@@ -193,6 +193,7 @@ private
       Database     : General_Xref_Database;
       Lang_Handler : Language_Handler;
       Options      : Docgen_Options;
+      Project      : Project_Type;
       Prj_Files    : Project_Files_List.Vector;
    end record;
 

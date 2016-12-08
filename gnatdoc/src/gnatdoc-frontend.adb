@@ -50,38 +50,49 @@ package body GNATdoc.Frontend is
       Tok_Number,
       Tok_Operator,
 
-      --  Reserved words
-      Tok_Abstract,
+      --  Reserved Ada 83 words
       Tok_And,
-      Tok_Aliased,
       Tok_Case,
       Tok_End,
       Tok_Entry,
       Tok_For,
       Tok_Function,
       Tok_Generic,
-      Tok_Interface,
       Tok_Is,
       Tok_Limited,
       Tok_New,
       Tok_Null,
-      Tok_Overriding,
       Tok_Others,
       Tok_Package,
       Tok_Pragma,
       Tok_Private,
       Tok_Procedure,
-      Tok_Protected,
       Tok_Record,
       Tok_Renames,
       Tok_Return,
       Tok_Subtype,
-      Tok_Tagged,
       Tok_Task,
       Tok_Type,
       Tok_Use,
       Tok_When,
       Tok_With,
+
+      --  Reserved Ada 95 words
+      Tok_Abstract,
+      Tok_Aliased,
+      Tok_Protected,
+      Tok_Until,
+      Tok_Requeue,
+      Tok_Tagged,
+
+      --  Reserved Ada 2005 words
+      Tok_Interface,
+      Tok_Overriding,
+      Tok_Synchronized,
+
+      --  Reserved Ada 2012 words
+      Tok_Some,
+
       --  Other tokens
       Tok_Arrow,
       Tok_Assignment,
@@ -91,7 +102,7 @@ package body GNATdoc.Frontend is
       Tok_Right_Square_Bracket,
       Tok_Semicolon);
 
-   subtype Reserved_Word_Kind is Tokens range Tok_Abstract .. Tok_With;
+   subtype Reserved_Word_Kind is Tokens range Tok_And .. Tok_With;
 
    ----------------------
    -- Local_Subrograms --
@@ -128,6 +139,10 @@ package body GNATdoc.Frontend is
    --------------------------
 
    package Reserved_Words_Table is
+      type Ada_Version_Type is (Ada_83, Ada_95, Ada_2005, Ada_2012);
+
+      procedure Enable_Ada_Version (Version : Ada_Version_Type);
+      --  Enable the reserved words set of the given version of Ada
 
       function Get_Token (Word : String) return Tokens;
       --  Return the token associated with Word
@@ -1189,6 +1204,11 @@ package body GNATdoc.Frontend is
             Partial_Entity : Boolean) return Boolean;
          --  Callback for entity parser
 
+         procedure Set_Ada_Version_From_Project_Switches;
+         --  Read the compiler switches associated with File and enable the set
+         --  of reserved words associated with the given Ada version. Ada 2005
+         --  is enabled by default if no switch was specified.
+
          ------------
          -- Append --
          ------------
@@ -1366,6 +1386,7 @@ package body GNATdoc.Frontend is
             procedure Complete_Decoration (End_Decl_Found : Boolean);
 
             procedure Handle_Doc;
+            procedure Handle_Pragma;
             procedure Handle_Scopes (End_Decl_Found : Boolean);
             procedure Handle_Sources (End_Decl_Found : Boolean);
             procedure Handle_Tokens;
@@ -2399,6 +2420,32 @@ package body GNATdoc.Frontend is
                      null;
                end case;
             end Handle_Doc;
+
+            -------------------
+            -- Handle_Pragma --
+            -------------------
+
+            procedure Handle_Pragma is
+               Pragma_Id : constant String := To_Lower (S);
+
+            begin
+               if Prev_Token /= Tok_Pragma then
+                  return;
+               end if;
+
+               if Pragma_Id = "ada_83" then
+                  Enable_Ada_Version (Ada_83);
+
+               elsif Pragma_Id = "ada_95" then
+                  Enable_Ada_Version (Ada_95);
+
+               elsif Pragma_Id = "ada_2005" then
+                  Enable_Ada_Version (Ada_2005);
+
+               elsif Pragma_Id = "ada_2012" then
+                  Enable_Ada_Version (Ada_2012);
+               end if;
+            end Handle_Pragma;
 
             -------------------
             -- Handle_Scopes --
@@ -3637,7 +3684,9 @@ package body GNATdoc.Frontend is
                   end if;
                end;
 
-               if not In_Pragma then
+               if In_Pragma then
+                  Handle_Pragma;
+               else
                   Complete_Decoration (End_Decl_Found);
 
                   if In_Private_Part (Current_Context)
@@ -4660,6 +4709,55 @@ package body GNATdoc.Frontend is
 
          end Extended_Cursor;
 
+         -------------------------------------------
+         -- Set_Ada_Version_From_Project_Switches --
+         -------------------------------------------
+
+         procedure Set_Ada_Version_From_Project_Switches is
+            Is_Default_Value : Boolean;
+            Value            : GNAT.Strings.String_List_Access;
+
+         begin
+            --  Set gnatdoc default Ada version
+
+            Enable_Ada_Version (Ada_2005);
+
+            --  Check if these sources were compiled with other version
+
+            Switches
+              (Project          => Context.Project,
+               In_Pkg           => Compiler_Package,
+               File             => File,
+               Language         => "Ada",
+               Value            => Value,
+               Is_Default_Value => Is_Default_Value);
+
+            for J in Value.all'Range loop
+               declare
+                  Switch : constant String := Value.all (J).all;
+               begin
+                  if Switch = "-gnat83" then
+                     Enable_Ada_Version (Ada_83);
+
+                  elsif Switch = "-gnat95" then
+                     Enable_Ada_Version (Ada_95);
+
+                  elsif Switch = "-gnat05"
+                    or else Switch = "-gnat2005"
+                  then
+                     Enable_Ada_Version (Ada_2005);
+
+                  elsif Switch = "-gnat12"
+                    or else Switch = "-gnat2012"
+                  then
+                     Enable_Ada_Version (Ada_2012);
+                  end if;
+               end;
+            end loop;
+
+            Free (Value);
+         end Set_Ada_Version_From_Project_Switches;
+
          --  Local variables
 
          Std_Entity : Entity_Id;
@@ -4667,6 +4765,8 @@ package body GNATdoc.Frontend is
       --  Start of processing for Parse_Ada_File
 
       begin
+         Set_Ada_Version_From_Project_Switches;
+
          Extended_Cursor.Initialize
            (Cursor, File_Entities.All_Entities'Access, Marks_Required => True);
 
@@ -5051,6 +5151,7 @@ package body GNATdoc.Frontend is
    --------------------------
 
    package body Reserved_Words_Table is
+      Ada_Version : Ada_Version_Type;
 
       function Hash (Key : String) return Ada.Containers.Hash_Type;
 
@@ -5063,6 +5164,15 @@ package body GNATdoc.Frontend is
          Equivalent_Keys => Equivalent_Keys);
 
       Keywords_Map : Reserved_Words.Map;
+
+      ------------------------
+      -- Enable_Ada_Version --
+      ------------------------
+
+      procedure Enable_Ada_Version (Version : Ada_Version_Type) is
+      begin
+         Ada_Version := Version;
+      end Enable_Ada_Version;
 
       ---------------------
       -- Equivalent_Keys --
@@ -5091,15 +5201,117 @@ package body GNATdoc.Frontend is
       ---------------
 
       function Get_Token (Word : String) return Tokens is
+         Lower_Word : constant String := To_Lower (Word);
+
+         function Get_Ada_95_Token return Tokens;
+         function Get_Ada_95_Token return Tokens is
+         begin
+            if Lower_Word = "abstract" then
+               return Tok_Abstract;
+
+            elsif Lower_Word = "aliased" then
+               return Tok_Aliased;
+
+            elsif Lower_Word = "protected" then
+               return Tok_Protected;
+
+            elsif Lower_Word = "until" then
+               return Tok_Until;
+
+            elsif Lower_Word = "requeue" then
+               return Tok_Requeue;
+
+            elsif Lower_Word = "tagged" then
+               return Tok_Tagged;
+
+            else
+               return Tok_Unknown;
+            end if;
+         end Get_Ada_95_Token;
+
+         function Get_Ada_2005_Token return Tokens;
+         function Get_Ada_2005_Token return Tokens is
+         begin
+            if Lower_Word = "interface" then
+               return Tok_Interface;
+
+            elsif Lower_Word = "overriding" then
+               return Tok_Overriding;
+
+            elsif Lower_Word = "synchronized" then
+               return Tok_Synchronized;
+
+            else
+               return Tok_Unknown;
+            end if;
+         end Get_Ada_2005_Token;
+
+         function Get_Ada_2012_Token return Tokens;
+         function Get_Ada_2012_Token return Tokens is
+         begin
+            if Lower_Word = "some" then
+               return Tok_Some;
+
+            else
+               return Tok_Unknown;
+            end if;
+         end Get_Ada_2012_Token;
+
+         --  Local variables
+
          Cursor  : constant Reserved_Words.Cursor :=
-                     Keywords_Map.Find (To_Lower (Word));
+                     Keywords_Map.Find (Lower_Word);
          use type Reserved_Words.Cursor;
       begin
+         --  Look for the token in the hash table containing the common
+         --  reserved words
+
          if Cursor /= Reserved_Words.No_Element then
             return Reserved_Words.Element (Cursor);
-         else
-            return Tok_Unknown;
          end if;
+
+         case Ada_Version is
+            when Ada_83 =>
+               if Get_Ada_95_Token /= Tok_Unknown
+                 or else Get_Ada_2005_Token /= Tok_Unknown
+                 or else Get_Ada_2012_Token /= Tok_Unknown
+               then
+                  return Tok_Id;
+               else
+                  return Tok_Unknown;
+               end if;
+
+            when Ada_95 =>
+               if Get_Ada_2005_Token /= Tok_Unknown
+                 or else Get_Ada_2012_Token /= Tok_Unknown
+               then
+                  return Tok_Id;
+               else
+                  return Get_Ada_95_Token;
+               end if;
+
+            when Ada_2005 =>
+               if Get_Ada_2012_Token /= Tok_Unknown then
+                  return Tok_Id;
+
+               elsif Get_Ada_95_Token /= Tok_Unknown then
+                  return Get_Ada_95_Token;
+
+               else
+                  return Get_Ada_2005_Token;
+               end if;
+
+            when Ada_2012 =>
+               if Get_Ada_95_Token /= Tok_Unknown then
+                  return Get_Ada_95_Token;
+
+               elsif Get_Ada_2005_Token /= Tok_Unknown then
+                  return Get_Ada_2005_Token;
+
+               else
+                  return Get_Ada_2012_Token;
+               end if;
+         end case;
       end Get_Token;
 
    begin

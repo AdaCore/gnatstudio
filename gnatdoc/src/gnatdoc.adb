@@ -72,6 +72,7 @@ package body GNATdoc is
    procedure Process_Files
      (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
+      Project             : Project_Type;
       Prj_Files           : in out Project_Files_List.Vector;
       Update_Global_Index : Boolean);
    --  This subprogram factorizes the functionality shared by routines
@@ -337,6 +338,7 @@ package body GNATdoc is
    procedure Process_Files
      (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
+      Project             : Project_Type;
       Prj_Files           : in out Project_Files_List.Vector;
       Update_Global_Index : Boolean)
    is
@@ -1128,7 +1130,8 @@ package body GNATdoc is
                   New_Backend (To_String (Options.Backend_Name));
       Context : aliased Docgen_Context_Ptr :=
                   new Docgen_Context'
-                        (Kernel, Database, Lang_Handler, Options, Prj_Files);
+                        (Kernel, Database, Lang_Handler, Options,
+                         Project, Prj_Files);
 
       Direct_Include_Files : aliased Files_List.Vector;
       --  C and C++ header files which are directly included by files of the
@@ -1639,6 +1642,7 @@ package body GNATdoc is
       Process_Files
         (Kernel    => Core_Kernel (Kernel),
          Options   => Options,
+         Project   => Project,
          Prj_Files => Prj_Files,
          Update_Global_Index => True);
 
