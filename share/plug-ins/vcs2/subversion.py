@@ -143,15 +143,23 @@ class SVN(core_staging.Emulate_Staging,
         return p.lines.flatMap(line_to_block())
 
     @core.run_in_background
-    def async_fetch_history(self, visitor):
+    def async_fetch_history(self, visitor, filter):
+        max_lines = filter[0]
+        for_file = filter[1]
+        pattern = filter[2]
         result = []
 
         def add_log(log):
             log[3] = log[3].split('\n', 1)[0]  # first line only
-            result.append(log)
+            if (len(result) <= max_lines and
+                    (not pattern or pattern in log[3])):
+                result.append(log)
 
-        yield self._log_stream(['-rHEAD:1', '--stop-on-copy']).subscribe(
-            add_log)
+        yield self._log_stream([
+            '-rHEAD:1',
+            '--stop-on-copy',
+            for_file.path if for_file else ''
+        ]).subscribe(add_log)
         visitor.add_lines(result)
 
     @core.run_in_background

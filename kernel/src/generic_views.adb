@@ -633,9 +633,16 @@ package body Generic_Views is
 
       Gtk_New (F.Pattern, Placeholder => Placeholder);
       Set_Font_And_Colors (F.Pattern, Fixed_Font => True);
-      Object_Callback.Object_Connect
-        (F.Pattern, Gtk.Editable.Signal_Changed,
-         Report_Filter_Changed'Access, Self);
+
+      if (Options and Debounce) /= 0 then
+         Object_Callback.Object_Connect
+           (F.Pattern, Gtk.GEntry.Signal_Activate,
+            Report_Filter_Changed'Access, Self);
+      else
+         Object_Callback.Object_Connect
+           (F.Pattern, Gtk.Editable.Signal_Changed,
+            Report_Filter_Changed'Access, Self);
+      end if;
       F.Pattern.On_Focus_Out_Event (On_Filter_Focus_Out'Access, F);
       F.Add (F.Pattern);
 
@@ -646,8 +653,13 @@ package body Generic_Views is
       F.Pattern.Set_Can_Focus (True);
 
       F.Pattern.Set_Tooltip_Markup
-        (Tooltip & ASCII.LF
-         & "Start with <b>not:</b> to invert the filter");
+        (Tooltip
+         & (if (Options and Has_Negate) /= 0
+           then ASCII.LF & "Start with <b>not:</b> to invert the filter"
+           else "")
+         & (if (Options and Debounce) /= 0
+           then ASCII.LF & "Press enter to apply the filter"
+           else ""));
 
       if Options /= 0 then
          F.Pattern.Set_Icon_From_Icon_Name

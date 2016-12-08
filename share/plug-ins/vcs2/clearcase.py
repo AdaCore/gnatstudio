@@ -82,7 +82,7 @@ class Clearcase(core_staging.Emulate_Staging,
             block_exit=True).wait_until_terminate()
 
     @core.run_in_background
-    def async_fetch_history(self, visitor):
+    def async_fetch_history(self, visitor, filter):
         p = self._cleartool(['lshistory', '.'])
         while True:
             line = yield p.wait_line()

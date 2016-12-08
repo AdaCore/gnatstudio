@@ -17,6 +17,7 @@
 
 --  Generic VCS views
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;          use Generic_Views;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -37,6 +38,10 @@ package VCS2.Views is
       Text_Render : Gtk_Cell_Renderer_Text;
       --  The text renderer for the longuest cell. This will automatically
       --  be ellipsized depending on the corresponding preference
+
+      Filter_Options  : Filter_Options_Mask :=
+        Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy;
+      Filter_Hist_Prefix : Unbounded_String;
 
    end record;
    overriding procedure Create_Toolbar

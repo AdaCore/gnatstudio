@@ -161,13 +161,27 @@ class VCS(GPS.VCS2):
         :param str message: the commit message
         """
 
-    def async_fetch_history(self, visitor):
+    def async_fetch_history(self, visitor, filter):
         """
         Fetch history for the whole repository asynchronously.
         For each line in the history, should call `self._add_log_line`
 
         :param GPS.VCS2_History_Visitor visitor: the object used to report
            when new lines have been pared for the history.
+        :param List filter: A list of various filters to apply. This list
+           is currently defined as:
+              [lines               : int,
+               file                : GPS.File,
+               filter              : str,
+               current_branch_only : bool,
+               branch_commits      : bool]
+           where `lines` is the number of lines that will be displayed
+           (returning more is useless), `file` is set if the log should be for
+           a specific file, `filter` is a string that is interpreted by the
+           VCS system, `current_branch_only` is set if a single branch
+           should be examined (as opposed to all branches) and
+           `branch_commits` is true if only commits related to branching
+           points should be returned.
         """
 
     def async_fetch_commit_details(self, ids, visitor):

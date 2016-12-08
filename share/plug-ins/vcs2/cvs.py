@@ -129,7 +129,9 @@ class CVS(core_staging.Emulate_Staging,
                 self.file = ''
                 self.in_header = False
                 self.revision = ''
+                self.previous = None
                 self.current = None
+                self.names = []
                 self.__re_log = re.compile(
                     '^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)')
 
@@ -141,6 +143,7 @@ class CVS(core_staging.Emulate_Staging,
             def __call__(self, out_stream, line):
                 if line.startswith('Working file: '):
                     self.file = line[14:]
+                    self.names = [self.file]
                     self.previous = None  # previous commit
                     self.current = None
 
@@ -173,7 +176,10 @@ class CVS(core_staging.Emulate_Staging,
                                 m.group('date'),
                                 '',     # subject
                                 None,   # parents
-                                [self.file]]  # names
+                                self.names]  # names
+
+                            # only apply the 'tag' to the first revision
+                            self.names = []
 
                             self.in_header = False
                             self.subject = ''
@@ -192,13 +198,26 @@ class CVS(core_staging.Emulate_Staging,
         return p.lines.flatMap(line_to_block())
 
     @core.run_in_background
-    def async_fetch_history(self, visitor):
+    def async_fetch_history(self, visitor, filter):
+        max_lines = filter[0]
+        for_file = filter[1]
+        pattern = filter[2]
         result = []
 
         def add_log(log):
             log[3] = log[3].split('\n', 1)[0]  # first line only
-            result.append(log)
-        yield self._log_stream([]).subscribe(add_log)
+            if (len(result) < max_lines and
+                    (not pattern or pattern in log[3])):
+
+                result.append(log)
+
+        f = ''
+        if for_file:
+            f = os.path.relpath(for_file.path, self.working_dir.path)
+
+        yield self._log_stream([
+            f
+        ]).subscribe(add_log)
         visitor.add_lines(result)
 
     @core.run_in_background

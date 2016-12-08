@@ -309,12 +309,34 @@ package VCS2.Engines is
       Message : String) is null;
    --   Called when details for a specific commit are available.
 
+   type History_Filter is record
+      Up_To_Lines         : Natural := Natural'Last;
+      For_File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Filter              : Unbounded_String := Null_Unbounded_String;
+      Current_Branch_Only : Boolean := False;
+      Branch_Commits_Only : Boolean := False;
+   end record;
+   No_Filter : constant History_Filter := (others => <>);
+   --  * Up_To_Lines is the number of lines that will be displayed. There is
+   --    no need to return more than that.
+   --  * For_File is set if the history for a specific file is requested. The
+   --    default is to request the history for all files.
+   --  * Filter is an extra filter typed by the user. It is interpreted by the
+   --    specific VCS: matches commit message, code, ... This is a regular
+   --    expression.
+   --  * Current_Branch_Only should be true if only the history of the current
+   --    branch is needed. Some systems cannot query multiple branches.
+   --  * Branch_Commits_Only should be true if only commits related to
+   --    branching points, merge points or end of branches should be returned.
+
    procedure Async_Fetch_History
      (Self        : not null access VCS_Engine;
-      Visitor     : not null access History_Visitor'Class) is null;
+      Visitor     : not null access History_Visitor'Class;
+      Filter      : History_Filter := No_Filter) is null;
    procedure Queue_Fetch_History
      (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access History_Visitor'Class);
+      Visitor     : not null access History_Visitor'Class;
+      Filter      : History_Filter := No_Filter);
    --  Fetch history for the whole repository.
    --  Visitor is freed automatically when no longer needed.
    --  Only call Queue_Fetch_History from your code, Async_Fetch_History is

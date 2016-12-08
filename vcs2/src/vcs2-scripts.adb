@@ -76,7 +76,8 @@ package body VCS2.Scripts is
       Message : String);
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
-      Visitor : not null access History_Visitor'Class);
+      Visitor : not null access History_Visitor'Class;
+      Filter  : History_Filter);
    overriding procedure Async_Fetch_Commit_Details
      (Self        : not null access Script_Engine;
       Ids         : not null GNAT.Strings.String_List_Access;
@@ -217,16 +218,33 @@ package body VCS2.Scripts is
 
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
-      Visitor : not null access History_Visitor'Class)
+      Visitor : not null access History_Visitor'Class;
+      Filter  : History_Filter)
    is
-      D    : Callback_Data'Class := Create (Self.Script, 1);
+      D    : Callback_Data'Class := Self.Script.Create (2);
+      L    : List_Instance'Class := Self.Script.New_List;
       Inst : Class_Instance;
    begin
+      --  First arg is the visitor
       Inst := Self.Script.New_Instance
         (Self.Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name));
       Set_Data (Inst, VCS2_History_Visitor_Class_Name,
                 History_Properties_Record'(Visitor => Visitor));
       D.Set_Nth_Arg (1, Inst);
+
+      --  Second arg and others are the filters
+      L.Set_Nth_Arg (1, Filter.Up_To_Lines);
+      if Filter.For_File = No_File then
+         L.Set_Nth_Arg (2, No_Class_Instance);
+      else
+         L.Set_Nth_Arg (2, Create_File (Self.Script, Filter.For_File));
+      end if;
+      L.Set_Nth_Arg (3, To_String (Filter.Filter));
+      L.Set_Nth_Arg (4, Filter.Current_Branch_Only);
+      L.Set_Nth_Arg (5, Filter.Branch_Commits_Only);
+      D.Set_Nth_Arg (2, L);
+      Free (L);  --  now owned by D
+
       Call_Method (Self, "async_fetch_history", D);
    end Async_Fetch_History;
 

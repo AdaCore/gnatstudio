@@ -37,10 +37,13 @@ with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Search;                  use GPS.Search;
 with Gtkada.MDI;                  use Gtkada.MDI;
@@ -94,8 +97,9 @@ package body VCS2.History is
    --  Color palette from d3js.org
 
    Show_Author             : Boolean_Preference;
-   Show_ID          : Boolean_Preference;
-   Show_Date            : Boolean_Preference;
+   Show_ID                 : Boolean_Preference;
+   Show_Date               : Boolean_Preference;
+   Show_All_Branches       : Boolean_Preference;
    Collapse_Simple_Commits : Boolean_Preference;
 
    subtype Graph_Column is Positive;
@@ -116,6 +120,7 @@ package body VCS2.History is
    type History_View_Config is record
       Initialized  : Boolean := False;
       Collapse     : Boolean := False;
+      All_Branches : Boolean := False;
    end record;
 
    type Visibility is new Natural;
@@ -145,7 +150,6 @@ package body VCS2.History is
    --  filtering and laying out the graph.
 
    type History_Tree_Record is new Tree_View_Record with record
-      User_Filter : GPS.Search.Search_Pattern_Access;
       Config      : History_View_Config;
       Commits     : Commit_Maps.Map;
       Graph       : Gtk_Drawing_Area;
@@ -154,8 +158,10 @@ package body VCS2.History is
 
       Max_Columns : Natural := 0;  --  Number of columns in the graph
 
-      Max_Lines   : Line_Index := 2000;
-      --  Maximum number of lines to display
+      User_Filter : History_Filter :=
+        (Up_To_Lines   => 2000,
+         others        => <>);
+      --  Current filter
 
       Col_ID      : Gtk_Tree_View_Column;
       Col_Author  : Gtk_Tree_View_Column;
@@ -191,6 +197,9 @@ package body VCS2.History is
    overriding procedure On_Create
      (Self    : not null access History_View_Record;
       Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access History_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (Self : access History_View_Record'Class) return Gtk_Widget;
@@ -354,6 +363,7 @@ package body VCS2.History is
          Is_Free  : array (1 .. Tree.Max_Columns) of Boolean :=
            (others => True);
          Skipped  : Boolean;
+         Curs     : Commit_Maps.Cursor;
 
       begin
          for Line in 1 .. Line_Start - 1 loop
@@ -408,9 +418,10 @@ package body VCS2.History is
                            while DP.Visible < Always_Visible
                              and then DP.Parents /= null
                            loop
-                              DP := Tree.Lines
-                                (Tree.Commits
-                                   (DP.Parents (DP.Parents'First).all));
+                              Curs := Tree.Commits.Find
+                                (DP.Parents (DP.Parents'First).all);
+                              exit when not Commit_Maps.Has_Element (Curs);
+                              DP := Tree.Lines (Commit_Maps.Element (Curs));
                               Skipped := True;
                            end loop;
                         end if;
@@ -423,7 +434,6 @@ package body VCS2.History is
                         else
                            X2 := Gdouble (DP.Col) * Column_Width;
                            Y2 := Data.Circle_Center + Radius + 16.0;
-                           --  Tree.Lines (Line + 1).Circle_Center - Radius;
                            Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
                            Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
 
@@ -447,6 +457,11 @@ package body VCS2.History is
                         else
                            Stroke (Cr);
                         end if;
+
+                     else
+                        --  parent not found in memory for now
+                        --  Will draw straight line.
+                        Is_Free (Data.Col) := False;
                      end if;
                   end loop;
                end if;
@@ -489,7 +504,7 @@ package body VCS2.History is
             Line_Start := Tree.Commits (First_ID);
             Line_End   :=
               (if Tree.Has_Show_Older and then Last_ID = ""
-               then Tree.Max_Lines else Tree.Commits (Last_ID));
+               then Tree.User_Filter.Up_To_Lines else Tree.Commits (Last_ID));
 
             Tree.Convert_Bin_Window_To_Widget_Coords
               (0, 0, Base_X, Base_Y);
@@ -556,9 +571,9 @@ package body VCS2.History is
            (View.Tree.Get_Store_Iter_For_Filter_Path (Path),
             Column_ID) = ""
          then
-            History_Tree (View.Tree).Max_Lines :=
-              History_Tree (View.Tree).Max_Lines + 2000;
-            Data := Recompute_Layout (View, Start_Running => False);
+            History_Tree (View.Tree).User_Filter.Up_To_Lines :=
+              History_Tree (View.Tree).User_Filter.Up_To_Lines + 2000;
+            View.Refresh;
          end if;
 
          Path_Free (Path);
@@ -566,6 +581,51 @@ package body VCS2.History is
 
       return False;
    end On_Button_Press;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access History_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access)
+   is
+      Tree : constant History_Tree := History_Tree (Self.Tree);
+   begin
+      if Pattern = null then
+         Tree.User_Filter.Filter := Null_Unbounded_String;
+         Tree.User_Filter.For_File := No_File;
+         Self.Refresh;
+      end if;
+
+      declare
+         Text : constant String := Get_Text (Pattern);
+      begin
+         if Starts_With (Text, "file:") then
+            Tree.User_Filter.Filter := Null_Unbounded_String;
+            Tree.User_Filter.For_File :=
+              Get_Project_Tree (Self.Kernel).Create
+              (+Text (Text'First + 5 .. Text'Last));
+            if Tree.User_Filter.For_File = No_File then
+               --  Create a dummy file
+               Tree.User_Filter.For_File :=
+                 Create (+Text (Text'First + 5 .. Text'Last));
+            end if;
+         else
+            Tree.User_Filter.For_File := No_File;
+
+            case Get_Kind (Pattern) is
+            when Full_Text | Fuzzy | Approximate =>
+               Tree.User_Filter.Filter := To_Unbounded_String
+                 (GNAT.Regpat.Quote (Text));
+            when Regexp =>
+               Tree.User_Filter.Filter := To_Unbounded_String (Text);
+            end case;
+         end if;
+
+         Self.Refresh;
+      end;
+   end Filter_Changed;
 
    ----------------------
    -- Recompute_Layout --
@@ -615,6 +675,7 @@ package body VCS2.History is
       Append_Menu (Menu, View.Kernel, Show_ID);
       Append_Menu (Menu, View.Kernel, Show_Author);
       Append_Menu (Menu, View.Kernel, Show_Date);
+      Append_Menu (Menu, View.Kernel, Show_All_Branches);
       Append_Menu (Menu, View.Kernel, Collapse_Simple_Commits);
    end Create_Menu;
 
@@ -815,6 +876,11 @@ package body VCS2.History is
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroy'Access);
 
+      Base_VCS_View_Record (Self.all).Filter_Options :=
+        Has_Regexp or Debounce;
+      Base_VCS_View_Record (Self.all).Filter_Hist_Prefix :=
+        To_Unbounded_String ("history");
+
       T := new History_Tree_Record;
 
       Gtk_New (Paned);
@@ -946,6 +1012,7 @@ package body VCS2.History is
 
       Config :=
         (Initialized  => True,
+         All_Branches => Show_All_Branches.Get_Pref,
          Collapse     => Collapse_Simple_Commits.Get_Pref);
       if Config /= T.Config then
          T.Config := Config;
@@ -1154,6 +1221,10 @@ package body VCS2.History is
                               Data.Is_Free (PRef.Col) := False;
                            end if;
                         end;
+
+                     else
+                        --  Parent is not visible, but we'll simulate
+                        Ref.Has_Parent_In_Same_Col := True;
                      end if;
                   end loop;
 
@@ -1178,7 +1249,7 @@ package body VCS2.History is
          return True;  --  Will run again for the actual insert
 
       when Step_Insert =>
-         while Data.Inserted < Tree.Max_Lines
+         while Data.Inserted < Tree.User_Filter.Up_To_Lines
            and then Data.Current <= Tree.Lines.Last_Index
          loop
             declare
@@ -1205,19 +1276,23 @@ package body VCS2.History is
                   Set_All_And_Clear (Tree.Model, Iter, V);
 
                   Data.Inserted := Data.Inserted + 1;
+                  Data.Current  := Data.Current + 1;
 
                   if Clock - Start >= 0.3 then
                      return True;  --  will try again later
                   end if;
+
+               else
+                  Data.Current  := Data.Current + 1;
                end if;
             end;
 
-            Data.Current  := Data.Current + 1;
          end loop;
 
          Trace (Me, "inserted" & Data.Inserted'Img & " nodes");
 
-         Tree.Has_Show_Older := Data.Current < Tree.Lines.Last_Index;
+         Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
+           or else (Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines);
          if Tree.Has_Show_Older then
             Init_Set_String (V (Column_ID), "");
             Init_Set_String (V (Column_Author), "");
@@ -1278,16 +1353,21 @@ package body VCS2.History is
    -------------
 
    overriding procedure Refresh (Self : not null access History_View_Record) is
-      VCS        : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
-      Seen       : access On_Line_Seen;
+      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      Seen : access On_Line_Seen;
+      Tree : constant History_Tree := History_Tree (Self.Tree);
    begin
       if VCS /= null then
          Reset_Lines (History_Tree (Self.Tree));
 
+         Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
+         Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;
+
          Seen := new On_Line_Seen;
          Seen.Kernel := Self.Kernel;
          Seen.Data   := Recompute_Layout (Self, Start_Running => False);
-         VCS.Queue_Fetch_History (Visitor => Seen);
+         VCS.Queue_Fetch_History
+           (Visitor => Seen, Filter => Tree.User_Filter);
       end if;
    end Refresh;
 
@@ -1314,6 +1394,11 @@ package body VCS2.History is
         ("vcs-history-show-date",
          Default => False,
          Label   => -"Show Date");
+
+      Show_All_Branches := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("vcs-history-show-all-branches",
+         Default => False,
+         Label   => -"Show All Branches");
 
       Collapse_Simple_Commits := Kernel.Get_Preferences.Create_Invisible_Pref
         ("vcs-history-collapse",

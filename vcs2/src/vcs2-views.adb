@@ -23,6 +23,7 @@ with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Widget;                  use Gtk.Widget;
+with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
 with VCS2.Engines;                use VCS2.Engines;
 
@@ -110,10 +111,11 @@ package body VCS2.Views is
 
       View.Build_Filter
         (Toolbar     => Toolbar,
-         Hist_Prefix => "commits",    --   ??? Should use a view-specific name
+         Hist_Prefix => Histories.History_Key
+           (To_String (View.Filter_Hist_Prefix)),
          Tooltip     => -"Filter the contents",
          Placeholder => -"filter",
-         Options   => Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+         Options     => View.Filter_Options);
    end Create_Toolbar;
 
    ----------------------------

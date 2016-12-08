@@ -838,6 +838,9 @@ package body VCS2.Commits is
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroyed'Access);
 
+      Base_VCS_View_Record (Self.all).Filter_Hist_Prefix :=
+        To_Unbounded_String ("commits");
+
       Gtk_New (Paned);
       Paned.Set_Opaque_Resizing (True);
       Self.Pack_Start (Paned);

@@ -129,27 +129,57 @@ class Git(core.VCS):
         GPS.Hook('vcs_commit_done').run(self)
 
     @core.run_in_background
-    def async_fetch_history(self, visitor):
+    def async_fetch_history(self, visitor, filter):
+        max_lines = filter[0]
+        for_file = filter[1]
+        pattern = filter[2]
+        current_branch_only = filter[3]
+        branch_commits_only = filter[4]
+
         p = ProcessWrapper(
             ['git',
              '--no-pager',  # do not require a terminal
              'log',
              # use tformat to get final newline
              '--pretty=tformat:%h@@%p@@%an@@%d@@%cD@@%s',
-             '--branches', '--tags',  # show all except stashes
-             '--topo-order'],  # children before parents
+             '--branches' if not current_branch_only else '',
+             '--tags' if not current_branch_only else '',
+             '--topo-order',  # children before parents
+             '--grep=%s' % pattern if pattern else '',
+             '--max-count=%d' % max_lines if not branch_commits_only else '',
+             '%s' % for_file.path if for_file else ''],
             block_exit=False,
             directory=self.working_dir.path)
+
+        children = {}   # number of children for each sha1
         result = []
+        count = 0
+
         while True:
             line = yield p.wait_line()
-            if line is None:
+            if line is None or '@@' not in line:
                 GPS.Logger("GIT").log("finished git-status")
                 break
 
             id, parents, author, branches, date, subject = line.split('@@')
-            result.append((id, author, date, subject, parents.split(),
-                           None if not branches else branches.split(',')))
+            parents = parents.split()
+            branches = None if not branches else branches.split(',')
+            current = (id, author, date, subject, parents, branches)
+
+            if branch_commits_only:
+                for pa in parents:
+                    children[pa] = children.setdefault(pa, 0) + 1
+
+                # Count only relevant commits
+                if (len(parents) > 1 or
+                        branches is not None or
+                        id not in children or
+                        children[id] > 1):
+                    count += 1
+
+            result.append(current)
+            if count >= max_lines:
+                break
 
         GPS.Logger("GIT").log(
             "done parsing git-log (%s lines)" % (len(result), ))

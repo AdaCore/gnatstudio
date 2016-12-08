@@ -164,6 +164,10 @@ package Generic_Views is
    Has_Whole_Word  : constant Filter_Options_Mask := 2 ** 2;
    Has_Approximate : constant Filter_Options_Mask := 2 ** 3;
    Has_Fuzzy       : constant Filter_Options_Mask := 2 ** 4;
+   Debounce        : constant Filter_Options_Mask := 2 ** 5;
+   --  If Debouncs is set, then all changes to the filter are reported when the
+   --  user presses <enter>. Otherwise, they are reported for all changes to
+   --  the pattern, as they occur.
 
    procedure Build_Filter
      (Self        : not null access View_Record;

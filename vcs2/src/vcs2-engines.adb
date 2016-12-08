@@ -179,7 +179,9 @@ package body VCS2.Engines is
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_All_Source_Files
 
-   type Cmd_Fetch_History is new VCS_Command with null record;
+   type Cmd_Fetch_History is new VCS_Command with record
+      Filter : History_Filter;
+   end record;
    overriding procedure Execute
      (Self : not null access Cmd_Fetch_History;
       VCS  : not null access VCS_Engine'Class);
@@ -844,7 +846,9 @@ package body VCS2.Engines is
       VCS  : not null access VCS_Engine'Class)
    is
    begin
-      VCS.Async_Fetch_History (History_Visitor_Access (Self.Visitor));
+      VCS.Async_Fetch_History
+        (Visitor => History_Visitor_Access (Self.Visitor),
+         Filter  => Self.Filter);
    end Execute;
 
    -------------------------
@@ -853,11 +857,14 @@ package body VCS2.Engines is
 
    procedure Queue_Fetch_History
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access History_Visitor'Class) is
+      Visitor : not null access History_Visitor'Class;
+      Filter  : History_Filter := No_Filter) is
    begin
       Queue
         (Self,
-         new Cmd_Fetch_History'(Visitor => Visitor.all'Unchecked_Access));
+         new Cmd_Fetch_History'(
+           Visitor => Visitor.all'Unchecked_Access,
+           Filter  => Filter));
    end Queue_Fetch_History;
 
    -------------
