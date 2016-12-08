@@ -30,7 +30,6 @@ with Basic_Types;
 with Commands;                     use Commands;
 with Commands.Custom;              use Commands.Custom;
 with Commands.Interactive;         use Commands.Interactive;
-with Generic_List;
 with GPS.Customizable_Modules;     use GPS.Customizable_Modules;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -149,7 +148,7 @@ package body VCS.Generic_VCS is
       Start      : Integer;
       Prev_Start : Integer;
       Parser     : Status_Parser_Record;
-      Status     : File_Status_List.List;
+      Status     : File_Status_List.Vector;
       Rep        : Generic_VCS_Access;
       Dir        : GNAT.Strings.String_Access;
       Is_Local   : Boolean;
@@ -230,7 +229,7 @@ package body VCS.Generic_VCS is
    begin
       GNAT.Strings.Free (Command.Text);
       GNAT.Strings.Free (Command.Dir);
-      File_Status_List.Free (Command.Status);
+      Command.Status.Clear;
    end Primitive_Free;
 
    ---------------------
@@ -286,7 +285,7 @@ package body VCS.Generic_VCS is
    begin
       Basic_Types.Unchecked_Free (S.Regexp);
       GNAT.Strings.Free (S.Pattern);
-      Status_Parser.Free (S.Status_Identifiers);
+      S.Status_Identifiers.Clear;
    end Free;
 
    ----------
@@ -792,11 +791,11 @@ package body VCS.Generic_VCS is
 
    overriding function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
-      Filenames : File_Array) return File_Status_List.List
+      Filenames : File_Array) return File_Status_List.Vector
    is
       pragma Unreferenced (Rep);
 
-      Result           : File_Status_List.List;
+      Result           : File_Status_List.Vector;
       Blank_Status     : File_Status_Record;
       Current_Status   : File_Status_Record := Blank_Status;
    begin
@@ -804,7 +803,7 @@ package body VCS.Generic_VCS is
          Current_Status := Blank_Status;
          Current_Status.File := Filenames (J);
 
-         File_Status_List.Append (Result, Current_Status);
+         Result.Append (Current_Status);
       end loop;
 
       return Result;
@@ -1279,8 +1278,8 @@ package body VCS.Generic_VCS is
                      end if;
 
                      if Num /= 0 then
-                        Status_Parser.Append
-                          (Parser.Status_Identifiers, (Regexp, Num));
+                        Parser.Status_Identifiers.Append
+                          (Regexp_Status_Record'(Regexp, Num));
                      else
                         Basic_Types.Unchecked_Free (Regexp);
                      end if;
@@ -1568,8 +1567,6 @@ package body VCS.Generic_VCS is
       Status_Update : Boolean := False;
 
       use File_Status_List;
-      N : File_Status_List.List_Node;
-      R : File_Status_Record;
    begin
       if S'Last = 0 then
          --  Empty text, nothing to do, this happen when doing a diff on a
@@ -1609,9 +1606,7 @@ package body VCS.Generic_VCS is
             --  Remove any error messages in the Locations view for all the
             --  files that have an 'Up to date' status.
 
-            N := First (Command.Status);
-            while N /= File_Status_List.Null_Node loop
-               R := Data (N);
+            for R of Command.Status loop
                if R.Status = Up_To_Date then
                   declare
                      Msgs : constant Message_Array :=
@@ -1627,8 +1622,6 @@ package body VCS.Generic_VCS is
                      end loop;
                   end;
                end if;
-
-               N := Next (N);
             end loop;
 
             Status_Parsed_Hook.Run (Command.Rep.Kernel);
@@ -1702,18 +1695,14 @@ package body VCS.Generic_VCS is
                   Matches       : Match_Array (0 .. 1);
 
                   use Status_Parser;
-
-                  Node : Status_Parser.List_Node :=
-                           First (Command.Parser.Status_Identifiers);
                begin
-                  while Node /= Status_Parser.Null_Node loop
-                     Match (Data (Node).Regexp.all, Status_String, Matches);
+                  for Item of Command.Parser.Status_Identifiers loop
+                     Match (Item.Regexp.all, Status_String, Matches);
 
                      if Matches (0) /= No_Match then
                         declare
                            New_Status : constant VCS_File_Status :=
-                                          Command.Rep.Status
-                                            (Data (Node).Index);
+                             Command.Rep.Status (Item.Index);
                         begin
                            --  Do not update the status if current command is
                            --  local and we have recorded that a modification
@@ -1731,8 +1720,6 @@ package body VCS.Generic_VCS is
 
                         exit;
                      end if;
-
-                     Node := Next (Node);
                   end loop;
                end;
             end if;

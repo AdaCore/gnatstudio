@@ -17,8 +17,8 @@
 
 with GNAT.Regpat;
 with GNAT.Strings;                    use GNAT.Strings;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
-with Generic_List;
 with Glib.Convert;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
@@ -48,15 +48,12 @@ package body GPS.Kernel.Messages.Tools_Output is
       Last   : Natural := 0;
    end record;
 
-   procedure Free (X : in out Location) is null;
-   --  Free memory associated to X
-
-   package Locations_List is new Generic_List (Location, Free);
+   package Locations_List is new Ada.Containers.Vectors (Positive, Location);
    use Locations_List;
 
    function Extract_Locations
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : String) return Locations_List.List;
+      Message : String) return Locations_List.Vector;
 
    ----------------------
    -- Add_Tool_Message --
@@ -76,9 +73,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access
    is
-      Locs                   : Locations_List.List;
-      Loc                    : Location;
-      Node                   : Locations_List.List_Node;
+      Locs                   : Locations_List.Vector;
       Has_Secondary_Location : Boolean := False;
       Returned               : Message_Access;
    begin
@@ -165,11 +160,7 @@ package body GPS.Kernel.Messages.Tools_Output is
             end if;
          end if;
 
-         Node := First (Locs);
-
-         while Node /= Locations_List.Null_Node loop
-            Loc := Data (Node);
-
+         for Loc of Locs loop
             if Loc.File = No_File then
                --  Secondary locations extraction subprogram can set File to
                --  No_File when reference to the same file as primary message
@@ -188,10 +179,9 @@ package body GPS.Kernel.Messages.Tools_Output is
                Loc.Last,
                (Editor_Side => True, Locations => Show_In_Locations,
                 Editor_Line => False));
-            Node := Next (Node);
          end loop;
 
-         Free (Locs);
+         Locs.Clear;
       end;
 
       return Returned;
@@ -203,7 +193,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    function Extract_Locations
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : String) return Locations_List.List
+      Message : String) return Locations_List.Vector
    is
       SFP     : constant Pattern_Matcher :=
                   Compile (Secondary_File_Pattern.Get_Pref);
@@ -213,7 +203,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       ASFP    : constant Pattern_Matcher :=
         Compile (Alternate_Secondary_Pattern.Get_Pref);
       ASFL    : constant Natural := Alternate_Secondary_Line_Index.Get_Pref;
-      Result  : Locations_List.List;
+      Result  : Locations_List.Vector;
       Matched : Match_Array (0 .. 9);
       Loc     : Location;
       Start   : Natural;

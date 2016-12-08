@@ -1095,7 +1095,7 @@ package body VCS_Module is
          Set_Cache (Get_Status_Cache, File, Stat);
 
          declare
-            F_Status : File_Status_List.List;
+            F_Status : File_Status_List.Vector;
          begin
             File_Status_List.Append (F_Status, Copy_File_Status (Stat.Status));
 
@@ -1104,7 +1104,7 @@ package body VCS_Module is
             --  Just ensure that this file is added into the explorer if
             --  not yet present.
 
-            File_Status_List.Free (F_Status);
+            F_Status.Clear;
          end;
 
          Refresh_File

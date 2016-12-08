@@ -21,10 +21,10 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
 with GPS.Kernel;                use GPS.Kernel;
-with Generic_List;
 with OS_Utils;                  use OS_Utils;
 with String_List_Utils;         use String_List_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS_Vectors;
 
 package VCS is
 
@@ -213,7 +213,7 @@ package VCS is
    --  Return a deep copy of F
 
    procedure Free (F : in out File_Status_Record);
-   package File_Status_List is new Generic_List (File_Status_Record);
+   package File_Status_List is new GPS_Vectors (File_Status_Record);
 
    procedure Get_Status
      (Rep        : access VCS_Record;
@@ -260,7 +260,7 @@ package VCS is
    function Local_Get_Status
      (Rep       : access VCS_Record;
       Filenames : GNATCOLL.VFS.File_Array)
-      return File_Status_List.List is abstract;
+      return File_Status_List.Vector is abstract;
    --  Return the status of a list of files.
    --  This function only attempts to read information from local data, and
    --  does not connect to the repository.

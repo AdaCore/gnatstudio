@@ -357,7 +357,7 @@ package body VCS_View.Activities is
    procedure Display_File_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
       Activity       : Activity_Id;
-      Status         : File_Status_List.List;
+      Status         : File_Status_List.Vector;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False;
@@ -507,13 +507,11 @@ package body VCS_View.Activities is
          return Create_Or_Remove_Activity (A);
       end Get_Activity_Iter;
 
-      Status_Temp       : File_Status_List.List_Node;
       Log               : Boolean;
       Line              : Line_Record;
       Sort_Id           : Gint;
       Up_To_Date_Status : VCS_File_Status;
 
-      use type File_Status_List.List_Node;
    begin
       if VCS_Identifier /= null then
          declare
@@ -534,8 +532,6 @@ package body VCS_View.Activities is
          return;
       end if;
 
-      Status_Temp := File_Status_List.First (Status);
-
       Sort_Id := Freeze_Sort (Explorer.Model);
 
       --  If activity is given, create the tree node now if needed
@@ -551,10 +547,9 @@ package body VCS_View.Activities is
 
       --  Handle each files
 
-      while Status_Temp /= File_Status_List.Null_Node loop
+      for Item of Status loop
          declare
-            File   : constant Virtual_File :=
-                       File_Status_List.Data (Status_Temp).File;
+            File   : constant Virtual_File  := Item.File;
             A_Iter : constant Gtk_Tree_Iter := Get_Activity_Iter (File);
          begin
             if A_Iter /= Null_Iter then
@@ -565,9 +560,7 @@ package body VCS_View.Activities is
                   Log := Get_Log_From_File
                     (Kernel, File, False) /= GNATCOLL.VFS.No_File;
 
-                  Line :=
-                    (Copy_File_Status
-                       (File_Status_List.Data (Status_Temp)), Log);
+                  Line := (Copy_File_Status (Item), Log);
                   Set_Cache (Get_Status_Cache, File, Line);
                end if;
 
@@ -595,8 +588,6 @@ package body VCS_View.Activities is
                   end;
                end if;
             end if;
-
-            Status_Temp := File_Status_List.Next (Status_Temp);
          end;
       end loop;
 

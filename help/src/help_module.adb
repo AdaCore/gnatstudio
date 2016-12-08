@@ -51,11 +51,11 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
-with Generic_List;
 with Toolchains;                 use Toolchains;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
 with Config;
+with GPS_Vectors;
 
 package body Help_Module is
 
@@ -96,21 +96,21 @@ package body Help_Module is
    --  See inherited documentation
 
    procedure Free (Data : in out Help_File_Record);
-   package Help_File_List is new Generic_List (Help_File_Record, Free);
+   package Help_File_List is new GPS_Vectors (Help_File_Record);
    use Help_File_List;
 
    type Help_Category_Record is record
       Name  : GNAT.Strings.String_Access;
-      Files : Help_File_List.List;
+      Files : Help_File_List.Vector;
    end record;
    type Help_Category_Access is access Help_Category_Record;
 
    procedure Free (Data : in out Help_Category_Access);
-   package Help_Category_List is new Generic_List (Help_Category_Access, Free);
+   package Help_Category_List is new GPS_Vectors (Help_Category_Access);
    use Help_Category_List;
 
    type Help_Module_ID_Record is new Module_ID_Record with record
-      Categories : Help_Category_List.List;
+      Categories : Help_Category_List.Vector;
       --  The registered help files
 
       Doc_Path   : File_Array_Access;
@@ -336,7 +336,7 @@ package body Help_Module is
 
    overriding procedure Destroy (Module : in out Help_Module_ID_Record) is
    begin
-      Free (Module.Categories);
+      Module.Categories.Clear;
       Unchecked_Free (Module.Doc_Path);
    end Destroy;
 
@@ -681,7 +681,7 @@ package body Help_Module is
         (Help_Category_Record, Help_Category_Access);
    begin
       Free (Data.Name);
-      Free (Data.Files);
+      Data.Files.Clear;
       Unchecked_Free (Data);
    end Free;
 
@@ -743,9 +743,11 @@ package body Help_Module is
       Menu_Before : String := "";
       Menu_After  : String := "")
    is
+      use Help_Category_List.Std_Vectors;
+
       Command : Interactive_Command_Access;
-      Node : Help_Category_List.List_Node;
-      Cat  : Help_Category_Access;
+      Node    : Help_Category_List.Std_Vectors.Cursor;
+      Cat     : Help_Category_Access;
    begin
       Command := new Display_Doc_Command'
         (Interactive_Command with
@@ -775,25 +777,26 @@ package body Help_Module is
          end if;
       end if;
 
-      Node := First (Help_Module_ID.Categories);
-      while Node /= Help_Category_List.Null_Node loop
-         Cat := Data (Node);
+      Node := Help_Module_ID.Categories.First;
+      while Has_Element (Node) loop
+         Cat := Element (Node);
          exit when Cat.Name.all = Category;
-         Node := Next (Node);
+         Next (Node);
       end loop;
 
-      if Node = Help_Category_List.Null_Node then
+      if not Has_Element (Node) then
          Cat := new Help_Category_Record'
            (Name  => new String'(Category),
-            Files => Help_File_List.Null_List);
+            Files => Help_File_List.Empty_Vector);
          Append (Help_Module_ID.Categories, Cat);
       end if;
 
-      Append (Cat.Files,
-              (URL        => new String'(URL),
-               Shell_Cmd  => new String'(Shell_Cmd),
-               Shell_Lang => new String'(Shell_Lang),
-               Descr      => new String'(Descr)));
+      Cat.Files.Append
+        (Help_File_Record'
+           (URL        => new String'(URL),
+            Shell_Cmd  => new String'(Shell_Cmd),
+            Shell_Lang => new String'(Shell_Lang),
+            Descr      => new String'(Descr)));
    end Register_Help;
 
    ------------------
@@ -1135,8 +1138,6 @@ package body Help_Module is
       Index           : Natural;
       Str             : Unbounded_String;
       In_Category     : Unbounded_String;
-      Cat             : Help_Category_List.List_Node;
-      F               : Help_File_List.List_Node;
       Output_Write    : Writable_File;
 
    begin
@@ -1152,35 +1153,30 @@ package body Help_Module is
 
          Str := To_Unbounded_String (Buffer (Buffer'First .. Index - 1));
 
-         Cat := First (Help_Module_ID.Categories);
          Append (Str, "<table cellspacing=""0"" width=""100%"" border=""2"""
                  & "cellpadding=""6"">");
 
-         while Cat /= Help_Category_List.Null_Node loop
+         for Item of Help_Module_ID.Categories loop
             In_Category := Null_Unbounded_String;
 
-            F := First (Data (Cat).Files);
-            while F /= Help_File_List.Null_Node loop
-               if Data (F).URL /= null and then Data (F).URL.all /= "" then
+            for File of Item.Files loop
+               if File.URL /= null and then File.URL.all /= "" then
                   Append (In_Category, "<tr><td><a href=""");
                   --  ??? need url here
-                  Append (In_Category, Data (F).URL.all);
-                  Append (In_Category, """>" & Data (F).Descr.all
+                  Append (In_Category, File.URL.all);
+                  Append (In_Category, """>" & File.Descr.all
                           & "</a></td></tr>");
                end if;
-               F := Next (F);
             end loop;
 
             if In_Category /= Null_Unbounded_String then
                Append (Str,
                        "<tr><td bgcolor=""#006db6"">"
                        & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
-                       & Data (Cat).Name.all
+                       & Item.Name.all
                        & "</font></td> </tr>" & ASCII.LF);
                Append (Str, In_Category);
             end if;
-
-            Cat := Next (Cat);
          end loop;
 
          Append (Str, "</table>");

@@ -57,7 +57,7 @@ package VCS.Unknown_VCS is
    overriding function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
       Filenames : GNATCOLL.VFS.File_Array)
-     return File_Status_List.List;
+     return File_Status_List.Vector;
 
    overriding procedure Create_Tag
      (Rep       : access Unknown_VCS_Record;

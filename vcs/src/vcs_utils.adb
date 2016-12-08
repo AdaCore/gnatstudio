@@ -169,18 +169,13 @@ package body VCS_Utils is
 
    procedure Update_Files_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
-      Status         : File_Status_List.List;
+      Status         : File_Status_List.Vector;
       VCS_Identifier : VCS_Access;
       Clear_Logs     : Boolean;
-      Up_To_Date     : VCS_File_Status)
-   is
-      use type File_Status_List.List_Node;
-      Iter : File_Status_List.List_Node := File_Status_List.First (Status);
+      Up_To_Date     : VCS_File_Status) is
    begin
-      while Iter /= File_Status_List.Null_Node loop
+      for S of Status loop
          declare
-            S       : constant File_Status_Record :=
-                        File_Status_List.Data (Iter);
             File    : constant Virtual_File := S.File;
             Success : Boolean;
          begin
@@ -213,8 +208,6 @@ package body VCS_Utils is
          exception
             when E : others => Trace (Me, E);
          end;
-
-         Iter := File_Status_List.Next (Iter);
       end loop;
    end Update_Files_Status;
 

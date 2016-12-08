@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers;
 
 with Gdk;
 
@@ -532,26 +533,26 @@ package body VCS_View.Explorer is
 
    procedure Display_File_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
-      Status         : File_Status_List.List;
+      Status         : File_Status_List.Vector;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False;
       Clear_Logs     : Boolean := False;
       Display        : Boolean := True)
    is
+      use type Ada.Containers.Count_Type;
+
       Explorer          : constant VCS_Explorer_View_Access :=
                             Get_Explorer (Kernel, False, False);
       Registered_Status : constant VCS.Status_Array :=
                             Get_Registered_Status (VCS_Identifier);
 
-      Status_Temp       : File_Status_List.List_Node;
       Sort_Id           : Gint := 0;
 
       Up_To_Date_Status : VCS_File_Status;
       Filter_Status     : Status_Array_Access :=
                             Get (Explorer.Status, Name (VCS_Identifier));
 
-      use type File_Status_List.List_Node;
    begin
       if Registered_Status'Length >= 2 then
          Up_To_Date_Status := Registered_Status (Registered_Status'First + 1);
@@ -589,30 +590,26 @@ package body VCS_View.Explorer is
          return;
       end if;
 
-      if File_Status_List.Length (Status) > 1 then
+      if Status.Length > 1 then
          Sort_Id := Freeze_Sort (Explorer.Model);
       end if;
 
       --  Iterate over each file
 
-      Status_Temp := File_Status_List.First (Status);
-
-      while Status_Temp /= File_Status_List.Null_Node loop
+      for Item of Status loop
          declare
             Displayed : Boolean;
             pragma Unreferenced (Displayed);
          begin
             Display_File_Status
-              (Kernel, File_Status_List.Data (Status_Temp), Explorer.VCS,
-               Override_Cache, Force_Display, Display, Displayed);
+              (Kernel, Item, Explorer.VCS, Override_Cache, Force_Display,
+               Display, Displayed);
          end;
-
-         Status_Temp := File_Status_List.Next (Status_Temp);
       end loop;
 
       Remove_Empty_Root (Explorer);
 
-      if File_Status_List.Length (Status) > 1 then
+      if Status.Length > 1 then
          Thaw_Sort (Explorer.Model, Sort_Id);
       end if;
    end Display_File_Status;

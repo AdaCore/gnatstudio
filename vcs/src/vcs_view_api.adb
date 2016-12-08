@@ -1118,7 +1118,7 @@ package body VCS_View_API is
      (Explorer : VCS_Explorer_View_Access;
       Context  : Selection_Context)
    is
-      Status : File_Status_List.List;
+      Status : File_Status_List.Vector;
       Ref    : VCS_Access;
 
    begin
@@ -1144,7 +1144,7 @@ package body VCS_View_API is
            (Ref, (1 => Directory_Information (Context)));
          Display_File_Status
            (Get_Kernel (Context), Status, Ref, False, True);
-         File_Status_List.Free (Status);
+         Status.Clear;
 
       elsif Has_Project_Information (Context)
         and then not Has_Directory_Information (Context)
@@ -2251,7 +2251,7 @@ package body VCS_View_API is
 
       procedure Query_Status_For_Project (The_Project : Project_Type) is
          Ref    : constant VCS_Access := Get_Current_Ref (Kernel, The_Project);
-         Status : File_Status_List.List;
+         Status : File_Status_List.Vector;
          Files  : File_Array_Access;
 
       begin
@@ -2294,7 +2294,7 @@ package body VCS_View_API is
                Files := The_Project.Source_Files (False);
                Status := Local_Get_Status (Ref, Files.all);
                Display_File_Status (Kernel, Status, Ref, False, True);
-               File_Status_List.Free (Status);
+               Status.Clear;
                Unchecked_Free (Files);
             end if;
          end if;
@@ -3142,7 +3142,7 @@ package body VCS_View_API is
 
       elsif Command = "diff_working" then
          declare
-            Status : File_Status_List.List;
+            Status : File_Status_List.Vector;
          begin
             if not Save_Files (Kernel, (1 => Full)) then
                return;
@@ -3152,10 +3152,10 @@ package body VCS_View_API is
 
             Diff
               (Ref,
-               File_Status_List.Head (Status).File,
+               Status.First_Element.File,
                "",
-               File_Status_List.Head (Status).Working_Revision.all);
-            File_Status_List.Free (Status);
+               Status.First_Element.Working_Revision.all);
+            Status.Clear;
          end;
 
       elsif Command = "annotate" then

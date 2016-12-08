@@ -56,7 +56,7 @@ package VCS.Generic_VCS is
 
    overriding function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
-      Filenames : GNATCOLL.VFS.File_Array) return File_Status_List.List;
+      Filenames : GNATCOLL.VFS.File_Array) return File_Status_List.Vector;
 
    overriding procedure Create_Tag
      (Rep       : access Generic_VCS_Record;
@@ -199,12 +199,12 @@ private
    procedure Free (X : in out Regexp_Status_Record);
    --  Free memory associated to X
 
-   package Status_Parser is new Generic_List (Regexp_Status_Record);
+   package Status_Parser is new GPS_Vectors (Regexp_Status_Record);
 
    type Status_Parser_Record is record
       Regexp               : GNAT.Expect.Pattern_Matcher_Access;
       Matches_Num          : Natural := 0;
-      Status_Identifiers   : Status_Parser.List;
+      Status_Identifiers   : Status_Parser.Vector;
 
       File_Index           : Natural := 0;
       Status_Index         : Natural := 0;

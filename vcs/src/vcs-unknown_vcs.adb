@@ -97,11 +97,11 @@ package body VCS.Unknown_VCS is
    overriding function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
       Filenames : File_Array)
-      return File_Status_List.List
+      return File_Status_List.Vector
    is
       pragma Unreferenced (Rep);
 
-      Result           : File_Status_List.List;
+      Result           : File_Status_List.Vector;
       Blank_Status     : File_Status_Record;
       Current_Status   : File_Status_Record := Blank_Status;
    begin

@@ -34,7 +34,7 @@ package VCS_View.Explorer is
 
    procedure Display_File_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
-      Status         : File_Status_List.List;
+      Status         : File_Status_List.Vector;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False;

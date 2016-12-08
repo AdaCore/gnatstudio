@@ -48,7 +48,7 @@ package VCS_Utils is
 
    procedure Update_Files_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
-      Status         : File_Status_List.List;
+      Status         : File_Status_List.Vector;
       VCS_Identifier : VCS_Access;
       Clear_Logs     : Boolean;
       Up_To_Date     : VCS_File_Status);

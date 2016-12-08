@@ -871,7 +871,7 @@ package body VCS_Activities_View_API is
                        Get_Registry (Kernel).Tree.Root_Project.Project_Path;
       VCS          : VCS_Access;
       Activity     : Activity_Id;
-      Status       : File_Status_List.List;
+      Status       : File_Status_List.Vector;
 
    begin
       Activity := First;
@@ -885,7 +885,8 @@ package body VCS_Activities_View_API is
 
                if Files'Length = 0 or else VCS = null then
                   Display_File_Status
-                    (Kernel, Activity, File_Status_List.Null_List, VCS, True);
+                    (Kernel, Activity, File_Status_List.Empty_Vector,
+                     VCS, True);
 
                else
                   if Real_Query then
@@ -895,7 +896,7 @@ package body VCS_Activities_View_API is
                      Status := Local_Get_Status (VCS, Files);
                      Display_File_Status
                        (Kernel, Activity, Status, VCS, False, True);
-                     File_Status_List.Free (Status);
+                     Status.Clear;
                   end if;
                end if;
             end if;
