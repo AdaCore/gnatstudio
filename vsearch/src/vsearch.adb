@@ -67,6 +67,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -536,6 +537,24 @@ package body Vsearch is
    procedure On_Context_Combo_Changed
      (Object : access Gtk_Widget_Record'Class);
    --  Called when the entry "Look in" has changed.
+
+   type Can_Fill_With_Current_Word_Filter is new Action_Filter_Record with
+     null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Can_Fill_With_Current_Word_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether the search view's search entry can be filled with the current
+   --  editor's buffer word.
+   --  Return False when there is no current editor or when the search view's
+   --  search entry does not have the focus.
+
+   type Fill_With_Current_Word_Command is new Interactive_Command with
+     null record;
+   overriding function Execute
+     (Command : access Fill_With_Current_Word_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Command used to fill the search view's search entry with the focused
+   --  editor current word.
 
    type Has_Search_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -1487,10 +1506,9 @@ package body Vsearch is
                                 (Vsearch.Kernel,
                                  Get_Active_Id (Vsearch.Context_Combo));
       In_Incremental_Mode : constant Boolean := Vsearch.Is_In_Incremental_Mode;
+      Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
    begin
-      if Get_Key_Val (Event) = GDK_Return
-        or else Get_Key_Val (Event) = GDK_KP_Enter
-      then
+      if Key = GDK_Return or else Key = GDK_KP_Enter then
          if Is_Sensitive (Vsearch.Search_Next_Button) then
 
             --  Don't give the focus to the search/next button when we are in
@@ -1507,9 +1525,7 @@ package body Vsearch is
          end if;
 
          return True;
-      elsif In_Incremental_Mode
-        and then Get_Key_Val (Event) = GDK_BackSpace
-      then
+      elsif In_Incremental_Mode and then Key = GDK_BackSpace then
          declare
             Occurrence    : Search_Occurrence;
             Start_Pos     : Gint;
@@ -1560,7 +1576,7 @@ package body Vsearch is
                return True;
             end if;
          end;
-      elsif Get_Key_Val (Event) = GDK_Escape then
+      elsif Key = GDK_Escape then
          declare
             Occurrence : constant Search_Occurrence :=
                            Module.Get_Last_Occurrence;
@@ -2573,6 +2589,30 @@ package body Vsearch is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Can_Fill_With_Current_Word_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context));
+   begin
+      if View /= null and then View.Pattern_Combo.Get_Child.Has_Focus then
+         declare
+            Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                       View.Kernel.Get_Buffer_Factory.Get (Open_View => False);
+         begin
+            return Buffer /= GPS.Editors.Nil_Editor_Buffer;
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Search_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -2580,6 +2620,42 @@ package body Vsearch is
    begin
       return Vsearch_Module_Id.Search_Started;
    end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Fill_With_Current_Word_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+                  Vsearch.Kernel.Get_Buffer_Factory.Get (Open_View => False);
+
+   begin
+      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+         declare
+            Start_Loc : constant GPS.Editors.Editor_Location'Class :=
+                          Buffer.Selection_Start;
+            End_Loc   : GPS.Editors.Editor_Location'Class :=
+                          Buffer.Selection_End;
+         begin
+            End_Loc := End_Loc.Forward_Word (1);
+
+            Buffer.Select_Text (Start_Loc, End_Loc);
+
+            Set_Active_Text
+              (Vsearch.Pattern_Combo,
+               Text => Buffer.Get_Chars (Start_Loc, End_Loc));
+            Gtk_Entry (Vsearch.Pattern_Combo.Get_Child).Set_Position (-1);
+         end;
+      end if;
+
+      return Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -2881,8 +2957,9 @@ package body Vsearch is
    is
       Id                  : constant Module_ID :=
                               Module_ID (Get_Creator (Context));
-      List                : Cursor := Vsearch_Module_Id.Search_Modules.First;
-      Last_Matching_Node  : Cursor := No_Element;
+      List                : Search_Modules_List.Cursor :=
+                              Vsearch_Module_Id.Search_Modules.First;
+      Last_Matching_Node  : Search_Modules_List.Cursor := No_Element;
       Key                 : constant History_Key :=
         Last_Function_In_Module_Key & History_Key (Get_Name (Id));
       Last_Selected       : constant String_List_Access :=
@@ -3085,6 +3162,15 @@ package body Vsearch is
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
          Icon_Name   => "gps-search-symbolic",
+         Category    => -"Search");
+
+      Filter := new Can_Fill_With_Current_Word_Filter;
+      Register_Action
+        (Kernel, "fill search with current word",
+         new Fill_With_Current_Word_Command,
+         Description => -("Fill the Search view's search entry with the "
+           & "focused editor's current word"),
+         Filter      => Filter,
          Category    => -"Search");
 
       Filter  := new Has_Search_Filter;

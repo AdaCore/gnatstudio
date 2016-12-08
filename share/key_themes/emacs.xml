@@ -93,5 +93,6 @@
   <key action="rectangle_string">control-x r t</key>
 
   <key action="incremental search">control-s</key>
+  <key action="fill search with current word">control-w</key>
   <key action="find previous">control-r</key>
 </GPS>
