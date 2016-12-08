@@ -21,12 +21,15 @@ with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Ada.Tags;                      use Ada.Tags;
 
+with GNATCOLL.Projects;             use GNATCOLL.Projects;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+
 with Glib.Convert;
 
 with Basic_Types;                   use Basic_Types;
 with Commands;                      use Commands;
-with GNATCOLL.Projects;             use GNATCOLL.Projects;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
@@ -787,17 +790,12 @@ package body GPS.Kernel.Messages is
      (Self : not null access Messages_Container'Class)
       return GNATCOLL.VFS.Virtual_File
    is
-      Root_Project : constant GNATCOLL.Projects.Project_Type :=
-        Get_Registry (Self.Kernel).Tree.Root_Project;
-      Directory    : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.Projects.Object_Dir (Root_Project);
+      Root_Project : constant Project_Type :=
+                       Get_Registry (Self.Kernel).Tree.Root_Project;
+      Project_Name : constant Filesystem_String :=
+                       Root_Project.Project_Path.Base_Name (".gpr");
    begin
-      if Directory = No_File then
-         Directory := Root_Project.Project_Path.Dir;
-      end if;
-
-      return Create_From_Dir
-        (Directory, Root_Project.Project_Path.Base_Name (".gpr") & "-msg.xml");
+      return Root_Project.Artifacts_Dir / (Project_Name & "-msg.xml");
    end Get_Message_File;
 
    --------------
