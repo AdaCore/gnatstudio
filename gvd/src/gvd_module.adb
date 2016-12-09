@@ -418,7 +418,7 @@ package body GVD_Module is
    begin
       Debug_Init
         (GPS.Kernel.Kernel_Handle (Kernel),
-         No_Project,
+         Get_Project (Kernel),
          No_File,
          Args);
    end Initialize_Debugger;
