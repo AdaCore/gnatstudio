@@ -72,6 +72,9 @@ package body Gtkada.Search_Entry is
         Gtk_Entry_Icon_Secondary
       then
          Self.Set_Text ("");
+
+         --  in case the filter is activated only on activate
+         Widget_Callback.Emit_By_Name (Self, Signal_Activate);
       end if;
    end On_Clear_Entry;
 

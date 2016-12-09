@@ -368,6 +368,9 @@ package body Generic_Views is
    begin
       if Self.Filter /= null then
          Self.Filter.Pattern.Set_Text (Text);
+         if (Self.Filter.Options and Debounce) /= 0 then
+            Report_Filter_Changed (Self);
+         end if;
       end if;
    end Set_Filter;
 
@@ -617,6 +620,7 @@ package body Generic_Views is
       F := Self.Filter;
       F.History_Prefix := new String'(String (Hist_Prefix));
       F.Kernel := Self.Kernel;
+      F.Options := Options;
 
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Item.Get_Type,

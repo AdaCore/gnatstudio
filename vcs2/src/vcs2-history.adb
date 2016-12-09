@@ -24,6 +24,7 @@ with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Cairo;                       use Cairo;
+with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Rectangle;               use Gdk.Rectangle;
@@ -40,8 +41,11 @@ with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Intl;                    use GPS.Intl;
@@ -59,13 +63,13 @@ with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
-with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 with GUI_Utils;                   use GUI_Utils;
 with Pango.Enums;                 use Pango.Enums;
+with VCS2.Diff;                   use VCS2.Diff;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 
@@ -184,7 +188,7 @@ package body VCS2.History is
       Hash               => Ada.Strings.Hash);
 
    type History_View_Record is new Base_VCS_View_Record with record
-      Details     : Gtk_Text_View;
+      Details     : Diff_Viewer;
    end record;
    overriding procedure Refresh
      (Self : not null access History_View_Record);
@@ -244,7 +248,7 @@ package body VCS2.History is
    end record;
    type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
-   type On_Line_Seen is new History_Visitor with record
+   type On_Line_Seen is new Task_Visitor with record
       Kernel   : Kernel_Handle;
 
       Data     : Layout_Idle_Data_Access;
@@ -264,7 +268,7 @@ package body VCS2.History is
    --  Names are freed automatically by this procedure when needed.
    --  Parents is adopted by this procedure and must not be freed by the caller
 
-   type On_Details is new History_Visitor with record
+   type On_Details is new Task_Visitor with record
       Kernel   : Kernel_Handle;
    end record;
    overriding procedure On_Commit_Details
@@ -290,6 +294,11 @@ package body VCS2.History is
    overriding procedure Execute
      (Self   : On_VCS_Refresh;
       Kernel : not null access Kernel_Handle_Record'Class);
+
+   type History_For_File is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access History_For_File;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    function On_Button_Press
      (Self   : access GObject_Record'Class;
@@ -596,6 +605,7 @@ package body VCS2.History is
          Tree.User_Filter.Filter := Null_Unbounded_String;
          Tree.User_Filter.For_File := No_File;
          Self.Refresh;
+         return;
       end if;
 
       declare
@@ -694,7 +704,7 @@ package body VCS2.History is
         History_Views.Retrieve_View (Self.Kernel);
       Buffer : constant Gtk_Text_Buffer := View.Details.Get_Buffer;
       Iter : Gtk_Text_Iter;
-      Grey, Bold, Diff, Block, Added, Removed  : Gtk_Text_Tag;
+      Grey, Bold  : Gtk_Text_Tag;
 
       Header_Bg : constant Gdk_RGBA := (0.95, 0.95, 0.95, 1.0);
 
@@ -712,25 +722,6 @@ package body VCS2.History is
       Gdk.RGBA.Set_Property
         (Bold, Gtk.Text_Tag.Foreground_Rgba_Property,
          (0.0, 0.0, 0.9, 1.0));
-
-      Diff := Buffer.Create_Tag;
-      Set_Property (Diff, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
-      Gdk.RGBA.Set_Property
-        (Diff, Gtk.Text_Tag.Foreground_Rgba_Property,
-         (0.0, 0.0, 0.6, 1.0));
-
-      Block := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Block, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.8, 0.7, 1.0));
-
-      Added := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Added, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.6, 0.0, 1.0));
-
-      Removed := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Removed, Gtk.Text_Tag.Foreground_Rgba_Property,
-         (1.0, 0.29, 0.32, 1.0));
 
       Buffer.Get_End_Iter (Iter);
 
@@ -769,37 +760,7 @@ package body VCS2.History is
       end if;
 
       if Message /= "" then
-         declare
-            List : String_List_Access :=
-              Split (Message, ASCII.LF, Omit_Empty_Lines => False);
-         begin
-            for L of List.all loop
-               if L'Length > 5
-                 and then L (L'First .. L'First + 4) = "diff "
-               then
-                  Buffer.Insert_With_Tags (Iter, L.all, Diff);
-
-               elsif L'Length > 2
-                 and then L (L'First .. L'First + 2) = "@@ "
-               then
-                  Buffer.Insert_With_Tags (Iter, L.all, Block);
-
-               elsif L'Length >= 1 and then L (L'First) = '-' then
-                  Buffer.Insert_With_Tags (Iter, L.all, Removed);
-
-               elsif L'Length >= 1 and then L (L'First) = '+' then
-                  Buffer.Insert_With_Tags (Iter, L.all, Added);
-
-               else
-                  Buffer.Insert (Iter, L.all);
-               end if;
-
-               Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
-            end loop;
-
-            Free (List);
-            Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
-         end;
+         View.Details.Add_Diff (Message);
       end if;
 
       Show_Placeholder_If_Needed (View.Details);
@@ -962,12 +923,11 @@ package body VCS2.History is
       T.Col_Date.Pack_Start (Text, False);
       T.Col_Date.Add_Attribute (Text, "text", Column_Date);
 
-      Gtk_New (Self.Details);
+      VCS2.Diff.Gtk_New (Self.Details);
       Set_Placeholder
         (Self.Details,
          -"Select one or more lines to view details");
       Scrolled2.Add (Self.Details);
-      Self.Details.Set_Editable (False);
 
       Self.On_Preferenced_Changed (null);
 
@@ -1331,7 +1291,7 @@ package body VCS2.History is
          Free (Self.Data);
       end if;
 
-      History_Visitor (Self).Free;  --  inherited
+      Task_Visitor (Self).Free;  --  inherited
    end Free;
 
    -------------
@@ -1371,6 +1331,31 @@ package body VCS2.History is
       end if;
    end Refresh;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access History_For_File;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      File   : constant Virtual_File := File_Information (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : History_View;
+      VCS    : VCS_Engine_Access;
+   begin
+      if File /= No_File then
+         VCS := VCS_Engine_Access
+           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         Set_Active_VCS (Kernel, VCS);
+
+         View := History_Views.Get_Or_Create_View (Kernel, Focus => True);
+         View.Set_Filter ("file:" & File.Display_Full_Name);
+      end if;
+      return Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1404,6 +1389,20 @@ package body VCS2.History is
         ("vcs-history-collapse",
          Default  => False,
          Label    => -"Hide non-branch related commits");
+
+      Register_Action
+        (Kernel, "open history for current file",
+         Description =>
+           -("Show the History view and display the history of changes for"
+           & " the current file only."),
+         Command     => new History_For_File,
+         Filter      => Lookup_Filter (Kernel, "File"),
+         Category    => "VCS2");
+
+      Register_Contextual_Menu
+        (Kernel,
+         Action      => "open history for current file",
+         Label       => "Version Control/Show history for file");
 
    end Register_Module;
 

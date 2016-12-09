@@ -431,6 +431,7 @@ private
    type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
      with record
       Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
+      Options : Filter_Options_Mask;
       Pattern_Config_Menu : Gtk.Menu.Gtk_Menu;
 
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;

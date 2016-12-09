@@ -103,6 +103,65 @@ package VCS2.Engines is
       return Natural;
    --  Return the number of VCS systems in use for the loaded project tree
 
+   -------------
+   -- Visitor --
+   -------------
+   --  Most operations in this package are asynchronous, i.e. they will report
+   --  their result at some later point in the future.
+   --  In their python implementation, we use the GPS workflows framework,
+   --  combined with python's yield statement and coroutines. We do not have
+   --  the same facility in Ada, so we use a visitor. This is an object with
+   --  various primitive operations that are called when operations complete.
+
+   type Task_Visitor is abstract tagged private;
+   type Task_Visitor_Access is access all Task_Visitor'Class;
+
+   procedure Free (Self : in out Task_Visitor) is null;
+   --  Called when the visitor is no longer needed.
+
+   procedure On_Terminate
+     (Self  : not null access Task_Visitor;
+      VCS   : access VCS_Engine'Class) is null;
+   --  An object called at various point during algorithms.
+   --  This base type only provides a standard callback for when a background
+   --  task terminates. Further derivation provide algorithm-specific
+   --  additional callbacks.
+
+   procedure On_History_Line
+     (Self    : not null access Task_Visitor;
+      ID      : String;
+      Author  : String;
+      Date    : String;
+      Subject : String;
+      Parents : in out GNAT.Strings.String_List_Access;
+      Names   : in out GNAT.Strings.String_List_Access) is null;
+   --  Called for every line in the history ('git log', 'cvs log',...)
+   --  Subject should be the first line of the commit message.
+   --  Parents is a list of ID, the ancestor commits.
+   --  Names is a list of labels associated with this commit (typically branch
+   --  names or tags for instance).
+   --  Parents and Names must be freed by the caller, although this procedure
+   --  might reset them to null if it needs to store keep them.
+
+   procedure On_Commit_Details
+     (Self    : not null access Task_Visitor;
+      ID      : String;
+      Header  : String;
+      Message : String) is null;
+   --   Called when details for a specific commit are available.
+
+   procedure On_Diff_Computed
+     (Self    : not null access Task_Visitor;
+      Diff    : String) is null;
+   --  Called when a diff or patch has been computed, and returns the contents
+   --  of that patch.
+
+   procedure On_File_Computed
+     (Self     : not null access Task_Visitor;
+      Contents : String) is null;
+   --  Called when the contents of a file (as of a specific version) has been
+   --  computed
+
    -------------------
    -- File statuses --
    -------------------
@@ -122,17 +181,6 @@ package VCS2.Engines is
    --  hook VCS_File_Status_Changed will be run for all files which status has
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
-
-   type Task_Visitor is abstract tagged private;
-   type Task_Visitor_Access is access all Task_Visitor'Class;
-   procedure Free (Self : in out Task_Visitor) is null;
-   procedure On_Terminate
-     (Self  : not null access Task_Visitor;
-      VCS   : access VCS_Engine'Class) is null;
-   --  An object called at various point during algorithms.
-   --  This base type only provides a standard callback for when a background
-   --  task terminates. Further derivation provide algorithm-specific
-   --  additional callbacks.
 
    procedure Ensure_Status_For_Files
      (Self        : not null access VCS_Engine;
@@ -284,31 +332,6 @@ package VCS2.Engines is
    --  the status of files (this is done asynchronously).
    --  Must emit the VCS_Commit_Done_Hook.
 
-   type History_Visitor is new Task_Visitor with private;
-   type History_Visitor_Access is access all History_Visitor'Class;
-   procedure On_History_Line
-     (Self    : not null access History_Visitor;
-      ID      : String;
-      Author  : String;
-      Date    : String;
-      Subject : String;
-      Parents : in out GNAT.Strings.String_List_Access;
-      Names   : in out GNAT.Strings.String_List_Access) is null;
-   --  Called for every line in the history.
-   --  Subject should be the first line of the commit message.
-   --  Parents is a list of ID, the ancestor commits.
-   --  Names is a list of labels associated with this commit (typically branch
-   --  names or tags for instance).
-   --  Parents and Names must be freed by the caller, although this procedure
-   --  might reset them to null if it needs to store keep them.
-
-   procedure On_Commit_Details
-     (Self    : not null access History_Visitor;
-      ID      : String;
-      Header  : String;
-      Message : String) is null;
-   --   Called when details for a specific commit are available.
-
    type History_Filter is record
       Up_To_Lines         : Natural := Natural'Last;
       For_File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -331,14 +354,16 @@ package VCS2.Engines is
 
    procedure Async_Fetch_History
      (Self        : not null access VCS_Engine;
-      Visitor     : not null access History_Visitor'Class;
+      Visitor     : not null access Task_Visitor'Class;
       Filter      : History_Filter := No_Filter) is null;
    procedure Queue_Fetch_History
      (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access History_Visitor'Class;
+      Visitor     : not null access Task_Visitor'Class;
       Filter      : History_Filter := No_Filter);
    --  Fetch history for the whole repository.
    --  Visitor is freed automatically when no longer needed.
+   --  Visitor.On_History_Line is called whenever part of the history becomes
+   --  available.
    --  Only call Queue_Fetch_History from your code, Async_Fetch_History is
    --  the actual implementation but doesn't ensure that a single command runs
    --  at a given time.
@@ -346,14 +371,50 @@ package VCS2.Engines is
    procedure Async_Fetch_Commit_Details
      (Self        : not null access VCS_Engine;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access History_Visitor'Class) is null;
+      Visitor     : not null access Task_Visitor'Class) is null;
    procedure Queue_Fetch_Commit_Details
      (Self        : not null access VCS_Engine'Class;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access History_Visitor'Class);
+      Visitor     : not null access Task_Visitor'Class);
    --  Asynchronously fetch detail information on the commits specified in Ids.
    --  Ids is freed automatically when no longer needed.
-   --  Details are reported via Visitor.On_Commit_Details
+   --  Details are reported via Visitor.On_Commit_Details.
+   --  Visitor is freed automatically when no longer needed
+
+   procedure Async_Diff
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File := No_File) is null;
+   procedure Queue_Diff
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File := No_File);
+   --  Asynchronously fetch a diff to compare either the specific file or the
+   --  whole repository to a specific version.
+   --  Ref will in general be a commit ID (as returned by Async_Fetch_History,
+   --  or some special branch names depending on the VCS.
+   --  One special value "HEAD" means the last commit on the current branch.
+   --
+   --  Reports the result via Visitor.On_Diff_Computed
+
+   procedure Async_View_File
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File) is null;
+   procedure Queue_View_File
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File);
+   --  Asynchronously fetch the contents of a file as of a specific version.
+   --  Ref will in general be a commit ID (as returned by Async_Fetch_History,
+   --  or some special branch names depending on the VCS.
+   --  One special value "HEAD" means the last commit on the current branch.
+   --
+   --  Reports the result via Visitor.On_File_Computed
 
    ----------
    -- Misc --
@@ -408,8 +469,6 @@ private
    type Task_Visitor is abstract tagged record
       Refcount : Natural := 1;
    end record;
-
-   type History_Visitor is new Task_Visitor with null record;
 
    package VCS_File_Cache is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,

@@ -17,16 +17,21 @@ class SVN(core_staging.Emulate_Staging,
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.svn')
 
+    def _svn(self, args, block_exit=False):
+        """
+        Execute svn with the given arguments
+        """
+        return ProcessWrapper(
+            ['svn'] + args,
+            block_exit=block_exit,
+            directory=self.working_dir.path)
+
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(all_files) as s:
-
-            p = ProcessWrapper(
-                ['svn', 'status', '-v',
-                 '-u'] +   # Compare with server (slower but more helpful)
-                args,
-                block_exit=False,
-                directory=self.working_dir.path)
+            p = self._svn(
+                # -u: Compare with server (slower but more helpful)
+                ['status', '-v', '-u'] + args)
 
             while True:
                 line = yield p.wait_line()
@@ -89,10 +94,10 @@ class SVN(core_staging.Emulate_Staging,
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
-                p = ProcessWrapper(['svn', 'add', f.path])
+                p = self._svn(['add', f.path], block_exit=True)
                 yield p.wait_until_terminate()
             elif status & GPS.VCS2.Status.STAGED_DELETED:
-                p = ProcessWrapper(['svn', 'delete', f.path])
+                p = self._svn(['delete', f.path], block_exit=True)
                 yield p.wait_until_terminate()
 
         self._internal_commit_staged_files(['svn', 'commit', '-m', message])
@@ -136,10 +141,7 @@ class SVN(core_staging.Emulate_Staging,
                             self.current[3] += '\n'
                         self.current[3] += line   # subject
 
-        p = ProcessWrapper(
-            ['svn', 'log', '--non-interactive'] + args,
-            block_exit=False,
-            directory=self.working_dir.path)
+        p = self._svn(['log', '--non-interactive'] + args)
         return p.lines.flatMap(line_to_block())
 
     @core.run_in_background
@@ -176,3 +178,15 @@ class SVN(core_staging.Emulate_Staging,
                 ['-r%s' % id, '-v',
                  '--diff' if len(ids) == 1 else '']
                 ).subscribe(_emit)
+
+    @core.run_in_background
+    def async_diff(self, visitor, ref, file):
+        p = self._svn(['diff', '-r%s' % ref, file.path if file else ''])
+        status, output = yield p.wait_until_terminate()
+        visitor.diff_computed(output)
+
+    @core.run_in_background
+    def async_view_file(self, visitor, ref, file):
+        p = self._svn(['cat', '-r%s' % ref, file.path])
+        status, output = yield p.wait_until_terminate()
+        visitor.file_computed(output)

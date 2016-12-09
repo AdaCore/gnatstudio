@@ -31,7 +31,7 @@ class CVS(core_staging.Emulate_Staging,
         '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
         ')$')
 
-    def __cvs(self, args, block_exit=True):
+    def _cvs(self, args, block_exit=False):
         """
         Execute cvs with the given arguments.
 
@@ -50,7 +50,7 @@ class CVS(core_staging.Emulate_Staging,
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(all_files) as s:
-            p = self.__cvs(['-f', 'status'] + args, block_exit=False)
+            p = self._cvs(['-f', 'status'] + args)
             current_file = None
             dir = None
             while True:
@@ -102,10 +102,10 @@ class CVS(core_staging.Emulate_Staging,
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
-                p = self.__cvs(['add', f.path])
+                p = self._cvs(['add', f.path], block_exit=True)
                 yield p.wait_until_terminate()
             elif status & GPS.VCS2.Status.STAGED_DELETED:
-                p = self.__cvs(['remove', f.path])
+                p = self._cvs(['remove', f.path], block_exit=True)
                 yield p.wait_until_terminate()
 
         self._internal_commit_staged_files(['cvs', 'commit', '-m', message])
@@ -191,10 +191,7 @@ class CVS(core_staging.Emulate_Staging,
             def oncompleted(self, out_stream, status):
                 self.emit_previous(out_stream)
 
-        p = ProcessWrapper(
-            ['cvs', 'log', '-N'] + args,
-            block_exit=False,
-            directory=base)
+        p = self._cvs(['log', '-N'] + args)
         return p.lines.flatMap(line_to_block())
 
     @core.run_in_background
@@ -232,3 +229,21 @@ class CVS(core_staging.Emulate_Staging,
         for id in ids:
             rev, file = self._parse_unique_id(id)
             yield self._log_stream(['-r%s' % rev, file]).subscribe(_emit)
+
+    @core.run_in_background
+    def async_diff(self, visitor, ref, file):
+        if ' ' in ref:
+            ref, f = self._parse_unique_id(ref)
+        p = self._cvs(['diff', '-r%s' % ref, '-u', '--new-file',
+                       file.path if file else ''])
+        status, output = yield p.wait_until_terminate()
+        # CVS returns status==0 if no diff was found
+        visitor.diff_computed(output)
+
+    @core.run_in_background
+    def async_view_file(self, visitor, ref, file):
+        if ' ' in ref:
+            ref, f = self._parse_unique_id(ref)
+        p = self._cvs(['-q', 'update', '-p', '-r%s' % ref, file.path])
+        status, output = yield p.wait_until_terminate()
+        visitor.file_computed(output)

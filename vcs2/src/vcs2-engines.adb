@@ -196,6 +196,22 @@ package body VCS2.Engines is
    overriding procedure Free
      (Self : in out Cmd_Fetch_Commit_Details);
 
+   type Cmd_Diff is new VCS_Command with record
+      Ref  : Unbounded_String;
+      File : Virtual_File;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Diff;
+      VCS  : not null access VCS_Engine'Class);
+
+   type Cmd_View_File is new VCS_Command with record
+      Ref  : Unbounded_String;
+      File : Virtual_File;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_View_File;
+      VCS  : not null access VCS_Engine'Class);
+
    -------------------
    -- Command queue --
    -------------------
@@ -847,7 +863,7 @@ package body VCS2.Engines is
    is
    begin
       VCS.Async_Fetch_History
-        (Visitor => History_Visitor_Access (Self.Visitor),
+        (Visitor => Self.Visitor,
          Filter  => Self.Filter);
    end Execute;
 
@@ -857,7 +873,7 @@ package body VCS2.Engines is
 
    procedure Queue_Fetch_History
      (Self    : not null access VCS_Engine'Class;
-      Visitor : not null access History_Visitor'Class;
+      Visitor : not null access Task_Visitor'Class;
       Filter  : History_Filter := No_Filter) is
    begin
       Queue
@@ -866,6 +882,64 @@ package body VCS2.Engines is
            Visitor => Visitor.all'Unchecked_Access,
            Filter  => Filter));
    end Queue_Fetch_History;
+
+   ----------------
+   -- Queue_Diff --
+   ----------------
+
+   procedure Queue_Diff
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File := No_File) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Diff'(
+           Visitor   => Visitor.all'Unchecked_Access,
+           Ref       => To_Unbounded_String (Ref),
+           File      => File));
+   end Queue_Diff;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Diff;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Diff (Self.Visitor, To_String (Self.Ref), Self.File);
+   end Execute;
+
+   ---------------------
+   -- Queue_View_File --
+   ---------------------
+
+   procedure Queue_View_File
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File) is
+   begin
+      Queue
+        (Self,
+         new Cmd_View_File'(
+           Visitor   => Visitor.all'Unchecked_Access,
+           Ref       => To_Unbounded_String (Ref),
+           File      => File));
+   end Queue_View_File;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_View_File;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_View_File (Self.Visitor, To_String (Self.Ref), Self.File);
+   end Execute;
 
    -------------
    -- Execute --
@@ -876,8 +950,7 @@ package body VCS2.Engines is
       VCS  : not null access VCS_Engine'Class)
    is
    begin
-      VCS.Async_Fetch_Commit_Details
-        (Self.Ids, History_Visitor_Access (Self.Visitor));
+      VCS.Async_Fetch_Commit_Details (Self.Ids, Self.Visitor);
    end Execute;
 
    ----------
@@ -898,7 +971,7 @@ package body VCS2.Engines is
    procedure Queue_Fetch_Commit_Details
      (Self        : not null access VCS_Engine'Class;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access History_Visitor'Class) is
+      Visitor     : not null access Task_Visitor'Class) is
    begin
       Queue
         (Self,

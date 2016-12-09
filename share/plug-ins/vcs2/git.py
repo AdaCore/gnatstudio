@@ -11,15 +11,25 @@ class Git(core.VCS):
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
 
+    def _git(self, args, block_exit=False):
+        """
+        Return git with the given arguments
+        :param List(str) args: git arguments
+        :param bool block_exit: if True, GPS won't exit while this process
+            is running.
+        :returntype: a ProcessWrapper
+        """
+        return ProcessWrapper(
+            ['git', '--no-pager'] + args,
+            block_exit=block_exit,
+            directory=self.working_dir.path)
+
     def __git_ls_tree(self):
         """
         Compute all files under version control
         """
         all_files = set()
-        p = ProcessWrapper(
-            ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
-            block_exit=False,
-            directory=self.working_dir.path)
+        p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -33,10 +43,7 @@ class Git(core.VCS):
         Run and parse "git status"
         :param s: the result of calling self.set_status_for_all_files
         """
-        p = ProcessWrapper(
-            ['git', 'status', '--porcelain', '--ignored'],
-            block_exit=False,
-            directory=self.working_dir.path)
+        p = self._git(['status', '--porcelain', '--ignored'])
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -97,10 +104,7 @@ class Git(core.VCS):
         :param List(str) params: the "git ..." action to perform
         :param List(GPS.File) files: list of files
         """
-        p = ProcessWrapper(
-            ['git'] + params + [f.path for f in files],
-            block_exit=True,
-            directory=self.working_dir.path)
+        p = self._git(params + [f.path for f in files], block_exit=True)
         (status, output) = yield p.wait_until_terminate()
         if status:
             GPS.Console().write("git %s: %s" % (" ".join(params), output))
@@ -136,10 +140,8 @@ class Git(core.VCS):
         current_branch_only = filter[3]
         branch_commits_only = filter[4]
 
-        p = ProcessWrapper(
-            ['git',
-             '--no-pager',  # do not require a terminal
-             'log',
+        p = self._git(
+            ['log',
              # use tformat to get final newline
              '--pretty=tformat:%h@@%p@@%an@@%d@@%cD@@%s',
              '--branches' if not current_branch_only else '',
@@ -147,9 +149,7 @@ class Git(core.VCS):
              '--topo-order',  # children before parents
              '--grep=%s' % pattern if pattern else '',
              '--max-count=%d' % max_lines if not branch_commits_only else '',
-             '%s' % for_file.path if for_file else ''],
-            block_exit=False,
-            directory=self.working_dir.path)
+             '%s' % for_file.path if for_file else ''])
 
         children = {}   # number of children for each sha1
         result = []
@@ -187,17 +187,12 @@ class Git(core.VCS):
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
-        p = ProcessWrapper(
-            ['git',
-             '--no-pager',
-             'show',
+        p = self._git(
+            ['show',
              '-p' if len(ids) == 1 else '--name-only',
              '--stat' if len(ids) == 1 else '',
              '--notes',   # show notes
-             '--pretty=fuller'] + ids,
-            block_exit=False,
-            directory=self.working_dir.path)
-
+             '--pretty=fuller'] + ids)
         id = ""
         message = []
         header = []
@@ -230,3 +225,21 @@ class Git(core.VCS):
 
             else:
                 message.append(line)
+
+    @core.run_in_background
+    def async_view_file(self, visitor, ref, file):
+        f = os.path.relpath(file.path, self.working_dir.path)
+        p = self._git(['show', '%s:%s' % (ref, f)])
+        status, output = yield p.wait_until_terminate()
+        visitor.file_computed(output)
+
+    @core.run_in_background
+    def async_diff(self, visitor, ref, file):
+        p = self._git(
+            ['diff', '--no-prefix',
+             ref, '--', file.path if file else ''])
+        status, output = yield p.wait_until_terminate()
+        if status == 0:
+            visitor.diff_computed(output)
+        else:
+            GPS.Logger("GIT").log("Error computing diff: %s" % output)

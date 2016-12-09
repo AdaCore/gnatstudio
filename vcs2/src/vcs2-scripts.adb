@@ -28,11 +28,11 @@ with VCS2.Engines;          use VCS2.Engines;
 package body VCS2.Scripts is
    Me : constant Trace_Handle := Create ("VCS2.SCRIPT") with Unreferenced;
 
-   VCS2_History_Visitor_Class_Name : constant String :=
-     "VCS2_History_Visitor";
+   VCS2_Task_Visitor_Class_Name : constant String :=
+     "VCS2_Task_Visitor";
 
-   type History_Properties_Record is new Instance_Property_Record with record
-      Visitor : access History_Visitor'Class;
+   type Task_Properties_Record is new Instance_Property_Record with record
+      Visitor : access Task_Visitor'Class;
    end record;
 
    type Script_Engine_Factory is new VCS_Engine_Factory with record
@@ -76,18 +76,28 @@ package body VCS2.Scripts is
       Message : String);
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
-      Visitor : not null access History_Visitor'Class;
+      Visitor : not null access Task_Visitor'Class;
       Filter  : History_Filter);
    overriding procedure Async_Fetch_Commit_Details
      (Self        : not null access Script_Engine;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access History_Visitor'Class);
+      Visitor     : not null access Task_Visitor'Class);
+   overriding procedure Async_Diff
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File := No_File);
+   overriding procedure Async_View_File
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   procedure VCS_History_Handler
+   procedure VCS_Task_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all script functions
 
@@ -105,6 +115,10 @@ package body VCS2.Scripts is
      (Data  : in out Callback_Data'Class;
       Nth   : Integer;
       Files : File_Array);
+   procedure Set_Nth_Arg
+     (Data    : in out Callback_Data'Class;
+      Nth     : Integer;
+      Visitor : not null access Task_Visitor'Class);
    --  Store a list of files as the nth argument
 
    -----------------
@@ -174,6 +188,26 @@ package body VCS2.Scripts is
       Free (L);   --  now owned by Data
    end Set_Nth_Arg;
 
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data    : in out Callback_Data'Class;
+      Nth     : Integer;
+      Visitor : not null access Task_Visitor'Class)
+   is
+      Script : constant Scripting_Language := Data.Get_Script;
+      Inst : Class_Instance;
+   begin
+      --  First arg is the visitor
+      Inst := Script.New_Instance
+        (Script.Get_Repository.New_Class (VCS2_Task_Visitor_Class_Name));
+      Set_Data (Inst, VCS2_Task_Visitor_Class_Name,
+                Task_Properties_Record'(Visitor => Visitor));
+      Data.Set_Nth_Arg (Nth, Inst);
+   end Set_Nth_Arg;
+
    ----------------------------------
    -- Async_Fetch_Status_For_Files --
    ----------------------------------
@@ -218,19 +252,13 @@ package body VCS2.Scripts is
 
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
-      Visitor : not null access History_Visitor'Class;
+      Visitor : not null access Task_Visitor'Class;
       Filter  : History_Filter)
    is
       D    : Callback_Data'Class := Self.Script.Create (2);
       L    : List_Instance'Class := Self.Script.New_List;
-      Inst : Class_Instance;
    begin
-      --  First arg is the visitor
-      Inst := Self.Script.New_Instance
-        (Self.Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name));
-      Set_Data (Inst, VCS2_History_Visitor_Class_Name,
-                History_Properties_Record'(Visitor => Visitor));
-      D.Set_Nth_Arg (1, Inst);
+      Set_Nth_Arg (D, 1, Visitor);
 
       --  Second arg and others are the filters
       L.Set_Nth_Arg (1, Filter.Up_To_Lines);
@@ -255,10 +283,9 @@ package body VCS2.Scripts is
    overriding procedure Async_Fetch_Commit_Details
      (Self        : not null access Script_Engine;
       Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access History_Visitor'Class)
+      Visitor     : not null access Task_Visitor'Class)
    is
       D    : Callback_Data'Class := Create (Self.Script, 2);
-      Inst : Class_Instance;
       L    : List_Instance'Class := New_List (Self.Script);
    begin
       for Id in Ids'Range loop
@@ -267,14 +294,52 @@ package body VCS2.Scripts is
       Set_Nth_Arg (D, 1, L);
       Free (L);   --  adopted by D
 
-      Inst := Self.Script.New_Instance
-        (Self.Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name));
-      Set_Data (Inst, VCS2_History_Visitor_Class_Name,
-                History_Properties_Record'(Visitor => Visitor));
-      D.Set_Nth_Arg (2, Inst);
+      Set_Nth_Arg (D, 2, Visitor);
 
       Call_Method (Self, "async_fetch_commit_details", D);
    end Async_Fetch_Commit_Details;
+
+   ----------------
+   -- Async_Diff --
+   ----------------
+
+   overriding procedure Async_Diff
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File := No_File)
+   is
+      D    : Callback_Data'Class := Self.Script.Create (3);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Ref);
+
+      if File = No_File then
+         D.Set_Nth_Arg (3, No_Class_Instance);
+      else
+         D.Set_Nth_Arg (3, Create_File (Self.Script, File));
+      end if;
+
+      Call_Method (Self, "async_diff", D);
+   end Async_Diff;
+
+   ---------------------
+   -- Async_View_File --
+   ---------------------
+
+   overriding procedure Async_View_File
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Ref         : String;
+      File        : Virtual_File)
+   is
+      D    : Callback_Data'Class := Self.Script.Create (3);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Ref);
+      D.Set_Nth_Arg (3, Create_File (Self.Script, File));
+      Call_Method (Self, "async_view_file", D);
+   end Async_View_File;
 
    -------------------
    -- Create_Engine --
@@ -457,23 +522,23 @@ package body VCS2.Scripts is
       end if;
    end VCS_Handler;
 
-   -------------------------
-   -- VCS_History_Handler --
-   -------------------------
+   ----------------------
+   -- VCS_Task_Handler --
+   ----------------------
 
-   procedure VCS_History_Handler
+   procedure VCS_Task_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst    : constant Class_Instance := Data.Nth_Arg (1);
       Prop    : Instance_Property;
-      Visitor : access History_Visitor'Class;
+      Visitor : access Task_Visitor'Class;
    begin
-      Prop := Get_Data (Inst, VCS2_History_Visitor_Class_Name);
+      Prop := Get_Data (Inst, VCS2_Task_Visitor_Class_Name);
       if Prop = null then
          return;
       end if;
 
-      Visitor := History_Properties_Record (Prop.all).Visitor;
+      Visitor := Task_Properties_Record (Prop.all).Visitor;
 
       if Command = "add_lines" then
          declare
@@ -522,8 +587,16 @@ package body VCS2.Scripts is
            (ID      => Data.Nth_Arg (2),
             Header  => Data.Nth_Arg (3),
             Message => Data.Nth_Arg (4));
+
+      elsif Command = "diff_computed" then
+         Visitor.On_Diff_Computed
+           (Diff    => Data.Nth_Arg (2));
+
+      elsif Command = "file_computed" then
+         Visitor.On_File_Computed
+           (Contents => Data.Nth_Arg (2));
       end if;
-   end VCS_History_Handler;
+   end VCS_Task_Handler;
 
    ------------------------
    -- Static_VCS_Handler --
@@ -589,8 +662,8 @@ package body VCS2.Scripts is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       VCS : constant Class_Type := Kernel.Scripts.New_Class (VCS_Class_Name);
-      History_Visitor : constant Class_Type :=
-        Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name);
+      Task_Visitor : constant Class_Type :=
+        Kernel.Scripts.New_Class (VCS2_Task_Visitor_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         ("_register",
@@ -669,15 +742,25 @@ package body VCS2.Scripts is
       Kernel.Scripts.Register_Command
         ("add_lines",
          Params        => (2 => Param ("lines")),
-         Class         => History_Visitor,
-         Handler       => VCS_History_Handler'Access);
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_details",
          Params        => (2 => Param ("id"),
                            3 => Param ("header"),
                            4 => Param ("message")),
-         Class         => History_Visitor,
-         Handler       => VCS_History_Handler'Access);
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("diff_computed",
+         Params        => (2 => Param ("diff")),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("file_computed",
+         Params        => (2 => Param ("contents")),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
    end Register_Scripts;
 
 end VCS2.Scripts;

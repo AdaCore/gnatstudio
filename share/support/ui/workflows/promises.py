@@ -742,7 +742,7 @@ class ProcessWrapper(object):
         output = []
         self.__stream.subscribe(
             onnext=lambda out: output.append(out),
-            oncompleted=lambda status: p.resolve((status, "\n".join(output))))
+            oncompleted=lambda status: p.resolve((status, "".join(output))))
         return p
 
     def __on_timeout(self):

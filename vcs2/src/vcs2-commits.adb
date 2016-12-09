@@ -195,6 +195,9 @@ package body VCS2.Commits is
       X, Y    : Gdouble);
    --  Called every time a row is clicked
 
+   procedure On_Selection_Changed (Self : access GObject_Record'Class);
+   --  Called when the selection changes
+
    type On_All_Files_Available_In_Cache is new Task_Visitor with
       record
          Kernel : not null access Kernel_Handle_Record'Class;
@@ -211,10 +214,37 @@ package body VCS2.Commits is
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
+   type Is_Staged_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Staged_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if the file is at least partially staged (i.e. there could still
+   --  be some unstaged changes)
+
+   type Is_Unstaged_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Unstaged_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if the file is at least partially unstaged and modified (i.e.
+   --  there could still be some staged changes).
+
+   type Toggle_Stage_Selected_Files is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Toggle_Stage_Selected_Files;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Stage_File is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Stage_File;
       Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Stage for commit the file described in the context.
+
+   type Unstage_File is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Unstage_File;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Unstage the file described in the context.
 
    type Reload_Status is new Interactive_Command with null record;
    overriding function Execute
@@ -302,6 +332,22 @@ package body VCS2.Commits is
 
       return Context;
    end Build_Context;
+
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed (Self : access GObject_Record'Class) is
+      View  : constant Commit_View := Commit_View (Self);
+      Child : constant GPS_MDI_Child := Commit_Views.Child_From_View (View);
+   begin
+      --  Might be null during refresh
+      if Child /= null
+        and then MDI_Child (Child) = Get_MDI (View.Kernel).Get_Focus_Child
+      then
+         View.Kernel.Context_Changed (Child.Build_Context);
+      end if;
+   end On_Selection_Changed;
 
    ---------------------
    -- Create_Contents --
@@ -674,7 +720,7 @@ package body VCS2.Commits is
    -------------
 
    overriding function Execute
-     (Command : access Stage_File;
+     (Command : access Toggle_Stage_Selected_Files;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
@@ -882,6 +928,7 @@ package body VCS2.Commits is
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      Self.Tree.Get_Selection.On_Changed (On_Selection_Changed'Access, Self);
       Scrolled.Add (Self.Tree);
 
       --  Tree
@@ -1149,12 +1196,104 @@ package body VCS2.Commits is
       return Commands.Success;
    end Execute;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Staged_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Self);
+      File   : constant Virtual_File := File_Information (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      VCS    : VCS_Engine_Access;
+      Props  : VCS_File_Properties;
+   begin
+      if File /= No_File then
+         VCS := VCS_Engine_Access
+           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         Props := VCS.File_Properties_From_Cache (File);
+         return (Props.Status and Mask_Staged) /= 0;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Unstaged_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Self);
+      File   : constant Virtual_File := File_Information (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      VCS    : VCS_Engine_Access;
+      Props  : VCS_File_Properties;
+   begin
+      if File /= No_File then
+         VCS := VCS_Engine_Access
+           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         Props := VCS.File_Properties_From_Cache (File);
+         return (Props.Status and Mask_Modified_Unstaged) /= 0
+           or else (Props.Status  and Mask_Untracked) /= 0;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Stage_File;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      File   : constant Virtual_File := File_Information (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      VCS    : VCS_Engine_Access;
+   begin
+      if File /= No_File then
+         VCS := VCS_Engine_Access
+           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS.Stage_Or_Unstage_Files ((1 => File), Stage => True);
+      end if;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Unstage_File;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      File   : constant Virtual_File := File_Information (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      VCS    : VCS_Engine_Access;
+   begin
+      if File /= No_File then
+         VCS := VCS_Engine_Access
+           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS.Stage_Or_Unstage_Files ((1 => File), Stage => False);
+      end if;
+      return Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : not null access Kernel_Handle_Record'Class) is
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Is_Staged   : constant Action_Filter := new Is_Staged_Filter;
+      Is_Unstaged : constant Action_Filter := new Is_Unstaged_Filter;
    begin
       Commit_Views.Register_Module (Kernel);
 
@@ -1186,13 +1325,40 @@ package body VCS2.Commits is
          Icon_Name   => "github-commit-symbolic");
 
       Register_Action
-        (Kernel, "vcs toggle stage file",
+        (Kernel, "vcs toggle stage selected files",
          Description =>
            -("Stage or unstage the selected file, so that it is part of the"
              & " next commit"),
-         Command     => new Stage_File,
+         Command     => new Toggle_Stage_Selected_Files,
+         Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2",
          Icon_Name   => "github-check-symbolic");
+
+      Register_Action
+        (Kernel, "vcs stage file",
+         Description =>
+           -"Stage the current file so that it is part of the next commit",
+         Command     => new Stage_File,
+         Filter      => Lookup_Filter (Kernel, "File") and Is_Unstaged,
+         Category    => "VCS2");
+
+      Register_Action
+        (Kernel, "vcs unstage file",
+         Description =>
+           -("Unstage the current file so that it is not part of the"
+             & " next commit"),
+         Command     => new Unstage_File,
+         Filter      => Lookup_Filter (Kernel, "File") and Is_Staged,
+         Category    => "VCS2");
+
+      Register_Contextual_Menu
+        (Kernel,
+         Action      => "vcs stage file",
+         Label       => "Version Control/Stage for commit");
+      Register_Contextual_Menu
+        (Kernel,
+         Action      => "vcs unstage file",
+         Label       => "Version Control/Unstage from commit");
 
       Register_Action
         (Kernel, "vcs reload status",

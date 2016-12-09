@@ -2009,16 +2009,22 @@ Classes
 
    .. automethod:: GPS.VCS2.vcs_in_use
 
-:class:`GPS.VCS2_History_Visitor`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`GPS.VCS2_Task_Visitor`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: VCS2_History_Visitor()
+.. autoclass:: VCS2_Task_Visitor()
 
 
 
-   .. automethod:: GPS.VCS2_History_Visitor.add_lines
+   .. automethod:: GPS.VCS2_Task_Visitor.add_lines
 
-   .. automethod:: GPS.VCS2_History_Visitor.set_details
+   .. automethod:: GPS.VCS2_Task_Visitor.annotations
+
+   .. automethod:: GPS.VCS2_Task_Visitor.diff_computed
+
+   .. automethod:: GPS.VCS2_Task_Visitor.file_computed
+
+   .. automethod:: GPS.VCS2_Task_Visitor.set_details
 
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^

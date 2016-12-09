@@ -9580,10 +9580,10 @@ class VCS2(object):
 
 
 ###########################################################
-# VCS2_History_Visitor
+# VCS2_Task_Visitor
 ###########################################################
 
-class VCS2_History_Visitor(object):
+class VCS2_Task_Visitor(object):
     """
     A class used in `GPS.VCS2.async_fetch_history`.
     This is only used when writing your own support for VCS engines.
@@ -9591,7 +9591,8 @@ class VCS2_History_Visitor(object):
 
     def add_lines(self, list):
         """
-        Report when a new line for the VCS history was seen.
+        Report when a new line for the VCS history was seen. Used from
+        `GPS.VCS2.async_fetch_history`.
 
         :param List() list: a list of lines from the history.
            This doesn't have to be the whole log, though, although it is
@@ -9613,12 +9614,22 @@ class VCS2_History_Visitor(object):
 
     def set_details(self, id, header, message):
         """
+        Used to provide details on one specific commit, from the
+        `GPS.VCS2.async_fetch_commit_details` method.
+
         :param str id: the commit for which we are reporting details
         :param str header: a multi-string piece of information to
             display in the History view. This should show the commit
             id, the date and author of the commit,...
         :param str message: a multi-string description of the commit
             message, and possibly a diff of what has changed.
+        """
+
+    def diff_computed(self, diff):
+        """
+        Used to report a diff, from `GPS.VCS2.async_diff`.
+
+        :param str diff: the diff, using standard diff format.
         """
 
 

@@ -155,49 +155,37 @@
          <menu label='Forward'                    action='forward locations history'/>
       </menu>
 
-      <menu label='VCS' optional='true'>
-         <menu label='_Explorer'                  action='vcs open explorer'/>
-         <menu label='_Activities'                action='vcs open activities window'/>
-         <menu label='Update All _Projects'       action='vcs update all projects'/>
-         <menu label='_Query Status for All Projects' action='vcs query status for all projects'/>
-         <!--  All other menus are dynamic and depend on the VCS backend
-         <menu label='Query Status'               action='status'/>
-         <menu label='Commit'                     action='commit'/>
-         <menu label='Commit (via Revision Log)'  action='commit (via revision log)'/>
-         <menu label='Commit File'                action='commit (from revision log)'/>
+      <menu label='VCS'>
+         <!--  for VCS1 (most menus are dynamic) -->
+         <menu label='_Explorer'                  action='vcs open explorer'
+               optional='true' hide='true'/>
+         <menu label='_Activities'                action='vcs open activities window'
+               optional='true' hide='true'/>
+         <menu label='Update All _Projects'       action='vcs update all projects'
+               optional='true' hide='true'/>
+         <menu label='_Query Status for All Projects' action='vcs query status for all projects'
+               optional='true' hide='true'/>
+
+         <!--  for VCS2 -->
+         <menu label="Commits"                    action="open commits"
+               optional='true' hide='true'/>
+         <menu label="View global history"        action="open history"
+               optional='true'/>
+         <menu label="View file history"          action="open history for current file"/>
          <separator />
-         <menu label='View Entire Revision History (as Text)' action='history (as text)'/>
-         <menu label='View Entire Revision History'           action='history'/>
-         <menu label='View Specific Revision History'         action='history for revision'/>
+         <menu label='Pull'   action='git pull' optional='true' hide='true'/>
+         <menu label='Pull rebase' action='git pull rebase'
+            optional='true' hide='true'/>
+         <menu label='Update' action='vcs update' optional='true' hide='true'/>
          <separator />
-         <menu label='Compare With Head Revision'             action='diff against head'/>
+         <menu label='Show local changes for file' action='diff against head for file'/>
+         <menu label='Show local changes for file (in editor)'
+               action='diff against head for file in editor'/>
+         <menu label='Show all local changes' action='diff against head'/>
          <separator />
-         <menu label='Add Annotations'                        action='annotate'/>
-         <menu label='Remove Annotations'                     action='remove annotate'/>
-         <menu label='Edit Revision Log'                      action='edit revision log'/>
-         <menu label='Edit Global Changelog'                  action='edit global changelog'/>
-         <menu label='Remove Revision Log'                    action='remove revision log'/>
-         <separator />
-         <menu label='Add, no Commit'                         action='add no commit'/>
-         <menu label='View Revision'                          action='view revision'/>
-         <separator />
-         <menu label='Directory'>
-            <menu label='Query Status for Directory'          action='status dir'/>
-            <menu label='Query Status for Directory (Recursively)' action='status dir (recursively)'/>
-            <menu label='Update Directory Recursively'        action='update dir (recursively)'/>
-         </menu>
-         <menu label='Project'>
-            <menu label='List All Files in Project'   action='list project'/>
-            <menu label='Query Status for Project'    action='status project'/>
-            <menu label='Update Project'              action='update project'/>
-            <menu label='List All Files in Project (Recursively)'
-                  action='list project (recursively)'/>
-            <menu label='Query Status for Project (Recursively)'
-                  action='status project (recursively)'/>
-            <menu label='Update Project (Recursively)'
-                  action='update project (recursively)'/>
-         </menu>
-         -->
+         <menu label='Show last modification for lines'  action='annotate'/>
+         <menu label='Show last modification for lines'  action='remove annotate'/>
+         
       </menu>
 
       <menu label='_Project'>
@@ -296,8 +284,10 @@
             <menu label="_Remote"                    action="open remote"/>
             <menu label="Scenario"                  action="open scenario"/>
             <menu label="Tasks"                     action="open Tasks"/>
-            <menu label="VCS Commits"                action="open commits"/>
-            <menu label="VCS History"                action="open history"/>
+            <menu label="VCS Commits"                action="open commits"
+                  optional='true' hide='true'/>
+            <menu label="VCS History"                action="open history"
+                  optional='true' hide='true'/>
             <menu label="VCS _Activities"            action="VCS open activities window"
                   optional='true' hide='true'/>
             <menu label="_VCS Explorer"              action="VCS open explorer"
@@ -606,7 +596,8 @@
       <separator id='commits'/>
       <button action='vcs commit staged files'/>
       <separator id='stages'/>
-      <button action='vcs toggle stage file'/>
+      <button action='vcs toggle stage selected files'/>
+      <button action='diff against head for file'/>
       <button action='vcs reload status'/>
    </toolbar>
 

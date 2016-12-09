@@ -166,7 +166,7 @@ class VCS(GPS.VCS2):
         Fetch history for the whole repository asynchronously.
         For each line in the history, should call `self._add_log_line`
 
-        :param GPS.VCS2_History_Visitor visitor: the object used to report
+        :param GPS.VCS2_Task_Visitor visitor: the object used to report
            when new lines have been pared for the history.
         :param List filter: A list of various filters to apply. This list
            is currently defined as:
@@ -192,8 +192,37 @@ class VCS(GPS.VCS2):
 
         :param List(str) ids: the list of commits for which we want the
           details.
-        :param GPS.VCS2_History_Visitory visitor: the object used to
+        :param GPS.VCS2_Task_Visitor visitor: the object used to
           report the details.
+        """
+
+    def async_diff(self, visitor, ref, file):
+        """
+        Compute a diff.
+
+        :param GPS.VCS2_Task.Visitor visitor: the object used to
+           report the diff, via its 'diff_computed` method.
+        :param str ref: the ref to which we want to compare. This is
+           typically the id of a commit (as returned from
+           `async_fetch_history`, although it can also be the name of a
+           branch, or "HEAD" to indicate the last commit done on the
+           current branch.
+        :param GPS.File file: the file for which we want a diff. This is
+            set to None to get a full repository diff.
+        """
+
+    def async_view_file(self, visitor, ref, file):
+        """
+        Show the full contents of the file for the given revision.
+
+        :param GPS.VCS2_Task.Visitor visitor: the object used to
+           report the diff, via its 'file_computed` method.
+        :param str ref: the ref to which we want to compare. This is
+           typically the id of a commit (as returned from
+           `async_fetch_history`, although it can also be the name of a
+           branch, or "HEAD" to indicate the last commit done on the
+           current branch.
+        :param GPS.File file: the file for which we want a diff.
         """
 
     ############

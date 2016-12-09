@@ -119,17 +119,23 @@ XML = r"""<?xml version="1.0" ?>
 
    <action name="generic_git_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <shell lang="python">vcs.git.from_git_root ("$1")</shell>
+      <shell lang="python">vcs.git.from_git_root ("$1")</shell> <!-- relative to root -->
       <external>git --no-pager show HEAD:%1</external>
-      <shell>dump "%1" TRUE</shell>
+      <shell>dump "%1" TRUE</shell>  <!--  dump git-show in temporary file -->
       <external>diff --normal -p %1 $1</external>
       <on-failure>
          <shell>base_name "$1"</shell>
-         <shell>dump "%2" TRUE</shell>
-         <shell>File "%1"</shell>
-         <shell>File "$1"</shell>
+         <shell>dump "%2" TRUE</shell>   <!-- dump diff in temporary file -->
+         <shell>File "%1"</shell>        <!-- a GPS.File for diff's output -->
+         <shell>File "$1"</shell>        <!-- a GPS.File for full file name -->
          <shell>Hook "diff_action_hook"</shell>
          <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
+            <!--  run: diff_action_hook(
+                vcs_file=filename,
+                orig_file=null,
+                new_file=GPS.File(filename),
+                diff_file=GPS.File(diff),
+                title= "base_name(filename) [HEAD]" -->
          <shell>delete "%5"</shell>
          <shell>delete "%9"</shell>
       </on-failure>
