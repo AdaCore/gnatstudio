@@ -23,7 +23,8 @@ with Language.Tree.Database; use Language.Tree.Database;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Projects;
 with Refactoring;            use Refactoring;
-with Generic_List;
+
+private with GPS_Vectors;
 
 package Codefix.Text_Manager is
 
@@ -775,16 +776,16 @@ private
    --  type Text_Navigator
    ----------------------------------------------------------------------------
 
-   package Text_List is new Generic_List (Ptr_Text);
+   package Text_List is new GPS_Vectors (Ptr_Text);
    use Text_List;
 
-   type Ptr_List_Text is access Text_List.List;
+   type Ptr_List_Text is access Text_List.Vector;
 
    procedure Free
-     is new Ada.Unchecked_Deallocation (Text_List.List, Ptr_List_Text);
+     is new Ada.Unchecked_Deallocation (Text_List.Vector, Ptr_List_Text);
 
    type Text_Navigator_Abstr is abstract tagged record
-      Files        : Ptr_List_Text := new Text_List.List;
+      Files        : Ptr_List_Text := new Text_List.Vector;
       Registry     : Projects.Project_Registry_Access;
       Construct_Db : Construct_Database_Access;
       Context      : Factory_Context;

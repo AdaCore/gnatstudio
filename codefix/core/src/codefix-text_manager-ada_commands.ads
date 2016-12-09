@@ -17,6 +17,9 @@
 
 with Refactoring.Services; use Refactoring.Services;
 
+private with Generic_List;
+private with Ada.Containers.Vectors;
+
 package Codefix.Text_Manager.Ada_Commands is
 
    ---------------------
@@ -640,7 +643,8 @@ private
    end record;
 
    procedure Free (Item : in out Unbounded_String) is null;
-   package String_List is new Generic_List (Unbounded_String);
+   package String_List is
+     new Ada.Containers.Vectors (Positive, Unbounded_String);
    use String_List;
    --  ??? Should use standard string list
 

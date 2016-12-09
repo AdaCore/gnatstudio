@@ -606,12 +606,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Clauses_List : Words_Lists.Vector;
       Last_With    : File_Cursor := Null_File_Cursor;
 
-      Is_Instantiation : Boolean;
-      Node      : String_List.List_Node;
-
+      Is_Instantiation  : Boolean;
       Instantiation_Pkg : Ada_Statement;
       Clauses_Pkg       : Ada_Statement;
-      Obj_List          : String_List.List;
+      Obj_List          : String_List.Vector;
    begin
       Trace (Me, "Execute Remove_Pkg_Clauses_Cmd");
 
@@ -735,11 +733,8 @@ package body Codefix.Text_Manager.Ada_Commands is
             Name    => Word.Get_Word));
 
       if Last_With /= Null_File_Cursor then
-         Node := First (Obj_List);
-
-         while Node /= String_List.Null_Node loop
-            Current_Text.Add_Line (Last_With, To_String (Data (Node)));
-            Node := Next (Node);
+         for Item of Obj_List loop
+            Current_Text.Add_Line (Last_With, To_String (Item));
          end loop;
 
          Free (Last_With);
@@ -748,7 +743,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Word);
       Free (Instantiation_Pkg);
       Free (Clauses_Pkg);
-      Free (Obj_List);
+      Obj_List.Clear;
    end Execute;
 
    ----------

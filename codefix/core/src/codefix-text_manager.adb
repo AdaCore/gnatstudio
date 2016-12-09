@@ -257,7 +257,7 @@ package body Codefix.Text_Manager is
 
    procedure Clean (This : in out Text_Navigator_Abstr) is
    begin
-      Remove_Nodes (This.Files.all, Text_List.Null_Node);
+      This.Files.Clear;
    end Clean;
 
    ----------
@@ -266,7 +266,7 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Navigator_Abstr) is
    begin
-      Free (This.Files.all);
+      This.Files.Clear;
       Free (This.Files);
    end Free;
 
@@ -424,15 +424,12 @@ package body Codefix.Text_Manager is
      (This : Text_Navigator_Abstr'Class;
       Name : GNATCOLL.VFS.Virtual_File) return Ptr_Text
    is
-      Iterator    : Text_List.List_Node := First (This.Files.all);
-      New_Text    : Ptr_Text;
+      New_Text : Ptr_Text;
    begin
-      while Iterator /= Text_List.Null_Node loop
-         if Get_File_Name (Data (Iterator).all) = Name then
-            return Data (Iterator);
+      for Item of This.Files.all loop
+         if Get_File_Name (Item.all) = Name then
+            return Item;
          end if;
-
-         Iterator := Next (Iterator);
       end loop;
 
       New_Text := New_Text_Interface (This);
@@ -695,14 +692,10 @@ package body Codefix.Text_Manager is
    -- Update_All --
    ----------------
 
-   procedure Update_All
-     (This : Text_Navigator_Abstr'Class)
-   is
-      Node : Text_List.List_Node := First (This.Files.all);
+   procedure Update_All (This : Text_Navigator_Abstr'Class) is
    begin
-      while Node /= Text_List.Null_Node loop
-         Constrain_Update (Data (Node).all);
-         Node := Next (Node);
+      for Item of This.Files.all loop
+         Constrain_Update (Item.all);
       end loop;
    end Update_All;
 
