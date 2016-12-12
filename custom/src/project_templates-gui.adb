@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;           use Ada.Exceptions;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -34,7 +35,6 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;
 with Gtk.Paned;                use Gtk.Paned;
-with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
@@ -48,7 +48,7 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with Dialog_Utils;             use Dialog_Utils;
 
 package body Project_Templates.GUI is
 
@@ -75,7 +75,7 @@ package body Project_Templates.GUI is
    -- Template page --
    -------------------
 
-   type Template_Page_Record is new Gtk.Box.Gtk_Vbox_Record with record
+   type Template_Page_Record is new Dialog_View_Record with record
       Template    : Project_Template;
       Var_Widgets : Variable_Widgets.List;
       Chooser     : Gtk_File_Chooser_Button;
@@ -120,8 +120,8 @@ package body Project_Templates.GUI is
       Template : Project_Template)
    is
       use Variables_List;
-      C     : Cursor;
-      Group : Gtk_Size_Group;
+      C            : Cursor;
+      Group_Widget : Dialog_Group_Widget;
 
       procedure Create_Var_Widget
         (Var : Variable);
@@ -135,10 +135,6 @@ package body Project_Templates.GUI is
         (Var : Variable)
       is
          Var_Widget : Variable_Widget_Record;
-         Label      : Gtk_Label;
-         Box        : Gtk_Box;
-         Main_Box   : Gtk_Box;
-         Label_Box  : Gtk_Box;
 
          function M (From : Character) return Character;
          --  Mapping function. Where are my lambda functions?
@@ -162,62 +158,56 @@ package body Project_Templates.GUI is
          Set_Text (Var_Widget.Ent, To_String (Var.Default_Value));
          Widget.Var_Widgets.Append (Var_Widget);
 
-         Gtk_New (Label, To_String
-                  (Translate (Var.Label, M'Unrestricted_Access)) & ":");
-         Gtk_New_Hbox (Box);
-         Set_Justify (Label, Justify_Left);
-         Gtk_New_Hbox (Label_Box);
-         Pack_Start (Label_Box, Label, False, False, 3);
-         Group.Add_Widget (Label_Box);
-         Pack_Start (Box, Label_Box, False, False, 5);
-         Pack_Start (Box, Var_Widget.Ent, False, False, 5);
-
-         Gtk_New_Hbox (Main_Box);
-         Pack_Start (Main_Box, Box, False, False, 3);
-
-         Gtk_New (Label, To_String (Var.Description));
-         Gtk_New_Hbox (Box);
-         Pack_Start (Box, Label, False, False, 5);
-
-         Pack_Start (Main_Box, Box, False, False, 3);
-
-         Pack_Start
-           (Widget, Main_Box,
-            Expand  => False,
-            Fill    => False,
-            Padding => 3);
+         Group_Widget.Create_Child
+           (Var_Widget.Ent,
+            Label     => To_String
+              (Translate (Var.Label, M'Unrestricted_Access)),
+            Doc       => To_String (Var.Description),
+            Expand    => False);
       end Create_Var_Widget;
 
       use type Ada.Containers.Count_Type;
 
-      Label   : Gtk_Label;
-      Box     : Gtk_Box;
-
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      Initialize_Vbox (Widget);
+      Dialog_Utils.Initialize (Widget);
       Widget.Template := Template;
 
+      --  Create the 'Location' group widget
+
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View         => Widget,
+         Group_Name          => "Location",
+         Allow_Multi_Columns => False);
+
+      --  Create the chooser for the target directory
+      Gtk_New (Widget.Chooser, "Select a directory", Action_Select_Folder);
+      Dummy := Set_Filename (+Widget.Chooser, +Get_Current_Dir.Full_Name.all);
+
+      Group_Widget.Create_Child
+        (Widget    => Widget.Chooser,
+         Label     => "Deploy project in",
+         Doc       => "The location of the project to create.",
+         Expand    => True,
+         Fill      => True);
+
+      --  Create the 'Settings' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View  => Widget,
+         Group_Name   => "Settings");
+
       --  Create the fields for variables.
-      Gtk_New (Group);
       C := Template.Variables.First;
 
       while Has_Element (C) loop
          Create_Var_Widget (Element (C));
          Next (C);
       end loop;
-
-      --  Create the chooser for the target directory
-      Gtk_New (Widget.Chooser, "Select a directory", Action_Select_Folder);
-      Dummy := Set_Filename (+Widget.Chooser, +Get_Current_Dir.Full_Name.all);
-
-      Gtk_New_Hbox (Box);
-      Pack_End (Widget, Box, False, False, 3);
-
-      Gtk_New (Label, "Deploy template in: ");
-      Pack_Start (Box, Label, False, False, 10);
-      Pack_Start (Box, Widget.Chooser, True, True, 3);
    end Initialize;
 
    -----------------
@@ -279,21 +269,24 @@ package body Project_Templates.GUI is
       Project      : out Virtual_File;
       Errors       : out Unbounded_String)
    is
-      Assistant : Gtk_Assistant;
+      Assistant    : Gtk_Assistant;
 
-      Scroll   : Gtk_Scrolled_Window;
-      Tree     : Gtk_Tree_View;
-      Model    : Gtk_Tree_Store;
-      Iter     : Gtk_Tree_Iter;
-      Col      : Gtk_Tree_View_Column;
-      Rend     : Gtk_Cell_Renderer_Text;
-      Pix      : Gtk_Cell_Renderer_Pixbuf;
-      Col_Num  : Gint;
-      Page_Num : Gint;
+      Scroll       : Gtk_Scrolled_Window;
+      Tree         : Gtk_Tree_View;
+      Model        : Gtk_Tree_Store;
+      Iter         : Gtk_Tree_Iter;
+      Col          : Gtk_Tree_View_Column;
+      Rend         : Gtk_Cell_Renderer_Text;
+      Pix          : Gtk_Cell_Renderer_Pixbuf;
+      Col_Num      : Gint;
+      Page_Num     : Gint;
       pragma Unreferenced (Col_Num, Page_Num);
-      Box      : Gtk_Box;
-      Hpane    : Gtk_Hpaned;
-      Main_Label : Gtk_Label;
+      Page_Box     : Gtk_Box;
+      Descr_Box    : Gtk_Box;
+      Hpane        : Gtk_Hpaned;
+      Main_Label   : Gtk_Label;
+      Bottom_Label : Gtk_Label;
+
       Next_Page_Number : Gint;
 
       use Project_Templates_List;
@@ -448,17 +441,9 @@ package body Project_Templates.GUI is
          --  Create the page
          Gtk_New (Page, Template);
 
-         --  The header image does not look great for now
-         --  Assistant.Set_Page_Header_Image (Page, Header_Image);
-
          --  Add the page to the assistant
          Page_Num := Append_Page (Assistant, Page);
          Assistant.Set_Page_Type (Page, Gtk_Assistant_Page_Confirm);
-
-         --  Titles don't look great in the Gtk+ assistant
---       Assistant.Set_Page_Title
---         (Page,
---          To_String (Template.Category) & " " & To_String (Template.Label));
 
          --  Connect the change of entry text to a function that checks the
          --  completeness of the page
@@ -522,9 +507,9 @@ package body Project_Templates.GUI is
 
          if Next_Page_Number <= 0 then
             Main_Label.Set_Text ("No template selected.");
-            Assistant.Set_Page_Complete (Hpane, False);
+            Assistant.Set_Page_Complete (Page_Box, False);
          else
-            Assistant.Set_Page_Complete (Hpane, True);
+            Assistant.Set_Page_Complete (Page_Box, True);
          end if;
       exception
          when E : others =>
@@ -627,24 +612,30 @@ package body Project_Templates.GUI is
       Gtk_New (Assistant);
       Assistant.Set_Position (Win_Pos_Center);
 
-      Gtk_New (Scroll);
+      Gtk_New_Vbox (Page_Box, Homogeneous => False);
+      Page_Num := Assistant.Append_Page (Page_Box);
+
       Gtk_New_Hpaned (Hpane);
+      Page_Box.Pack_Start (Hpane, Expand => True, Fill => True);
+
+      Gtk_New
+        (Bottom_Label,
+         "You can modify all the project properties "
+         & "later via the Project/Properties... menu.");
+      Bottom_Label.Set_Alignment (0.0, 0.5);
+      Page_Box.Pack_Start (Bottom_Label, Expand => False, Padding => 5);
+
+      Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
       Add1 (Hpane, Scroll);
 
-      Gtk_New_Vbox (Box);
-      Add2 (Hpane, Box);
+      Gtk_New_Vbox (Descr_Box);
+      Add2 (Hpane, Descr_Box);
 
       Gtk_New (Main_Label);
-      Pack_Start (Box, Main_Label, True, True, 3);
+      Pack_Start (Descr_Box, Main_Label, True, True, 3);
 
       Set_Position (Hpane, 200);
-      Page_Num := Assistant.Append_Page (Hpane);
-
-      --  The header image does not look great for now
-      --  Assistant.Set_Page_Header_Image (Hpane, Header_Image);
-
-      --  Assistant.Set_Page_Title (Hpane, "Select a template");
 
       --  Create the tree and model
       Gtk_New (Model, Column_Types);
@@ -725,7 +716,7 @@ package body Project_Templates.GUI is
       Assistant.Set_Title ("Create Project from Template");
 
       --  Launch a main loop: we do not want to leave this procedure while the
-      --  assistand is running.
+      --  assistant is running.
       Gtk.Main.Main;
 
       Assistant.Destroy;
