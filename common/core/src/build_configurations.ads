@@ -315,7 +315,7 @@ package Build_Configurations is
       --  Name of the messages category to be used to create messages in
       --  the messages container.
 
-      Parser_List       : String_List_Utils.String_List.List;
+      Parser_List       : String_List_Utils.String_List.Vector;
       --  Names of output parsers.
    end record;
 
@@ -720,9 +720,6 @@ private
       Message  : String;
       Mode     : Message_Mode := Error);
    --  Log Message
-
-   procedure Free (Target : in out Target_Type);
-   --  Free memory associated with Target
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Build_Config_Registry'Class, Build_Config_Registry_Access);

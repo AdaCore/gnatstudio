@@ -867,8 +867,7 @@ private
 
       Expression    : Unbounded_String;
 
-      Activities   : String_List_Utils.String_List.List :=
-                       String_List_Utils.String_List.Null_List;
+      Activities   : String_List_Utils.String_List.Vector;
       --  Activities
 
       File_Checked    : Boolean := False;

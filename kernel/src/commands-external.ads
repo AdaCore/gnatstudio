@@ -36,8 +36,8 @@ package Commands.External is
 
    type String_List_Handler is access
      function (Kernel : not null access Kernel_Handle_Record'Class;
-               Head   : String_List.List;
-               List   : String_List.List) return Boolean;
+               Head   : String_List.Vector;
+               List   : String_List.Vector) return Boolean;
    --  Parses the output of a command, contained in List.
    --  Return True if the command was executed successfully.
    --  This function should NOT modify data referenced by Head and List.
@@ -47,8 +47,8 @@ package Commands.External is
       Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
       Dir            : GNATCOLL.VFS.Virtual_File;
-      Args           : String_List.List;
-      Head           : String_List.List;
+      Args           : String_List.Vector;
+      Head           : String_List.Vector;
       Handler        : String_List_Handler;
       Description    : String;
       Check_Password : Boolean := False);
@@ -82,10 +82,10 @@ private
       Fd              : TTY_Process_Descriptor;
       Command         : GNAT.Strings.String_Access;
       Dir             : GNATCOLL.VFS.Virtual_File;
-      Args            : String_List.List;
-      Head            : String_List.List;
+      Args            : String_List.Vector;
+      Head            : String_List.Vector;
       Handler         : String_List_Handler;
-      Output          : String_List.List;
+      Output          : String_List.Vector;
 
       Running         : Boolean := False;
       Check_Password  : Boolean := False;

@@ -1010,29 +1010,26 @@ package body Interactive_Consoles is
    function Default_Completion_Handler
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address) return String_List_Utils.String_List.List
+      User_Data : System.Address) return String_List_Utils.String_List.Vector
    is
       pragma Unreferenced (User_Data);
+      use String_Lists;
       Console     : constant Interactive_Console := From_View (View);
       Completions : String_Lists.List;
-      C           : String_Lists.Cursor;
-      Result      : String_List_Utils.String_List.List :=
-                      String_List_Utils.String_List.Null_List;
    begin
-      if Console.Virtual /= null
-        and then Interactive_Virtual_Console (Console.Virtual).Script /= null
-      then
-         Complete (Interactive_Virtual_Console (Console.Virtual).Script,
-                   Input, Completions);
-         C := String_Lists.First (Completions);
-         while String_Lists.Has_Element (C) loop
-            String_List_Utils.String_List.Append
-              (Result, String_Lists.Element (C));
-            String_Lists.Next (C);
-         end loop;
-      end if;
+      return Result : String_List_Utils.String_List.Vector do
+         if Console.Virtual /= null
+           and then Interactive_Virtual_Console
+             (Console.Virtual).Script /= null
+         then
+            Complete (Interactive_Virtual_Console (Console.Virtual).Script,
+                      Input, Completions);
 
-      return Result;
+            for Item of Completions loop
+               Result.Append (Item);
+            end loop;
+         end if;
+      end return;
    end Default_Completion_Handler;
 
    -------------------------------

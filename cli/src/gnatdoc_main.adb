@@ -80,7 +80,8 @@ procedure GNATdoc_Main is
    procedure Launch_Gnatinspect;
    --  Launch gnatinspect on the loaded project
 
-   procedure Add_X_Switches (Args : in out String_List_Utils.String_List.List);
+   procedure Add_X_Switches
+     (Args : in out String_List_Utils.String_List.Vector);
    --  Copy "-Xvariable=value" from the command line to Args
 
    --------------------
@@ -88,7 +89,7 @@ procedure GNATdoc_Main is
    --------------------
 
    procedure Add_X_Switches
-     (Args : in out String_List_Utils.String_List.List)
+     (Args : in out String_List_Utils.String_List.Vector)
    is
       procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
       --  If Switch is "-X", pass add it to Args
@@ -103,7 +104,7 @@ procedure GNATdoc_Main is
          pragma Unreferenced (Section);
       begin
          if Switch = "-X" then
-            Append (Args, "-X" & Parameter);
+            Args.Append (String'("-X" & Parameter));
          end if;
       end Local_Parse_Command_Line;
 
@@ -119,7 +120,7 @@ procedure GNATdoc_Main is
 
    procedure Launch_Gprbuild is
       Result   : Integer;
-      Args     : String_List_Utils.String_List.List;
+      Args     : String_List_Utils.String_List.Vector;
       Gprbuild : GNAT.OS_Lib.String_Access;
    begin
       if not Quiet_Mode then
@@ -138,10 +139,10 @@ procedure GNATdoc_Main is
       end if;
 
       --  Compute the arguments to launch
-      Append (Args, "-U");
-      Append (Args, "-k");
-      Append (Args, "-q");
-      Append (Args, "-P" & (+Project_File.Full_Name.all));
+      Args.Append ("-U");
+      Args.Append ("-k");
+      Args.Append ("-q");
+      Args.Append (String'("-P" & (+Project_File.Full_Name.all)));
 
       Add_X_Switches (Args);
 
@@ -169,7 +170,6 @@ procedure GNATdoc_Main is
          end loop;
       end;
 
-      Free (Args);
       GNAT.OS_Lib.Free (Gprbuild);
    end Launch_Gprbuild;
 
@@ -179,7 +179,7 @@ procedure GNATdoc_Main is
 
    procedure Launch_Gnatinspect is
       Result : Integer;
-      Args   : String_List_Utils.String_List.List;
+      Args   : String_List_Utils.String_List.Vector;
       Gnatinspect : GNAT.OS_Lib.String_Access;
    begin
       if not Quiet_Mode then
@@ -204,10 +204,10 @@ procedure GNATdoc_Main is
          Append (Args, "--symlinks");
       end if;
 
-      Append (Args, "--encoding=" & Encoding.all);
-      Append (Args, "-P" & (+Project_File.Full_Name.all));
-      Append (Args, "--db=" &
-         (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
+      Args.Append (String'("--encoding=" & Encoding.all));
+      Args.Append (String'("-P" & (+Project_File.Full_Name.all)));
+      Args.Append (String'("--db=" &
+                   (+Kernel.Databases.Xref_Database_Location.Full_Name.all)));
 
       Add_X_Switches (Args);
 
@@ -235,7 +235,6 @@ procedure GNATdoc_Main is
          end loop;
       end;
 
-      Free (Args);
       GNAT.OS_Lib.Free (Gnatinspect);
    end Launch_Gnatinspect;
 

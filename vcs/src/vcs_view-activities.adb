@@ -281,7 +281,6 @@ package body VCS_View.Activities is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      use type String_List.List_Node;
       Closed : constant Boolean := Is_Closed (Activity);
       Ok     : Boolean := True;
 
@@ -718,7 +717,7 @@ package body VCS_View.Activities is
       return Selection_Context
    is
       function Get_Selected_Activities
-        (Explorer : VCS_View_Access) return String_List.List;
+        (Explorer : VCS_View_Access) return String_List.Vector;
       --  Return the list of activities that are selected
 
       -----------------------------
@@ -726,9 +725,9 @@ package body VCS_View.Activities is
       -----------------------------
 
       function Get_Selected_Activities
-        (Explorer : VCS_View_Access) return String_List.List
+        (Explorer : VCS_View_Access) return String_List.Vector
       is
-         Result : String_List.List;
+         Result : String_List.Vector;
 
          procedure Add_Selected_Item
            (Model : Gtk.Tree_Model.Gtk_Tree_Model;

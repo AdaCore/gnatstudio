@@ -722,7 +722,6 @@ package body GPS.Kernel is
          Unchecked_Free (Self.Messages);
       end if;
 
-      String_List_Utils.String_List.Free (Self.Activities);
       Self.Instances.Free;
    end Free;
 

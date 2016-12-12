@@ -80,7 +80,7 @@ package GPS.Tools_Output is
    --  Register new output parser fabric with given name
 
    function New_Parser_Chain
-     (Name_List : String_List_Utils.String_List.List)
+     (Name_List : String_List_Utils.String_List.Vector)
       return Tools_Output_Parser_Access;
    --  Create new chain of Tools_Output_Parsers.
    --  Result should be deallocated after use
@@ -89,7 +89,7 @@ package GPS.Tools_Output is
 
    procedure Create_External_Parsers
      (Self        : access External_Parser_Fabric;
-      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
       Found       : out Boolean) is abstract;
    --  This procedure iterates over Parser_List and creates output parser chain

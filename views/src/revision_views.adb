@@ -85,10 +85,10 @@ package body Revision_Views is
 
    package SL renames String_List_Utils.String_List;
 
-   procedure Free (L : in out SL.List);
+   procedure Free (L : in out SL.Vector);
    --  Free the string list
 
-   package Syms_Table is new String_Hash (SL.List, Free, SL.Null_List);
+   package Syms_Table is new String_Hash (SL.Vector, Free, SL.Empty_Vector);
    use Syms_Table;
 
    type Mode_Kind is (Link, Branch, Filter_Out);
@@ -219,7 +219,7 @@ package body Revision_Views is
    -- Free --
    ----------
 
-   procedure Free (L : in out SL.List) is
+   procedure Free (L : in out SL.Vector) is
       pragma Unreferenced (L);
    begin
       null;
@@ -293,7 +293,7 @@ package body Revision_Views is
       Rev    : constant String := Nth_Arg (Data, 2);
       Sym    : constant String := Nth_Arg (Data, 3);
       Key    : constant String := +Full_Name (File, True) & "$" & Rev;
-      List   : SL.List;
+      List   : SL.Vector;
    begin
       List := String_Hash_Table.Get (View.Syms, Key);
 
@@ -615,35 +615,31 @@ package body Revision_Views is
       --  Tags & Branches
 
       declare
-         use type SL.List_Node;
          Rev   : constant String := To_String (Line.Log.Revision);
          Key   : constant String :=
                    +Full_Name (View.File, True) & "$" & Rev;
-         List  : SL.List;
-         Node  : SL.List_Node;
+         List  : SL.Vector;
          First : Boolean := True;
       begin
          List := String_Hash_Table.Get (View.Syms, Key);
 
          if not SL.Is_Empty (List) then
             Append (Info, " (");
-            Node := SL.First (List);
 
-            while Node /= SL.Null_Node loop
+            for Item of List loop
                Append (-Store, Child, Iter);
 
                Set_And_Clear
                  (-Store, Child, (Info_Column, Rev_Info_Column),
-                  (As_String ("tag: " & SL.Data (Node)),
-                   As_String (SL.Data (Node))));
+                  (As_String ("tag: " & Item),
+                   As_String (Item)));
 
                if First then
-                  Append (Info, SL.Data (Node));
+                  Append (Info, Item);
                   First := False;
                else
-                  Append (Info, " " & SL.Data (Node));
+                  Append (Info, " " & Item);
                end if;
-               Node := SL.Next (Node);
             end loop;
 
             Append (Info, ")");

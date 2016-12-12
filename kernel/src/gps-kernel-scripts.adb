@@ -111,7 +111,7 @@ package body GPS.Kernel.Scripts is
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
-      return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.Vector;
    --  Called when the user has pressed <tab>
 
    procedure Default_Command_Handler
@@ -680,7 +680,7 @@ package body GPS.Kernel.Scripts is
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
-      return String_List_Utils.String_List.List
+      return String_List_Utils.String_List.Vector
    is
       On_Completion : constant Subprogram_Type := Convert (User_Data);
       Console  : constant Interactive_Console := From_View (View);
@@ -695,7 +695,7 @@ package body GPS.Kernel.Scripts is
       Set_Nth_Arg (C, 2, Input);
       Tmp := Execute (On_Completion, C);
       Free (C);
-      return String_List_Utils.String_List.Null_List;
+      return String_List_Utils.String_List.Empty_Vector;
    end On_Console_Completion;
 
    ----------------------

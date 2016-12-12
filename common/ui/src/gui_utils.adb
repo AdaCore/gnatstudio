@@ -1107,22 +1107,19 @@ package body GUI_Utils is
          use String_List_Utils.String_List;
          Text          : constant String :=
                            Get_Slice (Buffer, Prompt_Iter, Last_Iter);
-         Completions   : List :=  Completion (Text, View, User_Data);
+         Completions   : constant Vector := Completion (Text, View, User_Data);
          Prefix        : constant String := Longest_Prefix (Completions);
-         Node          : List_Node;
          Line          : Gint;
          Offset        : Gint;
          More_Than_One : constant Boolean :=
-                           Completions /= Null_List
-                           and then Next (First (Completions)) /= Null_Node;
+                           not Completions.Is_Empty
+                           and then Has_Element (Next (Completions.First));
          Success       : Boolean;
          Prev_Begin    : Gtk_Text_Iter;
          Prev_Last     : Gtk_Text_Iter;
          Pos           : Gtk_Text_Iter;
       begin
          if More_Than_One then
-            Node := First (Completions);
-
             --  Get the range copy the current line
 
             Line := Get_Line (Last_Iter);
@@ -1134,11 +1131,10 @@ package body GUI_Utils is
             Get_End_Iter (Buffer, Pos);
             Insert (Buffer, Pos, "" & ASCII.LF);
 
-            while Node /= Null_Node loop
+            for Item of Completions loop
                Get_End_Iter (Buffer, Pos);
                Set_Line_Offset (Pos, 0);
-               Insert (Buffer, Pos, Data (Node) & ASCII.LF);
-               Node := Next (Node);
+               Insert (Buffer, Pos, Item & ASCII.LF);
             end loop;
 
             Get_Iter_At_Line_Offset (Buffer, Prev_Begin, Line, 0);
@@ -1165,7 +1161,7 @@ package body GUI_Utils is
 
          --  Insert the completion, if any
 
-         if Completions /= Null_List then
+         if not Completions.Is_Empty then
             Get_End_Iter (Buffer, Pos);
 
             if Prefix'Length > Text'Length then
@@ -1176,8 +1172,6 @@ package body GUI_Utils is
             if not More_Than_One then
                Insert (Buffer, Pos, " ");
             end if;
-
-            Free (Completions);
          end if;
       end;
    end Do_Completion;

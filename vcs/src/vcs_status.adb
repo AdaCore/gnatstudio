@@ -179,7 +179,7 @@ package body VCS_Status is
          then
             declare
                procedure Add_Attribute
-                 (Name : String; List : String_List.List);
+                 (Name : String; List : String_List.Vector);
                --  Add attribute Name into Child with value read from List
 
                procedure Add_Attribute
@@ -194,10 +194,10 @@ package body VCS_Status is
                -------------------
 
                procedure Add_Attribute
-                 (Name : String; List : String_List.List) is
+                 (Name : String; List : String_List.Vector) is
                begin
                   if not String_List.Is_Empty (List) then
-                     Set_Attribute (Child, Name, String_List.Head (List));
+                     Set_Attribute (Child, Name, List.First_Element);
                   end if;
                end Add_Attribute;
 
@@ -283,7 +283,7 @@ package body VCS_Status is
          if Now - Date <= Valid_Delay then
             declare
                procedure Add_Attribute
-                 (Into : in out String_List.List; Name : String);
+                 (Into : in out String_List.Vector; Name : String);
                --  Add attribute value for the given Name into Into
 
                procedure Add_Attribute
@@ -295,7 +295,7 @@ package body VCS_Status is
                -------------------
 
                procedure Add_Attribute
-                 (Into : in out String_List.List; Name : String)
+                 (Into : in out String_List.Vector; Name : String)
                is
                   Value : constant String := Get_Attribute (Node, Name);
                begin

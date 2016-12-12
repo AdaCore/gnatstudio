@@ -48,10 +48,10 @@ package body Commands.External is
       Fd  : TTY_Process_Descriptor renames Command.Fd;
       PID : GNAT.Expect.Process_Id;
    begin
-      Free (Command.Args);
-      Free (Command.Head);
+      Command.Args.Clear;
+      Command.Head.Clear;
       GNAT.Strings.Free (Command.Command);
-      Free (Command.Output);
+      Command.Output.Clear;
       Command.Dir := GNATCOLL.VFS.No_File;
 
       PID := Get_Pid (Fd);
@@ -71,8 +71,8 @@ package body Commands.External is
       Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
       Dir            : GNATCOLL.VFS.Virtual_File;
-      Args           : String_List.List;
-      Head           : String_List.List;
+      Args           : String_List.Vector;
+      Head           : String_List.Vector;
       Handler        : String_List_Handler;
       Description    : String;
       Check_Password : Boolean := False) is
@@ -211,9 +211,9 @@ package body Commands.External is
 
       else
          declare
-            Len       : constant Natural := Length (Command.Args);
-            Args      : GNAT.OS_Lib.Argument_List (1 .. Len);
-            Temp_Args : List_Node := First (Command.Args);
+            Args      : GNAT.OS_Lib.Argument_List
+              (1 .. Natural (Command.Args.Length));
+            Temp_Args : Cursor := Command.Args.First;
             Old_Dir   : constant Virtual_File := Get_Current_Dir;
 
          begin
@@ -224,8 +224,8 @@ package body Commands.External is
             end if;
 
             for J in Args'Range loop
-               Args (J) := new String'(Data (Temp_Args));
-               Temp_Args := Next (Temp_Args);
+               Args (J) := new String'(Element (Temp_Args));
+               Next (Temp_Args);
             end loop;
 
             if Command.Dir /= No_File then
@@ -253,7 +253,7 @@ package body Commands.External is
                GNAT.OS_Lib.Free (Args (J));
             end loop;
 
-            String_List.Free (Command.Args);
+            Command.Args.Clear;
 
             if Command.Dir /= No_File then
                Change_Dir (Old_Dir);

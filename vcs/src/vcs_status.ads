@@ -78,7 +78,7 @@ private
 
    No_Data : constant Line_Record :=
                ((GNATCOLL.VFS.No_File, Unknown, null, null,
-                others => String_List.Null_List),
+                others => String_List.Empty_Vector),
                 False);
 
    No_I_Data : constant Internal_Record := (No_Data, Time_Of (1970, 1, 1));

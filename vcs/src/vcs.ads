@@ -201,10 +201,10 @@ package VCS is
       Repository_Revision : GNAT.Strings.String_Access := null;
       --  The latest version of the file in the repository
 
-      Tags                : String_List.List := String_List.Null_List;
+      Tags                : String_List.Vector;
       --  Other versions of this file that exist in the repository
 
-      Users               : String_List.List := String_List.Null_List;
+      Users               : String_List.Vector;
       --  A list of users currently working on the file
    end record;
 

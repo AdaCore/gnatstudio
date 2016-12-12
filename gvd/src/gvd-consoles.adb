@@ -167,7 +167,7 @@ package body GVD.Consoles is
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       Console   : System.Address)
-      return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.Vector;
    --  Return the list of completions for Input.
 
    procedure On_Debuggee_Destroy (Console : access Gtk_Widget_Record'Class);
@@ -338,15 +338,15 @@ package body GVD.Consoles is
      (Input   : String;
       View    : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       Console : System.Address)
-      return String_List_Utils.String_List.List
+      return String_List_Utils.String_List.Vector
    is
       pragma Unreferenced (View);
       use String_List_Utils.String_List;
       C : constant Debugger_Console := Convert (Console);
-      Result : List;
+      Result : Vector;
    begin
       if Get_Process (C) = null then
-         return String_List_Utils.String_List.Null_List;
+         return String_List_Utils.String_List.Empty_Vector;
 
       elsif not
         Command_In_Process

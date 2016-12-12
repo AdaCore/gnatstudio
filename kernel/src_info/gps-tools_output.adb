@@ -76,24 +76,24 @@ package body GPS.Tools_Output is
    ----------------------
 
    function New_Parser_Chain
-     (Name_List : List) return Tools_Output_Parser_Access
+     (Name_List : Vector) return Tools_Output_Parser_Access
    is
-      Node    : List_Node := First (Name_List);
+      Node    : Cursor := Name_List.First;
       Result  : Tools_Output_Parser_Access;
       Found   : Boolean;
    begin
-      while Node /= Null_Node loop
-         if Map.Contains (Data (Node)) then
+      while Has_Element (Node) loop
+         if Map.Contains (Element (Node)) then
             declare
                Fabric : constant Output_Parser_Fabric_Access :=
-                 Map (Data (Node));
+                 Map (Element (Node));
             begin
                Result := Fabric.Create (Result);
             end;
 
-            Node := Next (Node);
+            Next (Node);
          elsif External_Parsers_Fabric = null then
-            Node := Next (Node);
+            Next (Node);
          else
             External_Parsers_Fabric.Create_External_Parsers
               (Node, Result, Found);
@@ -101,7 +101,7 @@ package body GPS.Tools_Output is
             if not Found then
                --  Both Ada and python parsers not found
                --  Report error and skip to next parser
-               Node := Next (Node);
+               Next (Node);
             end if;
          end if;
       end loop;

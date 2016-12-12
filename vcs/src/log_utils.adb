@@ -58,8 +58,8 @@ package body Log_Utils is
 
    function Check_Handler
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
+      Head   : String_List.Vector;
+      List   : String_List.Vector) return Boolean;
    --  Display Head in the console, then return True if List is not
    --  empty, otherwise display List in the console and return False.
 
@@ -621,32 +621,32 @@ package body Log_Utils is
 
    function Check_Handler
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean
+      Head   : String_List.Vector;
+      List   : String_List.Vector) return Boolean
    is
       use String_List;
 
-      List_Temp : String_List.List_Node := First (List);
-      Head_Temp : String_List.List_Node := First (Head);
+      List_Temp : String_List.Cursor := List.First;
+      Head_Temp : String_List.Cursor := Head.First;
       Length    : Integer := 0;
 
    begin
-      if not String_List.Is_Empty (List) then
-         while Head_Temp /= Null_Node loop
-            Kernel.Insert (Data (Head_Temp), Mode => Error);
-            Head_Temp := Next (Head_Temp);
+      if not List.Is_Empty then
+         while Has_Element (Head_Temp) loop
+            Kernel.Insert (Element (Head_Temp), Mode => Error);
+            Next (Head_Temp);
          end loop;
       end if;
 
-      while List_Temp /= Null_Node loop
+      while Has_Element (List_Temp) loop
          declare
-            S : constant String := Data (List_Temp);
+            S : constant String := Element (List_Temp);
          begin
             Kernel.Insert (S, Mode => Error);
             Length := Length + S'Length;
          end;
 
-         List_Temp := Next (List_Temp);
+         Next (List_Temp);
       end loop;
 
       if Length /= 0 then
@@ -654,24 +654,24 @@ package body Log_Utils is
             S : String (1 .. Length);
          begin
             Length := 1;
-            List_Temp := First (List);
+            List_Temp := List.First;
 
-            while List_Temp /= Null_Node loop
+            while Has_Element (List_Temp) loop
                declare
-                  D : constant String := Data (List_Temp);
+                  D : constant String := Element (List_Temp);
                begin
                   S (Length .. Length - 1 + D'Length) := D;
                   Length := Length + D'Length;
                end;
 
-               List_Temp := Next (List_Temp);
+               Next (List_Temp);
             end loop;
 
             Parse_File_Locations (Kernel, S, -"Style/Log Check");
          end;
       end if;
 
-      return String_List.Is_Empty (List);
+      return List.Is_Empty;
    end Check_Handler;
 
    ----------------------
@@ -708,7 +708,7 @@ package body Log_Utils is
          end if;
       end Add_LF_To_Log;
 
-      Logs                   : String_List.List;
+      Logs                   : String_List.Vector;
 
       Commit_Command         : Log_Action_Command_Access;
       Commit_Command_Wrapper : Branching_Command;
@@ -783,10 +783,9 @@ package body Log_Utils is
                      Append (Logs, Get_Log (Kernel, Activity));
 
                   else
-                     Append
-                       (Logs,
-                        Add_LF_To_Log (Get_Log (Kernel, Files (J)))
-                        & Get_Log (Kernel, Activity));
+                     Logs.Append
+                       (String'(Add_LF_To_Log (Get_Log (Kernel, Files (J)))
+                        & Get_Log (Kernel, Activity)));
                   end if;
                end loop;
             end if;
@@ -882,9 +881,9 @@ package body Log_Utils is
                Log_Check_Command  : constant String := Project.Attribute_Value
                  (VCS_Log_Check);
                Log_File           : Virtual_File;
-               File_Args          : String_List.List;
-               Log_Args           : String_List.List;
-               Head_List          : String_List.List;
+               File_Args          : String_List.Vector;
+               Log_Args           : String_List.Vector;
+               Head_List          : String_List.Vector;
                S                  : Strings.String_Access;
                C_Args             : OS_Lib.Argument_List_Access;
 
@@ -921,7 +920,7 @@ package body Log_Utils is
                              C_Args (C_Args'First).all,
                              No_File,
                              File_Args,
-                             Null_List,
+                             Empty_Vector,
                              Check_Handler'Access,
                              -"Version Control: Checking files");
                      File_Checks_Wrapper := Create
@@ -957,9 +956,6 @@ package body Log_Utils is
                              (-"File could not be read: ")
                              & Display_Full_Name (Log_File));
 
-                     Free (File_Args);
-                     Free (Log_Args);
-                     Free (Head_List);
                      exit;
 
                   elsif S.all = "" then
@@ -979,9 +975,6 @@ package body Log_Utils is
                         Cancel_All := True;
 
                         GNAT.OS_Lib.Free (S);
-                        Free (File_Args);
-                        Free (Log_Args);
-                        Free (Head_List);
                         exit;
                      end if;
                   end if;
@@ -1000,10 +993,10 @@ package body Log_Utils is
                   --  Add filename
 
                   Append (Log_Args, +Full_Name (Log_File));
-                  Append
-                    (Head_List, -"File: "
+                  Head_List.Append
+                    (String'(-"File: "
                      & Display_Full_Name (Files (J)) & ASCII.LF
-                     & (-"The revision log does not pass the checks."));
+                     & (-"The revision log does not pass the checks.")));
 
                   Create
                     (Log_Checks,
@@ -1028,10 +1021,6 @@ package body Log_Utils is
 
                   OS_Lib.Free (C_Args);
                end if;
-
-               Free (File_Args);
-               Free (Log_Args);
-               Free (Head_List);
             end;
          end if;
       end loop;
@@ -1053,7 +1042,7 @@ package body Log_Utils is
            (Kernel, First_Check, True, True, Name (Ref));
       end if;
 
-      Free (Logs);
+      Logs.Clear;
    end Log_Action_Files;
 
 end Log_Utils;

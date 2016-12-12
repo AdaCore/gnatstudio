@@ -139,11 +139,11 @@ package body Completion_Module is
       Child : Child_Iterator;
       --  The editor we are currently testing
 
-      List : String_List_Utils.String_List.List;
+      List : String_List_Utils.String_List.Vector;
       --  The possible current completions. If empty, then there is no
       --  current completion operation.
 
-      Node : String_List_Utils.String_List.List_Node;
+      Node : String_List_Utils.String_List.Cursor;
       --  The current position in the completions list
 
       Top_Reached    : Boolean;
@@ -550,8 +550,8 @@ package body Completion_Module is
 
       GNAT.Strings.Free (Completion_Module.Prefix);
 
-      String_List_Utils.String_List.Free (Completion_Module.List);
-      Completion_Module.Node := String_List_Utils.String_List.Null_Node;
+      Completion_Module.List.Clear;
+      Completion_Module.Node := String_List_Utils.String_List.No_Element;
 
       Completion_Module.Top_Reached    := False;
       Completion_Module.Bottom_Reached := False;
@@ -684,10 +684,10 @@ package body Completion_Module is
       end if;
 
       if M.Complete then
-         if M.Node = Null_Node then
-            M.Node := First (M.List);
+         if not Has_Element (M.Node) then
+            M.Node := M.List.First;
          else
-            M.Node := Next (M.Node);
+            Next (M.Node);
          end if;
 
          return;
@@ -765,8 +765,8 @@ package body Completion_Module is
                if M.Buffer = null then
                   M.Complete := True;
 
-                  if M.Node /= Null_Node then
-                     M.Node := Next (M.Node);
+                  if Has_Element (M.Node) then
+                     Next (M.Node);
                   end if;
 
                   return;
@@ -1152,8 +1152,8 @@ package body Completion_Module is
          Extend_Completions_List;
       end if;
 
-      if M.Node /= Null_Node then
-         Text := new String'(Data (M.Node));
+      if Has_Element (M.Node) then
+         Text := new String'(Element (M.Node));
       else
          Text := new String'(M.Prefix.all);
       end if;

@@ -182,18 +182,15 @@ package body VCS_Activities_View_API is
         procedure (Kernel   : not null access Kernel_Handle_Record'Class;
                    Activity : Activity_Id))
    is
-      use type String_List.List_Node;
    begin
       if Context /= No_Context then
          declare
             Kernel : constant Kernel_Handle := Get_Kernel (Context);
-            List   : constant String_List.List :=
-                       Activity_Information (Context);
-            Iter   : String_List.List_Node := String_List.First (List);
+            List   : constant String_List.Vector :=
+              Activity_Information (Context);
          begin
-            while Iter /= String_List.Null_Node loop
-               Action (Kernel, Value (String_List.Data (Iter)));
-               Iter := String_List.Next (Iter);
+            for Item of List loop
+               Action (Kernel, Value (Item));
             end loop;
          end;
       end if;
@@ -401,7 +398,7 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id;
    begin
       if Has_Activity_Information (Context) then
-         Activity := Value (String_List.Head (Activity_Information (Context)));
+         Activity := Value (Activity_Information (Context).First_Element);
 
          Populate_Activity (Kernel, Activity, Context);
 
@@ -422,7 +419,6 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      use type String_List.List_Node;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Activity : constant Activity_Id := New_Activity (Kernel);
    begin
@@ -976,17 +972,14 @@ package body VCS_Activities_View_API is
          --  all closed or opened, all have commit/status/... actions).
 
          declare
-            use type String_List.List_Node;
             VCS       : VCS_Access;
-            Iter      : String_List.List_Node :=
-                          String_List.First (Activity_Information (Context));
             Activity  : Activity_Id;
             L_Actions : Action_Array;
             First     : Boolean := True;
             Closed    : Boolean;
          begin
-            while Iter /= String_List.Null_Node loop
-               Activity := Value (String_List.Data (Iter));
+            for Item of Activity_Information (Context) loop
+               Activity := Value (Item);
 
                VCS := Get_VCS_For_Activity (Kernel, Activity);
                L_Actions := Get_Identified_Actions (VCS);
@@ -1021,8 +1014,6 @@ package body VCS_Activities_View_API is
                   Same_Closed_Status := Same_Closed_Status
                     and then Closed = Is_Closed (Activity);
                end if;
-
-               Iter := String_List.Next (Iter);
             end loop;
 
             Gtk_New (Check, Label => -"Group commit");
@@ -1173,8 +1164,6 @@ package body VCS_Activities_View_API is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      use type String_List.List_Node;
-
       Kernel               : constant Kernel_Handle := Get_Kernel (Data);
       VCS_Activities_Class : constant Class_Type :=
                                New_Class (Kernel, "Activities");

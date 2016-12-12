@@ -38,7 +38,6 @@ package body Commands.VCS is
    overriding procedure Primitive_Free (X : in out Log_Action_Command_Type) is
    begin
       Unchecked_Free (X.Filenames);
-      String_List.Free (X.Logs);
    end Primitive_Free;
 
    overriding procedure Primitive_Free (X : in out Get_Status_Command_Type) is
@@ -62,7 +61,7 @@ package body Commands.VCS is
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : File_Array;
-      Logs      : String_List.List) is
+      Logs      : String_List.Vector) is
    begin
       Item := new Log_Action_Command_Type;
       Item.Kernel    := Kernel;
@@ -120,8 +119,9 @@ package body Commands.VCS is
      (Command : access Log_Action_Command_Type) return Command_Return_Type
    is
       use String_List;
+      use type Ada.Containers.Count_Type;
 
-      Log   : List_Node;
+      Log   : Cursor;
       Idx   : Natural;
       Last  : Natural;
 
@@ -131,7 +131,7 @@ package body Commands.VCS is
 
       Log := First (Command.Logs);
 
-      if Length (Command.Logs) = 0 then
+      if Command.Logs.Is_Empty then
          --  No log, this is the case when no log is required by the external
          --  VCS.
          case Command.Action is
@@ -148,16 +148,16 @@ package body Commands.VCS is
                raise Program_Error;
          end case;
 
-      elsif Length (Command.Logs) = 1 then
+      elsif Command.Logs.Length = 1 then
          case Command.Action is
             when Commit =>
-               Commit (Command.Rep, Command.Filenames.all, Data (Log));
+               Commit (Command.Rep, Command.Filenames.all, Element (Log));
 
             when Add =>
-               Add (Command.Rep, Command.Filenames.all, Data (Log));
+               Add (Command.Rep, Command.Filenames.all, Element (Log));
 
             when Remove =>
-               Remove (Command.Rep, Command.Filenames.all, Data (Log));
+               Remove (Command.Rep, Command.Filenames.all, Element (Log));
 
             when others =>
                raise Program_Error;
@@ -171,15 +171,15 @@ package body Commands.VCS is
          while Idx <= Command.Filenames'Last loop
 
             declare
-               Log_Content : constant String := Data (Log);
+               Log_Content : constant String := Element (Log);
             begin
                Last := Idx;
                loop
                   Log  := Next (Log);
                   Last := Last + 1;
                   exit when Last > Command.Filenames'Last
-                    or else Log = Null_Node
-                    or else Data (Log) /= Log_Content;
+                    or else not Has_Element (Log)
+                    or else Element (Log) /= Log_Content;
                end loop;
 
                case Command.Action is
@@ -218,7 +218,7 @@ package body Commands.VCS is
       return Success;
 
    exception
-      when List_Empty =>
+      when Constraint_Error =>
          Trace (Me, "Logs do not correspond to files");
          return Failure;
    end Execute;
@@ -262,7 +262,6 @@ package body Commands.VCS is
    overriding function Execute
      (Command : access Check_Activity_Command_Type) return Command_Return_Type
    is
-      use type String_List.List_Node;
       Explorer  : constant VCS_Activities_View_Access :=
                     Get_Activities_Explorer (Command.Kernel, False, False);
       VCS_Ref   : constant VCS_Access :=

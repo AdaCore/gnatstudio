@@ -293,7 +293,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Activity_Information
      (Context    : in out Selection_Context;
-      Activities : String_List_Utils.String_List.List);
+      Activities : String_List_Utils.String_List.Vector);
    --  Fill context with a set of activities
 
    function Has_Activity_Information
@@ -301,7 +301,7 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has some activity information
 
    function Activity_Information
-     (Context : Selection_Context) return String_List_Utils.String_List.List;
+     (Context : Selection_Context) return String_List_Utils.String_List.Vector;
    --  Returns a list of activity names
 
    --------------

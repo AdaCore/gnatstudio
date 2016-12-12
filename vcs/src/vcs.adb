@@ -151,8 +151,6 @@ package body VCS is
    begin
       GNAT.Strings.Free (F.Working_Revision);
       GNAT.Strings.Free (F.Repository_Revision);
-      Free (F.Tags);
-      Free (F.Users);
    end Free;
 
    ----------------------------------

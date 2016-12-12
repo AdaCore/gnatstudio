@@ -35,7 +35,7 @@ package body Build_Configurations is
    --  Convert Value to list of strings and assign as Target's parser list
 
    function To_String
-     (List : String_List_Utils.String_List.List) return String;
+     (List : String_List_Utils.String_List.Vector) return String;
    --  Convert list of strings to textual representation
 
    function Default_Parser_Names (Is_Run_Target : Boolean) return String;
@@ -885,15 +885,6 @@ package body Build_Configurations is
       return Target.Default_Command_Line.To_String_List
         (Expanded => False).all;
    end Get_Default_Command_Line_Unexpanded;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Target : in out Target_Type) is
-   begin
-      String_List_Utils.String_List.Free (Target.Properties.Parser_List);
-   end Free;
 
    ----------------------------------
    -- Create_Build_Config_Registry --
@@ -2033,10 +2024,6 @@ package body Build_Configurations is
          Free (Registry.Models);
          Free (Registry.Targets);
          Free (Registry.Modes);
-
-         for Item of Registry.Original_Targets loop
-            String_List_Utils.String_List.Free (Item.Properties.Parser_List);
-         end loop;
          Free (Registry.Original_Targets);
 
          Unchecked_Free (Registry);
@@ -2052,13 +2039,13 @@ package body Build_Configurations is
       Value  : String)
    is
       function Has_Parser
-        (Parsers       : String_List_Utils.String_List.List;
+        (Parsers       : String_List_Utils.String_List.Vector;
          Parser_Name   : String) return Boolean;
       --  Check if Parser_Name belongs to Parsers list
 
       function To_Parser_List
         (Parser_List : String;
-         Default     : String) return String_List_Utils.String_List.List;
+         Default     : String) return String_List_Utils.String_List.Vector;
       --  Convert string with parser_names to list of parser.
       --  Substitute [default] macro with Default text if found
 
@@ -2067,24 +2054,10 @@ package body Build_Configurations is
       ----------------
 
       function Has_Parser
-        (Parsers       : String_List_Utils.String_List.List;
-         Parser_Name   : String) return Boolean
-      is
-         use String_List_Utils.String_List;
-
-         Node    : String_List_Utils.String_List.List_Node := First (Parsers);
-         Found   : Boolean := False;
+        (Parsers       : String_List_Utils.String_List.Vector;
+         Parser_Name   : String) return Boolean is
       begin
-         while Node /= Null_Node loop
-            if Data (Node) = Parser_Name then
-               Found := True;
-               exit;
-            end if;
-
-            Node := Next (Node);
-         end loop;
-
-         return Found;
+         return Parsers.Contains (Parser_Name);
       end Has_Parser;
 
       --------------------
@@ -2093,7 +2066,7 @@ package body Build_Configurations is
 
       function To_Parser_List
         (Parser_List : String;
-         Default     : String) return String_List_Utils.String_List.List
+         Default     : String) return String_List_Utils.String_List.Vector
       is
          use Ada.Strings;
          use Ada.Strings.Fixed;
@@ -2102,7 +2075,7 @@ package body Build_Configurations is
          Macro  : constant Natural := Index (Parser_List, Default_Macro);
          First  : Positive;
          Last   : Natural := 0;
-         Result : String_List_Utils.String_List.List;
+         Result : String_List_Utils.String_List.Vector;
       begin
          if Macro > 0 then
             return To_Parser_List
@@ -2169,20 +2142,18 @@ package body Build_Configurations is
    ---------------
 
    function To_String
-     (List : String_List_Utils.String_List.List) return String
+     (List : String_List_Utils.String_List.Vector) return String
    is
       use String_List_Utils.String_List;
 
-      Node    : String_List_Utils.String_List.List_Node := First (List);
       Result  : Unbounded_String;
    begin
-      while Node /= Null_Node loop
+      for Item of List loop
          if Result /= "" then
             Result := " " & Result;
          end if;
 
-         Result := Data (Node) & Result;
-         Node := Next (Node);
+         Result := Item & Result;
       end loop;
 
       return To_String (Result);

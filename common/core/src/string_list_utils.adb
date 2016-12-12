@@ -27,18 +27,9 @@ package body String_List_Utils is
    ----------------------
 
    function Copy_String_List
-     (S : String_List.List) return String_List.List
-   is
-      Result : String_List.List;
-      Temp   : List_Node := First (S);
-
+     (S : String_List.Vector) return String_List.Vector is
    begin
-      while Temp /= Null_Node loop
-         Append (Result, Data (Temp));
-         Temp := Next (Temp);
-      end loop;
-
-      return Result;
+      return S;
    end Copy_String_List;
 
    --------------------------------
@@ -52,51 +43,25 @@ package body String_List_Utils is
         < Ada.Characters.Handling.To_Lower (Item2);
    end Less_Than_Case_Insensitive;
 
-   -----------------
-   -- String_Free --
-   -----------------
-
-   procedure String_Free (S : in out String) is
-      pragma Unreferenced (S);
-   begin
-      null;
-   end String_Free;
-
    ----------------------
    -- Remove_From_List --
    ----------------------
 
    procedure Remove_From_List
-     (L               : in out String_List.List;
+     (L               : in out String_List.Vector;
       S               : String;
       All_Occurrences : Boolean := True)
    is
-      Node      : List_Node;
-      Prev_Node : List_Node := Null_Node;
+      Node : Cursor := L.Find (S);
    begin
-      Node := First (L);
+      while Has_Element (Node) loop
+         L.Delete (Node);
 
-      while Node /= Null_Node loop
-         if Data (Node) = S then
-            Remove_Nodes (L, Prev_Node, Node);
-
-            if not All_Occurrences then
-               return;
-            end if;
-
-            if Prev_Node = Null_Node then
-               Node := First (L);
-            else
-               Node := Prev_Node;
-            end if;
-
-            if Node = Null_Node then
-               return;
-            end if;
+         if not All_Occurrences then
+            return;
          end if;
 
-         Prev_Node := Node;
-         Node := Next (Node);
+         Node := L.Find (S);
       end loop;
    end Remove_From_List;
 
@@ -104,18 +69,9 @@ package body String_List_Utils is
    -- Is_In_List --
    ----------------
 
-   function Is_In_List (L : String_List.List; S : String) return Boolean is
-      Node : List_Node := First (L);
+   function Is_In_List (L : String_List.Vector; S : String) return Boolean is
    begin
-      while Node /= Null_Node loop
-         if S = Data (Node) then
-            return True;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      return False;
+      return L.Contains (S);
    end Is_In_List;
 
    ------------------------
@@ -123,36 +79,36 @@ package body String_List_Utils is
    ------------------------
 
    procedure Add_Unique_Sorted
-     (L : in out String_List.List;
+     (L : in out String_List.Vector;
       S : String)
    is
-      N : List_Node;
-      P : List_Node;
+      N : Cursor;
+      P : Cursor;
    begin
-      if Is_Empty (L) then
-         Append (L, S);
+      if L.Is_Empty then
+         L.Append (S);
 
          return;
       end if;
 
-      N := First (L);
+      N := L.First;
 
-      while N /= Null_Node
-        and then Data (N) < S
+      while Has_Element (N)
+        and then Element (N) < S
       loop
          P := N;
-         N := Next (N);
+         Next (N);
       end loop;
 
-      if N /= Null_Node
-        and then Data (N) = S
+      if Has_Element (N)
+        and then Element (N) = S
       then
          return;
       else
-         if P = Null_Node then
-            Prepend (L, S);
+         if not Has_Element (P) then
+            L.Prepend (S);
          else
-            Append (L, P, S);
+            L.Insert (P, S);
          end if;
       end if;
    end Add_Unique_Sorted;
@@ -162,17 +118,14 @@ package body String_List_Utils is
    ---------------------------
 
    function List_To_Argument_List
-     (L : String_List.List) return GNAT.OS_Lib.Argument_List
+     (L : String_List.Vector) return GNAT.OS_Lib.Argument_List
    is
-      Length : constant Natural := String_List.Length (L);
-      Args   : Argument_List (1 .. Length);
+      Args   : Argument_List (1 .. Natural (L.Length));
       Index  : Natural := Args'First;
-      Node   : List_Node := First (L);
    begin
-      while Node /= Null_Node loop
-         Args (Index) := new String'(Data (Node));
+      for Item of L loop
+         Args (Index) := new String'(Item);
          Index := Index + 1;
-         Node := Next (Node);
       end loop;
 
       return Args;
@@ -182,21 +135,21 @@ package body String_List_Utils is
    -- Longest_Prefix --
    --------------------
 
-   function Longest_Prefix (L : String_List.List) return String is
+   function Longest_Prefix (L : String_List.Vector) return String is
    begin
-      if L = Null_List then
+      if L.Is_Empty then
          return "";
       end if;
 
       declare
-         Node    : List_Node       := First (L);
-         First_S : constant String := Data (Node);
+         Node    : Cursor          := L.First;
+         First_S : constant String := Element (Node);
          Length  : Natural         := First_S'Length;
       begin
-         Node := Next (Node);
-         while Node /= Null_Node loop
+         Next (Node);
+         while Has_Element (Node) loop
             declare
-               Data_S : constant String := Data (Node);
+               Data_S : constant String := Element (Node);
             begin
                Length := Natural'Min (Length, Data_S'Length);
                while Length > 0
@@ -211,7 +164,7 @@ package body String_List_Utils is
                exit when Length = 0;
             end;
 
-            Node := Next (Node);
+            Next (Node);
          end loop;
 
          return First_S (First_S'First .. First_S'First + Length - 1);

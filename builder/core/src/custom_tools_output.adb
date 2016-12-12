@@ -75,7 +75,7 @@ package body Custom_Tools_Output is
 
    overriding procedure Create_External_Parsers
      (Self        : access Python_Parser_Fabric;
-      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
       Found       : out Boolean);
 
@@ -85,7 +85,7 @@ package body Custom_Tools_Output is
 
    overriding procedure Create_External_Parsers
      (Self        : access Python_Parser_Fabric;
-      Parser_List : in out String_List_Utils.String_List.List_Node;
+      Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
       Found       : out Boolean)
    is
@@ -102,7 +102,7 @@ package body Custom_Tools_Output is
          Args : Callback_Data'Class :=
            Create (Script, 1 + Boolean'Pos (Child /= null));
       begin
-         Set_Nth_Arg (Args, 1, Data (Parser_List));
+         Set_Nth_Arg (Args, 1, Element (Parser_List));
 
          if Child /= null then
             --  Create wrapper around Child and pass to python function
@@ -128,13 +128,13 @@ package body Custom_Tools_Output is
          return;
       end if;
 
-      Parser_List := Next (Parser_List);
+      Next (Parser_List);
 
-      while Parser_List /= Null_Node loop
+      while Has_Element (Parser_List) loop
          declare
             Args : Callback_Data'Class := Create (Script, 2);
          begin
-            Set_Nth_Arg (Args, 1, Data (Parser_List));
+            Set_Nth_Arg (Args, 1, Element (Parser_List));
             Set_Nth_Arg (Args, 2, Inst);
 
             Execute_Command (Args, Create_Parser);
@@ -142,7 +142,7 @@ package body Custom_Tools_Output is
             exit when Args.Return_Value = No_Class_Instance;
 
             Inst := Args.Return_Value;
-            Parser_List := Next (Parser_List);
+            Next (Parser_List);
          end;
       end loop;
 

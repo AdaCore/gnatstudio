@@ -54,7 +54,7 @@ package Commands.VCS is
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : GNATCOLL.VFS.File_Array;
-      Logs      : String_List.List);
+      Logs      : String_List.Vector);
    --  Create a new Log_Action_Command.
    --  The user must free Filenames and Logs after calling Create.
    --  The log files for files that are up-to-date will be erased
@@ -122,7 +122,7 @@ private
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : GNATCOLL.VFS.File_Array_Access;
-      Logs      : String_List.List;
+      Logs      : String_List.Vector;
    end record;
 
    type Check_Activity_Command_Type is new Root_Command with record

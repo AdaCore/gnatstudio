@@ -76,7 +76,7 @@ package Interactive_Consoles is
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
-      return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.Vector;
    --  The default completion handler for a console, which queries the
    --  associated scripting language.
    --  When called, User_Data will be the Console itself, and not the one

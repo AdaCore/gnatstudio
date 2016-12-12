@@ -215,7 +215,7 @@ package GUI_Utils is
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
-      return String_List_Utils.String_List.List;
+      return String_List_Utils.String_List.Vector;
    --  This function should return a list of adequate elements that all
    --  begin with Input, or a list containing only Input.
    --  The list if freed automatically by the interactive console.

@@ -852,15 +852,14 @@ package body GPS.Kernel.Contexts is
      (Context : in out Selection_Context;
       Id      : String) is
    begin
-      String_List_Utils.String_List.Free (Context.Ref.Get.Activities);
+      Context.Ref.Get.Activities.Clear;
       String_List_Utils.String_List.Append (Context.Ref.Get.Activities, Id);
    end Set_Activity_Information;
 
    procedure Set_Activity_Information
      (Context    : in out Selection_Context;
-      Activities : String_List_Utils.String_List.List) is
+      Activities : String_List_Utils.String_List.Vector) is
    begin
-      String_List_Utils.String_List.Free (Context.Ref.Get.Activities);
       Context.Ref.Get.Activities := Activities;
    end Set_Activity_Information;
 
@@ -869,7 +868,8 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Activity_Information
-     (Context : Selection_Context) return String_List_Utils.String_List.List is
+     (Context : Selection_Context)
+      return String_List_Utils.String_List.Vector is
    begin
       return Context.Ref.Get.Activities;
    end Activity_Information;
