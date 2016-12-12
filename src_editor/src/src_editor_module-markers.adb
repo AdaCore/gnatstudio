@@ -311,7 +311,10 @@ package body Src_Editor_Module.Markers is
             begin
                Disconnect (Self.Buffer, Self.Cid);
                Self.Unlink_Mark (True);
-               B.Delete_Mark (M);
+
+               if M /= B.Get_Insert then
+                  B.Delete_Mark (M);
+               end if;
             end;
          end if;
       end if;
