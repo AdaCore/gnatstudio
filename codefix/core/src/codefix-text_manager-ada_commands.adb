@@ -506,12 +506,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Cursor : Word_Cursor;
-      Current_Word   : Mark_List.List_Node;
    begin
-      Current_Word := First (This.Remove_List);
-
-      while Current_Word /= Mark_List.Null_Node loop
-         Make_Word_Cursor (Data (Current_Word), Current_Text, Current_Cursor);
+      for Item of This.Remove_List loop
+         Make_Word_Cursor (Item, Current_Text, Current_Cursor);
 
          declare
             Extract_Temp : Ada_Statement;
@@ -534,8 +531,6 @@ package body Codefix.Text_Manager.Ada_Commands is
                  (Get_Context (Current_Text).Db.Symbols,
                   To_String (Current_Cursor.String_Match)));
          end;
-
-         Current_Word := Next (Current_Word);
       end loop;
    end Execute;
 
@@ -545,7 +540,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Elements_Cmd) is
    begin
-      Free (This.Remove_List);
+      This.Remove_List.Clear;
       Free (Text_Command (This));
    end Free;
 
@@ -555,14 +550,11 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding
    function Is_Writable (This : Remove_Elements_Cmd) return Boolean is
-      Cur : Mark_List.List_Node := First (This.Remove_List);
    begin
-      while Cur /= Mark_List.Null_Node loop
-         if not Mark_List.Data (Cur).Mark_Id.Get_File.Is_Writable then
+      for Item of This.Remove_List loop
+         if not Item.Mark_Id.Get_File.Is_Writable then
             return False;
          end if;
-
-         Cur := Next (Cur);
       end loop;
 
       return True;

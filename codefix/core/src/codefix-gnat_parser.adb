@@ -3273,7 +3273,7 @@ package body Codefix.GNAT_Parser is
       Message : constant Error_Message := Get_Message (Message_It);
       Matches_Prev    : Match_Array (0 .. 2);
       Preview         : Error_Message;
-      Cursor_List     : Cursor_Lists.List;
+      Cursor_List     : Cursor_Lists.Vector;
       Next_Message    : Error_Message_Iterator := Message_It;
    begin
       loop
@@ -3329,7 +3329,7 @@ package body Codefix.GNAT_Parser is
          To_Unbounded_String
            (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
-      Free (Cursor_List);
+      Cursor_List.Clear;
 
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
@@ -3366,7 +3366,7 @@ package body Codefix.GNAT_Parser is
       Matches_Check : Match_Array (0 .. 0);
       Matches_Loc   : Match_Array (0 .. 2);
       Preview       : Error_Message;
-      Cursor_List   : Cursor_Lists.List;
+      Cursor_List   : Cursor_Lists.Vector;
       Next_Message  : Error_Message_Iterator;
       Message       : constant Error_Message := Get_Message (Message_It);
 

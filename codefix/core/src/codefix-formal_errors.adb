@@ -1182,27 +1182,24 @@ package body Codefix.Formal_Errors is
    function Resolve_Ambiguity
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
-      Solution_Cursors : Cursor_Lists.List;
+      Solution_Cursors : Cursor_Lists.Vector;
       Name             : Unbounded_String) return Solution_List
    is
-      Str_Array   : array (1 .. Length (Solution_Cursors)) of Unbounded_String;
-      Cursor_Node : Cursor_Lists.List_Node;
+      Str_Array   : array
+        (1 .. Natural (Solution_Cursors.Length)) of Unbounded_String;
       Index_Str   : Positive := 1;
       Word        : Word_Cursor;
       Result      : Solution_List;
    begin
-      Cursor_Node := First (Solution_Cursors);
-
-      while Cursor_Node /= Cursor_Lists.Null_Node loop
+      for Item of Solution_Cursors loop
          declare
             New_Command_Ptr : constant Ptr_Command :=
               new Insert_Word_Cmd (Complex);
             New_Command     : Insert_Word_Cmd renames
               Insert_Word_Cmd (New_Command_Ptr.all);
          begin
-            Str_Array (Index_Str) :=
-              To_Unbounded_String
-                (Get_Full_Prefix (Current_Text, Data (Cursor_Node)));
+            Str_Array (Index_Str) := To_Unbounded_String
+              (Get_Full_Prefix (Current_Text, Item));
 
             for J in 1 ..  Index_Str - 1 loop
                if Str_Array (J) = Str_Array (Index_Str) then
@@ -1230,7 +1227,6 @@ package body Codefix.Formal_Errors is
             Free (Word);
 
             Index_Str := Index_Str + 1;
-            Cursor_Node := Next (Cursor_Node);
          end;
       end loop;
 

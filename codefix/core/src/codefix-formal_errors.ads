@@ -29,10 +29,11 @@ with Language;              use Language;
 with Language.Tree;         use Language.Tree;
 with Projects;
 with GNATCOLL.VFS;
+with GPS_Vectors;
 
 package Codefix.Formal_Errors is
 
-   package Cursor_Lists is new Generic_List (File_Cursor);
+   package Cursor_Lists is new GPS_Vectors (File_Cursor);
    use Cursor_Lists;
 
    ----------------------------------------------------------------------------
@@ -240,7 +241,7 @@ package Codefix.Formal_Errors is
    function Resolve_Ambiguity
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
-      Solution_Cursors : Cursor_Lists.List;
+      Solution_Cursors : Cursor_Lists.Vector;
       Name             : Unbounded_String) return Solution_List;
    --  Add to the object Name the prefix of the package declared at the
    --  position Solution_Cursor. If the ambiguity can't be solved by this

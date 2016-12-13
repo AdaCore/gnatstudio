@@ -17,7 +17,7 @@
 
 with Refactoring.Services; use Refactoring.Services;
 
-private with Generic_List;
+private with GPS_Vectors;
 private with Ada.Containers.Vectors;
 
 package Codefix.Text_Manager.Ada_Commands is
@@ -624,7 +624,7 @@ package Codefix.Text_Manager.Ada_Commands is
 
 private
 
-   package Mark_List is new Generic_List (Word_Mark);
+   package Mark_List is new GPS_Vectors (Word_Mark);
    use Mark_List;
 
    type Recase_Word_Cmd is new Text_Command (Simple) with record
@@ -638,7 +638,7 @@ private
    end record;
 
    type Remove_Elements_Cmd is new Text_Command (Complex) with record
-      Remove_List : Mark_List.List;
+      Remove_List : Mark_List.Vector;
       Mode        : Remove_Code_Mode := Erase;
    end record;
 
