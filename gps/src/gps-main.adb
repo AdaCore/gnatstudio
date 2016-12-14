@@ -79,6 +79,7 @@ with Gtkada.Style;
 
 with Config;                           use Config;
 with Default_Preferences;              use Default_Preferences;
+with Default_Preferences.Assistants;   use Default_Preferences.Assistants;
 with GPS.Callbacks;                    use GPS.Callbacks;
 with GPS.Environments;                 use GPS.Environments;
 with GPS.Intl;                         use GPS.Intl;
@@ -291,32 +292,33 @@ procedure GPS.Main is
       DB_Dirs     : GNATCOLL.VFS.File_Array_Access;
    end record;
 
-   Config_Files : Config_File_Setup;
+   Config_Files               : Config_File_Setup;
 
-   Home_Dir               : Virtual_File;
-   Prefix_Dir             : Virtual_File;
-   GPS_Home_Dir           : Virtual_File;
-   Batch_File             : String_Access;
-   Batch_Script           : String_Access;
-   Hide_GPS               : Boolean := False;
-   Tools_Host             : String_Access;
-   Target                 : String_Access;
-   Protocol               : String_Access;
-   Debugger_Name          : String_Access;
-   Startup_Dir            : String_Access;
-   Passed_Project_Name    : String_Access;
-   Program_Args           : String_Access;
-   Server_Mode            : Boolean := False;
-   Port_Number            : Natural := 0;
+   Home_Dir                   : Virtual_File;
+   Prefix_Dir                 : Virtual_File;
+   GPS_Home_Dir               : Virtual_File;
+   Show_Preferences_Assistant : Boolean := False;
+   Batch_File                 : String_Access;
+   Batch_Script               : String_Access;
+   Hide_GPS                   : Boolean := False;
+   Tools_Host                 : String_Access;
+   Target                     : String_Access;
+   Protocol                   : String_Access;
+   Debugger_Name              : String_Access;
+   Startup_Dir                : String_Access;
+   Passed_Project_Name        : String_Access;
+   Program_Args               : String_Access;
+   Server_Mode                : Boolean := False;
+   Port_Number                : Natural := 0;
 
-   GPS_Main               : GPS_Window;
-   Project_Name           : Virtual_File := No_File;
-   Splash                 : Gtk_Window;
-   Files_To_Open          : File_To_Open_Vectors.Vector;
-   Unexpected_Exception   : Boolean := False;
-   Env                    : GPS.Environments.Environment;
+   GPS_Main                   : GPS_Window;
+   Project_Name               : Virtual_File := No_File;
+   Splash                     : Gtk_Window;
+   Files_To_Open              : File_To_Open_Vectors.Vector;
+   Unexpected_Exception       : Boolean := False;
+   Env                        : GPS.Environments.Environment;
 
-   Timeout_Id             : Glib.Main.G_Source_Id;
+   Timeout_Id                 : Glib.Main.G_Source_Id;
    pragma Unreferenced (Timeout_Id);
 
    function Local_Command_Line
@@ -675,6 +677,7 @@ procedure GPS.Main is
 
       begin
          if not Is_Directory (GPS_Home_Dir) then
+            Show_Preferences_Assistant := True;
             Make_Dir (GPS_Home_Dir);
 
             --  Create a default configuration file for the traces.
@@ -2255,6 +2258,43 @@ procedure GPS.Main is
       --  Load the custom keys last, so that they override everything else set
       --  so far.
       KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
+
+      --  Show the preferences assistant dialog if the user don't have any GPS
+      --  home directory yet.
+
+      if Show_Preferences_Assistant then
+
+         --  Remove the splash screen, since it conflicts with the preferences
+         --  assistant dialog.
+         if Splash /= null then
+            Destroy (Splash);
+            Splash := null;
+         end if;
+
+         Display_Preferences_Assistant
+           (GPS_Main.Kernel,
+            Pages => (1 => Create
+                      (Pref_Page =>
+                         GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                           ("General/Color Theme"),
+                       Label     => "Set the color theme",
+                       Message   => "The color theme can be changed later via "
+                       & "<b>Edit/Preferences/Color Theme</b>."),
+                      2 => Create
+                        (Pref_Page =>
+                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                             ("Refactoring"),
+                         Label     => "Select refactoring stuff",
+                         Message   => "Refactoring preferences can be changed "
+                         & "later via <b>Edit/Preferences/Refactoring</b>."),
+                      3 => Create
+                        (Pref_Page =>
+                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                             ("Plugins"),
+                         Label     => "Select your plugins",
+                         Message   => "Enabled plugins can be changed later "
+                         & "via <b>Edit/Preferences/Plugins</b>.")));
+      end if;
 
       --  All/most actions are now loaded, we can reset the toolbars.
       --  We must have the keybindings in place already, since the clean up of

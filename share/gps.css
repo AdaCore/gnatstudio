@@ -117,6 +117,21 @@
    -GtkButtonBox-child-internal-pad-x: 0;
 }
 
+/**************************
+ * GPS Assistant Pages    *
+ **************************/
+
+.assistant-page-views > GtkViewport > GtkBox > .dialog-views-groups > GtkLabel {
+   /* Set extra large font for assistant pages titles */
+   font-weight: normal;
+   font-size: x-large;
+   padding-bottom: 5px;
+}
+
+.assistant-page-views .dialog-views-groups  {
+   padding-top: 5px;
+}
+
 /*********************
  * Menus
  *********************/
