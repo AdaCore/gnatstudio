@@ -24,12 +24,13 @@ with GNAT.Regpat;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
-with Generic_List;
 with Language;              use Language;
 with Language.Tree;         use Language.Tree;
 with Projects;
 with GNATCOLL.VFS;
 with GPS_Vectors;
+
+private with Ada.Unchecked_Deallocation;
 
 package Codefix.Formal_Errors is
 
@@ -410,18 +411,41 @@ private
       --  fixes.
    end record;
 
-   package Command_List is new Generic_List (Ptr_Command, Free);
-   use Command_List;
+   type List_Node_Record;
+   type Solution_List_Iterator is access List_Node_Record;
+   type List_Node_Access is access Solution_List_Iterator;
 
-   type Solution_List is new Command_List.List;
+   Null_Node : constant Solution_List_Iterator := null;
+
+   type Solution_List is record
+      First : List_Node_Access;
+      Last  : List_Node_Access;
+   end record;
    --  This is a list of solutions proposed to solve an error.
 
-   type Solution_List_Iterator is new Command_List.List_Node;
+   List_Empty : exception;
+
+   Null_Solution_List : constant Solution_List := Solution_List'(null, null);
+
+   type Data_Access is access Ptr_Command;
+
+   type List_Node_Record is record
+      Element : Data_Access;
+      Next    : Solution_List_Iterator;
+   end record;
+
+   procedure Free_Element is new
+     Ada.Unchecked_Deallocation (Ptr_Command, Data_Access);
+
+   procedure Free_Node is new
+     Ada.Unchecked_Deallocation (List_Node_Record, Solution_List_Iterator);
+
+   procedure Free_Node_Access is new
+     Ada.Unchecked_Deallocation (Solution_List_Iterator, List_Node_Access);
+
+   procedure Append (This : in out Solution_List; Command : Ptr_Command);
 
    Invalid_Error_Message : constant Error_Message :=
      (Null_File_Cursor with Null_Unbounded_String, False, False, 0, True);
-
-   Null_Solution_List : constant Solution_List := Solution_List
-     (Command_List.Null_List);
 
 end Codefix.Formal_Errors;

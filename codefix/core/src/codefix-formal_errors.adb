@@ -40,6 +40,10 @@ with Refactoring.Services;              use Refactoring.Services;
 package body Codefix.Formal_Errors is
    use type GNATCOLL.Xref.Visible_Column;
 
+   function Is_Empty (L : Solution_List) return Boolean;
+   function Data (Node : Solution_List_Iterator) return Ptr_Command;
+   function Data_Ref (Node : Solution_List_Iterator) return Data_Access;
+
    ----------------
    -- Initialize --
    ----------------
@@ -178,6 +182,17 @@ package body Codefix.Formal_Errors is
       This.Is_Cancelled := True;
    end Cancel;
 
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (L : Solution_List) return Boolean is
+   begin
+      return L.First = null
+        or else L.First.all = null
+        or else L.First.all.Element = null;
+   end Is_Empty;
+
    ------------------
    -- Is_Cancelled --
    ------------------
@@ -216,10 +231,34 @@ package body Codefix.Formal_Errors is
    -- Concat --
    ------------
 
-   overriding procedure Concat
-     (Dest : in out Solution_List; Source : Solution_List) is
+   procedure Concat
+     (Dest : in out Solution_List; Source : Solution_List)
+   is
+      F1 : List_Node_Access := Source.First;
+      F2 : List_Node_Access := Source.Last;
    begin
-      Concat (Command_List.List (Dest), Command_List.List (Source));
+      if Is_Empty (Source) then
+         return;
+      end if;
+
+      if Dest.Last = null then
+         Dest.Last := new Solution_List_Iterator'(Null_Node);
+      end if;
+
+      if Dest.First = null then
+         Dest.First := new Solution_List_Iterator'(Null_Node);
+      end if;
+
+      if Is_Empty (Dest) then
+         Dest.First.all := Source.First.all;
+         Dest.Last.all  := Source.Last.all;
+      else
+         Dest.Last.all.Next := Source.First.all;
+         Dest.Last.all      := Source.Last.all;
+      end if;
+
+      Free_Node_Access (F1);
+      Free_Node_Access (F2);
    end Concat;
 
    -------------------
@@ -244,7 +283,7 @@ package body Codefix.Formal_Errors is
          Caption : String)
          return Boolean
       is
-         Item : Command_List.List_Node := First (Dest);
+         Item : Solution_List_Iterator := First (Dest);
       begin
          for J in 1 .. Length (Dest) loop
             if Data (Item).Get_Caption = Caption then
@@ -256,7 +295,7 @@ package body Codefix.Formal_Errors is
          return False;
       end Has_Caption;
 
-      Item : Command_List.List_Node := First (Source);
+      Item : Solution_List_Iterator := First (Source);
    begin
       for J in 1 .. Length (Source) loop
          if not Has_Caption (Dest, Data (Item).Get_Caption) then
@@ -271,9 +310,24 @@ package body Codefix.Formal_Errors is
    -- Length --
    ------------
 
-   overriding function Length (List : Solution_List) return Integer is
+   function Length (List : Solution_List) return Integer
+   is
+      L_Current : Solution_List_Iterator;
+      Result    : Natural := 0;
+
    begin
-      return Length (Command_List.List (List));
+      if List.First = null then
+         return 0;
+      end if;
+
+      L_Current := List.First.all;
+
+      while L_Current /= null loop
+         Result := Result + 1;
+         L_Current := L_Current.Next;
+      end loop;
+
+      return Result;
    end Length;
 
    -----------
@@ -282,19 +336,54 @@ package body Codefix.Formal_Errors is
 
    function First (List : Solution_List) return Solution_List_Iterator is
    begin
-      return Solution_List_Iterator
-        (Command_List.First (Command_List.List (List)));
+      if List.First = null then
+         return Null_Node;
+      else
+         return List.First.all;
+      end if;
    end First;
 
    ----------
    -- Next --
    ----------
 
-   overriding function Next
+   function Next
      (It : Solution_List_Iterator) return Solution_List_Iterator is
    begin
-      return Solution_List_Iterator (Next (Command_List.List_Node (It)));
+      if It = null then
+         raise List_Empty;
+      else
+         return It.Next;
+      end if;
    end Next;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (This : in out Solution_List; Command : Ptr_Command) is
+   begin
+      if This.Last = null then
+         This.Last := new Solution_List_Iterator'(Null_Node);
+      end if;
+
+      if This.First = null then
+         This.First := new Solution_List_Iterator'(Null_Node);
+      end if;
+
+      if This.Last.all = null then
+         This.First.all := new List_Node_Record'
+           (Element => new Ptr_Command'(Command),
+            Next    => null);
+         This.Last.all := This.First.all;
+
+      else
+         This.Last.all.Next := new List_Node_Record'
+           (Element => new Ptr_Command'(Command),
+            Next    => null);
+         This.Last.all := This.Last.all.Next;
+      end if;
+   end Append;
 
    ------------
    -- At_End --
@@ -302,7 +391,7 @@ package body Codefix.Formal_Errors is
 
    function At_End (It : Solution_List_Iterator) return Boolean is
    begin
-      return Command_List.List_Node (It) = Command_List.Null_Node;
+      return It = Null_Node;
    end At_End;
 
    -----------------
@@ -323,7 +412,7 @@ package body Codefix.Formal_Errors is
      (This     : Solution_List;
       Position : Positive) return Ptr_Command
    is
-      Current_Node : Command_List.List_Node;
+      Current_Node : Solution_List_Iterator;
    begin
       Current_Node := First (This);
 
@@ -339,8 +428,7 @@ package body Codefix.Formal_Errors is
    ----------------
 
    procedure Set_Parser
-     (It : Solution_List_Iterator; Parser : Error_Parser_Access)
-   is
+     (It : Solution_List_Iterator; Parser : Error_Parser_Access) is
    begin
       Set_Parser (Data (It).all, Parser);
    end Set_Parser;
@@ -350,8 +438,34 @@ package body Codefix.Formal_Errors is
    ---------------
 
    procedure Free_List (This : in out Solution_List) is
+      Current : Solution_List_Iterator;
+      Tmp     : Solution_List_Iterator;
    begin
-      Free (This, True);
+      if This.First = null
+        or else This.Last = null
+        or else This.Last.all = null
+      then
+         return;
+      end if;
+
+      Current := This.First.all;
+      This.First.all := null;
+      This.Last.all  := null;
+
+      while Current /= null loop
+         Tmp := Current;
+         Current := Current.Next;
+
+         if Tmp.Element /= null then
+            Free (Tmp.Element.all);
+         end if;
+
+         Free_Element (Tmp.Element);
+         Free_Node (Tmp);
+      end loop;
+
+      Free_Node_Access (This.First);
+      Free_Node_Access (This.Last);
    end Free_List;
 
    ---------------------------
@@ -475,6 +589,32 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Wrong_Order;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Node : Solution_List_Iterator) return Ptr_Command is
+   begin
+      if Node = null or else Node.Element = null then
+         raise List_Empty;
+      else
+         return Node.Element.all;
+      end if;
+   end Data;
+
+   --------------
+   -- Data_Ref --
+   --------------
+
+   function Data_Ref (Node : Solution_List_Iterator) return Data_Access is
+   begin
+      if Node = null or else Node.Element = null then
+         raise List_Empty;
+      else
+         return Node.Element;
+      end if;
+   end Data_Ref;
 
    -----------------
    -- Expand_Tabs --
@@ -1205,7 +1345,7 @@ package body Codefix.Formal_Errors is
                if Str_Array (J) = Str_Array (Index_Str) then
                   Codefix.Formal_Errors.Free_List (Result);
 
-                  return Solution_List (Command_List.Null_List);
+                  return Null_Solution_List;
                end if;
             end loop;
 
