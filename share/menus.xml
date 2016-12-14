@@ -446,9 +446,11 @@
             <menu label='Standard'  action='display standard.ads'/>
          </menu>
          <menu label='GNAT'/>
+         <menu label='GPR'/>
          <menu label='GNU Tools'/>
          <menu label='Gprbuild'/>
          <menu label='XMLAda'/>
+         <menu label='Ada'/>
          <menu label='Python'/>
          <menu label='SPARK'/>
          <menu label='A_bout'       action='about gps'/>
