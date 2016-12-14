@@ -118,6 +118,8 @@ package body Database.Orm is
    Alias_Tools : constant Alias_Array := (0 => -1);
 
    pragma Warnings (On);
+   function Str_Or_Empty (Str : access String) return String;
+
    function Detach_No_Lookup
      (Self    : Category'Class;
       Session : Session_Type)
@@ -796,7 +798,7 @@ package body Database.Orm is
 
    function Data (Self : Detached_Message) return String is
    begin
-      return To_String (Message_Data (Self.Unchecked_Get).ORM_Data);
+      return Str_Or_Empty (Message_Data (Self.Unchecked_Get).ORM_Data);
    end Data;
 
    ---------------
@@ -1154,7 +1156,7 @@ package body Database.Orm is
 
    function Identifier (Self : Detached_Rule) return String is
    begin
-      return To_String (Rule_Data (Self.Unchecked_Get).ORM_Identifier);
+      return Str_Or_Empty (Rule_Data (Self.Unchecked_Get).ORM_Identifier);
    end Identifier;
 
    ----------------
@@ -1172,7 +1174,7 @@ package body Database.Orm is
 
    function Identifier (Self : Detached_Property) return String is
    begin
-      return To_String (Property_Data (Self.Unchecked_Get).ORM_Identifier);
+      return Str_Or_Empty (Property_Data (Self.Unchecked_Get).ORM_Identifier);
    end Identifier;
 
    ----------
@@ -1226,7 +1228,7 @@ package body Database.Orm is
 
    function Label (Self : Detached_Category) return String is
    begin
-      return To_String (Category_Data (Self.Unchecked_Get).ORM_Label);
+      return Str_Or_Empty (Category_Data (Self.Unchecked_Get).ORM_Label);
    end Label;
 
    ----------
@@ -1490,7 +1492,7 @@ package body Database.Orm is
 
    function Name (Self : Detached_Rule) return String is
    begin
-      return To_String (Rule_Data (Self.Unchecked_Get).ORM_Name);
+      return Str_Or_Empty (Rule_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1508,7 +1510,7 @@ package body Database.Orm is
 
    function Name (Self : Detached_Entity) return String is
    begin
-      return To_String (Entity_Data (Self.Unchecked_Get).ORM_Name);
+      return Str_Or_Empty (Entity_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1526,7 +1528,7 @@ package body Database.Orm is
 
    function Name (Self : Detached_Tool) return String is
    begin
-      return To_String (Tool_Data (Self.Unchecked_Get).ORM_Name);
+      return Str_Or_Empty (Tool_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1544,7 +1546,7 @@ package body Database.Orm is
 
    function Name (Self : Detached_Property) return String is
    begin
-      return To_String (Property_Data (Self.Unchecked_Get).ORM_Name);
+      return Str_Or_Empty (Property_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1562,7 +1564,7 @@ package body Database.Orm is
 
    function Name (Self : Detached_Resource) return String is
    begin
-      return To_String (Resource_Data (Self.Unchecked_Get).ORM_Name);
+      return Str_Or_Empty (Resource_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    -------------
@@ -1860,6 +1862,19 @@ package body Database.Orm is
       end if;
       return D.ORM_FK_Rule_Id.all;
    end Rule_Id;
+
+   ------------------
+   -- Str_Or_Empty --
+   ------------------
+
+   function Str_Or_Empty (Str : access String) return String is
+   begin
+      if Str = null then
+         return "";
+      else
+         return Str.all;
+      end if;
+   end Str_Or_Empty;
 
    ---------------
    -- Timestamp --
@@ -2175,8 +2190,9 @@ package body Database.Orm is
 
       Tmp := Category_Data (Result.Unchecked_Get);
 
+      Free (Tmp.ORM_Label);
       Tmp.ORM_Id         := Integer_Value (Self, F_Categories_Id);
-      Tmp.ORM_Label      := To_Unbounded_String (String_Value (Self, F_Categories_Label));
+      Tmp.ORM_Label      := new String'(String_Value (Self, F_Categories_Label));
       Tmp.ORM_On_Side    := Boolean_Value (Self, F_Categories_On_Side);
       Session.Persist (Result);
       return Result;
@@ -2202,11 +2218,12 @@ package body Database.Orm is
 
       Tmp := Entity_Data (Result.Unchecked_Get);
 
+      Free (Tmp.ORM_Name);
       Tmp.ORM_Col_Begin    := Integer_Value (Self, F_Entities_Col_Begin);
       Tmp.ORM_Col_End      := Integer_Value (Self, F_Entities_Col_End);
       Tmp.ORM_Id           := Integer_Value (Self, F_Entities_Id);
       Tmp.ORM_Line         := Integer_Value (Self, F_Entities_Line);
-      Tmp.ORM_Name         := To_Unbounded_String (String_Value (Self, F_Entities_Name));
+      Tmp.ORM_Name         := new String'(String_Value (Self, F_Entities_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -2285,8 +2302,9 @@ package body Database.Orm is
 
       end if;
 
+      Free (Tmp.ORM_Data);
       Tmp.ORM_Category_Id    := Integer_Value (Self, F_Messages_Category_Id);
-      Tmp.ORM_Data           := To_Unbounded_String (String_Value (Self, F_Messages_Data));
+      Tmp.ORM_Data           := new String'(String_Value (Self, F_Messages_Data));
       Tmp.ORM_FK_Category_Id := FK_Category_Id;
       Tmp.ORM_FK_Rule_Id     := FK_Rule_Id;
       Tmp.ORM_Id             := Integer_Value (Self, F_Messages_Id);
@@ -2355,9 +2373,11 @@ package body Database.Orm is
 
       Tmp := Property_Data (Result.Unchecked_Get);
 
+      Free (Tmp.ORM_Identifier);
+      Free (Tmp.ORM_Name);
       Tmp.ORM_Id            := Integer_Value (Self, F_Properties_Id);
-      Tmp.ORM_Identifier    := To_Unbounded_String (String_Value (Self, F_Properties_Identifier));
-      Tmp.ORM_Name          := To_Unbounded_String (String_Value (Self, F_Properties_Name));
+      Tmp.ORM_Identifier    := new String'(String_Value (Self, F_Properties_Identifier));
+      Tmp.ORM_Name          := new String'(String_Value (Self, F_Properties_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -2428,9 +2448,10 @@ package body Database.Orm is
 
       Tmp := Resource_Data (Result.Unchecked_Get);
 
+      Free (Tmp.ORM_Name);
       Tmp.ORM_Id           := Integer_Value (Self, F_Resources_Id);
       Tmp.ORM_Kind         := Integer_Value (Self, F_Resources_Kind);
-      Tmp.ORM_Name         := To_Unbounded_String (String_Value (Self, F_Resources_Name));
+      Tmp.ORM_Name         := new String'(String_Value (Self, F_Resources_Name));
       Tmp.ORM_Timestamp    := Time_Value (Self, F_Resources_Timestamp);
       Session.Persist (Result);
       return Result;
@@ -2506,11 +2527,13 @@ package body Database.Orm is
               (Self, Upto_Rules_0 (Self.Depth, LJ)).Detach);
       end if;
 
+      Free (Tmp.ORM_Identifier);
+      Free (Tmp.ORM_Name);
       Tmp.ORM_FK_Tool_Id    := FK_Tool_Id;
       Tmp.ORM_Id            := Integer_Value (Self, F_Rules_Id);
-      Tmp.ORM_Identifier    := To_Unbounded_String (String_Value (Self, F_Rules_Identifier));
+      Tmp.ORM_Identifier    := new String'(String_Value (Self, F_Rules_Identifier));
       Tmp.ORM_Kind          := Integer_Value (Self, F_Rules_Kind);
-      Tmp.ORM_Name          := To_Unbounded_String (String_Value (Self, F_Rules_Name));
+      Tmp.ORM_Name          := new String'(String_Value (Self, F_Rules_Name));
       Tmp.ORM_Tool_Id       := Integer_Value (Self, F_Rules_Tool_Id);
       Session.Persist (Result);
       return Result;
@@ -2536,8 +2559,9 @@ package body Database.Orm is
 
       Tmp := Tool_Data (Result.Unchecked_Get);
 
+      Free (Tmp.ORM_Name);
       Tmp.ORM_Id      := Integer_Value (Self, F_Tools_Id);
-      Tmp.ORM_Name    := To_Unbounded_String (String_Value (Self, F_Tools_Name));
+      Tmp.ORM_Name    := new String'(String_Value (Self, F_Tools_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -3377,6 +3401,7 @@ package body Database.Orm is
 
    overriding procedure Free (Self : in out Category_Ddr) is
    begin
+      Free (Self.ORM_Label);
       Free (Detached_Data (Self));
    end Free;
 
@@ -3386,6 +3411,8 @@ package body Database.Orm is
 
    overriding procedure Free (Self : in out Entity_Ddr) is
    begin
+      Free (Self.ORM_Name);
+
       Free (Detached_Data (Self));
    end Free;
 
@@ -3410,6 +3437,7 @@ package body Database.Orm is
       Unchecked_Free (Self.ORM_FK_Rule_Id);
       Unchecked_Free (Self.ORM_FK_Category_Id);
 
+      Free (Self.ORM_Data);
       Free (Detached_Data (Self));
    end Free;
 
@@ -3431,6 +3459,8 @@ package body Database.Orm is
 
    overriding procedure Free (Self : in out Property_Ddr) is
    begin
+      Free (Self.ORM_Identifier);
+      Free (Self.ORM_Name);
       Free (Detached_Data (Self));
    end Free;
 
@@ -3452,6 +3482,8 @@ package body Database.Orm is
 
    overriding procedure Free (Self : in out Resource_Ddr) is
    begin
+      Free (Self.ORM_Name);
+
       Free (Detached_Data (Self));
    end Free;
 
@@ -3475,6 +3507,9 @@ package body Database.Orm is
    begin
       Unchecked_Free (Self.ORM_FK_Tool_Id);
 
+      Free (Self.ORM_Name);
+      Free (Self.ORM_Identifier);
+
       Free (Detached_Data (Self));
    end Free;
 
@@ -3484,6 +3519,7 @@ package body Database.Orm is
 
    overriding procedure Free (Self : in out Tool_Ddr) is
    begin
+      Free (Self.ORM_Name);
       Free (Detached_Data (Self));
    end Free;
 
@@ -4119,7 +4155,7 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Categories.Label = To_String (D.ORM_Label));
+         A := A & (DBA.Categories.Label = Str_Or_Empty (D.ORM_Label));
       end if;
       if Mask (3) then
          A := A & (DBA.Categories.On_Side = D.ORM_On_Side);
@@ -4153,7 +4189,7 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Entities.Name = To_String (D.ORM_Name));
+         A := A & (DBA.Entities.Name = Str_Or_Empty (D.ORM_Name));
       end if;
       if Mask (3) then
          A := A & (DBA.Entities.Line = D.ORM_Line);
@@ -4275,7 +4311,7 @@ package body Database.Orm is
          end if;
       end if;
       if Mask (3) then
-         A := A & (DBA.Messages.Data = To_String (D.ORM_Data));
+         A := A & (DBA.Messages.Data = Str_Or_Empty (D.ORM_Data));
       end if;
       if Mask (4) then
          if D.ORM_Category_Id /= -1 then
@@ -4388,10 +4424,10 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Properties.Identifier = To_String (D.ORM_Identifier));
+         A := A & (DBA.Properties.Identifier = Str_Or_Empty (D.ORM_Identifier));
       end if;
       if Mask (3) then
-         A := A & (DBA.Properties.Name = To_String (D.ORM_Name));
+         A := A & (DBA.Properties.Name = Str_Or_Empty (D.ORM_Name));
       end if;
       if Missing_PK then
          Q := SQL_Insert (A);
@@ -4486,7 +4522,7 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Resources.Name = To_String (D.ORM_Name));
+         A := A & (DBA.Resources.Name = Str_Or_Empty (D.ORM_Name));
       end if;
       if Mask (3) then
          A := A & (DBA.Resources.Kind = D.ORM_Kind);
@@ -4596,10 +4632,10 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Rules.Name = To_String (D.ORM_Name));
+         A := A & (DBA.Rules.Name = Str_Or_Empty (D.ORM_Name));
       end if;
       if Mask (3) then
-         A := A & (DBA.Rules.Identifier = To_String (D.ORM_Identifier));
+         A := A & (DBA.Rules.Identifier = Str_Or_Empty (D.ORM_Identifier));
       end if;
       if Mask (4) then
          A := A & (DBA.Rules.Kind = D.ORM_Kind);
@@ -4651,7 +4687,7 @@ package body Database.Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Tools.Name = To_String (D.ORM_Name));
+         A := A & (DBA.Tools.Name = Str_Or_Empty (D.ORM_Name));
       end if;
       if Missing_PK then
          Q := SQL_Insert (A);
@@ -5689,7 +5725,8 @@ package body Database.Orm is
    is
       D : constant Message_Data := Message_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Data := To_Unbounded_String (Value);
+      Free (D.ORM_Data);
+      D.ORM_Data := new String'(Value);
       Self.Set_Modified (3);
    end Set_Data;
 
@@ -5734,7 +5771,8 @@ package body Database.Orm is
    is
       D : constant Rule_Data := Rule_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Identifier := To_Unbounded_String (Value);
+      Free (D.ORM_Identifier);
+      D.ORM_Identifier := new String'(Value);
       Self.Set_Modified (3);
    end Set_Identifier;
 
@@ -5746,7 +5784,8 @@ package body Database.Orm is
    is
       D : constant Property_Data := Property_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Identifier := To_Unbounded_String (Value);
+      Free (D.ORM_Identifier);
+      D.ORM_Identifier := new String'(Value);
       Self.Set_Modified (2);
    end Set_Identifier;
 
@@ -5782,7 +5821,8 @@ package body Database.Orm is
    is
       D : constant Category_Data := Category_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Label := To_Unbounded_String (Value);
+      Free (D.ORM_Label);
+      D.ORM_Label := new String'(Value);
       Self.Set_Modified (2);
    end Set_Label;
 
@@ -5917,7 +5957,8 @@ package body Database.Orm is
    is
       D : constant Rule_Data := Rule_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Name := To_Unbounded_String (Value);
+      Free (D.ORM_Name);
+      D.ORM_Name := new String'(Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -5929,7 +5970,8 @@ package body Database.Orm is
    is
       D : constant Entity_Data := Entity_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Name := To_Unbounded_String (Value);
+      Free (D.ORM_Name);
+      D.ORM_Name := new String'(Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -5941,7 +5983,8 @@ package body Database.Orm is
    is
       D : constant Tool_Data := Tool_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Name := To_Unbounded_String (Value);
+      Free (D.ORM_Name);
+      D.ORM_Name := new String'(Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -5953,7 +5996,8 @@ package body Database.Orm is
    is
       D : constant Property_Data := Property_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Name := To_Unbounded_String (Value);
+      Free (D.ORM_Name);
+      D.ORM_Name := new String'(Value);
       Self.Set_Modified (3);
    end Set_Name;
 
@@ -5965,7 +6009,8 @@ package body Database.Orm is
    is
       D : constant Resource_Data := Resource_Data (Self.Unchecked_Get);
    begin
-      D.ORM_Name := To_Unbounded_String (Value);
+      Free (D.ORM_Name);
+      D.ORM_Name := new String'(Value);
       Self.Set_Modified (2);
    end Set_Name;
 

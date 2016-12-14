@@ -1,7 +1,4 @@
 with GNATCOLL.SQL; use GNATCOLL.SQL;
-pragma Warnings (Off, "no entities of * are referenced");
-with GNATCOLL.SQL_Fields; use GNATCOLL.SQL_Fields;
-pragma Warnings (On, "no entities of * are referenced");
 with Database_Names; use Database_Names;
 package Database is
    pragma Style_Checks (Off);

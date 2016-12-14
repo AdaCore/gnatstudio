@@ -10,7 +10,6 @@ with GNATCOLL.SQL.Exec; use GNATCOLL.SQL.Exec;
 with GNATCOLL.SQL.Orm; use GNATCOLL.SQL.Orm;
 with GNATCOLL.SQL.Orm.Impl; use GNATCOLL.SQL.Orm.Impl;
 with GNATCOLL.SQL.Sessions; use GNATCOLL.SQL.Sessions;
-with GNATCOLL.SQL_Fields; use GNATCOLL.SQL_Fields;
 with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
 with System.Address_Image;
 pragma Warnings (On);
@@ -1313,7 +1312,7 @@ private
 
     type Category_DDR is new Detached_Data (3) with record
        ORM_Id         : Integer := -1;
-       ORM_Label      : Unbounded_String := Null_Unbounded_String;
+       ORM_Label      : GNAT.Strings.String_Access := null;
        ORM_On_Side    : Boolean := False;
     end record;
     type Category_Data is access all Category_DDR;
@@ -1323,7 +1322,7 @@ private
        ORM_Col_End      : Integer := -1;
        ORM_Id           : Integer := -1;
        ORM_Line         : Integer := -1;
-       ORM_Name         : Unbounded_String := Null_Unbounded_String;
+       ORM_Name         : GNAT.Strings.String_Access := null;
     end record;
     type Entity_Data is access all Entity_DDR;
     
@@ -1338,7 +1337,7 @@ private
     
     type Message_DDR is new Detached_Data (6) with record
        ORM_Category_Id    : Integer := -1;
-       ORM_Data           : Unbounded_String := Null_Unbounded_String;
+       ORM_Data           : GNAT.Strings.String_Access := null;
        ORM_FK_Category_Id : Detached_Category_Access := null;
        ORM_FK_Rule_Id     : Detached_Rule_Access := null;
        ORM_Id             : Integer := -1;
@@ -1357,8 +1356,8 @@ private
     
     type Property_DDR is new Detached_Data (3) with record
        ORM_Id            : Integer := -1;
-       ORM_Identifier    : Unbounded_String := Null_Unbounded_String;
-       ORM_Name          : Unbounded_String := Null_Unbounded_String;
+       ORM_Identifier    : GNAT.Strings.String_Access := null;
+       ORM_Name          : GNAT.Strings.String_Access := null;
     end record;
     type Property_Data is access all Property_DDR;
     
@@ -1374,7 +1373,7 @@ private
     type Resource_DDR is new Detached_Data (4) with record
        ORM_Id           : Integer := -1;
        ORM_Kind         : Integer := -1;
-       ORM_Name         : Unbounded_String := Null_Unbounded_String;
+       ORM_Name         : GNAT.Strings.String_Access := null;
        ORM_Timestamp    : Ada.Calendar.Time := No_Time;
     end record;
     type Resource_Data is access all Resource_DDR;
@@ -1394,16 +1393,16 @@ private
     type Rule_DDR is new Detached_Data (6) with record
        ORM_FK_Tool_Id    : Detached_Tool_Access := null;
        ORM_Id            : Integer := -1;
-       ORM_Identifier    : Unbounded_String := Null_Unbounded_String;
+       ORM_Identifier    : GNAT.Strings.String_Access := null;
        ORM_Kind          : Integer := 0;
-       ORM_Name          : Unbounded_String := Null_Unbounded_String;
+       ORM_Name          : GNAT.Strings.String_Access := null;
        ORM_Tool_Id       : Integer := -1;
     end record;
     type Rule_Data is access all Rule_DDR;
     
     type Tool_DDR is new Detached_Data (2) with record
        ORM_Id      : Integer := -1;
-       ORM_Name    : Unbounded_String := Null_Unbounded_String;
+       ORM_Name    : GNAT.Strings.String_Access := null;
     end record;
     type Tool_Data is access all Tool_DDR;
     
