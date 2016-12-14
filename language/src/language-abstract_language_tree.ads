@@ -96,7 +96,7 @@ package Language.Abstract_Language_Tree is
    --  the underlying representation of a node list doesn't matter much. The
    --  starting index is 1
 
-   type Semantic_Tree_Iterator is interface;
+   type Semantic_Tree_Iterator is limited interface;
 
    type Sort_Pred is
      access function (L, R : Semantic_Node'Class) return Boolean;
@@ -294,7 +294,7 @@ package Language.Abstract_Language_Tree is
    No_Semantic_Node : constant Semantic_Node'Class;
    No_Semantic_Tree : constant Semantic_Tree'Class;
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
-   No_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator'Class;
+   function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
 
    package Sem_Tree_Holders is new Ada.Containers.Indefinite_Holders
      (Semantic_Tree'Class);
@@ -452,8 +452,5 @@ private
 
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
      Dummy_Semantic_Node_Array'(null record);
-
-   No_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator'Class :=
-     Dummy_Semantic_Tree_Iterator'(null record);
 
 end Language.Abstract_Language_Tree;

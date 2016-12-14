@@ -40,4 +40,9 @@ package body Language.Abstract_Language_Tree is
       end return;
    end Info;
 
+   function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class is
+   begin
+      return Result : Dummy_Semantic_Tree_Iterator;
+   end No_Semantic_Tree_Iterator;
+
 end Language.Abstract_Language_Tree;
