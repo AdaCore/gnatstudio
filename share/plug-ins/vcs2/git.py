@@ -3,6 +3,7 @@ from . import core
 import os
 from workflows.promises import ProcessWrapper, join
 import datetime
+import gps_utils
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
@@ -12,7 +13,16 @@ class Git(core.VCS):
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
 
-    def _git(self, args, block_exit=False):
+    def setup(self):
+        gps_utils.make_interactive(
+            self.pull_rebase,
+            name='git pull rebase')
+
+    def pull_rebase(self):
+        p = self._git(['pull', '--rebase'], spawn_console='')
+        yield p.wait_until_terminate()
+
+    def _git(self, args, block_exit=False, **kwargs):
         """
         Return git with the given arguments
         :param List(str) args: git arguments
@@ -23,7 +33,8 @@ class Git(core.VCS):
         return ProcessWrapper(
             ['git', '--no-pager'] + args,
             block_exit=block_exit,
-            directory=self.working_dir.path)
+            directory=self.working_dir.path,
+            **kwargs)
 
     def __git_ls_tree(self):
         """

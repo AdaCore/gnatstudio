@@ -174,7 +174,7 @@
          <menu label="View file history"          action="open history for current file"/>
          <separator />
          <menu label='Pull'   action='git pull' optional='true' hide='true'/>
-         <menu label='Pull rebase' action='git pull rebase'
+         <menu label='Pull &amp; rebase' action='git pull rebase'
             optional='true' hide='true'/>
          <menu label='Update' action='vcs update' optional='true' hide='true'/>
          <separator />
