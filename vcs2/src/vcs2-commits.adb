@@ -1111,7 +1111,8 @@ package body VCS2.Commits is
       begin
          Trace (Me, "Got all files in cache for " & VCS.Name);
          Local_VCS := VCS;
-         VCS.For_Each_File_In_Cache (On_File'Access);
+         VCS.For_Each_File_In_Cache
+           (On_File'Access, Only_If_Up_To_Date => True);
       end On_VCS;
 
       Iter : Gtk_Tree_Iter;

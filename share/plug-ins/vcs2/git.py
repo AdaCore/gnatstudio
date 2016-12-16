@@ -14,6 +14,8 @@ class Git(core.VCS):
         return core.find_admin_directory(file, '.git')
 
     def setup(self):
+        # ??? Will not work correctly when several git working dirs exist in
+        # the same project.
         gps_utils.make_interactive(
             self.pull_rebase,
             name='git pull rebase')

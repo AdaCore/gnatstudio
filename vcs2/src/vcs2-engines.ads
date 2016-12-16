@@ -260,7 +260,7 @@ package VCS2.Engines is
    procedure Invalidate_File_Status_Cache
      (Self    : not null access VCS_Engine'Class;
       File    : Virtual_File := No_File);
-   --  Mark th entry for file (or all entries if No_File) in the cache as
+   --  Mark the entry for file (or all entries if No_File) in the cache as
    --  not being up-to-date.
    --  The next call to one of the Async_Fetch_Status_* procedures will
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
@@ -305,7 +305,8 @@ package VCS2.Engines is
      (Self     : not null access VCS_Engine'Class;
       Callback : not null access procedure
         (File  : GNATCOLL.VFS.Virtual_File;
-         Props : VCS_File_Properties));
+         Props : VCS_File_Properties);
+      Only_If_Up_To_Date : Boolean := False);
    --  For all files in the cache, execute the callbacks.
    --  The contents of the cache might only be initialized after a call to
    --  Ensure_* has finished executing in the background. So in general you
@@ -323,6 +324,9 @@ package VCS2.Engines is
    --      begin
    --          For_Each_File_In_Cache (VCS, ...);
    --      end;
+   --
+   --  If Only_If_Up_To_Date is true, only files for which the current status
+   --  is known are actually returned.(see Invalidate_File_Status_Cache).
 
    ----------------
    -- Operations --

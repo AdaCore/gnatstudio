@@ -1167,8 +1167,9 @@ package body VCS2.Engines is
       Need_Hook   : Boolean;
    begin
       if Has_Element (C) then
-         Need_Update := Props /= Element (C).Props;
-         Need_Hook := Need_Update;
+         Need_Hook := Props /= Element (C).Props;
+         Need_Update := Need_Hook
+           or else Element (C).Need_Update;
       else
          Need_Update := True;
          Need_Hook := Props.Status /= Self.Default_File_Status
@@ -1326,13 +1327,19 @@ package body VCS2.Engines is
      (Self     : not null access VCS_Engine'Class;
       Callback : not null access procedure
         (File  : GNATCOLL.VFS.Virtual_File;
-         Props : VCS_File_Properties))
+         Props : VCS_File_Properties);
+      Only_If_Up_To_Date : Boolean := False)
    is
       C : VCS_File_Cache.Cursor := Self.Cache.First;
    begin
       while VCS_File_Cache.Has_Element (C) loop
-         Callback (VCS_File_Cache.Key (C),
-                   VCS_File_Cache.Element (C).Props);
+         if not Only_If_Up_To_Date
+           or else not VCS_File_Cache.Element (C).Need_Update
+         then
+            Callback (VCS_File_Cache.Key (C),
+                      VCS_File_Cache.Element (C).Props);
+         end if;
+
          VCS_File_Cache.Next (C);
       end loop;
    end For_Each_File_In_Cache;
