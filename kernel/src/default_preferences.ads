@@ -133,7 +133,9 @@ package Default_Preferences is
    --
    --  Integrated_Page: denotes pages that should be displayed within other
    --  pages (e.g: a specific plugin page can be displayed in a root 'Plugins'
-   --  page). Then, the editor should not create a specific entry for it.
+   --  page, or a page that is displayed in the preferences assistant instead
+   --  of the preferences editor). Then, the preferences editor should not
+   --  create a specific entry for it.
    --
    --  Hidden_Page: denotes the page containing all the hidden preferences.
 

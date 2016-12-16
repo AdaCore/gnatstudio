@@ -7449,7 +7449,7 @@ class PreferencesPage:
     This interface can be used to create custom preferences pages.
     """
     @staticmethod
-    def create(self, name, get_widget, priority=-1):
+    def create(self, name, get_widget, priority=-1, is_integrated=False):
         """
         Create a new preferences page and makes it visible in the
         :guilabel:`Preferences` dialog, adding an entry with the
@@ -7471,9 +7471,16 @@ class PreferencesPage:
            - If two pages have the same priority, the alphabetical order
              determines which page will appear first.
 
+        when ``is_integrated`` is True, the preferences editor dialog will
+        not create an entry for this page in its left tree view. This is
+        generally needed for pages that are integrated in another visible
+        preferences pages or for pages displayed in the GPS preferences
+        assistant.
+
         :param name: A string
         :param get_widget: function returning a PyGtk widget
         :param priority: integer defining the page's priority
+        :param is_integrated: A boolean
         """
         pass   # implemented in Ada
 

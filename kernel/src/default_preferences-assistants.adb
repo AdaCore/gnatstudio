@@ -227,8 +227,8 @@ package body Default_Preferences.Assistants is
         (Assistant,
          Name   => "gps-preferences-assistant-dialog",
          Kernel => Kernel,
-         Width  => 600,
-         Height => 400);
+         Width  => 900,
+         Height => 600);
 
       Assistant.On_Cancel (On_Cancel'Access);
       Assistant.On_Apply (On_Apply'Access);

@@ -197,16 +197,20 @@ package body GPS.Kernel.Preferences is
       end if;
 
       declare
-         Page : constant Python_Preferences_Path :=
-                  new Python_Preferences_Page_Record'
-                    (Default_Preferences_Page_Record with
-                     Get_Python_Widget => Nth_Arg (Data, 2));
-         Priority   : constant Integer := Nth_Arg (Data, 3, Default => -1);
+         Page          : constant Python_Preferences_Path :=
+                           new Python_Preferences_Page_Record'
+                             (Default_Preferences_Page_Record with
+                              Get_Python_Widget => Data.Nth_Arg (2));
+         Priority      : constant Integer := Data.Nth_Arg (3, Default => -1);
+         Is_Integrated : constant Boolean :=
+                           Data.Nth_Arg (4, Default => False);
       begin
          Kernel.Get_Preferences.Register_Page
            (Name             => Name,
             Page             => Preferences_Page (Page),
             Priority         => Priority,
+            Page_Type        =>
+              (if Is_Integrated then Integrated_Page else Visible_Page),
             Replace_If_Exist => False);
       end;
    end Preferences_Page_Commands_Handler;
@@ -1604,7 +1608,8 @@ package body GPS.Kernel.Preferences is
         (Kernel.Scripts, "create",
          Params        => (1 => Param ("name"),
                            2 => Param ("get_widget"),
-                           3 => Param ("priority", Optional => True)),
+                           3 => Param ("priority", Optional => True),
+                           4 => Param ("is_integrated", Optional => True)),
          Class         => Preferences_Page_Class,
          Static_Method => True,
          Handler       => Preferences_Page_Commands_Handler'Access);

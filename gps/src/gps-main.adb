@@ -2281,7 +2281,7 @@ procedure GPS.Main is
             Pages => (1 => Create
                       (Pref_Page =>
                          GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                           ("General/Color Theme"),
+                           ("Color Theme Assistant"),
                        Label     => "Set the color theme",
                        Message   => "The color theme can be changed later via "
                        & "<b>Edit/Preferences/Color Theme</b>."),

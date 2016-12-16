@@ -388,38 +388,145 @@ def get_luminosity(x):
 
 class ColorSchemePicker(object):
 
-    def get_widget(self):
-        self.vbox = Gtk.VBox()
-        self.vbox.set_name(_VIEW_TITLE)
-        self.snapshots_dir = os.path.join(
-            GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
+    themes = []
 
-        flow = Gtk.FlowBox()
-        flow.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.vbox.pack_start(flow, True, True, 0)
+    snapshots_dir = None
+
+    vbox = None
+
+    flow = None
+
+    light_theme_radio = None
+
+    dark_theme_radio = None
+
+    # The indexes of the light and dark themes displayed in the color theme
+    # preferences page assistant.
+    LIGHT_THEME_INDEX = 0
+    DARK_THEME_INDEX = 1
+
+    # The indexes of the light and dark themes radio buttons in view's flow box
+    LIGHT_RADIO_CHILD_INDEX = 0
+    DARK_RADIO_CHILD_INDEX = 1
+
+    def get_preferences_page(self):
+        """
+        Used to construct the default color theme preferences page (i.e: the
+        one displayed in the Preferences editor dialog).
+        """
+        self.__initialize_view()
+
+        self.flow.set_selection_mode(Gtk.SelectionMode.NONE)
 
         index = 0
 
-        the_themes = list(get_themes())
-
-        the_themes.sort(key=get_luminosity)
-
-        for t in the_themes:
-            flow.add(self.__one_box(t))
-            c = flow.get_child_at_index(index)
+        for t in self.themes:
+            self.flow.add(self.__one_box(t))
+            c = self.flow.get_child_at_index(index)
             c.connect("activate", self.__on_chosen, t)
             index += 1
 
-        # a default size that allows showing two columns of previews
-        self.vbox.set_size_request(930, 600)
+        return self.vbox
+
+    def get_preferences_assistant_page(self):
+        """
+        Used to construct the color theme preferences assistant page. This page
+        is much simpler than the one displayed in the preferences editor: it
+        displays only two possibilities, a light theme (default) and a dark
+        one.
+        """
+        self.__initialize_view()
+
+        self.flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.flow.set_activate_on_single_click(True)
+
+        # Create the light theme radio box
+
+        vbox, self.light_theme_radio = self.__create_radio_box(
+            self.themes[self.LIGHT_THEME_INDEX], radio_group=None)
+        self.light_theme_radio.set_active(True)
+        self.flow.add(vbox)
+        self.flow.select_child(
+            self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
+
+        # Create the dark theme radio box
+
+        vbox, self.dark_theme_radio = self.__create_radio_box(
+            self.themes[self.DARK_THEME_INDEX],
+            radio_group=self.light_theme_radio)
+        self.dark_theme_radio.set_active(False)
+        self.flow.add(vbox)
+
+        self.flow.connect("child-activated", self.__on_child_activated)
 
         return self.vbox
 
+    def __initialize_view(self):
+        """
+        Initialize the general attributes of the color theme preferences page
+        view.
+        """
+        self.vbox = Gtk.VBox()
+        self.vbox.set_name(_VIEW_TITLE)
+
+        self.snapshots_dir = os.path.join(
+            GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
+
+        self.flow = Gtk.FlowBox()
+        self.flow.set_min_children_per_line(2)
+        self.vbox.pack_start(self.flow, True, True, 0)
+
+        self.themes = list(get_themes())
+
+        self.themes.sort(key=get_luminosity)
+
+    def __create_radio_box(self, theme, radio_group=None):
+        """
+        Create a box containing a radio button for the given ``theme``,
+        appending it to the given ``radio_group``, and the theme's image.
+        """
+        vbox = Gtk.VBox(homogeneous=False)
+
+        hbox = Gtk.HBox()
+        vbox.pack_start(hbox, False, False, 10)
+
+        radio_button = Gtk.RadioButton(group=radio_group, label=theme['name'])
+
+        radio_button.connect("toggled", self.__on_chosen, theme)
+        hbox.pack_start(radio_button, False, False, 15)
+
+        image = Gtk.Image.new_from_file(
+            os.path.join(self.snapshots_dir, theme['name'] + '.png'))
+        vbox.pack_start(image, False, False, 10)
+
+        return vbox, radio_button
+
+    def __on_child_activated(self, flow, child):
+        """
+        Called when a child has been activated in the preferences assistant
+        page view. Toggles the associated theme radio button.
+        """
+        if child.get_index() == self.LIGHT_RADIO_CHILD_INDEX:
+            self.light_theme_radio.set_active(True)
+        else:
+            self.dark_theme_radio.set_active(True)
+
     def __on_chosen(self, widget, theme):
+        """
+        Called when the theme's button or radio button has been clicked.
+        """
+        if widget == self.light_theme_radio:
+            self.flow.select_child(
+                self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
+        elif widget == self.dark_theme_radio:
+            self.flow.select_child(
+                self.flow.get_children()[self.DARK_RADIO_CHILD_INDEX])
+
         the_theme_switcher.apply_theme(theme)
 
     def __one_box(self, theme):
-        """ Return one widget representing one theme in the flowbox.
+        """
+        Return one widget representing one theme in the flowbox.
         """
         vbox = Gtk.VBox()
 
@@ -439,5 +546,13 @@ class ColorSchemePicker(object):
 # Register the color theme picker as a preferences page
 
 GPS.PreferencesPage.create(name="General/Color Theme",
-                           get_widget=ColorSchemePicker().get_widget,
+                           get_widget=ColorSchemePicker().get_preferences_page,
                            priority=0)
+
+# Register a simpler page for the color theme. This page will be displayed
+# in the preferences assistant but not in the preferences editor dialog.
+
+GPS.PreferencesPage.create(
+    name="Color Theme Assistant",
+    get_widget=ColorSchemePicker().get_preferences_assistant_page,
+    is_integrated=True)
