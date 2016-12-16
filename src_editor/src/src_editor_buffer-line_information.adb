@@ -301,6 +301,31 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
    end Recalculate_Side_Column_Width;
 
+   ----------------------------
+   -- Has_Information_Column --
+   ----------------------------
+
+   function Has_Information_Column
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String)
+     return Boolean
+   is
+      Columns_Config : constant Columns_Config_Access :=
+         Buffer.Editable_Line_Info_Columns;
+   begin
+      if Columns_Config.all = null then
+         return False;
+      end if;
+
+      for C of Columns_Config.all.all loop
+         if C.Identifier.all = Identifier then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Has_Information_Column;
+
    -------------------------------
    -- Get_Column_For_Identifier --
    -------------------------------
@@ -519,7 +544,6 @@ package body Src_Editor_Buffer.Line_Information is
          D      : in out Line_Data_Record)
       is
          M    : Message_Access;
---           Note : Line_Info_Note;
          C    : Message_Reference_List.Cursor;
          pragma Unreferenced (Buffer);
       begin

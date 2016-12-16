@@ -22,7 +22,7 @@ class SVN(core_staging.Emulate_Staging,
         Execute svn with the given arguments
         """
         return ProcessWrapper(
-            ['svn'] + args,
+            ['svn', '--non-interactive'] + args,
             block_exit=block_exit,
             directory=self.working_dir.path)
 
@@ -190,3 +190,28 @@ class SVN(core_staging.Emulate_Staging,
         p = self._svn(['cat', '-r%s' % ref, file.path])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
+
+    @core.run_in_background
+    def async_annotations(self, visitor, file):
+        r = re.compile(
+            "^\s*(?P<rev>\d\S*)"
+            "\s+"
+            "(?P<author>\S+)"
+            "\s+"
+            "(?P<date>....-..-..)")
+        lines = []
+        ids = []
+        p = self._svn(['annotate', '-v', file.path])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.annotations(file, 1, ids, lines)
+                break
+
+            m = r.search(line)
+            if m:
+                lines.append('%s %10s r%s' % (
+                    m.group('date'),
+                    m.group('author')[:10],
+                    m.group('rev')))
+                ids.append(m.group('rev'))

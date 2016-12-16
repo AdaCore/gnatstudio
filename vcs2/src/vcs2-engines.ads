@@ -150,6 +150,20 @@ package VCS2.Engines is
       Message : String) is null;
    --   Called when details for a specific commit are available.
 
+   procedure On_Annotation
+     (Self       : not null access Task_Visitor;
+      File       : Virtual_File;
+      First_Line : Positive;
+      Ids        : String_List;
+      Text       : String_List) is null;
+   --  Called when annotations have been computed for a file.
+   --  Annotations are made available for lines
+   --    First_Line .. First_Line + Text'Length - 1
+   --
+   --  Ids are the unique commit ids for each line, text is the information to
+   --  display on the side.
+   --  An entry can be null if it is the same as for the previous line
+
    procedure On_Diff_Computed
      (Self    : not null access Task_Visitor;
       Diff    : String) is null;
@@ -336,6 +350,7 @@ package VCS2.Engines is
       Up_To_Lines         : Natural := Natural'Last;
       For_File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Filter              : Unbounded_String := Null_Unbounded_String;
+      Select_Id           : Unbounded_String := Null_Unbounded_String;
       Current_Branch_Only : Boolean := False;
       Branch_Commits_Only : Boolean := False;
    end record;
@@ -415,6 +430,20 @@ package VCS2.Engines is
    --  One special value "HEAD" means the last commit on the current branch.
    --
    --  Reports the result via Visitor.On_File_Computed
+
+   procedure Async_Annotations
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      File        : Virtual_File) is null;
+   procedure Queue_Annotations
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      File        : Virtual_File);
+   --  Compute line annotations for a specific file.
+   --  These annotations show the last modification date, author, commit,...
+   --  for each line in a file.
+   --
+   --  Reports the result via Visitor.On_Annotation
 
    ----------
    -- Misc --

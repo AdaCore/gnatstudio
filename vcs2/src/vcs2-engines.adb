@@ -212,6 +212,13 @@ package body VCS2.Engines is
      (Self : not null access Cmd_View_File;
       VCS  : not null access VCS_Engine'Class);
 
+   type Cmd_Annotations is new VCS_Command with record
+      File : Virtual_File;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Annotations;
+      VCS  : not null access VCS_Engine'Class);
+
    -------------------
    -- Command queue --
    -------------------
@@ -910,6 +917,33 @@ package body VCS2.Engines is
       VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Diff (Self.Visitor, To_String (Self.Ref), Self.File);
+   end Execute;
+
+   -----------------------
+   -- Queue_Annotations --
+   -----------------------
+
+   procedure Queue_Annotations
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      File        : Virtual_File) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Annotations'(
+           Visitor   => Visitor.all'Unchecked_Access,
+           File      => File));
+   end Queue_Annotations;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Annotations;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Annotations (Self.Visitor, Self.File);
    end Execute;
 
    ---------------------

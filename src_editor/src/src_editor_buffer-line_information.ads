@@ -37,6 +37,12 @@ package Src_Editor_Buffer.Line_Information is
    --  Add a column corresponding to Identifier in Buffer
    --  Data is used to determine the size of the column.
 
+   function Has_Information_Column
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String)
+     return Boolean;
+   --  Whether a column with this Identifier has been created.
+
    procedure Remove_Line_Information_Column
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String);

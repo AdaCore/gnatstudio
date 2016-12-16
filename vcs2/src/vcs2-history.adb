@@ -38,7 +38,6 @@ with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
@@ -245,6 +244,7 @@ package body VCS2.History is
       Current  : Natural;  --  in lines
       Step     : Layout_Step := Step_Compute;
       Inserted : Natural;   --  number of items inserted in tree
+      To_Select : Gtk_Tree_Path := Null_Gtk_Tree_Path;
    end record;
    type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
@@ -299,6 +299,14 @@ package body VCS2.History is
    overriding function Execute
      (Self    : access History_For_File;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Show_History_Command is new Root_Command with record
+      Kernel    : Kernel_Handle;
+      File      : Virtual_File;
+      Commit_Id : Unbounded_String;
+   end record;
+   overriding function Execute
+     (Self    : access Show_History_Command) return Command_Return_Type;
 
    function On_Button_Press
      (Self   : access GObject_Record'Class;
@@ -600,6 +608,7 @@ package body VCS2.History is
       Pattern : in out GPS.Search.Search_Pattern_Access)
    is
       Tree : constant History_Tree := History_Tree (Self.Tree);
+      Pos  : Natural;
    begin
       if Pattern = null then
          Tree.User_Filter.Filter := Null_Unbounded_String;
@@ -613,14 +622,37 @@ package body VCS2.History is
       begin
          if Starts_With (Text, "file:") then
             Tree.User_Filter.Filter := Null_Unbounded_String;
+            Tree.User_Filter.Select_Id := Null_Unbounded_String;
+
+            Pos := Text'Last;
+            while Pos >= Text'First + 5 loop
+               if Text (Pos) = '@' then
+                  Tree.User_Filter.Select_Id := To_Unbounded_String
+                    (Text (Pos + 1 .. Text'Last));
+
+                  --  Will be selected after we have fetched the new contents
+                  --  but we do not want to preserve the current selection
+                  Tree.Get_Selection.Unselect_All;
+
+                  Pos := Pos - 1;
+                  exit;
+               end if;
+               Pos := Pos - 1;
+            end loop;
+
+            if Pos < Text'First + 5 then
+               Pos := Text'Last;
+            end if;
+
             Tree.User_Filter.For_File :=
               Get_Project_Tree (Self.Kernel).Create
-              (+Text (Text'First + 5 .. Text'Last));
+                 (+Text (Text'First + 5 .. Pos));
             if Tree.User_Filter.For_File = No_File then
                --  Create a dummy file
                Tree.User_Filter.For_File :=
-                 Create (+Text (Text'First + 5 .. Text'Last));
+                 Create (+Text (Text'First + 5 .. Pos));
             end if;
+
          else
             Tree.User_Filter.For_File := No_File;
 
@@ -1074,6 +1106,12 @@ package body VCS2.History is
       Trace (Me, "Free layout_idle_data");
       if Tree /= null then
          Unchecked_Free (Self.Detached);
+
+         if Self.To_Select /= Null_Gtk_Tree_Path then
+            Tree.Get_Selection.Select_Path (Self.To_Select);
+            Path_Free (Self.To_Select);
+         end if;
+
          Unchecked_Free (Self);
       end if;
    end Free;
@@ -1134,6 +1172,11 @@ package body VCS2.History is
                   Ref.Visible :=
                     (if Tree.Config.Collapse
                      then Ref.Visible else Always_Visible);
+               end if;
+
+               if Ref.Col > Data.Is_Free.Last_Index then
+                  Data.Is_Free.Set_Length
+                    (Ada.Containers.Count_Type (Ref.Col));
                end if;
 
                Data.Is_Free (Ref.Col) := True;
@@ -1238,6 +1281,11 @@ package body VCS2.History is
                   Data.Inserted := Data.Inserted + 1;
                   Data.Current  := Data.Current + 1;
 
+                  if Ref.ID.all = Tree.User_Filter.Select_Id then
+                     Data.To_Select :=
+                       Tree.Get_Filter_Path_For_Store_Iter (Iter);
+                  end if;
+
                   if Clock - Start >= 0.3 then
                      return True;  --  will try again later
                   end if;
@@ -1246,7 +1294,6 @@ package body VCS2.History is
                   Data.Current  := Data.Current + 1;
                end if;
             end;
-
          end loop;
 
          Trace (Me, "inserted" & Data.Inserted'Img & " nodes");
@@ -1355,6 +1402,43 @@ package body VCS2.History is
       end if;
       return Success;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self : access Show_History_Command) return Command_Return_Type
+   is
+      View   : History_View;
+      VCS    : VCS_Engine_Access;
+   begin
+      VCS := VCS_Engine_Access
+        (Self.Kernel.VCS.Guess_VCS_For_Directory (Self.File.Dir));
+      Set_Active_VCS (Self.Kernel, VCS);
+
+      View := History_Views.Get_Or_Create_View (Self.Kernel, Focus => True);
+      View.Set_Filter ("file:" & Self.File.Display_Full_Name
+                       & "@" & To_String (Self.Commit_Id));
+      return Success;
+   end Execute;
+
+   ---------------------------------
+   -- Create_Show_History_Command --
+   ---------------------------------
+
+   function Create_Show_History_Command
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Commit_ID : String) return Commands.Command_Access
+   is
+   begin
+      return new Show_History_Command'
+        (Root_Command with
+           Kernel    => Kernel_Handle (Kernel),
+           File      => File,
+           Commit_Id => To_Unbounded_String (Commit_ID));
+   end Create_Show_History_Command;
 
    ---------------------
    -- Register_Module --

@@ -757,6 +757,12 @@ package GPS.Editors is
    --         because in gtk having no selection or an empty selection is the
    --         same.
 
+   function Has_Information_Column
+      (This : Editor_Buffer; Id : String) return Boolean is abstract;
+   --  Editors can display information on the side.
+   --  This extra information is grouped into columns, each of which has a
+   --  name. This function returns True if a column with the given Id exists
+
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
 
@@ -1157,6 +1163,8 @@ private
 
    overriding function File (This : Dummy_Editor_Buffer) return Virtual_File;
 
+   overriding function Has_Information_Column
+      (This : Dummy_Editor_Buffer; Id : String) return Boolean is (False);
    overriding procedure Copy
      (This   : Dummy_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;

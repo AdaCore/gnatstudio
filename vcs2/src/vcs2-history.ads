@@ -17,12 +17,21 @@
 
 --  The History view
 
-with GPS.Kernel;     use GPS.Kernel;
+with Commands;                use Commands;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Kernel;              use GPS.Kernel;
 
 package VCS2.History is
 
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Create actions for this module
+
+   function Create_Show_History_Command
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Commit_ID : String) return Commands.Command_Access;
+   --  Create a new command that will open the History view, highlight the
+   --  given commit, and display its details.
 
 end VCS2.History;

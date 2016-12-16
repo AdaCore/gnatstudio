@@ -247,3 +247,29 @@ class CVS(core_staging.Emulate_Staging,
         p = self._cvs(['-q', 'update', '-p', '-r%s' % ref, file.path])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
+
+    @core.run_in_background
+    def async_annotations(self, visitor, file):
+        r = re.compile(
+            "^(?P<rev>\d+\.\d+)"
+            "\s+\("
+            "(?P<author>\S+)"
+            "\s+"
+            "(?P<date>[^)]+)")
+        lines = []
+        ids = []
+
+        p = self._cvs(['annotate', file.path])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.annotations(file, 1, ids, lines)
+                break
+
+            m = r.search(line)
+            if m:
+                lines.append('%s %10s %s' % (
+                    m.group('date'),
+                    m.group('author')[:10],
+                    m.group('rev')))
+                ids.append(m.group('rev'))

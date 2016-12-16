@@ -9632,6 +9632,27 @@ class VCS2_Task_Visitor(object):
         :param str diff: the diff, using standard diff format.
         """
 
+    def file_computed(self, contents):
+        """
+        Used to provide the contents of a file at a specific version.
+
+        :param str contents: the contents of the file.
+        """
+
+    def annotations(self, file, first_line, ids, annotations):
+        """
+        Report annotations to add to the side of the editors. Such
+        annotations should provide author, last modification date,
+        commit id,... for each line.
+
+        :param GPS.File file: the file for which we add annotations
+        :param int first_line: the first line number for which we
+           return information.
+        :param List(str) ids: the commit ids, for each line.
+        :param List(str) annotations: the annotations. The first
+           entry is for `first_line`, then the next line, and so on.
+        """
+
 
 ###########################################################
 # Vdiff

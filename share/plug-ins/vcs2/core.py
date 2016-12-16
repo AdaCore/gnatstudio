@@ -225,6 +225,18 @@ class VCS(GPS.VCS2):
         :param GPS.File file: the file for which we want a diff.
         """
 
+    def async_annotations(self, visitor, file):
+        """
+        Compute the information to display on the side of editors for
+        the given file. This information should include last commit date,
+        author, commit id,...
+
+        :param GPS.VCS2_Task_Visitor visitor: the object used to report
+           the information, via its `annotation` method.
+        :param GPS.File file: the file for which the information should be
+           computed
+        """
+
     ############
     # Services #
     ############

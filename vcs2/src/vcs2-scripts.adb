@@ -92,6 +92,10 @@ package body VCS2.Scripts is
       Visitor     : not null access Task_Visitor'Class;
       Ref         : String;
       File        : Virtual_File);
+   overriding procedure Async_Annotations
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      File        : Virtual_File);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -298,6 +302,22 @@ package body VCS2.Scripts is
 
       Call_Method (Self, "async_fetch_commit_details", D);
    end Async_Fetch_Commit_Details;
+
+   -----------------------
+   -- Async_Annotations --
+   -----------------------
+
+   overriding procedure Async_Annotations
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      File        : Virtual_File)
+   is
+      D    : Callback_Data'Class := Self.Script.Create (2);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Create_File (Self.Script, File));
+      Call_Method (Self, "async_annotations", D);
+   end Async_Annotations;
 
    ----------------
    -- Async_Diff --
@@ -595,6 +615,39 @@ package body VCS2.Scripts is
       elsif Command = "file_computed" then
          Visitor.On_File_Computed
            (Contents => Data.Nth_Arg (2));
+
+      elsif Command = "annotations" then
+         declare
+            Ids   : constant List_Instance'Class := Data.Nth_Arg (4);
+            Texts : constant List_Instance'Class := Data.Nth_Arg (5);
+
+            Text  : String_List_Access :=
+              new String_List (1 .. Texts.Number_Of_Arguments);
+            Id    : String_List_Access :=
+              new String_List (1 .. Texts.Number_Of_Arguments);
+            Non_Null : Natural := 0;
+         begin
+            for T in Text'Range loop
+               declare
+                  Commit : constant String := Ids.Nth_Arg (T);
+               begin
+                  if T = Text'First or else Commit /= Id (Non_Null).all then
+                     Id (T)   := new String'(Commit);
+                     Text (T) := new String'(Texts.Nth_Arg (T));
+                     Non_Null := T;
+                  end if;
+               end;
+            end loop;
+
+            Visitor.On_Annotation
+              (File       => Nth_Arg (Data, 2),
+               First_Line => Data.Nth_Arg (3),
+               Ids        => Id.all,
+               Text       => Text.all);
+
+            Free (Text);
+            Free (Id);
+         end;
       end if;
    end VCS_Task_Handler;
 
@@ -759,6 +812,14 @@ package body VCS2.Scripts is
       Kernel.Scripts.Register_Command
         ("file_computed",
          Params        => (2 => Param ("contents")),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("annotations",
+         Params        => (2 => Param ("file"),
+                           3 => Param ("first_line"),
+                           4 => Param ("ids"),
+                           5 => Param ("annotations")),
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
    end Register_Scripts;

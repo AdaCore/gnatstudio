@@ -183,8 +183,10 @@
                action='diff against head for file in editor'/>
          <menu label='Show all local changes' action='diff against head'/>
          <separator />
-         <menu label='Show last modification for lines'  action='annotate'/>
-         <menu label='Show last modification for lines'  action='remove annotate'/>
+         <menu label='Show last modification for lines'  action='vcs annotate'
+               hide='true'/>
+         <menu label='Hide last modification for lines'  action='vcs remove annotate'
+               hide='true'/>
          
       </menu>
 

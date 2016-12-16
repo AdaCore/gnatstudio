@@ -2,6 +2,7 @@ import GPS
 from . import core
 import os
 from workflows.promises import ProcessWrapper, join
+import datetime
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
@@ -143,7 +144,7 @@ class Git(core.VCS):
         p = self._git(
             ['log',
              # use tformat to get final newline
-             '--pretty=tformat:%h@@%p@@%an@@%d@@%cD@@%s',
+             '--pretty=tformat:%H@@%P@@%an@@%d@@%cD@@%s',
              '--branches' if not current_branch_only else '',
              '--tags' if not current_branch_only else '',
              '--topo-order',  # children before parents
@@ -243,3 +244,37 @@ class Git(core.VCS):
             visitor.diff_computed(output)
         else:
             GPS.Logger("GIT").log("Error computing diff: %s" % output)
+
+    @core.run_in_background
+    def async_annotations(self, visitor, file):
+        info = {}   # for each commit id, the annotation
+        current_id = None
+        first_line = 1
+        lines = []
+        ids = []
+
+        p = self._git(['blame', '--porcelain', file.path])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                break
+
+            if current_id is None:
+                current_id = line.split(' ', 1)[0]
+
+            elif line[0] == '\t':
+                # The line of code, which we ignore
+                lines.append(info[current_id])
+                ids.append(current_id)
+                current_id = None
+
+            elif line.startswith('author '):
+                info[current_id] = line[7:17]  # at most 10 chars
+
+            elif line.startswith('committer-time '):
+                d = datetime.datetime.fromtimestamp(
+                    int(line[15:])).strftime('%Y%m%d')
+                info[current_id] = '%s %10s %s' % (
+                    d, info[current_id], current_id[0:7])
+
+        visitor.annotations(file, first_line, ids, lines)

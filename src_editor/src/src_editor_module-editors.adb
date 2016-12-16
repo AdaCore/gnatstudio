@@ -502,6 +502,8 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Extend : Boolean);
    overriding function Extend_Existing_Selection
      (This : Src_Editor_Buffer) return Boolean;
+   overriding function Has_Information_Column
+     (This : Src_Editor_Buffer; Id : String) return Boolean;
 
    overriding function Current_Undo_Group
      (This : Src_Editor_Buffer) return Group_Block;
@@ -2078,6 +2080,16 @@ package body Src_Editor_Module.Editors is
 
       End_Action (This.Contents.Buffer);
    end Indent;
+
+   ----------------------------
+   -- Has_Information_Column --
+   ----------------------------
+
+   overriding function Has_Information_Column
+     (This : Src_Editor_Buffer; Id : String) return Boolean is
+   begin
+      return Has_Information_Column (This.Contents.Buffer, Id);
+   end Has_Information_Column;
 
    ------------
    -- Refill --
