@@ -809,6 +809,11 @@ procedure GPS.Main is
       Switch : constant String := ICS.Value (Option_Name);
 
    begin
+      --  Make sure that we don't display the preferences assistant when GPS
+      --  is invoked with some switches: it might bother advanced users.
+
+      Show_Preferences_Assistant := False;
+
       if Switch = "--project" or else Switch = "-P" then
          --  Although this isn't costly, we must not resolve symbolic
          --  links for project names unless Fast Project Loading mode is
