@@ -19,7 +19,8 @@ def dump_menu(menupath, topwidget=None, accel_path_prefix='<gps>/'):
 
     def __internal(item, prefix='', add=False):
         result = []
-        if isinstance(item, Gtk.MenuItem):
+        if (isinstance(item, Gtk.MenuItem) and item.get_visible()):
+
             label = ''
             if isinstance(item, Gtk.SeparatorMenuItem):
                 label = '<separator>'

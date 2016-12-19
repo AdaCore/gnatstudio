@@ -171,22 +171,25 @@
                optional='true' hide='true'/>
          <menu label="View global history"        action="open history"
                optional='true'/>
-         <menu label="View file history"          action="open history for current file"/>
+         <menu label="View file history"          action="open history for current file"
+               optional='true'/>
          <separator />
          <menu label='Pull'   action='git pull' optional='true' hide='true'/>
          <menu label='Pull &amp; rebase' action='git pull rebase'
             optional='true' hide='true'/>
-         <menu label='Update' action='vcs update' optional='true' hide='true'/>
          <separator />
-         <menu label='Show local changes for file' action='diff against head for file'/>
+         <menu label='Show local changes for file' action='diff against head for file'
+            optional='true'/>
          <menu label='Show local changes for file (in editor)'
-               action='diff against head for file in editor'/>
-         <menu label='Show all local changes' action='diff against head'/>
+            action='diff against head for file in editor'
+            optional='true'/>
+         <menu label='Show all local changes' action='diff against head'
+            optional='true'/>
          <separator />
          <menu label='Show last modification for lines'  action='vcs annotate'
-               hide='true'/>
+            optional='true' hide='true'/>
          <menu label='Hide last modification for lines'  action='vcs remove annotate'
-               hide='true'/>
+            optional='true' hide='true'/>
          
       </menu>
 
