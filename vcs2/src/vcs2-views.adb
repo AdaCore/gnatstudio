@@ -129,8 +129,8 @@ package body VCS2.Views is
    begin
       Set_Font_And_Colors (Self.Tree, Fixed_Font => True, Pref => Pref);
 
-      if Pref = null
-        or else Pref = Preference (Show_Ellipsis)
+      if (Pref = null or else Pref = Preference (Show_Ellipsis))
+        and then Self.Text_Render /= null
       then
          Set_Property
            (Self.Text_Render,

@@ -96,6 +96,9 @@ package body VCS2.Scripts is
      (Self        : not null access Script_Engine;
       Visitor     : not null access Task_Visitor'Class;
       File        : Virtual_File);
+   overriding procedure Async_Branches
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -318,6 +321,20 @@ package body VCS2.Scripts is
       D.Set_Nth_Arg (2, Create_File (Self.Script, File));
       Call_Method (Self, "async_annotations", D);
    end Async_Annotations;
+
+   --------------------
+   -- Async_Branches --
+   --------------------
+
+   overriding procedure Async_Branches
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class)
+   is
+      D    : Callback_Data'Class := Self.Script.Create (1);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      Call_Method (Self, "async_branches", D);
+   end Async_Branches;
 
    ----------------
    -- Async_Diff --
@@ -648,6 +665,32 @@ package body VCS2.Scripts is
             Free (Text);
             Free (Id);
          end;
+
+      elsif Command = "branches" then
+         declare
+            List     : constant List_Instance'Class := Data.Nth_Arg (4);
+            Branches : Branches_Array (1 .. List.Number_Of_Arguments);
+         begin
+            for B in Branches'Range loop
+               declare
+                  Current : constant List_Instance'Class := List.Nth_Arg (B);
+               begin
+                  Branches (B) :=
+                    (Name       => new String'(Current.Nth_Arg (1)),
+                     Is_Current => Current.Nth_Arg (2),
+                     Emblem     => new String'(Current.Nth_Arg (3)));
+               end;
+            end loop;
+
+            Visitor.On_Branches
+              (Category   => Data.Nth_Arg (2),
+               Iconname   => Data.Nth_Arg (3),
+               Branches   => Branches);
+
+            for B of Branches loop
+               Free (B.Name);
+            end loop;
+         end;
       end if;
    end VCS_Task_Handler;
 
@@ -820,6 +863,13 @@ package body VCS2.Scripts is
                            3 => Param ("first_line"),
                            4 => Param ("ids"),
                            5 => Param ("annotations")),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("branches",
+         Params        => (2 => Param ("category"),
+                           3 => Param ("iconname"),
+                           4 => Param ("branches")),
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
    end Register_Scripts;

@@ -237,6 +237,14 @@ class VCS(GPS.VCS2):
            computed
         """
 
+    def async_branches(self, visitor):
+        """
+        Retrieve the list of branches, tags, ... available for self.
+
+        :param GPS.VCS2_Task_Visitor visitor: the object used to report
+           the information, via its `branches` method.
+        """
+
     ############
     # Services #
     ############

@@ -2020,6 +2020,8 @@ Classes
 
    .. automethod:: GPS.VCS2_Task_Visitor.annotations
 
+   .. automethod:: GPS.VCS2_Task_Visitor.branches
+
    .. automethod:: GPS.VCS2_Task_Visitor.diff_computed
 
    .. automethod:: GPS.VCS2_Task_Visitor.file_computed

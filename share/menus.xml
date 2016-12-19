@@ -169,6 +169,8 @@
          <!--  for VCS2 -->
          <menu label="Commits"                    action="open commits"
                optional='true' hide='true'/>
+         <menu label="Branches"                   action="open branches"
+               optional='true' hide='true'/>
          <menu label="View global history"        action="open history"
                optional='true'/>
          <menu label="View file history"          action="open history for current file"

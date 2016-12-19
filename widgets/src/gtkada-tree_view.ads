@@ -320,6 +320,12 @@ package Gtkada.Tree_View is
       return Gtk.Tree_Model.Gtk_Tree_Path;
    --  Returned value must be freed by caller
 
+   function Get_Store_Path_For_Filter_Iter
+     (Self        : access Tree_View_Record'Class;
+      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   --  Returned value must be freed by caller
+
    function Get_Filter_Path_For_Store_Iter
      (Self       : access Tree_View_Record'Class;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)

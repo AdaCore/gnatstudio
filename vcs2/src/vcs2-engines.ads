@@ -176,6 +176,22 @@ package VCS2.Engines is
    --  Called when the contents of a file (as of a specific version) has been
    --  computed
 
+   type Branch_Info is record
+      Name       : GNAT.Strings.String_Access;
+      Is_Current : Boolean;
+      Emblem     : GNAT.Strings.String_Access;
+   end record;
+   type Branches_Array is array (Natural range <>) of Branch_Info;
+
+   procedure On_Branches
+     (Self     : not null access Task_Visitor;
+      Category : String;
+      Iconname : String;
+      Branches : Branches_Array) is null;
+   --  Called when information about available branches has been computed.
+   --  All branches are displayed in the same category ("BRANCHES", "REMOTES",
+   --  "TAGS",...)
+
    -------------------
    -- File statuses --
    -------------------
@@ -448,6 +464,15 @@ package VCS2.Engines is
    --  for each line in a file.
    --
    --  Reports the result via Visitor.On_Annotation
+
+   procedure Async_Branches
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access Task_Visitor'Class) is null;
+   procedure Queue_Branches
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class);
+   --  Compute available branches, tags and others for Self.
+   --  Reports the result via one or more calls to Visitor.On_Branches
 
    ----------
    -- Misc --

@@ -909,7 +909,7 @@ package body VCS2.Commits is
       --  Bottom widget
 
       Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Always);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Paned.Split
         (Ref_Widget  => Scrolled2,
          New_Child   => Scrolled,

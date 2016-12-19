@@ -434,6 +434,25 @@ package body Gtkada.Tree_View is
    end Get_Store_Path_For_Filter_Path;
 
    ------------------------------------
+   -- Get_Store_Path_For_Filter_Iter --
+   ------------------------------------
+
+   function Get_Store_Path_For_Filter_Iter
+     (Self        : access Tree_View_Record'Class;
+      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path
+   is
+      Store_Iter : Gtk_Tree_Iter;
+   begin
+      if Self.Filter /= null then
+         Self.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
+         return Self.Model.Get_Path (Store_Iter);
+      else
+         return Self.Model.Get_Path (Filter_Iter);
+      end if;
+   end Get_Store_Path_For_Filter_Iter;
+
+   ------------------------------------
    -- Get_Store_Iter_For_Filter_Path --
    ------------------------------------
 

@@ -215,3 +215,37 @@ class SVN(core_staging.Emulate_Staging,
                     m.group('author')[:10],
                     m.group('rev')))
                 ids.append(m.group('rev'))
+
+    @core.run_in_background
+    def async_branches(self, visitor):
+        url = ''
+
+        p = self._svn(['info'])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                break
+            if line.startswith('URL: '):
+                url = line[5:]
+                break
+
+        if not url:
+            return
+
+        branches = [('trunk', False, '')]
+        p = self._svn(['list', url.replace('/trunk', '/branches')])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches('branches', 'vcs-branch-symbolic', branches)
+                break
+            branches.append((line.replace('/', ''), False, ''))
+
+        tags = []
+        p = self._svn(['list', url.replace('/trunk', '/tags')])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches('tags', 'vcs-tag-symbolic', tags)
+                break
+            tags.append((line.replace('/', ''), False, ''))

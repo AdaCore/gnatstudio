@@ -1352,7 +1352,9 @@ package body VCS2.History is
       pragma Unreferenced (Self);
       View : constant History_View := History_Views.Retrieve_View (Kernel);
    begin
-      Refresh (View);
+      if View /= null then
+         Refresh (View);
+      end if;
    end Execute;
 
    -------------

@@ -9660,6 +9660,23 @@ class VCS2_Task_Visitor(object):
            entry is for `first_line`, then the next line, and so on.
         """
 
+    def branches(self, category, iconname, branches):
+        """
+        Report a list of branches available for the current VCS.
+
+        :param str category: the name of the category, as displayed
+           in the Branches view. You can call this method several times
+           for the same category if need be.
+        :param str iconname: icon to use for this category.
+        :param List branches: a list of branches. Each item in the
+           list is a tuple with the following elements:
+           - name of the branch
+           - a bool to indicate if this is the active branch
+           - a str to describe the status of the branch. This could for
+             instance indicate how many commits are in this branch and
+             not in the current one.
+         """
+
 
 ###########################################################
 # Vdiff

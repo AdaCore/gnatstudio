@@ -219,6 +219,11 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Annotations;
       VCS  : not null access VCS_Engine'Class);
 
+   type Cmd_Branches is new VCS_Command with null record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Branches;
+      VCS  : not null access VCS_Engine'Class);
+
    -------------------
    -- Command queue --
    -------------------
@@ -917,6 +922,32 @@ package body VCS2.Engines is
       VCS  : not null access VCS_Engine'Class) is
    begin
       VCS.Async_Diff (Self.Visitor, To_String (Self.Ref), Self.File);
+   end Execute;
+
+   --------------------
+   -- Queue_Branches --
+   --------------------
+
+   procedure Queue_Branches
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Branches'(
+           Visitor   => Visitor.all'Unchecked_Access));
+   end Queue_Branches;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Branches;
+      VCS  : not null access VCS_Engine'Class)
+   is
+   begin
+      VCS.Async_Branches (Self.Visitor);
    end Execute;
 
    -----------------------

@@ -273,3 +273,23 @@ class CVS(core_staging.Emulate_Staging,
                     m.group('author')[:10],
                     m.group('rev')))
                 ids.append(m.group('rev'))
+
+    @core.run_in_background
+    def async_branches(self, visitor):
+        p = self._cvs(['status', '-v'])
+        tags = set()
+        in_tags = False
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches(
+                    'tags', 'vcs-tag-symbolic',
+                    [(t, False, '') for t in tags])
+                break
+
+            if line.startswith('   Existing Tags:'):
+                in_tags = True
+            elif in_tags and not line:
+                in_tags = False
+            elif in_tags:
+                tags.add(line.lstrip().split(' ')[0])

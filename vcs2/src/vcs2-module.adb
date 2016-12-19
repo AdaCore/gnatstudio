@@ -31,6 +31,7 @@ with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with VCS2.Engines;                 use VCS2.Engines;
 with VCS2.Scripts;                 use VCS2.Scripts;
+with VCS2.Branches;
 with VCS2.Commits;
 with VCS2.Diff;
 with VCS2.History;
@@ -281,6 +282,7 @@ package body VCS2.Module is
       VCS2.Commits.Register_Module (Kernel);
       VCS2.History.Register_Module (Kernel);
       VCS2.Diff.Register_Module (Kernel);
+      VCS2.Branches.Register_Module (Kernel);
    end Register_Module;
 
 end VCS2.Module;

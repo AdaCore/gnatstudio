@@ -1,6 +1,7 @@
 import GPS
 from . import core
 import os
+import re
 from workflows.promises import ProcessWrapper, join
 import datetime
 import gps_utils
@@ -12,17 +13,6 @@ class Git(core.VCS):
     @staticmethod
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
-
-    def setup(self):
-        # ??? Will not work correctly when several git working dirs exist in
-        # the same project.
-        gps_utils.make_interactive(
-            self.pull_rebase,
-            name='git pull rebase')
-
-    def pull_rebase(self):
-        p = self._git(['pull', '--rebase'], spawn_console='')
-        yield p.wait_until_terminate()
 
     def _git(self, args, block_exit=False, **kwargs):
         """
@@ -145,6 +135,18 @@ class Git(core.VCS):
         yield self.__action_then_update_status(
             ['commit', '--amend', '--reuse-message=HEAD'])
         GPS.Hook('vcs_commit_done').run(self)
+
+    def setup(self):
+        # ??? Will not work correctly when several git working dirs exist in
+        # the same project.
+        super(Git, self).setup()
+        gps_utils.make_interactive(
+            self.pull_rebase,
+            name='git pull rebase')
+
+    def pull_rebase(self):
+        p = self._git(['pull', '--rebase'], spawn_console='')
+        yield p.wait_until_terminate()
 
     @core.run_in_background
     def async_fetch_history(self, visitor, filter):
@@ -291,3 +293,69 @@ class Git(core.VCS):
                     d, info[current_id], current_id[0:7])
 
         visitor.annotations(file, first_line, ids, lines)
+
+    @core.run_in_background
+    def async_branches(self, visitor):
+        def __branches():
+            branches = []
+            remotes = []
+            r = re.compile(
+                "^(?P<current>\*)?\s+"
+                "(?P<name>\S+)"
+                "\s+"
+                "(?P<id>[a-z0-9]+)"
+                "\s+"
+                "(\[(?P<tracking>.*\]))?")
+            emblem_r = re.compile(
+                "^(?P<tracking>.*):\s"
+                "(ahead (?P<ahead>\d+),?)?\s*"
+                "(behind (?P<behind>\d+))?")
+
+            p = self._git(['branch', '-a', '--list', '--no-color', '-vv'])
+            while True:
+                line = yield p.wait_line()
+                if line is None:
+                    visitor.branches(
+                        'branches', 'vcs-branch-symbolic', branches)
+                    visitor.branches('remotes', 'vcs-cloud-symbolic', remotes)
+                    break
+                m = r.search(line)
+                if m:
+                    n = m.group('name')
+                    emblem = []
+                    m2 = emblem_r.search(m.group('tracking') or '')
+                    if m2:
+                        n = '%s (%s)' % (n, m2.group('tracking'))
+                        if m2.group('ahead'):
+                            emblem.append("%s%s%s%s" % (
+                                chr(226), chr(134), chr(145),
+                                m2.group('ahead')))
+                        if m2.group('behind'):
+                            emblem.append("%s%s%s%s" % (
+                                chr(226), chr(134), chr(147),
+                                m2.group('behind')))
+
+                    emblem = ' '.join(emblem)
+
+                    if n.startswith('remotes/'):
+                        remotes.append(
+                            (n[8:],
+                             m.group('current') is not None,
+                             emblem))
+                    else:
+                        branches.append(
+                            (n,
+                             m.group('current') is not None,
+                             emblem))
+
+        def __tags():
+            p = self._git(['tag'])
+            tags = []
+            while True:
+                line = yield p.wait_line()
+                if line is None:
+                    visitor.branches('tags', 'vcs-tag-symbolic', tags)
+                    break
+                tags.append((line, False, ''))
+
+        a = yield join(__branches(), __tags())
