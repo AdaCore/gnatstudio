@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Intl;                    use GPS.Intl;
+with Glib.Object;                 use Glib.Object;
 with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Widget;                  use Gtk.Widget;
 with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
-with VCS2.Engines;                use VCS2.Engines;
 
 package body VCS2.Views is
 
@@ -54,6 +54,9 @@ package body VCS2.Views is
    overriding procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
+
+   procedure On_Selection_Changed (Self : access GObject_Record'Class);
+   --  Called when the selection changes in the tree
 
    ----------------------------
    -- On_Active_VCS_Selected --
@@ -187,6 +190,23 @@ package body VCS2.Views is
       Self.View.On_Preferenced_Changed (Pref);
    end Execute;
 
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed (Self : access GObject_Record'Class) is
+      View  : constant Base_VCS_View := Base_VCS_View (Self);
+      MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+      Child : constant MDI_Child := Find_MDI_Child_From_Widget (View);
+   begin
+      --  Might be null during refresh
+      if Child /= null
+        and then Child = MDI.Get_Focus_Child
+      then
+         View.Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
+      end if;
+   end On_Selection_Changed;
+
    ---------------
    -- On_Create --
    ---------------
@@ -198,10 +218,28 @@ package body VCS2.Views is
       pragma Unreferenced (Child);
       P : access On_Pref_Changed;
    begin
+      if Self.Tree /= null then
+         Self.Tree.Get_Selection.On_Changed
+           (On_Selection_Changed'Access, Self);
+      end if;
+
       P := new On_Pref_Changed;
       P.View := Self;
       Preferences_Changed_Hook.Add (P, Watch => Self);
       P.Execute (Self.Kernel, null);   --   initial setup
    end On_Create;
+
+   ------------------
+   -- On_Terminate --
+   ------------------
+
+   overriding procedure On_Terminate
+     (Self     : not null access Refresh_On_Terminate_Visitor;
+      VCS      : access VCS_Engine'Class)
+   is
+      pragma Unreferenced (VCS);
+   begin
+      Vcs_Refresh_Hook.Run (Self.Kernel);
+   end On_Terminate;
 
 end VCS2.Views;

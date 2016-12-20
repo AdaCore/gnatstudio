@@ -9675,6 +9675,9 @@ class VCS2_Task_Visitor(object):
            - a str to describe the status of the branch. This could for
              instance indicate how many commits are in this branch and
              not in the current one.
+           - a str to give a unique id for the branch. This is only used
+             by python callbacks in this module, so can be anything that
+             the VCS understands.
          """
 
 

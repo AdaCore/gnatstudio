@@ -26,7 +26,7 @@ with GPS.VCS;               use GPS.VCS;
 with VCS2.Engines;          use VCS2.Engines;
 
 package body VCS2.Scripts is
-   Me : constant Trace_Handle := Create ("VCS2.SCRIPT") with Unreferenced;
+   Me : constant Trace_Handle := Create ("VCS2.SCRIPT");
 
    VCS2_Task_Visitor_Class_Name : constant String :=
      "VCS2_Task_Visitor";
@@ -99,6 +99,10 @@ package body VCS2.Scripts is
    overriding procedure Async_Branches
      (Self        : not null access Script_Engine;
       Visitor     : not null access Task_Visitor'Class);
+   overriding procedure Async_Select_Branch
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Id          : String);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -335,6 +339,23 @@ package body VCS2.Scripts is
       Set_Nth_Arg (D, 1, Visitor);
       Call_Method (Self, "async_branches", D);
    end Async_Branches;
+
+   -------------------------
+   -- Async_Select_Branch --
+   -------------------------
+
+   overriding procedure Async_Select_Branch
+     (Self        : not null access Script_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Id          : String)
+   is
+      pragma Unreferenced (Visitor);
+      D : Callback_Data'Class := Self.Script.Create (1);
+   begin
+      Trace (Me, "MANU execute async_select_branch");
+      D.Set_Nth_Arg (1, Id);
+      Call_Method (Self, "async_select_branch", D);
+   end Async_Select_Branch;
 
    ----------------
    -- Async_Diff --
@@ -678,7 +699,8 @@ package body VCS2.Scripts is
                   Branches (B) :=
                     (Name       => new String'(Current.Nth_Arg (1)),
                      Is_Current => Current.Nth_Arg (2),
-                     Emblem     => new String'(Current.Nth_Arg (3)));
+                     Emblem     => new String'(Current.Nth_Arg (3, "")),
+                     Id         => new String'(Current.Nth_Arg (4, "")));
                end;
             end loop;
 
@@ -689,6 +711,8 @@ package body VCS2.Scripts is
 
             for B of Branches loop
                Free (B.Name);
+               Free (B.Emblem);
+               Free (B.Id);
             end loop;
          end;
       end if;

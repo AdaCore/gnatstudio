@@ -286,19 +286,33 @@ class CVS(core_staging.Emulate_Staging,
     @core.run_in_background
     def async_branches(self, visitor):
         p = self._cvs(['status', '-v'])
-        tags = set()
+        tags = set(['HEAD'])
+        sticky = set()
         in_tags = False
         while True:
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
                     'tags', 'vcs-tag-symbolic',
-                    [(t, False, '') for t in tags])
+                    [(t, t in sticky, '', t) for t in tags])
                 break
 
             if line.startswith('   Existing Tags:'):
                 in_tags = True
             elif in_tags and not line:
                 in_tags = False
-            elif in_tags:
+            elif in_tags and line != '\tNo Tags Exist':
                 tags.add(line.lstrip().split(' ')[0])
+            elif not in_tags and line.startswith('   Sticky Tag:'):
+                s = line.split()[2]
+                if s == '(none)':
+                    sticky.add('HEAD')
+                else:
+                    sticky.add(s)
+
+    @core.run_in_background
+    def async_select_branch(self, id):
+        p = self._cvs(['update', '-r', id])
+        status, output = yield p.wait_until_terminate()
+        if status != 0:
+            GPS.Console().write(output)

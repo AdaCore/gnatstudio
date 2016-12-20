@@ -224,24 +224,12 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Branches;
       VCS  : not null access VCS_Engine'Class);
 
-   -------------------
-   -- Command queue --
-   -------------------
-
-   procedure Queue
-     (Self        : not null access VCS_Engine'Class;
-      Command     : VCS_Command_Access);
-   --  Queue a new command for VCS.
-   --  Free Command eventually.
-
-   procedure Complete_Command (Self : not null access VCS_Engine'Class)
-     with Pre => not Self.Queue.Is_Empty;
-   --  Execute the On_Complete callback for the first command on the queue, if
-   --  needed. Then remove the command from the queue.
-
-   procedure Next_In_Queue (Self : not null access VCS_Engine'Class)
-     with Pre => Self.Run_In_Background = 0;
-   --  Execute the next command in the queue, if any
+   type Cmd_Select_Branch is new VCS_Command with record
+      Id  : Unbounded_String;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Select_Branch;
+      VCS  : not null access VCS_Engine'Class);
 
    procedure Unref (Self : in out Task_Visitor_Access);
    --  Decrease refcount of Self, and free if needed
@@ -255,6 +243,24 @@ package body VCS2.Engines is
       VCS   : access VCS_Engine'Class);
    --  A wrapper for another visitor, which executes the On_Complete callback
    --  with a null parameter after it has itself completed Steps times.
+
+   -------------------
+   -- Command queue --
+   -------------------
+
+   procedure Queue
+     (Self        : not null access VCS_Engine'Class;
+      Command     : VCS_Command_Access);
+   --  Queue (and possibly execute right away) a new command for VCS.
+   --  Free Command eventually.
+
+   procedure Command_Terminated (Self : not null access VCS_Engine'Class)
+     with Pre => Self.Run_In_Background = 0;
+   --  Called when the currently queue command terminates
+
+   procedure Start_Queue (Self : not null access VCS_Engine'Class);
+   --  Execute the next command in the queue, if non empty, and if none is
+   --  currently running.
 
    ----------
    -- Free --
@@ -956,6 +962,33 @@ package body VCS2.Engines is
       VCS.Async_Branches (Self.Visitor);
    end Execute;
 
+   -------------------------
+   -- Queue_Select_Branch --
+   -------------------------
+
+   procedure Queue_Select_Branch
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Id          : String) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Select_Branch'(
+           Visitor => Visitor.all'Unchecked_Access,
+           Id      => To_Unbounded_String (Id)));
+   end Queue_Select_Branch;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self    : not null access Cmd_Select_Branch;
+      VCS     : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Select_Branch (Self.Visitor, To_String (Self.Id));
+   end Execute;
+
    -----------------------
    -- Queue_Annotations --
    -----------------------
@@ -1051,52 +1084,6 @@ package body VCS2.Engines is
             Visitor => Visitor.all'Unchecked_Access));
    end Queue_Fetch_Commit_Details;
 
-   ----------------------
-   -- Complete_Command --
-   ----------------------
-
-   procedure Complete_Command (Self : not null access VCS_Engine'Class) is
-      Item : Queue_Item := Self.Queue.First_Element;
-   begin
-      Item.Command.Free;
-
-      if Item.Command.Visitor /= null then
-         Item.Command.Visitor.On_Terminate (Self);
-         Unref (Item.Command.Visitor);
-      end if;
-
-      Unchecked_Free (Item.Command);
-
-      Self.Queue.Delete_First;
-   end Complete_Command;
-
-   -------------------
-   -- Next_In_Queue --
-   -------------------
-
-   procedure Next_In_Queue
-     (Self    : not null access VCS_Engine'Class)
-   is
-      Item : Queue_Item;
-   begin
-      if not Self.Queue.Is_Empty then
-         Item := Self.Queue.First_Element;
-         Item.Command.Execute (Self);
-
-         --  If we haven't started a background command, terminate this
-         --  command. Otherwise, wait till Set_Run_In_Background is called.
-         --  The queue might have become empty if the command has terminated
-         --  immediately (and Set_Run_In_Background has been called).
-
-         if Self.Run_In_Background = 0
-           and then not Self.Queue.Is_Empty
-         then
-            Complete_Command (Self);
-            Next_In_Queue (Self);
-         end if;
-      end if;
-   end Next_In_Queue;
-
    -----------
    -- Queue --
    -----------
@@ -1106,12 +1093,67 @@ package body VCS2.Engines is
       Command     : VCS_Command_Access) is
    begin
       --  Allow users to directly pass a "new " as parameter
-      Self.Queue.Append ((Command => Command.all'Unchecked_Access));
-
-      if Self.Run_In_Background = 0 then
-         Next_In_Queue (Self);
-      end if;
+      Self.Queue.Append (Command.all'Unchecked_Access);
+      Start_Queue (Self);
    end Queue;
+
+   -----------------
+   -- Start_Queue --
+   -----------------
+
+   procedure Start_Queue (Self : not null access VCS_Engine'Class) is
+   begin
+      if Self.Run_In_Background = 0
+        and then not Self.Queue.Is_Empty
+
+        --  If not null, this indicate that a command was executed as part
+        --  of calling On_Terminate in Command_Terminated below.
+        and then Self.Queue_Current = null
+      then
+         Self.Queue_Current := Self.Queue.First_Element;
+         Self.Queue.Delete_First;
+
+         Self.Queue_Current.Execute (Self);
+
+         --  If we haven't started a background command, terminate this
+         --  command. Otherwise, wait till Set_Run_In_Background is called.
+         --  The queue might have become empty if the command has terminated
+         --  immediately (and Set_Run_In_Background has been called).
+
+         if Self.Run_In_Background = 0 then
+            Command_Terminated (Self);
+            Start_Queue (Self);
+         end if;
+      end if;
+   end Start_Queue;
+
+   ------------------------
+   -- Command_Terminated --
+   ------------------------
+
+   procedure Command_Terminated (Self : not null access VCS_Engine'Class) is
+   begin
+      if Self.Queue_Current /= null then
+         declare
+            C : constant VCS_Command_Access := Self.Queue_Current;
+         begin
+            if C.Visitor /= null then
+               --  This might start other commands
+               C.Visitor.On_Terminate (Self);
+               Unref (C.Visitor);
+            end if;
+
+            --  Only clear Queue_Current now, so that any command started from
+            --  on_terminate is not run until the current command actually
+            --  finishes.
+            C.Free;
+            Unchecked_Free (Self.Queue_Current);
+         end;
+      end if;
+
+      --  In case there are more commands in the queue
+      Start_Queue (Self);
+   end Command_Terminated;
 
    ---------------------------
    -- Set_Run_In_Background --
@@ -1122,19 +1164,17 @@ package body VCS2.Engines is
        Background : Boolean) is
    begin
       if Background then
+         --  Called when the command is already running
          Self.Run_In_Background := Self.Run_In_Background + 1;
+         Increase_Indent (Me, "Set_Run_In_Background "
+                          & Self.Run_In_Background'Img);
       else
          Self.Run_In_Background := Self.Run_In_Background - 1;
          Assert (Me, Self.Run_In_Background >= 0, "Invalid Set_In_Background");
-         Trace (Me, "Set run in background: " & Self.Run_In_Background'Img);
-
-         --  Queue could be empty if the command was executed directly from
-         --  python (and not via a call to Queue).
-         if Self.Run_In_Background = 0
-           and then not Self.Queue.Is_Empty
-         then
-            Complete_Command (Self);
-            Next_In_Queue (Self);
+         Decrease_Indent
+           (Me, "Set run in background: " & Self.Run_In_Background'Img);
+         if Self.Run_In_Background = 0 then
+            Command_Terminated (Self);
          end if;
       end if;
    end Set_Run_In_Background;

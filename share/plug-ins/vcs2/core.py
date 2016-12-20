@@ -245,6 +245,14 @@ class VCS(GPS.VCS2):
            the information, via its `branches` method.
         """
 
+    def async_select_branch(self, id):
+        """
+        Make the given branch the current branch.
+
+        :param str id: the id of the new branch, as returned by
+            `async_branches`
+        """
+
     ############
     # Services #
     ############
@@ -425,7 +433,7 @@ class vcs_action:
 
     _actions = set()  # all registered actions
 
-    def __init__(self, name, icon='', toolbar='Commits', toolbar_section='',
+    def __init__(self, name, icon='', toolbar='', toolbar_section='',
                  menu='', after=''):
         self.name = name
         self.icon = icon

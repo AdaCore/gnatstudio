@@ -20,10 +20,12 @@
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;          use Generic_Views;
+with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtkada.Tree_View;       use Gtkada.Tree_View;
+with VCS2.Engines;           use VCS2.Engines;
 
 package VCS2.Views is
 
@@ -34,6 +36,8 @@ package VCS2.Views is
    type Base_VCS_View_Record is new Generic_Views.View_Record with record
       Tree         : Tree_View;
       --  The tree that represents data.
+      --  Whenever the selection changes, the GPS context is automatically
+      --  updated.
 
       Text_Render : Gtk_Cell_Renderer_Text;
       --  The text renderer for the longuest cell. This will automatically
@@ -42,8 +46,8 @@ package VCS2.Views is
       Filter_Options  : Filter_Options_Mask :=
         Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy;
       Filter_Hist_Prefix : Unbounded_String;
-
    end record;
+   type Base_VCS_View is access all Base_VCS_View_Record'Class;
    overriding procedure Create_Toolbar
      (View    : not null access Base_VCS_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
@@ -59,5 +63,13 @@ package VCS2.Views is
 
    procedure Refresh (Self : not null access Base_VCS_View_Record) is null;
    --  Refresh the contents of the view
+
+   type Refresh_On_Terminate_Visitor is new Task_Visitor with record
+      Kernel  : Kernel_Handle;
+   end record;
+   overriding procedure On_Terminate
+     (Self     : not null access Refresh_On_Terminate_Visitor;
+      VCS      : access VCS_Engine'Class);
+   --  Refreshes all VCS views on terminate
 
 end VCS2.Views;

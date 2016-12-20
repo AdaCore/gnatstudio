@@ -345,12 +345,14 @@ class Git(core.VCS):
                         remotes.append(
                             (n[8:],
                              m.group('current') is not None,
-                             emblem))
+                             emblem,
+                             m.group('name')))
                     else:
                         branches.append(
                             (n,
                              m.group('current') is not None,
-                             emblem))
+                             emblem,
+                             m.group('name')))
 
         def __tags():
             p = self._git(['tag'])
@@ -360,6 +362,13 @@ class Git(core.VCS):
                 if line is None:
                     visitor.branches('tags', 'vcs-tag-symbolic', tags)
                     break
-                tags.append((line, False, ''))
+                tags.append((line, False, '', line))
 
         a = yield join(__branches(), __tags())
+
+    @core.run_in_background
+    def async_select_branch(self, id):
+        p = self._git(['checkout', id])
+        status, output = yield p.wait_until_terminate()
+        if status != 0:
+            GPS.Console().write(output)

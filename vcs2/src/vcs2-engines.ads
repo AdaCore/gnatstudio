@@ -20,6 +20,7 @@
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Glib.Main;                  use Glib.Main;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNAT.Strings;               use GNAT.Strings;
@@ -180,6 +181,7 @@ package VCS2.Engines is
       Name       : GNAT.Strings.String_Access;
       Is_Current : Boolean;
       Emblem     : GNAT.Strings.String_Access;
+      Id         : GNAT.Strings.String_Access;
    end record;
    type Branches_Array is array (Natural range <>) of Branch_Info;
 
@@ -474,6 +476,17 @@ package VCS2.Engines is
    --  Compute available branches, tags and others for Self.
    --  Reports the result via one or more calls to Visitor.On_Branches
 
+   procedure Async_Select_Branch
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access Task_Visitor'Class;
+      Id          : String) is null;
+   procedure Queue_Select_Branch
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access Task_Visitor'Class;
+      Id          : String);
+   --  The user has requested a change of the current branch.
+   --  The Id is as returned by Async_Branches.
+
    ----------
    -- Misc --
    ----------
@@ -560,11 +573,8 @@ private
        VCS    : not null access VCS_Engine'Class) is abstract;
    --  Execute the command
 
-   type Queue_Item is record
-      Command     : VCS_Command_Access;
-   end record;
    package Command_Queues is new Ada.Containers.Vectors
-      (Positive, Queue_Item);
+     (Positive, VCS_Command_Access);
 
    type VCS_Engine is abstract new Abstract_VCS_Engine with record
       Kernel      : Kernel_Handle;
@@ -573,10 +583,14 @@ private
       Working_Dir : Virtual_File;
 
       Run_In_Background : Integer := 0;
+      Queue_Current     : VCS_Command_Access;
       Queue             : Command_Queues.Vector;
-      --  Queue of commands (see Set_Run_In_Background)
-      --  When a background command is executing, the first item in the queue
-      --  is that command.
+      Queue_Id          : G_Source_Id := No_Source_Id;
+      --  Queue of commands (see Set_Run_In_Background).
+      --  Commands are started after a short idle, so that the current command
+      --  can be properly unregistered from GPS task manager.
+      --  We do not use GPS's standard command queues, because we only want to
+      --  run one command at a time per VCS engine)
 
       In_Use   : Boolean := True;
       --  True if any file depends on this engine. In practice, engines no in

@@ -195,9 +195,6 @@ package body VCS2.Commits is
       X, Y    : Gdouble);
    --  Called every time a row is clicked
 
-   procedure On_Selection_Changed (Self : access GObject_Record'Class);
-   --  Called when the selection changes
-
    type On_All_Files_Available_In_Cache is new Task_Visitor with
       record
          Kernel : not null access Kernel_Handle_Record'Class;
@@ -332,22 +329,6 @@ package body VCS2.Commits is
 
       return Context;
    end Build_Context;
-
-   --------------------------
-   -- On_Selection_Changed --
-   --------------------------
-
-   procedure On_Selection_Changed (Self : access GObject_Record'Class) is
-      View  : constant Commit_View := Commit_View (Self);
-      Child : constant GPS_MDI_Child := Commit_Views.Child_From_View (View);
-   begin
-      --  Might be null during refresh
-      if Child /= null
-        and then MDI_Child (Child) = Get_MDI (View.Kernel).Get_Focus_Child
-      then
-         View.Kernel.Context_Changed (Child.Build_Context);
-      end if;
-   end On_Selection_Changed;
 
    ---------------------
    -- Create_Contents --
@@ -928,7 +909,6 @@ package body VCS2.Commits is
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
-      Self.Tree.Get_Selection.On_Changed (On_Selection_Changed'Access, Self);
       Scrolled.Add (Self.Tree);
 
       --  Tree

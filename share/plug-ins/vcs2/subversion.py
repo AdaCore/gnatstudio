@@ -241,20 +241,42 @@ class SVN(core_staging.Emulate_Staging,
         if not url:
             return
 
-        branches = [('trunk', False, '')]
-        p = self._svn(['list', url.replace('/trunk', '/branches')])
+        # Assume the standard 'trunk', 'branches' and 'tags' naming
+        parent = url
+        while True:
+            parent, tail = os.path.split(parent)
+            if tail in ('trunk', 'branches', 'tags'):
+                break
+
+        branches = [('trunk', url.endswith('/trunk'), '',
+                     os.path.join(parent, 'trunk'))]
+        base = os.path.join(parent, 'branches')
+        p = self._svn(['list', base])
         while True:
             line = yield p.wait_line()
             if line is None:
                 visitor.branches('branches', 'vcs-branch-symbolic', branches)
                 break
-            branches.append((line.replace('/', ''), False, ''))
+            line = line.rstrip('/')
+            b = os.path.join(base, line)
+            GPS.Logger("MANU").log("b=%s url=%s--" % (b, url))
+            branches.append((line, b == url, '', b))
 
         tags = []
-        p = self._svn(['list', url.replace('/trunk', '/tags')])
+        base = os.path.join(parent, 'tags')
+        p = self._svn(['list', base])
         while True:
             line = yield p.wait_line()
             if line is None:
                 visitor.branches('tags', 'vcs-tag-symbolic', tags)
                 break
-            tags.append((line.replace('/', ''), False, ''))
+            line = line.rstrip('/')
+            b = os.path.join(base, line)
+            tags.append((line, b == url, '', b))
+
+    @core.run_in_background
+    def async_select_branch(self, id):
+        p = self._svn(['switch', '--ignore-ancestry', id])
+        status, output = yield p.wait_until_terminate()
+        if status != 0:
+            GPS.Console().write(output)
