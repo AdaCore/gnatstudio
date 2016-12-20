@@ -2288,10 +2288,11 @@ procedure GPS.Main is
                       2 => Create
                         (Pref_Page =>
                            GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                             ("Refactoring"),
-                         Label     => "Select refactoring stuff",
-                         Message   => "Refactoring preferences can be changed "
-                         & "later via <b>Edit/Preferences/Refactoring</b>."),
+                             ("Key shortcuts theme"),
+                         Label     => "Select a key shortcuts theme",
+                         Message   => "Key shortcuts can be changed later "
+                         & "later via "
+                         & "<b>Edit/Preferences/General/Key Shortcuts</b>."),
                       3 => Create
                         (Pref_Page =>
                            GPS_Main.Kernel.Get_Preferences.Get_Registered_Page

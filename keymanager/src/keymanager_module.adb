@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Config;                  use Config;
@@ -55,7 +54,6 @@ with HTables;                  use HTables;
 with Histories;                use Histories;
 with Interfaces.C.Strings;
 with KeyManager_Module.GUI;
-with String_Utils;             use String_Utils;
 with System.Assertions;        use System.Assertions;
 with XML_Parsers;
 with XML_Utils;                use XML_Utils;
@@ -1289,6 +1287,54 @@ package body KeyManager_Module is
          return False;
    end Process_Key_Event;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Theme : Key_Theme_Type) return String
+   is
+      (Ada.Strings.Unbounded.To_String (Theme.Name));
+
+   ---------------------
+   -- Is_User_Defined --
+   ---------------------
+
+   function Is_User_Defined (Theme : Key_Theme_Type) return Boolean
+   is
+      (Theme.User_Defined);
+
+   -------------------------
+   -- Get_First_Reference --
+   -------------------------
+
+   function Get_First_Reference
+     (Themes_List : Key_Theme_Type_List) return Key_Theme_Type_Cursor
+   is
+      (Key_Theme_Type_Cursor'(C => Themes_List.First));
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Theme_Cursor : in out Key_Theme_Type_Cursor) is
+   begin
+      Key_Theme_Type_Maps.Next (Theme_Cursor.C);
+   end Next;
+
+   -------------------
+   -- Get_Key_Theme --
+   -------------------
+
+   function Get_Key_Theme
+     (Theme_Cursor : Key_Theme_Type_Cursor) return Key_Theme_Type
+   is
+     (if Theme_Cursor /= Null_Key_Theme_Type_Cursor
+      and then Key_Theme_Type_Maps.Has_Element (Theme_Cursor.C)
+      then
+         Key_Theme_Type_Maps.Element (Theme_Cursor.C)
+      else
+         Null_Key_Theme);
+
    -------------------
    -- Get_Key_Theme --
    -------------------
@@ -1300,6 +1346,19 @@ package body KeyManager_Module is
    begin
       return Most_Recent (Get_History (Kernel), Hist_Key_Theme, "default");
    end Get_Key_Theme;
+
+   ------------------
+   -- Find_By_Name --
+   ------------------
+
+   function Find_By_Name
+     (Themes_List : Key_Theme_Type_List;
+      Name        : String) return Key_Theme_Type_Cursor
+   is
+     (if Themes_List.Contains (Name) then
+         (C => Themes_List.Find (Name))
+      else
+         Null_Key_Theme_Type_Cursor);
 
    -------------------
    -- Set_Key_Theme --
@@ -1341,23 +1400,40 @@ package body KeyManager_Module is
 
    function List_Key_Themes
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String_List_Access
+      return Key_Theme_Type_List
    is
       User_Theme : constant Virtual_File := User_Key_Theme_Directory (Kernel);
       System_Theme : constant Virtual_File :=
         Create_From_Dir (Kernel.Get_Share_Dir, +"key_themes");
 
-      Result : String_List_Access;
+      Result : Key_Theme_Type_List;
 
-      procedure Add_From_Dir (Dir : Virtual_File);
-      procedure Add_From_Dir (Dir : Virtual_File) is
+      procedure Add_From_Dir (Dir : Virtual_File; User_Defined : Boolean);
+
+      ------------------
+      -- Add_From_Dir --
+      ------------------
+
+      procedure Add_From_Dir (Dir : Virtual_File; User_Defined : Boolean) is
          Files : File_Array_Access;
+
+         use Ada.Strings.Unbounded;
       begin
          if Dir.Is_Directory then
             Files := Read_Dir (Dir, Files_Only);
             for F in Files'Range loop
                if Files (F).File_Extension = ".xml" then
-                  Append (Result, Files (F).Display_Base_Name (".xml"));
+                  declare
+                     Key_Theme_Name : constant String :=
+                                        Files (F).Display_Base_Name (".xml");
+                  begin
+                     Result.Include
+                       (Key      => Key_Theme_Name,
+                        New_Item => Key_Theme_Type'
+                          (Name         =>
+                               To_Unbounded_String (Key_Theme_Name),
+                           User_Defined => User_Defined));
+                  end;
                end if;
             end loop;
             Unchecked_Free (Files);
@@ -1365,8 +1441,8 @@ package body KeyManager_Module is
       end Add_From_Dir;
 
    begin
-      Add_From_Dir (User_Theme);
-      Add_From_Dir (System_Theme);
+      Add_From_Dir (User_Theme, User_Defined => True);
+      Add_From_Dir (System_Theme, User_Defined => False);
       return Result;
    end List_Key_Themes;
 

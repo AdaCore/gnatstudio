@@ -15,11 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings;
+with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Strings.Hash_Case_Insensitive;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Gdk.Event;
-with Gdk.Types;
+
 with GNAT.Strings;
 with GNATCOLL.VFS;
+
+with Gdk.Event;
+with Gdk.Types;
+
 with GPS.Kernel;
 with HTables;
 
@@ -38,6 +46,32 @@ package KeyManager_Module is
    --  Load the customized key bindings. This needs to be done after all
    --  XML files and themes have been loaded, so that the user's choice
    --  overrides everything.
+
+   type Key_Theme_Type is tagged private;
+   --  Type representing a key theme
+
+   Null_Key_Theme : constant Key_Theme_Type;
+
+   function Get_Name (Theme : Key_Theme_Type) return String;
+   --  Return the name of the given key theme
+
+   function Is_User_Defined (Theme : Key_Theme_Type) return Boolean;
+   --  Return True if the given the is user defined, False otherwise
+
+   type Key_Theme_Type_List is private;
+   type Key_Theme_Type_Cursor is private;
+   --  Types used to iterate over key themes
+
+   Null_Key_Theme_Type_Cursor : constant Key_Theme_Type_Cursor;
+
+   function Get_First_Reference
+     (Themes_List : Key_Theme_Type_List) return Key_Theme_Type_Cursor;
+   procedure Next (Theme_Cursor : in out Key_Theme_Type_Cursor);
+   function Find_By_Name
+     (Themes_List : Key_Theme_Type_List;
+      Name        : String) return Key_Theme_Type_Cursor;
+   function Get_Key_Theme
+     (Theme_Cursor : Key_Theme_Type_Cursor) return Key_Theme_Type;
 
    function Get_Key_Theme
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -71,9 +105,8 @@ package KeyManager_Module is
 
    function List_Key_Themes
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNAT.Strings.String_List_Access;
+      return Key_Theme_Type_List;
    --  Return all known key themes.
-   --  Returned value must be freed by user.
 
    procedure Block_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -106,6 +139,31 @@ private
       Key      : Gdk.Types.Gdk_Key_Type;
       Modifier : Gdk.Types.Gdk_Modifier_Type;
    end record;
+
+   type Key_Theme_Type is tagged record
+      Name         : Ada.Strings.Unbounded.Unbounded_String;
+      User_Defined : Boolean;
+   end record;
+
+   package Key_Theme_Type_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Key_Theme_Type,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+      "="             => "=");
+
+   type Key_Theme_Type_List is new Key_Theme_Type_Maps.Map with null record;
+   type Key_Theme_Type_Cursor is record
+      C : Key_Theme_Type_Maps.Cursor;
+   end record;
+
+   Null_Key_Theme : constant Key_Theme_Type := Key_Theme_Type'
+     (Name         => Ada.Strings.Unbounded.Null_Unbounded_String,
+      User_Defined => False);
+
+   Null_Key_Theme_Type_Cursor : constant Key_Theme_Type_Cursor :=
+                                  Key_Theme_Type_Cursor'
+                                    (C => Key_Theme_Type_Maps.No_Element);
 
    type Keymap_Record;
    type Keymap_Access is access Keymap_Record;

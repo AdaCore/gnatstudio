@@ -19,6 +19,7 @@ with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with System;                   use System;
 
+with GNAT.Case_Util;           use GNAT.Case_Util;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -43,6 +44,8 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Flow_Box;             use Gtk.Flow_Box;
+with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
@@ -50,9 +53,11 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Radio_Button;         use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
+with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -103,10 +108,13 @@ package body KeyManager_Module.GUI is
    Categories_Pref     : Boolean_Preference;
    Show_Empty_Cat      : Boolean_Preference;
 
-   Key_Shortcuts_Page_Name : constant String := "General/Key Shortcuts";
+   Key_Shortcuts_Page_Name       : constant String := "General/Key Shortcuts";
    --  Name of the key shortcuts editor preferences page
 
-   Action_Column_Min_Width : constant := 250;
+   Key_Theme_Assistant_Page_Name : constant String := "Key shortcuts theme";
+   --  Name of the preferences assistant page used to choose a key theme
+
+   Action_Column_Min_Width       : constant := 250;
    --  Minimum width of the 'Actions' tree view column
 
    type Keys_Editor_Preferences_Page_Record is new Preferences_Page_Record with
@@ -121,6 +129,44 @@ package body KeyManager_Module.GUI is
      (Self    : not null access Keys_Editor_Preferences_Page_Record;
       Manager : not null Preferences_Manager)
       return Gtk.Widget.Gtk_Widget;
+
+   type Key_Themes_Assistant_Page_Record is
+     new Keys_Editor_Preferences_Page_Record with null record;
+   --  Type reprensenting the key themes preferences assistant page model.
+
+   type Key_Theme_Widget_Record is new Gtk_Vbox_Record with record
+      Kernel       : Kernel_Handle;
+      Radio_Button : Gtk_Radio_Button;
+   end record;
+   type Key_Theme_Widget is access all Key_Theme_Widget_Record'Class;
+   --  Type representing the key themes widgets displayed in the key themes
+   --  preferences assistant page.
+
+   overriding function Get_Widget
+     (Self    : not null access Key_Themes_Assistant_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
+
+   procedure On_Child_Activated
+     (Self  : access Gtk_Flow_Box_Record'Class;
+      Child : not null access Gtk_Flow_Box_Child_Record'Class);
+   --  Called when a key theme is selected using the Gtk_Flow_Box selection
+   --  mechanism.
+
+   type On_Key_Theme_Selected_User_Data is record
+      Child    : Gtk_Flow_Box_Child;
+      Flow_Box : Gtk_Flow_Box;
+      Kernel   : Kernel_Handle;
+   end record;
+   package On_Key_Theme_Selected_Handlers is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk_Radio_Button_Record,
+      User_Type   => On_Key_Theme_Selected_User_Data);
+
+   procedure On_Key_Theme_Selected
+     (Self      : access Gtk_Radio_Button_Record'Class;
+      User_Data : On_Key_Theme_Selected_User_Data);
+   --  Called when a key theme radio button is selected in the key themes
+   --  preferences assistant page.
 
    type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
@@ -325,6 +371,208 @@ package body KeyManager_Module.GUI is
 
       return Gtk_Widget (Page_View);
    end Get_Widget;
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self    : not null access Key_Themes_Assistant_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Manager);
+      Key_Themes        : constant Key_Theme_Type_List :=
+                            List_Key_Themes (Self.Kernel);
+      Key_Theme         : Key_Theme_Type;
+      Label             : Gtk_Label;
+      Label_Size_Group  : Gtk_Size_Group;
+      Theme_Widget      : Key_Theme_Widget;
+      Hbox              : Gtk_Hbox;
+      Flow_Box          : Gtk_Flow_Box;
+      Radio_Group       : Gtk_Radio_Button;
+      Padding           : constant Guint := 5;
+
+      procedure Create_Key_Theme_Widget
+        (Key_Theme_Name : String;
+         Description    : String);
+      --  Create a key theme widget for the key theme denoted by
+      --  Key_Theme_Name, if any, and append it to the page's flow box.
+
+      procedure Add_Key_Shortcut_Example (Action : String);
+      --  Add a key shortcut example in the key theme's widget 'Example'
+      --  section, showing which key shortcut is binded to the given Action for
+      --  this key theme.
+
+      -----------------------------
+      -- Create_Key_Theme_Widget --
+      -----------------------------
+
+      procedure Create_Key_Theme_Widget
+        (Key_Theme_Name : String;
+         Description    : String) is
+      begin
+         Key_Theme :=
+           Get_Key_Theme (Find_By_Name (Key_Themes, Key_Theme_Name));
+
+         if Key_Theme /= Null_Key_Theme then
+            declare
+               Key_Theme_Name : String := Key_Theme.Get_Name;
+            begin
+               Theme_Widget := new Key_Theme_Widget_Record;
+               Theme_Widget.Kernel := Self.Kernel;
+
+               Initialize_Vbox (Theme_Widget, Homogeneous => False);
+               Flow_Box.Add (Theme_Widget);
+
+               Gtk_New_Hbox (Hbox);
+               Theme_Widget.Pack_Start (Hbox, Expand => False);
+
+               --  Create the key theme's radio button
+
+               To_Mixed (Key_Theme_Name);
+               Gtk_New
+                 (Theme_Widget.Radio_Button,
+                  Group => Radio_Group,
+                  Label => Key_Theme_Name);
+               On_Key_Theme_Selected_Handlers.Connect
+                 (Widget    => Theme_Widget.Radio_Button,
+                  Name      => Gtk.Toggle_Button.Signal_Toggled,
+                  Cb        => On_Key_Theme_Selected'Access,
+                  User_Data => On_Key_Theme_Selected_User_Data'
+                    (Child    => Gtk_Flow_Box_Child (Theme_Widget.Get_Parent),
+                     Flow_Box => Flow_Box,
+                     Kernel   => Self.Kernel));
+               Hbox.Pack_Start (Theme_Widget.Radio_Button, Expand => False);
+
+               if Radio_Group = null then
+                  Radio_Group := Theme_Widget.Radio_Button;
+               end if;
+
+               --  Create the description label
+
+               Gtk_New (Label, Description);
+               Label.Set_Alignment (0.0, 0.5);
+               Theme_Widget.Pack_Start
+                 (Label,
+                  Expand  => False,
+                  Padding => Padding);
+
+               --  Create the 'Examples' label
+
+               Gtk_New (Label);
+               Label.Set_Markup ("<b>Examples</b>");
+               Label.Set_Alignment (0.0, 0.5);
+               Theme_Widget.Pack_Start
+                 (Label,
+                  Expand  => False,
+                  Padding => Padding);
+
+               --  Load the key theme we want to display and retrieve some
+               --  key shortcuts examples once it's loaded.
+
+               Remove_Shortcuts (Self.Kernel, Mode => Standard_Shortcuts);
+               Load_Key_Theme (Self.Kernel, Key_Theme.Get_Name);
+               Set_Key_Theme (Self.Kernel, Key_Theme.Get_Name);
+
+               Add_Key_Shortcut_Example ("open file");
+               Add_Key_Shortcut_Example ("save");
+               Add_Key_Shortcut_Example ("paste from clipboard");
+            end;
+         end if;
+      end Create_Key_Theme_Widget;
+
+      ------------------------------
+      -- Add_Key_Shortcut_Example --
+      ------------------------------
+
+      procedure Add_Key_Shortcut_Example (Action : String)
+      is
+         User_Changed : aliased Boolean;
+         Key          : constant String :=
+                          Lookup_Key_From_Action
+                            (Get_Shortcuts (Self.Kernel),
+                             Action          => Action,
+                             Use_Markup      => False,
+                             Is_User_Changed => User_Changed'Unchecked_Access,
+                             Default         => -Disabled_String);
+      begin
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Theme_Widget.Pack_Start (Hbox, Expand => False, Padding => Padding);
+
+         Gtk_New (Label, Action);
+         Label.Set_Alignment (0.0, 0.5);
+         Label_Size_Group.Add_Widget (Label);
+         Hbox.Pack_Start (Label, Expand => False);
+
+         Gtk_New (Label, Key);
+         Label.Set_Alignment (0.0, 0.5);
+         Hbox.Pack_Start (Label, Expand => False, Padding => Padding);
+      end Add_Key_Shortcut_Example;
+
+   begin
+      --  Create the flow box that will contain the key themes widgets
+
+      Gtk_New (Flow_Box);
+      Flow_Box.Set_Min_Children_Per_Line (2);
+      Flow_Box.Set_Orientation (Orientation_Horizontal);
+      Flow_Box.Set_Homogeneous (True);
+      Flow_Box.Set_Selection_Mode (Selection_Single);
+
+      Gtk_New (Label_Size_Group);
+
+      --  Create a key theme widget for the 'default' key theme and select it
+      --  in the flow box.
+
+      Create_Key_Theme_Widget
+        (Key_Theme_Name => "default",
+         Description    => "The default key shortcuts theme.");
+      Flow_Box.Select_Child (Gtk_Flow_Box_Child (Theme_Widget.Get_Parent));
+
+      --  Create a key theme widget for the 'emacs' key theme
+
+      Create_Key_Theme_Widget
+        (Key_Theme_Name => "emacs",
+         Description    => "A key shortcuts theme based on the emacs default "
+         & "key shortcuts.");
+
+      Flow_Box.On_Child_Activated (On_Child_Activated'Access);
+
+      return Gtk_Widget (Flow_Box);
+   end Get_Widget;
+
+   ------------------------
+   -- On_Child_Activated --
+   ------------------------
+
+   procedure On_Child_Activated
+     (Self  : access Gtk_Flow_Box_Record'Class;
+      Child : not null access Gtk_Flow_Box_Child_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      Theme_Widget : constant Key_Theme_Widget :=
+                       Key_Theme_Widget (Child.Get_Child);
+   begin
+      Theme_Widget.Radio_Button.Set_Active (True);
+   end On_Child_Activated;
+
+   ---------------------------
+   -- On_Key_Theme_Selected --
+   ---------------------------
+
+   procedure On_Key_Theme_Selected
+     (Self      : access Gtk_Radio_Button_Record'Class;
+      User_Data : On_Key_Theme_Selected_User_Data)
+   is
+      Theme_Name : String := Self.Get_Label;
+   begin
+      User_Data.Flow_Box.Select_Child (User_Data.Child);
+
+      To_Lower (Theme_Name);
+      Remove_Shortcuts (User_Data.Kernel, Mode => Standard_Shortcuts);
+      Load_Key_Theme (User_Data.Kernel, Theme_Name);
+      Set_Key_Theme (User_Data.Kernel, Theme_Name);
+   end On_Key_Theme_Selected;
 
    -------------
    -- Execute --
@@ -1234,22 +1482,25 @@ package body KeyManager_Module.GUI is
    function Initialize
      (Editor : access Keys_Editor_Record'Class) return Gtk_Widget
    is
-      Scrolled  : Gtk_Scrolled_Window;
-      Hbox      : Gtk_Box;
-      Bbox      : Gtk_Button_Box;
-      Button    : Gtk_Button;
-      Col       : Gtk_Tree_View_Column;
-      Render    : Gtk_Cell_Renderer_Text;
-      Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
-      Frame     : Gtk_Frame;
-      Pane      : Gtk_Paned;
-      Text      : Gtk_Text_View;
-      Ignore    : Gint;
-      Sep       : Gtk_Separator;
-      Selected  : Gint := 0;
-      Key_Themes : String_List_Access := List_Key_Themes (Editor.Kernel);
-      Theme_Name : constant String := Get_Key_Theme (Editor.Kernel);
-
+      Scrolled           : Gtk_Scrolled_Window;
+      Hbox               : Gtk_Box;
+      Bbox               : Gtk_Button_Box;
+      Button             : Gtk_Button;
+      Col                : Gtk_Tree_View_Column;
+      Render             : Gtk_Cell_Renderer_Text;
+      Pixbuf             : Gtk_Cell_Renderer_Pixbuf;
+      Frame              : Gtk_Frame;
+      Pane               : Gtk_Paned;
+      Text               : Gtk_Text_View;
+      Ignore             : Gint;
+      Sep                : Gtk_Separator;
+      Selected           : Gint := 0;
+      Key_Themes         : constant Key_Theme_Type_List :=
+                             List_Key_Themes (Editor.Kernel);
+      Key_Theme_Cursor   : Key_Theme_Type_Cursor :=
+                             Get_First_Reference (Key_Themes);
+      Current_Theme_Name : constant String := Get_Key_Theme (Editor.Kernel);
+      Nb_Key_Themes      : Gint := 0;
    begin
       Initialize_Vbox (Editor);
       Editor.Set_Name ("Key shortcuts");  --  for testsuite
@@ -1308,17 +1559,27 @@ package body KeyManager_Module.GUI is
         (-("Select an alternate list of shortcuts. User-overridden shortcuts"
            & " are preserved, but all others are reset and reloaded from the"
            & " new theme"));
-      for K in Key_Themes'Range loop
-         Editor.Themes.Append_Text (Key_Themes (K).all);
-         if Key_Themes (K).all = Theme_Name then
-            Selected := Gint (K - Key_Themes'First);
-         end if;
+      while Key_Theme_Cursor /= Null_Key_Theme_Type_Cursor loop
+         declare
+            Key_Theme_Name : constant String :=
+                               Get_Key_Theme (Key_Theme_Cursor).Get_Name;
+         begin
+            Editor.Themes.Append_Text (Key_Theme_Name);
+
+            if Key_Theme_Name = Current_Theme_Name then
+               Selected := Nb_Key_Themes;
+            end if;
+
+            Nb_Key_Themes := Nb_Key_Themes + 1;
+
+            Next (Key_Theme_Cursor);
+         end;
       end loop;
+
       Editor.Themes.Set_Active (Selected);
 
       --  Set the callback after setting the active item.
       Editor.Themes.On_Changed (On_Load_Key_Theme'Access, Editor);
-      Free (Key_Themes);
 
       Gtk_New (Button, -"Reset");
       Button.Set_Tooltip_Text
@@ -1458,6 +1719,10 @@ package body KeyManager_Module.GUI is
                            Kernel.Get_Preferences;
       Keys_Editor_Page : constant Keys_Editor_Preferences_Page :=
                            new Keys_Editor_Preferences_Page_Record;
+      Keys_Theme_Page  : constant Keys_Editor_Preferences_Page :=
+                           new Key_Themes_Assistant_Page_Record'
+                             (Preferences_Page_Record with
+                              Kernel => Kernel_Handle (Kernel));
    begin
       Shortcuts_Only := Manager.Create_Invisible_Pref
         ("shortcuts-only", False,
@@ -1488,6 +1753,12 @@ package body KeyManager_Module.GUI is
          (Name             => Key_Shortcuts_Page_Name,
           Page             => Preferences_Page (Keys_Editor_Page),
           Priority         => -1,
+          Replace_If_Exist => False);
+      Manager.Register_Page
+         (Name             => Key_Theme_Assistant_Page_Name,
+          Page             => Preferences_Page (Keys_Theme_Page),
+          Priority         => -1,
+          Page_Type        => Integrated_Page,
           Replace_If_Exist => False);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
