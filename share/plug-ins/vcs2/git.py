@@ -136,16 +136,20 @@ class Git(core.VCS):
             ['commit', '--amend', '--reuse-message=HEAD'])
         GPS.Hook('vcs_commit_done').run(self)
 
-    def setup(self):
-        # ??? Will not work correctly when several git working dirs exist in
-        # the same project.
-        super(Git, self).setup()
-        gps_utils.make_interactive(
-            self.pull_rebase,
-            name='git pull rebase')
-
-    def pull_rebase(self):
+    @core.vcs_action(icon='vcs-pull-symbolic',
+                     name='git pull rebase',
+                     menu='/VCS/Pull & rebase',
+                     after='update section')
+    def _pull_rebase(self):
         p = self._git(['pull', '--rebase'], spawn_console='')
+        yield p.wait_until_terminate()
+
+    @core.vcs_action(icon='vcs-pull-symbolic',
+                     name='git pull',
+                     menu='/VCS/Pull',
+                     after='update section')
+    def _pull(self):
+        p = self._git(['pull'], spawn_console='')
         yield p.wait_until_terminate()
 
     @core.run_in_background

@@ -17,14 +17,23 @@ class SVN(core_staging.Emulate_Staging,
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.svn')
 
-    def _svn(self, args, block_exit=False):
+    def _svn(self, args, block_exit=False, spawn_console=False):
         """
         Execute svn with the given arguments
         """
         return ProcessWrapper(
             ['svn', '--non-interactive'] + args,
             block_exit=block_exit,
+            spawn_console=spawn_console,
             directory=self.working_dir.path)
+
+    @core.vcs_action(icon='vcs-cloud-symbolic',
+                     name='svn update',
+                     menu='/VCS/svn update',
+                     after='update section')
+    def _update(self):
+        p = self._svn(['update'], spawn_console='')
+        yield p.wait_until_terminate()
 
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):

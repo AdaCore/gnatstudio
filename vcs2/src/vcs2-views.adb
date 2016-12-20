@@ -72,6 +72,10 @@ package body VCS2.Views is
       begin
          if N = Selected then
             Set_Active_VCS (Combo.Kernel, VCS);
+
+            --  Need to update the context, so that VCS-related menus can be
+            --  updated
+            Combo.Kernel.Refresh_Context;
          end if;
       end On_VCS;
 

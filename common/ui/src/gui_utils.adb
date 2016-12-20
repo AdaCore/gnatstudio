@@ -63,6 +63,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -1277,7 +1278,10 @@ package body GUI_Utils is
       while Tmp /= Widget_List.Null_List loop
          Menu_Item := Gtk_Menu_Item (Widget_List.Get_Data (Tmp));
 
-         if Get_Child (Menu_Item) /= null
+         if Menu_Item.all in Gtk_Separator_Menu_Item_Record'Class then
+            exit when Menu_Item.Get_Name = Name;
+
+         elsif Get_Child (Menu_Item) /= null
            and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
          then
             Label := Gtk_Label (Get_Child (Menu_Item));
@@ -1492,6 +1496,24 @@ package body GUI_Utils is
 
          M2 := Model.Get_Item_Link (N, "section");   --  do not unref
          if M2 /= null then
+            --  Else we might have a separator, with a specific id
+
+            Val := Model.Get_Item_Attribute_Value
+              (Item_Index    => N,
+               Attribute     => GPS_Id_Attribute,
+               Expected_Type => Gvariant_Type_String);
+
+            if Val /= Null_Gvariant then
+               if Get_String (Val, null) = Name then
+                  Unref (Val);
+                  return
+                    (Item     => null,
+                     Model    => Gmenu (M2),
+                     Position => 0);
+               end if;
+               Unref (Val);
+            end if;
+
             Item := Find_Or_Create_Single_Level
                (Gmenu (M2), Name, Allow_Create => False);
             if Item /= No_Menu_Item then
@@ -1522,6 +1544,7 @@ package body GUI_Utils is
                   end if;
                end;
             end if;
+
          end if;
       end loop;
 

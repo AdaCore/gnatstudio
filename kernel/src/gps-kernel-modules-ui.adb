@@ -3141,12 +3141,12 @@ package body GPS.Kernel.Modules.UI is
          Item      : Gtk_Menu_Item;
          Sep       : Gtk_Separator_Menu_Item;
          Menu      : Gtk_Menu;
-         Has_Attributes : Boolean := False;
+         Attributes_Count : Natural := 0;
          Act       : Gaction;
       begin
          Attr_Iter := Iterate_Item_Attributes (M, Idx);
          while Next (Attr_Iter) loop
-            Has_Attributes := True;
+            Attributes_Count := Attributes_Count + 1;
             declare
                N   : constant String := Get_Name (Attr_Iter);
                Val : Gvariant;
@@ -3161,6 +3161,8 @@ package body GPS.Kernel.Modules.UI is
                   Action := To_Unbounded_String (Get_String (Val, null));
                elsif N = "hidden-when" then
                   Optional := Get_String (Val, null) = "action-disabled";
+               elsif N = GPS_Id_Attribute then
+                  Attributes_Count := Attributes_Count - 1;
                else
                   Trace (Me, "Unknown attribute " & N);
                end if;
@@ -3169,7 +3171,7 @@ package body GPS.Kernel.Modules.UI is
          end loop;
          Unref (Attr_Iter);
 
-         if Has_Attributes then
+         if Attributes_Count > 0 then
             Full_Path := Parent_Path & '/' & Label;
             if Action = "" then
                Gtk_New_With_Mnemonic (Item, To_String (Label_With_Mnemonic));
@@ -3205,9 +3207,10 @@ package body GPS.Kernel.Modules.UI is
          Links := Iterate_Item_Links (M, Idx);
          while Next (Links) loop
             declare
-               N  : constant String := Get_Name (Links);
-               M2 : Gmenu_Model;
-               P  : Gtk_Menu_Shell;
+               N   : constant String := Get_Name (Links);
+               M2  : Gmenu_Model;
+               P   : Gtk_Menu_Shell;
+               Val : Gvariant;
             begin
                if N = "submenu" and then Item /= null then
                   Gtk_New (Menu);
@@ -3216,7 +3219,20 @@ package body GPS.Kernel.Modules.UI is
                   P := Gtk_Menu_Shell (Menu);
                elsif N = "section" then
                   if Idx /= 0 then
+
                      Gtk_New (Sep);
+
+                     Val := M.Get_Item_Attribute_Value
+                       (Item_Index    => Idx,
+                        Attribute     => GPS_Id_Attribute,
+                        Expected_Type => Gvariant_Type_String);
+                     if Val /= Null_Gvariant then
+                        Sep.Set_Name (Get_String (Val, null));
+                        Trace (Me, "MANU create sep "
+                               & Get_String (Val, null));
+                        Unref (Val);
+                     end if;
+
                      Parent.Append (Sep);
                   end if;
                   P := Gtk_Menu_Shell (Parent);
@@ -3367,6 +3383,17 @@ package body GPS.Kernel.Modules.UI is
                   elsif Node_Name (N) = "separator" then
                      Section := Gmenu_New;
                      It := Gmenu_Item_New_Section ("", Section);
+
+                     declare
+                        Id : constant String :=
+                          Get_Attribute (N, "id");
+                     begin
+                        if Id /= "" then
+                           G_New_String (Val, Id);
+                           It.Set_Attribute_Value (GPS_Id_Attribute, Val);
+                        end if;
+                     end;
+
                      Menu.Append_Item (It);
                      Unref (It);
                   end if;

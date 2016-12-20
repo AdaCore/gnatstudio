@@ -444,6 +444,9 @@ package GUI_Utils is
    -- Menus --
    -----------
 
+   GPS_Id_Attribute : constant String := "gps-id";
+   --  An attribute set on items in a menu model's separators, to name sections
+
    type Menu_Item_Info is record
       Item     : Gmenu_Item;
       Model    : Gmenu;

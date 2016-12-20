@@ -31,7 +31,7 @@ class CVS(core_staging.Emulate_Staging,
         '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
         ')$')
 
-    def _cvs(self, args, block_exit=False):
+    def _cvs(self, args, block_exit=False, spawn_console=False):
         """
         Execute cvs with the given arguments.
 
@@ -41,7 +41,16 @@ class CVS(core_staging.Emulate_Staging,
         return ProcessWrapper(
             ['cvs'] + args,
             block_exit=block_exit,
+            spawn_console=spawn_console,
             directory=self.working_dir.path)
+
+    @core.vcs_action(icon='vcs-cloud-symbolic',
+                     name='cvs update',
+                     menu='/VCS/cvs update',
+                     after='update section')
+    def _update(self):
+        p = self._cvs(['update'], spawn_console='')
+        yield p.wait_until_terminate()
 
     @staticmethod
     def discover_working_dir(file):

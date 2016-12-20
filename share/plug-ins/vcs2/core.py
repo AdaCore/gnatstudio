@@ -425,9 +425,12 @@ class vcs_action:
 
     _actions = set()  # all registered actions
 
-    def __init__(self, name, icon='', toolbar='Commits', toolbar_section=''):
+    def __init__(self, name, icon='', toolbar='Commits', toolbar_section='',
+                 menu='', after=''):
         self.name = name
         self.icon = icon
+        self.menu = menu
+        self.after = after
         self.toolbar = toolbar
         self.toolbar_section = toolbar_section
 
@@ -457,15 +460,15 @@ class vcs_action:
                             self.vcs = inst
 
                         def filter(self, context):
-                            return GPS.VCS2.active_vcs() == self.vcs
+                            return GPS.VCS2.active_vcs().name == self.vcs.name
 
                         def __call__(self):
                             self.method(GPS.VCS2.active_vcs())
 
                     p = __Proxy(method, inst)
                     gps_utils.make_interactive(
-                        p, name=a.name, category='VCS2',
-                        icon=a.icon, filter=p.filter)
+                        p, name=a.name, category='VCS2', menu=a.menu,
+                        after=a.after, icon=a.icon, filter=p.filter)
 
                     if a.toolbar:
                         act = GPS.Action(a.name)
