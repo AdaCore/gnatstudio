@@ -48,6 +48,13 @@ package body VCS2.Views is
       Pref   : Preference);
    --  Called when the preferences have changed
 
+   type On_Active_VCS_Changed is new Simple_Hooks_Function with record
+      Combo : Kernel_Combo_Tool;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    ----------------------------
    -- On_Active_VCS_Selected --
    ----------------------------
@@ -71,6 +78,21 @@ package body VCS2.Views is
    begin
       For_Each_VCS (Combo.Kernel, On_VCS'Access);
    end On_Active_VCS_Selected;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      VCS : constant VCS_Engine_Access := Active_VCS (Kernel);
+      N   : constant String :=
+        VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+   begin
+      Self.Combo.Select_Item (N);
+   end Execute;
 
    --------------------
    -- Create_Toolbar --
@@ -103,6 +125,11 @@ package body VCS2.Views is
          Toolbar.Insert (Combo, 0);
 
          For_Each_VCS (View.Kernel, On_VCS'Access);
+
+         Vcs_Active_Changed_Hook.Add
+           (new On_Active_VCS_Changed'
+              (Simple_Hooks_Function with Combo => Combo),
+            Watch => Combo);
 
          Widget_Callback.Connect
            (Combo, Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
