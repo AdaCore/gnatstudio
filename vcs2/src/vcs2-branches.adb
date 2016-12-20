@@ -457,6 +457,8 @@ package body VCS2.Branches is
       Set_Property
         (Self.Emblem, Foreground_Rgba_Property, (0.39, 0.64, 0.88, 1.0));
 
+      Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
+
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
 
       return Gtk_Widget (Self.Tree);

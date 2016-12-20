@@ -428,15 +428,17 @@ package body VCS2.Engines is
          S : File_Array_Access := P.Source_Files (Recursive => False);
       begin
          if S'Length = 0 then
+            --  If there are no sources, try to look in the project's own
+            --  directory.
             Unchecked_Free (S);
-            return No_File;
-         else
-            return R : constant Virtual_File :=
-              F.Find_Working_Directory (S (S'First))
-            do
-               Unchecked_Free (S);
-            end return;
+            S := new File_Array'((1 => P.Project_Path.Dir));
          end if;
+
+         return R : constant Virtual_File :=
+           F.Find_Working_Directory (S (S'First))
+         do
+            Unchecked_Free (S);
+         end return;
       end Repo_From_Project;
 
       Iter   : Project_Iterator;
@@ -474,11 +476,15 @@ package body VCS2.Engines is
                   Insert (Kernel, P.Project_Path.Display_Full_Name
                           & ": unknown VCS: " & Kind);
                else
-                  Engine := Engine_From_Working_Dir
-                    (F,
-                     (if Repo /= ""
-                      then Create (+Repo)
-                      else Repo_From_Project (F, P)));
+                  declare
+                     R : constant Virtual_File :=
+                       (if Repo /= ""
+                        then Create (+Repo)
+                        else Repo_From_Project (F, P));
+                  begin
+                     Trace (Me, "Repo=" & R.Display_Full_Name);
+                     Engine := Engine_From_Working_Dir (F, R);
+                  end;
                end if;
 
             else
