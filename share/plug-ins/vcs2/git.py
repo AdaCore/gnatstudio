@@ -364,11 +364,26 @@ class Git(core.VCS):
                     break
                 tags.append((line, False, '', line))
 
-        a = yield join(__branches(), __tags())
+        def __stashes():
+            p = self._git(['stash', 'list'])
+            stashes = []
+            while True:
+                line = yield p.wait_line()
+                if line is None:
+                    visitor.branches('stashes', 'vcs-stash-symbolic', stashes)
+                    break
+                name, branch, descr = line.split(':', 3)
+                stashes.append(('%s: %s' % (name, descr), False, branch, name))
+
+        a = yield join(__branches(), __tags(), __stashes())
 
     @core.run_in_background
     def async_select_branch(self, id):
-        p = self._git(['checkout', id])
+        if id.startswith('stash@'):
+            p = self._git(['stash', 'apply', id])
+        else:
+            p = self._git(['checkout', id])
+
         status, output = yield p.wait_until_terminate()
         if status != 0:
             GPS.Console().write(output)

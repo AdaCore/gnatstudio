@@ -173,8 +173,7 @@
                optional='true' hide='true'/>
          <menu label="View global history"        action="open history"
                optional='true'/>
-         <menu label="View file history"          action="open history for current file"
-               optional='true'/>
+         <menu label="View file history"          action="open history for current file"/>
          <separator id='update section'/>
          <separator id='log section'/>
          <menu label='Show local changes for file' action='diff against head for file'/>
