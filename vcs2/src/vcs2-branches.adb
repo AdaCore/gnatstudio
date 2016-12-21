@@ -41,6 +41,7 @@ with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;             use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                          use Gtk.Enums;
 with Gtk.Gesture_Multi_Press;            use Gtk.Gesture_Multi_Press;
+with Gtk.Menu;                           use Gtk.Menu;
 with Gtk.Scrolled_Window;                use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;                     use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
@@ -89,6 +90,9 @@ package body VCS2.Branches is
    overriding procedure On_Create
      (Self    : not null access Branches_View_Record;
       Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Branches_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Self : access Branches_View_Record'Class) return Gtk_Widget;
@@ -208,6 +212,18 @@ package body VCS2.Branches is
 
       return False;
    end Filter_Matches_Primitive;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Branches_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+   begin
+      Append_Menu (Menu, View.Kernel, Show_Ellipsis);
+   end Create_Menu;
 
    ---------------------
    -- Create_Category --
