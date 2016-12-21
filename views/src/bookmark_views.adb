@@ -1910,6 +1910,10 @@ package body Bookmark_Views is
 
       Set_Property
         (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
+      Set_Property
+        (View.Tree.Text, Gtk.Cell_Renderer_Text.Cancel_On_Focus_Out_Property,
+         False);
+
       Col.Pack_Start (View.Tree.Text, Expand => False);
       Col.Add_Attribute (View.Tree.Text, "text", Name_Column);
       View.Tree.Text.On_Edited (On_Edited'Access, Slot => View);
