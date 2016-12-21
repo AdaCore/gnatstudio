@@ -165,9 +165,18 @@ package body Memory_Usage_Views.Linker_Parsers is
      (Filter  : access Linker_Supported_Filter;
       Context : Selection_Context) return Boolean
    is
-     (Linker_Parsers_Module.Is_Linker_Supported
-      and then
-      Get_Kernel (Context).Get_Build_Mode = "default");
+      pragma Unreferenced (Filter);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Target : constant String :=
+                 Kernel.Get_Project_Tree.Root_Project.Get_Target;
+   begin
+      Linker_Parsers_Module.Is_Linker_Supported :=
+        (Target /= "" and then Target /= "native"
+         and then Kernel.Get_Build_Mode = "default"
+         and then Is_Linker_Supported (Kernel));
+
+      return Linker_Parsers_Module.Is_Linker_Supported;
+   end Filter_Matches_Primitive;
 
    -------------
    -- Execute --
@@ -181,10 +190,6 @@ package body Memory_Usage_Views.Linker_Parsers is
    begin
       --  Close the view each time a project is loaded
       Memory_Usage_MDI_Views.Close (Kernel);
-
-      --  Check whether the linker used for this project is supported
-      Linker_Parsers_Module.Is_Linker_Supported :=
-        Is_Linker_Supported (Kernel);
    end Execute;
 
    ---------------------------
