@@ -26,15 +26,13 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
-with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 
-with GNAT.Strings;        use GNAT.Strings;
+with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-
-with Gdk.RGBA;            use Gdk.RGBA;
-with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
+with Gdk.RGBA;                              use Gdk.RGBA;
+with Glib;                                  use Glib;
+with Glib.Object;                           use Glib.Object;
 
 with Gtk.Box;
 with Gtk.Color_Button;
@@ -43,7 +41,7 @@ with Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Widget;
 
-with Pango.Font;          use Pango.Font;
+with Pango.Font;                            use Pango.Font;
 
 package Default_Preferences is
 
@@ -78,7 +76,6 @@ package Default_Preferences is
    --  must be defined when extending this type, by overriding its primitives.
 
    subtype Preferences_Page_Name is String;
-   type Preferences_Page_Name_Access is access all Preferences_Page_Name;
    --  Subtype representing a name for preferences pages and used to
    --  specify where a given page should be in the preferences dialog.
    --
@@ -94,20 +91,12 @@ package Default_Preferences is
    --      followed by a '/' delimiter and the subpage name
    --      (e.g : "Editor/Fonts" or "Editor/Fonts/")
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Preferences_Page_Name, Preferences_Page_Name_Access);
-
    subtype Preferences_Group_Name is String;
-   type Preferences_Group_Name_Access is access all Preferences_Group_Name;
    --  Subtype representing a name for the preferences groups.
    --
    --  A Preference_Group_Name may designate any String.
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Preferences_Group_Name, Preferences_Group_Name_Access);
-
    subtype Preference_Path is String;
-   type Preference_Path_Access is access all Preference_Path;
    --  Subtype representing a preference path and used to specify where a the
    --  preference should be displayed (which page/groups) in the preferences
    --  dialog.
@@ -120,9 +109,6 @@ package Default_Preferences is
    --    . A Preferences_Page_Name, followed by a ':' delimiter and the name
    --      of the group of the preference
    --      (e.g : "Editor:General" or "Editor/:General")
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Preference_Path, Preference_Path_Access);
 
    type Preferences_Page_Type is
      (Visible_Page, Integrated_Page, Hidden_Page);
@@ -141,8 +127,8 @@ package Default_Preferences is
 
    procedure Extract_Page_And_Group_Names
      (Path       : String;
-      Page_Name  : out Preferences_Page_Name_Access;
-      Group_Name : out Preferences_Group_Name_Access);
+      Page_Name  : out Unbounded_String;
+      Group_Name : out Unbounded_String);
    --  Extract the page's name and the group's name (if any) from the given
    --  preference's path.
 
@@ -406,7 +392,7 @@ package Default_Preferences is
    --  Conversion between a Variant_Enum and a pretty string for displaying in
    --  the dialog.
 
-   procedure Free (Pref : in out Preference_Record);
+   procedure Free (Pref : in out Preference_Record) is null;
    --  Free the memory associated with Pref
 
    type Integer_Preference_Record is new Preference_Record with private;
@@ -629,13 +615,13 @@ package Default_Preferences is
    --  For enumeration, it returns the 'Pos of the enumeration value.
 
    type Theme_Descr is record
-      Name : GNAT.Strings.String_Access;
+      Name      : Unbounded_String;
       --  Display name for the theme, including the variant
 
-      Directory : GNAT.Strings.String_Access;
+      Directory : Unbounded_String;
       --  Name for the theme (not including the variant name)
 
-      Dark    : Boolean := False;
+      Dark      : Boolean := False;
       --  Whether to use a dark variant
    end record;
    function Get_Pref
@@ -821,25 +807,25 @@ private
    --  Used to map preferences with the widgets displaying them.
 
    type Preference_Record is abstract tagged record
-      Name       : GNAT.Strings.String_Access;
+      Name       : Unbounded_String;
       --  Name in the .xml file, and used for external references
 
-      Label      : GNAT.Strings.String_Access;
+      Label      : Unbounded_String;
       --  Label used in the preferences dialog
 
-      Path       : Preference_Path_Access;
+      Path       : Unbounded_String;
       --  Preferences's full path in the preference dialog. Read the
       --  Preference_Path documentation for more details.
 
-      Page_Name  : Preferences_Page_Name_Access;
+      Page_Name  : Unbounded_String;
       --  Name of the preference's page. This is set to null if the preference
       --  is hidden.
 
-      Group_Name : Preferences_Group_Name_Access;
+      Group_Name : Unbounded_String;
       --  Name of the preference's group. This is set to null if no group has
       --  been specified in its path.
 
-      Doc        : GNAT.Strings.String_Access;
+      Doc        : Unbounded_String;
       --  The documentation for this preference
 
       Priority   : Integer;
@@ -848,7 +834,7 @@ private
    end record;
 
    type Preferences_Group_Record is tagged record
-      Name        : Preferences_Group_Name_Access;
+      Name        : Unbounded_String;
       --  Group's name.
 
       Priority    : Integer;
@@ -867,7 +853,7 @@ private
    end record;
 
    type Preferences_Page_Record is abstract tagged record
-      Name      : Preferences_Page_Name_Access;
+      Name      : Unbounded_String;
       --  Name of the page. Read the Preferences_Page_Name documentation for
       --  more details.
 
@@ -937,8 +923,8 @@ private
       Widget : access GObject_Record'Class);
 
    type String_Preference_Record is new Preference_Record with record
-      Str_Value     : GNAT.Strings.String_Access;
-      Default       : GNAT.Strings.String_Access;
+      Str_Value     : Unbounded_String;
+      Default       : Unbounded_String;
       Multi_Line    : Boolean := False;
    end record;
    overriding procedure Set_Pref
@@ -949,10 +935,10 @@ private
      (Pref               : access String_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out String_Preference_Record);
    overriding function Is_Default
      (Self : not null access String_Preference_Record) return Boolean
-   is (Self.Default /= null and then Self.Default.all = Self.Str_Value.all);
+   is
+     (Self.Default = Self.Str_Value);
    overriding procedure Update_On_Pref_Changed
      (Pref   : access String_Preference_Record;
       Widget : access GObject_Record'Class);

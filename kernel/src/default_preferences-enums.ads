@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;
+
 package Default_Preferences.Enums is
 
    type Choice_Preference_Record is new Enum_Preference_Record with private;

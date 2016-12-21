@@ -18,7 +18,6 @@
 with Ada.Command_Line;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.JSON;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
@@ -527,47 +526,51 @@ package body GPS.Main_Window is
       then
          Theme := Gtk_Theme.Get_Pref;
 
-         if Theme.Directory /= null then
+         declare
+            Theme_Name      : constant String := To_String (Theme.Name);
+            Theme_Directory : constant String := To_String (Theme.Directory);
+         begin
             Trace (Me, "Setting gtk+ theme to '"
-                   & Theme.Name.all & "', directory='"
-                   & Theme.Directory.all & "'");
+                   & Theme_Name & "', directory='"
+                   & Theme_Directory & "'");
             Glib.Properties.Set_Property
               (Gtk.Settings.Get_Default,
                Gtk.Settings.Gtk_Theme_Name_Property,
-               Theme.Directory.all);
-         end if;
+               Theme_Directory);
 
-         Glib.Properties.Set_Property
-           (Gtk.Settings.Get_Default,
-            Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
-            Theme.Dark);
+            Glib.Properties.Set_Property
+              (Gtk.Settings.Get_Default,
+               Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
+               Theme.Dark);
 
-         if Theme_Specific_Css_Provider = null then
-            Gtk_New (Theme_Specific_Css_Provider);
-            Gtk.Style_Context.Add_Provider_For_Screen
-              (Get_Default_Screen (Get_Default),
-               +Theme_Specific_Css_Provider,
-               Priority => Gtk.Style_Provider.Priority_Application);
-         end if;
+            if Theme_Specific_Css_Provider = null then
+               Gtk_New (Theme_Specific_Css_Provider);
+               Gtk.Style_Context.Add_Provider_For_Screen
+                 (Get_Default_Screen (Get_Default),
+                  +Theme_Specific_Css_Provider,
+                  Priority => Gtk.Style_Provider.Priority_Application);
+            end if;
 
-         Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir
-           ("gps-" & (+Theme.Name.all) & ".css");
-         if not Theme_Css.Is_Regular_File then
-            Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
-            Theme_Css := Kernel.Get_Share_Dir.Create_From_Dir
-              ("gps-" & (+Theme.Name.all) & ".css");
-         end if;
+            Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir
+              ("gps-" & (+Theme_Name) & ".css");
 
-         if not Theme_Css.Is_Regular_File then
-            Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
-         elsif not Theme_Specific_Css_Provider.Load_From_Path
-           (+Theme_Css.Full_Name.all, Err'Access)
-         then
-            Trace (Me, "Error loading " & Theme_Css.Display_Full_Name & ": "
-                   & Get_Message (Err));
-         else
-            Trace (Me, "Loaded " & Theme_Css.Display_Full_Name);
-         end if;
+            if not Theme_Css.Is_Regular_File then
+               Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
+               Theme_Css := Kernel.Get_Share_Dir.Create_From_Dir
+                 ("gps-" & (+Theme_Name) & ".css");
+            end if;
+
+            if not Theme_Css.Is_Regular_File then
+               Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
+            elsif not Theme_Specific_Css_Provider.Load_From_Path
+              (+Theme_Css.Full_Name.all, Err'Access)
+            then
+               Trace (Me, "Error loading " & Theme_Css.Display_Full_Name & ": "
+                      & Get_Message (Err));
+            else
+               Trace (Me, "Loaded " & Theme_Css.Display_Full_Name);
+            end if;
+         end;
       end if;
 
       if Pref = null

@@ -15,54 +15,56 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
-with XML_Utils;                use XML_Utils;
-with Default_Preferences.GUI;  use Default_Preferences.GUI;
-with Dialog_Utils;             use Dialog_Utils;
+with XML_Utils;                  use XML_Utils;
+with Default_Preferences.GUI;    use Default_Preferences.GUI;
+with Dialog_Utils;               use Dialog_Utils;
 
-with Gtk.Adjustment;           use Gtk.Adjustment;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Button;               use Gtk.Button;
-with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Color_Button;         use Gtk.Color_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
-with Gtk.Dialog;               use Gtk.Dialog;
-with Gtk.Editable;             use Gtk.Editable;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Event_Box;            use Gtk.Event_Box;
-with Gtk.Font_Selection;       use Gtk.Font_Selection;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.List_Box_Row;         use Gtk.List_Box_Row;
-with Gtk.Rc;                   use Gtk.Rc;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Spin_Button;          use Gtk.Spin_Button;
-with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
+with Gtk.Adjustment;             use Gtk.Adjustment;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Button;                 use Gtk.Button;
+with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Color_Button;           use Gtk.Color_Button;
+with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
+with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.Editable;               use Gtk.Editable;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Event_Box;              use Gtk.Event_Box;
+with Gtk.Font_Selection;         use Gtk.Font_Selection;
+with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.List_Box_Row;           use Gtk.List_Box_Row;
+with Gtk.Rc;                     use Gtk.Rc;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Spin_Button;            use Gtk.Spin_Button;
+with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
 
-with Pango.Context;            use Pango.Context;
-with Pango.Enums;              use Pango.Enums;
-with Pango.Font_Family;        use Pango.Font_Family;
+with Pango.Context;              use Pango.Context;
+with Pango.Enums;                use Pango.Enums;
+with Pango.Font_Family;          use Pango.Font_Family;
 
 with Config;
 with Defaults;
-with GPS.Intl;                 use GPS.Intl;
-with GUI_Utils;                use GUI_Utils;
-with String_Utils;             use String_Utils;
+with GPS.Intl;                   use GPS.Intl;
+with GUI_Utils;                  use GUI_Utils;
+with String_Utils;               use String_Utils;
 with XML_Parsers;
 
 -------------------------
@@ -441,8 +443,8 @@ package body Default_Preferences is
 
    procedure Extract_Page_And_Group_Names
      (Path       : String;
-      Page_Name  : out Preferences_Page_Name_Access;
-      Group_Name : out Preferences_Group_Name_Access)
+      Page_Name  : out Unbounded_String;
+      Group_Name : out Unbounded_String)
    is
       Delim_Index : Integer := Path'First;
    begin
@@ -452,16 +454,18 @@ package body Default_Preferences is
 
       --  No group has been specified in the path
       if Delim_Index > Path'Last then
-         Page_Name := new String'(Append_Dir_Delimitor_If_Needed (Path));
-         Group_Name := null;
+         Page_Name :=
+           To_Unbounded_String (Append_Dir_Delimitor_If_Needed (Path));
+         Group_Name := Null_Unbounded_String;
       else
-         Page_Name := new String'(Append_Dir_Delimitor_If_Needed
-                                  (Path (Path'First .. Delim_Index - 1)));
+         Page_Name := To_Unbounded_String
+           (Append_Dir_Delimitor_If_Needed
+              (Path (Path'First .. Delim_Index - 1)));
          Group_Name :=
            (if Path (Path'Last) /= '/' then
-                 new String'(Path (Delim_Index + 1 .. Path'Last))
+               To_Unbounded_String (Path (Delim_Index + 1 .. Path'Last))
             else
-               new String'(Path (Delim_Index + 1 .. Path'Last - 1)));
+               To_Unbounded_String (Path (Delim_Index + 1 .. Path'Last - 1)));
       end if;
    end Extract_Page_And_Group_Names;
 
@@ -491,12 +495,14 @@ package body Default_Preferences is
 
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
-      Obj    : not null access GObject_Record'Class) is
+      Obj    : not null access GObject_Record'Class)
+   is
+      Bounded_Pref_Name : constant String := To_String (Pref.Name);
    begin
-      if Preferences_GObjects_Map.Contains (Pref.Name.all) then
-         Preferences_GObjects_Map (Pref.Name.all) := Obj;
+      if Preferences_GObjects_Map.Contains (Bounded_Pref_Name) then
+         Preferences_GObjects_Map (Bounded_Pref_Name) := Obj;
       else
-         Preferences_GObjects_Map.Insert (Pref.Name.all, Obj);
+         Preferences_GObjects_Map.Insert (Bounded_Pref_Name, Obj);
       end if;
    end Set_GObject_To_Update;
 
@@ -505,17 +511,19 @@ package body Default_Preferences is
    ---------------------------
 
    function Get_GObject_To_Update
-     (Pref : not null access Preference_Record) return GObject is
-     (Preferences_GObjects_Map (Pref.Name.all));
+     (Pref : not null access Preference_Record) return GObject
+   is
+     (Preferences_GObjects_Map (To_String (Pref.Name)));
 
    --------------------------------
    -- Pref_Has_Gobject_To_Update --
    --------------------------------
 
    function Has_GObject_To_Update
-     (Pref : not null access Preference_Record) return Boolean is
+     (Pref : not null access Preference_Record) return Boolean
+   is
      (not Preferences_GObjects_Map.Is_Empty
-      and then Preferences_GObjects_Map.Contains (Pref.Name.all));
+      and then Preferences_GObjects_Map.Contains (To_String (Pref.Name)));
 
    -----------------------------------
    -- Remove_All_GObjects_To_Update --
@@ -585,26 +593,25 @@ package body Default_Preferences is
    -- Get_Name --
    --------------
 
-   function Get_Name  (Pref : access Preference_Record'Class) return String is
-   begin
-      return Pref.Name.all;
-   end Get_Name;
+   function Get_Name  (Pref : access Preference_Record'Class) return String
+   is
+      (To_String (Pref.Name));
 
    ---------------
    -- Get_Label --
    ---------------
 
-   function Get_Label (Pref : access Preference_Record'Class) return String is
-   begin
-      return Pref.Label.all;
-   end Get_Label;
+   function Get_Label (Pref : access Preference_Record'Class) return String
+   is
+     (To_String (Pref.Label));
 
    --------------
    -- Get_Path --
    --------------
 
-   function Get_Path  (Pref : access Preference_Record'Class) return String is
-     (if Pref.Path /= null then Pref.Path.all else "");
+   function Get_Path  (Pref : access Preference_Record'Class) return String
+   is
+     (To_String (Pref.Path));
 
    ------------------------------------
    -- Append_Dir_Delimitor_If_Needed --
@@ -624,10 +631,9 @@ package body Default_Preferences is
    -- Get_Doc --
    -------------
 
-   function Get_Doc (Pref : access Preference_Record'Class) return String is
-   begin
-      return Pref.Doc.all;
-   end Get_Doc;
+   function Get_Doc (Pref : access Preference_Record'Class) return String
+   is
+      (To_String (Pref.Doc));
 
    -------------------
    -- Get_Page_Name --
@@ -636,7 +642,7 @@ package body Default_Preferences is
    function Get_Page_Name
      (Pref : access Preference_Record'Class) return String
    is
-     (if Pref.Page_Name = null then "" else Pref.Page_Name.all);
+     (To_String (Pref.Page_Name));
 
    --------------------
    -- Get_Group_Name --
@@ -645,7 +651,7 @@ package body Default_Preferences is
    function Get_Group_Name
      (Pref : access Preference_Record'Class) return String
    is
-      (if Pref.Group_Name = null then "" else Pref.Group_Name.all);
+      (To_String (Pref.Group_Name));
 
    -------------
    -- Destroy --
@@ -732,16 +738,18 @@ package body Default_Preferences is
    --------------
 
    function Get_Name
-     (Self : not null access Preferences_Group_Record) return String is
-      (if Self.Name = null then "" else Self.Name.all);
+     (Self : not null access Preferences_Group_Record) return String
+   is
+      (To_String (Self.Name));
 
    --------------
    -- Get_Name --
    --------------
 
    function Get_Name
-     (Self : not null access Preferences_Page_Record) return String is
-     (if Self.Name = null then "" else Self.Name.all);
+     (Self : not null access Preferences_Page_Record) return String
+   is
+     (To_String (Self.Name));
 
    -------------------
    -- Get_Page_Type --
@@ -749,7 +757,8 @@ package body Default_Preferences is
 
    function Get_Page_Type
      (Self : not null access Preferences_Page_Record)
-      return Preferences_Page_Type is
+      return Preferences_Page_Type
+   is
       (Self.Page_Type);
 
    ----------------
@@ -820,7 +829,6 @@ package body Default_Preferences is
       end loop;
 
       Self.Preferences.Clear;
-      Free (Self.Name);
    end Free;
 
    ----------
@@ -839,9 +847,8 @@ package body Default_Preferences is
       for Subpage of Self.Subpages loop
          Free (Subpage);
       end loop;
-      Self.Subpages.Clear;
 
-      Free (Self.Name);
+      Self.Subpages.Clear;
    end Free;
 
    ------------
@@ -939,11 +946,11 @@ package body Default_Preferences is
         or else Pref.all not in String_Preference_Record'Class
       then
          Pref := new String_Preference_Record;
-         String_Preference (Pref).Str_Value := new String'(Default);
+         String_Preference (Pref).Str_Value := To_Unbounded_String (Default);
       end if;
 
-      if String_Preference (Pref).Default = null then
-         String_Preference (Pref).Default := new String'(Default);
+      if String_Preference (Pref).Default = Null_Unbounded_String then
+         String_Preference (Pref).Default := To_Unbounded_String (Default);
       end if;
 
       String_Preference (Pref).Multi_Line := Multi_Line;
@@ -1129,7 +1136,7 @@ package body Default_Preferences is
             --  adding a theme twice
 
             for J in Ret.Themes'Range loop
-               if Ret.Themes (J).Name.all = Name
+               if To_String (Ret.Themes (J).Name) = Name
                  and then Ret.Themes (J).Dark = Dark
                then
                   --  This theme is already registered, do nothing
@@ -1144,22 +1151,23 @@ package body Default_Preferences is
 
          if Dark then
             Ret.Themes (Ret.Themes'Last) :=
-              (Name      => new String'(Name & " (Dark)"),
-               Directory => new String'(Name),
+              (Name      => To_Unbounded_String (Name & " (Dark)"),
+               Directory => To_Unbounded_String (Name),
                Dark      => Dark);
          else
             Ret.Themes (Ret.Themes'Last) :=
-              (Name      => new String'(Name),
-               Directory => new String'(Name),
+              (Name      => To_Unbounded_String (Name),
+               Directory => To_Unbounded_String (Name),
                Dark      => Dark);
          end if;
 
          if not Dark
            and then
-             (Default = Ret.Themes (Ret.Themes'Last).Name.all
-              or else (Ret.Current = Natural'Last
-                       and then
-                       Ret.Themes (Ret.Themes'Last).Name.all = "Adwaita"))
+             (Default = To_String (Ret.Themes (Ret.Themes'Last).Name)
+              or else
+                (Ret.Current = Natural'Last
+                 and then
+                 To_String (Ret.Themes (Ret.Themes'Last).Name) = "Adwaita"))
          then
             Ret.Current := Ret.Themes'Last;
          end if;
@@ -1280,11 +1288,7 @@ package body Default_Preferences is
 
    begin
       --  Set the group's attributes
-      Free (Group.Name);
-
-      if Name /= "" then
-         Group.Name := new String'(Name);
-      end if;
+      Group.Name := To_Unbounded_String (Name);
 
       Group.Priority := Priority;
 
@@ -1332,11 +1336,10 @@ package body Default_Preferences is
       Replace_If_Exist : Boolean := False) is
    begin
       --  Set the page's attributes
-      Free (Page.Name);
-
       if Name /= "" and then Name /= "/" then
          Page.Page_Type := Page_Type;
-         Page.Name := new String'(Append_Dir_Delimitor_If_Needed (Name));
+         Page.Name :=
+           To_Unbounded_String (Append_Dir_Delimitor_If_Needed (Name));
       else
          --  Enforce the page's type to Hidden_Page in case of an empty name
          Page.Page_Type := Hidden_Page;
@@ -1446,26 +1449,21 @@ package body Default_Preferences is
       end if;
 
       --  Set the fields of the preference we want to register
-      Free (Pref.Name);
-      Pref.Name := new String'(Name);
+      Pref.Name := To_Unbounded_String (Name);
 
-      Free (Pref.Label);
-      Pref.Label := new String'(Label);
-
-      Free (Pref.Path);
+      Pref.Label := To_Unbounded_String (Label);
 
       --  For preferences registered from Python, the paths are retrieved from
       --  the preferences names using the Dir_Name command, which can return
       --  "./" or ".\" for an empty path, depending on the platform.
       if Path /= "" and then Path /= "./" and then Path /= ".\" then
-         Pref.Path := new String'(Path);
+         Pref.Path := To_Unbounded_String (Path);
          Extract_Page_And_Group_Names (Path       => Path,
                                        Page_Name  => Pref.Page_Name,
                                        Group_Name => Pref.Group_Name);
       end if;
 
-      Free (Pref.Doc);
-      Pref.Doc := new String'(Doc);
+      Pref.Doc := To_Unbounded_String (Doc);
 
       Pref.Priority := Priority;
 
@@ -1535,10 +1533,9 @@ package body Default_Preferences is
    --------------
 
    overriding function Get_Pref
-     (Pref : access String_Preference_Record) return String is
-   begin
-      return Pref.Str_Value.all;
-   end Get_Pref;
+     (Pref : access String_Preference_Record) return String
+   is
+      (To_String (Pref.Str_Value));
 
    --------------
    -- Get_Pref --
@@ -1636,7 +1633,7 @@ package body Default_Preferences is
       then
          return "";
       else
-         return Pref.Themes (Pref.Current).Name.all;
+         return To_String (Pref.Themes (Pref.Current).Name);
       end if;
    end Get_Pref;
 
@@ -1651,7 +1648,10 @@ package body Default_Preferences is
         or else Pref.Themes = null
         or else Pref.Current not in Pref.Themes'Range
       then
-         return (null, null, False);
+         return Theme_Descr'
+           (Name      => Null_Unbounded_String,
+            Directory => Null_Unbounded_String,
+            Dark      => False);
       else
          return Pref.Themes (Pref.Current);
       end if;
@@ -1818,8 +1818,7 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
    begin
-      Free (Pref.Str_Value);
-      Pref.Str_Value := new String'(Value);
+      Pref.Str_Value := To_Unbounded_String (Value);
       Manager.Notify_Pref_Changed (Pref);
    end Set_Pref;
 
@@ -1894,7 +1893,7 @@ package body Default_Preferences is
       end if;
 
       for J in Pref.Themes'Range loop
-         if Pref.Themes (J).Name.all = Value then
+         if To_String (Pref.Themes (J).Name) = Value then
             Pref.Current := J;
             Manager.Notify_Pref_Changed (Pref);
             return;
@@ -1973,10 +1972,10 @@ package body Default_Preferences is
      (Manager   : access  Preferences_Manager_Record;
       File_Name : Virtual_File)
    is
-      File, Node : Node_Ptr;
-      Err        : String_Access;
+      File, Node     : Node_Ptr;
+      Err            : GNAT.Strings.String_Access;
       Old_Prefs_File : Virtual_File;
-      Ign        : Boolean;
+      Ign            : Boolean;
    begin
       --  Attempt to import the "preferences" file
       if not Is_Regular_File (File_Name) then
@@ -2151,13 +2150,14 @@ package body Default_Preferences is
       Scrolled : Gtk_Scrolled_Window;
       P        : constant Manager_Preference :=
                    (Preferences_Manager (Manager), Preference (Pref));
+      Value    : constant String := To_String (Pref.Str_Value);
    begin
       if Pref.Multi_Line then
          Gtk_New (Scrolled);
          Set_Size_Request (Scrolled, -1, 200);
          Gtk_New (Text);
          Add (Scrolled, Text);
-         Set_Text (Get_Buffer (Text), Pref.Str_Value.all);
+         Set_Text (Get_Buffer (Text), Value);
          Preference_Handlers.Connect
            (Get_Buffer (Text), "changed", Text_Buffer_Changed'Access, P);
 
@@ -2166,7 +2166,7 @@ package body Default_Preferences is
          return Gtk.Widget.Gtk_Widget (Scrolled);
       else
          Gtk_New (Ent);
-         Set_Text (Ent, Pref.Str_Value.all);
+         Set_Text (Ent, Value);
 
          Preference_Handlers.Connect
            (Ent, Gtk.Editable.Signal_Insert_Text,
@@ -2332,7 +2332,7 @@ package body Default_Preferences is
       Set_Tooltip_Text (Theme_Combo, -"Theme list");
 
       for J in Pref.Themes'Range loop
-         Append_Text (Theme_Combo, Pref.Themes (J).Name.all);
+         Append_Text (Theme_Combo, To_String (Pref.Themes (J).Name));
 
          if J = Pref.Current then
             Theme_Combo.Set_Active (Gint (J) - Gint (Pref.Themes'First));
@@ -2499,31 +2499,6 @@ package body Default_Preferences is
    -- Free --
    ----------
 
-   procedure Free (Pref : in out Preference_Record) is
-   begin
-      Free (Pref.Name);
-      Free (Pref.Label);
-      Free (Pref.Path);
-      Free (Pref.Doc);
-      Free (Pref.Page_Name);
-      Free (Pref.Group_Name);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Pref : in out String_Preference_Record) is
-   begin
-      Free (Pref.Str_Value);
-      Free (Pref.Default);
-      Free (Preference_Record (Pref));
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    overriding procedure Free (Pref : in out Font_Preference_Record) is
    begin
       Free (Pref.Default);
@@ -2559,10 +2534,6 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Theme_Preference_Record) is
    begin
       if Pref.Themes /= null then
-         for T in Pref.Themes'Range loop
-            Free (Pref.Themes (T).Name);
-            Free (Pref.Themes (T).Directory);
-         end loop;
          Unchecked_Free (Pref.Themes);
       end if;
 

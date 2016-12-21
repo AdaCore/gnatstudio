@@ -218,8 +218,8 @@ package body Default_Preferences.Enums is
             Priority => Priority);
       else
          declare
-            Page_Name       : Preferences_Page_Name_Access;
-            Group_Name      : Preferences_Group_Name_Access;
+            Page_Name       : Unbounded_String;
+            Group_Name      : Unbounded_String;
             Registered_Page : Preferences_Page;
          begin
             Extract_Page_And_Group_Names (Path       => Path,
@@ -232,7 +232,7 @@ package body Default_Preferences.Enums is
             --  contain only this preference.
 
             Registered_Page := Manager.Get_Registered_Page
-              (Name             => Page_Name.all,
+              (Name             => To_String (Page_Name),
                Create_If_Needed => True);
             Registered_Page.Register_Group
               (Name             => Label,
@@ -241,14 +241,11 @@ package body Default_Preferences.Enums is
 
             Manager.Register
               (Name     => Name,
-               Path     => Page_Name.all & ':' & Label,
+               Path     => To_String (Page_Name) & ':' & Label,
                Label    => Label,
                Doc      => Doc,
                Pref     => Result,
                Priority => Priority);
-
-            Free (Page_Name);
-            Free (Group_Name);
          end;
       end if;
       return Result;
@@ -390,8 +387,8 @@ package body Default_Preferences.Enums is
                Priority => Priority);
          else
             declare
-               Page_Name       : Preferences_Page_Name_Access;
-               Group_Name      : Preferences_Group_Name_Access;
+               Page_Name       : Unbounded_String;
+               Group_Name      : Unbounded_String;
                Registered_Page : Preferences_Page;
             begin
                Extract_Page_And_Group_Names (Path       => Path,
@@ -404,7 +401,7 @@ package body Default_Preferences.Enums is
                --  contain only this preference.
 
                Registered_Page := Manager.Get_Registered_Page
-                 (Name             => Page_Name.all,
+                 (Name             => To_String (Page_Name),
                   Create_If_Needed => True);
                Registered_Page.Register_Group
                  (Name             => Label,
@@ -413,14 +410,11 @@ package body Default_Preferences.Enums is
 
                Manager.Register
                  (Name     => Name,
-                  Path     => Page_Name.all & ':' & Label,
+                  Path     => To_String (Page_Name) & ':' & Label,
                   Label    => Label,
                   Doc      => Doc,
                   Pref     => Result,
                   Priority => Priority);
-
-               Free (Page_Name);
-               Free (Group_Name);
             end;
          end if;
 
