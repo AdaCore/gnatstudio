@@ -34,6 +34,7 @@ with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;             use GPS.Kernel.Preferences;
 with GPS.Intl;                           use GPS.Intl;
 with Gtkada.MDI;                         use Gtkada.MDI;
+with Gtkada.Style;                       use Gtkada.Style;
 with Gtkada.Tree_View;                   use Gtkada.Tree_View;
 with Gtk.Box;                            use Gtk.Box;
 with Gtk.Cell_Renderer;                  use Gtk.Cell_Renderer;
@@ -249,7 +250,9 @@ package body VCS2.Branches is
       Init_Set_String (V (Column_Name), To_Upper (Name));
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value (V (Column_Foreground), (0.7, 0.7, 0.7, 1.0));
+      Gdk.RGBA.Set_Value
+        (V (Column_Foreground),
+         Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
 
       Init_Set_String (V (Column_Emblem), "");
       Init_Set_Boolean (V (Column_Emblem_Visible), False);
@@ -291,7 +294,8 @@ package body VCS2.Branches is
       Init_Set_String (V (Column_Name), Name);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value (V (Column_Foreground), Black_RGBA);
+      Gdk.RGBA.Set_Value
+        (V (Column_Foreground), Default_Style.Get_Pref_Fg);
 
       Init_Set_String (V (Column_Emblem), "");
       Init_Set_Boolean (V (Column_Emblem_Visible), False);
@@ -337,9 +341,9 @@ package body VCS2.Branches is
       Init_Set_String (V (Column_Name), Info.Name (First .. Info.Name'Last));
 
       if Info.Is_Current then
-         Gdk.RGBA.Set_Value (V (Column_Foreground), (0.0, 0.39, 0.88, 1.0));
+         Gdk.RGBA.Set_Value (V (Column_Foreground), Emblem_Color);
       else
-         Gdk.RGBA.Set_Value (V (Column_Foreground), Black_RGBA);
+         Gdk.RGBA.Set_Value (V (Column_Foreground), Default_Style.Get_Pref_Fg);
       end if;
 
       Init_Set_String (V (Column_Emblem), Info.Emblem.all);
@@ -645,8 +649,7 @@ package body VCS2.Branches is
       Col.Add_Attribute (Self.Emblem, "text", Column_Emblem);
       Col.Add_Attribute (Self.Emblem, "visible", Column_Emblem_Visible);
       Self.Emblem.Set_Alignment (1.0, 0.5);
-      Set_Property
-        (Self.Emblem, Foreground_Rgba_Property, (0.39, 0.64, 0.88, 1.0));
+      Set_Property (Self.Emblem, Foreground_Rgba_Property, Emblem_Color);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
 

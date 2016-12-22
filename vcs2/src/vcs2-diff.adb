@@ -40,6 +40,7 @@ with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Widget;               use Gtk.Widget;
 with Pango.Enums;              use Pango.Enums;
 with VCS2.Engines;             use VCS2.Engines;
+with VCS2.Views;               use VCS2.Views;
 
 package body VCS2.Diff is
 
@@ -148,8 +149,7 @@ package body VCS2.Diff is
       Diff := Buffer.Create_Tag;
       Set_Property (Diff, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
       Gdk.RGBA.Set_Property
-        (Diff, Gtk.Text_Tag.Foreground_Rgba_Property,
-         (0.0, 0.0, 0.6, 1.0));
+        (Diff, Gtk.Text_Tag.Foreground_Rgba_Property, Emblem_Color);
 
       Block := Buffer.Create_Tag;
       Gdk.RGBA.Set_Property

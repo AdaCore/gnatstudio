@@ -738,7 +738,8 @@ package body VCS2.History is
       Iter : Gtk_Text_Iter;
       Grey, Bold  : Gtk_Text_Tag;
 
-      Header_Bg : constant Gdk_RGBA := (0.95, 0.95, 0.95, 1.0);
+      Header_Bg : constant Gdk_RGBA :=
+        Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.8);
 
    begin
       Grey := Buffer.Create_Tag;
@@ -752,8 +753,7 @@ package body VCS2.History is
         (Bold, Gtk.Text_Tag.Paragraph_Background_Rgba_Property,
          Header_Bg);
       Gdk.RGBA.Set_Property
-        (Bold, Gtk.Text_Tag.Foreground_Rgba_Property,
-         (0.0, 0.0, 0.9, 1.0));
+        (Bold, Gtk.Text_Tag.Foreground_Rgba_Property, Emblem_Color);
 
       Buffer.Get_End_Iter (Iter);
 
@@ -1268,7 +1268,7 @@ package body VCS2.History is
                   if Ref.Names /= null then
                      for N of Ref.Names.all loop
                         Append
-                          (Tmp, "<span background='#ffd195'>"
+                          (Tmp, "<span background='#ff6600'>"
                            & Escape_Text (Trim (N.all, Both)) & " </span>");
                      end loop;
                   end if;

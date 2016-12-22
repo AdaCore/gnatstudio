@@ -43,6 +43,7 @@ with GPS.Properties;              use GPS.Properties;
 with GPS.Search;                  use GPS.Search;
 with GPS.VCS;                     use GPS.VCS;
 with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
+with Gtkada.Style;                use Gtkada.Style;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
@@ -77,12 +78,6 @@ package body VCS2.Commits is
    Column_Check_Visible : constant := 5;
    Column_Foreground    : constant := 6;
    subtype All_Columns is Gint range Column_File .. Column_Foreground;
-
-   Color_Untracked    : constant Gdk_RGBA := (0.6, 0.6, 0.6, 1.0);
-   Color_Normal       : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
-   Color_Category     : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
-   Color_Inactive_VCS : constant Gdk_RGBA := (0.8, 0.8, 0.8, 1.0);
-   --  Colors for text
 
    Show_Untracked_Files   : Boolean_Preference;
    Relative_Names         : Boolean_Preference;
@@ -426,11 +421,16 @@ package body VCS2.Commits is
 
          Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
          if not Is_Active then
-            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Inactive_VCS);
+            Gdk.RGBA.Set_Value
+              (V (Column_Foreground),
+               Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.6));
          elsif Untracked and then not Self.Config.Group_By_Category then
-            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Untracked);
+            Gdk.RGBA.Set_Value
+              (V (Column_Foreground),
+               Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
          else
-            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Normal);
+            Gdk.RGBA.Set_Value
+              (V (Column_Foreground), Default_Style.Get_Pref_Fg);
          end if;
 
          Set_All_And_Clear (Self.Tree.Model, Iter, V);
@@ -506,7 +506,9 @@ package body VCS2.Commits is
       Init_Set_String (V (Column_Name), Name);
       Init_Set_String (V (Column_Icon), "gps-emblem-directory-open");
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Category);
+      Gdk.RGBA.Set_Value
+        (V (Column_Foreground),
+         Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
 
       Self.Tree.Model.Set (Iter, V);
 

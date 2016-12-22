@@ -19,6 +19,7 @@
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
+with Gdk.RGBA;               use Gdk.RGBA;
 with Generic_Views;          use Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -28,6 +29,8 @@ with Gtkada.Tree_View;       use Gtkada.Tree_View;
 with VCS2.Engines;           use VCS2.Engines;
 
 package VCS2.Views is
+
+   Emblem_Color : constant Gdk_RGBA := (0.39, 0.64, 0.88, 1.0);
 
    -------------------
    -- Base_VCS_View --
