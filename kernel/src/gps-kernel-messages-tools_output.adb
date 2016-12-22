@@ -498,9 +498,8 @@ package body GPS.Kernel.Messages.Tools_Output is
 
             else
                Last := Matched (Col_Index).Last;
-               Column := Basic_Types.Visible_Column_Type'Value
-                 (Text (Matched (Col_Index).First ..
-                    Matched (Col_Index).Last));
+               Column := Basic_Types.Visible_Column_Type
+                  (Safe_Value (Text (Matched (Col_Index).First .. Last)));
 
                if Column <= 0 then
                   Column := 1;
