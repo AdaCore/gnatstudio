@@ -1109,6 +1109,12 @@ package body VCS2.History is
 
          if Self.To_Select /= Null_Gtk_Tree_Path then
             Tree.Get_Selection.Select_Path (Self.To_Select);
+            Tree.Scroll_To_Cell
+              (Path      => Self.To_Select,
+               Column    => null,
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
             Path_Free (Self.To_Select);
          end if;
 
