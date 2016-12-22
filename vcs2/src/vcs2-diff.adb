@@ -204,14 +204,25 @@ package body VCS2.Diff is
      (Self   : not null access On_Diff_Visitor;
       Diff   : String)
    is
-      View : constant Diff_View := Diff_Views.Get_Or_Create_View (Self.Kernel);
-      Child : constant MDI_Child :=
-        MDI_Child (Diff_Views.Child_From_View (View));
+      View  : Diff_View;
+      Child : MDI_Child;
    begin
-      Child.Set_Title ("Diff " & Self.File.Display_Base_Name
-                       & " [" & To_String (Self.Ref) & "]");
+      if Diff = "" then
+         if Self.File = No_File then
+            Insert (Self.Kernel, -"No difference found");
+         else
+            Insert
+              (Self.Kernel, -"No difference found for "
+               & Self.File.Display_Full_Name);
+         end if;
 
-      View.Patch.Add_Diff (Diff);
+      else
+         View  := Diff_Views.Get_Or_Create_View (Self.Kernel);
+         Child := MDI_Child (Diff_Views.Child_From_View (View));
+         Child.Set_Title ("Diff " & Self.File.Display_Base_Name
+                          & " [" & To_String (Self.Ref) & "]");
+         View.Patch.Add_Diff (Diff);
+      end if;
    end On_Diff_Computed;
 
    ----------------------
