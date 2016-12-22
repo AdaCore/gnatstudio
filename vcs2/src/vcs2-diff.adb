@@ -205,7 +205,12 @@ package body VCS2.Diff is
       Diff   : String)
    is
       View : constant Diff_View := Diff_Views.Get_Or_Create_View (Self.Kernel);
+      Child : constant MDI_Child :=
+        MDI_Child (Diff_Views.Child_From_View (View));
    begin
+      Child.Set_Title ("Diff " & Self.File.Display_Base_Name
+                       & " [" & To_String (Self.Ref) & "]");
+
       View.Patch.Add_Diff (Diff);
    end On_Diff_Computed;
 
