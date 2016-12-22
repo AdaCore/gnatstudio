@@ -166,6 +166,7 @@ class Git(core.VCS):
              '--pretty=tformat:%H@@%P@@%an@@%d@@%cD@@%s',
              '--branches' if not current_branch_only else '',
              '--tags' if not current_branch_only else '',
+             '--remotes' if not current_branch_only else '',
              '--topo-order',  # children before parents
              '--grep=%s' % pattern if pattern else '',
              '--max-count=%d' % max_lines if not branch_commits_only else '',
