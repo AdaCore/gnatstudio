@@ -15,19 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;          use Glib;
+with Glib;              use Glib;
 
-with Gtk.Assistant; use Gtk.Assistant;
-with Gtk.Arrow;     use Gtk.Arrow;
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Button;    use Gtk.Button;
-with Gtk.Enums;     use Gtk.Enums;
-with Gtk.Label;     use Gtk.Label;
+with Gtk.Assistant;     use Gtk.Assistant;
+with Gtk.Arrow;         use Gtk.Arrow;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Button;        use Gtk.Button;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Label;         use Gtk.Label;
 with Gtk.Main;
 with Gtk.Style_Context; use Gtk.Style_Context;
 
-with Dialog_Utils;    use Dialog_Utils;
-with GPS.Main_Window; use GPS.Main_Window;
+with Dialog_Utils;      use Dialog_Utils;
+with GPS.Main_Window;   use GPS.Main_Window;
 
 package body Default_Preferences.Assistants is
 
@@ -49,9 +49,9 @@ package body Default_Preferences.Assistants is
    --------------
 
    procedure On_Apply (Self : access Gtk_Assistant_Record'Class) is
-      pragma Unreferenced (Self);
    begin
       Gtk.Main.Main_Quit;
+      Self.Close;
    end On_Apply;
 
    ------------
