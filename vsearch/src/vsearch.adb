@@ -1555,6 +1555,15 @@ package body Vsearch is
             Occurrence := Module.Get_Last_Occurrence;
 
             if Occurrence /= null then
+
+               --  Clear the module's occurrences stack if the last
+               --  occurrence's pattern contains only one character. This
+               --  avoids going back to previous searches.
+               if Occurrence.Get_Pattern'Length = 1 then
+                  Module.Clear_Occurrences;
+                  return False;
+               end if;
+
                Vsearch.Locked := True;
 
                --  Remove any displayed information since and set the
