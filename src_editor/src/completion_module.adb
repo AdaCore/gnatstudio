@@ -1605,22 +1605,25 @@ package body Completion_Module is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class)
    is
+      Manager : constant Preferences_Manager := Kernel.Get_Preferences;
+      Page    : Preferences_Page;
+      Group   : Preferences_Group;
    begin
       Smart_Completion := Smart_Completion_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Name  => "Smart-Completion-Mode",
-         Label => -"Smart Completion",
+         Label => -"Smart completion",
          Path  => -"Editor:Smart Completion",
          Doc   =>
-           -("Control the display of smart completion:"
-             & """Disabled"" means the feature is entirely disabled."
-             & """Manual"" means only when the user triggers it."
-             & """Normal"" is ""Manual"" + language specific characters."
-             & """Dynamic"" is on very character."),
+           -("Control the display of smart completion: "
+             & "'Disabled' means the feature is entirely disabled. "
+             & "'Manual' means only when the user triggers it. "
+             & "'Normal' is 'Manual' + language specific characters. "
+             & "'Dynamic' is on every character."),
          Default => Dynamic);
 
       Smart_Completion_Trigger_Timeout := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Name    => "Smart-Completion-Trigger-Timeout",
          Minimum => 0,
          Maximum => 9999,
@@ -1632,6 +1635,26 @@ package body Completion_Module is
 
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion.Get_Pref;
+
+      --  Register these preferences in the 'General' page of the preferences
+      --  assistant too.
+
+      Page := Manager.Get_Registered_Page
+        (Name             => "Preferences Assistant General",
+         Create_If_Needed => False);
+
+      Group := new Preferences_Group_Record;
+      Page.Register_Group
+        (Name     => "Completion",
+         Group    => Group,
+         Priority => -1);
+
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Smart_Completion));
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Smart_Completion_Trigger_Timeout));
    end Register_Preferences;
 
    -------------------------

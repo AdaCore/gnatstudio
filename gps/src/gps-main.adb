@@ -2296,6 +2296,13 @@ procedure GPS.Main is
                       3 => Create
                         (Pref_Page =>
                            GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                             ("Preferences Assistant General"),
+                         Label     => "Set general settings",
+                         Message   => "These preferences can be changed "
+                         & "later via <b>Edit/Preferences</b>"),
+                      4 => Create
+                        (Pref_Page =>
+                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
                              ("Plugins"),
                          Label     => "Select your plugins",
                          Message   => "Enabled plugins can be changed later "

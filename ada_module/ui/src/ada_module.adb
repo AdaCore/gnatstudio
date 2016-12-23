@@ -255,6 +255,10 @@ package body Ada_Module is
       Spec_Has_No_Body_Filter : constant Action_Filter :=
                                   (Is_Ada_Spec_Filter
                                    and not Has_Other_File_Filter);
+      Manager                 : constant Preferences_Manager :=
+                                  Kernel.Get_Preferences;
+      Page                    : Preferences_Page;
+      Group                   : Preferences_Group;
    begin
       Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
 
@@ -302,7 +306,7 @@ package body Ada_Module is
       --  Register the default Ada-related preferences
 
       Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Auto-Indentation",
          Default => Extended,
@@ -310,7 +314,7 @@ package body Ada_Module is
          Label   => -"Auto indentation");
 
       Ada_Indentation_Level := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Indent-Level",
          Minimum => 1,
@@ -320,7 +324,7 @@ package body Ada_Module is
          Label   => -"Default indentation");
 
       Ada_Continuation_Level := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Continuation-Level",
          Minimum => 0,
@@ -330,7 +334,7 @@ package body Ada_Module is
          Label   => -"Continuation lines");
 
       Ada_Declaration_Level := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path  => -"Editor/Ada:Indentation",
          Name    => "Ada-Declaration-Level:Indentation",
          Minimum => 0,
@@ -340,7 +344,7 @@ package body Ada_Module is
          Label => -"Declaration lines");
 
       Ada_Conditional_Level := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Conditional-Level",
          Minimum => 0,
@@ -350,7 +354,7 @@ package body Ada_Module is
          Label   => -"Conditional continuation lines");
 
       Ada_Record_Level := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Record-Level",
          Minimum => 0,
@@ -360,7 +364,7 @@ package body Ada_Module is
          Label   => -"Record indentation");
 
       Ada_Indent_Case_Extra := Indent_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Indent-Case-Style",
          Default => Automatic,
@@ -368,7 +372,7 @@ package body Ada_Module is
          Label   => -"Case indentation");
 
       Ada_Casing_Policy := Casing_Policy_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Casing",
          Name    => "Ada-Casing-Policy",
          Label   => -"Keywords and Identifiers casing",
@@ -376,7 +380,7 @@ package body Ada_Module is
          Default => Disabled);
 
       Ada_Reserved_Casing := Casing_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Casing",
          Name    => "Ada-Reserved-Casing",
          Default => Lower,
@@ -384,7 +388,7 @@ package body Ada_Module is
          Label   => -"Reserved word casing");
 
       Ada_Ident_Casing := Casing_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Casing",
          Name    => "Ada-Ident-Casing",
          Default => Smart_Mixed,
@@ -392,7 +396,7 @@ package body Ada_Module is
          Label   => -"Identifier casing");
 
       Ada_Use_Tabs := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path     => -"Editor/Ada:Indentation",
          Name    => "Ada-Use-Tabs",
          Default => False,
@@ -401,7 +405,7 @@ package body Ada_Module is
          Label    => -"Use tabulations");
 
       Ada_Format_Operators := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Format-Operators",
          Default => False,
@@ -409,7 +413,7 @@ package body Ada_Module is
          Label   => -"Format operators/delimiters");
 
       Ada_Align_On_Colons := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Align-On-Colons",
          Default => False,
@@ -417,7 +421,7 @@ package body Ada_Module is
          Label   => -"Align colons in declarations");
 
       Ada_Align_On_Arrows := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Align-On-Arrows",
          Default => False,
@@ -425,7 +429,7 @@ package body Ada_Module is
          Label   => -"Align associations on arrows");
 
       Ada_Align_Decl_On_Colon := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Align-Decl-On_Colon",
          Default => False,
@@ -435,7 +439,7 @@ package body Ada_Module is
          Label   => -"Align declarations after colon");
 
       Ada_Indent_Comments := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Indent-Comments",
          Default => True,
@@ -443,7 +447,7 @@ package body Ada_Module is
          Label   => -"Indent comments");
 
       Ada_Stick_Comments := Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/Ada:Indentation",
          Name    => "Ada-Stick-Comments",
          Default => False,
@@ -451,6 +455,29 @@ package body Ada_Module is
          -("Align comment lines following 'record' and " &
            "'is' keywords immediately with no extra space"),
          Label   => -"Align comments on keywords");
+
+      --  Register some of the Ada casing preferences in the 'General' page of
+      --  the preferences assistant too.
+
+      Page := Kernel.Get_Preferences.Get_Registered_Page
+        (Name             => "Preferences Assistant General",
+         Create_If_Needed => False);
+
+      Group := new Preferences_Group_Record;
+      Page.Register_Group
+        (Name             => "Ada Casing",
+         Group            => Group,
+         Priority         => -2,
+         Replace_If_Exist => False);
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Ada_Casing_Policy));
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Ada_Reserved_Casing));
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Ada_Ident_Casing));
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
