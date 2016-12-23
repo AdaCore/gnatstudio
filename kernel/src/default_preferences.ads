@@ -23,8 +23,9 @@
 --  enumeration types with C types, thus allowing almost any type of
 --  preference.
 
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
 
@@ -265,8 +266,9 @@ package Default_Preferences is
    --  Return the group's name.
 
    procedure Add_Pref
-     (Self : not null access Preferences_Group_Record;
-      Pref : not null Preference);
+     (Self    : not null access Preferences_Group_Record;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Pref    : not null Preference);
    --  Add a new preference to the given group.
 
    procedure Remove_Pref
@@ -532,7 +534,7 @@ package Default_Preferences is
    function Get_Pref_From_Name
      (Self                : not null access Preferences_Manager_Record;
       Name                : String;
-      Create_If_Necessary : Boolean) return Preference;
+      Create_If_Necessary : Boolean := False) return Preference;
    --  Return the corresponding preference.
    --  If it doesn't exist, a temporary preference is created. When the
    --  actual preference is registered, it will replace that temporary entry
@@ -716,7 +718,9 @@ package Default_Preferences is
      (Group : not null access Preferences_Group_Record)
       return Preference_Cursor;
    procedure Next (C : in out Preference_Cursor);
-   function Get_Pref (Self : Preference_Cursor) return Preference;
+   function Get_Pref
+     (Self    : Preference_Cursor;
+      Manager : not null access Preferences_Manager_Record) return Preference;
    --  Iterate all over the registered preferences.
 
    ------------------------------
@@ -773,12 +777,10 @@ private
      (Preferences_Group, Group_Name_Equals);
    --  Used to store groups in the pages.
 
-   function Pref_Name_Equals (Left, Right : Preference) return Boolean;
-   --  Used to search in preferences lists using name equality.
-
-   package Preferences_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Preference, Pref_Name_Equals);
-   --  Used to store preference in the groups.
+   package Preferences_Names_Lists is
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (String, "=");
+   --  Used to store the names of the preferences that belong to a given group
 
    package Preferences_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Preference, Ada.Strings.Hash, "=");
@@ -787,7 +789,7 @@ private
          when From_Manager =>
             Map_Curs  : Preferences_Maps.Cursor;
          when From_Group =>
-            List_Curs : Preferences_Lists.Cursor;
+            List_Curs : Preferences_Names_Lists.Cursor;
       end case;
    end record;
    --  Used to map preferences with their names.
@@ -841,7 +843,7 @@ private
       --  Group's priority. This is used to sort the groups according to the
       --  order we want to display it.
 
-      Preferences : Preferences_Lists.List;
+      Preferences : Preferences_Names_Lists.List;
       --  List of preferences belonging to this group.
    end record;
 

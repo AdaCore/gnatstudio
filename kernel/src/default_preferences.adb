@@ -215,7 +215,8 @@ package body Default_Preferences is
    --  If no group is found, return null.
 
    procedure Insert_Pref
-     (Preferences      : in out Preferences_Lists.List;
+     (Manager          : not null access Preferences_Manager_Record'Class;
+      Preferences      : in out Preferences_Names_Lists.List;
       Pref             : not null Preference;
       Replace_If_Exist : Boolean := False);
    --  Insert Pref at the end of the the given list.
@@ -245,14 +246,6 @@ package body Default_Preferences is
    -----------------------
 
    function Group_Name_Equals (Left, Right : Preferences_Group) return Boolean
-   is
-     (Left.Get_Name = Right.Get_Name);
-
-   ----------------------
-   -- Pref_Name_Equals --
-   ----------------------
-
-   function Pref_Name_Equals (Left, Right : Preference) return Boolean
    is
      (Left.Get_Name = Right.Get_Name);
 
@@ -294,14 +287,15 @@ package body Default_Preferences is
    -----------------
 
    procedure Insert_Pref
-     (Preferences      : in out Preferences_Lists.List;
+     (Manager          : not null access Preferences_Manager_Record'Class;
+      Preferences      : in out Preferences_Names_Lists.List;
       Pref             : not null Preference;
       Replace_If_Exist : Boolean := False)
    is
-      use Preferences_Lists;
-      Pref_Iter : Preferences_Lists.Cursor;
+      use Preferences_Names_Lists;
+      Pref_Iter : Preferences_Names_Lists.Cursor;
    begin
-      Pref_Iter := Preferences.Find (Pref);
+      Pref_Iter := Preferences.Find (Pref.Get_Name);
 
       if Has_Element (Pref_Iter) then
          if Replace_If_Exist then
@@ -314,15 +308,22 @@ package body Default_Preferences is
       Pref_Iter := Preferences.First;
 
       --  Insert the Pref according to its priority
-      while Has_Element (Pref_Iter)
-        and then Pref.Priority <= Element (Pref_Iter).Priority
-      loop
-         Next (Pref_Iter);
+      while Has_Element (Pref_Iter) loop
+         declare
+            Current_Pref : constant Preference :=
+                             Manager.Preferences
+                               (Preferences_Names_Lists.Element (Pref_Iter));
+         begin
+            exit when Pref.Priority > Current_Pref.Priority;
+
+            Next (Pref_Iter);
+         end;
       end loop;
 
-      Insert (Container => Preferences,
-              Before    => Pref_Iter,
-              New_Item  => Pref);
+      Insert
+        (Container => Preferences,
+         Before    => Pref_Iter,
+         New_Item  => Pref.Get_Name);
    end Insert_Pref;
 
    ------------------
@@ -658,16 +659,17 @@ package body Default_Preferences is
    -------------
 
    procedure Destroy (Manager : in out Preferences_Manager_Record) is
-      C : Pages_Lists.Cursor := Manager.Pages.First;
-      Page : Preferences_Page;
    begin
-      while Pages_Lists.Has_Element (C) loop
-         Page := Pages_Lists.Element (C);
+      for Page of Manager.Pages loop
          Free (Page);
-         Pages_Lists.Next (C);
+      end loop;
+
+      for Pref of Manager.Preferences loop
+         Free (Pref);
       end loop;
 
       Manager.Pages.Clear;
+      Manager.Preferences.Clear;
    end Destroy;
 
    ----------------------
@@ -793,14 +795,17 @@ package body Default_Preferences is
    --------------
 
    procedure Add_Pref
-     (Self : not null access Preferences_Group_Record;
-      Pref : not null Preference) is
+     (Self    : not null access Preferences_Group_Record;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Pref    : not null Preference) is
    begin
       --  If a preference is already associated to this name, replace it.
       --  If not, insert it to the preferences list.
-      Insert_Pref (Preferences      => Self.Preferences,
-                   Pref             => Pref,
-                   Replace_If_Exist => True);
+      Insert_Pref
+        (Manager          => Manager,
+         Preferences      => Self.Preferences,
+         Pref             => Pref,
+         Replace_If_Exist => True);
    end Add_Pref;
 
    -----------------
@@ -811,9 +816,10 @@ package body Default_Preferences is
      (Self : not null access Preferences_Group_Record;
       Pref : not null Preference)
    is
-      Pref_Iter : Preferences_Lists.Cursor := Self.Preferences.Find (Pref);
+      Pref_Iter : Preferences_Names_Lists.Cursor :=
+                    Self.Preferences.Find (Pref.Get_Name);
    begin
-      if Preferences_Lists.Has_Element (Pref_Iter) then
+      if Preferences_Names_Lists.Has_Element (Pref_Iter) then
          Self.Preferences.Delete (Pref_Iter);
       end if;
    end Remove_Pref;
@@ -824,10 +830,6 @@ package body Default_Preferences is
 
    procedure Free (Self : in out Preferences_Group_Record) is
    begin
-      for Pref of Self.Preferences loop
-         Free (Pref);
-      end loop;
-
       Self.Preferences.Clear;
    end Free;
 
@@ -1251,7 +1253,7 @@ package body Default_Preferences is
    function Get_Pref_From_Name
      (Self                : not null access Preferences_Manager_Record;
       Name                : String;
-      Create_If_Necessary : Boolean) return Preference is
+      Create_If_Necessary : Boolean := False) return Preference is
    begin
       if Self.Preferences.Contains (Name) then
          return Self.Preferences (Name);
@@ -1485,7 +1487,7 @@ package body Default_Preferences is
          Create_If_Needed => True);
 
       --  Add the preference to its group
-      Registered_Group.Add_Pref (Pref);
+      Registered_Group.Add_Pref (Manager, Pref);
    end Register;
 
    --------------
@@ -2811,7 +2813,7 @@ package body Default_Preferences is
       if C.Cursor_Type = From_Manager then
          Preferences_Maps.Next (C.Map_Curs);
       else
-         Preferences_Lists.Next (C.List_Curs);
+         Preferences_Names_Lists.Next (C.List_Curs);
       end if;
    end Next;
 
@@ -2819,7 +2821,10 @@ package body Default_Preferences is
    -- Get_Pref --
    --------------
 
-   function Get_Pref (Self : Preference_Cursor) return Preference is
+   function Get_Pref
+     (Self    : Preference_Cursor;
+      Manager : not null access Preferences_Manager_Record) return Preference
+   is
    begin
       if Self.Cursor_Type = From_Manager then
          if not Preferences_Maps.Has_Element (Self.Map_Curs) then
@@ -2828,10 +2833,11 @@ package body Default_Preferences is
             return Preferences_Maps.Element (Self.Map_Curs);
          end if;
       else
-         if not Preferences_Lists.Has_Element (Self.List_Curs) then
+         if not Preferences_Names_Lists.Has_Element (Self.List_Curs) then
             return null;
          else
-            return Preferences_Lists.Element (Self.List_Curs);
+            return Manager.Preferences
+              (Preferences_Names_Lists.Element (Self.List_Curs));
          end if;
       end if;
    end Get_Pref;

@@ -192,11 +192,12 @@ package body GPS.Kernel.Search.Preferences is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Pref         : Preference;
+      Manager : constant Preferences_Manager := Self.Kernel.Get_Preferences;
+      Pref    : Preference;
    begin
       Result := null;
 
-      Pref := Get_Pref (Self.Iter);
+      Pref := Get_Pref (Self.Iter, Manager => Manager);
 
       if Self.Search_Among_Hidden
         or else Pref.Get_Page_Name /= ""
@@ -215,7 +216,7 @@ package body GPS.Kernel.Search.Preferences is
       end if;
 
       Next (Self.Iter);
-      Has_Next := Get_Pref (Self.Iter) /= null;
+      Has_Next := Get_Pref (Self.Iter, Manager => Manager) /= null;
    end Next;
 
    --------------------------------------

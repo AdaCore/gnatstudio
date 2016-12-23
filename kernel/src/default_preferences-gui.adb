@@ -86,7 +86,9 @@ package body Default_Preferences.GUI is
             Parent_View => Self);
 
          for Pref_Iter in Group.Preferences.Iterate loop
-            Pref := Preferences_Lists.Element (Pref_Iter);
+            Pref :=
+              Manager.Get_Pref_From_Name
+                (Preferences_Names_Lists.Element (Pref_Iter));
 
             --  Create the row in the group widget for Pref
             Create_Pref_Row
