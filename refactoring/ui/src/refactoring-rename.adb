@@ -445,10 +445,9 @@ package body Refactoring.Rename is
                      Make_Writable => Get_Active (Dialog.Make_Writable),
                      Auto_Compile  => Get_Active (Dialog.Auto_Compile));
                end;
-
-               Destroy (Dialog);
             end if;
 
+            Destroy (Dialog);
          else
             Create_Simple_Message
               (Get_Messages_Container (Get_Kernel (Context.Context)),
