@@ -362,7 +362,6 @@ package body GPS.Kernel.Timeout is
             --  as it may be used to keep count of executions, or to free
             --  memory, for instance.
             Self.Exit_Status := -1;
-            Run_On_Exit (Self);
 
             Unchecked_Free (Self.Descriptor);
             Cleanup (Monitor);
@@ -402,20 +401,26 @@ package body GPS.Kernel.Timeout is
          end if;
 
       elsif Command.Finished then
-         Trace (Me, "Process finished: "  & Get_Command (Command.CL));
+         Trace (Me, "Process finished: "  & To_Display_String (Command.CL));
          return Commands.Success;
 
       else
          declare
-            Str   : Unbounded_String;
-            Dummy : Expect_Status;
+            Str    : Unbounded_String;
+            Status : Expect_Status;
          begin
-            Dummy := Command.D.Expect
+            Status := Command.D.Expect
               (Regexp  => Command.Expect_Regexp.all,
                Timeout => 1,
                Output  => Str,
                Stop_At_First_Match => False);
-            return Execute_Again;
+
+            if Status = Died then
+               Trace (Me, "Process died: "  & To_Display_String (Command.CL));
+               return Commands.Success;
+            else
+               return Execute_Again;
+            end if;
          end;
       end if;
    end Execute;

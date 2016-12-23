@@ -156,6 +156,11 @@ package body VCS2.Engines is
    --  Ensure_Status_* do not result in multiple parallel computation of the
    --  status.
 
+   package Engine_Sources is new Glib.Main.Generic_Sources
+     (VCS_Engine_Access);
+   function On_Idle_Start_Queue (VCS : VCS_Engine_Access) return Boolean;
+   --  Execute the next command in the queue after a short idle.
+
    type Cmd_Ensure_Status_For_Files (Size : Natural) is
       new VCS_Command with record
          Files : File_Array (1 .. Size);
@@ -1152,8 +1157,20 @@ package body VCS2.Engines is
       end if;
 
       --  In case there are more commands in the queue
-      Start_Queue (Self);
+      Self.Queue_Id := Engine_Sources.Idle_Add
+        (On_Idle_Start_Queue'Access, VCS_Engine_Access (Self));
    end Command_Terminated;
+
+   -------------------------
+   -- On_Idle_Start_Queue --
+   -------------------------
+
+   function On_Idle_Start_Queue (VCS : VCS_Engine_Access) return Boolean is
+   begin
+      VCS.Queue_Id := No_Source_Id;
+      Start_Queue (VCS);
+      return False;   --  Do not run again
+   end On_Idle_Start_Queue;
 
    ---------------------------
    -- Set_Run_In_Background --

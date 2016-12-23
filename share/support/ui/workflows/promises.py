@@ -598,8 +598,8 @@ class ProcessWrapper(object):
         self.__output += remaining_output
 
         self.__stream.emit(remaining_output)
-        self.__stream.resolve(status)
 
+        self.__stream.resolve(status)
         self.__check_pattern_and_resolve()
 
     def wait_until_match(self, pattern, timeout=0):
@@ -647,11 +647,13 @@ class ProcessWrapper(object):
         :return: a promise
         """
         p = Promise()
+
         s = self.wait_until_match("^.*\n")
         if s is None:
-            p.resolve(None)
+            p.resolve(None)   # already finished
         else:
             s.then(lambda line: p.resolve(line[:-1] if line else None))
+
         return p
 
     @property
