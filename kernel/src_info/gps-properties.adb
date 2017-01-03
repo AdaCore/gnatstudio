@@ -243,7 +243,11 @@ package body GPS.Properties is
          declare
             P : String_Property;
          begin
-            Current_Writer.Get_Values (Name, P, Process'Access);
+            --  The Current_Writer might be null (for instance in the case of
+            --  gnatdoc or gps_cli)
+            if Current_Writer /= null then
+               Current_Writer.Get_Values (Name, P, Process'Access);
+            end if;
             Languages_Loaded := True;
          end;
       end if;
