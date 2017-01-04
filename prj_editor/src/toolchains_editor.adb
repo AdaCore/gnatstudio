@@ -955,7 +955,7 @@ package body Toolchains_Editor is
          Widget        : Gtk_Widget;
          Ent           : Gtk_Entry;
          Btn           : Gtk_Button := null;
-         Ent_Name      : constant String := To_Lower (Tool'Image) & "_tool";
+         Ent_Name      : constant String := To_Lower (Tool'Img) & "_tool";
          Tool_Label    : constant String := Get_Label (Kind, Tool, Lang);
       begin
          --  Use a combo box with an entry if several possible values have
