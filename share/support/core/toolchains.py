@@ -52,7 +52,7 @@ XML = r"""<?xml version="1.0" ?>
   </toolchain>
 
   <toolchain name="powerpc-wrs-vxworksae">
-    <debugger>powerpc-wrs-vxworksae-gdb_wtx4</debugger>
+    <debugger>powerpc-wrs-vxworksae-gdb</debugger>
     <cpp_filt>c++filtppc</cpp_filt>
     <compiler lang="c">ccppc</compiler>
     <compiler lang="c++">c++ppc</compiler>
