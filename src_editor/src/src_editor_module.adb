@@ -1262,8 +1262,30 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
    is
       M : constant Source_Editor_Module :=
-         Source_Editor_Module (Src_Editor_Module_Id);
+        Source_Editor_Module (Src_Editor_Module_Id);
    begin
+      --  Make sure we won't add duplicate entries in the history.
+      --  This loop is not very optimal, but we have to do this since
+      --  histories only store strings and we do not have a way of
+      --  normalizing capitalization under Windows.
+      declare
+         V : constant String_List_Access :=  --  Do not free
+            Get_History (Kernel.Get_History.all, Hist_Key);
+         F : Virtual_File;
+      begin
+         if V /= null then
+            for N of V.all loop
+               F := Create (+N.all);
+               if F = File then
+                  --  The menu and actions are already there, nothing to do.
+                  return;
+               end if;
+            end loop;
+         end if;
+      end;
+
+      --  If we reach this, it means the menu doesn't already exist: proceed.
+
       Add_To_History (Kernel, Hist_Key, UTF8_Full_Name (File));
 
       --  Remove old menus and actions
