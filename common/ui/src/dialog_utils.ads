@@ -31,6 +31,7 @@ with Gtk.Button_Box;                        use Gtk.Button_Box;
 with Gtk.Enums;                             use Gtk.Enums;
 with Gtk.Frame;                             use Gtk.Frame;
 with Gtk.Flow_Box;                          use Gtk.Flow_Box;
+with Gtk.Label;                             use Gtk.Label;
 with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
 with Gtk.Size_Group;                        use Gtk.Size_Group;
 with Gtk.Widget;                            use Gtk.Widget;
@@ -244,6 +245,14 @@ package Dialog_Utils is
    --
    --  The Expand and Fill properties have the same role as in the
    --  Gtk.Box.Pack_Start procedure.
+
+   ------------------
+   -- CSS Stlizers --
+   ------------------
+
+   procedure Apply_Doc_Style (Label : not null access Gtk_Label_Record'Class);
+   --  Apply the CSS style used for dialog group widgets' documentation to the
+   --  given label.
 
 private
 

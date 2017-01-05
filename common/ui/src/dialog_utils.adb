@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;               use Glib;
-with Gtk.Label;          use Gtk.Label;
 with Gtk.Separator;      use Gtk.Separator;
 with Gtk.Style_Context;  use Gtk.Style_Context;
 
@@ -408,8 +407,7 @@ package body Dialog_Utils is
             --  text without wrapping it.
             Doc_Widget.Set_Max_Width_Chars (50);
 
-            Get_Style_Context (Doc_Widget).Add_Class
-              ("dialog-views-doc-labels");
+            Apply_Doc_Style (Doc_Widget);
          end;
       end if;
 
@@ -516,5 +514,15 @@ package body Dialog_Utils is
       --  Update the number of children
       Self.Number_Of_Children := Self.Number_Of_Children + 1;
    end Append_Child;
+
+   ---------------------
+   -- Apply_Doc_Style --
+   ---------------------
+
+   procedure Apply_Doc_Style (Label : not null access Gtk_Label_Record'Class)
+   is
+   begin
+      Get_Style_Context (Label).Add_Class ("dialog-views-doc-labels");
+   end Apply_Doc_Style;
 
 end Dialog_Utils;

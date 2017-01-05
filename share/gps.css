@@ -132,6 +132,37 @@
    padding-top: 5px;
 }
 
+/**************************
+ * GPS Welcome Dialog     *
+ **************************/
+
+.gps-welcome-dialog GtkFrame {
+   box-shadow: none;
+   border-width: 0;
+   padding-top: 20px;
+   padding-bottom: 60px;
+}
+
+.gps-welcome-dialog GtkListBoxRow {
+   padding-left: 12px;
+}
+
+.gps-welcome-dialog-title {
+   font-size: xx-large;
+}
+
+.gps-welcome-dialog-subtitle {
+   font-size: x-large;
+   color: @inactive_tab_color;
+}
+
+.gps-welcome-dialog-version {
+   font-weight: 100;
+   font-style: italic;
+   font-size: large;
+   color: @tooltip-background-color;;
+}
+
 /*********************
  * Menus
  *********************/
