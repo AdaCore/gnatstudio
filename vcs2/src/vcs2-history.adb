@@ -75,11 +75,11 @@ with VCS2.Views;                  use VCS2.Views;
 package body VCS2.History is
    Me : constant Trace_Handle := Create ("HISTORY");
 
-   Column_ID      : constant := 0;
+   Column_Line    : constant := 0;
    Column_Author  : constant := 1;
    Column_Date    : constant := 2;
    Column_Subject : constant := 3;
-   subtype All_Columns is Gint range Column_ID .. Column_Subject;
+   subtype All_Columns is Gint range Column_Line .. Column_Subject;
 
    Inter_Row_Space  : constant Gint := 2;  --  hard-coded in gtk+
    Column_Width     : constant Gdouble := 10.0;
@@ -114,12 +114,6 @@ package body VCS2.History is
    package Boolean_Vectors is new Ada.Containers.Vectors
      (Index_Type => Graph_Column, Element_Type => Boolean);
 
-   package Commit_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Line_Index,   --  index into Tree.Lines
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
-
    type History_View_Config is record
       Initialized  : Boolean := False;
       Collapse     : Boolean := False;
@@ -130,27 +124,48 @@ package body VCS2.History is
    Always_Visible : constant Visibility := 2;
    --  See History_Line.Visible
 
-   type History_Line is record
+   type Parent is record
+      ID            : GNAT.Strings.String_Access;
+      Has_Invisible : Boolean := False;
+   end record;
+   type Parent_Array is array (Natural range <>) of Parent;
+   type Parent_Array_Access is access all Parent_Array;
+
+   type Node_Data is record
       ID, Author, Date, Subject : GNAT.Strings.String_Access;
-      Parents                   : GNAT.Strings.String_List_Access;
+      Parents                   : Parent_Array_Access;
       Names                     : GNAT.Strings.String_List_Access;
 
-      Col : Graph_Column := No_Graph_Column;
+      Col                       : Graph_Column := No_Graph_Column;
       --  which column to draw in
 
       Circle_Center             : Gdouble;
       --  coordinate, depending on current scroll value
 
+      Num_Children              : Natural := 0;
+      --  Number of children commits
+
+      Line                      : Integer := -1;
+      --  Line number within the tree model
+
       Visible                   : Visibility;
       --  A node is visible when this field is Always_Visible or more.
-
-      Has_Parent_In_Same_Col    : Boolean;
    end record;
+   type Node_Data_Access is access all Node_Data;
+
+   package Commit_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Node_Data_Access,    --  owned
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+
    package Line_Vectors is new Ada.Containers.Vectors
-     (Line_Index, History_Line);
+     (Line_Index, Node_Data_Access);
    --  Information for each commit line.
    --  This comes straight from the various VCS plugins, and are also used when
    --  filtering and laying out the graph.
+   --  Elements refer to entries in the commit_maps, and are now owned by the
+   --  vector.
 
    type History_Tree_Record is new Tree_View_Record with record
       Config      : History_View_Config;
@@ -158,6 +173,8 @@ package body VCS2.History is
       Graph       : Gtk_Drawing_Area;
 
       Lines       : Line_Vectors.Vector;
+      --  The visible commits, in the order they were returned by the VCS.
+      --  Invisible commits are not added
 
       Max_Columns : Natural := 0;  --  Number of columns in the graph
 
@@ -166,7 +183,6 @@ package body VCS2.History is
          others        => <>);
       --  Current filter
 
-      Col_ID      : Gtk_Tree_View_Column;
       Col_Author  : Gtk_Tree_View_Column;
       Col_Date    : Gtk_Tree_View_Column;
 
@@ -175,10 +191,18 @@ package body VCS2.History is
    end record;
    type History_Tree is access all History_Tree_Record'Class;
 
+   function Get_Parent_Node
+     (Tree   : not null access History_Tree_Record'Class;
+      N      : Node_Data_Access;
+      Parent : Natural) return Node_Data_Access;
+   --  Look at the Parent-th parent node of N, and go up the chain until we
+   --  find one visible parent (so it could be the Parent-th parent itself, or
+   --  its own parent).
+   --  Returns null if no such parent is found.
+
    function Get_ID_From_Node
      (Self       : not null access Tree_View_Record'Class;
-      Store_Iter : Gtk_Tree_Iter) return Commit_ID
-     is (Commit_ID (String'(Self.Model.Get_String (Store_Iter, Column_ID))));
+      Store_Iter : Gtk_Tree_Iter) return Commit_ID;
 
    package Expansion is new Expansion_Support
      (Tree_Record        => Tree_View_Record,
@@ -242,7 +266,7 @@ package body VCS2.History is
       Detached : Detached_Model_Access;
       Is_Free  : Boolean_Vectors.Vector;
       Current  : Natural;  --  in lines
-      Step     : Layout_Step := Step_Compute;
+      Step     : Layout_Step;
       Inserted : Natural;   --  number of items inserted in tree
       To_Select : Gtk_Tree_Path := Null_Gtk_Tree_Path;
    end record;
@@ -330,6 +354,24 @@ package body VCS2.History is
    procedure Clear_View (Self : not null access History_Tree_Record'Class);
    ---  Clear all views
 
+   ----------------------
+   -- Get_ID_From_Node --
+   ----------------------
+
+   function Get_ID_From_Node
+     (Self       : not null access Tree_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return Commit_ID
+   is
+      Line : constant Integer :=
+        Integer (Self.Model.Get_Int (Store_Iter, Column_Line));
+   begin
+      if Line = -1 then
+         return "";
+      else
+         return Commit_ID (History_Tree (Self).Lines (Line).ID.all);
+      end if;
+   end Get_ID_From_Node;
+
    ----------------
    -- Clear_View --
    ----------------
@@ -373,133 +415,145 @@ package body VCS2.History is
       ----------------
 
       procedure Draw_Lines is
+         type Parent_Link_Type is (No_Link, Visible_Parent, Invisible_Parent);
+         --  How to display a link to the parent node. This is used when a node
+         --  is offscreen.
+
          Y3, Y2   : Gdouble;
-         Data, DP : History_Line;
+         Data, DP : Node_Data_Access;
          X, X2    : Gdouble;
-         PLine    : Line_Index;
-         Is_Free  : array (1 .. Tree.Max_Columns) of Boolean :=
-           (others => True);
-         Skipped  : Boolean;
-         Curs     : Commit_Maps.Cursor;
+         Is_Occupied  : array (1 .. Tree.Max_Columns) of Parent_Link_Type :=
+           (others => No_Link);
+         Is_Merge : Boolean;
 
       begin
          for Line in 1 .. Line_Start - 1 loop
             Data := Tree.Lines (Line);
-            if Data.Visible >= Always_Visible then
-               Is_Free (Data.Col) := not Data.Has_Parent_In_Same_Col;
+            Is_Occupied (Data.Col) := No_Link;
+
+            if Data.Parents /= null then
+               for P in Data.Parents'Range loop
+                  DP := Get_Parent_Node (Tree, Data, P);
+                  if DP /= null then
+                     Is_Occupied (DP.Col) :=
+                       (if Data.Parents (P).Has_Invisible
+                        then Invisible_Parent
+                        else Visible_Parent);
+                  end if;
+               end loop;
             end if;
          end loop;
 
          Set_Line_Width (Cr, 2.0);
          for Line in Line_Start .. Line_End loop
             Data := Tree.Lines (Line);
+            X    := Gdouble (Data.Col) * Column_Width;
 
-            if Data.Visible >= Always_Visible then
-               X    := Gdouble (Data.Col) * Column_Width;
+            Arc (Cr,
+                 Xc     => X,
+                 Yc     => Data.Circle_Center,
+                 Radius => Radius,
+                 Angle1 => 0.0,
+                 Angle2 => 6.2831853072);
+            Set_Color (Data.Col);
+            Stroke (Cr);
 
-               if not Is_Free (Data.Col) then
+            case Is_Occupied (Data.Col) is
+               when No_Link =>
+                  null;
+
+               when Visible_Parent =>
                   Move_To (Cr, X, 0.0);
                   Line_To (Cr, X, Data.Circle_Center - Radius);
-                  Is_Free (Data.Col) := True;  --  not needed anymore
-               end if;
+                  Stroke (Cr);
 
-               Arc (Cr,
-                    Xc     => X,
-                    Yc     => Data.Circle_Center,
-                    Radius => Radius,
-                    Angle1 => 0.0,
-                    Angle2 => 6.2831853072);
-               Set_Color (Data.Col);
-               Stroke (Cr);
+               when Invisible_Parent =>
+                  Save (Cr);
+                  Set_Dash (Cr, (3.0, 3.0), 0.0);
+                  Move_To (Cr, X, 0.0);
+                  Line_To (Cr, X, Data.Circle_Center - Radius);
+                  Stroke (Cr);
+                  Restore (Cr);
+            end case;
+            Is_Occupied (Data.Col) := No_Link;
 
-               if Data.Parents /= null then
-                  --  Reverse to show straight lines on top of curves
-                  for P in reverse Data.Parents'Range loop
-                     if Tree.Commits.Contains (Data.Parents (P).all) then
-                        PLine := Tree.Commits (Data.Parents (P).all);
-                        if PLine > Line_End then
-                           DP := (Col           => Data.Col,
-                                  Circle_Center => Outside_Graph,
-                                  Visible       => Always_Visible,
-                                  others        => <>);
-                        else
-                           DP := Tree.Lines (PLine);
-                        end if;
+            if Data.Parents /= null then
+               --  Reverse to show straight lines on top of curves
+               for P in reverse Data.Parents'Range loop
+                  DP := Get_Parent_Node (Tree, Data, P);
+                  if DP /= null then
+                     if DP.Line > Line_End then
+                        DP.Circle_Center := Outside_Graph;
+                     end if;
 
-                        --  When collapsing, need to move up to first visible
-                        --  parent. We only look at the first parent, since a
-                        --  node with multiple parents is visible anyway
+                     Save (Cr);
 
-                        Skipped := False;
-                        if Tree.Config.Collapse then
-                           while DP.Visible < Always_Visible
-                             and then DP.Parents /= null
-                           loop
-                              Curs := Tree.Commits.Find
-                                (DP.Parents (DP.Parents'First).all);
-                              exit when not Commit_Maps.Has_Element (Curs);
-                              DP := Tree.Lines (Commit_Maps.Element (Curs));
-                              Skipped := True;
-                           end loop;
-                        end if;
+                     if Data.Parents (P).Has_Invisible then
+                        Set_Dash (Cr, (3.0, 3.0), 0.0);
+                     end if;
 
-                        Move_To (Cr, X, Data.Circle_Center + Radius);
+                     Move_To (Cr, X, Data.Circle_Center + Radius);
 
-                        if Data.Col = DP.Col then
-                           Line_To (Cr, X, DP.Circle_Center - Radius);
+                     if Data.Col = DP.Col then
+                        Line_To (Cr, X, DP.Circle_Center - Radius);
+                        Set_Color (Data.Col);
+                     else
+                        X2 := Gdouble (DP.Col) * Column_Width;
+                        Y2 := Data.Circle_Center + Radius + 16.0;
+                        Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
+                        Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
+
+                        --  Parent has a single child, but current has
+                        --  multiple parents: this is a merge
+                        Is_Merge := DP.Num_Children = 1
+                          and then Data.Parents'Length > 1;
+
+                        if DP.Line = Data.Line + 1 and then not Is_Merge then
                            Set_Color (Data.Col);
                         else
-                           X2 := Gdouble (DP.Col) * Column_Width;
-                           Y2 := Data.Circle_Center + Radius + 16.0;
-                           Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
-                           Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
-
-                           if DP.Col < Data.Col then
-                              Set_Color (Data.Col);
-                           else
-                              Set_Color (DP.Col);
-                           end if;
-
-                           Stroke (Cr);
+                           Set_Color (DP.Col);
                            Move_To (Cr, X2, Y2);
                            Line_To (Cr, X2, DP.Circle_Center - Radius);
-                           Set_Color (DP.Col);
                         end if;
-
-                        if Skipped then
-                           Save (Cr);
-                           Set_Dash (Cr, (3.0, 3.0), 0.0);
-                           Stroke (Cr);
-                           Restore (Cr);
-                        else
-                           Stroke (Cr);
-                        end if;
-
-                     else
-                        --  parent not found in memory for now
-                        --  Will draw straight line.
-                        Is_Free (Data.Col) := False;
                      end if;
-                  end loop;
-               end if;
+
+                     Stroke (Cr);
+                     Restore (Cr);
+
+                  else
+                     --  parent not found in memory for now
+                     --  Will draw straight line.
+                     Is_Occupied (Data.Col) := Invisible_Parent;
+                  end if;
+               end loop;
             end if;
          end loop;
 
          --  Branches for which no commit is currently visible
 
-         for Col in Is_Free'Range loop
-            if not Is_Free (Col) then
+         for Col in Is_Occupied'Range loop
+            if Is_Occupied (Col) /= No_Link then
+               Save (Cr);
+
+               if Is_Occupied (Col) = Invisible_Parent then
+                  Set_Dash (Cr, (3.0, 3.0), 0.0);
+               end if;
+
                X2 := Gdouble (Col) * Column_Width;
                Move_To (Cr, X2, 0.0);
                Line_To (Cr, X2, Outside_Graph);
                Set_Color (Col);
                Stroke (Cr);
+
+               Restore (Cr);
             end if;
          end loop;
       end Draw_Lines;
 
-      Start, Finish : Gtk_Tree_Path;
-      Success       : Boolean;
+      Start, Finish  : Gtk_Tree_Path;
+      Success        : Boolean;
+      Base_Y, Base_X : Gint;
+      Rect           : Gdk_Rectangle;
    begin
       Set_Source_Color (Cr, Browsers_Bg_Color.Get_Pref);
       Set_Operator (Cr, Cairo_Operator_Source);
@@ -507,45 +561,47 @@ package body VCS2.History is
 
       View.Tree.Get_Visible_Range (Start, Finish, Success);
       if Success then
-         declare
-            First_ID : constant String := Tree.Model.Get_String
+         Line_Start := Integer
+           (Tree.Model.Get_Int
               (Tree.Get_Store_Iter_For_Filter_Path (Start),
-               Column_ID);
-            Last_ID : constant String := Tree.Model.Get_String
-              (Tree.Get_Store_Iter_For_Filter_Path (Finish),
-               Column_ID);
+               Column_Line));
 
-            Base_Y, Base_X : Gint;
-            Rect   : Gdk_Rectangle;
+         declare
+            Tmp : Integer;
          begin
-            Line_Start := Tree.Commits (First_ID);
-            Line_End   :=
-              (if Tree.Has_Show_Older and then Last_ID = ""
-               then Tree.User_Filter.Up_To_Lines else Tree.Commits (Last_ID));
-
-            Tree.Convert_Bin_Window_To_Widget_Coords
-              (0, 0, Base_X, Base_Y);
-
-            --  Compute the coordinate for all nodes in current view layout
-
-            for Line in Line_Start .. Line_End loop
-               if Tree.Lines (Line).Visible >= Always_Visible then
-                  Tree.Get_Cell_Area (Start, null, Rect);
-                  Tree.Lines (Line).Circle_Center := Gdouble
-                    (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
-                  Next (Start);
-               end if;
-            end loop;
-
-            Path_Free (Start);
-            Path_Free (Finish);
-
-            Rectangle
-              (Cr, 0.0, Gdouble (Base_Y), Outside_Graph, Outside_Graph);
-            Clip (Cr);
-
-            Draw_Lines;
+            Tmp := Integer
+              (Tree.Model.Get_Int
+                 (Tree.Get_Store_Iter_For_Filter_Path (Finish),
+                  Column_Line));
+            if Tree.Has_Show_Older and then Tmp = -1 then
+               Line_End := Tree.User_Filter.Up_To_Lines;
+            else
+               Line_End := Tmp;
+            end if;
          end;
+
+         Tree.Convert_Bin_Window_To_Widget_Coords
+           (0, 0, Base_X, Base_Y);
+
+         --  Compute the coordinate for all nodes in current view layout
+
+         for Line in Line_Start .. Line_End loop
+            if Tree.Lines (Line).Visible >= Always_Visible then
+               Tree.Get_Cell_Area (Start, null, Rect);
+               Tree.Lines (Line).Circle_Center := Gdouble
+                 (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
+               Next (Start);
+            end if;
+         end loop;
+
+         Path_Free (Start);
+         Path_Free (Finish);
+
+         Rectangle
+           (Cr, 0.0, Gdouble (Base_Y), Outside_Graph, Outside_Graph);
+         Clip (Cr);
+
+         Draw_Lines;
       end if;
 
       return True;  --  handled
@@ -570,7 +626,6 @@ package body VCS2.History is
       Event  : Gdk_Event_Button) return Boolean
    is
       View : constant History_View := History_View (Self);
-      Data           : Layout_Idle_Data_Access with Unreferenced;
       X, Y           : Gint;
       Found          : Boolean;
       Cell_X, Cell_Y : Gint;
@@ -584,9 +639,9 @@ package body VCS2.History is
 
       if Found then
          --  If the user selected the "show older" entry
-         if View.Tree.Model.Get_String
+         if View.Tree.Model.Get_Int
            (View.Tree.Get_Store_Iter_For_Filter_Path (Path),
-            Column_ID) = ""
+            Column_Line) = -1
          then
             History_Tree (View.Tree).User_Filter.Up_To_Lines :=
               History_Tree (View.Tree).User_Filter.Up_To_Lines + 2000;
@@ -685,7 +740,6 @@ package body VCS2.History is
       for L of History_Tree (Self.Tree).Lines loop
          L.Col     := No_Graph_Column;
          L.Visible := 0;
-         L.Has_Parent_In_Same_Col := False;
       end loop;
 
       Data := new Layout_Idle_Data;
@@ -804,6 +858,7 @@ package body VCS2.History is
 
    procedure On_Selection_Changed (View : access GObject_Record'Class) is
       Self : constant History_View := History_View (View);
+      Tree : constant History_Tree := History_Tree (Self.Tree);
       VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
       Seen : access On_Details;
       Ids  : String_List_Access;
@@ -826,7 +881,8 @@ package body VCS2.History is
       is
          pragma Unreferenced (Path);
       begin
-         Ids (Count) := new String'(Get_String (Model, Iter, Column_ID));
+         Ids (Count) := new String'
+           (Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line))).ID.all);
          Count := Count + 1;
       end On_Selected;
 
@@ -836,12 +892,12 @@ package body VCS2.History is
          Seen.Kernel := Self.Kernel;
 
          Self.Details.Get_Buffer.Set_Text ("");
-         Count := Natural (Self.Tree.Get_Selection.Count_Selected_Rows);
+         Count := Natural (Tree.Get_Selection.Count_Selected_Rows);
 
          if Count /= 0 then
             Ids := new GNAT.Strings.String_List (1 .. Count);
             Count := Ids'First;
-            Self.Tree.Get_Selection.Selected_Foreach
+            Tree.Get_Selection.Selected_Foreach
               (On_Selected'Unrestricted_Access);
 
             VCS.Queue_Fetch_Commit_Details (Ids => Ids, Visitor => Seen);
@@ -903,7 +959,7 @@ package body VCS2.History is
 
       Self.Tree := Tree_View (T);
       Initialize (Self.Tree,
-                  (Column_ID      => GType_String,
+                  (Column_Line    => GType_Int,
                    Column_Author  => GType_String,
                    Column_Date    => GType_String,
                    Column_Subject => GType_String),
@@ -927,15 +983,6 @@ package body VCS2.History is
       Gtk_New (Self.Text_Render);
       Col.Pack_Start (Self.Text_Render, True);
       Col.Add_Attribute (Self.Text_Render, "markup", Column_Subject);
-
-      Gtk_New (T.Col_ID);
-      T.Col_ID.Set_Title ("ID");
-      T.Col_ID.Set_Sizing (Tree_View_Column_Fixed);
-      T.Col_ID.Set_Resizable (True);
-      Dummy := Self.Tree.Append_Column (T.Col_ID);
-      Gtk_New (Text);
-      T.Col_ID.Pack_Start (Text, False);
-      T.Col_ID.Add_Attribute (Text, "text", Column_ID);
 
       Gtk_New (T.Col_Author);
       T.Col_Author.Set_Title ("Author");
@@ -995,7 +1042,6 @@ package body VCS2.History is
       Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
       Set_Font_And_Colors (Self.Details, Fixed_Font => True, Pref => Pref);
 
-      T.Col_ID.Set_Visible (Show_ID.Get_Pref);
       T.Col_Author.Set_Visible (Show_Author.Get_Pref);
       T.Col_Date.Set_Visible (Show_Date.Get_Pref);
       Self.Tree.Set_Headers_Visible
@@ -1042,20 +1088,86 @@ package body VCS2.History is
       Names   : in out GNAT.Strings.String_List_Access)
    is
       Tree   : constant History_Tree := History_Tree (Self.Data.Detached.Tree);
+      C       : Commit_Maps.Cursor;
+      N, Parent_N : Node_Data_Access;
+      Is_Head_Of_Branch : Boolean;
    begin
       if Tree /= null then
-         Tree.Lines.Append
-           ((ID       => new String'(ID),
-             Author   => new String'(Author),
-             Date     => new String'(Date),
-             Subject  => new String'(Subject),
-             Parents  => Parents,
-             Names    => Names,
-             Has_Parent_In_Same_Col => False,
-             Visible                => 0,
-             Circle_Center          => 0.0,
-             Col                    => No_Graph_Column));
-         Tree.Commits.Include (ID, Line_Index (Tree.Lines.Last_Index));
+         --  Create the new node for this commit (or reuse existing one if
+         --  we have already created it.
+
+         C := Tree.Commits.Find (ID);
+         Is_Head_Of_Branch := not Commit_Maps.Has_Element (C);
+         if Is_Head_Of_Branch then
+            N := new Node_Data;
+         else
+            N := Commit_Maps.Element (C);
+         end if;
+
+         N.ID      := new String'(ID);
+         N.Author  := new String'(Author);
+         N.Date    := new String'(Date);
+         N.Subject := new String'(Subject);
+         N.Names   := Names;
+
+         if Parents /= null then
+            N.Parents := new Parent_Array (Parents'Range);
+            for P in Parents'Range loop
+               N.Parents (P).ID := Parents (P);
+            end loop;
+         end if;
+
+         --  Compute visibility of the node
+
+         if not Tree.Config.Collapse   --  want to view all
+           or else Names /= null       --  named commit
+           or else Parents = null      --  first commit on a branch
+           or else Parents'Length > 1  --  a branching commit
+           or else Is_Head_Of_Branch   --  current head of the branch
+         then
+            N.Visible := Always_Visible;
+         end if;
+
+         if Parents /= null then
+            for P of Parents.all loop
+               C := Tree.Commits.Find (P.all);
+               if Commit_Maps.Has_Element (C) then
+                  Parent_N := Commit_Maps.Element (C);
+                  --  visible if more than one child
+                  Parent_N.Visible := Parent_N.Visible + 1;
+                  Parent_N.Num_Children := Parent_N.Num_Children + 1;
+
+                  --  If parent is a branchpoint, always make the children
+                  --  visible (The first parent is not necessarily made
+                  --  visible, but since it will in general be in the same
+                  --  column that's OK).
+                  if Parent_N.Num_Children > 1 then
+                     N.Visible := Always_Visible;
+                  end if;
+               else
+                  --  Include parent in hash
+                  Parent_N := new Node_Data;
+                  Parent_N.Visible := 1;   --  one child
+                  Parent_N.Num_Children := 1;
+                  Tree.Commits.Include (P.all, Parent_N);
+               end if;
+
+               --  If current has multiple parents (a merge), we must
+               --  show each of the parent nodes for proper display in
+               --  the collapsed mode
+               if not Tree.Config.Collapse or else Parents'Length > 1 then
+                  Parent_N.Visible := Always_Visible;
+               end if;
+            end loop;
+         end if;
+
+         Tree.Commits.Include (ID, N);
+
+         if N.Visible >= Always_Visible then
+            Tree.Lines.Append (N);
+            N.Line := Tree.Lines.Last_Index;
+         end if;
+
          Parents := null;  --  adopted
          Names   := null;  --  adopted
       end if;
@@ -1066,14 +1178,23 @@ package body VCS2.History is
    -----------------
 
    procedure Reset_Lines (Self : not null access History_Tree_Record'Class) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Parent_Array, Parent_Array_Access);
    begin
       for L of Self.Lines loop
          Free (L.ID);
          Free (L.Author);
          Free (L.Date);
          Free (L.Subject);
-         Free (L.Parents);
          Free (L.Names);
+
+         if L.Parents /= null then
+            for P of L.Parents.all loop
+               Free (P.ID);
+            end loop;
+            Unchecked_Free (L.Parents);
+         end if;
+
       end loop;
       Self.Lines.Clear;
 
@@ -1122,6 +1243,42 @@ package body VCS2.History is
       end if;
    end Free;
 
+   ---------------------
+   -- Get_Parent_Node --
+   ---------------------
+
+   function Get_Parent_Node
+     (Tree   : not null access History_Tree_Record'Class;
+      N      : Node_Data_Access;
+      Parent : Natural) return Node_Data_Access
+   is
+      Node : Node_Data_Access;
+      Curs : Commit_Maps.Cursor;
+   begin
+      Curs := Tree.Commits.Find (N.Parents (Parent).ID.all);
+      if not Commit_Maps.Has_Element (Curs) then
+         return null;
+      end if;
+
+      Node := Commit_Maps.Element (Curs);
+
+      --  When we are collapsing, we go up the one-parent chain until we find
+      --  the visible parent. All others are ignored (as soon as there are
+      --  multiple parents, the node is visible anyway)
+
+      while Node.Visible < Always_Visible loop
+         N.Parents (Parent).Has_Invisible := True;
+
+         Curs := Tree.Commits.Find (Node.Parents (Node.Parents'First).ID.all);
+         if not Commit_Maps.Has_Element (Curs) then
+            return null;
+         end if;
+
+         Node := Commit_Maps.Element (Curs);
+      end loop;
+      return Node;
+   end Get_Parent_Node;
+
    --------------------
    -- On_Layout_Idle --
    --------------------
@@ -1150,7 +1307,9 @@ package body VCS2.History is
          return C;
       end Next_Empty_Col;
 
-      Start    : constant Time := Clock;
+      Start       : constant Time := Clock;
+      N, Parent_N : Node_Data_Access;
+      Pref_Show_ID : Boolean;
    begin
       --  If the tree was destroyed, nothing more to do
       if Tree = null then
@@ -1161,87 +1320,39 @@ package body VCS2.History is
       when Step_Compute =>
 
          while Data.Current <= Tree.Lines.Last_Index loop
-            declare
-               Ref : constant Line_Vectors.Reference_Type :=
-                 Tree.Lines.Reference (Data.Current);
-            begin
-               --  Compute the column. We might already know it the commit is
-               --  the parent for one of the existing commits
+            N := Tree.Lines (Data.Current);
 
-               if Ref.Col = No_Graph_Column then
-                  Ref.Col := Next_Empty_Col;
+            --  Compute the column. We might already know it the commit is
+            --  the parent for one of the existing commits
 
-                  --  Head of branches are always visible
-                  Ref.Visible := Always_Visible;
-               else
-                  --  Only visible if involved in a branch
-                  Ref.Visible :=
-                    (if Tree.Config.Collapse
-                     then Ref.Visible else Always_Visible);
-               end if;
+            if N.Col = No_Graph_Column then
+               N.Col := Next_Empty_Col;
+            end if;
 
-               if Ref.Col > Data.Is_Free.Last_Index then
-                  Data.Is_Free.Set_Length
-                    (Ada.Containers.Count_Type (Ref.Col));
-               end if;
+            Data.Is_Free (N.Col) := True;
 
-               Data.Is_Free (Ref.Col) := True;
-               Ref.Has_Parent_In_Same_Col := False;
+            --  Reserve columns for the parent commit
 
-               if Ref.Names /= null then
-                  Ref.Visible := Always_Visible;
-               end if;
+            if N.Parents /= null then
+               Is_First := True;
+               for P in N.Parents'Range loop
+                  Parent_N := Get_Parent_Node (Tree, N, P);
+                  if Parent_N /= null then
+                     if Parent_N.Col = No_Graph_Column then
+                        --  If this is the first parent for which we do not
+                        --  already know the column, reuse the current column.
+                        if Is_First then
+                           Parent_N.Col := N.Col;
+                           Is_First := False;
+                        else
+                           Parent_N.Col := Next_Empty_Col;
+                        end if;
 
-               --  Reserve columns for the parent commit
-
-               if Ref.Parents /= null then
-                  --  Always visible if there are multiple parents
-                  if Ref.Parents'Length > 1 then
-                     Ref.Visible := Always_Visible;
-                  end if;
-
-                  Is_First := True;
-                  for P of Ref.Parents.all loop
-                     if Tree.Commits.Contains (P.all) then
-                        declare
-                           PRef : constant Line_Vectors.Reference_Type :=
-                             Tree.Lines.Reference (Tree.Commits (P.all));
-                        begin
-                           if Ref.Parents'Length > 1 then
-                              --  Always visible before a merge
-                              PRef.Visible := Always_Visible;
-                           else
-                              --  If more than 1 child, should be visible
-                              PRef.Visible := PRef.Visible + 1;
-                           end if;
-
-                           if PRef.Col = No_Graph_Column then
-                              --  If this is the first parent for which we
-                              --  do not already know the column, reuse the
-                              --  current column.
-                              if Is_First then
-                                 PRef.Col := Ref.Col;
-                                 Is_First := False;
-                                 Ref.Has_Parent_In_Same_Col := True;
-                              else
-                                 PRef.Col := Next_Empty_Col;
-                              end if;
-
-                              Data.Is_Free (PRef.Col) := False;
-                           end if;
-                        end;
-
-                     else
-                        --  Parent is not visible, but we'll simulate
-                        Ref.Has_Parent_In_Same_Col := True;
+                        Data.Is_Free (Parent_N.Col) := False;
                      end if;
-                  end loop;
-
-               else
-                  --  Last commit in a branch always visible
-                  Ref.Visible := Always_Visible;
-               end if;
-            end;
+                  end if;
+               end loop;
+            end if;
 
             Data.Current := Data.Current + 1;
 
@@ -1258,48 +1369,48 @@ package body VCS2.History is
          return True;  --  Will run again for the actual insert
 
       when Step_Insert =>
+         Pref_Show_ID := Show_ID.Get_Pref;
+
          while Data.Inserted < Tree.User_Filter.Up_To_Lines
            and then Data.Current <= Tree.Lines.Last_Index
          loop
-            declare
-               Ref : constant Line_Vectors.Constant_Reference_Type :=
-                 Tree.Lines.Constant_Reference (Data.Current);
-            begin
-               if Ref.Visible >= Always_Visible then
-                  Init_Set_String (V (Column_ID),      Ref.ID.all);
-                  Init_Set_String (V (Column_Author),  Ref.Author.all);
-                  Init_Set_String (V (Column_Date),    Ref.Date.all);
+            N := Tree.Lines (Data.Current);
 
-                  Tmp := Null_Unbounded_String;
-                  if Ref.Names /= null then
-                     for N of Ref.Names.all loop
-                        Append
-                          (Tmp, "<span background='#ff6600'>"
-                           & Escape_Text (Trim (N.all, Both)) & " </span>");
-                     end loop;
-                  end if;
-                  Append (Tmp, Escape_Text (Ref.Subject.all));
-                  Init_Set_String (V (Column_Subject), To_String (Tmp));
+            Init_Set_Int    (V (Column_Line),    Gint (Data.Current));
+            Init_Set_String (V (Column_Author),  N.Author.all);
+            Init_Set_String (V (Column_Date),    N.Date.all);
 
-                  Tree.Model.Append (Iter, Parent => Null_Iter);
-                  Set_All_And_Clear (Tree.Model, Iter, V);
+            Tmp := Null_Unbounded_String;
+            if N.Names /= null then
+               for Name of N.Names.all loop
+                  Append
+                    (Tmp, "<span background='#ff6600'>"
+                     & Escape_Text (Trim (Name.all, Both)) & " </span>");
+               end loop;
+            end if;
 
-                  Data.Inserted := Data.Inserted + 1;
-                  Data.Current  := Data.Current + 1;
+            if Pref_Show_ID then
+               Append (Tmp, N.ID.all & " " & Escape_Text (N.Subject.all));
 
-                  if Ref.ID.all = Tree.User_Filter.Select_Id then
-                     Data.To_Select :=
-                       Tree.Get_Filter_Path_For_Store_Iter (Iter);
-                  end if;
+            else
+               Append (Tmp, Escape_Text (N.Subject.all));
+            end if;
 
-                  if Clock - Start >= 0.3 then
-                     return True;  --  will try again later
-                  end if;
+            Init_Set_String (V (Column_Subject), To_String (Tmp));
 
-               else
-                  Data.Current  := Data.Current + 1;
-               end if;
-            end;
+            Tree.Model.Append (Iter, Parent => Null_Iter);
+            Set_All_And_Clear (Tree.Model, Iter, V);
+
+            Data.Inserted := Data.Inserted + 1;
+            Data.Current  := Data.Current + 1;
+
+            if N.ID.all = Tree.User_Filter.Select_Id then
+               Data.To_Select := Tree.Get_Filter_Path_For_Store_Iter (Iter);
+            end if;
+
+            if Clock - Start >= 0.3 then
+               return True;  --  will try again later
+            end if;
          end loop;
 
          Trace (Me, "inserted" & Data.Inserted'Img & " nodes");
@@ -1307,7 +1418,7 @@ package body VCS2.History is
          Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
            or else (Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines);
          if Tree.Has_Show_Older then
-            Init_Set_String (V (Column_ID), "");
+            Init_Set_Int    (V (Column_Line), -1);
             Init_Set_String (V (Column_Author), "");
             Init_Set_String (V (Column_Date), "");
             Init_Set_String
