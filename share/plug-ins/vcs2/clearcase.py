@@ -4,7 +4,7 @@ from . import core_staging
 import os
 import re
 import types
-from workflows.promises import ProcessWrapper
+from workflows.promises import ProcessWrapper, Promise
 
 
 @core.register_vcs(name='ClearCase Native',
@@ -49,6 +49,40 @@ class Clearcase(core_staging.Emulate_Staging,
                         0,
                         rev,
                         '')  # repo revision
+
+    def has_defined_activity(self):
+        """
+        Whether there is a defined activity currently defined, which is
+        necessary to be able to do a checkout.
+
+        :returntype: a promise that will be resolved to a boolean, to
+            indicate whether there is a defined activity.
+        """
+        result = Promise()
+
+        def on_terminate(status, output):
+            if status != 0:
+                # could be a clearcase-only view, or not a view at all
+                result.resolve(False)
+            else:
+                result.resolve(output != '')
+
+        p = self._cleartool(['cleartool', 'lsactivity',
+                             '-cact',   # display info for current activity
+                             '-s'])     # short display
+        p.wait_until_terminate().then(on_terminate)
+        return result
+
+    @core.run_in_background
+    def checkout_file(self, file):
+        """
+        Checkout a file to make it writable
+        """
+        has_activity = yield self.has_defined_activity()
+        if has_activity:
+            GPS.Console().write('Support for checkout not implemented yet\n')
+        else:
+            GPS.Console().write('No clearcase activity set\n')
 
     @core.run_in_background
     def commit_staged_files(self, message):
