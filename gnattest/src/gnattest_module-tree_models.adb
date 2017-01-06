@@ -88,6 +88,8 @@ package body GNATTest_Module.Tree_Models is
       Path : Gtk.Tree_Model.Gtk_Tree_Path)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
+      use type Glib.Gint;
+
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
 
       Index_1 : constant Integer := Indices'First;
@@ -107,14 +109,13 @@ package body GNATTest_Module.Tree_Models is
 
          when 2 =>
 
-            if Integer (Indices (Index_1)) >= 0
-              and then Integer (Indices (Index_2)) >= 0
-              and then Self.Index.Contains
-                ((Natural (Indices (Index_1)),
-                  Natural (Indices (Index_2))))
-            then
-               Result := To_Iter
-                 ((Natural (Indices (Index_1)), Natural (Indices (Index_2))));
+            if Indices (Index_1) >= 0 and Indices (Index_2) >= 0 then
+               Row := (Natural (Indices (Index_1)),
+                       Natural (Indices (Index_2)));
+
+               if Self.Index.Contains (Row) then
+                  Result := To_Iter (Row);
+               end if;
             end if;
 
          when others =>
@@ -361,7 +362,6 @@ package body GNATTest_Module.Tree_Models is
    is
       Row    : Row_Index;
       Length : Natural;
-      Cursor : Index_Ordered_Maps.Cursor;
    begin
       To_Row_Index (Iter, Row, Length);
       Iter := Gtk.Tree_Model.Null_Iter;
@@ -375,10 +375,8 @@ package body GNATTest_Module.Tree_Models is
       elsif Length = 2 then
 
          Row (2) := Row (2) + 1;
-         Cursor := Self.Index.Ceiling (Row);
 
-         if Index_Ordered_Maps.Has_Element (Cursor) then
-            Row  := Index_Ordered_Maps.Key (Cursor);
+         if Self.Index.Contains (Row) then
             Iter := To_Iter (Row);
          end if;
       end if;
