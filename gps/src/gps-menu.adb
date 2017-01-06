@@ -350,20 +350,10 @@ package body GPS.Menu is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Filename : constant Virtual_File :=
-        Select_File
-          (-"Open Project",
-           File_Pattern      => "*.gpr",
-           Pattern_Name      => -"Project files",
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-           Kind              => Open_File,
-           History           => Get_History (Kernel));
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Success : Boolean with Unreferenced;
    begin
-      if Filename /= GNATCOLL.VFS.No_File then
-         Load_Project (Kernel, Filename);
-      end if;
+      Success := Display_Open_Project_Dialog (Kernel);
       return Commands.Success;
    end Execute;
 

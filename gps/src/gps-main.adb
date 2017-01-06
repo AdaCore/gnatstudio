@@ -110,11 +110,12 @@ with GPS.Menu;
 with GPS.Search.GUI;
 with OS_Utils;                         use OS_Utils;
 with Projects;                         use Projects;
+with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with Trace_Support;                    use Trace_Support;
-with Welcome;                          use Welcome;
+with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_Page;                     use Welcome_Page;
 
 --  Modules registered by GPS
@@ -142,7 +143,6 @@ with Codefix_Module;
 with Command_Window;
 with Cpp_Module;
 with Custom_Module;
-with Project_Templates.GPS;
 with GNAThub.Module;
 with GNATStack.Module;
 with GNATTest_Module;
@@ -1731,7 +1731,6 @@ procedure GPS.Main is
       File_Opened       : Boolean := False;
       Idle_Id           : Glib.Main.G_Source_Id;
       Project           : Project_Type;
-      Screen            : Welcome_Screen;
       Icon              : Gdk_Pixbuf;
       pragma Unreferenced (Idle_Id);
 
@@ -1863,10 +1862,6 @@ procedure GPS.Main is
             return True;
          end if;
 
-         --  Load the project selected by the user
-
-         Gtk_New (Screen, GPS_Main.Kernel, Project_Name);
-
          --  Remove the splash screen, since it conflicts with the
          --  welcome dialog.
 
@@ -1875,24 +1870,31 @@ procedure GPS.Main is
             Splash := null;
          end if;
 
-         --  If the user wants to quit immediately, so be it
+         --  Display the welcome dialog if no project has been automatically
+         --  loaded.
 
-         case Run_Welcome (Screen) is
+         case Display_Welcome_Dialog
+           (GPS_Main.Kernel,
+            Actions => (1 => Create
+                        (Callback  =>
+                            Display_Project_Templates_Assistant'Access,
+                         Label     => "Create new project",
+                         Icon_Name => "gps-add-symbolic"),
+                        2 => Create
+                          (Callback  =>
+                              Display_Open_Project_Dialog'Access,
+                           Label     => "Open project",
+                           Icon_Name => "gps-open-file-symbolic")))
+         is
             when Quit_GPS =>
-               Destroy (Screen);
                GPS_Main.Application.Quit;
-
                return False;
 
             when Project_Loaded =>
                --  Desktop was already loaded when the project itself
                --  was loaded.
-               null;
+               return True;
          end case;
-
-         Destroy (Screen);
-
-         return True;
       exception
          when E : others =>
             Unexpected_Exception := True;

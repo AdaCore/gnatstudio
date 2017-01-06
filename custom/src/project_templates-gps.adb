@@ -70,13 +70,12 @@ package body Project_Templates.GPS is
       end if;
    end Template_Command_Handler;
 
-   -------------------
-   -- Launch_Dialog --
-   -------------------
+   -----------------------------------------
+   -- Display_Project_Templates_Assistant --
+   -----------------------------------------
 
-   procedure Launch_Dialog
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Cancelled : out Boolean)
+   function Display_Project_Templates_Assistant
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean
    is
       use Virtual_File_List;
       C : Cursor;
@@ -88,9 +87,8 @@ package body Project_Templates.GPS is
 
       Chosen    : Project_Template;
       Templates : Project_Templates_List.List;
+      Success   : Boolean := False;
    begin
-      Cancelled := True;
-
       --  Read all available templates
       C := First (Module_Id.Dirs);
 
@@ -109,7 +107,7 @@ package body Project_Templates.GPS is
            (Kernel,
             -"Could not load any project templates.",
             Mode => Error);
-         return;
+         return False;
       end if;
 
       --  Launch the GUI
@@ -117,7 +115,7 @@ package body Project_Templates.GPS is
       Install_Template (Templates, Chosen, Installed, Dir, Project, E);
 
       if Installed then
-         Cancelled := False;
+         Success := True;
 
          --  First change directory
 
@@ -167,7 +165,9 @@ package body Project_Templates.GPS is
             -"The following occurred when deploying the Project from template:"
             & ASCII.LF & To_String (E), Mode => Error);
       end if;
-   end Launch_Dialog;
+
+      return Success;
+   end Display_Project_Templates_Assistant;
 
    -------------
    -- Execute --
@@ -177,11 +177,11 @@ package body Project_Templates.GPS is
      (Command : access Project_From_Template_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Cancelled : Boolean;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      pragma Unreferenced (Command, Cancelled);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Success : Boolean with Unreferenced;
    begin
-      Launch_Dialog (Kernel, Cancelled);
+      Success := Display_Project_Templates_Assistant (Kernel);
       return Commands.Success;
    end Execute;
 

@@ -26,10 +26,11 @@ package Project_Templates.GPS is
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class);
    --  Register the module
 
-   procedure Launch_Dialog
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Cancelled : out Boolean);
-   --  Launch the "project from template" dialog.
-   --  Cancelled indicates whether the user has cancelled the dialog.
+   function Display_Project_Templates_Assistant
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+   --  Display the "project from template" assistant.
+   --
+   --  Return True if the new project has been correctly loaded by GPS and
+   --  False if the assistant was cancelled by the user.
 
 end Project_Templates.GPS;

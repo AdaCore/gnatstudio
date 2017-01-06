@@ -31,6 +31,7 @@ with Ada.Unchecked_Deallocation;
 with Projects;                         use Projects;
 with Remote;                           use Remote;
 
+with Gtkada.File_Selector;             use Gtkada.File_Selector;
 with Gtk.Window;                       use Gtk.Window;
 
 with GPS.Intl;                         use GPS.Intl;
@@ -882,5 +883,30 @@ package body GPS.Kernel.Project is
          return Cmd;
       end;
    end Get_Switches;
+
+   ---------------------------------
+   -- Display_Open_Project_Dialog --
+   ---------------------------------
+
+   function Display_Open_Project_Dialog
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean
+   is
+      Filename : constant Virtual_File :=
+        Select_File
+          (-"Open Project",
+           File_Pattern      => "*.gpr",
+           Pattern_Name      => -"Project files",
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           History           => Get_History (Kernel));
+   begin
+      if Filename /= GNATCOLL.VFS.No_File then
+         Load_Project (Kernel, Filename);
+         return True;
+      else
+         return False;
+      end if;
+   end Display_Open_Project_Dialog;
 
 end GPS.Kernel.Project;

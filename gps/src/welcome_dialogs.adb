@@ -134,11 +134,11 @@ package body Welcome_Dialogs is
    procedure On_Clicked (Self : access Gtk_Button_Record'Class) is
       Action_Button : constant Welcome_Dialog_Action_Button :=
                         Welcome_Dialog_Action_Button (Self);
-      Cancelled     : aliased Boolean;
+      Success       : Boolean;
    begin
-      Action_Button.Callback (Action_Button.Kernel, Cancelled);
+      Success := Action_Button.Callback (Action_Button.Kernel);
 
-      if not Cancelled then
+      if Success then
          Action_Button.Dialog.Response := Project_Loaded;
          Gtk.Main.Main_Quit;
       end if;

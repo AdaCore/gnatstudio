@@ -39,14 +39,12 @@ package Welcome_Dialogs is
    --  Type representing actions that can be displayed in a welcome dialog
    --  (e.g: Open a project).
 
-   type Welcome_Dialog_Action_Callback is access procedure
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Cancelled : out Boolean);
+   type Welcome_Dialog_Action_Callback is access function
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
    --  Type of the callbacks called when a given action is selected by the
    --  user (e.g: a callback that displays a dialog used to open a project).
    --
-   --  Cancelled should be set to True when the action is cancelled by the
-   --  user.
+   --  Return False if the action was cancelled by the user, True otherwise.
 
    function Create
      (Callback  : not null Welcome_Dialog_Action_Callback;

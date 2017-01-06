@@ -171,4 +171,16 @@ package GPS.Kernel.Project is
    --  registered for that package/language combination are returned. These
    --  default switches are defined in XML files.
 
+   -------------
+   -- Dialogs --
+   -------------
+
+   function Display_Open_Project_Dialog
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+   --  Display a file selection dialog asking allowing the user to open a
+   --  project.
+   --
+   --  Return True if the selected project has been correctly loaded by GPS and
+   --  False if the dialog was cancelled by the user.
+
 end GPS.Kernel.Project;
