@@ -35,9 +35,7 @@ with Language; use Language;
 with Ada.Containers; use Ada.Containers;
 with Ada.Unchecked_Conversion;
 
-----------------
--- Clang_Xref --
-----------------
+with Clang_Buffer_Facilities; use Clang_Buffer_Facilities;
 
 package body Clang_Xref is
 
@@ -599,10 +597,14 @@ package body Clang_Xref is
       F : Virtual_File;
       Offset : Offset_T) return General_Location
    is
-      TU : constant Clang_Translation_Unit :=
-        Translation_Unit (K, F, Reparse => False);
+      Line   : Integer;
+      Column : Visible_Column_Type;
    begin
-      return To_General_Location (K, Location (TU, F, Natural (Offset)));
+      Offset_To_Line_Column (K, F, Integer (Offset), Line, Column);
+      return General_Location'
+        (F,
+         GNATCOLL.Projects.No_Project,
+         Line, Column);
    end To_General_Location;
 
    --------------
