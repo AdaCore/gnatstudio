@@ -53,7 +53,6 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
-with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
 with Default_Preferences;          use Default_Preferences;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -1183,11 +1182,6 @@ package body Project_Viewers is
       Filter  := Lookup_Filter (Kernel, "Project only");
       Filter2  := Lookup_Filter (Kernel, "Project only")
         and Lookup_Filter (Kernel, "Editable Project");
-
-      Register_Action
-        (Kernel, "new project",
-         Command     => new New_Project_Command,
-         Description => -"Interactively create a new project");
 
       --  These two commands are doing the same work, but the second can be
       --  used in contextual menu since it is filtered.

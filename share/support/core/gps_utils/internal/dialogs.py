@@ -168,6 +168,70 @@ class Project_Properties_Editor(Dialog):
         gps_assert(found, len(lang), "Some languages not found %s" % lang)
 
 
+###############################
+# Project Templates Assistant #
+###############################
+
+class ProjectTemplatesAssistant(Dialog):
+    """
+    Interface to the project templates assistant.
+    """
+
+    __assistant = None
+
+    def open_and_yield(self):
+        """
+        Compatible with run_test_driver, to be used in a yield statement
+            assistant = ProjectTemplatesAssistant()
+            yield assistant.open_and_yield()
+            ...
+        :param action: the name of the action that will open window
+        """
+
+        yield self._open_and_yield('create project from template')
+        self.__assistant = get_widget_by_name("Project Templates Assistant")
+
+    def select_template(self, template):
+        """
+        Select the given template in the assistant's left tree view and
+        click on the 'Next' button.
+
+        :param template: The label of the template to select
+        """
+
+        tree = get_widgets_by_type(Gtk.TreeView, self.__assistant)[0]
+        model = tree.get_model()
+        path = pygps.tree.find_in_tree(tree, 0, template)
+        pygps.tree.click_in_tree(tree, path)
+
+        get_button_from_label("Next", self.__assistant).clicked()
+
+    def get_current_page_widget(self):
+        """
+        Return the currently displayed page in the assistant.
+        """
+
+        return self.__assistant.get_nth_page(
+            self.__assistant.get_current_page())
+
+    def cancel(self):
+        """
+        Cancel the assistant.
+        """
+
+        get_button_from_label("Cancel", self.__assistant).clicked()
+        yield timeout(300)
+
+    def apply(self):
+        """
+        Click on the 'Apply' button of the assistant to deploy the currently
+        selected template.
+        """
+
+        get_button_from_label("Apply", self.__assistant).clicked()
+        yield timeout(300)
+
+
 ################
 # Project view #
 ################

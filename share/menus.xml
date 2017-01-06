@@ -189,8 +189,7 @@
       <menu label='_Project'>
          <menu label='Open...'                        action='open project dialog'/>
          <menu label='Open from _Host...'             action='open remote project'/>
-         <menu label='_New...'                        action='new project'/>
-         <menu label='New from _Template...'          action='create project from template'/>
+         <menu label='_New...'                        action='create project from template'/>
          <menu label='_Recent'/>  <!--  contents is dynamic -->
          <separator />
          <menu label='_Properties...' optional='true' hide='true'

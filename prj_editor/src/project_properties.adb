@@ -88,7 +88,6 @@ with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Editors;          use Switches_Editors;
 with Toolchains_Editor;         use Toolchains_Editor;
 with GPR;
-with Wizards;                   use Wizards;
 
 package body Project_Properties is
    use Widget_List;
@@ -158,12 +157,6 @@ package body Project_Properties is
       Attribute : Editable_Attribute_Description_Access;
       --  Description of the attribute
 
-      Wiz       : Wizard := null;
-      --  Wiz is the wizard in which the page is displayed. It should be null
-      --  if we are not in a wizard, but in the project properties editor. It
-      --  is used when validating fields, to display appropriate error
-      --  messages.
-
       Group_Widget : Dialog_Group_Widget;
       --  Set if the editor is within a group.
       --  This is the case if a section has been specified for the editor's
@@ -181,7 +174,6 @@ package body Project_Properties is
    procedure Initialize_Attribute_Editor
      (Kernel               : not null access Kernel_Handle_Record'Class;
       Page                 : not null access Project_Editor_Page_Record'Class;
-      Wiz                  : Wizard;
       Project              : Project_Type;
       Editable_Attr        : Editable_Attribute_Description_Access;
       Section              : Attribute_Page_Section;
@@ -197,13 +189,9 @@ package body Project_Properties is
    --  . Read_Only is used to set the attribute editor's sentivity.
    --  . Path_Widget should contain the full directory to the project file's
    --    location, and is used to resolve relative names.
-   --
-   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
-   --  parameter.
 
    function Create_Widget_Attribute
      (Kernel          : access Kernel_Handle_Record'Class;
-      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Editable_Attribute_Description_Access;
       Attribute_Index : String;
@@ -212,9 +200,7 @@ package body Project_Properties is
    --  Create the widget used to edit the attribute. This edits a specific
    --  attribute type, associated with Description (since for all indexes in
    --  the attribute the type can be different).
-   --  See above for the description of Path_Widget
-   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
-   --  parameter.
+   --  See above for the description of Path_Widget.
 
    function Create_Attribute_Dialog
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -253,7 +239,6 @@ package body Project_Properties is
 
    function Create_File_Attribute_Editor
      (Kernel          : access Kernel_Handle_Record'Class;
-      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Editable_Attribute_Description_Access;
       Attribute_Index : String;
@@ -264,8 +249,6 @@ package body Project_Properties is
    --  Is_List should be true if the attribute is a list of simple strings
    --  Path_Widget is the widget that contains the full path to the project
    --  file's location, and is used to resolve relative names.
-   --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
-   --  parameter.
 
    overriding function Get_Value_As_List
      (Editor          : access File_Attribute_Editor_Record;
@@ -2468,7 +2451,6 @@ package body Project_Properties is
 
    function Create_File_Attribute_Editor
      (Kernel          : access Kernel_Handle_Record'Class;
-      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Editable_Attribute_Description_Access;
       Attribute_Index : String;
@@ -2681,12 +2663,6 @@ package body Project_Properties is
 
       else
          Gtk_New (Editor.Ent);
-
-         if Wiz /= null then
-            Widget_Callback.Object_Connect
-              (Editor.Ent, Gtk.Editable.Signal_Changed,
-               Update_Buttons_Sensitivity'Access, Wiz);
-         end if;
 
          Set_Activates_Default (Editor.Ent, True);
 
@@ -2952,7 +2928,6 @@ package body Project_Properties is
 
    function Create_Widget_Attribute
      (Kernel          : access Kernel_Handle_Record'Class;
-      Wiz             : Wizard;
       Project         : Project_Type;
       Description     : Editable_Attribute_Description_Access;
       Attribute_Index : String;
@@ -2970,14 +2945,22 @@ package body Project_Properties is
             | Attribute_As_Directory =>
             return Attribute_Editor
               (Create_File_Attribute_Editor
-                 (Kernel, Wiz, Project, Description, Attribute_Index,
-                  Path_Widget, Is_List));
+                 (Kernel          => Kernel,
+                  Project         => Project,
+                  Description     => Description,
+                  Attribute_Index => Attribute_Index,
+                  Path_Widget     => Path_Widget,
+                  Is_List         =>  Is_List));
 
          when Attribute_As_Static_List
             | Attribute_As_Dynamic_List =>
             return Attribute_Editor
               (Create_List_Attribute_Editor
-                 (Kernel, Project, Description, Attribute_Index, Is_List));
+                 (Kernel          => Kernel,
+                  Project         => Project,
+                  Description     => Description,
+                  Attribute_Index => Attribute_Index,
+                  Is_List         => Is_List));
       end case;
    end Create_Widget_Attribute;
 
@@ -3270,7 +3253,6 @@ package body Project_Properties is
                         Flags  => Modal or Destroy_With_Parent);
                Value_Ed := Create_Widget_Attribute
                  (Kernel          => Ed.Kernel,
-                  Wiz             => Ed.Wiz,
                   Project         => Ed.Project,
                   Description     => Ed.Attribute,
                   Attribute_Index => Attribute_Index,
@@ -3648,7 +3630,6 @@ package body Project_Properties is
    procedure Initialize_Attribute_Editor
      (Kernel               : not null access Kernel_Handle_Record'Class;
       Page                 : not null access Project_Editor_Page_Record'Class;
-      Wiz                  : Wizard;
       Project              : Project_Type;
       Editable_Attr        : Editable_Attribute_Description_Access;
       Section              : Attribute_Page_Section;
@@ -3711,7 +3692,6 @@ package body Project_Properties is
       else
          Editable_Attr.Editor := Create_Widget_Attribute
            (Kernel,
-            Wiz,
             Project,
             Editable_Attr,
             Attribute_Index => "",
@@ -3724,8 +3704,6 @@ package body Project_Properties is
          Name      => Signal_Destroy,
          Cb        => Editor_Destroyed'Access,
          User_Data => Editable_Attr);
-
-      Editable_Attr.Editor.Wiz := Wiz;
 
       --  Add the attribute's editor to the section group if it's not
       --  expandable, or create a specific group for the editor otherwise.
@@ -4318,7 +4296,6 @@ package body Project_Properties is
                   Initialize_Attribute_Editor
                     (Kernel               => Kernel,
                      Page                 => Self,
-                     Wiz                  => null,
                      Project              => Project,
                      Editable_Attr        => Editable_Attr,
                      Section              => Section,
