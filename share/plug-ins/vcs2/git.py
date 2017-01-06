@@ -28,32 +28,22 @@ class Git(core.VCS):
             directory=self.working_dir.path,
             **kwargs)
 
-    def __git_ls_tree(self):
+    def __git_ls_tree(self, all_files):
         """
         Compute all files under version control
+        :param set all_files: will be modified to include the list of files
         """
-        all_files = set()
-        p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                GPS.Logger("GIT").log("finished ls-tree")
-                yield all_files
-                break
+        def on_line(line):
             all_files.add(GPS.File(os.path.join(self.working_dir.path, line)))
+        p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
+        yield p.lines.subscribe(on_line)   # wait until p terminates
 
     def __git_status(self, s):
         """
         Run and parse "git status"
         :param s: the result of calling self.set_status_for_all_files
         """
-        p = self._git(['status', '--porcelain', '--ignored'])
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                GPS.Logger("GIT").log("finished git-status")
-                break
-
+        def on_line(line):
             if len(line) > 3:
                 if line[0:2] in ('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'):
                     status = GPS.VCS2.Status.CONFLICT
@@ -87,6 +77,9 @@ class Git(core.VCS):
                             self.working_dir.path, line[3:])),
                         status)
 
+        p = self._git(['status', '--porcelain', '--ignored'])
+        yield p.lines.subscribe(on_line)   # wait until p terminates
+
     def async_fetch_status_for_files(self, files):
         self.async_fetch_status_for_all_files(files)
 
@@ -97,10 +90,9 @@ class Git(core.VCS):
            set the status eventually
         """
         s = self.set_status_for_all_files()
-        a = yield join(self.__git_ls_tree(), self.__git_status(s))
-        f = a[0]
-        f.update(extra_files)
-        s.set_status_for_remaining_files(f)
+        all_files = set(extra_files)
+        yield join(self.__git_ls_tree(all_files), self.__git_status(s))
+        s.set_status_for_remaining_files(all_files)
 
     @core.run_in_background
     def __action_then_update_status(self, params, files=[]):

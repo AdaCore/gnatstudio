@@ -6,6 +6,7 @@ import GPS
 import os
 import gps_utils
 import workflows
+import time
 from workflows.promises import Promise
 import types
 
@@ -64,6 +65,43 @@ def run_in_background(func):
             promise.resolve(r)
         return promise
     return __func
+
+
+class Profile:
+    """
+    A Context that runs the function inside the profiler, and display
+    the result in the log.
+    """
+
+    def __init__(self, time_only=False):
+        """
+        :param bool time_only: if true, only display the time it topok to
+           execute, not the whole profile
+        """
+        import cProfile
+        self.time_only = time_only
+        if time_only:
+            self.start = time.time()
+        else:
+            self.c = cProfile.Profile()
+
+    def __enter__(self):
+        if not self.time_only:
+            self.c.enable()
+        return self
+
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        if self.time_only:
+            GPS.Logger("GIT").log(
+                "Total time: %ss" % (time.time() - self.start, ))
+        else:
+            import pstats
+            import StringIO
+            self.c.disable()
+            s = StringIO.StringIO()
+            ps = pstats.Stats(self.c, stream=s).sort_stats('cumulative')
+            ps.print_stats()
+            GPS.Logger("GIT").log(s.getvalue())
 
 
 class VCS(GPS.VCS2):
@@ -291,6 +329,7 @@ class VCS(GPS.VCS2):
         class _CM(object):
             def __init__(self):
                 self._seen = set()
+                self._cache = {}    # (status,version,repo_version) -> [File]
 
             def __enter__(self):
                 return self
@@ -309,7 +348,8 @@ class VCS(GPS.VCS2):
                 :param str repo_version:
                 """
                 self._seen.add(file)
-                vcs._set_file_status(file, status, version, repo_version)
+                self._cache.setdefault(
+                    (status, version, repo_version), []).append(file)
 
             def set_status_for_remaining_files(self, files=set()):
                 """
@@ -318,10 +358,18 @@ class VCS(GPS.VCS2):
 
                 :param Set(GPS.File) files:
                 """
+                GPS.Logger("VCS2").log("Emit file statuses")
+                for s, files in self._cache.iteritems():
+                    vcs._set_file_status(files, s[0], s[1], s[2])
+                GPS.Logger("VCS2").log("Done emit file statuses")
+
+                # Emit the cached information
+
                 if not isinstance(files, set):
                     files = set(files)
                 files.difference_update(self._seen)
                 vcs._set_file_status(list(files), vcs.default_status)
+                GPS.Logger("VCS2").log("Done emit default statuses")
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)

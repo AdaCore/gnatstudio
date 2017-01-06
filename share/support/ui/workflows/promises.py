@@ -475,7 +475,7 @@ class ProcessWrapper(object):
         self.__current_promise = None
 
         # the stream that includes all output from the process
-        self.__stream = Stream()
+        self.__stream = None
 
         # __current_pattern = regexp that user waiting for in the output
         self.__current_pattern = None
@@ -553,17 +553,21 @@ class ProcessWrapper(object):
                     self.__start_time, end_time) + "\n"
                 self.__console.write(output)
 
-            self.__stream.subscribe(
-                lambda out: self.__console.write("%s\n" % out))
-            self.__stream.then(__show_console_on_exit)
+            self.stream.subscribe(
+                lambda out: self.__console.write("%s\n" % out),
+                oncompleted=__show_console_on_exit)
 
     def __on_match(self, process, match, unmatch):
         """
         Called by GPS everytime there's output coming
         """
-        self.__output += unmatch + match
-        self.__stream.emit(unmatch + match)
-        self.__check_pattern_and_resolve()
+        if self.__current_promise is not None:
+            self.__output += unmatch
+            self.__output += match
+            self.__check_pattern_and_resolve()
+        if self.__stream is not None:
+            self.__stream.emit(unmatch)
+            self.__stream.emit(match)
 
     def __resolve_promise(self, value):
         """
@@ -579,7 +583,7 @@ class ProcessWrapper(object):
         Check whether the current pattern matches the already known output
         of the tool, and resolve the promise if possible.
         """
-        if self.__current_promise:
+        if self.__current_promise is not None:
             p = self.__current_pattern.search(self.__output)
             if p:
                 self.__output = self.__output[p.end(0):]
@@ -595,12 +599,14 @@ class ProcessWrapper(object):
            Current_promise will be solved with False
         """
         self.finished = True
-        self.__output += remaining_output
 
-        self.__stream.emit(remaining_output)
+        if self.__current_promise is not None:
+            self.__output += remaining_output
+            self.__check_pattern_and_resolve()
 
-        self.__stream.resolve(status)
-        self.__check_pattern_and_resolve()
+        if self.__stream is not None:
+            self.__stream.emit(remaining_output)
+            self.__stream.resolve(status)
 
     def wait_until_match(self, pattern, timeout=0):
         """
@@ -674,6 +680,8 @@ class ProcessWrapper(object):
                 p = ProcessWrapper(...)
                 yield p.stream.subscribe(on_output)
         """
+        if self.__stream is None:
+            self.__stream = Stream()
         return self.__stream
 
     @property
@@ -731,7 +739,7 @@ class ProcessWrapper(object):
                 if self.buffer:
                     out_stream.emit(self.buffer)
 
-        return self.__stream.flatMap(map_to_line())
+        return self.stream.flatMap(map_to_line())
 
     def wait_until_terminate(self):
         """
@@ -742,7 +750,7 @@ class ProcessWrapper(object):
         """
         p = Promise()
         output = []
-        self.__stream.subscribe(
+        self.stream.subscribe(
             onnext=lambda out: output.append(out),
             oncompleted=lambda status: p.resolve((status, "".join(output))))
         return p
@@ -768,7 +776,6 @@ class ProcessWrapper(object):
         # Interrupt the process, if any
         if not self.finished:
             self.__process.interrupt()
-
             if self.__console:
                 self.__console.write(
                     "\n<^C> process interrupted (elapsed time: %s)\n" %
