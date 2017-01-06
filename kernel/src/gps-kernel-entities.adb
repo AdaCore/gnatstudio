@@ -54,6 +54,8 @@ with GPS.Kernel.Xref;               use GPS.Kernel.Xref;
 with GPS.Location_View;
 with GPS.Intl;                      use GPS.Intl;
 with Histories;                     use Histories;
+with Language;                      use Language;
+with Language.Ada;                  use Language.Ada;
 with String_Utils;                  use String_Utils;
 with UTF8_Utils;
 with Xref;                          use Xref;
@@ -822,6 +824,7 @@ package body GPS.Kernel.Entities is
          declare
             Entity : constant Root_Entity'Class :=
               Get_Entity (Context.Context);
+            File   : Virtual_File;
          begin
             if Entity /= No_Root_Entity then
                Filter                  := Custom_Filter'
@@ -837,14 +840,21 @@ package body GPS.Kernel.Entities is
                   Filter.Filter := Is_Read_Or_Write_Reference'Access;
                end if;
 
+               File := File_Information (Context.Context);
+
                Parse_All_Refs
                  (Kernel             => Kernel,
                   Entity             => Entity,
                   Locals_Only        => Command.Locals_Only,
-                  Local_File         => File_Information (Context.Context),
+                  Local_File         => File,
                   All_From_Same_File => False,
                   Filter             => Filter,
-                  Show_Caller        => True,
+
+                  --  Only show caller for Ada xrefs: it is too slow to do
+                  --  this in C/C++
+                  Show_Caller        => Get_Language_Handler (Kernel).
+                      Get_Language_From_File (File) = Ada_Lang,
+
                   Include_Overriding => True);
             end if;
             return Commands.Success;
