@@ -1989,6 +1989,7 @@ package body GPS.Kernel.Modules.UI is
       Ref      : Menu_Item_Info := No_Menu_Item;
       It       : Gmenu_Item;
       Act      : GPS_Action;
+      Menu     : Gmenu;
    begin
       Add_Menu_To_Action (Action, Strip_Single_Underscores (Full_Path));
 
@@ -2014,7 +2015,12 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          if Ref = No_Menu_Item then
-            Gmenu (Item.Item.Get_Link ("submenu")).Append_Item (It);
+            Menu := Gmenu (Item.Item.Get_Link ("submenu"));
+            if Menu /= null then
+               Menu.Append_Item (It);
+            else
+               Trace (Me, "Error adding menu " & Path & " ref=" & Ref_Item);
+            end if;
          elsif Add_Before then
             Ref.Model.Insert_Item (Ref.Position, It);
          else
