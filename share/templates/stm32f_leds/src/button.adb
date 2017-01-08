@@ -83,7 +83,8 @@ package body Button is
    end Current_Direction;
 
    procedure Initialize is
-      RCC_AHB1ENR_GPIOA : constant Word := 16#01#;
+      RCC_AHB1ENR_GPIOA  : constant Word := 16#01#;
+      RCC_APB2ENR_SYSCFG : constant Word := 2**14;
    begin
       --  Enable clock for GPIO-A
       RCC.AHB1ENR := RCC.AHB1ENR or RCC_AHB1ENR_GPIOA;
@@ -91,6 +92,9 @@ package body Button is
       --  Configure PA0
       GPIOA.MODER (0) := Mode_IN;
       GPIOA.PUPDR (0) := No_Pull;
+
+      --  Enable clock for SYSCFG
+      RCC.APB2ENR := RCC.APB2ENR or RCC_APB2ENR_SYSCFG;
 
       --  Select PA for EXTI0
       SYSCFG.EXTICR1 (0) := 0;
