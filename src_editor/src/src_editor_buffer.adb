@@ -1062,7 +1062,7 @@ package body Src_Editor_Buffer is
       --  Parse the blocks
 
       if Buffer.Parse_Blocks then
-         Compute_Blocks (Buffer);
+         Compute_Blocks (Buffer, Immediate => False);
       end if;
 
       --  Re-highlight the highlight region if needed
@@ -6245,28 +6245,34 @@ package body Src_Editor_Buffer is
             Tree.Update;
          end if;
 
-         --  Take the first possible project. This should not impact block
-         --  computation, which does not need xref information
-         declare
-            Node : constant Semantic_Node'Class := Tree.Node_At
-              ((Line => Integer (Line), Column => Column, others => <>),
-               Filter);
-         begin
-            if Node = No_Semantic_Node then
-               return New_Block;
-            else
-               return Block_Record'
-                 (Indentation_Level => 0,
-                  Offset_Start      => Integer (Node.Sloc_Start.Column),
-                  Stored_Offset     => 0,
-                  First_Line      => Editable_Line_Type (Node.Sloc_Start.Line),
-                  Last_Line         => Editable_Line_Type (Node.Sloc_End.Line),
-                  Name              => Node.Name,
-                  Tree_Node         => Sem_Node_Holders.To_Holder (Node),
-                  Block_Type        => Node.Category,
-                  Color             => Null_RGBA);
-            end if;
-         end;
+         if Tree.Is_Ready
+           or else Update_Immediately
+         then
+            --  Take the first possible project. This should not impact block
+            --  computation, which does not need xref information
+            declare
+               Node : constant Semantic_Node'Class := Tree.Node_At
+                 ((Line => Integer (Line), Column => Column, others => <>),
+                  Filter);
+            begin
+               if Node = No_Semantic_Node then
+                  return New_Block;
+               else
+                  return Block_Record'
+                    (Indentation_Level => 0,
+                     Offset_Start      => Integer (Node.Sloc_Start.Column),
+                     Stored_Offset     => 0,
+                     First_Line => Editable_Line_Type (Node.Sloc_Start.Line),
+                     Last_Line  => Editable_Line_Type (Node.Sloc_End.Line),
+                     Name              => Node.Name,
+                     Tree_Node         => Sem_Node_Holders.To_Holder (Node),
+                     Block_Type        => Node.Category,
+                     Color             => Null_RGBA);
+               end if;
+            end;
+         else
+            return New_Block;
+         end if;
       end;
    end Get_Block;
 

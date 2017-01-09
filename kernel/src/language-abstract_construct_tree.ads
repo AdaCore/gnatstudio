@@ -100,6 +100,9 @@ package Language.Abstract_Construct_Tree is
 
    overriding procedure Update_Async (Self : Abstract_Construct_Tree);
 
+   overriding function Is_Ready (Self : Abstract_Construct_Tree)
+     return Boolean is (True);
+
    overriding function Category
      (Self : Construct_Node) return Language_Category;
 

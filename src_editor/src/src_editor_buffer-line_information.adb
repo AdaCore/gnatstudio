@@ -2725,7 +2725,7 @@ package body Src_Editor_Buffer.Line_Information is
       pragma Unreferenced (Ignore);
    begin
       if Get_Constructs_State (Buffer) /= Exact then
-         Compute_Blocks (Buffer);
+         Compute_Blocks (Buffer, Immediate => True);
       end if;
 
       Ignore := Fold_Unfold_Line (Buffer, Line, Fold => True);

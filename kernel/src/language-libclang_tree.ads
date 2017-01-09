@@ -105,6 +105,9 @@ package Language.Libclang_Tree is
 
    overriding procedure Update_Async (Self : Abstract_Clang_Tree);
 
+   overriding function Is_Ready (Self : Abstract_Clang_Tree) return Boolean
+     is (Has_Translation_Unit_In_Cache (Self.File));
+
    ---------------------------
    -- Clang_Node primitives --
    ---------------------------

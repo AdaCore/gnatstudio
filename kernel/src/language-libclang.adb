@@ -652,6 +652,16 @@ package body Language.Libclang is
       return No_Translation_Unit;
    end Translation_Unit;
 
+   -----------------------------------
+   -- Has_Translation_Unit_In_Cache --
+   -----------------------------------
+
+   function Has_Translation_Unit_In_Cache
+     (File : GNATCOLL.VFS.Virtual_File) return Boolean is
+   begin
+      return Has_TU (Full_Name (File));
+   end Has_Translation_Unit_In_Cache;
+
    -------------
    -- Context --
    -------------

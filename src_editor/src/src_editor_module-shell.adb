@@ -1517,7 +1517,7 @@ package body Src_Editor_Module.Shell is
                   Src_Editor_Buffer.Line_Information.Fold_All
                     (Get_Buffer (Box));
                else
-                  Compute_Blocks (Get_Buffer (Box));
+                  Compute_Blocks (Get_Buffer (Box), Immediate => True);
                   Src_Editor_Buffer.Line_Information.Fold_Block
                     (Get_Buffer (Box), Editable_Line_Type (Line));
                end if;

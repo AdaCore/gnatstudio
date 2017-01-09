@@ -17,9 +17,13 @@
 
 package Src_Editor_Buffer.Blocks is
 
-   procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class);
+   procedure Compute_Blocks
+     (Buffer    : access Source_Buffer_Record'Class;
+      Immediate : Boolean);
    --  Fill the buffer information with the data necessary to handle block
    --  folding.
+   --  If Immediate is True, do the computing immediately. Otherwise, do it
+   --  only if the semantic tree for this buffer is ready.
 
    procedure Calculate_Screen_Offset
      (Buffer : access Source_Buffer_Record'Class;

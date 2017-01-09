@@ -32,7 +32,9 @@ package body Src_Editor_Buffer.Blocks is
    -- Compute_Blocks --
    --------------------
 
-   procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
+   procedure Compute_Blocks
+     (Buffer    : access Source_Buffer_Record'Class;
+      Immediate : Boolean) is
    begin
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
@@ -41,6 +43,12 @@ package body Src_Editor_Buffer.Blocks is
       end if;
 
       if Buffer.Blocks_Exact then
+         return;
+      end if;
+
+      if not Immediate
+        and then not Buffer.Get_Tree.Is_Ready
+      then
          return;
       end if;
 

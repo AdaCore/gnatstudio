@@ -252,6 +252,10 @@ package Language.Libclang is
    --  Request the translation unit associated with file and return
    --  immediately. Call Callback when the translation unit is ready
 
+   function Has_Translation_Unit_In_Cache
+     (File : GNATCOLL.VFS.Virtual_File) return Boolean;
+   --  Return True iff there is a TU already in cache for File
+
    ----------------------------------------------------------
    -- Global accessors for the clang cross reference cache --
    ----------------------------------------------------------

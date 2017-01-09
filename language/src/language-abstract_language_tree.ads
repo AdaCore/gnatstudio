@@ -167,6 +167,19 @@ package Language.Abstract_Language_Tree is
      (Self : Semantic_Tree) is abstract;
    --  Some as above but will executing asynchronously
 
+   function Is_Ready (Self : Semantic_Tree) return Boolean is abstract;
+   --  Return True iff the tree is ready for processing.
+   --  Implementations may have an engine where tree information is produced
+   --  in the background.
+   --  By default, all primitives on Semantic_Tree will ask the engine
+   --  to produce tree information synchronously, and these will cause GPS
+   --  to wait until the information produced by the engine is available.
+   --  In some cases, we prefer not to block GPS for this information to be
+   --  available (for instance, when we are displaying block information in
+   --  the editor, or when we are refreshing the Outline view lazily): in this
+   --  case, check the result of this function before calling primitives on
+   --  the Semantic_Tree.
+
    ----------------------------------
    -- Primitives for Semantic_Node --
    ----------------------------------
@@ -439,6 +452,9 @@ private
    overriding procedure Update (Self : Dummy_Semantic_Tree) is null;
 
    overriding procedure Update_Async (Self : Dummy_Semantic_Tree) is null;
+
+   overriding function Is_Ready
+     (Self : Dummy_Semantic_Tree) return Boolean is (False);
 
    --------------------
    -- Null constants --
