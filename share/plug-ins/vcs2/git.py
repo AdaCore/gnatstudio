@@ -73,8 +73,8 @@ class Git(core.VCS):
                 # Filter some obvious files to speed things up
                 if line[-3:] != '.o' and line[-5:] != '.ali':
                     s.set_status(
-                        GPS.File(os.path.join(
-                            self.working_dir.path, line[3:])),
+                        GPS.File(
+                            os.path.join(self.working_dir.path, line[3:])),
                         status)
 
         p = self._git(['status', '--porcelain', '--ignored'])

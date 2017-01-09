@@ -359,8 +359,8 @@ class VCS(GPS.VCS2):
                 :param Set(GPS.File) files:
                 """
                 GPS.Logger("VCS2").log("Emit file statuses")
-                for s, files in self._cache.iteritems():
-                    vcs._set_file_status(files, s[0], s[1], s[2])
+                for s, s_files in self._cache.iteritems():
+                    vcs._set_file_status(s_files, s[0], s[1], s[2])
                 GPS.Logger("VCS2").log("Done emit file statuses")
 
                 # Emit the cached information
