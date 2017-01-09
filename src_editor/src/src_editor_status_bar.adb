@@ -106,7 +106,7 @@ package body Src_Editor_Status_Bar is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      File          : GNATCOLL.VFS.Virtual_File;
+      Files         : GPS.VCS.File_Sets.Set;
       Props         : VCS_File_Properties);
 
    procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class);
@@ -389,13 +389,13 @@ package body Src_Editor_Status_Bar is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      File          : GNATCOLL.VFS.Virtual_File;
+      Files         : GPS.VCS.File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
       Bar : constant Source_Editor_Status_Bar := Self.Bar;
    begin
-      if File = Bar.Buffer.Get_Filename then
+      if Files.Contains (Bar.Buffer.Get_Filename) then
          declare
             D : constant Status_Display := Vcs.Get_Display (Props.Status);
          begin
@@ -408,7 +408,7 @@ package body Src_Editor_Status_Bar is
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
             Bar.VCS_Status.Set_Tooltip_Markup
-               (Vcs.Get_Tooltip_For_File (File));
+               (Vcs.Get_Tooltip_For_File (Bar.Buffer.Get_Filename));
          end;
       end if;
    end Execute;
@@ -482,12 +482,17 @@ package body Src_Editor_Status_Bar is
 
       VCS := Kernel.VCS.Get_VCS (P);
 
-      VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename));
-      H.Execute        --  display initial value
-        (Kernel,
-         VCS,
-         Buffer.Get_Filename,
-         VCS.File_Properties_From_Cache (Buffer.Get_Filename));
+      declare
+         Set : GPS.VCS.File_Sets.Set;
+      begin
+         VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename));
+         Set.Include (Buffer.Get_Filename);
+         H.Execute        --  display initial value
+           (Kernel,
+            VCS,
+            Set,
+            VCS.File_Properties_From_Cache (Buffer.Get_Filename));
+      end;
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);
       Get_Style_Context (Bar).Add_Class ("gps-editor-status-bar");

@@ -537,35 +537,19 @@ package body VCS2.Scripts is
                To_Unbounded_String (Data.Nth_Arg (4, ""));
             Repo_Version : constant Unbounded_String :=
                To_Unbounded_String (Data.Nth_Arg (5, ""));
+            Files : GPS.VCS.File_Sets.Set;
+            List : constant List_Instance := Data.Nth_Arg (2);
          begin
+            for Idx in 1 .. List.Number_Of_Arguments loop
+               Files.Include (Nth_Arg (List, Idx));
+            end loop;
 
-            --  Did we have a single file ?
-            declare
-               F : constant Virtual_File := Nth_Arg (Data, 2);
-            begin
-               VCS.Set_File_Status_In_Cache
-                 (File  => F,
-                  Props =>
-                    (Status       => Status,
-                     Version      => Version,
-                     Repo_Version => Repo_Version));
-            end;
-
-         exception
-            when Invalid_Parameter =>
-               --  Or maybe a list of files ?
-               declare
-                  List : constant List_Instance := Data.Nth_Arg (2);
-               begin
-                  for Idx in 1 .. List.Number_Of_Arguments loop
-                     VCS.Set_File_Status_In_Cache
-                       (File  => Nth_Arg (List, Idx),
-                        Props =>
-                          (Status       => Status,
-                           Version      => Version,
-                           Repo_Version => Repo_Version));
-                  end loop;
-               end;
+            VCS.Set_Files_Status_In_Cache
+              (Files => Files,
+               Props =>
+                 (Status       => Status,
+                  Version      => Version,
+                  Repo_Version => Repo_Version));
          end;
 
       elsif Command = "invalidate_status_cache" then

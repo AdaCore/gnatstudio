@@ -87,7 +87,7 @@ class Emulate_Staging(object):
                 self._staged.remove(f)
             new_status = self._override_status_for_file(f, status)
             if status != new_status:
-                self._set_file_status(f, new_status, version, repo_version)
+                self._set_file_status([f], new_status, version, repo_version)
 
         self.__save_staged_files()
 

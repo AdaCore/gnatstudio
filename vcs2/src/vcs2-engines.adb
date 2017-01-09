@@ -1247,45 +1247,52 @@ package body VCS2.Engines is
       end if;
    end Invalidate_File_Status_Cache;
 
-   ------------------------------
-   -- Set_File_Status_In_Cache --
-   ------------------------------
+   -------------------------------
+   -- Set_Files_Status_In_Cache --
+   -------------------------------
 
-   overriding procedure Set_File_Status_In_Cache
+   overriding procedure Set_Files_Status_In_Cache
      (Self         : not null access VCS_Engine;
-      File         : Virtual_File;
+      Files        : GPS.Kernel.File_Sets.Set;
       Props        : VCS_File_Properties)
    is
-      C : constant VCS_File_Cache.Cursor := Self.Cache.Find (File);
+      C           : VCS_File_Cache.Cursor;
       Need_Update : Boolean;
       Need_Hook   : Boolean;
+      For_Hook    : GPS.VCS.File_Sets.Set;
    begin
-      if Has_Element (C) then
-         Need_Hook := Props /= Element (C).Props;
-         Need_Update := Need_Hook
-           or else Element (C).Need_Update;
-      else
-         Need_Update := True;
-         Need_Hook := Props.Status /= Self.Default_File_Status
-            or else Props.Version /= ""
-            or else Props.Repo_Version /= "";
-      end if;
-
-      if Need_Update then
-         Self.Cache.Include
-           (File,
-            (Need_Update  => False,
-             Props        => Props));
-
-         if Need_Hook then
-            Vcs_File_Status_Changed_Hook.Run
-              (Self.Kernel,
-               Vcs    => Self,
-               File   => File,
-               Props  => Props);
+      for F of Files loop
+         C := Self.Cache.Find (F);
+         if Has_Element (C) then
+            Need_Hook := Props /= Element (C).Props;
+            Need_Update := Need_Hook or else Element (C).Need_Update;
+         else
+            Need_Update := True;
+            Need_Hook := Props.Status /= Self.Default_File_Status
+               or else Props.Version /= ""
+               or else Props.Repo_Version /= "";
          end if;
+
+         if Need_Update then
+            Self.Cache.Include
+              (F,
+               (Need_Update  => False,
+                Props        => Props));
+
+            if Need_Hook then
+               For_Hook.Include (F);
+            end if;
+         end if;
+      end loop;
+
+      if not For_Hook.Is_Empty then
+         Vcs_File_Status_Changed_Hook.Run
+           (Self.Kernel,
+            Vcs    => Self,
+            Files  => For_Hook,
+            Props  => Props);
       end if;
-   end Set_File_Status_In_Cache;
+   end Set_Files_Status_In_Cache;
 
    -----------------
    -- Get_Display --

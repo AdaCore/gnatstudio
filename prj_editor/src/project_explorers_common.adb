@@ -941,7 +941,7 @@ package body Project_Explorers_Common is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      File          : GNATCOLL.VFS.Virtual_File;
+      Files         : GPS.VCS.File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
@@ -965,7 +965,7 @@ package body Project_Explorers_Common is
          pragma Unreferenced (M, Path);
       begin
          if Tree.Get_Node_Type (Iter) = File_Node
-           and then Tree.Get_File_From_Node (Iter) = File
+           and then Files.Contains (Tree.Get_File_From_Node (Iter))
          then
             Model.Set
               (Iter, Icon_Column,

@@ -20,7 +20,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
-with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
@@ -296,10 +295,7 @@ package GPS.Kernel is
    --  The following subprograms are provided in addition to the ones provided
    --  in vfs.ads.
 
-   package File_Sets is new Ada.Containers.Ordered_Sets
-      (Element_Type        => GNATCOLL.VFS.Virtual_File,
-       "<"                 => GNATCOLL.VFS."<",
-       "="                 => GNATCOLL.VFS."=");
+   package File_Sets renames GPS.VCS.File_Sets;
 
    function Create
      (Name            : Filesystem_String;

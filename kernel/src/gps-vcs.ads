@@ -19,6 +19,7 @@
 --  This contains types needed for the hooks, so that changes to VCS_Engines
 --  do not force a whole recompilation of the project.
 
+with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
@@ -35,6 +36,11 @@ package GPS.VCS is
    type Abstract_VCS_Repository is interface;
    type Abstract_VCS_Repository_Access is
       access all Abstract_VCS_Repository'Class;
+
+   package File_Sets is new Ada.Containers.Hashed_Sets
+      (Element_Type        => GNATCOLL.VFS.Virtual_File,
+       Hash                => GNATCOLL.VFS.Full_Name_Hash,
+       Equivalent_Elements => GNATCOLL.VFS."=");
 
    function Get_VCS
      (Self     : not null access Abstract_VCS_Repository;
@@ -196,11 +202,11 @@ package GPS.VCS is
    --        Eng.Async_Fetch_Status_For_File (File);
    --        --  monitor the hook to update the displayed status
 
-   procedure Set_File_Status_In_Cache
+   procedure Set_Files_Status_In_Cache
      (Self         : not null access Abstract_VCS_Engine;
-      File         : Virtual_File;
+      Files        : File_Sets.Set;
       Props        : VCS_File_Properties) is null;
-   --  Update the file status in the cache, and emit the
+   --  Update the files status in the cache, and emit the
    --  VCS_File_Status_Changed hook if needed. This should only be called
    --  when you write your own VCS engine. Other code should use one of the
    --  Async_Fetch_Status_* subprograms instead.

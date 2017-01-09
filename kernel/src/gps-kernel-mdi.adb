@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
@@ -120,11 +119,6 @@ package body GPS.Kernel.MDI is
    end record;
    package Monitored_File_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Element_Type => Monitored_File_And_Child);
-
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => "=");
 
    type File_Check_Button_Record is new Gtk_Check_Button_Record with record
       File : Virtual_File;

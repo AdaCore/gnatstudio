@@ -85,9 +85,11 @@ package body VCS_Utils is
             T : constant Project_Tree_Access := Get_Project_Tree (Kernel.all);
             Info : constant File_Info'Class :=
               File_Info'Class (T.Info_Set (Status.File).First_Element);
+            Files : GPS.VCS.File_Sets.Set;
          begin
+            Files.Include (Status.File);
             Kernel.VCS.Get_VCS (Project (Info, Root_If_Not_Found => True))
-              .Set_File_Status_In_Cache (Status.File, Props);
+              .Set_Files_Status_In_Cache (Files, Props);
          end;
       end if;
    end Display_Editor_Status;

@@ -258,10 +258,10 @@ package VCS2.Engines is
      (Self    : not null access VCS_Engine;
       File    : Virtual_File)
      return VCS_File_Properties;
-   overriding procedure Set_File_Status_In_Cache
-     (Self         : not null access VCS_Engine;
-      File         : Virtual_File;
-      Props        : VCS_File_Properties);
+   overriding procedure Set_Files_Status_In_Cache
+     (Self    : not null access VCS_Engine;
+      Files   : GPS.VCS.File_Sets.Set;
+      Props   : VCS_File_Properties);
    overriding function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine;
       File    : GNATCOLL.VFS.Virtual_File)

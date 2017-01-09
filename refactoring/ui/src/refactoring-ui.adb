@@ -98,7 +98,8 @@ package body Refactoring.UI is
    is
       function Lang_C (SFS : Source_File_Set) return Boolean is
         (SFS.Is_Empty or else Kernel.Lang_Handler.Get_Language_From_File
-           (SFS.First_Element).Get_Name in "c" | "C" | "c++" | "C++");
+           (File_Sets.Element (SFS.First)).Get_Name
+            in "c" | "C" | "c++" | "C++");
       --  Returns true when
       --  1. SFS is empty
       --  2. SFS is a set of C/C++ files

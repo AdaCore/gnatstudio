@@ -296,7 +296,7 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      File          : GNATCOLL.VFS.Virtual_File;
+      Files         : GPS.VCS.File_Sets.Set;
       Props         : VCS_File_Properties);
 
    -------------------
@@ -977,14 +977,14 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      File          : GNATCOLL.VFS.Virtual_File;
+      Files         : GPS.VCS.File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Self);
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
 
       procedure Remove_Node_In_List (List : Gtk_Tree_Iter);
-      --  Remove the node for File in List and its siblings
+      --  Remove the node for Files in List and its siblings
 
       procedure Remove_From_Tree;
       --  Remove all nodes for File in the tree
@@ -993,11 +993,11 @@ package body VCS2.Commits is
          Iter : Gtk_Tree_Iter := List;
       begin
          while Iter /= Null_Iter loop
-            if Get_File_From_Node (View.Tree, Iter) = File then
+            if Files.Contains (Get_File_From_Node (View.Tree, Iter)) then
                View.Tree.Model.Remove (Iter);
-               return;
+            else
+               View.Tree.Model.Next (Iter);
             end if;
-            View.Tree.Model.Next (Iter);
          end loop;
       end Remove_Node_In_List;
 
@@ -1026,8 +1026,10 @@ package body VCS2.Commits is
               Expansion.Detach_Model_From_View (View.Tree);
          begin
             Remove_From_Tree;
-            View.Create_Nodes
-              (File, Props, VCS_Engine_Access (Vcs), Select_Nodes => False);
+            for F of Files loop
+               View.Create_Nodes
+                 (F, Props, VCS_Engine_Access (Vcs), Select_Nodes => False);
+            end loop;
          end;
 
          View.Tree.Expand_All;

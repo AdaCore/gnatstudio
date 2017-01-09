@@ -9562,13 +9562,13 @@ class VCS2(object):
         a refresh next time one of the `ensure_status_*` method is called.
         """
 
-    def _set_file_status(self, file, status, version, repo_version):
+    def _set_file_status(self, files, status, version, repo_version):
         """
         Modifies self's cache.
         This function is meant to be called only by the implementation of
         specific VCS engines.
 
-        :param GPS.File|List(GPS.File) file:
+        :param List(GPS.File) files:
         :param GPS.VCS2.Status status:
         :param str version:
         :param str repo_version:

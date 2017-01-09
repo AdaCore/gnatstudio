@@ -19,11 +19,15 @@ class Mapping(object):
     def __init__(self, ada, python,
                  topython='%(ada)s',
                  toada='Data.Nth_Arg(%(idx)d)',
+                 toada_vars='',
+                 toada_init='',
                  setreturn='Data.Set_Return_Value (Tmp);',
                  withs=[]):
         self.ada = ada
         self.python = python
         self.toada = toada
+        self.toada_vars = toada_vars
+        self.toada_init = toada_init
         self.topython = topython
         self.withs = withs
         self.setreturn = setreturn if python is not None else 'null;'
@@ -160,6 +164,15 @@ types = {
         topython='Create_File (Data.Get_Script, %(ada)s)',
         toada='GPS.Kernel.Scripts.Get_Data (Data.Nth_Arg (%(idx)d, '
             'Get_File_Class (K), Allow_Null => True))',
+        withs=['GNATCOLL.VFS']),
+
+    'FileSet': Mapping(
+        ada='GPS.Kernel.File_Sets.Set',
+        python='list',
+        topython='Ada_To_Python_File_Dict (Data.Get_Script, %(ada)s)',
+        toada_vars='Tmp_%(idx)d : File_Sets.Set;',
+        toada_init='Python_To_Ada_File_Dict (Tmp_%(idx)d, Data, %(idx)d);',
+        toada='Tmp_%(idx)d',
         withs=['GNATCOLL.VFS']),
          
     'VCS_Engine': Mapping(
@@ -438,7 +451,7 @@ Shadow builds''', inpython=False),
 
     'vcs_file_status_hooks': Hook_Type(
         [Param('VCS',       'VCS_Engine'),
-         Param('file',      'File'),
+         Param('files',     'FileSet'),
          Param('props',     'VCS_File_Properties')]),       
               
     'vcs_hooks': Hook_Type(
@@ -996,6 +1009,21 @@ package GPS.Kernel.Hooks is
    --  Info will be freed by the editor.
    --  Icon_Name is the name of a stock icon to display
 
+   ---------------
+   -- File_Sets --
+   ---------------
+
+   procedure Python_To_Ada_File_Dict
+      (Files   : out File_Sets.Set;
+       Data    : Callback_Data'Class;
+       Idx     : Natural);
+   --  Stores the Idx-th parameter of Data in Files.
+
+   function Ada_To_Python_File_Dict
+      (Script  : not null access Scripting_Language_Record'Class;
+       Files   : File_Sets.Set) return List_Instance;
+   --  Convert Files to a python list
+
    -----------
    -- Hooks --
    -----------
@@ -1128,6 +1156,39 @@ package body GPS.Kernel.Hooks is
          end loop;
       end if;
    end Add_Line_Information;
+
+   -----------------------------
+   -- Python_To_Ada_File_Dict --
+   -----------------------------
+
+   procedure Python_To_Ada_File_Dict
+      (Files   : out File_Sets.Set;
+       Data    : Callback_Data'Class;
+       Idx     : Natural)
+   is
+      pragma Unreferenced (Files, Data, Idx);
+   begin
+      raise Program_Error
+         with "Can't run vcs_file_status_changed from python";
+   end Python_To_Ada_File_Dict;
+
+   -----------------------------
+   -- Ada_To_Python_File_Dict --
+   -----------------------------
+
+   function Ada_To_Python_File_Dict
+      (Script  : not null access Scripting_Language_Record'Class;
+       Files   : File_Sets.Set) return List_Instance
+   is
+      List : List_Instance'Class := New_List (Script);
+      Idx  : Positive := 1;
+   begin
+      for F of Files loop
+          Set_Nth_Arg (List, Idx, Create_File (Script, F));
+          Idx := Idx + 1;
+      end loop;
+      return List;
+   end Ada_To_Python_File_Dict;
 ''')
 
     for type_name in sorted(hook_types.keys()):
@@ -1174,6 +1235,14 @@ package body GPS.Kernel.Hooks is
             'pset': ''.join(pset),
             'p_in_run': ''.join(p_in_run),
             'returndefault': t.return_default,
+            'toada_vars': '\n'.join(
+                types[p.type].toada_vars % {'idx': idx + 2}
+                for (idx, p) in enumerate(python_and_ada_params)
+                if types[p.type].toada_vars),
+            'toada_init': '      \n'.join(
+                types[p.type].toada_init % {'idx': idx + 2}
+                for (idx, p) in enumerate(python_and_ada_params)
+                if types[p.type].toada_init),
             'run_name': 'Run' if not t.internal_run else 'Run_Internal',
             'params': ''.join(params)}
 
@@ -1378,8 +1447,10 @@ package body GPS.Kernel.Hooks is
    is
       K : constant Kernel_Handle := Get_Kernel (Data);
    begin
-      declare%(run_from_python_var)s
+      declare
+         %(run_from_python_var)s%(toada_vars)s
       begin
+         %(toada_init)s
          %(run_from_python_body)s
       end;
    exception
