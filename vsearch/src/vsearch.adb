@@ -2146,7 +2146,7 @@ package body Vsearch is
       Add_To_History
         (Self.Kernel,
          Key       => Mode_Hist_Key,
-         New_Entry => Mode'Image);
+         New_Entry => Mode'Img);
 
       Self.Main_View.Set_Child_Visible
         (Child_Key => Replace_Child_Key,
