@@ -4082,6 +4082,14 @@ package body Src_Editor_Buffer is
       Trace (Me, "Internal_Save_To_File " & Filename.Display_Full_Name);
       Success := True;
 
+      if not Needs_To_Be_Saved (Buffer)
+         and then Filename = Buffer.Get_Filename
+         and then Filename.Is_Regular_File
+      then
+         Trace (Me, "File not modified, nothing to do");
+         return;
+      end if;
+
       if not Internal then
          --  Run the "before_file_saved" hook
          Before_File_Saved_Hook.Run (Buffer.Kernel, Filename);
