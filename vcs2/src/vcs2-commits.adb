@@ -149,6 +149,12 @@ package body VCS2.Commits is
    overriding procedure Refresh
      (Self : not null access Commit_View_Record);
 
+   procedure Refresh
+     (Self      : not null access Commit_View_Record'Class;
+      From_User : Boolean);
+   --  Internal implementation for Refresh, which indicates whether the
+   --  action comes from the user pressing the 'Reload' button.
+
    function Initialize
      (Self : access Commit_View_Record'Class) return Gtk_Widget;
    --  Create a new view
@@ -296,7 +302,7 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : GPS.VCS.File_Sets.Set;
+      Files         : File_Sets.Set;
       Props         : VCS_File_Properties);
 
    -------------------
@@ -598,7 +604,7 @@ package body VCS2.Commits is
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Refresh (View);
+         Refresh (View, From_User => True);
       end if;
    end Execute;
 
@@ -608,6 +614,17 @@ package body VCS2.Commits is
 
    overriding procedure Refresh
      (Self : not null access Commit_View_Record) is
+   begin
+      Refresh (Self, From_User => False);
+   end Refresh;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Self : not null access Commit_View_Record'Class;
+      From_User : Boolean) is
    begin
       --  Save and restore commit message
       Save_Commit_Message (Self);
@@ -626,8 +643,10 @@ package body VCS2.Commits is
 
       Self.Computing_File_Status := True;
       Ensure_Status_For_All_Files_In_All_Engines
-        (Self.Kernel, Visitor => new On_All_Files_Available_In_Cache'
-           (Task_Visitor with Kernel => Self.Kernel));
+        (Self.Kernel,
+         Visitor => new On_All_Files_Available_In_Cache'
+           (Task_Visitor with Kernel => Self.Kernel),
+         From_User => From_User);
    end Refresh;
 
    -------------
@@ -977,7 +996,7 @@ package body VCS2.Commits is
      (Self          : On_VCS_File_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : GPS.VCS.File_Sets.Set;
+      Files         : File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Self);

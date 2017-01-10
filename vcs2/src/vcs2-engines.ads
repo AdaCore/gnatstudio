@@ -205,14 +205,17 @@ package VCS2.Engines is
      (Self      : not null access VCS_Engine;
       Project   : Project_Type) is null;
    procedure Async_Fetch_Status_For_All_Files
-     (Self      : not null access VCS_Engine) is null;
+     (Self      : not null access VCS_Engine;
+      From_User : Boolean) is null;
    --  Force the computation of the current statuses of files.
    --  This does not check the cache status.
    --  Fetching is asynchronous, since it can take a long time depending on
    --  the system used. Whenever information is retrieved for one file, the
    --  hook VCS_File_Status_Changed will be run for all files which status has
    --  changed.
-   --  Should not be called directly, consider Ensure_Status_* instead
+   --  Should not be called directly, consider Ensure_Status_* instead.
+   --  From_User is set to True when this procedure is called as a result of
+   --  the user pressing 'reload' in the Commits view.
 
    procedure Ensure_Status_For_Files
      (Self        : not null access VCS_Engine;
@@ -224,7 +227,8 @@ package VCS2.Engines is
       Visitor     : access Task_Visitor'Class);
    procedure Ensure_Status_For_All_Source_Files
      (Self        : not null access VCS_Engine;
-      Visitor     : access Task_Visitor'Class := null);
+      Visitor     : access Task_Visitor'Class := null;
+      From_User   : Boolean);
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
@@ -239,10 +243,14 @@ package VCS2.Engines is
    --  compute their status anyway.
    --
    --  On_Complete is automatically freed after having executed.
+   --
+   --  See Async_Fetch_Status_For_All_Files for the documentation for
+   --  From_User.
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Visitor  : access Task_Visitor'Class := null);
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Visitor   : access Task_Visitor'Class := null;
+      From_User : Boolean);
    --  For all VCS engines of the project, ensure that the status for all files
    --  is known.
    --  The callback is executed for each VCS that terminates its processing,
@@ -260,7 +268,7 @@ package VCS2.Engines is
      return VCS_File_Properties;
    overriding procedure Set_Files_Status_In_Cache
      (Self    : not null access VCS_Engine;
-      Files   : GPS.VCS.File_Sets.Set;
+      Files   : GNATCOLL.VFS.File_Array;
       Props   : VCS_File_Properties);
    overriding function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine;

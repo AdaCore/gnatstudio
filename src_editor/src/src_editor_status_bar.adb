@@ -106,7 +106,7 @@ package body Src_Editor_Status_Bar is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : GPS.VCS.File_Sets.Set;
+      Files         : File_Sets.Set;
       Props         : VCS_File_Properties);
 
    procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class);
@@ -389,7 +389,7 @@ package body Src_Editor_Status_Bar is
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
-      Files         : GPS.VCS.File_Sets.Set;
+      Files         : File_Sets.Set;
       Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
@@ -483,7 +483,7 @@ package body Src_Editor_Status_Bar is
       VCS := Kernel.VCS.Get_VCS (P);
 
       declare
-         Set : GPS.VCS.File_Sets.Set;
+         Set : File_Sets.Set;
       begin
          VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename));
          Set.Include (Buffer.Get_Filename);

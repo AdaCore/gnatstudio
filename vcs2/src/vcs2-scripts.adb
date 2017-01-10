@@ -63,7 +63,8 @@ package body VCS2.Scripts is
      (Self    : not null access Script_Engine;
       Project : Project_Type);
    overriding procedure Async_Fetch_Status_For_All_Files
-     (Self    : not null access Script_Engine);
+     (Self      : not null access Script_Engine;
+      From_User : Boolean);
    overriding function Default_File_Status
      (Self    : not null access Script_Engine)
       return VCS_File_Status is (Self.Factory.Default_Status);
@@ -252,9 +253,13 @@ package body VCS2.Scripts is
    --------------------------------------
 
    overriding procedure Async_Fetch_Status_For_All_Files
-     (Self    : not null access Script_Engine) is
+     (Self      : not null access Script_Engine;
+      From_User : Boolean)
+   is
+      D : Callback_Data'Class := Create (Self.Script, 1);
    begin
-      Call_Method (Self, "async_fetch_status_for_all_files");
+      D.Set_Nth_Arg (1, From_User);
+      Call_Method (Self, "async_fetch_status_for_all_files", D);
    end Async_Fetch_Status_For_All_Files;
 
    -------------------------
@@ -352,7 +357,6 @@ package body VCS2.Scripts is
       pragma Unreferenced (Visitor);
       D : Callback_Data'Class := Self.Script.Create (1);
    begin
-      Trace (Me, "MANU execute async_select_branch");
       D.Set_Nth_Arg (1, Id);
       Call_Method (Self, "async_select_branch", D);
    end Async_Select_Branch;
@@ -513,7 +517,7 @@ package body VCS2.Scripts is
          VCS.Ensure_Status_For_Project (Get_Data (Data, 2));
 
       elsif Command = "ensure_status_for_all_source_files" then
-         VCS.Ensure_Status_For_All_Source_Files;
+         VCS.Ensure_Status_For_All_Source_Files (From_User => False);
 
       elsif Command = "set_run_in_background" then
          VCS.Set_Run_In_Background (Data.Nth_Arg (2));
@@ -537,13 +541,17 @@ package body VCS2.Scripts is
                To_Unbounded_String (Data.Nth_Arg (4, ""));
             Repo_Version : constant Unbounded_String :=
                To_Unbounded_String (Data.Nth_Arg (5, ""));
-            Files : GPS.VCS.File_Sets.Set;
             List : constant List_Instance := Data.Nth_Arg (2);
+            Count : constant Integer := List.Number_Of_Arguments;
+            Files : GNATCOLL.VFS.File_Array (1 .. Count);
          begin
-            for Idx in 1 .. List.Number_Of_Arguments loop
-               Files.Include (Nth_Arg (List, Idx));
+            Trace (Me, "Creating file_set from python");
+            for Idx in 1 .. Count loop
+               Files (Idx) := Nth_Arg (List, Idx);
             end loop;
 
+            Trace (Me, "Calling Set_Files_Status_In_Cache "
+               & Files'Length'Img);
             VCS.Set_Files_Status_In_Cache
               (Files => Files,
                Props =>

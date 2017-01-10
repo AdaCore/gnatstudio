@@ -109,7 +109,8 @@ package body VCS2.Engines is
       Visitor   : access Task_Visitor'Class := null) is null;
    overriding procedure Ensure_Status_For_All_Source_Files
      (Self      : not null access Dummy_VCS_Engine;
-      Visitor   : access Task_Visitor'Class := null) is null;
+      Visitor   : access Task_Visitor'Class := null;
+      From_User : Boolean) is null;
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File) return VCS_File_Properties
@@ -178,7 +179,9 @@ package body VCS2.Engines is
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_Project
 
-   type Cmd_Ensure_Status_For_All_Files is new VCS_Command with null record;
+   type Cmd_Ensure_Status_For_All_Files is new VCS_Command with record
+      From_User : Boolean;
+   end record;
    overriding procedure Execute
       (Self : not null access Cmd_Ensure_Status_For_All_Files;
        VCS  : not null access VCS_Engine'Class);
@@ -579,8 +582,9 @@ package body VCS2.Engines is
    ------------------------------------------------
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Visitor : access Task_Visitor'Class := null)
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Visitor   : access Task_Visitor'Class := null;
+      From_User : Boolean)
    is
       pragma Unreferenced (Kernel);
       Cb : access Complete_After_Steps;
@@ -595,7 +599,8 @@ package body VCS2.Engines is
       end if;
 
       for E of Global_Data.All_Engines loop
-         E.Ensure_Status_For_All_Source_Files (Visitor => Cb);
+         E.Ensure_Status_For_All_Source_Files
+            (Visitor => Cb, From_User => From_User);
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
 
@@ -837,14 +842,16 @@ package body VCS2.Engines is
    ----------------------------------------
 
    procedure Ensure_Status_For_All_Source_Files
-     (Self    : not null access VCS_Engine;
-      Visitor : access Task_Visitor'Class := null) is
+     (Self      : not null access VCS_Engine;
+      Visitor   : access Task_Visitor'Class := null;
+      From_User : Boolean) is
    begin
       Queue (Self,
              new Cmd_Ensure_Status_For_All_Files'
                (Visitor =>
                   (if Visitor = null then null
-                   else Visitor.all'Unchecked_Access)));
+                   else Visitor.all'Unchecked_Access),
+                From_User => From_User));
    end Ensure_Status_For_All_Source_Files;
 
    -------------
@@ -852,10 +859,9 @@ package body VCS2.Engines is
    -------------
 
    overriding procedure Execute
-      (Self : not null access Cmd_Ensure_Status_For_All_Files;
-       VCS  : not null access VCS_Engine'Class)
+      (Self      : not null access Cmd_Ensure_Status_For_All_Files;
+       VCS       : not null access VCS_Engine'Class)
    is
-      pragma Unreferenced (Self);
       Iter : Project_Iterator :=
         Get_Project (VCS.Kernel).Start (Recursive => True);
       N    : Boolean := False;
@@ -878,7 +884,7 @@ package body VCS2.Engines is
       end loop;
 
       if N then
-         VCS.Async_Fetch_Status_For_All_Files;
+         VCS.Async_Fetch_Status_For_All_Files (From_User => Self.From_User);
       end if;
    end Execute;
 
@@ -1253,24 +1259,39 @@ package body VCS2.Engines is
 
    overriding procedure Set_Files_Status_In_Cache
      (Self         : not null access VCS_Engine;
-      Files        : GPS.Kernel.File_Sets.Set;
+      Files        : GNATCOLL.VFS.File_Array;
       Props        : VCS_File_Properties)
    is
+      use type Ada.Containers.Count_Type;
       C           : VCS_File_Cache.Cursor;
       Need_Update : Boolean;
       Need_Hook   : Boolean;
-      For_Hook    : GPS.VCS.File_Sets.Set;
+      For_Hook    : File_Sets.Set;
+      Default_Status : constant VCS_File_Status :=
+         VCS_Engine'Class (Self.all).Default_File_Status;
+      Default_Need_Hook : constant Boolean :=
+         Props.Status /= Default_Status
+         or else Props.Version /= ""
+         or else Props.Repo_Version /= "";
    begin
+      --  When we initially fill the cache for a large repository
+      --  (94_000 files for qgen for instance), this might take a while
+      --  because Include is relatively slow (640ms on a fast laptop).
+      --  Reserving enough space might speed things up (400ms)
+      For_Hook.Reserve_Capacity (2 * Files'Length);
+      Self.Cache.Reserve_Capacity (2 * Files'Length);
+
       for F of Files loop
          C := Self.Cache.Find (F);
          if Has_Element (C) then
-            Need_Hook := Props /= Element (C).Props;
-            Need_Update := Need_Hook or else Element (C).Need_Update;
+            Need_Hook := Props /= Self.Cache.Constant_Reference (C).Props;
+            Need_Update := Need_Hook
+               or else Self.Cache.Constant_Reference (C).Need_Update;
          else
+            --  Always insert because we might need to know the list of files
+            --  managed by a given VCS.
             Need_Update := True;
-            Need_Hook := Props.Status /= Self.Default_File_Status
-               or else Props.Version /= ""
-               or else Props.Repo_Version /= "";
+            Need_Hook := Default_Need_Hook;
          end if;
 
          if Need_Update then
@@ -1286,6 +1307,9 @@ package body VCS2.Engines is
       end loop;
 
       if not For_Hook.Is_Empty then
+         Trace (Me, "Calling hook Vcs_File_Status_Changed "
+            & For_Hook.Length'Img
+            & " Status=" & Props.Status'Img);
          Vcs_File_Status_Changed_Hook.Run
            (Self.Kernel,
             Vcs    => Self,

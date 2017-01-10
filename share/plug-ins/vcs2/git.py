@@ -14,6 +14,12 @@ class Git(core.VCS):
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
 
+    def __init__(self, *args, **kwargs):
+        super(Git, self).__init__(*args, **kwargs)
+
+        self._non_default_files = None
+        # Files with a non-default status
+
     def _git(self, args, block_exit=False, **kwargs):
         """
         Return git with the given arguments
@@ -31,10 +37,11 @@ class Git(core.VCS):
     def __git_ls_tree(self, all_files):
         """
         Compute all files under version control
-        :param set all_files: will be modified to include the list of files
+        :param list all_files: will be modified to include the list of files
         """
         def on_line(line):
-            all_files.add(GPS.File(os.path.join(self.working_dir.path, line)))
+            all_files.append(
+                GPS.File(os.path.join(self.working_dir.path, line)))
         p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
         yield p.lines.subscribe(on_line)   # wait until p terminates
 
@@ -81,18 +88,46 @@ class Git(core.VCS):
         yield p.lines.subscribe(on_line)   # wait until p terminates
 
     def async_fetch_status_for_files(self, files):
-        self.async_fetch_status_for_all_files(files)
+        self.async_fetch_status_for_all_files(
+            from_user=False, extra_files=files)
 
     @core.run_in_background
-    def async_fetch_status_for_all_files(self, extra_files=[]):
+    def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
         """
         :param List(GPS.File) extra_files: files for which we need to
            set the status eventually
         """
+
         s = self.set_status_for_all_files()
-        all_files = set(extra_files)
-        yield join(self.__git_ls_tree(all_files), self.__git_status(s))
-        s.set_status_for_remaining_files(all_files)
+        files = set(extra_files)
+
+        # Do we need to reset the "ls-tree" cache ? After the initial
+        # loading, this list no longer changes without also impacting the
+        # output of "git status", so we do not need to execute it again.
+        if from_user or self._non_default_files is None:
+            all_files = []   # faster to update than a set
+            yield join(self.__git_ls_tree(all_files), self.__git_status(s))
+            self._non_default_files = s.files_with_explicit_status
+            files.update(all_files)
+
+        else:
+            # Reuse caches: we do not need to recompute the full list of files
+            # for git, since this will not change without also changing the
+            # output of "git status". We also do not reset the default status
+            # for all the files not in the git status output: that might be a
+            # slow operation that is blocking GPS. Instead, we only reset the
+            # default status for files that used to be in "git status" (for
+            # instance modified files), and are no longer there (either after
+            # a "reset" or a "commit").
+
+            yield self.__git_status(s)
+            nondefault = s.files_with_explicit_status
+            now_default = self._non_default_files.difference(nondefault)
+            self._non_default_files = nondefault
+            for f in now_default:
+                s.set_status(f, self.default_status)
+
+        s.set_status_for_remaining_files(files)
 
     @core.run_in_background
     def __action_then_update_status(self, params, files=[]):
@@ -105,7 +140,8 @@ class Git(core.VCS):
         if status:
             GPS.Console().write("git %s: %s" % (" ".join(params), output))
         else:
-            yield self.async_fetch_status_for_all_files()  # update statuses
+            # update statuses
+            yield self.async_fetch_status_for_all_files(from_user=False)
 
     def stage_or_unstage_files(self, files, stage):
         self.__action_then_update_status(['add' if stage else 'reset'], files)

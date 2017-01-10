@@ -162,7 +162,7 @@ class VCS(GPS.VCS2):
 
         :param List[GPS.File] files:
         """
-        self.async_fetch_status_for_all_files()
+        self.async_fetch_status_for_all_files(from_user=False)
 
     def async_fetch_status_for_project(self, project):
         """
@@ -171,12 +171,15 @@ class VCS(GPS.VCS2):
 
         :param GPS.File file:
         """
-        self.async_fetch_status_for_all_files()
+        self.async_fetch_status_for_all_files(from_user=False)
 
-    def async_fetch_status_for_all_files(self):
+    def async_fetch_status_for_all_files(self, from_user):
         """
         Fetch status for all files in the project tree.
         Use `set_status_for_all_files`.
+
+        :param bool from_user: True if this was called as a result of the
+            user pressing the 'Reload' button in the VCS views.
         """
         pass
 
@@ -334,6 +337,13 @@ class VCS(GPS.VCS2):
             def __enter__(self):
                 return self
 
+            @property
+            def files_with_explicit_status(self):
+                """
+                Return the set of files for which an explicit status was set
+                """
+                return self._seen
+
             def set_status(
                     self, file,
                     status,
@@ -356,19 +366,18 @@ class VCS(GPS.VCS2):
                 Set the status for all files in `files` for which no status
                 has been set yet.
 
-                :param Set(GPS.File) files:
+                :param set(GPS.File)|list(GPS.File) files:
                 """
                 GPS.Logger("VCS2").log("Emit file statuses")
                 for s, s_files in self._cache.iteritems():
                     vcs._set_file_status(s_files, s[0], s[1], s[2])
                 GPS.Logger("VCS2").log("Done emit file statuses")
 
-                # Emit the cached information
-
-                if not isinstance(files, set):
-                    files = set(files)
-                files.difference_update(self._seen)
-                vcs._set_file_status(list(files), vcs.default_status)
+                to_set = []
+                for f in files:
+                    if f not in self._seen:
+                        to_set.append(f)
+                vcs._set_file_status(to_set, vcs.default_status)
                 GPS.Logger("VCS2").log("Done emit default statuses")
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
@@ -402,7 +411,7 @@ class File_Based_VCS(VCS):
             all_files=project.sources(recursive=False),
             args=[d for d in project.source_dirs(recursive=False)])
 
-    def async_fetch_status_for_all_files(self):
+    def async_fetch_status_for_all_files(self, from_user):
         self._compute_status([])  # all files
 
 

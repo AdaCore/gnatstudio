@@ -295,7 +295,11 @@ package GPS.Kernel is
    --  The following subprograms are provided in addition to the ones provided
    --  in vfs.ads.
 
-   package File_Sets renames GPS.VCS.File_Sets;
+   pragma Suppress (Container_Checks);
+   package File_Sets is new Ada.Containers.Hashed_Sets
+      (Element_Type        => GNATCOLL.VFS.Virtual_File,
+       Hash                => GNATCOLL.VFS.Full_Name_Hash,
+       Equivalent_Elements => GNATCOLL.VFS."=");
 
    function Create
      (Name            : Filesystem_String;
