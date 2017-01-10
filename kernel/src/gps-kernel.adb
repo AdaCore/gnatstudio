@@ -72,6 +72,7 @@ with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Scripts.Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Properties;            use GPS.Properties;
+with GPS.VCS;                   use GPS.VCS;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -2196,5 +2197,20 @@ package body GPS.Kernel is
             Context => Context);
       end if;
    end Execute_Default_Line_Number_Click;
+
+   ------------------------
+   -- Make_File_Writable --
+   ------------------------
+
+   procedure Make_File_Writable
+     (Kernel   : not null access Kernel_Handle_Record;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Writable : Boolean := True)
+   is
+      VCS : Abstract_VCS_Engine_Access;
+   begin
+      VCS := Kernel.VCS.Guess_VCS_For_Directory (File.Dir);
+      VCS.Make_File_Writable (File, Writable);
+   end Make_File_Writable;
 
 end GPS.Kernel;

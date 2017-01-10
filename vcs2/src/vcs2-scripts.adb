@@ -104,6 +104,10 @@ package body VCS2.Scripts is
      (Self        : not null access Script_Engine;
       Visitor     : not null access Task_Visitor'Class;
       Id          : String);
+   overriding procedure Make_File_Writable
+     (Self       : not null access Script_Engine;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Writable   : Boolean);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -166,6 +170,41 @@ package body VCS2.Scripts is
       end if;
       Free (Data);
    end Call_Method;
+
+   ------------------------
+   -- Make_File_Writable --
+   ------------------------
+
+   overriding procedure Make_File_Writable
+     (Self       : not null access Script_Engine;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Writable   : Boolean)
+   is
+      Inst  : constant Class_Instance :=
+        Create_VCS_Instance (Self.Script, Self);
+      F     : Subprogram_Type := Get_Method (Inst, "make_file_writable");
+   begin
+      if F /= null then
+         declare
+            Result : Boolean;
+            Data  : Callback_Data'Class := Self.Script.Create (2);
+         begin
+            Data.Set_Nth_Arg (1, Create_File (Self.Script, File));
+            Data.Set_Nth_Arg (2, Writable);
+            Result := F.Execute (Data);
+            Free (Data);
+            Free (F);
+
+            if not Result then
+               VCS_Engine (Self.all).Make_File_Writable (File, Writable);
+            end if;
+         end;
+
+      else
+         --  Inherited
+         VCS_Engine (Self.all).Make_File_Writable (File, Writable);
+      end if;
+   end Make_File_Writable;
 
    ----------
    -- Name --

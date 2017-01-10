@@ -329,6 +329,13 @@ package GPS.Kernel is
    --  Whether the file or directory should considered hidden in the GUI, for
    --  instance in the Projects and Files view.
 
+   procedure Make_File_Writable
+     (Kernel   : not null access Kernel_Handle_Record;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Writable : Boolean := True);
+   --  Make the file writable on the disk.
+   --  This changes the disk permissions by using the appropriate VCS operation
+
    --------------
    -- Contexts --
    --------------

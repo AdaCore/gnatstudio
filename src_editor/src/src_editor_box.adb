@@ -148,9 +148,10 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event
 
-   procedure Set_Writable (Views : Views_Array; Writable : Boolean);
-   --  Make the views editable and update their read-only label according to
-   --  Writable.
+   procedure Update_Writable_Status_For_Views
+      (Box      : not null access Source_Editor_Box_Record'Class);
+   --  Update all attributes of the views to show whether the buffer is
+   --  writable.
    --  The purpose of this procedure is to share some code between the public
    --  subprograms Set_Writable and Check_Writable.
 
@@ -598,8 +599,8 @@ package body Src_Editor_Box is
             Set_Initial_Dir (Box.Source_Buffer, Create (Filename.Dir_Name));
             Set_Charset (Box.Source_Buffer, Get_File_Charset (Filename));
 
-            Set_Writable
-              (Box.Source_Buffer, Writable => True, Explicit => False);
+            Box.Source_Buffer.Mark_Buffer_Writable
+              (Writable => True, Explicit => False);
             Load_Empty_File (Box.Source_Buffer);
          end if;
 
@@ -1127,7 +1128,6 @@ package body Src_Editor_Box is
    --------------------
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
-      Views    : constant Views_Array := Get_Views (Editor.Source_Buffer);
       Writable : Boolean;
    begin
       if not Get_Explicit_Writable_Set (Editor.Source_Buffer) then
@@ -1143,17 +1143,22 @@ package body Src_Editor_Box is
                  and then Get_Writable (Editor.Source_Buffer));
          end if;
 
-         Set_Writable (Editor.Source_Buffer, Writable, Explicit => False);
+         Editor.Source_Buffer.Mark_Buffer_Writable
+            (Writable, Explicit => False);
       end if;
 
-      Set_Writable (Views, Get_Writable (Editor.Source_Buffer));
+      Update_Writable_Status_For_Views (Editor);
    end Check_Writable;
 
-   ------------------
-   -- Set_Writable --
-   ------------------
+   --------------------------------------
+   -- Update_Writable_Status_For_Views --
+   --------------------------------------
 
-   procedure Set_Writable (Views : Views_Array; Writable : Boolean) is
+   procedure Update_Writable_Status_For_Views
+      (Box      : not null access Source_Editor_Box_Record'Class)
+   is
+      Views    : constant Views_Array := Get_Views (Box.Source_Buffer);
+      Writable : constant Boolean := Get_Writable (Box.Source_Buffer);
    begin
       for V in Views'Range loop
          Set_Editable (Views (V).Source_View, Writable);
@@ -1164,7 +1169,7 @@ package body Src_Editor_Box is
          --  attributes like "color" into account.
          Views (V).Source_View.Set_Background_Color;
       end loop;
-   end Set_Writable;
+   end Update_Writable_Status_For_Views;
 
    ------------------
    -- Save_To_File --
@@ -1653,17 +1658,13 @@ package body Src_Editor_Box is
       Writable : Boolean;
       Explicit : Boolean := False)
    is
-      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
    begin
-      Set_Writable (Editor.Source_Buffer, Writable, Explicit);
+      --  Change permissions on the disk as well
+      Editor.Kernel.Make_File_Writable
+        (Editor.Source_Buffer.Get_Filename, Writable);
 
-      if Writable then
-         Add_Controls (Editor.Source_Buffer);
-      else
-         Remove_Controls (Editor.Source_Buffer);
-      end if;
-
-      Set_Writable (Views, Writable);
+      Editor.Source_Buffer.Mark_Buffer_Writable (Writable, Explicit);
+      Update_Writable_Status_For_Views (Editor);
 
       --  Let the world know that the status has changed (in particular that
       --  the undo/redo queue has changed).

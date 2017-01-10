@@ -2377,15 +2377,22 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Read_Only : Boolean)
    is
    begin
-      if This.Contents.Buffer /= null then
-         Set_Writable (This.Contents.Buffer, not Read_Only, Explicit => True);
+      --  ??? duplicates with Src_Editor_Box.Set_Writable
 
+      if This.Contents.Buffer /= null then
+         --  Change permissions on the disk as well
+         This.Contents.Kernel.Make_File_Writable
+           (This.Contents.Buffer.Get_Filename, not Read_Only);
+
+         This.Contents.Buffer.Mark_Buffer_Writable
+           (not Read_Only, Explicit => True);
+
+         --  Update statuses for views
          declare
             Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
-            --  Update the labels on the view as well
-            for J in Views'Range loop
-               Check_Writable (Views (J));
+            for V of Views loop
+               Check_Writable (V);
             end loop;
          end;
       end if;

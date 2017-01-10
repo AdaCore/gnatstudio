@@ -179,7 +179,7 @@ package Src_Editor_Buffer is
    --  If Internal is True, save the file to disk but do not modify the buffer
    --  status.
 
-   procedure Set_Writable
+   procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
       Writable : Boolean;
       Explicit : Boolean);

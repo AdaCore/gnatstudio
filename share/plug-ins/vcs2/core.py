@@ -196,6 +196,22 @@ class VCS(GPS.VCS2):
         :param bool stage: whether to stage or unstage.
         """
 
+    def make_file_writable(self, file, writable):
+        """
+        You can override the method named `make_file_writable` if you need
+        a special operation to make a file writable on the disk.
+
+        This must be SYNCHRONOUS (no background operation).
+
+        :param GPS.File file: the file to make writable
+        :param bool writable: whether the file should be made writable or
+            read-only.
+        :return: if it returns True, any needed operation is assumed to have
+            been performed (synchronously). If False, the default behavior is
+            applied, i.e. simply change permissions on the disk.
+        """
+        return False
+
     def commit_staged_files(self, message):
         """
         Commit all staged files.

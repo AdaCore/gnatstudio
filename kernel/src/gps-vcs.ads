@@ -231,6 +231,14 @@ package GPS.VCS is
    --  cache. This is done asynchronously, and results in possibly calls
    --  to the VCS_File_Status_Update_Hook.
 
+   procedure Make_File_Writable
+     (Self       : not null access Abstract_VCS_Engine;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Writable   : Boolean);
+   --  Make a file writable on the disk, possibly only using
+   --  GNATCOLL.VFS.Set_Writable, but possibly stealing a lock or any other
+   --  operation.
+
 private
 
    type Engine_Proxy is new Script_Proxy with null record;

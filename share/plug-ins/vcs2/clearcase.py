@@ -50,39 +50,47 @@ class Clearcase(core_staging.Emulate_Staging,
                         rev,
                         '')  # repo revision
 
-    def has_defined_activity(self):
+    def has_defined_activity(self, synchronous):
         """
         Whether there is a defined activity currently defined, which is
         necessary to be able to do a checkout.
 
+        :param bool synchronous: whether to compute this synchronously.
         :returntype: a promise that will be resolved to a boolean, to
             indicate whether there is a defined activity.
         """
-        result = Promise()
 
-        def on_terminate(status, output):
-            if status != 0:
-                # could be a clearcase-only view, or not a view at all
-                result.resolve(False)
-            else:
-                result.resolve(output != '')
+        if synchronous:
+            p = subprocess.Popen(['cleartool', 'lsact', '-cact', '-s'],
+                                 cwd=self.working_dir.path,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            output, error = p.communicate()
+            status = p.wait()
+            return status == 0 and output != ''
+        else:
+            result = Promise()
 
-        p = self._cleartool(['cleartool', 'lsactivity',
-                             '-cact',   # display info for current activity
-                             '-s'])     # short display
-        p.wait_until_terminate().then(on_terminate)
-        return result
+            def on_terminate(status, output):
+                # if status!=0, could be a clearcase-only view, or not a view
+                result.resolve(status == 0 and output != '')
 
-    @core.run_in_background
-    def checkout_file(self, file):
+            p = self._cleartool(['cleartool', 'lsactivity',
+                                 '-cact',   # display info for current activity
+                                 '-s'])     # short display
+            p.wait_until_terminate().then(on_terminate)
+            return result
+
+    def make_file_writable(self, file, writable):
         """
         Checkout a file to make it writable
         """
-        has_activity = yield self.has_defined_activity()
+        has_activity = self.has_defined_activity(synchronous=True)
         if has_activity:
             GPS.Console().write('Support for checkout not implemented yet\n')
         else:
             GPS.Console().write('No clearcase activity set\n')
+        return True   # Operation has been performed
 
     @core.run_in_background
     def commit_staged_files(self, message):

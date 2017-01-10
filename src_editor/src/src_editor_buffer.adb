@@ -4054,7 +4054,6 @@ package body Src_Editor_Buffer is
       FD          : Writable_File;
       Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
       Buffer_Line : Buffer_Line_Type;
-      Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable
       U_Buffer    : Unbounded_String;
       S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
@@ -4240,8 +4239,8 @@ package body Src_Editor_Buffer is
          end if;
 
          if Force or else Buttons = Button_Yes then
-            Force_Write := True;
-            Set_Writable (Filename, True);
+            Make_File_Writable (Buffer.Kernel, Filename, True);
+            Mark_Buffer_Writable (Buffer, True, Explicit => False);
          end if;
       end if;
 
@@ -4326,12 +4325,6 @@ package body Src_Editor_Buffer is
 
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Set_Last_Status (Saved);
-      end if;
-
-      --  If the file mode was forced to writable, reset it to read-only
-
-      if Force_Write then
-         Set_Writable (Filename, False);
       end if;
 
    exception
@@ -8281,18 +8274,24 @@ package body Src_Editor_Buffer is
       return Buffer.Constructs_Timestamp;
    end Get_Constructs_Timestamp;
 
-   ------------------
-   -- Set_Writable --
-   ------------------
+   --------------------------
+   -- Mark_Buffer_Writable --
+   --------------------------
 
-   procedure Set_Writable
+   procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
       Writable : Boolean;
       Explicit : Boolean) is
    begin
       Buffer.Writable := Writable;
       Buffer.Explicit_Writable_Set := Explicit;
-   end Set_Writable;
+
+      if Writable then
+         Add_Controls (Buffer);
+      else
+         Remove_Controls (Buffer);
+      end if;
+   end Mark_Buffer_Writable;
 
    ------------------
    -- Get_Writable --

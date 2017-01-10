@@ -68,4 +68,18 @@ package body GPS.VCS is
          Obj  => Abstract_VCS_Engine_Access (VCS));
    end Set_VCS_Instance;
 
+   ------------------------
+   -- Make_File_Writable --
+   ------------------------
+
+   procedure Make_File_Writable
+     (Self       : not null access Abstract_VCS_Engine;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Writable   : Boolean)
+   is
+      pragma Unreferenced (Self);
+   begin
+      File.Set_Writable (Writable);
+   end Make_File_Writable;
+
 end GPS.VCS;
