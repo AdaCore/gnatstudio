@@ -169,9 +169,12 @@ package body Welcome_Dialogs is
    is
       Dialog               : Welcome_Dialog;
       Pane                 : Gtk_Paned;
-      Recent_Projects_View : Recent_Projects_List_Box;
       Main_View            : Dialog_View;
       Response             : Welcome_Dialog_Response;
+      Recent_Projects_View : Recent_Projects_List_Box;
+      Recent_Projects      : constant String_List_Access :=
+                             Get_History
+                               (Kernel.Get_History.all, "project_files");
 
       procedure Create_Logo_And_Title_Area;
 
@@ -212,9 +215,6 @@ package body Welcome_Dialogs is
       -------------------------------
 
       procedure Fill_Recent_Projects_View is
-         Recent_Projects : constant String_List_Access :=
-                             Get_History
-                               (Kernel.Get_History.all, "project_files");
          Project_File    : Virtual_File;
 
          Label           : Gtk_Label;
@@ -301,40 +301,46 @@ package body Welcome_Dialogs is
       Dialog.On_Delete_Event (On_Delete'Access);
       Get_Style_Context (Dialog).Add_Class ("gps-welcome-dialog");
 
-      --  Create the paned view
-
-      Gtk_New_Hpaned (Pane);
-      Dialog.Get_Content_Area.Pack_Start (Pane);
-
-      --  Create and fill the recent projects list view on the left side
-
-      Recent_Projects_View := new Recent_Projects_List_Box_Record;
-      Recent_Projects_View.Kernel := Kernel_Handle (Kernel);
-      Initialize (Recent_Projects_View);
-      Recent_Projects_View.Set_Selection_Mode (Selection_Single);
-      Recent_Projects_View.Set_Activate_On_Single_Click (False);
-      Recent_Projects_View.On_Row_Activated
-        (On_Row_Activated'Access,
-         Slot => Dialog);
-      Pane.Pack1
-        (Recent_Projects_View,
-         Resize => False,
-         Shrink => False);
-
-      Fill_Recent_Projects_View;
-
-      --  Create and fill the right pane, which contains all the possible
-      --  actions.
+      --  Create and fill the view containing all the welcome dialog options
 
       Main_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Main_View);
-      Pane.Pack2
-        (Main_View,
-         Resize => True,
-         Shrink => True);
 
       Create_Logo_And_Title_Area;
       Create_Welcome_Dialog_Options;
+
+      --  If there is no recent project in the history, don't create the
+      --  recent projects view on the left side of the dialog.
+
+      if Recent_Projects /= null then
+         Recent_Projects_View := new Recent_Projects_List_Box_Record;
+         Recent_Projects_View.Kernel := Kernel_Handle (Kernel);
+         Initialize (Recent_Projects_View);
+         Recent_Projects_View.Set_Selection_Mode (Selection_Single);
+         Recent_Projects_View.Set_Activate_On_Single_Click (False);
+         Recent_Projects_View.On_Row_Activated
+           (On_Row_Activated'Access,
+            Slot => Dialog);
+
+         Fill_Recent_Projects_View;
+
+         --  Create a paned view for both the recent projects view and the
+         --  welcome dialog options.
+
+         Gtk_New_Hpaned (Pane);
+         Dialog.Get_Content_Area.Pack_Start (Pane);
+
+         Pane.Pack2
+           (Main_View,
+            Resize => True,
+            Shrink => True);
+         Pane.Pack1
+           (Recent_Projects_View,
+            Resize => False,
+            Shrink => False);
+      else
+         Dialog.Get_Content_Area.Pack_Start (Main_View);
+      end if;
 
       --  Show the dialog and block the execution of the procedure while it's
       --  running.
