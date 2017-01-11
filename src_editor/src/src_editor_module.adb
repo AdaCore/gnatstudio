@@ -248,9 +248,9 @@ package body Src_Editor_Module is
       Project : Project_Type);
    --  Callback for the "cursor_stopped" hook
 
-   type On_Buffer_Edited is new File_Hooks_Function with null record;
+   type On_Semantic_Tree_Updated is new File_Hooks_Function with null record;
    overriding procedure Execute
-     (Self   : On_Buffer_Edited;
+     (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
 
@@ -747,7 +747,7 @@ package body Src_Editor_Module is
    -------------
 
    overriding procedure Execute
-     (Self   : On_Buffer_Edited;
+     (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
@@ -760,7 +760,12 @@ package body Src_Editor_Module is
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
-            Update_Subprogram_Name (Box, Update_Tree => True);
+            Update_Subprogram_Name
+              (Box,
+               --  Call with Update_Tree => False: this is in reaction to
+               --  Semantic_Tree_Updated_Hook, so we know the info is exact
+               --  without having to force it.
+               Update_Tree => False);
          end if;
          Box.Get_View.Queue_Draw;
       end if;
@@ -2382,7 +2387,7 @@ package body Src_Editor_Module is
       File_Renamed_Hook.Add (new On_File_Renamed);
       File_Saved_Hook.Add (new On_File_Saved);
       Location_Changed_Hook.Add (new On_Cursor_Stopped);
-      Buffer_Edited_Hook.Add (new On_Buffer_Edited);
+      Semantic_Tree_Updated_Hook.Add (new On_Semantic_Tree_Updated);
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
       File_Edited_Hook.Add (new On_File_Edited);
       File_Changed_On_Disk_Hook.Add (new On_File_Changed_On_Disk);

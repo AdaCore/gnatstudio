@@ -45,6 +45,8 @@ use Src_Editor_Buffer.Line_Information;
 with Tooltips;               use Tooltips;
 with Xref;                   use Xref;
 
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+
 package body Src_Editor_Box.Tooltips is
    use type GNATCOLL.Xref.Visible_Column;
 
@@ -371,15 +373,27 @@ package body Src_Editor_Box.Tooltips is
          --  tooltip, based on cross references.
 
          declare
-            Entity : constant Root_Entity'Class := Get_Declaration_Info
-              (Box, Context, Entity_Ref);
+            Tree : constant Semantic_Tree'Class :=
+              Box.Kernel.Get_Abstract_Tree_For_File (Box.Get_Filename);
          begin
-            if Entity = No_Root_Entity then
+            --  We do not want to compute an xref-based tooltip if the source
+            --  is not indexed.
+            if not Tree.Is_Ready then
                return Gtk_Widget (Vbox);
             end if;
 
-            W := Entities_Tooltips.Draw_Tooltip
-              (Box.Kernel, Entity, Entity_Ref.Element, Draw_Border => False);
+            declare
+               Entity : constant Root_Entity'Class := Get_Declaration_Info
+                 (Box, Context, Entity_Ref);
+            begin
+               if Entity = No_Root_Entity then
+                  return Gtk_Widget (Vbox);
+               end if;
+
+               W := Entities_Tooltips.Draw_Tooltip
+                 (Box.Kernel, Entity, Entity_Ref.Element,
+                  Draw_Border => False);
+            end;
 
             if W /= null then
                if Vbox = null then

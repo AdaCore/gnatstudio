@@ -52,7 +52,10 @@ package body Src_Editor_Buffer.Blocks is
          return;
       end if;
 
-      Buffer.Blocks_Exact := True;
+      if Immediate then
+         Buffer.Get_Tree.Update;
+         Buffer.Blocks_Exact := True;
+      end if;
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);
@@ -60,7 +63,7 @@ package body Src_Editor_Buffer.Blocks is
 
       declare
          Current : Semantic_Tree_Iterator'Class
-           := Buffer.Get_Tree_Iterator (Line_Exact);
+           := Buffer.Get_Tree.Root_Iterator;
       begin
          while Has_Element (Current) loop
             declare
@@ -123,7 +126,7 @@ package body Src_Editor_Buffer.Blocks is
 
    begin
       if Block.Stored_Offset /= 0
-        and Get_Constructs_State (Buffer) = Exact
+        and then Blocks_Are_Exact (Buffer)
       then
          return;
       end if;

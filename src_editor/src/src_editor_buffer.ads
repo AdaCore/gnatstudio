@@ -721,43 +721,12 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
    --  Return True if the buffer has been saved sucessfully on disk
 
-   type Constructs_State_Type is
-     (Not_Parsed,
-      --  The constructs are not parsed
-
-      Approximate,
-      --  The buffer has changed since the previous constructs computation
-
-      Line_Exact,
-      --  The buffer has changed since the previous constructs computation,
-      --  but no lines have been added or removed.
-
-      Exact
-      --  The constructs match the contents of the buffer
-     );
-   --  Describes the state of constructs cached in the editor.
-   --  Note: the implementation relies on this type being ordered from least
-   --  exact to most exact.
-
    function Get_Tree
      (Buffer : access Source_Buffer_Record) return Semantic_Tree'Class;
 
-   function Get_Tree_Iterator
-     (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type)
-      return Semantic_Tree_Iterator'Class;
-   --  Return the current construct cache in the buffer. The returned
-   --  list matches at least the level of precision indicated by
-   --  Required_Level.
-   --  Caller must not free the result.
-
-   function Get_Constructs_State
-     (Buffer : access Source_Buffer_Record) return Constructs_State_Type;
-   --  Return the state of cached constructs
-
-   function Get_Constructs_Timestamp
-     (Buffer : access Source_Buffer_Record) return Natural;
-   --  Return the "timestamp" of the constructs
+   function Blocks_Are_Exact
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Return True iff the blocks information computed in the buffer
 
    -----------------------
    -- Extra Information --
@@ -1713,16 +1682,6 @@ private
       --  Whether the buffer was saved successfully during the last attempt.
       --  This can be False if only an approximate save was done, for
       --  instance if characters have been lost in the conversion from UTF8.
-
-      Constructs : Language.Construct_List;
-      --  The parsed constructs in the buffer. This list might or might not
-      --  be up to date, see Constructs_State below.
-
-      Constructs_State : Constructs_State_Type := Not_Parsed;
-      --  The state of the constructs list
-
-      Constructs_Timestamp : Natural := 0;
-      --  The "timestamp" of the stored constructs information
 
       Blocks_Exact : Boolean := False;
       --  Whether the blocks information is exact

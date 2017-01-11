@@ -208,6 +208,7 @@ package body Language.Libclang_Tree is
       Enqueue_Translation_Unit
         (Kernel   => Self.Kernel,
          File     => Self.File,
+         Reparse  => True,
          Callback => Callback);
    end Update_Async;
 

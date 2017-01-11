@@ -659,7 +659,7 @@ package body Language.Libclang is
    function Has_Translation_Unit_In_Cache
      (File : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
-      return Has_TU (Full_Name (File));
+      return Get_TU (Full_Name (File)).Cache.Is_Ready;
    end Has_Translation_Unit_In_Cache;
 
    -------------

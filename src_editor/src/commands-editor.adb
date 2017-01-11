@@ -627,7 +627,9 @@ package body Commands.Editor is
      (Command : access Hide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
-      if Get_Constructs_State (Command.Buffer) >= Line_Exact then
+      if Blocks_Are_Exact (Command.Buffer) then
+         --  Do not actually hide the lines if the block information is not
+         --  known to be good.
          Hide_Lines (Command.Buffer, Command.Base_Line, Command.Number);
       end if;
 

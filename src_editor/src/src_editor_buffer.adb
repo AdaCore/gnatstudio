@@ -564,6 +564,14 @@ package body Src_Editor_Buffer is
       File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
+   type On_Semantic_Tree_Updated is new File_Hooks_Function with record
+      Buffer : Source_Buffer;
+   end record;
+   overriding procedure Execute
+      (Self   : On_Semantic_Tree_Updated;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File);
+
    procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer);
 
@@ -727,6 +735,31 @@ package body Src_Editor_Buffer is
       if Need_Action then
          Self.Buffer.Saved_Position := -1;
          Self.Buffer.Status_Changed;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Semantic_Tree_Updated;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Kernel);
+      Edited  : constant GNATCOLL.VFS.Virtual_File := Self.Buffer.Filename;
+   begin
+      if Edited /= GNATCOLL.VFS.No_File
+        and then File = Edited
+      then
+         --  The semantic tree for this buffer has been updated.
+         --  Parse the blocks.
+
+         if Self.Buffer.Parse_Blocks then
+            Compute_Blocks (Self.Buffer, Immediate => False);
+            Self.Buffer.Blocks_Exact := True;
+         end if;
       end if;
    end Execute;
 
@@ -1059,12 +1092,6 @@ package body Src_Editor_Buffer is
          return True;
       end if;
 
-      --  Parse the blocks
-
-      if Buffer.Parse_Blocks then
-         Compute_Blocks (Buffer, Immediate => False);
-      end if;
-
       --  Re-highlight the highlight region if needed
 
       Process_Highlight_Region (Buffer);
@@ -1086,6 +1113,13 @@ package body Src_Editor_Buffer is
         and then Buffer.Get_Version /= Buffer.Last_Checked_Version
       then
          Buffer_Modified (Buffer);
+      end if;
+
+      --  Request an asynchronous update of the semantic tree
+
+      if Buffer.Filename /= No_File then
+         Buffer.Kernel.Get_Abstract_Tree_For_File
+           (Buffer.Filename).Update_Async;
       end if;
 
       --  Unregister the timeout
@@ -1569,10 +1603,6 @@ package body Src_Editor_Buffer is
    begin
       --  Request re-parsing of the blocks
 
-      if Buffer.Constructs_State > Approximate then
-         Buffer.Constructs_State := Approximate;
-      end if;
-
       Buffer.Blocks_Exact := False;
 
       Register_Edit_Timeout (Buffer);
@@ -1732,8 +1762,6 @@ package body Src_Editor_Buffer is
             Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
          end if;
       end loop;
-
-      Free (Buffer.Constructs);
 
       Unchecked_Free (Buffer.Line_Data);
       GNAT.Strings.Free (Buffer.Charset);
@@ -3251,6 +3279,7 @@ package body Src_Editor_Buffer is
       Prj_Hook     : access On_Project_Changed;
       Deleted_Hook : access On_File_Deleted;
       Renamed_Hook : access On_File_Renamed;
+      Tree_Updated_Hook : access On_Semantic_Tree_Updated;
 
       use Pango.Enums.Underline_Properties;
    begin
@@ -3294,6 +3323,10 @@ package body Src_Editor_Buffer is
       Renamed_Hook := new On_File_Renamed;
       Renamed_Hook.Buffer := Source_Buffer (Buffer);
       File_Renamed_Hook.Add (Renamed_Hook, Watch => Buffer, Last => True);
+
+      Tree_Updated_Hook := new On_Semantic_Tree_Updated;
+      Tree_Updated_Hook.Buffer := Source_Buffer (Buffer);
+      Semantic_Tree_Updated_Hook.Add (Tree_Updated_Hook, Watch => Buffer);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Buffer.Syntax_Tags (Entity_Kind) := Get_Tag
@@ -8237,48 +8270,15 @@ package body Src_Editor_Buffer is
       return Buffer.Kernel.Get_Abstract_Tree_For_File (Buffer.Filename);
    end Get_Tree;
 
-   --------------------
-   -- Get_Constructs --
-   --------------------
+   ----------------------
+   -- Blocks_Are_Exact --
+   ----------------------
 
-   function Get_Tree_Iterator
-     (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type)
-      return Semantic_Tree_Iterator'Class
-   is
+   function Blocks_Are_Exact
+     (Buffer : access Source_Buffer_Record) return Boolean is
    begin
-      if Buffer.Constructs_State < Required_Level then
-         Buffer.Get_Tree.Update;
-         Buffer.Constructs_State := Exact;
-         if Buffer.Constructs_Timestamp = Natural'Last then
-            Buffer.Constructs_Timestamp := 0;
-         else
-            Buffer.Constructs_Timestamp := Buffer.Constructs_Timestamp + 1;
-         end if;
-      end if;
-
-      return Buffer.Get_Tree.Root_Iterator;
-   end Get_Tree_Iterator;
-
-   --------------------------
-   -- Get_Constructs_State --
-   --------------------------
-
-   function Get_Constructs_State
-     (Buffer : access Source_Buffer_Record) return Constructs_State_Type is
-   begin
-      return Buffer.Constructs_State;
-   end Get_Constructs_State;
-
-   ------------------------------
-   -- Get_Constructs_Timestamp --
-   ------------------------------
-
-   function Get_Constructs_Timestamp
-     (Buffer : access Source_Buffer_Record) return Natural is
-   begin
-      return Buffer.Constructs_Timestamp;
-   end Get_Constructs_Timestamp;
+      return Buffer.Blocks_Exact;
+   end Blocks_Are_Exact;
 
    --------------------------
    -- Mark_Buffer_Writable --
