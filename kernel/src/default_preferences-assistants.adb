@@ -31,6 +31,12 @@ with GPS.Main_Window;   use GPS.Main_Window;
 
 package body Default_Preferences.Assistants is
 
+   type Preferences_Assistant_Record is new Gtk_Assistant_Record with record
+      Running_Main_Loop : Boolean := True;
+      --  True if the preferences assistant is running a nested main loop
+   end record;
+   type Preferences_Assistant is access all Preferences_Assistant_Record;
+
    procedure On_Cancel (Self : access Gtk_Assistant_Record'Class);
    procedure On_Apply (Self : access Gtk_Assistant_Record'Class);
 
@@ -38,20 +44,31 @@ package body Default_Preferences.Assistants is
    -- On_Cancel --
    ---------------
 
-   procedure On_Cancel (Self : access Gtk_Assistant_Record'Class) is
+   procedure On_Cancel (Self : access Gtk_Assistant_Record'Class)
+   is
+      Assistant : constant Preferences_Assistant :=
+                    Preferences_Assistant (Self);
    begin
-      Gtk.Main.Main_Quit;
-      Self.Destroy;
+      --  Quit the preferences assistant's main loop only if it's still running
+      if Assistant.Running_Main_Loop then
+         Gtk.Main.Main_Quit;
+      end if;
+
+      Assistant.Destroy;
    end On_Cancel;
 
    --------------
    -- On_Apply --
    --------------
 
-   procedure On_Apply (Self : access Gtk_Assistant_Record'Class) is
+   procedure On_Apply (Self : access Gtk_Assistant_Record'Class)
+   is
+      Assistant : constant Preferences_Assistant :=
+                    Preferences_Assistant (Self);
    begin
       Gtk.Main.Main_Quit;
-      Self.Close;
+      Assistant.Running_Main_Loop := False;
+      Assistant.Close;
    end On_Apply;
 
    ------------
@@ -77,7 +94,7 @@ package body Default_Preferences.Assistants is
       Pages  : Preferences_Assistant_Page_Array)
    is
       Manager       : constant Preferences_Manager := Kernel.Get_Preferences;
-      Assistant     : Gtk_Assistant;
+      Assistant     : Preferences_Assistant;
 
       procedure Rename_Standard_Butttons;
       --  Rename some standard Gtk.Assistant buttons (e.g: "Cancel" to "Skip &
@@ -220,7 +237,8 @@ package body Default_Preferences.Assistants is
       end Create_Assistant_Page_View;
 
    begin
-      Gtk_New (Assistant);
+      Assistant := new Preferences_Assistant_Record;
+      Gtk.Assistant.Initialize (Assistant);
       Assistant.Set_Position (Win_Pos_Center);
 
       Set_Default_Size_From_History
