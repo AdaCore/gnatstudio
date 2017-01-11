@@ -495,6 +495,17 @@ package VCS2.Engines is
    --  The user has requested a change of the current branch.
    --  The Id is as returned by Async_Branches.
 
+   procedure Async_Discard_Local_Changes
+     (Self        : not null access VCS_Engine;
+      Files       : GNATCOLL.VFS.File_Array) is null;
+   procedure Queue_Discard_Local_Changes
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : access Task_Visitor'Class;
+      Files       : GNATCOLL.VFS.File_Array_Access);
+   --  Discard all changes done in any file in Files.
+   --  Files is freed automatically.
+   --  Calls Visitor.On_Terminate when done.
+
    ----------
    -- Misc --
    ----------

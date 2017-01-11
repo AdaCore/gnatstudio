@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Intl;                    use GPS.Intl;
@@ -28,6 +29,7 @@ with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
 
 package body VCS2.Views is
+   Me : constant Trace_Handle := Create ("VIEWS");
 
    type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
       record
@@ -239,6 +241,8 @@ package body VCS2.Views is
    is
       pragma Unreferenced (VCS);
    begin
+      Trace (Me, "Refreshing all VCS views");
+      Invalidate_All_Caches (Self.Kernel);
       Vcs_Refresh_Hook.Run (Self.Kernel);
    end On_Terminate;
 

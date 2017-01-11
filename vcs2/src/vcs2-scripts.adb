@@ -104,6 +104,9 @@ package body VCS2.Scripts is
      (Self        : not null access Script_Engine;
       Visitor     : not null access Task_Visitor'Class;
       Id          : String);
+   overriding procedure Async_Discard_Local_Changes
+     (Self        : not null access Script_Engine;
+      Files       : GNATCOLL.VFS.File_Array);
    overriding procedure Make_File_Writable
      (Self       : not null access Script_Engine;
       File       : GNATCOLL.VFS.Virtual_File;
@@ -399,6 +402,20 @@ package body VCS2.Scripts is
       D.Set_Nth_Arg (1, Id);
       Call_Method (Self, "async_select_branch", D);
    end Async_Select_Branch;
+
+   ---------------------------------
+   -- Async_Discard_Local_Changes --
+   ---------------------------------
+
+   overriding procedure Async_Discard_Local_Changes
+     (Self        : not null access Script_Engine;
+      Files       : GNATCOLL.VFS.File_Array)
+   is
+      D : Callback_Data'Class := Self.Script.Create (1);
+   begin
+      Set_Nth_Arg (D, 1, Files);
+      Call_Method (Self, "async_discard_local_changes", D);
+   end Async_Discard_Local_Changes;
 
    ----------------
    -- Async_Diff --

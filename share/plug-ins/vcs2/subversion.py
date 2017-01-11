@@ -280,3 +280,8 @@ class SVN(core_staging.Emulate_Staging,
         status, output = yield p.wait_until_terminate()
         if status != 0:
             GPS.Console().write(output)
+
+    @core.run_in_background
+    def async_discard_local_changes(self, files):
+        n = [f.path for f in files]
+        yield self._svn(['revert'] + n).wait_until_terminate()

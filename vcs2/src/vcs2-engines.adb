@@ -239,6 +239,14 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Select_Branch;
       VCS  : not null access VCS_Engine'Class);
 
+   type Cmd_Discard_Local_Changes is new VCS_Command with record
+      Files : File_Array_Access;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Discard_Local_Changes;
+      VCS  : not null access VCS_Engine'Class);
+   overriding procedure Free (Self : in out Cmd_Discard_Local_Changes);
+
    procedure Unref (Self : in out Task_Visitor_Access);
    --  Decrease refcount of Self, and free if needed
 
@@ -999,6 +1007,44 @@ package body VCS2.Engines is
    begin
       VCS.Async_Select_Branch (Self.Visitor, To_String (Self.Id));
    end Execute;
+
+   ---------------------------------
+   -- Queue_Discard_Local_Changes --
+   ---------------------------------
+
+   procedure Queue_Discard_Local_Changes
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : access Task_Visitor'Class;
+      Files       : GNATCOLL.VFS.File_Array_Access)
+   is
+   begin
+      Queue
+        (Self,
+         new Cmd_Discard_Local_Changes'(
+           Visitor => Visitor.all'Unchecked_Access,
+           Files   => Files));
+   end Queue_Discard_Local_Changes;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Discard_Local_Changes;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Discard_Local_Changes (Self.Files.all);
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Cmd_Discard_Local_Changes) is
+   begin
+      Unchecked_Free (Self.Files);
+      Free (VCS_Command (Self));   --  inherited
+   end Free;
 
    -----------------------
    -- Queue_Annotations --

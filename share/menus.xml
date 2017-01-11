@@ -596,6 +596,7 @@
       <button action='vcs commit staged files'/>
       <separator id='stages'/>
       <button action='vcs toggle stage selected files'/>
+      <button action='vcs discard local changes'/>
       <button action='diff against head for file'/>
       <button action='vcs reload status'/>
    </toolbar>

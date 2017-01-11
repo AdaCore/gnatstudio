@@ -316,3 +316,8 @@ class CVS(core_staging.Emulate_Staging,
         status, output = yield p.wait_until_terminate()
         if status != 0:
             GPS.Console().write(output)
+
+    @core.run_in_background
+    def async_discard_local_changes(self, files):
+        n = [f.path for f in files]
+        yield self._cvs(['update', '-C'] + n).wait_until_terminate()

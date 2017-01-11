@@ -50,10 +50,7 @@ with Gtk.Widget;                         use Gtk.Widget;
 with VCS2.Engines;                       use VCS2.Engines;
 with VCS2.Views;                         use VCS2.Views;
 
-with GNATCOLL.Traces; use GNATCOLL.Traces;
-
 package body VCS2.Branches is
-   Me : constant Trace_Handle := Create ("TRACES");
 
    Column_Name           : constant := 0;
    Column_Foreground     : constant := 1;
@@ -542,7 +539,6 @@ package body VCS2.Branches is
                     Column_Id);
             begin
                if Id /= "" then
-                  Trace (Me, "MANU Queuing select branch");
                   Active_VCS (View.Kernel).Queue_Select_Branch
                     (new Refresh_On_Terminate_Visitor'
                        (Task_Visitor with Kernel => View.Kernel),

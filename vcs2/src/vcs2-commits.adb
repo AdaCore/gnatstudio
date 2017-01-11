@@ -42,6 +42,7 @@ with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
 with GPS.Properties;              use GPS.Properties;
 with GPS.Search;                  use GPS.Search;
 with GPS.VCS;                     use GPS.VCS;
+with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
 with Gtkada.Style;                use Gtkada.Style;
 with Gtk.Box;                     use Gtk.Box;
@@ -252,6 +253,11 @@ package body VCS2.Commits is
    type Commit is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Commit;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Discard_Changes is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Discard_Changes;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type On_Committed is new Vcs_Hooks_Function with null record;
@@ -759,6 +765,61 @@ package body VCS2.Commits is
             View.Active_VCS.Stage_Or_Unstage_Files
               (Files.all, Stage => not Staged);
             Unchecked_Free (Files);
+         end if;
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Discard_Changes;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View   : constant Commit_View :=
+        Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Files  : File_Array_Access;
+
+      procedure On_Selection
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter);
+      procedure On_Selection
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter)
+      is
+         pragma Unreferenced (Model, Path);
+         F : constant Virtual_File := Get_File_From_Node
+           (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
+      begin
+         if F /= No_File then
+            Append (Files, F);
+         end if;
+      end On_Selection;
+
+   begin
+      if View /= null then
+         View.Tree.Get_Selection.Selected_Foreach
+           (On_Selection'Unrestricted_Access);
+
+         if Files /= null
+           and then Message_Dialog
+             (-("Discard local changes ?" & ASCII.LF
+                & "This operation cannot be undone."),
+              Dialog_Type    => Confirmation,
+              Buttons        => Button_Yes or Button_No,
+              Default_Button => Button_No,
+              Title          => -"Confirm discard",
+              Parent         => Get_Main_Window (View.Kernel)) = Button_Yes
+         then
+            View.Active_VCS.Queue_Discard_Local_Changes
+              (Files   => Files,  --  freed by Queue_Discard_Local_Changes
+               Visitor => new Refresh_On_Terminate_Visitor'
+                 (Task_Visitor with Kernel => View.Kernel));
          end if;
       end if;
       return Commands.Success;
@@ -1353,6 +1414,13 @@ package body VCS2.Commits is
              & " next commit"),
          Command     => new Unstage_File,
          Filter      => Lookup_Filter (Kernel, "File") and Is_Staged,
+         Category    => "VCS2");
+
+      Register_Action
+        (Kernel, "vcs discard local changes",
+         Command     => new Discard_Changes,
+         Icon_Name   => "vcs-discard-changes-symbolic",
+         Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
 
       Register_Contextual_Menu

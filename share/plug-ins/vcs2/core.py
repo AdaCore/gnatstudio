@@ -212,6 +212,15 @@ class VCS(GPS.VCS2):
         """
         return False
 
+    def async_discard_local_changes(self, files):
+        """
+        Revert the local changes for all of the files in the list.
+        This can be run asynchronously.
+
+        :param [GPS.File] files: the list of files
+        """
+        GPS.Console().write("Revert not supported for %s" % (self.name, ))
+
     def commit_staged_files(self, message):
         """
         Commit all staged files.
