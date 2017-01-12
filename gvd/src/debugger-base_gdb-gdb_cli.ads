@@ -21,14 +21,13 @@
 with GNAT.Strings;
 with Debugger;
 with GNAT.Regpat;
-with Language.Debugger;
 with GVD.Types;
 with GNATCOLL.VFS;
-with GNATCOLL.Tribooleans;
+with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
 
-package Debugger.Gdb is
+package Debugger.Base_Gdb.Gdb_CLI is
 
-   type Gdb_Debugger is new Debugger.Debugger_Root with private;
+   type Gdb_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with private;
 
    overriding procedure Spawn
      (Debugger        : access Gdb_Debugger;
@@ -439,50 +438,14 @@ private
       Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   type Remote_GDB_Mode is (Native, Cross, VxWorks);
-   --  Indicates the type of remote access.
-   --  This controls the behavior of the debugger when doing file load
-   --  operations.
-   --  Here are the commands that are launched:
-   --
-   --   Native  :  "file"
-   --   Cross   :  "file" -> "target" * -> "load"
-   --   VxWorks :            "target" * -> "load"
-   --
-   --  * Note: "target" is only launched if the debugger is not already
-   --    connected to a target.
-
-   ----------------------
-   -- Version handling --
-   ----------------------
-
-   type Version_Number is record
-      Major : Natural;
-      Minor : Natural;
-   end record;
-
-   Unknown_Version : constant Version_Number := (Major => 0, Minor => 0);
-
-   type Gdb_Debugger is new Debugger.Debugger_Root with record
-      Executable       : GNATCOLL.VFS.Virtual_File;
-      Executable_Args  : GNAT.Strings.String_Access;
-      Stored_Language  : GNAT.Strings.String_Access;
+   type Gdb_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
       WTX_List         : GNAT.Strings.String_Access;
       WTX_Index        : Natural;
-      GDB_Version      : Version_Number := Unknown_Version;
       VxWorks_Version  : GVD.Types.VxWorks_Version_Type := GVD.Types.Vx_None;
-      Endian           : Endian_Type := Unknown_Endian;
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
-      Debuggee_Pid     : Integer := 0;
       Has_Symbol_List  : Integer := -1;
-      Has_Start_Cmd    : Integer := -1;
-      Has_Wtx_Add_Symbol_File : Integer := -1;
-      Initializing     : Boolean := False;
-
-      Mode             : Remote_GDB_Mode := Native;
-      Target_Connected : Boolean := False;
-      --  Whether we have connected to a target.
+      Has_Start_Cmd    : GNATCOLL.Tribooleans.Triboolean := Indeterminate;
 
       Use_Catch_For_Exceptions : GNATCOLL.Tribooleans.Triboolean :=
         GNATCOLL.Tribooleans.Indeterminate;
@@ -491,16 +454,4 @@ private
       --  on exception
    end record;
 
-   procedure Internal_Parse_Value
-     (Lang       : access Language.Debugger.Language_Debugger'Class;
-      Type_Str   : String;
-      Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
-      Repeat_Num : out Positive;
-      Parent     : Items.Generic_Type_Access);
-   --  Internal function used to parse the value.
-   --  The parameters are the same as for Parse_Value, plus Parent that is
-   --  the item that contains Result.
-   --  Parent should be null for the top-level item.
-
-end Debugger.Gdb;
+end Debugger.Base_Gdb.Gdb_CLI;

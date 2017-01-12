@@ -77,6 +77,7 @@ with String_Utils;             use String_Utils;
 with Xref;                     use Xref;
 
 package body GVD.Canvas is
+
    Me : constant Trace_Handle := Create ("Canvas");
 
    Detect_Aliases : Boolean_Preference;
@@ -1915,38 +1916,36 @@ package body GVD.Canvas is
       --  If an auto-updated similar item is on the canvas, we simply show
       --  and select it.
 
-      if Item.Info.Entity /= null then
-         if Item.Info.Is_A_Variable then
-            Item.Id := new String'
-              (Get_Uniq_Id (Debugger.Debugger, To_String (Item.Info.Varname)));
-         end if;
+      if Item.Info.Entity /= null
+        and then Item.Info.Is_A_Variable
+      then
+         Item.Id := new String'
+           (Get_Uniq_Id (Debugger.Debugger, To_String (Item.Info.Varname)));
 
-         if Item.Info.Is_A_Variable then
-            if Auto_Refresh then
-               --  Avoid creating the same item twice if it already exists in
-               --  the canvas
+         if Auto_Refresh then
+            --  Avoid creating the same item twice if it already exists in
+            --  the canvas
 
-               Alias_Item := Search_Item
-                 (Debugger, Item.Id.all, To_String (Item.Info.Varname));
+            Alias_Item := Search_Item
+              (Debugger, Item.Id.all, To_String (Item.Info.Varname));
 
-               --  Two structures are aliased only if they have the same
-               --  address and the same structure. The latter is to handle
-               --  cases like "struct A {struct B {int field}} where A, B and
-               --  field have the same address and would be considered as
-               --  aliases otherwise.
-               if Alias_Item /= null
-                 and then
-                   (not Typed_Aliases
-                    or else Structurally_Equivalent
-                      (Alias_Item.Info.Entity, Item.Info.Entity))
-               then
-                  Browser.Get_View.Model.Add_To_Selection (Alias_Item);
-                  Browser.Get_View.Scroll_Into_View
-                    (Alias_Item, Duration => 0.3);
-                  Destroy (Item, In_Model => Browser.Get_View.Model);
-                  Item := Alias_Item;
-                  return;
-               end if;
+            --  Two structures are aliased only if they have the same
+            --  address and the same structure. The latter is to handle
+            --  cases like "struct A {struct B {int field}} where A, B and
+            --  field have the same address and would be considered as
+            --  aliases otherwise.
+            if Alias_Item /= null
+              and then
+                (not Typed_Aliases
+                 or else Structurally_Equivalent
+                   (Alias_Item.Info.Entity, Item.Info.Entity))
+            then
+               Browser.Get_View.Model.Add_To_Selection (Alias_Item);
+               Browser.Get_View.Scroll_Into_View
+                 (Alias_Item, Duration => 0.3);
+               Destroy (Item, In_Model => Browser.Get_View.Model);
+               Item := Alias_Item;
+               return;
             end if;
          end if;
       end if;

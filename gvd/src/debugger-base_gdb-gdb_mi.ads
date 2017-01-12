@@ -24,9 +24,13 @@ with GNAT.Regpat;
 with GVD.Types;
 with GNATCOLL.VFS;
 
-package Debugger.Gdb_MI is
+private with Ada.Containers.Vectors;
+private with Ada.Containers.Indefinite_Ordered_Maps;
 
-   type Gdb_MI_Debugger is new Debugger.Debugger_Root with private;
+package Debugger.Base_Gdb.Gdb_MI is
+
+   type Gdb_MI_Debugger is
+     new Debugger.Base_Gdb.Base_Gdb_Debugger with private;
 
    overriding procedure Spawn
      (Debugger        : access Gdb_MI_Debugger;
@@ -419,43 +423,81 @@ private
       Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   type Remote_GDB_Mode is (Native, Cross);
-   --  Indicates the type of remote access.
-   --  This controls the behavior of the debugger when doing file load
-   --  operations.
-   --  Here are the commands that are launched:
-   --
-   --   Native  :  "file"
-   --   Cross   :  "file" -> "target" * -> "load"
-   --
-   --  * Note: "target" is only launched if the debugger is not already
-   --    connected to a target.
+   type Evaluate_Type is (Var, Data);
+   --  How to retrieve values
 
-   ----------------------
-   -- Version handling --
-   ----------------------
+   type Node;
+   type Node_Access is access all Node;
 
-   type Version_Number is record
-      Major : Natural;
-      Minor : Natural;
+   package Nodes_Vectors is
+     new Standard.Ada.Containers.Vectors (Positive, Node_Access);
+
+   type Node (Has_Childs : Boolean) is record
+      Name : Unbounded_String;
+      Exp  : Unbounded_String;
+      case Has_Childs is
+         when True =>
+            Childs : Nodes_Vectors.Vector;
+         when False =>
+            Evaluate  : Evaluate_Type := Var;
+            Value     : Unbounded_String;
+            Is_String : Boolean := False;
+      end case;
+   end record;
+   --  Type which represent a node in MI tree structure
+
+   type Variable is record
+      Frame    : GVD.Types.Address_Type;
+      Name     : Ada.Strings.Unbounded.Unbounded_String;
+      Childs   : Natural := 0;
+      Updated  : Integer := 0;
+      Nodes    : Nodes_Vectors.Vector;
+   end record;
+   --  Represent variable
+
+   procedure Free (Var : in out Variable);
+
+   package Vars_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, Variable);
+   use Vars_Maps;
+
+   type Frame_Info is record
+      Frame  : Integer;
+      Addr   : GVD.Types.Address_Type;
+      Line   : Natural;
+   end record;
+   --  Frame data
+
+   Null_Frame_Info : constant Frame_Info :=
+     (Frame => -1,
+      Addr  => GVD.Types.Invalid_Address,
+      Line  => 0);
+
+   type Gdb_MI_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
+      Breakpoints_Changed  : Boolean := False;
+      Current_Command_Kind : Command_Category := Misc_Command;
+      Current_Frame        : Frame_Info       := Null_Frame_Info;
+      Command_No           : Integer          := 1;
+      Variables            : Vars_Maps.Map;
    end record;
 
-   Unknown_Version : constant Version_Number := (Major => 0, Minor => 0);
+   function Find_Var
+     (Debugger : access Gdb_MI_Debugger;
+      Entity   : String)
+      return Vars_Maps.Cursor;
+   --  Return representation of variable object associated
+   --  with entity and frame. Create new variable object if needed.
 
-   type Gdb_MI_Debugger is new Debugger.Debugger_Root with record
-      Executable          : GNATCOLL.VFS.Virtual_File;
-      Executable_Args     : GNAT.Strings.String_Access;
-      Stored_Language     : GNAT.Strings.String_Access;
-      GDB_Version         : Version_Number := Unknown_Version;
-      Endian              : Endian_Type := Unknown_Endian;
-      Debuggee_Pid        : Integer := 0;
-      Initializing        : Boolean := False;
-      Breakpoints_Changed : Boolean := False;
-      Category            : Command_Category := Misc_Command;
+   procedure Update_Var
+     (Debugger : access Gdb_MI_Debugger;
+      C        : Vars_Maps.Cursor);
+   --  Update variable and list childs
 
-      Mode             : Remote_GDB_Mode := Native;
-      Target_Connected : Boolean := False;
-      --  Whether we have connected to a target.
-   end record;
+   procedure Get_Frame_Info (Debugger : access Gdb_MI_Debugger);
+   --  Retrieve info about current frame
 
-end Debugger.Gdb_MI;
+   function Get_Current_Frame_Addr
+     (Debugger : access Gdb_MI_Debugger) return GVD.Types.Address_Type;
+   --  Return address of current frame
+
+end Debugger.Base_Gdb.Gdb_MI;

@@ -15,32 +15,32 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;        use Ada.Calendar;
-with Ada.Text_IO;         use Ada.Text_IO;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Text_IO;               use Ada.Text_IO;
 
-with GNAT.Expect;         use GNAT.Expect;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Expect;               use GNAT.Expect;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Gtk.Main;            use Gtk.Main;
+with Gtk.Main;                  use Gtk.Main;
 
-with Debugger.Gdb.Ada;    use Debugger.Gdb.Ada;
-with Debugger.Gdb;        use Debugger.Gdb;
-with Debugger;            use Debugger;
-with Default_Preferences; use Default_Preferences;
-with GVD_Module;          use GVD_Module;
-with GVD.Preferences;     use GVD.Preferences;
-with GVD.Types;           use GVD.Types;
-with Items;               use Items;
-with Language.Debugger;   use Language.Debugger;
-with Process_Proxies;     use Process_Proxies;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with Parse_Support;       use Parse_Support;
+with Debugger.Base_Gdb.Ada;     use Debugger.Base_Gdb.Ada;
+with Debugger.Base_Gdb.Gdb_CLI; use Debugger.Base_Gdb.Gdb_CLI;
+with Debugger.Base_Gdb.Gdb_MI;  use Debugger.Base_Gdb.Gdb_MI;
+with Debugger;                  use Debugger;
+with Default_Preferences;       use Default_Preferences;
+with GVD_Module;                use GVD_Module;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Types;                 use GVD.Types;
+with Items;                     use Items;
+with Language.Debugger;         use Language.Debugger;
+with Process_Proxies;           use Process_Proxies;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Parse_Support;             use Parse_Support;
 
 procedure Test_Parse is
 
-   Gdb_Record : aliased Gdb_Debugger;
-   Gdb        : Debugger_Access := Gdb_Record'Unchecked_Access;
-   Lang       : access Gdb_Ada_Language := new Gdb_Ada_Language;
+   Gdb  : Debugger_Access;
+   Lang : access Gdb_Ada_Language := new Gdb_Ada_Language;
 
    -----------------------
    -- Print_Special_Var --
@@ -63,8 +63,7 @@ procedure Test_Parse is
          Get_Line (File, Type_Str, Last);
          Close (File);
          Index := 1;
-         Parse_Value (Lang, Type_Str (1 .. Last),
-                      Index, V, Repeat_Num);
+         Lang.Parse_Value (Type_Str (1 .. Last), Index, V, Repeat_Num);
          Print (V, Lang, Var);
       else
          Put_Line (Var & ": Unknown variable");
@@ -77,13 +76,13 @@ procedure Test_Parse is
 
    procedure Print_Var (Var : String);
    procedure Print_Var (Var : String) is
-      V : Generic_Type_Access;
+      V     : Generic_Type_Access;
       Found : Boolean;
    begin
       Put_Line ("------------------------------");
-      V := Parse_Type (Gdb, Var);
+      V := Gdb.Parse_Type (Var);
       if V /= null then
-         Parse_Value (Gdb, Var, V, Value_Found => Found);
+         Gdb.Parse_Value (Var, V, Value_Found => Found);
          Print (V, Lang, Var);
       else
          Put_Line (Var & ": Unknown variable");
@@ -122,19 +121,26 @@ begin
    Register_Default_Preferences (GVD_Prefs);
    Load_Preferences (GVD_Prefs, Create_From_Base ("preferences"));
 
-   Set_Language (Gdb, Lang.all'Unchecked_Access);
-   Set_Debugger (Lang, Gdb);
+   case GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref) is
+      when GVD.Types.Gdb =>
+         Gdb := new Gdb_Debugger;
+      when GVD.Types.Gdb_MI =>
+         Gdb := new Gdb_MI_Debugger;
+   end case;
 
-   Spawn (Gdb, null, No_File, List, "", new Process_Proxy);
+   Gdb.Set_Language (Lang.all'Unchecked_Access);
+   Lang.Set_Debugger (Gdb);
 
-   Initialize (Gdb);
-   Set_Executable (Gdb, Create (Full_Filename => "../parse"));
-   Send (Gdb, "begin");
-   Num := Break_Exception (Gdb, Unhandled => False);
+   Gdb.Spawn (null, No_File, List, "", new Process_Proxy);
 
-   Run (Gdb);
+   Gdb.Initialize;
+   Gdb.Set_Executable (Create (Full_Filename => "../parse"));
+   Gdb.Send ("begin");
+   Num := Gdb.Break_Exception (Unhandled => False);
 
-   Stack_Up (Gdb);
+   Gdb.Run;
+
+   Gdb.Stack_Up;
 
    Print_Var_Parse ("Non_Existant_Variable");
    --  Check there is no error in that case.
@@ -197,10 +203,10 @@ begin
    Print_Var_Parse ("Scr");
    Print_Var_Parse ("More_Fruits");  --  Test for F223-004
 
-   Stack_Down (Gdb);  --  Test for 9305-014
+   Gdb.Stack_Down;  --  Test for 9305-014
    Print_Var_Parse ("Args");
    Print_Var_Parse ("Args2");
-   Send (Gdb, "cont");
+   Gdb.Send ("cont");
 
    Print_Var_Parse ("Ut");
 
@@ -229,16 +235,16 @@ begin
    Print_Var ("RAF");
    --  Test for G413-004
 
-   Send (Gdb, "b swap");
-   Send (Gdb, "cont");
+   Gdb.Send ("b swap");
+   Gdb.Send ("cont");
    Print_Var ("Word.all");
    --  Test for JC21-017
 
-   Close (Gdb);
+   Gdb.Close;
 
 exception
    when others =>
-      Close (Gdb);
+      Gdb.Close;
       raise;
 
 end Test_Parse;

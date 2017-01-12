@@ -25,7 +25,7 @@ with Language; use Language;
 with Language.Debugger;
 with GNAT.Expect;
 
-package Debugger.Gdb.Ada is
+package Debugger.Base_Gdb.Ada is
 
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with private;
@@ -137,4 +137,4 @@ private
    overriding function Get_Name (Lang : access Gdb_Ada_Language) return String;
    --  See inherited documentation
 
-end Debugger.Gdb.Ada;
+end Debugger.Base_Gdb.Ada;

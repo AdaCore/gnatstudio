@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Utils; use GNATCOLL.Utils;
-with String_Utils;  use String_Utils;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with String_Utils;      use String_Utils;
 with Language.Debugger; use Language.Debugger;
-with Language.C;    use Language.C;
+with Language.C;        use Language.C;
 
-with Items;         use Items;
-with Items.Simples; use Items.Simples;
-with Items.Arrays;  use Items.Arrays;
-with Items.Records; use Items.Records;
+with Items;             use Items;
+with Items.Simples;     use Items.Simples;
+with Items.Arrays;      use Items.Arrays;
+with Items.Records;     use Items.Records;
 
-package body Debugger.Gdb.C is
+package body Debugger.Base_Gdb.C is
 
    --------------------
    -- Is_Simple_Type --
@@ -862,8 +862,9 @@ package body Debugger.Gdb.C is
       Index    : in out Natural;
       Result   : in out Array_Type_Access)
    is
-      Dim     : Natural := 0;            --  current dimension
+      Dim           : Natural      := 0; --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
+      Int           : Natural;
 
       procedure Parse_Item;
       --  Parse the value of a single item, and add it to the contents of
@@ -874,8 +875,8 @@ package body Debugger.Gdb.C is
       ----------------
 
       procedure Parse_Item is
-         Tmp        : Generic_Type_Access;
-         Repeat_Num : Integer;
+         Tmp         : Generic_Type_Access;
+         Repeat_Num  : Integer;
          Start_Index : constant Natural := Index;
 
       begin
@@ -906,7 +907,7 @@ package body Debugger.Gdb.C is
       loop
          case Type_Str (Index) is
             when '}' =>
-               Dim := Dim - 1;
+               Dim   := Dim - 1;
                Index := Index + 1;
 
             when '{' =>
@@ -918,8 +919,23 @@ package body Debugger.Gdb.C is
                if Dim = Num_Dimensions (Result.all) then
                   Parse_Item;
                else
-                  Dim := Dim + 1;
+                  Dim   := Dim + 1;
                   Index := Index + 1;
+               end if;
+
+               --  Looking at "index = ".
+               Int := Index;
+               while Int <= Type_Str'Last
+                 and then Type_Str (Int) /= ','  --  item separator
+                 and then Type_Str (Int) /= '}'  --  end of sub-array
+                 and then Type_Str (Int) /= '{'  --  start of sub-array
+                 and then Type_Str (Int) /= '='  --  index of the item
+               loop
+                  Int := Int + 1;
+               end loop;
+
+               if Type_Str (Int) = '=' then
+                  Index := Int + 2;  --  skip "index = "
                end if;
 
             when ',' | ' ' =>
@@ -988,4 +1004,4 @@ package body Debugger.Gdb.C is
       return "c";
    end Get_Name;
 
-end Debugger.Gdb.C;
+end Debugger.Base_Gdb.C;

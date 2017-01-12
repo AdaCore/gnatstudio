@@ -79,7 +79,7 @@ package body GVD.Preferences is
         (Manager => Prefs,
          Name    => "GPS6-Debugger-Debugger-Kind",
          Label   => -"Debugger kind",
-         Path    => ":Debugger",
+         Path    => "Debugger:Startup & Exit",
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 

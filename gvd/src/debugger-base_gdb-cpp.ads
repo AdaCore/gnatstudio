@@ -25,7 +25,7 @@ with GNAT.Expect;
 with Language; use Language;
 with Language.Debugger;
 
-package Debugger.Gdb.Cpp is
+package Debugger.Base_Gdb.Cpp is
 
    type Gdb_Cpp_Language is new
      Language.Debugger.Language_Debugger with private;
@@ -134,4 +134,4 @@ private
    overriding function Get_Name (Lang : access Gdb_Cpp_Language) return String;
    --  See inherited documentation
 
-end Debugger.Gdb.Cpp;
+end Debugger.Base_Gdb.Cpp;

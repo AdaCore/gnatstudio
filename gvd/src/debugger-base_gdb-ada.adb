@@ -28,7 +28,7 @@ with Language.Ada;          use Language.Ada;
 with Language.Debugger;     use Language.Debugger;
 with String_Utils;          use String_Utils;
 
-package body Debugger.Gdb.Ada is
+package body Debugger.Base_Gdb.Ada is
 
    Me : constant Trace_Handle := Create ("Debug.Gdb.Ada", Off);
 
@@ -1173,4 +1173,4 @@ package body Debugger.Gdb.Ada is
            or else Info (Info'First .. Info'First + 14) /= "access function");
    end Can_Tooltip_On_Entity;
 
-end Debugger.Gdb.Ada;
+end Debugger.Base_Gdb.Ada;

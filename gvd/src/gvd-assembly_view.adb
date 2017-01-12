@@ -537,7 +537,7 @@ package body GVD.Assembly_View is
       Process : Visual_Debugger;
    begin
       if View = null then
-         Num := Breakpoint_Identifier'Last;
+         Num    := Breakpoint_Identifier'Last;
          Result := False;
          return;
       end if;
@@ -545,7 +545,7 @@ package body GVD.Assembly_View is
       Process := Visual_Debugger (Get_Process (View));
       for B of Get_Stored_List_Of_Breakpoints (Process).List loop
          if B.Address = Addr then
-            Num := B.Num;
+            Num    := B.Num;
             Result := True;
             return;
          end if;

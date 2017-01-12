@@ -257,7 +257,7 @@ package body GVD.Breakpoints_List is
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class)
       is
-         Num      : Breakpoint_Identifier with Unreferenced;
+         Num : Breakpoint_Identifier with Unreferenced;
       begin
          if Self.Command_In_Process then
             Insert
@@ -301,6 +301,7 @@ package body GVD.Breakpoints_List is
    is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
+      Num     : Breakpoint_Identifier := GVD.Types.No_Breakpoint;
 
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class);
@@ -315,8 +316,13 @@ package body GVD.Breakpoints_List is
                -"The debugger is busy processing a command",
                Mode => Error);
          else
-            Visual_Debugger (Self).Debugger.Remove_Breakpoint_At
-              (File, Line, Mode => Visible);
+            if Num = GVD.Types.No_Breakpoint then
+               Visual_Debugger (Self).Debugger.Remove_Breakpoint_At
+                 (File, Line, Mode => Visible);
+            else
+               Visual_Debugger (Self).Debugger.Remove_Breakpoint
+                 (Num, Mode => Visible);
+            end if;
          end if;
       end On_Debugger;
 
@@ -334,7 +340,20 @@ package body GVD.Breakpoints_List is
          end loop;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
+
       else
+         for Idx in Process.Breakpoints.List.First_Index ..
+           Process.Breakpoints.List.Last_Index
+         loop
+            if Get_File (Process.Breakpoints.List (Idx).Location) = File
+              and then Get_Line
+                (Process.Breakpoints.List (Idx).Location) = Line
+            then
+               Num := Process.Breakpoints.List (Idx).Num;
+               exit;
+            end if;
+         end loop;
+
          For_Each_Debugger (Kernel, On_Debugger'Access);
       end if;
    end Unbreak_Source;

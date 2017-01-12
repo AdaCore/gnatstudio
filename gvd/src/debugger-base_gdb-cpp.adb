@@ -17,21 +17,21 @@
 
 --  ??? Must add support for "show print vtbl"
 
-with Language.Debugger; use Language.Debugger;
-with Language.Cpp;      use Language.Cpp;
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with Language.Debugger;   use Language.Debugger;
+with Language.Cpp;        use Language.Cpp;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
 
-with String_Utils;   use String_Utils;
-with Items;          use Items;
-with Items.Arrays;   use Items.Arrays;
-with Items.Records;  use Items.Records;
-with Items.Classes;  use Items.Classes;
-with Items.Simples;  use Items.Simples;
+with String_Utils;        use String_Utils;
+with Items;               use Items;
+with Items.Arrays;        use Items.Arrays;
+with Items.Records;       use Items.Records;
+with Items.Classes;       use Items.Classes;
+with Items.Simples;       use Items.Simples;
 
-with Ada.Tags;       use Ada.Tags;
-with Debugger.Gdb.C; use Debugger.Gdb.C;
+with Ada.Tags;            use Ada.Tags;
+with Debugger.Base_Gdb.C; use Debugger.Base_Gdb.C;
 
-package body Debugger.Gdb.Cpp is
+package body Debugger.Base_Gdb.Cpp is
 
    procedure Parse_Class_Type
      (Lang      : access Gdb_Cpp_Language;
@@ -612,4 +612,4 @@ package body Debugger.Gdb.Cpp is
       return "c++";
    end Get_Name;
 
-end Debugger.Gdb.Cpp;
+end Debugger.Base_Gdb.Cpp;

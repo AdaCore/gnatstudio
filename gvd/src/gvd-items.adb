@@ -21,6 +21,7 @@ with Language;           use Language;
 with Items.Simples;      use Items.Simples;
 
 package body GVD.Items is
+
    Me : constant Trace_Handle := Create ("ITEMS");
 
    ---------------------------

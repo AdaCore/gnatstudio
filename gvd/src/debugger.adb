@@ -51,7 +51,7 @@ with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 package body Debugger is
 
@@ -137,22 +137,6 @@ package body Debugger is
    --  Call the first command queued for Debugger.
    --  Return False if no command are in the queue, True otherwise.
 
-   -----------------------
-   -- Connect_To_Target --
-   -----------------------
-
-   procedure Connect_To_Target
-     (Debugger : access Debugger_Root;
-      Target   : String;
-      Protocol : String;
-      Force    : Boolean := False;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden)
-   is
-      pragma Unreferenced (Debugger, Target, Protocol, Mode);
-   begin
-      null;
-   end Connect_To_Target;
-
    ----------
    -- Free --
    ----------
@@ -175,14 +159,13 @@ package body Debugger is
       Entity   : String) return Items.Generic_Type_Access
    is
       Result   : Generic_Type_Access;
-      Type_Str : constant String  := Type_Of (Debugger, Entity);
+      Type_Str : constant String  := Debugger.Type_Of (Entity);
       Index    : Natural := Type_Str'First;
 
    begin
       if Type_Str'Length /= 0 then
-         Parse_Type
-           (Language_Debugger_Access (Get_Language (Debugger)),
-            Type_Str, Entity, Index, Result);
+         Language_Debugger_Access (Debugger.Get_Language).Parse_Type
+           (Type_Str, Entity, Index, Result);
       end if;
 
       return Result;
@@ -199,7 +182,7 @@ package body Debugger is
       Format      : Value_Format := Default_Format;
       Value_Found : out Boolean)
    is
-      Type_Str   : constant String := Value_Of (Debugger, Entity, Format);
+      Type_Str   : constant String := Debugger.Value_Of (Entity, Format);
       Index      : Natural := Type_Str'First;
       Repeat_Num : Positive;
 
@@ -208,9 +191,8 @@ package body Debugger is
       Value_Found := Type_Str'Length /= 0;
 
       if Value_Found then
-         Parse_Value
-           (Language_Debugger_Access (Get_Language (Debugger)),
-            Type_Str, Index, Value, Repeat_Num);
+         Language_Debugger_Access (Debugger.Get_Language).Parse_Value
+           (Type_Str, Index, Value, Repeat_Num);
       end if;
    end Parse_Value;
 
@@ -256,23 +238,13 @@ package body Debugger is
 
       C := First (Debugger.Languages);
       while Has_Element (C) loop
-         if Equal (Get_Name (Element (C)), Lang, Case_Sensitive => False) then
+         if Equal (Element (C).Get_Name, Lang, Case_Sensitive => False) then
             return Element (C);
          end if;
          Next (C);
       end loop;
       return null;
    end Get_Language;
-
-   ---------------------
-   -- Detect_Language --
-   ---------------------
-
-   procedure Detect_Language (Debugger : access Debugger_Root) is
-      pragma Unreferenced (Debugger);
-   begin
-      null;
-   end Detect_Language;
 
    -----------------
    -- Get_Process --
@@ -321,13 +293,13 @@ package body Debugger is
          Success           => Success);
 
       if not Success
-        or else Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid
+        or else Descriptor.Get_Pid = GNAT.Expect.Invalid_Pid
       then
          raise Spawn_Error;
       end if;
 
-      Set_Descriptor (Debugger.Process, Descriptor);
-      Set_Is_Started (Debugger, False);
+      Debugger.Process.Set_Descriptor (Descriptor);
+      Debugger.Set_Is_Started (False);
 
       --  Install a callback on the debugger's output file descriptor
 
@@ -370,7 +342,7 @@ package body Debugger is
    is
       pragma Unreferenced (Debugger, Str);
    begin
-      Frame := Null_Unbounded_String;
+      Frame   := Null_Unbounded_String;
       Message := Location_Not_Found;
    end Found_Frame_Info;
 
@@ -423,13 +395,13 @@ package body Debugger is
       procedure Flush_Async_Output is
       begin
          loop
-            Wait (Get_Process (Debugger), Match, Line_Regexp, Timeout => 1);
+            Debugger.Get_Process.Wait (Match, Line_Regexp, Timeout => 1);
             exit when Match <= 0;
 
             if Active (Me) then
                declare
                   S : constant String :=
-                    Strip_CR (Expect_Out (Get_Process (Debugger)));
+                    Strip_CR (Debugger.Get_Process.Expect_Out);
                begin
                   --  Reduce noise in output
                   if S /= (1 => ASCII.LF) then
@@ -475,9 +447,9 @@ package body Debugger is
 
       pragma Assert (Debugger.State = Async_Wait);
 
-      if Wait_Prompt (Debugger, Timeout => 1) then
+      if Debugger.Wait_Prompt (Timeout => 1) then
          Debugger.Continuation_Line := False;
-         Mode := Get_Command_Mode (Get_Process (Debugger));
+         Mode := Debugger.Get_Process.Get_Command_Mode;
 
          Debugger.State := Idle;
          Flush_Async_Output;
@@ -505,12 +477,12 @@ package body Debugger is
          end if;
          Process.Timeout_Id := 0;
 
-         if Debugger /= null and then Get_Process (Debugger) /= null then
-            Set_Command_In_Process (Get_Process (Debugger), False);
+         if Debugger /= null and then Debugger.Get_Process /= null then
+            Debugger.Get_Process.Set_Command_In_Process (False);
          end if;
 
          Free (Process.Current_Command);
-         Unregister_Dialog (Process);
+         Process.Unregister_Dialog;
          return False;
    end Output_Available;
 
@@ -529,18 +501,18 @@ package body Debugger is
       Kind    : Command_Category;
 
    begin
-      Set_Command_Mode (Get_Process (Debugger), Mode);
-      Kind := Command_Kind (Debugger, Cmd);
+      Debugger.Get_Process.Set_Command_Mode (Mode);
+      Kind := Debugger.Command_Kind (Cmd);
 
-      if not Is_Started (Debugger)
+      if not Debugger.Is_Started
         and then Kind = Execution_Command
       then
-         Set_Is_Started (Debugger, True);
+         Debugger.Set_Is_Started (True);
       end if;
 
       Process := GVD.Process.Convert (Debugger);
       if Process /= null then
-         if not Command_In_Process (Get_Process (Debugger)) then
+         if not Debugger.Get_Process.Command_In_Process then
             --  If we are already processing a command, this means we set a
             --  Force_Send parameter to True in the call to Send. Most notably,
             --  this is used when sending additional input to the debugger (for
@@ -558,7 +530,7 @@ package body Debugger is
             Process.Current_Command := new String'(Cmd);
          end if;
 
-         Set_Command_In_Process (Get_Process (Debugger));
+         Debugger.Get_Process.Set_Command_In_Process;
 
          if Mode /= Internal
            and then Kind = Execution_Command
@@ -573,7 +545,7 @@ package body Debugger is
          end if;
 
       else
-         Set_Command_In_Process (Get_Process (Debugger));
+         Debugger.Get_Process.Set_Command_In_Process;
       end if;
 
       --  Append the command to the history if necessary
@@ -582,7 +554,7 @@ package body Debugger is
         and then Mode /= Internal
         and then Process /= null
       then
-         Data.Mode := Mode;
+         Data.Mode    := Mode;
          Data.Command := new String'
            (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
          Append (Process.Command_History, Data);
@@ -590,7 +562,7 @@ package body Debugger is
 
       --  Send the command to the debugger
 
-      Send (Get_Process (Debugger), Cmd, Empty_Buffer);
+      Debugger.Get_Process.Send (Cmd, Empty_Buffer);
    end Send_Internal_Pre;
 
    ------------------------
@@ -608,7 +580,7 @@ package body Debugger is
       Dummy                 : Boolean;
 
    begin
-      Set_Command_In_Process (Get_Process (Debugger), False);
+      Debugger.Get_Process.Set_Command_In_Process (False);
 
       --  ??? Process might be null in the testsuite.
 
@@ -616,12 +588,12 @@ package body Debugger is
          --  Compute whether breakpoints might have changed before running
          --  hooks and e.g. running other debugger commands as a side effect.
 
-         Bp_Might_Have_Changed := Breakpoints_Changed
-           (Debugger, Process.Current_Command.all);
-         Kind := Command_Kind (Debugger, Process.Current_Command.all);
+         Bp_Might_Have_Changed := Debugger.Breakpoints_Changed
+           (Process.Current_Command.all);
+         Kind := Debugger.Command_Kind (Process.Current_Command.all);
 
          Free (Process.Current_Command);
-         Unregister_Dialog (Process);
+         Process.Unregister_Dialog;
 
          --  Are there still commands to run in the queue ? If yes, execute
          --  them and let the last one do the post-processing.
@@ -629,8 +601,8 @@ package body Debugger is
             return;
          end if;
 
-         Final_Post_Process
-           (Process, Mode,
+         Process.Final_Post_Process
+           (Mode,
             Always_Emit_Hooks              => Always_Emit_Hooks,
             Category                       => Kind,
             Breakpoints_Might_Have_Changed => Bp_Might_Have_Changed);
@@ -641,7 +613,6 @@ package body Debugger is
          if Mode /= Internal then
             Dummy := Process_Command (Debugger);
          end if;
-
       end if;
    end Send_Internal_Post;
 
@@ -671,7 +642,7 @@ package body Debugger is
       procedure Wait_For_Prompt_And_Get_Output is
          Dummy   : Boolean;
       begin
-         Wait_Prompt (Debugger_Access (Debugger));
+         Debugger_Access (Debugger).Wait_Prompt;
          Debugger.Continuation_Line := False;
          Debugger.State := Idle;
 
@@ -680,7 +651,7 @@ package body Debugger is
 
             declare
                S : String := Glib.Convert.Locale_To_UTF8
-                 (Expect_Out (Get_Process (Debugger)));
+                 (Debugger.Get_Process.Expect_Out);
                L : Natural;
             begin
                --  Strip CRs in remote mode, as we can't know in advance if the
@@ -713,7 +684,7 @@ package body Debugger is
       --  only occur in a few limited cases anyway (Set_Breakpoint_Command for
       --  instance).
 
-      if Command_In_Process (Get_Process (Debugger)) then
+      if Debugger.Get_Process.Command_In_Process then
          if Synchronous then
             Trace (Me, "Cannot send command " & Cmd & " since debugger is"
                    & " already processing"
@@ -767,8 +738,11 @@ package body Debugger is
 
                elsif Tmp /= "" then
                   if Mode in Visible_Command then
-                     Output_Text (Process, Tmp, Is_Command  => False,
-                                  Set_Position              => True);
+                     Process.Output_Text
+                       (Tmp,
+                        Is_Command   => False,
+                        Set_Position => True);
+
                      Debugger_Root'Class (Debugger.all).Display_Prompt;
                   end if;
                   return;
@@ -817,7 +791,7 @@ package body Debugger is
                      --  we're sending input in the middle of a command,
                      --  which is delicate.
 
-                     Process_Proxies.Empty_Buffer (Get_Process (Debugger));
+                     Process_Proxies.Empty_Buffer (Debugger.Get_Process);
                   end if;
                end if;
          end case;
@@ -852,11 +826,11 @@ package body Debugger is
 
          Dummy :=
            Message_Dialog
-             (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
+             (Debugger.Get_Process.Expect_Out & ASCII.LF &
               (-"The underlying debugger died unexpectedly. Closing it"),
               Error, Button_OK, Button_OK,
               Parent => Debugger.Kernel.Get_Main_Window);
-         Close_Debugger (Process);
+         Process.Close_Debugger;
       end if;
    end On_Debugger_Died;
 
@@ -991,8 +965,8 @@ package body Debugger is
       Value    : String)
    is
       S : constant String :=
-        Set_Variable (Language_Debugger_Access (Get_Language (Debugger)),
-                      Var_Name, Value);
+        Language_Debugger_Access (Debugger.Get_Language).Set_Variable
+        (Var_Name, Value);
    begin
       if S /= "" then
          --  We need to send the command in hidden mode (synchronously)
@@ -1004,7 +978,7 @@ package body Debugger is
          --  invalid value for instance), and we also want the Variables view
          --  to refresh after the command.
 
-         Send (Debugger, S, Mode => Hidden);
+         Debugger.Send (S, Mode => Hidden);
       end if;
    end Set_Variable;
 
@@ -1024,13 +998,13 @@ package body Debugger is
    begin
       --  Wait until the command has been processed
 
-      Current_Process := Get_Process (Debugger);
+      Current_Process := Debugger.Get_Process;
 
       --  Make sure that Current_Process is not null before calling
       --  Command_In_Process : this can happen when GVD is exiting.
 
       while Current_Process /= null
-        and then Command_In_Process (Current_Process)
+        and then Current_Process.Command_In_Process
       loop
          Num_Events := 1;
 
@@ -1041,7 +1015,7 @@ package body Debugger is
             Num_Events := Num_Events + 1;
          end loop;
 
-         Current_Process := Get_Process (Debugger);
+         Current_Process := Debugger.Get_Process;
       end loop;
    end Wait_User_Command;
 
@@ -1101,8 +1075,9 @@ package body Debugger is
       end if;
 
       Debugger.Command_Queue := Command.Next;
-      Send
-        (Debugger, Command.Cmd.all, Command.Empty_Buffer,
+      Debugger.Send
+        (Command.Cmd.all,
+         Command.Empty_Buffer,
          Mode => Command.Mode);
 
       Free (Command.Cmd);
@@ -1192,8 +1167,8 @@ package body Debugger is
 
    procedure Close (Debugger : access Debugger_Root) is
       Result : Expect_Match;
-      C : Language_Lists.Cursor := First (Debugger.Languages);
-      Lang : Language.Language_Access;
+      C      : Language_Lists.Cursor := First (Debugger.Languages);
+      Lang   : Language.Language_Access;
    begin
       while Has_Element (C) loop
          Lang := Element (C);
@@ -1202,21 +1177,21 @@ package body Debugger is
       end loop;
       Clear (Debugger.Languages);
 
-      if Get_Process (Debugger) /= null
-        and then Get_Descriptor (Get_Process (Debugger)) /= null
+      if Debugger.Get_Process /= null
+        and then Debugger.Get_Process.Get_Descriptor /= null
       then
          begin
             --  Ensure that the debugger is terminated before closing the pipes
             --  and trying to kill it abruptly.
 
             begin
-               Wait (Get_Process (Debugger), Result, ".+", Timeout => 200);
+               Debugger.Get_Process.Wait (Result, ".+", Timeout => 200);
             exception
                when Process_Died =>
                   --  This is somewhat expected... RIP.
                   null;
             end;
-            Close (Get_Descriptor (Get_Process (Debugger)).all);
+            Debugger.Get_Process.Get_Descriptor.Close;
          exception
             when Process_Died =>
                null;
@@ -1265,106 +1240,6 @@ package body Debugger is
       return Debugger.Kernel;
    end Get_Kernel;
 
-   ------------------------------
-   -- Set_Breakpoint_Condition --
-   ------------------------------
-
-   procedure Set_Breakpoint_Condition
-     (Debugger  : access Debugger_Root;
-      Num       : GVD.Types.Breakpoint_Identifier;
-      Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-   begin
-      null;
-   end Set_Breakpoint_Condition;
-
-   ----------------------
-   -- Set_Scope_Action --
-   ----------------------
-
-   procedure Set_Breakpoint_Command
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-   begin
-      null;
-   end Set_Breakpoint_Command;
-
-   ----------------------
-   -- Set_Scope_Action --
-   ----------------------
-
-   procedure Set_Breakpoint_Ignore_Count
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Count    : Integer;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-   begin
-      null;
-   end Set_Breakpoint_Ignore_Count;
-
-   ----------------------
-   -- Set_Scope_Action --
-   ----------------------
-
-   procedure Set_Scope_Action
-     (Debugger : access Debugger_Root;
-      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
-      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
-      Num      : GVD.Types.Breakpoint_Identifier := 0;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-      pragma Unreferenced (Scope, Action, Num, Mode);
-   begin
-      null;
-   end Set_Scope_Action;
-
-   -----------------
-   -- Task_Switch --
-   -----------------
-
-   procedure Task_Switch
-     (Debugger : access Debugger_Root;
-      Task_Num : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-      pragma Unreferenced (Task_Num, Mode);
-   begin
-      null;
-   end Task_Switch;
-
-   -------------------
-   -- Thread_Switch --
-   -------------------
-
-   procedure Thread_Switch
-     (Debugger : access Debugger_Root;
-      Thread   : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-      pragma Unreferenced (Thread, Mode);
-   begin
-      null;
-   end Thread_Switch;
-
-   ---------------
-   -- PD_Switch --
-   ---------------
-
-   procedure PD_Switch
-     (Debugger : access Debugger_Root;
-      PD       : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
-      pragma Unreferenced (PD, Mode);
-   begin
-      null;
-   end PD_Switch;
-
    ----------------
    -- Info_Tasks --
    ----------------
@@ -1406,18 +1281,6 @@ package body Debugger is
    begin
       Len := 0;
    end Info_PD;
-
-   -------------------------
-   -- Set_VxWorks_Version --
-   -------------------------
-
-   procedure Set_VxWorks_Version
-     (Debugger : access Debugger_Root; Force : Boolean := False)
-   is
-      pragma Unreferenced (Force);
-   begin
-      null;
-   end Set_VxWorks_Version;
 
    ---------------------
    -- VxWorks_Version --

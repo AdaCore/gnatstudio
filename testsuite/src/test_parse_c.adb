@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences; use Default_Preferences;
-with Items;               use Items;
-with Debugger.Gdb;        use Debugger.Gdb;
-with Debugger.Gdb.C;      use Debugger.Gdb.C;
-with GNAT.Expect;         use GNAT.Expect;
-with GNAT.IO;             use GNAT.IO;
+with Default_Preferences;       use Default_Preferences;
+with Items;                     use Items;
+with Debugger.Base_Gdb.Gdb_CLI; use Debugger.Base_Gdb.Gdb_CLI;
+with Debugger.Base_Gdb.Gdb_MI;  use Debugger.Base_Gdb.Gdb_MI;
+with Debugger.Base_Gdb.C;       use Debugger.Base_Gdb.C;
+with GNAT.Expect;               use GNAT.Expect;
+with GNAT.IO;                   use GNAT.IO;
 with GNATCOLL.Traces;
-with Ada.Calendar;        use Ada.Calendar;
-with Process_Proxies;     use Process_Proxies;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with Debugger;            use Debugger;
-with GVD_Module;          use GVD_Module;
-with GVD.Types;           use GVD.Types;
-with Gtk.Main;            use Gtk.Main;
-with GVD.Preferences;     use GVD.Preferences;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with Parse_Support;       use Parse_Support;
+with Ada.Calendar;              use Ada.Calendar;
+with Process_Proxies;           use Process_Proxies;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Debugger;                  use Debugger;
+with GVD_Module;                use GVD_Module;
+with GVD.Types;                 use GVD.Types;
+with Gtk.Main;                  use Gtk.Main;
+with GVD.Preferences;           use GVD.Preferences;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Parse_Support;             use Parse_Support;
 
 procedure Test_Parse_C is
 
-   Gdb_Record : aliased Gdb_Debugger;
-   Gdb        : Debugger_Access := Gdb_Record'Unchecked_Access;
-   Language   : access Gdb_C_Language := new Gdb_C_Language;
+   Gdb      : Debugger_Access;
+   Language : access Gdb_C_Language := new Gdb_C_Language;
 
    ---------------
    -- Print_Var --
@@ -69,6 +69,13 @@ begin
    GVD_Prefs := new Preferences_Manager_Record;
    Register_Default_Preferences (GVD_Prefs);
    Load_Preferences (GVD_Prefs, Create_From_Base ("preferences"));
+
+   case GVD.Types.Debugger_Type'(Debugger_Kind.Get_Pref) is
+      when GVD.Types.Gdb =>
+         Gdb := new Gdb_Debugger;
+      when GVD.Types.Gdb_MI =>
+         Gdb := new Gdb_MI_Debugger;
+   end case;
 
    Set_Language (Gdb, Language.all'Unchecked_Access);
    Set_Debugger (Language, Gdb);

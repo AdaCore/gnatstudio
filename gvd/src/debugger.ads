@@ -102,7 +102,7 @@ package Debugger is
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden) is null;
    --  If supported by the debugger, connect to the given target, using
    --  the given communication protocol.
    --  If Force is True, the debugger should kill any existing connection
@@ -192,7 +192,7 @@ package Debugger is
    --  This might return null if Set_Language was never called for that
    --  language. If Lang is the empty string, returns the current language.
 
-   procedure Detect_Language (Debugger : access Debugger_Root);
+   procedure Detect_Language (Debugger : access Debugger_Root) is null;
    --  Try to detect the current language associated with the debugger.
 
    function Parse_Type
@@ -705,14 +705,14 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Set the condition on which a breakpoint should be activated.
 
    procedure Set_Breakpoint_Command
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Set the commands to execute upon stopping at the breakpoint.
    --  One command per line in commands.
 
@@ -720,7 +720,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Set the number of times the breakpoint should be ignored before being
    --  activated.
 
@@ -729,7 +729,7 @@ package Debugger is
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Num      : GVD.Types.Breakpoint_Identifier := 0;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Set the scope/action of the breakpoint identified by Num:
    --  GDB_COMMAND: change-breakpoint-scope/change-breakpoint-action
    --  Set the default scope/action of a debugging session if Num = 0:
@@ -790,21 +790,21 @@ package Debugger is
    procedure Task_Switch
      (Debugger : access Debugger_Root;
       Task_Num : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Switch to a specified task.
    --  GDB_COMMAND: "task"
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root;
       Thread   : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread"
 
    procedure PD_Switch
      (Debugger : access Debugger_Root;
       PD       : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  Switch to a specified protection domain.
    --  GDB_COMMAND: "pd <pd_id>"
 
@@ -830,7 +830,7 @@ package Debugger is
    --  GDB_COMMAND: "info pds"
 
    procedure Set_VxWorks_Version
-     (Debugger : access Debugger_Root; Force : Boolean := False);
+     (Debugger : access Debugger_Root; Force : Boolean := False) is null;
    --  Determine the VxWorks version running on the target
 
    function VxWorks_Version
@@ -1066,4 +1066,5 @@ private
 
       Execution_Window : Boolean := False;
    end record;
+
 end Debugger;

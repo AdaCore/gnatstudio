@@ -43,8 +43,8 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands;                   use Commands;
 with Config;                     use Config;
-with Debugger.Gdb;               use Debugger.Gdb;
-with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
+with Debugger.Base_Gdb.Gdb_CLI;  use Debugger.Base_Gdb.Gdb_CLI;
+with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
 with Default_Preferences;        use Default_Preferences;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
@@ -67,7 +67,8 @@ with Toolchains_Old;             use Toolchains_Old;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 package body GVD.Process is
-   Me      : constant Trace_Handle := Create ("GVD.Process");
+
+   Me : constant Trace_Handle := Create ("GVD.Process");
 
    type GPS_Proxy is new Process_Proxy with record
       Process : Visual_Debugger;
@@ -347,10 +348,9 @@ package body GVD.Process is
 
       Process.Post_Processing := True;
 
-      if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
-         Found_File_Name
-           (Process.Debugger,
-            Process.Current_Output
+      if Process.Debugger.Get_Process.Get_Parse_File_Name then
+         Process.Debugger.Found_File_Name
+           (Process.Current_Output
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
             File, Line, Addr);
 
@@ -688,7 +688,7 @@ package body GVD.Process is
          return;
       end if;
 
-      Busy := Command_In_Process (Get_Process (Debugger.Debugger));
+      Busy := Debugger.Debugger.Get_Process.Command_In_Process;
 
       if Output /= null and then Busy then
          GNATCOLL.Traces.Trace
@@ -697,7 +697,7 @@ package body GVD.Process is
       end if;
 
       if Output_Command then
-         Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
+         Debugger.Output_Text (Command & ASCII.LF, Is_Command => True);
       end if;
 
       --  Command has been converted to lower-cases, but the new version
@@ -712,9 +712,8 @@ package body GVD.Process is
             --  If the debugger does not have a separate execution window,
             --  send the command right away.
 
-            Send
-              (Debugger.Debugger,
-               Command, Wait_For_Prompt => False, Mode => Mode);
+            Debugger.Debugger.Send
+              (Command, Wait_For_Prompt => False, Mode => Mode);
 
          else
             Close_Debugger (Debugger);
@@ -728,33 +727,33 @@ package body GVD.Process is
       --  answers the question...
 
       if Output = null
-        and then (Continuation_Line (Debugger.Debugger)
+        and then (Debugger.Debugger.Continuation_Line
                   or else Debugger.Registered_Dialog /= null)
       then
          --  For interactive command, we always send them immediately to
          --  the debugger, since this might be an answer to a gdb question
          --  ("restart process (y/n) ?")
-         Send
-           (Debugger.Debugger,
-            Command, Wait_For_Prompt => False, Mode => Mode,
-            Force_Send               => Debugger.Is_From_Dbg_Console);
+         Debugger.Debugger.Send
+           (Command,
+            Wait_For_Prompt => False,
+            Mode            => Mode,
+            Force_Send      => Debugger.Is_From_Dbg_Console);
 
       elsif Output = null then
          --  Force_Send is always false so that commands are queued. We
          --  are not in a secondary prompt anyway (which should be when
          --  we have a Registered_Dialog).
-         Send (Debugger.Debugger, Command, Mode => Mode,
-               Force_Send => False);
+         Debugger.Debugger.Send (Command, Mode => Mode, Force_Send => False);
 
       else
          Output.all := new String'
-           (Send_And_Get_Clean_Output
-              (Debugger.Debugger, Command, Mode => Mode));
+           (Debugger.Debugger.Send_And_Get_Clean_Output
+              (Command, Mode => Mode));
 
          if Output_Command
            and then Debugger.Debugger /= null
          then
-            Display_Prompt (Debugger.Debugger);
+            Debugger.Debugger.Display_Prompt;
          end if;
       end if;
    end Process_User_Command;
