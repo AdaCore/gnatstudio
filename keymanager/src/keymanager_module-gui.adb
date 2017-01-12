@@ -536,6 +536,13 @@ package body KeyManager_Module.GUI is
          Description    => "A key shortcuts theme based on the emacs default "
          & "key shortcuts.");
 
+      --  Reset to the 'defaut' key theme so that it's the default one if the
+      --  user does not explicitly choose one in the UI.
+
+      Remove_Shortcuts (Self.Kernel, Mode => Standard_Shortcuts);
+      Load_Key_Theme (Self.Kernel, "default");
+      Set_Key_Theme (Self.Kernel, "default");
+
       Flow_Box.On_Child_Activated (On_Child_Activated'Access);
 
       return Gtk_Widget (Flow_Box);
