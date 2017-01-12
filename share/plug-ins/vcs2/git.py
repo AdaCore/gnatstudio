@@ -4,6 +4,7 @@ import os
 import re
 from workflows.promises import ProcessWrapper, join
 import datetime
+import types
 import gps_utils
 
 
@@ -338,84 +339,99 @@ class Git(core.VCS):
 
         visitor.annotations(file, first_line, ids, lines)
 
+    def _branches(self, visitor):
+        """
+        A generator that returns via `visitor.branches` the list of all
+        known branches
+        """
+        branches = []
+        remotes = []
+        r = re.compile(
+            "^(?P<current>\*)?\s+"
+            "(?P<name>\S+)"
+            "\s+"
+            "(?P<id>[a-z0-9]+)"
+            "\s+"
+            "(\[(?P<tracking>.*\]))?")
+        emblem_r = re.compile(
+            "^(?P<tracking>.*):\s"
+            "(ahead (?P<ahead>\d+),?)?\s*"
+            "(behind (?P<behind>\d+))?")
+
+        p = self._git(['branch', '-a', '--list', '--no-color', '-vv'])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches(
+                    'branches', 'vcs-branch-symbolic', branches)
+                visitor.branches('remotes', 'vcs-cloud-symbolic', remotes)
+                break
+            m = r.search(line)
+            if m:
+                n = m.group('name')
+                emblem = []
+                m2 = emblem_r.search(m.group('tracking') or '')
+                if m2:
+                    n = '%s (%s)' % (n, m2.group('tracking'))
+                    if m2.group('ahead'):
+                        emblem.append("%s%s%s%s" % (
+                            chr(226), chr(134), chr(145),
+                            m2.group('ahead')))
+                    if m2.group('behind'):
+                        emblem.append("%s%s%s%s" % (
+                            chr(226), chr(134), chr(147),
+                            m2.group('behind')))
+
+                emblem = ' '.join(emblem)
+
+                if n.startswith('remotes/'):
+                    remotes.append(
+                        (n[8:],
+                         m.group('current') is not None,
+                         emblem,
+                         m.group('name')))
+                else:
+                    branches.append(
+                        (n,
+                         m.group('current') is not None,
+                         emblem,
+                         m.group('name')))
+
+    def _tags(self, visitor):
+        """
+        A generator that returns the list of all known tags
+        via `visitor.branches`
+        """
+        p = self._git(['tag'])
+        tags = []
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches('tags', 'vcs-tag-symbolic', tags)
+                break
+            tags.append((line, False, '', line))
+
+    def _stashes(self, visitor):
+        """
+        A generator that returns the list of all known stashes via
+        `visitor.branches`.
+        """
+        p = self._git(['stash', 'list'])
+        stashes = []
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches('stashes', 'vcs-stash-symbolic', stashes)
+                break
+            name, branch, descr = line.split(':', 3)
+            stashes.append(('%s: %s' % (name, descr), False, branch, name))
+
     @core.run_in_background
     def async_branches(self, visitor):
-        def __branches():
-            branches = []
-            remotes = []
-            r = re.compile(
-                "^(?P<current>\*)?\s+"
-                "(?P<name>\S+)"
-                "\s+"
-                "(?P<id>[a-z0-9]+)"
-                "\s+"
-                "(\[(?P<tracking>.*\]))?")
-            emblem_r = re.compile(
-                "^(?P<tracking>.*):\s"
-                "(ahead (?P<ahead>\d+),?)?\s*"
-                "(behind (?P<behind>\d+))?")
-
-            p = self._git(['branch', '-a', '--list', '--no-color', '-vv'])
-            while True:
-                line = yield p.wait_line()
-                if line is None:
-                    visitor.branches(
-                        'branches', 'vcs-branch-symbolic', branches)
-                    visitor.branches('remotes', 'vcs-cloud-symbolic', remotes)
-                    break
-                m = r.search(line)
-                if m:
-                    n = m.group('name')
-                    emblem = []
-                    m2 = emblem_r.search(m.group('tracking') or '')
-                    if m2:
-                        n = '%s (%s)' % (n, m2.group('tracking'))
-                        if m2.group('ahead'):
-                            emblem.append("%s%s%s%s" % (
-                                chr(226), chr(134), chr(145),
-                                m2.group('ahead')))
-                        if m2.group('behind'):
-                            emblem.append("%s%s%s%s" % (
-                                chr(226), chr(134), chr(147),
-                                m2.group('behind')))
-
-                    emblem = ' '.join(emblem)
-
-                    if n.startswith('remotes/'):
-                        remotes.append(
-                            (n[8:],
-                             m.group('current') is not None,
-                             emblem,
-                             m.group('name')))
-                    else:
-                        branches.append(
-                            (n,
-                             m.group('current') is not None,
-                             emblem,
-                             m.group('name')))
-
-        def __tags():
-            p = self._git(['tag'])
-            tags = []
-            while True:
-                line = yield p.wait_line()
-                if line is None:
-                    visitor.branches('tags', 'vcs-tag-symbolic', tags)
-                    break
-                tags.append((line, False, '', line))
-
-        def __stashes():
-            p = self._git(['stash', 'list'])
-            stashes = []
-            while True:
-                line = yield p.wait_line()
-                if line is None:
-                    visitor.branches('stashes', 'vcs-stash-symbolic', stashes)
-                    break
-                name, branch, descr = line.split(':', 3)
-                stashes.append(('%s: %s' % (name, descr), False, branch, name))
-
-        a = yield join(__branches(), __tags(), __stashes())
+        yield join(self._branches(visitor),
+                   self._tags(visitor),
+                   self._stashes(visitor),
+                   *self.extensions('async_branches', visitor))
 
     @core.run_in_background
     def async_select_branch(self, id):

@@ -104,6 +104,27 @@ class Profile:
             GPS.Logger("GIT").log(s.getvalue())
 
 
+class Extension():
+    """
+    A class similar to core.VCS, which is used to decorate an existing VCS
+    engine to add more features.
+    For instance, it is used to add Gerrit or github support.
+    A decorator has the same primitive operations as a VCS engine, which can
+    be overridden. However, each VCS engine is responsible for using its
+    decorators when appropriate.
+    Such extensions must be registered with core.register_extension().
+    """
+
+    def __init__(self, base_vcs):
+        self.base = base_vcs
+
+    def applies(self):
+        """
+        Check if self should be applied to its base VCS system.
+        """
+        return False
+
+
 class VCS(GPS.VCS2):
     """
     To create a new engine, extend this class, and then call:
@@ -112,6 +133,8 @@ class VCS(GPS.VCS2):
         class MyVCS(core.VCS):
             pass
     """
+
+    _class_extensions = []  # a list of classes derived from Extension
 
     #######################
     # Overridable methods #
@@ -132,6 +155,16 @@ class VCS(GPS.VCS2):
         """
         self.working_dir = working_dir
         self.default_status = default_status
+        self._extensions = []   # the decorators that apply to self
+
+        # Check which decorators apply
+        for d in self._class_extensions:
+            inst = d(base_vcs=self)
+            if inst.applies():
+                GPS.Logger("VCS2").log(
+                    "Extension %s applied to %s (%s)" % (
+                        inst, self, working_dir))
+                self._extensions.append(inst)
 
     def setup(self):
         """
@@ -410,6 +443,35 @@ class VCS(GPS.VCS2):
                 return False   # do not suppress exceptions
 
         return _CM()
+
+    @classmethod
+    def register_extension(klass, extension):
+        klass._class_extensions.append(extension)
+
+    def extensions(self, name, *args, **kwargs):
+        """
+        Execute all extension's method, if they exists.
+        Typically, a method that executes in the background will do
+        something like::
+
+            def method(self, ...):
+                def _internal():
+                    ...
+                yield join(_internal(), *self.extensions('method', ...))
+
+        to execute the extensions
+
+        :returntype: a list of generators, one for each method that is
+           executing in the background.
+        """
+        result = []
+        for ext in self._extensions:
+            m = getattr(ext, name, None)
+            if m is not None:
+                gen = m(*args, **kwargs)
+                if isinstance(gen, types.GeneratorType):
+                    result.append(gen)
+            return result
 
 
 class File_Based_VCS(VCS):
