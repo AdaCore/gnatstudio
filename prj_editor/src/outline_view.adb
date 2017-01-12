@@ -213,13 +213,6 @@ package body Outline_View is
       (Self   : On_Project_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
 
-   type On_File_Modified is new File_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_File_Modified;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File);
-   --  Called when a file has been modified
-
    type On_File_Closed is new File_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_File_Closed;
@@ -801,8 +794,6 @@ package body Outline_View is
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Outline);
       Location_Changed_Hook.Add (new On_Location_Changed, Watch => Outline);
-      File_Saved_Hook.Add (new On_File_Modified, Watch => Outline);
-      Buffer_Edited_Hook.Add (new On_File_Modified, Watch => Outline);
       File_Closed_Hook.Add (new On_File_Closed, Watch => Outline);
       File_Edited_Hook.Add (new On_File_Edited, Watch => Outline);
       Project_View_Changed_Hook.Add (new On_Project_Changed, Watch => Outline);
@@ -852,25 +843,6 @@ package body Outline_View is
          Set_File (Outline, Outline.File);
       end if;
    end Force_Refresh;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_File_Modified;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File)
-   is
-      pragma Unreferenced (Self);
-      Outline : constant Outline_View_Access :=
-        Outline_Views.Retrieve_View (Kernel);
-   begin
-      if Outline /= null and then Outline.File = File then
-         Refresh (Outline);
-         Location_Changed (Kernel, File);
-      end if;
-   end Execute;
 
    -------------
    -- Execute --
@@ -1038,7 +1010,9 @@ package body Outline_View is
 
       Model.Set_Tree (Tree, Filter);
 
-      if Tree /= No_Semantic_Tree then
+      if Tree /= No_Semantic_Tree
+        and then Tree.Is_Ready
+      then
          declare
             Path : Gtk_Tree_Path;
          begin
