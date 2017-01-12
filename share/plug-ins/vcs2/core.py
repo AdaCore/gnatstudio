@@ -469,12 +469,14 @@ class register_vcs:
         return klass
 
 
-def find_admin_directory(file, basename):
+def find_admin_directory(file, basename, allow_file=False):
     """
     Starting from the location of `file`, move up the directory tree to
     find a directory named `basename`.
     Used for the implementation of discoved_working_dir
 
+    :param bool allow_file: if true, search for files with the given name,
+      not just directories.
     :return: A str
       The parent directory `basename`, i.e. the root repository
     """
@@ -482,7 +484,7 @@ def find_admin_directory(file, basename):
     dir = os.path.dirname(file.path)
     while dir != '/' and dir != parent:
         d = os.path.join(dir, basename)
-        if os.path.isdir(d):
+        if os.path.isdir(d) or (allow_file and os.path.isfile(d)):
             return os.path.normpath(os.path.join(d, '..'))
         dir = os.path.dirname(dir)
     return ""

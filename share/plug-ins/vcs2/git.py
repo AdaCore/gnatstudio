@@ -12,7 +12,8 @@ class Git(core.VCS):
 
     @staticmethod
     def discover_working_dir(file):
-        return core.find_admin_directory(file, '.git')
+        # When using "git worktree", ".git" is a file, not a directory
+        return core.find_admin_directory(file, '.git', allow_file=True)
 
     def __init__(self, *args, **kwargs):
         super(Git, self).__init__(*args, **kwargs)
