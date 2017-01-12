@@ -539,6 +539,8 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : access Diff_Head)
    is
+      Block : constant Block_Trace_Handle := Create (Me, "Show differences");
+
       List       : constant Diff_List := Item.List;
       Offset1    : Natural;
       Offset2    : Natural;
@@ -583,7 +585,7 @@ package body Vdiff2_Module.Utils is
 
          Add_Line_Information
            (Kernel,
-            File       =>  File,
+            File       => File,
             Identifier => Id_Col_Vdiff,
             Info       => Infos);
       end Add_Side_Symbol;
@@ -603,8 +605,6 @@ package body Vdiff2_Module.Utils is
       use Diff_Chunk_List.Std_Vectors;
 
    begin
-      Trace (Me, "Show_Differences");
-
       if Ref = 1 then
          Other := 2;
       elsif Ref = 2 then
@@ -625,8 +625,17 @@ package body Vdiff2_Module.Utils is
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      Edit (Kernel, Item.Files (2));
-      Edit (Kernel, Item.Files (1));
+      --  Note: we need to open the "ref" editor first, so that the focus is
+      --  given to the "real" editor. This way, opening multiple vdiffs on
+      --  unopened editors will not create a cascade of refs.
+
+      if Ref = 1 then
+         Edit (Kernel, Item.Files (1));
+         Edit (Kernel, Item.Files (2));
+      else
+         Edit (Kernel, Item.Files (2));
+         Edit (Kernel, Item.Files (1));
+      end if;
 
       --  Synchronize the scrollings
 
@@ -635,16 +644,6 @@ package body Vdiff2_Module.Utils is
       if Split_MDI then
          Split
            (Get_MDI (Kernel), Orientation_Horizontal, Mode => Before_Reuse);
-      end if;
-
-      --  Note: we need to open the "ref" editor first, so that the focus is
-      --  given to the "real" editor. This way, opening multiple vdiffs on
-      --  unopened editors will not create a cascade of refs.
-
-      if Ref = 1 then
-         Edit (Kernel, Item.Files (2));
-      else
-         Edit (Kernel, Item.Files (1));
       end if;
 
       Create_Line_Information_Column
@@ -980,6 +979,7 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : access Diff_Head)
    is
+      Block : constant Block_Trace_Handle := Create (Me, "Show differences3");
       Res  : Diff_List;
       Info : T_VLine_Information;
 
@@ -995,8 +995,6 @@ package body Vdiff2_Module.Utils is
 
          return;
       end if;
-
-      Trace (Me, "Show_Differences3");
 
       --  Keep the current window configuration, except we split the current
       --  editor. This doesn't lose the user's current setup, and will be
@@ -1042,14 +1040,10 @@ package body Vdiff2_Module.Utils is
         (Kernel, Item.Files (3), Id_Col_Vdiff, Info => Info (3).all);
       Move_Mark (Res, Item.List);
       Res.Clear;
-      Trace (Me, "End Show_Differences3");
 
       Unchecked_Free (Info (1));
       Unchecked_Free (Info (2));
       Unchecked_Free (Info (3));
-
-   exception
-      when E : others => Trace (Me, E);
    end Show_Differences3;
 
    ---------------------

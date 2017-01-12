@@ -376,6 +376,8 @@ package body Vdiff2_Module.Callback is
          end if;
       end Setup_Ref;
 
+      Res   : Diff_Head_Access;
+
    begin
       if Orig_File = GNATCOLL.VFS.No_File then
          if New_File = GNATCOLL.VFS.No_File then
@@ -384,7 +386,6 @@ package body Vdiff2_Module.Callback is
 
          declare
             Ref_F : Virtual_File renames Get_Ref_Filename (New_File);
-            Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch
               (Diff_Mode.Get_Pref, Ref_F, New_File, Diff_File, True);
@@ -395,13 +396,11 @@ package body Vdiff2_Module.Callback is
 
             Delete (Ref_F, Success);
 
-            return Res /= null;
          end;
 
       elsif New_File = GNATCOLL.VFS.No_File then
          declare
             Ref_F : Virtual_File renames Get_Ref_Filename (Orig_File);
-            Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch
               (Diff_Mode.Get_Pref, Orig_File, Ref_F, Diff_File, False);
@@ -411,13 +410,17 @@ package body Vdiff2_Module.Callback is
             end if;
 
             Delete (Ref_F, Success);
-            return Res /= null;
          end;
 
       else
-         return Visual_Patch
-           (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File) /= null;
+         Res := Visual_Patch
+           (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File);
+         if Res /= null then
+            Setup_Ref (No_File, Orig_File);
+         end if;
       end if;
+
+      return Res /= null;
    end Execute;
 
    -------------

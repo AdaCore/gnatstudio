@@ -325,60 +325,69 @@ package body Diff_Utils2 is
       Cmd_Args      : Argument_List_Access;
 
    begin
-      Cmd_Args := Argument_String_To_List (Patch_Command);
-      Cmd      :=
-        Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
+      --  ??? Why would we need to apply 'patch' when we already have the old
+      --  and the new file ?
 
-      if Cmd = No_File then
-         Kernel.Insert
-           ("command not found: " & Patch_Command &
-            ". You should modify the ""Visual Diff"" preferences",
-            Mode => Error);
-         Free (Cmd_Args);
-         return Ret;
+      if (Revert and then not Orig_File.Is_Regular_File)
+        or else (not Revert and then not New_File.Is_Regular_File)
+      then
+         Cmd_Args := Argument_String_To_List (Patch_Command);
+         Cmd      :=
+           Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
+
+         if Cmd = No_File then
+            Kernel.Insert
+              ("command not found: " & Patch_Command &
+                 ". You should modify the ""Visual Diff"" preferences",
+               Mode => Error);
+            Free (Cmd_Args);
+            return Ret;
+         end if;
+
+         Args (1) := new String'("-f");
+         Args (2) := new String'("-s");
+         Args (3) := new String'("-o");
+
+         if Revert then
+            Args (4) := new String'(+Full_Name (Orig_File));
+            Args (5) := new String'("-R");
+            Args (6) := new String'(+Full_Name (New_File));
+            Num_Args := 7;
+         else
+            Args (4) := new String'(+Full_Name (New_File));
+            Args (5) := new String'(+Full_Name (Orig_File));
+            Num_Args := 6;
+         end if;
+
+         Args (Num_Args) := new String'(+Full_Name (Diff_File));
+
+         if Active (Me) then
+            Trace (Me, "spawn: " &
+                     Argument_List_To_String
+                     (Cmd_Args.all & Args (1 .. Num_Args)));
+         end if;
+
+         begin
+            Non_Blocking_Spawn
+              (Descriptor, +Cmd.Full_Name,
+               Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
+                 Args (1 .. Num_Args));
+            Free (Cmd_Args);
+            Free (Args);
+
+            loop
+               Expect
+                 (Descriptor, Result, Pattern_Any, Matches, Timeout => -1);
+            end loop;
+
+         exception
+            when others =>
+               Close (Descriptor);
+         end;
       end if;
-
-      Args (1) := new String'("-f");
-      Args (2) := new String'("-s");
-      Args (3) := new String'("-o");
-
-      if Revert then
-         Args (4) := new String'(+Full_Name (Orig_File));
-         Args (5) := new String'("-R");
-         Args (6) := new String'(+Full_Name (New_File));
-         Num_Args := 7;
-      else
-         Args (4) := new String'(+Full_Name (New_File));
-         Args (5) := new String'(+Full_Name (Orig_File));
-         Num_Args := 6;
-      end if;
-
-      Args (Num_Args) := new String'(+Full_Name (Diff_File));
-
-      if Active (Me) then
-         Trace (Me, "spawn: " &
-                Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
-      end if;
-
-      begin
-         Non_Blocking_Spawn
-           (Descriptor, +Cmd.Full_Name,
-            Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
-            Args (1 .. Num_Args));
-         Free (Cmd_Args);
-         Free (Args);
-
-         loop
-            Expect (Descriptor, Result, Pattern_Any, Matches, Timeout => -1);
-         end loop;
-
-      exception
-         when others =>
-            Close (Descriptor);
-      end;
 
       --  ??? Should use VFS.Read_File instead, more efficient
-      Open (File, In_File, +Full_Name (Diff_File));
+      Open (File, In_File, +Diff_File.Full_Name);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);

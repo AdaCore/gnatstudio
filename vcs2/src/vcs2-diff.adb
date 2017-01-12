@@ -238,20 +238,23 @@ package body VCS2.Diff is
       W        : Writable_File;
       Status   : aliased Integer;
    begin
-      Tmp_File := Create (Self.File.Full_Name.all & ".old");
+      Tmp_File := Create_From_Dir
+        (Get_Tmp_Directory,
+         Self.File.Base_Name & "." & (+To_String (Self.Ref)));
       W := Write_File (Tmp_File, Append => False);
       Write (W, Contents);
       Close (W);
 
       --  ??? Generate a diff file that GPS can read. Not sure why we actually
-      --  need this file when we have both versions of the file already
+      --  need this file when we have both versions of the file already.
+      --  Also, vcs systems are in general pretty good at generating diff (git
+      --  is much better than "diff") so we should take advantage of that.
 
       declare
          Args     : GNAT.Strings.String_List :=
            (1 => new String'("--normal"),
-            2 => new String'("-p"),
-            3 => new String'(Tmp_File.Display_Full_Name),
-            4 => new String'(Self.File.Display_Full_Name));
+            2 => new String'(Tmp_File.Display_Full_Name),
+            3 => new String'(Self.File.Display_Full_Name));
          Diff : constant String := Get_Command_Output
            ("diff", Args, Input => "", Status => Status'Access);
       begin
@@ -259,7 +262,8 @@ package body VCS2.Diff is
 
          Free (Args);
 
-         Diff_File := Create (Self.File.Full_Name.all & ".diff");
+         Diff_File := Create_From_Dir
+           (Get_Tmp_Directory, Self.File.Base_Name & ".diff");
          W := Write_File (Diff_File, Append => False);
          Write (W, Diff);
          Close (W);
@@ -268,10 +272,7 @@ package body VCS2.Diff is
       Dummy := Diff_Action_Hook.Run
         (Kernel    => Self.Kernel,
          Vcs_File  => Self.File,
-         Orig_File => No_File,
-         --  ??? We should pass Tmp_File, but if we do we end up overwriting
-         --  Self.File because of the way 'patch' is called.
-
+         Orig_File => Tmp_File,
          New_File  => Self.File,
          Diff_File => Diff_File,
          Title     =>
