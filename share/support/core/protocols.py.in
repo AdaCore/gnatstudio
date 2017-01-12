@@ -7,8 +7,6 @@ these remote hosts can be done through a number of protocols, which
 are defined in this package.
 """
 
-
-
 import GPS
 
 XML = r"""<?xml version="1.0"?>
