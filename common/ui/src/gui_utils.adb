@@ -1920,7 +1920,7 @@ package body GUI_Utils is
          then
             Gtk_New (Text_Render);
             Pack_Start (Col, Text_Render, False);
-            Add_Attribute (Col, Text_Render, "text", Gint (N));
+            Add_Attribute (Col, Text_Render, "markup", Gint (N));
 
             if Integer (ColNum) in Editable_Columns'Range
               and then Editable_Columns (Integer (ColNum)) >= 0

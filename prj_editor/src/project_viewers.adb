@@ -51,7 +51,6 @@ with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands.Interactive;         use Commands, Commands.Interactive;
-with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Default_Preferences;          use Default_Preferences;
 with GPS.Intl;                     use GPS.Intl;
@@ -1237,18 +1236,6 @@ package body Project_Viewers is
         (Kernel,
          Name   => "Project/Edit source file",
          Action => "Edit project source file");
-
-      Register_Action
-        (Kernel, "edit project dependencies",
-         Command     => new Project_Dependency_Wizard_Command,
-         Description => "Open a dialog to edit the project dependencies",
-         Filter      => Filter2,
-         Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Project dependencies",
-         Action => "edit project dependencies",
-         Label  => "Project/Dependencies");
 
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,

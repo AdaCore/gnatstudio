@@ -106,7 +106,7 @@
 
 .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
-   font-size: 9px;
+   font-size: x-small;
    color: @inactive_tab_color;
 }
 

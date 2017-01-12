@@ -15,78 +15,79 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;               use GNAT.Case_Util;
+with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 
-with Gdk.Event;                 use Gdk.Event;
+with Gdk.Event;                    use Gdk.Event;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Glib_Values_Utils;         use Glib_Values_Utils;
+with Glib;                         use Glib;
+with Glib.Object;                  use Glib.Object;
+with Glib.Values;                  use Glib.Values;
+with Glib_Values_Utils;            use Glib_Values_Utils;
 
-with Gtk.Arrow;                 use Gtk.Arrow;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
-with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Arrow;                    use Gtk.Arrow;
+with Gtk.Box;                      use Gtk.Box;
+with Gtk.Button;                   use Gtk.Button;
+with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;     use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;             use Gtk.Check_Button;
+with Gtk.Combo_Box_Text;           use Gtk.Combo_Box_Text;
+with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Editable;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.GEntry;                   use Gtk.GEntry;
+with Gtk.Handlers;                 use Gtk.Handlers;
+with Gtk.Label;                    use Gtk.Label;
+with Gtk.Paned;                    use Gtk.Paned;
+with Gtk.Radio_Button;             use Gtk.Radio_Button;
+with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Stock;                    use Gtk.Stock;
+with Gtk.Toggle_Button;            use Gtk.Toggle_Button;
+with Gtk.Tree_Model;               use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;        use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
+with Gtk.Tree_Store;               use Gtk.Tree_Store;
+with Gtk.Tree_View;                use Gtk.Tree_View;
+with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
+with Gtk.Widget;                   use Gtk.Widget;
+with Gtk.Window;                   use Gtk.Window;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Dialogs;               use Gtkada.Dialogs;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
+with Gtkada.Handlers;              use Gtkada.Handlers;
 
-with Basic_Types;               use Basic_Types;
-with Dialog_Utils;              use Dialog_Utils;
-with File_Utils;                use File_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Core_Kernels;          use GPS.Core_Kernels;
-with GPS.Project_Properties;    use GPS.Project_Properties;
-with GUI_Utils;                 use GUI_Utils;
-with Histories;                 use Histories;
-with Language_Handlers;         use Language_Handlers;
-with Projects;                  use Projects;
-with Scenario_Selectors;        use Scenario_Selectors;
-with Switches_Editors;          use Switches_Editors;
-with Toolchains_Editor;         use Toolchains_Editor;
+with Basic_Types;                  use Basic_Types;
+with Dialog_Utils;                 use Dialog_Utils;
+with File_Utils;                   use File_Utils;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Main_Window;              use GPS.Main_Window;
+with GPS.Core_Kernels;             use GPS.Core_Kernels;
+with GPS.Project_Properties;       use GPS.Project_Properties;
+with GUI_Utils;                    use GUI_Utils;
+with Histories;                    use Histories;
+with Language_Handlers;            use Language_Handlers;
+with Projects;                     use Projects;
+with Project_Dependencies_Editors; use Project_Dependencies_Editors;
+with Scenario_Selectors;           use Scenario_Selectors;
+with Switches_Editors;             use Switches_Editors;
+with Toolchains_Editor;            use Toolchains_Editor;
 with GPR;
 
 package body Project_Properties is
@@ -4032,6 +4033,10 @@ package body Project_Properties is
       Editor.General_Page.Initialize (Kernel, Read_Only, Project);
       Editor.Find_Or_Create_Page (-"General", Editor.General_Page);
 
+      P := new Project_Dependencies_Editor_Record (0);
+      P.Initialize (Kernel, Read_Only, Project);
+      Editor.Find_Or_Create_Page (-"Sources/Dependencies", P);
+
       Editor.Languages_Editor := new Languages_Page_Record;
       Editor.Languages_Editor.Initialize (Kernel, Read_Only, Project);
       Editor.Languages_Editor.When_Languages_Change
@@ -4677,13 +4682,20 @@ package body Project_Properties is
                   procedure Edit_Page
                     (Page : not null access Project_Editor_Page_Record'Class)
                   is
+                     Scenario_Variables : constant Scenario_Variable_Array :=
+                                  (if (Page.Flags
+                                   and Multiple_Scenarios) /= 0
+                                   then
+                                      Current (Scenar_Iter)
+                                   else
+                                      All_Scenarios);
                   begin
                      Changed := Changed
                        or Page.Edit_Project
                          (Current (Prj_Iter),
                           Kernel             => Kernel,
                           Languages          => Languages.all,
-                          Scenario_Variables => Current (Scenar_Iter));
+                          Scenario_Variables => Scenario_Variables);
                   end Edit_Page;
 
                begin
