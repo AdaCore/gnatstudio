@@ -2656,10 +2656,17 @@ package body Vsearch is
 
             Buffer.Select_Text (Start_Loc, End_Loc);
 
+            --  Avoid having the character placed under the editor's cursor
+            --  in the search view's entry: we only want the text that has
+            --  been selected.
+            End_Loc := Forward_Char (End_Loc, -1);
+
+            Vsearch.Locked := True;
             Set_Active_Text
               (Vsearch.Pattern_Combo,
                Text => Buffer.Get_Chars (Start_Loc, End_Loc));
             Gtk_Entry (Vsearch.Pattern_Combo.Get_Child).Set_Position (-1);
+            Vsearch.Locked := False;
          end;
       end if;
 
