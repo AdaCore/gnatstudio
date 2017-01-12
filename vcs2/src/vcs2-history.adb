@@ -172,6 +172,9 @@ package body VCS2.History is
       Commits     : Commit_Maps.Map;
       Graph       : Gtk_Drawing_Area;
 
+      Show_Graph  : Boolean := True;
+      --  Whether to show the graph, depending on preferences and filtering
+
       Lines       : Line_Vectors.Vector;
       --  The visible commits, in the order they were returned by the VCS.
       --  Invisible commits are not added
@@ -555,11 +558,15 @@ package body VCS2.History is
       Base_Y, Base_X : Gint;
       Rect           : Gdk_Rectangle;
    begin
+      if not Tree.Show_Graph then
+         return True;  --  handled
+      end if;
+
       Set_Source_Color (Cr, Browsers_Bg_Color.Get_Pref);
       Set_Operator (Cr, Cairo_Operator_Source);
       Paint (Cr);
 
-      View.Tree.Get_Visible_Range (Start, Finish, Success);
+      Tree.Get_Visible_Range (Start, Finish, Success);
       if Success then
          Line_Start := Integer
            (Tree.Model.Get_Int
@@ -1119,7 +1126,8 @@ package body VCS2.History is
 
          --  Compute visibility of the node
 
-         if not Tree.Config.Collapse   --  want to view all
+         if not Tree.Show_Graph
+           or else not Tree.Config.Collapse   --  want to view all
            or else Names /= null       --  named commit
            or else Parents = null      --  first commit on a branch
            or else Parents'Length > 1  --  a branching commit
@@ -1430,8 +1438,13 @@ package body VCS2.History is
          --  Force redisplay of graph
          Trace (Me, "done inserting nodes, max columns="
                 & Tree.Max_Columns'Img);
-         Tree.Graph.Set_Size_Request
-           (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
+
+         if Tree.Show_Graph then
+            Tree.Graph.Set_Size_Request
+              (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
+         else
+            Tree.Graph.Set_Size_Request (0, -1);
+         end if;
          Tree.Graph.Queue_Draw;
          return False;  --  All done
       end case;
@@ -1485,6 +1498,10 @@ package body VCS2.History is
    begin
       if VCS /= null then
          Reset_Lines (History_Tree (Self.Tree));
+
+         --  If we have a filter, we can't show the graph, since we are
+         --  missing too many commits.
+         Tree.Show_Graph := Tree.User_Filter.Filter = "";
 
          Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
          Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;

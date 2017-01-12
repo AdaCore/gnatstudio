@@ -189,6 +189,15 @@ class Git(core.VCS):
         current_branch_only = filter[3]
         branch_commits_only = filter[4]
 
+        filter_switch = ''
+        if pattern:
+            if pattern.startswith('author:'):
+                filter_switch = '--author=%s' % pattern[7:]
+            elif pattern.startswith('code:'):
+                filter_switch = '-S=%s' % pattern[5:]
+            else:
+                filter_switch = '--grep=%s' % pattern
+
         p = self._git(
             ['log',
              # use tformat to get final newline
@@ -197,7 +206,8 @@ class Git(core.VCS):
              '--tags' if not current_branch_only else '',
              '--remotes' if not current_branch_only else '',
              '--topo-order',  # children before parents
-             '--grep=%s' % pattern if pattern else '',
+             filter_switch,
+
              '--max-count=%d' % max_lines if not branch_commits_only else '',
              '%s' % for_file.path if for_file else ''])
 
