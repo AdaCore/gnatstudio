@@ -15,25 +15,22 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Glib;                     use Glib;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
+with Glib;                     use Glib;
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Frame;                use Gtk.Frame;
-with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Radio_Button;         use Gtk.Radio_Button;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
@@ -41,32 +38,9 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
-with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
-with Wizards;                  use Wizards;
 
-package body Creation_Wizard.Extending is
-
-   type Extending_Sources_Page is new Project_Wizard_Page_Record with record
-      Copy_Files     : Gtk.Check_Button.Gtk_Check_Button;
-      Files          : Gtk.Tree_View.Gtk_Tree_View;
-      Projects_Count : Natural;
-      Obj_Dir        : Gtk_Entry;
-   end record;
-   type Extending_Sources_Page_Access is access all Extending_Sources_Page;
-   overriding procedure Generate_Project
-     (Page               : access Extending_Sources_Page;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Scenario_Variable_Array;
-      Project            : in out Project_Type;
-      Changed            : in out Boolean);
-   overriding function Create_Content
-     (Page : access Extending_Sources_Page;
-      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentation
+package body Extending_Projects_Editors is
 
    type Edit_In_Extended_Project is
      new Commands.Interactive.Interactive_Command with null record;
@@ -111,251 +85,6 @@ package body Creation_Wizard.Extending is
    --  File_Project initially.
    --  Obj_Dir is used when a new extending project needs to be created, and
    --  is a directory relative to that new project's location.
-
-   --------------------------------
-   -- Add_Extending_Wizard_Pages --
-   --------------------------------
-
-   procedure Add_Extending_Wizard_Pages
-     (Wiz : access Project_Wizard_Record'Class)
-   is
-      Sources : constant Extending_Sources_Page_Access :=
-        new Extending_Sources_Page;
-   begin
-      Add_Page (Wiz, Sources,
-                Description => -"Selecting sources",
-                Toc         => -"Sources");
-   end Add_Extending_Wizard_Pages;
-
-   --------------------
-   -- Create_Content --
-   --------------------
-
-   overriding function Create_Content
-     (Page : access Extending_Sources_Page;
-      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
-   is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Wiz);
-      Box, hbox : Gtk_Box;
-      Frame    : Gtk_Frame;
-      Label    : Gtk_Label;
-      Scrolled : Gtk_Scrolled_Window;
-      PIter    : Project_Iterator;
-      TIter    : Gtk_Tree_Iter;
-      FIter    : Gtk_Tree_Iter;
-      Project  : Project_Type;
-      Model    : Gtk_Tree_Store;
-
-   begin
-      Gtk_New_Vbox (Box, Homogeneous => False);
-
-      Gtk_New
-        (Label,
-         -("Select the source files you want to modify."
-           & ASCII.LF
-           & "You can add sources later by modifying the project"
-           & " properties"));
-      Pack_Start (Box, Label, Expand => False);
-
-      Gtk_New (Page.Copy_Files,
-               -"Copy selected files to the project's directory");
-      Pack_Start (Box, Page.Copy_Files, Expand => False, Padding => 5);
-      Set_Active (Page.Copy_Files, True);
-
-      Gtk_New (Frame);
-      Pack_Start (Box, Frame, Expand => True, Fill => True);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Add (Frame, Scrolled);
-
-      Page.Files := Create_Tree_View
-        (Column_Types       => (0 => GType_Boolean,
-                                1 => GType_String,
-                                2 => Get_Virtual_File_Type),
-         Column_Names       => (1 => null, 2 => null),
-         Show_Column_Titles => False,
-         Initial_Sort_On    => 2);
-      Model := -Get_Model (Page.Files);
-      Add (Scrolled, Page.Files);
-
-      Page.Projects_Count := 0;
-
-      PIter := Start (Get_Project (Kernel));
-      loop
-         Project := Current (PIter);
-         exit when Project = No_Project;
-
-         Page.Projects_Count := Page.Projects_Count + 1;
-
-         Append (Model, TIter, Null_Iter);
-         Set_And_Clear (Model, TIter,
-                        (0 => As_Boolean (False),
-                         1 => As_String  (Project.Name),
-                         2 => As_File    (No_File)));
-
-         declare
-            Sources : File_Array_Access := Project.Source_Files;
-         begin
-            for F in Sources'Range loop
-               Append (Model, FIter, TIter);
-               Set_And_Clear (Model, FIter,
-                              (0 => As_Boolean (False),
-                               1 => As_String  (+Sources (F).Base_Name),
-                               2 => As_File    (Sources (F))));
-            end loop;
-
-            Unchecked_Free (Sources);
-         end;
-
-         Next (PIter);
-      end loop;
-
-      Gtk_New_Hbox (hbox);
-      Box.Pack_Start (hbox, Expand => False);
-      Gtk_New (Label, -"Object directory");
-      hbox.Pack_Start (Label, Expand => False);
-      Gtk_New (Page.Obj_Dir);
-      Page.Obj_Dir.Set_Text ("obj");
-      hbox.Pack_Start (Page.Obj_Dir);
-      Set_Tooltip_Text (Page.Obj_Dir,
-        -("The directory in which the compiler puts its output."
-          & " This directory is relative to the location of each of the"
-          & " project files that will be created."));
-
-      return Gtk_Widget (Box);
-   end Create_Content;
-
-   ----------------------
-   -- Generate_Project --
-   ----------------------
-
-   overriding procedure Generate_Project
-     (Page               : access Extending_Sources_Page;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Scenario_Variable_Array;
-      Project            : in out Project_Type;
-      Changed            : in out Boolean)
-   is
-      Parent   : Project_Type := Get_Project (Kernel);
-      PIter, FIter : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Store;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Prj      : Project_Type;
-      Projects : Project_Type_Array (1 .. Page.Projects_Count) :=
-        (others => No_Project);
-      Files    : array (1 .. Page.Projects_Count) of File_Array_Access;
-      Count    : array (1 .. Page.Projects_Count) of Natural := (others => 0);
-
-      procedure Add_File (Prj : Project_Type; File : Virtual_File);
-      --  Add a file into the list of files that are locally modified
-
-      --------------
-      -- Add_File --
-      --------------
-
-      procedure Add_File (Prj : Project_Type; File : Virtual_File) is
-         P : Integer;
-      begin
-         P := Projects'First;
-         while P < Projects'Last
-           and then Projects (P) /= Prj
-           and then Projects (P) /= No_Project
-         loop
-            P := P + 1;
-         end loop;
-
-         if Projects (P) = No_Project then
-            Projects (P) := Prj;
-         end if;
-
-         if Files (P) = null then
-            Files (P) := new File_Array (1 .. Direct_Sources_Count (Prj));
-         end if;
-
-         Count (P) := Count (P) + 1;
-         Files (P)(Count (P)) := File;
-      end Add_File;
-
-      Obj_Dir : constant Filesystem_String := +Page.Obj_Dir.Get_Text;
-
-   begin
-      --  The new project will expand the root project. However, if the latter
-      --  is itself an expanding project, we prefer to expand the original
-      --  project.
-
-      while Extended_Project (Parent) /= No_Project loop
-         Parent := Extended_Project (Parent);
-      end loop;
-
-      Project.Set_Extended_Project
-        (Parent,
-         Extend_All         => True,
-         Use_Relative_Paths => True);
-
-      Project.Set_Attribute
-        (Scenario  => Scenario_Variables,
-         Attribute => Source_Files_Attribute,
-         Values    => (1 .. 0 => null));
-
-      Project.Set_Attribute
-        (Obj_Dir_Attribute,
-         Create_From_Dir
-           (Project_Directory (Project), Obj_Dir).Display_Full_Name);
-
-      --  Find the list of source files that are modified
-
-      Model := -Get_Model (Page.Files);
-      PIter := Get_Iter_First (Model);
-      while PIter /= Null_Iter loop
-         Prj := Get_Registry (Kernel).Tree.Project_From_Name
-           (Get_String (Model, PIter, 1));
-
-         --  If the project is selected, import all its source files
-         if Get_Boolean (Model, PIter, 0) then
-            declare
-               Sources : File_Array_Access := Prj.Source_Files;
-            begin
-               for P in Sources'Range loop
-                  Add_File (Prj, Sources (P));
-               end loop;
-               Unchecked_Free (Sources);
-            end;
-         end if;
-
-         FIter := Children (Model, PIter);
-         while FIter /= Null_Iter loop
-            if Get_Boolean (Model, FIter, 0) then
-               File := Get_File (Model, FIter, 2);
-               Add_File (Prj, File);
-            end if;
-
-            Next (Model, FIter);
-         end loop;
-
-         Next (Model, PIter);
-      end loop;
-
-      --  Now create each of the extending project needed for the sources
-      --  themselves
-
-      for P in Projects'Range loop
-         exit when Projects (P) = No_Project;
-
-         Add_Source_Files
-           (Kernel => Kernel,
-            Root_Project => Project,
-            Files        => Files (P) (1 .. Count (P)),
-            File_Project => Projects (P),
-            Copy_Files   => Get_Active (Page.Copy_Files),
-            In_Dir       => GNATCOLL.VFS.No_File,
-            Obj_Dir      => Obj_Dir,
-            Recompute    => False);
-         Changed := True;
-
-         Unchecked_Free (Files (P));
-      end loop;
-   end Generate_Project;
 
    ----------------------
    -- Add_Source_Files --
@@ -730,4 +459,4 @@ package body Creation_Wizard.Extending is
       Register_Contextual_Menu (Kernel, "Remove from extending project");
    end Register_Contextual_Menus;
 
-end Creation_Wizard.Extending;
+end Extending_Projects_Editors;

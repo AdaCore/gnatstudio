@@ -51,8 +51,8 @@ with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands.Interactive;         use Commands, Commands.Interactive;
-with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Default_Preferences;          use Default_Preferences;
+with Extending_Projects_Editors;   use Extending_Projects_Editors;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -1261,7 +1261,7 @@ package body Project_Viewers is
          Action => "edit file switches",
          Label  => "Edit switches for %f");
 
-      Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);
+      Extending_Projects_Editors.Register_Contextual_Menus (Kernel);
 
       Kernel.Scripts.Register_Command
         ("add_main_unit",
