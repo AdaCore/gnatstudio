@@ -112,7 +112,14 @@ package body Project_Templates.GPS is
 
       --  Launch the GUI
 
-      Install_Template (Templates, Chosen, Installed, Dir, Project, E);
+      Install_Template
+        (Templates     => Templates,
+         Chosen        => Chosen,
+         Installed     => Installed,
+         Dir           => Dir,
+         Project       => Project,
+         Errors        => E,
+         Default_Label => "Simple Project");
 
       if Installed then
          Success := True;

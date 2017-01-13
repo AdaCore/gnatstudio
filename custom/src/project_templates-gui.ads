@@ -22,12 +22,13 @@
 package Project_Templates.GUI is
 
    procedure Install_Template
-     (Templates    : Project_Templates_List.List;
-      Chosen       : out Project_Template;
-      Installed    : out Boolean;
-      Dir          : out Virtual_File;
-      Project      : out Virtual_File;
-      Errors       : out Unbounded_String);
+     (Templates     : Project_Templates_List.List;
+      Chosen        : out Project_Template;
+      Installed     : out Boolean;
+      Dir           : out Virtual_File;
+      Project       : out Virtual_File;
+      Errors        : out Unbounded_String;
+      Default_Label : String := "");
    --  Read templates in Templates, offer a dialog to select a template and
    --  fill in the fields, and select a target directory.
    --  If the user validates the choice, then install the template in the
@@ -35,5 +36,7 @@ package Project_Templates.GUI is
    --  the target directory, Project the deployed project file, and
    --  Chosen the chosen template.
    --  If any errors are encountered, they are listed in Errors.
+   --  If Default_Label is specified and if a template has the same label, it
+   --  gets selected by default.
 
 end Project_Templates.GUI;

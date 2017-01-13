@@ -262,12 +262,13 @@ package body Project_Templates.GUI is
    ----------------------
 
    procedure Install_Template
-     (Templates    : Project_Templates_List.List;
-      Chosen       : out Project_Template;
-      Installed    : out Boolean;
-      Dir          : out Virtual_File;
-      Project      : out Virtual_File;
-      Errors       : out Unbounded_String)
+     (Templates     : Project_Templates_List.List;
+      Chosen        : out Project_Template;
+      Installed     : out Boolean;
+      Dir           : out Virtual_File;
+      Project       : out Virtual_File;
+      Errors        : out Unbounded_String;
+      Default_Label : String := "")
    is
       Assistant    : Gtk_Assistant;
 
@@ -275,6 +276,7 @@ package body Project_Templates.GUI is
       Tree         : Gtk_Tree_View;
       Model        : Gtk_Tree_Store;
       Iter         : Gtk_Tree_Iter;
+      Default_Path : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Col          : Gtk_Tree_View_Column;
       Rend         : Gtk_Cell_Renderer_Text;
       Pix          : Gtk_Cell_Renderer_Pixbuf;
@@ -478,6 +480,10 @@ package body Project_Templates.GUI is
          end loop;
 
          Model.Insert_Before (Iter, Cat, Child);
+
+         if Template.Label = Default_Label then
+            Default_Path := Model.Get_Path (Iter);
+         end if;
 
          Set_All_And_Clear
            (Model, Iter,
@@ -700,17 +706,22 @@ package body Project_Templates.GUI is
 
       Set_Default_Size (Assistant, 600, 350);
 
-      --  Expand the tree and select the first leaf
+      --  Expand the tree and select the default template or the first leaf
+      --  if there is no default template.
       Expand_All (Tree);
 
-      Iter := Model.Get_Iter_First;
+      if Default_Path /= Null_Gtk_Tree_Path then
+         Tree.Get_Selection.Select_Path (Default_Path);
+      else
+         Iter := Model.Get_Iter_First;
 
-      while Model.Has_Child (Iter) loop
-         Iter := Model.Children (Iter);
-      end loop;
+         while Model.Has_Child (Iter) loop
+               Iter := Model.Children (Iter);
+         end loop;
 
-      if Iter /= Null_Iter then
-         Get_Selection (Tree).Select_Iter (Iter);
+         if Iter /= Null_Iter then
+               Get_Selection (Tree).Select_Iter (Iter);
+         end if;
       end if;
 
       Show_All (Assistant);
