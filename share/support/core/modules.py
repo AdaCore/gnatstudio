@@ -136,6 +136,7 @@ class Module(object):
 
         "project_view_changed",
         "preferences_changed",
+        "semantic_tree_updated",
         "file_edited",
         "project_changed",   # not called for the initial project
         "compilation_finished",

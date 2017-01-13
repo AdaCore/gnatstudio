@@ -34,11 +34,23 @@ class Clang(object):
         return GPS.Libclang.get_translation_unit(ed_buffer.file())
 
     def refresh_buffer(self, ed_buffer, update=False):
-        if ed_buffer.file().language() in ("c", "c++"):
+        """Refresh the information displayed in the buffer"""
+        f = ed_buffer.file()
+
+        # Do not display diagnostics if the semantic tree is not ready.
+        # Rather, count on this being called in reaction to the
+        # 'semantic_tree_updated' hook.
+        if f.language() in ("c", "c++") and GPS.SemanticTree(f).is_ready():
             self.add_diagnostics(ed_buffer)
 
     def add_diagnostics(self, ed_buffer):
+        """Add diagnostic information to the side of the buffer
+
+           This will request a Translation_Unit, and therefore will be
+           blocking if the Translation_Unit is not ready.
+        """
         f = ed_buffer.file()
+
         tu = self.get_translation_unit(ed_buffer)
 
         # If none was got, don't do anything
@@ -99,22 +111,12 @@ class Clang_Module(Module):
         Clang_Module.clang_instance = Clang()
         self.refresh_current_editor()
 
-    def buffer_edited(self, f):
+    def semantic_tree_updated(self, f):
         if self.is_on():
             # The file might have been opened in a QGen browser for instance
             buffer = GPS.EditorBuffer.get(f, open=False)
             if buffer:
                 Clang_Module.clang_instance.refresh_buffer(buffer)
-
-    def file_edited(self, f):
-        """
-        This hook is called when a new file editor is being opened
-        """
-        if self.is_on():
-            # The file might have been opened in a QGen browser for instance
-            buffer = GPS.EditorBuffer.get(f, open=False)
-            if buffer:
-                self.clang_instance.refresh_buffer(buffer)
 
     def preferences_changed(self, *args):
         if show_diags_pref.get() != self.show_diags_pref_val:
