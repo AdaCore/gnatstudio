@@ -104,10 +104,10 @@ package body Welcome_Dialogs is
       pragma Unreferenced (Event);
       Dialog : constant Welcome_Dialog := Welcome_Dialog (Self);
    begin
-      Gtk.Main.Main_Quit;
       Dialog.Response := Quit_GPS;
+      Gtk.Main.Main_Quit;
 
-      return False;
+      return True;
    end On_Delete;
 
    ----------------------
@@ -354,10 +354,11 @@ package body Welcome_Dialogs is
 
       if Response = Project_Loaded then
          Trace (Me, "A project has been loaded.");
-         Dialog.Destroy;
       else
          Trace (Me, "No project has been loaded. Quitting GPS");
       end if;
+
+      Dialog.Destroy;
 
       return Response;
    end Display_Welcome_Dialog;
