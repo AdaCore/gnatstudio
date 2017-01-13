@@ -34,11 +34,16 @@ package body Default_Preferences.Assistants is
    type Preferences_Assistant_Record is new Gtk_Assistant_Record with record
       Running_Main_Loop : Boolean := True;
       --  True if the preferences assistant is running a nested main loop
+      Start_GPS_Button  : Gtk_Button;
+      --  The button used to skip the remaining assistant pages and to start
+      --  GPS directly.
    end record;
    type Preferences_Assistant is access all Preferences_Assistant_Record;
 
    procedure On_Cancel (Self : access Gtk_Assistant_Record'Class);
-   procedure On_Apply (Self : access Gtk_Assistant_Record'Class);
+   procedure On_Prepare
+     (Self : access Gtk_Assistant_Record'Class;
+      Page : not null access Gtk_Widget_Record'Class);
 
    ---------------
    -- On_Cancel --
@@ -57,19 +62,31 @@ package body Default_Preferences.Assistants is
       Assistant.Destroy;
    end On_Cancel;
 
-   --------------
-   -- On_Apply --
-   --------------
+   ----------------
+   -- On_Prepare --
+   ----------------
 
-   procedure On_Apply (Self : access Gtk_Assistant_Record'Class)
+   procedure On_Prepare
+     (Self : access Gtk_Assistant_Record'Class;
+      Page : not null access Gtk_Widget_Record'Class)
    is
+      pragma Unreferenced (Page);
       Assistant : constant Preferences_Assistant :=
                     Preferences_Assistant (Self);
+      Hbox      : Gtk_Hbox;
    begin
-      Gtk.Main.Main_Quit;
-      Assistant.Running_Main_Loop := False;
-      Assistant.Close;
-   end On_Apply;
+      Hbox := Gtk_Hbox (Assistant.Start_GPS_Button.Get_Parent);
+
+      --  Put the 'Start using GPS' button at the last position when the last
+      --  assitant page is going to be displayed.
+      --  Otherwise, put it at the first position.
+
+      if Assistant.Get_Current_Page = Assistant.Get_N_Pages - 1 then
+         Hbox.Reorder_Child (Assistant.Start_GPS_Button, 0);
+      else
+         Hbox.Reorder_Child (Assistant.Start_GPS_Button, -1);
+      end if;
+   end On_Prepare;
 
    ------------
    -- Create --
@@ -124,18 +141,24 @@ package body Default_Preferences.Assistants is
 
          Children := Hbox.Get_Children;
 
-         --  Loop over all the action area children and rename some of the
-         --  buttons.
+         --  Loop over all the action area children and rename/remove some of
+         --  the buttons.
 
          while Children /= Widget_List.Null_List loop
             Button := Gtk_Button (Widget_List.Get_Data (Children));
 
             if Button.Get_Label = "_Cancel" then
-               Button.Set_Label ("Skip & Use Defaults");
+               Button.Set_Label ("Start using GPS");
+               Assistant.Start_GPS_Button := Button;
             end if;
 
-            if Button.Get_Label = "_Apply" then
-               Button.Set_Label ("Start using GPS");
+            --  Remove the 'Finish' and the 'Apply' buttons: we don't need them
+            --  in this assistant.
+
+            if Button.Get_Label = "_Finish"
+              or else Button.Get_Label = "_Apply"
+            then
+               Button.Destroy;
             end if;
 
             Children := Next (Children);
@@ -249,7 +272,7 @@ package body Default_Preferences.Assistants is
          Height => 600);
 
       Assistant.On_Cancel (On_Cancel'Access);
-      Assistant.On_Apply (On_Apply'Access);
+      Assistant.On_Prepare (On_Prepare'Access);
 
       for Page_Index in Pages'Range loop
          Create_Assistant_Page_View (Page_Index);
