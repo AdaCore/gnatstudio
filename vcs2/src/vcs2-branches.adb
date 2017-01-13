@@ -34,6 +34,7 @@ with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;             use GPS.Kernel.Preferences;
 with GPS.Intl;                           use GPS.Intl;
+with GPS.Search;                         use GPS.Search;
 with Gtkada.MDI;                         use Gtkada.MDI;
 with Gtkada.Style;                       use Gtkada.Style;
 with Gtkada.Tree_View;                   use Gtkada.Tree_View;
@@ -77,8 +78,12 @@ package body VCS2.Branches is
    type Branches_Tree_Record is new Tree_View_Record with record
       Config      : Branches_Config;
       Categories  : Path_Maps.Map;
+      User_Filter : GPS.Search.Search_Pattern_Access;
    end record;
    type Branches_Tree is access all Branches_Tree_Record'Class;
+   overriding function Is_Visible
+     (Self : not null access Branches_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    type Branches_View_Record is new Base_VCS_View_Record with record
       Emblem      : Gtk_Cell_Renderer_Text;
@@ -94,6 +99,9 @@ package body VCS2.Branches is
    overriding procedure Create_Menu
      (View    : not null access Branches_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Branches_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (Self : access Branches_View_Record'Class) return Gtk_Widget;
@@ -628,6 +636,39 @@ package body VCS2.Branches is
       return Gtk_Widget (Label);
    end Create_Contents;
 
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Branches_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access)
+   is
+   begin
+      GPS.Search.Free (Branches_Tree (Self.Tree).User_Filter);
+      Branches_Tree (Self.Tree).User_Filter := Pattern;
+      Self.Tree.Refilter;
+   end Filter_Changed;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self : not null access Branches_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is
+      N : constant String := Self.Model.Get_String (Iter, Column_Name);
+      D : constant String := Self.Model.Get_String (Iter, Column_Emblem);
+   begin
+      if Self.User_Filter = null then
+         return True;
+      else
+         return Self.User_Filter.Start (N) /= GPS.Search.No_Match
+           or else Self.User_Filter.Start (D) /= GPS.Search.No_Match;
+      end if;
+   end Is_Visible;
+
    ----------------
    -- Initialize --
    ----------------
@@ -657,7 +698,8 @@ package body VCS2.Branches is
           Column_Icon           => GType_String,
           Column_Icon_Visible   => GType_Boolean,
           Column_Id             => GType_String),
-         Filtered   => False);
+         Filtered         => True,
+         Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Single);
       Scrolled.Add (Self.Tree);
