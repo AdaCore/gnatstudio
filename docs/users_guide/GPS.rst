@@ -2028,6 +2028,8 @@ Classes
 
    .. automethod:: GPS.VCS2_Task_Visitor.set_details
 
+   .. automethod:: GPS.VCS2_Task_Visitor.tooltip
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 

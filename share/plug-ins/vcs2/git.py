@@ -2,10 +2,18 @@ import GPS
 from . import core
 import os
 import re
-from workflows.promises import ProcessWrapper, join
+from workflows.promises import ProcessWrapper, join, Promise
 import datetime
 import types
 import gps_utils
+
+
+CAT_BRANCHES = 'BRANCHES'
+CAT_REMOTES = 'REMOTES'
+CAT_TAGS = 'TAGS'
+CAT_STASHES = 'STASHES'
+CAT_WORKTREES = 'WORKTREES'
+CAT_SUBMODULES = 'SUBMODULES'
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
@@ -138,10 +146,8 @@ class Git(core.VCS):
         :param List(GPS.File) files: list of files
         """
         p = self._git(params + [f.path for f in files], block_exit=True)
-        (status, output) = yield p.wait_until_terminate()
-        if status:
-            GPS.Console().write("git %s: %s" % (" ".join(params), output))
-        else:
+        (status, _) = yield p.wait_until_terminate(show_if_error=True)
+        if status == 0:
             # update statuses
             yield self.async_fetch_status_for_all_files(from_user=False)
 
@@ -348,7 +354,7 @@ class Git(core.VCS):
         remotes = []
         r = re.compile(
             "^(?P<current>\*)?\s+"
-            "(?P<name>\S+)"
+            "(?P<name>[^(]\S+|\([^)]+\))"   # "(HEAD detached at ...)"
             "\s+"
             "(?P<id>[a-z0-9]+)"
             "\s+"
@@ -363,8 +369,9 @@ class Git(core.VCS):
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    'branches', 'vcs-branch-symbolic', branches)
-                visitor.branches('remotes', 'vcs-cloud-symbolic', remotes)
+                    CAT_BRANCHES, 'vcs-branch-symbolic', branches)
+                visitor.branches(
+                    CAT_REMOTES, 'vcs-cloud-symbolic', remotes)
                 break
             m = r.search(line)
             if m:
@@ -407,7 +414,7 @@ class Git(core.VCS):
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches('tags', 'vcs-tag-symbolic', tags)
+                visitor.branches(CAT_TAGS, 'vcs-tag-symbolic', tags)
                 break
             tags.append((line, False, '', line))
 
@@ -442,7 +449,7 @@ class Git(core.VCS):
                 # Do not report if we only have the current directory
                 if len(trees) > 1:
                     visitor.branches(
-                        'worktrees', 'vcs-git-worktrees-symbolic', trees)
+                        CAT_WORKTREES, 'vcs-git-worktrees-symbolic', trees)
                 break
             elif not line:
                 trees.append(current)
@@ -459,6 +466,9 @@ class Git(core.VCS):
                 current[2] = 'detached'  # details
 
     def _submodules(self, visitor):
+        """
+        A generator that returns the list of submodules via `visitor.branches`
+        """
         p = self._git(['submodule', 'status', '--recursive'])
         modules = []
         while True:
@@ -466,7 +476,7 @@ class Git(core.VCS):
             if line is None:
                 if len(modules) != 0:
                     visitor.branches(
-                        'submodules', 'vcs-submodules-symbolic', modules)
+                        CAT_SUBMODULES, 'vcs-submodules-symbolic', modules)
                 break
             _, sha1, name, _ = line.split(' ', 3)
             modules.append((name, False, '', sha1))
@@ -480,16 +490,122 @@ class Git(core.VCS):
                    self._submodules(visitor),
                    *self.extensions('async_branches', visitor))
 
-    @core.run_in_background
-    def async_select_branch(self, id):
-        if id.startswith('stash@'):
-            p = self._git(['stash', 'apply', id])
-        else:
-            p = self._git(['checkout', id])
+    def _current_branch(self):
+        """
+        A promise that returns the name of the current branch
+        """
+        result = Promise()
 
-        status, output = yield p.wait_until_terminate()
-        if status != 0:
-            GPS.Console().write(output)
+        def online(line):
+            result.resolve(line)
+
+        p = self._git(['rev-parse', '--abbrev-ref', 'HEAD'])
+        p.lines.subscribe(online)
+        return result
+
+    @core.run_in_background
+    def async_action_on_branch(self, visitor, action, category, id):
+        if category == CAT_BRANCHES and id:
+            if action == core.VCS.ACTION_DOUBLE_CLICK:
+                p = self._git(['checkout', id])
+                yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    '\nDouble-click to checkout this branch.\n'
+                    'Click [+] to create a new branch from this one.\n'
+                    'Click [-] to delete current branch.')
+
+            elif action == core.VCS.ACTION_ADD and id:
+                name = GPS.MDI.input_dialog(
+                    'Choose a name for the new branch',
+                    'name=%s-new' % id)
+                if not name:
+                    return   # Cancelled
+                name = name[0]
+                p = self._git(['branch', '--track', name, id])
+                s, _ = yield p.wait_until_terminate(show_if_error=True)
+                if s == 0:
+                    # Checkout will not succeed if there are local changes
+                    p = self._git(['checkout', name])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == core.VCS.ACTION_REMOVE and id:
+                if (id != 'master' and
+                        GPS.MDI.yes_no_dialog("Delete branch `%s` ?" % id)):
+
+                    # If this is the current branch, fallback to master
+                    current = yield self._current_branch()
+                    if current == id:
+                        p = self._git(['checkout', 'master'])
+                        s, _ = yield p.wait_until_terminate(show_if_error=True)
+
+                    p = self._git(['branch', '-D', id])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+        elif category == CAT_TAGS:
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+                p = self._git(['checkout', id])
+                yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    '\nDouble-click to checkout this tag' +
+                    ('\nClick [+] to create a new tag on current branch'
+                     if not id else '') +
+                    ('\nClick [-] to delete tag' if id else ''))
+            elif action == core.VCS.ACTION_ADD and not id:
+                name = GPS.MDI.input_dialog(
+                    'Choose a name for the new tag',
+                    'name', 'Commit Message')
+                if name:   # not cancelled
+                    p = self._git(['tag', '-a', '-m', name[1], name[0]])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == core.VCS.ACTION_REMOVE:
+                if id and GPS.MDI.yes_no_dialog("Delete tag `%s` ?" % id):
+                    p = self._git(['tag', '-d', id])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+        elif category == CAT_STASHES:
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+                p = self._git(['stash', 'apply', id])
+                yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    ('\nDouble-click to apply this stash on HEAD' +
+                     '\nClick [-] to drop this stash' if id else '') +
+                    ('' if id else '\nClick [+] to stash all local changes'))
+            elif action == core.VCS.ACTION_ADD and not id:
+                p = self._git(['stash', 'save', 'created from GPS'])
+                yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_REMOVE and id:
+                p = self._git(['stash', 'drop', id])
+                yield p.wait_until_terminate(show_if_error=True)
+
+        elif category == CAT_REMOTES:
+            if action == core.VCS.ACTION_DOUBLE_CLICK:
+                pass
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    '\nDouble-click to checkout this remote branch locally' +
+                    '\nClick [-] to delete this remote branch'
+                    if id else '')
+                pass
+            elif action == core.VCS.ACTION_ADD:
+                pass
+            elif action == core.VCS.ACTION_REMOVE and id:
+                # id is of the form 'remotes/origin/some/name'
+                _, origin, name = id.split('/', 2)
+                if GPS.MDI.yes_no_dialog("Delete remote branch `%s` ?" % id):
+                    p = self._git(['push', origin, ':%s' % name])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+        elif category in (CAT_WORKTREES, CAT_SUBMODULES):
+            pass
+
+        else:
+            yield join(*self.extensions(
+                'async_action_on_branch', visitor, action, category, id))
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

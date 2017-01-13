@@ -5,6 +5,10 @@ import os
 from workflows.promises import ProcessWrapper
 
 
+CAT_BRANCHES = 'BRANCHES'
+CAT_TAGS = 'TAGS'
+
+
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
 class SVN(core_staging.Emulate_Staging,
           core.File_Based_VCS):
@@ -225,6 +229,39 @@ class SVN(core_staging.Emulate_Staging,
                     m.group('rev')))
                 ids.append(m.group('rev'))
 
+    def _branches(self, visitor, parent_url):
+        """
+        A generator that returns the list of branches via `visitor.branches`
+        """
+        branches = [('trunk', url.endswith('/trunk'), '',
+                     os.path.join(parent, 'trunk'))]
+        base = os.path.join(parent_url, 'branches')
+        p = self._svn(['list', base])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches(CAT_BRANCHES, 'vcs-branch-symbolic', branches)
+                break
+            line = line.rstrip('/')
+            b = os.path.join(base, line)
+            branches.append((line, b == url, '', b))
+
+    def _tags(self, visitor, parent_url):
+        """
+        A generator that returns the list of tags via `visitor.tags`
+        """
+        tags = []
+        base = os.path.join(parent_url, 'tags')
+        p = self._svn(['list', base])
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                visitor.branches(CAT_TAGS, 'vcs-tag-symbolic', tags)
+                break
+            line = line.rstrip('/')
+            b = os.path.join(base, line)
+            tags.append((line, b == url, '', b))
+
     @core.run_in_background
     def async_branches(self, visitor):
         url = ''
@@ -238,48 +275,31 @@ class SVN(core_staging.Emulate_Staging,
                 url = line[5:]
                 break
 
-        if not url:
-            return
+        if url:
+            # Assume the standard 'trunk', 'branches' and 'tags' naming
+            parent = url
+            while True:
+                parent, tail = os.path.split(parent)
+                if tail in ('trunk', 'branches', 'tags'):
+                    break
 
-        # Assume the standard 'trunk', 'branches' and 'tags' naming
-        parent = url
-        while True:
-            parent, tail = os.path.split(parent)
-            if tail in ('trunk', 'branches', 'tags'):
-                break
-
-        branches = [('trunk', url.endswith('/trunk'), '',
-                     os.path.join(parent, 'trunk'))]
-        base = os.path.join(parent, 'branches')
-        p = self._svn(['list', base])
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                visitor.branches('branches', 'vcs-branch-symbolic', branches)
-                break
-            line = line.rstrip('/')
-            b = os.path.join(base, line)
-            GPS.Logger("MANU").log("b=%s url=%s--" % (b, url))
-            branches.append((line, b == url, '', b))
-
-        tags = []
-        base = os.path.join(parent, 'tags')
-        p = self._svn(['list', base])
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                visitor.branches('tags', 'vcs-tag-symbolic', tags)
-                break
-            line = line.rstrip('/')
-            b = os.path.join(base, line)
-            tags.append((line, b == url, '', b))
+            yield join(self._branches(visitor, parent),
+                       self._tags(visitor, parent))
 
     @core.run_in_background
-    def async_select_branch(self, id):
-        p = self._svn(['switch', '--ignore-ancestry', id])
-        status, output = yield p.wait_until_terminate()
-        if status != 0:
-            GPS.Console().write(output)
+    def async_action_on_branch(self, visitor, action, category, id):
+        if category in (CAT_BRANCHES, CAT_TAGS):
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+                p = self._svn(['switch', '--ignore-ancestry', id])
+                yield p.wait_until_terminate(shof_if_error=True)
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    '\nDouble-click to checkout this tag or branch'
+                    if id else '')
+            elif action == core.VCS.ACTION_ADD and not id:
+                pass
+            elif action == core.VCS.ACTION_REMOVE and id:
+                pass
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

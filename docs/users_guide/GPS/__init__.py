@@ -9667,6 +9667,8 @@ class VCS2_Task_Visitor(object):
         :param str category: the name of the category, as displayed
            in the Branches view. You can call this method several times
            for the same category if need be.
+           If the category is 'BRANCHES', it will be expanded in the GUI to
+           show all the branches within.
         :param str iconname: icon to use for this category.
         :param List branches: a list of branches. Each item in the
            list is a tuple with the following elements:
@@ -9679,6 +9681,15 @@ class VCS2_Task_Visitor(object):
              by python callbacks in this module, so can be anything that
              the VCS understands.
          """
+
+    def tooltip(self, text):
+        """
+        Report additonal text to display in tooltips.
+        In particular, this is called in the Branches view, as a result of
+        calling the VCS engine's `async_action_on_branch` method.
+
+        :param str text: additional text for the tooltip
+        """
 
 
 ###########################################################

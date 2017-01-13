@@ -17,6 +17,8 @@ STATUSES = {
     "unknown": GPS.VCS2.Status.UNTRACKED
 }
 
+CAT_TAGS = 'TAGS'
+
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
 class CVS(core_staging.Emulate_Staging,
@@ -293,7 +295,7 @@ class CVS(core_staging.Emulate_Staging,
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    'tags', 'vcs-tag-symbolic',
+                    CAT_TAGS, 'vcs-tag-symbolic',
                     [(t, t in sticky, '', t) for t in tags])
                 break
 
@@ -311,11 +313,27 @@ class CVS(core_staging.Emulate_Staging,
                     sticky.add(s)
 
     @core.run_in_background
-    def async_select_branch(self, id):
-        p = self._cvs(['update', '-r', id])
-        status, output = yield p.wait_until_terminate()
-        if status != 0:
-            GPS.Console().write(output)
+    def async_action_on_branch(self, visitor, action, category, id):
+        if category == CAT_TAGS:
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+                p = self._cvs(['update', '-r', id])
+                yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    ('\nDouble-click to checkout this tag' if id else '') +
+                    ('\nClick [+] to create new tag from current checkout'
+                     if not id else '') +
+                    ('\nClick [-] to delete this tag' if id else ''))
+            elif action == core.VCS.ACTION_ADD and not id:
+                name = GPS.MDI.input_dialog(
+                    'Choose a name for the new tag', 'name')
+                if name:
+                    p = self._cvs(['tag', name[0]])
+                    yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_REMOVE and id:
+                if GPS.MDI.yes_no_dialog("Delete tag '%s' ?" % id):
+                    p = self._cvs(['tag', '-d', id])
+                    yield p.wait_until_terminate(show_if_error=True)
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

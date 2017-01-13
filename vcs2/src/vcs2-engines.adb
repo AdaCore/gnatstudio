@@ -232,11 +232,12 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Branches;
       VCS  : not null access VCS_Engine'Class);
 
-   type Cmd_Select_Branch is new VCS_Command with record
-      Id  : Unbounded_String;
+   type Cmd_Action_On_Branch is new VCS_Command with record
+      Action        : Branch_Action;
+      Category, Id  : Unbounded_String;
    end record;
    overriding procedure Execute
-     (Self : not null access Cmd_Select_Branch;
+     (Self : not null access Cmd_Action_On_Branch;
       VCS  : not null access VCS_Engine'Class);
 
    type Cmd_Discard_Local_Changes is new VCS_Command with record
@@ -981,31 +982,38 @@ package body VCS2.Engines is
       VCS.Async_Branches (Self.Visitor);
    end Execute;
 
-   -------------------------
-   -- Queue_Select_Branch --
-   -------------------------
+   ----------------------------
+   -- Queue_Action_On_Branch --
+   ----------------------------
 
-   procedure Queue_Select_Branch
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Id          : String) is
+   procedure Queue_Action_On_Branch
+     (Self         : not null access VCS_Engine'Class;
+      Visitor      : not null access Task_Visitor'Class;
+      Action       : Branch_Action;
+      Category, Id : String) is
    begin
       Queue
         (Self,
-         new Cmd_Select_Branch'(
-           Visitor => Visitor.all'Unchecked_Access,
-           Id      => To_Unbounded_String (Id)));
-   end Queue_Select_Branch;
+         new Cmd_Action_On_Branch'(
+           Visitor  => Visitor.all'Unchecked_Access,
+           Action   => Action,
+           Category => To_Unbounded_String (Category),
+           Id       => To_Unbounded_String (Id)));
+   end Queue_Action_On_Branch;
 
    -------------
    -- Execute --
    -------------
 
    overriding procedure Execute
-     (Self    : not null access Cmd_Select_Branch;
+     (Self    : not null access Cmd_Action_On_Branch;
       VCS     : not null access VCS_Engine'Class) is
    begin
-      VCS.Async_Select_Branch (Self.Visitor, To_String (Self.Id));
+      VCS.Async_Action_On_Branch
+        (Self.Visitor,
+         Self.Action,
+         To_String (Self.Category),
+         To_String (Self.Id));
    end Execute;
 
    ---------------------------------

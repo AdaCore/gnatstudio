@@ -194,6 +194,11 @@ package VCS2.Engines is
    --  All branches are displayed in the same category ("BRANCHES", "REMOTES",
    --  "TAGS",...)
 
+   procedure On_Tooltip
+     (Self     : not null access Task_Visitor;
+      Text     : String) is null;
+   --  Called when extra information is available for a tooltip.
+
    -------------------
    -- File statuses --
    -------------------
@@ -484,15 +489,29 @@ package VCS2.Engines is
    --  Compute available branches, tags and others for Self.
    --  Reports the result via one or more calls to Visitor.On_Branches
 
-   procedure Async_Select_Branch
-     (Self        : not null access VCS_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Id          : String) is null;
-   procedure Queue_Select_Branch
-     (Self        : not null access VCS_Engine'Class;
-      Visitor     : not null access Task_Visitor'Class;
-      Id          : String);
-   --  The user has requested a change of the current branch.
+   type Branch_Action is (Action_Double_Click,
+                          Action_Tooltip,
+                          Action_Add,
+                          Action_Remove);
+   procedure Async_Action_On_Branch
+     (Self         : not null access VCS_Engine;
+      Visitor      : not null access Task_Visitor'Class;
+      Action       : Branch_Action;
+      Category, Id : String) is null;
+   procedure Queue_Action_On_Branch
+     (Self         : not null access VCS_Engine'Class;
+      Visitor      : not null access Task_Visitor'Class;
+      Action       : Branch_Action;
+      Category, Id : String);
+   --  Some action related to the Branches view.
+   --  Depending on the action, the result should be reported differently to
+   --  the caller:
+   --     Action_Double_Click => simply perform the action
+   --     Action_Tooltip      => use Visitor.On_Tooltip
+   --     Action_Add          => simply perform the action
+   --     Action_Remove       => simply perform the action
+   --
+   --  Category is the upper-cased name of the top-level node.
    --  The Id is as returned by Async_Branches.
 
    procedure Async_Discard_Local_Changes

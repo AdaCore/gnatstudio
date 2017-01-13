@@ -741,18 +741,30 @@ class ProcessWrapper(object):
 
         return self.stream.flatMap(map_to_line())
 
-    def wait_until_terminate(self):
+    def wait_until_terminate(self, show_if_error=False):
         """
         Called by user. Make a promise to them that:
         I'll let you know when the process is finished
         Promise made here will be resolved with a tuple:
             (exit_status, full output since call to wait_until_terminate)
+
+        :param bool show_if_error: if true and the process exits with a
+           non zero status, then print the full output of the process to the
+           Messages window.
         """
         p = Promise()
         output = []
+
+        def on_terminate(status):
+            out = "".join(output)
+            if show_if_error and status != 0:
+                GPS.Console().write("%s\n" % (" ".join(self.__command, )))
+                GPS.Console().write(out)
+            p.resolve((status, "".join(output)))
+
         self.stream.subscribe(
             onnext=lambda out: output.append(out),
-            oncompleted=lambda status: p.resolve((status, "".join(output))))
+            oncompleted=on_terminate)
         return p
 
     def __on_timeout(self):

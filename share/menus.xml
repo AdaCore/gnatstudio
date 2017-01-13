@@ -602,6 +602,8 @@
    </toolbar>
 
    <toolbar id='Branches'>
+      <button action='vcs add branch'/>
+      <button action='vcs delete branch'/>
       <button action='vcs checkout branch'/>
    </toolbar>
 

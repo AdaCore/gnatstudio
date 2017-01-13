@@ -344,12 +344,22 @@ class VCS(GPS.VCS2):
            the information, via its `branches` method.
         """
 
-    def async_select_branch(self, id):
-        """
-        Make the given branch the current branch.
+    ACTION_DOUBLE_CLICK = 0
+    ACTION_TOOLTIP = 1
+    ACTION_ADD = 2
+    ACTION_REMOVE = 3
 
-        :param str id: the id of the new branch, as returned by
-            `async_branches`
+    def async_action_on_branch(self, visitor, action, category, id):
+        """
+        React to a double-click action in the Branches view.
+
+        :param GPS.VCS2_Task_Visitor visitor: the object used to report
+           asynchronously.
+           If action is ACTION_TOOLTIP, use `visitor.tooltip`.
+        :param int action: the action to perform
+        :param str category: the upper-cased category, i.e. the first
+           parameter to `visitor.branches` in the call to `async_branches`.
+        :param str id: the id of the specific line that was selected.
         """
 
     ############

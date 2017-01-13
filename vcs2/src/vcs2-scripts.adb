@@ -100,10 +100,11 @@ package body VCS2.Scripts is
    overriding procedure Async_Branches
      (Self        : not null access Script_Engine;
       Visitor     : not null access Task_Visitor'Class);
-   overriding procedure Async_Select_Branch
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Id          : String);
+   overriding procedure Async_Action_On_Branch
+     (Self         : not null access Script_Engine;
+      Visitor      : not null access Task_Visitor'Class;
+      Action       : Branch_Action;
+      Category, Id : String);
    overriding procedure Async_Discard_Local_Changes
      (Self        : not null access Script_Engine;
       Files       : GNATCOLL.VFS.File_Array);
@@ -387,21 +388,24 @@ package body VCS2.Scripts is
       Call_Method (Self, "async_branches", D);
    end Async_Branches;
 
-   -------------------------
-   -- Async_Select_Branch --
-   -------------------------
+   ----------------------------
+   -- Async_Action_On_Branch --
+   ----------------------------
 
-   overriding procedure Async_Select_Branch
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Id          : String)
+   overriding procedure Async_Action_On_Branch
+     (Self         : not null access Script_Engine;
+      Visitor      : not null access Task_Visitor'Class;
+      Action       : Branch_Action;
+      Category, Id : String)
    is
-      pragma Unreferenced (Visitor);
-      D : Callback_Data'Class := Self.Script.Create (1);
+      D : Callback_Data'Class := Self.Script.Create (4);
    begin
-      D.Set_Nth_Arg (1, Id);
-      Call_Method (Self, "async_select_branch", D);
-   end Async_Select_Branch;
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Branch_Action'Pos (Action));
+      D.Set_Nth_Arg (3, Category);
+      D.Set_Nth_Arg (4, Id);
+      Call_Method (Self, "async_action_on_branch", D);
+   end Async_Action_On_Branch;
 
    ---------------------------------
    -- Async_Discard_Local_Changes --
@@ -763,6 +767,9 @@ package body VCS2.Scripts is
                Free (B.Id);
             end loop;
          end;
+
+      elsif Command = "tooltip" then
+         Visitor.On_Tooltip (Text => Data.Nth_Arg (2));
       end if;
    end VCS_Task_Handler;
 
@@ -942,6 +949,11 @@ package body VCS2.Scripts is
          Params        => (2 => Param ("category"),
                            3 => Param ("iconname"),
                            4 => Param ("branches")),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("tooltip",
+         Params        => (2 => Param ("text")),
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
    end Register_Scripts;

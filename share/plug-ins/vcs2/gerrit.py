@@ -5,6 +5,8 @@ import GPS
 from . import core
 from . import git
 
+CAT_REVIEWS = 'REVIEWS'
+
 
 class Gerrit(core.Extension):
     def applies(self):
@@ -31,6 +33,7 @@ class Gerrit(core.Extension):
     def async_branches(self, visitor):
         p = ProcessWrapper(
             ['ssh',
+             '-x',
              '-p' if self.port else '', self.port,
              self.host,
              'gerrit',
@@ -44,7 +47,8 @@ class Gerrit(core.Extension):
             line = yield p.wait_line()
             if line is None:
                 if reviews:
-                    visitor.branches('Reviews', 'vcs-gerrit-symbolic', reviews)
+                    visitor.branches(
+                        CAT_REVIEWS, 'vcs-gerrit-symbolic', reviews)
                 break
 
             patch = json.loads(line)
@@ -65,6 +69,25 @@ class Gerrit(core.Extension):
                      False,   # not active
                      '%s%s' % (review, workflow),
                      patch.get(u'number', '')))   # unique id
+
+    def async_action_on_branch(self, visitor, action, category, id):
+        if category == CAT_REVIEWS:
+            if action == core.VCS.ACTION_DOUBLE_CLICK:
+                p = self.base._git(['review', '--cherrypick', id])
+                status, _ = yield p.wait_until_terminate(show_if_error=True)
+                if status == 0:
+                    GPS.Console().write(
+                        "Applied to working directory: %s\n" % id)
+
+            elif action == core.VCS.ACTION_TOOLTIP:
+                visitor.tooltip(
+                    '\nDouble-click to cherry-pick this review on HEAD')
+
+            elif axction == core.VCS.ACTION_ADD:
+                pass
+
+            elif action == core.VCS.ACTION_REMOVE:
+                pass
 
 
 git.Git.register_extension(Gerrit)

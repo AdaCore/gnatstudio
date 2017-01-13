@@ -131,7 +131,7 @@ package body VCS2.Branches is
 
    procedure Create_Node
      (Self      : not null access Branches_View_Record'Class;
-      Category  : String;
+      Category  : Gtk_Tree_Iter;
       Icon_Name : String;
       Info      : Branch_Info);
    --  Create nodes in the tree
@@ -145,17 +145,21 @@ package body VCS2.Branches is
 
    type Branches_Visitor is new Task_Visitor with record
       Kernel   : Kernel_Handle;
-      Cleared  : Boolean := False;
    end record;
    overriding procedure On_Branches
      (Self     : not null access Branches_Visitor;
       Category : String;
       Iconname : String;
       Branches : Branches_Array);
-   overriding procedure On_Terminate
-     (Self     : not null access Branches_Visitor;
-      VCS      : access VCS_Engine'Class);
-      --  Gather the results of the branches list for the current VCS
+   --  Gather the results of the branches list for the current VCS
+
+   type Tooltips_Visitor is new Task_Visitor with record
+      Label    : Gtk_Label;
+   end record;
+   overriding procedure On_Tooltip
+     (Self     : not null access Tooltips_Visitor;
+      Text     : String);
+   overriding procedure Free (Self : in out Tooltips_Visitor);
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -179,6 +183,16 @@ package body VCS2.Branches is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Unstage the file described in the context.
 
+   type Add_Branch is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Add_Branch;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Delete_Branch is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Delete_Branch;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Branches_Tooltips is new Tooltips.Tooltips with record
       View   : access Branches_View_Record'Class;
    end record;
@@ -186,6 +200,11 @@ package body VCS2.Branches is
      (Self     : not null access Branches_Tooltips;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+
+   function Category_From_Node
+     (Self       : not null access Branches_Tree_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return String;
+   --  Return the name of the top-level node that contains Store_Iter
 
    procedure On_Multipress
      (Self    : access Glib.Object.GObject_Record'Class;
@@ -198,6 +217,11 @@ package body VCS2.Branches is
 
    procedure On_Destroyed (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
+
+   procedure Execute_Action_On_Selected_Lines
+     (Context : Interactive_Command_Context;
+      Action  : Branch_Action);
+   --  Perform an action on the select lines
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -221,10 +245,7 @@ package body VCS2.Branches is
       if View /= null then
          Tree := Branches_Tree (View.Tree);
          Tree.Get_Selection.Get_Selected (Model => Model, Iter => Filter_Iter);
-
-         return Filter_Iter /= Null_Iter
-           and then Tree.Model.Get_String
-             (Tree.Convert_To_Store_Iter (Filter_Iter), Column_Id) /= "";
+         return Filter_Iter /= Null_Iter;
       end if;
 
       return False;
@@ -331,11 +352,11 @@ package body VCS2.Branches is
 
    procedure Create_Node
      (Self      : not null access Branches_View_Record'Class;
-      Category  : String;
+      Category  : Gtk_Tree_Iter;
       Icon_Name : String;
       Info      : Branch_Info)
    is
-      Parent  : Gtk_Tree_Iter := Create_Category (Self, Category);
+      Parent  : Gtk_Tree_Iter := Category;
       Iter    : Gtk_Tree_Iter;
       V       : Glib.Values.GValue_Array (All_Columns);
       First, Last : Natural := Info.Name'First;
@@ -357,6 +378,7 @@ package body VCS2.Branches is
             end if;
             Last := Last + 1;
          end loop;
+         Last := Info.Name'Last + 1;
       end if;
 
       Self.Tree.Model.Append (Iter, Parent => Parent);
@@ -393,16 +415,21 @@ package body VCS2.Branches is
    is
       View : constant Branches_View :=
         Branches_Views.Retrieve_View (Self.Kernel);
+      Cat   : Gtk_Tree_Iter;
+      Dummy : Boolean;
    begin
       if View /= null then
-         if not Self.Cleared then
-            Clear (View);
-            Self.Cleared := True;
-         end if;
+         Cat := Create_Category (View, Category);
 
          for B of Branches loop
-            Create_Node (View, Category, Iconname, B);
+            Create_Node (View, Cat, Iconname, B);
          end loop;
+
+         if To_Upper (Category) = "BRANCHES" then
+            Dummy := View.Tree.Expand_Row
+              (View.Tree.Get_Filter_Path_For_Store_Iter (Cat),
+               Open_All => True);
+         end if;
       end if;
    end On_Branches;
 
@@ -428,41 +455,6 @@ package body VCS2.Branches is
    begin
       Clear (Branches_View (View));
    end On_Destroyed;
-
-   ------------------
-   -- On_Terminate --
-   ------------------
-
-   overriding procedure On_Terminate
-     (Self     : not null access Branches_Visitor;
-      VCS      : access VCS_Engine'Class)
-   is
-      pragma Unreferenced (VCS);
-      View : constant Branches_View :=
-        Branches_Views.Retrieve_View (Self.Kernel);
-      Iter  : Gtk_Tree_Iter;
-      Dummy : Boolean;
-   begin
-      if View /= null then
-         if not Self.Cleared then
-            Clear (View);
-            Self.Cleared := True;
-         end if;
-
-         --  Expand all toplevel nodes, as well as all nodes beneath BRANCHES.
-         --  The others are not used that often, so we keep them potentially
-         --  hidden.
-
-         Iter := View.Tree.Model.Get_Iter_First;
-         while Iter /= Null_Iter loop
-            Dummy := View.Tree.Expand_Row
-              (View.Tree.Get_Filter_Path_For_Store_Iter (Iter),
-               Open_All => View.Tree.Model.Get_String (Iter, Column_Name) =
-                   "BRANCHES");
-            View.Tree.Model.Next (Iter);
-         end loop;
-      end if;
-   end On_Terminate;
 
    -------------
    -- Execute --
@@ -505,12 +497,10 @@ package body VCS2.Branches is
    is
       VCS : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
    begin
+      Clear (Self);
       if VCS /= null then
          VCS.Queue_Branches
-           (new Branches_Visitor'
-              (Task_Visitor with Kernel => Self.Kernel, Cleared => False));
-      else
-         Clear (Self);
+           (new Branches_Visitor'(Task_Visitor with Kernel => Self.Kernel));
       end if;
    end Refresh;
 
@@ -536,6 +526,30 @@ package body VCS2.Branches is
       end if;
    end On_Preferenced_Changed;
 
+   ------------------------
+   -- Category_From_Node --
+   ------------------------
+
+   function Category_From_Node
+     (Self       : not null access Branches_Tree_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return String
+   is
+      Iter : Gtk_Tree_Iter := Self.Model.Parent (Store_Iter);
+      P    : Gtk_Tree_Iter;
+   begin
+      if Iter = Null_Iter then
+         --  Return the node itself (it will have a null id)
+         return Self.Model.Get_String (Store_Iter, Column_Name);
+      else
+         loop
+            P := Self.Model.Parent (Iter);
+            exit when P = Null_Iter;
+            Iter := P;
+         end loop;
+         return Self.Model.Get_String (Iter, Column_Name);
+      end if;
+   end Category_From_Node;
+
    -------------------
    -- On_Multipress --
    -------------------
@@ -546,30 +560,32 @@ package body VCS2.Branches is
       X, Y    : Gdouble)
    is
       View           : constant Branches_View := Branches_View (Self);
+      Tree           : constant Branches_Tree := Branches_Tree (View.Tree);
       Filter_Path    : Gtk_Tree_Path;
       Column         : Gtk_Tree_View_Column;
       Success        : Boolean;
       Cell_X, Cell_Y : Gint;
    begin
       if N_Press = 2 then
-         View.Tree.Get_Path_At_Pos
+         Tree.Get_Path_At_Pos
            (Gint (X), Gint (Y), Filter_Path,
             Column, Cell_X, Cell_Y, Success);
          if Success then
             --  Select the row that was clicked
-            View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
+            Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
 
             declare
-               Id : constant String :=
-                 View.Tree.Model.Get_String
-                   (View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path),
-                    Column_Id);
+               Iter : constant Gtk_Tree_Iter :=
+                 Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+               Id : constant String := Tree.Model.Get_String (Iter, Column_Id);
             begin
                if Id /= "" then
-                  Active_VCS (View.Kernel).Queue_Select_Branch
-                    (new Refresh_On_Terminate_Visitor'
+                  Active_VCS (View.Kernel).Queue_Action_On_Branch
+                    (Visitor => new Refresh_On_Terminate_Visitor'
                        (Task_Visitor with Kernel => View.Kernel),
-                     Id);
+                     Action   => Action_Double_Click,
+                     Category => Category_From_Node (Tree, Iter),
+                     Id       => Id);
                end if;
             end;
 
@@ -578,6 +594,35 @@ package body VCS2.Branches is
          end if;
       end if;
    end On_Multipress;
+
+   --------------------------------------
+   -- Execute_Action_On_Selected_Lines --
+   --------------------------------------
+
+   procedure Execute_Action_On_Selected_Lines
+     (Context : Interactive_Command_Context;
+      Action  : Branch_Action)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
+      Tree        : Branches_Tree;
+      Store_Iter  : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+   begin
+      if View /= null then
+         Tree := Branches_Tree (View.Tree);
+         Tree.Get_Selection.Get_Selected (Model => Model, Iter => Store_Iter);
+         Store_Iter := Tree.Convert_To_Store_Iter (Store_Iter);
+         if Store_Iter /= Null_Iter then
+            Active_VCS (Kernel).Queue_Action_On_Branch
+              (Visitor  => new Refresh_On_Terminate_Visitor'
+                 (Task_Visitor with Kernel => Kernel),
+               Action   => Action,
+               Category => Category_From_Node (Tree, Store_Iter),
+               Id       => Tree.Model.Get_String (Store_Iter, Column_Id));
+         end if;
+      end if;
+   end Execute_Action_On_Selected_Lines;
 
    -------------
    -- Execute --
@@ -588,29 +633,60 @@ package body VCS2.Branches is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
-      Tree   : Branches_Tree;
-      Filter_Iter : Gtk_Tree_Iter;
-      Model       : Gtk_Tree_Model;
    begin
-      if View /= null then
-         Tree := Branches_Tree (View.Tree);
-         Tree.Get_Selection.Get_Selected (Model => Model, Iter => Filter_Iter);
-         if Filter_Iter /= Null_Iter then
-            declare
-               Id : constant String := Tree.Model.Get_String
-                 (Tree.Convert_To_Store_Iter (Filter_Iter), Column_Id);
-            begin
-               Active_VCS (Kernel).Queue_Select_Branch
-                 (new Refresh_On_Terminate_Visitor'
-                    (Task_Visitor with Kernel => Kernel),
-                  Id);
-            end;
-         end if;
-      end if;
+      Execute_Action_On_Selected_Lines (Context, Action_Double_Click);
       return Success;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Add_Branch;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      Execute_Action_On_Selected_Lines (Context, Action_Add);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Delete_Branch;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      Execute_Action_On_Selected_Lines (Context, Action_Remove);
+      return Success;
+   end Execute;
+
+   ----------------
+   -- On_Tooltip --
+   ----------------
+
+   overriding procedure On_Tooltip
+     (Self     : not null access Tooltips_Visitor;
+      Text     : String) is
+   begin
+      if not Self.Label.In_Destruction then
+         Self.Label.Set_Text (Self.Label.Get_Text & ASCII.LF & Text);
+      end if;
+   end On_Tooltip;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Tooltips_Visitor) is
+   begin
+      Unref (Self.Label);
+   end Free;
 
    ---------------------
    -- Create_Contents --
@@ -622,16 +698,25 @@ package body VCS2.Branches is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
+      Tree        : constant Branches_Tree := Branches_Tree (Self.View.Tree);
       Filter_Iter : Gtk_Tree_Iter;
       Iter        : Gtk_Tree_Iter;
       Area        : Gdk_Rectangle;
       Label       : Gtk_Label;
    begin
-      Initialize_Tooltips (Self.View.Tree, X, Y, Area, Filter_Iter);
-      Iter := Self.View.Tree.Convert_To_Store_Iter (Filter_Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Filter_Iter);
+      Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
       if Iter /= Null_Iter then
          Self.Set_Tip_Area (Area);
-         Gtk_New (Label, Self.View.Tree.Model.Get_String (Iter, Column_Name));
+         Gtk_New (Label, Tree.Model.Get_String (Iter, Column_Name));
+         Label.Ref_Sink;
+         Ref (Label);  --  owned by the visitor
+
+         Active_VCS (Self.View.Kernel).Queue_Action_On_Branch
+           (Visitor => new Tooltips_Visitor'(Task_Visitor with Label => Label),
+            Action   => Action_Tooltip,
+            Category => Category_From_Node (Tree, Iter),
+            Id       => Tree.Model.Get_String (Iter, Column_Id));
       end if;
       return Gtk_Widget (Label);
    end Create_Contents;
@@ -775,12 +860,40 @@ package body VCS2.Branches is
       Register_Action
         (Kernel, "vcs checkout branch",
          Description =>
-           -("Switch to the branch selected in the Branches view"),
+           -("Perform an action on the selected line." & ASCII.LF
+             & "The exact behavior depends on the specific type of entry"
+             & " that was selected, for instance selecting a branch or a tag,"
+             & " or applying stashed git changes." & ASCII.LF
+             & "This is the same as double-clicking on a line, see tooltips"
+             & " for a more detailed description of each action."),
          Command     => new Select_Branch,
          Icon_Name   => "vcs-branch-symbolic",
          Filter      => Has_Selected_Branch,
          Category    => "VCS2");
 
+      Register_Action
+        (Kernel, "vcs add branch",
+         Description =>
+           -("Create a new branch, tag,..." & ASCII.LF
+             & "The exact behavior depends on the specific type of entry"
+             & " that was selected. See tooltips for a more detailed"
+             & " description of what will happen."),
+         Command     => new Add_Branch,
+         Icon_Name   => "gps-add-symbolic",
+         Filter      => Has_Selected_Branch,
+         Category    => "VCS2");
+
+      Register_Action
+        (Kernel, "vcs delete branch",
+         Description =>
+           -("Delete a branch, tag,..." & ASCII.LF
+           & "The exact behavior depends on the specific type of entry"
+           & " that was selected. See tooltips for a more detailed"
+           & " description of what will happen."),
+         Command     => new Delete_Branch,
+         Icon_Name   => "gps-remove-symbolic",
+         Filter      => Has_Selected_Branch,
+         Category    => "VCS2");
    end Register_Module;
 
 end VCS2.Branches;
