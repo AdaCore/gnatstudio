@@ -20,6 +20,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Commands, Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;                use Default_Preferences;
+with Gdk.Rectangle;                      use Gdk.Rectangle;
 with Gdk.RGBA;                           use Gdk.RGBA;
 with Generic_Views;                      use Generic_Views;
 with Glib;                               use Glib;
@@ -42,11 +43,13 @@ with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;             use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                          use Gtk.Enums;
 with Gtk.Gesture_Multi_Press;            use Gtk.Gesture_Multi_Press;
+with Gtk.Label;                          use Gtk.Label;
 with Gtk.Menu;                           use Gtk.Menu;
 with Gtk.Scrolled_Window;                use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;                     use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
 with Gtk.Widget;                         use Gtk.Widget;
+with Tooltips;                           use Tooltips;
 with VCS2.Engines;                       use VCS2.Engines;
 with VCS2.Views;                         use VCS2.Views;
 
@@ -167,6 +170,14 @@ package body VCS2.Branches is
      (Command : access Select_Branch;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Unstage the file described in the context.
+
+   type Branches_Tooltips is new Tooltips.Tooltips with record
+      View   : access Branches_View_Record'Class;
+   end record;
+   overriding function Create_Contents
+     (Self     : not null access Branches_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    procedure On_Multipress
      (Self    : access Glib.Object.GObject_Record'Class;
@@ -593,6 +604,30 @@ package body VCS2.Branches is
       return Success;
    end Execute;
 
+   ---------------------
+   -- Create_Contents --
+   ---------------------
+
+   overriding function Create_Contents
+     (Self     : not null access Branches_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Widget);
+      Filter_Iter : Gtk_Tree_Iter;
+      Iter        : Gtk_Tree_Iter;
+      Area        : Gdk_Rectangle;
+      Label       : Gtk_Label;
+   begin
+      Initialize_Tooltips (Self.View.Tree, X, Y, Area, Filter_Iter);
+      Iter := Self.View.Tree.Convert_To_Store_Iter (Filter_Iter);
+      if Iter /= Null_Iter then
+         Self.Set_Tip_Area (Area);
+         Gtk_New (Label, Self.View.Tree.Model.Get_String (Iter, Column_Name));
+      end if;
+      return Gtk_Widget (Label);
+   end Create_Contents;
+
    ----------------
    -- Initialize --
    ----------------
@@ -604,6 +639,7 @@ package body VCS2.Branches is
       Col      : Gtk_Tree_View_Column;
       Dummy    : Gint;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip  : access Branches_Tooltips'Class;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroyed'Access);
@@ -644,6 +680,10 @@ package body VCS2.Branches is
         (Self.Text_Render, "foreground-rgba", Column_Foreground);
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
+
+      Tooltip := new Branches_Tooltips;
+      Tooltip.View := Self;
+      Tooltip.Set_Tooltip (Self.Tree);
 
       Gtk_New (Col);
       Col.Set_Expand (False);
