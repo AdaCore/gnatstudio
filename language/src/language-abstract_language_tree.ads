@@ -52,6 +52,50 @@
 --  a value paradigm rather than in a reference paradigm: Nodes don't survive
 --  a reparse, but they have an unique_id that you can use to keep identity
 --  across reparses, and which is what is used in the GPS outline.
+--
+--  What is synchronous, what is not?
+--  =================================
+--
+--  The semantic tree for a given file can be expensive to compute.
+--  Normally, we should never block the UI waiting for this computation
+--  to occur. The editor/refresh workflow should be:
+--
+--       GPS Main UI task                         Semantic engine
+--              |                               (thread or background process)
+--              |
+--           user opens or
+--           modifies an editor:
+--           call Update_Async ------------------> start processing
+--              |                                  the new buffer contents
+--              |                                       |
+--          (the UI task is                             |
+--           not blocked here)                          |
+--              |                                  processing done:
+--              |                                  run hook
+--              |                                   "semantic_tree_updated"
+--              |                                      /
+--              |         <---------------------------/
+--              |
+--      react to the hook to update
+--      the interface accordingly
+--      (outline, block information, etc)
+--
+--  Making queries exact and using Is_Ready
+--  =======================================
+--
+--  Any call to the semantic tree API, unless otherwise specified, should
+--  report *exact* information, and this means that the main UI will compute
+--  the tree information in the foreground (and therefore freeze) if needed.
+--
+--  For instance, the call to get the location of the definition for an entity
+--  might freeze the UI to make sure it works on an up-to-date tree.
+--
+--  To make sure the UI freezes as seldom as possible, the clients can call
+--  Is_Ready to check whether the tree is ready, and compute data only if the
+--  tree is ready. For instance when moving the cursor: we need the tree to
+--  display the current subprogram in the editor, but it's better to display
+--  nothing if the tree is not ready than to freeze the UI to compute the
+--  tree.
 
 with Language.Tree; use Language.Tree;
 with Ada.Containers; use Ada.Containers;
