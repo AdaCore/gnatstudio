@@ -458,12 +458,26 @@ class Git(core.VCS):
             elif line.startswith('detached'):
                 current[2] = 'detached'  # details
 
+    def _submodules(self, visitor):
+        p = self._git(['submodule', 'status', '--recursive'])
+        modules = []
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                if len(modules) != 0:
+                    visitor.branches(
+                        'submodules', 'vcs-submodules-symbolic', modules)
+                break
+            _, sha1, name, _ = line.split(' ', 3)
+            modules.append((name, False, '', sha1))
+
     @core.run_in_background
     def async_branches(self, visitor):
         yield join(self._branches(visitor),
                    self._tags(visitor),
                    self._stashes(visitor),
                    self._worktrees(visitor),
+                   self._submodules(visitor),
                    *self.extensions('async_branches', visitor))
 
     @core.run_in_background
