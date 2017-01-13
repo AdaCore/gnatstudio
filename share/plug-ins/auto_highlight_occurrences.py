@@ -234,9 +234,16 @@ class Current_Entity_Highlighter(Location_Highlighter):
                     word = buffer.get_chars(start_loc, end_loc).strip()
                     word = word.decode("utf8")  # make unicode-string
 
-        # Attempt entity highlighting if no word was found.
+        # Attempt entity highlighting.
+        # Do this only if there is indeed an entity under the cursor,
+        # and, then, only if the semantic tree for this file is already
+        # available: we do not want to block the UI waiting for this
+        # computation.
 
-        if not word and self.highlight_entities and context.entity_name():
+        if not word and (
+            self.highlight_entities and
+            GPS.SemanticTree(context.file()).is_ready() and
+                context.entity_name()):
             try:
                 entity = context.entity(approximate_search_fallback=False)
             except:

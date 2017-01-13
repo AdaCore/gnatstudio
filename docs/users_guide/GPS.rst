@@ -1822,6 +1822,17 @@ Classes
 
    .. automethod:: GPS.Search_Result.show
 
+:class:`GPS.SemanticTree`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: SemanticTree()
+
+
+
+   .. automethod:: GPS.SemanticTree.__init__
+
+   .. automethod:: GPS.SemanticTree.is_ready
+
 :class:`GPS.Style`
 ^^^^^^^^^^^^^^^^^^
 

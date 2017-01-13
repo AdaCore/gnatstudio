@@ -24,6 +24,7 @@ with Language_Handlers;     use Language_Handlers;
 with GPS.Scripts;
 with GPS.Scripts.Files;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Language.Shell is
    pragma Warnings (Off);
@@ -32,6 +33,7 @@ package body Language.Shell is
    Construct_List_Class_Name : constant String := "ConstructsList";
    Language_Class_Name       : constant String := "Language";
    Construct_Class_Name      : constant String := "Construct";
+   Semantic_Tree_Class_Name  : constant String := "SemanticTree";
 
    Null_Context : aliased Language_Context :=
      (Syntax                        => (Comment_Start                 => null,
@@ -110,6 +112,16 @@ package body Language.Shell is
    end record;
    type Construct_Properties is access all Construct_Properties_Record;
 
+   type Semantic_Tree_Properties_Record is new
+     Instance_Property_Record
+   with record
+      --  Note: we cannot store a Semantic_Tree_Access in this class, since
+      --  the data contained in a Semantic_Tree can be freed at any time.
+      --  To provide safety, we query the tree from the file for every
+      --  primitive.
+      File : GNATCOLL.VFS.Virtual_File;
+   end record;
+
    function Create_Python_Constructs_List
      (Script : access Scripting_Language_Record'Class;
       Lang   : Shell_Language_Access) return Class_Instance;
@@ -124,6 +136,10 @@ package body Language.Shell is
    procedure Construct_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the GPS.Construct class
+
+   procedure Semantic_Tree_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the GPS.SemanticTree class
 
    -----------------------
    -- Construct_Handler --
@@ -160,6 +176,48 @@ package body Language.Shell is
          Data.Set_Return_Value (Get (Prop.Info.Unique_Id).all);
       end if;
    end Construct_Handler;
+
+   ---------------------------
+   -- Semantic_Tree_Handler --
+   ---------------------------
+
+   procedure Semantic_Tree_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant GPS.Kernel.Kernel_Handle := Get_Kernel (Data);
+
+      function Get_Tree return Semantic_Tree'Class;
+      --  Return the tree stored in the first argument to Data
+
+      function Get_Tree return Semantic_Tree'Class is
+         Ins : constant Class_Instance := Nth_Arg (Data, 1);
+         R   : constant Instance_Property := Get_Data
+           (Ins, Semantic_Tree_Class_Name);
+      begin
+         return Kernel.Get_Abstract_Tree_For_File
+           (Semantic_Tree_Properties_Record (R.all).File);
+      end Get_Tree;
+
+   begin
+      if Command = Constructor_Method then
+         declare
+            File : constant Class_Instance :=
+              Nth_Arg (Data, 2,
+                       GPS.Scripts.Files.Get_File_Class (Kernel),
+                       Default    => No_Class_Instance,
+                       Allow_Null => False);
+            Instance : constant Class_Instance :=
+              Nth_Arg (Data, 1,
+                       New_Class (Kernel.Scripts, Semantic_Tree_Class_Name));
+            R : Semantic_Tree_Properties_Record :=
+              (File => GPS.Scripts.Files.Get_Data (File));
+         begin
+            Set_Data (Instance, Semantic_Tree_Class_Name, R);
+         end;
+      elsif Command = "is_ready" then
+         Set_Return_Value (Data, Get_Tree.Is_Ready);
+      end if;
+   end Semantic_Tree_Handler;
 
    --------------------------
    -- Clicked_On_Construct --
@@ -445,6 +503,8 @@ package body Language.Shell is
         Kernel.Scripts.New_Class (Construct_Class_Name);
       Language_Class : constant Class_Type :=
          Kernel.Scripts.New_Class (Language_Class_Name);
+      Semantic_Tree_Class : constant Class_Type :=
+        Kernel.Scripts.New_Class (Semantic_Tree_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         ("register",
@@ -502,8 +562,21 @@ package body Language.Shell is
                        Param ("sloc_end"),
                        Param ("sloc_entity"),
                        Param ("id", Optional => True)),
-        Handler  => Add_Construct'Access,
+         Handler  => Add_Construct'Access,
          Class     => List_Class);
+
+      --  Tree class
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class       => Semantic_Tree_Class,
+         Handler     => Semantic_Tree_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("is_ready",
+         Class     => Semantic_Tree_Class,
+         Handler   => Semantic_Tree_Handler'Access);
    end Setup;
 
 end Language.Shell;

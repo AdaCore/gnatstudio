@@ -8480,10 +8480,10 @@ class Project(object):
                scope='whole', recursive=True):
         """
         Returns the list of matches for pattern in all the files belonging to
-        the project (and its imported projects if recursive is true
-        (default). ``scope`` is a string, and should be any of 'whole',
-        'comments', 'strings', 'code'. The latter will match only for text
-        outside of comments.
+        the project (and its imported projects if recursive is true,
+        which is the default). ``scope`` is a string, and should be any of
+        'whole', 'comments', 'strings', 'code'. The latter will match only
+        for text outside of comments.
 
         :param pattern: A string
         :param case_sensitive: A boolean
@@ -8918,6 +8918,31 @@ class Search_Result(object):
 
 
 ###########################################################
+# SemanticTree
+###########################################################
+
+class SemanticTree(object):
+    """
+    This class represents the semantic information known to GPS for
+    a given file.
+    """
+
+    def __init__(self, file):
+        """
+        Creates a SemanticTree.
+
+        :param file: A :class:`File`.
+        """
+
+    def is_ready(self):
+        """
+        Return True if and only if the semantic tree for this file is available
+
+        :return: A boolean.
+        """
+
+
+###########################################################
 # Style
 ###########################################################
 
@@ -9086,7 +9111,7 @@ class Task(object):
 
     def block_exit(self):
         """
-        Returns True iff this task should block the exit of GPS.
+        Returns True if and only if this task should block the exit of GPS.
 
         :return: A boolean
         """
