@@ -322,20 +322,28 @@ package body VCS2.Branches is
       First, Last : Natural := Info.Name'First;
 
    begin
-      while Last <= Info.Name'Last loop
-         exit when Info.Name (Last) = '(';
-         if Info.Name (Last) = '/' then
-            Parent := Create_Group
-              (Self, Icon_Name, Info.Name (First .. Last - 1), Parent);
-            First := Last + 1;
-         end if;
-         Last := Last + 1;
-      end loop;
+      if Info.Name (First) = '"'
+        and then Info.Name (Info.Name'Last) = '"'
+      then
+         First := Info.Name'First + 1;
+         Last  := Info.Name'Last;
+
+      else
+         while Last <= Info.Name'Last loop
+            exit when Info.Name (Last) = '(';
+            if Info.Name (Last) = '/' then
+               Parent := Create_Group
+                 (Self, Icon_Name, Info.Name (First .. Last - 1), Parent);
+               First := Last + 1;
+            end if;
+            Last := Last + 1;
+         end loop;
+      end if;
 
       Self.Tree.Model.Append (Iter, Parent => Parent);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Init_Set_String (V (Column_Name), Info.Name (First .. Info.Name'Last));
+      Init_Set_String (V (Column_Name), Info.Name (First .. Last - 1));
 
       if Info.Is_Current then
          Gdk.RGBA.Set_Value (V (Column_Foreground), Emblem_Color);

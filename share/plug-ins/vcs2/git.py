@@ -426,11 +426,44 @@ class Git(core.VCS):
             name, branch, descr = line.split(':', 3)
             stashes.append(('%s: %s' % (name, descr), False, branch, name))
 
+    def _worktrees(self, visitor):
+        """
+        A generator that returns the list of worktrees via `visitor.branches`
+        """
+        # "--no-pager" results in segfault with git 2.11
+        p = ProcessWrapper(
+            ['git', 'worktree', 'list', '--porcelain'],
+            directory=self.working_dir.path)
+        trees = []
+        current = []
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                # Do not report if we only have the current directory
+                if len(trees) > 1:
+                    visitor.branches(
+                        'worktrees', 'vcs-git-worktrees-symbolic', trees)
+                break
+            elif not line:
+                trees.append(current)
+            elif line.startswith('worktree '):
+                current = ['"%s"' % line[9:],   # quoted not to expand '/'
+                           self.working_dir == GPS.File(line[9:]),  # active ?
+                           '',   # details
+                           '']   # unique id
+            elif line.startswith('HEAD '):
+                current[3] = line[5:]   # unique id
+            elif line.startswith('branch '):
+                current[2] = line[7:]   # details
+            elif line.startswith('detached'):
+                current[2] = 'detached'  # details
+
     @core.run_in_background
     def async_branches(self, visitor):
         yield join(self._branches(visitor),
                    self._tags(visitor),
                    self._stashes(visitor),
+                   self._worktrees(visitor),
                    *self.extensions('async_branches', visitor))
 
     @core.run_in_background
