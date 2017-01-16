@@ -618,6 +618,7 @@ package body Project_Templates.GUI is
       Gtk_New (Assistant);
       Assistant.Set_Name ("Project Templates Assistant");
       Assistant.Set_Position (Win_Pos_Center);
+      Assistant.Set_Keep_Above (True);
 
       Gtk_New_Vbox (Page_Box, Homogeneous => False);
       Page_Num := Assistant.Append_Page (Page_Box);
