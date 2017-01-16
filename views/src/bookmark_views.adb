@@ -214,8 +214,11 @@ package body Bookmark_Views is
           else Next_Recursive (Bookmark_Iter (Iter.Parent)));
    --  Iter the whole tree recursively.
 
+   type Bookmark_View_Record is tagged;
+
    type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
+         View        : access Bookmark_View_Record'Class;
          Text        : Gtk_Cell_Renderer_Text;
          Note_Pixbuf : Gtk_Cell_Renderer_Pixbuf;
          Pattern     : Search_Pattern_Access;
@@ -224,6 +227,11 @@ package body Bookmark_Views is
    overriding function Is_Visible
      (Self       : not null access Bookmark_Tree_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean;
+   overriding procedure On_Edited
+     (Self        : not null access Bookmark_Tree_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String);
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Bookmark_Tree;
@@ -387,25 +395,9 @@ package body Bookmark_Views is
    --  called every time the mouse moves to verify whether the drop is
    --  possible.
 
-   procedure On_Edited
-     (V           : access GObject_Record'Class;
-      Filter_Path : Glib.UTF8_String;
-      New_Text    : Glib.UTF8_String);
-   --  Called when a line is edited in the view
-
-   procedure On_Editing_Canceled (V : access GObject_Record'Class);
-   --  Called when interactive editing of the bookmark name as finished
-
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
-
-   package Bookmark_Idle is new Glib.Main.Generic_Sources
-     (Bookmark_View_Access);
-   use Bookmark_Idle;
-   function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean;
-   --  Function called to start editing the selected line. This is necessary
-   --  since any editing is stopped as soon as the tree gains the focus back.
 
    type Refresh_Hook is new String_Hooks_Function with null record;
    overriding procedure Execute
@@ -842,47 +834,6 @@ package body Bookmark_Views is
       Self.Tree.Refilter;  --  Recompute visibility of rows
    end Filter_Changed;
 
-   ------------------------
-   -- Start_Editing_Idle --
-   ------------------------
-
-   function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean is
-      procedure Edit_Selected
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
-      --  Foreach callback on a selection
-
-      -------------------
-      -- Edit_Selected --
-      -------------------
-
-      procedure Edit_Selected
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
-      is
-         pragma Unreferenced (Model);
-      begin
-         if Iter /= Null_Iter then
-            --  Make the rows editable temporarily
-            Set_Property
-              (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
-            Set_Cursor_On_Cell
-              (View.Tree,
-               Path          => Path,
-               Focus_Column  => Get_Column (View.Tree, 0),
-               Focus_Cell    => View.Tree.Text,
-               Start_Editing => True);
-         end if;
-      end Edit_Selected;
-
-   begin
-      View.Tree.Get_Selection.Selected_Foreach
-        (Edit_Selected'Unrestricted_Access);
-      return False;
-   end Start_Editing_Idle;
-
    -------------
    -- Execute --
    -------------
@@ -891,28 +842,14 @@ package body Bookmark_Views is
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-
-      Ignore : G_Source_Id;
-      pragma Unreferenced (Command, Ignore);
    begin
       if View /= null then
-         View.Tree.Get_Selection.Get_Selected (Model, Iter);
-
-         if Iter /= Null_Iter then
-            --  Start the edition in idle mode, since otherwise the tree gains
-            --  the focus when the menu is hidden, and stops the edition
-            --  immediately.
-
-            Ignore := Idle_Add (Start_Editing_Idle'Access, View,
-                                Priority => Priority_High_Idle);
-            return Success;
-         end if;
+         View.Tree.Start_Editing (Render => View.Tree.Text);
       end if;
-      return Failure;
+      return Success;
    end Execute;
 
    ---------------
@@ -1310,12 +1247,8 @@ package body Bookmark_Views is
            View.Tree.Get_Data (Store_Iter => Iter);
       begin
          if B = Bookmark then
-            View.Tree.Get_Selection.Unselect_All;
-            View.Tree.Get_Selection.Select_Iter
-              (View.Tree.Convert_To_Filter_Iter (Iter));
-            Dummy := Idle_Add
-              (Start_Editing_Idle'Access, View,
-               Priority => Priority_High_Idle);
+            View.Tree.Start_Editing
+              (Render => View.Tree.Text, Store_Iter => Iter);
             return True;  --  stop iteration
          else
             return False; --  continue iteration
@@ -1447,41 +1380,24 @@ package body Bookmark_Views is
       end if;
    end Refresh;
 
-   -------------------------
-   -- On_Editing_Canceled --
-   -------------------------
-
-   procedure On_Editing_Canceled (V : access GObject_Record'Class) is
-      View : constant Bookmark_View_Access := Bookmark_View_Access (V);
-   begin
-      --  Prevent interactive editing via single click
-      Set_Property
-        (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
-   end On_Editing_Canceled;
-
    ---------------
    -- On_Edited --
    ---------------
 
-   procedure On_Edited
-     (V           : access GObject_Record'Class;
-      Filter_Path : Glib.UTF8_String;
-      New_Text    : Glib.UTF8_String)
+   overriding procedure On_Edited
+     (Self        : not null access Bookmark_Tree_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String)
    is
-      View  : constant Bookmark_View_Access := Bookmark_View_Access (V);
-      Filter_Iter  : Gtk_Tree_Iter;
+      pragma Unreferenced (View_Column);
       Mark  : Bookmark_Data_Access;
    begin
-      Filter_Iter := View.Tree.Filter.Get_Iter_From_String (Filter_Path);
-      Mark := View.Tree.Get_Data
-        (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+      Mark := Self.Get_Data (Store_Iter => Store_Iter);
       Free (Mark.Name);
-      Mark.Name := new String'(New_Text);
+      Mark.Name := new String'(Text);
       Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
-      View.Refresh (Selected => Mark);
-
-      Set_Property
-        (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
+      Self.View.Refresh (Selected => Mark);
    end On_Edited;
 
    -------------
@@ -1802,11 +1718,12 @@ package body Bookmark_Views is
       View  : constant Bookmark_View_Access := Bookmark_View_Access (Self);
       Filter_Iter : Gtk_Tree_Iter;
       Col         : Gtk_Tree_View_Column;
-      Dummy       : G_Source_Id;
    begin
       Coordinates_For_Event (View.Tree, X, Y, Filter_Iter, Col);
       if Filter_Iter /= Null_Iter then
-         Dummy := Idle_Add (Start_Editing_Idle'Access, View);
+         View.Tree.Start_Editing
+           (Render     => View.Tree.Text,
+            Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
          View.Longpress.Set_State (Event_Sequence_Claimed);
       end if;
    end On_Longpress;
@@ -1886,6 +1803,7 @@ package body Bookmark_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := new Bookmark_Tree_Record;
+      View.Tree.View := View;
       View.Tree.Initialize
         (Column_Types     => Column_Types,
          Filtered         => True,
@@ -1916,9 +1834,6 @@ package body Bookmark_Views is
 
       Col.Pack_Start (View.Tree.Text, Expand => False);
       Col.Add_Attribute (View.Tree.Text, "text", Name_Column);
-      View.Tree.Text.On_Edited (On_Edited'Access, Slot => View);
-      View.Tree.Text.On_Editing_Canceled
-        (On_Editing_Canceled'Access, Slot => View);
 
       Gtk_New (View.Multipress, Widget => View.Tree);
       View.Multipress.On_Pressed (On_Multipress'Access, Slot => View);

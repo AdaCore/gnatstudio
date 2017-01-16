@@ -7,6 +7,8 @@ from . import git
 
 CAT_REVIEWS = 'REVIEWS'
 
+CAN_RENAME = True
+
 
 class Gerrit(core.Extension):
     def applies(self):
@@ -48,7 +50,8 @@ class Gerrit(core.Extension):
             if line is None:
                 if reviews:
                     visitor.branches(
-                        CAT_REVIEWS, 'vcs-gerrit-symbolic', reviews)
+                        CAT_REVIEWS, 'vcs-gerrit-symbolic',
+                        not CAN_RENAME, reviews)
                 break
 
             patch = json.loads(line)
@@ -70,7 +73,7 @@ class Gerrit(core.Extension):
                      '%s%s' % (review, workflow),
                      patch.get(u'number', '')))   # unique id
 
-    def async_action_on_branch(self, visitor, action, category, id):
+    def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category == CAT_REVIEWS:
             if action == core.VCS.ACTION_DOUBLE_CLICK:
                 p = self.base._git(['review', '--cherrypick', id])
@@ -82,12 +85,6 @@ class Gerrit(core.Extension):
             elif action == core.VCS.ACTION_TOOLTIP:
                 visitor.tooltip(
                     '\nDouble-click to cherry-pick this review on HEAD')
-
-            elif axction == core.VCS.ACTION_ADD:
-                pass
-
-            elif action == core.VCS.ACTION_REMOVE:
-                pass
 
 
 git.Git.register_extension(Gerrit)

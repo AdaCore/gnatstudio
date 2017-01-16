@@ -104,7 +104,7 @@ package body VCS2.Scripts is
      (Self         : not null access Script_Engine;
       Visitor      : not null access Task_Visitor'Class;
       Action       : Branch_Action;
-      Category, Id : String);
+      Category, Id, Text : String);
    overriding procedure Async_Discard_Local_Changes
      (Self        : not null access Script_Engine;
       Files       : GNATCOLL.VFS.File_Array);
@@ -396,14 +396,15 @@ package body VCS2.Scripts is
      (Self         : not null access Script_Engine;
       Visitor      : not null access Task_Visitor'Class;
       Action       : Branch_Action;
-      Category, Id : String)
+      Category, Id, Text : String)
    is
-      D : Callback_Data'Class := Self.Script.Create (4);
+      D : Callback_Data'Class := Self.Script.Create (5);
    begin
       Set_Nth_Arg (D, 1, Visitor);
       D.Set_Nth_Arg (2, Branch_Action'Pos (Action));
       D.Set_Nth_Arg (3, Category);
       D.Set_Nth_Arg (4, Id);
+      D.Set_Nth_Arg (5, Text);
       Call_Method (Self, "async_action_on_branch", D);
    end Async_Action_On_Branch;
 
@@ -741,7 +742,7 @@ package body VCS2.Scripts is
 
       elsif Command = "branches" then
          declare
-            List     : constant List_Instance'Class := Data.Nth_Arg (4);
+            List     : constant List_Instance'Class := Data.Nth_Arg (5);
             Branches : Branches_Array (1 .. List.Number_Of_Arguments);
          begin
             for B in Branches'Range loop
@@ -759,6 +760,7 @@ package body VCS2.Scripts is
             Visitor.On_Branches
               (Category   => Data.Nth_Arg (2),
                Iconname   => Data.Nth_Arg (3),
+               Can_Rename => Data.Nth_Arg (4),
                Branches   => Branches);
 
             for B of Branches loop
@@ -948,7 +950,8 @@ package body VCS2.Scripts is
         ("branches",
          Params        => (2 => Param ("category"),
                            3 => Param ("iconname"),
-                           4 => Param ("branches")),
+                           4 => Param ("can_rename"),
+                           5 => Param ("branches")),
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command

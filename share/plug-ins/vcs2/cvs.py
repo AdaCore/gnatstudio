@@ -19,6 +19,8 @@ STATUSES = {
 
 CAT_TAGS = 'TAGS'
 
+CAN_RENAME = True
+
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
 class CVS(core_staging.Emulate_Staging,
@@ -295,7 +297,7 @@ class CVS(core_staging.Emulate_Staging,
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    CAT_TAGS, 'vcs-tag-symbolic',
+                    CAT_TAGS, 'vcs-tag-symbolic', not CAN_RENAME,
                     [(t, t in sticky, '', t) for t in tags])
                 break
 
@@ -313,7 +315,7 @@ class CVS(core_staging.Emulate_Staging,
                     sticky.add(s)
 
     @core.run_in_background
-    def async_action_on_branch(self, visitor, action, category, id):
+    def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category == CAT_TAGS:
             if action == core.VCS.ACTION_DOUBLE_CLICK and id:
                 p = self._cvs(['update', '-r', id])
@@ -334,6 +336,8 @@ class CVS(core_staging.Emulate_Staging,
                 if GPS.MDI.yes_no_dialog("Delete tag '%s' ?" % id):
                     p = self._cvs(['tag', '-d', id])
                     yield p.wait_until_terminate(show_if_error=True)
+            elif action == core.VCS.ACTION_RENAME:
+                pass
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

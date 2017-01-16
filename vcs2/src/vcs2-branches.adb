@@ -43,6 +43,7 @@ with Gtk.Cell_Renderer;                  use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;             use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                          use Gtk.Enums;
+with Gtk.Gesture_Long_Press;             use Gtk.Gesture_Long_Press;
 with Gtk.Gesture_Multi_Press;            use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                          use Gtk.Label;
 with Gtk.Menu;                           use Gtk.Menu;
@@ -50,6 +51,7 @@ with Gtk.Scrolled_Window;                use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;                     use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
 with Gtk.Widget;                         use Gtk.Widget;
+with GUI_Utils;                          use GUI_Utils;
 with Tooltips;                           use Tooltips;
 with VCS2.Engines;                       use VCS2.Engines;
 with VCS2.Views;                         use VCS2.Views;
@@ -63,7 +65,8 @@ package body VCS2.Branches is
    Column_Icon           : constant := 4;
    Column_Icon_Visible   : constant := 5;
    Column_Id             : constant := 6;
-   subtype All_Columns is Gint range Column_Name .. Column_Id;
+   Column_Can_Rename     : constant := 7;
+   subtype All_Columns is Gint range Column_Name .. Column_Can_Rename;
 
    package Path_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
@@ -76,6 +79,8 @@ package body VCS2.Branches is
    end record;
 
    type Branches_Tree_Record is new Tree_View_Record with record
+      Kernel      : Kernel_Handle;
+      Name_Render : Gtk_Cell_Renderer_Text;
       Config      : Branches_Config;
       Categories  : Path_Maps.Map;
       User_Filter : GPS.Search.Search_Pattern_Access;
@@ -84,10 +89,16 @@ package body VCS2.Branches is
    overriding function Is_Visible
      (Self : not null access Branches_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
+   overriding procedure On_Edited
+     (Self        : not null access Branches_Tree_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String);
 
    type Branches_View_Record is new Base_VCS_View_Record with record
       Emblem      : Gtk_Cell_Renderer_Text;
       Multipress  : Gtk_Gesture_Multi_Press;
+      Longpress   : Gtk_Gesture_Long_Press;
    end record;
    overriding procedure Refresh (Self : not null access Branches_View_Record);
    overriding procedure On_Preferenced_Changed
@@ -130,10 +141,11 @@ package body VCS2.Branches is
    --  category.
 
    procedure Create_Node
-     (Self      : not null access Branches_View_Record'Class;
-      Category  : Gtk_Tree_Iter;
-      Icon_Name : String;
-      Info      : Branch_Info);
+     (Self       : not null access Branches_View_Record'Class;
+      Category   : Gtk_Tree_Iter;
+      Icon_Name  : String;
+      Info       : Branch_Info;
+      Can_Rename : Boolean);
    --  Create nodes in the tree
 
    function Create_Group
@@ -147,10 +159,11 @@ package body VCS2.Branches is
       Kernel   : Kernel_Handle;
    end record;
    overriding procedure On_Branches
-     (Self     : not null access Branches_Visitor;
-      Category : String;
-      Iconname : String;
-      Branches : Branches_Array);
+     (Self       : not null access Branches_Visitor;
+      Category   : String;
+      Iconname   : String;
+      Can_Rename : Boolean;
+      Branches   : Branches_Array);
    --  Gather the results of the branches list for the current VCS
 
    type Tooltips_Visitor is new Task_Visitor with record
@@ -193,6 +206,12 @@ package body VCS2.Branches is
      (Command : access Delete_Branch;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Rename_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Rename_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Rename the selected branch
+
    type Branches_Tooltips is new Tooltips.Tooltips with record
       View   : access Branches_View_Record'Class;
    end record;
@@ -211,6 +230,11 @@ package body VCS2.Branches is
       N_Press : Gint;
       X, Y    : Gdouble);
    --  Called every time a row is clicked
+
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble);
+   --  Called to rename current entry
 
    procedure Clear (Self : not null access Branches_View_Record'Class);
    --  Clear the view
@@ -284,20 +308,19 @@ package body VCS2.Branches is
       end if;
 
       Self.Tree.Model.Append (Iter, Parent => Null_Iter);
-      Init_Set_String (V (Column_Name), To_Upper (Name));
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground),
          Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
 
+      Init_Set_String (V (Column_Name), To_Upper (Name));
       Init_Set_String (V (Column_Emblem), "");
       Init_Set_Boolean (V (Column_Emblem_Visible), False);
-
       Init_Set_String (V (Column_Icon), "");
       Init_Set_Boolean (V (Column_Icon_Visible), False);
-
       Init_Set_String (V (Column_Id), "");
+      Init_Set_Boolean (V (Column_Can_Rename), False);
 
       Set_All_And_Clear (Self.Tree.Model, Iter, V);
 
@@ -328,18 +351,16 @@ package body VCS2.Branches is
 
       Self.Tree.Model.Append (Iter, Parent => Parent);
 
-      Init_Set_String (V (Column_Name), Name);
-
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value
         (V (Column_Foreground), Default_Style.Get_Pref_Fg);
 
+      Init_Set_String (V (Column_Name), Name);
       Init_Set_String (V (Column_Emblem), "");
       Init_Set_Boolean (V (Column_Emblem_Visible), False);
-
       Init_Set_String (V (Column_Icon), Icon_Name);
       Init_Set_Boolean (V (Column_Icon_Visible), Icon_Name /= "");
-
+      Init_Set_Boolean (V (Column_Can_Rename), False);
       Init_Set_String (V (Column_Id), "");
 
       Set_All_And_Clear (Self.Tree.Model, Iter, V);
@@ -351,10 +372,11 @@ package body VCS2.Branches is
    -----------------
 
    procedure Create_Node
-     (Self      : not null access Branches_View_Record'Class;
-      Category  : Gtk_Tree_Iter;
-      Icon_Name : String;
-      Info      : Branch_Info)
+     (Self       : not null access Branches_View_Record'Class;
+      Category   : Gtk_Tree_Iter;
+      Icon_Name  : String;
+      Info       : Branch_Info;
+      Can_Rename : Boolean)
    is
       Parent  : Gtk_Tree_Iter := Category;
       Iter    : Gtk_Tree_Iter;
@@ -394,11 +416,10 @@ package body VCS2.Branches is
 
       Init_Set_String (V (Column_Emblem), Info.Emblem.all);
       Init_Set_Boolean (V (Column_Emblem_Visible), Info.Emblem.all /= "");
-
       Init_Set_String (V (Column_Icon), Icon_Name);
       Init_Set_Boolean (V (Column_Icon_Visible), Icon_Name /= "");
-
       Init_Set_String (V (Column_Id), Info.Id.all);
+      Init_Set_Boolean (V (Column_Can_Rename), Can_Rename);
 
       Set_All_And_Clear (Self.Tree.Model, Iter, V);
    end Create_Node;
@@ -408,10 +429,11 @@ package body VCS2.Branches is
    -----------------
 
    overriding procedure On_Branches
-     (Self     : not null access Branches_Visitor;
-      Category : String;
-      Iconname : String;
-      Branches : Branches_Array)
+     (Self       : not null access Branches_Visitor;
+      Category   : String;
+      Iconname   : String;
+      Can_Rename : Boolean;
+      Branches   : Branches_Array)
    is
       View : constant Branches_View :=
         Branches_Views.Retrieve_View (Self.Kernel);
@@ -422,7 +444,7 @@ package body VCS2.Branches is
          Cat := Create_Category (View, Category);
 
          for B of Branches loop
-            Create_Node (View, Cat, Iconname, B);
+            Create_Node (View, Cat, Iconname, B, Can_Rename);
          end loop;
 
          if To_Upper (Category) = "BRANCHES" then
@@ -595,6 +617,27 @@ package body VCS2.Branches is
       end if;
    end On_Multipress;
 
+   ------------------
+   -- On_Longpress --
+   ------------------
+
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble)
+   is
+      View        : constant Branches_View := Branches_View (Self);
+      Filter_Iter : Gtk_Tree_Iter;
+      Col         : Gtk_Tree_View_Column;
+   begin
+      Coordinates_For_Event (View.Tree, X, Y, Filter_Iter, Col);
+      if Filter_Iter /= Null_Iter then
+         View.Tree.Start_Editing
+           (Render     => Branches_Tree (View.Tree).Name_Render,
+            Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+         View.Longpress.Set_State (Event_Sequence_Claimed);
+      end if;
+   end On_Longpress;
+
    --------------------------------------
    -- Execute_Action_On_Selected_Lines --
    --------------------------------------
@@ -663,6 +706,57 @@ package body VCS2.Branches is
       pragma Unreferenced (Command);
    begin
       Execute_Action_On_Selected_Lines (Context, Action_Remove);
+      return Success;
+   end Execute;
+
+   ---------------
+   -- On_Edited --
+   ---------------
+
+   overriding procedure On_Edited
+     (Self        : not null access Branches_Tree_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String)
+   is
+      pragma Unreferenced (View_Column);
+   begin
+      Active_VCS (Self.Kernel).Queue_Action_On_Branch
+        (Visitor  => new Refresh_On_Terminate_Visitor'
+           (Task_Visitor with Kernel => Self.Kernel),
+         Action   => Action_Rename,
+         Category => Category_From_Node (Self, Store_Iter),
+         Id       => Self.Model.Get_String (Store_Iter, Column_Id),
+         Text     => Text);
+   end On_Edited;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Rename_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
+      Tree   : Branches_Tree;
+      Store_Iter  : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+   begin
+      if View /= null then
+         Tree := Branches_Tree (View.Tree);
+         Tree.Get_Selection.Get_Selected (Model => Model, Iter => Store_Iter);
+         Store_Iter := Tree.Convert_To_Store_Iter (Store_Iter);
+         if Store_Iter /= Null_Iter
+           and then Tree.Model.Get_Boolean (Store_Iter, Column_Can_Rename)
+         then
+            Tree.Start_Editing
+              (Render     => Tree.Name_Render,
+               Store_Iter => Store_Iter);
+         end if;
+      end if;
       return Success;
    end Execute;
 
@@ -782,7 +876,8 @@ package body VCS2.Branches is
           Column_Emblem_Visible => GType_Boolean,
           Column_Icon           => GType_String,
           Column_Icon_Visible   => GType_Boolean,
-          Column_Id             => GType_String),
+          Column_Id             => GType_String,
+          Column_Can_Rename     => GType_Boolean),
          Filtered         => True,
          Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
@@ -804,7 +899,10 @@ package body VCS2.Branches is
       Col.Pack_Start (Self.Text_Render, True);
       Col.Add_Attribute (Self.Text_Render, "markup", Column_Name);
       Col.Add_Attribute
-        (Self.Text_Render, "foreground-rgba", Column_Foreground);
+         (Self.Text_Render, "foreground-rgba", Column_Foreground);
+
+      Branches_Tree (Self.Tree).Name_Render := Self.Text_Render;
+      Branches_Tree (Self.Tree).Kernel := Self.Kernel;
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
@@ -827,6 +925,10 @@ package body VCS2.Branches is
       Gtk_New (Self.Multipress, Widget => Self.Tree);
       Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
       Self.Multipress.Watch (Self);
+
+      Gtk_New (Self.Longpress, Widget => Self.Tree);
+      Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
+      Self.Longpress.Watch (Self);
 
       return Gtk_Widget (Self.Tree);
    end Initialize;
@@ -892,6 +994,18 @@ package body VCS2.Branches is
            & " description of what will happen."),
          Command     => new Delete_Branch,
          Icon_Name   => "gps-remove-symbolic",
+         Filter      => Has_Selected_Branch,
+         Category    => "VCS2");
+
+      Register_Action
+        (Kernel, "vcs rename branch",
+         Description =>
+           -("Rename a branch, tag,..." & ASCII.LF
+           & "The exact behavior depends on the specific type of entry"
+           & " that was selected. See tooltips for a more detailed"
+           & " description of what will happen."),
+         Command     => new Rename_Command,
+         Icon_Name   => "gps-rename-symbolic",
          Filter      => Has_Selected_Branch,
          Category    => "VCS2");
    end Register_Module;

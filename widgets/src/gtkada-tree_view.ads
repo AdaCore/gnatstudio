@@ -53,12 +53,13 @@
 
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Finalization;
-with Gtk.Tree_View;         use Gtk.Tree_View;
-with Gtk.Tree_Store;        use Gtk.Tree_Store;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter; use Gtk.Tree_Model_Filter;
-with Glib;                  use Glib;
-with Glib.Main;             use Glib.Main;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;  use Gtk.Tree_Model_Filter;
+with Glib;                   use Glib;
+with Glib.Main;              use Glib.Main;
 private with Glib.Object;
 private with System;
 
@@ -287,6 +288,36 @@ package Gtkada.Tree_View is
    --  Such nodes are inserted to make the parent node expandable.
    --  In general, you don't need to call this function, call Add_Row_Children
    --  instead (or let Add_Children be called automatically.
+
+   -------------
+   -- Editing --
+   -------------
+   --  Interactive editing
+
+   type Edited_Column_Id is new Gint;
+
+   procedure On_Edited
+     (Self        : not null access Tree_View_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String) is null;
+   --  Called when interactive editing finishes.
+   --  The column is provided as a way to distinguish when multiple cells are
+   --  editable in a given row.
+
+   procedure Start_Editing
+     (Self        : not null access Tree_View_Record'Class;
+      Render      : not null access Gtk_Cell_Renderer_Text_Record'Class;
+      Store_Iter  : Gtk_Tree_Iter := Null_Iter;
+      View_Column : Edited_Column_Id := 0);
+   --  Start editing the contents of the render.
+   --  View_Column is not a column in the model, but a physical column in the
+   --  view.
+   --  Editing starts in an idle, in case this was started from a menu.
+   --  You must override On_Edited to perform an actual change in the model.
+   --
+   --  If Store_Iter is unspecified, the current selection is used instead.
+   --  If it is specified, the current selection is modified.
 
    ----------------
    -- Converters --

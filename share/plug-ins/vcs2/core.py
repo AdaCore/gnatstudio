@@ -348,8 +348,9 @@ class VCS(GPS.VCS2):
     ACTION_TOOLTIP = 1
     ACTION_ADD = 2
     ACTION_REMOVE = 3
+    ACTION_RENAME = 4
 
-    def async_action_on_branch(self, visitor, action, category, id):
+    def async_action_on_branch(self, visitor, action, category, id, text=''):
         """
         React to a double-click action in the Branches view.
 
@@ -360,6 +361,7 @@ class VCS(GPS.VCS2):
         :param str category: the upper-cased category, i.e. the first
            parameter to `visitor.branches` in the call to `async_branches`.
         :param str id: the id of the specific line that was selected.
+        :param str text: the new name, when action is ACTION_RENAME
         """
 
     ############

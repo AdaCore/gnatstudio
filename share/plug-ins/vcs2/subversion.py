@@ -8,6 +8,8 @@ from workflows.promises import ProcessWrapper
 CAT_BRANCHES = 'BRANCHES'
 CAT_TAGS = 'TAGS'
 
+CAN_RENAME = True
+
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
 class SVN(core_staging.Emulate_Staging,
@@ -240,7 +242,9 @@ class SVN(core_staging.Emulate_Staging,
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches(CAT_BRANCHES, 'vcs-branch-symbolic', branches)
+                visitor.branches(
+                    CAT_BRANCHES, 'vcs-branch-symbolic',
+                    not CAN_RENAME, branches)
                 break
             line = line.rstrip('/')
             b = os.path.join(base, line)
@@ -256,7 +260,8 @@ class SVN(core_staging.Emulate_Staging,
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches(CAT_TAGS, 'vcs-tag-symbolic', tags)
+                visitor.branches(
+                    CAT_TAGS, 'vcs-tag-symbolic', not CAN_RENAME, tags)
                 break
             line = line.rstrip('/')
             b = os.path.join(base, line)
@@ -287,7 +292,7 @@ class SVN(core_staging.Emulate_Staging,
                        self._tags(visitor, parent))
 
     @core.run_in_background
-    def async_action_on_branch(self, visitor, action, category, id):
+    def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category in (CAT_BRANCHES, CAT_TAGS):
             if action == core.VCS.ACTION_DOUBLE_CLICK and id:
                 p = self._svn(['switch', '--ignore-ancestry', id])

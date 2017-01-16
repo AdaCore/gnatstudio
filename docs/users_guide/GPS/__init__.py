@@ -9660,7 +9660,7 @@ class VCS2_Task_Visitor(object):
            entry is for `first_line`, then the next line, and so on.
         """
 
-    def branches(self, category, iconname, branches):
+    def branches(self, category, iconname, can_rename, branches):
         """
         Report a list of branches available for the current VCS.
 
@@ -9670,6 +9670,7 @@ class VCS2_Task_Visitor(object):
            If the category is 'BRANCHES', it will be expanded in the GUI to
            show all the branches within.
         :param str iconname: icon to use for this category.
+        :param bool can_rename: true if the branches can be renamed.
         :param List branches: a list of branches. Each item in the
            list is a tuple with the following elements:
            - name of the branch

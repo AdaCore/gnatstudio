@@ -605,6 +605,7 @@
       <button action='vcs add branch'/>
       <button action='vcs delete branch'/>
       <button action='vcs checkout branch'/>
+      <button action='vcs rename branch'/>
    </toolbar>
 
    <toolbar id="MDL Browser" inherit='Browser'>

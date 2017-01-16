@@ -20,9 +20,12 @@ with Ada.Unchecked_Deallocation;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
 with Glib.Object;          use Glib.Object;
+with Glib.Properties;      use Glib.Properties;
 with Glib.Types;           use Glib.Types;
 with Glib.Values;          use Glib.Values;
+with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Handlers;         use Gtk.Handlers;
 with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
 with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
@@ -129,6 +132,36 @@ package body Gtkada.Tree_View is
    --  When we use a filter, we must disable filtering during such an
    --  operation, since the selection_data manipulated by gtk+ internally
    --  manipulates paths from the child model which we cannot override.
+
+   -------------
+   -- Editing --
+   -------------
+
+   type Editing_Data_Record is record
+      Tree                   : Tree_View;
+      Render                 : Gtk_Cell_Renderer_Text;
+      Filter_Path            : Gtk_Tree_Path;
+      View_Column            : Edited_Column_Id;
+      Edited_Cb, Canceled_Cb : Handler_Id;
+   end record;
+   type Editing_Data is access all Editing_Data_Record;
+   package Rename_Idle is new Glib.Main.Generic_Sources (Editing_Data);
+   package Editing_Callbacks is new Gtk.Handlers.User_Callback
+     (Gtk_Cell_Renderer_Text_Record, Editing_Data);
+
+   function Start_Editing_Idle (Data : Editing_Data) return Boolean;
+   --  Start interactive editing in an idle loop
+
+   procedure On_Edited
+     (V           : access Gtk_Cell_Renderer_Text_Record'Class;
+      Params      : Glib.Values.GValues;
+      Data        : Editing_Data);
+   --  Called when a line is edited in the view
+
+   procedure On_Editing_Canceled
+     (V    : access Gtk_Cell_Renderer_Text_Record'Class;
+      Data : Editing_Data);
+   --  Called when interactive editing has finished.
 
    -----------
    -- Flags --
@@ -1055,7 +1088,121 @@ package body Gtkada.Tree_View is
 
          Unchecked_Free (Data);
       end Finalize;
-
    end Expansion_Support;
+
+   -------------------------
+   -- On_Editing_Canceled --
+   -------------------------
+
+   procedure On_Editing_Canceled
+     (V    : access Gtk_Cell_Renderer_Text_Record'Class;
+      Data : Editing_Data)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Editing_Data_Record, Editing_Data);
+      Id : Handler_Id;
+      D  : Editing_Data;
+   begin
+      --  Prevent interactive editing via single click
+      Set_Property
+        (Data.Render, Gtk.Cell_Renderer_Text.Editable_Property, False);
+
+      Id := Data.Edited_Cb;
+      Disconnect (V, Id);
+
+      Id := Data.Canceled_Cb;
+      Disconnect (V, Id);
+
+      D := Data;
+      Unchecked_Free (D);
+   end On_Editing_Canceled;
+
+   ---------------
+   -- On_Edited --
+   ---------------
+
+   procedure On_Edited
+     (V           : access Gtk_Cell_Renderer_Text_Record'Class;
+      Params      : Glib.Values.GValues;
+      Data        : Editing_Data)
+   is
+      Filter_Path : constant UTF8_String := Get_String (Nth (Params, 1));
+      Text        : constant UTF8_String := Get_String (Nth (Params, 2));
+      Filter_Iter  : Gtk_Tree_Iter;
+   begin
+      Filter_Iter := Data.Tree.Filter.Get_Iter_From_String (Filter_Path);
+      Data.Tree.On_Edited
+        (Store_Iter  => Data.Tree.Convert_To_Store_Iter (Filter_Iter),
+         View_Column => Data.View_Column,
+         Text        => Text);
+      On_Editing_Canceled (V, Data);
+   end On_Edited;
+
+   ------------------------
+   -- Start_Editing_Idle --
+   ------------------------
+
+   function Start_Editing_Idle (Data : Editing_Data) return Boolean is
+   begin
+      --  Make the rows editable temporarily
+      Set_Property
+        (Data.Render, Gtk.Cell_Renderer_Text.Editable_Property, True);
+      Set_Cursor_On_Cell
+        (Data.Tree,
+         Path          => Data.Filter_Path,
+         Focus_Column  => Data.Tree.Get_Column (Gint (Data.View_Column)),
+         Focus_Cell    => Data.Render,
+         Start_Editing => True);
+
+      --  Data will be freed by one of the On_Edited or On_Editing_Canceled
+      --  callbacks
+      return False;
+   end Start_Editing_Idle;
+
+   -------------------
+   -- Start_Editing --
+   -------------------
+
+   procedure Start_Editing
+     (Self        : not null access Tree_View_Record'Class;
+      Render      : not null access Gtk_Cell_Renderer_Text_Record'Class;
+      Store_Iter  : Gtk_Tree_Iter := Null_Iter;
+      View_Column : Edited_Column_Id := 0)
+   is
+      Dummy       : G_Source_Id;
+      Filter_Iter : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Data        : Editing_Data;
+   begin
+      if Store_Iter = Null_Iter then
+         Self.Get_Selection.Get_Selected (Model, Filter_Iter);
+      else
+         Model := (if Self.Filter /= null then +Self.Filter else +Self.Model);
+         Filter_Iter := Self.Convert_To_Filter_Iter (Store_Iter);
+         Self.Get_Selection.Unselect_All;
+         Self.Get_Selection.Select_Iter (Filter_Iter);
+      end if;
+
+      if Filter_Iter /= Null_Iter then
+         Data := new Editing_Data_Record;
+         Data.all :=
+           (Tree        => Tree_View (Self),
+            Render      => Gtk_Cell_Renderer_Text (Render),
+            Filter_Path => Get_Path (Model, Filter_Iter),
+            View_Column => View_Column,
+            Edited_Cb   => Editing_Callbacks.Connect
+              (Render, Signal_Edited, On_Edited'Access, Data),
+            Canceled_Cb => Editing_Callbacks.Connect
+              (Render, Gtk.Cell_Renderer.Signal_Editing_Canceled,
+               Editing_Callbacks.To_Marshaller (On_Editing_Canceled'Access),
+               Data));
+
+         --  Start the edition in idle mode, since otherwise the tree gains
+         --  the focus when the menu is hidden, and stops the edition
+         --  immediately.
+         Dummy := Rename_Idle.Idle_Add
+           (Start_Editing_Idle'Access, Data, Priority   => Priority_High_Idle);
+      end if;
+   end Start_Editing;
 
 end Gtkada.Tree_View;

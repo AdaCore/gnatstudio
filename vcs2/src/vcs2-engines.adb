@@ -235,6 +235,7 @@ package body VCS2.Engines is
    type Cmd_Action_On_Branch is new VCS_Command with record
       Action        : Branch_Action;
       Category, Id  : Unbounded_String;
+      Text          : Unbounded_String;
    end record;
    overriding procedure Execute
      (Self : not null access Cmd_Action_On_Branch;
@@ -990,7 +991,8 @@ package body VCS2.Engines is
      (Self         : not null access VCS_Engine'Class;
       Visitor      : not null access Task_Visitor'Class;
       Action       : Branch_Action;
-      Category, Id : String) is
+      Category, Id : String;
+      Text         : String := "") is
    begin
       Queue
         (Self,
@@ -998,7 +1000,8 @@ package body VCS2.Engines is
            Visitor  => Visitor.all'Unchecked_Access,
            Action   => Action,
            Category => To_Unbounded_String (Category),
-           Id       => To_Unbounded_String (Id)));
+           Id       => To_Unbounded_String (Id),
+           Text     => To_Unbounded_String (Text)));
    end Queue_Action_On_Branch;
 
    -------------
@@ -1013,7 +1016,8 @@ package body VCS2.Engines is
         (Self.Visitor,
          Self.Action,
          To_String (Self.Category),
-         To_String (Self.Id));
+         To_String (Self.Id),
+         To_String (Self.Text));
    end Execute;
 
    ---------------------------------

@@ -15,6 +15,8 @@ CAT_STASHES = 'STASHES'
 CAT_WORKTREES = 'WORKTREES'
 CAT_SUBMODULES = 'SUBMODULES'
 
+CAN_RENAME = True
+
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
 class Git(core.VCS):
@@ -369,9 +371,9 @@ class Git(core.VCS):
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    CAT_BRANCHES, 'vcs-branch-symbolic', branches)
+                    CAT_BRANCHES, 'vcs-branch-symbolic', CAN_RENAME, branches)
                 visitor.branches(
-                    CAT_REMOTES, 'vcs-cloud-symbolic', remotes)
+                    CAT_REMOTES, 'vcs-cloud-symbolic', not CAN_RENAME, remotes)
                 break
             m = r.search(line)
             if m:
@@ -414,7 +416,8 @@ class Git(core.VCS):
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches(CAT_TAGS, 'vcs-tag-symbolic', tags)
+                visitor.branches(
+                    CAT_TAGS, 'vcs-tag-symbolic', CAN_RENAME, tags)
                 break
             tags.append((line, False, '', line))
 
@@ -428,7 +431,8 @@ class Git(core.VCS):
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches('stashes', 'vcs-stash-symbolic', stashes)
+                visitor.branches(
+                    'stashes', 'vcs-stash-symbolic', not CAN_RENAME, stashes)
                 break
             name, branch, descr = line.split(':', 3)
             stashes.append(('%s: %s' % (name, descr), False, branch, name))
@@ -449,7 +453,8 @@ class Git(core.VCS):
                 # Do not report if we only have the current directory
                 if len(trees) > 1:
                     visitor.branches(
-                        CAT_WORKTREES, 'vcs-git-worktrees-symbolic', trees)
+                        CAT_WORKTREES, 'vcs-git-worktrees-symbolic',
+                        not CAN_RENAME, trees)
                 break
             elif not line:
                 trees.append(current)
@@ -476,7 +481,8 @@ class Git(core.VCS):
             if line is None:
                 if len(modules) != 0:
                     visitor.branches(
-                        CAT_SUBMODULES, 'vcs-submodules-symbolic', modules)
+                        CAT_SUBMODULES, 'vcs-submodules-symbolic',
+                        not CAN_RENAME, modules)
                 break
             _, sha1, name, _ = line.split(' ', 3)
             modules.append((name, False, '', sha1))
@@ -504,13 +510,13 @@ class Git(core.VCS):
         return result
 
     @core.run_in_background
-    def async_action_on_branch(self, visitor, action, category, id):
-        if category == CAT_BRANCHES and id:
-            if action == core.VCS.ACTION_DOUBLE_CLICK:
+    def async_action_on_branch(self, visitor, action, category, id, text=''):
+        if category == CAT_BRANCHES:
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
                 p = self._git(['checkout', id])
                 yield p.wait_until_terminate(show_if_error=True)
 
-            elif action == core.VCS.ACTION_TOOLTIP:
+            elif action == core.VCS.ACTION_TOOLTIP and id:
                 visitor.tooltip(
                     '\nDouble-click to checkout this branch.\n'
                     'Click [+] to create a new branch from this one.\n'
@@ -520,15 +526,18 @@ class Git(core.VCS):
                 name = GPS.MDI.input_dialog(
                     'Choose a name for the new branch',
                     'name=%s-new' % id)
-                if not name:
-                    return   # Cancelled
-                name = name[0]
-                p = self._git(['branch', '--track', name, id])
-                s, _ = yield p.wait_until_terminate(show_if_error=True)
-                if s == 0:
-                    # Checkout will not succeed if there are local changes
-                    p = self._git(['checkout', name])
-                    yield p.wait_until_terminate(show_if_error=True)
+                if name:
+                    name = name[0]
+                    p = self._git(['branch', '--track', name, id])
+                    s, _ = yield p.wait_until_terminate(show_if_error=True)
+                    if s == 0:
+                        # Checkout will not succeed if there are local changes
+                        p = self._git(['checkout', name])
+                        yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == core.VCS.ACTION_RENAME and id and text:
+                p = self._git(['branch', '-m', id, text])
+                yield p.wait_until_terminate(show_if_error=True)
 
             elif action == core.VCS.ACTION_REMOVE and id:
                 if (id != 'master' and
@@ -556,15 +565,27 @@ class Git(core.VCS):
             elif action == core.VCS.ACTION_ADD and not id:
                 name = GPS.MDI.input_dialog(
                     'Choose a name for the new tag',
-                    'name', 'Commit Message')
-                if name:   # not cancelled
-                    p = self._git(['tag', '-a', '-m', name[1], name[0]])
+                    'name', 'Commit Message (will annotate if set)')
+                if name and name[0]:   # not cancelled
+                    p = self._git(['tag',
+                                   '-a' if name[1] else '',
+                                   '--message=%s' % name[1] if name[1] else '',
+                                   name[0]])
                     yield p.wait_until_terminate(show_if_error=True)
 
             elif action == core.VCS.ACTION_REMOVE:
                 if id and GPS.MDI.yes_no_dialog("Delete tag `%s` ?" % id):
                     p = self._git(['tag', '-d', id])
                     yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == core.VCS.ACTION_RENAME and id and text:
+                # ??? Can we create an annotated tag ?
+                p = self._git(['tag', text, id])
+                s, _ = yield p.wait_until_terminate(show_if_error=True)
+                if s == 0:
+                    p = self._git(['tag', '-d', id])
+                    s, _ = yield p.wait_until_terminate(show_if_error=True)
+                # ??? Should we push to origin to remote ?
 
         elif category == CAT_STASHES:
             if action == core.VCS.ACTION_DOUBLE_CLICK and id:
@@ -605,7 +626,7 @@ class Git(core.VCS):
 
         else:
             yield join(*self.extensions(
-                'async_action_on_branch', visitor, action, category, id))
+                'async_action_on_branch', visitor, action, category, id, text))
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

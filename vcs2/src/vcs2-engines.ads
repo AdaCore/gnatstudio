@@ -186,10 +186,11 @@ package VCS2.Engines is
    type Branches_Array is array (Natural range <>) of Branch_Info;
 
    procedure On_Branches
-     (Self     : not null access Task_Visitor;
-      Category : String;
-      Iconname : String;
-      Branches : Branches_Array) is null;
+     (Self       : not null access Task_Visitor;
+      Category   : String;
+      Iconname   : String;
+      Can_Rename : Boolean;
+      Branches   : Branches_Array) is null;
    --  Called when information about available branches has been computed.
    --  All branches are displayed in the same category ("BRANCHES", "REMOTES",
    --  "TAGS",...)
@@ -492,17 +493,20 @@ package VCS2.Engines is
    type Branch_Action is (Action_Double_Click,
                           Action_Tooltip,
                           Action_Add,
-                          Action_Remove);
+                          Action_Remove,
+                          Action_Rename);
    procedure Async_Action_On_Branch
      (Self         : not null access VCS_Engine;
       Visitor      : not null access Task_Visitor'Class;
       Action       : Branch_Action;
-      Category, Id : String) is null;
+      Category, Id : String;
+      Text         : String := "") is null;
    procedure Queue_Action_On_Branch
      (Self         : not null access VCS_Engine'Class;
       Visitor      : not null access Task_Visitor'Class;
       Action       : Branch_Action;
-      Category, Id : String);
+      Category, Id : String;
+      Text         : String := "");
    --  Some action related to the Branches view.
    --  Depending on the action, the result should be reported differently to
    --  the caller:
@@ -513,6 +517,7 @@ package VCS2.Engines is
    --
    --  Category is the upper-cased name of the top-level node.
    --  The Id is as returned by Async_Branches.
+   --  Text is only used when renaming, and can be ignored otherwise.
 
    procedure Async_Discard_Local_Changes
      (Self        : not null access VCS_Engine;
