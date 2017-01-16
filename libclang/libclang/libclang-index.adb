@@ -989,7 +989,7 @@ package body Libclang.Index is
    begin
       if
         clang_Location_isFromMainFile (clang_getCursorLocation (Child)) /= 0
-        and then Semantic_Parent (Clang_Cursor (Child))
+        and then Lexical_Parent (Clang_Cursor (Child))
           = Root_Cursor (clang_Cursor_getTranslationUnit (Child))
       then
          Data.Vec.Append (Clang_Cursor (Child));

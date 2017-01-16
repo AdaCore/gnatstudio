@@ -244,8 +244,8 @@ package body Outline_View.Model is
        Node.Name /= No_Symbol
 
        --  Static category filter
-       and then (Node.Category in Cat_Package .. Cat_Entry
-                   | Cat_Field | Cat_Variable | Type_Category | Cat_With)
+       and then (Node.Category in Cat_Package .. Cat_Structure
+                     | Cat_Field | Cat_Variable | Type_Category | Cat_With)
 
        --  Dynamic category filters
        and then not
