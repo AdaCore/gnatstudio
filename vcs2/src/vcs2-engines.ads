@@ -114,7 +114,7 @@ package VCS2.Engines is
    --  the same facility in Ada, so we use a visitor. This is an object with
    --  various primitive operations that are called when operations complete.
 
-   type Task_Visitor is abstract tagged private;
+   type Task_Visitor is abstract tagged limited private;
    type Task_Visitor_Access is access all Task_Visitor'Class;
 
    procedure Free (Self : in out Task_Visitor) is null;
@@ -580,7 +580,7 @@ private
       Props        : VCS_File_Properties;
    end record;
 
-   type Task_Visitor is abstract tagged record
+   type Task_Visitor is abstract tagged limited record
       Refcount : Natural := 1;
    end record;
 

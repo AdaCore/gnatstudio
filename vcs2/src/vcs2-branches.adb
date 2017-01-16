@@ -95,6 +95,20 @@ package body VCS2.Branches is
       View_Column : Edited_Column_Id;
       Text        : String);
 
+   function Expansion_Id_From_Node
+     (Self       : not null access Branches_Tree_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return String;
+
+   Category_Id_Prefix : constant String := "GPS@@";
+   --  Special prefix added to the name of categories to make a special id used
+   --  to restore expansion
+
+   package Branches_Expansion is new Expansion_Support
+     (Tree_Record   => Branches_Tree_Record,
+      Id            => String,
+      Get_Id        => Expansion_Id_From_Node,
+      Hash          => Ada.Strings.Hash);
+
    type Branches_View_Record is new Base_VCS_View_Record with record
       Emblem      : Gtk_Cell_Renderer_Text;
       Multipress  : Gtk_Gesture_Multi_Press;
@@ -156,7 +170,8 @@ package body VCS2.Branches is
    --  Create a group of nodes
 
    type Branches_Visitor is new Task_Visitor with record
-      Kernel   : Kernel_Handle;
+      Kernel    : Kernel_Handle;
+      Detached  : Branches_Expansion.Detached_Model;
    end record;
    overriding procedure On_Branches
      (Self       : not null access Branches_Visitor;
@@ -246,6 +261,24 @@ package body VCS2.Branches is
      (Context : Interactive_Command_Context;
       Action  : Branch_Action);
    --  Perform an action on the select lines
+
+   ----------------------------
+   -- Expansion_Id_From_Node --
+   ----------------------------
+
+   function Expansion_Id_From_Node
+     (Self       : not null access Branches_Tree_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return String
+   is
+      Id : constant String := Self.Model.Get_String (Store_Iter, Column_Id);
+   begin
+      if Id = "" then   --  a category
+         return Category_Id_Prefix
+           & Self.Model.Get_String (Store_Iter, Column_Name);
+      else
+         return Id;
+      end if;
+   end Expansion_Id_From_Node;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -446,12 +479,6 @@ package body VCS2.Branches is
          for B of Branches loop
             Create_Node (View, Cat, Iconname, B, Can_Rename);
          end loop;
-
-         if To_Upper (Category) = "BRANCHES" then
-            Dummy := View.Tree.Expand_Row
-              (View.Tree.Get_Filter_Path_For_Store_Iter (Cat),
-               Open_All => True);
-         end if;
       end if;
    end On_Branches;
 
@@ -517,12 +544,26 @@ package body VCS2.Branches is
    overriding procedure Refresh
      (Self : not null access Branches_View_Record)
    is
-      VCS : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      VCS     : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      Visitor : access Branches_Visitor;
    begin
-      Clear (Self);
       if VCS /= null then
-         VCS.Queue_Branches
-           (new Branches_Visitor'(Task_Visitor with Kernel => Self.Kernel));
+         Visitor := new Branches_Visitor'
+           (Task_Visitor with
+            Kernel      => Self.Kernel,
+            Detached    => Branches_Expansion.Detach_Model_From_View
+              (Branches_Tree (Self.Tree)));
+
+         --  By default, BRANCHES is expanded
+         if Self.Tree.Model.N_Children (Null_Iter) = 0 then
+            Branches_Expansion.Set_Expanded
+              (Visitor.Detached, Category_Id_Prefix & "BRANCHES", True);
+         end if;
+
+         Clear (Self);
+         VCS.Queue_Branches (Visitor);
+      else
+         Clear (Self);
       end if;
    end Refresh;
 

@@ -865,6 +865,36 @@ package body Gtkada.Tree_View is
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Detached_Data_Access);
 
+      ------------------
+      -- Set_Expanded --
+      ------------------
+
+      procedure Set_Expanded
+        (Status    : in out Expansion_Status;
+         Row       : Id;
+         Expanded  : Boolean := True) is
+      begin
+         if Expanded then
+            Status.Expanded.Include (Row);
+         else
+            Status.Expanded.Delete (Row);
+         end if;
+      end Set_Expanded;
+
+      ------------------
+      -- Set_Expanded --
+      ------------------
+
+      procedure Set_Expanded
+        (Status    : in out Detached_Model;
+         Row       : Id;
+         Expanded  : Boolean := True) is
+      begin
+         if Status.Data /= null then
+            Set_Expanded (Status.Data.Expansion, Row, Expanded);
+         end if;
+      end Set_Expanded;
+
       --------------------------
       -- Get_Expansion_Status --
       --------------------------

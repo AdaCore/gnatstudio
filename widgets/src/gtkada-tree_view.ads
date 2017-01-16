@@ -93,7 +93,7 @@ package Gtkada.Tree_View is
    function Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Store
      with Inline;
-   --  The data model
+   --  The data model.
 
    function Filter
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
@@ -172,6 +172,19 @@ package Gtkada.Tree_View is
       --
       --  This works even if the tree is destroyed while detached. In this case
       --  it will simply never be reattached.
+
+      procedure Set_Expanded
+        (Status    : in out Expansion_Status;
+         Row       : Id;
+         Expanded  : Boolean := True);
+      procedure Set_Expanded
+        (Status    : in out Detached_Model;
+         Row       : Id;
+         Expanded  : Boolean := True);
+      --  Force a saved expansion status for a row.
+      --  This doesn't impact the actual tree, only when Set_Expansion_Status
+      --  is called.
+      --  The row doesn't have to exist.
 
    private
       package Id_Sets is new Ada.Containers.Indefinite_Hashed_Sets
