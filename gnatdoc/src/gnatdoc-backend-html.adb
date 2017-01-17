@@ -91,6 +91,10 @@ package body GNATdoc.Backend.HTML is
    --  Returns href to source file where this entity is declared. Returned URI
    --  includes fragment identifier to navigate to source code line.
 
+   function Compilation_Unit_File_Basename (Entity : Entity_Id) return String;
+   --  Returns basename to be used to construct filenames for enclosing
+   --  compilation unit of given entity.
+
    procedure Print_Source_Code
      (Self       : HTML_Backend'Class;
       File       : GNATCOLL.VFS.Virtual_File;
@@ -129,6 +133,40 @@ package body GNATdoc.Backend.HTML is
 
       return False;
    end "<";
+
+   ------------------------------------
+   -- Compilation_Unit_File_Basename --
+   ------------------------------------
+
+   function Compilation_Unit_File_Basename
+     (Entity : Entity_Id) return String
+   is
+      Parent : Entity_Id := Entity;
+
+   begin
+      while Get_Kind (Parent) /= E_Package
+        and then Get_Scope (Parent) /= null
+      loop
+         Parent := Get_Scope (Parent);
+      end loop;
+
+      declare
+         Name : constant String := To_Lower (Get_Full_Name (Parent));
+         File : Unbounded_String;
+
+      begin
+         for C of Name loop
+            if C = '.' then
+               Append (File, "__");
+
+            else
+               Append (File, C);
+            end if;
+         end loop;
+
+         return To_String (File) & "___spec";
+      end;
+   end Compilation_Unit_File_Basename;
 
    -------------------------------------
    -- Extract_Summary_And_Description --
@@ -1143,7 +1181,8 @@ package body GNATdoc.Backend.HTML is
 
       Docs_Dir       : constant Virtual_File :=
         Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
-      File_Base_Name : constant String := To_Lower (Get_Full_Name (Entity));
+      File_Base_Name : constant String :=
+        Compilation_Unit_File_Basename (Entity);
       HTML_File_Name : constant String := File_Base_Name & ".html";
       JS_File_Name   : constant String := File_Base_Name & ".js";
       Documentation  : constant JSON_Value := Create_Object;
@@ -1343,18 +1382,10 @@ package body GNATdoc.Backend.HTML is
    -------------------
 
    function Get_Docs_Href (Entity : Entity_Id) return String is
-      Parent : Entity_Id := Entity;
-
    begin
-      while Get_Kind (Parent) /= E_Package
-        and then Get_Scope (Parent) /= null
-      loop
-         Parent := Get_Scope (Parent);
-      end loop;
-
       return
         "docs/"
-        & To_Lower (Get_Full_Name (Parent))
+        & Compilation_Unit_File_Basename (Entity)
         & ".html#L"
         & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both)
         & "C"
