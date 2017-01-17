@@ -534,7 +534,7 @@ time.\n
    # compilation commands.
    import gps_utils
    @gps_utils.hook("compilation_starting")
-   def __compilation_starting(hook, category, quiet, *args);
+   def __compilation_starting(hook, category, quiet, *args):
       if not quiet:
          return MDI.yes_no_dialog("Confirm compilation ?")
       else:
