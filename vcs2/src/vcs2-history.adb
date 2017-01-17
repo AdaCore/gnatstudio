@@ -744,10 +744,12 @@ package body VCS2.History is
       Data : Layout_Idle_Data_Access;
       Id   : G_Source_Id with Unreferenced;
    begin
-      for L of History_Tree (Self.Tree).Lines loop
+      for L of History_Tree (Self.Tree).Commits loop
          L.Col     := No_Graph_Column;
          L.Visible := 0;
       end loop;
+
+      History_Tree (Self.Tree).Lines.Clear;
 
       Data := new Layout_Idle_Data;
       Data.Detached := new Expansion.Detached_Model'
@@ -1116,6 +1118,7 @@ package body VCS2.History is
          N.Date    := new String'(Date);
          N.Subject := new String'(Subject);
          N.Names   := Names;
+         N.Col     := No_Graph_Column;
 
          if Parents /= null then
             N.Parents := new Parent_Array (Parents'Range);
@@ -1501,7 +1504,9 @@ package body VCS2.History is
 
          --  If we have a filter, we can't show the graph, since we are
          --  missing too many commits.
-         Tree.Show_Graph := Tree.User_Filter.Filter = "";
+         Tree.Show_Graph := Tree.User_Filter.Filter = ""
+            and then Tree.User_Filter.For_File = No_File
+            and then Tree.User_Filter.Select_Id = "";
 
          Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
          Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;
