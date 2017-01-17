@@ -238,9 +238,11 @@ package body VCS2.Diff is
       W        : Writable_File;
       Status   : aliased Integer;
    begin
+      --  ??? Due to limitations in the vdiff module, this must be the same
+      --  name as returned by Vdiff2_Module.Callback.Get_Ref_Filename
       Tmp_File := Create_From_Dir
         (Get_Tmp_Directory,
-         Self.File.Base_Name & "." & (+To_String (Self.Ref)));
+         "ref$" & Self.File.Base_Name);
       W := Write_File (Tmp_File, Append => False);
       Write (W, Contents);
       Close (W);

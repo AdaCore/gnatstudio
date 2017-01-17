@@ -35,6 +35,8 @@ package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
 
+   Ref_Prefix : constant Filesystem_String := "ref$";
+
    function Get_Ref_Filename (File : Virtual_File) return Virtual_File;
    pragma Inline (Get_Ref_Filename);
    --  Returns the ref filename for the give file
@@ -46,7 +48,7 @@ package body Vdiff2_Module.Callback is
    function Get_Ref_Filename (File : Virtual_File) return Virtual_File is
    begin
       return Create_From_Dir
-        (Get_Tmp_Directory, "ref$" & Base_Name (File));
+        (Get_Tmp_Directory, Ref_Prefix & Base_Name (File));
    end Get_Ref_Filename;
 
    -------------
@@ -416,7 +418,7 @@ package body Vdiff2_Module.Callback is
          Res := Visual_Patch
            (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File);
          if Res /= null then
-            Setup_Ref (No_File, Orig_File);
+            Setup_Ref (New_File, Orig_File);
          end if;
       end if;
 
@@ -584,13 +586,14 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Command);
       use Diff_Head_List.Std_Vectors;
 
+      Kernel : constant Kernel_Handle := Get_Kernel (Vdiff_Module_ID.all);
       Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
    begin
       Create
         (Cmd,
-         Get_Kernel (Vdiff_Module_ID.all),
+         Kernel,
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Unhighlight_Difference'Access);
 
@@ -604,12 +607,10 @@ package body Vdiff2_Module.Callback is
 
       --  Remove all virtual buffers created during diff operations
 
-      for J in Element (Node).Files'Range loop
+      for J of Element (Node).Files loop
          declare
             Editor : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory
-                (Get_Kernel (Vdiff_Module_ID.all)).Get
-              (Element (Node).Files (J), Open_View => False);
+              Get_Buffer_Factory (Kernel).Get (J, Open_View => False);
          begin
             if Editor.Current_View = Nil_Editor_View then
                Editor.Close;
