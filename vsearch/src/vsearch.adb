@@ -411,7 +411,7 @@ package body Vsearch is
    --  This also refreshes the 'context' combo box.
 
    procedure Refresh_Context_Combo
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Vsearch : not null access Vsearch_Record'Class);
    --  Update the context_combo, so that missing contexts are added, and the
    --  label of existing ones is updated to show the next context (macro
    --  substitution,...)
@@ -507,6 +507,9 @@ package body Vsearch is
       Text      : Glib.UTF8_String);
    --  Used to paste the contents of the clibboard in the search pattern entry,
    --  when no selection can be found
+
+   procedure Set_Search_Regexps (Vsearch : access Vsearch_Record'Class);
+   --  Enter the registered search regexps in the Vsearch model
 
    ---------------
    -- Callbacks --
@@ -1661,17 +1664,11 @@ package body Vsearch is
          null;
    end Selection_Changed;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------------
+   -- Set_Search_Regexps --
+   ------------------------
 
-   overriding procedure Execute
-     (Self   : New_Predefined_Regexp;
-      Kernel : not null access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Self);
-      Vsearch    : constant Vsearch_Access :=
-                     Search_Views.Retrieve_View (Kernel);
+   procedure Set_Search_Regexps (Vsearch : access Vsearch_Record'Class) is
       Model      : constant Gtk_List_Store :=
                      -Get_Model (Vsearch.Pattern_Combo);
       Item       : Gtk_Tree_Iter;
@@ -1682,7 +1679,6 @@ package body Vsearch is
    begin
       --  Add a separator row to distinguish prefefined regexps from the
       --  patterns typed by the user.
-
       Item := Add_Unique_List_Entry (Model, Text => "", Col => Column_Text);
       Model.Set (Item, Column_Is_Separator, True);
 
@@ -1703,6 +1699,22 @@ package body Vsearch is
       Set_Active (Vsearch.Case_Toggle, Casing);
       Set_Active (Vsearch.Whole_Word_Toggle, Whole_Word);
       Set_Active (Vsearch.Regexp_Toggle, Regexp);
+   end Set_Search_Regexps;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : New_Predefined_Regexp;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Set_Search_Regexps (View);
+      end if;
    end Execute;
 
    ---------------------------
@@ -1710,9 +1722,8 @@ package body Vsearch is
    ---------------------------
 
    procedure Refresh_Context_Combo
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Vsearch   : not null access Vsearch_Record'Class)
    is
-      Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
       Num     : Positive := 1;
       Store   : constant Gtk_List_Store :=
                   Gtk_List_Store'(-Vsearch.Context_Combo.Get_Model);
@@ -1723,7 +1734,7 @@ package body Vsearch is
       loop
          declare
             Module : constant Search_Module :=
-                       Get_Nth_Search_Module (Kernel, Num);
+                       Get_Nth_Search_Module (Vsearch.Kernel, Num);
          begin
             exit when Module = null;
 
@@ -1734,7 +1745,8 @@ package body Vsearch is
                if Get_String (Store, Iter, Id_Col) = Module.Get_Label then
                   --  Update the text, after substituting macros.
                   Store.Set
-                    (Iter, 0, Substitute_Label (Kernel, Module.Get_Label));
+                    (Iter, 0, Substitute_Label
+                       (Vsearch.Kernel, Module.Get_Label));
                   Found := True;
                   exit;
                end if;
@@ -1744,7 +1756,8 @@ package body Vsearch is
             if not Found then
                Vsearch.Context_Combo.Append
                  (Id   => Module.Get_Label,
-                  Text => Substitute_Label (Kernel, Module.Get_Label));
+                  Text => Substitute_Label
+                    (Vsearch.Kernel, Module.Get_Label));
             end if;
 
             Num := Num + 1;
@@ -1766,8 +1779,11 @@ package body Vsearch is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
    begin
-      Refresh_Context_Combo (Kernel);
+      if View /= null then
+         Refresh_Context_Combo (View);
+      end if;
    end Execute;
 
    -----------------------
@@ -2120,6 +2136,7 @@ package body Vsearch is
       --  Initialize the widgets that may have saved items in history
       Initialize_From_History;
 
+      --  Connect the hooks
       Search_Reset_Hook.Add (new Set_First_Next_Mode_Cb);
       Search_Functions_Changed_Hook.Add (new Search_Functions_Changed);
       Search_Regexps_Changed_Hook.Add (new New_Predefined_Regexp);
@@ -2186,6 +2203,10 @@ package body Vsearch is
       View : constant Vsearch_Access := Search_Views.Retrieve_View
         (Vsearch_Module_Id.Get_Kernel);
    begin
+      if View = null then
+         return;
+      end if;
+
       if Text /= ""
         and then Text'Length < 128
       then
@@ -2251,6 +2272,12 @@ package body Vsearch is
          Reset_Search'Access,
          View.Kernel);
       Toolbar.Insert (View.Whole_Word_Toggle);
+
+      --  Set the search regexps
+      Set_Search_Regexps (View);
+
+      --  Set the context combo
+      Refresh_Context_Combo (View);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
@@ -2556,7 +2583,7 @@ package body Vsearch is
          end if;
       end if;
 
-      Refresh_Context_Combo (Kernel);
+      Refresh_Context_Combo (View);
    end Set_Selected_Project;
 
    --------------------------
@@ -2590,6 +2617,10 @@ package body Vsearch is
       if View /= null then
          From := View.Selection_From;
          To   := View.Selection_To;
+      else
+         --  This should not happen, but set this for safety
+         From := null;
+         To := null;
       end if;
    end Get_Selection;
 
@@ -2641,34 +2672,40 @@ package body Vsearch is
       pragma Unreferenced (Command);
       Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View
         (Get_Kernel (Context.Context));
-      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
-                  Vsearch.Kernel.Get_Buffer_Factory.Get (Open_View => False);
-
    begin
-      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-         declare
-            Start_Loc : constant GPS.Editors.Editor_Location'Class :=
-                          Buffer.Selection_Start;
-            End_Loc   : GPS.Editors.Editor_Location'Class :=
-                          Buffer.Selection_End;
-         begin
-            End_Loc := End_Loc.Forward_Word (1);
-
-            Buffer.Select_Text (Start_Loc, End_Loc);
-
-            --  Avoid having the character placed under the editor's cursor
-            --  in the search view's entry: we only want the text that has
-            --  been selected.
-            End_Loc := Forward_Char (End_Loc, -1);
-
-            Vsearch.Locked := True;
-            Set_Active_Text
-              (Vsearch.Pattern_Combo,
-               Text => Buffer.Get_Chars (Start_Loc, End_Loc));
-            Gtk_Entry (Vsearch.Pattern_Combo.Get_Child).Set_Position (-1);
-            Vsearch.Locked := False;
-         end;
+      if Vsearch = null then
+         return Success;
       end if;
+
+      declare
+         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+           Vsearch.Kernel.Get_Buffer_Factory.Get (Open_View => False);
+      begin
+         if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+            declare
+               Start_Loc : constant GPS.Editors.Editor_Location'Class :=
+                 Buffer.Selection_Start;
+               End_Loc   : GPS.Editors.Editor_Location'Class :=
+                 Buffer.Selection_End;
+            begin
+               End_Loc := End_Loc.Forward_Word (1);
+
+               Buffer.Select_Text (Start_Loc, End_Loc);
+
+               --  Avoid having the character placed under the editor's cursor
+               --  in the search view's entry: we only want the text that has
+               --  been selected.
+               End_Loc := Forward_Char (End_Loc, -1);
+
+               Vsearch.Locked := True;
+               Set_Active_Text
+                 (Vsearch.Pattern_Combo,
+                  Text => Buffer.Get_Chars (Start_Loc, End_Loc));
+               Gtk_Entry (Vsearch.Pattern_Combo.Get_Child).Set_Position (-1);
+               Vsearch.Locked := False;
+            end;
+         end if;
+      end;
 
       return Success;
    end Execute;
