@@ -6836,7 +6836,17 @@ class MDI(object):
                print "You pressed yes"
 
         """
-        pass  # implemented in Ada
+
+    @staticmethod
+    def information_popup(self, text='', icon=''):
+        """
+        Display a temporary information popup on the screen. This popup
+        automatically disappears after a short while, so should only be
+        used to indicate success or failure for an action, for instance.
+
+        :param str text: The text to display.
+        :param str icon: The name of an icon to display beside the text.
+        """
 
     @staticmethod
     def load_perspective(name):
@@ -9676,6 +9686,17 @@ class VCS2_Task_Visitor(object):
     A class used in `GPS.VCS2.async_fetch_history`.
     This is only used when writing your own support for VCS engines.
     """
+
+    def success(self, msg=''):
+        """
+        This should be called whenever an action succeed.
+        It is used to perform various cleanups on the Ada side (for instance
+        recomputing the status of files).
+
+        :param str msg: If specified, a temporary popup is displayed to the
+           user showing the message. The popup automatically disappears after
+           a short while.
+        """
 
     def add_lines(self, list):
         """

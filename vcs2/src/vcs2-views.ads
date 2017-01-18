@@ -67,12 +67,11 @@ package VCS2.Views is
    procedure Refresh (Self : not null access Base_VCS_View_Record) is null;
    --  Refresh the contents of the view
 
-   type Refresh_On_Terminate_Visitor is new Task_Visitor with record
-      Kernel  : Kernel_Handle;
-   end record;
-   overriding procedure On_Terminate
-     (Self     : not null access Refresh_On_Terminate_Visitor;
-      VCS      : access VCS_Engine'Class);
-   --  Refreshes all VCS views on terminate
+   function Refresh_On_Terminate
+      (Kernel    : not null access Kernel_Handle_Record'Class)
+      return not null access Task_Visitor'Class;
+   --  Returns a task visitor that refreshes the contents of all VCS views
+   --  when the command terminates.
+   --  ??? Should this only be done upon success (see On_Success callback).
 
 end VCS2.Views;

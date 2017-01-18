@@ -60,6 +60,14 @@ package body VCS2.Views is
    procedure On_Selection_Changed (Self : access GObject_Record'Class);
    --  Called when the selection changes in the tree
 
+   type Refresh_On_Terminate_Visitor is new Task_Visitor with record
+      Kernel    : Kernel_Handle;
+   end record;
+   overriding procedure On_Terminate
+     (Self     : not null access Refresh_On_Terminate_Visitor;
+      VCS      : access VCS_Engine'Class);
+   --  Refreshes all VCS views on terminate
+
    ----------------------------
    -- On_Active_VCS_Selected --
    ----------------------------
@@ -245,5 +253,18 @@ package body VCS2.Views is
       Self.Kernel.VCS.Invalidate_All_Caches;
       Vcs_Refresh_Hook.Run (Self.Kernel);
    end On_Terminate;
+
+   --------------------------
+   -- Refresh_On_Terminate --
+   --------------------------
+
+   function Refresh_On_Terminate
+      (Kernel    : not null access Kernel_Handle_Record'Class)
+      return not null access Task_Visitor'Class is
+   begin
+      return new Refresh_On_Terminate_Visitor'
+         (Task_Visitor with
+          Kernel    => Kernel_Handle (Kernel));
+   end Refresh_On_Terminate;
 
 end VCS2.Views;

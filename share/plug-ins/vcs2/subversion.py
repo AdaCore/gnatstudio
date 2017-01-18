@@ -105,7 +105,7 @@ class SVN(core_staging.Emulate_Staging,
                     s.set_status(GPS.File(f), status, rev, rrev)
 
     @core.run_in_background
-    def commit_staged_files(self, message):
+    def async_commit_staged_files(self, visitor, message):
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
@@ -115,7 +115,9 @@ class SVN(core_staging.Emulate_Staging,
                 p = self._svn(['delete', f.path], block_exit=True)
                 yield p.wait_until_terminate()
 
-        self._internal_commit_staged_files(['svn', 'commit', '-m', message])
+        yield self._internal_commit_staged_files(
+            visitor,
+            ['svn', 'commit', '-m', message])
 
     def _log_stream(self, args=[]):
         """

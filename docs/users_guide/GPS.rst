@@ -1416,6 +1416,8 @@ Classes
 
    .. automethod:: GPS.MDI.hide
 
+   .. automethod:: GPS.MDI.information_popup
+
    .. automethod:: GPS.MDI.input_dialog
 
    .. automethod:: GPS.MDI.load_perspective
@@ -2054,6 +2056,8 @@ Classes
    .. automethod:: GPS.VCS2_Task_Visitor.file_computed
 
    .. automethod:: GPS.VCS2_Task_Visitor.set_details
+
+   .. automethod:: GPS.VCS2_Task_Visitor.success
 
    .. automethod:: GPS.VCS2_Task_Visitor.tooltip
 

@@ -143,14 +143,6 @@ class Predefined_Hooks:
       :param str name:
         """
 
-    # commit_done_hook = 'commit_done_hook'
-    def commit_done_hook(name):
-        """
-      Emitted when a commit has been done
-
-      :param str name:
-        """
-
     # compilation_finished = 'compilation_finished'
     def compilation_finished(name,category,target,mode,shadow,background,status):
         """
@@ -960,14 +952,6 @@ class Predefined_Hooks:
       like commit and log happen.
 
       :param str name:
-        """
-
-    # vcs_commit_done = 'vcs_commit_done'
-    def vcs_commit_done(VCS):
-        """
-      Emitted when a commit has been successfully performed.
-
-      :param GPS.VCS VCS:
         """
 
     # vcs_file_status_changed = 'vcs_file_status_changed'

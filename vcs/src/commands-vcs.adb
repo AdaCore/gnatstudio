@@ -210,10 +210,6 @@ package body Commands.VCS is
          end loop;
       end if;
 
-      if Command.Action = Commit then
-         Commit_Done_Hook.Run (Command.Kernel);
-      end if;
-
       Command_Finished (Command, True);
       return Success;
 

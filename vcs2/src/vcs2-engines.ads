@@ -118,6 +118,10 @@ package VCS2.Engines is
 
    type Task_Visitor is abstract tagged limited private;
    type Task_Visitor_Access is access all Task_Visitor'Class;
+   --  An object called at various point during algorithms.
+   --  This base type only provides a standard callback for when a background
+   --  task terminates. Further derivation provide algorithm-specific
+   --  additional callbacks.
 
    procedure Free (Self : in out Task_Visitor) is null;
    --  Called when the visitor is no longer needed.
@@ -131,10 +135,12 @@ package VCS2.Engines is
    procedure On_Terminate
      (Self  : not null access Task_Visitor;
       VCS   : access VCS_Engine'Class) is null;
-   --  An object called at various point during algorithms.
-   --  This base type only provides a standard callback for when a background
-   --  task terminates. Further derivation provide algorithm-specific
-   --  additional callbacks.
+   --  This is called whether the action succeeded or not.
+
+   procedure On_Success
+     (Self   : not null access Task_Visitor;
+      Kernel : not null access Kernel_Handle_Record'Class) is null;
+   --  Called when the plugin reports that the action has succeeded.
 
    procedure On_History_Line
      (Self    : not null access Task_Visitor;
@@ -378,13 +384,6 @@ package VCS2.Engines is
    --  appropriate hooks to report the change. This is done possibly
    --  asynchronously.
 
-   procedure Commit_Staged_Files
-     (Self    : not null access VCS_Engine;
-      Message : String) is abstract;
-   --  Commit all staged files with the corresponding message, then refresh
-   --  the status of files (this is done asynchronously).
-   --  Must emit the VCS_Commit_Done_Hook.
-
    type History_Filter is record
       Up_To_Lines         : Natural := Natural'Last;
       For_File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -421,6 +420,16 @@ package VCS2.Engines is
    --  Only call Queue_Fetch_History from your code, Async_Fetch_History is
    --  the actual implementation but doesn't ensure that a single command runs
    --  at a given time.
+
+   procedure Async_Commit_Staged_Files
+     (Self    : not null access VCS_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Message : String) is null;
+   procedure Queue_Commit_Staged_Files
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Message : String);
+   --  Commit all staged files with the corresponding message.
 
    procedure Async_Fetch_Commit_Details
      (Self        : not null access VCS_Engine;

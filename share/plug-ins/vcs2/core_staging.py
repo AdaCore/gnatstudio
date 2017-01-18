@@ -17,8 +17,7 @@ class Emulate_Staging(object):
         super(Emulate_Staging, self).__init__(*args, **kwargs)
         self.__load_staged_files()
 
-    @core.run_in_background
-    def _internal_commit_staged_files(self, args):
+    def _internal_commit_staged_files(self, visitor, args):
         """
         Execute the command `args` and pass all staged files.
 
@@ -33,9 +32,8 @@ class Emulate_Staging(object):
         if status:
             GPS.Console().write("%s %s" % (" ".join(args), output))
         else:
-            GPS.Hook('vcs_commit_done').run(self)
             self.stage_or_unstage_files(files, stage=False)
-            yield self.async_fetch_status_for_files(files)
+            visitor.success('Commit successful')
 
     def _set_file_status(self, files, status, version="", repo_version=""):
         """Override Ada behavior"""

@@ -81,6 +81,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;
+with Informational_Popups;      use Informational_Popups;
 with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
 
@@ -823,12 +824,13 @@ package body GPS.Main_Window is
         (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
       Command          : MDI_Child_Selection_Command_Access;
       Command2         : MDI_Window_Actions_Command_Access;
+      Kernel           : constant Kernel_Handle := Main_Window.Kernel;
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Move_To_Next := True;
       Command.Group        := Group_Any;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move to next window",
          Command     => Command,
          Category    => "MDI",
@@ -840,7 +842,7 @@ package body GPS.Main_Window is
       Command.Move_To_Next := False;
       Command.Group        := Group_Any;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move to previous window",
          Command     => Command,
          Category    => "MDI",
@@ -852,7 +854,7 @@ package body GPS.Main_Window is
       Command.Group        := Group_Default;
       Command.Move_To_Next := True;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Select other window",
          Command     => Command,
          Category    => "MDI",
@@ -862,7 +864,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Split_H;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Split horizontally",
          Command     => Command2,
          Category    => "MDI",
@@ -871,7 +873,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Split_V;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Split vertically",
          Command     => Command2,
          Category    => "MDI",
@@ -880,7 +882,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Clone;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Clone window",
          Command     => Command2,
          Category    => "MDI",
@@ -891,7 +893,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Reorder_Tab_Left;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move tab to left",
          Command     => Command2,
          Category    => "MDI",
@@ -902,7 +904,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Reorder_Tab_Right;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move tab to right",
          Command     => Command2,
          Category    => "MDI",
@@ -913,7 +915,7 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Next_Tab;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move to next tab",
          Command     => Command2,
          Category    => "MDI",
@@ -922,146 +924,153 @@ package body GPS.Main_Window is
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Previous_Tab;
       Register_Action
-        (Main_Window.Kernel,
+        (Kernel,
          Name        => "Move to previous tab",
          Command     => Command2,
          Category    => "MDI",
          Description => -("Move to the previous tab in the current notebook"));
 
-      Register_Command
-        (Main_Window.Kernel, "dialog",
+      Kernel.Scripts.Register_Command
+        ("dialog",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "yes_no_dialog",
+      Kernel.Scripts.Register_Command
+        ("yes_no_dialog",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "file_selector",
+      Kernel.Scripts.Register_Command
+        ("information_popup",
+         Params        => (1  => Param ("text", Optional => True),
+                           2  => Param ("icon", Optional => True)),
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("file_selector",
          Minimum_Args  => 0,
          Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "input_dialog",
+      Kernel.Scripts.Register_Command
+        ("input_dialog",
          Minimum_Args  => 2,
          Maximum_Args  => 100,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "save_all",
+      Kernel.Scripts.Register_Command
+        ("save_all",
          Maximum_Args  => 1,
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "exit",
+      Kernel.Scripts.Register_Command
+        ("exit",
          Minimum_Args => 0,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "version",
+      Kernel.Scripts.Register_Command
+        ("version",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
 
-      Register_Command
-        (Main_Window.Kernel, Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "split",
+      Kernel.Scripts.Register_Command
+        ("split",
          Class        => MDI_Window_Class,
          Maximum_Args => 3,
          Handler      => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "float",
+      Kernel.Scripts.Register_Command
+        ("float",
          Maximum_Args => 1,
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "is_floating",
+      Kernel.Scripts.Register_Command
+        ("is_floating",
          Class       => MDI_Window_Class,
          Handler     => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "raise_window",
+      Kernel.Scripts.Register_Command
+        ("raise_window",
          Class       => MDI_Window_Class,
          Handler     => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel.Scripts, "close",
+      Kernel.Scripts.Register_Command
+        ("close",
          Params      => (1 => Param ("force", Optional => True)),
          Class       => MDI_Window_Class,
          Handler     => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "get_child",
+      Kernel.Scripts.Register_Command
+        ("get_child",
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "next",
+      Kernel.Scripts.Register_Command
+        ("next",
          Class        => MDI_Window_Class,
          Maximum_Args => 1,
          Handler      => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "name",
+      Kernel.Scripts.Register_Command
+        ("name",
          Maximum_Args => 1,
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "rename",
+      Kernel.Scripts.Register_Command
+        ("rename",
          Minimum_Args => 1,
          Maximum_Args => 2,
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
 
-      Register_Command
-        (Main_Window.Kernel, "get",
+      Kernel.Scripts.Register_Command
+        ("get",
          Class         => MDI_Class,
          Static_Method => True,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "children",
+      Kernel.Scripts.Register_Command
+        ("children",
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "get_by_child",
+      Kernel.Scripts.Register_Command
+        ("get_by_child",
          Class         => MDI_Class,
          Static_Method => True,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "current",
+      Kernel.Scripts.Register_Command
+        ("current",
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "hide",
+      Kernel.Scripts.Register_Command
+        ("hide",
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel, "show",
+      Kernel.Scripts.Register_Command
+        ("show",
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Main_Window.Kernel.Scripts, "load_perspective",
+      Kernel.Scripts.Register_Command
+        ("load_perspective",
          Params        => (1 => Param ("name")),
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-      Main_Window.Kernel.Scripts.Register_Command
+      Kernel.Scripts.Register_Command
         ("current_perspective",
          Class          => MDI_Class,
          Static_Method  => True,
@@ -1324,6 +1333,12 @@ package body GPS.Main_Window is
              Justification => Justify_Left,
              Dialog_Type   => Confirmation,
              Parent        => Get_Current_Window (Kernel)) = Button_Yes);
+
+      elsif Command = "information_popup" then
+         Display_Informational_Popup
+            (Parent    => Get_Main_Window (Kernel),
+             Icon_Name => Data.Nth_Arg (2, ""),
+             Text      => Data.Nth_Arg (1, ""));
 
       elsif Command = "file_selector" then
          Name_Parameters (Data, File_Selector_Cmd_Parameters);

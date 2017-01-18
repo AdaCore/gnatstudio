@@ -512,9 +512,6 @@ Emitted when the contents of the clipboard has changed, either
 because the user added a new entry to it (Copy or Cut) or because
 the index of the last paste operation has changed (Paste Previous)'''),
 
-    Hook('commit_done_hook', 'simple_hooks',
-         descr='Emitted when a commit has been done'),
-
     Hook('compilation_starting', 'compilation_hooks', descr='''
 Emitted when a compilation operation is about to start.\n
 Among the various tasks that GPS connects to this hook are: check
@@ -932,9 +929,6 @@ details.'''),
     Hook('vcs_active_changed', 'simple_hooks', descr='''
 Emitted when the active VCS has changed. This is the VCS on which operations
 like commit and log happen.'''),
-         
-    Hook('vcs_commit_done', 'vcs_hooks', descr='''
-Emitted when a commit has been successfully performed.'''),
          
     Hook('vcs_refresh', 'simple_hooks', descr='''
 Run this hook to force a refresh of all VCS-related views. They will

@@ -254,9 +254,13 @@ class VCS(GPS.VCS2):
         """
         GPS.Console().write("Revert not supported for %s" % (self.name, ))
 
-    def commit_staged_files(self, message):
+    def async_commit_staged_files(self, visitor, message):
         """
         Commit all staged files.
+        The cached status of files is automatically refreshed on exit.
+
+        :param GPS.VCS2_Task_Visitor visitor: the object used to report
+           success via `visitor.success`.
         :param str message: the commit message
         """
 

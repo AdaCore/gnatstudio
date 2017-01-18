@@ -119,8 +119,9 @@ package body VCS2.Engines is
      (Self    : not null access Dummy_VCS_Engine;
       Files   : GNATCOLL.VFS.File_Array;
       Stage   : Boolean) is null;
-   overriding procedure Commit_Staged_Files
+   overriding procedure Async_Commit_Staged_Files
      (Self    : not null access Dummy_VCS_Engine;
+      Visitor : not null access Task_Visitor'Class;
       Message : String) is null;
 
    --  An engine that does nothing, used when the project is not setup for
@@ -194,6 +195,14 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Fetch_History;
       VCS  : not null access VCS_Engine'Class);
    --  Implementation for Async_Fetch_History
+
+   type Cmd_Commit is new VCS_Command with record
+      Message : Unbounded_String;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Commit;
+      VCS  : not null access VCS_Engine'Class);
+   --  Implementation for Async_Commit_Staged_Files
 
    type Cmd_Fetch_Commit_Details is new VCS_Command with record
       Ids  : String_List_Access;
@@ -1136,6 +1145,34 @@ package body VCS2.Engines is
       Free (Self.Ids);
       Free (VCS_Command (Self));  --  inherited
    end Free;
+
+   -------------------------------
+   -- Queue_Commit_Staged_Files --
+   -------------------------------
+
+   procedure Queue_Commit_Staged_Files
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Message : String) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Commit'(
+           Visitor    => Visitor.all'Unchecked_Access,
+           Message    => To_Unbounded_String (Message)));
+   end Queue_Commit_Staged_Files;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Commit;
+      VCS  : not null access VCS_Engine'Class)
+   is
+   begin
+      VCS.Async_Commit_Staged_Files (Self.Visitor, To_String (Self.Message));
+   end Execute;
 
    --------------------------------
    -- Queue_Fetch_Commit_Details --

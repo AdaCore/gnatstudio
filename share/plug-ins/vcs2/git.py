@@ -142,24 +142,18 @@ class Git(core.VCS):
         s.set_status_for_remaining_files(files)
 
     @core.run_in_background
-    def __action_then_update_status(self, params, files=[]):
-        """
-        :param List(str) params: the "git ..." action to perform
-        :param List(GPS.File) files: list of files
-        """
-        p = self._git(params + [f.path for f in files], block_exit=True)
-        (status, _) = yield p.wait_until_terminate(show_if_error=True)
-        if status == 0:
-            # update statuses
-            yield self.async_fetch_status_for_all_files(from_user=False)
-
     def stage_or_unstage_files(self, files, stage):
-        self.__action_then_update_status(['add' if stage else 'reset'], files)
+        p = self._git(['add' if stage else 'reset'] + [f.path for f in files],
+                      block_exit=True)
+        yield p.wait_until_terminate(show_if_error=True)
+        yield self.async_fetch_status_for_all_files(from_user=False)
 
     @core.run_in_background
-    def commit_staged_files(self, message):
-        yield self.__action_then_update_status(['commit', '-m', message])
-        yield GPS.Hook('vcs_commit_done').run(self)
+    def async_commit_staged_files(self, visitor, message):
+        p = self._git(['commit', '-m', message], block_exit=True)
+        status, _ = yield p.wait_until_terminate(show_if_error=True)
+        if status == 0:
+            visitor.success('Commit successful')
 
     @core.vcs_action(icon='git-commit-amend-symbolic',
                      name='git amend previous commit',
@@ -170,9 +164,13 @@ class Git(core.VCS):
         """
         # ??? Should do nothing if the previous commit has been pushed
         # already.
-        yield self.__action_then_update_status(
-            ['commit', '--amend', '--reuse-message=HEAD'])
-        GPS.Hook('vcs_commit_done').run(self)
+        p = self._git(['commit', '--amend', '--reuse-message=HEAD'],
+                      block_exit=True)
+        status, _ = yield p.wait_until_terminate(show_if_error=True)
+        if status == 0:
+            GPS.MDI.information_popup(
+                'Commit successful', 'github-commit-symbolic')
+            yield self.async_fetch_status_for_all_files(from_user=False)
 
     @core.vcs_action(icon='vcs-pull-symbolic',
                      name='git pull rebase',
@@ -180,7 +178,9 @@ class Git(core.VCS):
                      after='update section')
     def _pull_rebase(self):
         p = self._git(['pull', '--rebase'], spawn_console='')
-        yield p.wait_until_terminate()
+        status, _ = yield p.wait_until_terminate()
+        if status == 0:
+            GPS.MDI.information_popup('Pulled', 'github-commit-symbolic')
 
     @core.vcs_action(icon='vcs-pull-symbolic',
                      name='git pull',
@@ -188,7 +188,9 @@ class Git(core.VCS):
                      after='update section')
     def _pull(self):
         p = self._git(['pull'], spawn_console='')
-        yield p.wait_until_terminate()
+        status, _ = yield p.wait_until_terminate()
+        if status == 0:
+            GPS.MDI.information_popup('Pulled', 'github-commit-symbolic')
 
     @core.run_in_background
     def async_fetch_history(self, visitor, filter):
@@ -648,3 +650,5 @@ class Git(core.VCS):
         n = [f.path for f in files]
         yield self._git(['reset'] + n).wait_until_terminate()
         yield self._git(['checkout'] + n).wait_until_terminate()
+        GPS.MDI.information_popup(
+            'Local changes discarded', 'github-commit-symbolic')

@@ -63,7 +63,6 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
-with Informational_Popups;        use Informational_Popups;
 with Tooltips;                    use Tooltips;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
@@ -260,11 +259,10 @@ package body VCS2.Commits is
      (Command : access Discard_Changes;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type On_Committed is new Vcs_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Committed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      VCS    : not null access Abstract_VCS_Engine'Class);
+   type Commit_Visitor is new Task_Visitor with null record;
+   overriding procedure On_Success
+      (Self   : not null access Commit_Visitor;
+       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a commit has been completed
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
@@ -818,37 +816,34 @@ package body VCS2.Commits is
          then
             View.Active_VCS.Queue_Discard_Local_Changes
               (Files   => Files,  --  freed by Queue_Discard_Local_Changes
-               Visitor => new Refresh_On_Terminate_Visitor'
-                 (Task_Visitor with Kernel => View.Kernel));
+               Visitor => Refresh_On_Terminate (View.Kernel));
          end if;
       end if;
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   ----------------
+   -- On_Success --
+   ----------------
 
-   overriding procedure Execute
-     (Self   : On_Committed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      VCS    : not null access Abstract_VCS_Engine'Class)
+   overriding procedure On_Success
+      (Self   : not null access Commit_Visitor;
+       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
       Trace (Me, "Commit completed successfully");
-      Set_Commit_Message (VCS_Engine_Access (VCS), "");
+      Set_Commit_Message (Active_VCS (Kernel), "");
       if View /= null then
          View.Commit.Get_Buffer.Set_Text ("");
          Show_Placeholder_If_Needed (View.Commit);
       end if;
 
-      Display_Informational_Popup
-        (Parent    => Get_Main_Window (Kernel),
-         Icon_Name => "github-commit-symbolic",
-         Text      => -"Committed");
-   end Execute;
+      --  Force a refresh of all VCS status
+      Kernel.VCS.Invalidate_All_Caches;
+      Vcs_Refresh_Hook.Run (Kernel);
+   end On_Success;
 
    -------------
    -- Execute --
@@ -875,7 +870,9 @@ package body VCS2.Commits is
                else Get_Commit_Message_From_Properties (VCS));
          begin
             if Msg /= "" then
-               VCS.Commit_Staged_Files (Msg);
+               VCS.Queue_Commit_Staged_Files
+                 (Message => Msg,
+                  Visitor => new Commit_Visitor);
             else
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;
@@ -1440,8 +1437,6 @@ package body VCS2.Commits is
          Command     => new Reload_Status,
          Category    => "VCS2",
          Icon_Name   => "gps-refresh-symbolic");
-
-      Vcs_Commit_Done_Hook.Add (new On_Committed);
 
    end Register_Module;
 

@@ -197,6 +197,7 @@ package body Informational_Popups is
 
       if Text /= "" then
          Gtk_New (Label, Text);
+         Label.Set_Padding (20, 20);
          Box.Pack_Start (Label, Expand => False, Fill => False);
       end if;
 

@@ -111,7 +111,7 @@ class CVS(core_staging.Emulate_Staging,
                 s.set_status(current_file, status, rev, repo_rev)
 
     @core.run_in_background
-    def commit_staged_files(self, message):
+    def async_commit_staged_files(self, visitor, message):
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
@@ -121,7 +121,9 @@ class CVS(core_staging.Emulate_Staging,
                 p = self._cvs(['remove', f.path], block_exit=True)
                 yield p.wait_until_terminate()
 
-        self._internal_commit_staged_files(['cvs', 'commit', '-m', message])
+        yield self._internal_commit_staged_files(
+            visitor,
+            ['cvs', 'commit', '-m', message])
 
     def _build_unique_id(self, rev, file):
         return '%s %s' % (rev, file)

@@ -23,6 +23,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNAT.Strings;          use GNAT.Strings;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.VCS;               use GPS.VCS;
+with Informational_Popups;  use Informational_Popups;
 with VCS2.Engines;          use VCS2.Engines;
 
 package body VCS2.Scripts is
@@ -72,8 +73,9 @@ package body VCS2.Scripts is
      (Self    : not null access Script_Engine;
       Files   : GNATCOLL.VFS.File_Array;
       Stage   : Boolean);
-   overriding procedure Commit_Staged_Files
+   overriding procedure Async_Commit_Staged_Files
      (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
       Message : String);
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
@@ -538,15 +540,17 @@ package body VCS2.Scripts is
    -- Commit_Staged_Files --
    -------------------------
 
-   overriding procedure Commit_Staged_Files
+   overriding procedure Async_Commit_Staged_Files
      (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
       Message : String)
    is
-      Data : Callback_Data'Class := Create (Self.Script, 1);
+      Data : Callback_Data'Class := Create (Self.Script, 2);
    begin
-      Set_Nth_Arg (Data, 1, Message);
-      Call_Method (Self, "commit_staged_files", Data);
-   end Commit_Staged_Files;
+      Set_Nth_Arg (Data, 1, Visitor);
+      Set_Nth_Arg (Data, 2, Message);
+      Call_Method (Self, "async_commit_staged_files", Data);
+   end Async_Commit_Staged_Files;
 
    -----------------
    -- VCS_Handler --
@@ -651,7 +655,21 @@ package body VCS2.Scripts is
 
       Visitor := Task_Properties_Record (Prop.all).Visitor;
 
-      if Command = "add_lines" then
+      if Command = "success" then
+         declare
+            Kernel : constant Kernel_Handle := Get_Kernel (Data);
+            Msg : constant String := Data.Nth_Arg (2);
+         begin
+            if Msg /= "" then
+               Display_Informational_Popup
+                  (Parent   => Get_Main_Window (Kernel),
+                   Icon_Name => "github-commit-symbolic",
+                   Text      => Msg);
+            end if;
+            Visitor.On_Success (Kernel);
+         end;
+
+      elsif Command = "add_lines" then
          declare
             List  : constant List_Instance'Class := Data.Nth_Arg (2);
             Count : constant Natural := List.Number_Of_Arguments;
@@ -916,6 +934,11 @@ package body VCS2.Scripts is
          Class         => VCS,
          Handler       => VCS_Handler'Access);
 
+      Kernel.Scripts.Register_Command
+        ("success",
+         Params        => (1 => (Param ("msg", Optional => True))),
+         Class         => Task_Visitor,
+         Handler       => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add_lines",
          Params        => (2 => Param ("lines")),

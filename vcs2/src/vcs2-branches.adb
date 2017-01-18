@@ -646,8 +646,7 @@ package body VCS2.Branches is
             begin
                if Id /= "" then
                   Active_VCS (View.Kernel).Queue_Action_On_Branch
-                    (Visitor => new Refresh_On_Terminate_Visitor'
-                       (Task_Visitor with Kernel => View.Kernel),
+                    (Visitor => Refresh_On_Terminate (View.Kernel),
                      Action   => Action_Double_Click,
                      Category => Category_From_Node (Tree, Iter),
                      Id       => Id);
@@ -701,8 +700,7 @@ package body VCS2.Branches is
          Store_Iter := Tree.Convert_To_Store_Iter (Store_Iter);
          if Store_Iter /= Null_Iter then
             Active_VCS (Kernel).Queue_Action_On_Branch
-              (Visitor  => new Refresh_On_Terminate_Visitor'
-                 (Task_Visitor with Kernel => Kernel),
+              (Visitor  => Refresh_On_Terminate (Kernel),
                Action   => Action,
                Category => Category_From_Node (Tree, Store_Iter),
                Id       => Tree.Model.Get_String (Store_Iter, Column_Id));
@@ -765,8 +763,7 @@ package body VCS2.Branches is
       pragma Unreferenced (View_Column);
    begin
       Active_VCS (Self.Kernel).Queue_Action_On_Branch
-        (Visitor  => new Refresh_On_Terminate_Visitor'
-           (Task_Visitor with Kernel => Self.Kernel),
+        (Visitor  => Refresh_On_Terminate (Self.Kernel),
          Action   => Action_Rename,
          Category => Category_From_Node (Self, Store_Iter),
          Id       => Self.Model.Get_String (Store_Iter, Column_Id),
