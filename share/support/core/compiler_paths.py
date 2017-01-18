@@ -43,7 +43,11 @@ def get_compiler_search_paths(project_name, language,
         )
 
     if not compiler:
-        compiler = "-".join(filter(bool, [GPS.get_target(), ccs[language]]))
+        if language in ccs:
+            compiler = "-".join(filter(bool,
+                                       [GPS.get_target(), ccs[language]]))
+        else:
+            return ''
 
     logger.log('Compiler: {}'.format(compiler))
 

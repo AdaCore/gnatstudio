@@ -501,10 +501,13 @@ package body Clang_Xref is
            Clang_Type_Inst => <>);
 
    begin
-      if Kernel.Lang_Handler.Get_Language_From_File (Res.Loc.File) = "" then
+      if Res.Loc.File /= No_File
+        and then Kernel.Lang_Handler.Get_Language_From_File (Res.Loc.File) = ""
+      then
          Set_Language_From_File
            (Kernel_Handle (Kernel), Res.Loc.File, Lang);
       end if;
+
       return (if Cursor /= No_Cursor then Res
               else No_Clang_Entity);
    end Cursor_As_Entity;

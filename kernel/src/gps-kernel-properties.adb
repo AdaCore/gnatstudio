@@ -458,6 +458,12 @@ package body GPS.Kernel.Properties is
    is
       Prop : String_Property_Access;
    begin
+      if Filename = No_File then
+         --  This shouldn't happen. But add the test for safety, to make sure
+         --  we are not persisting a language for the empty file.
+         return;
+      end if;
+
       if Language = "" then
          Remove_Property (Kernel, Filename, "language");
       else
