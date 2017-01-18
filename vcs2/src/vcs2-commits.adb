@@ -144,7 +144,7 @@ package body VCS2.Commits is
    overriding procedure Filter_Changed
      (Self    : not null access Commit_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self    : not null access Commit_View_Record;
       Pref    : Preference);
    overriding procedure Refresh
@@ -528,16 +528,16 @@ package body VCS2.Commits is
    end Create_Category_Node;
 
    ----------------------------
-   -- On_Preferenced_Changed --
+   -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self    : not null access Commit_View_Record;
       Pref    : Preference)
    is
       Config : Commit_View_Config;
    begin
-      Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
+      Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
 
       Config :=
         (Initialized          => True,
@@ -553,7 +553,7 @@ package body VCS2.Commits is
          Self.Config := Config;
          Refresh (Self);
       end if;
-   end On_Preferenced_Changed;
+   end On_Preferences_Changed;
 
    ----------------------------------------
    -- Get_Commit_Message_From_Properties --

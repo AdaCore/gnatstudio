@@ -155,10 +155,10 @@ package body VCS2.Views is
    end Create_Toolbar;
 
    ----------------------------
-   -- On_Preferenced_Changed --
+   -- On_Preferences_Changed --
    ----------------------------
 
-   procedure On_Preferenced_Changed
+   procedure On_Preferences_Changed
      (Self    : not null access Base_VCS_View_Record;
       Pref    : Preference)
    is
@@ -176,7 +176,7 @@ package body VCS2.Views is
          Self.Queue_Resize;
          Self.Tree.Queue_Draw;
       end if;
-   end On_Preferenced_Changed;
+   end On_Preferences_Changed;
 
    -------------
    -- Execute --
@@ -189,7 +189,7 @@ package body VCS2.Views is
    is
       pragma Unreferenced (Kernel);
    begin
-      Self.View.On_Preferenced_Changed (Pref);
+      Self.View.On_Preferences_Changed (Pref);
    end Execute;
 
    --------------------------

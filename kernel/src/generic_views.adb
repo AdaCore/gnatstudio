@@ -866,7 +866,9 @@ package body Generic_Views is
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
          View         : out View_Access;
-         Toolbar_Id   : String := View_Name);
+         Toolbar_Id   : String := View_Name;
+         Init         : access procedure
+            (View : not null access Formal_View_Record'Class) := null);
       --  Create or reuse a view.
 
       procedure Find
@@ -1205,7 +1207,9 @@ package body Generic_Views is
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
          View         : out View_Access;
-         Toolbar_Id   : String := View_Name)
+         Toolbar_Id   : String := View_Name;
+         Init         : access procedure
+            (View : not null access Formal_View_Record'Class) := null)
       is
          Focus_Widget   : Gtk_Widget;
          Finalized_View : Gtk_Widget;
@@ -1213,6 +1217,9 @@ package body Generic_Views is
          if Reuse_If_Exist then
             Find (Kernel, Child, View);
             if View /= null then
+               if Init /= null then
+                  Init (View);
+               end if;
                return;
             end if;
          end if;
@@ -1300,6 +1307,10 @@ package body Generic_Views is
                  Position_At_Mouse => not Found,
                  X => X, Y => Y);
          end;
+
+         if Init /= null then
+            Init (View);
+         end if;
 
          View.On_Create (Child);
       end Create_If_Needed;
@@ -1484,7 +1495,9 @@ package body Generic_Views is
       function Get_Or_Create_View
         (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
          Focus      : Boolean := True;
-         Toolbar_Id : String := View_Name)
+         Toolbar_Id : String := View_Name;
+         Init       : access procedure
+            (View : not null access Formal_View_Record'Class) := null)
          return View_Access
       is
          Child        : GPS_MDI_Child;
@@ -1498,7 +1511,8 @@ package body Generic_Views is
             end if;
          end if;
 
-         Create_If_Needed (Kernel, Child, View, Toolbar_Id => Toolbar_Id);
+         Create_If_Needed
+            (Kernel, Child, View, Toolbar_Id => Toolbar_Id, Init => Init);
 
          if Focus then
             Raise_Child (Child);

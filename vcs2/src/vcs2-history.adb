@@ -164,7 +164,7 @@ package body VCS2.History is
    --  Information for each commit line.
    --  This comes straight from the various VCS plugins, and are also used when
    --  filtering and laying out the graph.
-   --  Elements refer to entries in the commit_maps, and are now owned by the
+   --  Elements refer to entries in the commit_maps, and are not owned by the
    --  vector.
 
    type History_Tree_Record is new Tree_View_Record with record
@@ -215,10 +215,12 @@ package body VCS2.History is
 
    type History_View_Record is new Base_VCS_View_Record with record
       Details     : Diff_Viewer;
+
+      Refresh_On_Pref_Changed : Boolean := True;
    end record;
    overriding procedure Refresh
      (Self : not null access History_View_Record);
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self : not null access History_View_Record;
       Pref : Preference);
    overriding procedure Create_Menu
@@ -282,6 +284,7 @@ package body VCS2.History is
       --  The same data that will be used for layout once all lines have been
       --  retrieved.
    end record;
+   overriding procedure On_Start (Self : not null access On_Line_Seen);
    overriding procedure Free (Self : in out On_Line_Seen);
    overriding procedure On_History_Line
      (Self    : not null access On_Line_Seen;
@@ -1013,11 +1016,8 @@ package body VCS2.History is
 
       VCS2.Diff.Gtk_New (Self.Details);
       Set_Placeholder
-        (Self.Details,
-         -"Select one or more lines to view details");
+        (Self.Details, -"Select one or more lines to view details");
       Scrolled2.Add (Self.Details);
-
-      Self.On_Preferenced_Changed (null);
 
       return Gtk_Widget (Self.Tree);
    end Initialize;
@@ -1032,30 +1032,28 @@ package body VCS2.History is
    is
    begin
       Base_VCS_View_Record (Self.all).On_Create (Child);  --  inherited
-
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
       Vcs_Refresh_Hook.Add (new On_VCS_Refresh, Watch => Self);
    end On_Create;
 
    ----------------------------
-   -- On_Preferenced_Changed --
+   -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self : not null access History_View_Record;
       Pref : Preference)
    is
       T  : constant History_Tree := History_Tree (Self.Tree);
       Config : History_View_Config;
    begin
-      Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
+      Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
       Set_Font_And_Colors (Self.Details, Fixed_Font => True, Pref => Pref);
 
       T.Col_Author.Set_Visible (Show_Author.Get_Pref);
       T.Col_Date.Set_Visible (Show_Date.Get_Pref);
       Self.Tree.Set_Headers_Visible
         (Show_ID.Get_Pref or Show_Author.Get_Pref or Show_Date.Get_Pref);
-      T.Graph.Queue_Draw;   --  refresh graph
 
       Config :=
         (Initialized  => True,
@@ -1063,9 +1061,11 @@ package body VCS2.History is
          Collapse     => Collapse_Simple_Commits.Get_Pref);
       if Config /= T.Config then
          T.Config := Config;
-         Refresh (Self);
+         if Self.Refresh_On_Pref_Changed then
+            Refresh (Self);
+         end if;
       end if;
-   end On_Preferenced_Changed;
+   end On_Preferences_Changed;
 
    -------------
    -- Execute --
@@ -1160,6 +1160,7 @@ package body VCS2.History is
                   Parent_N := new Node_Data;
                   Parent_N.Visible := 1;   --  one child
                   Parent_N.Num_Children := 1;
+                  Parent_N.Col := No_Graph_Column;
                   Tree.Commits.Include (P.all, Parent_N);
                end if;
 
@@ -1192,7 +1193,7 @@ package body VCS2.History is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Parent_Array, Parent_Array_Access);
    begin
-      for L of Self.Lines loop
+      for L of Self.Commits loop
          Free (L.ID);
          Free (L.Author);
          Free (L.Date);
@@ -1205,12 +1206,10 @@ package body VCS2.History is
             end loop;
             Unchecked_Free (L.Parents);
          end if;
-
       end loop;
+
       Self.Lines.Clear;
-
       Self.Commits.Clear;
-
       Self.Max_Columns := 0;
    end Reset_Lines;
 
@@ -1279,6 +1278,10 @@ package body VCS2.History is
 
       while Node.Visible < Always_Visible loop
          N.Parents (Parent).Has_Invisible := True;
+
+         if Node.Parents = null then
+            return null;
+         end if;
 
          Curs := Tree.Commits.Find (Node.Parents (Node.Parents'First).ID.all);
          if not Commit_Maps.Has_Element (Curs) then
@@ -1449,6 +1452,7 @@ package body VCS2.History is
             Tree.Graph.Set_Size_Request (0, -1);
          end if;
          Tree.Graph.Queue_Draw;
+
          return False;  --  All done
       end case;
    end On_Layout_Idle;
@@ -1490,17 +1494,18 @@ package body VCS2.History is
       end if;
    end Execute;
 
-   -------------
-   -- Refresh --
-   -------------
+   --------------
+   -- On_Start --
+   --------------
 
-   overriding procedure Refresh (Self : not null access History_View_Record) is
-      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
-      Seen : access On_Line_Seen;
-      Tree : constant History_Tree := History_Tree (Self.Tree);
+   overriding procedure On_Start (Self : not null access On_Line_Seen) is
+      View : constant History_View :=
+         History_Views.Retrieve_View (Self.Kernel);
+      Tree : History_Tree;
    begin
-      if VCS /= null then
-         Reset_Lines (History_Tree (Self.Tree));
+      if View /= null then
+         Tree := History_Tree (View.Tree);
+         Reset_Lines (Tree);
 
          --  If we have a filter, we can't show the graph, since we are
          --  missing too many commits.
@@ -1511,11 +1516,24 @@ package body VCS2.History is
          Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
          Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;
 
+         --  Reset layout, and detach model from view
+         Self.Data := Recompute_Layout (View, Start_Running => False);
+      end if;
+   end On_Start;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   overriding procedure Refresh (Self : not null access History_View_Record) is
+      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      Seen : access On_Line_Seen;
+      Tree : constant History_Tree := History_Tree (Self.Tree);
+   begin
+      if VCS /= null then
          Seen := new On_Line_Seen;
          Seen.Kernel := Self.Kernel;
-         Seen.Data   := Recompute_Layout (Self, Start_Running => False);
-         VCS.Queue_Fetch_History
-           (Visitor => Seen, Filter => Tree.User_Filter);
+         VCS.Queue_Fetch_History (Visitor => Seen, Filter => Tree.User_Filter);
       end if;
    end Refresh;
 
@@ -1532,13 +1550,27 @@ package body VCS2.History is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View   : History_View;
       VCS    : VCS_Engine_Access;
+
+      procedure Set_Initial_Filter
+         (View : not null access History_View_Record'Class);
+      procedure Set_Initial_Filter
+         (View : not null access History_View_Record'Class) is
+      begin
+         View.Refresh_On_Pref_Changed := False;
+      end Set_Initial_Filter;
+
    begin
       if File /= No_File then
          VCS := VCS_Engine_Access
            (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          Set_Active_VCS (Kernel, VCS);
 
-         View := History_Views.Get_Or_Create_View (Kernel, Focus => True);
+         View := History_Views.Get_Or_Create_View
+            (Kernel, Focus => True, Init => Set_Initial_Filter'Access);
+
+         --  The view will be refreshed automatically because of the
+         --  call to Set_Filter
+         View.Refresh_On_Pref_Changed := True;
          View.Set_Filter ("file:" & File.Display_Full_Name);
       end if;
       return Success;
@@ -1553,12 +1585,23 @@ package body VCS2.History is
    is
       View   : History_View;
       VCS    : VCS_Engine_Access;
+
+      procedure Set_Initial_Filter
+         (View : not null access History_View_Record'Class);
+      procedure Set_Initial_Filter
+         (View : not null access History_View_Record'Class) is
+      begin
+         View.Refresh_On_Pref_Changed := False;
+      end Set_Initial_Filter;
+
    begin
       VCS := VCS_Engine_Access
         (Self.Kernel.VCS.Guess_VCS_For_Directory (Self.File.Dir));
       Set_Active_VCS (Self.Kernel, VCS);
 
-      View := History_Views.Get_Or_Create_View (Self.Kernel, Focus => True);
+      View := History_Views.Get_Or_Create_View
+         (Self.Kernel, Focus => True, Init => Set_Initial_Filter'Access);
+      View.Refresh_On_Pref_Changed := True;
       View.Set_Filter ("file:" & Self.File.Display_Full_Name
                        & "@" & To_String (Self.Commit_Id));
       return Success;

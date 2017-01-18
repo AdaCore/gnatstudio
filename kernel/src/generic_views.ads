@@ -304,7 +304,9 @@ package Generic_Views is
       function Get_Or_Create_View
         (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
          Focus      : Boolean := True;
-         Toolbar_Id : String := View_Name)
+         Toolbar_Id : String := View_Name;
+         Init       : access procedure
+            (View : not null access Formal_View_Record'Class) := null)
          return View_Access;
       --  Return the view (create a new one if necessary, or always if
       --  Reuse_If_Exist is False).
@@ -313,6 +315,13 @@ package Generic_Views is
       --  Toolbar_Id is the name of the toolbar to use. It refers to names in
       --  menus.xml, or toolbars from GPS.Kernel.Module.UI.Create_Toolbar. This
       --  has no effect, though, if the view already existed.
+      --
+      --  Init is called just before the primitive On_Create operation. It
+      --  comes in addition, since a different version can be called every
+      --  time Get_Or_Create_View is called, and can get information from the
+      --  local procedure. Typically, this would be used to set a filter on
+      --  the view, and then On_Create is called to further set things up.
+      --  Init is called even if the view already existed.
 
       function Retrieve_View
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)

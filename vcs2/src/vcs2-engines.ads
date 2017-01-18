@@ -120,6 +120,12 @@ package VCS2.Engines is
    procedure Free (Self : in out Task_Visitor) is null;
    --  Called when the visitor is no longer needed.
 
+   procedure On_Start
+     (Self  : not null access Task_Visitor) is null;
+   --  Called when the command to which the visitor belongs starts running,
+   --  since commands are queue (we only want to execute one at a time per
+   --  engine).
+
    procedure On_Terminate
      (Self  : not null access Task_Visitor;
       VCS   : access VCS_Engine'Class) is null;

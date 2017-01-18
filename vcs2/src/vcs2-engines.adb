@@ -1182,6 +1182,10 @@ package body VCS2.Engines is
          Self.Queue_Current := Self.Queue.First_Element;
          Self.Queue.Delete_First;
 
+         if Self.Queue_Current.Visitor /= null then
+            Self.Queue_Current.Visitor.On_Start;
+         end if;
+
          Self.Queue_Current.Execute (Self);
 
          --  If we haven't started a background command, terminate this

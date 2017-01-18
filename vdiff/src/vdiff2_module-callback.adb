@@ -606,6 +606,7 @@ package body Vdiff2_Module.Callback is
       Unchecked_Execute (Cmd, Element (Node));
 
       --  Remove all virtual buffers created during diff operations
+      --  ??? This never closes the ref file in side-by-side diffs.
 
       for J of Element (Node).Files loop
          declare

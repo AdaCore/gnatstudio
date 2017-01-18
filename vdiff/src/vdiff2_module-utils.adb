@@ -741,14 +741,14 @@ package body Vdiff2_Module.Utils is
                  (Kernel, Item.Files (1),
                   Curr_Chunk.Range1.First, VStyle (Ref).all,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
-                  Curr_Chunk.Range2.Blank_Lines_Mark := Add_Line
-                     (Kernel,
-                      GPS_Editor_Buffer
-                         (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
-                      Pos => Editable_Line_Type (Curr_Chunk.Range2.First),
-                      Style => VStyle (Other).all,
-                      Number =>
-                         Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
+               Curr_Chunk.Range2.Blank_Lines_Mark := Add_Line
+                 (Kernel,
+                  GPS_Editor_Buffer
+                    (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
+                  Pos    => Editable_Line_Type (Curr_Chunk.Range2.First),
+                  Style  => VStyle (Other).all,
+                  Number =>
+                     Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
 
                Add_Side_Symbol
                  (Item.Files (1),
@@ -873,28 +873,17 @@ package body Vdiff2_Module.Utils is
                   Info       => Arr));
          end;
 
-         if Arr'Length = 1 then
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               -"Visual differences",
-               File,
-               Natural'Max (Curr_Chunk.Range2.First - 1, 1),
-               1,
-               "1 line removed",
-               0,
-               Side_And_Locations);
-
-         else
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               -"Visual differences",
-               File,
-               Natural'Max (Curr_Chunk.Range2.First - 1, 1),
-               1,
-               Image (Arr'Length) & " lines removed",
-               0,
-               Side_And_Locations);
-         end if;
+         Create_Simple_Message
+           (Get_Messages_Container (Kernel),
+            -"Visual differences",
+            File,
+            Natural'Max (Curr_Chunk.Range2.First - 1, 1),
+            1,
+            (if Arr'Length = 1
+             then "1 line removed"
+             else Image (Arr'Length) & " lines removed"),
+            0,
+            Side_And_Locations);
 
          Unchecked_Free (Arr);
       end Show_Deleted;
@@ -921,28 +910,17 @@ package body Vdiff2_Module.Utils is
 
          Buf.Add_File_Information (Id_Col_Vdiff, Arr);
 
-         if Arr'Length = 1 then
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               -"Visual differences",
-               File,
-               Curr_Chunk.Range2.First,
-               1,
-               "1 line added",
-               0,
-               Side_And_Locations);
-
-         else
-            Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               -"Visual differences",
-               File,
-               Curr_Chunk.Range2.First,
-               1,
-               Image (Arr'Length) & " lines added",
-               0,
-               Side_And_Locations);
-         end if;
+         Create_Simple_Message
+           (Get_Messages_Container (Kernel),
+            -"Visual differences",
+            File,
+            Curr_Chunk.Range2.First,
+            1,
+            (if Arr'Length = 1
+             then "1 line added"
+             else Image (Arr'Length) & " lines added"),
+            0,
+            Side_And_Locations);
 
          Unchecked_Free (Arr);
       end Show_Added;

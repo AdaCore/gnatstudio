@@ -58,7 +58,7 @@ package VCS2.Views is
      (Self    : not null access Base_VCS_View_Record;
       Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
 
-   procedure On_Preferenced_Changed
+   procedure On_Preferences_Changed
      (Self    : not null access Base_VCS_View_Record;
       Pref    : Preference);
    --  Called when preferences change.

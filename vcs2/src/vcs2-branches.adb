@@ -115,7 +115,7 @@ package body VCS2.Branches is
       Longpress   : Gtk_Gesture_Long_Press;
    end record;
    overriding procedure Refresh (Self : not null access Branches_View_Record);
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self    : not null access Branches_View_Record;
       Pref    : Preference);
    overriding procedure On_Create
@@ -568,17 +568,17 @@ package body VCS2.Branches is
    end Refresh;
 
    ----------------------------
-   -- On_Preferenced_Changed --
+   -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferenced_Changed
+   overriding procedure On_Preferences_Changed
      (Self    : not null access Branches_View_Record;
       Pref    : Preference)
    is
       Tree   : constant Branches_Tree := Branches_Tree (Self.Tree);
       Config : Branches_Config;
    begin
-      Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
+      Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
       Set_Font_And_Colors (Self.Tree, Fixed_Font => False, Pref => Pref);
 
       Config :=
@@ -587,7 +587,7 @@ package body VCS2.Branches is
          Tree.Config := Config;
          Self.Refresh;
       end if;
-   end On_Preferenced_Changed;
+   end On_Preferences_Changed;
 
    ------------------------
    -- Category_From_Node --
