@@ -618,10 +618,10 @@ package body VCS2.Engines is
    -- Invalidate_All_Caches --
    ---------------------------
 
-   procedure Invalidate_All_Caches
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+   overriding procedure Invalidate_All_Caches
+     (Self    : not null access VCS_Repository)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
    begin
       for E of Global_Data.All_Engines loop
          E.Invalidate_File_Status_Cache;

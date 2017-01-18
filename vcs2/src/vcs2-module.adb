@@ -81,6 +81,11 @@ package body VCS2.Module is
       First_Line : Positive;
       Ids, Text  : GNAT.Strings.String_List);
 
+   type On_File_Changed_Detected is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Changed_Detected;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    -------------------
    -- On_Annotation --
    -------------------
@@ -239,6 +244,20 @@ package body VCS2.Module is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_File_Changed_Detected;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Kernel.VCS.Invalidate_All_Caches;
+      Vcs_Refresh_Hook.Run (Kernel);
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -254,6 +273,7 @@ package body VCS2.Module is
 
       VCS2.Scripts.Register_Scripts (Kernel);
 
+      After_File_Changed_Detected_Hook.Add (new On_File_Changed_Detected);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       File_Saved_Hook.Add (new On_File_Saved);
 

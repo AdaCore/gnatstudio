@@ -60,6 +60,11 @@ package GPS.VCS is
    --  project sources, or is beneath the directory that contains the VCS
    --  repo (root/.git for instance).
 
+   procedure Invalidate_All_Caches
+     (Self    : not null access Abstract_VCS_Repository) is abstract;
+   --  Invalid all caches for all VCS, so that the next Ensure_* calls
+   --  will reload from the disk
+
    -------------
    -- Scripts --
    -------------

@@ -36,6 +36,16 @@ class Predefined_Hooks:
       :param GPS.File file:
         """
 
+    # after_file_changed_detected = 'after_file_changed_detected'
+    def after_file_changed_detected(name):
+        """
+      Emitted when one or more opened file have been changed outside of GPS,
+      and GPS needed to resynchronize it. This is called even when the user
+      declined to synchronize.
+
+      :param str name:
+        """
+
     # annotation_parsed_hook = 'annotation_parsed_hook'
     def annotation_parsed_hook(name):
         """
@@ -495,6 +505,9 @@ class Predefined_Hooks:
       behavior, which is asking if the user wants to reload the file. Your
       function should return 1 if the action is handled by the function, and
       return 0 if the default behavior is desired.
+      
+      This hook stops propagating as soon as a handler returns True. If you want
+      get noticed systematically, use the `after_file_changed_detected` instead.
       
       .. code-block:: python
       

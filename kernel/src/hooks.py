@@ -708,7 +708,11 @@ Emitted whenever GPS detects that an opened file changed on the
 disk. You can connect to this hook if you want to change the default
 behavior, which is asking if the user wants to reload the file. Your
 function should return 1 if the action is handled by the function, and
-return 0 if the default behavior is desired.\n
+return 0 if the default behavior is desired.
+
+This hook stops propagating as soon as a handler returns True. If you want
+get noticed systematically, use the `after_file_changed_detected` instead.
+
 .. code-block:: python\n
   import GPS
 
@@ -720,6 +724,12 @@ return 0 if the default behavior is desired.\n
   # install a handler on "file_changed_detected" hook
   GPS.Hook("file_changed_detected").add(on_file_changed)'''),
 
+    Hook('after_file_changed_detected', 'simple_hooks', descr='''
+Emitted when one or more opened file have been changed outside of GPS,
+and GPS needed to resynchronize it. This is called even when the user
+declined to synchronize.'''),
+
+    # ??? Can be removed when we get rid of VCS1
     Hook('file_changed_on_disk', 'file_hooks', descr='''
 Emitted when some external action has changed the contents of a file on
 the disk, such as a VCS operation. The parameter might be a directory

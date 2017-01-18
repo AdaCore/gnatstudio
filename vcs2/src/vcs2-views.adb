@@ -242,7 +242,7 @@ package body VCS2.Views is
       pragma Unreferenced (VCS);
    begin
       Trace (Me, "Refreshing all VCS views");
-      Invalidate_All_Caches (Self.Kernel);
+      Self.Kernel.VCS.Invalidate_All_Caches;
       Vcs_Refresh_Hook.Run (Self.Kernel);
    end On_Terminate;
 

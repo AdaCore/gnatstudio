@@ -2126,6 +2126,10 @@ package body GPS.Kernel.MDI is
             end if;
             Next (F);
          end loop;
+
+         --  Since there were changes done independently of GPS, we should
+         --  also refresh the VCS status
+         After_File_Changed_Detected_Hook.Run (Kernel);
       end if;
 
       return False;

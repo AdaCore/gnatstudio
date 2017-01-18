@@ -1256,7 +1256,7 @@ package body VCS2.Commits is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Invalidate_All_Caches (Kernel);
+      Invalidate_All_Caches (Kernel.VCS);
       Vcs_Refresh_Hook.Run (Kernel);
       return Commands.Success;
    end Execute;

@@ -92,6 +92,8 @@ package VCS2.Engines is
    overriding function Guess_VCS_For_Directory
      (Self      : not null access VCS_Repository;
       Directory : Virtual_File) return not null Abstract_VCS_Engine_Access;
+   overriding procedure Invalidate_All_Caches
+     (Self    : not null access VCS_Repository);
 
    procedure For_Each_VCS
      (Kernel    : not null access Kernel_Handle_Record'Class;
@@ -302,11 +304,6 @@ package VCS2.Engines is
    --  not being up-to-date.
    --  The next call to one of the Async_Fetch_Status_* procedures will
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
-
-   procedure Invalidate_All_Caches
-     (Kernel  : not null access Kernel_Handle_Record'Class);
-   --  Invalid all caches for all VCS, so that the next Ensure_* calls
-   --  will reload from the disk
 
    ----------------------
    -- Labels and icons --
