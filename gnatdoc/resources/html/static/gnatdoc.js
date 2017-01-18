@@ -206,6 +206,10 @@ function buildDocumentationPage() {
 
     var header = document.createElement('h1');
     var text = document.createTextNode(GNATdoc.Documentation.label);
+    if (GNATdoc.Documentation.qualifier != '') {
+        text.appendData(' ');
+        text.appendData(GNATdoc.Documentation.qualifier);
+    }
     header.appendChild(text);
     pane.appendChild(header);
     buildText(pane, GNATdoc.Documentation.summary);

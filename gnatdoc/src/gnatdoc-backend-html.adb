@@ -1231,6 +1231,9 @@ package body GNATdoc.Backend.HTML is
       end if;
 
       Documentation.Set_Field ("label", Get_Full_Name (Entity));
+      Documentation.Set_Field
+        ("qualifier",
+         (if From_Spec (Self.Context.Kernel, Entity) then "" else "(body)"));
 
       --  Extract package's "summary" and "description".
 
