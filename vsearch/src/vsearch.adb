@@ -226,7 +226,6 @@ package body Vsearch is
       Formal_View_Record     => Vsearch_Record,
       Formal_MDI_Child       => GPS_MDI_Child_Record,
       Reuse_If_Exist         => True,
-      Hide_Rather_Than_Close => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
       Local_Config           => True,

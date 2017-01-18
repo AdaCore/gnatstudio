@@ -28,7 +28,6 @@ with Gdk.Window;              use Gdk.Window;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
-with Gtk.Container;           use Gtk.Container;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
@@ -967,56 +966,6 @@ package body Generic_Views is
             Gint'Image (Y));
       end Store_Position;
 
-      ---------------------
-      -- On_Delete_Event --
-      ---------------------
-
-      function On_Delete_Event
-        (Box : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
-      is
-         Event : Gdk_Event;
-         Prevent_Delete : Boolean;
-         Initial_View : View_Access;
-      begin
-         Gdk_New (Event, Delete);
-         Initial_View := Toplevel_Box (Box.all).Initial;
-         Event.Any.Window := Initial_View.Get_Window;
-         Prevent_Delete := Return_Callback.Emit_By_Name
-           (Initial_View,
-            Gtk.Widget.Signal_Delete_Event,
-            Event);
-
-         Event.Any.Window := null;
-         Free (Event);
-
-         return Prevent_Delete;
-      end On_Delete_Event;
-
-      -----------------------------
-      -- On_Before_Destroy_Child --
-      -----------------------------
-
-      procedure On_Before_Destroy_Child
-        (Child : access Gtk_Widget_Record'Class)
-      is
-         Self   : constant Local_Formal_MDI_Child_Access :=
-           Local_Formal_MDI_Child_Access (Child);
-         View   : constant View_Access := View_From_Child (Self);
-      begin
-         if Hide_Rather_Than_Close
-           and then Reuse_If_Exist
-         then
-            --  We are about to close the MDI child containing a view which
-            --  has the flag Hide_Rather_Than_Close: save this view here.
-            View.Ref;
-            if Abstract_View_Access (View).Config_Menu /= null then
-               Abstract_View_Access (View).Config_Menu.Popdown;
-            end if;
-            Gtk_Container (View.Get_Parent).Remove (View);
-            Global.Stored_View := View;
-         end if;
-      end On_Before_Destroy_Child;
-
       -----------------------------
       -- On_Display_Local_Config --
       -----------------------------
@@ -1180,18 +1129,9 @@ package body Generic_Views is
       begin
          Store_Position (View);
 
-         if Local_Toolbar or else Local_Config then
-            --  If we have Toplevel_Box query child for delete
-
-            if On_Delete_Event (View.Get_Parent) then
-               return;  --  Сhild rejected delete query
-            end if;
-         end if;
-
-         --  Use Close rather than C.Close_Child, so that the parent window
-         --  has the opportunity to react to "delete_event", and store
-         --  its size, for example.
-         Gtk_Window (View.Get_Toplevel).Close;
+         --  We have just stored the position of the view: call Close_Child
+         --  to let the MDI close the view.
+         Child_From_View (View).Close_Child;
 
          --  Give the focus back to the main Window, since this is not always
          --  done by the window manager (e.g. under Windows)
@@ -1277,18 +1217,9 @@ package body Generic_Views is
             end if;
          end if;
 
-         if Hide_Rather_Than_Close
-           and then Global.Stored_View /= null
-         then
-            --  We have a non-null Stored_View: reuse this, rather than
-            --  recreating a view.
-            View := Global.Stored_View;
-            Global.Stored_View := null;
-         else
-            View := new Formal_View_Record;
-            Set_Kernel (View, Kernel_Handle (Kernel));
-            Focus_Widget := Initialize (View);
-         end if;
+         View := new Formal_View_Record;
+         Set_Kernel (View, Kernel_Handle (Kernel));
+         Focus_Widget := Initialize (View);
 
          --  Create the finalized view, creating its local toolbar if needed
          Finalized_View := Create_Finalized_View
@@ -1351,10 +1282,6 @@ package body Generic_Views is
               (Child, Signal_Before_Unfloat_Child,
                On_Before_Unfloat_Child_Access);
          end if;
-
-         Widget_Callback.Connect
-           (Child, Signal_Before_Destroy_Child,
-            On_Before_Destroy_Child_Access);
 
          --  Put the child in the MDI
 
@@ -1473,12 +1400,6 @@ package body Generic_Views is
       begin
          Find (Kernel, Child, View);
 
-         if View = null
-           and then Hide_Rather_Than_Close
-         then
-            return Global.Stored_View;
-         end if;
-
          return View;
       end Retrieve_View;
 
@@ -1550,10 +1471,6 @@ package body Generic_Views is
 
          View.Set_Toolbar (Toolbar);
          Reset_Toolbar (View, Toolbar_Id);
-
-         --  We need to propagate the delete event to the view
-         Return_Callback.Connect
-           (Box, Gtk.Widget.Signal_Delete_Event, On_Delete_Event_Access);
 
          View.On_Destroy (On_Destroy_View'Access);
 

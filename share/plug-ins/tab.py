@@ -158,9 +158,7 @@ def smart_escape():
              if (c.is_floating() and c.get_child().__class__ == GPS.GUI)]
 
         if c:
-            # Do this rather than c[0].close() to give the toplevel window
-            # a chance to react to delete_event.
-            c[0].get_child().pywidget().get_toplevel().close()
+            c[0].close()
             return True
 
     if do_something():
