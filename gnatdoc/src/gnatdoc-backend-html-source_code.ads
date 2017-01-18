@@ -21,7 +21,9 @@ with Language;
 
 private package GNATdoc.Backend.HTML.Source_Code is
 
-   type Source_Code_Printer is tagged limited private;
+   type Source_Code_Printer
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+      is tagged limited private;
 
    not overriding procedure Start_File
      (Self         : in out Source_Code_Printer;
@@ -150,7 +152,9 @@ private
 
    package Scope_Vectors is new Ada.Containers.Vectors (Positive, Scope_Info);
 
-   type Source_Code_Printer is tagged limited record
+   type Source_Code_Printer
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+   is tagged limited record
       File          : GNATCOLL.VFS.Virtual_File;
       Buffer        : GNAT.Strings.String_Access;
       Result        : GNATCOLL.JSON.JSON_Array;
