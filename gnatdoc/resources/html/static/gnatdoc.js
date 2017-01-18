@@ -504,6 +504,10 @@ function buildPackagesIndexList(entries) {
             href.href = entry.file;
             href.target = 'contentView';
             text = document.createTextNode(entry.label);
+            if (entry.qualifier != '') {
+                text.appendData(' ');
+                text.appendData(entry.qualifier);
+            }
             href.appendChild(text);
             item.appendChild(href);
             list.appendChild(item);

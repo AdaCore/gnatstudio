@@ -1366,6 +1366,9 @@ package body GNATdoc.Backend.HTML is
       --  Construct documentation index entry for generated page
 
       Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
+      Index_Entry.Set_Field
+        ("qualifier",
+         (if From_Spec (Self.Context.Kernel, Entity) then "" else "(body)"));
       Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
 
       if Present (Get_Comment (Entity)) then
@@ -1558,11 +1561,13 @@ package body GNATdoc.Backend.HTML is
      (Left  : GNATCOLL.JSON.JSON_Value;
       Right : GNATCOLL.JSON.JSON_Value) return Boolean
    is
-      L : constant String := Left.Get ("label");
-      R : constant String := Right.Get ("label");
+      LL : constant String := Left.Get ("label");
+      LQ : constant String := Left.Get ("qualifier");
+      RL : constant String := Right.Get ("label");
+      RQ : constant String := Right.Get ("qualifier");
 
    begin
-      return L < R;
+      return LL < RL or (LL = RL and LQ < RQ);
    end Less;
 
    ----------
