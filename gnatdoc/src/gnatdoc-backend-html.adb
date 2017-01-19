@@ -83,11 +83,15 @@ package body GNATdoc.Backend.HTML is
    package Entity_Id_Ordered_Sets is
      new Ada.Containers.Ordered_Sets (Entity_Id);
 
-   function Get_Srcs_Base_Href (Entity : Entity_Id) return String;
+   function Get_Srcs_Base_Href
+     (Self   : HTML_Backend'Class;
+      Entity : Entity_Id) return String;
    --  Returns href to source file where this entity is declared. Returned URI
    --  doesn't have fragment identifier.
 
-   function Get_Srcs_Href (Entity : Entity_Id) return String;
+   function Get_Srcs_Href
+     (Self   : HTML_Backend'Class;
+      Entity : Entity_Id) return String;
    --  Returns href to source file where this entity is declared. Returned URI
    --  includes fragment identifier to navigate to source code line.
 
@@ -869,7 +873,7 @@ package body GNATdoc.Backend.HTML is
             if Is_Decorated (Entity) then
                Scope := Get_Scope (Entity);
                Object.Set_Field ("declared", Get_Full_Name (Scope));
-               Object.Set_Field ("srcHref", Get_Srcs_Href (Entity));
+               Object.Set_Field ("srcHref", Self.Get_Srcs_Href (Entity));
             end if;
 
             Append (Entries, Object);
@@ -1036,7 +1040,11 @@ package body GNATdoc.Backend.HTML is
             Entity_Entry.Set_Field ("line", LL.Get_Location (E).Line);
             Entity_Entry.Set_Field
               ("column", Integer (LL.Get_Location (E).Column));
-            Entity_Entry.Set_Field ("src", Get_Srcs_Base_Href (E));
+
+            if Self.Get_Srcs_Base_Href (E) /= "" then
+               Entity_Entry.Set_Field ("src", Self.Get_Srcs_Base_Href (E));
+            end if;
+
             Entity_Entry.Set_Field ("summary", Summary);
             Entity_Entry.Set_Field ("description", Description);
 
@@ -1441,24 +1449,38 @@ package body GNATdoc.Backend.HTML is
    -- Get_Srcs_Base_Href --
    ------------------------
 
-   function Get_Srcs_Base_Href (Entity : Entity_Id) return String is
+   function Get_Srcs_Base_Href
+     (Self   : HTML_Backend'Class;
+      Entity : Entity_Id) return String is
    begin
-      return
-        "srcs/"
-        & String (LL.Get_Location (Entity).File.Base_Name)
-        & ".html";
+      if From_Spec (Self.Context.Kernel, Entity) then
+         return
+           "srcs/"
+           & String (LL.Get_Location (Entity).File.Base_Name)
+           & ".html";
+
+      else
+         return "";
+      end if;
    end Get_Srcs_Base_Href;
 
    -------------------
    -- Get_Srcs_Href --
    -------------------
 
-   function Get_Srcs_Href (Entity : Entity_Id) return String is
+   function Get_Srcs_Href
+     (Self   : HTML_Backend'Class;
+      Entity : Entity_Id) return String is
    begin
-      return
-        Get_Srcs_Base_Href (Entity)
-        & "#L"
-        & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both);
+      if Self.Get_Srcs_Base_Href (Entity) /= "" then
+         return
+           Self.Get_Srcs_Base_Href (Entity)
+           & "#L"
+           & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both);
+
+      else
+         return "";
+      end if;
    end Get_Srcs_Href;
 
    ------------------

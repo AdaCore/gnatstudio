@@ -291,14 +291,16 @@ function buildDocumentationPage() {
                 header.id = 'L' + entity.line.toString() +
                   'C' + entity.column.toString();
                 header.appendChild(document.createTextNode(entity.label));
-                var sup = document.createElement('sup');
-                sup.className = 'srcHref';
-                href = document.createElement('a');
-                href.href = '../' + entity.src +
-                  '#L' + entity.line.toString();
-                href.appendChild(document.createTextNode(' [source]'));
-                sup.appendChild(href);
-                header.appendChild(sup);
+                if (entity.src !== undefined) {
+                    var sup = document.createElement('sup');
+                    sup.className = 'srcHref';
+                    href = document.createElement('a');
+                    href.href = '../' + entity.src +
+                      '#L' + entity.line.toString();
+                    href.appendChild(document.createTextNode(' [source]'));
+                    sup.appendChild(href);
+                    header.appendChild(sup);
+                }
                 pane.appendChild(header);
                 buildText(pane, entity.description);
 
