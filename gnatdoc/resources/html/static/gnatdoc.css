@@ -94,9 +94,12 @@ td {
     outline: 0;
 }
 
-#tocView {
+#tocViewLayout {
 /*  margin-left can't be used here due to bug in IE8, so we use padding-left instead */
     padding-left: 90px;
+}
+
+#tocView {
     width: 100%;
     color: #bbb;
     font-weight: 300;
