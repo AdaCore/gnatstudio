@@ -625,9 +625,21 @@ function buildEntitiesCategoryPage() {
         item.appendChild(href);
         item.appendChild(document.createTextNode(' from '));
 
-        href = document.createElement('a');
-        href.href = '../' + entity.srcHref;
-        href.appendChild(document.createTextNode(entity.declared));
+        if (entity.srcHref !== undefined) {
+            href = document.createElement('a');
+            href.href = '../' + entity.srcHref;
+        } else {
+            href = document.createElement('span');
+        }
+
+        var text = document.createTextNode(entity.declared);
+
+        if (entity.declared_qualifier != '') {
+            text.appendData(' ');
+            text.appendData(entity.declared_qualifier);
+        }
+
+        href.appendChild(text);
         item.appendChild(href);
         list.appendChild(item);
     }

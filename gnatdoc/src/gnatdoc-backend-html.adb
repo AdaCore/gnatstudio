@@ -878,9 +878,13 @@ package body GNATdoc.Backend.HTML is
             Object := Create_Object;
             Self.Set_Label_And_Href (Object, Entity);
 
-            if Is_Decorated (Entity) then
-               Scope := Get_Scope (Entity);
-               Object.Set_Field ("declared", Get_Full_Name (Scope));
+            Scope := Get_Scope (Entity);
+            Object.Set_Field ("declared", Get_Full_Name (Scope));
+            Object.Set_Field
+              ("declared_qualifier",
+               (if From_Spec (Self.Context.Kernel, Entity)
+                then "" else "(body)"));
+            if Self.Get_Srcs_Href (Entity) /= "" then
                Object.Set_Field ("srcHref", Self.Get_Srcs_Href (Entity));
             end if;
 
@@ -1428,11 +1432,8 @@ package body GNATdoc.Backend.HTML is
       Entity : Entity_Id) is
    begin
       Object.Set_Field ("label", Get_Short_Name (Entity));
-
-      if Is_Decorated (Entity) then
-         Object.Set_Field
-           ("docHref", Get_Docs_Href (Self.Context.Kernel, Entity));
-      end if;
+      Object.Set_Field
+        ("docHref", Get_Docs_Href (Self.Context.Kernel, Entity));
    end Set_Label_And_Href;
 
    -------------------
