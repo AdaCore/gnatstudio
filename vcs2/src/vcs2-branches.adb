@@ -24,6 +24,7 @@ with Gdk.Rectangle;                      use Gdk.Rectangle;
 with Gdk.RGBA;                           use Gdk.RGBA;
 with Generic_Views;                      use Generic_Views;
 with Glib;                               use Glib;
+with Glib.Convert;                       use Glib.Convert;
 with Glib.Object;                        use Glib.Object;
 with Glib.Values;                        use Glib.Values;
 with Glib_Values_Utils;                  use Glib_Values_Utils;
@@ -439,7 +440,8 @@ package body VCS2.Branches is
       Self.Tree.Model.Append (Iter, Parent => Parent);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Init_Set_String (V (Column_Name), Info.Name (First .. Last - 1));
+      Init_Set_String
+         (V (Column_Name), Escape_Text (Info.Name (First .. Last - 1)));
 
       if Info.Is_Current then
          Gdk.RGBA.Set_Value (V (Column_Foreground), Emblem_Color);
@@ -447,7 +449,7 @@ package body VCS2.Branches is
          Gdk.RGBA.Set_Value (V (Column_Foreground), Default_Style.Get_Pref_Fg);
       end if;
 
-      Init_Set_String (V (Column_Emblem), Info.Emblem.all);
+      Init_Set_String (V (Column_Emblem), Escape_Text (Info.Emblem.all));
       Init_Set_Boolean (V (Column_Emblem_Visible), Info.Emblem.all /= "");
       Init_Set_String (V (Column_Icon), Icon_Name);
       Init_Set_Boolean (V (Column_Icon_Visible), Icon_Name /= "");

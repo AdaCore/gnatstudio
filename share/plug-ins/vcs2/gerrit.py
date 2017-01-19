@@ -66,25 +66,34 @@ class Gerrit(core.Extension):
                         elif a[u'type'] == u'Code-Review':
                             review = a['value']
 
+                id = {'url': patch.get(u'url', ''),
+                      'number': patch.get(u'number', '')}
+
                 reviews.append(
                     ('%s: %s' % (patchset[u'author'][u'username'],
                                  patch[u'subject']),
                      False,   # not active
                      '%s%s' % (review, workflow),
-                     patch.get(u'number', '')))   # unique id
+                     json.dumps(id)))
 
     def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category == CAT_REVIEWS:
-            if action == core.VCS.ACTION_DOUBLE_CLICK:
-                p = self.base._git(['review', '--cherrypick', id])
-                status, _ = yield p.wait_until_terminate(show_if_error=True)
-                if status == 0:
-                    GPS.Console().write(
-                        "Applied to working directory: %s\n" % id)
+            if id:
+                id = json.loads(id)
+            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+                import webbrowser
+                webbrowser.open(id['url'])
 
             elif action == core.VCS.ACTION_TOOLTIP:
                 visitor.tooltip(
-                    '\nDouble-click to cherry-pick this review on HEAD')
+                    '\nDouble-click to open Gerrit on this change' +
+                    ('\nClick [+] to cherry-pick this review' if id else ''))
 
+            elif action == core.VCS.ACTION_ADD and id:
+                p = self.base._git(['review', '--cherrypick', id['number']])
+                status, _ = yield p.wait_until_terminate(show_if_error=True)
+                if status == 0:
+                    GPS.Console().write(
+                        "Applied to working directory: %s\n" % id['number'])
 
 git.Git.register_extension(Gerrit)
