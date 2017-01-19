@@ -7028,6 +7028,62 @@ class Menu(object):
 
 
 ###########################################################
+# MemoryUsageProvider
+###########################################################
+
+class MemoryUsageProvider(object):
+
+    """
+    General interface used to populate the GPS Memory Usage View.
+
+    In practice, this class is derived in the code to provide memory usage
+    providers that are specific to ones or more external tools (e.g: a memory
+    usage provider that fetches data generated from the ld linker).
+    """
+
+    @staticmethod
+    def _register(name, construct):
+        """
+        Register a new memory usage provider.
+        This function is not meant to be called directly. Instead, check the
+        memory_usage_provider/core.py plugin.
+
+        :param str name: the name of the memory usage provider
+        :param construct: a function called when initializing a new provider
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
+# MemoryUsageProviderVisitor
+###########################################################
+
+class MemoryUsageProviderVisitor(object):
+
+    """
+    This class is used to notify GPS of events that occur during a memory usage
+    provider task (e.g: when a memory usage provider has finished to fetch all
+    the memory usage data needed by the Memory Usage View).
+    """
+
+    def on_memory_regions_fetched(self, regions):
+        """
+        Report when a :class:`GPS.MemoryUsageProvider` finished to fetch all
+        the memory regions of the last built executable.
+
+        This method is called in
+        `GPS.MemoryUsageProvider.async_fetch_memory_regions`.
+
+        Note that the given :class:`GPS.MemoryUsageProviderVisitor` instance
+        is freed after calling this method.
+
+        :param str name: the name of the memory usage provider
+        :param construct: a function called when initializing a new provider
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
 # Message
 ###########################################################
 
@@ -10509,7 +10565,7 @@ def current_context(refresh=False):
     pass  # implemented in Ada
 
 
-def debug_memory_usage(size):
+def debug__usage(size):
     """
     Dumps on stdout the largest (by size) memory allocators in GPS. This is
     meant as a debug function for GPS developers.

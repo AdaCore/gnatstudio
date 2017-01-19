@@ -33,7 +33,7 @@ with Gtk.Widget;                         use Gtk.Widget;
 with Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Kernel;
+with GPS.Kernel;                         use GPS.Kernel;
 with GPS.Kernel.MDI;                     use GPS.Kernel.MDI;
 
 package Memory_Usage_Views is
@@ -42,9 +42,12 @@ package Memory_Usage_Views is
    type Memory_Usage_View is access all Memory_Usage_View_Record'Class;
    --  Type representing the memory usage view.
 
-   procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the module into the list
+   type Memory_Region_Description is private;
+   --  Type used to store all the parsed information from the linker's output
+   --  regarding memory regions.
+
+   type Memory_Region_Description_Array is
+     array (Integer range <>) of Memory_Region_Description;
 
 private
 
@@ -54,8 +57,6 @@ private
       Used_Size       : Unbounded_String;
       Percentage_Used : Float;
    end record;
-   --  Type used to store all the parsed information from the linker's output
-   --  regarding memory regions.
 
    package Memory_Region_Description_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Memory_Region_Description, "=");
@@ -72,7 +73,7 @@ private
 
    procedure Refresh
      (Self           : access Memory_Usage_View_Record'Class;
-      Memory_Regions : Memory_Region_Description_Lists.List);
+      Memory_Regions : Memory_Region_Description_Array);
    --  Refresh the given memory usage view to display the memory region
    --  descriptions contained in Memory_Regions.
 

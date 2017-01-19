@@ -294,12 +294,21 @@ package body Memory_Usage_Views.Linker_Parsers is
       --  Spawn the memory usage view with the newly parsed memory descriptions
       if Status = 0 and then not Self.Memory_Regions.Is_Empty then
          declare
-            Kernel : constant Kernel_Handle :=
-                       Memory_Usage_MDI_Views.Get_Module.Get_Kernel;
-            View : constant Memory_Usage_MDI_Views.View_Access :=
-                       Memory_Usage_MDI_Views.Get_Or_Create_View (Kernel);
+            Kernel         : constant Kernel_Handle :=
+                               Memory_Usage_MDI_Views.Get_Module.Get_Kernel;
+            View           : constant Memory_Usage_MDI_Views.View_Access :=
+                               Memory_Usage_MDI_Views.Get_Or_Create_View
+                                 (Kernel);
+            Memory_Regions : Memory_Region_Description_Array
+              (1 .. Integer (Self.Memory_Regions.Length));
+            J              : Integer := 1;
          begin
-            View.Refresh (Self.Memory_Regions);
+            for Region of Self.Memory_Regions loop
+               Memory_Regions (J) := Region;
+               J := J + 1;
+            end loop;
+
+            View.Refresh (Memory_Regions);
 
             Self.Memory_Regions.Clear;
             Self.Memory_Usage_Output_Detected := False;

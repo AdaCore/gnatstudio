@@ -15,20 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps.Constants;         use Ada.Strings.Maps.Constants;
+with Ada.Strings.Maps.Constants;            use Ada.Strings.Maps.Constants;
 
-with Glib;                               use Glib;
-with Gtk.Box;                            use Gtk.Box;
-with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Progress;         use Gtk.Cell_Renderer_Progress;
-with Gtk.Cell_Renderer_Text;             use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                          use Gtk.Enums;
-with Gtk.Scrolled_Window;                use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;                     use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
-
-with GPS.Kernel;                         use GPS.Kernel;
-with Memory_Usage_Views.Linker_Parsers;
+with Glib;                                  use Glib;
+with Gtk.Box;                               use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf;              use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Progress;            use Gtk.Cell_Renderer_Progress;
+with Gtk.Cell_Renderer_Text;                use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                             use Gtk.Enums;
+with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;                        use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
 
 package body Memory_Usage_Views is
 
@@ -63,7 +60,7 @@ package body Memory_Usage_Views is
 
    procedure Refresh
      (Self           : access Memory_Usage_View_Record'Class;
-      Memory_Regions : Memory_Region_Description_Lists.List)
+      Memory_Regions : Memory_Region_Description_Array)
    is
       Iter : Gtk_Tree_Iter;
 
@@ -167,17 +164,5 @@ package body Memory_Usage_Views is
       --  No widget to focus
       return null;
    end Initialize;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Memory_Usage_Views.Linker_Parsers.Register_Module (Kernel);
-
-      Memory_Usage_MDI_Views.Register_Module (Kernel);
-   end Register_Module;
 
 end Memory_Usage_Views;

@@ -161,7 +161,7 @@ with KeyManager_Module.Macros;
 with Toolchains_Module;
 with Ada_Semantic_Tree_Module;
 with Language_Handlers.Assistants;
-with Memory_Usage_Views;
+with Memory_Usage_Views.Module;
 with Navigation_Module;
 with Outline_View;
 with Project_Explorers;
@@ -2206,7 +2206,7 @@ procedure GPS.Main is
 
       Language_Handlers.Assistants.Register_Module (GPS_Main.Kernel);
 
-      Memory_Usage_Views.Register_Module (GPS_Main.Kernel);
+      Memory_Usage_Views.Module.Register_Module (GPS_Main.Kernel);
 
       GPS.Kernel.Custom.Parse_Startup_Scripts_List (GPS_Main.Kernel);
 

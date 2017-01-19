@@ -27,7 +27,7 @@ with Commands;           use Commands;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Tools_Output;   use GPS.Tools_Output;
 
-package Memory_Usage_Views.Linker_Parsers is
+private package Memory_Usage_Views.Linker_Parsers is
 
    type Linker_Parser_Module_ID_Record is new Module_ID_Record with private;
    type Linker_Parser_Module is

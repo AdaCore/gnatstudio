@@ -1453,6 +1453,22 @@ Classes
 
    .. automethod:: GPS.MDIWindow.split
 
+:class:`GPS.MemoryUsageProvider`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: MemoryUsageProvider()
+
+
+
+:class:`GPS.MemoryUsageProviderVisitor`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: MemoryUsageProviderVisitor()
+
+
+
+   .. automethod:: GPS.MemoryUsageProviderVisitor.on_memory_regions_fetched
+
 :class:`GPS.Menu`
 ^^^^^^^^^^^^^^^^^
 
