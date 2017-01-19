@@ -47,7 +47,7 @@
   <key action="cancel mark command">control-g</key>
 
   <key action="global search in context: actions">cmd-x</key>
-  <key action="global search in context: opened windows">control-x b</key>
+  <key action="global search in context: opened">control-x b</key>
 
   <key action="paste from clipboard">control-y</key>
   <key action="paste previous from clipboard">cmd-y</key>
