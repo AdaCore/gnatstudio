@@ -624,72 +624,80 @@ package body GNATdoc.Backend.HTML is
       Files_Vector_Sort.Sort (Src_Files);
 
       for File of Src_Files loop
-         Trace
-           (Me, "generate annotated source for " & String (File.Base_Name));
+         --  Generate source listing for spec files only, this is requirement
+         --  for development under PC02-022.
 
-         Lang      := Get_Language_From_File (Self.Context.Lang_Handler, File);
-         Buffer    := Read_Source_File (Self.Context, File);
-         Sloc_Last := (0, 0, 0);
-         Printer.Start_File
-           (File, Buffer, 1, Self.Context.Options.Show_Private, Continue);
+         if Is_Spec_File (Self.Context.Kernel, File) then
+            Trace
+              (Me, "generate annotated source for " & String (File.Base_Name));
 
-         if Continue then
-            Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
-            Printer.End_File (Code, Continue);
-            Code.Set_Field ("label", String (File.Base_Name));
+            Lang      :=
+              Get_Language_From_File (Self.Context.Lang_Handler, File);
+            Buffer    := Read_Source_File (Self.Context, File);
+            Sloc_Last := (0, 0, 0);
+            Printer.Start_File
+              (File, Buffer, 1, Self.Context.Options.Show_Private, Continue);
 
             if Continue then
-               --  Write HTML page
+               Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
+               Printer.End_File (Code, Continue);
+               Code.Set_Field ("label", String (File.Base_Name));
 
-               declare
-                  Translation : Translate_Set;
+               if Continue then
+                  --  Write HTML page
 
-               begin
-                  Insert
-                    (Translation,
-                     Assoc ("SOURCE_FILE_JS", +File.Base_Name & ".js"));
-                  Write_To_File
-                    (Self.Context,
-                     Get_Doc_Directory
-                       (Self.Context.Kernel).Create_From_Dir ("srcs"),
-                     File.Base_Name & ".html",
-                     Parse
-                       (+Self.Get_Template (Tmpl_Source_File_HTML).Full_Name,
-                        Translation,
-                        Cached => True));
-               end;
+                  declare
+                     Translation : Translate_Set;
 
-               --  Write JSON data file
+                  begin
+                     Insert
+                       (Translation,
+                        Assoc ("SOURCE_FILE_JS", +File.Base_Name & ".js"));
+                     Write_To_File
+                       (Self.Context,
+                        Get_Doc_Directory
+                          (Self.Context.Kernel).Create_From_Dir ("srcs"),
+                        File.Base_Name & ".html",
+                        Parse
+                          (+Self.Get_Template
+                               (Tmpl_Source_File_HTML).Full_Name,
+                           Translation,
+                           Cached => True));
+                  end;
 
-               declare
-                  Translation : Translate_Set;
+                  --  Write JSON data file
 
-               begin
-                  Insert
-                    (Translation,
-                     Assoc ("SOURCE_FILE_DATA", String'(Write (Code, False))));
-                  Write_To_File
-                    (Self.Context,
-                     Get_Doc_Directory
-                       (Self.Context.Kernel).Create_From_Dir ("srcs"),
-                     File.Base_Name & ".js",
-                     Parse
-                       (+Self.Get_Template (Tmpl_Source_File_JS).Full_Name,
-                        Translation,
-                        Cached => True));
-               end;
+                  declare
+                     Translation : Translate_Set;
 
-               --  Append source file to the index
+                  begin
+                     Insert
+                       (Translation,
+                        Assoc
+                          ("SOURCE_FILE_DATA", String'(Write (Code, False))));
+                     Write_To_File
+                       (Self.Context,
+                        Get_Doc_Directory
+                          (Self.Context.Kernel).Create_From_Dir ("srcs"),
+                        File.Base_Name & ".js",
+                        Parse
+                          (+Self.Get_Template (Tmpl_Source_File_JS).Full_Name,
+                           Translation,
+                           Cached => True));
+                  end;
 
-               Object := Create_Object;
-               Object.Set_Field ("label", String (File.Base_Name));
-               Object.Set_Field
-                 ("srcHref", "srcs/" & String (File.Base_Name) & ".html");
-               Append (Sources, Object);
+                  --  Append source file to the index
+
+                  Object := Create_Object;
+                  Object.Set_Field ("label", String (File.Base_Name));
+                  Object.Set_Field
+                    ("srcHref", "srcs/" & String (File.Base_Name) & ".html");
+                  Append (Sources, Object);
+               end if;
             end if;
-         end if;
 
-         Free (Buffer);
+            Free (Buffer);
+         end if;
       end loop;
 
       --  Write JSON data file for index of source files.
