@@ -1062,8 +1062,12 @@ package body Clang_Xref is
    overriding function Is_Predefined_Entity
      (E  : Clang_Entity) return Boolean
    is
+      Typ : constant Clang_Type := As_Type (E);
    begin
-      return As_Type (E).kind in CXType_FirstBuiltin .. CXType_LastBuiltin;
+      return Typ.kind in CXType_FirstBuiltin .. CXType_LastBuiltin
+        --  Consider "void ()" as a predefined entity
+        or else (Typ.kind = CXType_FunctionProto
+                   and then E.Loc.File = No_File);
    end Is_Predefined_Entity;
 
    -------------------

@@ -347,8 +347,8 @@ package body Src_Editor_Module.Commands is
             if Is_Predefined_Entity (Entity_Type) then
                Kernel.Insert
                (Get_Name (Entity) &
-                " is of predefined type " &
-                Get_Name (Entity_Type));
+                  (-" is of predefined type """) &
+                  Get_Name (Entity_Type) & """");
                return Standard.Commands.Failure;
 
             else
@@ -468,8 +468,8 @@ package body Src_Editor_Module.Commands is
 
             if Is_Predefined_Entity (Entity_Type.all) then
                Kernel.Insert
-                  (Name & (-" is of predefined type ") &
-                   Get_Name (Entity_Type.all));
+                  (Name & (-" is of predefined type """) &
+                   Get_Name (Entity_Type.all) & """");
                Unchecked_Free (Entity_Type);
                return Standard.Commands.Failure;
             end if;
