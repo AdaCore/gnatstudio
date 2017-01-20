@@ -256,12 +256,27 @@ class Git(core.VCS):
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
+        # If there is a single commit, show the full patch (use
+        # --stat to also show the list of files).
+        # Otherwise, show the list of modified files
+        #
+        # We use a custom format to be able to display the refnames, which
+        # are not displayed otherwise by git.
+
+        format = ('commit %H%n'
+                  'Author:     %aN <%ae>%n'
+                  'AuthorDate: %aD%n'
+                  'Commit:     %cN <%ce>%n'
+                  'CommitDate: %cD%n'
+                  'Refnames:  %d%n%n'
+                  '%B')
+
         p = self._git(
             ['show',
              '-p' if len(ids) == 1 else '--name-only',
              '--stat' if len(ids) == 1 else '',
              '--notes',   # show notes
-             '--pretty=fuller'] + ids)
+             '--pretty=format:%s' % format] + ids)
         id = ""
         message = []
         header = []

@@ -892,9 +892,10 @@ package body VCS2.History is
          Iter  : Gtk_Tree_Iter)
       is
          pragma Unreferenced (Path);
+         N : constant Node_Data_Access :=
+           Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line)));
       begin
-         Ids (Count) := new String'
-           (Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line))).ID.all);
+         Ids (Count) := new String'(N.ID.all);
          Count := Count + 1;
       end On_Selected;
 
