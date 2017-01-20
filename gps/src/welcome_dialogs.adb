@@ -15,31 +15,32 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;       use GNAT.Strings;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNAT.Strings;        use GNAT.Strings;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with Glib.Object;
-with Gdk.Event;          use Gdk.Event;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Enums;          use Gtk.Enums;
-with Gtk.Frame;          use Gtk.Frame;
-with Gtk.Image;          use Gtk.Image;
-with Gtk.Label;          use Gtk.Label;
-with Gtk.List_Box;       use Gtk.List_Box;
-with Gtk.List_Box_Row;   use Gtk.List_Box_Row;
-with Gtk.Main;           use Gtk.Main;
-with Gtk.Paned;          use Gtk.Paned;
-with Gtk.Size_Group;     use Gtk.Size_Group;
-with Gtk.Style_Context;  use Gtk.Style_Context;
-with Gtk.Widget;         use Gtk.Widget;
+with Gdk.Event;           use Gdk.Event;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Frame;           use Gtk.Frame;
+with Gtk.Image;           use Gtk.Image;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.List_Box;        use Gtk.List_Box;
+with Gtk.List_Box_Row;    use Gtk.List_Box_Row;
+with Gtk.Main;            use Gtk.Main;
+with Gtk.Paned;           use Gtk.Paned;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Size_Group;      use Gtk.Size_Group;
+with Gtk.Style_Context;   use Gtk.Style_Context;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Config;
-with Dialog_Utils;       use Dialog_Utils;
-with Histories;          use Histories;
-with GPS.Dialogs;        use GPS.Dialogs;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
+with Dialog_Utils;        use Dialog_Utils;
+with Histories;           use Histories;
+with GPS.Dialogs;         use GPS.Dialogs;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
 
 package body Welcome_Dialogs is
 
@@ -171,6 +172,7 @@ package body Welcome_Dialogs is
       Pane                 : Gtk_Paned;
       Main_View            : Dialog_View;
       Response             : Welcome_Dialog_Response;
+      Scrolled             : Gtk_Scrolled_Window;
       Recent_Projects_View : Recent_Projects_List_Box;
       Recent_Projects      : constant String_List_Access :=
                              Get_History
@@ -313,9 +315,13 @@ package body Welcome_Dialogs is
       --  recent projects view on the left side of the dialog.
 
       if Recent_Projects /= null then
+         Gtk_New (Scrolled);
+         Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+
          Recent_Projects_View := new Recent_Projects_List_Box_Record;
          Recent_Projects_View.Kernel := Kernel_Handle (Kernel);
          Initialize (Recent_Projects_View);
+         Scrolled.Add (Recent_Projects_View);
          Recent_Projects_View.Set_Selection_Mode (Selection_Single);
          Recent_Projects_View.Set_Activate_On_Single_Click (False);
          Recent_Projects_View.On_Row_Activated
@@ -335,9 +341,11 @@ package body Welcome_Dialogs is
             Resize => True,
             Shrink => True);
          Pane.Pack1
-           (Recent_Projects_View,
+           (Scrolled,
             Resize => False,
             Shrink => False);
+
+         Pane.Set_Position (300);
       else
          Dialog.Get_Content_Area.Pack_Start (Main_View);
       end if;
