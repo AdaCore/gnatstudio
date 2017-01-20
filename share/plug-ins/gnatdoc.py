@@ -245,11 +245,12 @@ def run_gnatdoc(target, force=False, extra_args=[]):
     """
     Runs GNATdoc using given target and extra arguments.
     """
+    extra = list(extra_args)
     if not GNATdoc_Module.trusted_mode:
-        extra_args.append("--symlinks")
+        extra.append("--symlinks")
 
     GPS.BuildTarget(target).execute(
-        synchronous=False, force=force, extra_args=extra_args)
+        synchronous=False, force=force, extra_args=extra)
 
 GPS.File.generate_doc = generate_doc_file
 GPS.Project.generate_doc = generate_doc_project
