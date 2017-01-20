@@ -87,11 +87,20 @@ register_highlighter(
         c99_comment, multiline_comment, preprocessor_comment,
         preprocessor_directive,
         # Match keywords
-        words("auto|break|case|const|continue|default|do|else|enum|extern|for"
-              "|goto|if|register|return|sizeof|static|struct|switch|typedef"
-              "|union|void|volatile|while", tag=tag_keyword),
+        words("alignas|alignof|and|and_eq|asm|atomic_cancel|atomic_commit"
+              "|atomic_noexcept|auto|bitand|bitor|break|case|catch|class"
+              "|compl|concept|const|constexpr|const_cast|continue|decltype"
+              "|default|delete|do|dynamic_cast|else|enum|explicit|export"
+              "|extern|false|for|friend|goto|if|inline|mutable|namespace|new"
+              "|noexcept|not|not_eq|nullptr|operator|or|or_eq|private"
+              "|protected|public|register|reinterpret_cast|requires|return"
+              "|sizeof|static|static_assert|static_cast|struct|switch"
+              "|synchronized|template|this|thread_local|throw|true|try|typedef"
+              "|typeid|typename|union|using|virtual|void|volatile|while"
+              "|xor|xor_eq", tag=tag_keyword),
 
-        words("int|long|char|float|short|unsigned|double|signed",
+        words("bool|char|char16_t|char32_t|double|float|int|long|short"
+              "|signed|uint16_t|uint32_t|uint64_t|unsigned|wchar_t",
               tag=tag_type)
     )
 )
