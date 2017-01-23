@@ -1096,10 +1096,6 @@ package body Debugger.Gdb is
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Internal);
       end if;
 
-      if Debugger.Executable = GNATCOLL.VFS.No_File then
-         Display_Prompt (Debugger);
-      end if;
-
       Debugger.Initializing := False;
 
    exception
@@ -1533,7 +1529,9 @@ package body Debugger.Gdb is
       (Debugger : access Gdb_Debugger;
        Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      if Debugger.Is_Connected_To_Target then
+      if Debugger.Is_Connected_To_Target
+        and then Debugger.Executable /= GNATCOLL.VFS.No_File
+      then
          Send (Debugger, "load", Mode => Mode);
 
          if Mode in Visible_Command then

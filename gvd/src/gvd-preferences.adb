@@ -69,7 +69,7 @@ package body GVD.Preferences is
         (Manager   => Prefs,
          Name      => "Debugger-Load-On-Init",
          Path      => -"Debugger:Startup & Exit",
-         Label     => -"Load excutable on init",
+         Label     => -"Load executable on init",
          Doc       =>
             -("Load the currently debugged executable to the target when " &
                "initializing a remote debugging session."),
