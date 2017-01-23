@@ -1428,7 +1428,8 @@ show_report = 'Show Report'
 clean_up = 'Clean Proofs'
 check_msg_prefix = 'medium: '
 
-Default_Trace_Color = "#00ffff"  # "aqua" (light blue)
+# moderate blue with 0.7 transparency
+Default_Trace_Color = "rgba(107,174,214, 0.7)"
 Overlay_Name = "Gnatprove_Trace_Overlay"
 Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
 Ce_Highlighting = "Editor code annotations"
