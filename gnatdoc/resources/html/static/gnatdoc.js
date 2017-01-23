@@ -375,9 +375,16 @@ function buildDocumentationPage() {
                           document.createTextNode(parameter.label));
                         term.appendChild(
                           document.createTextNode(' of type '));
-                        href = document.createElement('a');
-                        href.href = '../' + parameter.type.docHref;
-                        href.target = 'contentView';
+
+                        if (parameter.type.docHref !== undefined)
+                        {
+                            href = document.createElement('a');
+                            href.href = '../' + parameter.type.docHref;
+                            href.target = 'contentView';
+                        } else {
+                            href = document.createElement('span');
+                        }
+
                         href.appendChild(
                           document.createTextNode(parameter.type.label));
                         term.appendChild(href);
@@ -398,9 +405,16 @@ function buildDocumentationPage() {
 
                     if (entity.returns.type !== undefined) {
                         term.appendChild(document.createTextNode(' of type '));
-                        href = document.createElement('a');
-                        href.href = '../' + entity.returns.type.docHref;
-                        href.target = 'contentView';
+
+                        if (entity.returns.type.docHref !== undefined)
+                        {
+                            href = document.createElement('a');
+                            href.href = '../' + entity.returns.type.docHref;
+                            href.target = 'contentView';
+                        } else {
+                            href = document.createElement('span');
+                        }
+
                         href.appendChild(
                           document.createTextNode(entity.returns.type.label));
                         term.appendChild(href);
@@ -440,9 +454,16 @@ function buildDocumentationPage() {
                           document.createTextNode(field.label));
                         term.appendChild(
                           document.createTextNode(' of type '));
-                        href = document.createElement('a');
-                        href.href = '../' + field.type.docHref;
-                        href.target = 'contentView';
+
+                        if (field.type.docHref !== undefined)
+                        {
+                            href = document.createElement('a');
+                            href.href = '../' + field.type.docHref;
+                            href.target = 'contentView';
+                        } else {
+                            href = document.createElement('span');
+                        }
+
                         href.appendChild(
                           document.createTextNode(field.type.label));
                         term.appendChild(href);
