@@ -158,7 +158,7 @@ class CVS(core_staging.Emulate_Staging,
             def __call__(self, out_stream, line):
                 if line.startswith('Working file: '):
                     self.file = line[14:]
-                    self.names = [self.file]
+                    self.names = [(self.file, GPS.VCS2.Commit.Kind.LOCAL)]
                     self.previous = None  # previous commit
                     self.current = None
 
@@ -185,13 +185,13 @@ class CVS(core_staging.Emulate_Staging,
                     else:
                         m = self.__re_log.search(line)
                         if m:
-                            self.current = [
-                                self.revision,
-                                m.group('author'),
-                                m.group('date'),
-                                '',     # subject
-                                None,   # parents
-                                self.names]  # names
+                            self.current = GPS.VCS2.Commit(
+                                id=self.revision,
+                                author=m.group('author'),
+                                date=m.group('date'),
+                                subject='',
+                                parents=[],
+                                names=self.names)
 
                             # only apply the 'tag' to the first revision
                             self.names = []
@@ -201,7 +201,7 @@ class CVS(core_staging.Emulate_Staging,
                 elif self.current:
                     if self.current[3]:
                         self.current[3] += '\n'
-                    self.current[3] += line   # subject
+                    self.current[3] += line  # subject
 
             def oncompleted(self, out_stream, status):
                 self.emit_previous(out_stream)
@@ -230,7 +230,7 @@ class CVS(core_staging.Emulate_Staging,
         yield self._log_stream([
             f
         ]).subscribe(add_log)
-        visitor.add_lines(result)
+        visitor.history_lines(result)
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
@@ -300,7 +300,9 @@ class CVS(core_staging.Emulate_Staging,
             if line is None:
                 visitor.branches(
                     CAT_TAGS, 'vcs-tag-symbolic', not CAN_RENAME,
-                    [(t, t in sticky, '', t) for t in tags])
+                    [GPS.VCS2.Branch(
+                        name=t, active=t in sticky, annotation='', id=t)
+                     for t in tags])
                 break
 
             if line.startswith('   Existing Tags:'):
@@ -319,26 +321,26 @@ class CVS(core_staging.Emulate_Staging,
     @core.run_in_background
     def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category == CAT_TAGS:
-            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+            if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 p = self._cvs(['update', '-r', id])
                 yield p.wait_until_terminate(show_if_error=True)
-            elif action == core.VCS.ACTION_TOOLTIP:
+            elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     ('\nDouble-click to checkout this tag' if id else '') +
                     ('\nClick [+] to create new tag from current checkout'
                      if not id else '') +
                     ('\nClick [-] to delete this tag' if id else ''))
-            elif action == core.VCS.ACTION_ADD and not id:
+            elif action == GPS.VCS2.Actions.ADD and not id:
                 name = GPS.MDI.input_dialog(
                     'Choose a name for the new tag', 'name')
                 if name:
                     p = self._cvs(['tag', name[0]])
                     yield p.wait_until_terminate(show_if_error=True)
-            elif action == core.VCS.ACTION_REMOVE and id:
+            elif action == GPS.VCS2.Actions.REMOVE and id:
                 if GPS.MDI.yes_no_dialog("Delete tag '%s' ?" % id):
                     p = self._cvs(['tag', '-d', id])
                     yield p.wait_until_terminate(show_if_error=True)
-            elif action == core.VCS.ACTION_RENAME:
+            elif action == GPS.VCS2.Actions.RENAME:
                 pass
 
     @core.run_in_background

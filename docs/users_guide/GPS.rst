@@ -2013,6 +2013,18 @@ Classes
 
 
 
+   .. autoattribute:: GPS.VCS2.Actions
+
+
+
+   .. autoattribute:: GPS.VCS2.Branch
+
+
+
+   .. autoattribute:: GPS.VCS2.Commit
+
+
+
    .. autoattribute:: GPS.VCS2.Status
 
 
@@ -2045,8 +2057,6 @@ Classes
 
 
 
-   .. automethod:: GPS.VCS2_Task_Visitor.add_lines
-
    .. automethod:: GPS.VCS2_Task_Visitor.annotations
 
    .. automethod:: GPS.VCS2_Task_Visitor.branches
@@ -2054,6 +2064,8 @@ Classes
    .. automethod:: GPS.VCS2_Task_Visitor.diff_computed
 
    .. automethod:: GPS.VCS2_Task_Visitor.file_computed
+
+   .. automethod:: GPS.VCS2_Task_Visitor.history_lines
 
    .. automethod:: GPS.VCS2_Task_Visitor.set_details
 

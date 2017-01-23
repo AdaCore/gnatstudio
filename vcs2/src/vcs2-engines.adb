@@ -1608,4 +1608,20 @@ package body VCS2.Engines is
       end if;
    end Set_Active_VCS;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Commit_Names_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (Commit_Names, Commit_Names_Access);
+   begin
+      if Self /= null then
+         for B of Self.all loop
+            Free (B.Name);
+         end loop;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
 end VCS2.Engines;

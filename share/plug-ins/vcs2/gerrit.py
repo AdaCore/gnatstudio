@@ -80,16 +80,16 @@ class Gerrit(core.Extension):
         if category == CAT_REVIEWS:
             if id:
                 id = json.loads(id)
-            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+            if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 import webbrowser
                 webbrowser.open(id['url'])
 
-            elif action == core.VCS.ACTION_TOOLTIP:
+            elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     '\nDouble-click to open Gerrit on this change' +
                     ('\nClick [+] to cherry-pick this review' if id else ''))
 
-            elif action == core.VCS.ACTION_ADD and id:
+            elif action == GPS.VCS2.Actions.ADD and id:
                 p = self.base._git(['review', '--cherrypick', id['number']])
                 status, _ = yield p.wait_until_terminate(show_if_error=True)
                 if status == 0:

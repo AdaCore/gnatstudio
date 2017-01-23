@@ -28,6 +28,82 @@ GPS.VCS2.Status = gps_utils.enum(
         NEEDS_UPDATE=2**13)
 # Valid statuses for files (they can be combined)
 
+GPS.VCS2.Actions = gps_utils.enum(
+        DOUBLE_CLICK=0,
+        TOOLTIP=1,
+        ADD=2,
+        REMOVE=3,
+        RENAME=4)
+
+
+class _Branch(list):
+    """
+    A convenience class to create the tuples to pass to
+    `GPS.VCS2_Task_Visitor.branches`
+    """
+
+    def __init__(self, name, active, annotation, id):
+        """
+        :param str name: name of the branch, as displayed in the Branches view
+        :param bool active: whether the branch is "active" (for instance the
+            current branch, or a persistent tag,... An active branch is
+            highlighted in the Branches view.
+        :param str annotation: extra information to display on the right in
+            the Branches view. For instance, the number of commits that are
+            in this branch but not upstream.
+        :param str id: a unique id for the branch. This is used in python
+            callbacks, but the exact value of the id is irrelevant outside
+            of the plug-in that creates this id. It could for instance be
+            the result of `json.dumps` on python data.
+        """
+        list.__init__(self, (name, active, annotation, id))
+
+
+class _Commit(list):
+    """
+    A convenience wrapper to create the tuples to pass to
+    `GPS.VCS2_Task_Visitor.history_lines`
+    """
+
+    Kind = gps_utils.enum(
+        HEAD=0,     # current working dir
+        LOCAL=1,    # a local branch name exists for this commit
+        REMOTE=2,   # a remote branch name exists for this commit
+        TAG=3)      # a tag exists for this commit
+
+    Flags = gps_utils.enum(
+        UNPUSHED=2**1)  # an unpushed local commit
+
+    def __init__(self, id, author, date, subject, parents, names=None,
+                 flags=0):
+        """
+        :param str id: the unique id for the commit
+        :param str author: the author of the commit
+        :param str date: the date of the commit
+        :param str subject: the first line of the commit message
+        :param List(str) parents: a list of commit ids, the parents
+           of the commit. There are multiple parents when this is
+           a merge commit.
+        :param List((str, GPS.VCS2.Commit.Kind)) names: a list of tag names
+           or branch names associated with this commit. Each of the items
+           indicates the type of the name
+        :param GPS.VCS2.Commit.Flags: a combination of flags, which
+           influence of the commit is represented in the History view.
+        """
+        list.__init__(self, (id, author, date, subject, parents, names, flags))
+
+    @property
+    def subject(self):
+        return self[3]
+
+    @subject.setter
+    def set_subject(self, str):
+        self[3] = str
+
+
+GPS.VCS2.Branch = _Branch
+GPS.VCS2.Commit = _Commit
+
 
 def run_in_background(func):
     """
@@ -348,12 +424,6 @@ class VCS(GPS.VCS2):
            the information, via its `branches` method.
         """
 
-    ACTION_DOUBLE_CLICK = 0
-    ACTION_TOOLTIP = 1
-    ACTION_ADD = 2
-    ACTION_REMOVE = 3
-    ACTION_RENAME = 4
-
     def async_action_on_branch(self, visitor, action, category, id, text=''):
         """
         React to a double-click action in the Branches view.
@@ -361,7 +431,7 @@ class VCS(GPS.VCS2):
         :param GPS.VCS2_Task_Visitor visitor: the object used to report
            asynchronously.
            If action is ACTION_TOOLTIP, use `visitor.tooltip`.
-        :param int action: the action to perform
+        :param GPS.VCS2.Action action: the action to perform
         :param str category: the upper-cased category, i.e. the first
            parameter to `visitor.branches` in the call to `async_branches`.
         :param str id: the id of the specific line that was selected.

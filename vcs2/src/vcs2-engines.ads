@@ -142,6 +142,21 @@ package VCS2.Engines is
       Kernel : not null access Kernel_Handle_Record'Class) is null;
    --  Called when the plugin reports that the action has succeeded.
 
+   type Commit_Flags is mod Integer'Last;
+   Commit_Unpushed : constant Commit_Flags := 2 ** 1;
+
+   type Name_Kind is (Name_Head, Name_Local, Name_Remote, Name_Tag);
+   type Name_Description is record
+      Name    : GNAT.Strings.String_Access;
+      Kind    : Name_Kind;
+   end record;
+   type Commit_Names is array (Natural range <>) of Name_Description;
+   type Commit_Names_Access is access all Commit_Names;
+   --  Description for the names associated with a commit (a tag
+   --  name, a branch name,...)
+
+   procedure Free (Self : in out Commit_Names_Access);
+
    procedure On_History_Line
      (Self    : not null access Task_Visitor;
       ID      : String;
@@ -149,14 +164,15 @@ package VCS2.Engines is
       Date    : String;
       Subject : String;
       Parents : in out GNAT.Strings.String_List_Access;
-      Names   : in out GNAT.Strings.String_List_Access) is null;
+      Names   : in out Commit_Names_Access;
+      Flags   : Commit_Flags := 0) is null;
    --  Called for every line in the history ('git log', 'cvs log',...)
    --  Subject should be the first line of the commit message.
    --  Parents is a list of ID, the ancestor commits.
    --  Names is a list of labels associated with this commit (typically branch
    --  names or tags for instance).
    --  Parents and Names must be freed by the caller, although this procedure
-   --  might reset them to null if it needs to store keep them.
+   --  might reset them to null if it needs to keep them.
 
    procedure On_Commit_Details
      (Self    : not null access Task_Visitor;

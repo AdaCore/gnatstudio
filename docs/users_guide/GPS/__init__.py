@@ -9700,27 +9700,14 @@ class VCS2_Task_Visitor(object):
            a short while.
         """
 
-    def add_lines(self, list):
+    def history_lines(self, list):
         """
         Report when a new line for the VCS history was seen. Used from
         `GPS.VCS2.async_fetch_history`.
 
-        :param List() list: a list of lines from the history.
+        :param List(GPS.VCS2.Commit) list: a list of lines from the history.
            This doesn't have to be the whole log, though, although it is
-           more efficient to send bigger chunks. Each element of the list
-           is a tuple (or list) with the following contents:
-               (id, author, date, subject, parents, names)
-           with:
-
-        :param str id: the unique id for the commit
-        :param str author: the author of the commit
-        :param str date: the date of the commit
-        :param str subject: the first line of the commit message
-        :param List(str) parents: a list of commit ids, the parents
-           of the commit. There are multiple parents when this is
-           a merge commit.
-        :param List(str) names: a list of tag names or branch names
-           associated with this commit
+           more efficient to send bigger chunks.
         """
 
     def set_details(self, id, header, message):
@@ -9775,16 +9762,7 @@ class VCS2_Task_Visitor(object):
            show all the branches within.
         :param str iconname: icon to use for this category.
         :param bool can_rename: true if the branches can be renamed.
-        :param List branches: a list of branches. Each item in the
-           list is a tuple with the following elements:
-           - name of the branch
-           - a bool to indicate if this is the active branch
-           - a str to describe the status of the branch. This could for
-             instance indicate how many commits are in this branch and
-             not in the current one.
-           - a str to give a unique id for the branch. This is only used
-             by python callbacks in this module, so can be anything that
-             the VCS understands.
+        :param List branches: a list of branches (see `GPS.VCS2.Branch`).
          """
 
     def tooltip(self, text):

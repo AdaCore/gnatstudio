@@ -134,7 +134,7 @@ package body VCS2.History is
    type Node_Data is record
       ID, Author, Date, Subject : GNAT.Strings.String_Access;
       Parents                   : Parent_Array_Access;
-      Names                     : GNAT.Strings.String_List_Access;
+      Names                     : Commit_Names_Access;
 
       Col                       : Graph_Column := No_Graph_Column;
       --  which column to draw in
@@ -150,6 +150,8 @@ package body VCS2.History is
 
       Visible                   : Visibility;
       --  A node is visible when this field is Always_Visible or more.
+
+      Flags                     : Commit_Flags := 0;
    end record;
    type Node_Data_Access is access all Node_Data;
 
@@ -293,7 +295,8 @@ package body VCS2.History is
       Date    : String;
       Subject : String;
       Parents : in out GNAT.Strings.String_List_Access;
-      Names   : in out GNAT.Strings.String_List_Access);
+      Names   : in out Commit_Names_Access;
+      Flags   : Commit_Flags);
    --  Add a new log entry to the view
    --  Names are freed automatically by this procedure when needed.
    --  Parents is adopted by this procedure and must not be freed by the caller
@@ -462,6 +465,11 @@ package body VCS2.History is
                  Angle1 => 0.0,
                  Angle2 => 6.2831853072);
             Set_Color (Data.Col);
+
+            if (Data.Flags and Commit_Unpushed) /= 0 then
+               Fill_Preserve (Cr);
+            end if;
+
             Stroke (Cr);
 
             case Is_Occupied (Data.Col) is
@@ -1095,7 +1103,8 @@ package body VCS2.History is
       Date    : String;
       Subject : String;
       Parents : in out GNAT.Strings.String_List_Access;
-      Names   : in out GNAT.Strings.String_List_Access)
+      Names   : in out Commit_Names_Access;
+      Flags   : Commit_Flags)
    is
       Tree   : constant History_Tree := History_Tree (Self.Data.Detached.Tree);
       C       : Commit_Maps.Cursor;
@@ -1120,6 +1129,7 @@ package body VCS2.History is
          N.Subject := new String'(Subject);
          N.Names   := Names;
          N.Col     := No_Graph_Column;
+         N.Flags   := Flags;
 
          if Parents /= null then
             N.Parents := new Parent_Array (Parents'Range);
@@ -1397,10 +1407,26 @@ package body VCS2.History is
 
             Tmp := Null_Unbounded_String;
             if N.Names /= null then
-               for Name of N.Names.all loop
+               for B in N.Names'Range loop
+                  case N.Names (B).Kind is
+                     when Name_Head =>
+                        Append (Tmp, "<span background='#ff6600'");
+                     when Name_Local =>
+                        Append (Tmp, "<span background='#fee391'");
+                     when Name_Remote =>
+                        Append (Tmp, "<span background='#a6bddb'");
+                     when Name_Tag =>
+                        Append (Tmp, "<span background='#a1d99b'");
+                  end case;
+
+                  Append (Tmp, " foreground='black'>");
                   Append
-                    (Tmp, "<span background='#ff6600'>"
-                     & Escape_Text (Trim (Name.all, Both)) & " </span>");
+                     (Tmp, Escape_Text (Trim (N.Names (B).Name.all, Both)));
+                  if B = N.Names'Last then
+                     Append (Tmp, "</span> ");
+                  else
+                     Append (Tmp, " </span>");
+                  end if;
                end loop;
             end if;
 

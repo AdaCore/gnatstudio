@@ -2,7 +2,7 @@ from . import core, core_staging
 import GPS
 import re
 import os
-from workflows.promises import ProcessWrapper
+from workflows.promises import ProcessWrapper, join
 
 
 CAT_BRANCHES = 'BRANCHES'
@@ -147,12 +147,12 @@ class SVN(core_staging.Emulate_Staging,
                         else:
                             parents = [str(rev - 1)]
 
-                        self.current = [m.group('rev'),
-                                        m.group('author'),
-                                        m.group('date'),
-                                        '',    # subject
-                                        parents,
-                                        None]  # names
+                        self.current = GPS.VCS2.Commit(
+                            id=m.group('rev'),
+                            author=m.group('author'),
+                            date=m.group('date'),
+                            subject='',
+                            parents=parents)
                     elif self.current:
                         if self.current[3]:
                             self.current[3] += '\n'
@@ -179,7 +179,7 @@ class SVN(core_staging.Emulate_Staging,
             '--stop-on-copy',
             for_file.path if for_file else ''
         ]).subscribe(add_log)
-        visitor.add_lines(result)
+        visitor.history_lines(result)
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
@@ -237,8 +237,8 @@ class SVN(core_staging.Emulate_Staging,
         """
         A generator that returns the list of branches via `visitor.branches`
         """
-        branches = [('trunk', url.endswith('/trunk'), '',
-                     os.path.join(parent, 'trunk'))]
+        branches = [('trunk', parent_url.endswith('/trunk'), '',
+                     os.path.join(parent_url, 'trunk'))]
         base = os.path.join(parent_url, 'branches')
         p = self._svn(['list', base])
         while True:
@@ -250,7 +250,8 @@ class SVN(core_staging.Emulate_Staging,
                 break
             line = line.rstrip('/')
             b = os.path.join(base, line)
-            branches.append((line, b == url, '', b))
+            branches.append(GPS.VCS2.Branch(
+                name=line, active=b == parent_url, annotation='', id=b))
 
     def _tags(self, visitor, parent_url):
         """
@@ -267,7 +268,8 @@ class SVN(core_staging.Emulate_Staging,
                 break
             line = line.rstrip('/')
             b = os.path.join(base, line)
-            tags.append((line, b == url, '', b))
+            tags.append(GPS.VCS2.Branch(
+                name=line, active=b == parent_url, annotation='', id=b))
 
     @core.run_in_background
     def async_branches(self, visitor):
@@ -296,16 +298,16 @@ class SVN(core_staging.Emulate_Staging,
     @core.run_in_background
     def async_action_on_branch(self, visitor, action, category, id, text=''):
         if category in (CAT_BRANCHES, CAT_TAGS):
-            if action == core.VCS.ACTION_DOUBLE_CLICK and id:
+            if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 p = self._svn(['switch', '--ignore-ancestry', id])
                 yield p.wait_until_terminate(shof_if_error=True)
-            elif action == core.VCS.ACTION_TOOLTIP:
+            elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     '\nDouble-click to checkout this tag or branch'
                     if id else '')
-            elif action == core.VCS.ACTION_ADD and not id:
+            elif action == GPS.VCS2.Actions.ADD and not id:
                 pass
-            elif action == core.VCS.ACTION_REMOVE and id:
+            elif action == GPS.VCS2.Actions.REMOVE and id:
                 pass
 
     @core.run_in_background
