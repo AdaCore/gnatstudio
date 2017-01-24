@@ -6972,15 +6972,17 @@ class MDIWindow(GUI):
         """
         pass  # implemented in Ada
 
-    def split(self, vertically=True, reuse=False):
+    def split(self, vertically=True, reuse=False, new_view=False):
         """
         Splits the window in two parts, either horizontally (side by side),
-        or vertically (one below the other). If ``reuse`` is True, attempt to
-        reuse an existing space rather than splitting the current
-        window. This should be done to avoid ending up with too small windows.
+        or vertically (one below the other).
 
-        :param vertically: A boolean
-        :param reuse: A boolean
+        :param bool vertically:
+        :param bool reuse: whether to reuse an existing space to the side of
+           current window, rather than splitting the current window.
+           This should be used to avoid ending up with too small windows.
+        :param bool new_view: whether to create a new view when the current
+           window is an editor.
 
         .. seealso:: :func:`GPS.MDIWindow.single`
         """

@@ -1406,39 +1406,64 @@ def __on_clipboard_changed():
         cancel_mark_command()
 
 
+@interactive(name='New View Horizontal reuse', category='MDI')
+def new_view_horizontal_reuse():
+    """
+    When on an editor, splits the current notebook into two side-by-side
+    windows, so that the two windows show two views of the same file.
+
+    If another window already exists to the side, a new view is created
+    inside that existing notebook, rather than create a new one.
+    """
+    GPS.MDI.current().split(vertically=False, new_view=True, reuse=True)
+
+
+@interactive(name='New View Horizontal', category='MDI')
+def new_view_horizontal():
+    """
+    When on an editor, splits the current notebook into two side-by-side
+    windows, so that the two windows show two views of the same file.
+    """
+    GPS.MDI.current().split(vertically=False, new_view=True, reuse=False)
+
+
+@interactive(name='New View Vertical reuse', category='MDI')
+def new_view_vertical_reuse():
+    """
+    When on an editor, splits the current notebook into two windows
+    vertically, so that the two windows show two views of the same file.
+
+    If another window already exists above or below, a new view is created
+    inside that existing notebook, rather than create a new one
+    """
+    GPS.MDI.current().split(vertically=True, new_view=True, reuse=True)
+
+
+@interactive(name='New View Vertical', category='MDI')
+def new_view_vertical():
+    """
+    When on an editor, splits the current notebook into two windows
+    vertically, so that the two windows show two views of the same file.
+    """
+    GPS.MDI.current().split(vertically=True, new_view=True, reuse=False)
+
+
 GPS.parse_xml("""
    <action name="kill line" output="none" category="Editor">
-   <description>This is similar to Emacs' kill-line function. It deletes the
-   end of the line after the cursor's current column. If the cursor is at the
-   end of the line, it deletes the newline character and therefore joins the
-   current line and the next.  The text that is deleted is copied to the
-   clipboard. If you call this action multiple times from the same location,
-   all deleted text is merged into a single clipboard, so that a single Paste
-   will put it all back.  When this command is executed after a repeat_next
-   command, the whole line is deleted to provide a more intuitive
-   behavior.
-   </description>
-   <filter id="Source editor" />
-   <shell lang="python">if $repeat == 1: text_utils.kill_line (
-   None, $remaining+1)</shell>
+      <description>
+      This is similar to Emacs' kill-line function. It deletes the end of the
+      line after the cursor's current column. If the cursor is at the
+      end of the line, it deletes the newline character and therefore
+      joins the current line and the next.  The text that is deleted is
+      copied to the clipboard. If you call this action multiple times
+      from the same location, all deleted text is merged into a single
+      clipboard, so that a single Paste will put it all back.  When
+      this command is executed after a repeat_next command, the whole
+      line is deleted to provide a more intuitive behavior.
+      </description>
+      <filter id="Source editor" />
+      <shell lang="python">
+if $repeat == 1: text_utils.kill_line(None, $remaining+1)
+      </shell>
    </action>
-
-  <action name="New View Horizontal" output="none" category="MDI">
-  <description>When on an editor, splits the current notebook into two
-  side-by-side windows, so that the two windows show two views of the same
-  file. If another window already exists to the side, a new view is created
-  inside that existing notebook, rather than create a new one
-  </description>
-
-  <shell lang="python">GPS.MDI.current().split(
-  vertically=False,new_view=True,reuse=True)
-  </shell> </action>
-
-  <action name="New View Vertical" output="none" category="MDI">
-  <description>When on an editor, splits the current notebook into two windows
-  vertically, so that the two windows show two views of the same file. If
-  another window already exists above or below, a new view is created inside
-  that existing notebook, rather than create a new one</description> <shell
-  lang="python">GPS.MDI.current().split(
-  vertically=True,new_view=True,reuse=True)</shell> </action>
 """)

@@ -108,22 +108,16 @@ package body GPS.Main_Window is
      (1 => Msg_Cst'Access,
       2 => Param1_Cst'Access);
 
-   Vertically_Cst : aliased constant String := "vertically";
    Name_Cst       : aliased constant String := "name";
    Child_Cst      : aliased constant String := "child";
    Float_Cst      : aliased constant String := "float";
-   Reuse_Cst      : aliased constant String := "reuse";
    Visible_Only_Cst : aliased constant String := "visible_only";
    Short_Cst      : aliased constant String := "short";
-   New_View_Cst   : aliased constant String := "new_view";
    Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Child_Cst'Access);
    Float_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Float_Cst'Access);
-   Split_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Vertically_Cst'Access, 2 => Reuse_Cst'Access,
-      3 => New_View_Cst'Access);
    Next_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Visible_Only_Cst'Access);
    Name_Cmd_Parameters : constant Cst_Argument_List :=
@@ -989,7 +983,9 @@ package body GPS.Main_Window is
       Kernel.Scripts.Register_Command
         ("split",
          Class        => MDI_Window_Class,
-         Maximum_Args => 3,
+         Params       => (2 => Param ("vertically", Optional => True),
+                          3 => Param ("reuse",      Optional => True),
+                          4 => Param ("new_view",   Optional => True)),
          Handler      => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("float",
@@ -1094,9 +1090,7 @@ package body GPS.Main_Window is
       Child2 : MDI_Child;
       Klass  : Class_Type;
       Widget : Gtk_Widget;
-      Orientation : Gtk_Orientation;
       Result : Class_Instance;
-      Reuse  : Boolean;
    begin
       if Child = null then
          Set_Error_Msg (Data, "MDIWindow no longer exists");
@@ -1105,29 +1099,19 @@ package body GPS.Main_Window is
          Set_Error_Msg (Data, "Cannot build instances of MDIWindow");
 
       elsif Command = "split" then
-         Name_Parameters (Data, Split_Cmd_Parameters);
-         if Get_State (Child) = Normal then
+         if Child.Get_State = Normal then
             Raise_Child (Child);
-            Child2 := Dnd_Data (Child, Copy => Nth_Arg (Data, 3, False));
+            Child2 := Dnd_Data (Child, Copy => Data.Nth_Arg (4, False));
             Set_Focus_Child (Child2);
 
-            if Nth_Arg (Data, 2, True) then
-               Orientation := Orientation_Vertical;
-            else
-               Orientation := Orientation_Horizontal;
-            end if;
-
-            Reuse := Nth_Arg (Data, 3, False);
-
-            if Reuse then
-               Split (Get_MDI (Kernel),
-                      Orientation       => Orientation,
-                      Mode              => Any_Side_Reuse);
-            else
-               Split (Get_MDI (Kernel),
-                      Orientation       => Orientation,
-                      Mode              => Before);
-            end if;
+            Get_MDI (Kernel).Split
+               (Child       => Child2,
+                Orientation =>
+                   (if Data.Nth_Arg (2, True)
+                    then Orientation_Vertical else Orientation_Horizontal),
+                Mode        =>
+                   (if Data.Nth_Arg (3, False)
+                    then Any_Side_Reuse else Before));
          end if;
 
       elsif Command = "float" then
