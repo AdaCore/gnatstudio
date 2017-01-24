@@ -355,14 +355,6 @@ package body VCS2.History is
    procedure Reset_Lines (Self : not null access History_Tree_Record'Class);
    --  Reset all lines information
 
-   function Recompute_Layout
-     (Self          : not null access History_View_Record'Class;
-      Start_Running : Boolean)
-      return Layout_Idle_Data_Access;
-   --  Setup the background layout computation.
-   --  Start running it immediately if Start_Running is True.
-   --  the returned value must not be freed, it is owned by the idle loop
-
    procedure Clear_View (Self : not null access History_Tree_Record'Class);
    ---  Clear all views
 
@@ -744,43 +736,6 @@ package body VCS2.History is
          Self.Refresh;
       end;
    end Filter_Changed;
-
-   ----------------------
-   -- Recompute_Layout --
-   ----------------------
-
-   function Recompute_Layout
-     (Self : not null access History_View_Record'Class;
-      Start_Running : Boolean)
-     return Layout_Idle_Data_Access
-   is
-      Tree : constant History_Tree := History_Tree (Self.Tree);
-      Data : Layout_Idle_Data_Access;
-      Id   : G_Source_Id with Unreferenced;
-   begin
-      for L of History_Tree (Self.Tree).Commits loop
-         L.Col     := No_Graph_Column;
-         L.Visible := 0;
-      end loop;
-
-      History_Tree (Self.Tree).Lines.Clear;
-
-      Data := new Layout_Idle_Data;
-      Data.Detached := new Expansion.Detached_Model'
-        (Expansion.Detach_Model_From_View (Self.Tree));
-      Data.Step := Step_Compute;
-      Data.Inserted := 0;
-      Data.Current := 1;
-      Tree.Max_Columns := 0;
-
-      Clear_View (Tree);
-
-      if Start_Running then
-         Id := Layout_Sources.Idle_Add
-           (On_Layout_Idle'Access, Data, Notify => Free'Access);
-      end if;
-      return Data;
-   end Recompute_Layout;
 
    -----------------
    -- Create_Menu --
@@ -1212,6 +1167,8 @@ package body VCS2.History is
         (Parent_Array, Parent_Array_Access);
    begin
       for L of Self.Commits loop
+         L.Col     := No_Graph_Column;
+         L.Visible := 0;
          Free (L.ID);
          Free (L.Author);
          Free (L.Date);
@@ -1539,7 +1496,18 @@ package body VCS2.History is
    begin
       if View /= null then
          Tree := History_Tree (View.Tree);
-         Reset_Lines (Tree);
+
+         --  Reset layout, and detach model from view.
+         --  Do this before we reset the data, since detaching requires
+         --  computing the ID of lines.
+
+         Self.Data := new Layout_Idle_Data;
+         Self.Data.Detached := new Expansion.Detached_Model'
+           (Expansion.Detach_Model_From_View (Tree, Save_Expansion => False));
+         Self.Data.Step := Step_Compute;
+         Self.Data.Inserted := 0;
+         Self.Data.Current := 1;
+         Tree.Max_Columns := 0;
 
          --  If we have a filter, we can't show the graph, since we are
          --  missing too many commits.
@@ -1550,8 +1518,10 @@ package body VCS2.History is
          Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
          Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;
 
-         --  Reset layout, and detach model from view
-         Self.Data := Recompute_Layout (View, Start_Running => False);
+         --  Remove all data from the tree model
+
+         Reset_Lines (Tree);
+         Clear_View (Tree);
       end if;
    end On_Start;
 
