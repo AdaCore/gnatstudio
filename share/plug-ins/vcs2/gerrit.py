@@ -96,4 +96,22 @@ class Gerrit(core.Extension):
                     GPS.Console().write(
                         "Applied to working directory: %s\n" % id['number'])
 
+    @core.vcs_action(icon='vcs-cloud-symbolic',
+                     name='git review',
+                     menu='VCS/Review',
+                     after='server section')
+    def _review(self):
+        """
+        Push all local changes to Gerrit, so that they can be reviewed by
+        other team members.
+        """
+        p = self.base._git(
+            ['review', '--yes', '--no-rebase'],
+            spawn_console='')
+        status, _ = yield p.wait_until_terminate()
+        if status == 0:
+            GPS.MDI.information_popup(
+                'Pushed to review', 'vcs-cloud-symbolic')
+
+
 git.Git.register_extension(Gerrit)

@@ -132,10 +132,14 @@ def run_in_background(func):
     def __func(self, *args, **kwargs):
         r = func(self, *args, **kwargs)
         if isinstance(r, types.GeneratorType):
-            self.set_run_in_background(True)
+            if isinstance(self, Extension):
+                vcs = self.base
+            else:
+                vcs = self
+            vcs.set_run_in_background(True)
             promise = workflows.driver(r)
-            promise.then(lambda x: self.set_run_in_background(False),
-                         lambda x: self.set_run_in_background(False))
+            promise.then(lambda x: vcs.set_run_in_background(False),
+                         lambda x: vcs.set_run_in_background(False))
         else:
             promise = Promise()
             promise.resolve(r)
@@ -679,39 +683,74 @@ class vcs_action:
         return func
 
     @staticmethod
-    def register_all_vcs_actions(inst):
+    def create_action(method, vcs_name, extension_class=None):
+        """
+        Register a GPS action.
+        Nothing is done if the action has already been registered for another
+        instance of the same VCS kind.
+
+        :param Func method: the function to call.
+           It receives either the instance of the active VCS or the instance
+           of the extension, depending on whether extension_name is specified.
+           This must be a method that was decorated with @vcs_action.
+        :param str vcs_name: the name of the VCS system to which the action
+           applies. The action is only enabled when this is the current VCS
+           (any instance of that VCS, in case for instance the user has
+           multiple git working directories in a project.
+        :param type extension_class: the class of the VCS extension to which
+           this action applies. When specified, the parameter given to the
+           method is the instance of the VCS extension, not the VCS itself.
+        """
+
+        action = method._vcs2_is_action
+        if action.name in vcs_action._actions:
+            return
+
+        vcs_action._actions.add(action.name)
+
+        class __Proxy:
+            def __init__(self, method):
+                self.method = run_in_background(method)
+
+            def filter(self, context):
+                return GPS.VCS2.active_vcs().name == vcs_name
+
+            def __call__(self):
+                v = GPS.VCS2.active_vcs()
+                if extension_class is None:
+                    self.method(v)
+                else:
+                    for e in v._extensions:
+                        if e.__class__ == extension_class:
+                            self.method(e)
+                            break
+
+        p = __Proxy(method)
+        gps_utils.make_interactive(
+            p, description=method.__doc__,
+            name=action.name, category='VCS2', menu=action.menu,
+            after=action.after, icon=action.icon, filter=p.filter)
+
+        if action.toolbar:
+            act = GPS.Action(action.name)
+            act.button(toolbar=action.toolbar,
+                       section=action.toolbar_section,
+                       hide=True)
+
+    @staticmethod
+    def register_all_vcs_actions(vcs):
         """
         Called internally by GPS.
         This makes sure that all actions registered for a VCS class are active
         only when a VCS is in use for the current project.
 
-        :param VCS inst: an instance of the VCS class
+        :param VCS vcs: an instance of the VCS class
         """
-        for name, method in inst.__class__.__dict__.iteritems():
-            if hasattr(method, "_vcs2_is_action"):
-                a = method._vcs2_is_action
+        for name, meth in vcs.__class__.__dict__.iteritems():
+            if hasattr(meth, "_vcs2_is_action"):
+                vcs_action.create_action(meth, vcs.name, None)
 
-                if a.name not in vcs_action._actions:
-                    vcs_action._actions.add(a.name)
-
-                    class __Proxy:
-                        def __init__(self, method, inst):
-                            self.method = run_in_background(method)
-                            self.vcs = inst
-
-                        def filter(self, context):
-                            return GPS.VCS2.active_vcs().name == self.vcs.name
-
-                        def __call__(self):
-                            self.method(GPS.VCS2.active_vcs())
-
-                    p = __Proxy(method, inst)
-                    gps_utils.make_interactive(
-                        p, name=a.name, category='VCS2', menu=a.menu,
-                        after=a.after, icon=a.icon, filter=p.filter)
-
-                    if a.toolbar:
-                        act = GPS.Action(a.name)
-                        act.button(toolbar=a.toolbar,
-                                   section=a.toolbar_section,
-                                   hide=True)
+        for d in vcs._extensions:
+            for name, meth in d.__class__.__dict__.iteritems():
+                if hasattr(meth, "_vcs2_is_action"):
+                    vcs_action.create_action(meth, vcs.name, d.__class__)

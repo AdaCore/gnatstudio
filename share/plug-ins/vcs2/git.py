@@ -192,6 +192,19 @@ class Git(core.VCS):
         if status == 0:
             GPS.MDI.information_popup('Pulled', 'github-commit-symbolic')
 
+    @core.vcs_action(icon='vcs-cloud-symbolic',
+                     name='git push',
+                     menu='/VCS/Push',
+                     after='server section')
+    def _push(self):
+        """
+        Push all changes to the remote repository.
+        """
+        p = self._git(['push'], spawn_console='')
+        status, _ = yield p.wait_until_terminate()
+        if status == 0:
+            GPS.MDI.information_popup('Pushed', 'vcs-cloud-symbolic')
+
     @core.run_in_background
     def async_fetch_history(self, visitor, filter):
         # First find out which local commits have not been pushed yet
