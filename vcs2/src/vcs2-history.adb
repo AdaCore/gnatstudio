@@ -118,6 +118,9 @@ package body VCS2.History is
       Initialized  : Boolean := False;
       Collapse     : Boolean := False;
       All_Branches : Boolean := False;
+      Show_Author  : Boolean := False;
+      Show_Date    : Boolean := False;
+      Show_Id      : Boolean := False;
    end record;
 
    type Visibility is new Natural;
@@ -1059,17 +1062,21 @@ package body VCS2.History is
       Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
       Set_Font_And_Colors (Self.Details, Fixed_Font => True, Pref => Pref);
 
-      T.Col_Author.Set_Visible (Show_Author.Get_Pref);
-      T.Col_Date.Set_Visible (Show_Date.Get_Pref);
-      Self.Tree.Set_Headers_Visible
-        (Show_ID.Get_Pref or Show_Author.Get_Pref or Show_Date.Get_Pref);
-
       Config :=
         (Initialized  => True,
+         Show_Author  => Show_Author.Get_Pref,
+         Show_Date    => Show_Date.Get_Pref,
+         Show_Id      => Show_ID.Get_Pref,
          All_Branches => Show_All_Branches.Get_Pref,
          Collapse     => Collapse_Simple_Commits.Get_Pref);
       if Config /= T.Config then
          T.Config := Config;
+
+         T.Col_Author.Set_Visible (Config.Show_Author);
+         T.Col_Date.Set_Visible (Config.Show_Date);
+         Self.Tree.Set_Headers_Visible
+           (Config.Show_Id or Config.Show_Author or Config.Show_Date);
+
          if Self.Refresh_On_Pref_Changed then
             Refresh (Self);
          end if;
