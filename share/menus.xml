@@ -183,7 +183,6 @@
          <separator id='editors'/>
          <menu label='Show last modification for lines'  action='vcs annotate'/>
          <menu label='Hide last modification for lines'  action='vcs remove annotate'/>
-         
       </menu>
 
       <menu label='_Project'>
