@@ -1416,6 +1416,9 @@ package body VCS2.Commits is
       Register_Action
         (Kernel, "vcs discard local changes",
          Command     => new Discard_Changes,
+         Description =>
+            -("Undo all local changes, and revert to the latest commit"
+              & " on the current branch"),
          Icon_Name   => "vcs-discard-changes-symbolic",
          Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
