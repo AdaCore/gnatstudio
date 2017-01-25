@@ -244,7 +244,7 @@ function buildDocumentationPage() {
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++) {
             var entity = entity_set.entities[eindex];
             var row = document.createElement('tr');
-            var cell = document.createElement('th');
+            var cell = document.createElement('td');
             var href = document.createElement('a');
 
             if (entity.href !== undefined) {
@@ -256,6 +256,13 @@ function buildDocumentationPage() {
 
             href.appendChild(document.createTextNode(entity.label));
             cell.appendChild(href);
+
+            if (entity.qualifier !== '')
+            {
+                cell.appendChild(
+                  document.createTextNode(' ' + entity.qualifier));
+            }
+
             row.appendChild(cell);
             cell = document.createElement('td');
             buildText(cell, entity.summary);

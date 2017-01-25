@@ -1049,6 +1049,11 @@ package body GNATdoc.Backend.HTML is
 
             Entity_Entry := Create_Object;
             Entity_Entry.Set_Field ("label", Get_Short_Name (E));
+            Entity_Entry.Set_Field
+              ("qualifier",
+               (if Is_Subprogram (E)
+                     and then Present (Get_Corresponding_Spec (E))
+                then "(body)" else ""));
             Entity_Entry.Set_Field ("line", LL.Get_Location (E).Line);
             Entity_Entry.Set_Field
               ("column", Integer (LL.Get_Location (E).Column));
