@@ -50,20 +50,30 @@ private package Memory_Usage_Views.Providers is
    procedure Free (Self : in out Provider_Task_Visitor);
    --  Called when the visitor is no longer needed.
 
-   procedure On_Memory_Regions_Fetched
-     (Self           : not null access Provider_Task_Visitor_Type;
-      Memory_Regions : Memory_Region_Description_Array);
-   --  Called when the memory regions has been fetched by the given memory
-   --  usage provider.
+   procedure On_Memory_Usage_Data_Fetched
+     (Self            : not null access Provider_Task_Visitor_Type;
+      Memory_Regions  : Memory_Region_Description_Array;
+      Memory_Sections : Memory_Section_Description_Array);
+   --  Called when all the memory usage data has been fetched by the given
+   --  memory usage provider.
 
    ----------------------------
    -- Overridable Operations --
    ----------------------------
 
-   procedure Async_Fetch_Memory_Regions
+   function Is_Enabled
+     (Self : not null access Memory_Usage_Provider_Type) return Boolean
+      is abstract;
+   --  Return True if the given memory usage provider is enabled and False
+   --  otherwise.
+   --
+   --  This is used to know whether we should query memory usage data from
+   --  this provider once an executable is built.
+
+   procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Memory_Usage_Provider_Type;
       Visitor : access Provider_Task_Visitor_Type'Class) is abstract;
-   --  Ask the given memory usage provider to fetch the memory regions
+   --  Ask the given memory usage provider to fetch the memory usage data
 
    ------------
    -- Module --

@@ -43,13 +43,15 @@ package body Memory_Usage_Views.Scripts is
 
    type Script_Memory_Usage_Provider_Type is
      new Memory_Usage_Provider_Type with record
-      Script  : Scripting_Language;
+      Script    : Scripting_Language;
       Instances : Memory_Usage_Provider_Proxy;
    end record;
    type Script_Memory_Usage_Provider is
      access all Script_Memory_Usage_Provider_Type'Class;
 
-   overriding procedure Async_Fetch_Memory_Regions
+   overriding function Is_Enabled
+     (Self : not null access Script_Memory_Usage_Provider_Type) return Boolean;
+   overriding procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
       Visitor : access Provider_Task_Visitor_Type'Class);
 
@@ -151,11 +153,32 @@ package body Memory_Usage_Views.Scripts is
       Data.Set_Nth_Arg (Nth, Inst);
    end Add_Visitor;
 
-   --------------------------------
-   -- Async_Fetch_Memory_Regions --
-   --------------------------------
+   ----------------
+   -- Is_Enabled --
+   ----------------
 
-   overriding procedure Async_Fetch_Memory_Regions
+   overriding function Is_Enabled
+     (Self : not null access Script_Memory_Usage_Provider_Type) return Boolean
+   is
+      Inst   : constant Class_Instance :=
+                 Create_Provider_Instance (Self.Script, Self);
+      Data   : Callback_Data'Class := Create (Self.Script, 0);
+      F      : constant Subprogram_Type := Get_Method (Inst, "is_enabled");
+      Result : Boolean;
+   begin
+      if F /= null then
+         Result := F.Execute (Data);
+      end if;
+      Free (Data);
+
+      return Result;
+   end Is_Enabled;
+
+   -----------------------------------
+   -- Async_Fetch_Memory_Usage_Data --
+   -----------------------------------
+
+   overriding procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
       Visitor : access Provider_Task_Visitor_Type'Class)
    is
@@ -168,9 +191,9 @@ package body Memory_Usage_Views.Scripts is
 
       Call_Method
         (Self,
-         Method => "async_fetch_memory_regions",
+         Method => "async_fetch_memory_usage_data",
          Data   => Data);
-   end Async_Fetch_Memory_Regions;
+   end Async_Fetch_Memory_Usage_Data;
 
    ------------------------------
    -- Create_Provider_Instance --
@@ -259,27 +282,48 @@ package body Memory_Usage_Views.Scripts is
 
       Prop := Provider_Task_Properties_Record (Prop_Inst.all);
 
-      if Command = "on_memory_regions_fetched" then
+      if Command = "on_memory_usage_data_fetched" then
          declare
-            List    : constant List_Instance'Class := Data.Nth_Arg (2);
-            Regions : Memory_Region_Description_Array
-              (1 .. List.Number_Of_Arguments);
+            Regions_List  : constant List_Instance'Class := Data.Nth_Arg (2);
+            Sections_List : constant List_Instance'Class := Data.Nth_Arg (3);
+            Regions       : Memory_Region_Description_Array
+              (1 .. Regions_List.Number_Of_Arguments);
+            Sections      : Memory_Section_Description_Array
+              (1 .. Sections_List.Number_Of_Arguments);
          begin
-            Trace (Me, "on_memory_regions_fetched has been called");
+            Trace (Me, "on_memory_usage_data_fetched has been called");
+
             for J in Regions'Range loop
                declare
-                  Current : constant List_Instance'Class := List.Nth_Arg (J);
+                  Current : constant List_Instance'Class :=
+                              Regions_List.Nth_Arg (J);
                begin
                   Regions (J) := Memory_Region_Description'
                     (Name            => Current.Nth_Arg (1),
-                     Total_Size      => Current.Nth_Arg (2),
-                     Used_Size       => Current.Nth_Arg (3),
-                     Percentage_Used => Current.Nth_Arg (4));
+                     Total_Size      => Null_Unbounded_String,
+                     Used_Size       => Null_Unbounded_String,
+                     Percentage_Used => 0.0,
+                     Origin          => Current.Nth_Arg (2),
+                     Length          => Current.Nth_Arg (3));
+               end;
+            end loop;
+
+            for J in Sections'Range loop
+               declare
+                  Current : constant List_Instance'Class :=
+                              Sections_List.Nth_Arg (J);
+               begin
+                  Sections (J) := Memory_Section_Description'
+                    (Name   => Current.Nth_Arg (1),
+                     Origin => Current.Nth_Arg (2),
+                     Length => Current.Nth_Arg (3));
                end;
             end loop;
 
             if Prop.Visitor /= null then
-               Prop.Visitor.On_Memory_Regions_Fetched (Regions);
+               Prop.Visitor.On_Memory_Usage_Data_Fetched
+                 (Memory_Regions  => Regions,
+                  Memory_Sections => Sections);
                Free (Prop.Visitor);
             end if;
          end;
@@ -309,8 +353,9 @@ package body Memory_Usage_Views.Scripts is
          Handler       => Static_Memory_Usage_Provider_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        ("on_memory_regions_fetched",
-         Params        => (2 => Param ("regions")),
+        ("on_memory_usage_data_fetched",
+         Params        => (2 => Param ("regions"),
+                           3 => Param ("sections")),
          Class         => Provider_Task_Visitor_Class,
          Handler       => Provider_Task_Visitor_Handler'Access);
    end Register_Scripts;

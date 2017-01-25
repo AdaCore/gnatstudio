@@ -27,16 +27,23 @@ class MemoryUsageProvider(GPS.MemoryUsageProvider):
 
         pass
 
-    def async_fetch_memory_regions(self, visitor):
+    def is_enabled(self):
         """
-        Fetch the memory regions of the last built executable.
+        Return True if the gievn memory usage provider is currently enabled,
+        False otherwise.
+        """
+
+    def async_fetch_memory_usage_data(self, visitor):
+        """
+        Fetch the memory usage data of the last built executable.
 
         Depending on the way to retrieve this data, this function may be
-        asynchronous: call `visitor.on_memory_regions_fetched` method
-        to notify that the operation ended.
+        asynchronous: calling the various primitives of the passed visitor
+        (e.g: `visitor.on_memory_regions_fetched`) to notify that some
+        specific data has been fetched and pass it.
 
         :param GPS.MemoryUsageProviderVisitor: the object used to report
-        when the operation has finished.
+        when specific operations have finished.
         """
 
         pass

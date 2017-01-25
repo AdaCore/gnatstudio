@@ -70,9 +70,11 @@ package body Memory_Usage_Views.Providers is
             Provider : constant Memory_Usage_Provider :=
                          Global_Data.Providers ("LD");
          begin
-            Provider.Async_Fetch_Memory_Regions
-              (Visitor => new Provider_Task_Visitor_Type'
-                 (Kernel => Kernel_Handle (Kernel)));
+            if Provider.Is_Enabled then
+               Provider.Async_Fetch_Memory_Usage_Data
+                 (Visitor => new Provider_Task_Visitor_Type'
+                    (Kernel => Kernel_Handle (Kernel)));
+            end if;
          end;
       end if;
    end Execute;
@@ -91,23 +93,20 @@ package body Memory_Usage_Views.Providers is
       end if;
    end Free;
 
-   -------------------------------
-   -- On_Memory_Regions_Fetched --
-   -------------------------------
+   ----------------------------------
+   -- On_Memory_Usage_Data_Fetched --
+   ----------------------------------
 
-   procedure On_Memory_Regions_Fetched
+   procedure On_Memory_Usage_Data_Fetched
      (Self           : not null access Provider_Task_Visitor_Type;
-      Memory_Regions : Memory_Region_Description_Array)
+      Memory_Regions  : Memory_Region_Description_Array;
+      Memory_Sections : Memory_Section_Description_Array)
    is
-      View : Memory_Usage_MDI_Views.View_Access;
-
+      pragma Unreferenced (Self, Memory_Regions, Memory_Sections);
    begin
-      --  ??? Notify the user that the view could not be refreshed
-      if Memory_Regions'Length /= 0 then
-         View := Memory_Usage_MDI_Views.Get_Or_Create_View (Self.Kernel);
-         View.Refresh (Memory_Regions);
-      end if;
-   end On_Memory_Regions_Fetched;
+      --  ??? refresh the new memory usage view once created
+      Trace (Me, "Refreshing the view");
+   end On_Memory_Usage_Data_Fetched;
 
    -----------------------
    -- Register_Provider --

@@ -1469,7 +1469,7 @@ Classes
 
 
 
-   .. automethod:: GPS.MemoryUsageProviderVisitor.on_memory_regions_fetched
+   .. automethod:: GPS.MemoryUsageProviderVisitor.on_memory_usage_data_fetched
 
 :class:`GPS.Menu`
 ^^^^^^^^^^^^^^^^^

@@ -7078,19 +7078,23 @@ class MemoryUsageProviderVisitor(object):
     the memory usage data needed by the Memory Usage View).
     """
 
-    def on_memory_regions_fetched(self, regions):
+    def on_memory_usage_data_fetched(self, regions, sections):
         """
         Report when a :class:`GPS.MemoryUsageProvider` finished to fetch all
-        the memory regions of the last built executable.
+        the memory usage data of the last built executable (i.e: memory regions
+        and memory sections).
 
         This method is called in
-        `GPS.MemoryUsageProvider.async_fetch_memory_regions`.
+        `GPS.MemoryUsageProvider.async_fetch_memory_usage_data`.
 
         Note that the given :class:`GPS.MemoryUsageProviderVisitor` instance
         is freed after calling this method.
 
-        :param str name: the name of the memory usage provider
-        :param construct: a function called when initializing a new provider
+        :param regions: a list of (name, origin, length) tuples describing
+            memory regions.
+
+        :param sections: a list of (name, origin, length) tuples describing
+            memory sections.
         """
         pass  # implemented in Ada
 

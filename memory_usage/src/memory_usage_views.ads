@@ -43,11 +43,14 @@ package Memory_Usage_Views is
    --  Type representing the memory usage view.
 
    type Memory_Region_Description is private;
-   --  Type used to store all the parsed information from the linker's output
-   --  regarding memory regions.
-
    type Memory_Region_Description_Array is
      array (Integer range <>) of Memory_Region_Description;
+   --  Type representing a memory region
+
+   type Memory_Section_Description is private;
+   type Memory_Section_Description_Array is
+     array (Integer range <>) of Memory_Section_Description;
+   --  Type representing a memory section
 
 private
 
@@ -56,10 +59,18 @@ private
       Total_Size      : Unbounded_String;
       Used_Size       : Unbounded_String;
       Percentage_Used : Float;
+      Origin          : Integer;
+      Length          : Integer;
    end record;
 
    package Memory_Region_Description_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Memory_Region_Description, "=");
+
+   type Memory_Section_Description is record
+      Name   : Unbounded_String;
+      Origin : Integer;
+      Length : Integer;
+   end record;
 
    type Memory_Usage_View_Record is new Generic_Views.View_Record with record
       Memory_Tree       : Gtk_Tree_View;
