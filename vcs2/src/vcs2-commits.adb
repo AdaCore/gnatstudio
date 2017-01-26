@@ -50,6 +50,7 @@ with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;    use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Gesture_Long_Press;      use Gtk.Gesture_Long_Press;
 with Gtk.Gesture_Multi_Press;     use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
@@ -130,6 +131,7 @@ package body VCS2.Commits is
       --  The nodes for the categories (if they are displayed)
 
       Multipress  : Gtk_Gesture_Multi_Press;
+      Longpress   : Gtk_Gesture_Long_Press;
 
       Config      : Commit_View_Config;
       Commit      : Gtk_Text_View;
@@ -194,7 +196,10 @@ package body VCS2.Commits is
      (Self    : access Glib.Object.GObject_Record'Class;
       N_Press : Gint;
       X, Y    : Gdouble);
-   --  Called every time a row is clicked
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble);
+   --  Called every time a row is clicked with specific gesture
 
    type On_All_Files_Available_In_Cache is new Task_Visitor with
       record
@@ -884,6 +889,36 @@ package body VCS2.Commits is
       return Commands.Success;
    end Execute;
 
+   ------------------
+   -- On_Longpress --
+   ------------------
+
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble)
+   is
+      View           : constant Commit_View := Commit_View (Self);
+      Filter_Path    : Gtk_Tree_Path;
+      Col            : Gtk_Tree_View_Column;
+      Success        : Boolean;
+      Cell_X, Cell_Y : Gint;
+   begin
+      View.Tree.Get_Path_At_Pos
+        (Gint (X), Gint (Y), Filter_Path,
+         Col, Cell_X, Cell_Y, Success);
+      if Success then
+         --  Select the row
+         View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
+
+         Success := Execute_Action
+            (View.Kernel,
+             Action => "diff against head for file");
+
+         Path_Free (Filter_Path);
+         View.Longpress.Set_State (Event_Sequence_Claimed);
+      end if;
+   end On_Longpress;
+
    -------------------
    -- On_Multipress --
    -------------------
@@ -1026,6 +1061,10 @@ package body VCS2.Commits is
       Gtk_New (Self.Multipress, Widget => Self.Tree);
       Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
       Self.Multipress.Watch (Self);
+
+      Gtk_New (Self.Longpress, Widget => Self.Tree);
+      Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
+      Self.Longpress.Watch (Self);
 
       return Gtk_Widget (Self.Tree);
    end Initialize;
