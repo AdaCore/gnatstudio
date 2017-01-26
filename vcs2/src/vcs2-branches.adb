@@ -172,7 +172,7 @@ package body VCS2.Branches is
 
    type Branches_Visitor is new Task_Visitor with record
       Kernel    : Kernel_Handle;
-      Detached  : Branches_Expansion.Detached_Model;
+      Expansion : Branches_Expansion.Expansion_Status;
    end record;
    overriding procedure On_Branches
      (Self       : not null access Branches_Visitor;
@@ -481,6 +481,13 @@ package body VCS2.Branches is
          for B of Branches loop
             Create_Node (View, Cat, Iconname, B, Can_Rename);
          end loop;
+
+         --  Restore the expansion immediately, so that newly inserted nodes
+         --  have their original expansion. Do not force a collapse though,
+         --  in case the user has already started manipulating the view.
+         Branches_Expansion.Set_Expansion_Status
+            (Branches_Tree (View.Tree), Self.Expansion,
+             Collapse_All_First => False);
       end if;
    end On_Branches;
 
@@ -553,13 +560,20 @@ package body VCS2.Branches is
          Visitor := new Branches_Visitor'
            (Task_Visitor with
             Kernel      => Self.Kernel,
-            Detached    => Branches_Expansion.Detach_Model_From_View
-              (Branches_Tree (Self.Tree)));
+            Expansion   => <>);
+
+         --  Save expansion, but do not detach from view, so that the view is
+         --  filled as information is discovered (querying data from Gerrit,
+         --  for instance, might take a while).
+         Branches_Expansion.Get_Expansion_Status
+            (Branches_Tree (Self.Tree),
+             Visitor.Expansion,
+             Save_Scrolling => False);
 
          --  By default, BRANCHES is expanded
          if Self.Tree.Model.N_Children (Null_Iter) = 0 then
             Branches_Expansion.Set_Expanded
-              (Visitor.Detached, Category_Id_Prefix & "BRANCHES", True);
+              (Visitor.Expansion, Category_Id_Prefix & "BRANCHES", True);
          end if;
 
          Clear (Self);
