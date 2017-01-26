@@ -143,7 +143,8 @@ package VCS2.Engines is
    --  Called when the plugin reports that the action has succeeded.
 
    type Commit_Flags is mod Integer'Last;
-   Commit_Unpushed : constant Commit_Flags := 2 ** 1;
+   Commit_Unpushed    : constant Commit_Flags := 2 ** 1;
+   Commit_Uncommitted : constant Commit_Flags := 2 ** 2;
 
    type Name_Kind is (Name_Head, Name_Local, Name_Remote, Name_Tag);
    type Name_Description is record

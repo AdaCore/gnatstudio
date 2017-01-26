@@ -459,7 +459,12 @@ package body VCS2.History is
                  Radius => Radius,
                  Angle1 => 0.0,
                  Angle2 => 6.2831853072);
-            Set_Color (Data.Col);
+
+            if (Data.Flags and Commit_Uncommitted) /= 0 then
+               Set_Source_Color (Cr, (0.5, 0.5, 0.5, 1.0));
+            else
+               Set_Color (Data.Col);
+            end if;
 
             if (Data.Flags and Commit_Unpushed) /= 0 then
                Fill_Preserve (Cr);
@@ -1394,11 +1399,18 @@ package body VCS2.History is
                end loop;
             end if;
 
+            if (N.Flags and Commit_Uncommitted) /= 0 then
+               Append (Tmp, "<span foreground='#555'>");
+            end if;
+
             if Pref_Show_ID then
                Append (Tmp, N.ID.all & " " & Escape_Text (N.Subject.all));
-
             else
                Append (Tmp, Escape_Text (N.Subject.all));
+            end if;
+
+            if (N.Flags and Commit_Uncommitted) /= 0 then
+               Append (Tmp, "</span>");
             end if;
 
             Init_Set_String (V (Column_Subject), To_String (Tmp));

@@ -72,7 +72,8 @@ class _Commit(list):
         TAG=3)      # a tag exists for this commit
 
     Flags = gps_utils.enum(
-        UNPUSHED=2**1)  # an unpushed local commit
+        UNPUSHED=2**1,     # an unpushed local commit
+        UNCOMMITTED=2**2)  # uncommitted local changes
 
     def __init__(self, id, author, date, subject, parents, names=None,
                  flags=0):

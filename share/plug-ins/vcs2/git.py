@@ -17,6 +17,9 @@ CAT_SUBMODULES = 'SUBMODULES'
 
 CAN_RENAME = True
 
+LOCAL_CHANGES_ID = 'localchanges'
+# A dummy id to represent local changes in the History view
+
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
 class Git(core.VCS):
@@ -205,18 +208,36 @@ class Git(core.VCS):
         if status == 0:
             GPS.MDI.information_popup('Pushed', 'vcs-cloud-symbolic')
 
-    @core.run_in_background
-    def async_fetch_history(self, visitor, filter):
-        # First find out which local commits have not been pushed yet
+    def _unpushed_local_changes(self):
+        """
+        Compute the list of changes that either haven't been pushed
+        to the remote yet, or haven't been pulled from the remote.
 
-        p = self._git(['cherry'])
+        :returntype set: will contain the sha1 of the commits
+        """
         unpushed = set()
+        p = self._git(['cherry'])
         while True:
             line = yield p.wait_line()
             if line is None:
                 break
-            if line.startswith('+ '):
-                unpushed.add(line[2:])
+            unpushed.add(line[2:])
+        yield unpushed
+
+    def _has_local_changes(self):
+        """
+        Check whether there is any uncomitted change.
+        """
+        p = self._git(['diff-index', '--quiet', 'HEAD', '--'])
+        status, _ = yield p.wait_until_terminate()
+        yield status != 0
+
+    @core.run_in_background
+    def async_fetch_history(self, visitor, filter):
+        # Compute, in parallel, needed pieces of information
+        (unpushed, has_local) = yield join(
+            self._unpushed_local_changes(),
+            self._has_local_changes())
 
         # Then fetch the history
 
@@ -262,6 +283,8 @@ class Git(core.VCS):
             parents = parents.split()
             branches = None if not branches else branches.split(',')
 
+            has_head = None
+
             flags = 0
             if id in unpushed:
                 flags |= GPS.VCS2.Commit.Flags.UNPUSHED
@@ -277,6 +300,7 @@ class Git(core.VCS):
                     if b.startswith('origin/'):
                         f = (b, GPS.VCS2.Commit.Kind.REMOTE)
                     elif b.startswith("HEAD"):
+                        has_head = id
                         f = (b, GPS.VCS2.Commit.Kind.HEAD)
                     elif b.startswith("tag: "):
                         f = (b[5:], GPS.VCS2.Commit.Kind.TAG)
@@ -284,6 +308,15 @@ class Git(core.VCS):
                         f = (b, GPS.VCS2.Commit.Kind.LOCAL)
 
                     branch_descr.append(f)
+
+            # Append a dummy entry if we have local changes, and
+            # we have the HEAD
+            if has_head is not None and has_local:
+                result.insert(0, GPS.VCS2.Commit(
+                    LOCAL_CHANGES_ID, '', '', '<uncommitted changes>',
+                    parents=[has_head],
+                    flags=GPS.VCS2.Commit.Flags.UNCOMMITTED |
+                    GPS.VCS2.Commit.Flags.UNPUSHED))
 
             current = GPS.VCS2.Commit(
                 id, author, date, subject, parents, branch_descr,
@@ -310,6 +343,27 @@ class Git(core.VCS):
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
+        if LOCAL_CHANGES_ID in ids:
+            # If there are unstaged changes, show those, otherwise
+            # show the staged changes
+
+            p = self._git(['diff', '--exit-code'])
+            status, output = yield p.wait_until_terminate()
+            if status != 0:
+                visitor.set_details(
+                    LOCAL_CHANGES_ID,
+                    'Unstaged local changes',
+                    output)
+
+            p = self._git(['diff', '--cached', '--exit-code'])
+            status, output = yield p.wait_until_terminate()
+            if status != 0:
+                visitor.set_details(
+                    LOCAL_CHANGES_ID,
+                    'Staged local changes',
+                    output)
+            return
+
         # If there is a single commit, show the full patch (use
         # --stat to also show the list of files).
         # Otherwise, show the list of modified files
