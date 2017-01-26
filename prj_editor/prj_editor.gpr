@@ -29,9 +29,7 @@ project Prj_Editor is
 
    package Compiler renames Shared.Compiler;
 
-   package Binder is
-      for Switches ("Ada") use ("-E");
-   end Binder;
+   package Binder renames Shared.Binder;
 
    package Linker is
       for Switches ("Ada") use ("-shared-libgcc");

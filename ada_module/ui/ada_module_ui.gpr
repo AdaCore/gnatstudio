@@ -13,9 +13,7 @@ project Ada_Module_UI is
 
    package Compiler renames Shared.Compiler;
 
-   package Binder is
-      for Switches ("Ada") use ("-E");
-   end Binder;
+   package Binder renames Shared.Binder;
 
    package Linker renames Shared.Linker;
 

@@ -15,8 +15,6 @@ project GVD is
 
    package Compiler renames Shared.Compiler;
 
-   package Binder is
-      for Switches ("Ada") use ("-E");
-   end Binder;
+   package Binder renames Shared.Binder;
 
 end GVD;
