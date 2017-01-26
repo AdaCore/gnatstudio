@@ -1135,3 +1135,39 @@ functions, which would, for example, query the value of several variables
 and pretty-print the result.  You can call any of these complex Python
 functions from the debugger console or have it called automatically every
 time the debugger stops via the :command:`graph display` command.
+
+Command line interface
+======================
+
+GPS is still running the standard gdb underneath. So any command that you
+might be used to run in gdb can also be executed from the :guilabel:`Debugger
+Console`.
+
+.. index:: .gdbinit
+
+In particular, gdb has a feature where it reads initialization commands from
+a `.gdbinit` configuration file. Here are some pieces of information if you
+would like to use such files:
+
+  - When :command:`gdb` starts, the current directory (which is where you
+    should put your `.gdbinit` file is the environment's current directory.
+    GPS doesn't override it. In general, this will also be the directory
+    from which you started GPS itself. You can type::
+
+        (gdb) pwd
+
+    in the debugger console to find out exactly what the directory is.
+
+  - :command:`gdb` always loads the global configuration `.gdbinit` in
+    your home directory. It can also load a `.gdbinit` from the current
+    directory, but this feature is disabled by default for security reasons
+    to avoid malicious scripts.
+
+    To enable the local `.gdbinit`, you will need to create the global one
+    as well, with a contents similar to::
+
+       add-auto-load-safe-path  <your directory>
+       set auto-load local-gdbinit
+
+    If you feel safe, you can replace "<your directory>" with "/" to always
+    allow it on your system.
