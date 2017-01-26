@@ -57,7 +57,7 @@ project Shared is
    end Compiler;
 
    package Binder is
-      for Switches ("Ada") use ("-E");
+      for Switches ("Ada") use ("-E", "-shared");
    end Binder;
 
    Clang_Libs := (@CLANG_LIBS_GPR@);
