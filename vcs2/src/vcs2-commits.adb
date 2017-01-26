@@ -364,7 +364,9 @@ package body VCS2.Commits is
             Self.Set_Tip_Area (Area);
             Gtk_New
               (Label,
-               Get_Tooltip_For_File
+               -("Click on the checkbox to stage the file, so that it is part"
+                 & " of the next commit")
+               & Get_Tooltip_For_File
                  (Kernel       => Self.View.Kernel,
                   File         => File));
             Label.Set_Use_Markup (True);
@@ -1410,7 +1412,7 @@ package body VCS2.Commits is
 
       Group_By_Category := Kernel.Get_Preferences.Create_Invisible_Pref
         ("commit-view-group-by-category",
-         Default  => False,
+         Default  => True,
          Label    => -"Group by category (staged, modified, untracked)");
 
       Hide_Other_VCS := Kernel.Get_Preferences.Create_Invisible_Pref
