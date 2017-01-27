@@ -820,6 +820,7 @@ package body Generic_Views is
    begin
       if V.Config_Menu /= null then
          V.Config_Menu.Destroy;
+         V.Config_Menu := null;
       end if;
    end On_Destroy_View;
 
@@ -830,8 +831,10 @@ package body Generic_Views is
    procedure On_Menu_Deactivate (View : access GObject_Record'Class) is
       V  : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
-      V.Config.Set_Active (False);
-      V.Config_Menu := null;
+      if not V.In_Destruction then
+         V.Config.Set_Active (False);
+         V.Config_Menu := null;
+      end if;
    end On_Menu_Deactivate;
 
    ------------------
