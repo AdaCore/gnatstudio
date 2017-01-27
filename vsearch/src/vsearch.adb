@@ -173,6 +173,10 @@ package body Vsearch is
 
       Focused : Gtk_Widget;
       --  The last widget which has had the focus
+
+      Pattern_Changed_Once : Boolean := False;
+      --  Set to True if the pattern has changed once. This is used to know
+      --  whether incremental mode is valid after this.
    end record;
 
    overriding procedure Create_Toolbar
@@ -548,10 +552,6 @@ package body Vsearch is
 
    procedure On_Replace_All (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Replace_All" is clicked.
-
-   procedure On_Pattern_Combo_Changed
-     (Object : access Gtk_Widget_Record'Class);
-   --  Called when the pattern combo has changed.
 
    procedure On_Context_Combo_Changed
      (Object : access Gtk_Widget_Record'Class);
@@ -1306,27 +1306,6 @@ package body Vsearch is
    end Create_Replace;
 
    ------------------------------
-   -- On_Pattern_Combo_Changed --
-   ------------------------------
-
-   procedure On_Pattern_Combo_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
-   begin
-      if not Vsearch_Module_Id.Locked
-        and then Is_In_Incremental_Mode
-      then
-         Reset_Interactive_Context (Vsearch);
-         Internal_Search
-           (Vsearch,
-            All_Occurrences => False,
-            Is_Incremental  => True,
-            Replace         => False);
-      end if;
-   end On_Pattern_Combo_Changed;
-
-   ------------------------------
    -- On_Context_Combo_Changed --
    ------------------------------
 
@@ -2053,9 +2032,6 @@ package body Vsearch is
       Self.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
       Layout := +Self.Pattern_Combo;
 
-      Widget_Callback.Object_Connect
-        (Self.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Pattern_Combo_Changed'Access, Self);
       Self.Pattern_Combo.Set_Row_Separator_Func (Is_Separator_Row_Func'Access);
       Self.Pattern_Combo.Get_Child.On_Button_Press_Event
         (On_Button_Press'Access, After => False);
@@ -2210,7 +2186,10 @@ package body Vsearch is
          On_Replace_Combo_Changed_After'Access, Self, After => True);
 
       --  Initialize the widgets that may have saved items in history
+
+      Vsearch_Module_Id.Locked := True;
       Initialize_From_History;
+      Vsearch_Module_Id.Locked := False;
 
       --  Connect the hooks
       Search_Reset_Hook.Add (new Set_First_Next_Mode_Cb);
@@ -2261,8 +2240,12 @@ package body Vsearch is
         Find_Module
           (Vsearch_Module_Id.Kernel,
            Label => To_String (Vsearch_Module_Id.Context));
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Vsearch_Module_Id.Get_Kernel);
    begin
       return (Module /= null
+              and then View /= null
+              and then View.Pattern_Changed_Once
               and then Module.Is_Option_Supported (Supports_Incremental)
               and then Incremental_Search.Get_Pref);
    end Is_In_Incremental_Mode;
@@ -3446,6 +3429,18 @@ package body Vsearch is
    begin
       Vsearch_Module_Id.Pattern := To_Unbounded_String
         (Vsearch.Pattern_Combo.Get_Active_Text);
+      Vsearch.Pattern_Changed_Once := True;
+
+      if not Vsearch_Module_Id.Locked
+        and then Is_In_Incremental_Mode
+      then
+         Reset_Interactive_Context (Vsearch);
+         Internal_Search
+           (Vsearch,
+            All_Occurrences => False,
+            Is_Incremental  => True,
+            Replace         => False);
+      end if;
    end On_Pattern_Combo_Changed_After;
 
    ------------------------------------
