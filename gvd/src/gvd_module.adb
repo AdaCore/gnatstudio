@@ -67,6 +67,7 @@ with Histories;                 use Histories;
 with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
 with GPS.Dialogs;               use GPS.Dialogs;
+with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
@@ -941,9 +942,12 @@ package body GVD_Module is
          if S /= No_File then
             Set_Executable (Process.Debugger, S, Mode => Hidden);
 
-            --  Load the excutable to the remote target if we are connected
+            --  Load the executable to the remote target if we are connected
             --  remotely.
-            Load_Current_Executable (Process.Debugger, Mode => Visible);
+            Load_Executable
+              (Process.Debugger,
+               Executable => S.To_Remote (Get_Nickname (Debug_Server)),
+               Mode       => Visible);
          end if;
 
       exception

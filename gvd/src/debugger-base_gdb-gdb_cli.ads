@@ -141,9 +141,10 @@ package Debugger.Base_Gdb.Gdb_CLI is
       Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Load_Current_Executable
-      (Debugger : access Gdb_Debugger;
-       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Load_Executable
+     (Debugger   : access Gdb_Debugger;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Run
      (Debugger  : access Gdb_Debugger;

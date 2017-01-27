@@ -1109,10 +1109,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Internal);
       end if;
 
-      if Debugger.Executable = GNATCOLL.VFS.No_File then
-         Debugger.Display_Prompt;
-      end if;
-
       Debugger.Initializing := False;
 
    exception
@@ -1168,10 +1164,54 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Force    : Boolean := False;
       Mode     : Invisible_Command := Hidden)
    is
-      pragma Unreferenced (Force);
+      Process : constant Visual_Debugger := Convert (Debugger);
+      Cmd     : constant String := "-target-select " & Protocol & " " & Target;
+      Timeout : constant := 2_000;
+      Success : Boolean;
    begin
-      Debugger.Send ("target " & Protocol & " " & Target, Mode => Mode);
-      Debugger.Set_VxWorks_Version (Force => True);
+      if Debugger.Target_Connected then
+         if Force then
+            Debugger.Interrupt;
+         else
+            return;
+         end if;
+      end if;
+
+      --  Send the command to the debugger in a non-blocking way and check if
+      --  it succeed.
+      Send (Debugger,
+            Cmd             => Cmd,
+            Wait_For_Prompt => False,
+            Mode            => Mode);
+      Success := Wait_Prompt (Debugger, Timeout);
+
+      --  Mark the command as processed, even if did not succeed in the
+      --  specified timeout so that we can continue sending other commands.
+      Set_Command_In_Process (Get_Process (Debugger), False);
+      Free (Process.Current_Command);
+
+      if Success then
+         if Process /= null then
+            Output_Text
+              (Process, Protocol & " debugging using " & Target & ASCII.LF);
+         end if;
+
+         if Protocol = "remote" then
+            Set_Is_Started (Debugger, True);
+         end if;
+
+         Debugger.Set_VxWorks_Version;
+      else
+         Debugger.Interrupt;
+
+         if Process /= null then
+            Output_Text (Process, "Can't connect to the target using "
+                         & Protocol & " protocol on " & Target & ASCII.LF);
+         end if;
+      end if;
+
+      Debugger.Display_Prompt;
+      Debugger.Target_Connected := Success;
    end Connect_To_Target;
 
    ----------------------------
@@ -1212,30 +1252,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    procedure Connect_To_Target_If_Needed (Debugger : access Gdb_MI_Debugger) is
    begin
       if Debugger.Remote_Target /= null
+        and then Debugger.Remote_Protocol /= null
         and then not Debugger.Target_Connected
       then
-         declare
-            Process : constant Visual_Debugger := Convert (Debugger);
-            Cmd : constant String :=
-              "target " & Debugger.Remote_Protocol.all & " "
-              & Debugger.Remote_Target.all;
-         begin
-            if Process = null then
-               Debugger.Send (Cmd, Mode => Internal);
-
-            else
-               Process.Output_Text
-                 (Debugger.Send_And_Get_Clean_Output
-                    (Cmd, Mode => Internal) & ASCII.LF);
-            end if;
-
-            if Debugger.Remote_Protocol.all = "remote" then
-               Debugger.Set_Is_Started (True);
-            end if;
-         end;
-
-         Debugger.Set_VxWorks_Version;
-         Debugger.Target_Connected := True;
+         Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
+                                     Protocol => Debugger.Get_Remote_Protocol,
+                                     Mode     => Internal);
       end if;
    end Connect_To_Target_If_Needed;
 
@@ -1319,14 +1341,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  Connect to the remote target if needed
 
       Connect_To_Target_If_Needed (Debugger);
-
-      --  Send the "load" command if needed
-
-      if Debugger.Remote_Mode /= Native then
-         Launch_Command_And_Output ("load");
-      end if;
-
-      Debugger.Display_Prompt;
 
       --  If we are in Cross mode (ie, with the "remote" protocol), the call
       --  to "target" has the side effect of starting the executable.
@@ -1426,18 +1440,38 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
    end Load_Core_File;
 
-   -----------------------------
-   -- Load_Current_Executable --
-   -----------------------------
+   ---------------------
+   -- Load_Executable --
+   ---------------------
 
-   overriding procedure Load_Current_Executable
-      (Debugger : access Gdb_MI_Debugger;
-       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   overriding procedure Load_Executable
+     (Debugger   : access Gdb_MI_Debugger;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       if Debugger.Is_Connected_To_Target then
-         Debugger.Send ("-target-download", Mode => Mode);
+
+         --  The GDB mi '-target-download' command does not allow to specify
+         --  a module name: send directly the GDB console 'load' command
+         --  instead.
+         if Executable /= GNATCOLL.VFS.No_File then
+            Send
+              (Debugger,
+               "-interpreter-exec console ""load \"""
+               & (+Executable.Unix_Style_Full_Name) & "\""""",
+               Mode => Mode);
+         else
+            Send
+              (Debugger,
+               "-interpreter-exec console ""load""",
+               Mode => Mode);
+         end if;
+
+         if Mode in Visible_Command then
+            Wait_User_Command (Debugger);
+         end if;
       end if;
-   end Load_Current_Executable;
+   end Load_Executable;
 
    -----------------
    -- Add_Symbols --

@@ -138,9 +138,10 @@ package Debugger.Base_Gdb.Gdb_MI is
       Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Load_Current_Executable
-      (Debugger : access Gdb_MI_Debugger;
-       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Load_Executable
+     (Debugger   : access Gdb_MI_Debugger;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Add_Symbols
      (Debugger : access Gdb_MI_Debugger;

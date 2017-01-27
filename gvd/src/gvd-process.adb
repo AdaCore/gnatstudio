@@ -1077,7 +1077,9 @@ package body GVD.Process is
       --  When True, Load the executable on the target, if any
 
       if Load_Executable then
-         Load_Current_Executable (Process.Debugger, Mode => Visible);
+         Process.Debugger.Load_Executable
+           (Executable => Executable.To_Remote (Get_Nickname (Debug_Server)),
+            Mode       => Visible);
       end if;
 
       --  Force the creation of the project if needed

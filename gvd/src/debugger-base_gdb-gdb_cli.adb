@@ -1163,24 +1163,30 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
    end Add_Symbols;
 
-   -----------------------------
-   -- Load_Current_Executable --
-   -----------------------------
+   ---------------------
+   -- Load_Executable --
+   ---------------------
 
-   overriding procedure Load_Current_Executable
-      (Debugger : access Gdb_Debugger;
-       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   overriding procedure Load_Executable
+     (Debugger   : access Gdb_Debugger;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      if Debugger.Is_Connected_To_Target
-        and then Debugger.Executable /= GNATCOLL.VFS.No_File
-      then
-         Send (Debugger, "load", Mode => Mode);
+      if Debugger.Is_Connected_To_Target then
+
+         if Executable /= GNATCOLL.VFS.No_File then
+            Send
+              (Debugger, "load """ & (+Executable.Unix_Style_Full_Name) & '"',
+               Mode => Mode);
+         else
+            Send (Debugger, "load", Mode => Mode);
+         end if;
 
          if Mode in Visible_Command then
             Wait_User_Command (Debugger);
          end if;
       end if;
-   end Load_Current_Executable;
+   end Load_Executable;
 
    --------------------
    -- Attach_Process --
