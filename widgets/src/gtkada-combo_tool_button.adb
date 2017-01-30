@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Numerics;
-with System;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Cairo;                    use Cairo;
+with Glib.Convert;             use Glib.Convert;
 with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
 with Gdk.Device;               use Gdk.Device;
@@ -34,6 +34,7 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
+with System;
 
 package body Gtkada.Combo_Tool_Button is
 
@@ -50,26 +51,10 @@ package body Gtkada.Combo_Tool_Button is
    ---------------
 
    type Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Icon_Name  : Unbounded_String;
       Short_Name : Unbounded_String;
-      Label      : Gtk_Label;
       Data       : User_Data;
    end record;
    type Menu_Item is access all Menu_Item_Record'Class;
-
-   procedure Gtk_New
-     (Item       : out Menu_Item;
-      Label      : String;
-      Icon_Name  : String;
-      Short_Name : String;
-      Data       : User_Data);
-
-   procedure Set_Highlight
-     (Item  : access Menu_Item_Record'Class;
-      State : Boolean);
-
-   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
-   --  Called when the tool_button is destroyed
 
    --------------
    -- Handlers --
@@ -101,10 +86,6 @@ package body Gtkada.Combo_Tool_Button is
      (Button : access GObject_Record'Class;
       Event  : Gdk_Event_Button) return Boolean;
 
-   procedure Menu_Detacher
-     (Attach_Widget : System.Address; Menu : System.Address);
-   pragma Convention (C, Menu_Detacher);
-
    procedure Menu_Position
      (Menu    : not null access Gtk_Menu_Record'Class;
       X       : out Gint;
@@ -116,9 +97,11 @@ package body Gtkada.Combo_Tool_Button is
      (Item   : access Menu_Item_Record'Class;
       Widget : Gtkada_Combo_Tool_Button);
 
+   procedure Popup
+     (Self : not null access Gtkada_Combo_Tool_Button_Record'Class);
    procedure Popdown
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class);
-   --  Hide the popup menu
+   --  Hide or Show the popup menu
 
    function On_Draw
      (Self : access GObject_Record'Class;
@@ -128,6 +111,10 @@ package body Gtkada.Combo_Tool_Button is
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
       return Gtk_Widget;
    --  Return the internal button widget used by a GtkToolButton
+
+   procedure Menu_Detacher
+     (Attach_Widget : System.Address; Menu : System.Address);
+   pragma Convention (C, Menu_Detacher);
 
    ----------------
    -- Get_Button --
@@ -147,59 +134,101 @@ package body Gtkada.Combo_Tool_Button is
    procedure Popdown
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class) is
    begin
-      if Self.Menu /= null and then Self.Menu.Get_Visible then
+      if Self.Menu /= null then
          Self.Menu.Deactivate;
+         Self.Menu := null;
       end if;
    end Popdown;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   -----------
+   -- Popup --
+   -----------
 
-   procedure Gtk_New
-     (Item       : out Menu_Item;
-      Label      : String;
-      Icon_Name  : String;
-      Short_Name : String;
-      Data       : User_Data)
+   procedure Popup
+     (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
    is
-      Icon : Gtk_Image;
-      Hbox : Gtk_Hbox;
+      M_Item, Active : Menu_Item;
+      Label  : Gtk_Label;
+      Icon   : Gtk_Image;
+      Hbox   : Gtk_Hbox;
    begin
-      Item := new Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Item);
+      if Self.Menu = null then
+         Gtk_New (Self.Menu);
 
-      Item.Data     := Data;
-      Item.Icon_Name := To_Unbounded_String (Icon_Name);
-      Item.Short_Name := To_Unbounded_String (Short_Name);
+         --  Destroy the menu when Self is destroyed
+         Self.Menu.Attach_To_Widget (Self, Menu_Detacher'Access);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
-      Item.Add (Hbox);
+         --  This is necessary because the menu gets a grab, and on OSX we
+         --  cannot select the current item from the menu (on a long click)
+         --  because the Enter/Leave events have not been propagated correctly.
+         Self.Menu.On_Button_Release_Event
+           (On_Menu_Button_Release'Access, Self);
 
-      Gtk_New_From_Icon_Name (Icon, Icon_Name, Icon_Size_Menu);
-      Hbox.Pack_Start (Icon, False, False, 0);
+         --  Fill the menu
 
-      Gtk_New (Item.Label, Label);
-      Item.Label.Set_Alignment (0.0, 0.5);
-      Item.Label.Set_Use_Markup (True);
-      Hbox.Pack_Start (Item.Label, True, True, 0);
-      Show_All (Item);
-   end Gtk_New;
+         for Item of Self.Items loop
+            M_Item := new Menu_Item_Record;
+            M_Item.Data       := Item.Data;
+            M_Item.Short_Name := Item.Short_Name;
+            Gtk.Menu_Item.Initialize (M_Item);
 
-   -------------------
-   -- Set_Highlight --
-   -------------------
+            Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
+            M_Item.Add (Hbox);
 
-   procedure Set_Highlight
-     (Item  : access Menu_Item_Record'Class;
-      State : Boolean) is
-   begin
-      if State then
-         Item.Label.Set_Label ("<b>" & Item.Label.Get_Text & "</b>");
-      else
-         Item.Label.Set_Label (Item.Label.Get_Text);
+            if Item.Icon_Name /= "" then
+               Gtk_New_From_Icon_Name
+                 (Icon, To_String (Item.Icon_Name), Icon_Size_Menu);
+               Hbox.Pack_Start (Icon, False, False, 0);
+            end if;
+
+            if Item.Full_Name = Self.Selected then
+               Gtk_New
+                 (Label,
+                  "<b>" & Escape_Text (To_String (Item.Full_Name)) & "</b>");
+               Label.Set_Use_Markup (True);
+               Active := M_Item;
+            else
+               Gtk_New (Label, To_String (Item.Full_Name));
+            end if;
+
+            Label.Set_Alignment (0.0, 0.5);
+            Hbox.Pack_Start (Label, True, True, 0);
+
+            Self.Menu.Add (M_Item);
+
+            Add_Watch
+              (Items_Callback.Connect
+                 (M_Item, Gtk.Menu_Item.Signal_Activate,
+                  Items_Callback.To_Marshaller
+                    (On_Menu_Item_Activated'Access),
+                  Gtkada_Combo_Tool_Button (Self)),
+               Self);
+         end loop;
+
+         Self.Menu.Show_All;
+
+         --  Show the menu on screen
+
+         if Self.Popup_Timeout /= No_Source_Id then
+            Remove (Self.Popup_Timeout);
+            Self.Popup_Timeout := No_Source_Id;
+         end if;
+
+         Menu_Popup.Popup_For_Device
+           (Self.Menu,
+            Device            => Self.Popup_Device,
+            Parent_Menu_Shell => null,
+            Parent_Menu_Item  => null,
+            Func              => Menu_Position'Access,
+            Data              => Self,
+            Button            => 1,
+            Activate_Time     => Self.Popup_Time);
+
+         if Active /= null then
+            Self.Menu.Select_Item (Active);
+         end if;
       end if;
-   end Set_Highlight;
+   end Popup;
 
    -------------
    -- On_Draw --
@@ -250,14 +279,9 @@ package body Gtkada.Combo_Tool_Button is
       B.Popup_Device := Gdk_Device (Get_User_Data (Event.Device, Stub));
       Ref (B.Popup_Device);
 
-      if Event.Button = 1 then
-         if B.Popup_Timeout /= No_Source_Id then
-            Remove (B.Popup_Timeout);
-         end if;
-         B.Popup_Timeout := Button_Sources.Timeout_Add
-           (300, On_Long_Click'Access, B);
-
-      elsif Event.Button = 3 then
+      if Event.Button = 3
+        or else (Event.Button = 1 and then B.Click_Pops_Up)
+      then
          --  Immediately popup the dialog.
          --  This is a workaround for a OSX-specific bug in gtk+ 3.8.2: if we
          --  popup the dialog later, there will be not "current event" at that
@@ -271,6 +295,14 @@ package body Gtkada.Combo_Tool_Button is
          --  popup we can properly select any of the items.
 
          Tmp := On_Long_Click (B);
+         return True;
+
+      elsif Event.Button = 1 then
+         if B.Popup_Timeout /= No_Source_Id then
+            Remove (B.Popup_Timeout);
+         end if;
+         B.Popup_Timeout := Button_Sources.Timeout_Add
+           (300, On_Long_Click'Access, B);
       end if;
       return False;
    end On_Button_Press;
@@ -291,7 +323,6 @@ package body Gtkada.Combo_Tool_Button is
       if B.Popup_Timeout /= No_Source_Id then
          Remove (B.Popup_Timeout);
          B.Popup_Timeout := No_Source_Id;
-         --  Widget_Callback.Emit_By_Name (B, Signal_Clicked);
 
       else
          --  We already performed the long click, so don't do the default
@@ -344,22 +375,7 @@ package body Gtkada.Combo_Tool_Button is
 
    function On_Long_Click (Self : Gtkada_Combo_Tool_Button) return Boolean is
    begin
-      if Self.Popup_Timeout /= No_Source_Id then
-         Remove (Self.Popup_Timeout);
-         Self.Popup_Timeout := No_Source_Id;
-      end if;
-
-      Menu_Popup.Popup_For_Device
-        (Self.Menu,
-         Device            => Self.Popup_Device,
-         Parent_Menu_Shell => null,
-         Parent_Menu_Item  => null,
-         Func              => Menu_Position'Access,
-         Data              => Self,
-         Button            => 1,
-         Activate_Time     => Self.Popup_Time);
-
-      Self.Menu.Select_Item (Self.Menu.Get_Active);
+      Popup (Self);
       return False;
    end On_Long_Click;
 
@@ -374,11 +390,9 @@ package body Gtkada.Combo_Tool_Button is
       Stub : Gtkada_Combo_Tool_Button_Record;
       pragma Unmodified (Stub);
       Self : constant Gtkada_Combo_Tool_Button :=
-         Gtkada_Combo_Tool_Button (Get_User_Data (Attach_Widget, Stub));
+        Gtkada_Combo_Tool_Button (Get_User_Data (Attach_Widget, Stub));
    begin
-      if Self.Menu /= null then
-         Detach (Self.Menu);
-      end if;
+      Popdown (Self);
    end Menu_Detacher;
 
    -------------------
@@ -420,7 +434,7 @@ package body Gtkada.Combo_Tool_Button is
       Widget : Gtkada_Combo_Tool_Button)
    is
    begin
-      Select_Item (Widget, Item.Label.Get_Text);
+      Select_Item (Widget, To_String (Item.Short_Name));
       Widget_Callback.Emit_By_Name (Widget, Signal_Clicked);
    end On_Menu_Item_Activated;
 
@@ -429,12 +443,12 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    procedure Gtk_New
-     (Self      : out Gtkada_Combo_Tool_Button;
-      Icon_Name : String)
-   is
+     (Self          : out Gtkada_Combo_Tool_Button;
+      Icon_Name     : String;
+      Click_Pops_Up : Boolean := False) is
    begin
       Self := new Gtkada_Combo_Tool_Button_Record;
-      Initialize (Self, Icon_Name);
+      Initialize (Self, Icon_Name, Click_Pops_Up);
    end Gtk_New;
 
    ----------------
@@ -442,9 +456,9 @@ package body Gtkada.Combo_Tool_Button is
    ----------------
 
    procedure Initialize
-     (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
-      Icon_Name : String)
-   is
+     (Self          : access Gtkada_Combo_Tool_Button_Record'Class;
+      Icon_Name     : String;
+      Click_Pops_Up : Boolean := False) is
    begin
       Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Button.Get_Type,
@@ -457,32 +471,14 @@ package body Gtkada.Combo_Tool_Button is
 
       Self.Set_Icon_Name (Icon_Name);
       Self.Set_Homogeneous (False);
-      Self.Items    := Strings_Vector.Empty_Vector;
-      Self.Selected := Strings_Vector.No_Index;
       Self.Icon_Name := To_Unbounded_String (Icon_Name);
-
-      Self.Clear_Items;  --  Creates the menu
+      Self.Click_Pops_Up := Click_Pops_Up;
 
       Get_Button (Self).On_Button_Press_Event (On_Button_Press'Access, Self);
       Get_Button (Self).On_Button_Release_Event
         (On_Button_Release'Access, Self);
       Self.On_Draw (On_Draw'Access, Self, After => True);
-
-      Self.On_Destroy (On_Destroy'Access);
    end Initialize;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
-      S : constant Gtkada_Combo_Tool_Button := Gtkada_Combo_Tool_Button (Self);
-   begin
-      if S.Menu /= null then
-         Unref (S.Menu);
-         S.Menu := null;
-      end if;
-   end On_Destroy;
 
    --------------
    -- Add_Item --
@@ -496,27 +492,20 @@ package body Gtkada.Combo_Tool_Button is
       Short_Name : String := "")
    is
       First  : constant Boolean := Widget.Items.Is_Empty;
-      M_Item : Menu_Item;
-
    begin
-      if Icon_Name /= "" then
-         Gtk_New (M_Item, Item, Icon_Name, Short_Name, Data);
-      else
-         Gtk_New
-           (M_Item, Item, To_String (Widget.Icon_Name), Short_Name, Data);
-      end if;
+      Widget.Items.Append
+        ((Icon_Name   =>
+            (if Icon_Name /= ""
+             then To_Unbounded_String (Icon_Name)
+             else Widget.Icon_Name),
+          Full_Name   => To_Unbounded_String (Item),
+          Short_Name  =>
+            (if Short_Name /= ""
+             then To_Unbounded_String (Short_Name)
+             else To_Unbounded_String (Item)),
+          Data        => Data));
 
-      Widget.Menu.Add (M_Item);
-      Add_Watch
-        (Items_Callback.Connect
-           (M_Item, Gtk.Menu_Item.Signal_Activate,
-            Items_Callback.To_Marshaller (On_Menu_Item_Activated'Access),
-            Gtkada_Combo_Tool_Button (Widget)),
-         Widget);
-
-      Widget.Items.Append (To_Unbounded_String (Item));
-
-      if First then
+      if First and then Widget.Selected = "" then
          Widget.Select_Item (Item);
       end if;
    end Add_Item;
@@ -531,22 +520,19 @@ package body Gtkada.Combo_Tool_Button is
         (Item : String; Data : User_Data) return Boolean)
    is
       Index : Natural := 0;
-
-      procedure On_Child (Child : not null access Gtk_Widget_Record'Class);
-      procedure On_Child (Child : not null access Gtk_Widget_Record'Class) is
-         M : constant Menu_Item := Menu_Item (Child);
-         Name : constant String := To_String (Self.Items.Element (Index));
-      begin
-         if Predicate (Name, M.Data) then
-            Self.Menu.Remove (Child);
-            Self.Items.Delete (Index);
-         else
-            Index := Index + 1;
-         end if;
-      end On_Child;
-
    begin
-      Self.Menu.Foreach (On_Child'Unrestricted_Access);
+      Popdown (Self);
+      while Index <= Self.Items.Last_Index loop
+         declare
+            It : constant Item_Record := Self.Items (Index);
+         begin
+            if Predicate (To_String (It.Full_Name), It.Data) then
+               Self.Items.Delete (Index);
+            else
+               Index := Index + 1;
+            end if;
+         end;
+      end loop;
    end Remove_If;
 
    -----------------
@@ -555,39 +541,30 @@ package body Gtkada.Combo_Tool_Button is
 
    procedure Select_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Item   : String)
-   is
-      M_Item : Menu_Item;
+      Item   : String) is
    begin
-      if Widget.Selected /= Strings_Vector.No_Index then
-         --  A bit weird, but with Menu API, the only way to retrieve an item
-         --  from its place number is to set it active first, then get the
-         --  active menu_item ...
-         Widget.Menu.Set_Active (Guint (Widget.Selected));
-         Menu_Item (Widget.Menu.Get_Active).Set_Highlight (False);
-      end if;
+      --  Avoid loop when selected an item executes an action that refreshes
+      --  the contents of the combo
+      if Item /= Widget.Selected then
+         Widget.Selected := To_Unbounded_String (Item);
+         Popdown (Widget);
 
-      for J in Widget.Items.First_Index .. Widget.Items.Last_Index loop
-         if Widget.Items.Element (J) = Item then
-            Widget.Menu.Set_Active (Guint (J));
-            M_Item := Menu_Item (Widget.Menu.Get_Active);
-            M_Item.Set_Highlight (True);
-            Widget.Selected := J;
+         for J of Widget.Items loop
+            if J.Full_Name = Item then
+               --  Change the toolbar icon
 
-            --  Change the toolbar icon
-            if M_Item /= null and then M_Item.Icon_Name /= "" then
-               Widget.Set_Icon_Name (To_String (M_Item.Icon_Name));
-            elsif Widget.Icon_Name /= "" then
-               Widget.Set_Icon_Name (To_String (Widget.Icon_Name));
-            else
-               Widget.Set_Label (To_String (M_Item.Short_Name));
+               if J.Icon_Name /= "" then
+                  Widget.Set_Icon_Name (To_String (J.Icon_Name));
+               else
+                  Widget.Set_Label (To_String (J.Short_Name));
+               end if;
+
+               Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);
+               return;
             end if;
-
-            Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);
-            return;
-         end if;
-      end loop;
-      --  ??? raise something ?
+         end loop;
+         --  ??? raise something ?
+      end if;
    end Select_Item;
 
    -----------------
@@ -598,21 +575,6 @@ package body Gtkada.Combo_Tool_Button is
    begin
       Widget.Items.Clear;
       Popdown (Widget);
-
-      if Widget.Menu /= null then
-         Unref (Widget.Menu);
-         Widget.Menu.Detach;   --  also resets menu to null
-      end if;
-
-      Gtk_New (Widget.Menu);
-      Ref (Widget.Menu);
-      Widget.Menu.Attach_To_Widget (Widget, Menu_Detacher'Access);
-
-      --  This is necessary because the menu gets a grab, and on OSX we cannot
-      --  select the current item from the menu (on a long click) because the
-      --  Enter/Leave events have not been propagated correctly.
-      Widget.Menu.On_Button_Release_Event
-        (On_Menu_Button_Release'Access, Widget);
    end Clear_Items;
 
    -----------------------
@@ -620,15 +582,9 @@ package body Gtkada.Combo_Tool_Button is
    -----------------------
 
    function Get_Selected_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record) return String
-   is
-      Item : constant Menu_Item := Menu_Item (Widget.Menu.Get_Active);
+     (Widget : access Gtkada_Combo_Tool_Button_Record) return String is
    begin
-      if Item /= null then
-         return Item.Label.Get_Text;
-      else
-         return "";
-      end if;
+      return To_String (Widget.Selected);
    end Get_Selected_Item;
 
    ----------------------------
@@ -639,13 +595,13 @@ package body Gtkada.Combo_Tool_Button is
      (Widget : access Gtkada_Combo_Tool_Button_Record)
       return User_Data
    is
-      Item : constant Menu_Item := Menu_Item (Widget.Menu.Get_Active);
    begin
-      if Item /= null then
-         return Item.Data;
-      else
-         return null;
-      end if;
+      for Item of Widget.Items loop
+         if Item.Full_Name = Widget.Selected then
+            return Item.Data;
+         end if;
+      end loop;
+      return null;
    end Get_Selected_Item_Data;
 
    ---------------

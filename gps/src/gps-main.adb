@@ -2132,6 +2132,9 @@ procedure GPS.Main is
       end if;
 
       GPS.Search.GUI.Register_Module (GPS_Main.Kernel);
+
+      GPS.Main_Window.Setup_Perspective_Selector (GPS_Main);
+
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
 
       if Active (VCS_Trace) then

@@ -378,7 +378,17 @@ package body Src_Editor_Status_Bar is
       Kernel : constant Kernel_Handle := Get_Kernel (B.Buffer);
       Dummy : Boolean;
    begin
-      Dummy := Execute_Action (Kernel, "open Commits");
+      if Perspective_Exists (Kernel, "VCS") then
+         Load_Perspective (Kernel, "VCS");
+      else
+         Insert
+           (Kernel,
+            -"The VCS perspective is not defined in your environment."
+            & ASCII.LF
+            & (-"Consider using the menu /File/Reset all perspectives"));
+
+         Dummy := Execute_Action (Kernel, "open Commits");
+      end if;
    end On_VCS_Status_Clicked;
 
    -------------

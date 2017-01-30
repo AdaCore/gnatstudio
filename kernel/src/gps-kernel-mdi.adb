@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
@@ -79,7 +80,6 @@ with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
 with Gtk.Style_Context;         use Gtk.Style_Context;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body GPS.Kernel.MDI is
 
@@ -1040,6 +1040,25 @@ package body GPS.Kernel.MDI is
       Kernel_Desktop.Load_Perspective
         (Get_MDI (Kernel), Name, Kernel_Handle (Kernel));
    end Load_Perspective;
+
+   ------------------------
+   -- Perspective_Exists --
+   ------------------------
+
+   function Perspective_Exists
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) return Boolean
+   is
+      List : constant String_List_Access :=   --  do not free
+         Get_MDI (Kernel).List_Of_Perspectives;
+   begin
+      for L of List.all loop
+         if To_Lower (L.all) = To_Lower (Name) then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Perspective_Exists;
 
    --------------------------------
    -- Register_Desktop_Functions --

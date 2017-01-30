@@ -43,7 +43,7 @@ class Gerrit(core.Extension):
              '--format=json',
              '--current-patch-set',
              'project:%s' % self.project,
-             'status:open'])
+             'status:open'], block_exit=False)
         reviews = []
         while True:
             line = yield p.wait_line()

@@ -132,6 +132,36 @@
         </Pane>
       </Pane>
     </perspective>
+    <perspective name="VCS"  >
+      <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL" >
+        <Notebook width=" 1.38913E+01%" Tabs="POS_LEFT" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Project_Explorer_Project />
+          </Child>
+        </Notebook>
+        <Pane width=" 3.65833E+01%" Orientation="ORIENTATION_VERTICAL" >
+          <central height=" 6.61446E+01%"  />
+          <Notebook height=" 3.43373E+01%" Tabs="POS_TOP" >
+            <Child Group=" 107" State="NORMAL" >
+              <Message_Window />
+            </Child>
+            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL" >
+              <Branches />
+            </Child>
+          </Notebook>
+        </Pane>
+        <Notebook width=" 2.55393E+01%" Tabs="POS_TOP" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <VCS_History />
+          </Child>
+        </Notebook>
+        <Notebook width=" 2.43313E+01%" Tabs="POS_TOP" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Commits />
+          </Child>
+        </Notebook>
+      </Pane>
+    </perspective>
   </perspectives>
   <desktops>
     <desktop perspective="Default">

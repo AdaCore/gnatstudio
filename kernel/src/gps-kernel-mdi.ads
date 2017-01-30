@@ -206,6 +206,11 @@ package GPS.Kernel.MDI is
    --  Change the current perspective to another one.
    --  Nothing is done if Name does not exist
 
+   function Perspective_Exists
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) return Boolean;
+   --  Chech whether a perspective with that name exists.
+
    procedure Configure_MDI
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference := null);

@@ -3234,8 +3234,6 @@ package body GPS.Kernel.Modules.UI is
                         Expected_Type => Gvariant_Type_String);
                      if Val /= Null_Gvariant then
                         Sep.Set_Name (Get_String (Val, null));
-                        Trace (Me, "MANU create sep "
-                               & Get_String (Val, null));
                         Unref (Val);
                      end if;
 

@@ -24,6 +24,7 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNAT.Strings;              use GNAT.Strings;
 
 with Cairo;                     use Cairo;
 with Gdk.Display;               use Gdk.Display;
@@ -37,6 +38,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -266,6 +268,13 @@ package body GPS.Main_Window is
        Data  : Delete_Event_Data);
    --  Called when a window is hidden, to store its size in the properties
    --  and be able to restore ir later on.
+
+   procedure Update_Perspectives_In_Selector
+     (Self : access Gtk_Widget_Record'Class);
+   --  Refresh the contents of the perspectives selector
+
+   procedure On_Switch_Perspective (Self : access Gtk_Widget_Record'Class);
+   --  Called when the user selects a new perspective via the selector
 
    --------------------------
    -- For_All_Open_Windows --
@@ -685,12 +694,37 @@ package body GPS.Main_Window is
       Self.Add (Self.Main_Box);
    end Initialize;
 
+   -------------------------------------
+   -- Update_Perspectives_In_Selector --
+   -------------------------------------
+
+   procedure Update_Perspectives_In_Selector
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      Main : constant GPS_Window := GPS_Window (Self);
+      List : constant String_List_Access :=  --  do not free
+        Main.MDI.List_Of_Perspectives;
+      Current : constant String := Main.MDI.Current_Perspective;
+      Selected : constant String :=
+        Main.Perspective_Selector.Get_Selected_Item;
+   begin
+      if Selected /= Current then
+         Main.Perspective_Selector.Clear_Items;
+         Main.Perspective_Selector.Select_Item (Current);
+
+         for L of List.all loop
+            Main.Perspective_Selector.Add_Item (Item => L.all);
+         end loop;
+      end if;
+   end Update_Perspectives_In_Selector;
+
    ------------------
    -- Set_Menu_Bar --
    ------------------
 
    procedure Setup_Menu_Bar
-     (Self : not null access GPS_Application_Window_Record'Class) is
+     (Self : not null access GPS_Application_Window_Record'Class)
+   is
    begin
       Install_Menus (Self.Application.Kernel, Menubar => Self.Menu_Bar);
       if Self.Menu_Bar /= null then
@@ -793,6 +827,44 @@ package body GPS.Main_Window is
       Preferences_Changed_Hook.Add (P);
       P.Execute (Application.Kernel, null);
    end Gtk_New;
+
+   ---------------------------
+   -- On_Switch_Perspective --
+   ---------------------------
+
+   procedure On_Switch_Perspective (Self : access Gtk_Widget_Record'Class) is
+      B : constant GPS_Window := GPS_Window (Self);
+      Selected : constant String := B.Perspective_Selector.Get_Selected_Item;
+   begin
+      Load_Perspective (B.Kernel, Selected);
+   end On_Switch_Perspective;
+
+   --------------------------------
+   -- Setup_Perspective_Selector --
+   --------------------------------
+
+   procedure Setup_Perspective_Selector
+     (Self        : not null access GPS_Window_Record'Class)
+   is
+      P : Gtkada_Combo_Tool_Button;
+   begin
+      Gtk_New (P, "", Click_Pops_Up => True);
+      Self.Perspective_Selector := P;
+
+      P.Set_Tooltip_Text (-"Change the current perspective (layout of views)");
+      Widget_Callback.Object_Connect
+        (Self.MDI, Signal_Perspective_Changed,
+         Update_Perspectives_In_Selector'Access, Self);
+      Widget_Callback.Object_Connect
+        (Self.MDI, Signal_Perspectives_Added,
+         Update_Perspectives_In_Selector'Access, Self);
+      Widget_Callback.Object_Connect
+        (Self.Perspective_Selector,
+         Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
+         On_Switch_Perspective'Access, Self);
+
+      Self.Toolbar_Box.Pack_End (P, Expand => False, Fill => False);
+   end Setup_Perspective_Selector;
 
    --------------------
    -- On_Float_Child --

@@ -33,13 +33,21 @@ package Gtkada.Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
    procedure Gtk_New
-     (Self      : out Gtkada_Combo_Tool_Button;
-      Icon_Name : String);
+     (Self          : out Gtkada_Combo_Tool_Button;
+      Icon_Name     : String;
+      Click_Pops_Up : Boolean := False);
    procedure Initialize
-     (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
-      Icon_Name : String);
+     (Self          : access Gtkada_Combo_Tool_Button_Record'Class;
+      Icon_Name     : String;
+      Click_Pops_Up : Boolean := False);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads).
    --  Leave Icon_Name to the empty string to display text instead.
+   --
+   --  The default behavior is to emit the Signal_Clicked signal when the user
+   --  does a short click on the button, and popup the menu on long clicks.
+   --  However, if you set Click_Pops_Up to True, then the signal
+   --  Signal_Clicked is never executed, and instead the menu is displayed even
+   --  on short clicks.
 
    type User_Data_Record is abstract tagged null record;
    type User_Data is access all User_Data_Record'Class;
@@ -112,15 +120,25 @@ package Gtkada.Combo_Tool_Button is
 
 private
 
-   package Strings_Vector is new Ada.Containers.Vectors
-     (Natural, Ada.Strings.Unbounded.Unbounded_String);
+   type Item_Record is record
+      Icon_Name  : Unbounded_String;
+      Full_Name  : Unbounded_String;
+      Short_Name : Unbounded_String;
+      Data       : User_Data;
+   end record;
+
+   package Item_Vector is new Ada.Containers.Vectors (Natural, Item_Record);
 
    type Gtkada_Combo_Tool_Button_Record is new
      Gtk.Tool_Button.Gtk_Tool_Button_Record
     with record
-      Items       : Strings_Vector.Vector;
-      Selected    : Strings_Vector.Extended_Index;
+      Items       : Item_Vector.Vector;
+      Selected    : Unbounded_String;
+
       Menu        : Gtk_Menu;
+      --  null if the menu is not visible on the screen
+
+      Click_Pops_Up : Boolean;
 
       Icon_Name    : Unbounded_String;
       --  The default icon name, when items do not provide one

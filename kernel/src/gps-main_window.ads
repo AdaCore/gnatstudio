@@ -27,8 +27,9 @@ with Gdk.Event;               use Gdk.Event;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Window;              use Gtk.Window;
 
-with Gtkada.Application;      use Gtkada.Application;
-with Gtkada.MDI;              use Gtkada.MDI;
+with Gtkada.Application;       use Gtkada.Application;
+with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 with GPS.Kernel;
 
@@ -129,6 +130,9 @@ package GPS.Main_Window is
 
       Is_Destroyed      : Boolean := False;
 
+      Perspective_Selector : Gtkada_Combo_Tool_Button;
+      --  The combo box to select the current perspective
+
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu
 
@@ -145,6 +149,10 @@ package GPS.Main_Window is
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
+
+   procedure Setup_Perspective_Selector
+     (Self        : not null access GPS_Window_Record'Class);
+   --  Setup and add the perspectives selector to the toolbar
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
