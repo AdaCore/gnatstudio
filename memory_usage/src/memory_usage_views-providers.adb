@@ -99,13 +99,19 @@ package body Memory_Usage_Views.Providers is
 
    procedure On_Memory_Usage_Data_Fetched
      (Self           : not null access Provider_Task_Visitor_Type;
-      Memory_Regions  : Memory_Region_Description_Array;
-      Memory_Sections : Memory_Section_Description_Array)
+      Memory_Regions : Memory_Region_Description_Maps.Map)
    is
-      pragma Unreferenced (Self, Memory_Regions, Memory_Sections);
    begin
-      --  ??? refresh the new memory usage view once created
-      Trace (Me, "Refreshing the view");
+      if not Memory_Regions.Is_Empty then
+         declare
+            View : constant Memory_Usage_MDI_Views.View_Access :=
+                     Memory_Usage_MDI_Views.Get_Or_Create_View
+                       (Self.Kernel,
+                        Init => Memory_Usage_Views.On_Init'Access);
+         begin
+            View.Refresh (Memory_Regions => Memory_Regions);
+         end;
+      end if;
    end On_Memory_Usage_Data_Fetched;
 
    -----------------------

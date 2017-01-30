@@ -123,10 +123,10 @@ XML = r"""<?xml version="1.0" ?>
             since last compilation" />
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
-     <check label="Display memory usage" switch="-Wl,--print-memory-usage"
+     <check label="Display memory usage" switch="-Wl,-Map=map.txt"
             section="-largs"
             tip="Display the memory usage in the Memory usage view"
-            filter="Linker is supported"
+            filter="ld_supports_map_file"
             line="2" />
      <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
            column="2"
@@ -436,7 +436,7 @@ name="U_pdate file XRef in background">
        <arg>%X</arg>
        <arg>%TT</arg>
        <arg>-largs</arg>
-       <arg>-Wl,--print-memory-usage</arg>
+       <arg>-Wl,-Map=map.txt</arg>
     </command-line>
 </target>
 
@@ -455,7 +455,7 @@ name="U_pdate file XRef in background">
        <arg>%autoconf</arg>
        <arg>%X</arg>
        <arg>-largs</arg>
-       <arg>-Wl,--print-memory-usage</arg>
+       <arg>-Wl,-Map=map.txt</arg>
     </command-line>
 </target>
 <target model="builder" category="_Project" name="_Compile All Sources">

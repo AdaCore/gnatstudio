@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Containers;             use Ada.Containers;
+with Ada.Float_Text_IO;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Fixed;
@@ -100,6 +101,65 @@ package body String_Utils is
          Replace (S, Value.all);
       end if;
    end Replace;
+
+   ------------------
+   -- Format_Bytes --
+   ------------------
+
+   function Format_Bytes (Bytes : Integer) return String is
+      Aft     : constant Integer := 2;
+      Exp     : constant Integer := 0;
+      Bytes_F : constant Float := Float (Bytes);
+      Bytes_S : String (1 .. 64);
+      Unit    : Unbounded_String;
+      First   : Integer;
+   begin
+      if Bytes_F < 1024.0 then
+         Ada.Float_Text_IO.Put
+           (Bytes_S,
+            Item  => Bytes_F,
+            Aft   => Aft,
+            Exp   => Exp);
+         Unit := To_Unbounded_String ("B");
+      elsif Bytes_F < 1048576.0 then
+         Ada.Float_Text_IO.Put
+           (Bytes_S,
+            Item  => Bytes_F / 1024.0,
+            Aft   => Aft,
+            Exp   => Exp);
+         Unit := To_Unbounded_String ("KB");
+      elsif Bytes_F < 1073741824.0 then
+         Ada.Float_Text_IO.Put
+           (Bytes_S,
+            Item => Bytes_F / 1048576.0,
+            Aft  => Aft,
+            Exp  => Exp);
+         Unit := To_Unbounded_String ("MB");
+      else
+         Ada.Float_Text_IO.Put
+           (Bytes_S,
+            Item => Bytes_F / 1073741824.0,
+            Aft  => Aft,
+            Exp  => Exp);
+         Unit := To_Unbounded_String ("GB");
+      end if;
+
+      --  Remove the leading whitespaces
+
+      First := Bytes_S'First;
+
+      while First < Bytes_S'Last - 2 and then Bytes_S (First) = ' ' loop
+         First := First + 1;
+      end loop;
+
+      --  Remove the '.00' substring if any
+
+      if Bytes_S (Bytes_S'Last - 2 .. Bytes_S'Last) = ".00" then
+         return Bytes_S (First .. Bytes_S'Last - 3) & ' ' & To_String (Unit);
+      else
+         return Bytes_S (First .. Bytes_S'Last) & ' ' & To_String (Unit);
+      end if;
+   end Format_Bytes;
 
    --------------------------
    -- Get_Surrounding_Line --

@@ -51,9 +51,8 @@ private package Memory_Usage_Views.Providers is
    --  Called when the visitor is no longer needed.
 
    procedure On_Memory_Usage_Data_Fetched
-     (Self            : not null access Provider_Task_Visitor_Type;
-      Memory_Regions  : Memory_Region_Description_Array;
-      Memory_Sections : Memory_Section_Description_Array);
+     (Self           : not null access Provider_Task_Visitor_Type;
+      Memory_Regions : Memory_Region_Description_Maps.Map);
    --  Called when all the memory usage data has been fetched by the given
    --  memory usage provider.
 

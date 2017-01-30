@@ -286,44 +286,49 @@ package body Memory_Usage_Views.Scripts is
          declare
             Regions_List  : constant List_Instance'Class := Data.Nth_Arg (2);
             Sections_List : constant List_Instance'Class := Data.Nth_Arg (3);
-            Regions       : Memory_Region_Description_Array
-              (1 .. Regions_List.Number_Of_Arguments);
-            Sections      : Memory_Section_Description_Array
-              (1 .. Sections_List.Number_Of_Arguments);
+            Regions       : Memory_Region_Description_Maps.Map;
          begin
             Trace (Me, "on_memory_usage_data_fetched has been called");
 
-            for J in Regions'Range loop
+            for J in 1 .. Regions_List.Number_Of_Arguments loop
                declare
                   Current : constant List_Instance'Class :=
                               Regions_List.Nth_Arg (J);
+                  Name    : constant String := Current.Nth_Arg (1);
                begin
-                  Regions (J) := Memory_Region_Description'
-                    (Name            => Current.Nth_Arg (1),
-                     Total_Size      => Null_Unbounded_String,
-                     Used_Size       => Null_Unbounded_String,
-                     Percentage_Used => 0.0,
-                     Origin          => Current.Nth_Arg (2),
-                     Length          => Current.Nth_Arg (3));
+                  Regions.Include
+                    (Key      => Name,
+                     New_Item => Memory_Region_Description'
+                       (Name            => To_Unbounded_String (Name),
+                        Origin          => Current.Nth_Arg (2),
+                        Length          => Current.Nth_Arg (3),
+                        Used_Size       => 0,
+                        Sections        => <>));
                end;
             end loop;
 
-            for J in Sections'Range loop
+            for J in 1 .. Sections_List.Number_Of_Arguments loop
                declare
-                  Current : constant List_Instance'Class :=
-                              Sections_List.Nth_Arg (J);
+                  Current     : constant List_Instance'Class :=
+                                  Sections_List.Nth_Arg (J);
+                  Region_Name : constant String := Current.Nth_Arg (4);
+                  Length      : constant Integer := Current.Nth_Arg (3);
                begin
-                  Sections (J) := Memory_Section_Description'
-                    (Name   => Current.Nth_Arg (1),
-                     Origin => Current.Nth_Arg (2),
-                     Length => Current.Nth_Arg (3));
+                  Regions (Region_Name).Sections.Append
+                    (Memory_Section_Description'
+                       (Name        => Current.Nth_Arg (1),
+                        Origin      => Current.Nth_Arg (2),
+                        Length      => Length));
+
+                  --  Calculate the used size of the memory region from the
+                  --  contained memory sections.
+                  Regions (Region_Name).Used_Size :=
+                    Regions (Region_Name).Used_Size + Length;
                end;
             end loop;
 
             if Prop.Visitor /= null then
-               Prop.Visitor.On_Memory_Usage_Data_Fetched
-                 (Memory_Regions  => Regions,
-                  Memory_Sections => Sections);
+               Prop.Visitor.On_Memory_Usage_Data_Fetched (Regions);
                Free (Prop.Visitor);
             end if;
          end;

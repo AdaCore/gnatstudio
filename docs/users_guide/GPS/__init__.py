@@ -7093,8 +7093,8 @@ class MemoryUsageProviderVisitor(object):
         :param regions: a list of (name, origin, length) tuples describing
             memory regions.
 
-        :param sections: a list of (name, origin, length) tuples describing
-            memory sections.
+        :param sections: a list of (name, origin, length, region_name) tuples
+            describing memory sections.
         """
         pass  # implemented in Ada
 

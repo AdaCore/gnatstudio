@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Memory_Usage_Views.Linker_Parsers;
 with Memory_Usage_Views.Providers;
 with Memory_Usage_Views.Scripts;
 
@@ -29,8 +28,7 @@ package body Memory_Usage_Views.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Memory_Usage_Views.Memory_Usage_MDI_Views.Register_Module (Kernel);
-
-      Memory_Usage_Views.Linker_Parsers.Register_Module (Kernel);
+      Memory_Usage_Views.Register_Module (Kernel);
       Memory_Usage_Views.Providers.Register_Module (Kernel);
       Memory_Usage_Views.Scripts.Register_Scripts (Kernel);
    end Register_Module;

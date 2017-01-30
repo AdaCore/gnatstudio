@@ -17,15 +17,20 @@
 
 with Ada.Strings.Maps.Constants;            use Ada.Strings.Maps.Constants;
 
+with Gdk.RGBA;
 with Glib;                                  use Glib;
+with Glib.Values;                           use Glib.Values;
+with Glib_Values_Utils;                     use Glib_Values_Utils;
 with Gtk.Box;                               use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;              use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Progress;            use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Text;                use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                             use Gtk.Enums;
-with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;                        use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
+
+with Default_Preferences;                   use Default_Preferences;
+with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
+with String_Utils;                          use String_Utils;
 
 package body Memory_Usage_Views is
 
@@ -48,11 +53,80 @@ package body Memory_Usage_Views is
    --  Column containing the percentage in a text form so that it can be
    --  displayed in the progress bar.
 
+   Origin_Column          : constant := 4;
+   --  Column containing the origin address of a given memory region/section
+
+   Bg_Color_Column        : constant := 5;
+   --  Column containing the background color of a given row in the memory
+   --  usage tree view.
+
    Column_Types : constant GType_Array :=
                     (Icon_Column            => GType_String,
                      Name_Column            => GType_String,
                      Percentage_Column      => GType_Int,
-                     Percentage_Text_Column => GType_String);
+                     Percentage_Text_Column => GType_String,
+                     Origin_Column          => GType_String,
+                     Bg_Color_Column        => Gdk.RGBA.Get_Type);
+
+   Show_Addresses : Boolean_Preference;
+   --  Show the origin addresses in the memory usage tree view
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
+   is
+      pragma Unreferenced (Self);
+      View : constant Memory_Usage_View := Memory_Usage_View
+        (Memory_Usage_MDI_Views.Retrieve_View (Kernel));
+   begin
+      if View /= null and then Pref /= null then
+         View.Col_Addresses.Set_Visible (Show_Addresses.Get_Pref);
+      end if;
+   end Execute;
+
+   -------------
+   -- On_Init --
+   -------------
+
+   procedure On_Init
+     (Self : not null access Memory_Usage_View_Record'Class) is
+      pragma Unreferenced (Self);
+   begin
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+   end On_Init;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Memory_Region_Description) return Boolean is
+   begin
+      return To_String (Left.Origin) < To_String (Right.Origin);
+   end "<";
+
+   ------------
+   -- Get_ID --
+   ------------
+
+   function Get_ID
+     (Self : not null access Memory_Usage_Tree_View_Record'Class;
+      Row  : Gtk_Tree_Iter) return String is
+   begin
+      return Get_String_From_Iter
+        (Tree_Model => +Self.Model,
+         Iter       => Row);
+   end Get_ID;
 
    -------------
    -- Refresh --
@@ -60,14 +134,25 @@ package body Memory_Usage_Views is
 
    procedure Refresh
      (Self           : access Memory_Usage_View_Record'Class;
-      Memory_Regions : Memory_Region_Description_Array)
+      Memory_Regions : Memory_Region_Description_Maps.Map)
    is
-      Iter : Gtk_Tree_Iter;
+      Expansion    : Expansions.Expansion_Status;
+      Region_Iter  : Gtk_Tree_Iter;
+      Section_Iter : Gtk_Tree_Iter;
 
       function Get_Icon_Name
         (Memory_Region_Name : Unbounded_String) return String;
       --  Return the icon corresponding to RAM memory or FLASH memory depending
       --  on Memory_Region_Name.
+
+      procedure Set_Values
+        (Iter      : Gtk_Tree_Iter;
+         Name      : String;
+         Origin    : String;
+         Used_Size : Integer;
+         Length    : Integer;
+         Icon_Name : String := "");
+      --  Used to set the values of the given Iter
 
       -------------------
       -- Get_Icon_Name --
@@ -86,26 +171,93 @@ package body Memory_Usage_Views is
          end if;
       end Get_Icon_Name;
 
+      ----------------
+      -- Set_Values --
+      ----------------
+
+      procedure Set_Values
+        (Iter      : Gtk_Tree_Iter;
+         Name      : String;
+         Origin    : String;
+         Used_Size : Integer;
+         Length    : Integer;
+         Icon_Name : String := "")
+      is
+         Percent : Gint := Gint (Float (Used_Size) / Float (Length) * 100.0);
+         Bg      : Glib.Values.GValue;
+      begin
+         if Percent > 100 then
+            Percent := 100;
+         end if;
+
+         if Icon_Name /= "" then
+            Set
+              (Tree_Store => Self.Memory_Tree_Model,
+               Iter       => Iter,
+               Column     => Icon_Column,
+               Value      => Icon_Name);
+         end if;
+
+         Set_And_Clear
+           (Model  => Self.Memory_Tree_Model,
+            Iter   => Iter,
+            Values =>
+              (Name_Column            => As_String (Name),
+               Percentage_Column      => As_Int (Percent),
+               Percentage_Text_Column => As_String
+                 (Format_Bytes (Used_Size) & " / "
+                  & Format_Bytes (Length)),
+               Origin_Column          => As_String (Origin)));
+
+         --  Display the row in red if the memory usage percentage is higher
+         --  than 100%.
+
+         if Percent >= 100 then
+            Glib.Values.Init (Bg, Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value (Bg, Message_Highlight.Get_Pref);
+            Set_Value
+              (Tree_Store => Self.Memory_Tree_Model,
+               Iter       => Iter,
+               Column     => Bg_Color_Column,
+               Value      => Bg);
+         end if;
+      end Set_Values;
+
    begin
+      Self.Memory_Tree.Set_No_Show_All (False);
+      Self.Memory_Tree.Show_All;
+      Self.No_Data_Label.Hide;
+
+      Expansions.Get_Expansion_Status (Self.Memory_Tree, Expansion);
       Self.Memory_Tree_Model.Clear;
 
       for Memory_Region of Memory_Regions loop
          declare
             Icon_Name : constant String := Get_Icon_Name (Memory_Region.Name);
          begin
-            Self.Memory_Tree_Model.Append (Iter);
-            Set
-              (Self.Memory_Tree_Model, Iter, Icon_Column, Icon_Name);
-            Set (Self.Memory_Tree_Model, Iter, Name_Column,
-                 To_String (Memory_Region.Name));
-            Set (Self.Memory_Tree_Model, Iter, Percentage_Column,
-                 Gint (Memory_Region.Percentage_Used));
-            Set (Self.Memory_Tree_Model, Iter, Percentage_Text_Column,
-                 To_String
-                   (Memory_Region.Used_Size
-                    & " / " & Memory_Region.Total_Size));
+            Self.Memory_Tree_Model.Append (Region_Iter, Null_Iter);
+
+            for Section of Memory_Region.Sections loop
+               Self.Memory_Tree_Model.Append (Section_Iter, Region_Iter);
+               Set_Values
+                 (Iter      => Section_Iter,
+                  Name      => To_String (Section.Name),
+                  Origin    => To_String (Section.Origin),
+                  Used_Size => Section.Length,
+                  Length    => Memory_Region.Length);
+            end loop;
+
+            Set_Values
+              (Iter      => Region_Iter,
+               Name      => To_String (Memory_Region.Name),
+               Origin    => To_String (Memory_Region.Origin),
+               Used_Size => Memory_Region.Used_Size,
+               Length    => Memory_Region.Length,
+               Icon_Name => Icon_Name);
          end;
       end loop;
+
+      Expansions.Set_Expansion_Status (Self.Memory_Tree, Expansion);
    end Refresh;
 
    ----------------
@@ -115,7 +267,6 @@ package body Memory_Usage_Views is
    function Initialize
      (Self : access Memory_Usage_View_Record'Class) return Gtk_Widget
    is
-      Scrolled          : Gtk_Scrolled_Window;
       Column            : Gtk_Tree_View_Column;
       Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer     : Gtk_Cell_Renderer_Text;
@@ -126,43 +277,110 @@ package body Memory_Usage_Views is
       --  Initialize the view itself
       Initialize_Vbox (Self, Homogeneous => False);
 
-      --  Create a scrolled window to contain all the view's widgets
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
+      --  Initialize the main view
+      Self.Main_View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (Self.Main_View);
+      Self.Pack_Start (Self.Main_View, Expand => True, Fill => True);
 
-      --  Create a tree view to display the memory region descriptions
-      Gtk_New (Self.Memory_Tree_Model, Column_Types);
-      Gtk_New (Self.Memory_Tree, +Self.Memory_Tree_Model);
-      Self.Memory_Tree.Set_Headers_Visible (False);
-      Scrolled.Add (Self.Memory_Tree);
+      --  Create a tree view to display the memory regions/sections
+      --  descriptions.
+      Self.Memory_Tree := new Memory_Usage_Tree_View_Record;
+      Gtkada.Tree_View.Initialize
+        (Widget       => Self.Memory_Tree,
+         Column_Types => Column_Types,
+         Filtered     => False);
+      Self.Memory_Tree_Model := Self.Memory_Tree.Model;
+      Self.Memory_Tree.Set_No_Show_All (True);
+      Self.Memory_Tree.Get_Selection.Set_Mode (Selection_None);
+      Self.Main_View.Append (Self.Memory_Tree, Expand => True, Fill => True);
 
       --  Create a tree view column to display an icon representing the type
       --  of memory corresponding to the region.
       Gtk_New (Column);
       Gtk_New (Icon_Renderer);
+      Column.Set_Title ("Type");
       Column.Pack_Start (Icon_Renderer, Expand => False);
       Column.Add_Attribute (Icon_Renderer, "icon-name", Icon_Column);
+      Column.Add_Attribute
+        (Icon_Renderer, "cell-background-rgba", Bg_Color_Column);
       Dummy := Self.Memory_Tree.Append_Column (Column);
 
-      --  Create a tree view column to display the name of the memory region
+      --  Create a tree view column to display the name of the memory
+      --  region/section.
       Gtk_New (Column);
       Gtk_New (Text_Renderer);
+      Column.Set_Title ("Name");
       Column.Pack_Start (Text_Renderer, Expand => False);
       Column.Add_Attribute (Text_Renderer, "text", Name_Column);
+      Column.Add_Attribute
+        (Text_Renderer, "cell-background-rgba", Bg_Color_Column);
+      Column.Set_Sort_Column_Id (Name_Column);
       Dummy := Self.Memory_Tree.Append_Column (Column);
 
+      --  Create a tree view column to display the origin address of the
+      --  memory region/section
+      Gtk_New (Self.Col_Addresses);
+      Gtk_New (Text_Renderer);
+      Self.Col_Addresses.Set_Title ("Origin");
+      Self.Col_Addresses.Pack_Start (Text_Renderer, Expand => False);
+      Self.Col_Addresses.Set_Title ("Origin");
+      Self.Col_Addresses.Add_Attribute (Text_Renderer, "text", Origin_Column);
+      Self.Col_Addresses.Add_Attribute
+        (Text_Renderer, "cell-background-rgba", Bg_Color_Column);
+      Self.Col_Addresses.Set_Visible (Show_Addresses.Get_Pref);
+      Dummy := Self.Memory_Tree.Append_Column (Self.Col_Addresses);
+
+      --  Sort the rows by their origin addresses by default
+      Self.Col_Addresses.Set_Sort_Column_Id (Origin_Column);
+      Self.Col_Addresses.Clicked;
+
       --  Create a tree view column to display a progress bar representing
-      --  the percentage of the region's used memory.
+      --  the percentage of the region/section used memory.
       Gtk_New (Column);
       Gtk_New (Progress_Renderer);
       Column.Pack_Start (Progress_Renderer, Expand => True);
+      Column.Set_Title ("Usage");
       Column.Add_Attribute (Progress_Renderer, "value", Percentage_Column);
       Column.Add_Attribute (Progress_Renderer, "text", Percentage_Text_Column);
+      Column.Add_Attribute
+        (Progress_Renderer, "cell-background-rgba", Bg_Color_Column);
+      Column.Set_Sort_Column_Id (Percentage_Column);
       Dummy := Self.Memory_Tree.Append_Column (Column);
+
+      --  Create the label used to notify the user that no data is avalaible
+      Gtk_New (Self.No_Data_Label, "No memory usage data avalaible");
+      Self.No_Data_Label.Set_Sensitive (False);
+      Self.Main_View.Append (Self.No_Data_Label, Expand => True, Fill => True);
 
       --  No widget to focus
       return null;
    end Initialize;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Memory_Usage_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   begin
+      Append_Menu
+        (Menu   => Menu,
+         Kernel => View.Kernel,
+         Pref   => Show_Addresses);
+   end Create_Menu;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Show_Addresses := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("memory-usage-view-show-addresses",
+         Default => False,
+         Label   => "Show addresses");
+   end Register_Module;
 
 end Memory_Usage_Views;

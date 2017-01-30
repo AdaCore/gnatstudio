@@ -36,6 +36,15 @@ package String_Utils is
    --  Return the value for the hexadecimal number Hex. Raises
    --  Constraint_Error is Hex is not an hexadecimal number.
 
+   function Format_Bytes (Bytes : Integer) return String;
+   --  Return a formatted string for the given Bytes quantity in the following
+   --  format:
+   --
+   --    . Format_Bytes (1024) = "1 KB"
+   --    . Format_Bytes (1024 ** 2) = "1 MB"
+   --    . Format_Bytes (1024 ** 3) = "1 GB"
+   --    . Format_Bytes (1056) = "1.03 KB" --  For non-round numbers
+
    function Get_Surrounding_Line
      (Str    : String;
       Start  : Natural;

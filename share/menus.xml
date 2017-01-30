@@ -275,7 +275,8 @@
             <menu label="_Files"                     action="open files"/>
             <menu label="_Locations"                 action="open locations"/>
             <menu label="_Messages"                  action="open messages"/>
-            <menu label="Metrics"                    action="open metrics view" />
+            <menu label="Metrics"                    action="open metrics view"/>
+            <menu label="Memory Usage"               action="open memory usage" />
             <menu label="_Outline"                   action="open outline"/>
             <menu label="Project"                   action="open project"/>
             <menu label="_Remote"                    action="open remote"/>

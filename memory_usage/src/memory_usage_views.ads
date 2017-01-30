@@ -25,16 +25,23 @@
 --  is parsed when this switch is present.
 
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
+with Ada.Strings.Hash;
 
-with Gtk.List_Store;                     use Gtk.List_Store;
-with Gtk.Tree_View;                      use Gtk.Tree_View;
-with Gtk.Widget;                         use Gtk.Widget;
+with Gtkada.Tree_View;                       use Gtkada.Tree_View;
+with Gtk.Label;                              use Gtk.Label;
+with Gtk.Menu;                               use Gtk.Menu;
+with Gtk.Tree_Model;                         use Gtk.Tree_Model;
+with Gtk.Tree_Store;                         use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
+with Gtk.Widget;                             use Gtk.Widget;
 with Gtkada.MDI;
 
+with Dialog_Utils;                           use Dialog_Utils;
 with Generic_Views;
-with GPS.Kernel;                         use GPS.Kernel;
-with GPS.Kernel.MDI;                     use GPS.Kernel.MDI;
+with GPS.Kernel;                             use GPS.Kernel;
+with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 
 package Memory_Usage_Views is
 
@@ -43,61 +50,96 @@ package Memory_Usage_Views is
    --  Type representing the memory usage view.
 
    type Memory_Region_Description is private;
-   type Memory_Region_Description_Array is
-     array (Integer range <>) of Memory_Region_Description;
    --  Type representing a memory region
 
    type Memory_Section_Description is private;
-   type Memory_Section_Description_Array is
-     array (Integer range <>) of Memory_Section_Description;
    --  Type representing a memory section
 
 private
 
+   type Memory_Section_Description is record
+      Name        : Unbounded_String;
+      Origin      : Unbounded_String;
+      Length      : Integer;
+   end record;
+
+   package Memory_Section_Description_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Memory_Section_Description, "=");
+
    type Memory_Region_Description is record
       Name            : Unbounded_String;
-      Total_Size      : Unbounded_String;
-      Used_Size       : Unbounded_String;
-      Percentage_Used : Float;
-      Origin          : Integer;
+      Origin          : Unbounded_String;
       Length          : Integer;
+      Used_Size       : Integer;
+      Sections        : Memory_Section_Description_Lists.List;
    end record;
 
-   package Memory_Region_Description_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Memory_Region_Description, "=");
+   function "<" (Left, Right : Memory_Region_Description) return Boolean;
 
-   type Memory_Section_Description is record
-      Name   : Unbounded_String;
-      Origin : Integer;
-      Length : Integer;
-   end record;
+   package Memory_Region_Description_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Memory_Region_Description,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
+
+   type Memory_Usage_Tree_View_Record is new Tree_View_Record with null record;
+   type Memory_Usage_Tree_View is
+     access all Memory_Usage_Tree_View_Record'Class;
+
+   function Get_ID
+     (Self : not null access Memory_Usage_Tree_View_Record'Class;
+      Row  : Gtk_Tree_Iter) return String;
+
+   package Expansions is new Expansion_Support
+     (Tree_Record => Memory_Usage_Tree_View_Record,
+      Id          => String,
+      Get_Id      => Get_ID,
+      Hash        => Ada.Strings.Hash,
+      "="         => "=");
 
    type Memory_Usage_View_Record is new Generic_Views.View_Record with record
-      Memory_Tree       : Gtk_Tree_View;
-      Memory_Tree_Model : Gtk_List_Store;
-      Memory_Regions    : Memory_Region_Description_Lists.List;
+      Main_View         : Dialog_View;
+      No_Data_Label     : Gtk_Label;
+      Memory_Tree       : Memory_Usage_Tree_View;
+      Memory_Tree_Model : Gtk_Tree_Store;
+      Col_Addresses     : Gtk_Tree_View_Column;
+      Memory_Regions    : Memory_Region_Description_Maps.Map;
    end record;
+   overriding procedure Create_Menu
+     (View    : not null access Memory_Usage_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Self : access Memory_Usage_View_Record'Class) return Gtk_Widget;
    --  Initialize the memory usage view widget
 
+   procedure On_Init
+     (Self : not null access Memory_Usage_View_Record'Class);
+   --  Called when creating the view.
+   --  Used to connect to the Preferences_Changed hook.
+
    procedure Refresh
      (Self           : access Memory_Usage_View_Record'Class;
-      Memory_Regions : Memory_Region_Description_Array);
-   --  Refresh the given memory usage view to display the memory region
-   --  descriptions contained in Memory_Regions.
+      Memory_Regions : Memory_Region_Description_Maps.Map);
+   --  Refresh the given memory usage view to display the given memory usage
+   --  data.
 
    package Memory_Usage_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name               => "Memory_Usage_Views",
       View_Name                 => "Memory Usage",
       Formal_View_Record        => Memory_Usage_View_Record,
       Formal_MDI_Child          => GPS_MDI_Child_Record,
+      Local_Config              => True,
       Initialize                => Initialize,
       Areas                     => Gtkada.MDI.Sides_Only,
       Position                  => Gtkada.MDI.Position_Left);
    use Memory_Usage_MDI_Views;
    --  Instantiation of the Generic_Views.Simple_Views package with
    --  the parameters we want for our memory usage views.
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
 end Memory_Usage_Views;
