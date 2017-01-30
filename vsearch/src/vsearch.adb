@@ -173,10 +173,6 @@ package body Vsearch is
 
       Focused : Gtk_Widget;
       --  The last widget which has had the focus
-
-      Pattern_Changed_Once : Boolean := False;
-      --  Set to True if the pattern has changed once. This is used to know
-      --  whether incremental mode is valid after this.
    end record;
 
    overriding procedure Create_Toolbar
@@ -198,10 +194,6 @@ package body Vsearch is
       Mode : Vsearch_Mode);
    --  Set the mode of the given search mode, hiding or showing the widgets
    --  related with replacing depending on With_Replace.
-
-   function Is_In_Incremental_Mode return Boolean;
-   --  Return True if the incremental mode preference is enabled and the
-   --  currently selected search module supports it. Return False otherwise.
 
    package Search_Views is new Generic_Views.Simple_Views
      (Module_Name            => Search_Module_Name,
@@ -261,6 +253,22 @@ package body Vsearch is
      (Search_Module);
    use Search_Modules_List;
 
+   type Incremental_Search_State is
+     (Not_Incremental,
+      Search_Ahead,
+      Search_Full);
+   --  Represents the state in which the dialog is, regarding the incremental
+   --  search feature.
+   --
+   --    Not_Incremental: the dialog is not currently in an incremental search
+   --    Search_Ahead:    the user has started typing characters in the box:
+   --                     the dialog should search for these characters;
+   --                     - pressing Backspace should backspace in the entry,
+   --                     - pressing Enter should enter the Search_Full mode
+   --    Search_Full:     the user is searching in full interactive mode:
+   --                     pressing Enter and Backspace should search for the
+   --                     next/previous occurrences.
+
    type Vsearch_Module_Record is new Module_ID_Record with record
       Kernel : Kernel_Handle;
 
@@ -271,9 +279,6 @@ package body Vsearch is
       Default_Search_Module : Search_Module;
       --  The default search module to use when no one matches with the current
       --  context.
-
-      Search_Started        : Boolean := False;
-      --  Whether the user has started a search (Next and Previous should work)
 
       Search_Regexps        : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
@@ -299,14 +304,12 @@ package body Vsearch is
       --  Used to lock the search view when the search pattern changes in
       --  incremental mode.
 
-      Search_Has_Failed       : Boolean := False;
-      --  Used to know if the last search operation has failed.
-      --  This is needed for the 'backspace' feature of the incremental mode.
-
       Selector                : Scope_Selector;
 
       Projects                : Standard.Projects.Project_Type_Array_Access;
       --  Restrict the search to these projects
+
+      State : Incremental_Search_State := Not_Incremental;
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
@@ -961,6 +964,7 @@ package body Vsearch is
    is
    begin
       Free (Vsearch_Module_Id.Interactive_Context);
+      Vsearch_Module_Id.State := Not_Incremental;
 
       if Vsearch /= null then
          --  Disable the replace buttons, since we haven't made sure the
@@ -993,7 +997,7 @@ package body Vsearch is
                               To_String (Vsearch_Module_Id.Pattern);
       C                   : access Search_Command;
       Has_Select_On_Match : constant Boolean :=
-                              (not Is_In_Incremental_Mode
+                              (not Incremental_Search.Get_Pref
                                and then Select_On_Match.Get_Pref);
       Search_Category     : constant String :=
                 -"Search for: " & To_String (Vsearch_Module_Id.Pattern);
@@ -1045,22 +1049,14 @@ package body Vsearch is
                Found                => Found,
                Continue             => Has_Next);
 
-            --  Push the occurrence in the module's search occurrences stack
-            --  if it supports the incremental search mode. Free it otherwise.
-            if Occurrence /= null then
-               if Is_In_Incremental_Mode then
-                  Module.Push_Occurrence (Occurrence);
-               else
-                  Free (Occurrence);
-               end if;
-
-               if Vsearch /= null then
-                  --  Remove any displayed information since a match has been
-                  --  found.
-                  Remove_Information_On_Child
-                    (Vsearch.Main_View,
-                     Child_Key => Pattern_Child_Key);
-               end if;
+            if Occurrence /= null
+              and then Vsearch /= null
+            then
+               --  Remove any displayed information since a match has been
+               --  found.
+               Remove_Information_On_Child
+                 (Vsearch.Main_View,
+                  Child_Key => Pattern_Child_Key);
             end if;
 
             if Vsearch /= null then
@@ -1088,7 +1084,7 @@ package body Vsearch is
                      Is_Error  => True);
                end if;
                Ctxt.Set_End_Notif_Done (True);
-               Vsearch_Module_Id.Search_Has_Failed := True;
+               Vsearch_Module_Id.State := Not_Incremental;
             end if;
 
             --  We keep the "Next" mode until a new context is created by
@@ -1130,7 +1126,6 @@ package body Vsearch is
       Has_Next       : Boolean;
       Ctxt           : Root_Search_Context_Access;
    begin
-      Reset_Interactive_Context (Vsearch);
       Ctxt := Create_Context (Vsearch, All_Occurences);
 
       if Ctxt /= null then
@@ -1142,7 +1137,7 @@ package body Vsearch is
             Vsearch_Module_Id.Kernel,
             Search_Backward      => True,
             From_Selection_Start => False,
-            Give_Focus           => (not Is_In_Incremental_Mode
+            Give_Focus           => (not Incremental_Search.Get_Pref
                                      and then Select_On_Match.Get_Pref),
             Found                => Found,
             Continue             => Has_Next);
@@ -1298,7 +1293,7 @@ package body Vsearch is
          Context                => Ctxt,
          Context_Is_Owned       => All_Occurrences,  --  command will free ctxt
          Kernel                 => Vsearch_Module_Id.Kernel,
-         Select_Editor_On_Match => (not Is_In_Incremental_Mode
+         Select_Editor_On_Match => (not Incremental_Search.Get_Pref
                                     and then Select_On_Match.Get_Pref),
          Found                  => False,
          Replace_With           =>
@@ -1452,8 +1447,6 @@ package body Vsearch is
             Set_Sensitive (Vsearch.Search_Next_Button, True);
          end if;
 
-         Vsearch_Module_Id.Search_Started := True;
-
       else
          if Vsearch /= null then
             --  Remove size constraints on Search_Next_Button.
@@ -1467,8 +1460,6 @@ package body Vsearch is
             Add (Align, Label);
             Show_All (Align);
          end if;
-
-         Vsearch_Module_Id.Search_Started := False;
       end if;
    end Set_First_Next_Mode;
 
@@ -1495,7 +1486,7 @@ package body Vsearch is
          --  since the interactive search context is systematically reset in
          --  this case (see On_Patter_Combo_Changed).
 
-         if not Is_In_Incremental_Mode then
+         if not Incremental_Search.Get_Pref then
             Reset_Interactive_Context (View);
          end if;
       end if;
@@ -1552,7 +1543,6 @@ package body Vsearch is
                                 (Vsearch_Module_Id.Kernel,
                                  To_String
                                    (Vsearch_Module_Id.Context));
-      In_Incremental_Mode : constant Boolean := Is_In_Incremental_Mode;
       Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
    begin
       if Key = GDK_Return or else Key = GDK_KP_Enter then
@@ -1561,7 +1551,7 @@ package body Vsearch is
             --  Don't give the focus to the search/next button when we are in
             --  the incremental mode so that the user can still modify the
             --  entry after pressing the Enter/Return key.
-            if not In_Incremental_Mode then
+            if not Incremental_Search.Get_Pref then
                Grab_Focus (Vsearch.Search_Next_Button);
             end if;
 
@@ -1571,10 +1561,11 @@ package body Vsearch is
             On_Replace (Vsearch);
          end if;
 
+         Vsearch_Module_Id.State := Search_Full;
+
          return True;
-      elsif In_Incremental_Mode and then Key = GDK_BackSpace then
+      elsif Incremental_Search.Get_Pref and then Key = GDK_BackSpace then
          declare
-            Occurrence    : Search_Occurrence;
             Start_Pos     : Gint;
             End_Pos       : Gint;
             Has_Selection : Boolean;
@@ -1590,47 +1581,17 @@ package body Vsearch is
                return False;
             end if;
 
-            --  Pop the last saved occurence and use the one just after, so
-            --  that we don't go to the same occurrence every time.
-            if not Vsearch_Module_Id.Search_Has_Failed then
-               Occurrence := Module.Pop_Occurrence;
-               Free (Occurrence);
-            else
-               Vsearch_Module_Id.Search_Has_Failed := False;
-            end if;
-
-            Occurrence := Module.Get_Last_Occurrence;
-
-            if Occurrence /= null then
-
-               --  Clear the module's occurrences stack if the last
-               --  occurrence's pattern contains only one character. This
-               --  avoids going back to previous searches.
-               if Occurrence.Get_Pattern'Length = 1 then
-                  Module.Clear_Occurrences;
+            case Vsearch_Module_Id.State is
+               when Not_Incremental | Search_Ahead =>
+                  --  We want to interpret backspace as a backspace
                   return False;
-               end if;
+               when Search_Full =>
+                  --  Interpret backspace as a "search backwards in
+                  --  incremental mode", and stop processing the event.
+                  Internal_Search_Previous (Vsearch);
+                  return True;
+            end case;
 
-               Vsearch_Module_Id.Locked := True;
-
-               --  Remove any displayed information since and set the
-               --  sensitivity of the 'Replace' and 'Replace and Find'
-               --  buttons since a match has been found.
-               Remove_Information_On_Child
-                 (Vsearch.Main_View,
-                  Child_Key => Pattern_Child_Key);
-               Vsearch.Replace_Button.Set_Sensitive (True);
-               Vsearch.Replace_Search_Button.Set_Sensitive (True);
-
-               Set_Active_Text (Vsearch.Pattern_Combo, Occurrence.Get_Pattern);
-               Gtk_Entry
-                 (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
-               Module.Highlight_Occurrence (Occurrence);
-
-               Vsearch_Module_Id.Locked := False;
-
-               return True;
-            end if;
          end;
       elsif Key = GDK_Escape then
          declare
@@ -2230,26 +2191,6 @@ package body Vsearch is
       Self.Search_All_Button.Set_Visible (not Show_Replace_Widgets);
    end Set_Vsearch_Mode;
 
-   ----------------------------
-   -- Is_In_Incremental_Mode --
-   ----------------------------
-
-   function Is_In_Incremental_Mode return Boolean
-   is
-      Module : constant Search_Module :=
-        Find_Module
-          (Vsearch_Module_Id.Kernel,
-           Label => To_String (Vsearch_Module_Id.Context));
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Vsearch_Module_Id.Get_Kernel);
-   begin
-      return (Module /= null
-              and then View /= null
-              and then View.Pattern_Changed_Once
-              and then Module.Is_Option_Supported (Supports_Incremental)
-              and then Incremental_Search.Get_Pref);
-   end Is_In_Incremental_Mode;
-
    ------------------
    -- Receive_Text --
    ------------------
@@ -2717,7 +2658,11 @@ package body Vsearch is
    is
       pragma Unreferenced (Filter, Context);
    begin
-      return Vsearch_Module_Id.Search_Started;
+      --  Implement as a case statement for maintainability
+      case Vsearch_Module_Id.State is
+         when Search_Ahead | Search_Full => return True;
+         when Not_Incremental => return False;
+      end case;
    end Filter_Matches_Primitive;
 
    -------------
@@ -2910,7 +2855,7 @@ package body Vsearch is
 
       if Vsearch /= null
         and then Vsearch.Pattern_Combo.Get_Child.Has_Focus
-        and then Is_In_Incremental_Mode
+        and then Incremental_Search.Get_Pref
       then
          On_Search (Vsearch);
       else
@@ -3429,10 +3374,9 @@ package body Vsearch is
    begin
       Vsearch_Module_Id.Pattern := To_Unbounded_String
         (Vsearch.Pattern_Combo.Get_Active_Text);
-      Vsearch.Pattern_Changed_Once := True;
 
       if not Vsearch_Module_Id.Locked
-        and then Is_In_Incremental_Mode
+        and then Incremental_Search.Get_Pref
       then
          Reset_Interactive_Context (Vsearch);
          Internal_Search
@@ -3440,6 +3384,7 @@ package body Vsearch is
             All_Occurrences => False,
             Is_Incremental  => True,
             Replace         => False);
+         Vsearch_Module_Id.State := Search_Ahead;
       end if;
    end On_Pattern_Combo_Changed_After;
 
