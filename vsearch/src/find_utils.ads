@@ -350,27 +350,6 @@ package Find_Utils is
    --  It shouldn't set the general information like the pattern and the
    --  replacement pattern, since these are set automatically.
 
-   procedure Push_Occurrence
-     (Module     : not null access Search_Module_Type;
-      Occurrence : not null access Search_Occurrence_Record'Class);
-   --  Push the given search occurrence into the search module's search
-   --  occurrences stack..
-
-   function Pop_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence;
-   --  Pop the top element of the search module's search occurrences stack.
-
-   function Get_Last_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence;
-   --  Get the last search occurrence pushed into the module's search
-   --  occurrences stack, without popping it.
-
-   procedure Clear_Occurrences (Module : not null access Search_Module_Type);
-   --  Clear the module's search occurrences stack, freeing the memory
-   --  associated with the contained search occurrences.
-
    procedure Highlight_Occurrence
      (Module     : not null access Search_Module_Type;
       Occurrence : not null access Search_Occurrence_Record'Class) is null;
