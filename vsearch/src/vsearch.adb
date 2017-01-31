@@ -3333,7 +3333,11 @@ package body Vsearch is
    --------------------------
 
    procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Manager : constant Preferences_Manager := Kernel.Get_Preferences;
+      Page    : Preferences_Page;
+      Group   : Preferences_Group;
    begin
       Incremental_Search := Create
         (Get_Preferences (Kernel),
@@ -3343,7 +3347,7 @@ package body Vsearch is
          Doc     =>
            -"Enable the incremental mode. In this mode, a search will be "
          & "automatically performed whenever the search pattern is modified, "
-         & "starting from the current location to next occurence in the "
+         & "starting from the current location to the next occurrence in the "
          & "current file.",
          Default => False);
 
@@ -3388,6 +3392,20 @@ package body Vsearch is
          Doc   => -("Preserve the contents of the ""Look in"" entry"
            & " between searches."),
          Default => False);
+
+      Page := Manager.Get_Registered_Page
+        (Name             => "Preferences Assistant General",
+         Create_If_Needed => False);
+
+      Group := new Preferences_Group_Record;
+      Page.Register_Group
+        (Name     => "Search View",
+         Group    => Group,
+         Priority => -4);
+
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Incremental_Search));
    end Register_Preferences;
 
    ------------------
