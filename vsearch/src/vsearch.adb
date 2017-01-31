@@ -1621,6 +1621,7 @@ package body Vsearch is
                   Child_Key => Pattern_Child_Key);
                Vsearch.Replace_Button.Set_Sensitive (True);
                Vsearch.Replace_Search_Button.Set_Sensitive (True);
+               Reset_Interactive_Context (Vsearch);
 
                Set_Active_Text (Vsearch.Pattern_Combo, Occurrence.Get_Pattern);
                Gtk_Entry
