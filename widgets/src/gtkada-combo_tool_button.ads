@@ -67,9 +67,11 @@ package Gtkada.Combo_Tool_Button is
    --  short.
 
    procedure Select_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Item   : String);
-   --  Select Item from the list
+     (Widget      : access Gtkada_Combo_Tool_Button_Record;
+      Item        : String);
+   --  Select Item from the list.
+   --  Emits the Signal_Selection_Changed to let listeners
+   --  know of the change.
 
    function Get_Selected_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record) return String;

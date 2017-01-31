@@ -51,8 +51,8 @@ package body Gtkada.Combo_Tool_Button is
    ---------------
 
    type Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Short_Name : Unbounded_String;
-      Data       : User_Data;
+      Full_Name : Unbounded_String;
+      Data      : User_Data;
    end record;
    type Menu_Item is access all Menu_Item_Record'Class;
 
@@ -168,8 +168,8 @@ package body Gtkada.Combo_Tool_Button is
 
          for Item of Self.Items loop
             M_Item := new Menu_Item_Record;
-            M_Item.Data       := Item.Data;
-            M_Item.Short_Name := Item.Short_Name;
+            M_Item.Data      := Item.Data;
+            M_Item.Full_Name := Item.Full_Name;
             Gtk.Menu_Item.Initialize (M_Item);
 
             Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
@@ -434,7 +434,7 @@ package body Gtkada.Combo_Tool_Button is
       Widget : Gtkada_Combo_Tool_Button)
    is
    begin
-      Select_Item (Widget, To_String (Item.Short_Name));
+      Select_Item (Widget, To_String (Item.Full_Name));
       Widget_Callback.Emit_By_Name (Widget, Signal_Clicked);
    end On_Menu_Item_Activated;
 
@@ -489,9 +489,7 @@ package body Gtkada.Combo_Tool_Button is
       Item       : String;
       Icon_Name  : String := "";
       Data       : User_Data := null;
-      Short_Name : String := "")
-   is
-      First  : constant Boolean := Widget.Items.Is_Empty;
+      Short_Name : String := "") is
    begin
       Widget.Items.Append
         ((Icon_Name   =>
@@ -504,10 +502,6 @@ package body Gtkada.Combo_Tool_Button is
              then To_Unbounded_String (Short_Name)
              else To_Unbounded_String (Item)),
           Data        => Data));
-
-      if First and then Widget.Selected = "" then
-         Widget.Select_Item (Item);
-      end if;
    end Add_Item;
 
    ---------------
@@ -558,12 +552,13 @@ package body Gtkada.Combo_Tool_Button is
                else
                   Widget.Set_Label (To_String (J.Short_Name));
                end if;
-
-               Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);
-               return;
+               exit;
             end if;
          end loop;
-         --  ??? raise something ?
+
+         --  Emit the signal outside of the loop, in case listeners try
+         --  to modify Widget.Items, to avoid tampering with cursors
+         Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);
       end if;
    end Select_Item;
 

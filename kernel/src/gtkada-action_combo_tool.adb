@@ -95,6 +95,7 @@ package body Gtkada.Action_Combo_Tool is
       Widget_Callback.Connect (Self, Signal_Clicked, On_Clicked'Access);
 
       Self.Add_Action (Initial_Label, Initial_Action);
+      Self.Select_Item (Initial_Label);
    end Gtk_New;
 
    ----------------

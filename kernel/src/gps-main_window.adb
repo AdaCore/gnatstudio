@@ -271,7 +271,7 @@ package body GPS.Main_Window is
 
    procedure Update_Perspectives_In_Selector
      (Self : access Gtk_Widget_Record'Class);
-   --  Refresh the contents of the perspectives selector
+   --  Update the current perspective in the perspectives selector
 
    procedure On_Switch_Perspective (Self : access Gtk_Widget_Record'Class);
    --  Called when the user selects a new perspective via the selector
@@ -702,20 +702,19 @@ package body GPS.Main_Window is
      (Self : access Gtk_Widget_Record'Class)
    is
       Main : constant GPS_Window := GPS_Window (Self);
+      Current : constant String := Main.MDI.Current_Perspective;
       List : constant String_List_Access :=  --  do not free
         Main.MDI.List_Of_Perspectives;
-      Current : constant String := Main.MDI.Current_Perspective;
-      Selected : constant String :=
-        Main.Perspective_Selector.Get_Selected_Item;
    begin
-      if Selected /= Current then
-         Main.Perspective_Selector.Clear_Items;
-         Main.Perspective_Selector.Select_Item (Current);
+      Main.Perspective_Selector.Clear_Items;
 
+      if List /= null then
          for L of List.all loop
             Main.Perspective_Selector.Add_Item (Item => L.all);
          end loop;
       end if;
+
+      Main.Perspective_Selector.Select_Item (Current);
    end Update_Perspectives_In_Selector;
 
    ------------------
