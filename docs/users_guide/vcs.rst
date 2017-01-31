@@ -142,7 +142,7 @@ places, via a small icon and appropriate tooltips.
   the file has been modified locally, but not committed yet into the
   version control system (git in this case).
 
-  Clicking on this icon will change to the :ref:`VCS perspective`.
+  Clicking on this icon will change to the :ref:`The_VCS_perspective`.
 
 * The :guilabel:`Project` view
 
@@ -172,7 +172,8 @@ The VCS Perspective
 
 To display all pertinent information on your files, GPS uses multiple
 views, as described below. Although you can open any of them whenever
-you want, via the :menuselection:`Tools --> Views` menu, the most
+you want, via the :menuselection:`Tools --> Views` or
+:menuselection:`VCS` menus, the most
 convenient is to select the VCS perspective.
 
 This perspective was created to show all VCS related views, and hide
@@ -197,9 +198,11 @@ views, and instead show the following:
   files
 * The :guilabel:`Commits` view (:ref:`The_Commits_View`), used to
   select which files should be committed, and do the actual commit
-* The :guilabel:`History` view, to view all past commits
-* The :guilabel:`Branches` view, to view various pieces of information
-  about your repository, depending on which system you use.
+* The :guilabel:`History` view (:ref:`The_History_View`), to view
+  all past commits
+* The :guilabel:`Branches` view (:ref:`The_Branches_View`), to view
+  various pieces of information about your repository, depending on
+  which system you use.
 
 
 .. _The_Commits_View:
@@ -231,14 +234,15 @@ By default, they are organized into three sections:
   These are locally modified files, which will not be part of the next
   commit, unless you stage them.
 
-  It is possible for a file to be in both groups, when it had been
+  It is possible for a file to be in both groups (on the screenshot, this
+  is the case for :file:`vcs.rst`), when it had been
   modified, then staged, then further modified. If you are using git,
   the later modification have not been staged for commit, and git will
   only commit the first set of changes. Other systems like CVS and
   Subversion will always apply all current change to the file, no
   matter whether they were done before or after the staging operation.
 
-* Unknown files
+* Untracked files
 
   These are files found in your directory, but that are unknown to the
   VCS. Sometimes these files should simply be ignored and never committed,
@@ -264,4 +268,300 @@ over systems).
   multiple files at once and then clicking on the "stage" toolbar
   button.
 
+  Staging files can be done at any point in time, not necessarily just
+  before you commit. You can also stage files, exit GPS then restart,
+  and GPS will remember which files had been staged.
+
+* The second step is to provide a commit message. GPS will not let you
+  do a commit without an actual message (most VCS systems don't either).
+  You can enter any message in the editor at the top of the
+  :guilabel:`Commits` view.
+
+  With git, the standard is to have one single short line first then an
+  empty line, then a more extensive message. We recommend similar
+  approaches for other systems. That first line is the one that will be
+  displayed in the :guilabel:`History` (:ref:`The_History_View`).
+
+  Just like for staging files, you can edit this message at any point in
+  time, so it is a useful way to explain your changes as you do them,
+  even if you intend to do further changes before the actual commit.
+
+* Finally, you just press the :guilabel:`Commit` button in the local
+  toolbar. GPS will ask the VCS to do the actual commit, and then will
+  refresh all views. All files that were modified and staged before are
+  shown as no longer modified, for instance.
+
+Actions in the Commits view
+---------------------------
+
+Double-clicking on a file will open an editor for that file.
+
+Clicking and keeping the mouse pressed on a file will open a :guilabel:`Diff`
+view showing the current changes to the file.
+
+The Commits view local toolbar
+------------------------------
+
+The commits view contains a number of buttons in its toolbar. The
+exact set of buttons will depend on which VCS you are using, but here
+is some buttons that will be useful in a lot of cases:
+
+* On the left of the toolbar is a button to select the current VCS
+  system, in case your projects uses multiple such systems, or multiple
+  repositories with the same system. The commit and staging will always
+  be done for the current system only.
+
+  .. image:: vcs-selector.png
+
+  This button is hidden if you are using a single VCS system for all your
+  projects.
+
+* A button is provided to undo all local changes.
+
+  .. index:: undo local changes
+
+  After confirmation, GPS will revert to the last commit, and cancel all
+  changes you might have done locally. This works for all supported VCS.
+
+* A button to refresh the contents of all VCS views
+
+  This button is not needed if you do all operations from GPS, including
+  editing files. But if you do operations outside of GPS's control, you
+  will need to manually resynchronize the views with what's really in your
+  VCS.
+
+.. _The_History_View:
+
+The History view
+================
+
+.. image:: vcs-history1.png
+
+The purpose of this view is to show all past changes that you have done
+with your VCS.
+
+This view is divided into three parts:
+
+List of all past commits
+------------------------
+
+For each commit, GPS displays the first line of the commit message.
+Optionally, you can configure the view to also show the author, the
+date, and the unique identifier for these commits.
+
+Depending on the VCS in use, GPS will also show the name of the
+branches associated with these commits, as well as specific tag names
+that might have been set.
+
+In particular, git shows the contents of all active branches, so the
+history is not so linear, and there is a wealth of information to show
+how the branches were split and joined in the past.
+
+When this is too much information, you can use the local configuration
+menu to only show the details for the current branch.
+
+A special line (added at the top in the screenshot above) is displayed
+in gray when there are local uncommitted changes in your working
+directory.
+
+By default, GPS only shows the first 2000 commits. If you want to see
+more, scroll to the bottom and click on the :guilabel:`Show more`
+buttons to download more entries.
+
+Graph of past history
+---------------------
+
+Next to the list of commits is a graph showing their relationships.
+Most of the times, this history is fairly linear, with each commit
+having one parent commit, and followed by another commit.
+
+But with some VCS like git, people might chose to use a lot more
+branches. They create a new branch to work on a specific feature, then
+merge it into the master branch when the feature is completed. It can
+become harder to follow the history in such a case.
+
+.. image:: vcs-history2.png
+
+In this case, the graph becomes more useful, as shown in the screenshot
+above.
+
+But using the local configuration menu, you can also chose to only
+show commits that are related to branches (either because they are the
+beginning of a branch, or because they are a merge of two branches, or
+because they have a special name (tag or branch name) associated with
+them. All commits with a single parent and single child are hidden.
+
+.. image:: vcs-history3.png
+
+When you are using git, commits that have not yet been pushed to the
+remote branch will be displayed with a filled circle to help you find
+out whether you need to push.
+
+Details on selected commits
+---------------------------
+
+Whenever you select one or more commits, GPS will download their
+details and show those at the bottom of the :guilabel:`Commits`
+view.
+
+These details are those provided by the VCS, and generally include
+the author and date of the commit, as well as the full commit
+message and diff of what changes were made.
+
+.. image:: vcs-history-details.png
+
+The diff is syntax highlighted to make it more readable.
+
+
+.. _The_Branches_View:
+
+The Branches view
+=================
+
+The purpose of this view is to display various pieces of information that
+are specific to each VCS.
+
+Most notably, it will let you interact with branches.
+
+Various actions are possible in this view, all of which depends on the
+VCS and which specific section of the view you interact with. Please
+check the tooltips that are shown when you leave the mouse over a line
+for a brief while to see what actions are possible. The actions are
+done via one of the following means:
+
+* double-clicking on a line. This is the same as using the corresponding
+  toolbar button.
+* a long click on a line (click and then leave the mouse pressed for a
+  short while). This is the same as using the :guilabel:`rename` toolbar
+  button.
+* clicking on the :guilabel:`[+]` button in the toolbar.
+* clicking on the :guilabel:`[-]` button in the toolbar.
+
+Git and the Branches view
+-------------------------
+
+.. index:: git
+
+.. image:: vcs-branches-git.png
+
+The screenshot above is for git. In this case, GPS displays the following
+pieces of information:
+
+* List of local branches
+
+  For each branch, GPS displays the number of commits that have not yet
+  been pushed to the remote branch, and conversely the number of changes
+  that have been made in the remote branch but not yet applied to the
+  local branch.
+
+  Double-clicking on any of them will check it out and make it the current
+  branch. If you have locally modified files at that time, git might
+  refuse to do the checkout, and the error message will be displayed in
+  GPS's :guilabel:`Messages` view.
+
+  A long click on any of the branch names will let you rename the branch.
+
+  A click on :guilabel:`[+]` will create a new branch, starting from the
+  selected one.
+
+  A click on :guilabel:`[-]` will remove the selected branch if it is not
+  the current one.
+
+* List of remote branches
+
+  These are the branches that exist in the git repository, that you can
+  checkout locally by double-clicking on them. The branches are grouped
+  by the name of the remote repository that contains this branch, since
+  git is a distributed system.
+
+  You can also delete a remote branch by clicking on :guilabel:`[-]`.
+
+* List of Gerrit reviews
+
+  If you are doing code reviews via Gerrit, GPS is able to download the
+  list of patches pending review, as well as their current scores.
+
+  Double-clicking on any of the patch will open the Gerrit page in a
+  web browser.
+
+  Clicking on :guilabel:`[+]` will cherry pick the patch and apply it to
+  the local working directory.
+
+  If you are not using Gerrit, this category will not be displayed.
+
+* List of stashes
+
+  In git, stashes are a way to temporary move away local changes to get
+  back to a pristine working directory, without losing your current work.
+
+  GPS displays the list of all stashes, and lets you create new stashes
+  by clicking on :guilabel:`[+]` when the :guilabel:`STASHES` line is
+  selected.
+
+  Clicking on :guilabel:`[-]` will drop the selected stash, and you will
+  lose the corresponding changes.
+
+  Double-clicking on a stash will reapply it to the current working directory.
+  It will not drop it though, so that you can also apply it to another
+  branch.
+
+* List of tags
+
+  All tags that have been applied in your repository are also listed. You
+  can create new tags by selecting the :guilabel:`TAGS` line and clicking
+  on :guilabel:`[+]` line.
+
+  You can remove tags by clicking on :guilabel:`[-]`.
+
+CVS and the Branches view
+-------------------------
+
+.. index:: cvs
+
+.. image:: vcs-branches-cvs.png
+
+The screenshot above is for CVS. GPS displays far fewer information than
+for git, and only shows the tags.
+
+Double-clicking on any of the tag will check it out in the working
+directory.
+
+Clicking on :guilabel:`[-]` deletes the selected tag.
+
+Clicking on :guilabel:`[+]` while the :guilabel:`TAGS` line is selected
+will create a new tag.
+
+Subversion and the Branches view
+--------------------------------
+
+.. index:: svn
+.. index:: subversion
+.. image:: vcs-branches-svn.png
+
+GPS assumes a standard organization of the subversion repository, namely
+that there are three top-level directories::
+
+    <repository>/trunk/project/
+    <repository>/tags/project/
+    <repository>/branches/project/
+
+If this is the organization you are also using, GPS is able to show the list
+of tags and branches in the :guilabel:`Branches` view.
+
+You can checkout a specific tag or branch by double-clicking on it.
+
+
+.. _The_Diff_View:
+
+The Diff View
+=============
+
+.. image:: vcs-diff.png
+
+This view shows a simple color highlighted diff. The screenshot shows the
+changes currently done to this document...)
+
+This view is opened either by long clicking on a file name in the
+:guilabel:`Commits` view (:ref:`The_Commits_View`), or by selecting the
+menu :menuselection:`VCS --> Show all local changes`.
 

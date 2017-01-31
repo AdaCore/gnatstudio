@@ -1131,10 +1131,6 @@ These menu entries include the following categories:
 
   See :ref:`The_Project_View`.
 
-*Version control*
-
-  See :ref:`The_Version_Control_Contextual_Menu`.
-
 *Debugger*
 
   See :ref:`Using_the_Source_Editor_when_Debugging`.

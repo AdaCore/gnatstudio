@@ -965,7 +965,7 @@ class Predefined_Hooks:
       details.
 
       :param GPS.VCS VCS:
-      :param list files:
+      :param [GPS.File] files:
       :param int props:
         """
 

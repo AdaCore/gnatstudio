@@ -108,6 +108,25 @@ import exceptions
 from constructs import INDENTATION_SIMPLE
 
 
+class __enum_proxy(object):
+    def __init__(self, name, **enums):
+        for k, v in enums.iteritems():
+            setattr(self, k, "%s.%s" % (name, k))
+
+
+def enum(name, **enums):
+    """Replaces an enumeration so that the values are not displayed as
+       ints in the doc, but as a string representing the name.
+
+       This function is used whenever a value from the enum is accessed
+       (for instance for the default value of parameters).
+       However, for the class definition themselves, they use the enum()
+       defined in gps_utils, because of the order in which sphinx loads
+       things.
+    """
+    return __enum_proxy("GPS.Browsers.%s" % name, **enums)
+
+
 ###########################################################
 # GUI
 ###########################################################
@@ -542,7 +561,7 @@ class Activities(object):
         Returns the list of all activity's id.
 
         :return: A list of all activity's id defined
-        :rtype: list[string]
+        :rtype: [string]
         """
         pass  # implemented in Ada
 
@@ -832,7 +851,7 @@ class Bookmark(object):
         """
         Return the list of all existing bookmarks.
 
-        :rtype: list[:class`GPS.Bookmark`]
+        :rtype: [:class`GPS.Bookmark`]
 
         .. code-block:: python
 
@@ -994,7 +1013,7 @@ class Clipboard(object):
         the text at position :func:`GPS.Clipboard.current` rather than the
         first in the list.
 
-        :rtype: list[string]
+        :rtype: [string]
         """
         pass  # implemented in Ada
 
@@ -1298,7 +1317,7 @@ class Codefix(object):
         can all be used to create a new instance of :class:`Codefix` through
         its constructor.
 
-        :rtype: list[string]
+        :rtype: [string]
 
         .. code-block:: python
 
@@ -1380,7 +1399,7 @@ class CodefixError(object):
         """
         Lists the possible fixes for the specific error.
 
-        :rtype: list[string]
+        :rtype: [string]
 
         .. code-block:: python
 
@@ -1436,7 +1455,7 @@ class Command(object):
         """
         Returns the list of commands scheduled or running in the tasks view.
 
-        :rtype: list[:class:`GPS.Command`]
+        :rtype: [:class:`GPS.Command`]
         """
         pass  # implemented in Ada
 
@@ -1450,7 +1469,7 @@ class Command(object):
         current = total, the command has completed.
 
         :return: A list [current, total]
-        :rtype: list[int]
+        :rtype: [int]
         """
         pass  # implemented in Ada
 
@@ -3741,7 +3760,7 @@ class EditorBuffer(object):
         Returns the list of all editors that are currently open in GPS.
 
         :return: A list of instances of :class:`GPS.EditorBuffer`
-        :rtype: list[EditorBuffer]
+        :rtype: [EditorBuffer]
 
         .. code-block:: python
 
@@ -9568,6 +9587,19 @@ class VCS2(object):
               Git   CVS    Subversion
     """
 
+    Actions = enum('VCS2.Actions', DOUBLE_CLICK=0, TOOLTIP=1, ADD=2,
+                   REMOVE=3, RENAME=4)
+    Status = enum('VCS2.Status', UNMODIFIED=2**0, MODIFIED=2**1)
+
+    class Branch:
+        def __init__(self, name, active, annotation, id):
+            pass
+
+    class Commit:
+        def __init__(self, id, author, date, subject, parents, names=None,
+                     flags=0):
+            pass
+
     @staticmethod
     def _register(name, construct, default_status, discover_repo):
         """
@@ -9587,6 +9619,29 @@ class VCS2(object):
         """
 
     @staticmethod
+    def active_vcs(self):
+        """
+        Return the currently active VCS. When the project uses a single VCS,
+        it will always be the same instance. But when the project tree has
+        multiple VCS, or the same VCS but multiple working directories, this
+        will return the instance selected by the user in the local toolbar
+        of the VCS views.
+
+        :rtype: `GPS.VCS2`
+
+        .. seealso: `GPS.VCS2.vcs_in_use`
+        """
+
+    @staticmethod
+    def vcs_in_use(self):
+        """
+        Return the list of all VCS in use for the loaded project and its
+        imported projects.
+
+        :rtype: [GPS.VCS2]
+        """
+
+    @staticmethod
     def get(project):
         """
         Return the VCS to use for the files in a given project.
@@ -9594,7 +9649,7 @@ class VCS2(object):
         from another repository.
 
         :param GPS.Project project:
-        :returntype: `GPS.VCS2`
+        :rtype: `GPS.VCS2`
         """
 
     @property

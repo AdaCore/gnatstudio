@@ -91,7 +91,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         # Words that should not be highlighted.
         # ??? This should be based on the language
 
-        GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
+        GPS.Hook("preferences_changed").add(self._on_preferences_changed)
         GPS.Hook("location_changed").add(self.highlight)
         GPS.Hook("file_closed").add(self.__on_file_closed)
 
@@ -100,7 +100,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
             if self.current_buffer.file() == file:
                 self.current_buffer = None
 
-    def __on_preferences_changed(self, hook_name):
+    def _on_preferences_changed(self, hook_name):
         """
         Called whenever one of the preferences has changed.
         """
@@ -316,9 +316,30 @@ def __before_exit():
         return True
 
 
-# Cleanup any autohighlight messages that could have been persisted by
-# error in a previous run of GPS
-cleanup_autohighlight_messages()
+highlighter = None
 
-# Launch the highlighter
-highlighter = Current_Entity_Highlighter()
+
+def setup():
+    global highlighter
+    if highlighter is None:
+        # Do the initialization in the hooks, not systematically. This plugin
+        # is imported by sphinx for the documentation, and fails to load in
+        # that context otherwise.
+
+        # Cleanup any autohighlight messages that could have been persisted by
+        # error in a previous run of GPS
+        cleanup_autohighlight_messages()
+
+        # Launch the highlighter
+        highlighter = Current_Entity_Highlighter()
+
+        # Highlight the current context. If the user has loaded a file from the
+        # command line, the file is already the current context by the time we
+        # setup the highlighter, so we need to start highlighting immediately.
+        highlighter._on_preferences_changed("")
+        highlighter.highlight()
+
+
+@hook('gps_started')
+def __on_gps_started():
+    setup()

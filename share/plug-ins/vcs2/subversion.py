@@ -11,7 +11,8 @@ CAT_TAGS = 'TAGS'
 CAN_RENAME = True
 
 
-@core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
+@core.register_vcs(name='subversion',
+                   default_status=GPS.VCS2.Status.UNTRACKED)
 class SVN(core_staging.Emulate_Staging,
           core.File_Based_VCS):
 

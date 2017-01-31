@@ -168,13 +168,13 @@ types = {
 
     'FileSet': Mapping(
         ada='GPS.Kernel.File_Sets.Set',
-        python='list',
+        python='[GPS.File]',
         topython='Ada_To_Python_File_Dict (Data.Get_Script, %(ada)s)',
         toada_vars='Tmp_%(idx)d : File_Sets.Set;',
         toada_init='Python_To_Ada_File_Dict (Tmp_%(idx)d, Data, %(idx)d);',
         toada='Tmp_%(idx)d',
         withs=['GNATCOLL.VFS']),
-         
+
     'VCS_Engine': Mapping(
         ada='not null access GPS.VCS.Abstract_VCS_Engine\'Class',
         python='GPS.VCS',

@@ -3,25 +3,7 @@ Interface to the graph drawing API in GPS.
 """
 
 import GPS
-
-
-class __enum_proxy(object):
-    def __init__(self, name, **enums):
-        for k, v in enums.iteritems():
-            setattr(self, k, "%s.%s" % (name, k))
-
-
-def enum(name, **enums):
-    """Replaces an enumeration so that the values are not displayed as
-       ints in the doc, but as a string representing the name.
-
-       This function is used whenever a value from the enum is accessed
-       (for instance for the default value of parameters).
-       However, for the class definition themselves, they use the enum()
-       defined in gps_utils, because of the order in which sphinx loads
-       things.
-    """
-    return __enum_proxy("GPS.Browsers.%s" % name, **enums)
+from GPS import enum
 
 
 class Style(object):

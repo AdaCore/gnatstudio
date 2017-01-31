@@ -252,6 +252,11 @@ Each perspective has a name.  Switch perspectives by selecting the
 :menuselection:`Window --> Perspectives` menu.  Create a new perspective by
 selecting the :menuselection:`Window --> Perspectives --> Create New` menu.
 
+The most convenient way to change perspective, though, is to simply click
+on the button to the right of the main toolbar. By default, it shows the
+label "Default", which is the name of the default perspective. Selecting
+any item in the popup window will switch to that perspective.
+
 GPS sometimes automatically changes perspectives. For example, if you start
 a debugger, it switches to the perspective called :guilabel:`Debug` if one
 exists. When the debugger terminates, you are switched back to the

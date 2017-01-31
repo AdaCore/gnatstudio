@@ -389,8 +389,6 @@ You can access the following entries from the menu bar:
 
 * :menuselection:`Navigate` (see :ref:`The_Navigate_Menu`)
 
-* :menuselection:`VCS` (see :ref:`The_VCS_Menu`)
-
 * :menuselection:`Project` (see :ref:`The_Project_Menu`)
 
 * :menuselection:`Build` (see :ref:`The_Build_Menu`)

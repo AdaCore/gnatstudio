@@ -70,14 +70,6 @@ The list of active entries includes:
 
     See :ref:`The_Task_Manager`.
 
-  * :guilabel:`VCS Activities`
-
-    See :ref:`VCS_Activities`.
-
-  * :guilabel:`VCS Explorer`
-
-    See :ref:`The_VCS_Explorer`.
-
   * :guilabel:`Windows`
 
     Open a view containing all currently opened files.  See
