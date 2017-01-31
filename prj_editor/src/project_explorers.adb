@@ -1295,12 +1295,12 @@ package body Project_Explorers is
       Filter_Iter : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path)
    is
-      T         : constant Project_Explorer := Project_Explorer (Explorer);
-      Iter      : Gtk_Tree_Iter;
-      N_Type    : Node_Types;
+      T      : constant Project_Explorer := Project_Explorer (Explorer);
+      Iter   : Gtk_Tree_Iter;
+      N_Type : Node_Types;
    begin
       if Filter_Iter /= Null_Iter then
-         Iter := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+         Iter   := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
          N_Type := T.Tree.Get_Node_Type (Iter);
          T.Tree.Set_Node_Type (Iter, N_Type, Expanded => True);
       end if;

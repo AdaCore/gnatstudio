@@ -626,7 +626,7 @@ package body Gtkada.Tree_View is
          Iter := Children (Tree.Model, Store_Iter);
          while Iter /= Null_Iter loop
             if Get_Flag (Tree, Iter, Flag_Is_Expanded) then
-               Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
+               Path  := Tree.Get_Filter_Path_For_Store_Iter (Iter);
                Dummy := Expand_Row (Tree, Path, False);
                Path_Free (Path);
             end if;
@@ -977,11 +977,14 @@ package body Gtkada.Tree_View is
             Iter  : Gtk_Tree_Iter) return Boolean
          is
             pragma Unreferenced (Model);
-            Dummy : Boolean;
-            The_Id : constant Id := Get_Id (Self, Iter);
+            Dummy       : Boolean;
+            The_Id      : constant Id := Get_Id (Self, Iter);
+            Filter_Path : Gtk_Tree_Path;
          begin
             if Status.Expanded.Contains (The_Id) then
-               Dummy := Self.Expand_Row (Path, Open_All => False);
+               Filter_Path := Self.Get_Filter_Path_For_Store_Iter (Iter);
+               Dummy := Self.Expand_Row (Filter_Path, Open_All => False);
+               Path_Free (Filter_Path);
             end if;
 
             if Status.Selection.Contains (The_Id) then
