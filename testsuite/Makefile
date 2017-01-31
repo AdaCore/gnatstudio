@@ -13,7 +13,7 @@ endif
 endif
 
 all default: package
-	$(GPRBUILD) -P testsuite_drivers.gpr -m -XOS=${OS} -j0
+	$(GPRBUILD) -P testsuite_drivers.gpr -m -XOS=${OS} -j0 -XLIBRARY_TYPE=relocatable
 
 package:
 	mkdir -p share/doc

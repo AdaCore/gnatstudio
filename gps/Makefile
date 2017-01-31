@@ -22,9 +22,9 @@ PYTHON=python
 Build?=Debug
 
 ifeq ($(Build),Production)
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production -XOS=${OS}
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production -XOS=${OS} -XLIBRARY_TYPE=relocatable
 else
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XGnatcoll_Build=Debug -XOS=${OS}
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XGnatcoll_Build=Debug -XOS=${OS} -XLIBRARY_TYPE=relocatable
 endif
 
 .PHONY: default resources do_links all clean
