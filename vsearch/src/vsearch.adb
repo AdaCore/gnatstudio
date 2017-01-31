@@ -1401,6 +1401,9 @@ package body Vsearch is
             Vsearch.Set_Size_Request (-1, -1);
             Vsearch.Queue_Resize;
          end if;
+
+         --  Clear the module's search occurrences stack
+         Module.Clear_Occurrences;
       end if;
    end On_Context_Combo_Changed;
 
@@ -1535,6 +1538,11 @@ package body Vsearch is
       Event  : Gdk_Event) return Boolean
    is
       Vsearch             : constant Vsearch_Access := Vsearch_Access (Widget);
+      Module              : constant Search_Module :=
+                              Find_Module
+                                (Vsearch_Module_Id.Kernel,
+                                 To_String
+                                   (Vsearch_Module_Id.Context));
       Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
    begin
       if Key = GDK_Return or else Key = GDK_KP_Enter then
@@ -1584,6 +1592,17 @@ package body Vsearch is
                   return True;
             end case;
 
+         end;
+      elsif Key = GDK_Escape then
+         declare
+            Occurrence : constant Search_Occurrence :=
+                           Module.Get_Last_Occurrence;
+         begin
+            if Occurrence /= null then
+               Module.Give_Focus_To_Occurrence (Occurrence);
+
+               return True;
+            end if;
          end;
       end if;
 
