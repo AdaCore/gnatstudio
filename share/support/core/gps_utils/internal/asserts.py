@@ -99,6 +99,17 @@ def gps_assert(left, right, msg='Error in test script', quiet=False):
     return True
 
 
+def gps_assert_is_instance(inst, klass, msg='', quiet=False):
+    """
+    Ensure inst is of the given type
+    """
+    if not isinstance(inst, klass):
+        display_error("%s" % inst, "%s" % klass,
+                      "is not an instance of", msg, quiet)
+        return False
+    return True
+
+
 def gps_assert_list(left, right, msg, quiet=0):
     """
     Compare two lists and display an error if they do not match

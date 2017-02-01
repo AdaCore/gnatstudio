@@ -979,3 +979,4 @@ from asserts import *
 from tree import *
 from menu import *
 from editor import *
+from vcs import *

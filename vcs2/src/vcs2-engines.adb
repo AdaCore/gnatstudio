@@ -501,7 +501,10 @@ package body VCS2.Engines is
             F             : VCS_Engine_Factory_Access;
 
          begin
-            if Kind /= "auto" then
+            if Kind = "none" then
+               Trace (Me, "Disable VCS for " & P.Name);
+
+            elsif Kind /= "auto" then
                Trace (Me, "Using VCS attribute for " & P.Name
                       & " => " & Kind & " " & Repo);
                F := Get_VCS_Factory (Kernel, Kind);

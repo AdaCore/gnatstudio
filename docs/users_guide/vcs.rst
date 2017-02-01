@@ -23,6 +23,26 @@ will need to edit your project file as described below.
 
 GPS has built in support for the following VCS systems:
 
+* :guilabel:`None`
+
+  Disables version control support in GPS::
+
+     project Default is
+        package IDE is
+           for VCS_Kind use "None";
+        end IDE;
+     end Default;
+
+* :guilabel:`Auto`  (default)
+
+  Let GPS guess the correct version control system::
+
+     project Default is
+        package IDE is
+           for VCS_Kind use "Auto";
+        end IDE;
+     end Default;
+
 * :guilabel:`CVS`
 
   .. index:: VCS, CVS

@@ -241,6 +241,7 @@ package body VCS2.Module is
          and Mask_Modified_Unstaged) = 0
       then
          V.Invalidate_File_Status_Cache (File);
+         Vcs_Refresh_Hook.Run (Kernel);
       end if;
    end Execute;
 
