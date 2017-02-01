@@ -83,6 +83,13 @@ package GPS.Kernel.Project is
    --  If Clear is true, the Messages window is cleared before loading the
    --  default project
 
+   function Load_Default_Project
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+   --  Same as above, but with a signature which compatible with the
+   --  Welcome_Dialogs.Welcome_Dialog_Action callback type.
+   --  Used to display a "Start with default project" option in the GPS
+   --  Welcome Dialog.
+
    procedure Load_Empty_Project
      (Kernel : access Kernel_Handle_Record'Class);
    --  Create and load an empty project in memory.

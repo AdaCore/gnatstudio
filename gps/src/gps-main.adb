@@ -1884,7 +1884,12 @@ procedure GPS.Main is
                           (Callback  =>
                               Display_Open_Project_Dialog'Access,
                            Label     => "Open project",
-                           Icon_Name => "gps-open-file-symbolic")))
+                           Icon_Name => "gps-open-file-symbolic"),
+                        3 => Create
+                          (Callback  =>
+                              Load_Default_Project'Access,
+                           Label     => "Start with default project",
+                           Icon_Name => "gps-run-symbolic")))
          is
             when Quit_GPS =>
                GPS_Main.Application.Quit;

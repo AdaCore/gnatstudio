@@ -429,6 +429,21 @@ package body GPS.Kernel.Project is
       end if;
    end Load_Default_Project;
 
+   --------------------------
+   -- Load_Default_Project --
+   --------------------------
+
+   function Load_Default_Project
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean is
+   begin
+      Load_Default_Project
+        (Kernel,
+         Directory => Get_Current_Dir,
+         Clear     => False);
+
+      return True;
+   end Load_Default_Project;
+
    ------------------------
    -- Load_Empty_Project --
    ------------------------
