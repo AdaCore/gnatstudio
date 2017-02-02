@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2016, AdaCore                     --
+--                     Copyright (C) 2005-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -221,7 +221,41 @@ package body GPS.Properties is
             Descr.Value := new Property_Record'Class'(Property);
          end if;
 
-         Insert (All_Properties, Key & Sep & Name, Descr);
+         declare
+            C : constant Cursor := All_Properties.Find (Key & Sep & Name);
+
+            ---------
+            -- Get --
+            ---------
+            function Get (Property : Property_Access) return String;
+            function Get (Property : Property_Access) return String is
+            begin
+               if Property = null then
+                  return "'empty'";
+               else
+                  if Property.all in String_Property'Class then
+                     return String_Property (Property.all).Value.all;
+                  elsif Property.all in Integer_Property'Class then
+                     return Integer_Property (Property.all).Value'Img;
+                  elsif Property.all in Boolean_Property'Class then
+                     return Boolean_Property (Property.all).Value'Img;
+                  else
+                     return "Unsupported property class:" &
+                       Ada.Tags.External_Tag (Property'Tag);
+                  end if;
+               end if;
+            end Get;
+
+         begin
+            if C /= No_Element then
+               Trace
+                 (Me, "Key '" & Key & Sep & Name &
+                    "' already exsists with " & Get (Element (C).Value) &
+                    " value. New value:" & Get (Descr.Value));
+            else
+               Insert (All_Properties, Key & Sep & Name, Descr);
+            end if;
+         end;
       end Append;
 
       -------------
