@@ -971,12 +971,18 @@ package body Gtkada.Tree_View is
            (Model : Gtk_Tree_Model;
             Path  : Gtk_Tree_Path;
             Iter  : Gtk_Tree_Iter) return Boolean;
+
+         -----------------
+         -- Expand_Node --
+         -----------------
+
          function Expand_Node
            (Model : Gtk_Tree_Model;
             Path  : Gtk_Tree_Path;
             Iter  : Gtk_Tree_Iter) return Boolean
          is
-            pragma Unreferenced (Model);
+            pragma Unreferenced (Model, Path);
+
             Dummy       : Boolean;
             The_Id      : constant Id := Get_Id (Self, Iter);
             Filter_Path : Gtk_Tree_Path;
