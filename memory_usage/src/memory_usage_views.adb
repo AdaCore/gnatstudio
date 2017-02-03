@@ -26,8 +26,10 @@ with Gtk.Cell_Renderer_Pixbuf;              use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Progress;            use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Text;                use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                             use Gtk.Enums;
+with Pango.Layout;                          use Pango.Layout;
 
 with Default_Preferences;                   use Default_Preferences;
+with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
 with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
 with String_Utils;                          use String_Utils;
@@ -59,6 +61,9 @@ package body Memory_Usage_Views is
    Bg_Color_Column        : constant := 5;
    --  Column containing the background color of a given row in the memory
    --  usage tree view.
+
+   Name_Column_Min_Width  : constant := 100;
+   --  Minimum width of the name column
 
    Column_Types : constant GType_Array :=
                     (Icon_Column            => GType_String,
@@ -136,14 +141,23 @@ package body Memory_Usage_Views is
      (Self           : access Memory_Usage_View_Record'Class;
       Memory_Regions : Memory_Region_Description_Maps.Map)
    is
-      Expansion    : Expansions.Expansion_Status;
+      Dummy        : constant Expansions.Detached_Model :=
+                       Expansions.Detach_Model_From_View
+                         (Self.Memory_Tree, Save_Expansion => False);
       Region_Iter  : Gtk_Tree_Iter;
       Section_Iter : Gtk_Tree_Iter;
+      Module_Iter  : Gtk_Tree_Iter;
 
       function Get_Icon_Name
         (Memory_Region_Name : Unbounded_String) return String;
       --  Return the icon corresponding to RAM memory or FLASH memory depending
       --  on Memory_Region_Name.
+
+      function Get_Markup_For_Module
+        (Module : Module_Description) return String;
+      --  Return a markup string displaying information about the module's
+      --  object file: base name, full name or, if it belongs to a an external
+      --  library, the full name of this library.
 
       procedure Set_Values
         (Iter      : Gtk_Tree_Iter;
@@ -223,12 +237,25 @@ package body Memory_Usage_Views is
          end if;
       end Set_Values;
 
-   begin
-      Self.Memory_Tree.Set_No_Show_All (False);
-      Self.Memory_Tree.Show_All;
-      Self.No_Data_Label.Hide;
+      ---------------------------
+      -- Get_Markup_For_Module --
+      ---------------------------
 
-      Expansions.Get_Expansion_Status (Self.Memory_Tree, Expansion);
+      function Get_Markup_For_Module
+        (Module : Module_Description) return String is
+      begin
+         if Module.Lib_File = No_File then
+            return Module.Obj_File.Display_Base_Name & ASCII.LF
+              & "<span foreground=""#8c8c8c"" size=""x-small"">"
+              & Module.Obj_File.Display_Full_Name & "</span>";
+         else
+            return Module.Obj_File.Display_Base_Name & ASCII.LF
+              & "<span foreground=""#8c8c8c"" size=""x-small"">"
+              & Module.Lib_File.Display_Full_Name & "</span>";
+         end if;
+      end Get_Markup_For_Module;
+
+   begin
       Self.Memory_Tree_Model.Clear;
 
       for Memory_Region of Memory_Regions loop
@@ -239,6 +266,18 @@ package body Memory_Usage_Views is
 
             for Section of Memory_Region.Sections loop
                Self.Memory_Tree_Model.Append (Section_Iter, Region_Iter);
+
+               for Module of Section.Modules loop
+                  Self.Memory_Tree_Model.Append (Module_Iter, Section_Iter);
+
+                  Set_Values
+                    (Iter      => Module_Iter,
+                     Name      => Get_Markup_For_Module (Module),
+                     Origin    => To_String (Module.Origin),
+                     Used_Size => Module.Size,
+                     Length    => Memory_Region.Length);
+               end loop;
+
                Set_Values
                  (Iter      => Section_Iter,
                   Name      => To_String (Section.Name),
@@ -257,7 +296,9 @@ package body Memory_Usage_Views is
          end;
       end loop;
 
-      Expansions.Set_Expansion_Status (Self.Memory_Tree, Expansion);
+      Self.Scrolled.Set_No_Show_All (False);
+      Self.Scrolled.Show_All;
+      Self.No_Data_Label.Hide;
    end Refresh;
 
    ----------------
@@ -267,6 +308,7 @@ package body Memory_Usage_Views is
    function Initialize
      (Self : access Memory_Usage_View_Record'Class) return Gtk_Widget
    is
+      Main_View         : Dialog_View;
       Column            : Gtk_Tree_View_Column;
       Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer     : Gtk_Cell_Renderer_Text;
@@ -278,9 +320,14 @@ package body Memory_Usage_Views is
       Initialize_Vbox (Self, Homogeneous => False);
 
       --  Initialize the main view
-      Self.Main_View := new Dialog_View_Record;
-      Dialog_Utils.Initialize (Self.Main_View);
-      Self.Pack_Start (Self.Main_View, Expand => True, Fill => True);
+      Main_View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (Main_View);
+      Self.Pack_Start (Main_View, Expand => True, Fill => True);
+
+      Gtk_New (Self.Scrolled);
+      Self.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Scrolled.Set_No_Show_All (True);
+      Main_View.Append (Self.Scrolled, Expand => True, Fill => True);
 
       --  Create a tree view to display the memory regions/sections
       --  descriptions.
@@ -290,15 +337,15 @@ package body Memory_Usage_Views is
          Column_Types => Column_Types,
          Filtered     => False);
       Self.Memory_Tree_Model := Self.Memory_Tree.Model;
-      Self.Memory_Tree.Set_No_Show_All (True);
       Self.Memory_Tree.Get_Selection.Set_Mode (Selection_None);
-      Self.Main_View.Append (Self.Memory_Tree, Expand => True, Fill => True);
+      Self.Scrolled.Add (Self.Memory_Tree);
 
       --  Create a tree view column to display an icon representing the type
       --  of memory corresponding to the region.
       Gtk_New (Column);
       Gtk_New (Icon_Renderer);
       Column.Set_Title ("Type");
+      Column.Set_Resizable (True);
       Column.Pack_Start (Icon_Renderer, Expand => False);
       Column.Add_Attribute (Icon_Renderer, "icon-name", Icon_Column);
       Column.Add_Attribute
@@ -310,18 +357,30 @@ package body Memory_Usage_Views is
       Gtk_New (Column);
       Gtk_New (Text_Renderer);
       Column.Set_Title ("Name");
+      Column.Set_Resizable (True);
       Column.Pack_Start (Text_Renderer, Expand => False);
-      Column.Add_Attribute (Text_Renderer, "text", Name_Column);
+      Column.Add_Attribute (Text_Renderer, "markup", Name_Column);
       Column.Add_Attribute
         (Text_Renderer, "cell-background-rgba", Bg_Color_Column);
       Column.Set_Sort_Column_Id (Name_Column);
       Dummy := Self.Memory_Tree.Append_Column (Column);
+
+      --  We set a minimum width for the 'Name' column to ensure that
+      --  most of the module object files' base names are fully visible
+      --  by default, even if ellipsizing is enabled for the column's
+      --  Gtk_Cell_Renrerer_Text.
+      Set_Property
+        (Text_Renderer,
+         Gtk.Cell_Renderer_Text.Ellipsize_Property,
+         Ellipsize_Middle);
+      Column.Set_Min_Width (Name_Column_Min_Width);
 
       --  Create a tree view column to display the origin address of the
       --  memory region/section
       Gtk_New (Self.Col_Addresses);
       Gtk_New (Text_Renderer);
       Self.Col_Addresses.Set_Title ("Origin");
+      Self.Col_Addresses.Set_Resizable (True);
       Self.Col_Addresses.Pack_Start (Text_Renderer, Expand => False);
       Self.Col_Addresses.Set_Title ("Origin");
       Self.Col_Addresses.Add_Attribute (Text_Renderer, "text", Origin_Column);
@@ -350,7 +409,7 @@ package body Memory_Usage_Views is
       --  Create the label used to notify the user that no data is avalaible
       Gtk_New (Self.No_Data_Label, "No memory usage data avalaible");
       Self.No_Data_Label.Set_Sensitive (False);
-      Self.Main_View.Append (Self.No_Data_Label, Expand => True, Fill => True);
+      Main_View.Append (Self.No_Data_Label, Expand => True, Fill => True);
 
       --  No widget to focus
       return null;

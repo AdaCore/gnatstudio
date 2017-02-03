@@ -17,6 +17,7 @@
 
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Scripts;                  use GPS.Scripts;
@@ -286,6 +287,7 @@ package body Memory_Usage_Views.Scripts is
          declare
             Regions_List  : constant List_Instance'Class := Data.Nth_Arg (2);
             Sections_List : constant List_Instance'Class := Data.Nth_Arg (3);
+            Modules_List  : constant List_Instance'Class := Data.Nth_Arg (4);
             Regions       : Memory_Region_Description_Maps.Map;
          begin
             Trace (Me, "on_memory_usage_data_fetched has been called");
@@ -311,19 +313,40 @@ package body Memory_Usage_Views.Scripts is
                declare
                   Current     : constant List_Instance'Class :=
                                   Sections_List.Nth_Arg (J);
+                  Name        : constant String := Current.Nth_Arg (1);
                   Region_Name : constant String := Current.Nth_Arg (4);
                   Length      : constant Integer := Current.Nth_Arg (3);
                begin
-                  Regions (Region_Name).Sections.Append
-                    (Memory_Section_Description'
-                       (Name        => Current.Nth_Arg (1),
+                  Regions (Region_Name).Sections.Include
+                    (Key => Name,
+                     New_Item => Memory_Section_Description'
+                       (Name        => To_Unbounded_String (Name),
                         Origin      => Current.Nth_Arg (2),
-                        Length      => Length));
+                        Length      => Length,
+                        Modules     => <>));
 
                   --  Calculate the used size of the memory region from the
                   --  contained memory sections.
                   Regions (Region_Name).Used_Size :=
                     Regions (Region_Name).Used_Size + Length;
+               end;
+            end loop;
+
+            for J in 1 .. Modules_List.Number_Of_Arguments loop
+               declare
+                  Current      : constant List_Instance'Class :=
+                                   Modules_List.Nth_Arg (J);
+                  Region_Name  : constant String := Current.Nth_Arg (5);
+                  Section_Name : constant String := Current.Nth_Arg (6);
+               begin
+                  Regions (Region_Name).Sections (Section_Name).Modules.Append
+                    (Module_Description'
+                       (Obj_File => Create
+                           (Current.Nth_Arg (1), Normalize => True),
+                        Lib_File => Create
+                           (Current.Nth_Arg (2), Normalize => True),
+                        Origin   => Current.Nth_Arg (3),
+                        Size     => Current.Nth_Arg (4)));
                end;
             end loop;
 
@@ -360,7 +383,8 @@ package body Memory_Usage_Views.Scripts is
       Kernel.Scripts.Register_Command
         ("on_memory_usage_data_fetched",
          Params        => (2 => Param ("regions"),
-                           3 => Param ("sections")),
+                           3 => Param ("sections"),
+                           4 => Param ("modules")),
          Class         => Provider_Task_Visitor_Class,
          Handler       => Provider_Task_Visitor_Handler'Access);
    end Register_Scripts;

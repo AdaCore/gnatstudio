@@ -64,12 +64,16 @@ class LD(core.MemoryUsageProvider):
         # units?)
         regions = []
         sections = []
+        modules_dict = {}
+        modules = []
 
         # The regexps used to match the information we want to fetch
         region_r = re.compile('^(?P<name>\w+)\s+(?P<origin>0x[0-9a-f]+)' +
-                              ' (?P<length>0x[0-9a-f]+) x?r?w?')
+                              '\s+(?P<length>0x[0-9a-f]+)\s+x?r?w?')
         section_r = re.compile('^(?P<name>[\w.]+)\s+(?P<origin>0x[0-9a-f]+)' +
                                '\s+(?P<length>0x[0-9a-f]+)')
+        module_r = re.compile('^\s+[\w.]*\s+(?P<origin>0x[0-9a-f]+)\s+' +
+                              '(?P<size>0x[0-9a-f]+) (?P<files>.+\.o\)?)')
 
         def region_name_from_address(addr):
             """
@@ -134,6 +138,49 @@ class LD(core.MemoryUsageProvider):
             else:
                 return None
 
+        def try_match_module(line):
+            """
+            Try to match a module description in the given line.
+
+            A module description gives information about the size taken by
+            an object file in a given section.
+            """
+
+            m = module_r.search(line)
+            if m:
+                files_info = m.group('files')
+                files = re.split("\(|\)", files_info)
+
+                # Get the object file name and, if any, information about
+                # the library for which this file has been compiled.
+
+                obj_file = files[0] if len(files) == 1 else files[1]
+                lib_file = files[0] if len(files) > 1 else ""
+
+                section = sections[-1]
+                section_name = section[0]
+                module = modules_dict.get((files_info, section_name), None)
+
+                # If the object file name does not contain any directory
+                # information assume that this file is located in the same
+                # directory as the map file.
+
+                if not os.path.dirname(obj_file) and not lib_file:
+                    obj_file = os.path.join(map_dir, obj_file)
+
+                # If a previous module decription has been found for the same
+                # key, just add the size of this one to the previously found
+                # one.
+
+                if module:
+                    module[3] += int(m.group('size'), 16)
+                else:
+                    region_name = section[3]
+                    module = [obj_file, lib_file, m.group('origin'),
+                              int(m.group('size'), 16),
+                              region_name, section_name]
+                    modules_dict[(files_info, section_name)] = module
+
         # Parse the memory map file to retrieve the memory regions and
         # the path of the linked executable.
 
@@ -144,9 +191,14 @@ class LD(core.MemoryUsageProvider):
                     section = try_match_section(line)
                     if section:
                         sections.append(section)
+                    else:
+                        try_match_module(line)
                 else:
                     regions.append(region)
 
-        visitor.on_memory_usage_data_fetched(regions, sections)
+        for module in modules_dict.itervalues():
+            modules.append(tuple(module))
+
+        visitor.on_memory_usage_data_fetched(regions, sections, modules)
 
 GPS.parse_xml(xml)

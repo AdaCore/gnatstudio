@@ -28,17 +28,18 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
+with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 
 with Gtkada.Tree_View;                       use Gtkada.Tree_View;
 with Gtk.Label;                              use Gtk.Label;
 with Gtk.Menu;                               use Gtk.Menu;
+with Gtk.Scrolled_Window;                    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;                         use Gtk.Tree_Model;
 with Gtk.Tree_Store;                         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
 with Gtk.Widget;                             use Gtk.Widget;
 with Gtkada.MDI;
 
-with Dialog_Utils;                           use Dialog_Utils;
 with Generic_Views;
 with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
@@ -55,23 +56,45 @@ package Memory_Usage_Views is
    type Memory_Section_Description is private;
    --  Type representing a memory section
 
+   type Module_Description is private;
+   --  Type representing a module description.
+   --  A module represents a file based split of ressources consumed by a given
+   --  object file for a particular section (e.g: ressources consumed by
+   --  the main unit's object file for the .text section).
+
 private
 
-   type Memory_Section_Description is record
-      Name        : Unbounded_String;
-      Origin      : Unbounded_String;
-      Length      : Integer;
+   type Module_Description is record
+      Obj_File : Virtual_File;
+      Lib_File : Virtual_File;
+      Origin   : Unbounded_String;
+      Size     : Integer;
    end record;
 
-   package Memory_Section_Description_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Memory_Section_Description, "=");
+   package Module_Description_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Module_Description, "=");
+
+   type Memory_Section_Description is record
+      Name    : Unbounded_String;
+      Origin  : Unbounded_String;
+      Length  : Integer;
+      Modules : Module_Description_Lists.List;
+   end record;
+
+   package Memory_Section_Description_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Memory_Section_Description,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Memory_Region_Description is record
-      Name            : Unbounded_String;
-      Origin          : Unbounded_String;
-      Length          : Integer;
-      Used_Size       : Integer;
-      Sections        : Memory_Section_Description_Lists.List;
+      Name      : Unbounded_String;
+      Origin    : Unbounded_String;
+      Length    : Integer;
+      Used_Size : Integer;
+      Sections  : Memory_Section_Description_Maps.Map;
    end record;
 
    function "<" (Left, Right : Memory_Region_Description) return Boolean;
@@ -100,12 +123,11 @@ private
       "="         => "=");
 
    type Memory_Usage_View_Record is new Generic_Views.View_Record with record
-      Main_View         : Dialog_View;
-      No_Data_Label     : Gtk_Label;
+      Scrolled          : Gtk_Scrolled_Window;
       Memory_Tree       : Memory_Usage_Tree_View;
       Memory_Tree_Model : Gtk_Tree_Store;
       Col_Addresses     : Gtk_Tree_View_Column;
-      Memory_Regions    : Memory_Region_Description_Maps.Map;
+      No_Data_Label     : Gtk_Label;
    end record;
    overriding procedure Create_Menu
      (View    : not null access Memory_Usage_View_Record;
