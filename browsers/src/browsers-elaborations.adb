@@ -219,33 +219,81 @@ package body Browsers.Elaborations is
       --------------
 
       procedure Add_Link (It1, It2 : Unit_Item; Descr : String) is
-         Link   : constant GPS_Link := new GPS_Link_Record;
-         Offset : constant Natural := Browser.Count_Links (It1, It2);
+         Link         : GPS_Link;
+         Offset       : Natural;
+         Already_Have : Boolean;
+
+         procedure Look_For_Links
+           (Has_Exact   : out Boolean;
+            Total_Count : out Natural);
+         --  Look for links between It1 and It2, count total count of them.
+         --  Also check if there is a link with label = Descr already.
+
+         --------------------
+         -- Look_For_Links --
+         --------------------
+
+         procedure Look_For_Links
+           (Has_Exact   : out Boolean;
+            Total_Count : out Natural)
+         is
+
+            procedure On_Link
+              (Item : not null access Abstract_Item_Record'Class);
+
+            -------------
+            -- On_Link --
+            -------------
+
+            procedure On_Link
+              (Item : not null access Abstract_Item_Record'Class)
+            is
+               Label : Container_Item;
+            begin
+               if Item.all in GPS_Link_Record'Class
+                 and then GPS_Link (Item).Get_To = Abstract_Item (It2)
+                 and then GPS_Link (Item).Get_From = Abstract_Item (It1)
+               then
+                  Total_Count := Total_Count + 1;
+                  Label := GPS_Link (Item).Get_Label;
+                  if Text_Item (Label).Get_Text = Descr then
+                     Has_Exact := True;
+                  end if;
+               end if;
+            end On_Link;
+
+            S : Item_Sets.Set;
+
+         begin
+            Total_Count := 0;
+            Has_Exact := False;
+            S.Include (Abstract_Item (It1));
+            Browser.Get_View.Model.For_Each_Link
+              (On_Link'Access, From_Or_To => S);
+         end Look_For_Links;
+
       begin
+         Look_For_Links (Already_Have, Total_Count => Offset);
+
+         if Already_Have then
+            return;
+         end if;
+
+         Link := new GPS_Link_Record;
          Link.Default_Style := Styles.Link;
 
-         if False and then Offset = 0 then
-            Initialize
-              (Link,
-               From    => It1,
-               To      => It2,
-               Routing => Curve,
-               Label   => Gtk_New_Text (Styles.Label, Descr),
-               Style   => Link.Default_Style);
-         else
-            Initialize
-              (Link,
-               From    => It1,
-               To      => It2,
-               Routing => Arc,
-               Label   => Gtk_New_Text (Styles.Label, Descr),
-               Style   => Link.Default_Style);
+         Initialize
+           (Link,
+            From    => It1,
+            To      => It2,
+            Routing => Arc,
+            Label   => Gtk_New_Text (Styles.Label, Descr),
+            Style   => Link.Default_Style);
 
-            if Offset mod 2 = 1 then
-               Link.Set_Offset (Gdouble ((Offset + 1) / 2) * 10.0);
-            else
-               Link.Set_Offset (Gdouble (-Offset / 2 + 1) * 10.0);
-            end if;
+         if Offset mod 2 = 1 then
+            Link.Set_Offset (Gdouble ((Offset + 1) / 2) * 10.0);
+         else
+            Link.Set_Offset (Gdouble (-Offset / 2 + 1) * 10.0);
          end if;
 
          Browser_Model (Browser.Get_View.Model).Add (Link);
