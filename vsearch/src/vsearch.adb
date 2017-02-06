@@ -1729,15 +1729,16 @@ package body Vsearch is
 
       --  Add an entry for each registered prefedined regexp
 
-      for R of Vsearch_Module_Id.Search_Regexps.all loop
-         Item := Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, R.Name.all);
-         Model.Set (Item, Column_Pattern,        R.Regexp.all);
-         Model.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
-         Model.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
-         Model.Set (Item, Column_Whole_Word,     False);
-         Model.Set (Item, Column_Is_Separator,   False);
-      end loop;
-
+      if Vsearch_Module_Id.Search_Regexps /= null then
+         for R of Vsearch_Module_Id.Search_Regexps.all loop
+            Item := Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, R.Name.all);
+            Model.Set (Item, Column_Pattern,        R.Regexp.all);
+            Model.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
+            Model.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
+            Model.Set (Item, Column_Whole_Word,     False);
+            Model.Set (Item, Column_Is_Separator,   False);
+         end loop;
+      end if;
       --  Restore the options as before (they might have changed depending
       --  on the last predefined regexp we inserted)
 
