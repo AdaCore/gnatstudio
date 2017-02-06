@@ -1102,7 +1102,9 @@ package body Outline_View.Model is
       Path     : Gtk_Tree_Path;
       use type Sem_Tree_Holders.Holder;
    begin
-      if Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder then
+      if Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
+        or else not Model.Semantic_Tree.Element.Is_Ready
+      then
          Gtk_New (Path);
          return Path;
       end if;
