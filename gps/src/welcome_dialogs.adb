@@ -190,24 +190,39 @@ package body Welcome_Dialogs is
 
       procedure Create_Logo_And_Title_Area is
          Frame : Gtk_Frame;
+         Hbox  : Gtk_Box;
          Vbox  : Gtk_Box;
+         Logo  : Gtk_Image;
          Label : Gtk_Label;
       begin
          Gtk_New (Frame);
          Main_View.Append (Frame, Expand => False);
+         Set_Halign (Frame, Align_Center);
+
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Frame.Add (Hbox);
+
+         Gtk.Image.Gtk_New_From_Icon_Name
+           (Image     => Logo,
+            Icon_Name => "gps_welcome_logo",
+            Size      => Icon_Size_Dialog);
+         Hbox.Pack_Start (Logo, Expand => False);
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
-         Frame.Add (Vbox);
+         Hbox.Pack_Start (Vbox, Expand => False, Padding => 10);
 
          Gtk_New (Label, "GPS");
+         Label.Set_Alignment (0.0, 0.5);
          Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-title");
          Vbox.Pack_Start (Label, Expand => False);
 
          Gtk_New (Label, "The GNAT Programming Studio");
+         Label.Set_Alignment (0.0, 0.5);
          Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-subtitle");
          Vbox.Pack_Start (Label, Expand => False);
 
          Gtk_New (Label, "Version " & Config.Version);
+         Label.Set_Alignment (0.0, 0.5);
          Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
          Vbox.Pack_Start (Label, Expand => False);
       end Create_Logo_And_Title_Area;
