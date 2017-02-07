@@ -1602,6 +1602,10 @@ package body GPS.Kernel.Modules.UI is
       procedure Remove_Button
         (Toolbar : not null access Gtk_Toolbar_Record'Class)
       is
+         package Widget_List is new Ada.Containers.Doubly_Linked_Lists
+           (Gtk_Widget);
+         To_Remove : Widget_List.List;
+
          procedure On_Child (C : not null access Gtk_Widget_Record'Class);
          procedure On_Child (C : not null access Gtk_Widget_Record'Class) is
          begin
@@ -1612,12 +1616,17 @@ package body GPS.Kernel.Modules.UI is
             elsif C.all in Action_Combo_Tool_Record'Class then
                Action_Combo_Tool (C).Remove_Action (Action);
                if not Action_Combo_Tool (C).Has_Items then
-                  Toolbar.Remove (C);
+                  --  Tampering risk: do not remove widgets in a Foreach on the
+                  --  container that contains them.
+                  To_Remove.Append (C);
                end if;
             end if;
          end On_Child;
       begin
          Toolbar.Foreach (On_Child'Unrestricted_Access);
+         for C of To_Remove loop
+            Toolbar.Remove (C);
+         end loop;
       end Remove_Button;
 
       Item : Menu_Item_Info;
