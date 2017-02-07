@@ -926,7 +926,7 @@ package body Language.Libclang is
          return;
       end if;
 
-      Trace (Me, "Loading the db !" & Full_Name (Cache_VFS));
+      Trace (Me, "Loading the db: " & Full_Name (Cache_VFS));
 
       if not Cache_VFS.Is_Regular_File then
          Trace (Me, "No database file");
