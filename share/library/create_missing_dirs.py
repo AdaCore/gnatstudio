@@ -19,9 +19,13 @@ import os
 from os.path import *
 import string
 
+attempted = []  # List of directories that this plugin has attempted to create
+
 
 def on_project_changed(self):
+    global attempted
     CreatedDirs = False
+    created = []
     try:
         must_create = GPS.Preference("Auto-Create-Dirs").get()
     except:
@@ -30,7 +34,6 @@ def on_project_changed(self):
     if must_create:
         prjs = GPS.Project.root().dependencies(True)
         prjs.append(GPS.Project.root())
-        created = []
         for i in prjs:
             dirs = [i.get_attribute_as_string("Exec_Dir"),
                     i.get_attribute_as_string("Library_Dir"),
@@ -39,10 +42,13 @@ def on_project_changed(self):
             for j in dirs:
                 if i and i not in [".", "", " "]:
                     dir = join(dirname(i.file().path), j).strip()
-                    if not exists(dir):
-                        os.makedirs(dir)
-                        created.append(dir)
-                        CreatedDirs = True
+                    # Only attempt to create each directory once
+                    if dir not in attempted:
+                        if not exists(dir):
+                            os.makedirs(dir)
+                            attempted.append(dir)
+                            created.append(dir)
+                            CreatedDirs = True
         if CreatedDirs:
             GPS.Console("Messages").write("Created missing dirs\n")
             GPS.Console("Messages").write(string.join(created, "\n"))
