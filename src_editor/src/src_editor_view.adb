@@ -1999,13 +1999,14 @@ package body Src_Editor_View is
       Buffer_Y      : Gint;
       Iter          : Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
+      In_Text       : Boolean;
 
    begin
       Window_To_Buffer_Coords
         (View, Text_Window_Text,
          Window_X => X, Window_Y => Y,
          Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
-      Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y);
+      Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y, In_Text);
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
 
@@ -2258,11 +2259,12 @@ package body Src_Editor_View is
                   declare
                      L, C    : Gint;
                      Iter    : Gtk_Text_Iter;
+                     In_Text : Boolean;
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
+                     Get_Iter_At_Location (View, Iter, L, C, In_Text);
                      Grab_Focus (View);
                      Cursors.Add_Cursor
                        (Buffer, Iter);
@@ -2300,11 +2302,12 @@ package body Src_Editor_View is
                   declare
                      L, C    : Gint;
                      Iter    : Gtk_Text_Iter;
+                     In_Text : Boolean;
                   begin
                      Window_To_Buffer_Coords
                        (View, Text_Window_Text,
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
-                     Get_Iter_At_Location (View, Iter, L, C);
+                     Get_Iter_At_Location (View, Iter, L, C, In_Text);
                      Grab_Focus (View);
                      Place_Cursor (Get_Buffer (View), Iter);
                      Paste_Clipboard (Get_Clipboard (View.Kernel), View);
@@ -2898,6 +2901,7 @@ package body Src_Editor_View is
       The_Line                   : Editable_Line_Type;
       The_Column                 : Character_Offset_Type;
       Success                    : Boolean;
+      In_Text                    : Boolean;
 
    begin
       Trace (Me, "Build_Editor_Context");
@@ -2931,7 +2935,7 @@ package body Src_Editor_View is
                Get_Coords (Event, Xevent, Yevent);
                Window_To_Buffer_Coords
                  (V, Text_Window_Left, Gint (Xevent), Gint (Yevent), X, Y);
-               Get_Iter_At_Location (V, Start_Iter, X, Y);
+               Get_Iter_At_Location (V, Start_Iter, X, Y, In_Text);
                Line := Get_Line (Start_Iter);
                Place_Cursor (B, Start_Iter);
 

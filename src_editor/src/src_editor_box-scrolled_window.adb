@@ -58,11 +58,12 @@ package body Src_Editor_Box.Scrolled_Window is
       Scrollbar_Width : constant Gint := 10;
       Buffer : Source_Buffer;
       Iter : Gtk_Text_Iter;
-      Trailing : Gint;
+      Trailing : aliased Gint;
       X, Y, Width, Height : Gint;
       Alloc : Gtk_Allocation;
       Min, Nat : Gtk_Requisition;
       Event : Gdk_Event;
+      In_Text : Boolean;
 
    begin
       --  Is the scroll due to a wheel or touchpad event ?
@@ -84,8 +85,9 @@ package body Src_Editor_Box.Scrolled_Window is
       --  Else the user is scrolling the scroll bar with the mouse
 
       View.Get_Iter_At_Position
-         (Iter, Trailing, X => 0,
-          Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0));
+        (Iter, Trailing, X => 0,
+         Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0),
+         In_Text => In_Text);
 
       Buffer := Source_Buffer (View.Get_Buffer);
 
