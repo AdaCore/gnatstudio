@@ -244,6 +244,23 @@ the enclosing package and a full view in the private part of the package.
 A triangle icon will appear for each of the two occurrences of the type
 name, one with the additional decoration indicating 'private' visibility.
 
+.. index:: preferences assistant
+.. index:: windows; preferences assistant
+.. _The_Preferences_Assistant:
+
+
+The Preferences Assistant
+==================
+
+.. image:: preferences_assistant.png
+
+When starting GPS for the first time, a preferences assistant window opens,
+allowing you to configure some general preferences (color theme, key bindings
+etc.).
+
+You can skip the remaining pages of the preferences assistant by clicking on
+the :guilabel:`Start using GPS` button or by clicking on red cross.
+
 .. index:: welcome dialog
 .. index:: windows; welcome dialog
 .. _The_Welcome_Dialog:
@@ -264,85 +281,42 @@ Finally, if you specify the name of a source file to edit, GPS loads a
 default project.  If GPS cannot find a project file, it displays a welcome
 dialog, giving you the following choices:
 
-* :guilabel:`Create new project from template`
+* :guilabel:`Create new project`
 
   Selecting this choice and the clicking :guilabel:`OK` button launches an
   assistant to create a project using one of the predefined project
   templates. This makes it easy to create GtkAda-based applications, or
   applications using the Ada Web Server, for example.
 
-.. index:: project; default
-
-* :guilabel:`Start with default project in directory`
-
-  Selecting this choice and clicking the :guilabel:`OK` button causes GPS to
-  look for a project called :file:`default.gpr` in the current directory
-  and load it if found. Otherwise, it copies the default project
-  :file:`<prefix>/share/gps/default.gpr` into the current directory and
-  loads it. GPS removes this temporary copy when exiting or loading another
-  project if you have not modified the copy.
-
-  The default project contains all the Ada source files from the specified
-  directory (assuming they use the default GNAT naming scheme :file:`.ads`
-  and :file:`.adb`).
-
-  If the current directory is not writable, GPS instead loads
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS runs in a
-  limited mode, where some capabilities (such as building and source
-  navigation) are not available. This project will not contain any
-  sources.
-
-.. index:: project; wizard
-
-* :guilabel:`Create new project with wizard`
-
-  Selecting this choice and clicking the :guilabel:`OK` button starts a
-  wizard allowing you to specify most of the properties for a new
-  project. Once the project is created, GPS saves it and loads it
-  automatically.  See :ref:`The_Project_Wizard` for more details.
-
-  There are several kinds of wizards, ranging from creating a single
-  project, to creating a set of project that attempt to adapt to an
-  existing directory layout. The list of pages in the wizard depends on the
-  kind of project you want to create.
-
-  One of the wizards, :guilabel:`Project Tree`, tries to import a set of
-  sources and object files and attempt to create one or more project files
-  so that building your application through these project files puts the
-  objects in the same directory they are currently in. If you have not
-  compiled your application when launching this wizard, GPS creates a
-  single project file that puts all object files in the same directory.
-  This is the prefered method when importing sources with duplicate file
-  names, since the latter is only allowed in a single project file, not
-  across multiple project files.
-
 .. index:: project; load existing project
 
-* :guilabel:`Open existing project`
+* :guilabel:`Open project`
 
-  Select an existing project by clicking on the :guilabel:`Browse` button
-  or using a previously loaded project listed in the combo box. When a
-  project is selected, click on the :guilabel:`OK` button to load this
-  project and open the main window.
+  Clicking on this button opens up a file browser, allowing you to select a
+  a project file to load.
 
-* :guilabel:`Always show this dialog when GPS starts`
+.. index:: project; default
 
-  If unset, the welcome dialog will not be shown in future sessions.  In this
-  case, GPS behaves as follows: it first looks for a :command:`-P` switch
-  on the command line and loads the corresponding project if so; otherwise,
-  it looks for a project file in the current directory and loads it if
-  there is only one; if no project file was loaded, GPS starts with the
-  default project, as if you had selected :guilabel:`Start with default
-  project in directory` in the welcome dialog.
+* :guilabel:`Start with default`
 
-  .. index:: preferences; display welcome window
+  Clicking on this button causes GPS to look for a project called
+  :file:`default.gpr` in the current directory and load it if found. Otherwise,
+  it copies the default project :file:`<prefix>/share/gps/default.gpr` into the
+  current directory and loads it. GPS removes this temporary copy when exiting
+  or loading another project if you have not modified the copy.
 
-  To reset this property, go to the :menuselection:`Edit --> Preferences`
-  menu.
+  The default project contains all the Ada source files from the specified
+  directory (assuming they use the default GNAT naming scheme :file:`.ads` and
+  :file:`.adb`).
 
-* :guilabel:`Quit`
+  If the current directory is not writable, GPS instead loads
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS runs in a limited
+  mode, where some capabilities (such as building and source navigation) are not
+  available. This project will not contain any sources.
 
-  If you click on this button, GPS terminates immediately.
+In addition to these choices, you can also load a recently opened project by
+clicking the project of interest in the left-hand pane listing the known recent
+projects.
 
 .. index:: tip of the day
 .. index:: windows; tip of the day
@@ -1508,7 +1482,7 @@ information. You can view this information in one of three ways:
   * select the bookmark, and click again on the :guilabel:`Edit Note` button as before
 
   * :guilabel:`double-click` on the tag icon.
-  
+
   * leave the mouse hover the bookmark line. This will display a tooltip with
     extra information on the bookmark: its name, its current location and any
     note it might have. This is useful if you only want to quickly glance at
