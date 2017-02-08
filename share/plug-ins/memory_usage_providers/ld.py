@@ -90,6 +90,28 @@ class LD(core.MemoryUsageProvider):
 
             return ""
 
+        def is_section_allocated(section):
+            """
+            Return True if the given section tuple is going to be allocated in
+            memory, False otherwise.
+
+            An allocated section is a memory section that will actually be
+            loaded by the target. Sections related with debug information,
+            code comments or that have null size are typically not allocated
+            and should be ignored.
+            """
+
+            not_alloc_sections_prefixes = ['.debug', '.comment']
+
+            for prefix in not_alloc_sections_prefixes:
+                if section[0].startswith(prefix):
+                    return False
+
+            if section[2] == 0:
+                return False
+
+            return True
+
         def try_match_region(line):
             """
             Try to match a region description in the given line.
@@ -109,16 +131,10 @@ class LD(core.MemoryUsageProvider):
             """
             Try to match an allocated section description in the given live.
 
-            An allocated section is a memory section that will actually be
-            loaded by the target. Sections related with debug information,
-            code comments or that have null size are typically not allocated
-            and should be ignored.
-
             Return a tuple (name, origin, length, region_name) if a section was
             matched and None otherwise.
             """
 
-            not_alloc_sections_prefixes = ['.debug', '.comment']
             m = section_r.search(line)
 
             if m:
@@ -126,13 +142,6 @@ class LD(core.MemoryUsageProvider):
                 region_name = region_name_from_address(int(section_addr, 16))
                 section = (m.group('name'), section_addr,
                            int(m.group('length'), 16), region_name)
-
-                for prefix in not_alloc_sections_prefixes:
-                    if section[0].startswith(prefix):
-                        return None
-
-                if section[2] == 0:
-                    return None
 
                 return section
             else:
@@ -156,8 +165,15 @@ class LD(core.MemoryUsageProvider):
 
                 obj_file = files[0] if len(files) == 1 else files[1]
                 lib_file = files[0] if len(files) > 1 else ""
-
+                module_size = int(m.group('size'), 16)
                 section = sections[-1]
+
+                # Do nothing if the module belongs to a section that will not
+                # be allocated or if it's size is null.
+
+                if module_size == 0 or not is_section_allocated(section):
+                    return
+
                 section_name = section[0]
                 module = modules_dict.get((files_info, section_name), None)
 
@@ -198,6 +214,11 @@ class LD(core.MemoryUsageProvider):
 
         for module in modules_dict.itervalues():
             modules.append(tuple(module))
+
+        # Keep only the sections that will be allocated in memory
+
+        sections = [section for section in sections
+                    if is_section_allocated(section)]
 
         visitor.on_memory_usage_data_fetched(regions, sections, modules)
 

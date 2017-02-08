@@ -275,7 +275,7 @@ package body Memory_Usage_Views is
                      Name      => Get_Markup_For_Module (Module),
                      Origin    => To_String (Module.Origin),
                      Used_Size => Module.Size,
-                     Length    => Memory_Region.Length);
+                     Length    => Section.Length);
                end loop;
 
                Set_Values
