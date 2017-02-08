@@ -1329,6 +1329,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
                Process.Output_Text
                  (To_String (Result) & ASCII.LF,
                   Set_Position => True);
+
+               --  "file" command doesn't return prompt in answer,
+               --  so add it manually
+               Process.Output_Text (Prompt_String, True, True);
             end if;
          end;
       end Launch_Command_And_Output;
