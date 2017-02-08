@@ -15,16 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Finalization;        use Ada.Finalization;
-with Ada.Streams;             use Ada.Streams;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Finalization;           use Ada.Finalization;
+with Ada.Streams;                use Ada.Streams;
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with System;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 package body MI.Lexer is
+
+   Me : constant Trace_Handle := Create ("MI.Lexer", On);
 
    package Handler is
       --  This package is meant to simplify operations on the input stream
@@ -602,6 +605,11 @@ package body MI.Lexer is
       Sh : Handler.Input_Handler (Input'Unrestricted_Access);
    begin
       return Build_Tokens (Sh);
+
+   exception
+      when E : others =>
+         Trace (Me, E, " when parsing:" & Input);
+         return Token_Lists.Empty_List;
    end Build_Tokens;
 
 end MI.Lexer;
