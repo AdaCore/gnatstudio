@@ -476,14 +476,9 @@ private
       File  => Null_Unbounded_String,
       Line  => 0);
 
-   package Frames_Vectors is
-     new Ada.Containers.Vectors (Natural, Frame_Info);
-
    type Gdb_MI_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
       Breakpoints_Changed  : Boolean := False;
-      Frames               : Frames_Vectors.Vector;
       Current_Frame        : Frame_Info       := Null_Frame_Info;
-      Switching_To_Frame   : Integer          := -1;
       Current_Command_Kind : Command_Category := Misc_Command;
       Command_No           : Integer          := 1;
       Variables            : Vars_Maps.Map;
