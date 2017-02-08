@@ -49,7 +49,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb.Gdb_MI is
 
-   Me : constant Trace_Handle := Create ("Gdb_MI", Off);
+   Me : constant Trace_Handle := Create ("Gdb_MI", On);
 
    ---------------
    -- Constants --
@@ -1790,6 +1790,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Index : Natural := Command'First;
    begin
+      if not Starts_With (Command, "-stack-select-frame") then
+         Debugger.Switching_To_Frame := -1;
+      end if;
+
       if Command = "" then
          Debugger.Current_Command_Kind := Misc_Command;
 
@@ -1839,7 +1843,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       if Debugger.Current_Command_Kind = Execution_Command then
-         Debugger.Command_No := Debugger.Command_No + 1;
+         Debugger.Command_No    := Debugger.Command_No + 1;
+         Debugger.Current_Frame := Null_Frame_Info;
+
+         Debugger.Frames.Clear;
       end if;
 
       return Debugger.Current_Command_Kind;
@@ -1870,10 +1877,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Mode     : Command_Type := Hidden) is
    begin
       if Debugger.Current_Frame.Frame /= -1 then
+         Debugger.Switching_To_Frame := Debugger.Current_Frame.Frame - 1;
+         Debugger.Current_Frame      := Null_Frame_Info;
+
          Debugger.Send
            ("-stack-select-frame" &
-              Integer'Image (Debugger.Current_Frame.Frame - 1),
+              Integer'Image (Debugger.Switching_To_Frame),
             Mode => Mode);
+
       else
          Debugger.Send ("down", Mode => Mode);
       end if;
@@ -1888,10 +1899,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Mode     : Command_Type := Hidden) is
    begin
       if Debugger.Current_Frame.Frame /= -1 then
+         Debugger.Switching_To_Frame := Debugger.Current_Frame.Frame + 1;
+         Debugger.Current_Frame      := Null_Frame_Info;
+
          Debugger.Send
            ("-stack-select-frame" &
-              Integer'Image (Debugger.Current_Frame.Frame + 1),
+              Integer'Image (Debugger.Switching_To_Frame),
             Mode => Mode);
+
       else
          Debugger.Send ("up", Mode => Mode);
       end if;
@@ -1906,6 +1921,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Frame    : Positive;
       Mode     : Command_Type := Hidden) is
    begin
+      Debugger.Current_Frame      := Null_Frame_Info;
+      Debugger.Switching_To_Frame := Frame - 1;
       Debugger.Send
         ("-stack-select-frame" & Natural'Image (Frame - 1),
          Mode => Mode);
@@ -1927,7 +1944,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Tokens     : Token_List_Controller;
       C, C2, C3  : Token_Lists.Cursor;
 
+      Info : Frame_Info;
    begin
+      Debugger.Frames.Clear;
+
       Tokens.List := Build_Tokens (S);
       Len := 0;
       C   := Find_Identifier (First (Tokens.List), "stack");
@@ -1940,6 +1960,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Next (C, 3);
 
       loop
+         Info := Null_Frame_Info;
          C := Find_Identifier (C, "frame");
 
          exit when C = Token_Lists.No_Element;
@@ -1950,11 +1971,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
          C2 := Find_Identifier (C, "level");
          Next (C2, 2);
          Value (Len).Frame_Id := Natural'Value (Element (C2).Text.all);
+         Info.Frame := Value (Len).Frame_Id;
 
          C2 := Find_Identifier (C2, "addr");
          if C2 /= Token_Lists.No_Element then
             Next (C2, 2);
             Value (Len).Program_Counter := new String'(Element (C2).Text.all);
+            Info.Addr := String_To_Address (Element (C2).Text.all);
          else
             Value (Len).Program_Counter := new String'("<>");
             C2 := C;
@@ -1975,17 +1998,30 @@ package body Debugger.Base_Gdb.Gdb_MI is
             C3 := Find_Identifier (C2, "line");
             if C3 /= Token_Lists.No_Element then
                Next (C3, 2);
-               Value (Len).Source_Location :=
-                 new String'
-                   (Strip_Escape
-                      (Element (C2).Text.all) & ':' & Element (C3).Text.all);
+               declare
+                  Name : constant String := Strip_Escape
+                    (Element (C2).Text.all);
+               begin
+                  Value (Len).Source_Location :=
+                    new String'(Name & ':' & Element (C3).Text.all);
+                  Info.File := To_Unbounded_String (Name);
+                  Info.Line := Natural'Value (Element (C3).Text.all);
+               end;
+
             else
-               Value (Len).Source_Location :=
-                 new String'(Strip_Escape (Element (C2).Text.all) & ": <>");
+               declare
+                  Name : constant String := Strip_Escape
+                    (Element (C2).Text.all);
+               begin
+                  Value (Len).Source_Location := new String'(Name & ": <>");
+                  Info.File := To_Unbounded_String (Name);
+               end;
             end if;
          else
             Value (Len).Source_Location := new String'("<>");
          end if;
+
+         Debugger.Frames.Append (Info);
       end loop;
    end Backtrace;
 
@@ -2546,13 +2582,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -- Found_File_Name --
    ---------------------
 
-   Frame_Pattern         : constant Pattern_Matcher :=
-     Compile ("^\*stopped.*frame={(.*)}", Multiple_Lines);
-   Subframe_Pattern      : constant Pattern_Matcher :=
-     Compile ("addr=""(0x[\da-hA-H]+)"",.*fullname=""(.*)"",line=""(\d+)""");
-   CLI_File_Name_Pattern : constant Pattern_Matcher :=
-     Compile (".+(\d+).+\""(.+?)\\\"".+(0x[0-9a-f]+)", Multiple_Lines);
-   --  Matches a file name/line indication in gdb's output
+   Frame_Pattern         : constant Pattern_Matcher := Compile
+     ("^(\*stopped.*|\^done,)frame={.*addr=""(0x[\da-hA-H]+)"",.*" &
+        "fullname=""(.*)"".*line=""(\d+)"".*}",
+      Multiple_Lines);
+   CLI_Frame_Pattern     : constant Pattern_Matcher :=
+     Compile ("^~""#\d+[\s]+(0x[0-9a-f]+)|()[\s\S]+at[\s]+(\S+):(\d+)");
 
    overriding procedure Found_File_Name
      (Debugger    : access Gdb_MI_Debugger;
@@ -2561,56 +2596,56 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Line        : out Natural;
       Addr        : out GVD.Types.Address_Type)
    is
-      pragma Unreferenced (Debugger);
-
-      Start    : Natural := Str'First;
-      Matched  : Match_Array (0 .. 3);
-      Matched2 : Match_Array (0 .. 3);
+      Matched  : Match_Array (0 .. 4);
 
    begin
+      Trace (Me, "-> Found_File_Name:" & Str);
+
       --  Default values if nothing better is found
       Name := Null_Unbounded_String;
       Line := 0;
       Addr := Invalid_Address;
 
       Match (Frame_Pattern, Str, Matched);
-
       if Matched (0) /= No_Match then
-         Match
-           (Subframe_Pattern,
-            Str (Matched (1).First .. Matched (1).Last),
-            Matched);
-
-         if Matched (0) = No_Match then
-            return;
-         end if;
-
+         Trace (Me, " Frame_Pattern");
          Addr := String_To_Address
-           (Str (Matched (1).First .. Matched (1).Last));
+           (Str (Matched (2).First .. Matched (2).Last));
          Set_Unbounded_String
-           (Name, Strip_Escape (Str (Matched (2).First .. Matched (2).Last)));
-         Line := Integer'Value (Str (Matched (3).First .. Matched (3).Last));
-
-      else
-         loop
-            Match (CLI_File_Name_Pattern, Str (Start .. Str'Last), Matched2);
-            exit when Matched2 (0) = No_Match;
-            Matched := Matched2;
-            Start   := Matched (0).Last + 1;
-         end loop;
-
-         if Matched (0) = No_Match then
-            return;
-         end if;
-
-         Set_Unbounded_String
-           (Name, Str (Matched (2).First .. Matched (2).Last));
-
-         Addr := String_To_Address
-           (Str (Matched (3).First .. Matched (3).Last));
-
-         Line := Natural'Value (Str (Matched (1).First .. Matched (1).Last));
+           (Name, Strip_Escape (Str (Matched (3).First .. Matched (3).Last)));
+         Line := Integer'Value (Str (Matched (4).First .. Matched (4).Last));
+         return;
       end if;
+
+      Match (CLI_Frame_Pattern, Str, Matched);
+      if Matched (0) /= No_Match then
+         Trace (Me, " CLI_Frame_Pattern");
+         if Matched (1) /= No_Match then
+            Addr := String_To_Address
+              (Str (Matched (1).First .. Matched (1).Last));
+         end if;
+
+         Set_Unbounded_String
+           (Name, Strip_Escape (Str (Matched (3).First .. Matched (3).Last)));
+         Line := Integer'Value (Str (Matched (4).First .. Matched (4).Last));
+         return;
+      end if;
+
+      if Debugger.Switching_To_Frame >= 0
+        and then Debugger.Switching_To_Frame <= Natural
+          (Debugger.Frames.Length)
+      then
+         declare
+            Info : constant Frame_Info :=
+              Debugger.Frames.Element (Debugger.Switching_To_Frame);
+         begin
+            Trace (Me, " Switching_To_Frame");
+            Addr := Info.Addr;
+            Name := Info.File;
+            Line := Info.Line;
+         end;
+      end if;
+      Trace (Me, "<- Found_File_Name");
    end Found_File_Name;
 
    ----------------------
@@ -2623,10 +2658,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type)
    is
-      pragma Unreferenced (Str);
+--        pragma Unreferenced (Str);
 
    begin
+      Trace (Me, "-> Found_Frame_Info:" & Str);
       if Debugger.Current_Frame.Frame = -1 then
+         Trace (Me, " Call Get_Frame_Info");
          Debugger.Get_Frame_Info;
       end if;
 
@@ -3508,9 +3545,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Restore_Language;
    end Put_Memory_Byte;
 
-   ----------------------
-   -- Found_Frame_Info --
-   ----------------------
+   --------------------
+   -- Get_Frame_Info --
+   --------------------
 
    procedure Get_Frame_Info (Debugger : access Gdb_MI_Debugger) is
       use Token_Lists;

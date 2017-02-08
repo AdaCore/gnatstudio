@@ -465,6 +465,7 @@ private
    type Frame_Info is record
       Frame  : Integer;
       Addr   : GVD.Types.Address_Type;
+      File   : Ada.Strings.Unbounded.Unbounded_String;
       Line   : Natural;
    end record;
    --  Frame data
@@ -472,12 +473,18 @@ private
    Null_Frame_Info : constant Frame_Info :=
      (Frame => -1,
       Addr  => GVD.Types.Invalid_Address,
+      File  => Null_Unbounded_String,
       Line  => 0);
+
+   package Frames_Vectors is
+     new Ada.Containers.Vectors (Natural, Frame_Info);
 
    type Gdb_MI_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
       Breakpoints_Changed  : Boolean := False;
-      Current_Command_Kind : Command_Category := Misc_Command;
+      Frames               : Frames_Vectors.Vector;
       Current_Frame        : Frame_Info       := Null_Frame_Info;
+      Switching_To_Frame   : Integer          := -1;
+      Current_Command_Kind : Command_Category := Misc_Command;
       Command_No           : Integer          := 1;
       Variables            : Vars_Maps.Map;
    end record;
