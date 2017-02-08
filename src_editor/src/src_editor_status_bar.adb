@@ -455,9 +455,6 @@ package body Src_Editor_Status_Bar is
       Bar.Buffer := Buffer;
       Bar.Box := Box;
 
-      --  Avoid resizing the main window whenever a label is changed
-      Bar.Set_Resize_Mode (Resize_Queue);
-
       Gtk_New (Bar.Function_Label);
       Bar.Function_Label.Set_Name ("Status Bar Name Label"); -- For testing
       Bar.Function_Label.Set_Ellipsize (Ellipsize_Start);
