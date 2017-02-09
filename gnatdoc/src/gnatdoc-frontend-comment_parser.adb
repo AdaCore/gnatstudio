@@ -307,15 +307,6 @@ package body GNATdoc.Frontend.Comment_Parser is
                   if Get_Kind (E) /= E_Function then
                      Report_Error;
                   end if;
-
-               elsif Tag_Name = "description"
-                 or else Tag_Name = "summary"
-               then
-                  if not Is_Package (E)
-                    and then not Is_Subprogram_Or_Entry (E)
-                  then
-                     Report_Error;
-                  end if;
                end if;
             end Check_Tag;
 
