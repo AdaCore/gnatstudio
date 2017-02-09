@@ -144,9 +144,9 @@ package body Array_Utils is
    function Unique
      (In_Array : Array_Type) return Array_Type renames Unique_Inst;
 
-   ------------
-   -- Filter --
-   ------------
+   ----------------
+   -- Filter_Gen --
+   ----------------
 
    function Filter_Gen (In_Array : Array_Type) return Array_Type
    is

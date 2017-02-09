@@ -612,9 +612,9 @@ package body GNATTest_Module is
       end if;
    end Find_Tested;
 
-   ---------------
-   -- Find_Test --
-   ---------------
+   -----------------
+   -- Find_In_Map --
+   -----------------
 
    function Find_In_Map
      (File_Name : GNATCOLL.VFS.Virtual_File)

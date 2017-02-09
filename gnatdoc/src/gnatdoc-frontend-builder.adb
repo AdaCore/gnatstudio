@@ -188,9 +188,9 @@ package body GNATdoc.Frontend.Builder is
 
       end Hash_Table;
 
-      ------------
-      -- Append --
-      ------------
+      --------------------
+      -- Append_To_List --
+      --------------------
 
       procedure Append_To_List
         (List : access EInfo_List.Vector;
@@ -200,9 +200,9 @@ package body GNATdoc.Frontend.Builder is
          List.Append (E);
       end Append_To_List;
 
-      -------------
-      -- Is_Type --
-      -------------
+      --------------------
+      -- Is_Access_Type --
+      --------------------
 
       function Is_Access_Type (Entity : Entity_Id) return Boolean is
       begin

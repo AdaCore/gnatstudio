@@ -980,7 +980,7 @@ package body Src_Editor_View is
    end Scroll_Bar_Draw;
 
    -------------------------------
-   -- Speed_Bar_Expose_Event_Cb --
+   -- Side_Area_Expose_Event_Cb --
    -------------------------------
 
    function Side_Area_Expose_Event_Cb

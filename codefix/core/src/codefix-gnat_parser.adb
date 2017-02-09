@@ -1251,9 +1251,9 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like Elaborate_All pragma required for "Procs2"
 
-   --------------------------------------
-   --  GnatCheck_Missing_Storage_Order --
-   --------------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize
      (This : in out GnatCheck_Missing_Storage_Order) is
@@ -1332,9 +1332,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   ---------------------------
-   -- Aggregate_Misspelling --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Agregate_Misspelling) is
    begin
@@ -1362,9 +1362,9 @@ package body Codefix.GNAT_Parser is
            To_Unbounded_String ("="));
    end Fix;
 
-   -----------------------
-   -- Light_Misspelling --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Light_Misspelling) is
    begin
@@ -1394,9 +1394,9 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   ------------------------
-   -- Double_Misspelling --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Double_Misspelling) is
    begin
@@ -1432,9 +1432,9 @@ package body Codefix.GNAT_Parser is
                (Matches (2).First .. Matches (2).Last))));
    end Fix;
 
-   ---------------------
-   -- Goto_Mispelling --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Goto_Misspelling) is
    begin
@@ -1463,9 +1463,9 @@ package body Codefix.GNAT_Parser is
            Regular_Expression);
    end Fix;
 
-   -------------------------
-   -- Library_Misspelling --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Library_Misspelling) is
    begin
@@ -1517,9 +1517,9 @@ package body Codefix.GNAT_Parser is
       Cancel_Message (Next (Message_It));
    end Fix;
 
-   -----------------------
-   -- Sth_Should_Be_Sth --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Sth_Should_Be_Sth) is
    begin
@@ -1556,9 +1556,9 @@ package body Codefix.GNAT_Parser is
          Text_Ascii);
    end Fix;
 
-   -------------------------
-   -- Should_Be_Semicolon --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Should_Be_Semicolon) is
    begin
@@ -1587,9 +1587,9 @@ package body Codefix.GNAT_Parser is
            Text_Ascii);
    end Fix;
 
-   ---------------
-   -- And_Meant --
-   ---------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out And_Meant) is
    begin
@@ -1616,9 +1616,9 @@ package body Codefix.GNAT_Parser is
            To_Unbounded_String ("&"));
    end Fix;
 
-   --------------
-   -- Or_Meant --
-   --------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Or_Meant) is
    begin
@@ -1646,9 +1646,9 @@ package body Codefix.GNAT_Parser is
            To_Unbounded_String ("\|"));
    end Fix;
 
-   ----------------------------
-   -- Short_Circuit_Required --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Short_Circuit_Required) is
    begin
@@ -1677,9 +1677,9 @@ package body Codefix.GNAT_Parser is
            Regular_Expression);
    end Fix;
 
-   -------------------
-   -- Bad_End_Block --
-   -------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Bad_End_Block) is
    begin
@@ -1712,9 +1712,9 @@ package body Codefix.GNAT_Parser is
            Regular_Expression);
    end Fix;
 
-   ----------------------------
-   -- Unqualified_Expression --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Unqualified_Expression) is
    begin
@@ -1744,9 +1744,9 @@ package body Codefix.GNAT_Parser is
            To_Unbounded_String ("Replace conversion by qualification"));
    end Fix;
 
-   -----------------
-   -- Goes_Before --
-   -----------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Goes_Before) is
    begin
@@ -1782,9 +1782,9 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Fix;
 
-   --------------------
-   -- Sth_Expected_3 --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Sth_Expected_3) is
    begin
@@ -1814,9 +1814,9 @@ package body Codefix.GNAT_Parser is
          Expected (Current_Text, Message, To_Unbounded_String ("package")));
    end Fix;
 
-   --------------------
-   -- Sth_Expected_2 --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Sth_Expected_2) is
    begin
@@ -1843,9 +1843,9 @@ package body Codefix.GNAT_Parser is
          Expected (Current_Text, Message, To_Unbounded_String ("procedure")));
    end Fix;
 
-   ------------------
-   -- Sth_Expected --
-   ------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Sth_Expected) is
    begin
@@ -1873,7 +1873,7 @@ package body Codefix.GNAT_Parser is
    end Fix;
 
    ----------------
-   -- Missing_Kw --
+   -- Initialize --
    ----------------
 
    overriding procedure Initialize (This : in out Missing_Kw) is
@@ -1907,9 +1907,9 @@ package body Codefix.GNAT_Parser is
         Expected (Current_Text, Message, To_Unbounded_String (Str_Red));
    end Fix;
 
-   -----------------
-   -- Missing_Sep --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Missing_Sep) is
    begin
@@ -1972,9 +1972,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   -----------------
-   -- Missing_All --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Missing_All) is
    begin
@@ -2028,9 +2028,9 @@ package body Codefix.GNAT_Parser is
          After_Pattern => "type[\s]+[\w]+[\s]+is[\s]+(access)");
    end Fix;
 
-   --------------------------
-   -- Implicit_Dereference --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Implicit_Dereference) is
    begin
@@ -2057,9 +2057,9 @@ package body Codefix.GNAT_Parser is
            Add_Spaces => False);
    end Fix;
 
-   -----------------------
-   -- Statement_Missing --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Statement_Missing) is
    begin
@@ -2087,9 +2087,9 @@ package body Codefix.GNAT_Parser is
            Position => Before);
    end Fix;
 
-   ------------------------
-   -- Useless_Assignment --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Useless_Assignment) is
    begin
@@ -2110,9 +2110,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Statement (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   -------------------
-   -- Space_Missing --
-   -------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Space_Missing) is
    begin
@@ -2139,9 +2139,9 @@ package body Codefix.GNAT_Parser is
            Add_Spaces => False);
    end Fix;
 
-   ------------------------
-   -- Two_Spaces_Missing --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Two_Spaces_Missing) is
    begin
@@ -2169,9 +2169,9 @@ package body Codefix.GNAT_Parser is
            Add_Spaces => False);
    end Fix;
 
-   ------------------
-   -- Name_Missing --
-   ------------------
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Name_Missing) is
    begin
@@ -2230,9 +2230,9 @@ package body Codefix.GNAT_Parser is
          After_Pattern => This.Matcher_Aux (Match_Number).all);
    end Fix;
 
-   --------------------
-   -- Double_Keyword --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Double_Keyword) is
    begin
@@ -2261,9 +2261,9 @@ package body Codefix.GNAT_Parser is
              (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   -----------------
-   -- Extra_Paren --
-   -----------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Extra_Paren) is
    begin
@@ -2287,9 +2287,9 @@ package body Codefix.GNAT_Parser is
         Unexpected (Current_Text, Message, To_Unbounded_String (")"));
    end Fix;
 
-   --------------------
-   -- Redudant_Paren --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redudant_Paren) is
    begin
@@ -2347,9 +2347,9 @@ package body Codefix.GNAT_Parser is
            All_Occurrences   => True);
    end Fix;
 
-   -----------------------
-   -- Redundant_Keyword --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_Keyword) is
    begin
@@ -2382,9 +2382,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   -------------------------
-   -- Redundant_Attribute --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_Attribute) is
    begin
@@ -2405,9 +2405,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Attribute (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   --------------------------
-   -- Redundant_Comparison --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_Comparison) is
    begin
@@ -2428,9 +2428,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Comparison (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   --------------------
-   -- Unexpected_Sep --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Unexpected_Sep) is
    begin
@@ -2457,9 +2457,9 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   ---------------------
-   -- Unexpected_Word --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Unexpected_Word) is
    begin
@@ -2494,9 +2494,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   --------------------
-   -- Kw_Not_Allowed --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Kw_Not_Allowed) is
    begin
@@ -2598,9 +2598,9 @@ package body Codefix.GNAT_Parser is
            All_Occurrences   => All_Occurrences);
    end Fix;
 
-   --------------------------
-   -- In_Should_Be_Omitted --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out In_Should_Be_Omitted) is
    begin
@@ -2625,9 +2625,9 @@ package body Codefix.GNAT_Parser is
          Mode              => Regular_Expression);
    end Fix;
 
-   --------------------------
-   -- Out_Should_Be_Omitted --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Out_Should_Be_Omitted) is
    begin
@@ -2655,9 +2655,9 @@ package body Codefix.GNAT_Parser is
            Search_Forward    => True);
    end Fix;
 
-   -------------------------
-   -- Already_Use_Visible --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Already_Use_Visible) is
    begin
@@ -2682,9 +2682,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Message, Cat_Use, After);
    end Fix;
 
-   --------------------
-   -- Redundant_With --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_With) is
    begin
@@ -2709,9 +2709,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Message, Cat_With, Before, Look_For_Use => False);
    end Fix;
 
-   ----------------------------
-   -- Redundant_With_In_Body --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_With_In_Body) is
    begin
@@ -2736,9 +2736,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Message, Cat_With, Before, Look_For_Use => False);
    end Fix;
 
-   -----------------------
-   -- Use_Valid_Instead --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Use_Valid_Instead) is
    begin
@@ -2762,9 +2762,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Change_To_Tick_Valid (Current_Text, Message);
    end Fix;
 
-   ------------------
-   -- Should_Be_In --
-   ------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Should_Be_In) is
    begin
@@ -2792,7 +2792,7 @@ package body Codefix.GNAT_Parser is
    end Fix;
 
    ----------------
-   -- Bad_Column --
+   -- Initialize --
    ----------------
 
    overriding procedure Initialize (This : in out Bad_Column) is
@@ -2818,9 +2818,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Wrong_Column (Current_Text, Message);
    end Fix;
 
-   -----------------------
-   -- Main_With_Missing --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Main_With_Missing) is
    begin
@@ -2872,9 +2872,9 @@ package body Codefix.GNAT_Parser is
          Column_Str /= ";" or else Use_Str = "use");
    end Fix;
 
-   -------------------------
-   -- Bad_Casing_Standard --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Bad_Casing_Standard) is
    begin
@@ -2898,9 +2898,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Bad_Casing (Current_Text, Message);
    end Fix;
 
-   -------------------------
-   -- Bad_Casing_Declared --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Bad_Casing_Declared) is
    begin
@@ -2927,9 +2927,9 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   ------------------------
-   -- Bad_Casing_Keyword --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Bad_Casing_Keyword) is
    begin
@@ -2953,9 +2953,9 @@ package body Codefix.GNAT_Parser is
         Bad_Casing (Current_Text, Message, Null_Unbounded_String, Lower);
    end Fix;
 
-   ---------------------------
-   -- Object_Not_Referenced --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Object_Not_Referenced) is
    begin
@@ -3038,9 +3038,9 @@ package body Codefix.GNAT_Parser is
       end;
    end Fix;
 
-   ------------------------
-   -- Pkg_Not_Referenced --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Pkg_Not_Referenced) is
    begin
@@ -3075,7 +3075,7 @@ package body Codefix.GNAT_Parser is
    end Fix;
 
    ----------------
-   -- Never_Read --
+   -- Initialize --
    ----------------
 
    overriding procedure Initialize (This : in out Never_Read) is
@@ -3106,9 +3106,9 @@ package body Codefix.GNAT_Parser is
          Add_Pragma_Unreferenced);
    end Fix;
 
-   --------------------
-   -- Never_Assigned --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Never_Assigned) is
    begin
@@ -3139,9 +3139,9 @@ package body Codefix.GNAT_Parser is
          Options.Remove_Policy);
    end Fix;
 
-   -----------------------
-   -- Pragma_Missplaced --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Pragma_Missplaced) is
    begin
@@ -3164,9 +3164,9 @@ package body Codefix.GNAT_Parser is
       Solutions := First_Line_Pragma (Current_Text, Message);
    end Fix;
 
-   -------------------------
-   -- Useless_Pragma_Pack --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Useless_Pragma_Pack) is
    begin
@@ -3187,9 +3187,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Statement (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   -----------------------
-   -- Constant_Expected --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Constant_Expected) is
    begin
@@ -3216,9 +3216,9 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
-   -------------------------
-   -- Suspicious_Renaming --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Suspicious_Renaming) is
    begin
@@ -3241,9 +3241,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   -----------------------------
-   -- Possible_Interpretation --
-   -----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Possible_Interpretation) is
    begin
@@ -3336,9 +3336,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   ------------------------
-   -- Hidden_Declaration --
-   ------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Hidden_Declaration) is
    begin
@@ -3451,9 +3451,9 @@ package body Codefix.GNAT_Parser is
 
    end Fix;
 
-   -----------------
-   -- Use_Missing --
-   -----------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Use_Missing) is
    begin
@@ -3514,9 +3514,9 @@ package body Codefix.GNAT_Parser is
             Add_Use        => True);
    end Fix;
 
-   --------------------------
-   -- Redundant_Conversion --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Redundant_Conversion) is
    begin
@@ -3582,9 +3582,9 @@ package body Codefix.GNAT_Parser is
          To_Unbounded_String ("Remove abs operator"));
    end Fix;
 
-   ---------------------
-   -- Missplaced_With --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Missplaced_With) is
    begin
@@ -3610,9 +3610,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Move_With_To_Body (Current_Text, Message);
    end Fix;
 
-   --------------------------
-   -- Not_Fully_Conformant --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Not_Fully_Conformant) is
    begin
@@ -3667,9 +3667,9 @@ package body Codefix.GNAT_Parser is
       Free (Spec_Cursor);
    end Fix;
 
-   ---------------------------
-   -- Generic_Use_Unallowed --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Generic_Use_Unallowed) is
    begin
@@ -3693,9 +3693,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Message, Cat_Use, Before);
    end Fix;
 
-   -----------------------------
-   -- Non_Visible_Declaration --
-   -----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Non_Visible_Declaration) is
    begin
@@ -3783,9 +3783,9 @@ package body Codefix.GNAT_Parser is
 
    end Fix;
 
-   ----------------------------
-   -- Consecutive_Underlines --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Consecutive_Underlines) is
    begin
@@ -3807,9 +3807,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Extra_Underlines (Current_Text, Message);
    end Fix;
 
-   --------------------------
-   -- Multiple_Blank_Lines --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Multiple_Blank_Lines) is
    begin
@@ -3838,9 +3838,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, First_Line_To_Remove);
    end Fix;
 
-   ---------------------
-   -- EOF_Blank_Lines --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out EOF_Blank_Lines) is
    begin
@@ -3870,9 +3870,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, First_Line_To_Remove);
    end Fix;
 
-   ----------------------------
-   -- Lower_Bound_Assumption --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Suggested_Replacement) is
    begin
@@ -3901,9 +3901,9 @@ package body Codefix.GNAT_Parser is
          Regular_Expression);
    end Fix;
 
-   -----------------
-   -- Pragma_Pack --
-   -----------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding
    procedure Initialize (This : in out Pragma_Pack) is
@@ -3954,9 +3954,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   ----------------------
-   -- Undefined_Entity --
-   ----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding
    procedure Initialize (This : in out Undefined_Entity) is
@@ -4072,9 +4072,9 @@ package body Codefix.GNAT_Parser is
       Free (List);
    end Fix;
 
-   ----------------------------------
-   -- Unwanted_Pragma_Unreferenced --
-   ----------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding
    procedure Initialize (This : in out Unwanted_Pragma_Unreferenced) is
@@ -4102,9 +4102,9 @@ package body Codefix.GNAT_Parser is
            (Message_It).Get_Message (Matches (1).First .. Matches (1).Last));
    end Fix;
 
-   -----------------------
-   -- Wrong_Index_Usage --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Wrong_Index_Usage) is
    begin
@@ -4138,9 +4138,9 @@ package body Codefix.GNAT_Parser is
       end if;
    end Fix;
 
-   --------------------
-   -- Wrong_Sb_Order --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Wrong_Sb_Order) is
    begin
@@ -4163,9 +4163,9 @@ package body Codefix.GNAT_Parser is
         (Current_Text, Get_Message (Message_It));
    end Fix;
 
-   ---------------------------------
-   -- No_Statement_Following_Then --
-   ---------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize
      (This : in out No_Statement_Following_Then)
@@ -4194,9 +4194,9 @@ package body Codefix.GNAT_Parser is
            True);
    end Fix;
 
-   ----------------------------
-   -- Elaborate_All_Required --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Elaborate_All_Required) is
    begin

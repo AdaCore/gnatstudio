@@ -158,9 +158,9 @@ package body Default_Preferences.Enums is
       return Radio_Box;
    end Create_Enum_Radio_Buttons_Box;
 
-   ------------------
-   -- Enum_Changed --
-   ------------------
+   ------------------------
+   -- Enum_Combo_Changed --
+   ------------------------
 
    procedure Enum_Combo_Changed
      (Widget : access GObject_Record'Class;

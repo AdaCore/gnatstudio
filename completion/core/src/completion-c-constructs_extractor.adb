@@ -523,7 +523,7 @@ package body Completion.C.Constructs_Extractor is
          --  associated with all the parameters as C comments.
 
          -----------------------
-         -- To_Named_Notation --
+         -- Single_Param_Text --
          -----------------------
 
          function Single_Param_Text (Param : Root_Entity'Class)
@@ -532,9 +532,9 @@ package body Completion.C.Constructs_Extractor is
             return "/* " & Get_Name (Param) & " */";
          end Single_Param_Text;
 
-         --------------------
-         -- Get_All_Params --
-         --------------------
+         ---------------------
+         -- All_Params_Text --
+         ---------------------
 
          function All_Params_Text return String is
             Separator : constant String := "," & ASCII.LF;
@@ -842,9 +842,9 @@ package body Completion.C.Constructs_Extractor is
       procedure Prev_Token;
       --  Displace Tok_Index and Tok_Prev to reference the previous token
 
-      ------------------
-      -- Add_Proposal --
-      ------------------
+      ---------------------
+      -- Append_Proposal --
+      ---------------------
 
       procedure Append_Proposal
         (To_List : in out Extensive_List_Pckg.Vector;
@@ -854,9 +854,9 @@ package body Completion.C.Constructs_Extractor is
          Append (To_List, New_C_Completion_Proposal (Resolver, E));
       end Append_Proposal;
 
-      ------------------------------
-      -- Add_Proposal_With_Params --
-      ------------------------------
+      ---------------------------------
+      -- Append_Proposal_With_Params --
+      ---------------------------------
 
       procedure Append_Proposal_With_Params
         (To_List : in out Extensive_List_Pckg.Vector;
@@ -882,9 +882,9 @@ package body Completion.C.Constructs_Extractor is
          Free (Params);
       end Append_Proposal_With_Params;
 
-      -------------------------
-      -- Add_Scope_Proposals --
-      -------------------------
+      ----------------------------
+      -- Append_Scope_Proposals --
+      ----------------------------
 
       procedure Append_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.Vector;
@@ -953,9 +953,9 @@ package body Completion.C.Constructs_Extractor is
          Destroy (It);
       end Append_Scope_Proposals;
 
-      ------------------------
-      -- Is_Self_Referenced --
-      ------------------------
+      -----------------------------
+      -- Is_Self_Referenced_Type --
+      -----------------------------
 
       function Is_Self_Referenced_Type
         (E : Root_Entity'Class) return Boolean is

@@ -579,9 +579,9 @@ package body Debugger.Base_Gdb is
       end if;
    end Test_If_Has_Command;
 
-   ---------------------
-   -- Question_Filter --
-   ---------------------
+   ----------------------
+   -- Question_Filter1 --
+   ----------------------
 
    procedure Question_Filter1
      (Process : access Visual_Debugger_Record'Class;

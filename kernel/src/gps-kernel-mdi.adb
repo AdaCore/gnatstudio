@@ -1608,9 +1608,9 @@ package body GPS.Kernel.MDI is
       Add_Watch (Id, Data);
    end Setup;
 
-   ------------
-   -- Create --
-   ------------
+   -----------------------
+   -- Create_MDI_Marker --
+   -----------------------
 
    function Create_MDI_Marker
      (Kernel : not null access Kernel_Handle_Record'Class;

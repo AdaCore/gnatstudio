@@ -138,9 +138,9 @@ package body XML_Utils is
       end if;
    end Get_Buf;
 
-   ------------------------
-   -- Extract_Attributes --
-   ------------------------
+   --------------------
+   -- Extract_Attrib --
+   --------------------
 
    procedure Extract_Attrib
      (Tag        : in out String_Ptr;

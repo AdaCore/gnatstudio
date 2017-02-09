@@ -155,9 +155,9 @@ package body GPS.Kernel.Search.Plugins is
       Has_Next := Get_Page (Self.Iter) /= null;
    end Next;
 
-   --------------------------------------
-   -- Create_Preferences_Search_Result --
-   --------------------------------------
+   ----------------------------------
+   -- Create_Plugins_Search_Result --
+   ----------------------------------
 
    function Create_Plugins_Search_Result
      (Self        : not null access Plugins_Search_Provider;

@@ -455,9 +455,9 @@ package body Language.Libclang_Tree is
       return Empty_String;
    end Profile;
 
-   -----------------
-   -- Counterpart --
-   -----------------
+   ----------------
+   -- Definition --
+   ----------------
 
    overriding function Definition
      (Self : Clang_Node) return Semantic_Node'Class

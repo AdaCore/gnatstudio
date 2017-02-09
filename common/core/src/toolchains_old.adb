@@ -50,9 +50,9 @@ package body Toolchains_Old is
       Property.Compiler_Path := Compiler_Search_Path;
    end Set_Toolchains_Properties;
 
-   ---------------
-   -- Is_Active --
-   ---------------
+   --------------------------
+   -- Is_Toolchains_Active --
+   --------------------------
 
    function Is_Toolchains_Active return Boolean is
    begin

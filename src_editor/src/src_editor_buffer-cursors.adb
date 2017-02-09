@@ -27,9 +27,9 @@ package body Src_Editor_Buffer.Cursors is
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
 
-   -----------------------------
-   -- Create_Mc_Selection_Tag --
-   -----------------------------
+   ----------------------------
+   -- Check_Mc_Selection_Tag --
+   ----------------------------
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer) is
       T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
@@ -205,9 +205,9 @@ package body Src_Editor_Buffer.Cursors is
       Buffer.Slave_Cursors_List.Clear;
    end Remove_All_Slave_Cursors;
 
-   ----------------------
-   -- Set__Manual_Sync --
-   ----------------------
+   ---------------------
+   -- Set_Manual_Sync --
+   ---------------------
 
    procedure Set_Manual_Sync
      (C : Cursor)

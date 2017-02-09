@@ -333,9 +333,9 @@ package body Command_Lines is
       GNAT.OS_Lib.Free (List);
    end Set_Command_Line;
 
-   ------------------
-   -- Add_Switches --
-   ------------------
+   ---------------------
+   -- Append_Switches --
+   ---------------------
 
    procedure Append_Switches
      (Cmd  : in out Command_Line;
@@ -686,9 +686,9 @@ package body Command_Lines is
       end if;
    end Append;
 
-   ----------------
-   -- Add_Switch --
-   ----------------
+   -------------------
+   -- Append_Switch --
+   -------------------
 
    procedure Append_Switch
      (Cmd        : in out Command_Line;
@@ -704,9 +704,9 @@ package body Command_Lines is
         (Cmd, Switch, Parameter, Separator, Section, Add_Before, Success);
    end Append_Switch;
 
-   ----------------
-   -- Add_Switch --
-   ----------------
+   -------------------
+   -- Append_Switch --
+   -------------------
 
    procedure Append_Switch
      (Cmd        : in out Command_Line;

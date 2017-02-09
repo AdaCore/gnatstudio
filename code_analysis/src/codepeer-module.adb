@@ -1443,9 +1443,9 @@ package body CodePeer.Module is
          Trace (Me, E);
    end On_Show_Messages;
 
-   --------------------------------
-   -- Remove_Codepeer_Categories --
-   --------------------------------
+   ------------------------------
+   -- Remove_Codepeer_Messages --
+   ------------------------------
 
    procedure Remove_Codepeer_Messages
      (Kernel : access Kernel_Handle_Record'Class)
@@ -1753,9 +1753,9 @@ package body CodePeer.Module is
       Editors.Register_Module (Kernel);
    end Register_Module;
 
-   ------------------
-   -- Show_Message --
-   ------------------
+   -------------------
+   -- Show_Messages --
+   -------------------
 
    procedure Show_Messages
      (Self : not null access Module_Id_Record'Class;

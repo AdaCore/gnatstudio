@@ -240,9 +240,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       Free (Resolver.Hiding_Entities);
    end Free;
 
-   ----------------------------
-   -- Get_Visible_Constructs --
-   ----------------------------
+   ----------------------------------
+   -- Get_Local_Visible_Constructs --
+   ----------------------------------
 
    function Get_Local_Visible_Constructs
      (File       : Structured_File_Access;
@@ -1486,9 +1486,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
         < To_Construct_Tree_Iterator (Right);
    end Is_Before;
 
-   -------------------------------
-   -- Initialize_Ordered_Result --
-   -------------------------------
+   --------------------------------
+   -- Initialize_Ordered_Results --
+   --------------------------------
 
    procedure Initialize_Ordered_Results
      (It : in out Local_Visible_Construct_Iterator)

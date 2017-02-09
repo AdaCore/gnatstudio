@@ -62,9 +62,9 @@ package body Trace_Support is
          (Create ("DEBUG.MEMORY", Off, Factory => Memory_Factory'Access));
    end Add_Trace_Decorators;
 
-   -------------------
-   -- Pre_Decorator --
-   -------------------
+   --------------------
+   -- Post_Decorator --
+   --------------------
 
    overriding procedure Post_Decorator
       (Handle   : in out Ada_Factory_Decorator;
@@ -85,9 +85,9 @@ package body Trace_Support is
       Handle.Previous := Watermark.Current;
    end Post_Decorator;
 
-   -------------------
-   -- Pre_Decorator --
-   -------------------
+   --------------------
+   -- Post_Decorator --
+   --------------------
 
    overriding procedure Post_Decorator
       (Handle   : in out Factory_Decorator;

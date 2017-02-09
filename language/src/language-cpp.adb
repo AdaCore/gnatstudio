@@ -277,9 +277,9 @@ package body Language.Cpp is
       return True;
    end Entities_Indexed;
 
-   ---------------------------
-   -- Parse_Tokens_Backward --
-   ---------------------------
+   ----------------------------
+   -- Parse_Tokens_Backwards --
+   ----------------------------
 
    overriding
    procedure Parse_Tokens_Backwards

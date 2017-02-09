@@ -606,9 +606,9 @@ package body Commands.Custom is
       Unchecked_Free (Component);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
    overriding procedure Primitive_Free (X : in out Custom_Command) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation

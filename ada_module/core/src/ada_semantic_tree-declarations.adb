@@ -1273,9 +1273,9 @@ package body Ada_Semantic_Tree.Declarations is
       return Result;
    end Find_Declarations;
 
-   ----------------------
-   -- Get_Possiblities --
-   ----------------------
+   -----------------------
+   -- Get_Possibilities --
+   -----------------------
 
    procedure Get_Possibilities
      (Identifier      : Normalized_Symbol;

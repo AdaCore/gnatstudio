@@ -407,9 +407,9 @@ package body Ada_Semantic_Tree.Lang is
          return Result;
       end Get_Type;
 
-      -------------------------
-      -- Remove_Extra_Blanks --
-      -------------------------
+      -------------------
+      -- Remove_Blanks --
+      -------------------
 
       function Remove_Blanks (Str : String) return String is
          Result : String := Str;
@@ -1356,9 +1356,9 @@ package body Ada_Semantic_Tree.Lang is
            or else Construct.Category = Cat_Function);
    end Is_Compilation_Unit;
 
-   ----------------------------
-   -- Register_Ada_Assistant --
-   ----------------------------
+   ------------------------
+   -- Register_Assistant --
+   ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
       use Construct_Annotations_Pckg;
@@ -1390,9 +1390,9 @@ package body Ada_Semantic_Tree.Lang is
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
    end Get_Ref_Key;
 
-   --------------------------
-   -- Get_Language_Handler --
-   --------------------------
+   ----------------------------
+   -- Get_Language_From_File --
+   ----------------------------
 
    overriding function Get_Language_From_File
      (Handler           : access Ada_Language_Handler;

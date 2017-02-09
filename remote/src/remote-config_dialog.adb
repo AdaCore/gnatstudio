@@ -362,9 +362,9 @@ package body Remote.Config_Dialog is
       Unref (Widget.Add_Path_Button);
    end Set_Path_List;
 
-   -------------------
-   -- Get_Path_List --
-   -------------------
+   ----------------------
+   -- Get_Mount_Points --
+   ----------------------
 
    function Get_Mount_Points
      (Widget : Paths_Widget;
@@ -601,9 +601,9 @@ package body Remote.Config_Dialog is
       Path_Row_List.Remove (Widget.List, Row);
    end Remove_Path_Row;
 
-   -----------------
-   -- Update_Path --
-   -----------------
+   ---------------------
+   -- Get_Mount_Point --
+   ---------------------
 
    function Get_Mount_Point (Row : Path_Row; Host : String) return Mount_Point
    is
@@ -1443,9 +1443,9 @@ package body Remote.Config_Dialog is
       end if;
    end On_Changed;
 
-   ----------
-   -- Save --
-   ----------
+   ------------------
+   -- Save_Current --
+   ------------------
 
    function Save_Current
      (Dialog : Server_List_Editor;
@@ -1656,9 +1656,9 @@ package body Remote.Config_Dialog is
       return True;
    end Save_Current;
 
-   -----------------------
-   -- Selection_Changed --
-   -----------------------
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : constant Server_List_Editor :=
@@ -1738,9 +1738,9 @@ package body Remote.Config_Dialog is
       when E : others => Trace (Me, E);
    end On_Selection_Changed;
 
-   -------------------------
-   -- Add_Machine_Clicked --
-   -------------------------
+   ----------------------------
+   -- On_Add_Machine_Clicked --
+   ----------------------------
 
    procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog   : Server_List_Editor_Record
@@ -1794,9 +1794,9 @@ package body Remote.Config_Dialog is
          Trace (Me, E);
    end On_Add_Machine_Clicked;
 
-   ---------------------
-   -- Restore_Clicked --
-   ---------------------
+   ------------------------
+   -- On_Restore_Clicked --
+   ------------------------
 
    procedure On_Restore_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog  : constant Server_List_Editor := Server_List_Editor (W);
@@ -1830,9 +1830,9 @@ package body Remote.Config_Dialog is
       when E : others => Trace (Me, E);
    end On_Restore_Clicked;
 
-   --------------------
-   -- Remove_Clicked --
-   --------------------
+   -----------------------
+   -- On_Remove_Clicked --
+   -----------------------
 
    procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class) is
       Dialog    : constant Server_List_Editor := Server_List_Editor (W);

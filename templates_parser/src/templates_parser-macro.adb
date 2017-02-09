@@ -161,7 +161,7 @@ package body Macro is
             --  Delete node C
 
             -----------------
-            -- Delete_Note --
+            -- Delete_Node --
             -----------------
 
             procedure Delete_Node

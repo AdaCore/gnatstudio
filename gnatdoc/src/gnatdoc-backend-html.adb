@@ -1406,7 +1406,7 @@ package body GNATdoc.Backend.HTML is
    end Get_Srcs_Base_Href;
 
    -------------------
-   -- Get_Scrs_Href --
+   -- Get_Srcs_Href --
    -------------------
 
    function Get_Srcs_Href (Entity : Entity_Id) return String is

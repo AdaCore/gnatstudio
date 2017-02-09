@@ -174,7 +174,7 @@ package body Ada_Semantic_Tree.Parts is
    end File_Updated;
 
    ------------------
-   -- Analyze_File --
+   -- Analyze_Unit --
    ------------------
 
    procedure Analyze_Unit
@@ -730,9 +730,9 @@ package body Ada_Semantic_Tree.Parts is
          Key       => Key);
    end Disconnect_Relation_Annotation;
 
-   ----------------------
-   -- Update_If_Needed --
-   ----------------------
+   ------------------
+   -- Get_Relation --
+   ------------------
 
    function Get_Relation (Entity : Entity_Access) return Ada_Relation_Access is
       Assistant : Database_Assistant_Access;
@@ -1001,9 +1001,9 @@ package body Ada_Semantic_Tree.Parts is
       end case;
    end Get_Last_Visible_Declaration;
 
-   -----------------
-   -- Is_In_Scope --
-   -----------------
+   ---------------------------
+   -- Unchecked_Is_In_Scope --
+   ---------------------------
 
    function Unchecked_Is_In_Scope
      (Assistant   : Database_Assistant_Access;

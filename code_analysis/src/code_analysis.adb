@@ -21,9 +21,9 @@ with Ada.Strings.Equal_Case_Insensitive;
 
 package body Code_Analysis is
 
-   -----------
-   --  Less --
-   -----------
+   ----------
+   -- Less --
+   ----------
 
    function Less (V1, V2 : String) return Boolean is
    begin

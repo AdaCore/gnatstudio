@@ -159,9 +159,9 @@ package body GPS.Project_Properties is
    is
       (if Attr.Pkg /= null then Attr.Pkg.all else "");
 
-   --------------------
-   -- Attribute_Name --
-   --------------------
+   -------------------
+   -- Get_Full_Name --
+   -------------------
 
    function Get_Full_Name (Attr : Attribute_Description) return String
    is

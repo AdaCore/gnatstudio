@@ -48,9 +48,9 @@ package body Vdiff2_Module.Utils.Shell_Command is
           Info       => null));
    end Add_Line;
 
-   --------------------------
-   --  Remove_Blank_Lines  --
-   --------------------------
+   ------------------------
+   -- Remove_Blank_Lines --
+   ------------------------
 
    procedure Remove_Blank_Lines
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -123,9 +123,9 @@ package body Vdiff2_Module.Utils.Shell_Command is
       return Execute_GPS_Shell_Command (Kernel, CL);
    end Get_Chars;
 
-   --------------------------
-   --  Get_File_Last_Line  --
-   --------------------------
+   ------------------------
+   -- Get_File_Last_Line --
+   ------------------------
 
    function Get_File_Last_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

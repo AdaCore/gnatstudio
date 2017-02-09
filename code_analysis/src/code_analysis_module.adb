@@ -488,9 +488,9 @@ package body Code_Analysis_Module is
       Destroy_All_Analyzes (Get_Kernel (Module), Close_View => False);
    end Destroy;
 
-   --------------------------------------------
-   -- CodeAnalysis_Default_Shell_Constructor --
-   --------------------------------------------
+   ------------------------------------
+   -- Shell_CodeAnalysis_Constructor --
+   ------------------------------------
 
    procedure Shell_CodeAnalysis_Constructor
      (Data : in out Callback_Data'Class; Command : String)
@@ -580,9 +580,9 @@ package body Code_Analysis_Module is
       return Analysis;
    end Get_Or_Create;
 
-   -------------------------------------
-   -- Add_Gcov_Project_Info_From_Menu --
-   -------------------------------------
+   ----------------------------------
+   -- Add_Gcov_File_Info_From_Menu --
+   ----------------------------------
 
    procedure Add_Gcov_File_Info_From_Menu
      (Widget  : access Glib.Object.GObject_Record'Class;

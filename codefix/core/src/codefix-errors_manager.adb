@@ -106,7 +106,7 @@ package body Codefix.Errors_Manager is
    end Undo;
 
    -------------
-   -- Analyse --
+   -- Analyze --
    -------------
 
    procedure Analyze

@@ -1821,9 +1821,9 @@ package body Build_Configurations.Gtkada is
          function Get_Mode_Name (S : Unbounded_String) return String;
          --  Return the string to store in model for mode S
 
-         -----------------------
-         -- Get_Category_Name --
-         -----------------------
+         -------------------
+         -- Get_Mode_Name --
+         -------------------
 
          function Get_Mode_Name (S : Unbounded_String) return String is
          begin

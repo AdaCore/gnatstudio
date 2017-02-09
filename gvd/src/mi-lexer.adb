@@ -317,9 +317,9 @@ package body MI.Lexer is
          Identifier := new String'(To_String (Str));
       end Read_Identifier;
 
-      --------------------
-      --  Read_C_String --
-      --------------------
+      -------------------
+      -- Read_C_String --
+      -------------------
 
       procedure Read_C_String
         (Sh            : in out Input_Handler;

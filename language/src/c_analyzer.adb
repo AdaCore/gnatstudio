@@ -1474,9 +1474,9 @@ package body C_Analyzer is
          return False;
       end Identifier_Keyword;
 
-      ----------------------
-      -- Set_Parent_Index --
-      ----------------------
+      ---------------------
+      -- Set_Paren_Index --
+      ---------------------
 
       procedure Set_Paren_Index is
          First_Non_Blank : Natural := Line_Start (Buffer, Index);

@@ -1622,9 +1622,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Destination_Mark);
    end Free;
 
-   -----------------------
-   -- Paste_Profile_Cmd --
-   -----------------------
+   -----------------
+   -- Is_Writable --
+   -----------------
 
    overriding
    function Is_Writable (This : Paste_Profile_Cmd) return Boolean is
@@ -2506,9 +2506,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   -------------------------------
-   -- Remove_Pragma_Element_Cmd --
-   -------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Pragma_Element_Cmd;
@@ -2600,9 +2600,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   ----------------------------
-   -- Remove_Parenthesis_Cmd --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This            : in out Remove_Parenthesis_Cmd;
@@ -2641,9 +2641,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   --------------------------
-   -- Fix_Index_Number_Cmd --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Fix_Index_Number_Cmd;
@@ -2718,9 +2718,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   ----------------------------
-   -- Reorder_Subprogram_Cmd --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Reorder_Subprogram_Cmd;
@@ -2855,9 +2855,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   --------------------------
-   -- Remove_Attribute_Cmd --
-   --------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Attribute_Cmd;
@@ -2901,9 +2901,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   -------------------------
-   -- Renames_To_Constant --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Renames_To_Constant_Cmd;
@@ -2948,9 +2948,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   ---------------------------
-   -- Remove_Comparison_Cmd --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Comparison_Cmd;

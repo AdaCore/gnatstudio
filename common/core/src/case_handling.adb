@@ -109,9 +109,9 @@ package body Case_Handling is
       return Encode (Mixed_Case (Image, Smart));
    end Mixed_Case;
 
-   ---------------
-   --  Set_Case --
-   ---------------
+   --------------
+   -- Set_Case --
+   --------------
 
    function Set_Case
      (C      : Casing_Exceptions;

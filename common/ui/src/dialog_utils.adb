@@ -189,9 +189,9 @@ package body Dialog_Utils is
       end if;
    end Set_Child_Visible;
 
-   -------------------------
-   -- Set_Row_Highlighted --
-   -------------------------
+   ---------------------------
+   -- Set_Child_Highlighted --
+   ---------------------------
 
    procedure Set_Child_Highlighted
      (Self      : not null access Dialog_View_Record'Class;

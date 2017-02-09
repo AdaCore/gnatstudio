@@ -62,9 +62,9 @@ package body Codefix.SPARK_Parser is
    --  Fix Semantic Error 320: 'Tilde or Percent may only be applied to an
    --  entire variable'
 
-   ---------------------------------
-   -- Unexpected_Tilde_Or_Percent --
-   ---------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Unexpected_Tilde_Or_Percent)
    is
@@ -102,9 +102,9 @@ package body Codefix.SPARK_Parser is
            Regular_Expression);
    end Fix;
 
-   ---------------------------------
-   -- Misplaced_Tilde_Or_Percent --
-   ---------------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    overriding procedure Initialize (This : in out Misplaced_Tilde_Or_Percent)
    is

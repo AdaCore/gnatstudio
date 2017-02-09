@@ -486,7 +486,7 @@ package body Outline_View.Model is
    end Add_Recursive;
 
    --------------
-   -- Set_File --
+   -- Set_Tree --
    --------------
 
    procedure Set_Tree
@@ -547,7 +547,7 @@ package body Outline_View.Model is
    end Set_Tree;
 
    --------------
-   -- Get_File --
+   -- Get_Tree --
    --------------
 
    function Get_Tree (Model : Outline_Model) return Semantic_Tree'Class is

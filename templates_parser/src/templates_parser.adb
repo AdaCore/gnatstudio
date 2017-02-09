@@ -4292,7 +4292,7 @@ package body Templates_Parser is
          end Rollback;
 
          ------------------------
-         -- Flatten_Parameter  --
+         -- Flatten_Parameters --
          ------------------------
 
          function Flatten_Parameters
@@ -5606,9 +5606,9 @@ package body Templates_Parser is
 
    procedure Free_Filters renames Filter.Free_Filters;
 
-   -----------
-   -- Macro --
-   -----------
+   ----------------------------
+   -- Register_Macro_Handler --
+   ----------------------------
 
    procedure Register_Macro_Handler (Callback : Macro_Callback) is
    begin

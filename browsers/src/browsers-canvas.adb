@@ -851,9 +851,9 @@ package body Browsers.Canvas is
       return False;
    end On_Export_Idle;
 
-   ---------------
-   -- On_Export --
-   ---------------
+   ----------------------
+   -- On_Export_To_PNG --
+   ----------------------
 
    procedure On_Export_To_PNG (Browser : access Gtk_Widget_Record'Class) is
       Id : G_Source_Id;

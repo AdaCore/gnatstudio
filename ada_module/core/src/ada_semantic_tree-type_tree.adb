@@ -325,9 +325,9 @@ package body Ada_Semantic_Tree.Type_Tree is
       end if;
    end Is_Primitive_Param;
 
-   ---------------------------
-   -- Perform_Type_Analyzis --
-   ---------------------------
+   -------------------------------------
+   -- Perform_Type_Analyzis_If_Needed --
+   -------------------------------------
 
    procedure Perform_Type_Analyzis_If_Needed
      (Entity_Type : Entity_Access;
@@ -457,9 +457,9 @@ package body Ada_Semantic_Tree.Type_Tree is
          return True;
       end Same_Overriding_Subprogram;
 
-      --------------------------------
-      --  Find_Overridden_Primitive --
-      --------------------------------
+      -------------------------------
+      -- Find_Overridden_Primitive --
+      -------------------------------
 
       function Find_Overridden_Primitive
         (Subprogram : Entity_Access) return Ada_Primitive_Access

@@ -1515,9 +1515,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       return Misc_Command;
    end Command_Kind;
 
-   ----------------------
-   -- Is_Break_Command --
-   ----------------------
+   -------------------------
+   -- Breakpoints_Changed --
+   -------------------------
 
    overriding function Breakpoints_Changed
      (Debugger : access Gdb_Debugger;

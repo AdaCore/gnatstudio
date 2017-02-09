@@ -3536,9 +3536,9 @@ package body Project_Properties is
       return Ed;
    end Create_Indexed_Attribute_Editor;
 
-   -----------------------------------
-   -- Set_Attribute_Editor_Editable --
-   -----------------------------------
+   -------------------------------------
+   -- Set_Attribute_Editor_Accessible --
+   -------------------------------------
 
    procedure Set_Attribute_Editor_Accessible
      (Editor   : not null access Attribute_Editor_Record'Class;

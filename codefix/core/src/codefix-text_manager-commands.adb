@@ -23,9 +23,9 @@ with GNATCOLL.Xref;
 package body Codefix.Text_Manager.Commands is
    use type GNATCOLL.Xref.Visible_Column;
 
-   ---------------------
-   -- Remove_Word_Cmd --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This              : in out Remove_Word_Cmd;
@@ -151,9 +151,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Word.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
-   ---------------------
-   -- Insert_Word_Cmd --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This            : in out Insert_Word_Cmd;
@@ -279,9 +279,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Word.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
-   -------------------
-   -- Move_Word_Cmd --
-   -------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This            : in out Move_Word_Cmd;
@@ -324,9 +324,9 @@ package body Codefix.Text_Manager.Commands is
         and then This.Step_Insert.Is_Writable;
    end Is_Writable;
 
-   ----------------------
-   -- Replace_Word_Cmd --
-   ----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This           : in out Replace_Word_Cmd;
@@ -400,9 +400,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Mark.Mark_Id.Get_File.Is_Writable;
    end Is_Writable;
 
-   ---------------------
-   -- Invert_Word_Cmd --
-   ---------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Invert_Words_Cmd;
@@ -469,9 +469,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
-   -------------------
-   --  Add_Line_Cmd --
-   -------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Add_Line_Cmd;
@@ -519,9 +519,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Position.Get_File.Is_Writable;
    end Is_Writable;
 
-   ----------------------
-   -- Replace_Slice_Cmd --
-   ----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This                     : in out Replace_Slice_Cmd;
@@ -569,9 +569,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Start_Mark.Get_File.Is_Writable;
    end Is_Writable;
 
-   ----------------------------
-   -- Remove_Blank_Lines_Cmd --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This         : in out Remove_Blank_Lines_Cmd;
@@ -622,9 +622,9 @@ package body Codefix.Text_Manager.Commands is
       return This.Start_Mark.Get_File.Is_Writable;
    end Is_Writable;
 
-   -----------------------
-   -- Tab_Expansion_Cmd --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (This   : in out Tab_Expansion_Cmd;

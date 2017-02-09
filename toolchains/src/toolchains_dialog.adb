@@ -69,9 +69,9 @@ package body Toolchains_Dialog is
       Data   : Entry_Callback_Data);
    --  Browse for a directory, then fill the GEntry
 
-   -------------
-   -- Toggled --
-   -------------
+   ----------------------
+   -- Activate_Toggled --
+   ----------------------
 
    procedure Activate_Toggled
      (Toggle : access Gtk_Widget_Record'Class;

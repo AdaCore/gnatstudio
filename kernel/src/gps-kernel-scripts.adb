@@ -430,9 +430,9 @@ package body GPS.Kernel.Scripts is
       end if;
    end Entity_Context_Command_Handler;
 
-   --------------------------------------
-   --  Message_Context_Command_Handler --
-   --------------------------------------
+   -------------------------------------
+   -- Message_Context_Command_Handler --
+   -------------------------------------
 
    procedure Message_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)

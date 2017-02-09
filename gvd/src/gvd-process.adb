@@ -263,9 +263,9 @@ package body GVD.Process is
       end if;
    end Get_Command;
 
-   ---------------------------
-   --  Is_Execution_Command --
-   ---------------------------
+   --------------------------
+   -- Is_Execution_Command --
+   --------------------------
 
    function Is_Execution_Command
      (Process : access Visual_Debugger_Record'Class) return Boolean is

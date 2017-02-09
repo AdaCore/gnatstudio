@@ -46,9 +46,9 @@ package body Language_Handlers is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Info_Array, Language_Info_Access);
 
-   -------------
-   -- Gtk_New --
-   -------------
+   --------------------
+   -- Create_Handler --
+   --------------------
 
    procedure Create_Handler
      (Handler : out Language_Handler;

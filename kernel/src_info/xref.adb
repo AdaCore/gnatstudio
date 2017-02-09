@@ -1894,7 +1894,7 @@ package body Xref is
    end Is_Read_Reference;
 
    --------------------------------------------
-   -- Is_Or_Read_Write_Or_Implicit_Reference --
+   -- Is_Read_Or_Write_Or_Implicit_Reference --
    --------------------------------------------
 
    overriding function Is_Read_Or_Write_Or_Implicit_Reference

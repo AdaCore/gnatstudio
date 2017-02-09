@@ -343,9 +343,9 @@ package body Completion is
       return True;
    end Is_Valid;
 
-   -----------------
-   -- Get_Manager --
-   -----------------
+   ------------------
+   -- Get_Resolver --
+   ------------------
 
    function Get_Resolver (Proposal : Completion_Proposal)
      return Completion_Resolver_Access is

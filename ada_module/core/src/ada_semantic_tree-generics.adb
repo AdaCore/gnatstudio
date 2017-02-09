@@ -342,9 +342,9 @@ package body Ada_Semantic_Tree.Generics is
       return Null_Entity_Access;
    end Get_Actual_For_Generic_Param;
 
-   -------------------------
-   -- Get_Generic_Package --
-   -------------------------
+   ------------------------
+   -- Get_Generic_Entity --
+   ------------------------
 
    function Get_Generic_Entity (Info : Instance_Info) return Entity_Access
    is
@@ -356,9 +356,9 @@ package body Ada_Semantic_Tree.Generics is
       end if;
    end Get_Generic_Entity;
 
-   -------------------------
-   -- Get_Generic_Package --
-   -------------------------
+   ------------------------
+   -- Get_Generic_Entity --
+   ------------------------
 
    function Get_Generic_Entity (Info : Entity_Access) return Entity_View is
       Result : Entity_View;

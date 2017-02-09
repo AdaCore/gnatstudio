@@ -174,9 +174,9 @@ package body VCS_View is
         (Explorer, Signal_Grab_Focus, On_Selected'Access, After => True);
    end Initialize;
 
-   -------------------
-   --  Create_Model --
-   -------------------
+   ------------------
+   -- Create_Model --
+   ------------------
 
    procedure Create_Model
      (Explorer : access VCS_View_Record'Class) is
@@ -385,9 +385,9 @@ package body VCS_View is
          Quit : in out Boolean);
       --  Check if Iter correspond to File
 
-      -------------
-      -- Look_In --
-      -------------
+      ----------------
+      -- Check_Iter --
+      ----------------
 
       procedure Check_Iter
         (Iter : in out Gtk_Tree_Iter;
@@ -443,9 +443,9 @@ package body VCS_View is
          Quit : in out Boolean);
       --  Check if Iter corresponds to File
 
-      -------------
-      -- Look_In --
-      -------------
+      ----------------
+      -- Check_Iter --
+      ----------------
 
       procedure Check_Iter
         (Iter : in out Gtk_Tree_Iter;
@@ -727,7 +727,7 @@ package body VCS_View is
    end On_Menu_Expand_All;
 
    --------------------------
-   -- On_Menu_Collaspe_All --
+   -- On_Menu_Collapse_All --
    --------------------------
 
    procedure On_Menu_Collapse_All

@@ -1904,9 +1904,9 @@ package body Build_Configurations is
       Target.Properties.In_Toolbar := Value;
    end In_Toolbar;
 
-   ----------------
-   -- In_Menubar --
-   ----------------
+   -------------
+   -- In_Menu --
+   -------------
 
    procedure In_Menu (Target : Target_Access; Value : Boolean) is
    begin

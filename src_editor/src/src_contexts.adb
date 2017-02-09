@@ -2458,9 +2458,9 @@ package body Src_Contexts is
       return True;
    end Replace_From_Editor;
 
-   ------------------------
-   --  Replace_From_File --
-   ------------------------
+   -----------------------
+   -- Replace_From_File --
+   -----------------------
 
    function Replace_From_File
      (Context         : access Abstract_Files_Context'Class;

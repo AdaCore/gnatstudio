@@ -186,9 +186,9 @@ package body Ada_Semantic_Tree.Visibility is
          end loop;
       end Add_Scope;
 
-      ----------------------------
-      -- Mark_Scope_Not_Visible --
-      ----------------------------
+      --------------------------
+      -- Mark_Scope_Not_Vible --
+      --------------------------
 
       procedure Mark_Scope_Not_Vible (Scope : Construct_Tree_Iterator) is
          It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
@@ -410,9 +410,9 @@ package body Ada_Semantic_Tree.Visibility is
       end case;
    end Is_Accessible;
 
-   ----------------------------
-   -- To_Use_Clause_Iterator --
-   ----------------------------
+   ------------------------
+   -- To_Clause_Iterator --
+   ------------------------
 
    function To_Clause_Iterator
      (Visibility_Info : Visibility_Context;

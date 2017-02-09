@@ -226,9 +226,9 @@ package body BT.Xml.Reader is
       end if;
    end LT;
 
-   -----------
-   --  Hash --
-   -----------
+   ----------
+   -- Hash --
+   ----------
 
    function Hash (Key_Type : Source_Position) return Hash_Type is
    begin
@@ -516,9 +516,9 @@ package body BT.Xml.Reader is
       end if;
    end End_Element;
 
-   ------------------------------
-   -- Read_File_Backtraces_Xml --
-   ------------------------------
+   -----------------------------
+   -- Read_File_Backtrace_Xml --
+   -----------------------------
 
    procedure Read_File_Backtrace_Xml
      (Output_Dir  : String;
@@ -657,9 +657,9 @@ package body BT.Xml.Reader is
          --  VN. For precondition events, recursively import the backtraces
          --  contributing to the corresponding precondition.
 
-         ---------------------
-         --  Add_One_Backtrace
-         ---------------------
+         -----------------------
+         -- Add_One_Backtrace --
+         -----------------------
 
          procedure Add_One_Backtrace (Info : BT_Info) is
          begin
@@ -955,9 +955,9 @@ package body BT.Xml.Reader is
    --  Read the *_vals XML file corresponding to File_Name if it has not yet
    --  been read
 
-   -----------------
-   --  Read_Xml_File
-   -----------------
+   -------------------
+   -- Read_Xml_File --
+   -------------------
 
    procedure Read_Xml_File (File_Name : String;
       File_Exists : out Boolean) is

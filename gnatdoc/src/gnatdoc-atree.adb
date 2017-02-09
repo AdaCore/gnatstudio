@@ -176,9 +176,9 @@ package body GNATdoc.Atree is
       Get_Array_Index_Type (E).Append (Value);
    end Append_Array_Index_Type;
 
-   -----------------------
-   -- Append_Derivation --
-   -----------------------
+   ------------------------------
+   -- Append_Direct_Derivation --
+   ------------------------------
 
    procedure Append_Direct_Derivation (E : Entity_Id; Value : Entity_Id) is
    begin
@@ -573,9 +573,9 @@ package body GNATdoc.Atree is
       return E.Comment;
    end Get_Comment;
 
-   ------------------------
-   -- Get_Component_Type --
-   ------------------------
+   ------------------------------
+   -- Get_Array_Component_Type --
+   ------------------------------
 
    function Get_Array_Component_Type
      (E : Entity_Id) return Entity_Id is
@@ -610,9 +610,9 @@ package body GNATdoc.Atree is
       return Result;
    end Get_Components;
 
-   ---------------------
-   -- Get_Derivations --
-   ---------------------
+   ----------------------------
+   -- Get_Direct_Derivations --
+   ----------------------------
 
    function Get_Direct_Derivations
      (E : Entity_Id) return access EInfo_List.Vector is
@@ -1143,9 +1143,9 @@ package body GNATdoc.Atree is
       return E.Has_Private_Parent;
    end Has_Private_Parent;
 
-   ------------------------------
-   -- Has_Unknown_Discriminant --
-   ------------------------------
+   -------------------------------
+   -- Has_Unknown_Discriminants --
+   -------------------------------
 
    function Has_Unknown_Discriminants (E : Entity_Id) return Boolean is
    begin
@@ -1162,9 +1162,9 @@ package body GNATdoc.Atree is
       return Get_Language (E).all in Language.Ada.Ada_Language'Class;
    end In_Ada_Language;
 
-   -------------------
-   -- In_C_Language --
-   -------------------
+   --------------------------
+   -- In_C_Or_CPP_Language --
+   --------------------------
 
    function In_C_Or_CPP_Language
      (E : Entity_Id) return Boolean is
@@ -2453,9 +2453,9 @@ package body GNATdoc.Atree is
       E.Is_Generic_Formal := True;
    end Set_Is_Generic_Formal;
 
-   --------------------
-   -- Set_Is_Private --
-   --------------------
+   -----------------------
+   -- Set_Is_Incomplete --
+   -----------------------
 
    procedure Set_Is_Incomplete (E : Entity_Id; Value : Boolean := True) is
    begin
@@ -2847,9 +2847,9 @@ package body GNATdoc.Atree is
          return E.Xref.Is_Primitive;
       end Is_Primitive;
 
-      ------------------------
-      -- Is_Self_Referenced --
-      ------------------------
+      -----------------------------
+      -- Is_Self_Referenced_Type --
+      -----------------------------
 
       function Is_Self_Referenced_Type
         (E    : Root_Entity'Class;

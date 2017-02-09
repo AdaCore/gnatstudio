@@ -574,9 +574,9 @@ package body GNATdoc.Frontend is
                Partial_Entity : Boolean) return Boolean;
             --  Callback for entity parser
 
-            -----------------
-            -- Append_Line --
-            -----------------
+            ------------
+            -- Append --
+            ------------
 
             procedure Append (Text : String) is
             begin
@@ -692,7 +692,7 @@ package body GNATdoc.Frontend is
          end Get_Class_Type_Source;
 
          ----------------------------
-         -- Get_Record_Type_Source --
+         -- Get_Struct_Type_Source --
          ----------------------------
 
          function Get_Struct_Type_Source return Unbounded_String is
@@ -708,9 +708,9 @@ package body GNATdoc.Frontend is
                Partial_Entity : Boolean) return Boolean;
             --  Callback for entity parser
 
-            -----------------
-            -- Append_Line --
-            -----------------
+            ------------
+            -- Append --
+            ------------
 
             procedure Append (Text : String) is
             begin
@@ -843,9 +843,9 @@ package body GNATdoc.Frontend is
                Partial_Entity : Boolean) return Boolean;
             --  Callback for entity parser
 
-            -----------------
-            -- Append_Line --
-            -----------------
+            ------------
+            -- Append --
+            ------------
 
             procedure Append (Text : String) is
             begin
@@ -1209,9 +1209,9 @@ package body GNATdoc.Frontend is
          --  of reserved words associated with the given Ada version. Ada 2005
          --  is enabled by default if no switch was specified.
 
-         ------------
-         -- Append --
-         ------------
+         --------------------
+         -- Append_Comment --
+         --------------------
 
          procedure Append_Comment (Text : String) is
             Comment_Prefix : constant String := "--";
@@ -1233,9 +1233,9 @@ package body GNATdoc.Frontend is
             Printout := Printout & Text;
          end Append_Sources;
 
-         -----------
-         -- Clear --
-         -----------
+         ---------------
+         -- Clear_Doc --
+         ---------------
 
          procedure Clear_Doc is
          begin
@@ -3750,9 +3750,9 @@ package body GNATdoc.Frontend is
 
             procedure Print_State;
 
-            -------------------------
-            -- Accumulate_Comments --
-            -------------------------
+            ---------------------------------
+            -- Accumulate_Comments_In_Body --
+            ---------------------------------
 
             procedure Accumulate_Comments_In_Body is
             begin
@@ -4300,9 +4300,9 @@ package body GNATdoc.Frontend is
                end case;
             end Handle_Body_Scopes;
 
-            -------------------
-            -- Handle_Tokens --
-            -------------------
+            ------------------------
+            -- Handle_Body_Tokens --
+            ------------------------
 
             procedure Handle_Body_Tokens is
                procedure Update_Prev_Known_Token;
@@ -5091,9 +5091,9 @@ package body GNATdoc.Frontend is
       null;
    end Finalize;
 
-   -----------------
-   -- Find_Entity --
-   -----------------
+   ------------------------
+   -- Find_Unique_Entity --
+   ------------------------
 
    function Find_Unique_Entity
      (Location      : General_Location;
@@ -5389,9 +5389,9 @@ package body GNATdoc.Frontend is
          Stack.Delete_First;
       end Exit_Scope;
 
-      -------------
-      -- Getters --
-      -------------
+      ------------------------
+      -- Get_Current_Entity --
+      ------------------------
 
       function Get_Current_Entity
         (Context : Context_Id) return Entity_Id is

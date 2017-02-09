@@ -1618,9 +1618,9 @@ package body Gtkada.Entry_Completion is
       Free (Self.Pattern);
    end Primitive_Free;
 
-   -------------------
-   -- Show_Settings --
-   -------------------
+   ---------------------
+   -- Toggle_Settings --
+   ---------------------
 
    procedure Toggle_Settings (Self : access GObject_Record'Class) is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);

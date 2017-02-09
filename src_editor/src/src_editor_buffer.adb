@@ -1049,9 +1049,9 @@ package body Src_Editor_Buffer is
       return Output;
    end Get_Buffer_Lines;
 
-   ---------------------
-   --  Get_Byte_Index --
-   ---------------------
+   --------------------
+   -- Get_Byte_Index --
+   --------------------
 
    function Get_Byte_Index (Iter : Gtk_Text_Iter) return Natural is
       Index : Natural := 0;
@@ -5448,9 +5448,9 @@ package body Src_Editor_Buffer is
       Select_Range (Buffer, Ins => End_Iter, Bound => Start_Iter);
    end Select_All;
 
-   ----------------------
-   -- Selection_Region --
-   ----------------------
+   -------------------
+   -- Select_Region --
+   -------------------
 
    procedure Select_Region
      (Buffer      : access Source_Buffer_Record;
@@ -6158,9 +6158,9 @@ package body Src_Editor_Buffer is
       end loop;
    end Set_Line_Highlighting;
 
-   --------------------------
-   -- Add_Line_Higlighting --
-   --------------------------
+   ---------------------------
+   -- Add_Line_Highlighting --
+   ---------------------------
 
    procedure Add_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
@@ -7449,9 +7449,9 @@ package body Src_Editor_Buffer is
             Trace (Me, E);
       end Refill_Plain_Text;
 
-      -------------------
-      -- Scan_Commment --
-      -------------------
+      ------------------
+      -- Scan_Comment --
+      ------------------
 
       procedure Scan_Comment
         (Line : String;

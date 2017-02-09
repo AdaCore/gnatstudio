@@ -769,9 +769,9 @@ package body VCS2.Engines is
       return Need_Update;
    end Need_Update_For_Files;
 
-   ----------------------------
-   -- Ensure_Status_For_File --
-   ----------------------------
+   -----------------------------
+   -- Ensure_Status_For_Files --
+   -----------------------------
 
    procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;

@@ -627,9 +627,9 @@ package body VCS_View.Explorer is
         (R_Iter, Base_Name_Column, -"No VCS for this project");
    end No_VCS_Message;
 
-   ---------------
-   -- Fill_Info --
-   ---------------
+   ------------------
+   -- Do_Fill_Info --
+   ------------------
 
    overriding procedure Do_Fill_Info
      (Explorer  : VCS_Explorer_View_Record;

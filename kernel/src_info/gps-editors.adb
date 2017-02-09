@@ -363,9 +363,9 @@ package body GPS.Editors is
       return Nil_Editor_Buffer;
    end Buffer;
 
-   --------------
-   -- Get_Name --
-   --------------
+   ----------
+   -- Name --
+   ----------
 
    overriding function Name (This : Dummy_Editor_Mark) return String is
       pragma Unreferenced (This);

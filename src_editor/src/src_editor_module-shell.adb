@@ -426,9 +426,9 @@ package body Src_Editor_Module.Shell is
            (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Mark;
 
-   --------------
-   -- Get_Mark --
-   --------------
+   ----------------
+   -- Get_Marker --
+   ----------------
 
    function Get_Marker
      (Data : Callback_Data'Class;

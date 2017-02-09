@@ -1234,9 +1234,9 @@ package body VCS_Module is
       return M.Activities /= null and then M.Activities_Child /= null;
    end Activities_Explorer_Is_Open;
 
-   ---------------
-   -- Get_Cache --
-   ---------------
+   ----------------------
+   -- Get_Status_Cache --
+   ----------------------
 
    function Get_Status_Cache return Status_Cache is
       M : constant VCS_Module_ID_Access := VCS_Module_ID;

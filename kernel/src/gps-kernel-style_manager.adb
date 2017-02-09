@@ -520,9 +520,9 @@ package body GPS.Kernel.Style_Manager is
       procedure U (Position : Style_Map.Cursor);
       --  Utility to walk the container and free memory.
 
-      -----------
-      -- Unref --
-      -----------
+      -------
+      -- U --
+      -------
 
       procedure U (Position : Style_Map.Cursor) is
          V : Style_Access;
@@ -779,9 +779,9 @@ package body GPS.Kernel.Style_Manager is
       Style.Icon := new Style_Key'(Icon);
    end Set_Icon;
 
-   -----------------------
-   -- Initialize_Colors --
-   -----------------------
+   ------------------------------
+   -- Initialize_Style_Manager --
+   ------------------------------
 
    procedure Initialize_Style_Manager (Kernel : Kernel_Handle) is
       P_Hook : constant access On_Pref_Changed := new On_Pref_Changed;

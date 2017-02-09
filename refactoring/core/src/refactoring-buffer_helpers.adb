@@ -109,7 +109,7 @@ package body Refactoring.Buffer_Helpers is
    end Get;
 
    -----------------
-   -- Delete_Code --
+   -- Remove_Code --
    -----------------
 
    procedure Remove_Code
@@ -323,7 +323,7 @@ package body Refactoring.Buffer_Helpers is
    end Indent_Line;
 
    -----------------
-   -- Delete_Line --
+   -- Remove_Line --
    -----------------
 
    procedure Remove_Line
@@ -383,9 +383,9 @@ package body Refactoring.Buffer_Helpers is
       Unlock (Lock);
    end Replace;
 
-   ---------------
-   --  Replace  --
-   ---------------
+   -------------
+   -- Replace --
+   -------------
 
    procedure Replace
      (Context   : not null access Factory_Context_Record'Class;

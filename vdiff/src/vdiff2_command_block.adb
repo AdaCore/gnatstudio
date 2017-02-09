@@ -56,9 +56,9 @@ package body Vdiff2_Command_Block is
       Item.Action := Action;
    end Create;
 
-   -------------------------
-   --  Unchecked_Execute  --
-   -------------------------
+   -----------------------
+   -- Unchecked_Execute --
+   -----------------------
 
    procedure Unchecked_Execute
      (Command : access Diff_Command_Block;

@@ -1273,9 +1273,9 @@ package body GNATdoc.Backend.Simple is
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Annotated_Files_Index;
 
-         -----------------------
-         -- Generate_Entities --
-         -----------------------
+         -----------------------------
+         -- Generate_Entities_Index --
+         -----------------------------
 
          procedure Generate_Entities_Index
            (Filename : String;
@@ -1615,9 +1615,9 @@ package body GNATdoc.Backend.Simple is
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Project_Files_Index;
 
-         --------------------------------
-         -- Generate_Tagged_Types_Tree --
-         --------------------------------
+         --------------------------------------
+         -- Generate_Tagged_Types_Tree_Index --
+         --------------------------------------
 
          procedure Generate_Tagged_Types_Tree_Index
            (Filename : String;
@@ -1638,9 +1638,9 @@ package body GNATdoc.Backend.Simple is
             procedure ReST_Append (E : Entity_Id; Prefix : String);
             --  Append to Printout the Prefix followed by E
 
-            ---------------------------
-            -- Get_Tagged_Type_Roots --
-            ---------------------------
+            -----------------------------------------
+            -- Collect_Tagged_Types_And_Interfaces --
+            -----------------------------------------
 
             function Collect_Tagged_Types_And_Interfaces
               return EInfo_List.Vector

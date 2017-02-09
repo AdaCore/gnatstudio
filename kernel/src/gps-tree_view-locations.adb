@@ -365,9 +365,9 @@ package body GPS.Tree_View.Locations is
       return False;
    end On_Button_Release;
 
-   -----------------------------------
-   -- On_Lowerst_Model_Row_Inserted --
-   -----------------------------------
+   ----------------------------------
+   -- On_Lowest_Model_Row_Inserted --
+   ----------------------------------
 
    overriding procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Locations_Tree_View_Record;
@@ -604,9 +604,9 @@ package body GPS.Tree_View.Locations is
         (-Self.Filter.Get_Model).Set_Order (File_Order, Msg_Order);
    end Set_Order;
 
-   ---------------------------
-   -- To_Lowerst_Model_Iter --
-   ---------------------------
+   --------------------------
+   -- To_Lowest_Model_Iter --
+   --------------------------
 
    overriding function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;

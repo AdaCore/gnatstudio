@@ -245,9 +245,9 @@ package body Clang_Xref is
       return Line_Offset + 1;
    end Get_Line_Offset;
 
-   --------------------
-   -- Get_Clang_Node --
-   --------------------
+   ----------------------
+   -- Get_Clang_Cursor --
+   ----------------------
 
    function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor
    is

@@ -435,9 +435,9 @@ package body Language.Shell is
       null;
    end Parse_Entities;
 
-   ---------------------------
-   -- Create_Shell_Language --
-   ---------------------------
+   -----------------------------
+   -- Register_Shell_Language --
+   -----------------------------
 
    procedure Register_Shell_Language
      (Kernel      : GPS.Kernel.Kernel_Handle;

@@ -595,9 +595,9 @@ package body VCS_View.Activities is
       Thaw_Sort (Explorer.Model, Sort_Id);
    end Display_File_Status;
 
-   ------------------------
-   -- Fill_Info_Specific --
-   ------------------------
+   ------------------
+   -- Do_Fill_Info --
+   ------------------
 
    overriding procedure Do_Fill_Info
      (Explorer  : VCS_Activities_View_Record;
@@ -882,9 +882,9 @@ package body VCS_View.Activities is
       end if;
    end Execute;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   -------------------
+   -- Do_Initialize --
+   -------------------
 
    overriding procedure Do_Initialize
      (Explorer : access VCS_Activities_View_Record;

@@ -577,9 +577,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          end if;
       end Next_Child_Packages;
 
-      -----------------------------
-      -- Next_Dotted_Subprograms --
-      -----------------------------
+      -------------------------------
+      -- Next_Tagged_Type_Contents --
+      -------------------------------
 
       procedure Next_Tagged_Type_Contents is
          Parent_Info : Ada_Type_Access;

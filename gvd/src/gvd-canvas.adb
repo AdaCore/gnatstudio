@@ -470,9 +470,9 @@ package body GVD.Canvas is
       return False;
    end Filter_Matches_Primitive;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Local_Vars_Command;
@@ -488,9 +488,9 @@ package body GVD.Canvas is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Arguments_Command;

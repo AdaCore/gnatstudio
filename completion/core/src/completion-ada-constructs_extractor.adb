@@ -429,9 +429,9 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
    end Get_Caret_Offset;
 
-   --------------
-   -- Get_Type --
-   --------------
+   ------------------
+   -- Get_Category --
+   ------------------
 
    overriding function Get_Category
      (Proposal : Construct_Completion_Proposal) return Language_Category
@@ -645,9 +645,9 @@ package body Completion.Ada.Constructs_Extractor is
       Internal_Free (This);
    end Free;
 
-   -----------------------
-   -- Get_Possibilities --
-   -----------------------
+   -------------------------
+   -- Get_Completion_Root --
+   -------------------------
 
    overriding procedure Get_Completion_Root
      (Resolver : access Construct_Completion_Resolver;

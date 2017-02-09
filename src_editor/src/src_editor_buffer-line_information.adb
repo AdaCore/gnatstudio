@@ -1144,9 +1144,9 @@ package body Src_Editor_Buffer.Line_Information is
       end loop Drawing_Loop;
    end Draw_Line_Info;
 
-   ----------------
-   -- Get_Action --
-   ----------------
+   -------------------------
+   -- Get_Relevant_Action --
+   -------------------------
 
    function Get_Relevant_Action
      (Data : Line_Info_Width) return Line_Information_Record

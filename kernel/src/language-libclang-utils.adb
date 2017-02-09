@@ -23,9 +23,9 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 package body Language.Libclang.Utils is
 
-   -------------------------------
-   -- Get_Compiler_Search_Paths --
-   -------------------------------
+   ----------------------------------------
+   -- Get_Compiler_Search_Paths_Switches --
+   ----------------------------------------
 
    function Get_Compiler_Search_Paths_Switches
      (Kernel   : Core_Kernel;

@@ -539,9 +539,9 @@ package body CodePeer.Module.Actions is
           (Kernel).Create_From_Dir ("Inspection_Info.xml");
    end Inspection_Info_File;
 
-   -----------------------
-   -- Register_Commands --
-   -----------------------
+   ----------------------
+   -- Register_Actions --
+   ----------------------
 
    procedure Register_Actions (Module : not null CodePeer_Module_Id) is
    begin

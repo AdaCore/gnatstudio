@@ -235,9 +235,9 @@ package body GNAThub.Module is
    is
       function Get_Default_Color return String;
 
-      -----------------
-      -- Get_Default --
-      -----------------
+      -----------------------
+      -- Get_Default_Color --
+      -----------------------
 
       function Get_Default_Color return String is
       begin

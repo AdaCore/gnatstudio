@@ -1413,9 +1413,9 @@ package body Codefix_Module is
       Destroy (Module_ID_Record (Id));
    end Destroy;
 
-   --------------------------
-   -- Execute_Corrupted_Cb --
-   --------------------------
+   -----------
+   -- Panic --
+   -----------
 
    overriding procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;

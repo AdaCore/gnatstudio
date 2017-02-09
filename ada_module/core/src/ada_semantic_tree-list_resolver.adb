@@ -101,9 +101,9 @@ package body Ada_Semantic_Tree.List_Resolver is
       end if;
    end Is_Entity_With_Profile;
 
-   ----------------------------------
-   -- Get_Formal_Parameter_Profile --
-   ----------------------------------
+   ----------------------
+   -- Get_List_Profile --
+   ----------------------
 
    function Get_List_Profile
      (Entity       : Entity_Access;
@@ -259,9 +259,9 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Profile.Params;
    end Get_Formals;
 
-   --------------------
-   -- Get_Subprogram --
-   --------------------
+   ----------------
+   -- Get_Entity --
+   ----------------
 
    function Get_Entity
      (Profile : List_Profile) return Entity_Access
@@ -599,9 +599,9 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Result (1 .. Result_Index - 1);
    end Get_Missing_Formals;
 
-   -------------------------------
-   -- Any_Named_Formal_Missingg --
-   -------------------------------
+   ------------------------------
+   -- Any_Named_Formal_Missing --
+   ------------------------------
 
    function Any_Named_Formal_Missing
      (Params : Actual_Parameter_Resolver) return Boolean

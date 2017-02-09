@@ -454,9 +454,9 @@ package body GNATdoc is
             end;
          end Init_Ignored_Files;
 
-         ---------------------
-         -- Ignore_File --
-         ---------------------
+         ----------------------
+         -- In_Ignored_Files --
+         ----------------------
 
          function In_Ignored_Files (Base_Name : String) return Boolean is
          begin
@@ -752,9 +752,9 @@ package body GNATdoc is
          end;
       end Collect_C_Header_Files;
 
-      ---------------------------
-      --  Compute_Dependencies --
-      ---------------------------
+      --------------------------
+      -- Compute_Dependencies --
+      --------------------------
 
       procedure Compute_Dependencies
         (File : Virtual_File; Files : in out Files_List.Vector)
@@ -795,9 +795,9 @@ package body GNATdoc is
             Files.Append (Subtree.File);
          end Append;
 
-         ----------------
-         -- Build_Tree --
-         ----------------
+         -----------------------------
+         -- Build_Dependencies_Tree --
+         -----------------------------
 
          function Build_Dependencies_Tree
            (File : Virtual_File) return Node_Ptr
@@ -845,9 +845,9 @@ package body GNATdoc is
          return All_Src_Files.Length > 400;
       end Is_Large_Project;
 
-      ------------------------
-      --  Sort_Dependencies --
-      ------------------------
+      -----------------------
+      -- Sort_Dependencies --
+      -----------------------
 
       procedure Sort_Dependencies (Files : in out Files_List.Vector) is
          Num_Files     : constant Natural  := Natural (Files.Length);
@@ -986,9 +986,9 @@ package body GNATdoc is
          return False;
       end Have_Files;
 
-      --------------------
-      -- Internal_Error --
-      --------------------
+      ------------------
+      -- Report_Error --
+      ------------------
 
       procedure Report_Error (File : Virtual_File; Stage : Stages) is
          Header_Eq : constant Natural := 25;
@@ -1526,9 +1526,9 @@ package body GNATdoc is
            Kernel.Registry.Tree.Root_Project.Attribute_Value (Ign_Attr);
       end Init_Ignored_Subprojects_Table;
 
-      ----------------------------
-      -- In_Ignored_Subprojects --
-      ----------------------------
+      ---------------------------
+      -- Is_Ignored_Subproject --
+      ---------------------------
 
       function Is_Ignored_Subproject (Prj_Name : String) return Boolean is
          use type GNAT.Strings.String_List_Access;

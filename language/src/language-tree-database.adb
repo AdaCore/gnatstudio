@@ -48,9 +48,9 @@ package body Language.Tree.Database is
    --  If Global_Update_Lock is set then lock File (if not already locked).
    --  Files are automatically unlocked when Global_Update_Lock is reset.
 
-   ------------------------------
-   -- Get_Last_Relevant_Entity --
-   ------------------------------
+   ---------------------------------
+   -- Get_Last_Relevant_Construct --
+   ---------------------------------
 
    function Get_Last_Relevant_Construct
      (Tree : Construct_Tree; Offset : Natural)
@@ -647,9 +647,9 @@ package body Language.Tree.Database is
       Column := To_Visible_Column (File, Line, Index_In_Line);
    end To_Line_Column;
 
-   ------------------
-   -- Get_Language --
-   ------------------
+   -----------------------
+   -- Get_Tree_Language --
+   -----------------------
 
    function Get_Tree_Language
      (File : Structured_File_Access) return Tree_Language_Access is
@@ -940,9 +940,9 @@ package body Language.Tree.Database is
       end if;
    end Internal_Update_Contents;
 
-   ----------
-   -- Lock --
-   ----------
+   ------------------
+   -- Lock_Updates --
+   ------------------
 
    function Lock_Updates
      (File : Structured_File_Access;
@@ -1231,9 +1231,9 @@ package body Language.Tree.Database is
       Db.Files_Db.Clear;
    end Clear;
 
-   ----------
-   -- Free --
-   ----------
+   -------------
+   -- Destroy --
+   -------------
 
    procedure Destroy (Db : access Construct_Database) is
       Assistant_Cur : Assistant_Map.Cursor;
@@ -1707,9 +1707,9 @@ package body Language.Tree.Database is
       end if;
    end Unref;
 
-   -------------
-   -- Is_Null --
-   -------------
+   ------------
+   -- Exists --
+   ------------
 
    function Exists (Entity : Entity_Persistent_Access) return Boolean is
    begin

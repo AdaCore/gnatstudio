@@ -447,9 +447,9 @@ package body Revision_Views is
       end if;
    end Add_Log_If_Not_Present;
 
-   -------------------------------
-   -- Clear_Log_Command_Handler --
-   -------------------------------
+   --------------------------------
+   -- Clear_View_Command_Handler --
+   --------------------------------
 
    procedure Clear_View_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
@@ -565,9 +565,9 @@ package body Revision_Views is
       return Context;
    end Build_Context;
 
-   -----------------------------
-   -- Create_Revision_Browser --
-   -----------------------------
+   --------------------------
+   -- Create_Revision_View --
+   --------------------------
 
    function Create_Revision_View
      (Kernel : access Kernel_Handle_Record'Class) return Revision_View
@@ -986,9 +986,9 @@ package body Revision_Views is
       return Result;
    end Find_Revision;
 
-   ---------------------------
-   -- Open_Revision_Browser --
-   ---------------------------
+   ------------------------
+   -- Open_Revision_View --
+   ------------------------
 
    function Open_Revision_View
      (Kernel : access Kernel_Handle_Record'Class;

@@ -279,9 +279,9 @@ package body GNATStack.Module is
       end if;
    end Append_To_Menu;
 
-   --------------------
-   -- Fill_Locations --
-   --------------------
+   -----------------------
+   -- Fill_Entry_Points --
+   -----------------------
 
    procedure Fill_Entry_Points
      (Self : not null access GNATStack_Module_Id_Record'Class)

@@ -1177,9 +1177,9 @@ package body GUI_Utils is
       end;
    end Do_Completion;
 
-   --------------------
-   -- Query_Password --
-   --------------------
+   ----------------
+   -- Query_User --
+   ----------------
 
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;

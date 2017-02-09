@@ -1075,9 +1075,9 @@ package body Src_Editor_Module.Editors is
       end if;
    end Block_End;
 
-   ---------------
-   -- Bloc_Type --
-   ---------------
+   ----------------
+   -- Block_Type --
+   ----------------
 
    overriding function Block_Type
      (This        : Src_Editor_Location;
@@ -1651,9 +1651,9 @@ package body Src_Editor_Module.Editors is
          end;
    end New_Location;
 
-   ------------------
-   -- New_Location --
-   ------------------
+   -------------------------
+   -- New_Location_Offset --
+   -------------------------
 
    overriding function New_Location_Offset
      (This   : Src_Editor_Buffer;

@@ -74,9 +74,9 @@ package body String_List_Utils is
       return L.Contains (S);
    end Is_In_List;
 
-   ------------------------
-   --  Add_Unique_Sorted --
-   ------------------------
+   -----------------------
+   -- Add_Unique_Sorted --
+   -----------------------
 
    procedure Add_Unique_Sorted
      (L : in out String_List.Vector;

@@ -915,9 +915,9 @@ package body Language is
       return not (S1 < S2);
    end ">=";
 
-   ---------------------------
-   -- Parse_Tokens_Backward --
-   ---------------------------
+   ----------------------------
+   -- Parse_Tokens_Backwards --
+   ----------------------------
 
    procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
@@ -951,9 +951,9 @@ package body Language is
       end if;
    end Parse_Tokens_Backwards;
 
-   ------------------------------
-   -- Parse_Reference_Backward --
-   ------------------------------
+   -------------------------------
+   -- Parse_Reference_Backwards --
+   -------------------------------
 
    function Parse_Reference_Backwards
      (Lang              : access Language_Root;

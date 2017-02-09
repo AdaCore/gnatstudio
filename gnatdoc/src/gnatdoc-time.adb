@@ -47,9 +47,9 @@ package body GNATdoc.Time is
          Printout := Printout & Text & ASCII.LF;
       end Append_Line;
 
-      -------------
-      -- Percent --
-      -------------
+      ----------------
+      -- To_Percent --
+      ----------------
 
       function To_Percent (Partial_Time, Total_Time : Duration) return String
       is

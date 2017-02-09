@@ -117,9 +117,9 @@ package body Vdiff2_Module.Utils is
       Info       : T_VLine_Information);
    --  Hightlight the Current Chunk Curr_Chunk
 
-   -------------
-   --  Append --
-   -------------
+   ------------
+   -- Append --
+   ------------
 
    procedure Append
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -229,9 +229,9 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Fine_Highlight_Line;
 
-   -----------------------
-   --  Fine_Diff_Block  --
-   -----------------------
+   ---------------------
+   -- Fine_Diff_Block --
+   ---------------------
 
    procedure Fine_Diff_Block
      (Kernel       : Kernel_Handle;
@@ -423,9 +423,9 @@ package body Vdiff2_Module.Utils is
       return Curr_Node;
    end Get_Diff_Node;
 
-   -----------------
-   --  Move_Mark  --
-   -----------------
+   ---------------
+   -- Move_Mark --
+   ---------------
 
    procedure Move_Mark (Source, Dest : Diff_List) is
       use Diff_Chunk_List.Std_Vectors;
@@ -491,9 +491,9 @@ package body Vdiff2_Module.Utils is
       return null;
    end Process_Differences;
 
-   ------------------
-   --  Put_Button  --
-   ------------------
+   ----------------
+   -- Put_Button --
+   ----------------
 
    procedure Put_Button
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -949,9 +949,9 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Show_Unified_Differences;
 
-   ------------------------
-   --  Show_Differences3 --
-   ------------------------
+   -----------------------
+   -- Show_Differences3 --
+   -----------------------
 
    procedure Show_Differences3
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -1247,9 +1247,9 @@ package body Vdiff2_Module.Utils is
       Edit (Kernel, Merge);
    end Show_Merge;
 
-   -------------------------
-   --  Unhighlight_Block  --
-   -------------------------
+   -----------------------
+   -- Unhighlight_Block --
+   -----------------------
 
    procedure Unhighlight_Block
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

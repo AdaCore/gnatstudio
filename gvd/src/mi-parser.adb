@@ -20,9 +20,9 @@ with Ada.Text_IO;    use Ada.Text_IO;
 
 package body MI.Parser is
 
-   -----------------
-   -- Get_Records --
-   -----------------
+   -------------------
+   -- Build_Records --
+   -------------------
 
    procedure Build_Records
      (Tokens : in out Token_List;

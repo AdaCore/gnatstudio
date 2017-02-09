@@ -65,7 +65,7 @@ procedure Ada_Semantic_Tree.Test_Driver is
    Test_Trace : constant Trace_Handle := Create ("Ada_Semantic_Tree.Test");
 
    -----------------------
-   -- Next_Complete_Tag --
+   -- Next_Test_Command --
    -----------------------
 
    procedure Next_Test_Command

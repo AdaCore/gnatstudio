@@ -295,9 +295,9 @@ package body Completion_Window is
       Info.Proposals.Append (new Root_Proposal'Class'(Deep_Copy (Proposal)));
    end Augment_Notes;
 
-   ------------------------
-   -- Empty_Notes_Window --
-   ------------------------
+   ---------------------------
+   -- Empty_Notes_Container --
+   ---------------------------
 
    procedure Empty_Notes_Container
      (Explorer : access Completion_Explorer_Record'Class)

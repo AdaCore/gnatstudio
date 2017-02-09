@@ -391,9 +391,9 @@ package body Language.Abstract_Construct_Tree is
       end if;
    end Profile;
 
-   -----------------
-   -- Counterpart --
-   -----------------
+   ----------------
+   -- Definition --
+   ----------------
 
    overriding function Definition
      (Self : Construct_Node) return Semantic_Node'Class
@@ -566,9 +566,9 @@ package body Language.Abstract_Construct_Tree is
       return Success;
    end Execute;
 
-   --------------
-   -- Has_Next --
-   --------------
+   -----------------
+   -- Has_Element --
+   -----------------
 
    overriding function Has_Element
      (Self : Abstract_Construct_Tree_Iterator) return Boolean is

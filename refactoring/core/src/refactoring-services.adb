@@ -398,9 +398,9 @@ package body Refactoring.Services is
       return False;
    end Contains_Element;
 
-   ---------------------
-   -- Remove_Elements --
-   ---------------------
+   --------------------
+   -- Remove_Element --
+   --------------------
 
    procedure Remove_Element
      (Self  : in out Ada_Statement;
@@ -413,9 +413,9 @@ package body Refactoring.Services is
       Extract_Element (Self, Str, Name, Mode);
    end Remove_Element;
 
-   ----------------------
-   -- Extract_Elements --
-   ----------------------
+   ---------------------
+   -- Extract_Element --
+   ---------------------
 
    procedure Extract_Element
      (Self      : in out Ada_Statement;

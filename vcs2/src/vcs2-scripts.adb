@@ -536,9 +536,9 @@ package body VCS2.Scripts is
       Call_Method (Self, "stage_or_unstage_files", Data);
    end Stage_Or_Unstage_Files;
 
-   -------------------------
-   -- Commit_Staged_Files --
-   -------------------------
+   -------------------------------
+   -- Async_Commit_Staged_Files --
+   -------------------------------
 
    overriding procedure Async_Commit_Staged_Files
      (Self    : not null access Script_Engine;

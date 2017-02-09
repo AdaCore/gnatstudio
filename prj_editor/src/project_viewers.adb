@@ -898,9 +898,9 @@ package body Project_Viewers is
       procedure Set_Error_Tmp (Str : String);
       --  Set an error
 
-      ---------------
-      -- Set_Error --
-      ---------------
+      -------------------
+      -- Set_Error_Tmp --
+      -------------------
 
       procedure Set_Error_Tmp (Str : String) is
       begin

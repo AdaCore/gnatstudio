@@ -438,9 +438,9 @@ package body GPS.Kernel is
       Win.Weak_Ref (On_Main_Window_Destroyed'Access, Convert (Self));
    end Set_Main_Window;
 
-   ---------------------
-   -- On_Pref_Changed --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
    overriding procedure Execute
      (Self   : On_Pref_Changed;
@@ -528,9 +528,9 @@ package body GPS.Kernel is
       return Self.VCS;
    end VCS;
 
-   ---------------------------
-   -- Default_Language_Tree --
-   ---------------------------
+   ------------------------------------
+   -- Default_Language_Tree_Provider --
+   ------------------------------------
 
    overriding function Default_Language_Tree_Provider
      (Kernel : not null access Kernel_Handle_Record)
@@ -699,9 +699,9 @@ package body GPS.Kernel is
       end if;
    end Report_Preference_File_Error;
 
-   -----------
-   -- Freee --
-   -----------
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (Self : in out Selection_Context_Data_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation

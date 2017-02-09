@@ -717,9 +717,9 @@ package body GPS.Main_Window is
       Main.Perspective_Selector.Select_Item (Current);
    end Update_Perspectives_In_Selector;
 
-   ------------------
-   -- Set_Menu_Bar --
-   ------------------
+   --------------------
+   -- Setup_Menu_Bar --
+   --------------------
 
    procedure Setup_Menu_Bar
      (Self : not null access GPS_Application_Window_Record'Class)

@@ -183,9 +183,9 @@ package body Collapsing_Pane is
       end if;
    end Set_Child_Widget;
 
-   -----------------------
-   -- Set_Folding_State --
-   -----------------------
+   ---------------
+   -- Set_State --
+   ---------------
 
    procedure Set_State
      (Pane : access Collapsing_Pane_Record'Class; State : Foldable_Box_State)

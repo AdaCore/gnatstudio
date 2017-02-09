@@ -838,9 +838,9 @@ package body Language.Ada is
       end case;
    end Image;
 
-   -------------------------------
-   -- Parse_Expression_Backward --
-   -------------------------------
+   ----------------------------
+   -- Parse_Tokens_Backwards --
+   ----------------------------
 
    overriding procedure Parse_Tokens_Backwards
      (Lang         : access Ada_Language;

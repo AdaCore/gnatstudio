@@ -90,9 +90,9 @@ package body GPS.CLI_Utils is
         (Builder'Unchecked_Access);
    end Register_Output_Parsers;
 
-   ----------------------------
-   --  Create_Kernel_Context --
-   ----------------------------
+   ---------------------------
+   -- Create_Kernel_Context --
+   ---------------------------
 
    procedure Create_Kernel_Context
      (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
@@ -217,7 +217,7 @@ package body GPS.CLI_Utils is
    end Parse_And_Execute_Script;
 
    ------------------------
-   -- Parse_Command_line --
+   -- Parse_Command_Line --
    ------------------------
 
    procedure Parse_Command_Line
@@ -227,9 +227,9 @@ package body GPS.CLI_Utils is
       procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
       --  Allow to manage every occurrence of -X switch for scenario variable.
 
-      ------------------------
-      -- Parse_Command_Line --
-      ------------------------
+      ------------------------------
+      -- Local_Parse_Command_Line --
+      ------------------------------
 
       procedure Local_Parse_Command_Line
         (Switch, Parameter, Section : String) is

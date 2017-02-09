@@ -30,9 +30,9 @@ with GNAT.Regpat;               use GNAT.Regpat;
 
 package body Xref.Docgen is
 
-   -------------
-   -- Present --
-   -------------
+   --------
+   -- No --
+   --------
 
    function No (Comment : Comment_Result) return Boolean is
    begin

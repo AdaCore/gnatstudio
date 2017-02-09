@@ -948,9 +948,9 @@ package body GNAT.Expect.TTY.Remote is
       TTY_Data.Sessions (Session_Nb).State := BUSY;
    end Get_Or_Init_Session;
 
-   ------------------------
-   -- Non_Blocking_Spawn --
-   ------------------------
+   ------------------
+   -- Remote_Spawn --
+   ------------------
 
    procedure Remote_Spawn
      (Descriptor          : out Process_Descriptor_Access;
@@ -1095,9 +1095,9 @@ package body GNAT.Expect.TTY.Remote is
         (Host, Args, Execution_Directory, False, Out_Value, Status_Nb, Status);
    end Sync_Execute;
 
-   ------------------
-   -- Sync_Execute --
-   ------------------
+   ---------------------------
+   -- Internal_Sync_Execute --
+   ---------------------------
 
    procedure Internal_Sync_Execute
      (Host                  : String;
@@ -1534,9 +1534,9 @@ package body GNAT.Expect.TTY.Remote is
          Descriptor.Terminated := True;
    end Interrupt;
 
-   -----------
-   -- Close --
-   -----------
+   ---------------
+   -- Close_All --
+   ---------------
 
    procedure Close_All (Host : String) is
       Machine  : constant Machine_Access := Get_Server (Host);

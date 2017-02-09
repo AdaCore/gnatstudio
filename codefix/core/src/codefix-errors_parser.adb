@@ -82,9 +82,9 @@ package body Codefix.Errors_Parser is
       Processor.Parse_List.Append (New_Parser);
    end Add_Parser;
 
-   ------------------
-   -- Free_Parsers --
-   ------------------
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (Processor : in out Fix_Processor) is
    begin

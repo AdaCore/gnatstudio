@@ -537,9 +537,9 @@ package body Language.Libclang is
    function Full_Name (F : Virtual_File) return String
    is (String (F.Full_Name (Normalize => True).all));
 
-   ----------------------
-   -- Translation_Unit --
-   ----------------------
+   ------------------------------
+   -- Enqueue_Translation_Unit --
+   ------------------------------
 
    procedure Enqueue_Translation_Unit
      (Kernel       : Core_Kernel;
@@ -662,9 +662,9 @@ package body Language.Libclang is
       return Get_TU (Full_Name (File)).Cache.Is_Ready;
    end Has_Translation_Unit_In_Cache;
 
-   -------------
-   -- Context --
-   -------------
+   ---------------------
+   -- Crossrefs_Cache --
+   ---------------------
 
    function Crossrefs_Cache return Clang_Crossrefs_Cache
    is
@@ -997,9 +997,9 @@ package body Language.Libclang is
       Close (Cache_File);
    end Initialize_Crossrefs_Cache;
 
-   -------------------
-   -- Save_Database --
-   -------------------
+   --------------------------
+   -- Save_Crossrefs_Cache --
+   --------------------------
 
    procedure Save_Crossrefs_Cache (Kernel : Core_Kernel)
    is

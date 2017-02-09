@@ -764,9 +764,9 @@ package body Language.Tree is
       return It;
    end Get_Last_Child;
 
-   -------------------
-   -- Is_Same_Scope --
-   -------------------
+   --------------------
+   -- Is_Same_Entity --
+   --------------------
 
    function Is_Same_Entity
      (Tree : Construct_Tree; Iter1, Iter2 : Construct_Tree_Iterator)
@@ -1386,9 +1386,9 @@ package body Language.Tree is
       return It.Node.Referenced_Ids;
    end Get_Referenced_Identifiers;
 
-   --------------------------------
-   -- Get_Referenced_Identifiers --
-   --------------------------------
+   -------------------------------------
+   -- Get_Next_Referenced_Identifiers --
+   -------------------------------------
 
    function Get_Next_Referenced_Identifiers
      (Ref : Referenced_Identifiers_List) return Referenced_Identifiers_List is

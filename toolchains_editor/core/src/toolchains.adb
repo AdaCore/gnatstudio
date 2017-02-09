@@ -1033,9 +1033,9 @@ package body Toolchains is
       return Comp.Base_Name;
    end Is_Base_Name;
 
-   ----------------------
-   -- Reset_To_Default --
-   ----------------------
+   -------------------------------
+   -- Reset_Compiler_To_Default --
+   -------------------------------
 
    procedure Reset_Compiler_To_Default (This : Toolchain; Lang : String) is
       Default : constant Natural :=
@@ -1141,9 +1141,9 @@ package body Toolchains is
       return This.Tools (Name).Base_Name;
    end Is_Base_Name;
 
-   ----------------------
-   -- Reset_To_Default --
-   ----------------------
+   ---------------------------
+   -- Reset_Tool_To_Default --
+   ---------------------------
 
    procedure Reset_Tool_To_Default (This : Toolchain; Name : Tools) is
    begin
@@ -2173,9 +2173,9 @@ package body Toolchains is
       return Result;
    end Get_Known_Toolchain;
 
-   ------------------------
-   -- Get_Anonymous_Name --
-   ------------------------
+   ---------------------------
+   -- Create_Anonymous_Name --
+   ---------------------------
 
    function Create_Anonymous_Name
      (Manager : access Toolchain_Manager_Record;

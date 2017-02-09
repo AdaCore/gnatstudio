@@ -109,9 +109,9 @@ package body Ada_Semantic_Tree.Units is
       return null;
    end Get_Unit_Info;
 
-   -----------------------------
-   -- Register_Ada_Assistants --
-   -----------------------------
+   ------------------------
+   -- Register_Assistant --
+   ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
       use Construct_Annotations_Pckg;
@@ -857,9 +857,9 @@ package body Ada_Semantic_Tree.Units is
       Invalidate_Local_Constructs;
    end File_Updated;
 
-   ----------------------
-   -- Get_Current_Unit --
-   ----------------------
+   ---------------------
+   -- Get_Owning_Unit --
+   ---------------------
 
    function Get_Owning_Unit
      (File : Structured_File_Access; Offset : String_Index_Type)
@@ -1055,9 +1055,9 @@ package body Ada_Semantic_Tree.Units is
       return False;
    end Is_In_Parents;
 
-   -----------------------------
-   -- Get_Depenency_Timestamp --
-   -----------------------------
+   ------------------------------
+   -- Get_Dependency_Timestamp --
+   ------------------------------
 
    function Get_Dependency_Timestamp (Unit : Unit_Access) return Integer is
    begin
@@ -1102,9 +1102,9 @@ package body Ada_Semantic_Tree.Units is
       Unit.Is_Up_To_Date := Dep;
    end Set_Updated_Dependencies;
 
-   --------------------------
-   -- Get_Timestamp_Vector --
-   --------------------------
+   ----------------------------------
+   -- Get_Unit_Hierarchy_Timestamp --
+   ----------------------------------
 
    function Get_Unit_Hierarchy_Timestamp
      (Unit : Unit_Access) return Unit_Hierarchy_Timestamp

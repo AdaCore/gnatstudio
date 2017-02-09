@@ -564,9 +564,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Step_Command;
@@ -578,9 +578,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Stepi_Command;
@@ -592,9 +592,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Next_Command;
@@ -606,9 +606,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Nexti_Command;
@@ -620,9 +620,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Finish_Command;
@@ -635,9 +635,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Continue_Command;
@@ -656,9 +656,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Kill_Command;
@@ -670,9 +670,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Interrupt_Command;
@@ -1291,9 +1291,9 @@ package body GVD_Module is
          return Commands.Failure;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Up_Command;
@@ -1305,9 +1305,9 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Execute_Dbg --
+   -----------------
 
    overriding function Execute_Dbg
      (Command : access Down_Command;

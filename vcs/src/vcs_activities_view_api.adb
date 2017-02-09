@@ -836,9 +836,9 @@ package body VCS_Activities_View_API is
       when E : others => Trace (Me, E);
    end On_Menu_Build_Patch_File;
 
-   -------------------
-   -- Open_Explorer --
-   -------------------
+   ------------------------------
+   -- Open_Activities_Explorer --
+   ------------------------------
 
    procedure Open_Activities_Explorer
      (Kernel  : not null access Kernel_Handle_Record'Class;

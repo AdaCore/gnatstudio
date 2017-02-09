@@ -741,9 +741,9 @@ package body Codefix.Formal_Errors is
       return Result;
    end Wrong_Column;
 
-   ---------------------
-   -- Clauses_Missing --
-   ---------------------
+   --------------------
+   -- Clause_Missing --
+   --------------------
 
    function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;

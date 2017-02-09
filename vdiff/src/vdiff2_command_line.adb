@@ -138,9 +138,9 @@ package body Vdiff2_Command_Line is
       return Curr_Node;
    end Is_In_Diff_Chunk_List;
 
-   ------------------------
-   --  Move_On_Ref_File  --
-   ------------------------
+   ----------------------
+   -- Move_On_Ref_File --
+   ----------------------
 
    procedure Move_On_Ref_File
      (Kernel : Kernel_Handle;

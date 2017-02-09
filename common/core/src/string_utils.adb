@@ -1317,9 +1317,9 @@ package body String_Utils is
       return Integer'Value ("16#" & Hex & "#");
    end Hex_Value;
 
-   ------------
-   -- Decode --
-   ------------
+   ----------------
+   -- URL_Decode --
+   ----------------
 
    function URL_Decode (URL : String) return String is
       Res : String (1 .. URL'Length);

@@ -504,9 +504,9 @@ package body Codefix.Text_Manager is
          File_Cursor (Cursor));
    end Line_Length;
 
-   -------------------
-   -- Search_String --
-   -------------------
+   ------------------
+   -- Search_Token --
+   ------------------
 
    function Search_Token
      (This     : Text_Navigator_Abstr'Class;
@@ -522,9 +522,9 @@ package body Codefix.Text_Manager is
          Step);
    end Search_Token;
 
-   --------------------
-   -- Search_Strings --
-   --------------------
+   -------------------
+   -- Search_Tokens --
+   -------------------
 
    function Search_Tokens
      (This     : Text_Navigator_Abstr'Class;
@@ -564,9 +564,9 @@ package body Codefix.Text_Manager is
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
 
-   -------------------
-   -- Get_Full_Name --
-   -------------------
+   ---------------------
+   -- Get_Full_Prefix --
+   ---------------------
 
    function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
@@ -726,9 +726,9 @@ package body Codefix.Text_Manager is
       Undo (Get_File (This, File_Name).all);
    end Undo;
 
-   --------------
-   -- Get_Tree --
-   --------------
+   -------------------------
+   -- Get_Structured_File --
+   -------------------------
 
    function Get_Structured_File
      (This : Text_Navigator_Abstr'Class; File : Virtual_File)
@@ -890,7 +890,7 @@ package body Codefix.Text_Manager is
    end Get;
 
    ------------------------
-   -- Remove_Emtpy_Lines --
+   -- Remove_Empty_Lines --
    ------------------------
 
    procedure Remove_Empty_Lines
@@ -922,9 +922,9 @@ package body Codefix.Text_Manager is
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
 
-   -------------------
-   -- Search_String --
-   -------------------
+   ------------------
+   -- Search_Token --
+   ------------------
 
    function Search_Token
      (This     : Text_Interface'Class;
@@ -939,9 +939,9 @@ package body Codefix.Text_Manager is
       return Result;
    end Search_Token;
 
-   --------------------
-   -- Search_Strings --
-   --------------------
+   -------------------
+   -- Search_Tokens --
+   -------------------
 
    function Search_Tokens
      (Line     : String;
@@ -1245,9 +1245,9 @@ package body Codefix.Text_Manager is
         To_Column_Index (Cursor_Char_Index, To_String (Current_Line));
    end Next_Word;
 
-   --------------
-   -- Get_Tree --
-   --------------
+   -------------------------
+   -- Get_Structured_File --
+   -------------------------
 
    function Get_Structured_File
      (This : access Text_Interface'Class) return Structured_File_Access is
@@ -1273,9 +1273,9 @@ package body Codefix.Text_Manager is
       end if;
    end Update_Structure_If_Needed;
 
-   -----------------------
-   --  Text_Has_Changed --
-   -----------------------
+   ----------------------
+   -- Text_Has_Changed --
+   ----------------------
 
    procedure Text_Has_Changed (This : in out Text_Interface'Class) is
    begin
@@ -1790,9 +1790,9 @@ package body Codefix.Text_Manager is
       end if;
    end Comment;
 
-   -----------------
-   -- Word_Cursor --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Word_Cursor) is
    begin
@@ -1853,9 +1853,9 @@ package body Codefix.Text_Manager is
       Free (This.Mark_Id);
    end Free;
 
-   ----------------
-   -- Set_Kernel --
-   ----------------
+   ------------------
+   -- Set_Registry --
+   ------------------
 
    procedure Set_Registry
      (Text   : in out Text_Navigator_Abstr;
@@ -1864,9 +1864,9 @@ package body Codefix.Text_Manager is
       Text.Registry := Registry;
    end Set_Registry;
 
-   ----------------
-   -- Get_Kernel --
-   ----------------
+   ------------------
+   -- Get_Registry --
+   ------------------
 
    function Get_Registry
      (Text : Text_Navigator_Abstr)
@@ -2085,9 +2085,9 @@ package body Codefix.Text_Manager is
    --  type Text_Command
    ----------------------------------------------------------------------------
 
-   ------------------
-   -- Text_Command --
-   ------------------
+   ---------------
+   -- Free_Data --
+   ---------------
 
    procedure Free_Data (This : in out Text_Command'Class) is
    begin

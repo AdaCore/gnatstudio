@@ -656,9 +656,9 @@ package body Switches_Chooser is
          Slave_Status   => Slave_Activate);
    end Add_Dependency;
 
-   ----------------------------
-   -- Add_Dependency_Default --
-   ----------------------------
+   ----------------------------------
+   -- Add_Default_Value_Dependency --
+   ----------------------------------
 
    procedure Add_Default_Value_Dependency
      (Config         : Switches_Editor_Config;

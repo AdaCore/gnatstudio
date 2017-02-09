@@ -162,9 +162,9 @@ package body Vdiff2_Module.Callback is
       return Commands.Success;
    end Execute;
 
-   -------------------------
-   -- On_Merge_Tree_Files --
-   -------------------------
+   --------------------------
+   -- On_Merge_Three_Files --
+   --------------------------
 
    procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)

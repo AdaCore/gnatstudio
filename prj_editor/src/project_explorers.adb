@@ -1730,9 +1730,9 @@ package body Project_Explorers is
       Decrease_Indent (Me, "done Refresh project");
    end Refresh_Project_Node;
 
-   --------------------
-   --  Jump_To_Node  --
-   --------------------
+   ------------------
+   -- Jump_To_Node --
+   ------------------
 
    procedure Jump_To_Node
      (Explorer    : Project_Explorer;
