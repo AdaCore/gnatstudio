@@ -101,6 +101,10 @@ package body GNATTest_Module.Tree_Models is
       case Indices'Length is
          when 1 =>
 
+            if Self.Index.Is_Empty then
+               return Result;
+            end if;
+
             Row := Self.Index.Last_Key;
 
             if Integer (Indices (Index_1)) in 0 .. Row (1) then
