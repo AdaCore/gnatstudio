@@ -15,29 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Calendar;                    use Ada.Calendar;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with GNAT.Strings;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
+with GPS.Kernel.Messages;             use GPS.Kernel.Messages;
+with GPS.Kernel.Project;              use GPS.Kernel.Project;
 with Default_Preferences.Enums;
 
-with Language;                  use Language;
-with Language.Unknown;          use Language.Unknown;
-with Language.Tree;             use Language.Tree;
-with Language_Handlers;         use Language_Handlers;
-with String_Utils;              use String_Utils;
-with Code_Coverage;             use Code_Coverage;
+with Language;                        use Language;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language.Unknown;                use Language.Unknown;
+with Language_Handlers;               use Language_Handlers;
+with String_Utils;                    use String_Utils;
+with Code_Coverage;                   use Code_Coverage;
 with Code_Coverage.Gcov;
 with Code_Coverage.GNATcov;
 with GPS.Editors; use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with UTF8_Utils;                   use UTF8_Utils;
+with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
 
 package body Coverage_GUI is
 
@@ -155,16 +154,18 @@ package body Coverage_GUI is
 
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             declare
-               Text : GNAT.Strings.String_Access;
                Lang : constant Language_Access :=
                         Get_Language_From_File (Handler, Src_File);
             begin
                if Lang /= Unknown_Lang then
-                  Text := Read_File (Src_File);
-                  Add_Subprogram_Info
-                    (File_Node, To_Construct_Tree
-                       (File_Node.Name, Locale_To_UTF8 (Text.all), Lang));
-                  Free (Text);
+                  declare
+                     Tree : aliased Semantic_Tree'Class :=
+                              Kernel.Get_Abstract_Tree_For_File
+                                (File_Node.Name);
+                  begin
+                     Add_Subprogram_Info
+                       (File_Node, Tree'Access);
+                  end;
                end if;
             end;
          end if;

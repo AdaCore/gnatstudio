@@ -116,77 +116,80 @@ package body Code_Coverage is
 
    procedure Add_Subprogram_Info
      (File_Node : Code_Analysis.File_Access;
-      Tree      : Construct_Tree)
+      Tree      : not null access Semantic_Tree'Class)
    is
-      Node       : Construct_Tree_Iterator := First (Tree);
-      Node_Info  : access Simple_Construct_Information;
+      Current    : Semantic_Tree_Iterator'Class := Tree.Root_Iterator;
       Subp_Node  : Subprogram_Access;
       Subp_Name  : String_Access;
       Subp_Cov   : access Subprogram_Coverage := null;
       Line_Count : Natural := 0;
    begin
-      loop
-         Node_Info := Get_Construct (Node);
+      while Has_Element (Current) loop
+         declare
+            Node       : constant Semantic_Node'Class := Element (Current);
+            Start_Line : constant Natural := Node.Sloc_Start.Line;
+            End_Line   : constant Natural := Node.Sloc_End.Line;
+         begin
+            if Node.Category in Subprogram_Category then
+               for J in Start_Line .. End_Line loop
+                  if J not in File_Node.Lines'Range then
+                     --  This can occur only the Constructs information is
+                     --  invalid. In this case, we want to log the error but
+                     --  keep going, so that other information (such as project
+                     --  totals, or the processing of other files) is still
+                     --  reported to the user.
 
-         if Node_Info.Category in Subprogram_Category then
-            for J in Node_Info.Sloc_Start.Line .. Node_Info.Sloc_End.Line loop
-               if J not in File_Node.Lines'Range then
-                  --  This can occur only the Constructs information is
-                  --  invalid. In this case, we want to log the error but keep
-                  --  going, so that other information (such as project totals,
-                  --  or the processing of other files) is still reported
-                  --  to the user.
-
-                  Trace (Me, +Full_Name (File_Node.Name) &
-                         ": invalid construct at line" &
-                         Node_Info.Sloc_Start.Line'Img);
-
-               else
-                  if File_Node.Lines (J).Analysis_Data.Coverage_Data
-                    /= null
-                  then
-                     if Subp_Cov = null then
-                        Subp_Name := new String'(Get (Node_Info.Name).all);
-                        Subp_Node := Get_Or_Create (File_Node, Subp_Name);
-                        Subp_Node.Line   := Node_Info.Sloc_Entity.Line;
-                        Subp_Node.Column := Node_Info.Sloc_Entity.Column;
-                        Subp_Node.Start  := Node_Info.Sloc_Start.Line;
-                        Subp_Node.Stop   := Node_Info.Sloc_End.Line;
-                        Subp_Node.Analysis_Data.Coverage_Data := new
-                          Subprogram_Coverage'
-                            (Coverage => 0,
-                             Status   => Valid,
-                             Called   => File_Node.Lines
-                               (J).Analysis_Data.Coverage_Data.Coverage,
-                             Children => 1);
-                        --  ??? Here we make the hypothesis that the 1st
-                        --  executed line of the subprogram was executed
-                        --  excatly one time by subprogram calls
-                        --  It fits with GCC 4.1 series
-                        Subp_Cov := Subprogram_Coverage
-                          (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
-                     else
-                        Subp_Cov.Children := Subp_Cov.Children + 1;
-                     end if;
-
-                     if File_Node.Lines
-                       (J).Analysis_Data.Coverage_Data.Coverage = 0
+                     Trace (Me, +Full_Name (File_Node.Name) &
+                              ": invalid construct at line" & Start_Line'Img);
+                  else
+                     if File_Node.Lines (J).Analysis_Data.Coverage_Data
+                       /= null
                      then
-                        Subp_Cov.Coverage := Subp_Cov.Coverage + 1;
+                        if Subp_Cov = null then
+                           Subp_Name := new String'(Get (Node.Name).all);
+                           Subp_Node := Get_Or_Create
+                             (File_Node,
+                              Key => Subp_Name.all
+                              & ' ' & Get (Node.Profile).all);
+                           Subp_Node.Name   := Subp_Name;
+                           Subp_Node.Line   := Node.Sloc_Def.Line;
+                           Subp_Node.Column := Integer (Node.Sloc_Def.Column);
+                           Subp_Node.Start  := Node.Sloc_Start.Line;
+                           Subp_Node.Stop   := Node.Sloc_End.Line;
+                           Subp_Node.Analysis_Data.Coverage_Data := new
+                             Subprogram_Coverage'
+                               (Coverage => 0,
+                                Status   => Valid,
+                                Called   => File_Node.Lines
+                                  (J).Analysis_Data.Coverage_Data.Coverage,
+                                Children => 1);
+                           --  ??? Here we make the hypothesis that the 1st
+                           --  executed line of the subprogram was executed
+                           --  excatly one time by subprogram calls
+                           --  It fits with GCC 4.1 series
+                           Subp_Cov := Subprogram_Coverage
+                            (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
+                        else
+                           Subp_Cov.Children := Subp_Cov.Children + 1;
+                        end if;
+
+                        if File_Node.Lines
+                          (J).Analysis_Data.Coverage_Data.Coverage = 0
+                        then
+                           Subp_Cov.Coverage := Subp_Cov.Coverage + 1;
+                        end if;
                      end if;
                   end if;
+               end loop;
+
+               if Subp_Cov /= null then
+                  Line_Count := Line_Count + Subp_Cov.Children;
+                  Subp_Cov := null;
                end if;
-            end loop;
-
-            if Subp_Cov /= null then
-               Line_Count := Line_Count + Subp_Cov.Children;
-               Subp_Cov := null;
             end if;
-         end if;
+         end;
 
-         Node := Next (Tree, Node);
-
-         exit when Node = Null_Construct_Tree_Iterator;
+         Next (Current);
       end loop;
    end Add_Subprogram_Info;
 

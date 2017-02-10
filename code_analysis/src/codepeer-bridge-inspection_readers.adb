@@ -561,7 +561,9 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=
            Code_Analysis.Get_Or_Create
-             (Self.File_Node, new String'(Attrs.Get_Value ("name")));
+             (Self.File_Node, Attrs.Get_Value ("name"));
+         Self.Subprogram_Node.Name :=
+           new String'(Attrs.Get_Value ("name"));
          Self.Subprogram_Node.Line :=
            Positive'Value (Attrs.Get_Value ("line"));
          Self.Subprogram_Node.Column :=

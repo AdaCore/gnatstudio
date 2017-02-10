@@ -313,7 +313,8 @@ package body Code_Analysis_XML is
                   Subp_Node : Subprogram_Access;
                begin
                   Subp_Node := Get_Or_Create
-                    (File_Node, new String'(Get_Attribute (Child, "name")));
+                    (File_Node, Get_Attribute (Child, "name"));
+                  Subp_Node.Name := new String'(Get_Attribute (Child, "name"));
                   Subp_Node.Line :=
                     Natural'Value (Get_Attribute (Child, "line"));
                   Subp_Node.Column :=

@@ -236,17 +236,16 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (File_Node : File_Access;
-      Sub_Name  : String_Access) return Subprogram_Access
+      Key       : String) return Subprogram_Access
    is
       Sub_Node : Subprogram_Access;
    begin
-      if File_Node.Subprograms.Contains (Sub_Name.all) then
-         return File_Node.Subprograms.Element (Sub_Name.all);
+      if File_Node.Subprograms.Contains (Key) then
+         return File_Node.Subprograms.Element (Key);
       end if;
 
       Sub_Node := new Subprogram;
-      Sub_Node.Name := Sub_Name;
-      File_Node.Subprograms.Insert (Sub_Name.all, Sub_Node);
+      File_Node.Subprograms.Insert (Key, Sub_Node);
       return Sub_Node;
    end Get_Or_Create;
 

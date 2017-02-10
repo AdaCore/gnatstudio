@@ -244,7 +244,7 @@ package Code_Analysis is
 
    function Get_Or_Create
      (File_Node : File_Access;
-      Sub_Name  : String_Access) return Subprogram_Access;
+      Key       : String) return Subprogram_Access;
 
    function Get_Or_Create
      (Project_Node : Project_Access;
