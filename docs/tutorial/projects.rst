@@ -6,64 +6,22 @@ Projects
 Project Wizard
 ==============
 
-Go to the menu `Project->New...`: this is a standard wizard, with various
-steps listed on the left area of the window.
+Go to the menu `Project->New...`: this opens up the GPS project
+creation wizard.
 
-The first page of the wizard allows you to select what kind of project you
-want to build, depending on the information you have. Select the default
-choice `Single Project`, and press `Forward`.
+The first page of the wizard allows you to select a pre-defined project
+template in the left-hand pane. These project templates are organized
+according to the technology they use (e.g: `AWS`) or the platform that
+is targeted (e.g: `STM32F4 compatible`). The description of the currently
+selected project is displayed on the right-hand side pane.
 
-Type *sdc2* in the project name field.
+Select a project template and click on `Next`: a page asking you the name and
+the location of your project will appear. This page may also list project
+template-specific options.
 
-Click on `Forward`: we are now on the language selection page.
-It is possible to create a multi-language project by e.g. selecting the C or C++
-check box.
-
-Click on `Forward`: this is the source directories selection,
-used to specify the project's sources. Click on the `Add` button,
-and select the `struct` directory, then click on `OK` to validate.
-
-Click on `Forward`: we are now on the `VCS page`. *VCS* stands for *Version
-Control System*.  GPS provides a generic framework for *VCS* which allows it to
-support new systems easily. Systems supported by default are CVS, ClearCase,
-GIT, Mercurial and Subversion. Select `Auto`, which means that GPS will
-automatically detect the version control system used, if any.
-
-Click on `Forward`: this is the `Build` and `Exec` directory
-selection, used to store object, ali files, ...
-
-Click on the first `Browse` button, then click on
-`obj`, and finally click on `OK`.
-
-Click on `Forward`: this is the main units selection, used mainly for
-building executables and debugging.
-
-Click on `Add`, open the `common` directory and select
-`sdc.adb`.
-
-Click on `Forward`: this is the naming scheme editor.
-GNAT is very flexible and can use any kind of naming scheme for Ada files.
-In particular, you can easily set the default file
-extensions (e.g by using one of the predefined schemes) and you
-can also specify exceptions that use non standard file names.
-
-Click on `Forward`: we're now in the switch selector. Go on the `Builder`
-switch page and select `Recompile if switches changed`.
-
-Select the `Ada` switch page.
-
-Select `Full errors` and `Overflow checking`.  The boxes and the command line
-(the text entry at the bottom of the page) are fully synchronized, e.g if you
-click on the command line, and change `-gnatf` to `-gnat`, the `Full errors`
-check box is unselected; now type `a` to get `-gnata`, and notice that `Enable
-assertions` is now selected.
-
-We've now created a project similar to the one used in this tutorial.
-
-Click on `Cancel` to close the wizard.
-
-Clicking on `Apply` instead would have created the project file
-and loaded it in GPS.
+Once completed, click on `Apply` to actually create the project. Note that you
+can still can customize your newly created project after is creation using the
+:ref:`Project_properties` editor.
 
 .. _Project_properties:
 
