@@ -853,10 +853,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Free (Process.Current_Command);
 
       if Success then
-         if Process /= null then
-            Output_Text
-              (Process, Protocol & " debugging using " & Target & ASCII.LF);
-         end if;
+         Output_Text
+           (Process, Protocol & " debugging using " & Target & ASCII.LF);
 
          if Protocol = "remote" then
             Set_Is_Started (Debugger, True);
@@ -868,10 +866,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Interrupt (Debugger);
          Wait_Prompt (Debugger);
 
-         if Process /= null then
-            Output_Text (Process, "Can't connect to the target using "
-                         & Protocol & " protocol on " & Target & ASCII.LF);
-         end if;
+         Output_Text (Process, "Can't connect to the target using "
+                      & Protocol & " protocol on " & Target & ASCII.LF);
       end if;
 
       Debugger.Target_Connected := Success;

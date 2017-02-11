@@ -239,8 +239,7 @@ package body GNAT.Expect.TTY.Remote is
       --  treated.
 
       if not Desc.Terminated and not Desc.Session_Died then
-         if Desc.Machine /= null
-           and then Desc.Session_Nb in Data.Sessions'Range
+         if Desc.Session_Nb in Data.Sessions'Range
            and then Data.Sessions (Desc.Session_Nb).State /= OFF
          then
             Data.Sessions (Desc.Session_Nb).State := OFF;

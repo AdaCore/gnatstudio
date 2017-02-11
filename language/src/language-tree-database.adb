@@ -948,10 +948,11 @@ package body Language.Tree.Database is
      (File : Structured_File_Access;
       Kind : Lock_Kind_Type := Defer_Updates) return Update_Lock
    is
-      Last_Lock_Kind : constant Lock_Kind_Type := File.Lock_Kind;
+      Last_Lock_Kind : Lock_Kind_Type := Kind;
    begin
       if File /= null then
          File.Lock_Depth := File.Lock_Depth + 1;
+         Last_Lock_Kind := File.Lock_Kind;
          File.Lock_Kind := Kind;
       end if;
 

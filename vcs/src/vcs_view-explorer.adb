@@ -554,6 +554,10 @@ package body VCS_View.Explorer is
                             Get (Explorer.Status, Name (VCS_Identifier));
 
    begin
+      if Explorer = null then
+         return;
+      end if;
+
       if Registered_Status'Length >= 2 then
          Up_To_Date_Status := Registered_Status (Registered_Status'First + 1);
       end if;
@@ -585,10 +589,6 @@ package body VCS_View.Explorer is
 
       Update_Files_Status
         (Kernel, Status, VCS_Identifier, Clear_Logs, Up_To_Date_Status);
-
-      if Explorer = null then
-         return;
-      end if;
 
       if Status.Length > 1 then
          Sort_Id := Freeze_Sort (Explorer.Model);

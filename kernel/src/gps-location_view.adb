@@ -1888,8 +1888,7 @@ package body GPS.Location_View is
       Path        : Gtk_Tree_Path;
       Model       : Gtk_Tree_Model;
       Export_File : GNATCOLL.VFS.Virtual_File;
-      Container   : constant not null GPS.Kernel.Messages_Container_Access :=
-                      View.Kernel.Get_Messages_Container;
+      Container   : GPS.Kernel.Messages_Container_Access;
       List        : Gtk_Tree_Path_List.Glist;
       G_Iter      : Gtk_Tree_Path_List.Glist;
       File        : Ada.Text_IO.File_Type;
@@ -1947,6 +1946,8 @@ package body GPS.Location_View is
       if View = null then
          return Commands.Failure;
       end if;
+
+      Container := View.Kernel.Get_Messages_Container;
 
       View.View.Get_Selection.Get_Selected_Rows (Model, List);
       if Model /= Null_Gtk_Tree_Model

@@ -591,10 +591,9 @@ package body Project_Viewers is
       pragma Unreferenced (Kernel);
       View : constant Project_Viewer := Project_Viewer (Self.View);
    begin
-      View.Default_Switches_Color := Default_Switches_Color.Get_Pref;
-      --  ??? Do we need to change the model to reflect this change
-
       if View /= null then
+         View.Default_Switches_Color := Default_Switches_Color.Get_Pref;
+         --  ??? Do we need to change the model to reflect this change
          Set_Font_And_Colors (View, Fixed_Font => True, Pref => Pref);
       end if;
    end Execute;

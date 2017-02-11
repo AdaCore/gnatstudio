@@ -545,7 +545,8 @@ package body GPS.Kernel.Search.Sources is
       To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
       Free (UTF8);
 
-      if Tmp = null then
+      if Count <= 0 then
+         GNAT.Strings.Free (Tmp);
          return null;
       else
          Gtk_New (Buffer);
@@ -559,9 +560,8 @@ package body GPS.Kernel.Search.Sources is
          View.Set_Wrap_Mode (Wrap_None);
          View.Modify_Font (Default_Style.Get_Pref_Font);
 
-         --  ??? Need to convert to UTF8
          Buffer.Get_End_Iter (First);
-         Buffer.Insert (First, Tmp.all);
+         Buffer.Insert (First, Tmp (1 .. Count));
          GNAT.Strings.Free (Tmp);
 
          --  If match is empty string we have nothing to tag

@@ -90,11 +90,11 @@ package body Language is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Language_Context, Language_Context_Access);
 
-      Var : GNAT.Expect.Pattern_Matcher_Access :=
-        GNAT.Expect.Pattern_Matcher_Access
-          (Context.Syntax.New_Line_Comment_Start_Regexp);
+      Var : GNAT.Expect.Pattern_Matcher_Access;
    begin
       if Context /= null then
+         Var := GNAT.Expect.Pattern_Matcher_Access
+          (Context.Syntax.New_Line_Comment_Start_Regexp);
          GNAT.Strings.Free (Context.Syntax.Comment_Start);
          GNAT.Strings.Free (Context.Syntax.Comment_End);
          Basic_Types.Unchecked_Free (Var);
