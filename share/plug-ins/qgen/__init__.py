@@ -192,7 +192,8 @@ class MDL_Language(GPS.Language):
                     category=type,
                     is_declaration=True,
                     visibility=constructs.VISIBILITY_PUBLIC,
-                    name=it_name if flat else os.path.basename(it_name),
+                    name=it_name if flat else Diagram_Utils.block_split(
+                        it_name, count=1, backward=True)[-1],
                     profile='',
                     # We combine the name of the block with its id and a #QGEN#
                     # string to both create a unique id (it_name is unique) and
@@ -892,7 +893,7 @@ else:
             it in the debugger 'debug'
             """
             for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
-                symbol = s.split('/')
+                symbol = Diagram_Utils.block_split(s)
                 context = symbol[0]
                 symbol = symbol[-1].strip()
                 src_file, lines = QGEN_Module.modeling_map.get_func_bounds(
@@ -917,7 +918,7 @@ else:
             """
 
             for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
-                symbol = s.split('/')
+                symbol = Diagram_Utils.block_split(s)
                 context = symbol[0]
                 symbol = symbol[-1].strip()
                 debug.send("qgen_delete_logpoint %s %s" % (symbol, context),

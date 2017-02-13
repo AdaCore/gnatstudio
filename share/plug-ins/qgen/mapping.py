@@ -2,6 +2,7 @@ import GPS
 import json
 import os
 from project_support import Project_Support
+from diagram_utils import Diagram_Utils
 
 
 class Mapping_File(object):
@@ -134,7 +135,9 @@ class Mapping_File(object):
         :param JSON_Diagram_File diags: The file to search in
         :param string block: The block to search for
         """
-        diag = diags.get(block.rsplit('/', 1)[0])
+        diag = diags.get(Diagram_Utils.block_split(
+            block, count=1, backward=True)[0])
+
         if diag:
             it = diag.get_item(block)
             return (diag, it)

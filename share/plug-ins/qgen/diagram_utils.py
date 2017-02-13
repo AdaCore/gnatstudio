@@ -1,7 +1,36 @@
-from sig_utils import Signal
+import re
+import GPS
 
 
 class Diagram_Utils(object):
+
+    # Using regexp lookarounds to assert that the previous or next
+    # character is not a '/'
+    slash_split = re.compile("(?<!/)/(?!/)")
+
+    @staticmethod
+    def block_split(s, count=0, backward=False):
+        """
+        Splits a block name in the hilite format whithout spliting
+        escaped slashes which are doubled
+        :param string s: The block name to split
+        :param integer count: The number of splits to realize
+        :param boolean backward: The direction of the split
+        """
+
+        res = re.split(Diagram_Utils.slash_split, s)
+
+        # Merge the strings after count if necessary
+        length = len(res)
+
+        if count != 0 and count < length:
+            if backward:
+                last = length - count
+                res[0:last] = ['/'.join(res[0:last])]
+            else:
+                res[count:length] = ['/'.join(res[count:length])]
+
+        return res
 
     @staticmethod
     def highlight_breakpoints(viewer, diag, map,
