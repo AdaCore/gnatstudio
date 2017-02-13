@@ -669,13 +669,12 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.diagram = diag
             self.scale_to_fit(2)
 
+        QGEN_Module.on_diagram_changed(self, self.diagram)
+
         # Let GPS views, in particular the outline, know when we select
         # a new diagram
-        GPS.Hook('buffer_edited').run(self.file)
-
-        # Make sure we will recompute the value of signals when the
-        # user selects a new diagram, or forces an update
-        QGEN_Module.on_diagram_changed(self, self.diagram)
+        GPS.SemanticTree(self.file).update()
+        GPS.Hook('semantic_tree_updated').run(self.file)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):

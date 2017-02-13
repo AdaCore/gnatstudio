@@ -546,15 +546,6 @@ package body Outline_View.Model is
         (Me, "Time elapsed to compute outline: " & Duration'Image (Clock - T));
    end Set_Tree;
 
-   --------------
-   -- Get_Tree --
-   --------------
-
-   function Get_Tree (Model : Outline_Model) return Semantic_Tree'Class is
-   begin
-      return Model.Semantic_Tree.Element;
-   end Get_Tree;
-
    -------------------
    -- Get_N_Columns --
    -------------------
@@ -967,7 +958,8 @@ package body Outline_View.Model is
    ------------------
 
    procedure File_Updated
-     (Model    : access Outline_Model_Record)
+     (Model : access Outline_Model_Record;
+      Tree  : Semantic_Tree'Class)
    is
 
       procedure Update_Nodes
@@ -1072,17 +1064,22 @@ package body Outline_View.Model is
          end loop;
 
       end Update_Nodes;
+
    begin
       --  ??? Using a Gtkada.Tree_View, we could just clear the model and
       --  recreate from scratch, which would be faster than trying to preserve
       --  existing nodes.
 
-      if Model.Filter.Flat_View or else Model.Filter_Pattern /= null then
+      --  Tree might have changed from the stored Semantic_Tree:
+      if Tree /= Model.Semantic_Tree.Element
+        or else Model.Filter.Flat_View
+        or else Model.Filter_Pattern /= null
+      then
          --  Don't use the selective update mode in flat view or when there
          --  is an active filter pattern. Just reset the tree. For the filter
          --  pattern, since we show node that don't necessarily have parents,
          --  the selective update does not make sense.
-         Set_Tree (Model, Model.Semantic_Tree.Element, Model.Filter);
+         Set_Tree (Model, Tree, Model.Filter);
       else
          Update_Nodes
            (Model.Phantom_Root.Children,

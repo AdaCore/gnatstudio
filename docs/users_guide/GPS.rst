@@ -1851,6 +1851,8 @@ Classes
 
    .. automethod:: GPS.SemanticTree.is_ready
 
+   .. automethod:: GPS.SemanticTree.update
+
 :class:`GPS.Style`
 ^^^^^^^^^^^^^^^^^^
 

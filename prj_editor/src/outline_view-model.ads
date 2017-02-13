@@ -80,10 +80,6 @@ private package Outline_View.Model is
       Sem_Tree : Semantic_Tree'Class;
       Filter   : Tree_Filter);
 
-   function Get_Tree (Model : Outline_Model) return Semantic_Tree'Class;
-   --  Return the file modelized by this model.
-   --  Setting the file forces a refresh of the model.
-
    type Sorted_Node is private;
    type Sorted_Node_Access is access all Sorted_Node;
 
@@ -169,7 +165,8 @@ private package Outline_View.Model is
    --  usable afterwards (this doesn't unchecked free the model itself).
 
    procedure File_Updated
-     (Model    : access Outline_Model_Record);
+     (Model    : access Outline_Model_Record;
+      Tree     : Semantic_Tree'Class);
    --  In order to keep the model up to date with the tree, this function
    --  should be called every time the construct tree is changed.
 

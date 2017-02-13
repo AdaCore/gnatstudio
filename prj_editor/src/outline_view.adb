@@ -1076,11 +1076,14 @@ package body Outline_View is
       pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
+
+      Tree : constant Semantic_Tree'Class :=
+        Outline.Kernel.Get_Abstract_Tree_For_File (File);
    begin
       if Outline /= null and then Outline.File /= No_File
         and then Outline.File = File
       then
-         File_Updated (Get_Outline_Model (Outline));
+         File_Updated (Get_Outline_Model (Outline), Tree);
          Location_Changed (Outline.Kernel, File);
       end if;
    end Execute;

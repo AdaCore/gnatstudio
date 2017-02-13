@@ -9039,6 +9039,13 @@ class SemanticTree(object):
         :return: A boolean.
         """
 
+    def update(self):
+        """Ask for an immediate recomputation of the sematic tree.
+
+        This should be used by custom implementations of semantic trees,
+        to force GPS to ask for the new contents of the tree.
+        """
+
 
 ###########################################################
 # Style

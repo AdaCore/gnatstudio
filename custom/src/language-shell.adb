@@ -216,6 +216,8 @@ package body Language.Shell is
          end;
       elsif Command = "is_ready" then
          Set_Return_Value (Data, Get_Tree.Is_Ready);
+      elsif Command = "update" then
+         Get_Tree.Update;
       end if;
    end Semantic_Tree_Handler;
 
@@ -575,6 +577,10 @@ package body Language.Shell is
          Handler     => Semantic_Tree_Handler'Access);
       Kernel.Scripts.Register_Command
         ("is_ready",
+         Class     => Semantic_Tree_Class,
+         Handler   => Semantic_Tree_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("update",
          Class     => Semantic_Tree_Class,
          Handler   => Semantic_Tree_Handler'Access);
    end Setup;
