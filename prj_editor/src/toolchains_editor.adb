@@ -958,9 +958,9 @@ package body Toolchains_Editor is
          Ent_Name      : constant String := To_Lower (Tool'Img) & "_tool";
          Tool_Label    : constant String := Get_Label (Kind, Tool, Lang);
       begin
-         --  Use a combo box with an entry if several possible values have
+         --  Use a combo box with an entry if possible value(s) have
          --  been given for this tool.
-         if Values'Length > 1 then
+         if Values'Length > 0 then
             declare
                Combo : Gtk_Combo_Box_Text;
             begin
