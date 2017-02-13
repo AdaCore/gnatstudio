@@ -551,10 +551,11 @@ package body Help_Module is
       Inst   : Class_Instance;
       XML    : Node_Ptr;
    begin
-      if Command = Constructor_Method then
+      if Command = Constructor_Method
+        or else Command = "reset"
+      then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data
-           (Inst, Help_Class_Name, XML_Property'(XML => null));
+         Set_Data (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "getdoc" then
          Name_Parameters (Data, Getdoc_Parameters);
@@ -594,10 +595,6 @@ package body Help_Module is
            (Data,
             +Get_System_Dir (Kernel).Full_Name &
             "share/gps/shell_commands.xml");
-
-      elsif Command = "reset" then
-         Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data (Inst, Help_Class_Name, XML_Property'(XML => null));
 
       elsif Command = "browse" then
          Name_Parameters (Data, Browse_Cmd_Parameters);

@@ -2301,21 +2301,12 @@ package body Project_Properties is
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
-         if Ed.Attribute.Base_Name_Only then
-            Select_Attribute_In_List
-              (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Get_Pkg,
-               Index_Name  => Ed.Attribute.Get_Name,
-               Index_Value => Get_String (Ed.Model, Iter, 0),
-               Is_Selected => False);
-         else
-            Select_Attribute_In_List
-              (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Get_Pkg,
-               Index_Name  => Ed.Attribute.Get_Name,
-               Index_Value => Get_String (Ed.Model, Iter, 0),
-               Is_Selected => False);
-         end if;
+         Select_Attribute_In_List
+           (Project     => Ed.Project,
+            Index_Pkg   => Ed.Attribute.Get_Pkg,
+            Index_Name  => Ed.Attribute.Get_Name,
+            Index_Value => Get_String (Ed.Model, Iter, 0),
+            Is_Selected => False);
 
          Remove (Ed.Model, Iter);
       end if;

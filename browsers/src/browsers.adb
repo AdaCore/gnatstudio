@@ -99,14 +99,7 @@ package body Browsers is
                Paint (Context.Cr);
             end if;
 
-         when Background_Grid_Lines =>
-            Draw_Grid_Lines
-              (Self    => Self,
-               Style   => Self.Grid_Style,
-               Context => Context,
-               Area    => Area);
-
-         when Background_Grid_Dots =>
+         when Background_Grid_Lines | Background_Grid_Dots =>
             Draw_Grid_Lines
               (Self    => Self,
                Style   => Self.Grid_Style,

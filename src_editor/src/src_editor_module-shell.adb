@@ -2191,14 +2191,9 @@ package body Src_Editor_Module.Shell is
             end if;
          end;
 
-      elsif Command = "forward_char" then
-         Name_Parameters (Data, (1 => Count_Cst'Access));
-         Set_Return_Value
-           (Data, Create_Editor_Location
-              (Get_Script (Data),
-               Get_Location (Data, 1).Forward_Char (Nth_Arg (Data, 2, 1))));
-
-      elsif Command = Addition_Method then
+      elsif Command = "forward_char"
+        or else Command = Addition_Method
+      then
          Name_Parameters (Data, (1 => Count_Cst'Access));
          Set_Return_Value
            (Data, Create_Editor_Location

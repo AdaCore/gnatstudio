@@ -355,33 +355,13 @@ package body Refactoring.Subprograms is
 
          elsif Flags (Flag_Modified) then
             if Flags (Flag_Modified_Before) then
-               if Flags (Flag_Read_After)
-                 or else Flags (Flag_Ref_Outside_Parent)
-               then
-                  --  Written before and at least needed after the call
-
-                  Params.List.Append
-                    ((Parameter => E,
-                      Is_Tagged =>
-                        Accepts_Primitive_Ops
-                          (Context.Code.Context, E.Entity.Element, Offset),
-                      PType     => In_Out_Parameter));
-                  Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
-
-               else
-                  --  Written before, but not needed after.
-                  --  ??? It is modified in the function, so we should have
-                  --  a local variable that takes its value and is modified,
-                  --  we do not need to return the parameter itself
-
-                  Params.List.Append
-                    ((Parameter => E,
-                      Is_Tagged =>
-                        Accepts_Primitive_Ops
-                          (Context.Code.Context, E.Entity.Element, Offset),
-                      PType     => In_Out_Parameter));
-                  Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
-               end if;
+               Params.List.Append
+                 ((Parameter => E,
+                   Is_Tagged =>
+                     Accepts_Primitive_Ops
+                       (Context.Code.Context, E.Entity.Element, Offset),
+                   PType     => In_Out_Parameter));
+               Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
 
             elsif Flags (Flag_Read_After)
               or else Flags (Flag_Ref_Outside_Parent)

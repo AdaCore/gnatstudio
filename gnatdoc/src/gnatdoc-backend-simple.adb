@@ -278,11 +278,9 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout, Header);
          Append_Line (Printout, "");
 
-         if not Is_Partial_View (E) then
-            ReST_Append_Src (Printout, E);
-            ReST_Append_Comment (Printout, E);
-
-         elsif not Context.Options.Show_Private then
+         if not Is_Partial_View (E)
+           or else not Context.Options.Show_Private
+         then
             ReST_Append_Src (Printout, E);
             ReST_Append_Comment (Printout, E);
 
@@ -532,11 +530,9 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout, Header);
          Append_Line (Printout, "");
 
-         if not Is_Partial_View (E) then
-            ReST_Append_Src (Printout, E);
-            ReST_Append_Comment (Printout, E);
-
-         elsif not Context.Options.Show_Private then
+         if not Is_Partial_View (E)
+           or else not Context.Options.Show_Private
+         then
             ReST_Append_Src (Printout, E);
             ReST_Append_Comment (Printout, E);
 
@@ -673,11 +669,9 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout, Header);
          Append_Line (Printout, "");
 
-         if not Is_Partial_View (E) then
-            ReST_Append_Src (Printout, E);
-            ReST_Append_Comment (Printout, E);
-
-         elsif not Context.Options.Show_Private then
+         if not Is_Partial_View (E)
+           or else not Context.Options.Show_Private
+         then
             ReST_Append_Src (Printout, E);
             ReST_Append_Comment (Printout, E);
 

@@ -3354,14 +3354,9 @@ package body GNATdoc.Frontend is
                then
                   --  Support for floating comments (currently disabled)
 
-                  if Enhancements then
-                     Set_Doc_After (E,
-                       Comment_Result'
-                         (Text       => Doc,
-                          Start_Line => Doc_Start_Line));
-
-                  elsif Kind_In (Get_Kind (E), E_Enumeration_Literal,
-                                               E_Formal)
+                  if Enhancements
+                    or else Kind_In
+                      (Get_Kind (E), E_Enumeration_Literal, E_Formal)
                   then
                      Set_Doc_After (E,
                        Comment_Result'
@@ -4446,13 +4441,9 @@ package body GNATdoc.Frontend is
                then
                   --  Support for floating comments (currently disabled)
 
-                  if Enhancements then
-                     Set_Doc_After (E,
-                       Comment_Result'
-                         (Text       => Doc,
-                          Start_Line => Doc_Start_Line));
-
-                  elsif Get_Kind (E) = E_Formal then
+                  if Enhancements
+                    or else Get_Kind (E) = E_Formal
+                  then
                      Set_Doc_After (E,
                        Comment_Result'
                          (Text       => Doc,

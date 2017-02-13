@@ -288,18 +288,15 @@ package body GNATdoc.Frontend.Comment_Parser is
                      Report_Error;
                   end if;
 
-               elsif Tag_Name = "exception" then
+               elsif Tag_Name = "exception"
+                 or else Tag_Name = "param"
+               then
                   if not Is_Subprogram_Or_Entry (E) then
                      Report_Error;
                   end if;
 
                elsif Tag_Name = "field" then
                   if not Is_Record_Type (E) then
-                     Report_Error;
-                  end if;
-
-               elsif Tag_Name = "param" then
-                  if not Is_Subprogram_Or_Entry (E) then
                      Report_Error;
                   end if;
 
