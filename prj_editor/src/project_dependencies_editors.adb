@@ -65,7 +65,7 @@ package body Project_Dependencies_Editors is
 
    --  Constants for the dependency editor
    Is_Limited_Column         : constant := 0;
-   Project_Name_Column       : constant := 1;
+   Project_Info_Column       : constant := 1;
    Full_Path_Column          : constant := 2;
    Can_Change_Limited_Column : constant := 3;
    Use_Base_Name_Column      : constant := 4;
@@ -73,7 +73,7 @@ package body Project_Dependencies_Editors is
    function Dependency_Column_Types return GType_Array;
 
    --  Constants for the "Add from known dialog"
-   Project_Name_Column2     : constant := 0;
+   Project_Info_Column2     : constant := 0;
    Full_Path_Column2        : constant := 1;
 
    function Add_Column_Types return GType_Array;
@@ -95,7 +95,7 @@ package body Project_Dependencies_Editors is
       Model   : access Gtk_Tree_Store_Record'Class);
    --  Add all projects imported by Project to the tree
 
-   function Get_Row_Label
+   function Get_Project_Info_Label
      (Project_Name : String;
       Full_Path    : String) return String;
    --  Return a label displaying the project's name and its directory to
@@ -106,7 +106,7 @@ package body Project_Dependencies_Editors is
       Imported                  : Project_Type;
       Model                     : access Gtk_Tree_Store_Record'Class;
       Ignore_If_Imported        : Boolean := False;
-      Column_Project_Name       : Gint;
+      Column_Project_Info       : Gint;
       Column_Full_Path          : Gint;
       Column_Is_Limited         : Gint := -1;
       Column_Can_Change_Limited : Gint := -1);
@@ -128,7 +128,7 @@ package body Project_Dependencies_Editors is
    procedure Set_Columns
      (Model         : Gtk_Tree_Store;
       Iter          : Gtk_Tree_Iter;
-      Project_Name  : String;
+      Project_Info  : String;
       Is_Limited    : Boolean;
       Can_Change    : Boolean;
       Full_Path     : Virtual_File;
@@ -184,11 +184,11 @@ package body Project_Dependencies_Editors is
          Iter      => Iter);
 
       declare
-         Project_Name : constant String :=
-                          Get_String (Model, Iter, Project_Name_Column2);
+         Project_Info : constant String :=
+                          Get_String (Model, Iter, Project_Info_Column2);
          Project_File : constant Virtual_File :=
                           Get_File (Model, Iter, Full_Path_Column2);
-         Text_Data    : constant String := Project_Name
+         Text_Data    : constant String := Project_Info
                           & Drag_N_Drop_Data_Sep
                           & Project_File.Display_Full_Name
                           & Drag_N_Drop_Data_Sep
@@ -224,7 +224,7 @@ package body Project_Dependencies_Editors is
          Text_Data    : constant Unbounded_String_Array :=
                           Split (Data.Get_Data_As_String,
                                  On => Drag_N_Drop_Data_Sep);
-         Project_Name : constant String :=
+         Project_Info : constant String :=
                           To_String (Text_Data (Text_Data'First));
          Full_Path    : constant String :=
                           To_String (Text_Data (Text_Data'First + 1));
@@ -234,7 +234,7 @@ package body Project_Dependencies_Editors is
       begin
          Set_Columns
            (Model, Iter,
-            Project_Name  => Project_Name,
+            Project_Info  => Project_Info,
             Is_Limited    => False,
             Can_Change    => True,
             Full_Path     => Project_File,
@@ -412,11 +412,11 @@ package body Project_Dependencies_Editors is
                            Set_All_And_Clear
                              (Gtk_Tree_Store (Model),
                               Iter,
-                              (Project_Name_Column2 => As_String
-                                   (Get_Row_Label
+                              (Project_Info_Column2 => As_String
+                                   (Get_Project_Info_Label
                                       (Project_Name => +Base,
                                        Full_Path    =>
-                                         Project_Path (J).Display_Full_Name)),
+                                         Files (K).Display_Full_Name)),
                                Full_Path_Column2    => As_File (Files (K))));
                         end if;
                      end if;
@@ -439,7 +439,7 @@ package body Project_Dependencies_Editors is
             Imported             => Current (Imported),
             Model                => Model,
             Ignore_If_Imported   => True,
-            Column_Project_Name  => Project_Name_Column2,
+            Column_Project_Info  => Project_Info_Column2,
             Column_Full_Path     => Full_Path_Column2);
          Next (Imported);
       end loop;
@@ -461,7 +461,7 @@ package body Project_Dependencies_Editors is
            (Project                   => Project,
             Imported                  => Current (Imported),
             Model                     => Model,
-            Column_Project_Name       => Project_Name_Column,
+            Column_Project_Info       => Project_Info_Column,
             Column_Is_Limited         => Is_Limited_Column,
             Column_Can_Change_Limited => Can_Change_Limited_Column,
             Column_Full_Path          => Full_Path_Column);
@@ -473,7 +473,7 @@ package body Project_Dependencies_Editors is
    -- Get_Row_Label --
    -------------------
 
-   function Get_Row_Label
+   function Get_Project_Info_Label
      (Project_Name : String;
       Full_Path    : String) return String
    is
@@ -490,7 +490,7 @@ package body Project_Dependencies_Editors is
       Imported                  : Project_Type;
       Model                     : access Gtk_Tree_Store_Record'Class;
       Ignore_If_Imported        : Boolean := False;
-      Column_Project_Name       : Gint;
+      Column_Project_Info       : Gint;
       Column_Full_Path          : Gint;
       Column_Is_Limited         : Gint := -1;
       Column_Can_Change_Limited : Gint := -1)
@@ -527,12 +527,13 @@ package body Project_Dependencies_Editors is
 
             Append (Model, Iter, Null_Iter);
 
-            Columns (1 .. 2) := (Column_Project_Name, Column_Full_Path);
+            Columns (1 .. 2) := (Column_Project_Info, Column_Full_Path);
             Values (1 .. 2) :=
               (1 => As_String
-                 (Get_Row_Label (Project_Name => Imported.Name,
-                                 Full_Path    => Project_Directory
-                                   (Imported).Display_Full_Name)),
+                 (Get_Project_Info_Label
+                      (Project_Name => Imported.Name,
+                       Full_Path    =>
+                         Imported.Project_Path.Display_Full_Name)),
                2 => As_File    (Project_Path (Imported)));
             Last := 2;
 
@@ -564,7 +565,7 @@ package body Project_Dependencies_Editors is
    function Dependency_Column_Types return GType_Array is
    begin
       return (Is_Limited_Column         => GType_Boolean,
-              Project_Name_Column       => GType_String,
+              Project_Info_Column       => GType_String,
               Full_Path_Column          => Get_Virtual_File_Type,
               Can_Change_Limited_Column => GType_Boolean,
               Use_Base_Name_Column      => GType_Boolean);
@@ -576,7 +577,7 @@ package body Project_Dependencies_Editors is
 
    function Add_Column_Types return GType_Array is
    begin
-      return (Project_Name_Column2 => GType_String,
+      return (Project_Info_Column2 => GType_String,
               Full_Path_Column2    => Get_Virtual_File_Type);
    end Add_Column_Types;
 
@@ -609,7 +610,9 @@ package body Project_Dependencies_Editors is
 
          Set_Columns
            (Model, Iter,
-            Project_Name  => Name.Display_Base_Name (".gpr"),
+            Project_Info  => Get_Project_Info_Label
+              (Project_Name => Name.Display_Base_Name (".gpr"),
+               Full_Path    => Name.Display_Full_Name),
             Is_Limited    => False,
             Can_Change    => True,
             Full_Path     => Name,
@@ -726,9 +729,9 @@ package body Project_Dependencies_Editors is
         (Column_Types      => Dependency_Column_Types,
          Column_Names      =>
            (1 + Is_Limited_Column   => Cst_Limited'Unchecked_Access,
-            1 + Project_Name_Column => Cst_Project_Name'Unchecked_Access),
+            1 + Project_Info_Column => Cst_Project_Name'Unchecked_Access),
          Show_Column_Titles => True,
-         Initial_Sort_On    => 1 + Project_Name_Column,
+         Initial_Sort_On    => 1 + Project_Info_Column,
          Selection_Mode     => Gtk.Enums.Selection_Single);
       Add (Scrolled, Self.Dependencies_Tree);
       Model := -Get_Model (Self.Dependencies_Tree);
@@ -790,9 +793,9 @@ package body Project_Dependencies_Editors is
       Self.Known_Projects_Tree := Create_Tree_View
         (Column_Types      => Add_Column_Types,
          Column_Names      =>
-           (1 + Project_Name_Column2 => Cst_Project_Name'Unchecked_Access),
+           (1 + Project_Info_Column2 => Cst_Project_Name'Unchecked_Access),
          Show_Column_Titles => True,
-         Initial_Sort_On    => 1 + Project_Name_Column2,
+         Initial_Sort_On    => 1 + Project_Info_Column2,
          Selection_Mode     => Gtk.Enums.Selection_Single);
       Model := -Get_Model (Self.Known_Projects_Tree);
       Add (Scrolled, Self.Known_Projects_Tree);
@@ -861,41 +864,49 @@ package body Project_Dependencies_Editors is
          while Iter /= Null_Iter loop
             Found := False;
 
+            declare
+               Project_Info : constant String := Get_String
+                 (Model, Iter, Project_Info_Column);
+               Project_Name : constant String := Project_Info
+                 (Project_Info'First .. EOL (Project_Info) - 1);
+            begin
+
+               for P in Projects'Range loop
+                  if Projects (P) /= No_Project
+                    and then
+                      Projects (P).Name = Project_Name
+                  then
+                     Projects (P) := No_Project;
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Add_Dependency_Internal
+                    (Kernel                => Kernel,
+                     Importing_Project     => Project,
+                     Imported_Project_Path =>
+                       Get_File (Model, Iter, Full_Path_Column),
+                     Limited_With          =>
+                       Get_Boolean (Model, Iter, Is_Limited_Column),
+                     Use_Base_Name         =>
+                       Get_Boolean (Model, Iter, Use_Base_Name_Column));
+                  Changed := True;
+               end if;
+
+               Next (Model, Iter);
+            end;
+         end loop;
+
             for P in Projects'Range loop
-               if Projects (P) /= No_Project
-                 and then Projects (P).Name =
-                 Get_String (Model, Iter, Project_Name_Column)
-               then
-                  Projects (P) := No_Project;
-                  Found := True;
-                  exit;
+               if Projects (P) /= No_Project then
+                  Remove_Imported_Project
+                    (Project               => Project,
+                     Imported_Project      => Projects (P));
+                  Changed := True;
                end if;
             end loop;
-
-            if not Found then
-               Add_Dependency_Internal
-                 (Kernel                => Kernel,
-                  Importing_Project     => Project,
-                  Imported_Project_Path =>
-                    Get_File (Model, Iter, Full_Path_Column),
-                  Limited_With          =>
-                    Get_Boolean (Model, Iter, Is_Limited_Column),
-                  Use_Base_Name         =>
-                    Get_Boolean (Model, Iter, Use_Base_Name_Column));
-               Changed := True;
-            end if;
-
-            Next (Model, Iter);
-         end loop;
-
-         for P in Projects'Range loop
-            if Projects (P) /= No_Project then
-               Remove_Imported_Project
-                 (Project               => Project,
-                  Imported_Project      => Projects (P));
-               Changed := True;
-            end if;
-         end loop;
       end;
 
       return Changed;
@@ -908,7 +919,7 @@ package body Project_Dependencies_Editors is
    procedure Set_Columns
      (Model         : Gtk_Tree_Store;
       Iter          : Gtk_Tree_Iter;
-      Project_Name  : String;
+      Project_Info  : String;
       Is_Limited    : Boolean;
       Can_Change    : Boolean;
       Full_Path     : Virtual_File;
@@ -917,7 +928,7 @@ package body Project_Dependencies_Editors is
       Set_All_And_Clear
         (Model, Iter,
          (Is_Limited_Column         => As_Boolean (Is_Limited),
-          Project_Name_Column       => As_String  (Project_Name),
+          Project_Info_Column       => As_String  (Project_Info),
           Full_Path_Column          => As_File    (Full_Path),
           Can_Change_Limited_Column => As_Boolean (Can_Change),
           Use_Base_Name_Column      => As_Boolean (Use_Base_Name)));
