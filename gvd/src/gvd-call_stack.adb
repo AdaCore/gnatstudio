@@ -207,7 +207,7 @@ package body GVD.Call_Stack is
       Iter  : Gtk_Tree_Iter;
    begin
       if Get_Process (Stack) /= null and then not Stack.Block then
-         Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
+         Stack.Tree.Get_Selection.Get_Selected (Model, Iter);
          if Iter /= Null_Iter then
             Stack_Frame
               (Visual_Debugger (Get_Process (Stack)).Debugger,
@@ -414,7 +414,7 @@ package body GVD.Call_Stack is
          --  the current stack trace. While it is executing, we do not want to
          --  keep a visible call stack displayed.
 
-         if Is_Execution_Command (Visual_Debugger (Get_Process (View))) then
+         if Visual_Debugger (View.Get_Process).Is_Execution_Command then
             --  Calling Clear might cause the selection to jump from row to
             --  row, causing a query of every frame info. To prevent this,
             --  set the Block flag.
@@ -423,14 +423,13 @@ package body GVD.Call_Stack is
             Clear (View.Model);
             View.Block := Prev;
 
-            Append (View.Model, Iter, Null_Iter);
+            View.Model.Append (Iter, Null_Iter);
 
             Set_And_Clear
               (View.Model, Iter, (Frame_Num_Column, Subprog_Name_Column),
                (1 => As_String ("0"),
                 2 => As_String ("Running...")));
-
-            Set_Mode (Get_Selection (View.Tree), Selection_None);
+            View.Tree.Get_Selection.Set_Mode (Selection_None);
          end if;
       end if;
    end On_State_Changed;
@@ -497,7 +496,7 @@ package body GVD.Call_Stack is
             Index := Index + 1;
          end loop;
 
-         Append (View.Model, Iter, Null_Iter);
+         View.Model.Append (Iter, Null_Iter);
 
          Set_All_And_Clear
            (View.Model, Iter,
@@ -510,11 +509,11 @@ package body GVD.Call_Stack is
 
       Free (Bt (1 .. Len));
 
-      Set_Mode (Get_Selection (View.Tree), Selection_Single);
+      View.Tree.Get_Selection.Set_Mode (Selection_Single);
 
       View.Block := True;
       if Get_Iter_First (View.Model) /= Null_Iter then
-         Select_Iter (Get_Selection (View.Tree), Get_Iter_First (View.Model));
+         View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
       end if;
       View.Block := False;
    end Update;

@@ -86,6 +86,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("^\*stopped,", Multiple_Lines + Single_Line);
    --  Pattern used to detect when the debuggee stops
 
+   Running_Regexp            : constant Pattern_Matcher := Compile
+     ("^\*running,", Multiple_Lines);
+   --  Pattern used to detect when the debuggee runs
+
    Terminate_Pattern         : constant Pattern_Matcher := Compile
      ("^=thread-group-exited", Multiple_Lines);
    --  Pattern used to detect when the debuggee terminates
@@ -146,11 +150,15 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched : Match_Array);
    --  Filter used to detect when the program no longer runs
 
-   procedure Frame_Filter
+   procedure Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect current frame
+
+   procedure Stopped_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
 
    function Internal_Set_Breakpoint
      (Debugger  : access Gdb_MI_Debugger;
@@ -1005,7 +1013,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Process.Add_Regexp_Filter
            (Breakpoint_Filter'Access, Breakpoint_Pattern);
 
-         Process.Add_Regexp_Filter (Frame_Filter'Access, Stopped_Regexp);
+         Process.Add_Regexp_Filter (Running_Filter'Access, Running_Regexp);
+         Process.Add_Regexp_Filter (Stopped_Filter'Access, Stopped_Regexp);
 
          Process.Add_Regexp_Filter
            (Question_Filter1'Access, Question_Filter_Pattern1);
@@ -1188,7 +1197,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       --  Mark the command as processed, even if did not succeed in the
       --  specified timeout so that we can continue sending other commands.
-      Set_Command_In_Process (Get_Process (Debugger), False);
+      Debugger.Get_Process.Set_Command_In_Process (False);
       Free (Process.Current_Command);
 
       if Success then
@@ -1588,14 +1597,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -----------------
 
    overriding procedure Wait_Prompt (Debugger : access Gdb_MI_Debugger) is
-      Num : Expect_Match;
-      pragma Unreferenced (Num);
+      Dummy : Expect_Match;
    begin
-      if Debugger.Current_Command_Kind = Execution_Command then
-         Debugger.Get_Process.Wait (Num, Stopped_Regexp, Timeout => -1);
-      end if;
-
-      Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => -1);
+      Debugger.Get_Process.Wait (Dummy, Prompt_Regexp, Timeout => -1);
    end Wait_Prompt;
 
    -----------------
@@ -1608,15 +1612,17 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Num : Expect_Match;
    begin
-      if Debugger.Current_Command_Kind = Execution_Command then
-         Debugger.Get_Process.Wait (Num, Stopped_Regexp, Timeout => Timeout);
-         if Num = Expect_Timeout then
-            return False;
-         end if;
+      Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+      if Num = Expect_Timeout then
+         return False;
       end if;
 
-      Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
-      return Num /= Expect_Timeout;
+      if Debugger.Is_Running then
+         Debugger.Is_Running := False;
+         return False;
+      end if;
+
+      return True;
    end Wait_Prompt;
 
    ----------------
@@ -1670,6 +1676,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       Debugger.Send
         ("-exec-run" & (if Start then " --start" else ""), Mode => Mode);
+
       Debugger.Set_Is_Started (True);
    end Run_Helper;
 
@@ -2577,8 +2584,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched  : Match_Array (0 .. 4);
 
    begin
-      Trace (Me, "-> Found_File_Name:" & Str);
-
       --  Default values if nothing better is found
       Name := Null_Unbounded_String;
       Line := 0;
@@ -2620,16 +2625,15 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type)
    is
---        pragma Unreferenced (Str);
+      pragma Unreferenced (Str);
 
    begin
-      Trace (Me, "-> Found_Frame_Info:" & Str);
-      if Debugger.Current_Frame.Frame = -1 then
+      if Debugger.Current_Frame = Null_Frame_Info then
          Trace (Me, " Call Get_Frame_Info");
          Debugger.Get_Frame_Info;
       end if;
 
-      if Debugger.Current_Frame.Line = 0 then
+      if Debugger.Current_Frame.Addr = GVD.Types.Invalid_Address then
          Message := No_Debug_Info;
       else
          Message := Location_Found;
@@ -2637,20 +2641,41 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
    end Found_Frame_Info;
 
-   ------------------
-   -- Frame_Filter --
-   ------------------
+   --------------------
+   -- Running_Filter --
+   --------------------
 
-   procedure Frame_Filter
+   procedure Running_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
+   is
+      pragma Unreferenced (Matched, Str);
+   begin
+      Gdb_MI_Debugger (Process.Debugger.all).Is_Running := True;
+   end Running_Filter;
+
+   --------------------
+   -- Stopped_Filter --
+   --------------------
+
+   procedure Stopped_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
    is
       pragma Unreferenced (Matched);
       use Token_Lists;
-      Tokens  : Token_List_Controller;
-      C       : Token_Lists.Cursor;
+
+      Debugger : Gdb_MI_Debugger renames
+        Gdb_MI_Debugger (Process.Debugger.all);
+
+      Tokens   : Token_List_Controller;
+      C        : Token_Lists.Cursor;
    begin
+      Debugger.Is_Running    := False;
+      Debugger.Current_Frame := Null_Frame_Info;
+
       Tokens.List := Build_Tokens (Str);
       C := Find_Identifier (First (Tokens.List), "frame");
       if C = Token_Lists.No_Element then
@@ -2663,9 +2688,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       Next (C, 2);
-      Gdb_MI_Debugger (Process.Debugger.all).Current_Frame.Addr :=
-        String_To_Address (Element (C).Text.all);
-   end Frame_Filter;
+      Debugger.Current_Frame.Addr := String_To_Address (Element (C).Text.all);
+   end Stopped_Filter;
 
    ----------
    -- Free --
@@ -3874,6 +3898,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
    end Set_TTY;
 
+   -------------------
+   -- Filter_Output --
+   -------------------
+
    overriding procedure Filter_Output
      (Debugger : access Gdb_MI_Debugger;
       Mode     : GVD.Types.Command_Type;
@@ -3977,6 +4005,23 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      end if;
 
                      Append (Result, "]" & ASCII.LF);
+
+                  elsif J + 6 < Str'Last
+                    and then Str (J - 1) = '*'
+                    and then Str (J .. J + 6) = "running"
+                  then
+                     --  Display info to the user
+                     Append (Result, "[program running");
+
+                     J := J + 7;
+                     while J <= Str'Last and then Str (J) /= ASCII.LF loop
+                        Append (Result, Str (J));
+                        J := J + 1;
+                     end loop;
+                     Append (Result, "]" & ASCII.LF);
+
+                     --  remove "(gdb)" for a running program"
+                     J := J + 1;
                   end if;
 
                   while J <= Str'Last and then Str (J) /= ASCII.LF loop

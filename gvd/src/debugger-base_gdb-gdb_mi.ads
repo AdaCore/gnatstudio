@@ -482,6 +482,7 @@ private
       Current_Command_Kind : Command_Category := Misc_Command;
       Command_No           : Integer          := 1;
       Variables            : Vars_Maps.Map;
+      Is_Running           : Boolean          := False;
    end record;
 
    function Find_Var
