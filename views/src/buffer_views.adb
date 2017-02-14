@@ -15,52 +15,54 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with Glib_Values_Utils;      use Glib_Values_Utils;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Rectangle;          use Gdk.Rectangle;
-with Gdk.Types;              use Gdk.Types;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Glib;                     use Glib;
+with Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gdk.Types;                use Gdk.Types;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Notebook;           use Gtk.Notebook;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Toolbar;            use Gtk.Toolbar;
-with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Gtkada.Tree_View;       use Gtkada.Tree_View;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Default_Preferences;    use Default_Preferences;
-with Generic_Views;          use Generic_Views;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Search;      use GPS.Kernel.Search;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Search;             use GPS.Search;
-with GPS.Search.GUI;         use GPS.Search.GUI;
-with GUI_Utils;              use GUI_Utils;
-with Src_Editor_Module;      use Src_Editor_Module;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with Tooltips;               use Tooltips;
-with Commands.Interactive;   use Commands, Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
+with Generic_Views;            use Generic_Views;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Search;        use GPS.Kernel.Search;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Search;               use GPS.Search;
+with GPS.Search.GUI;           use GPS.Search.GUI;
+with GUI_Utils;                use GUI_Utils;
+with Src_Editor_Module;        use Src_Editor_Module;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with Tooltips;                 use Tooltips;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 
 package body Buffer_Views is
    Me : constant Trace_Handle := Create ("BUFFERS");
@@ -824,27 +826,32 @@ package body Buffer_Views is
        Result   : out GPS.Search.Search_Result_Access;
        Has_Next : out Boolean)
    is
-      C : Search_Context;
+      C     : Search_Context;
       Child : constant MDI_Child := Get (Self.Iter);
    begin
       Result := null;
 
       if Child = null then
-         Has_Next  := False;
+         Has_Next := False;
       else
-         C := Self.Pattern.Start (Child.Get_Short_Title);
-         if C /= GPS.Search.No_Match then
-            Result := new Opened_Windows_Result'
-              (Kernel   => Self.Kernel,
-               Provider => Self,
-               Score    => C.Score,
-               Short    => new String'
-                 (Self.Pattern.Highlight_Match
-                      (Child.Get_Short_Title, Context => C)),
-               Long     => new String'(Child.Get_Short_Title),
-               Id       => new String'(Child.Get_Title));
-            Self.Adjust_Score (Result);
-         end if;
+         declare
+            Short_Name : constant String := Child.Get_Short_Title;
+         begin
+            C := Self.Pattern.Start (Child.Get_Short_Title);
+            if C /= GPS.Search.No_Match then
+               Result := new Opened_Windows_Result'
+                 (Kernel   => Self.Kernel,
+                  Provider => Self,
+                  Score    => C.Score,
+                  Short    => new String'
+                    (Self.Pattern.Highlight_Match (Short_Name, Context => C)),
+                  Long     => new String'
+                    (Glib.Convert.Escape_Text (Short_Name)),
+                  Id       => new String'(Child.Get_Title));
+
+               Self.Adjust_Score (Result);
+            end if;
+         end;
 
          Next (Self.Iter);
          Has_Next := Get (Self.Iter) /= null;
@@ -913,7 +920,7 @@ package body Buffer_Views is
        Give_Focus : Boolean)
    is
       C : constant MDI_Child :=
-         Find_MDI_Child_By_Name (Get_MDI (Self.Kernel), Self.Id.all);
+        Find_MDI_Child_By_Name (Get_MDI (Self.Kernel), Self.Id.all);
    begin
       if C /= null then
          Raise_Child (C, Give_Focus => Give_Focus);
