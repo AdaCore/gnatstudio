@@ -1217,7 +1217,7 @@ package body Language.Ada is
 
             when '<' | '>' | '/' =>
                if Offset < Buffer'Last and then Buffer (Offset + 1) = '=' then
-                  --  >= or <= case
+                  --  <= or >= or /= case
                   Token.Tok_Type := Tok_Operator;
                   Token.Token_First := String_Index_Type (Offset);
                   Token.Token_Last := String_Index_Type (Offset + 1);
