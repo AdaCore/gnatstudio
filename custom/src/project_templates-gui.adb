@@ -263,6 +263,7 @@ package body Project_Templates.GUI is
 
    procedure Install_Template
      (Templates     : Project_Templates_List.List;
+      Parent        : not null access Gtk_Window_Record'Class;
       Chosen        : out Project_Template;
       Installed     : out Boolean;
       Dir           : out Virtual_File;
@@ -617,8 +618,7 @@ package body Project_Templates.GUI is
 
       Gtk_New (Assistant);
       Assistant.Set_Name ("Project Templates Assistant");
-      Assistant.Set_Position (Win_Pos_Center);
-      Assistant.Set_Keep_Above (True);
+      Assistant.Set_Transient_For (Parent);
 
       Gtk_New_Vbox (Page_Box, Homogeneous => False);
       Page_Num := Assistant.Append_Page (Page_Box);

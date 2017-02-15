@@ -20,7 +20,9 @@
 --  or opening an existing one.
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GPS.Kernel; use GPS.Kernel;
+
+with Gtk.Window;            use Gtk.Window;
+with GPS.Kernel;            use GPS.Kernel;
 
 package Welcome_Dialogs is
 
@@ -40,9 +42,14 @@ package Welcome_Dialogs is
    --  (e.g: Open a project).
 
    type Welcome_Dialog_Action_Callback is access function
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Type of the callbacks called when a given action is selected by the
    --  user (e.g: a callback that displays a dialog used to open a project).
+   --
+   --  Parent is the actual welcome dialog from which this callback has been
+   --  caled. Call Set_Transient_Window with it if the callkack opens a dialog
+   --  so that the created dialog stays on top of the welcome dialog.
    --
    --  Return False if the action was cancelled by the user, True otherwise.
 

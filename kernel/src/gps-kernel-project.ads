@@ -46,6 +46,8 @@ with Projects;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
+with Gtk.Window;        use Gtk.Window;
+
 package GPS.Kernel.Project is
 
    -------------------
@@ -84,7 +86,8 @@ package GPS.Kernel.Project is
    --  default project
 
    function Load_Default_Project
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Same as above, but with a signature which compatible with the
    --  Welcome_Dialogs.Welcome_Dialog_Action callback type.
    --  Used to display a "Start with default project" option in the GPS
@@ -183,9 +186,13 @@ package GPS.Kernel.Project is
    -------------
 
    function Display_Open_Project_Dialog
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Display a file selection dialog asking allowing the user to open a
    --  project.
+   --
+   --  Parent is set to be the transient window of the displayed file selection
+   --  dialog.
    --
    --  Return True if the selected project has been correctly loaded by GPS and
    --  False if the dialog was cancelled by the user.

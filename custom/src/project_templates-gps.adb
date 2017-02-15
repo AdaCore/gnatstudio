@@ -21,6 +21,7 @@ with Glib.Object;           use Glib.Object;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Intl;              use GPS.Intl;
@@ -75,7 +76,8 @@ package body Project_Templates.GPS is
    -----------------------------------------
 
    function Display_Project_Templates_Assistant
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean
    is
       use Virtual_File_List;
       C : Cursor;
@@ -114,6 +116,7 @@ package body Project_Templates.GPS is
 
       Install_Template
         (Templates     => Templates,
+         Parent        => Parent,
          Chosen        => Chosen,
          Installed     => Installed,
          Dir           => Dir,
@@ -188,7 +191,9 @@ package body Project_Templates.GPS is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Success : Boolean with Unreferenced;
    begin
-      Success := Display_Project_Templates_Assistant (Kernel);
+      Success := Display_Project_Templates_Assistant
+        (Kernel,
+         Parent => Get_Current_Window (Kernel));
       return Commands.Success;
    end Execute;
 

@@ -137,7 +137,9 @@ package body Welcome_Dialogs is
                         Welcome_Dialog_Action_Button (Self);
       Success       : Boolean;
    begin
-      Success := Action_Button.Callback (Action_Button.Kernel);
+      Success := Action_Button.Callback
+        (Kernel => Action_Button.Kernel,
+         Parent => Action_Button.Dialog);
 
       if Success then
          Action_Button.Dialog.Response := Project_Loaded;

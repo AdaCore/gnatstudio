@@ -19,10 +19,13 @@
 --  NOTE: this should remain independent from the GPS Kernel, so that
 --  it can be reused in a stand-alone executable.
 
+with Gtk.Window; use Gtk.Window;
+
 package Project_Templates.GUI is
 
    procedure Install_Template
      (Templates     : Project_Templates_List.List;
+      Parent        : not null access Gtk_Window_Record'Class;
       Chosen        : out Project_Template;
       Installed     : out Boolean;
       Dir           : out Virtual_File;
@@ -31,6 +34,7 @@ package Project_Templates.GUI is
       Default_Label : String := "");
    --  Read templates in Templates, offer a dialog to select a template and
    --  fill in the fields, and select a target directory.
+   --  Parent is set to be the transient window of the spawned dialog.
    --  If the user validates the choice, then install the template in the
    --  selected location, and Installed is set to True, Dir contains
    --  the target directory, Project the deployed project file, and

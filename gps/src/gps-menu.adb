@@ -353,7 +353,9 @@ package body GPS.Menu is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Success : Boolean with Unreferenced;
    begin
-      Success := Display_Open_Project_Dialog (Kernel);
+      Success := Display_Open_Project_Dialog
+        (Kernel,
+         Parent => Get_Current_Window (Kernel));
       return Commands.Success;
    end Execute;
 

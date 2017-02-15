@@ -19,6 +19,8 @@
 --  engine and GPS.
 
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.Window; use Gtk.Window;
+
 with GPS.Kernel; use GPS.Kernel;
 
 package Project_Templates.GPS is
@@ -27,8 +29,12 @@ package Project_Templates.GPS is
    --  Register the module
 
    function Display_Project_Templates_Assistant
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean;
    --  Display the "project from template" assistant.
+   --
+   --  Parent is set to be the transient window of the displayed project
+   --  templates assistant.
    --
    --  Return True if the new project has been correctly loaded by GPS and
    --  False if the assistant was cancelled by the user.

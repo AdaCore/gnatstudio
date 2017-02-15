@@ -32,7 +32,6 @@ with Projects;                         use Projects;
 with Remote;                           use Remote;
 
 with Gtkada.File_Selector;             use Gtkada.File_Selector;
-with Gtk.Window;                       use Gtk.Window;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
@@ -434,7 +433,10 @@ package body GPS.Kernel.Project is
    --------------------------
 
    function Load_Default_Project
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean is
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Parent);
    begin
       Load_Default_Project
         (Kernel,
@@ -904,14 +906,15 @@ package body GPS.Kernel.Project is
    ---------------------------------
 
    function Display_Open_Project_Dialog
-     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean
    is
       Filename : constant Virtual_File :=
         Select_File
           (-"Open Project",
            File_Pattern      => "*.gpr",
            Pattern_Name      => -"Project files",
-           Parent            => Get_Current_Window (Kernel),
+           Parent            => Gtk_Window (Parent),
            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
            Kind              => Open_File,
            History           => Get_History (Kernel));
