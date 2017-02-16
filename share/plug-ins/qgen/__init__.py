@@ -66,12 +66,12 @@ class MDL_Language(GPS.Language):
     """
     A class that describes the MDL and Simulink language for GPS.
     """
-
+    const_split = re.compile('#QGEN.*#')
     # @overriding
+
     def __init__(self):
         # The constant string used to create a construct id
-        self.const_id = "#QGEN#"
-        pass
+        self.const_id = "#QGEN"
 
     @staticmethod
     def register():
@@ -92,7 +92,8 @@ class MDL_Language(GPS.Language):
     # @overriding
     def clicked_on_construct(self, construct):
         def __on_loaded(view):
-            construct_id = construct.id.split(self.const_id, 1)[1]
+            construct_id = re.split(
+                MDL_Language.const_split, construct.id, 1)[1]
             diag = view.diags.get(construct_id)
             # If the construct was a diagram, open it
             # otherwise highlight the item
@@ -133,7 +134,6 @@ class MDL_Language(GPS.Language):
             # When processing the current diagram, this list stores what
             # subsystems where already added in the Outline to avoid
             # duplication when adding items
-            exclude_subsystem = item_id == viewer.diagram.id
 
             # The index entry contains a JSON_Array of entries with
             # a 'name' and 'diagram' fields. They respectively correspond
@@ -142,8 +142,7 @@ class MDL_Language(GPS.Language):
                 for child in children:
                     child_name = child["name"]
                     child_id = child["diagram"]
-                    if exclude_subsystem:
-                        subsystem_list.append(child_name)
+                    subsystem_list.append(child_name)
                     for child_entry_name, child_children in viewer.diags.index:
                         # Each child of the current diagram is processed
                         if child_entry_name == child_id:
@@ -154,27 +153,33 @@ class MDL_Language(GPS.Language):
                                 yield result
                             break
 
+            # Avoid corrupting the outline when processing an
+            # unsupported diagram
+            try:
+                diag_items = viewer.diags.get(item_id).items
+            except:
+                diag_items = []
+
             # Adding all generic blocks to the outline for the current diagram
-            if exclude_subsystem:
-                for it in viewer.diagram.items:
-                    if isinstance(it, GPS.Browsers.Link):
-                        continue
-                    try:
-                        for child in it.children:
-                            # The qgen_navigation_info is a custom item
-                            # used by this plugin for navigation we do not
-                            # want to display it
-                            if child.id != 'qgen_navigation_info' and \
-                               child.id not in subsystem_list:
-                                max_offset = max_offset + 2
-                                # A block item will have the same name and id
-                                # both set to child.id
-                                yield (child.id, child.id,
-                                       (0, 0, max_offset - 1),
-                                       (0, 0, max_offset),
-                                       constructs.CAT_ENTRY)
-                    except:
-                        None
+            for it in diag_items:
+                if isinstance(it, GPS.Browsers.Link):
+                    continue
+                try:
+                    for child in it.children:
+                        # The qgen_navigation_info is a custom item
+                        # used by this plugin for navigation we do not
+                        # want to display it
+                        if child.id != 'qgen_navigation_info' and \
+                           child.id not in subsystem_list:
+                            max_offset = max_offset + 2
+                            # A block item will have the same name and id
+                            # both set to child.id
+                            yield (child.id, child.id,
+                                   (0, 0, max_offset - 1),
+                                   (0, 0, max_offset),
+                                   constructs.CAT_ENTRY)
+                except:
+                    None
             yield (item, item_id,
                    (0, 0, start_offset),
                    (0, 0, max_offset + 1),
@@ -200,7 +205,8 @@ class MDL_Language(GPS.Language):
                     # be able to retrieve the id to display the correct diagram
                     # when the construct is clicked (as long as the name did
                     # not contain #QGEN# already, which is unlikely).
-                    id=it_name + self.const_id + it_id,
+                    id="{0}{1}{2}#{3}".format(
+                        it_name, self.const_id, sloc_end, it_id),
                     sloc_start=sloc_start,
                     sloc_end=sloc_end,
                     sloc_entity=sloc_start)
@@ -674,7 +680,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         # Let GPS views, in particular the outline, know when we select
         # a new diagram
-        GPS.SemanticTree(self.file).update()
+        # If outline item selection is enabled in the future
+        # an update can be forced by GPS.SemanticTree(self.file).update()
         GPS.Hook('semantic_tree_updated').run(self.file)
 
     # @overriding
