@@ -1641,19 +1641,21 @@ def get_str_indent(buf, line):
 def show_ce(ce):
     for file in ce:
         if GPS.File(file).language() == "ada":
-            first_sloc = GPS.FileLocation(GPS.File(file),
-                                          int(next(iter(ce[file]))),
-                                          1)
-            buf = GPS.EditorBuffer.get(first_sloc.file())
-            goto_location(first_sloc)
-            overlay = get_trace_overlay(buf)
-            for line in ce[file]:
-                text = get_str_indent(buf, int(line)) + "--  " + \
-                    get_ce_text_for_line(ce[file][line])
-                add_ce_special_line(buf, int(line), text)
-                buf.apply_overlay(overlay,
-                                  buf.at(int(line), 1),
-                                  buf.at(int(line), 1))
+            first = next(iter(ce[file]), None)
+            if first:
+                first_sloc = GPS.FileLocation(GPS.File(file),
+                                              int(first),
+                                              1)
+                buf = GPS.EditorBuffer.get(first_sloc.file())
+                goto_location(first_sloc)
+                overlay = get_trace_overlay(buf)
+                for line in ce[file]:
+                    text = get_str_indent(buf, int(line)) + "--  " + \
+                           get_ce_text_for_line(ce[file][line])
+                    add_ce_special_line(buf, int(line), text)
+                    buf.apply_overlay(overlay,
+                                      buf.at(int(line), 1),
+                                      buf.at(int(line), 1))
 
 
 def remove_ce(ce):
