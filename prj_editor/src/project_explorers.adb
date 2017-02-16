@@ -1392,8 +1392,15 @@ package body Project_Explorers is
    -------------
 
    procedure Refresh (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      T     : constant Project_Explorer := Project_Explorer (Explorer);
+      T      : constant Project_Explorer := Project_Explorer (Explorer);
+      --  store old filter
+      Filter : constant GPS.Search.Search_Pattern_Access :=
+        T.Tree.User_Filter.Pattern;
    begin
+      --  clear filter to avoid filtering during reloading
+      T.Tree.User_Filter.Pattern := null;
+      T.Tree.User_Filter.Visible.Clear;
+
       --  Cache the value for use in Sort_Func
       Boolean_User_Data.Set
         (T.Tree.Model,
@@ -1424,16 +1431,20 @@ package body Project_Explorers is
 
          --  Refilter only if needed
          if not T.Tree.User_Filter.Config.Show_Empty_Dirs
-            or else T.Tree.User_Filter.Pattern /= null
+            or else Filter /= null
          then
             Trace (Me, "Refilter");
-            T.Tree.Refilter;
+            if Filter /= null then
+               Set_Pattern (T.Tree.User_Filter, T.Kernel, Filter);
+            else
+               T.Tree.Refilter;
+            end if;
             Trace (Me, "Done Refilter");
          end if;
       end;
 
       declare
-         Path : Gtk_Tree_Path;
+         Path    : Gtk_Tree_Path;
          Success : Boolean with Unreferenced;
       begin
          --  Expand the node for the root project. Its contents
@@ -1612,7 +1623,7 @@ package body Project_Explorers is
          if Flat_View then
             declare
                Iter : Project_Iterator := Get_Project (Self.Kernel).Start
-                 (Direct_Only => False,
+                 (Direct_Only      => False,
                   Include_Extended => True);
             begin
                while Current (Iter) /= No_Project loop
