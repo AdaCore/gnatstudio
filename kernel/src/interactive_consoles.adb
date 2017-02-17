@@ -70,7 +70,6 @@ with GUI_Utils;                use GUI_Utils;
 with GPS.Default_Styles;       use GPS.Default_Styles;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;

@@ -38,7 +38,6 @@ with GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information;
 pragma Unreferenced (GPS.Editors.Line_Information);
 --  Required to access to members of Line_Information_Record.
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with Default_Preferences;    use Default_Preferences;
 with String_Utils;           use String_Utils;
 

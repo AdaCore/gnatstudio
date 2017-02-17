@@ -41,7 +41,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;

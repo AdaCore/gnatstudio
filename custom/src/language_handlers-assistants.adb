@@ -35,7 +35,6 @@ with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;                 use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                 use GPS.Kernel.Scripts;
-with Gtkada.MDI; use Gtkada.MDI;
 
 package body Language_Handlers.Assistants is
 
