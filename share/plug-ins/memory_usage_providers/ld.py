@@ -155,6 +155,10 @@ class LD(core.MemoryUsageProvider):
             an object file in a given section.
             """
 
+            # Don't try to match a module if sections have not been parsed yet
+            if not sections:
+                return
+
             m = module_r.search(line)
             if m:
                 files_info = m.group('files')
