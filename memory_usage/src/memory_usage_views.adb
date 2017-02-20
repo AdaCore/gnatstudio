@@ -143,7 +143,7 @@ package body Memory_Usage_Views is
    is
       Dummy        : constant Expansions.Detached_Model :=
                        Expansions.Detach_Model_From_View
-                         (Self.Memory_Tree, Save_Expansion => False);
+                         (Self.Memory_Tree, Save_Expansion => True);
       Region_Iter  : Gtk_Tree_Iter;
       Section_Iter : Gtk_Tree_Iter;
       Module_Iter  : Gtk_Tree_Iter;
