@@ -617,9 +617,9 @@ package body Scenario_Views is
          --  Remove_Child_Nodes (Model, Scenario);
 
       else
-         V.Build_Node := Null_Gtk_Tree_Path;
+         V.Build_Node    := Null_Gtk_Tree_Path;
          V.Scenario_Node := Null_Gtk_Tree_Path;
-         Scenario := Null_Iter;
+         Scenario        := Null_Iter;
       end if;
 
       declare
