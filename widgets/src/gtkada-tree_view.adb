@@ -23,9 +23,9 @@ with Glib.Object;          use Glib.Object;
 with Glib.Properties;      use Glib.Properties;
 with Glib.Types;           use Glib.Types;
 with Glib.Values;          use Glib.Values;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
 with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Handlers;         use Gtk.Handlers;
 with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
 with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
@@ -93,7 +93,7 @@ package body Gtkada.Tree_View is
    --  Called when the tree view is being destroyed
 
    procedure Row_Expanded_Callback
-     (Widget      : access Gtk_Tree_View_Record'Class;
+     (Widget      : access Gtk_Widget_Record'Class;
       Filter_Iter : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path);
    --  Callback for the "row_expanded" signal.
@@ -203,6 +203,20 @@ package body Gtkada.Tree_View is
       Iter : Gtk_Tree_Iter;
       F    : Flags) with Inline;
    --   Set or unset a flag on a specific row
+
+   ----------------
+   -- Expand_All --
+   ----------------
+
+   overriding procedure Expand_All (Self : not null access Tree_View_Record) is
+   begin
+      --  Block the Row_Expanded_Callback while expanding all the nodes: we
+      --  don't want to scroll the view to the last node in this case.
+
+      Handler_Block (Self, Self.Row_Expanded_Callback_ID);
+      Gtk_Tree_View_Record (Self.all).Expand_All;
+      Handler_Unblock (Self, Self.Row_Expanded_Callback_ID);
+   end Expand_All;
 
    ---------------------------------
    -- On_Drag_Data_Received_Proxy --
@@ -592,7 +606,7 @@ package body Gtkada.Tree_View is
    ---------------------------
 
    procedure Row_Expanded_Callback
-     (Widget      : access Gtk_Tree_View_Record'Class;
+     (Widget      : access Gtk_Widget_Record'Class;
       Filter_Iter : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path)
    is
@@ -771,7 +785,10 @@ package body Gtkada.Tree_View is
       --  might have been modified, and in particular would no longer be
       --  relative to the filter model if we use one.
 
-      Widget.On_Row_Expanded (Row_Expanded_Callback'Access, After => False);
+      Widget.Row_Expanded_Callback_ID := Widget_Callback.Connect
+        (Widget,
+         Gtk.Tree_View.Signal_Row_Expanded,
+         Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
       Widget.On_Row_Collapsed (Row_Collapsed_Callback'Access, After => False);
       Widget.On_Destroy (On_Destroy'Access);
 

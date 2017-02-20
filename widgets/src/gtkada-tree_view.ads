@@ -54,6 +54,7 @@
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Finalization;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
@@ -67,6 +68,8 @@ package Gtkada.Tree_View is
 
    type Tree_View_Record is new Gtk_Tree_View_Record with private;
    type Tree_View is access all Tree_View_Record'Class;
+
+   overriding procedure Expand_All (Self : not null access Tree_View_Record);
 
    procedure Gtk_New
      (Widget       : out Tree_View;
@@ -404,6 +407,8 @@ private
 
       Propagate_Filtered_Status : Boolean := True;
       --  See Set_Propagate_Filtered_Status
+
+      Row_Expanded_Callback_ID : Handler_Id;
    end record;
 
    function Model
