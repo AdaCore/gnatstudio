@@ -602,7 +602,8 @@ package body Generic_Views is
       Hist_Prefix : History_Key;
       Tooltip     : String := "";
       Placeholder : String := "";
-      Options     : Filter_Options_Mask := 0)
+      Options     : Filter_Options_Mask := 0;
+      Name        : String := "")
    is
       F   : Filter_Panel;
       Sep : Gtk_Separator_Menu_Item;
@@ -636,6 +637,9 @@ package body Generic_Views is
 
       Gtk_New (F.Pattern, Placeholder => Placeholder);
       Set_Font_And_Colors (F.Pattern, Fixed_Font => True);
+      if Name /= "" then
+         F.Pattern.Set_Name (Name);
+      end if;
 
       if (Options and Debounce) /= 0 then
          Object_Callback.Object_Connect

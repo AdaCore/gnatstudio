@@ -175,7 +175,8 @@ package Generic_Views is
       Hist_Prefix : Histories.History_Key;
       Tooltip     : String := "";
       Placeholder : String := "";
-      Options     : Filter_Options_Mask := 0);
+      Options     : Filter_Options_Mask := 0;
+      Name        : String := "");
    --  Build a filter panel which provides a standard look-and-feel:
    --     * rounded corner (through the theme)
    --     * "clear" icon
@@ -183,6 +184,7 @@ package Generic_Views is
    --     * tooltip
    --     * a number of predefined options
    --     * remember option settings across sessions (through Hist_Prefix)
+   --     * name is used to access filter from testsuite
    --  Whenever the pattern is changed (or cleared), Self.Filter_Changed is
    --  called.
    --  Nothing is done if the filter panel has already been built.

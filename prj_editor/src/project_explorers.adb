@@ -911,7 +911,8 @@ package body Project_Explorers is
          Tooltip     => -"Filter the contents of the project view",
          Placeholder => -"filter",
          Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Project Explorer Filter");
    end Create_Toolbar;
 
    -----------------
@@ -1008,10 +1009,10 @@ package body Project_Explorers is
          end if;
       end Mark_Project_And_Parents_Visible;
 
-      PIter : Project_Iterator;
-      P     : Project_Type;
-      Files : File_Array_Access;
-      Found : Boolean;
+      PIter       : Project_Iterator;
+      P           : Project_Type;
+      Files       : File_Array_Access;
+      Found       : Boolean;
       Prj_Visible : Boolean;  --  has the project already been marked visible
    begin
       GPS.Search.Free (Self.Pattern);
@@ -1202,8 +1203,8 @@ package body Project_Explorers is
       ------------------
 
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type) is
-         It   : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
-         Prj  : Project_Type := Project;
+         It  : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
+         Prj : Project_Type  := Project;
       begin
          case Exp.Tree.Get_Node_Type (Iter) is
             when Project_Node_Types =>
@@ -1226,8 +1227,8 @@ package body Project_Explorers is
                          (Show_Abs_Paths => Show_Abs_Paths,
                           Show_Base      => Show_Base,
                           Project        => Prj,
-                          Dir            =>
-                           Get_File (Exp.Tree.Model, It, File_Column)));
+                          Dir            => Get_File
+                            (Exp.Tree.Model, It, File_Column)));
 
                when others =>
                   null;
