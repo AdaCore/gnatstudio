@@ -1101,6 +1101,10 @@ package body Gtkada.Tree_View is
             Self.Set_Model (Null_Gtk_Tree_Model);
          end if;
 
+         if Self.Filter /= null then
+            Self.Filter.Clear_Cache;
+         end if;
+
          return D : Detached_Model do
             D.Data := Data;
          end return;
