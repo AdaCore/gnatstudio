@@ -124,4 +124,10 @@ private
       Matched : Match_Array);
    --  Filter used to detect a change in the current language
 
+   procedure Remove_Breakpoint_Duplicates
+     (Debugger : access Base_Gdb_Debugger'Class;
+      Num      : GVD.Types.Breakpoint_Identifier);
+   --  remove breakpoint with given number and all others in same location
+   --  if the location has more than one breakpoint
+
 end Debugger.Base_Gdb;

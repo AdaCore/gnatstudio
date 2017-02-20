@@ -2058,13 +2058,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      Result : GVD.Types.Breakpoint_Identifier;
    begin
-      return Internal_Set_Breakpoint
+      Result := Internal_Set_Breakpoint
         (Debugger,
          "-break-insert " & (if Temporary then "-t " else "")
          & (+Base_Name (File)) & ':' & Image (Integer (Line)),
          Mode => Mode);
+
+      Debugger.Remove_Breakpoint_Duplicates (Result);
+
+      return Result;
    end Break_Source;
 
    --------------------------
@@ -2990,6 +2996,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      Next (C);
                   end loop;
                end if;
+
                --  ??? missing Commands
             end;
 

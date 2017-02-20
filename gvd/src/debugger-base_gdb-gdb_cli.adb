@@ -1715,20 +1715,26 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      Result : GVD.Types.Breakpoint_Identifier;
    begin
       if Temporary then
-         return Internal_Set_Breakpoint
+         Result := Internal_Set_Breakpoint
            (Debugger,
             "tbreak " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
             Mode => Mode);
 
       else
-         return Internal_Set_Breakpoint
+         Result := Internal_Set_Breakpoint
            (Debugger,
             "break " & (+Base_Name (File)) & ':' & Image (Integer (Line)),
             Mode => Mode);
+
+         Debugger.Remove_Breakpoint_Duplicates (Result);
       end if;
+
+      return Result;
    end Break_Source;
 
    --------------------------

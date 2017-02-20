@@ -30,6 +30,8 @@ with Language;                 use Language;
 with String_Utils;             use String_Utils;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Editors;
+with GPS.Markers;
 
 with GVD.Dialogs;              use GVD.Dialogs;
 with GVD.Trace;                use GVD.Trace;
@@ -550,6 +552,65 @@ package body Debugger.Base_Gdb is
          end if;
       end if;
    end Prepare_Target_For_Send;
+
+   ----------------------------------
+   -- Remove_Breakpoint_Duplicates --
+   ----------------------------------
+
+   procedure Remove_Breakpoint_Duplicates
+     (Debugger : access Base_Gdb_Debugger'Class;
+      Num      : GVD.Types.Breakpoint_Identifier)
+   is
+      use GVD.Types, GPS.Markers;
+
+      List     : Breakpoint_Vectors.Vector;
+      Location : Location_Marker;
+      Remove   : Boolean := False;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+   begin
+      if Num = No_Breakpoint then
+         return;
+      end if;
+
+      Debugger.List_Breakpoints (Debugger.Kernel, List);
+      for Item of List loop
+         if Item.Num = Num then
+            Location := Item.Location;
+            exit;
+         end if;
+      end loop;
+
+      if Location = No_Marker then
+         return;
+      end if;
+
+      for Item of List loop
+         if Item.Num /= Num
+           and then Similar (Item.Location, Location)
+         then
+            Remove := True;
+            exit;
+         end if;
+      end loop;
+
+      if not Remove then
+         return;
+      end if;
+
+      File := GPS.Editors.Get_File (Location);
+      Line := GPS.Editors.Get_Line (Location);
+
+      for Item of List loop
+         if Similar (Item.Location, Location) then
+            if Item.Num /= No_Breakpoint then
+               Debugger.Remove_Breakpoint (Item.Num);
+            else
+               Debugger.Remove_Breakpoint_At (File, Line);
+            end if;
+         end if;
+      end loop;
+   end Remove_Breakpoint_Duplicates;
 
    -------------------------
    -- Test_If_Has_Command --
