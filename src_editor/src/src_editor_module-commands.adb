@@ -971,6 +971,7 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
       Gtk_New (Label, Display_Base_Name (File));
+      Label.Set_Selectable (True);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 
@@ -983,6 +984,7 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
       Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File)));
+      Label.Set_Selectable (True);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 
