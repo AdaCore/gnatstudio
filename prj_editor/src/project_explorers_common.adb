@@ -162,10 +162,10 @@ package body Project_Explorers_Common is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Icon_Column          => GType_String,
-         File_Column          => Get_Virtual_File_Type,
-         Display_Name_Column  => GType_String,
-         Node_Type_Column     => GType_Int);
+        (Icon_Column         => GType_String,
+         File_Column         => Get_Virtual_File_Type,
+         Display_Name_Column => GType_String,
+         Node_Type_Column    => GType_Int);
    end Columns_Types;
 
    --------------------
@@ -334,7 +334,7 @@ package body Project_Explorers_Common is
    --------------------------
 
    function Create_Or_Reuse_Node
-     (Self      : not null access Base_Explorer_Tree_Record'Class;
+     (Self   : not null access Base_Explorer_Tree_Record'Class;
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
@@ -519,19 +519,19 @@ package body Project_Explorers_Common is
       Tree      : not null access Base_Explorer_Tree_Record'Class;
       Event     : Gdk_Event_Button) return Boolean
    is
-      Iter         : Gtk_Tree_Iter;  --  applies to Model
-      Path         : Gtk_Tree_Path;
-      Filter_Path  : Gtk_Tree_Path;
-      Project      : Project_Type;
-      File         : Virtual_File;
-      Col          : Gtk_Tree_View_Column;
-      Rect         : Gdk_Rectangle;
+      Iter           : Gtk_Tree_Iter;  --  applies to Model
+      Path           : Gtk_Tree_Path;
+      Filter_Path    : Gtk_Tree_Path;
+      Project        : Project_Type;
+      File           : Virtual_File;
+      Col            : Gtk_Tree_View_Column;
+      Rect           : Gdk_Rectangle;
       Cell_X, Cell_Y : Gint;
       Row_Found      : Boolean;
    begin
       if Event.Button = 1 then
          declare
-            Filter_Iter  : Gtk_Tree_Iter;  --  applies to Filter_M
+            Filter_Iter : Gtk_Tree_Iter;  --  applies to Filter_M
          begin
             Filter_Iter := Find_Iter_For_Event (Tree, Event);
             if Filter_Iter = Null_Iter then
@@ -557,16 +557,15 @@ package body Project_Explorers_Common is
 
                if Event.The_Type = Gdk_2button_Press then
                   declare
-                     Path    : Gtk_Tree_Path;
-                     Ignore  : Boolean;
-                     pragma Unreferenced (Ignore);
+                     Path  : Gtk_Tree_Path;
+                     Dummy : Boolean;
                   begin
                      Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
 
                      if Row_Expanded (Tree, Path) then
-                        Ignore := Collapse_Row (Tree, Path);
+                        Dummy := Collapse_Row (Tree, Path);
                      else
-                        Ignore := Expand_Row (Tree, Path, False);
+                        Dummy := Expand_Row (Tree, Path, False);
                      end if;
 
                      Path_Free (Path);
