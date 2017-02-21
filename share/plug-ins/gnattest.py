@@ -121,9 +121,11 @@ def __on_compilation_finished(category, target_name="",
     open_harness_project(last_gnattest['project'])
 
 
-@hook('project_view_changed')
-def on_project_view_changed():
-    """ Replace run target in harness project. """
+def __update_build_targets_visibility():
+    """
+    Update the GNATtest/'Run Main' Build Targets visibility regarding
+    the nature of the loaded project.
+    """
     test_run_target = GPS.BuildTarget("Run a test-driver")
     test_run_targets = GPS.BuildTarget("Run a test drivers list")
     run_main_target = GPS.BuildTarget("Run Main")
@@ -141,6 +143,21 @@ def on_project_view_changed():
         run_main_target.hide()
         test_run_target.hide()
         test_run_targets.show()
+
+
+@hook('gps_started')
+def on_gps_start():
+    """
+    Make sure that the 'Run main' build target is not hidden when opening
+    GPS with a non-harness project.
+    """
+    __update_build_targets_visibility()
+
+
+@hook('project_view_changed')
+def on_project_view_changed():
+    """ Replace run target in harness project. """
+    __update_build_targets_visibility()
 
     # Update read-only areas in already opened files
     buffer_list = GPS.EditorBuffer.list()
