@@ -1652,9 +1652,6 @@ package body Completion_Module is
       Group.Add_Pref
         (Manager => Manager,
          Pref    => Preference (Smart_Completion));
-      Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Smart_Completion_Trigger_Timeout));
    end Register_Preferences;
 
    -------------------------
