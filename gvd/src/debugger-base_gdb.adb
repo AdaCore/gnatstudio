@@ -585,24 +585,15 @@ package body Debugger.Base_Gdb is
          return;
       end if;
 
-      for Item of List loop
-         if Item.Num /= Num
-           and then Similar (Item.Location, Location)
-         then
-            Remove := True;
-            exit;
-         end if;
-      end loop;
-
-      if not Remove then
-         return;
-      end if;
-
       File := GPS.Editors.Get_File (Location);
       Line := GPS.Editors.Get_Line (Location);
 
       for Item of List loop
-         if Similar (Item.Location, Location) then
+         if Item.Num /= Num
+           and then Similar (Item.Location, Location)
+         then
+            --  we have another breakpoint in same location, so delete them all
+            Remove := True;
             if Item.Num /= No_Breakpoint then
                Debugger.Remove_Breakpoint (Item.Num);
             else
@@ -610,6 +601,11 @@ package body Debugger.Base_Gdb is
             end if;
          end if;
       end loop;
+
+      if Remove then
+         --  we have duplicates, so delete this just created breakpoint
+         Debugger.Remove_Breakpoint (Num);
+      end if;
    end Remove_Breakpoint_Duplicates;
 
    -------------------------
