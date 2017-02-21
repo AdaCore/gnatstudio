@@ -114,7 +114,6 @@ with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
-with Trace_Support;                    use Trace_Support;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_Page;                     use Welcome_Page;
 
@@ -739,10 +738,6 @@ procedure GPS.Main is
          File : constant Virtual_File :=
                   Create_From_Dir (GPS_Home_Dir, "traces.cfg");
       begin
-         --   Add the decorators first, so that the proper factory is
-         --   used for them when parsing the config file.
-         Trace_Support.Add_Trace_Decorators;
-
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
             Default      => File,
