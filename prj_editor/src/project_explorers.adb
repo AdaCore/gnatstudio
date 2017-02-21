@@ -20,6 +20,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Ordered_Sets;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -1461,33 +1463,156 @@ package body Project_Explorers is
    -- Find_Project_Node --
    -----------------------
 
+   package Files_Set is new Ada.Containers.Ordered_Sets (Virtual_File);
+   package Projects_Vectors is
+     new Ada.Containers.Vectors (Positive, Project_Type);
+   --  used in Find_Project_Node and declared at package level
+   --  to avoid side effects
+
    function Find_Project_Node
      (Self    : not null access Project_Explorer_Record'Class;
       Project : Project_Type) return Gtk_Tree_Iter
    is
       Flat_View : constant Boolean := Self.Tree.User_Filter.Config.Flat_View;
-      Node     : Gtk_Tree_Iter;
-      P        : Project_Type;
+      Node      : Gtk_Tree_Iter;
+      P         : Project_Type;
+
+      Processed : Files_Set.Set;
+      Way       : Projects_Vectors.Vector;
+      Found     : Boolean := False;
+
+      procedure Find_Path
+        (From  : Project_Type;
+         Way   : in out Projects_Vectors.Vector;
+         Found : in out Boolean);
+      --  tests whether project or its children is one which we looking for
+      --  and fill "way" list to create chain of projects to this one
+
+      procedure Add_Children (Node : in out Gtk_Tree_Iter);
+      --  Add children for node and call itself recursively
+      --  to add childern for all projects in "way" list
+
+      ------------------
+      -- Add_Children --
+      ------------------
+
+      procedure Add_Children (Node : in out Gtk_Tree_Iter)
+      is
+         Path : Gtk_Tree_Path;
+      begin
+         --  iterate over childs to find project from way
+         while Node /= Null_Iter loop
+            P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
+
+            if P = Way.First_Element then
+               --  found, delete it from way
+               Way.Delete_First;
+
+               --  add children for node
+               Path := Self.Tree.Model.Get_Path (Node);
+               Self.Tree.Add_Row_Children (Node);
+               Node := Self.Tree.Model.Get_Iter (Path);
+               Path_Free (Path);
+
+               if not Way.Is_Empty then
+                  --  we have to add deeper
+                  Node := Self.Tree.Model.Children (Node);
+                  Add_Children (Node);
+               end if;
+
+               exit;
+            end if;
+
+            Self.Tree.Model.Next (Node);
+         end loop;
+      end Add_Children;
+
+      ---------------
+      -- Find_Path --
+      ---------------
+
+      procedure Find_Path
+        (From  : Project_Type;
+         Way   : in out Projects_Vectors.Vector;
+         Found : in out Boolean)
+      is
+         Iterator        : Project_Iterator;
+         Current_Project : Project_Type;
+      begin
+         if Processed.Contains (From.Project_Path) then
+            --  this project is already tested
+            return;
+         end if;
+
+         Processed.Insert (From.Project_Path);
+
+         if From = Project then
+            Found := True;
+            return;
+         end if;
+
+         Iterator := From.Start
+           (Recursive   => True,
+            Direct_Only => True);
+
+         --  iterate over nested projects
+         loop
+            Current_Project := Current (Iterator);
+            if Current_Project = No_Project then
+               --  no more project, return "not found"
+               return;
+            end if;
+
+            --  add current project to way and test it (with nested)
+            Way.Append (Current_Project);
+            Find_Path (Current_Project, Way, Found);
+            if Found then
+               --  project is found in this way
+               return;
+            end if;
+
+            --  last project does not contains needed,
+            --  delete from way and try next
+            Way.Delete_Last;
+            Next (Iterator);
+         end loop;
+      end Find_Path;
+
    begin
       if Project = No_Project then
          return Null_Iter;
       end if;
 
-      if not Flat_View then
-         Set_Pref (Show_Flat_View, Self.Kernel.Get_Preferences, True);
-      end if;
+      if Flat_View then
+         Node := Self.Tree.Model.Get_Iter_First;
+         while Node /= Null_Iter loop
+            P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
+            if P = Project then
+               return Node;
+            end if;
 
-      Node := Self.Tree.Model.Get_Iter_First;
-      while Node /= Null_Iter loop
-         P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
-         if P = Project then
-            return Node;
+            Self.Tree.Model.Next (Node);
+         end loop;
+
+         return Null_Iter;
+
+      else
+         Find_Path (Self.Kernel.Get_Project_Tree.Root_Project, Way, Found);
+
+         if Found then
+            --  Way contains projects chain,
+            --  we need to add all children nodes for this way
+            Self.Tree.Add_Row_Children (Self.Tree.Model.Get_Iter_First);
+            Node := Self.Tree.Model.Children (Self.Tree.Model.Get_Iter_First);
+
+            if not Way.Is_Empty then
+               --  we have to add deeper
+               Add_Children (Node);
+            end if;
          end if;
 
-         Self.Tree.Model.Next (Node);
-      end loop;
-
-      return Null_Iter;
+         return Node;
+      end if;
    end Find_Project_Node;
 
    ------------------------
@@ -1804,15 +1929,16 @@ package body Project_Explorers is
      (Command : access Locate_File_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
+
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File     : constant Virtual_File := File_Information (Context.Context);
+      File     : constant Virtual_File  := File_Information (Context.Context);
       S        : File_Info_Set;
       View     : constant Project_Explorer :=
         Explorer_Views.Get_Or_Create_View (Kernel);
       Node     : Gtk_Tree_Iter;
       Success  : Boolean;
       Filter_Path, Path : Gtk_Tree_Path;
-      pragma Unreferenced (Command);
 
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter);
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter) is
