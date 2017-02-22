@@ -40,6 +40,7 @@
   <key action="Delete word forward" >control-Delete</key>
 
   <key action="Search">control-f</key>
+  <key action="Replace" >shift-control-F</key>
   <key action="find next">control-n</key>
   <key action="find previous">control-p</key>
 

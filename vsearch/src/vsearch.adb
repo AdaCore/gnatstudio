@@ -36,6 +36,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Types;                use Glib.Types;
 
+with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -114,6 +115,9 @@ package body Vsearch is
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
 
+   Find_Only_Label         : constant String := "Find Only";
+   Find_And_Replace_Label  : constant String := "Find & Replace";
+
    Incremental_Search               : Boolean_Preference;
    Select_On_Match                  : Boolean_Preference;
    Close_On_Match                   : Boolean_Preference;
@@ -149,6 +153,7 @@ package body Vsearch is
    type Vsearch_Record is new View_Record with record
       Mode                    : Vsearch_Mode := Unknown;
       Main_View               : Dialog_View_With_Button_Box;
+      Mode_Combo              : Gtkada_Combo_Tool_Button;
       Replace_Combo           : Gtk_Combo_Box;
       Context_Combo           : Gtk_Combo_Box_Text;
       Pattern_Combo           : Gtk_Combo_Box;
@@ -569,6 +574,10 @@ package body Vsearch is
      (Object : access Gtk_Widget_Record'Class);
    --  Called after the replace combo has changed
 
+   procedure On_Mode_Changed
+     (Object : access Gtk_Widget_Record'Class);
+   --  Called when the user changes the mode from the mode combo tool button
+
    type Can_Fill_With_Current_Word_Filter is new Action_Filter_Record with
      null record;
    overriding function Filter_Matches_Primitive
@@ -672,6 +681,28 @@ package body Vsearch is
 
    procedure On_Destroy_Focused (Widget : access Gtk_Widget_Record'Class);
    --  Called when widget which had focus is destroing
+
+   -------------------------
+   -- Get_Label_From_Mode --
+   -------------------------
+
+   function Get_Label_From_Mode (Mode : Vsearch_Mode) return String is
+     (case Mode is
+         when Find_Only        => Find_Only_Label,
+         when Find_And_Replace => Find_And_Replace_Label,
+         when Unknown          => "");
+
+   -------------------------
+   -- Get_Mode_From_Label --
+   -------------------------
+
+   function Get_Mode_From_Label (Label : String) return Vsearch_Mode is
+     (if Label = Find_Only_Label then
+         Find_Only
+      elsif Label = Find_And_Replace_Label then
+         Find_And_Replace
+      else
+         Unknown);
 
    --------------
    -- On_Float --
@@ -2113,7 +2144,7 @@ package body Vsearch is
       Self.Main_View.Append_Button (Self.Search_Next_Button);
       Self.Search_Next_Button.Set_Tooltip_Text (-"Search next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Search_Next_Button, Signal_Clicked,
+        (Self.Search_Next_Button, Gtk.Button.Signal_Clicked,
          On_Search'Access, Self);
 
       Gtk_New_With_Mnemonic (Self.Search_Previous_Button, -"_Previous");
@@ -2122,7 +2153,7 @@ package body Vsearch is
       Self.Search_Previous_Button.Set_Tooltip_Text
         (-"Search previous occurrence");
       Widget_Callback.Object_Connect
-        (Self.Search_Previous_Button, Signal_Clicked,
+        (Self.Search_Previous_Button, Gtk.Button.Signal_Clicked,
          On_Search_Previous'Access, Self);
 
       Gtk_New_With_Mnemonic (Self.Search_All_Button, -"Find All");
@@ -2130,7 +2161,7 @@ package body Vsearch is
       Self.Main_View.Append_Button (Self.Search_All_Button);
       Self.Search_All_Button.Set_Tooltip_Text (-"Find all occurences");
       Widget_Callback.Object_Connect
-        (Self.Search_All_Button, Signal_Clicked,
+        (Self.Search_All_Button, Gtk.Button.Signal_Clicked,
          On_Search_All'Access, Self);
 
       Gtk_New (Self.Replace_Button, -"Replace");
@@ -2138,7 +2169,7 @@ package body Vsearch is
       Self.Main_View.Append_Button (Self.Replace_Button);
       Self.Replace_Button.Set_Tooltip_Text (-"Replace next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Replace_Button, Signal_Clicked,
+        (Self.Replace_Button, Gtk.Button.Signal_Clicked,
          On_Replace'Access, Self);
       Self.Replace_Button.Set_Sensitive (False);
 
@@ -2148,7 +2179,7 @@ package body Vsearch is
       Self.Replace_Search_Button.Set_Tooltip_Text
         (-"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Replace_Search_Button, Signal_Clicked,
+        (Self.Replace_Search_Button, Gtk.Button.Signal_Clicked,
          On_Replace_Search'Access, Self);
 
       Gtk_New_With_Mnemonic (Self.Replace_All_Button, -"Replace All");
@@ -2157,7 +2188,7 @@ package body Vsearch is
       Self.Replace_All_Button.Set_Tooltip_Text
         (-"Replace all occurences");
       Widget_Callback.Object_Connect
-        (Self.Replace_All_Button, Signal_Clicked,
+        (Self.Replace_All_Button, Gtk.Button.Signal_Clicked,
          On_Replace_All'Access, Self);
 
       Self.On_Destroy (On_Vsearch_Destroy'Access);
@@ -2230,6 +2261,10 @@ package body Vsearch is
       Self.Replace_Search_Button.Set_Visible (Show_Replace_Widgets);
       Self.Search_Previous_Button.Set_Visible (not Show_Replace_Widgets);
       Self.Search_All_Button.Set_Visible (not Show_Replace_Widgets);
+
+      if Self.Mode_Combo /= null then
+         Self.Mode_Combo.Select_Item (Get_Label_From_Mode (Mode));
+      end if;
    end Set_Vsearch_Mode;
 
    ----------------------------
@@ -2298,7 +2333,9 @@ package body Vsearch is
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      Toolbar.Insert (View.Regexp_Toggle);
+      View.Append_Toolbar
+        (Toolbar => Toolbar,
+         Item    => View.Regexp_Toggle);
 
       Gtk_New (View.Case_Toggle);
       View.Case_Toggle.Set_Icon_Name ("gps-case-sensitive-symbolic");
@@ -2315,7 +2352,9 @@ package body Vsearch is
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      Toolbar.Insert (View.Case_Toggle);
+      View.Append_Toolbar
+        (Toolbar => Toolbar,
+         Item    => View.Case_Toggle);
 
       Gtk_New (View.Whole_Word_Toggle);
       View.Whole_Word_Toggle.Set_Icon_Name ("gps-whole-word-symbolic");
@@ -2332,7 +2371,25 @@ package body Vsearch is
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      Toolbar.Insert (View.Whole_Word_Toggle);
+      View.Append_Toolbar
+        (Toolbar     => Toolbar,
+         Item        => View.Whole_Word_Toggle);
+
+      Gtk_New (View.Mode_Combo, "", Click_Pops_Up => True);
+      Widget_Callback.Object_Connect
+        (View.Mode_Combo,
+         Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
+         On_Mode_Changed'Access,
+         View);
+      for Mode in Find_Only .. Find_And_Replace loop
+         View.Mode_Combo.Add_Item (Get_Label_From_Mode (Mode));
+      end loop;
+
+      View.Append_Toolbar
+        (Toolbar     => Toolbar,
+         Item        => View.Mode_Combo,
+         Right_Align => True,
+         Homogeneous => False);
 
       --  Set the search regexps
       Set_Search_Regexps (View);
@@ -3437,6 +3494,19 @@ package body Vsearch is
       Vsearch_Module_Id.Replace := To_Unbounded_String
         (Vsearch.Replace_Combo.Get_Active_Text);
    end On_Replace_Combo_Changed_After;
+
+   ---------------------
+   -- On_Mode_Changed --
+   ---------------------
+
+   procedure On_Mode_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
+   begin
+      Vsearch.Set_Vsearch_Mode
+        (Get_Mode_From_Label (Vsearch.Mode_Combo.Get_Selected_Item));
+   end On_Mode_Changed;
 
    ------------------------------------
    -- On_Pattern_Combo_Changed_After --
