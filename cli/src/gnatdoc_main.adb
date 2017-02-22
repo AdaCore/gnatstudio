@@ -626,7 +626,8 @@ begin
 
       --  Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
 
-      Internal_Output : constant Boolean := Backend_Name.all = "test";
+      Internal_Output : constant Boolean :=
+        Backend_Name.all in "test" | "cm";
 
       Options : constant GNATdoc.Docgen_Options :=
         (Comments_Filter  => (if Pattern = "" then null

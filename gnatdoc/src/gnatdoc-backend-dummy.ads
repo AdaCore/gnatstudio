@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2017, AdaCore                     --
+--                         Copyright (C) 2017, AdaCore                      --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,32 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATdoc.Backend.Dummy;  use GNATdoc.Backend.Dummy;
-with GNATdoc.Backend.HTML;   use GNATdoc.Backend.HTML;
-with GNATdoc.Backend.Simple; use GNATdoc.Backend.Simple;
+--  This package implements a dummy backend that don't generate any
+--  documentation, but generates internal cm/pr files.
 
-package body GNATdoc.Backend is
+with GNATdoc.Atree;        use GNATdoc.Atree;
+with GNATdoc.Backend.Base; use GNATdoc.Backend.Base;
 
-   -----------------
-   -- New_Backend --
-   -----------------
+private package GNATdoc.Backend.Dummy is
 
-   function New_Backend (Name : String) return GNATdoc_Backend'Class is
-   begin
-      if Name = "html" then
-         return Result : HTML_Backend;
+   type Dummy_Backend is new GNATdoc.Backend.Base.Base_Backend with private;
 
-      elsif Name = "test" then
-         return Result : Simple_Backend;
+private
 
-      elsif Name = "cm" then
-         --  This is special kind of backend to generate cm/pr files only
+   type Dummy_Backend is
+     new GNATdoc.Backend.Base.Base_Backend with null record;
 
-         return Result : Dummy_Backend;
+   overriding procedure Finalize
+     (Self                : in out Dummy_Backend;
+      Update_Global_Index : Boolean) is null;
 
-      else
-         raise Unknown_Backend;
-      end if;
-   end New_Backend;
+   overriding procedure Generate_Lang_Documentation
+     (Self        : in out Dummy_Backend;
+      Tree        : access Tree_Type;
+      Entity      : Entity_Id;
+      Entities    : Collected_Entities;
+      Scope_Level : Natural) is null;
 
-end GNATdoc.Backend;
+   overriding function Name (Self : Dummy_Backend) return String is ("dummy");
+   --  Returns name of the backend.
+
+end GNATdoc.Backend.Dummy;
