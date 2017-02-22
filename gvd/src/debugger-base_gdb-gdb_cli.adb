@@ -167,10 +167,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    GNAT_Binder_File_Pattern  : constant Pattern_Matcher := Compile
      ("(b(~|_).+\.(adb|c))");
 
-   Version_Pattern : constant Pattern_Matcher := Compile
-     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(.[0-9]+)? .*");
-   --  To detect the version of GDB
-
    Undefined_Info_Command    : constant String := "Undefined info command";
    --  Another string used to detect undefined info commands
 
@@ -313,19 +309,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       declare
-         S       : constant String := Send_And_Get_Clean_Output
+         S : constant String := Send_And_Get_Clean_Output
            (Debugger, "show version", Mode => Internal);
-         Matched : Match_Array (0 .. 3);
       begin
-         Match (Version_Pattern, S, Matched);
-
-         if Matched (0) = No_Match then
-            Debugger.GDB_Version := (0, 1);
-         else
-            Debugger.GDB_Version :=
-              (Natural'Value (S (Matched (2).First .. Matched (2).Last)),
-               Natural'Value (S (Matched (3).First .. Matched (3).Last)));
-         end if;
+         Debugger.GDB_Version := Parse_GDB_Version (S);
       end;
 
       return Debugger.GDB_Version;

@@ -45,6 +45,10 @@ package body Debugger.Base_Gdb is
    No_Definition_Of : constant String := "No definition of";
    --  Another string used to detect undefined commands
 
+   Version_Pattern : constant Pattern_Matcher := Compile
+     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(.[0-9]+)? .*");
+   --  To detect the version of GDB
+
    --------------------------
    -- Detect_Debugger_Mode --
    --------------------------
@@ -521,6 +525,26 @@ package body Debugger.Base_Gdb is
          Index := Index + 7;  --  skips " times>"
       end if;
    end Internal_Parse_Value;
+
+   -----------------------
+   -- Parse_GDB_Version --
+   -----------------------
+
+   function Parse_GDB_Version (Output : String) return Version_Number
+   is
+      Matched : Match_Array (0 .. 4);
+
+   begin
+      Match (Version_Pattern, Output, Matched);
+
+      if Matched (0) = No_Match then
+         return (0, 1);
+      else
+         return
+           (Natural'Value (Output (Matched (2).First .. Matched (2).Last)),
+            Natural'Value (Output (Matched (3).First .. Matched (3).Last)));
+      end if;
+   end Parse_GDB_Version;
 
    -----------------------------
    -- Prepare_Target_For_Send --

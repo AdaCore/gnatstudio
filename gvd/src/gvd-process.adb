@@ -19,16 +19,21 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with System;                     use System;
 
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
+
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
-with System;                     use System;
 
 with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
@@ -46,13 +51,13 @@ with Config;                     use Config;
 with Debugger.Base_Gdb.Gdb_CLI;  use Debugger.Base_Gdb.Gdb_CLI;
 with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
 with Default_Preferences;        use Default_Preferences;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Remote;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Consoles;               use GVD.Consoles;
@@ -64,7 +69,6 @@ with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
 with Toolchains_Old;             use Toolchains_Old;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 package body GVD.Process is
 
@@ -84,6 +88,10 @@ package body GVD.Process is
    function To_Main_Debug_Window is new
      Ada.Unchecked_Conversion (System.Address, GPS_Window);
    pragma Warnings (On);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Expect.Process_Descriptor'Class,
+      GNAT.Expect.Process_Descriptor_Access);
 
    -----------------------
    -- Local Subprograms --
@@ -896,6 +904,9 @@ package body GVD.Process is
       function Get_Main return Virtual_File;
       --  Return the file to debug
 
+      function Is_MI_Protocol_Allowed return Boolean;
+      --  check whether GDB version is correct for using MI protocol
+
       --------------
       -- Get_Main --
       --------------
@@ -997,6 +1008,54 @@ package body GVD.Process is
 
       Executable : GNATCOLL.VFS.Virtual_File;
 
+      ----------------------------
+      -- Is_MI_Protocol_Allowed --
+      ----------------------------
+
+      function Is_MI_Protocol_Allowed return Boolean
+      is
+         use Debugger.Base_Gdb;
+
+         CL      : Arg_List := Create (Process.Descriptor.Debugger_Name.all);
+         Fd      : GNAT.Expect.Process_Descriptor_Access := null;
+         Version : Version_Number := Unknown_Version;
+         Success : Boolean := False;
+
+      begin
+         Append_Argument (CL, "--version", One_Arg);
+         GPS.Kernel.Remote.Spawn
+           (Kernel            => Kernel_Handle (Kernel),
+            Arguments         => CL,
+            Server            => Debug_Server,
+            Pd                => Fd,
+            Success           => Success);
+
+         if Success
+           and then Fd /= null
+         then
+            declare
+               S : constant String := GNATCOLL.Utils.Get_Command_Output (Fd);
+            begin
+               Trace (Me, "GDB version is: " & S);
+               Version := Parse_GDB_Version (S);
+            exception
+               when others =>
+                  Trace (Me, "Could not detect gdb version");
+            end;
+         end if;
+         Unchecked_Free (Fd);
+
+         return Version.Major > 7
+           or else (Version.Major = 7
+                    and then Version.Minor >= 10);
+
+      exception
+         when others =>
+            Trace (Me, "Could not detect gdb version");
+            Unchecked_Free (Fd);
+            return False;
+      end Is_MI_Protocol_Allowed;
+
    begin
       Process := new Visual_Debugger_Record;
       GVD.Process.Initialize (Process, Top);
@@ -1008,15 +1067,24 @@ package body GVD.Process is
       Proxy := new GPS_Proxy;
       GPS_Proxy (Proxy.all).Process := Process;
 
-      Process.Descriptor.Debugger := Kind;
-      Process.Descriptor.Program := Executable;
+      Process.Descriptor.Debugger      := Kind;
+      Process.Descriptor.Program       := Executable;
       Process.Descriptor.Debugger_Name := new String'(Args2 (1).all);
 
       case Kind is
          when GVD.Types.Gdb =>
             Process.Debugger := new Gdb_Debugger;
+
          when GVD.Types.Gdb_MI =>
-            Process.Debugger := new Gdb_MI_Debugger;
+            if Is_MI_Protocol_Allowed then
+               Process.Debugger := new Gdb_MI_Debugger;
+
+            else
+               Process.Kernel.Insert
+                 ("MI protocol is not supported by GDB, switching to CI mode",
+                  True, Error);
+               Process.Debugger := new Gdb_Debugger;
+            end if;
       end case;
 
       --  Spawn the debugger

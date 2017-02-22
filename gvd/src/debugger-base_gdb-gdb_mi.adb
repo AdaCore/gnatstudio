@@ -98,10 +98,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("^\^error,msg=""The program is not being run.", Multiple_Lines);
    --  Pattern used to detect when the debuggee is not running
 
-   Version_Pattern           : constant Pattern_Matcher := Compile
-     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(.[0-9]+)? .*");
-   --  To detect the version of GDB
-
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(~[""]*The current source language is [\\]?|Current language:)" &
         "[""]*(auto; currently)?[\s]*([^"",\s,\\]+)?", Multiple_Lines);
@@ -319,20 +315,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       declare
-         S       : constant String := Debugger.Send_And_Get_Clean_Output
+         S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-gdb-version", Mode => Internal);
-         Matched : Match_Array (0 .. 3);
-
       begin
-         Match (Version_Pattern, S, Matched);
-
-         if Matched (0) = No_Match then
-            Debugger.GDB_Version := (0, 1);
-         else
-            Debugger.GDB_Version :=
-              (Natural'Value (S (Matched (2).First .. Matched (2).Last)),
-               Natural'Value (S (Matched (3).First .. Matched (3).Last)));
-         end if;
+         Debugger.GDB_Version := Parse_GDB_Version (S);
       end;
 
       return Debugger.GDB_Version;

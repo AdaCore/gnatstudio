@@ -26,11 +26,6 @@ package Debugger.Base_Gdb is
 
    type Base_Gdb_Debugger is abstract new Debugger.Debugger_Root with private;
 
-private
-
-   use GNAT.Regpat;
-   use GVD.Process;
-
    ----------------------
    -- Version handling --
    ----------------------
@@ -41,6 +36,13 @@ private
    end record;
 
    Unknown_Version : constant Version_Number := (Major => 0, Minor => 0);
+
+   function Parse_GDB_Version (Output : String) return Version_Number;
+
+private
+
+   use GNAT.Regpat;
+   use GVD.Process;
 
    type Remote_GDB_Mode is (Native, Cross, VxWorks);
    --  Indicates the type of remote access.

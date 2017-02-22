@@ -19,7 +19,11 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
+
+with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -38,9 +42,6 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Default_Preferences;       use Default_Preferences;
-with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
