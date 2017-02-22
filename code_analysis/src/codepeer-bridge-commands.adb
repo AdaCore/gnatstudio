@@ -252,6 +252,7 @@ package body CodePeer.Bridge.Commands is
    procedure Inspection
      (Command_File_Name    : Virtual_File;
       Output_Directory     : Virtual_File;
+      DB_Directory         : Virtual_File;
       Inspection_File_Name : Virtual_File;
       Status_File_Name     : Virtual_File;
       Maximum_Version      : Format_Version)
@@ -272,6 +273,8 @@ package body CodePeer.Bridge.Commands is
          Format_Version'Image (Maximum_Version));
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      XML_Utils.Set_Attribute
+        (Database_Node, "db_directory", +DB_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute

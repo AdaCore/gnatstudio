@@ -173,6 +173,7 @@ package body CodePeer.Module.Bridge is
          CodePeer.Bridge.Commands.Inspection
            (Command_File_Name,
             Output_Directory,
+            Codepeer_Database_Directory (Project),
             Reply_File_Name,
             Status_File_Name,
             Format_Version'Min
