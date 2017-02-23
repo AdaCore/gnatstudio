@@ -50,7 +50,9 @@ project Shared is
             for Switches ("Ada") use Common & Optimize &
               ("-O2", "-gnatn",
                "-gnatT3", --  Temporary, L403-023.
-               "-gnatws"
+               "-gnatws",
+               "-gnatwaCJ",
+               "-gnatygO"
                );
             for Switches ("C") use Optimize & ("-g", "-O2");
       end case;

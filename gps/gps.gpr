@@ -58,6 +58,9 @@ project GPS is
             when "Windows_NT" | "osx" =>
                 null;
          end case;
+
+      when "Production" =>
+         null;
    end case;
 
    Processors := external ("PROCESSORS", "1");
