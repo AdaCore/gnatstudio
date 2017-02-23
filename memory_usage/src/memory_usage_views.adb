@@ -333,9 +333,10 @@ package body Memory_Usage_Views is
       --  descriptions.
       Self.Memory_Tree := new Memory_Usage_Tree_View_Record;
       Gtkada.Tree_View.Initialize
-        (Widget       => Self.Memory_Tree,
-         Column_Types => Column_Types,
-         Filtered     => False);
+        (Widget           => Self.Memory_Tree,
+         Column_Types     => Column_Types,
+         Filtered         => True,
+         Set_Visible_Func => True);
       Self.Memory_Tree_Model := Self.Memory_Tree.Model;
       Self.Memory_Tree.Get_Selection.Set_Mode (Selection_None);
       Self.Scrolled.Add (Self.Memory_Tree);
@@ -428,6 +429,58 @@ package body Memory_Usage_Views is
          Kernel => View.Kernel,
          Pref   => Show_Addresses);
    end Create_Menu;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Memory_Usage_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "memory_usage_view",
+         Tooltip     => "Filter the contents of the memory usage view",
+         Placeholder => "filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Memory Usage View Filter");
+   end Create_Toolbar;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Memory_Usage_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access) is
+   begin
+      GPS.Search.Free (Self.Memory_Tree.Pattern);
+      Self.Memory_Tree.Pattern := Pattern;
+      Self.Memory_Tree.Refilter;
+   end Filter_Changed;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self       : not null access Memory_Usage_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean is
+   begin
+      if Self.Pattern = null then
+         return True;
+      end if;
+
+      if Self.Pattern.Start (Self.Model.Get_String (Store_Iter, Name_Column))
+        /= GPS.Search.No_Match
+      then
+         return True;
+      end if;
+
+      return False;
+   end Is_Visible;
 
    ---------------------
    -- Register_Module --

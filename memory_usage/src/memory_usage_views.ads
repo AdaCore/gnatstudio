@@ -34,15 +34,17 @@ with Gtkada.Tree_View;                       use Gtkada.Tree_View;
 with Gtk.Label;                              use Gtk.Label;
 with Gtk.Menu;                               use Gtk.Menu;
 with Gtk.Scrolled_Window;                    use Gtk.Scrolled_Window;
+with Gtk.Toolbar;                            use Gtk.Toolbar;
 with Gtk.Tree_Model;                         use Gtk.Tree_Model;
 with Gtk.Tree_Store;                         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
 with Gtk.Widget;                             use Gtk.Widget;
 with Gtkada.MDI;
 
-with Generic_Views;
+with Generic_Views;                          use Generic_Views;
 with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
+with GPS.Search;                             use GPS.Search;
 
 package Memory_Usage_Views is
 
@@ -107,9 +109,14 @@ private
         Equivalent_Keys => "=",
         "="             => "=");
 
-   type Memory_Usage_Tree_View_Record is new Tree_View_Record with null record;
+   type Memory_Usage_Tree_View_Record is new Tree_View_Record with record
+      Pattern : Search_Pattern_Access;
+   end record;
    type Memory_Usage_Tree_View is
      access all Memory_Usage_Tree_View_Record'Class;
+   overriding function Is_Visible
+     (Self       : not null access Memory_Usage_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean;
 
    function Get_ID
      (Self : not null access Memory_Usage_Tree_View_Record'Class;
@@ -132,6 +139,12 @@ private
    overriding procedure Create_Menu
      (View    : not null access Memory_Usage_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Create_Toolbar
+     (View    : not null access Memory_Usage_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Memory_Usage_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (Self : access Memory_Usage_View_Record'Class) return Gtk_Widget;
