@@ -34,7 +34,6 @@ with String_Utils;                     use String_Utils;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
-with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
