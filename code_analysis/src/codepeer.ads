@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2016, AdaCore                     --
+--                     Copyright (C) 2008-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -42,7 +42,8 @@ package CodePeer is
 
    type Lifeage_Kinds is (Added, Unchanged, Removed);
 
-   type Message_Ranking_Level is (Suppressed, Info, Low, Medium, High);
+   type Message_Ranking_Level is
+     (Not_An_Error, Suppressed, Info, Low, Medium, High);
 
    function Image (Level : CodePeer.Message_Ranking_Level) return String;
 

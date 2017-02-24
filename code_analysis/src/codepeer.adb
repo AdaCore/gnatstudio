@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2016, AdaCore                     --
+--                     Copyright (C) 2008-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -359,6 +359,9 @@ package body CodePeer is
 
             when CodePeer.Suppressed =>
                return "suppressed";
+
+            when CodePeer.Not_An_Error =>
+               return "not-an-error";
          end case;
       end Ranking_Image;
 
@@ -430,6 +433,9 @@ package body CodePeer is
 
          when CodePeer.Suppressed =>
             return "Suppressed";
+
+         when CodePeer.Not_An_Error =>
+            return "not-an-error";
       end case;
    end Image;
 
