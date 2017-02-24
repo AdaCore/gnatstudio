@@ -250,7 +250,7 @@ name, one with the additional decoration indicating 'private' visibility.
 
 
 The Preferences Assistant
-==================
+=========================
 
 .. image:: preferences_assistant.png
 
@@ -283,10 +283,9 @@ dialog, giving you the following choices:
 
 * :guilabel:`Create new project`
 
-  Selecting this choice and the clicking :guilabel:`OK` button launches an
-  assistant to create a project using one of the predefined project
-  templates. This makes it easy to create GtkAda-based applications, or
-  applications using the Ada Web Server, for example.
+  Clicking on this button launches an assistant to create a project using one
+  of the predefined project templates. This makes it easy to create GtkAda-based
+  applications, or applications using the Ada Web Server, for example.
 
 .. index:: project; load existing project
 
