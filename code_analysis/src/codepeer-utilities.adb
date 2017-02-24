@@ -74,6 +74,7 @@ package body CodePeer.Utilities is
 
          if Message.Is_Check
            and then Message.Ranking /= Suppressed
+           and then Message.Ranking /= Not_An_Error
            and then Message.Lifeage /= Removed
          then
             Checks := Checks + 1;

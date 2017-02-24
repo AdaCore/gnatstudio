@@ -42,7 +42,8 @@ package CodePeer is
 
    type Lifeage_Kinds is (Added, Unchanged, Removed);
 
-   type Message_Ranking_Level is (Suppressed, Info, Low, Medium, High);
+   type Message_Ranking_Level is
+     (Not_An_Error, Suppressed, Info, Low, Medium, High);
 
    function Image (Level : CodePeer.Message_Ranking_Level) return String;
 

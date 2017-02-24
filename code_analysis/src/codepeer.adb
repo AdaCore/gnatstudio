@@ -359,6 +359,9 @@ package body CodePeer is
 
             when CodePeer.Suppressed =>
                return "suppressed";
+
+            when CodePeer.Not_An_Error =>
+               return "not-an-error";
          end case;
       end Ranking_Image;
 
@@ -430,6 +433,9 @@ package body CodePeer is
 
          when CodePeer.Suppressed =>
             return "Suppressed";
+
+         when CodePeer.Not_An_Error =>
+            return "not-an-error";
       end case;
    end Image;
 
