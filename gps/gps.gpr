@@ -18,6 +18,7 @@ with "../gvd/gvd";
 with "../help/help";
 with "../kernel/kernel";
 with "../keymanager/keymanager";
+with "../lal/lal";
 with "../memory_usage/memory_usage";
 with "../navigation/navigation";
 with "../prj_editor/prj_editor";

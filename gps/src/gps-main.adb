@@ -159,6 +159,7 @@ with KeyManager_Module;
 with KeyManager_Module.Macros;
 with Toolchains_Module;
 with Ada_Semantic_Tree_Module;
+with LAL.Module;
 with Language_Handlers.Assistants;
 with Memory_Usage_Views.Module;
 with Navigation_Module;
@@ -2191,6 +2192,7 @@ procedure GPS.Main is
       --  Register the supported languages and their associated LI handlers
 
       Ada_Module.Register_Module (GPS_Main.Kernel);
+      LAL.Module.Register_Module (GPS_Main.Kernel);
 
       if Active (CPP_Trace) then
          Cpp_Module.Register_Module (GPS_Main.Kernel);
