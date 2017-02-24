@@ -1725,11 +1725,6 @@ package body CodePeer.Module is
          Informational_Probability_Style_Name,
          Module.Message_Colors (CodePeer.Info),
          True);
-      Initialize_Style
-        (Module.Message_Styles (CodePeer.Suppressed),
-         Suppressed_Probability_Style_Name,
-         Module.Message_Colors (CodePeer.Suppressed),
-         True);
 
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
       Project_Changed_Hook.Add (new On_Project_Changed);

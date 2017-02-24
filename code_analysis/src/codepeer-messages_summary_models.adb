@@ -102,11 +102,9 @@ package body CodePeer.Messages_Summary_Models is
 
          when Entity_Name_Column
             | Entity_Lifeage_Column
-            | Informational_Current_Count_Column
             | Low_Current_Count_Column
             | Medium_Current_Count_Column
             | High_Current_Count_Column
-            | Suppressed_Current_Count_Column
             | Total_Checks_Count_Column
             | Passed_Checks_Count_Column
               =>
@@ -324,9 +322,6 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, "");
             end if;
 
-         when Informational_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Info);
-
          when Low_Current_Count_Column =>
             Set_Count_Image (CodePeer.Low);
 
@@ -347,9 +342,6 @@ package body CodePeer.Messages_Summary_Models is
          when High_Current_Color_Column =>
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (High));
-
-         when Suppressed_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Suppressed);
 
          when Passed_Checks_Count_Column =>
             if Subprogram_Node /= null then

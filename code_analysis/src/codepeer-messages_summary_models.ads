@@ -26,17 +26,15 @@ package CodePeer.Messages_Summary_Models is
    Entity_Icon_Name_Column            : constant :=  0;
    Entity_Name_Column                 : constant :=  1;
    Entity_Lifeage_Column              : constant :=  2;
-   Informational_Current_Count_Column : constant :=  3;
-   Low_Current_Count_Column           : constant :=  4;
-   Low_Current_Color_Column           : constant :=  5;
-   Medium_Current_Count_Column        : constant :=  6;
-   Medium_Current_Color_Column        : constant :=  7;
-   High_Current_Count_Column          : constant :=  8;
-   High_Current_Color_Column          : constant :=  9;
-   Suppressed_Current_Count_Column    : constant := 10;
-   Passed_Checks_Count_Column         : constant := 11;
-   Total_Checks_Count_Column          : constant := 12;
-   Number_Of_Columns                  : constant := 13;
+   Low_Current_Count_Column           : constant :=  3;
+   Low_Current_Color_Column           : constant :=  4;
+   Medium_Current_Count_Column        : constant :=  5;
+   Medium_Current_Color_Column        : constant :=  6;
+   High_Current_Count_Column          : constant :=  7;
+   High_Current_Color_Column          : constant :=  8;
+   Passed_Checks_Count_Column         : constant :=  9;
+   Total_Checks_Count_Column          : constant := 10;
+   Number_Of_Columns                  : constant := 11;
 
    type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;

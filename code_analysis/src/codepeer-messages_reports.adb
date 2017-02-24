@@ -105,9 +105,6 @@ package body CodePeer.Messages_Reports is
    procedure On_Show_High_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
-   procedure On_Show_Suppressed_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
    --  Handles change of state of items of ranking filter
 
    procedure On_Show_Unclassified_Messages_Toggled
@@ -512,9 +509,6 @@ package body CodePeer.Messages_Reports is
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Ranking_High_History, True);
 
-      Self.Show_Ranking (CodePeer.Suppressed) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Ranking_Suppressed_History);
       Self.Show_Ranking (CodePeer.Info) :=
         Histories.Get_History
           (Kernel.Get_History.all, Ranking_Informational_History);
@@ -792,16 +786,6 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Box.Gtk_New_Vbox (Box);
       Scrolled.Add (Box);
-
-      Gtk.Check_Button.Gtk_New (Check, -"suppressed");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.Suppressed));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Suppressed_Messages_Toggled'Access),
-         Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
       Check.Set_Active (Self.Show_Ranking (CodePeer.Info));
@@ -1232,22 +1216,6 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Pending_Messages_Toggled;
-
-   -----------------------------------------
-   -- On_Show_Suppressed_Messages_Toggled --
-   -----------------------------------------
-
-   procedure On_Show_Suppressed_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Ranking (Suppressed) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Ranking_Suppressed_History,
-         Self.Show_Ranking (Suppressed));
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Suppressed_Messages_Toggled;
 
    -------------------------------------------
    -- On_Show_Unclassified_Messages_Toggled --

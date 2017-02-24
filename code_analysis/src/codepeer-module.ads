@@ -215,8 +215,6 @@ private
    --  Style names to be used by children packages
    Informational_Probability_Style_Name : constant String
      := "CodePeer informational messages";
-   Suppressed_Probability_Style_Name    : constant String
-     := "CodePeer suppressed messages";
 
    Module : CodePeer_Module_Id;
    --  Global variable for store CodePeer plugin module. Used in the main menu
