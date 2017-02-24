@@ -1566,6 +1566,7 @@ def check_proof_after_close(proc, ex_st, outp):
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
             llarg = limit_line_option(proc._proc_msg, vc_kind)
+            GPS.Locations.remove_category("Builder results")
             GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
                                                    synchronous=False)
         except TypeError:
@@ -1930,6 +1931,7 @@ def is_file_context(self):
 
 def generic_on_analyze(target, args=[]):
     disable_trace_and_ce()
+    GPS.Locations.remove_category("Builder results")
     GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
@@ -2130,6 +2132,7 @@ def generic_action_on_subp(self, action):
         args = [arg]
         if inside_generic_unit_context(self):
             args.append("-U")
+        GPS.Locations.remove_category("Builder results")
         target = GPS.BuildTarget(action)
         target.execute(extra_args=args,
                        synchronous=False)
@@ -2317,6 +2320,7 @@ def on_prove_check(context):
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
+    GPS.Locations.remove_category("Builder results")
     GPS.BuildTarget(prove_check()).execute(extra_args=args,
                                            synchronous=False)
 
