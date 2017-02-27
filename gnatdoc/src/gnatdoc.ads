@@ -85,8 +85,12 @@ package GNATdoc is
       --  project may have or reference these files we may not be interested
       --  in the addition of those files to the generated documentation).
 
+      Document_Bodies  : Boolean := False;
+      --  True to enable documenting Ada bodies
+
       Process_Bodies   : Boolean := False;
-      --  True to enable processing of body files
+      --  True to enable processing of body files (to retrieve documentation
+      --  for public entities defined in the spec file).
 
       Show_Private     : Boolean := False;
       --  Show also private entities

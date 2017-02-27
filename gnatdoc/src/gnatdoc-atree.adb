@@ -42,6 +42,22 @@ package body GNATdoc.Atree is
    Disable_Free : constant Boolean := True;
    --  Value used to temporarily disable free of entities???
 
+   type Ref_Kind is
+     (R_Unknown,
+      R_Body,
+      R_Declaration,
+      R_Dispatching_Call,
+      R_End_Of_Body,
+      R_End_Of_Spec,
+      R_Full_Declaration,
+      R_Implicit_Reference,
+      R_Label_Of_End_Of_Line,
+      R_Private_Part,
+      R_Reference,
+      R_Static_Call,
+      R_With_Line,
+      R_Write_Reference);
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -78,6 +94,10 @@ package body GNATdoc.Atree is
      (E : Entity_Id) return Root_Entity'Class;
    pragma Inline (LL_Get_Etype);
 
+   function LL_Get_End_Of_Scope_Loc
+     (E : Entity_Id) return General_Location;
+   pragma Inline (LL_Get_End_Of_Scope_Loc);
+
    function LL_Get_First_Private_Entity_Loc
      (E : Entity_Id) return General_Location;
    pragma Inline (LL_Get_First_Private_Entity_Loc);
@@ -99,6 +119,13 @@ package body GNATdoc.Atree is
    procedure LL_Set_Etype
      (E : Entity_Id; Value : Root_Entity'Class);
    pragma Inline (LL_Set_Etype);
+
+   function To_Ref_Kind (Entity_Reference : Ref_Info) return Ref_Kind;
+   --  Convert an entity reference info to the corresponding reference kind.
+
+   ----------------
+   -- Hash_Table --
+   ----------------
 
    package Hash_Table is
       function Hash
@@ -164,6 +191,33 @@ package body GNATdoc.Atree is
       end Hash;
 
    end Hash_Table;
+
+   ------------------
+   -- Acts_As_Spec --
+   ------------------
+
+   function Acts_As_Spec (E : Entity_Id) return Boolean is
+      Loc      : General_Location;
+      Body_Loc : General_Location;
+
+   begin
+      if No (E) then
+         return False;
+      end if;
+
+      Loc      := LL.Get_Location (E);
+      Body_Loc := LL.Get_Body_Loc (E);
+
+      --  ??? Need to investigate this issue: sometimes the files associated
+      --  by Xref matches but the comparison fails???
+
+      return Present (E)
+        and then Is_Subprogram (E)
+      --  and then LL.Get_Location (E) = LL.Get_Body_Loc (E);
+        and then Loc.File.Base_Name = Body_Loc.File.Base_Name
+        and then Loc.Line = Body_Loc.Line
+        and then Loc.Column = Body_Loc.Column;
+   end Acts_As_Spec;
 
    -----------------------------
    -- Append_Array_Index_Type --
@@ -611,6 +665,24 @@ package body GNATdoc.Atree is
    end Get_Components;
 
    ----------------------------
+   -- Get_Corresponding_Body --
+   ----------------------------
+
+   function Get_Corresponding_Body (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Corresponding_Body;
+   end Get_Corresponding_Body;
+
+   ----------------------------
+   -- Get_Corresponding_Spec --
+   ----------------------------
+
+   function Get_Corresponding_Spec (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Corresponding_Spec;
+   end Get_Corresponding_Spec;
+
+   ----------------------------
    -- Get_Direct_Derivations --
    ----------------------------
 
@@ -681,14 +753,14 @@ package body GNATdoc.Atree is
    end Get_Doc_Before;
 
    ---------------------------------
-   -- Get_End_Of_Syntax_Scope_Loc --
+   -- Get_End_Of_Profile_Location --
    ---------------------------------
 
-   function Get_End_Of_Syntax_Scope_Loc
+   function Get_End_Of_Profile_Location
      (E : Entity_Id) return General_Location is
    begin
-      return E.End_Of_Syntax_Scope_Loc;
-   end Get_End_Of_Syntax_Scope_Loc;
+      return E.End_Of_Profile_Location;
+   end Get_End_Of_Profile_Location;
 
    -----------------------------------------
    -- Get_End_Of_Profile_Location_In_Body --
@@ -699,6 +771,30 @@ package body GNATdoc.Atree is
    begin
       return E.End_Of_Profile_Location_In_Body;
    end Get_End_Of_Profile_Location_In_Body;
+
+   --------------------------
+   -- Get_End_Of_Scope_Loc --
+   --------------------------
+
+   function Get_End_Of_Scope_Loc
+     (E : Entity_Id) return General_Location is
+   begin
+      if Present (E.End_Of_Scope_Loc) then
+         return E.End_Of_Scope_Loc;
+      else
+         return LL_Get_End_Of_Scope_Loc (E);
+      end if;
+   end Get_End_Of_Scope_Loc;
+
+   ---------------------------------
+   -- Get_End_Of_Syntax_Scope_Loc --
+   ---------------------------------
+
+   function Get_End_Of_Syntax_Scope_Loc
+     (E : Entity_Id) return General_Location is
+   begin
+      return E.End_Of_Syntax_Scope_Loc;
+   end Get_End_Of_Syntax_Scope_Loc;
 
    ------------------
    -- Get_Entities --
@@ -756,6 +852,25 @@ package body GNATdoc.Atree is
       return E.Etype;
    end Get_Etype;
 
+   ---------------------
+   -- Get_First_Local --
+   ---------------------
+
+   function Get_First_Local
+     (E : Entity_Id) return Entity_Id
+   is
+   begin
+      for Entity of Get_Entities (E).all loop
+         if not Kind_In (Get_Kind (Entity), E_Formal,
+                                            E_Generic_Formal)
+         then
+            return Entity;
+         end if;
+      end loop;
+
+      return Atree.No_Entity;
+   end Get_First_Local;
+
    ----------------------------------
    -- Get_First_Private_Entity_Loc --
    ----------------------------------
@@ -773,7 +888,9 @@ package body GNATdoc.Atree is
       --  "private" and the first private declaration then it is not clear
       --  the location computed by the compiler.
 
-      if Present (LL_Get_First_Private_Entity_Loc (E)) then
+      if Present (LL_Get_First_Private_Entity_Loc (E))
+        and then not Is_Internal (E)
+      then
          return LL_Get_First_Private_Entity_Loc (E);
       else
          return E.First_Private_Entity_Loc;
@@ -1419,9 +1536,17 @@ package body GNATdoc.Atree is
          end if;
 
          --  Store all the references to types; required to support clickable
-         --  types in the html output
+         --  types in the html output. Used also to locate the beginning and
+         --  end of concurrent type bodies (Get_End_Of_Body_Loc
+         --  and Get_Begin_Of_Concurrent_Type_Body_Loc).
 
-         if LL.Is_Type (New_E) then
+         --  Store also references to subprograms and packages. Used to
+         --  identify separate units (since they have two 'body' references)
+
+         if LL.Is_Type (New_E)
+           or else Is_Subprogram (New_E)
+           or else Is_Package (New_E)
+         then
             declare
                Cursor : Root_Reference_Iterator'Class :=
                  Find_All_References
@@ -1432,15 +1557,26 @@ package body GNATdoc.Atree is
                   declare
                      Ref : constant Root_Entity_Reference'Class :=
                        Get (Cursor);
+                     Kind : Ref_Kind;
                   begin
                      Info :=
                        Ref_Info'(Entity => New_E,
                                  Ref    =>
                                    Root_Entity_Reference_Refs.To_Holder (Ref),
                                  Loc    => Get_Location (Ref));
+                     Kind := To_Ref_Kind (Info);
 
-                     New_E.Xref.References.Append (Info);
-                     Append_To_Map (Info);
+                     --  For types store all their references (needed by the
+                     --  backend); for subprograms and packages store only the
+                     --  kind of references needed by the frontend.
+
+                     if LL.Is_Type (New_E)
+                       or else Kind = R_Body
+                       or else Kind = R_End_Of_Body
+                     then
+                        New_E.Xref.References.Append (Info);
+                        Append_To_Map (Info);
+                     end if;
 
                      Next (Cursor);
                   end;
@@ -1480,6 +1616,70 @@ package body GNATdoc.Atree is
                end loop;
 
                Destroy (Cursor);
+            end;
+         end if;
+
+         --  Identify and decorate separate units
+
+         if LL.Is_Type (New_E)
+           or else Is_Subprogram (New_E)
+           or else Is_Package (New_E)
+         then
+            declare
+               Cursor        : Ref_List.Cursor;
+               Body_Refs     : array (1 .. 2) of Ref_Info;
+               Num_Body_Refs : Natural := 0;
+
+            begin
+               --  Save the first two R_Body references (if available)
+
+               Cursor := New_E.Xref.References.First;
+               while Ref_List.Has_Element (Cursor) loop
+                  if To_Ref_Kind (Ref_List.Element (Cursor)) = R_Body then
+                     Num_Body_Refs := Num_Body_Refs + 1;
+                     Body_Refs (Num_Body_Refs) := Ref_List.Element (Cursor);
+
+                     exit when Num_Body_Refs = 2;
+                  end if;
+
+                  Ref_List.Next (Cursor);
+               end loop;
+
+               --  If we have two 'body' references in different files then
+               --  this is a separate unit.
+
+               if Num_Body_Refs = 2
+                 and then Body_Refs (1).Loc.File /= Body_Refs (2).Loc.File
+               then
+                  New_E.Is_Separate_Unit := True;
+                  pragma Assert (Loc /= No_Location);
+
+                  --  At this stage Loc references the declaration of the
+                  --  entity whose body is separate [1], and it has two body
+                  --  references: one associated with its body stub [2], and
+                  --  another associated with the actual separate unit [3].
+
+                  --    package Example is
+                  --       procedure Test;             -- [1]
+                  --    end;
+
+                  --    package body Example is
+                  --       procedure Test is separate; -- [2]
+                  --    end;
+
+                  --    separate (Example);
+                  --    procedure Test is ...          -- [3]
+
+                  if +Loc.File.Base_Name'Length
+                    = +Body_Refs (2).Loc.File.Base_Name'Length
+                  then
+                     LL.Set_Separate_Stub_Body_Loc (New_E, Body_Refs (2).Loc);
+                     LL.Set_Body_Loc (New_E, Body_Refs (1).Loc);
+                  else
+                     LL.Set_Separate_Stub_Body_Loc (New_E, Body_Refs (1).Loc);
+                     LL.Set_Body_Loc (New_E, Body_Refs (2).Loc);
+                  end if;
+               end if;
             end;
          end if;
 
@@ -1562,30 +1762,31 @@ package body GNATdoc.Atree is
 
                 First_Private_Entity_Loc  => No_Location,
 
-                Instance_Of           => Instance_Of,
-                Loc                   => Xref_Loc,
-                Array_Component_Type  => Component_Type,
-                Pointed_Type          => Pointed_Type,
+                Instance_Of            => Instance_Of,
+                Loc                    => Xref_Loc,
+                Array_Component_Type   => Component_Type,
+                Pointed_Type           => Pointed_Type,
+                Separate_Stub_Body_Loc => No_Location,
 
                 Scope_E          => Scope_E,
                 Parent_Package   => Parent_Package,
 
-                Has_Methods   => False,
+                Has_Methods      => False,
 
-                Is_Abstract   => False,
-                Is_Access     => False,
-                Is_Array      => False,
-                Is_Container  => False,
-                Is_Global     => False,
-                Is_Predef     => False,
-                Is_Primitive  => False,
-                Is_Subprogram => False,
-                Is_Type       => False,
-                Is_Generic    => False,
+                Is_Abstract      => False,
+                Is_Access        => False,
+                Is_Array         => False,
+                Is_Container     => False,
+                Is_Generic       => False,
+                Is_Global        => False,
+                Is_Predef        => False,
+                Is_Primitive     => False,
+                Is_Subprogram    => False,
+                Is_Type          => False,
 
-                Parent_Types  => <>,
-                Child_Types   => <>,
-                References    => <>),
+                Parent_Types     => <>,
+                Child_Types      => <>,
+                References       => <>),
 
               Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
               Short_Name      => Context.Kernel.Symbols.Find (S_Name),
@@ -1596,7 +1797,12 @@ package body GNATdoc.Atree is
               Scope           => No_Entity,
               Parent_Package  => No_Entity,
 
+              Corresponding_Spec => No_Entity,
+              Corresponding_Body => No_Entity,
+
+              End_Of_Scope_Loc => No_Location,
               End_Of_Syntax_Scope_Loc => No_Location,
+              End_Of_Profile_Location => No_Location,
               End_Of_Profile_Location_In_Body => No_Location,
               Generic_Formals_Loc => No_Location,
               First_Private_Entity_Loc => No_Location,
@@ -1612,6 +1818,8 @@ package body GNATdoc.Atree is
               Is_Alias          => False,
               Is_Generic_Formal => False,
               Is_Internal       => Is_Internal,
+              Is_Separate_Unit  => False,
+              Is_Skipped        => False,
               Is_Subtype        => False,
               Is_Tagged_Type    => False,
               Is_Incomplete     => False,
@@ -1681,6 +1889,40 @@ package body GNATdoc.Atree is
         and then (Is_Subprogram (E) or else Is_Package (E));
    end Is_Compilation_Unit;
 
+   -------------------
+   -- Is_Entry_Body --
+   -------------------
+
+   function Is_Entry_Body (E : Entity_Id) return Boolean is
+   begin
+      return
+        Get_Kind (E) = E_Entry
+          and then Present (Get_Corresponding_Spec (E));
+   end Is_Entry_Body;
+
+   ---------------------
+   -- Is_Package_Body --
+   ---------------------
+
+   function Is_Package_Body (E : Entity_Id) return Boolean is
+   begin
+      return
+        Is_Package (E)
+          and then Present (Get_Corresponding_Spec (E));
+   end Is_Package_Body;
+
+   -----------------------
+   -- Is_Protected_Body --
+   -----------------------
+
+   function Is_Protected_Body (E : Entity_Id) return Boolean is
+   begin
+      return
+        Present (Get_Corresponding_Spec (E))
+          and then (Get_Kind (E) = E_Protected_Type
+                      or else Get_Kind (E) = E_Single_Protected);
+   end Is_Protected_Body;
+
    --------------------
    -- Is_Record_Type --
    --------------------
@@ -1692,6 +1934,39 @@ package body GNATdoc.Atree is
         or else Kind_In (Get_Kind (E), E_Tagged_Record_Type,
                                        E_Interface);
    end Is_Record_Type;
+
+   ----------------------
+   -- Is_Separate_Unit --
+   ----------------------
+
+   function Is_Separate_Unit (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Separate_Unit;
+   end Is_Separate_Unit;
+
+   ------------------------
+   -- Is_Subprogram_Body --
+   ------------------------
+
+   function Is_Subprogram_Body (E : Entity_Id) return Boolean is
+   begin
+      return
+        Is_Subprogram (E)
+          and then (Present (Get_Corresponding_Spec (E))
+                      or else Acts_As_Spec (E));
+   end Is_Subprogram_Body;
+
+   ------------------
+   -- Is_Task_Body --
+   ------------------
+
+   function Is_Task_Body (E : Entity_Id) return Boolean is
+   begin
+      return
+        Present (Get_Corresponding_Spec (E))
+          and then (Get_Kind (E) = E_Task_Type
+                      or else Get_Kind (E) = E_Single_Task);
+   end Is_Task_Body;
 
    -----------------------------
    -- Is_Class_Or_Record_Type --
@@ -1717,6 +1992,18 @@ package body GNATdoc.Atree is
       return Kind_In (Get_Kind (E), E_Task_Type, E_Protected_Type)
         or else Kind_In (Get_Kind (E), E_Single_Task, E_Single_Protected);
    end Is_Concurrent_Type_Or_Object;
+
+   ---------------------------------------
+   -- Is_Concurrent_Type_Or_Object_Body --
+   ---------------------------------------
+
+   function Is_Concurrent_Type_Or_Object_Body
+     (E : Entity_Id) return Boolean is
+   begin
+      return
+        Is_Concurrent_Type_Or_Object (E)
+          and then Present (Get_Corresponding_Spec (E));
+   end Is_Concurrent_Type_Or_Object_Body;
 
    ------------------
    -- Is_Decorated --
@@ -1840,6 +2127,15 @@ package body GNATdoc.Atree is
    begin
       return E.Is_Private;
    end Is_Private;
+
+   ----------------
+   -- Is_Skipped --
+   ----------------
+
+   function Is_Skipped (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Skipped;
+   end Is_Skipped;
 
    ------------------------
    -- Is_Standard_Entity --
@@ -2020,6 +2316,15 @@ package body GNATdoc.Atree is
       return E.Xref.Etype.Element;
    end LL_Get_Etype;
 
+   -----------------------------
+   -- LL_Get_End_Of_Scope_Loc --
+   -----------------------------
+
+   function LL_Get_End_Of_Scope_Loc (E : Entity_Id) return General_Location is
+   begin
+      return E.Xref.End_Of_Scope_Loc;
+   end LL_Get_End_Of_Scope_Loc;
+
    -------------------------------------
    -- LL_Get_First_Private_Entity_Loc --
    -------------------------------------
@@ -2131,6 +2436,28 @@ package body GNATdoc.Atree is
            Is_Internal => True);
    end New_Internal_Entity;
 
+   -------------------------
+   -- New_Internal_Entity --
+   -------------------------
+
+   function New_Internal_Entity
+     (Context : access constant Docgen_Context;
+      E       : Entity_Id) return Entity_Id
+   is
+      New_Node : Entity_Id;
+
+   begin
+      New_Node :=
+        Internal_New_Entity
+          (Context     => Context,
+           Lang        => Get_Language (E),
+           E           => LL.Get_Entity (E),
+           Loc         => LL.Get_Location (E));
+      New_Node.Is_Internal := True;
+
+      return New_Node;
+   end New_Internal_Entity;
+
    --------
    -- No --
    --------
@@ -2155,6 +2482,18 @@ package body GNATdoc.Atree is
       return EInfo_List.Has_Element (Cursor);
    end Present;
 
+   ----------------
+   -- Remove_Doc --
+   ----------------
+
+   procedure Remove_Doc (E : Entity_Id) is
+   begin
+      Set_Doc        (E, No_Comment_Result);
+      Set_Doc_After  (E, No_Comment_Result);
+      Set_Doc_Before (E, No_Comment_Result);
+      Set_Comment    (E, No_Structured_Comment);
+   end Remove_Doc;
+
    ----------------------
    -- Remove_Full_View --
    ----------------------
@@ -2167,7 +2506,7 @@ package body GNATdoc.Atree is
          end if;
 
          if Disable_Free then
-            E.Full_View := null;
+            E.Full_View := Atree.No_Entity;
          else
             Free (E.Full_View);
          end if;
@@ -2225,6 +2564,15 @@ package body GNATdoc.Atree is
       Set_Scope (E, Atree.No_Entity);
    end Remove_From_Scope;
 
+   ----------------
+   -- Remove_Src --
+   ----------------
+
+   procedure Remove_Src (E : Entity_Id) is
+   begin
+      E.Src := Null_Unbounded_String;
+   end Remove_Src;
+
    ---------------
    -- Set_Alias --
    ---------------
@@ -2253,6 +2601,24 @@ package body GNATdoc.Atree is
       E.Comment := Value;
    end Set_Comment;
 
+   ----------------------------
+   -- Set_Corresponding_Body --
+   ----------------------------
+
+   procedure Set_Corresponding_Body (E : Entity_Id; Value : Entity_Id) is
+   begin
+      E.Corresponding_Body := Value;
+   end Set_Corresponding_Body;
+
+   ----------------------------
+   -- Set_Corresponding_Spec --
+   ----------------------------
+
+   procedure Set_Corresponding_Spec (E : Entity_Id; Value : Entity_Id) is
+   begin
+      E.Corresponding_Spec := Value;
+   end Set_Corresponding_Spec;
+
    -------------
    -- Set_Doc --
    -------------
@@ -2280,6 +2646,16 @@ package body GNATdoc.Atree is
       E.Doc_Before := Value;
    end Set_Doc_Before;
 
+   --------------------------
+   -- Set_End_Of_Scope_Loc --
+   --------------------------
+
+   procedure Set_End_Of_Scope_Loc
+     (E : Entity_Id; Loc : General_Location) is
+   begin
+      E.End_Of_Scope_Loc := Loc;
+   end Set_End_Of_Scope_Loc;
+
    ---------------------------------
    -- Set_End_Of_Syntax_Scope_Loc --
    ---------------------------------
@@ -2289,6 +2665,16 @@ package body GNATdoc.Atree is
    begin
       E.End_Of_Syntax_Scope_Loc := Loc;
    end Set_End_Of_Syntax_Scope_Loc;
+
+   ---------------------------------
+   -- Set_End_Of_Profile_Location --
+   ---------------------------------
+
+   procedure Set_End_Of_Profile_Location
+     (E : Entity_Id; Loc : General_Location) is
+   begin
+      E.End_Of_Profile_Location := Loc;
+   end Set_End_Of_Profile_Location;
 
    -----------------------------------------
    -- Set_End_Of_Profile_Location_In_Body --
@@ -2321,7 +2707,8 @@ package body GNATdoc.Atree is
          P := Get_Full_View (P);
       end if;
 
-      pragma Assert (Is_Tagged (P));
+      pragma Assert (Is_Tagged (P)
+        or else Get_Kind (P) = E_Abstract_Record_Type);
 
       P := Get_Parent (P);
       while Present (P) loop
@@ -2471,6 +2858,15 @@ package body GNATdoc.Atree is
       pragma Assert (not (Is_Private (E)));
       E.Is_Private := True;
    end Set_Is_Private;
+
+   --------------------
+   -- Set_Is_Skipped --
+   --------------------
+
+   procedure Set_Is_Skipped (E : Entity_Id) is
+   begin
+      E.Is_Skipped := True;
+   end Set_Is_Skipped;
 
    --------------------
    -- Set_Is_Subtype --
@@ -2759,6 +3155,18 @@ package body GNATdoc.Atree is
          return E.Xref.Alias.Element;
       end Get_Alias;
 
+      function Get_Begin_Of_Concurrent_Type_Body_Loc
+        (E : Entity_Id) return General_Location is
+      begin
+         for Ref of E.Xref.References loop
+            if To_Ref_Kind (Ref) = R_Body then
+               return Ref.Loc;
+            end if;
+         end loop;
+
+         return No_Location;
+      end Get_Begin_Of_Concurrent_Type_Body_Loc;
+
       function Get_Body_Loc (E : Entity_Id) return General_Location is
       begin
          return E.Xref.Body_Loc;
@@ -2770,10 +3178,17 @@ package body GNATdoc.Atree is
          return E.Xref.Child_Types'Access;
       end Get_Child_Types;
 
-      function Get_End_Of_Scope_Loc (E : Entity_Id) return General_Location is
+      function Get_End_Of_Body_Loc
+        (E : Entity_Id) return General_Location is
       begin
-         return E.Xref.End_Of_Scope_Loc;
-      end Get_End_Of_Scope_Loc;
+         for Ref of E.Xref.References loop
+            if To_Ref_Kind (Ref) = R_End_Of_Body then
+               return Ref.Loc;
+            end if;
+         end loop;
+
+         return No_Location;
+      end Get_End_Of_Body_Loc;
 
       function Get_Entity (E : Entity_Id) return Root_Entity'Class is
       begin
@@ -2811,6 +3226,12 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Scope_E.Element;
       end Get_Scope;
+
+      function Get_Separate_Stub_Body_Loc
+        (E : Entity_Id) return General_Location is
+      begin
+         return E.Xref.Separate_Stub_Body_Loc;
+      end Get_Separate_Stub_Body_Loc;
 
       function Has_Methods (E : Entity_Id) return Boolean is
       begin
@@ -2892,6 +3313,8 @@ package body GNATdoc.Atree is
         (E           : Root_Entity'Class;
          In_Ada_Lang : Boolean) return Entity_Kind
       is
+         pragma Unreferenced (In_Ada_Lang);
+
          Kind : constant String := Get_Display_Kind (E);
 
       begin
@@ -3026,13 +3449,6 @@ package body GNATdoc.Atree is
            or else Kind = "statement label"
            or else Kind = "statement"
          then
-            --  Should not be found in Ada since we are processing only
-            --  specifications (bodies are not handled yet???)
-
-            if In_Ada_Lang then
-               pragma Assert (False);
-            end if;
-
             return E_Unknown;
 
          else
@@ -3040,6 +3456,13 @@ package body GNATdoc.Atree is
             return E_Unknown;
          end if;
       end Get_Ekind;
+
+      procedure Set_Body_Loc
+        (E : Entity_Id; Value : General_Location)
+      is
+      begin
+         E.Xref.Body_Loc := Value;
+      end Set_Body_Loc;
 
       procedure Set_Location
         (E : Entity_Id; Value : General_Location)
@@ -3055,6 +3478,13 @@ package body GNATdoc.Atree is
 
          E.Xref.Loc := Xref_Loc;
       end Set_Location;
+
+      procedure Set_Separate_Stub_Body_Loc
+        (E : Entity_Id; Value : General_Location)
+      is
+      begin
+         E.Xref.Separate_Stub_Body_Loc := Value;
+      end Set_Separate_Stub_Body_Loc;
 
    end LL;
 
@@ -3072,6 +3502,59 @@ package body GNATdoc.Atree is
    begin
       Db := Database;
    end Register_Database;
+
+   -----------------
+   -- To_Ref_Kind --
+   -----------------
+
+   function To_Ref_Kind (Entity_Reference : Ref_Info) return Ref_Kind is
+      Descr : constant String :=
+                Get_Display_Kind
+                  (Root_Entity_Reference_Refs.Element
+                     (Entity_Reference.Ref));
+   begin
+      if Descr = "body" then
+         return R_Body;
+
+      elsif Descr = "declaration" then
+         return R_Declaration;
+
+      elsif Descr = "dispatching call" then
+         return R_Dispatching_Call;
+
+      elsif Descr = "end of body" then
+         return R_End_Of_Body;
+
+      elsif Descr = "end of spec" then
+         return R_End_Of_Spec;
+
+      elsif Descr = "full declaration" then
+         return R_Full_Declaration;
+
+      elsif Descr = "implicit reference" then
+         return R_Implicit_Reference;
+
+      elsif Descr = "label on end line" then
+         return R_Label_Of_End_Of_Line;
+
+      elsif Descr = "private part" then
+         return R_Private_Part;
+
+      elsif Descr = "reference" then
+         return R_Reference;
+
+      elsif Descr = "static call" then
+         return R_Static_Call;
+
+      elsif Descr = "with line" then
+         return R_With_Line;
+
+      elsif Descr = "write reference" then
+         return R_Write_Reference;
+      end if;
+
+      return R_Unknown;
+   end To_Ref_Kind;
 
    ---------------
    -- To_String --
@@ -3204,6 +3687,14 @@ package body GNATdoc.Atree is
          UID : constant String :=
                  (if With_Unique_Id then To_String (E.Id) & ": "
                                     else "");
+         Spec : constant String :=
+                 (if Present (Get_Corresponding_Spec (E))
+                    and then not Reliable_Mode
+                  then
+                     " [Spec=" &
+                     To_String (Get_Corresponding_Spec (E).Id) &
+                     "]"
+                  else "");
       begin
          --  The internally generated Standard entity is not fully decorated
          --  and hence we generate a minimum output.
@@ -3215,7 +3706,8 @@ package body GNATdoc.Atree is
                & Get_Short_Name (E)
                & " ("
                & Get_Kind (E)'Img
-               & ")");
+               & ")"
+               & Spec);
 
             return To_String (Printout);
          end if;
@@ -3228,7 +3720,8 @@ package body GNATdoc.Atree is
             & Get_Kind (E)'Img
             & ":"
             & LL_Get_Kind (E)'Img
-            & ")");
+            & ")"
+            & Spec);
       end;
 
       --  Synthesized attributes
@@ -3244,9 +3737,34 @@ package body GNATdoc.Atree is
       end if;
 
       if not Reliable_Mode
+        and then Present (Get_Corresponding_Spec (E))
+      then
+         Append_Entity ("Corresponding_Spec: ", Get_Corresponding_Spec (E));
+      end if;
+
+      if not Reliable_Mode
+        and then Present (Get_Corresponding_Body (E))
+      then
+         Append_Entity ("Corresponding_Body: ", Get_Corresponding_Body (E));
+      end if;
+
+      if not Reliable_Mode
         and then Present (Get_Etype (E))
       then
          Append_Entity ("Etype: ", Get_Etype (E));
+      end if;
+
+      if not Reliable_Mode then
+         declare
+            End_Of_Scope_Loc : constant General_Location :=
+              Get_End_Of_Scope_Loc (E);
+
+         begin
+            if Present (End_Of_Scope_Loc) then
+               Append_Line
+                 ("End_Of_Scope_Loc: " & Image (End_Of_Scope_Loc));
+            end if;
+         end;
       end if;
 
       if Present (Get_End_Of_Syntax_Scope_Loc (E)) then
@@ -3266,15 +3784,23 @@ package body GNATdoc.Atree is
          then
             null;
 
-         elsif Is_Subprogram_Or_Entry (E) then
+         elsif Reliable_Mode and then Is_Subprogram_Or_Entry (E) then
             Append_Line
               ("End_Of_Profile_Location: "
-               & Image (Get_End_Of_Profile_Location (E)));
+               & Image (Get_End_Of_Syntax_Scope_Loc (E)));
          else
             Append_Line
               ("End_Of_Syntax_Scope_Loc: "
                & Image (Get_End_Of_Syntax_Scope_Loc (E)));
          end if;
+      end if;
+
+      if not Reliable_Mode
+        and then Present (Get_End_Of_Profile_Location (E))
+      then
+         Append_Line
+           ("End_Of_Profile_Location: "
+            & Image (Get_End_Of_Profile_Location (E)));
       end if;
 
       if Present (Get_Generic_Formals_Loc (E)) then
@@ -3380,6 +3906,12 @@ package body GNATdoc.Atree is
          Append_Line ("Is_Subprogram");
       end if;
 
+      if not Reliable_Mode
+        and then Is_Separate_Unit (E)
+      then
+         Append_Line ("Is_Separate_Unit");
+      end if;
+
       --  Display record type discriminants, components, entries and
       --  subprograms
 
@@ -3420,8 +3952,8 @@ package body GNATdoc.Atree is
          end;
       end if;
 
-      if LL.Is_Array (E)
-        and then not Reliable_Mode
+      if not Reliable_Mode
+        and then LL.Is_Array (E)
       then
          Append_Entities
            (Vector => Get_Array_Index_Type (E),
@@ -3453,6 +3985,15 @@ package body GNATdoc.Atree is
             & LL_Get_Full_Name (E));
       end if;
 
+      if not Reliable_Mode
+        and then Present (LL.Get_Separate_Stub_Body_Loc (E))
+      then
+         Append_Line
+           (LL_Prefix
+            & "Separate_Stub_Body_Loc: "
+            & Image (LL.Get_Separate_Stub_Body_Loc (E)));
+      end if;
+
       if Present (LL.Get_Body_Loc (E)) then
          Append_Line
            (LL_Prefix
@@ -3467,16 +4008,28 @@ package body GNATdoc.Atree is
             & Image (Get_First_Private_Entity_Loc (E)));
       end if;
 
-      if Present (LL_Get_First_Private_Entity_Loc (E)) then
-         Append_Line
-           (LL_Prefix
-            & "First_Private_Entity_Loc: "
-            & Image (LL_Get_First_Private_Entity_Loc (E)));
+      --  This should be fixed; left temporarily to avoid spurious
+      --  regressions in the testsuite???
+
+      if Reliable_Mode then
+         if Present (LL_Get_First_Private_Entity_Loc (E)) then
+            Append_Line
+              (LL_Prefix
+               & "First_Private_Entity_Loc: "
+               & Image (LL_Get_First_Private_Entity_Loc (E)));
+         end if;
+      else
+         if Present (Get_First_Private_Entity_Loc (E)) then
+            Append_Line
+              (LL_Prefix
+               & "First_Private_Entity_Loc: "
+               & Image (Get_First_Private_Entity_Loc (E)));
+         end if;
       end if;
 
       declare
          End_Of_Scope_Loc : constant General_Location :=
-           End_Of_Scope (LL.Get_Entity (E));
+           LL_Get_End_Of_Scope_Loc (E);
 
       begin
          if Present (End_Of_Scope_Loc) then
@@ -3674,37 +4227,97 @@ package body GNATdoc.Atree is
       if E.Xref.Is_Subprogram then
          if Has_Formals (E) then
             declare
-               Cursor : EInfo_List.Cursor;
-               Formal : Entity_Id;
+               -----------------
+               -- Body_Output --
+               -----------------
+
+               procedure Body_Output;
+               procedure Body_Output is
+               begin
+                  Append_Line (LL_Prefix & " Formals:");
+
+                  for Formal of Get_Entities (E).all loop
+                     exit when Get_Kind (Formal) /= E_Formal;
+
+                     declare
+                        UID : constant String :=
+                                (if With_Unique_Id
+                                 then To_String (Formal.Id) & ": "
+                                 else "");
+                     begin
+                        Append_Line
+                          (LL_Prefix
+                           & " - "
+                           & UID
+                           & Image (LL.Get_Location (Formal))
+                           & ":"
+                           & Get_Short_Name (Formal));
+                     end;
+                  end loop;
+
+                  Append_Line (LL_Prefix & " Entities:");
+
+                  for Formal of Get_Entities (E).all loop
+                     if Get_Kind (Formal) /= E_Formal then
+                        declare
+                           UID : constant String :=
+                                   (if With_Unique_Id
+                                    then To_String (Formal.Id) & ": "
+                                    else "");
+                        begin
+                           Append_Line
+                             (LL_Prefix
+                              & " - "
+                              & UID
+                              & Image (LL.Get_Location (Formal))
+                              & ":"
+                              & Get_Short_Name (Formal));
+                        end;
+                     end if;
+                  end loop;
+               end Body_Output;
+
+               -------------------
+               -- Legacy_Output --
+               -------------------
+
+               procedure Legacy_Output;
+               procedure Legacy_Output is
+               begin
+                  Append_Line (LL_Prefix & " Formals:");
+
+                  for Formal of Get_Entities (E).all loop
+                     declare
+                        UID : constant String :=
+                                (if With_Unique_Id
+                                 then To_String (Formal.Id) & ": "
+                                 else "");
+                        Suffix : constant String :=
+                          (if Get_Kind (Formal) = E_Formal then ""
+                              else Get_Kind (Formal)'Img & " ???");
+                     begin
+                        Append_Line
+                          (LL_Prefix
+                           & " - "
+                           & UID
+                           & Image (LL.Get_Location (Formal))
+                           & ":"
+                           & Get_Short_Name (Formal)
+                           & Suffix);
+                     end;
+                  end loop;
+               end Legacy_Output;
+
+               Is_Body_Entity : constant Boolean :=
+                 Present (Get_Corresponding_Spec (E))
+                   or else Acts_As_Spec (E);
 
             begin
-               Append_Line (LL_Prefix & " Formals:");
-
-               Cursor := Get_Entities (E).First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Formal := EInfo_List.Element (Cursor);
-
-                  declare
-                     UID : constant String :=
-                             (if With_Unique_Id
-                              then To_String (Formal.Id) & ": "
-                              else "");
-                     Suffix : constant String :=
-                       (if Get_Kind (Formal) = E_Formal then ""
-                           else Get_Kind (Formal)'Img & " ???");
-                  begin
-                     Append_Line
-                       (LL_Prefix
-                        & " - "
-                        & UID
-                        & Image (LL.Get_Location (Formal))
-                        & ":"
-                        & Get_Short_Name (Formal)
-                        & Suffix);
-                  end;
-
-                  EInfo_List.Next (Cursor);
-               end loop;
+               if not Is_Body_Entity then
+                  Legacy_Output;
+               else
+                  Body_Output;
+               end if;
             end;
          end if;
       end if;
@@ -3730,7 +4343,9 @@ package body GNATdoc.Atree is
       end if;
 
       if not Reliable_Mode
-        and then LL.Is_Type (E)
+        and then (LL.Is_Type (E)
+                   or else Is_Subprogram (E)
+                   or else Is_Package (E))
       then
          declare
             Cursor : Ref_List.Cursor;
@@ -3742,7 +4357,9 @@ package body GNATdoc.Atree is
                Append_Line
                  (LL_Prefix
                   & "- "
-                  & Image (Ref_List.Element (Cursor).Loc));
+                  & Image (Ref_List.Element (Cursor).Loc)
+                  & ":"
+                  & To_Ref_Kind (Ref_List.Element (Cursor))'Img);
                Ref_List.Next (Cursor);
             end loop;
          end;
@@ -3871,13 +4488,26 @@ package body GNATdoc.Atree is
    begin
       if No (E) then
          GNAT.IO.Put_Line ("<No entity>");
+
+      elsif Present (Get_Corresponding_Spec (E)) then
+         GNAT.IO.Put_Line
+           ("["
+            & To_String (Get_Unique_Id (E))
+            & "] "
+            & Image (LL.Get_Location (E))
+            & ":"
+            & Get_Short_Name (E)
+            & " (Spec="
+            & To_String (Get_Unique_Id (Get_Corresponding_Spec (E)))
+            & ")");
       else
          GNAT.IO.Put_Line
            ("["
             & To_String (Get_Unique_Id (E))
             & "] "
-            & Get_Short_Name (E) & " "
-            & Image (LL.Get_Location (E)));
+            & Image (LL.Get_Location (E))
+            & ":"
+            & Get_Short_Name (E));
       end if;
    end pns;
 
@@ -3904,12 +4534,35 @@ package body GNATdoc.Atree is
       if No (E) then
          GNAT.IO.Put_Line ("<No entity>");
       else
-         GNAT.IO.Put_Line
-           ("["
-            & To_String (Get_Unique_Id (E))
-            & "] "
-            & Get_Short_Name (E) & " "
-            & Image (LL.Get_Body_Loc (E)));
+         declare
+            Spec_Id : constant String :=
+              (if Present (Get_Corresponding_Spec (E)) then
+                  " [Spec=" &
+                  To_String (Get_Corresponding_Spec (E).Id) &
+                  "]"
+               else "");
+            Body_Loc : constant String :=
+              (if Present (LL.Get_Body_Loc (E)) then
+                  " Body=" &
+                  Image (LL.Get_Body_Loc (E))
+               else "");
+            Separate_Stub_Body_Loc : constant String :=
+              (if Present (LL.Get_Separate_Stub_Body_Loc (E)) then
+                  " Sep_Body=" &
+                  Image (LL.Get_Separate_Stub_Body_Loc (E))
+               else "");
+         begin
+            GNAT.IO.Put_Line
+              ("["
+               & To_String (Get_Unique_Id (E))
+               & "] "
+               & Image (LL.Get_Location (E))
+               & ":"
+               & Get_Short_Name (E)
+               & Body_Loc
+               & Separate_Stub_Body_Loc
+               & Spec_Id);
+         end;
       end if;
    end pnsb;
 

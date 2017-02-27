@@ -52,6 +52,8 @@ package body GNATdoc.Frontend is
 
       --  Reserved Ada 83 words
       Tok_And,
+      Tok_Begin,
+      Tok_Body,
       Tok_Case,
       Tok_End,
       Tok_Entry,
@@ -70,6 +72,7 @@ package body GNATdoc.Frontend is
       Tok_Record,
       Tok_Renames,
       Tok_Return,
+      Tok_Separate,
       Tok_Subtype,
       Tok_Task,
       Tok_Type,
@@ -108,13 +111,24 @@ package body GNATdoc.Frontend is
    -- Local_Subrograms --
    ----------------------
 
+   function "<"
+     (Left  : General_Location;
+      Right : General_Location) return Boolean;
+   --  Return True if Left is located before Right in the same file
+
    function Add_Documentation_From_Sources
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
-      File_Entities : access Tree_Type) return Boolean;
+      File_Entities : access Tree_Type;
+      Tree_Spec     : access Tree_Type) return Boolean;
    --  Add to the nodes their blocks of documentation & sources. Returns false
    --  if we found discrepancies between the contents of the database and the
-   --  parsed sources.
+   --  parsed sources. Tree_Spec contanins the tree built for the specification
+   --  of this file (the null value means that we are building the tree of a
+   --  compilation unit specification; the No_Tree value means that we are
+   --  processing a compilation unit body that has no spec; and other values
+   --  mean that we are processing a compilation unit body that has the given
+   --  compilation unit specification tree).
 
    function To_Visible_Column
      (Buffer          : String;
@@ -170,6 +184,9 @@ package body GNATdoc.Frontend is
       procedure Exit_Scope;
       --  Leave a syntax scope
 
+      procedure Reset_Stack;
+      --  Reset the scopes stack
+
       -- Getters --------------------------------------------------
 
       function Get_Current_Entity
@@ -184,6 +201,16 @@ package body GNATdoc.Frontend is
 
       function Get_Scope (Context : Context_Id) return Entity_Id;
       --  Return scope of the next entity (No_Entity if no scope available)
+
+      function In_Body
+        (Context : Context_Id) return Boolean;
+      --  Return True if we have seen the 'begin' token or if we have seen the
+      --  the first internal entity of the current package, subprogram or
+      --  concurrent type body (excluding its formals).
+
+      function In_Concurrent_Type_Definition
+        (Context : Context_Id) return Boolean;
+      --  Return True if this context corresponds with task or protected type
 
       function In_Private_Part
         (Context : Context_Id) return Boolean;
@@ -211,6 +238,12 @@ package body GNATdoc.Frontend is
       procedure Set_End_Decl_Found
         (Context : Context_Id);
 
+      procedure Set_In_Body
+        (Context : Context_Id);
+
+      procedure Set_In_Concurrent_Type_Definition
+        (Context : Context_Id);
+
       procedure Set_In_Private_Part
         (Context : Context_Id);
 
@@ -230,8 +263,11 @@ package body GNATdoc.Frontend is
          Current_Entity       : Entity_Id;
 
          --  Parser state
-         End_Decl_Found       : Boolean := False;
-         In_Private_Part      : Boolean := False;
+         End_Decl_Found                : Boolean := False;
+         In_Body                       : Boolean := False;
+         In_Concurrent_Type_Definition : Boolean := False;
+         In_Private_Part               : Boolean := False;
+
          Token_Seen           : Token_Flags := (others => False);
       end record;
 
@@ -241,9 +277,12 @@ package body GNATdoc.Frontend is
       pragma Inline (Current_Context);
       pragma Inline (Enter_Scope);
       pragma Inline (Exit_Scope);
+      pragma Inline (Reset_Stack);
 
       pragma Inline (Get_Current_Entity);
       pragma Inline (Get_End_Decl_Found);
+      pragma Inline (In_Body);
+      pragma Inline (In_Concurrent_Type_Definition);
       pragma Inline (In_Private_Part);
       pragma Inline (Get_Prev_Entity_In_Scope);
       pragma Inline (Get_Scope);
@@ -256,11 +295,52 @@ package body GNATdoc.Frontend is
 
       pragma Inline (Set_Current_Entity);
       pragma Inline (Set_End_Decl_Found);
+      pragma Inline (Set_In_Body);
+      pragma Inline (Set_In_Concurrent_Type_Definition);
       pragma Inline (Set_In_Private_Part);
       pragma Inline (Set_Token_Seen);
 
    end Scopes_Stack;
    use Scopes_Stack;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<"
+     (Left  : General_Location;
+      Right : General_Location) return Boolean is
+   begin
+      --  ??? Need to investigate this issue: sometimes the files associated
+      --  by Xref matches but the comparison fails (most probably because
+      --  we are comparing pointers to Location records)
+
+      --  return Left.File = Right.File
+      return Left.File.Base_Name = Right.File.Base_Name
+               and then
+                  (Left.Line < Right.Line
+                     or else (Left.Line = Right.Line
+                                and then Left.Column < Right.Column));
+   end "<";
+
+   --------------------------
+   -- Ada_Compilation_Unit --
+   --------------------------
+
+   function Ada_Compilation_Unit (Tree : Tree_Type) return Entity_Id is
+   begin
+      pragma Assert (Is_Standard_Entity (Tree.Tree_Root));
+
+      for E of Get_Entities (Tree.Tree_Root).all loop
+         if Is_Compilation_Unit (E) then
+            return E;
+         end if;
+
+         pragma Assert (Is_Generic_Formal (E));
+      end loop;
+
+      return Atree.No_Entity;
+   end Ada_Compilation_Unit;
 
    ------------------------------------
    -- Add_Documentation_From_Sources --
@@ -269,13 +349,28 @@ package body GNATdoc.Frontend is
    function Add_Documentation_From_Sources
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
-      File_Entities : access Tree_Type) return Boolean
+      File_Entities : access Tree_Type;
+      Tree_Spec     : access Tree_Type) return Boolean
    is
       Lang          : constant Language_Access :=
                         Get_Language_From_File (Context.Lang_Handler, File);
       In_Ada_Lang   : constant Boolean :=
                         Lang.all in Language.Ada.Ada_Language'Class;
+      In_Ada_Body   : constant Boolean :=
+                        In_Ada_Lang
+                          and then not Is_Spec_File (Context.Kernel, File);
+      In_Ada_Spec   : constant Boolean :=
+                        In_Ada_Lang
+                          and then Is_Spec_File (Context.Kernel, File);
       In_C_Lang     : constant Boolean := not In_Ada_Lang;
+
+      Processing_Body : constant Boolean := Tree_Spec /= null;
+
+      Processing_Body_With_Spec : constant Boolean :=
+        Processing_Body and then Tree_Spec.all /= No_Tree;
+
+      Processing_Body_Without_Spec : constant Boolean :=
+        Processing_Body and then Tree_Spec.all = No_Tree;
 
       Body_File        : Virtual_File := No_File;
       Buffer           : GNAT.Strings.String_Access;
@@ -353,6 +448,26 @@ package body GNATdoc.Frontend is
       procedure Ada_Set_Doc (E : Entity_Id);
       --  Set the documentation of E
 
+      procedure Append_Corresponding_Body_Of_Entities_Defined_In_Body;
+      --  Append to the list of entities of File_Entities the corresponding
+      --  body of entities defined in the body (that is, entities whose spec
+      --  is defined in a compilation unit body).
+
+      procedure Append_Corresponding_Body_Of_Entities_Defined_In_Spec;
+      --  Append to the list of entities of File_Entities the corresponding
+      --  body of entities defined in the spec (that is, entities whose spec
+      --  is defined in a compilation unit spec).
+
+      procedure Clean_Entities;
+      --  Remove sources and documentation of skipped entities. Remove also
+      --  sources attached to the internal entities associated with the
+      --  corresponding bodies.
+
+      function Build_Corresponding_Body
+        (E       : Entity_Id;
+         New_Loc : General_Location) return Entity_Id;
+      --  Build the corresponding body entity of E
+
       procedure CPP_Get_Doc (E : Entity_Id);
       --  Retrieve the C/C++ documentation associated with E
 
@@ -370,6 +485,14 @@ package body GNATdoc.Frontend is
          Prev_Word_Begin : out Natural;
          Prev_Word_End   : out Natural);
       --  Return the indexes to the first word in Buffer located before Index
+
+      procedure Remove_Internal_FE_Entities;
+      --  Remove from the list of entities of File_Entities internal entities
+      --  available in the ALI files which GNATdoc does not need to process.
+
+      procedure Remove_Task_Body_Entities;
+      --  Remove from the list of entities all the entities defined in task
+      --  bodies.
 
       procedure Swap_Buffers;
       --  Swap the contents of Buffer and C_Headers_Buffer. Used to retrieve
@@ -483,6 +606,221 @@ package body GNATdoc.Frontend is
          Set_Doc_Before (E, No_Comment_Result);
          Set_Doc_After (E, No_Comment_Result);
       end Ada_Set_Doc;
+
+      -----------------------------------------------------------
+      -- Append_Corresponding_Body_Of_Entities_Defined_In_Body --
+      -----------------------------------------------------------
+
+      procedure Append_Corresponding_Body_Of_Entities_Defined_In_Body is
+         Body_Entities : aliased EInfo_List.Vector;
+         Subp_E        : Entity_Id := Atree.No_Entity;
+         Cloned_E      : Entity_Id;
+
+      begin
+         pragma Assert (In_Ada_Body);
+
+         for E of File_Entities.All_Entities loop
+            if Is_Concurrent_Type_Or_Object (E) then
+               declare
+                  Body_Loc : constant General_Location :=
+                    LL.Get_Begin_Of_Concurrent_Type_Body_Loc (E);
+               begin
+                  --  For iterators the compiler may generate references to
+                  --  internal tasks that do not have its Body_Loc attribute
+
+                  if Present (Body_Loc) then
+                     Cloned_E := Build_Corresponding_Body (E, Body_Loc);
+
+                     if Present (Cloned_E) then
+                        Set_First_Private_Entity_Loc (Cloned_E, No_Location);
+
+                        if not File_Entities.All_Entities.Contains (Cloned_E)
+                          and then not Body_Entities.Contains (Cloned_E)
+                        then
+                           Body_Entities.Append (Cloned_E);
+                        end if;
+                     end if;
+
+                     Subp_E := Atree.No_Entity;
+                  end if;
+               end;
+
+            elsif Is_Package (E)
+              or else Is_Subprogram_Or_Entry (E)
+            then
+               if Is_Separate_Unit (E) then
+                  Cloned_E := Build_Corresponding_Body (E,
+                                LL.Get_Separate_Stub_Body_Loc (E));
+
+                  LL.Set_Body_Loc (Cloned_E, LL.Get_Body_Loc (E));
+                  LL.Set_Separate_Stub_Body_Loc (Cloned_E, No_Location);
+
+                  if Present (Cloned_E)
+                    and then not
+                      File_Entities.All_Entities.Contains (Cloned_E)
+                  then
+                     Body_Entities.Append (Cloned_E);
+                  end if;
+               else
+                  declare
+                     Loc      : constant General_Location :=
+                                  LL.Get_Location (E);
+                     Body_Loc : constant General_Location :=
+                                  LL.Get_Body_Loc (E);
+                  begin
+                     if Loc.File = Body_Loc.File
+                       and then Body_Loc.Line /= Loc.Line
+                     then
+                        Cloned_E :=
+                          Build_Corresponding_Body (E, LL.Get_Body_Loc (E));
+
+                        if Present (Cloned_E)
+                          and then not
+                            File_Entities.All_Entities.Contains (Cloned_E)
+                          and then not Body_Entities.Contains (Cloned_E)
+                        then
+                           Body_Entities.Append (Cloned_E);
+                        end if;
+
+                        Subp_E := E;
+                     end if;
+                  end;
+               end if;
+
+            elsif Present (Subp_E)
+              and then Get_Kind (E) = E_Formal
+              and then Present (LL.Get_Body_Loc (E))
+            then
+               Cloned_E :=
+                 Build_Corresponding_Body (E, LL.Get_Body_Loc (E));
+
+               if Present (Cloned_E)
+                 and then not
+                   File_Entities.All_Entities.Contains (Cloned_E)
+                 and then not Body_Entities.Contains (Cloned_E)
+               then
+                  Body_Entities.Append (Cloned_E);
+               end if;
+            else
+               Subp_E := Atree.No_Entity;
+            end if;
+         end loop;
+
+         for E of Body_Entities loop
+            File_Entities.All_Entities.Append (E);
+         end loop;
+      end Append_Corresponding_Body_Of_Entities_Defined_In_Body;
+
+      -----------------------------------------------------------
+      -- Append_Corresponding_Body_Of_Entities_Defined_In_Spec --
+      -----------------------------------------------------------
+
+      procedure Append_Corresponding_Body_Of_Entities_Defined_In_Spec is
+         Cloned_E : Entity_Id;
+         Body_Loc : General_Location;
+
+      begin
+         pragma Assert (In_Ada_Body
+           and then Processing_Body_With_Spec);
+
+         for E of Tree_Spec.All_Entities loop
+            if Is_Concurrent_Type_Or_Object (E) then
+               Body_Loc :=
+                 LL.Get_Begin_Of_Concurrent_Type_Body_Loc (E);
+
+               if Body_Loc /= No_Location
+                 and then Body_Loc.File = File
+               then
+                  Cloned_E :=
+                    Build_Corresponding_Body (E, Body_Loc);
+
+                  if Present (Cloned_E) then
+                     if not File_Entities.All_Entities.Contains (Cloned_E)
+                     then
+                        File_Entities.All_Entities.Append (Cloned_E);
+                     end if;
+                  end if;
+               end if;
+
+            elsif Is_Separate_Unit (E) then
+               Body_Loc := LL.Get_Separate_Stub_Body_Loc (E);
+               Cloned_E := Build_Corresponding_Body (E, Body_Loc);
+               LL.Set_Body_Loc (Cloned_E, LL.Get_Body_Loc (E));
+               LL.Set_Separate_Stub_Body_Loc (Cloned_E, No_Location);
+
+               if Present (Cloned_E)
+                 and then not
+                   File_Entities.All_Entities.Contains (Cloned_E)
+               then
+                  File_Entities.All_Entities.Append (Cloned_E);
+               end if;
+
+            else
+               Body_Loc := LL.Get_Body_Loc (E);
+
+               if Body_Loc /= No_Location
+                 and then Body_Loc.File = File
+               then
+                  Cloned_E :=
+                    Build_Corresponding_Body (E, Body_Loc);
+
+                  if Present (Cloned_E)
+                    and then not
+                      File_Entities.All_Entities.Contains (Cloned_E)
+                  then
+                     File_Entities.All_Entities.Append (Cloned_E);
+                  end if;
+               end if;
+            end if;
+         end loop;
+      end Append_Corresponding_Body_Of_Entities_Defined_In_Spec;
+
+      ------------------------------
+      -- Build_Corresponding_Body --
+      ------------------------------
+
+      function Build_Corresponding_Body
+        (E       : Entity_Id;
+         New_Loc : General_Location) return Entity_Id
+      is
+         Body_E : Entity_Id := Find_Unique_Entity (New_Loc,
+                                 In_References => False);
+      begin
+         --  In instantiations the attribute Body_Loc references the location
+         --  of the generic unit and hence there is no need to build the
+         --  corresponding body.
+
+         if Present (LL.Get_Instance_Of (E)) then
+            return Atree.No_Entity;
+         end if;
+
+         if No (Body_E) then
+            Body_E := New_Internal_Entity (Context, E);
+            LL.Set_Location (Body_E, New_Loc);
+            Append_To_Map (Body_E);
+         end if;
+
+         LL.Set_Body_Loc (Body_E, No_Location);
+
+         Set_Corresponding_Body (E, Body_E);
+         Set_Corresponding_Spec (Body_E, E);
+
+         --  Propagate decoration & fix decoration of the low-level builder
+
+         if Get_Kind (E) = E_Formal then
+            Set_Kind (Body_E, E_Formal);
+            Set_Full_View (E, Atree.No_Entity);
+            Set_Partial_View (Body_E, Atree.No_Entity);
+         else
+            if LL.Get_End_Of_Body_Loc (E)
+              /= Get_End_Of_Scope_Loc (Body_E)
+            then
+               Set_End_Of_Scope_Loc (Body_E, LL.Get_End_Of_Body_Loc (E));
+            end if;
+         end if;
+
+         return Body_E;
+      end Build_Corresponding_Body;
 
       -----------------
       -- CPP_Get_Doc --
@@ -1126,6 +1464,9 @@ package body GNATdoc.Frontend is
          --  Raised when the parser detects discrepancies between the contents
          --  of the database and the sources.
 
+         Separate_Unit : exception;
+         --  Raised when the parser skips processing a separate unit.
+
          package Extended_Cursor is
             type Extended_Cursor is private;
             function Has_Entity  (Cursor : Extended_Cursor) return Boolean;
@@ -1178,6 +1519,17 @@ package body GNATdoc.Frontend is
          procedure Append_Sources (Text : String);
          pragma Inline (Append_Sources);
          --  Append Text to Printout
+
+         function At_Valid_Line_After
+           (Doc_Line       : Natural;
+            Reference_Line : Natural) return Boolean;
+         --  Return True if Doc_Line is Reference_Line or the next line (that,
+         --  is Reference_Line + 1).
+
+         function At_Valid_Line_Before
+           (Doc_Line       : Natural;
+            Reference_Line : Natural) return Boolean;
+         --  Return True if Doc_Line is Reference_Line - 1
 
          procedure Clear_Doc;
          --  Clear the accumulated comment
@@ -1233,6 +1585,30 @@ package body GNATdoc.Frontend is
             Printout := Printout & Text;
          end Append_Sources;
 
+         -------------------------
+         -- At_Valid_Line_After --
+         -------------------------
+
+         function At_Valid_Line_After
+           (Doc_Line       : Natural;
+            Reference_Line : Natural) return Boolean is
+         begin
+            return Doc_Line = Reference_Line
+              or else Doc_Line = Reference_Line + 1;
+         end At_Valid_Line_After;
+
+         --------------------------
+         -- At_Valid_Line_Before --
+         --------------------------
+
+         function At_Valid_Line_Before
+           (Doc_Line       : Natural;
+            Reference_Line : Natural) return Boolean is
+         begin
+            return Reference_Line > 0
+              and then Doc_Line = Reference_Line - 1;
+         end At_Valid_Line_Before;
+
          ---------------
          -- Clear_Doc --
          ---------------
@@ -1241,6 +1617,7 @@ package body GNATdoc.Frontend is
          begin
             if Doc_Start_Line /= No_Line then
                Doc_Start_Line := No_Line;
+               Doc_End_Line   := No_Line;
                Doc            := Null_Unbounded_String;
             end if;
          end Clear_Doc;
@@ -1281,7 +1658,6 @@ package body GNATdoc.Frontend is
          Nested_Variants_Count  : Natural := 0;
 
          In_Compilation_Unit    : Boolean := False;
-         Generics_Nesting_Level : Natural := 0;
          In_Generic_Formals     : Boolean := False;
          In_Generic_Decl        : Boolean := False;
          Generic_Formals        : EInfo_List.Vector;
@@ -1341,7 +1717,6 @@ package body GNATdoc.Frontend is
 
             Nested_Variants_Count  := 0;
             In_Compilation_Unit    := False;
-            Generics_Nesting_Level := 0;
             In_Generic_Formals     := False;
             In_Generic_Decl        := False;
             Generic_Formals.Clear;
@@ -1394,7 +1769,13 @@ package body GNATdoc.Frontend is
             function Has_Scope (E : Entity_Id) return Boolean;
             function In_Next_Entity return Boolean;
 
-            procedure Set_Doc_After (E : Entity_Id);
+            procedure Set_Doc_After
+              (E             : Entity_Id;
+               Forced_Update : Boolean := False);
+            --  Attach Doc as the documentation located after E. No action is
+            --  performed if E already has such documentation (unless formal
+            --  Forced_Update is True).
+
             procedure Set_Doc_After_Current_Entity;
             procedure Set_Doc_After_Previous_Entity_In_Scope;
 
@@ -1405,27 +1786,58 @@ package body GNATdoc.Frontend is
             -------------------------
 
             procedure Accumulate_Comments is
+               Scope : constant Entity_Id :=
+                 Get_Scope (Current_Context);
+               Current_Entity : constant Entity_Id :=
+                 Get_Current_Entity (Current_Context);
+
             begin
-               --  Clear the previously accumulated documentation if the
-               --  current one is not its continuation
+               --  If the current comment is not a continuation then check
+               --  if the previous documentation can be associated with the
+               --  enclosing scope (or with the previous entity), and clear
+               --  the previous documentation.
 
                if Doc_End_Line /= No_Line
                  and then Sloc_Start.Line /= Doc_End_Line + 1
                then
-                  declare
-                     Current_Entity : constant Entity_Id :=
-                       Get_Current_Entity (Current_Context);
-                  begin
-                     if Present (Current_Entity)
-                       and then
-                         Doc_Start_Line
-                           >= LL.Get_Location (Current_Entity).Line
-                     then
-                        Set_Doc_After_Current_Entity;
-                     else
-                        Set_Doc_After_Previous_Entity_In_Scope;
-                     end if;
-                  end;
+                  --  Documentation after the beginning of a concurrent type,
+                  --  subprogram or package.
+
+                  if (Is_Concurrent_Type_Or_Object (Scope)
+                        or else Is_Subprogram (Scope)
+                        or else Is_Package (Scope))
+                    and then Present (Get_End_Of_Profile_Location (Scope))
+                    and then At_Valid_Line_After (Doc_Start_Line,
+                               Get_End_Of_Profile_Location (Scope).Line)
+                  then
+                     Set_Doc_After (Scope);
+
+                  --  Documentation after the declaration of a concurrent type,
+                  --  subprogram or package.
+
+                  elsif Present (Current_Entity)
+                    and then
+                      (Is_Concurrent_Type_Or_Object (Current_Entity)
+                        or else Is_Subprogram (Current_Entity)
+                        or else Is_Package (Current_Entity))
+                    and then
+                      Present (Get_End_Of_Syntax_Scope_Loc (Current_Entity))
+                    and then
+                      At_Valid_Line_After (Doc_Start_Line,
+                        Get_End_Of_Syntax_Scope_Loc (Current_Entity).Line)
+                  then
+                     Set_Doc_After (Current_Entity);
+
+                  elsif Present (Current_Entity)
+                    and then
+                      Doc_Start_Line
+                        >= LL.Get_Location (Current_Entity).Line
+                  then
+                     Set_Doc_After_Current_Entity;
+
+                  else
+                     Set_Doc_After_Previous_Entity_In_Scope;
+                  end if;
 
                   Clear_Doc;
                end if;
@@ -1550,7 +1962,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => No_Project,  --  ??? unknown
+                              Project => Context.Project,
                               Line    => Sloc_Start.Line,
                               Column  => To_Visible_Column
                                 (Buffer.all,
@@ -1598,7 +2010,9 @@ package body GNATdoc.Frontend is
                      end;
                   end if;
 
-                  if Is_Generic (E) then
+                  if Is_Generic (E)
+                    and then No (Get_Corresponding_Spec (E))
+                  then
                      pragma Assert (Present (Generic_Formals_Loc));
                      Set_Generic_Formals_Loc (E, Generic_Formals_Loc);
                      Generic_Formals_Loc := No_Location;
@@ -1642,8 +2056,26 @@ package body GNATdoc.Frontend is
 
                         when Tok_Protected =>
                            Set_Kind (E, E_Single_Protected);
+
+                           if Is_Partial_View (E) then
+                              Set_Kind (Get_Full_View (E), E_Single_Protected);
+
+                              if not Processing_Body then
+                                 Remove_Full_View (E);
+
+                              else
+                                 Set_Corresponding_Body (E, Get_Full_View (E));
+                                 Set_Corresponding_Spec (Get_Full_View (E), E);
+
+                                 --  Remove wrong decoration
+
+                                 Set_Partial_View
+                                   (Get_Full_View (E), Atree.No_Entity);
+                                 Set_Full_View (E, Atree.No_Entity);
+                              end if;
+                           end if;
+
                            Set_Is_Incomplete (E, False);
-                           Remove_Full_View (E);
 
                         when others =>
                            null;
@@ -1703,9 +2135,9 @@ package body GNATdoc.Frontend is
 
                      if No (Get_Parent (E)) then
                         declare
-                           Tok_Loc   : General_Location;
-                           Parent    : Entity_Id := Atree.No_Entity;
-                           Dot_Pos   : Natural   := 0;
+                           Tok_Loc : General_Location;
+                           Parent  : Entity_Id := Atree.No_Entity;
+                           Dot_Pos : Natural   := 0;
 
                         begin
                            if Is_Expanded_Name (S) then
@@ -1722,7 +2154,7 @@ package body GNATdoc.Frontend is
                               Tok_Loc :=
                                 General_Location'
                                   (File    => File,
-                                   Project => No_Project, --  ??? unknown
+                                   Project => Context.Project,
                                    Line    => Sloc_Start.Line,
                                    Column  => To_Visible_Column
                                      (Buffer.all,
@@ -1817,7 +2249,7 @@ package body GNATdoc.Frontend is
                              Name => S,
                              Loc  => General_Location'
                                (File    => File,
-                                Project => No_Project, --  ???
+                                Project => Context.Project,
                                 Line    => Sloc_Start.Line,
                                 Column  =>
                                   To_Visible_Column
@@ -1872,8 +2304,12 @@ package body GNATdoc.Frontend is
                      Update_Scope (E);
 
                   elsif not End_Decl_Found
-                    and then Is_Subprogram (Scope)
+                    and then Is_Subprogram_Or_Entry (Scope)
                     and then Get_Kind (E) = E_Variable
+                    and then not In_Body (Current_Context)
+
+                     --  Handle formals of anonymous access to subprograms
+                    and then Par_Count >= 1
                   then
                      Set_Kind (E, E_Formal);
                      Update_Scope (E);
@@ -1915,6 +2351,141 @@ package body GNATdoc.Frontend is
                   end if;
                end Decorate_Scope;
 
+               ------------------------------------
+               -- Update_End_Of_Profile_Location --
+               ------------------------------------
+
+               procedure Update_End_Of_Profile_Location;
+               procedure Update_End_Of_Profile_Location is
+                  Current_Entity : constant Entity_Id :=
+                                     Get_Current_Entity (Current_Context);
+
+                  Scope : constant Entity_Id :=
+                            Get_Scope (Current_Context);
+
+                  E : constant Entity_Id :=
+                        (if Present (Current_Entity)
+                           and then Get_Kind (Current_Entity)
+                                      /= E_Discriminant
+                           and then Get_Kind (Current_Entity) /= E_Formal
+                         then
+                            Current_Entity
+                         else
+                            Scope);
+               begin
+                  --  If we have processed a single declaration then E
+                  --  references it; if we have processed all the formals of
+                  --  a subprogram or entry then there is no current entity
+                  --  available in the scope
+
+                  if Present (Get_End_Of_Profile_Location (E)) then
+                     return;
+                  end if;
+
+                  if (Token = Tok_Semicolon
+                        and then Par_Count = 0
+                        and then Is_Subprogram (E))
+                    or else
+                      (Token = Tok_Is
+                         and then Par_Count = 0
+                         and then
+                           (Is_Subprogram_Or_Entry (E)
+                              or else Is_Concurrent_Type_Or_Object (E)
+                              or else Is_Package (E))
+                         and then No (LL.Get_Instance_Of (E)))
+                  then
+                     Set_End_Of_Profile_Location (E,
+                       General_Location'
+                         (File    => File,
+                          Project => Context.Project,
+                          Line    => Sloc_Start.Line,
+                          Column  => To_Visible_Column
+                                       (Buffer.all,
+                                        Sloc_Start.Column,
+                                        Sloc_Start.Index)));
+                  end if;
+               end Update_End_Of_Profile_Location;
+
+               ------------------------------------
+               -- Update_End_Of_Syntax_Scope_Loc --
+               ------------------------------------
+
+               procedure Update_End_Of_Syntax_Scope_Loc;
+               procedure Update_End_Of_Syntax_Scope_Loc is
+                  Current_Entity : constant Entity_Id :=
+                                     Get_Current_Entity (Current_Context);
+
+                  Scope : constant Entity_Id :=
+                            Get_Scope (Current_Context);
+
+                  E : constant Entity_Id :=
+                        (if Present (Current_Entity)
+                           and then Get_Kind (Current_Entity)
+                                      /= E_Discriminant
+                           and then Get_Kind (Current_Entity) /= E_Formal
+                         then
+                            Current_Entity
+                         else
+                            Scope);
+               begin
+                  if Present (Get_End_Of_Syntax_Scope_Loc (E)) then
+                     return;
+                  end if;
+
+                  --  If we have processed a single declaration then E
+                  --  references it; if we have processed all the formals of
+                  --  a subprogram or entry then there is no current entity
+                  --  available in the scope
+
+                  --  No action needed if this attribute is already set. When
+                  --  we are processing an unit spec this case occurs with
+                  --  pragmas located after E.
+
+                  if (Token = Tok_Semicolon and then not Is_Subprogram (E))
+                    or else
+                      (Token = Tok_Semicolon
+                         and then Par_Count = 0
+                         and then Is_Subprogram (E))
+                  then
+                     Set_End_Of_Syntax_Scope_Loc (E,
+                       General_Location'
+                         (File    => File,
+                          Project => Context.Project,
+                          Line    => Sloc_Start.Line,
+                          Column  => To_Visible_Column
+                                       (Buffer.all,
+                                        Sloc_Start.Column,
+                                        Sloc_Start.Index)));
+
+                     --  Workaround decoration of end location in instances
+                     --  Required to handle scopes.
+
+                     if Par_Count = 0
+                       and then No (Get_Current_Entity (Current_Context))
+                       and then
+                         Kind_In (Get_Kind (Get_Scope (Current_Context)),
+                           E_Package, E_Procedure, E_Function)
+                       and then
+                         Present
+                           (LL.Get_Instance_Of (Get_Scope (Current_Context)))
+                       and then
+                         No (Get_End_Of_Scope_Loc
+                              (Get_Scope (Current_Context)))
+                     then
+                        Set_End_Of_Scope_Loc
+                          (Get_Scope (Current_Context),
+                           General_Location'
+                             (File    => File,
+                              Project => Context.Project,
+                              Line    => Sloc_Start.Line,
+                              Column  => To_Visible_Column
+                                (Buffer.all,
+                                 Sloc_Start.Column,
+                                 Sloc_Start.Index)));
+                     end if;
+                  end if;
+               end Update_End_Of_Syntax_Scope_Loc;
+
             --  Start of processing for Complete_Decoration
 
             begin
@@ -1924,7 +2495,7 @@ package body GNATdoc.Frontend is
                      Generic_Formals_Loc :=
                        General_Location'
                          (File    => File,
-                          Project => GNATCOLL.Projects.No_Project, --  ???
+                          Project => Context.Project,
                           Line    => Sloc_Start.Line,
                           Column  => To_Visible_Column
                             (Buffer.all,
@@ -1951,7 +2522,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => GNATCOLL.Projects.No_Project, --  ???
+                              Project => Context.Project,
                               Line    => Sloc_Start.Line,
                               Column  => To_Visible_Column
                                 (Buffer.all,
@@ -1991,7 +2562,11 @@ package body GNATdoc.Frontend is
                         Scope : constant Entity_Id :=
                           Get_Scope (Current_Context);
                      begin
-                        pragma Assert (Is_Record_Type (Scope));
+                        --  Include in this assertion class-wide types because
+                        --  the Xref database decorates abstract tagged records
+                        --  as E_Class_Wide types.
+                        pragma Assert (Is_Record_Type (Scope)
+                          or else Get_Kind (Scope) = E_Class_Wide_Type);
                         Set_Is_Tagged (Scope);
                         Set_Kind (Scope, E_Tagged_Record_Type);
                      end;
@@ -2069,6 +2644,11 @@ package body GNATdoc.Frontend is
                         null;
                      end if;
 
+                  when Tok_Is =>
+                     if Par_Count = 0 then
+                        Update_End_Of_Profile_Location;
+                     end if;
+
                   when Tok_Semicolon =>
                      if Par_Count = 0 then
                         declare
@@ -2087,43 +2667,7 @@ package body GNATdoc.Frontend is
                                    (Get_Partial_View (Scope));
                               end if;
 
-                              --  If we have processed a single declaration
-                              --  then E references it; if we have processed
-                              --  all the formals of a subprogram or entry
-                              --  then there is no current entity available
-                              --  in the scope
-
-                              declare
-                                 Loc : constant General_Location :=
-                                   General_Location'
-                                     (File    => File,
-                                      Project => No_Project, --  ???
-                                      Line    => Sloc_Start.Line,
-                                      Column  =>
-                                        To_Visible_Column
-                                          (Buffer.all,
-                                           Sloc_Start.Column,
-                                           Sloc_Start.Index));
-                                 Current_Entity : constant Entity_Id :=
-                                   Get_Current_Entity (Current_Context);
-                                 E : constant Entity_Id :=
-                                   (if Present (Current_Entity)
-                                      and then Get_Kind (Current_Entity)
-                                                 /= E_Discriminant
-                                    then
-                                       Current_Entity
-                                    else
-                                       Scope);
-
-                              begin
-                                 --  No action needed if this attribute is
-                                 --  already set. This case occurs with
-                                 --  pragmas located after E.
-
-                                 if No (Get_End_Of_Syntax_Scope_Loc (E)) then
-                                    Set_End_Of_Syntax_Scope_Loc (E, Loc);
-                                 end if;
-                              end;
+                              Update_End_Of_Syntax_Scope_Loc;
                            end if;
                         end;
                      end if;
@@ -2203,28 +2747,51 @@ package body GNATdoc.Frontend is
             begin
                case Token is
 
-                  when Tok_Private =>
-                     if Present (Doc) then
-                        declare
-                           Scope : constant Entity_Id :=
-                             Get_Scope (Current_Context);
-                           Curr_Entity_In_Scope : constant Entity_Id :=
-                             Get_Current_Entity (Current_Context);
-                        begin
-                           if Is_Package (Scope)
-                             or else Is_Concurrent_Type_Or_Object (Scope)
-                           then
-                              Set_Doc_After (Curr_Entity_In_Scope);
-                           end if;
-
-                           Clear_Doc;
-                        end;
-                     end if;
-
                   --  Expanded names & identifiers
 
                   when Tok_Id =>
-                     if In_Next_Entity
+
+                     --  Nested entities of bodies have been removed and
+                     --  need special management here.
+
+                     if Processing_Body
+                       and then Present (Doc)
+                       and then Present (Get_Scope (Current_Context))
+                       and then Is_Concurrent_Type_Or_Object_Body
+                                  (Get_Scope (Current_Context))
+                       and then
+                         Doc_Start_Line =
+                           Get_End_Of_Profile_Location
+                             (Get_Scope (Current_Context)).Line + 1
+                     then
+                        Set_Doc_After (Get_Scope (Current_Context));
+                        Clear_Doc;
+
+                     --  Documentation located before the first internal
+                     --  entity of a subprogram
+
+                     elsif Processing_Body
+                       and then In_Next_Entity
+                       and then Present (Doc)
+                       and then Present (Get_Scope (Current_Context))
+                       and then Is_Subprogram (Get_Scope (Current_Context))
+                       and then
+                         Present
+                           (Get_First_Local (Get_Scope (Current_Context)))
+                       and then
+                         Get_First_Local (Get_Scope (Current_Context))
+                           = Extended_Cursor.Entity (Cursor)
+                     then
+                        if At_Valid_Line_After (Doc_Start_Line,
+                             Get_End_Of_Profile_Location
+                               (Get_Scope (Current_Context)).Line)
+                        then
+                           Set_Doc_After (Get_Scope (Current_Context),
+                             Forced_Update => True);
+                           Clear_Doc;
+                        end if;
+
+                     elsif In_Next_Entity
                        and then Present (Doc)
                      then
                         declare
@@ -2245,20 +2812,20 @@ package body GNATdoc.Frontend is
                                  Scope : constant Entity_Id :=
                                    Get_Scope (Current_Context);
                               begin
-                                 if Kind_In (Get_Kind (E),
-                                      E_Enumeration_Literal,
-                                      E_Formal)
+                                 if Is_Standard_Entity (Scope) then
+                                    Set_Doc_Before (E);
+
+                                 elsif Kind_In (Get_Kind (E),
+                                         E_Enumeration_Literal,
+                                         E_Formal)
                                  then
                                     Set_Doc_Before (E);
 
-                                 elsif Is_Concurrent_Type_Or_Object (Scope)
-                                   or else
-                                     (Is_Package (Scope)
-                                        and then not
-                                      Is_Standard_Entity (Scope))
+                                 elsif Is_Package (Scope)
+                                   or else Is_Concurrent_Type_Or_Object (Scope)
                                  then
                                     Prev_E := Scope;
-                                    --  Do not attach the comment to the
+                                    --  Do not attach this comment to the
                                     --  previous line if it precedes the
                                     --  current entity.
 
@@ -2334,8 +2901,76 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
-                  when Tok_Is  =>
+                  when Tok_Begin =>
+                     if Processing_Body and then Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           if Present (Scope) then
+                              if Is_Subprogram_Or_Entry (Scope) then
+                                 if At_Valid_Line_After (Doc_Start_Line,
+                                      Get_End_Of_Profile_Location
+                                        (Scope).Line)
+                                 then
+                                    Set_Doc_After (Scope,
+                                      Forced_Update => True);
+                                 end if;
+
+                              elsif Is_Concurrent_Type_Or_Object (Scope) then
+                                 Set_Doc_After (Scope);
+                              end if;
+                           end if;
+                        end;
+                     end if;
+
+                  when Tok_Is =>
+                     if Processing_Body and then Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           if Present (Scope) then
+                              if Is_Subprogram_Or_Entry (Scope) then
+                                 if At_Valid_Line_Before (Doc_End_Line,
+                                      Sloc_Start.Line)
+                                 then
+                                    Set_Doc_After (Scope);
+                                 end if;
+
+                              elsif Is_Concurrent_Type_Or_Object (Scope) then
+                                 Set_Doc_After (Scope);
+                              end if;
+                           end if;
+                        end;
+                     end if;
+
                      Clear_Doc;
+
+                  when Tok_Private =>
+                     --  No action needed for library level private packages
+                     --  since the previous documentation (if any). It will
+                     --  be attached before the package.
+
+                     if Is_Standard_Entity (Get_Scope (Current_Context)) then
+                        null;
+
+                     elsif Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Is_Package (Scope)
+                             or else Is_Concurrent_Type_Or_Object (Scope)
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
 
                   when Tok_Procedure |
                        Tok_Function  |
@@ -2365,10 +3000,28 @@ package body GNATdoc.Frontend is
                                Get_Kind (Curr_Entity_In_Scope) = E_Formal
                            then
                               Set_Doc_After (Curr_Entity_In_Scope);
+
+                           elsif Present (Curr_Entity_In_Scope)
+                             and then Get_Kind (Curr_Entity_In_Scope)
+                                         = E_Discriminant
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
                            end if;
 
                            Clear_Doc;
                         end;
+                     end if;
+
+                  when Tok_Return |
+                       Tok_With   =>
+                     --  Skip comments located in the profile of subprograms
+                     --  before "with" or "return"
+
+                     if Present (Doc)
+                       and then Par_Count = 0
+                       and then Is_Subprogram (Get_Scope (Current_Context))
+                     then
+                        Clear_Doc;
                      end if;
 
                   when Tok_Semicolon =>
@@ -2394,25 +3047,21 @@ package body GNATdoc.Frontend is
 
                   when Tok_End =>
                      declare
+                        Curr_Entity_In_Scope : constant Entity_Id :=
+                          Get_Current_Entity (Current_Context);
                         Scope : constant Entity_Id :=
                           Get_Scope (Current_Context);
                      begin
-                        pragma Assert
-                          (Is_Record_Type (Scope)
-                           or else Is_Package (Scope)
-                           or else Is_Concurrent_Type_Or_Object (Scope));
+                        if (Is_Record_Type (Scope)
+                             or else Is_Package (Scope)
+                             or else Is_Concurrent_Type_Or_Object (Scope))
+                          and then Present (Doc)
+                        then
+                           if Present (Curr_Entity_In_Scope) then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
 
-                        if Present (Doc) then
-                           declare
-                              Curr_Entity_In_Scope : constant Entity_Id :=
-                                Get_Current_Entity (Current_Context);
-                           begin
-                              if Present (Curr_Entity_In_Scope) then
-                                 Set_Doc_After (Curr_Entity_In_Scope);
-                              end if;
-
-                              Clear_Doc;
-                           end;
+                           Clear_Doc;
                         end if;
                      end;
 
@@ -2458,9 +3107,9 @@ package body GNATdoc.Frontend is
                procedure Do_Breakpoint;
                procedure Do_Breakpoint is
                begin
-                  if False
-                    and then In_Debug_File
+                  if In_Debug_File
                     and then Sloc_Start.Line = 1
+                    and then Sloc_Start.Column = 1
                   then
                      Print_State;
                   end if;
@@ -2620,10 +3269,6 @@ package body GNATdoc.Frontend is
                            (Get_Scope (Current_Context)));
                   end if;
 
-                  if Is_Generic (Get_Scope (Current_Context)) then
-                     Generics_Nesting_Level := Generics_Nesting_Level - 1;
-                  end if;
-
                   if not In_Generic_Formals
                     and then Is_Compilation_Unit (Get_Scope (Current_Context))
                   then
@@ -2649,14 +3294,6 @@ package body GNATdoc.Frontend is
                         In_Skipped_Declaration := True;
                      end if;
 
-                  --  We have to increment the generics nesting level here
-                  --  (instead of when we process the entity) to be able to
-                  --  generate their corresponding entity (required to
-                  --  workaround the problem of their missing entity)
-
-                  when Tok_Generic =>
-                     Generics_Nesting_Level := Generics_Nesting_Level + 1;
-
                   when Tok_For =>
                      if Par_Count = 0 then
                         In_Representation_Clause := True;
@@ -2677,16 +3314,15 @@ package body GNATdoc.Frontend is
                   --  Handle variants of record types
 
                   when Tok_Case =>
+                     if Is_Record_Type (Get_Scope (Current_Context)) then
 
-                     pragma Assert
-                       (Is_Record_Type (Get_Scope (Current_Context)));
+                        --  "end case"
 
-                     --  "end case"
-
-                     if Prev_Token = Tok_End then
-                        Nested_Variants_Count := Nested_Variants_Count - 1;
-                     else
-                        Nested_Variants_Count := Nested_Variants_Count + 1;
+                        if Prev_Token = Tok_End then
+                           Nested_Variants_Count := Nested_Variants_Count - 1;
+                        else
+                           Nested_Variants_Count := Nested_Variants_Count + 1;
+                        end if;
                      end if;
 
                   when Tok_Char_Literal   |
@@ -2758,7 +3394,9 @@ package body GNATdoc.Frontend is
                            E : constant Entity_Id :=
                              Get_Current_Entity (Current_Context);
                         begin
-                           if Get_Kind (E) = E_Discriminant then
+                           if Present (E)
+                             and then Get_Kind (E) = E_Discriminant
+                           then
                               Do_Exit;
                            end if;
                         end;
@@ -2770,15 +3408,32 @@ package body GNATdoc.Frontend is
                   when Tok_Right_Paren =>
                      if Par_Count = 0 then
                         declare
+                           Scope : constant Entity_Id :=
+                                     Get_Scope (Current_Context);
                            E : constant Entity_Id :=
                                  Get_Current_Entity (Current_Context);
                         begin
-                           if Present (E)
-                             and then Kind_In (Get_Kind (E),
-                                        E_Enumeration_Literal,
-                                        E_Formal)
-                           then
-                              Do_Exit;
+                           if Present (E) then
+                              if In_Ada_Spec then
+                                 if Kind_In (Get_Kind (E),
+                                      E_Enumeration_Literal,
+                                      E_Formal)
+                                 then
+                                    Do_Exit;
+                                 end if;
+                              else pragma Assert (In_Ada_Body);
+                                 pragma Assert
+                                   (Context.Options.Document_Bodies);
+
+                                 if Get_Kind (E) = E_Enumeration_Literal then
+                                    Do_Exit;
+
+                                 elsif Is_Subprogram (Scope)
+                                   and then not Is_Subprogram_Body (Scope)
+                                 then
+                                    Do_Exit;
+                                 end if;
+                              end if;
                            end if;
                         end;
                      end if;
@@ -2853,6 +3508,33 @@ package body GNATdoc.Frontend is
                                     then
                                        null;
 
+                                    elsif Processing_Body
+                                      and then not
+                                        In_Concurrent_Type_Definition
+                                          (Current_Context)
+                                      and then
+                                        Present
+                                          (Get_Corresponding_Spec (Scope))
+                                    then
+                                       if (Is_Subprogram (Scope)
+                                             or else Is_Package (Scope))
+                                         and then Prev_Token = Tok_Separate
+                                       then
+                                          Do_Exit;
+
+                                       elsif Present
+                                               (Get_End_Of_Scope_Loc (Scope))
+                                       then
+                                          if Get_End_Of_Scope_Loc (Scope).Line
+                                            = Sloc_Start.Line
+                                          then
+                                             Do_Exit;
+                                          end if;
+
+                                       elsif Get_Kind (Scope) = E_Entry then
+                                          Do_Exit;
+                                       end if;
+
                                     else
                                        Do_Exit;
                                     end if;
@@ -2863,8 +3545,31 @@ package body GNATdoc.Frontend is
                                  elsif Is_Package (Scope) then
                                     null;
 
-                                 elsif Is_Subprogram_Or_Entry (Scope) then
+                                 elsif Get_Kind (Scope) = E_Entry then
                                     Do_Exit;
+
+                                 elsif Is_Subprogram (Scope) then
+                                    if Prev_Token = Tok_Separate then
+                                       Do_Exit;
+                                    elsif Is_Alias (Scope) then
+                                       Do_Exit;
+                                    elsif not Processing_Body then
+                                       Do_Exit;
+                                    else
+                                       declare
+                                          Loc : General_Location;
+                                       begin
+                                          Loc := Get_End_Of_Scope_Loc (Scope);
+
+                                          if Loc.File = File
+                                            and then Loc.Line = Sloc_Start.Line
+                                            and then Natural (Loc.Column)
+                                                       = Sloc_Start.Column
+                                          then
+                                             Do_Exit;
+                                          end if;
+                                       end;
+                                    end if;
 
                                  --  Handle taft ammendment
 
@@ -2914,12 +3619,25 @@ package body GNATdoc.Frontend is
                            Scope : constant Entity_Id :=
                              Get_Scope (Current_Context);
                         begin
-                           pragma Assert
-                             (Is_Record_Type (Scope)
-                              or else Is_Package (Scope)
-                              or else Is_Concurrent_Type_Or_Object (Scope));
+                           if not Is_Record_Type (Scope)
+                             and then not Is_Package (Scope)
+                             and then not Is_Concurrent_Type_Or_Object (Scope)
+                           then
+                              return;
+                           end if;
 
-                           Do_Exit;
+                           if Is_Record_Type (Scope) then
+                              Do_Exit;
+
+                           elsif Processing_Body then
+                              if Get_End_Of_Scope_Loc (Scope).Line
+                                = Sloc_Start.Line
+                              then
+                                 Do_Exit;
+                              end if;
+                           else
+                              Do_Exit;
+                           end if;
                         end;
                      end if;
 
@@ -2975,6 +3693,10 @@ package body GNATdoc.Frontend is
             --  Start of processing for Handle_Sources
 
             begin
+               if In_Body (Current_Context) then
+                  return;
+               end if;
+
                --  Append all text between previous call and current one
 
                if Last_Idx /= 0 then
@@ -3087,7 +3809,9 @@ package body GNATdoc.Frontend is
                              and then Get_Kind (E) /= E_Formal
                              and then Get_Kind (E) /= E_Discriminant
                            then
-                              if Is_Concurrent_Type_Or_Object (E) then
+                              if Is_Concurrent_Type_Or_Object (E)
+                                and then No (Get_Corresponding_Spec (E))
+                              then
                                  Set_Src (E, Printout_Plain);
                                  Clear_Plain_Sources;
 
@@ -3109,7 +3833,10 @@ package body GNATdoc.Frontend is
                               end if;
 
                            elsif Present (LL.Get_Instance_Of (Scope)) then
-                              Set_Src (Scope, Printout);
+                              if No (Get_Src (Scope)) then
+                                 Set_Src (Scope, Printout);
+                              end if;
+
                               Clear_Src;
 
                            elsif Is_Partial_View (Scope) then
@@ -3117,7 +3844,29 @@ package body GNATdoc.Frontend is
                               Clear_Src;
 
                            elsif Is_Subprogram_Or_Entry (Scope) then
-                              Set_Src (Scope, Printout);
+                              if not Processing_Body then
+                                 Set_Src (Scope, Printout);
+                                 Clear_Src;
+                              else
+                                 if Get_End_Of_Scope_Loc (Scope).Line
+                                      = Sloc_Start.Line
+                                   and then
+                                     Natural (Get_End_Of_Scope_Loc
+                                                (Scope).Column)
+                                      = Sloc_Start.Column
+                                 then
+                                    Set_Src (Scope, Printout);
+                                    Clear_Src;
+                                 end if;
+                              end if;
+
+                           elsif Is_Concurrent_Type_Or_Object (Scope)
+                             and then No (E)
+                             and then No (Get_Corresponding_Spec (Scope))
+                           then
+                              Set_Src (Scope, Printout_Plain);
+                              Clear_Plain_Sources;
+
                               Clear_Src;
 
                            elsif Is_Record_Type (Scope) then
@@ -3125,7 +3874,14 @@ package body GNATdoc.Frontend is
                               Clear_Src;
 
                            elsif Get_Kind (Scope) = E_Access_Type then
-                              Set_Src (Scope, Printout);
+                              if In_Representation_Clause then
+                                 --  We should append here to Scope the
+                                 --  sources of the representation clause???
+                                 null;
+                              else
+                                 Set_Src (Scope, Printout);
+                              end if;
+
                               Clear_Src;
                            end if;
                         end;
@@ -3184,12 +3940,55 @@ package body GNATdoc.Frontend is
                         when Tok_Package =>
                            null;
 
+                        when Tok_Begin =>
+                           Set_In_Body (Current_Context);
+
                         when Tok_End =>
-                           if not In_Item_Decl
-                             and then In_Type_Definition
-                           then
-                              Set_End_Decl_Found (Current_Context);
-                           end if;
+                           declare
+                              Scope : constant Entity_Id :=
+                                Get_Scope (Current_Context);
+                           begin
+                              if not In_Item_Decl
+                                and then In_Type_Definition
+                              then
+                                 Set_End_Decl_Found (Current_Context);
+                              end if;
+
+                              if In_Concurrent_Type_Definition
+                                   (Current_Context)
+                              then
+                                 Set_End_Of_Scope_Loc (Scope,
+                                   General_Location'
+                                     (File    => File,
+                                      Project => Context.Project,
+                                      Line    => Sloc_Start.Line,
+                                      Column  => To_Visible_Column
+                                        (Buffer.all,
+                                         Sloc_Start.Column,
+                                         Sloc_Start.Index)));
+
+                              --  Workaround decoration of the end location of
+                              --  package declarations whose body is located
+                              --  in a separate file. Required to handle its
+                              --  scope.
+
+                              elsif Get_Kind (Scope) = E_Package
+                                and then No (Get_Corresponding_Spec (Scope))
+                                and then
+                                  Get_End_Of_Scope_Loc (Scope).File
+                                    /= LL.Get_Location (Scope).File
+                              then
+                                 Set_End_Of_Scope_Loc (Scope,
+                                   General_Location'
+                                     (File    => File,
+                                      Project => Context.Project,
+                                      Line    => Sloc_Start.Line,
+                                      Column  => To_Visible_Column
+                                        (Buffer.all,
+                                         Sloc_Start.Column,
+                                         Sloc_Start.Index)));
+                              end if;
+                           end;
 
                         when Tok_Null =>
                            if Prev_Token = Tok_Record then
@@ -3200,9 +3999,6 @@ package body GNATdoc.Frontend is
                            if In_Null_Record and then Prev_Token = Tok_End then
                               In_Null_Record := False;
                            end if;
-
-                        when Tok_Type =>
-                           null;
 
                         when Tok_With =>
                            if In_Item_Decl then
@@ -3217,6 +4013,20 @@ package body GNATdoc.Frontend is
                      Token := Tok_Operator;
 
                      if S = "(" then
+
+                        --  Skip processing bodies of separate units
+
+                        if Prev_Token = Tok_Separate then
+                           pragma Assert (In_Ada_Body
+                             and then Processing_Body_Without_Spec);
+
+                           GNAT.IO.Put_Line
+                             ("warning: skip processing separate unit "
+                              & (+File.Base_Name));
+
+                           raise Separate_Unit;
+                        end if;
+
                         Token := Tok_Left_Paren;
                         Par_Count := Par_Count + 1;
 
@@ -3259,6 +4069,31 @@ package body GNATdoc.Frontend is
                         if Par_Count = 0
                           and then not In_Null_Record
                         then
+                           --  Workaround missing decoration of the end
+                           --  location of expression functions. Required
+                           --  to handle their scope.
+
+                           if Get_Kind (Get_Scope (Current_Context))
+                                 = E_Function
+                             and then
+                               No (Get_End_Of_Scope_Loc
+                                     (Get_Scope (Current_Context)))
+                             and then
+                               Present (Get_End_Of_Profile_Location
+                                         (Get_Scope (Current_Context)))
+                           then
+                              Set_End_Of_Scope_Loc
+                                (Get_Scope (Current_Context),
+                                 General_Location'
+                                   (File    => File,
+                                    Project => Context.Project,
+                                    Line    => Sloc_Start.Line,
+                                    Column  => To_Visible_Column
+                                      (Buffer.all,
+                                       Sloc_Start.Column,
+                                       Sloc_Start.Index)));
+                           end if;
+
                            Set_End_Decl_Found (Current_Context);
 
                            --  ???may fail with access to subprogram formals
@@ -3304,7 +4139,10 @@ package body GNATdoc.Frontend is
                   --  Include access types to handle the formals of access to
                   --  subprograms
                  or else Get_Kind (E) = E_Access_Type
-                 or else Get_Kind (E) = E_Enumeration_Type;
+                 or else Get_Kind (E) = E_Enumeration_Type
+                  --  Include class-wide types because the Xref database
+                  --  decorates abstract tagged records as E_Class_Wide types
+                 or else Get_Kind (E) = E_Class_Wide_Type;
             end Has_Scope;
 
             --------------------
@@ -3312,15 +4150,20 @@ package body GNATdoc.Frontend is
             --------------------
 
             function In_Next_Entity return Boolean is
+               Loc         : General_Location;
                Next_Entity : constant Entity_Id :=
-                 Extended_Cursor.Entity (Cursor);
-               Loc : General_Location;
+                               Extended_Cursor.Entity (Cursor);
             begin
                if No (Next_Entity) then
                   return False;
                end if;
 
                Loc := LL.Get_Location (Extended_Cursor.Entity (Cursor));
+
+               pragma Assert (Sloc_Start.Line <= Loc.Line
+                  or else
+                    (Sloc_Start.Line = Loc.Line
+                       and then Sloc_Start.Column <= Natural (Loc.Column)));
 
                --  Handle wide character encoding in identifiers. For example:
                --    ["03C0"] : constant := Pi;
@@ -3346,17 +4189,30 @@ package body GNATdoc.Frontend is
             -- Set_Doc_After --
             -------------------
 
-            procedure Set_Doc_After (E : Entity_Id) is
+            procedure Set_Doc_After
+              (E             : Entity_Id;
+               Forced_Update : Boolean := False) is
             begin
                if Present (Doc)
                  and then Present (E)
-                 and then No (Get_Doc_After (E))
+                 and then (No (Get_Doc_After (E)) or else Forced_Update)
                then
                   --  Support for floating comments (currently disabled)
 
                   if Enhancements
                     or else Kind_In
-                      (Get_Kind (E), E_Enumeration_Literal, E_Formal)
+                      (Get_Kind (E), E_Enumeration_Literal,
+                                     E_Formal,
+                                     E_Discriminant)
+                  then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+
+                  elsif Processing_Body
+                    and then (Is_Subprogram_Body (E)
+                                or else Is_Entry_Body (E))
                   then
                      Set_Doc_After (E,
                        Comment_Result'
@@ -3366,30 +4222,29 @@ package body GNATdoc.Frontend is
                   else
                      declare
                         End_Loc : constant General_Location :=
-                          (if Is_Subprogram_Or_Entry (E) then
-                              Get_End_Of_Profile_Location (E)
-                           else Get_End_Of_Syntax_Scope_Loc (E));
+                          Get_End_Of_Syntax_Scope_Loc (E);
                      begin
                         if No (End_Loc) then
                            --  Documentation located immediately after the
                            --  header of a package or concurrent type
 
-                           if Is_Concurrent_Type_Or_Object (E)
-                             or else Is_Package (E)
+                           if (Is_Package (E)
+                                 or else Is_Concurrent_Type_Or_Object (E))
+                             and then Present (Get_End_Of_Profile_Location (E))
+                             and then At_Valid_Line_After (Doc_Start_Line,
+                                        Get_End_Of_Profile_Location (E).Line)
                            then
-                              if Doc_Start_Line = LL.Get_Location (E).Line
-                                or else
-                                 Doc_Start_Line = LL.Get_Location (E).Line + 1
-                              then
-                                 Set_Doc_After (E,
-                                   Comment_Result'
-                                     (Text       => Doc,
-                                      Start_Line => Doc_Start_Line));
-                              end if;
+                              Set_Doc_After (E,
+                                Comment_Result'
+                                  (Text       => Doc,
+                                   Start_Line => Doc_Start_Line));
                            end if;
 
-                        elsif Doc_Start_Line = End_Loc.Line
-                          or else Doc_Start_Line = End_Loc.Line + 1
+                        --  Documentation located immediately after the end of
+                        --  the previous declaration.
+
+                        elsif At_Valid_Line_After (Doc_Start_Line,
+                                End_Loc.Line)
                         then
                            Set_Doc_After (E,
                              Comment_Result'
@@ -3500,7 +4355,7 @@ package body GNATdoc.Frontend is
             procedure Build_Missing_Entity is
                Loc   : constant General_Location :=
                  (File,
-                  GNATCOLL.Projects.No_Project,  --  ??? unknown
+                  Context.Project,
                   Sloc_Start.Line,
                   To_Visible_Column
                     (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
@@ -3536,7 +4391,7 @@ package body GNATdoc.Frontend is
             procedure Fix_Wrong_Location (E : Entity_Id) is
                Loc : constant General_Location :=
                  (File,
-                  GNATCOLL.Projects.No_Project, --  ??? unknown
+                  Context.Project,
                   Sloc_Start.Line,
                   To_Visible_Column
                     (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
@@ -3549,6 +4404,32 @@ package body GNATdoc.Frontend is
                Replace_Current_Entity (Current_Context, E);
             end Fix_Wrong_Location;
 
+            -----------------------------
+            -- Handle_Skipped_Entities --
+            -----------------------------
+
+            procedure Handle_Skipped_Entities;
+            procedure Handle_Skipped_Entities is
+            begin
+               if In_Next_Entity then
+                  declare
+                     Scope : constant Entity_Id := Get_Scope (Current_Context);
+                     E     : constant Entity_Id :=
+                               Extended_Cursor.Entity (Cursor);
+                  begin
+                     if In_Body (Current_Context) then
+                        Set_Is_Skipped (E);
+
+                     elsif Is_Subprogram (Scope)
+                       and then Get_Kind (E) /= E_Formal
+                     then
+                        Set_In_Body (Current_Context);
+                        Set_Is_Skipped (E);
+                     end if;
+                  end;
+               end if;
+            end Handle_Skipped_Entities;
+
          --  Start of processing for Parse_Ada_File.CB
 
          begin
@@ -3556,6 +4437,7 @@ package body GNATdoc.Frontend is
 
             if Entity = Comment_Text
               or else Entity = Annotated_Comment_Text
+              or else Entity = Aspect_Comment_Text
             then
                if not In_Private_Part (Current_Context)
                  or else Context.Options.Show_Private
@@ -3564,6 +4446,28 @@ package body GNATdoc.Frontend is
                end if;
 
                return False; -- Continue
+
+            elsif Entity = Aspect_Text then
+
+               --  Workaround a wrong token assignment of the underlying
+               --  parser because an aspect_text should never have a text
+               --  without contents.
+
+               declare
+                  Is_Empty_String : Boolean := True;
+
+               begin
+                  for J in S'Range loop
+                     if S (J) /= ' ' then
+                        Is_Empty_String := False;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Is_Empty_String then
+                     Clear_Doc;
+                  end if;
+               end;
             end if;
 
             Handle_Tokens;
@@ -3660,8 +4564,6 @@ package body GNATdoc.Frontend is
                          or else Prev_Token = Tok_Procedure
                          or else Prev_Token = Tok_Function)
                   then
-                     pragma Assert (Generics_Nesting_Level > 0);
-
                      declare
                         Prev_Entity : constant Entity_Id :=
                           Extended_Cursor.Prev_Entity (Cursor);
@@ -3699,6 +4601,10 @@ package body GNATdoc.Frontend is
                   Handle_Sources (End_Decl_Found);
                end if;
 
+               if Processing_Body then
+                  Handle_Skipped_Entities;
+               end if;
+
                Handle_Scopes (End_Decl_Found);
 
                if End_Decl_Found then
@@ -3709,6 +4615,12 @@ package body GNATdoc.Frontend is
             return False; --  Continue
          exception
             when Database_Not_Up_To_Date =>
+               File_Successfully_Parsed := False;
+               return True; --  Stop
+
+            when Separate_Unit =>
+               File_Entities.Is_Separate_Unit := True;
+               File_Successfully_Parsed := False;
                return True; --  Stop
          end CB;
 
@@ -3758,10 +4670,20 @@ package body GNATdoc.Frontend is
                  and then Sloc_Start.Line /= Doc_End_Line + 1
                then
                   declare
+                     Scope : constant Entity_Id :=
+                       Get_Scope (Current_Context);
                      Current_Entity : constant Entity_Id :=
                        Get_Current_Entity (Current_Context);
                   begin
-                     if Present (Current_Entity)
+                     if No (Current_Entity)
+                       and then Is_Concurrent_Type_Or_Object (Scope)
+                       and then
+                         Doc_Start_Line
+                           = LL.Get_Location (Scope).Line + 1
+                     then
+                        Set_Doc_After (Scope);
+
+                     elsif Present (Current_Entity)
                        and then
                          Doc_Start_Line
                            >= LL.Get_Location (Current_Entity).Line
@@ -3829,7 +4751,7 @@ package body GNATdoc.Frontend is
                                  Loc : constant General_Location :=
                                    General_Location'
                                      (File    => Current_Body_File,
-                                      Project => No_Project,  --  ??? unknown
+                                      Project => Context.Project,
                                       Line    => Sloc_Start.Line,
                                       Column  =>
                                         To_Visible_Column
@@ -4454,8 +5376,8 @@ package body GNATdoc.Frontend is
                         End_Loc : constant General_Location :=
                           Get_End_Of_Profile_Location_In_Body (E);
                      begin
-                        if Doc_Start_Line = End_Loc.Line
-                          or else Doc_Start_Line = End_Loc.Line + 1
+                        if At_Valid_Line_After (Doc_Start_Line,
+                             End_Loc.Line)
                         then
                            Set_Doc_After (E,
                              Comment_Result'
@@ -4615,6 +5537,8 @@ package body GNATdoc.Frontend is
 
          package body Extended_Cursor is
             Saved_Next_Entity : Entity_Id := Atree.No_Entity;
+            --  Pending code cleanup: Move it inside the extended cursor
+            --  record???
 
             procedure Update_Entity (Cursor : in out Extended_Cursor);
             procedure Update_Entity (Cursor : in out Extended_Cursor) is
@@ -4653,8 +5577,10 @@ package body GNATdoc.Frontend is
                   if Cursor.Marks_Required
                     and then not Check_Disabled
                     and then not Cursor.Element_Seen
+                    and then not In_Pragma
+                    and then not In_Body (Current_Context)
+                    and then not Is_Separate_Unit (Cursor.Element)
                   then
-                     File_Successfully_Parsed := False;
                      raise Database_Not_Up_To_Date;
                   end if;
 
@@ -4768,6 +5694,7 @@ package body GNATdoc.Frontend is
                pragma Assert (Is_Standard_Entity (E));
 
                Std_Entity := E;
+               Reset_Stack;
                Enable_Enter_Scope;
                Enter_Scope (Std_Entity);
                Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
@@ -4788,6 +5715,23 @@ package body GNATdoc.Frontend is
                   end loop;
 
                   EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+               end if;
+
+               --  Workaround missing decoration of end_location in bodies
+               --  of child packages.
+
+               if Get_Scope (Current_Context) /= Std_Entity
+                 and then Is_Package_Body (Get_Scope (Current_Context))
+                 and then
+                   Is_Standard_Entity (Get_Scope (Get_Scope (Current_Context)))
+               then
+                  Exit_Scope;
+               end if;
+
+               if Get_Scope (Current_Context) /= Std_Entity then
+                  GNAT.IO.Put_Line
+                    (">>> GNATdoc frontend internal error (Code: 05)");
+                  raise Database_Not_Up_To_Date;
                end if;
 
                pragma Assert (Get_Scope (Current_Context) = Std_Entity);
@@ -4823,7 +5767,7 @@ package body GNATdoc.Frontend is
                            Body_File : constant Virtual_File :=
                              LL.Get_Body_Loc (E).File;
                            End_Scope_File : constant Virtual_File :=
-                             LL.Get_End_Of_Scope_Loc (E).File;
+                             Get_End_Of_Scope_Loc (E).File;
                            Lang      : constant Language_Access :=
                              Get_Language_From_File
                                (Context.Lang_Handler, Body_File);
@@ -4927,6 +5871,72 @@ package body GNATdoc.Frontend is
          Prev_Word_Begin := Idx + 1;
       end Previous_Word;
 
+      ---------------------------------
+      -- Remove_Internal_FE_Entities --
+      ---------------------------------
+
+      procedure Remove_Internal_FE_Entities is
+         Removed_Entities : aliased EInfo_List.Vector;
+
+      begin
+         for E of File_Entities.All_Entities loop
+            --  The compiler generates some internal functions with name
+            --  "type" that confuse the GNATdoc cursors.
+
+            if Get_Short_Name (E) = "declare"
+              or else Get_Short_Name (E) = "new"
+              or else Get_Short_Name (E) = "type"
+            then
+               Removed_Entities.Append (E);
+            end if;
+         end loop;
+
+         for E of Removed_Entities loop
+            declare
+               Cursor : EInfo_List.Cursor;
+            begin
+               Cursor := File_Entities.All_Entities.Find (E);
+               File_Entities.All_Entities.Delete (Cursor);
+            end;
+         end loop;
+      end Remove_Internal_FE_Entities;
+
+      -------------------------------
+      -- Remove_Task_Body_Entities --
+      -------------------------------
+
+      procedure Remove_Task_Body_Entities is
+         Removed_Entities  : aliased EInfo_List.Vector;
+         Entity_With_Scope : Entity_Id := Atree.No_Entity;
+
+      begin
+         pragma Assert (In_Ada_Body
+           and then Processing_Body_With_Spec);
+
+         for E of File_Entities.All_Entities loop
+            if Is_Task_Body (E) then
+               pragma Assert (Present (Get_End_Of_Scope_Loc (E)));
+               Entity_With_Scope := E;
+
+            elsif Present (Entity_With_Scope) then
+               if LL.Get_Location (E)
+                    < Get_End_Of_Scope_Loc (Entity_With_Scope)
+               then
+                  Removed_Entities.Append (E);
+               end if;
+            end if;
+         end loop;
+
+         for E of Removed_Entities loop
+            declare
+               Cursor : EInfo_List.Cursor;
+            begin
+               Cursor := File_Entities.All_Entities.Find (E);
+               File_Entities.All_Entities.Delete (Cursor);
+            end;
+         end loop;
+      end Remove_Task_Body_Entities;
+
       ------------------
       -- Swap_Buffers --
       ------------------
@@ -4940,10 +5950,112 @@ package body GNATdoc.Frontend is
          Buffers_Swapped  := True;
       end Swap_Buffers;
 
+      --------------------
+      -- Clean_Entities --
+      --------------------
+
+      procedure Clean_Entities is
+         Removed_Entities  : aliased EInfo_List.Vector;
+
+      begin
+         for E of File_Entities.All_Entities loop
+            if Is_Skipped (E) then
+               Remove_Doc (E);
+               Remove_Src (E);
+
+               Removed_Entities.Append (E);
+            end if;
+         end loop;
+
+         for E of Removed_Entities loop
+            declare
+               Cursor : EInfo_List.Cursor;
+            begin
+               Cursor := File_Entities.All_Entities.Find (E);
+               File_Entities.All_Entities.Delete (Cursor);
+            end;
+         end loop;
+
+         --  Clean sources of internal entities
+
+         for E of File_Entities.All_Entities loop
+            if Present (Get_Corresponding_Spec (E)) then
+               Remove_Src (E);
+            end if;
+         end loop;
+      end Clean_Entities;
+
+      -------------------------------
+      -- Debug_Output_All_Entities --
+      -------------------------------
+
+      procedure Debug_Output_All_Entities;
+      procedure Debug_Output_All_Entities is
+         In_Debug_File : constant Boolean :=
+           (+File.Base_Name) = " disabled";
+
+      begin
+         if not In_Debug_File then
+            return;
+         end if;
+
+         if In_Ada_Body
+           and then Processing_Body_With_Spec
+         then
+            GNAT.IO.Put_Line ("----- All_Entities (Spec)");
+            for E of Tree_Spec.All_Entities loop
+               pnsb (E);
+            end loop;
+
+            GNAT.IO.Put_Line ("----- All_Entities (Body)");
+            for E of File_Entities.All_Entities loop
+               pnsb (E);
+            end loop;
+            GNAT.IO.Put ("----- File_Entities.All_Entities (end)");
+         else
+            GNAT.IO.Put_Line ("----- All_Entities");
+            for E of File_Entities.All_Entities loop
+               pns (E);
+            end loop;
+            GNAT.IO.Put ("----- File_Entities.All_Entities (end)");
+         end if;
+
+         GNAT.IO.New_Line;
+      end Debug_Output_All_Entities;
+
    --  Start of processing for Add_Documentation_From_Sources
 
    begin
+      Remove_Internal_FE_Entities;
       EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+
+      --  Append to the list of entities defined in the body that have a body
+
+      if In_Ada_Body then
+         Append_Corresponding_Body_Of_Entities_Defined_In_Body;
+      end if;
+
+      --  Append to the list of entities of the body all the entities defined
+      --  in the spec that have a body.
+
+      if In_Ada_Body
+        and then Processing_Body_With_Spec
+      then
+         Append_Corresponding_Body_Of_Entities_Defined_In_Spec;
+      end if;
+
+      --  Remove from the list of entities all the entities defined in task
+      --  bodies since they are not processed by GNATdoc.
+
+      if In_Ada_Body
+        and then Processing_Body_With_Spec
+      then
+         EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+         Remove_Task_Body_Entities;
+      end if;
+
+      EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+      Debug_Output_All_Entities;
 
       Buffer := Read_Source_File (Context, File);
 
@@ -4968,6 +6080,7 @@ package body GNATdoc.Frontend is
          Parse_Ada_File (Buffer);
 
          if File_Successfully_Parsed then
+            Clean_Entities;
             Prev_Comment_Line := 0;
             For_All (File_Entities.All_Entities, Ada_Set_Doc'Access);
             For_All (File_Entities.All_Entities, Filter_Doc'Access);
@@ -4991,8 +6104,9 @@ package body GNATdoc.Frontend is
    ----------------
 
    function Build_Tree
-     (Context : access constant Docgen_Context;
-      File    : Virtual_File) return Tree_Type
+     (Context   : access constant Docgen_Context;
+      File      : Virtual_File;
+      Tree_Spec : access Tree_Type := null) return Tree_Type
    is
       Built_Tree    : Entity_Id;
       Tree          : aliased Tree_Type;
@@ -5028,9 +6142,14 @@ package body GNATdoc.Frontend is
 
       Start (Doc_Time);
 
-      if not Add_Documentation_From_Sources (Context, File, Tree'Access) then
+      if not Add_Documentation_From_Sources
+          (Context, File, Tree'Access, Tree_Spec)
+      then
          Stop (Doc_Time, GetDoc_Time);
-         Report_Skipped_File (Context.Kernel, File);
+
+         if not Tree.Is_Separate_Unit then
+            Report_Skipped_File (Context.Kernel, File);
+         end if;
 
          return No_Tree;
       end if;
@@ -5092,6 +6211,19 @@ package body GNATdoc.Frontend is
    begin
       return Builder.Find_Unique_Entity (Location, In_References);
    end Find_Unique_Entity;
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Tree : Tree_Type) return Boolean is
+   begin
+      if Tree = No_Tree then
+         return True;
+      else
+         return Get_Entities (Tree.Tree_Root).Is_Empty;
+      end if;
+   end Is_Empty;
 
    -----------
    -- Debug --
@@ -5366,6 +6498,24 @@ package body GNATdoc.Frontend is
             Set_In_Private_Part (New_Scope);
          end if;
 
+         if Is_Concurrent_Type_Or_Object (Entity)
+           and then No (Get_Corresponding_Spec (Entity))
+         then
+            Set_In_Concurrent_Type_Definition (New_Scope);
+         end if;
+
+         --  Propagate attributes to inner scopes
+
+         if not Is_Standard_Entity (Entity) then
+            if In_Concurrent_Type_Definition (Current_Context) then
+               Set_In_Concurrent_Type_Definition (New_Scope);
+            end if;
+
+            if In_Body (Current_Context) then
+               Set_In_Body (New_Scope);
+            end if;
+         end if;
+
          Stack.Prepend (New_Scope);
       end Enter_Scope;
 
@@ -5380,9 +6530,18 @@ package body GNATdoc.Frontend is
          Stack.Delete_First;
       end Exit_Scope;
 
-      ------------------------
-      -- Get_Current_Entity --
-      ------------------------
+      -----------------
+      -- Reset_Stack --
+      -----------------
+
+      procedure Reset_Stack is
+      begin
+         Stack.Clear;
+      end Reset_Stack;
+
+      -------------
+      -- Getters --
+      -------------
 
       function Get_Current_Entity
         (Context : Context_Id) return Entity_Id is
@@ -5394,6 +6553,18 @@ package body GNATdoc.Frontend is
       begin
          return Context.End_Decl_Found;
       end Get_End_Decl_Found;
+
+      function In_Body
+        (Context : Context_Id) return Boolean is
+      begin
+         return Context.In_Body;
+      end In_Body;
+
+      function In_Concurrent_Type_Definition
+        (Context : Context_Id) return Boolean is
+      begin
+         return Context.In_Concurrent_Type_Definition;
+      end In_Concurrent_Type_Definition;
 
       function In_Private_Part
         (Context : Context_Id) return Boolean is
@@ -5457,6 +6628,18 @@ package body GNATdoc.Frontend is
          Context.End_Decl_Found := True;
       end Set_End_Decl_Found;
 
+      procedure Set_In_Body
+        (Context : Context_Id) is
+      begin
+         Context.In_Body := True;
+      end Set_In_Body;
+
+      procedure Set_In_Concurrent_Type_Definition
+        (Context : Context_Id) is
+      begin
+         Context.In_Concurrent_Type_Definition := True;
+      end Set_In_Concurrent_Type_Definition;
+
       procedure Set_In_Private_Part
         (Context : Context_Id) is
       begin
@@ -5498,7 +6681,6 @@ package body GNATdoc.Frontend is
 
             Count := Count - 1;
          end loop;
-         null;
       end Print_Scopes;
    end Scopes_Stack;
 

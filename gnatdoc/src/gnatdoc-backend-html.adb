@@ -356,7 +356,9 @@ package body GNATdoc.Backend.HTML is
 
       procedure Analyze_Inheritance_Tree
         (Entity     : Entity_Id;
-         Root_Types : in out EInfo_List.Vector) is
+         Root_Types : in out EInfo_List.Vector)
+      is
+         Full_View : Entity_Id;
       begin
          if Get_IDepth_Level (Entity) = 0 then
             if not Root_Types.Contains (Entity) then
@@ -364,9 +366,15 @@ package body GNATdoc.Backend.HTML is
             end if;
 
          else
-            Analyze_Inheritance_Tree (Get_Parent (Entity), Root_Types);
+            if Is_Partial_View (Entity) then
+               Full_View := Get_Full_View (Entity);
+            else
+               Full_View := Entity;
+            end if;
 
-            for Progenitor of Get_Progenitors (Entity).all loop
+            Analyze_Inheritance_Tree (Get_Parent (Full_View), Root_Types);
+
+            for Progenitor of Get_Progenitors (Full_View).all loop
                Analyze_Inheritance_Tree (Progenitor, Root_Types);
             end loop;
          end if;

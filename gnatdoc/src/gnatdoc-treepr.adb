@@ -113,6 +113,9 @@ package body GNATdoc.Treepr is
       is
          pragma Unreferenced (Scope_Level);
       begin
+         if Is_Skipped (Entity) then
+            return OK; -- Do not output this node
+         end if;
 
          --  Temporarily for backward output compatibility (to avoid
          --  generating false regressions)???

@@ -57,6 +57,10 @@
 --  have both access functions and set procedures to set the corresponding
 --  values, while synthesized attributes have only access functions.
 
+--    Acts_As_Spec (synthesized)
+--       True in subprograms defined in the body that have no previous
+--       declaration.
+
 --    Alias
 --       Defined in renamings. References the renamed entity.
 --       See also Is_Alias.
@@ -78,6 +82,15 @@
 --    Components (synthesized)
 --       Defined in record types, concurrent types and concurrent objects.
 
+--    Corresponding_Spec
+--       Defined in all entities. Set in internally build entities of bodies
+--       to reference their corresponding entity in the specification.
+--       Available also in formals.
+
+--    Corresponding_Body
+--       Defined in all entities. Set in specifications to reference their
+--       corresponding body. Available also in formals.
+
 --    Direct derivations
 --       Defined in types. Direct_Derivations (E) contains all the entities
 --       for which Parent (Value) = E. In combination with attribute "Parent"
@@ -91,6 +104,10 @@
 --    Discriminants (synthesized)
 --       Defined in incomplete types, private types, record types, concurrent
 --       types and concurrent objects.
+
+--    End_Of_Scope_Loc
+--       This high level attribute fixes the decoration of the low level
+--       attribute available in the Xref database.
 
 --    End_Of_Syntax_Scope_Loc
 --       Defined in all entities. Points to the location of the semicolon
@@ -117,6 +134,10 @@
 --    Etype
 --       Defined in all entities. Represents the type of the entity, which
 --       is itself another entity.
+
+--    First_Local (synthesized)
+--       Defined in all entities. For entities defining scopes returns their
+--       first local entity (skipping formals) skip also generic formals???
 
 --    First_Private_Entity_Loc
 --       Location of the first private entity (if any). Internally we have two
@@ -217,11 +238,21 @@
 --       Defined in all entities. True for E_Single_Task, E_Task_Type,
 --       E_Single_Protected and E_Protected_Type.
 
+--    Is_Concurrent_Type_Or_Object_Body (synthesized)
+--       Defined in all entities. True for the body of E_Single_Task,
+--       E_Task_Type, E_Single_Protected and E_Protected_Type.
+
 --    Is_Decorated
---       Defined in all entities. True for entities which have been fully
---       decorated by the GNATdoc frontend. For entities whose ALI file is
---       not available to GNATdoc this attribute returns False and their
---       scope is generally not available.
+--       Defined in all entities. True for entities which have been decorated
+--       by the GNATdoc frontend using the information available in the ALI
+--       files by the frontend builder (such decoration may have been fixed
+--       by the fast parser that extracts the comments from the sources). For
+--       internally build entities (that is, entities needed to build the tree
+--       that are not available in the ALI file), this attribute return False.
+--       and their scope may not be available.
+
+--    Is_Entry_Body (synthesized)
+--       Defined in all entities. True for the entity of an entry body.
 
 --    Is_Full_View (synthesized)
 --       Defined in types and subtypes. True in the full view of private
@@ -247,6 +278,10 @@
 --    Is_Package (synthesized)
 --       Defined in all entities. True for packages and generic package.
 
+--    Is_Package_Body (synthesized)
+--       Defined in all entities. True for package bodies and generic package
+--       bodies.
+
 --    Is_Partial_View (synthesized)
 --       Defined in types and subtypes. True in the partial view of private
 --       types and incomplete types.
@@ -254,11 +289,23 @@
 --    Is_Primitive (LL)
 --       Defined in subprograms. True for primitives of tagged types.
 
+--    Is_Protected_Body (synthesized)
+--       Defined in all entities. True for the body of a protected type.
+
 --    Is_Record_Type (synthesized)
 --       Defined in all entities. True for record types and interface types.
 
+--    Is_Separate_Unit (synthesized)
+--       Defined in all entities. True for subprograms and packages that are
+--       separate units.
+
 --    Is_Type (LL)
 --       Defined in all entities. True for types and subtypes.
+
+--    Is_Skipped
+--       Defined in all entities. True for entities internally skipped by the
+--       frontend of GNATdoc when building the tree. Used to skip processing
+--       entities in nested scopes.
 
 --    Is_Standard_Entity
 --       Defined in all entities. True if the entity represents the Standard
@@ -267,11 +314,17 @@
 --    Is_Subprogram (synthesized)
 --       Defined in all entities. True for procedures and functions.
 
+--    Is_Subprogram_Body (synthesized)
+--       Defined in all entities. True for the entity of a subprogram body.
+
 --    Is_Subprogram_Or_Entry (synthesized)
 --       Defined in all entities. True for subprograms and entries.
 
 --    Is_Subtype
 --       Defined in all entities. True for subtypes.
+
+--    Is_Task_Body (synthesized)
+--       Defined in all entities. True for the entity of a task body.
 
 --    Is_Tagged
 --       Defined in all entities. True for tagged types.
@@ -337,6 +390,10 @@
 --       Defined in renamings. References the Xref entity associated with
 --       the renamed entity (if available).
 
+--    Begin_Of_Concurrent_Type_Body_Loc (LL)
+--       Defined in all entities. Set on concurrent types and concurrent
+--       objects to reference their location of their body.
+
 --    Body_Loc (LL)
 --       Defined in all entities. Set on the following kind of entities:
 --         E_Discriminant
@@ -367,15 +424,22 @@
 --    EKind (LL)
 --       Defined in all entities. Kind of an entity returned by Xref.
 
+--    End_Of_Body_Loc (LL, synthesized)
+--       Defined in all entities. Set on concurrent types, concurrent objects,
+--       packages and subprograms to reference the location of the end of
+--       their body.
+
 --    End_Of_Profile_Location
---       Defined in subprograms and entries. Points to the location of the
---       semicolon closing the declaration of the entity. This attribute is
---       just a renaming of attribute End_Of_Syntax_Scope_Loc provided to
---       improve the readability of the sources.
+--       Defined in all entities. Set on subprograms, entries, packages and
+--       concurrent types. Points to the token IS located after their profile.
+--       Notice that, although in this latter case it points to the same
+--       location of End_Of_Profile_Location_In_Body, this latter attribute
+--       is only set when the file is parsed with switch -b
 
 --    End_Of_Profile_Location_In_Body
 --       Defined in subprograms and entries. Points to the location of the
---       keyword "is" after the profile of the entity.
+--       keyword "is" after the profile of the entity. Set only when the file
+--       is parsed with switch -b
 
 --    First_Private_Entity_Loc (LL)
 --       Location of the first private entity (if provided by the compiler).
@@ -407,6 +471,11 @@
 
 --    Pointed_Type (LL)
 --       Value provided by Xref. Currently unused???
+
+--    Separate_Stub_Body_Loc (LL)
+--       Defined in all entities. Set on separate subprograms and packages to
+--       reference the location of their stub (that is, the location of the
+--       Ada subprogram or package terminating with the syntax "is separate;".
 
 --    Scope (LL)
 --       Value provided by Xref.
@@ -637,19 +706,30 @@ private package GNATdoc.Atree is
    -- Entity_Id subprograms --
    ---------------------------
 
+   function Acts_As_Spec (E : Entity_Id) return Boolean;
+   --  True in subprograms defined in the body that have no previous
+   --  declaration.
+
    function New_Entity
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
       E        : Root_Entity'Class;
       Loc      : General_Location) return Entity_Id;
+   --  Build a new entity.
+
    function New_Internal_Entity
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
       Name     : String) return Entity_Id;
-   --  Tree node constructors. New_Internal_Entity is used only to build the
-   --  entity associated with the Standard scope, the full-view of private
-   --  and incomplete types, and the entity associated with unknown
-   --  discriminants of private types.
+   --  Build a new internal entity. Used to build the entity associated with
+   --  the Standard scope, the full-view of private and incomplete types, and
+   --  the entity associated with unknown discriminants of private types.
+
+   function New_Internal_Entity
+     (Context : access constant Docgen_Context;
+      E       : Entity_Id) return Entity_Id;
+   --  Build a new internal entity using the language and location of E. Used
+   --  when processing bodies to build entities associated with bodies.
 
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
@@ -676,6 +756,11 @@ private package GNATdoc.Atree is
    function Get_Array_Component_Type
      (E : Entity_Id) return Entity_Id;
 
+   function Get_Corresponding_Body
+     (E : Entity_Id) return Entity_Id;
+   function Get_Corresponding_Spec
+     (E : Entity_Id) return Entity_Id;
+
    function Get_Components
      (E : Entity_Id) return EInfo_List.Vector;
    --  Applicable to record types, concurrent types and concurrent objects
@@ -694,24 +779,27 @@ private package GNATdoc.Atree is
    function Get_Doc_Before
      (E : Entity_Id) return Comment_Result;
 
+   function Get_End_Of_Profile_Location
+     (E : Entity_Id) return General_Location;
+
    function Get_End_Of_Profile_Location_In_Body
      (E : Entity_Id) return General_Location;
-   --  This attribute is set only for subprograms
+
+   function Get_End_Of_Scope_Loc
+     (E : Entity_Id) return General_Location;
 
    function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location;
    --  At current stage this attribute is set only for E_Package,
    --  E_Generic_Package entities, and concurrent types and objects.
 
-   function Get_End_Of_Profile_Location
-     (E : Entity_Id) return General_Location
-      renames Get_End_Of_Syntax_Scope_Loc;
-
    function Get_Entities
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Error_Msg
      (E : Entity_Id) return Unbounded_String;
    function Get_Etype
+     (E : Entity_Id) return Entity_Id;
+   function Get_First_Local
      (E : Entity_Id) return Entity_Id;
    function Get_First_Private_Entity_Loc
      (E : Entity_Id) return General_Location;
@@ -801,7 +889,12 @@ private package GNATdoc.Atree is
 
    function Is_Concurrent_Type_Or_Object
      (E : Entity_Id) return Boolean;
+   function Is_Concurrent_Type_Or_Object_Body
+     (E : Entity_Id) return Boolean;
    function Is_Decorated
+     (E : Entity_Id) return Boolean;
+
+   function Is_Entry_Body
      (E : Entity_Id) return Boolean;
 
    function Is_Full_View
@@ -824,6 +917,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
+   function Is_Package_Body
+     (E : Entity_Id) return Boolean;
 
    function Is_Partial_View
      (E : Entity_Id) return Boolean;
@@ -831,16 +926,26 @@ private package GNATdoc.Atree is
 
    function Is_Private
      (E : Entity_Id) return Boolean;
+   function Is_Protected_Body
+     (E : Entity_Id) return Boolean;
+   function Is_Separate_Unit
+     (E : Entity_Id) return Boolean;
+   function Is_Tagged
+     (E : Entity_Id) return Boolean;
    function Is_Standard_Entity
      (E : Entity_Id) return Boolean;
    --  Return true if E represents the Standard scope (the outermost entity)
+   function Is_Skipped
+     (E : Entity_Id) return Boolean;
    function Is_Subprogram
+     (E : Entity_Id) return Boolean;
+   function Is_Subprogram_Body
      (E : Entity_Id) return Boolean;
    function Is_Subprogram_Or_Entry
      (E : Entity_Id) return Boolean;
    function Is_Subtype
      (E : Entity_Id) return Boolean;
-   function Is_Tagged
+   function Is_Task_Body
      (E : Entity_Id) return Boolean;
 
    function Kind_In
@@ -859,6 +964,10 @@ private package GNATdoc.Atree is
       V3 : Entity_Kind;
       V4 : Entity_Kind) return Boolean;
 
+   procedure Remove_Doc (E : Entity_Id);
+   --  Remove the documentation of E. Used to clean documentation of skipped
+   --  entities.
+
    procedure Remove_Full_View
      (E : Entity_Id);
    procedure Remove_From_List
@@ -867,10 +976,18 @@ private package GNATdoc.Atree is
    procedure Remove_From_Scope
      (E : Entity_Id);
 
+   procedure Remove_Src (E : Entity_Id);
+   --  Remove the sources of E. Used to clean sources of skipped entities.
+
    procedure Set_Alias
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Comment
      (E : Entity_Id; Value : Structured_Comment);
+
+   procedure Set_Corresponding_Body
+     (E : Entity_Id; Value : Entity_Id);
+   procedure Set_Corresponding_Spec
+     (E : Entity_Id; Value : Entity_Id);
 
    procedure Set_Doc
      (E : Entity_Id; Value : Comment_Result);
@@ -879,7 +996,11 @@ private package GNATdoc.Atree is
    procedure Set_Doc_Before
      (E : Entity_Id; Value : Comment_Result);
 
+   procedure Set_End_Of_Profile_Location
+     (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Profile_Location_In_Body
+     (E : Entity_Id; Loc : General_Location);
+   procedure Set_End_Of_Scope_Loc
      (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Syntax_Scope_Loc
      (E : Entity_Id; Loc : General_Location);
@@ -922,6 +1043,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id);
    procedure Set_Is_Incomplete
      (E : Entity_Id; Value : Boolean := True);
+   procedure Set_Is_Skipped
+     (E : Entity_Id);
    procedure Set_Is_Private
      (E : Entity_Id);
    procedure Set_Is_Subtype
@@ -985,11 +1108,13 @@ private package GNATdoc.Atree is
 
       function Get_Alias
         (E : Entity_Id) return Root_Entity'Class;
+      function Get_Begin_Of_Concurrent_Type_Body_Loc
+        (E : Entity_Id) return General_Location;
       function Get_Body_Loc
         (E : Entity_Id) return General_Location;
       function Get_Child_Types
         (E : Entity_Id) return access EInfo_List.Vector;
-      function Get_End_Of_Scope_Loc
+      function Get_End_Of_Body_Loc
         (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return Root_Entity'Class;
@@ -1003,6 +1128,8 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return access EInfo_List.Vector;
       function Get_Pointed_Type
         (E : Entity_Id) return Root_Entity'Class;
+      function Get_Separate_Stub_Body_Loc
+        (E : Entity_Id) return General_Location;
       function Get_Scope
         (E : Entity_Id) return Root_Entity'Class;
 
@@ -1037,7 +1164,11 @@ private package GNATdoc.Atree is
       --  named typedef structs (the compiler generates two entites in the LI
       --  file with the same name).
 
+      procedure Set_Body_Loc
+        (E : Entity_Id; Value : General_Location);
       procedure Set_Location
+        (E : Entity_Id; Value : General_Location);
+      procedure Set_Separate_Stub_Body_Loc
         (E : Entity_Id; Value : General_Location);
 
    private
@@ -1045,14 +1176,16 @@ private package GNATdoc.Atree is
       pragma Inline (Append_Parent_Type);
 
       pragma Inline (Get_Alias);
+      pragma Inline (Get_Begin_Of_Concurrent_Type_Body_Loc);
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
-      pragma Inline (Get_End_Of_Scope_Loc);
+      pragma Inline (Get_End_Of_Body_Loc);
       pragma Inline (Get_Entity);
       pragma Inline (Get_Location);
       pragma Inline (Get_Parent_Package);
       pragma Inline (Get_Parent_Types);
       pragma Inline (Get_Pointed_Type);
+      pragma Inline (Get_Separate_Stub_Body_Loc);
       pragma Inline (Get_Scope);
 
       pragma Inline (Is_Abstract);
@@ -1063,6 +1196,7 @@ private package GNATdoc.Atree is
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Type);
 
+      pragma Inline (Set_Body_Loc);
       pragma Inline (Set_Location);
    end LL;
 
@@ -1148,12 +1282,13 @@ private
          Instance_Of      : Root_Entity_Ref;
          Loc              : General_Location;
 
-         Array_Component_Type : Root_Entity_Ref;
+         Array_Component_Type   : Root_Entity_Ref;
 
-         Pointed_Type     : Root_Entity_Ref;
+         Pointed_Type           : Root_Entity_Ref;
 
-         Scope_E          : Root_Entity_Ref;
-         Parent_Package   : Root_Entity_Ref;
+         Separate_Stub_Body_Loc : General_Location;
+         Scope_E                : Root_Entity_Ref;
+         Parent_Package         : Root_Entity_Ref;
          --  Present in packages
 
          First_Private_Entity_Loc : General_Location;
@@ -1172,12 +1307,12 @@ private
          Is_Access     : Boolean;
          Is_Array      : Boolean;
          Is_Container  : Boolean;
+         Is_Generic    : Boolean;
          Is_Global     : Boolean;
          Is_Predef     : Boolean;
-         Is_Type       : Boolean;
-         Is_Subprogram : Boolean;
          Is_Primitive  : Boolean;
-         Is_Generic    : Boolean;
+         Is_Subprogram : Boolean;
+         Is_Type       : Boolean;
       end record;
 
    type Entity_Info_Record is
@@ -1203,7 +1338,12 @@ private
          Parent_Package  : Entity_Id;
          --  Present in packages
 
+         Corresponding_Spec : Entity_Id;
+         Corresponding_Body : Entity_Id;
+
+         End_Of_Scope_Loc                : General_Location;
          End_Of_Syntax_Scope_Loc         : General_Location;
+         End_Of_Profile_Location         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
          Generic_Formals_Loc             : General_Location;
          First_Private_Entity_Loc        : General_Location;
@@ -1227,6 +1367,8 @@ private
          Is_Internal       : Boolean;
          Is_Incomplete     : Boolean;
          Is_Private        : Boolean;
+         Is_Separate_Unit  : Boolean;
+         Is_Skipped        : Boolean;
 
          Is_Subtype        : Boolean;
          Is_Tagged_Type    : Boolean;
@@ -1285,12 +1427,16 @@ private
    pragma Inline (Get_Comment);
    pragma Inline (Get_Array_Component_Type);
    pragma Inline (Get_Array_Index_Type);
+   pragma Inline (Get_Corresponding_Body);
+   pragma Inline (Get_Corresponding_Spec);
    pragma Inline (Get_Direct_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_Doc_After);
    pragma Inline (Get_Doc_Before);
+   pragma Inline (Get_End_Of_Profile_Location);
    pragma Inline (Get_End_Of_Profile_Location_In_Body);
-   pragma Inline (Get_End_Of_Syntax_Scope_Loc);
+   pragma Inline (Get_End_Of_Scope_Loc);
+--   pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Etype);
@@ -1306,6 +1452,7 @@ private
    pragma Inline (Get_Parent);
    pragma Inline (Get_Parent_Package);
    pragma Inline (Get_Partial_View);
+   pragma Inline (Get_First_Local);
    pragma Inline (Get_First_Private_Entity_Loc);
    pragma Inline (Get_Progenitors);
    pragma Inline (Get_Scope);
@@ -1324,30 +1471,44 @@ private
    pragma Inline (Is_Compilation_Unit);
    pragma Inline (Is_Class_Or_Record_Type);
    pragma Inline (Is_Concurrent_Type_Or_Object);
+   pragma Inline (Is_Concurrent_Type_Or_Object_Body);
    pragma Inline (Is_Decorated);
+   pragma Inline (Is_Entry_Body);
    pragma Inline (Is_Full_View);
    pragma Inline (Is_Generic);
    pragma Inline (Is_Generic_Formal);
    pragma Inline (Is_Incomplete);
    pragma Inline (Is_Package);
+   pragma Inline (Is_Package_Body);
    pragma Inline (Is_Partial_View);
    pragma Inline (Is_Private);
+   pragma Inline (Is_Protected_Body);
    pragma Inline (Is_Record_Type);
+   pragma Inline (Is_Separate_Unit);
+   pragma Inline (Is_Skipped);
    pragma Inline (Is_Subprogram);
+   pragma Inline (Is_Subprogram_Body);
    pragma Inline (Is_Subprogram_Or_Entry);
    pragma Inline (Is_Subtype);
+   pragma Inline (Is_Task_Body);
    pragma Inline (Is_Tagged);
    pragma Inline (Kind_In);
    pragma Inline (No);
    pragma Inline (Present);
+   pragma Inline (Remove_Doc);
+   pragma Inline (Remove_Src);
    pragma Inline (Set_Alias);
    pragma Inline (Set_Comment);
+   pragma Inline (Set_Corresponding_Body);
+   pragma Inline (Set_Corresponding_Spec);
    pragma Inline (Set_In_Private_Part);
    pragma Inline (Set_IDepth_Level);
    pragma Inline (Set_Doc);
    pragma Inline (Set_Doc_After);
    pragma Inline (Set_Doc_Before);
+   pragma Inline (Set_End_Of_Profile_Location);
    pragma Inline (Set_End_Of_Profile_Location_In_Body);
+   pragma Inline (Set_End_Of_Scope_Loc);
    pragma Inline (Set_End_Of_Syntax_Scope_Loc);
    pragma Inline (Set_Error_Msg);
    pragma Inline (Set_Full_View);
@@ -1361,6 +1522,7 @@ private
    pragma Inline (Set_Is_Generic_Formal);
    pragma Inline (Set_Is_Incomplete);
    pragma Inline (Set_Is_Private);
+   pragma Inline (Set_Is_Skipped);
    pragma Inline (Set_Is_Subtype);
    pragma Inline (Set_Is_Tagged);
    pragma Inline (Set_Kind);

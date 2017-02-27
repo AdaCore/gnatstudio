@@ -156,6 +156,7 @@ package body GPS.CLI_Scripts is
                                     With_Comments),
                Backend_Name     => To_Unbounded_String (Backend_Name),
                Display_Time     => False,
+               Document_Bodies  => False,
                Process_Bodies   => False,
                Show_Private     => True,
                Output_Comments  => True,

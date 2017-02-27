@@ -37,22 +37,39 @@ private package GNATdoc.Frontend is
 
       Header_File : Virtual_File;
       --  (C/C+): Header file (.h) associated with File
+
+      Is_Separate_Unit : Boolean := False;
+      --  True if the frontend skipped building the tree because this is a
+      --  separate unit.
    end record;
 
    No_Tree : constant Tree_Type :=
                (Tree_Root    => null,
                 All_Entities => EInfo_List.Empty_Vector,
                 File         => No_File,
-                Header_File  => No_File);
+                Header_File  => No_File,
+                Is_Separate_Unit => False);
+
+   function Ada_Compilation_Unit (Tree : Tree_Type) return Entity_Id;
+   --  Return the compilation unit of the given Ada tree.
 
    function Build_Tree
-     (Context : access constant Docgen_Context;
-      File    : Virtual_File) return Tree_Type;
+     (Context   : access constant Docgen_Context;
+      File      : Virtual_File;
+      Tree_Spec : access Tree_Type := null) return Tree_Type;
    --  Analyze all the entities defined in File and build the corresponding
-   --  tree.
+   --  tree. Tree_Spec contanins the tree built for the unit containing the
+   --  specification of this file (the null value means that we are building
+   --  the tree of a compilation unit specification; the No_Tree value means
+   --  that we are processing a compilation unit body that has no spec; and
+   --  other values mean that we are processing a compilation unit body that
+   --  has the given compilation unit specification tree).
 
    procedure Initialize;
    --  Initialize (or clear) internal data structures
+
+   function Is_Empty (Tree : Tree_Type) return Boolean;
+   --  True if the tree is empty or No_Tree.
 
    procedure Finalize;
 

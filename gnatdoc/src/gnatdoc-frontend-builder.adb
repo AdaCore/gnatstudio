@@ -349,13 +349,28 @@ package body GNATdoc.Frontend.Builder is
 
             elsif Is_Concurrent_Type_Or_Object (New_E) then
                return
-                 LL.Get_Location (New_E).File = LL.Get_Body_Loc (New_E).File
+                 Is_Spec_File
+                   (Context.Kernel, LL.Get_Location (New_E).File)
+                 and then
+                   LL.Get_Location (New_E).File = LL.Get_Body_Loc (New_E).File
                  and then
                    LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line;
+
+            --  Formals and variables found in the scope of entries
+
+            elsif Get_Kind (New_E) = E_Variable
+              and then
+                LL.Get_Ekind (LL.Get_Scope (New_E), In_Ada_Lang) = E_Entry
+            then
+               return False;
 
             elsif LL.Is_Type (New_E)
               or else Get_Kind (New_E) = E_Variable
             then
+               --  This is not correct if New_E is a single concurrent type
+               --  defined in the public part of a package. However, at this
+               --  stage we cannot differentiate such case.
+
                return
                  LL.Get_Location (New_E).File /= LL.Get_Body_Loc (New_E).File
                  or else
@@ -852,6 +867,7 @@ package body GNATdoc.Frontend.Builder is
                                     Discr_Full_V : constant Entity_Id :=
                                       Get_Full_View (Entity);
                                  begin
+                                    Append_To_File_Entities (Discr_Full_V);
                                     Set_Kind
                                       (Discr_Full_V, E_Discriminant);
                                     Remove_From_Scope (Discr_Full_V);
@@ -859,7 +875,10 @@ package body GNATdoc.Frontend.Builder is
                                     Append_To_Scope (Get_Full_View (E),
                                       Discr_Full_V);
 
-                                    Set_Full_View (Entity, Atree.No_Entity);
+                                    Set_Full_View
+                                      (Entity, Atree.No_Entity);
+                                    Set_Partial_View
+                                      (Discr_Full_V, Atree.No_Entity);
                                     Set_Is_Incomplete (Entity, False);
 
                                     Set_Scope (Discr_Full_V,
@@ -1047,7 +1066,11 @@ package body GNATdoc.Frontend.Builder is
                               Append_Method (E, Method);
                            end if;
                         else
-                           Append_Method (Get_Full_View (E), Method);
+                           if not
+                             Get_Methods (Get_Full_View (E)).Contains (Method)
+                           then
+                              Append_Method (Get_Full_View (E), Method);
+                           end if;
                         end if;
 
                         Set_Is_Decorated (Method);
