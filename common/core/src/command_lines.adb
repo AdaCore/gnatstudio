@@ -855,7 +855,7 @@ package body Command_Lines is
             Switch_Index   => 1,
             Char_Index     => 1,
             Prefix         => 0,
-            Is_New_Section => False);
+            Is_New_Section => True);
 
          if Has_More (Iter) then
             declare
@@ -877,7 +877,7 @@ package body Command_Lines is
            (Expanded       => False,
             Line           => Copy,
             Switch_Index   => 1,
-            Is_New_Section => False);
+            Is_New_Section => True);
       end if;
    end Start;
 
@@ -1041,7 +1041,7 @@ package body Command_Lines is
       while Has_More (Iter) loop
          Count := Count + 1;
 
-         if Is_New_Section (Iter) then
+         if Is_New_Section (Iter) and then Current_Section (Iter) /= "" then
             Count := Count + 1;
          end if;
 
@@ -1059,7 +1059,7 @@ package body Command_Lines is
       Start (Cmd, Iter, Expanded => Expanded);
 
       while Has_More (Iter) loop
-         if Is_New_Section (Iter) then
+         if Is_New_Section (Iter) and then Current_Section (Iter) /= "" then
             Result (Count) := new String'(Current_Section (Iter));
             Count := Count + 1;
          end if;

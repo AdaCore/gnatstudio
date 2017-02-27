@@ -1142,31 +1142,18 @@ package body Switches_Chooser is
       procedure Update_Graphical_Command_Line
         (Editor : in out Root_Switches_Editor)
       is
-         Iter    : Command_Line_Iterator;
-         Cmd     : Unbounded_String;
-
+         List     : String_List_Access :=
+                      Editor.Cmd_Line.To_String_List (Expanded => False);
+         Cmd_Line : constant String :=
+                      (if List /= null then
+                          Argument_List_To_String (List.all)
+                       else
+                          "");
       begin
          Editor.Block := True;
-
-         Start (Editor.Cmd_Line, Iter, Expanded => False);
-         while Has_More (Iter) loop
-            if Is_New_Section (Iter) then
-               Append (Cmd, Current_Section (Iter) & " ");
-            end if;
-
-            if Current_Parameter (Iter) /= "" then
-               Append (Cmd, Current_Switch (Iter)
-                       & Current_Separator (Iter)
-                       & Current_Parameter (Iter) & " ");
-            else
-               Append (Cmd, Current_Switch (Iter) & " ");
-            end if;
-
-            Next (Iter);
-         end loop;
-
          Set_Graphical_Command_Line
-           (Root_Switches_Editor'Class (Editor), To_String (Cmd));
+           (Root_Switches_Editor'Class (Editor), Cmd_Line);
+         Free (List);
          Editor.Block := False;
       end Update_Graphical_Command_Line;
 
