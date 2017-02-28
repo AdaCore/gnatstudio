@@ -164,6 +164,8 @@ private
       Message_Colors         : Message_Ranking_Color_Preference_Array;
       Removed_Message_Color  : Default_Preferences.Color_Preference;
       Message_Styles         : Message_Ranking_Style_Array;
+      Import_Annotations     : Default_Preferences.Boolean_Preference;
+      --  Control import of CodePeer annotations
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter

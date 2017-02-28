@@ -177,6 +177,7 @@ package body CodePeer.Module.Bridge is
             Codepeer_Database_Directory (Project),
             Reply_File_Name,
             Status_File_Name,
+            Module.Import_Annotations.Get_Pref,
             Format_Version'Min
               (Module.Version_Limit, Supported_Format_Version'Last));
 

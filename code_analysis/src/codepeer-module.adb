@@ -1707,6 +1707,16 @@ package body CodePeer.Module is
              & " in Locations view"),
            Default => "#5A5A5A");
 
+      Module.Import_Annotations :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "CodePeer-Import-Annotations",
+           Label   => -"Import CodePeer annotations",
+           Path    => -"CodePeer",
+           Doc     => -("Import and display CodePeer annotations in source"
+             & " editor"),
+           Default => True);
+
       --  CodePeer styles initialization
 
       Module.Annotations_Style := Editor_Code_Annotations_Style;
