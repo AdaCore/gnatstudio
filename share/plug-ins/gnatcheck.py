@@ -435,7 +435,8 @@ def edit_gnatcheck_rules():
 @hook('gps_started')
 def __on_gps_started():
     GPS.parse_xml("""
-  <tool name="GnatCheck" package="Check" index="Ada" override="false">
+  <tool name="GnatCheck" package="Check" index="Ada" override="false"
+        attribute="Default_Switches">
      <language>Ada</language>
      <switches sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
