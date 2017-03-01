@@ -15,8 +15,11 @@ GPS window).
 .. index:: menu; navigate --> find or replace
 
 All of these search contexts are merged into a single graphical window that
-you can open either through the :menuselection:`Navigate --> Find or
-Replace...` menu or the shortcut :kbd:`Ctrl-F`.
+you can open either through the :menuselection:`Navigate --> Find` menu or
+the shortcut :kbd:`Ctrl-F`.
+
+Searching
+---------
 
 By default, the search window is floating and appears as a dialog on top of
 GPS. Put it inside the multiple document interface for easier access by
@@ -25,18 +28,71 @@ search window into a new location (for example, above the
 :guilabel:`Project` view).  Selecting either option pops up a dialog on the
 screen similar to the following:
 
-.. image:: search-hide.jpg
+.. image:: search_view.png
 
-This dialog contains three fields:
+This dialog's toolbar contains several buttons that enable some specific
+options:
 
-*Search for*
-  .. index:: search for
+* :guilabel:`Regexp`
 
-  Type the string or pattern to search for. GPS supports two modes, strings
-  or regular expressions. Toggle between the two modes either by clicking
-  the :guilabel:`Options` button and selecting the appropriate check box or
-  by opening the combo box by clicking on the arrow on the right of the
-  entry field.
+  .. index:: regular expression
+
+  Toggles between strings and regular expressions.  Or you can select the
+  arrow to the right of the :guilabel:`Search for:` field.  The grammar
+  used by regular expressions is similar to the Perl and Python regular
+  expressions grammar and is documented in the GNAT run time file
+  :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
+  project <Open_From_Project>` menu (:menuselection:`File --> Open From
+  Project...`) and type :file:`g-regpat.ads`.
+
+* :guilabel:`Whole Word`
+
+  .. index:: whole word
+
+  Force the search engine to ignore substrings. For example, "sensitive"
+  no longer matches "insensitive".
+
+* :guilabel:`Case Sensitive Search`
+
+  .. index:: case sensitive
+
+  By default, patterns are case insensitive (upper-case letters and
+  lower-case letters are considered equivalent).  Change this behavior by
+  clicking this check box.
+
+In addition, the dialog's local menu contains more general options used
+to control the behavior of the Search view:
+
+* :guilabel:`Incremental search`
+
+  .. index:: incremental search
+
+  Enable the incremental mode. In this mode, a search will be automatically
+  performed whenever the search pattern is modified, starting from the
+  current location to the next occurrence in the current file.
+
+* :guilabel:`Close on Match`
+
+  .. index:: close dialog on match
+
+  This button only appears if the search window is floating. If pressed,
+  the search window is automatically closed when an occurrence of the
+  search string is found.
+
+* :guilabel:`Select on Match`
+
+  .. index:: select window on match
+
+  Gives the focus to the editor containing the match. If not selected, the
+  focus remains on the search window.  If so, press :kbd:`Enter` to search
+  for the next occurrence.
+
+By default, the search view contains three searching related widgets:
+
+*Search*
+  .. index:: search
+
+  Type the string or pattern to search for.
 
   The combo box provides a number of predefined patterns. The top two are
   empty patterns that automatically set the appropriate strings or regular
@@ -46,24 +102,16 @@ This dialog contains three fields:
   .. index:: C++
   .. index:: Ada
 
-*Replace with*
-  .. index:: replace with
 
-  Contains the string to replace the occurrences of the pattern.  The combo
-  box provides a history of previously used replacement strings. If a
-  regular expression is used for search, special escapes in this field are
-  used as:
+*Where*
+  .. index:: where
 
-  * :samp:`\\1`, :samp:`\\2` .. :samp:`\\9` refer to the
-    corresponding matching subexpressions;
+  Used restrict the search to a set of language constructs.  For example, use
+  this to to avoid matching comments when you are only interested in actual code
+  or to only search strings and comments, but not code.
 
-  * :samp:`\\0` refers to the complete matched string;
-
-  * :samp:`\\i`, :samp:`\\i(start,step)` refers to the sequentially increasing
-    number (starting from start and increased by step on each replace).
-    
-*Look in*
-  .. index:: look in
+*In*
+  .. index:: in
 
   The context in which the search should occur.
 
@@ -74,10 +122,7 @@ This dialog contains three fields:
   focus. If several contexts are possible for one component (for example,
   the editor has :guilabel:`Current_File`, :guilabel:`Files from Project`,
   :guilabel:`Files...`, and :guilabel:`Open Files`), the last one you used
-  is selected.  In most contexts, the :guilabel:`Scope` option restricts
-  the search to a set of language constructs.  For example, use this to to
-  avoid matching comments when you are only interested in actual code or to
-  only search strings and comments, but not code.
+  is selected.
 
 Change the context to a different one by clicking on the arrow on the
 right, which displays the list of all possible contexts, including:
@@ -117,77 +162,21 @@ right, which displays the list of all possible contexts, including:
 
   .. index:: preferences; search --> preserve search context
 
-  Normally, GPS sets the default value for :guilabel:`Look In` that matches
-  the currently selected window. For example, if you are in an editor and
-  open the search dialog, the context is set to :guilabel:`Current
-  File`. Optionally, GPS can remember the last
-  context that was set (see the preference :menuselection:`Search -->
-  Preserve Search Context`). In that case, if an editor is selected, GPS
-  remembers whether the last time you started a search from an editor you
-  decided to search in (for example) :guilabel:`Current File` or
-  :guilabel:`Files From Project`.
+  Normally, GPS sets the default value for :guilabel:`In` that matches the
+  currently selected window. For example, if you are in an editor and open the
+  search dialog, the context is set to :guilabel:`Current File`. Optionally, GPS
+  can remember the last context that was set (see the preference
+  :menuselection:`Search --> Preserve Search Context`). In that case, if an
+  editor is selected, GPS remembers whether the last time you started a search
+  from an editor you decided to search in (for example) :guilabel:`Current File`
+  or :guilabel:`Files From Project`.
 
   Finally, you can create key shortcuts (through the :menuselection:`Edit -->
   Key Shortcuts` menu, in the :guilabel:`Search` category) to open the search
   dialog and set the context to a specific value.
 
-.. image:: search-options.jpg
-
-The second section in the dialog is a row of five buttons, used to start
-the search, or continue to the next occurrence, or set options:
-
-* :guilabel:`Regexp`
-
-  .. index:: regular expression
-
-  Toggles between strings and regular expressions.  Or you can select the
-  arrow to the right of the :guilabel:`Search for:` field.  The grammar
-  used by regular expressions is similar to the Perl and Python regular
-  expressions grammar and is documented in the GNAT run time file
-  :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
-  project <Open_From_Project>` menu (:menuselection:`File --> Open From
-  Project...`) and type :file:`g-regpat.ads`.
-
-* :guilabel:`Whole Word`
-
-  .. index:: whole word
-
-  Force the search engine to ignore substrings. For example, "sensitive"
-  no longer matches "insensitive".
-
-* :guilabel:`Select on Match`
-
-  .. index:: select window on match
-
-  Gives the focus to the editor containing the match. If not selected, the
-  focus remains on the search window.  If so, press :kbd:`Enter` to search
-  for the next occurrence.
-
-* :guilabel:`Close on Match`
-
-  .. index:: close dialog on match
-
-  This button only appears if the search window is floating. If pressed,
-  the search window is automatically closed when an occurrence of the
-  search string is found.
-
-* :guilabel:`Case Sensitive Search`
-
-  .. index:: case sensitive
-
-  By default, patterns are case insensitive (upper-case letters and
-  lower-case letters are considered equivalent).  Change this behavior by
-  clicking this check box.
-
-* :guilabel:`Case Preserving Replace`
-
-  .. index:: case preserving
-
-  When this is checked, replacements preserve casing. Three casings are
-  detected and preserved: all lower, all UPPER, and Mixed_Case (where the
-  first character of each word is capitalized).  When the replacement
-  pattern is not all lower case, replacement is never case-preserving; the
-  original casing of the replacement pattern is used.
+The right part of the dialog is a row of three buttons, used to navigate
+among the search results.
 
 Press the :guilabel:`Find` or :guilabel:`Previous` button to perform an
 interactive search, which stops as soon as one occurrence of the pattern is
@@ -198,6 +187,34 @@ found.  At that point, the :guilabel:`Find` button is renamed to
 The :guilabel:`Find all` button starts a search for all occurrences and
 puts the results in a view called :guilabel:`Locations` view,
 see :ref:`The_Locations_View`.
+
+Replacing
+---------
+
+The combo box present in the toolbar is used to switch the search view's
+mode: switch to :guilabel:`Find & Replace` to enable replacing
+capabilities. You can also use the :menuselection:`Navigate --> Replace` menu
+or the :kbd:`Ctrl-Shift-F` shortcut to switch to this mode.
+
+.. image:: search_replace.png
+
+In this mode, an additional field is displayed:
+
+*Replace*
+  .. index:: replace
+
+  Contains the string to replace the occurrences of the pattern. The combo box
+  provides a history of previously used replacement strings. If a regular
+  expression is used for search, special escapes in this field are used as:
+
+  * :samp:`\\1`, :samp:`\\2` .. :samp:`\\9` refer to the corresponding matching
+    subexpressions.
+
+  * :samp:`\\0` refers to the complete matched string.
+
+  * :samp:`\\i`, :samp:`\\i(start,step)` refers to the sequentially increasing
+    number (starting from start and increased by step on each replace).
+
 
 The :guilabel:`Replace` and :guilabel:`Replace & Find` buttons are grayed
 out if no occurence of the pattern is found. To enable them, start a
@@ -234,14 +251,10 @@ multiple files, or even in files that are not opened in GPS. However,
 the most frequent context is to search in the current file. GPS provides
 a number of facilities just for this:
 
-* Use the :file:`isearch.py` plugin
+* Use the :guilabel:`Incremental search` option
 
-  This plugin provides an interactive search. When you press the key
-  shortcut (:kbd:`ctrl-s` by default when using Emacs mode, or use the
-  :menuselection:`Edit --> Key Shortcuts` to assign another shortcut), GPS
-  displays a small prompt window. As you start typing letters there, GPS
-  jumps to the next match for the word you are currently typing.
-  Press the same shortcut again to search for the next occurrence.
+  When this option is enabled, GPS automatically jumps to the next match for the
+  word you are currently typing.
 
 * Use the omni-search
 
