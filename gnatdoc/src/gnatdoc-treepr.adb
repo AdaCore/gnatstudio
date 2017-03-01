@@ -84,6 +84,9 @@ package body GNATdoc.Treepr is
      (Context : access constant Docgen_Context;
       Tree    : access Tree_Type)
    is
+      Backend_Name  : constant String :=
+                        To_String (Context.Options.Backend_Name);
+      In_CM_Backend : constant Boolean := Backend_Name = "cm";
       Printout : aliased Unbounded_String;
 
       procedure Append_Line (Text : String);
@@ -112,6 +115,24 @@ package body GNATdoc.Treepr is
          Scope_Level : Natural) return Traverse_Result
       is
          pragma Unreferenced (Scope_Level);
+
+         procedure Append_Structured_Comment (E : Entity_Id);
+         --  Append the comment avoiding the duplicate addition of the prefix
+         --  to the output
+
+         procedure Append_Structured_Comment (E : Entity_Id) is
+            Output_Mode : constant String_Mode :=
+                            (if In_CM_Backend then Plain_Text_Mode
+                                              else Single_Line_Mode);
+         begin
+            Append_Line
+              (Ada.Strings.Unbounded.To_String
+                 (To_Unbounded_String
+                    (Comment => Get_Comment (E),
+                     Prefix  => "",
+                     Mode    => Output_Mode)));
+         end Append_Structured_Comment;
+
       begin
          if Is_Skipped (Entity) then
             return OK; -- Do not output this node
@@ -191,11 +212,7 @@ package body GNATdoc.Treepr is
                   (Comment /= "" and then not Spaces_Only (Comment))
                then
                   Append_Line ("--- Structured Comment:");
-
-                  --  Append the comment avoiding the duplicate addition of the
-                  --  prefix to the output
-
-                  Append_Line (Comment);
+                  Append_Structured_Comment (Entity);
                end if;
             end;
          end if;
@@ -215,14 +232,7 @@ package body GNATdoc.Treepr is
                          /= No_Structured_Comment
             then
                Append_Line ("--- Full_View.Structured Comment:");
-
-               --  Append the comment avoiding the duplicate addition of the
-               --  prefix to the output
-
-               Append_Line
-                 (Ada.Strings.Unbounded.To_String
-                    (To_Unbounded_String
-                       (Get_Comment (Get_Full_View (Entity)), Prefix => "")));
+               Append_Structured_Comment (Get_Full_View (Entity));
             end if;
          end if;
 

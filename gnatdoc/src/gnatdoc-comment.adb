@@ -387,7 +387,8 @@ package body GNATdoc.Comment is
 
    function To_Unbounded_String
      (Comment : Structured_Comment;
-      Prefix  : String := "") return Unbounded_String
+      Prefix  : String := "";
+      Mode    : String_Mode := Single_Line_Mode) return Unbounded_String
    is
       Printout : Unbounded_String;
 
@@ -418,10 +419,17 @@ package body GNATdoc.Comment is
          end if;
 
          if Present (Tag_Info.Text) then
-            Append_Line
-              (Trim
-                 (Reduce (To_String (Tag_Info.Text)),
-                  Ada.Strings.Left));
+            case Mode is
+               when Single_Line_Mode =>
+                  Append_Line
+                    (Trim
+                       (Reduce (To_String (Tag_Info.Text)),
+                        Ada.Strings.Left));
+
+               when Plain_Text_Mode =>
+                  Append_Line
+                    (To_String (Tag_Info.Text));
+            end case;
          end if;
       end Append;
 

@@ -122,9 +122,20 @@ private package GNATdoc.Comment is
      (Comment : in out Structured_Comment);
    --  Free the memory associated with Comment
 
+   type String_Mode is (Single_Line_Mode, Plain_Text_Mode);
+   --  Single_Line_Mode: The output associated with each attribute of the
+   --    structured comment is generated in a single line of text aligned
+   --    to the left. This mode is used to generate the output associated
+   --    with the GNATdoc switch '--output=test'.
+   --  Plain_Text_Mode: The output associated with each line of the structured
+   --    comment is the plain unmodified text scanned by the parser, including
+   --    line terminators. This mode is used to generate the output associated
+   --    with the GNATdoc switch '--output=cm'.
+
    function To_Unbounded_String
      (Comment : Structured_Comment;
-      Prefix  : String := "")
+      Prefix  : String := "";
+      Mode    : String_Mode := Single_Line_Mode)
       return Unbounded_String;
    --  Convert Comment to an String. Prefix is used by print routines to
    --  format the output (if required).

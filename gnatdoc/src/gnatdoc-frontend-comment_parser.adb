@@ -41,6 +41,9 @@ package body GNATdoc.Frontend.Comment_Parser is
      (Context : access constant Docgen_Context;
       Root    : Entity_Id)
    is
+      Backend_Name : constant String :=
+                       To_String (Context.Options.Backend_Name);
+      In_CM_Backend : constant Boolean := Backend_Name = "cm";
       Private_Entities_List : aliased EInfo_List.Vector;
 
       procedure Error
@@ -634,7 +637,11 @@ package body GNATdoc.Frontend.Comment_Parser is
                            Text : constant String :=
                              S (Text_Loc.First .. Text_Loc.Last);
                         begin
-                           Append_Text (Current, Text);
+                           if In_CM_Backend then
+                              Append_Text (Current, Text & ASCII.LF);
+                           else
+                              Append_Text (Current, Text);
+                           end if;
                         end;
                      end if;
                   end if;
