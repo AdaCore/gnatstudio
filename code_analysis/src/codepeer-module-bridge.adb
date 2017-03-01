@@ -101,6 +101,7 @@ package body CodePeer.Module.Bridge is
             CodePeer.Bridge.Commands.Add_Audit_Record_V4
               (Command_File_Name,
                Codepeer_Output_Directory (Module.Kernel),
+               Codepeer_Database_Directory (Project),
                All_Messages);
       end case;
 
@@ -220,6 +221,7 @@ package body CodePeer.Module.Bridge is
       CodePeer.Bridge.Commands.Audit_Trail
         (Command_File_Name,
          Codepeer_Output_Directory (Module.Kernel),
+         Codepeer_Database_Directory (Project),
          Reply_File_Name,
          Messages,
          Module.Version);

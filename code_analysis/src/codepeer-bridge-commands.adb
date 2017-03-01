@@ -29,6 +29,7 @@ package body CodePeer.Bridge.Commands is
    procedure Audit_Trail_V4
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
+      DB_Directory      : Virtual_File;
       Export_File_Name  : Virtual_File;
       Messages          : CodePeer.Message_Vectors.Vector);
    --  Generates request of messages' audit trail in format version 4.
@@ -90,6 +91,7 @@ package body CodePeer.Bridge.Commands is
    procedure Add_Audit_Record_V4
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
+      DB_Directory      : Virtual_File;
       Messages          : Message_Vectors.Vector)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
@@ -106,6 +108,8 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Set_Attribute (Database_Node, "format", "4");
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      XML_Utils.Set_Attribute
+        (Database_Node, "db_directory", +DB_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
@@ -143,6 +147,7 @@ package body CodePeer.Bridge.Commands is
    procedure Audit_Trail
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
+      DB_Directory      : Virtual_File;
       Export_File_Name  : Virtual_File;
       Messages          : CodePeer.Message_Vectors.Vector;
       Version           : Supported_Format_Version) is
@@ -159,6 +164,7 @@ package body CodePeer.Bridge.Commands is
             Audit_Trail_V4
               (Command_File_Name,
                Output_Directory,
+               DB_Directory,
                Export_File_Name,
                Messages);
       end case;
@@ -207,6 +213,7 @@ package body CodePeer.Bridge.Commands is
    procedure Audit_Trail_V4
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
+      DB_Directory      : Virtual_File;
       Export_File_Name  : Virtual_File;
       Messages          : CodePeer.Message_Vectors.Vector)
    is
@@ -233,6 +240,8 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Set_Attribute (Database_Node, "format", "4");
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      XML_Utils.Set_Attribute
+        (Database_Node, "db_directory", +DB_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute (Audit_Trail_Node, "messages", To_String (Ids));
