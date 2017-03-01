@@ -1,5 +1,8 @@
 +
->&2
+
+>&2:buffer_size=0
+--  No buffering so that we see all messages immediately. This is slower
+--  however.
 
 --  Configure the traces format
 
