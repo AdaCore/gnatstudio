@@ -148,6 +148,14 @@ XML = r"""<?xml version="1.0" ?>
    </project_attribute>
 
    <project_attribute
+       name="Xref_Database"
+       package="IDE"
+       description="Location of the xref database."
+       hide_in="all"
+       label="xref database">
+   </project_attribute>
+
+   <project_attribute
        name="gnatlist"
        package="IDE"
        editor_page=""
