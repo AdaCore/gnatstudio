@@ -111,9 +111,15 @@ package body GNATdoc.Frontend is
    -- Local_Subrograms --
    ----------------------
 
+   function "="
+     (Left  : General_Location;
+      Right : General_Location) return Boolean renames Atree."=";
+   --  Return True if Left and right are references to the same location in
+   --  the same file.
+
    function "<"
      (Left  : General_Location;
-      Right : General_Location) return Boolean;
+      Right : General_Location) return Boolean renames Atree."<";
    --  Return True if Left is located before Right in the same file
 
    function Add_Documentation_From_Sources
@@ -302,26 +308,6 @@ package body GNATdoc.Frontend is
 
    end Scopes_Stack;
    use Scopes_Stack;
-
-   ---------
-   -- "<" --
-   ---------
-
-   function "<"
-     (Left  : General_Location;
-      Right : General_Location) return Boolean is
-   begin
-      --  ??? Need to investigate this issue: sometimes the files associated
-      --  by Xref matches but the comparison fails (most probably because
-      --  we are comparing pointers to Location records)
-
-      --  return Left.File = Right.File
-      return Left.File.Base_Name = Right.File.Base_Name
-               and then
-                  (Left.Line < Right.Line
-                     or else (Left.Line = Right.Line
-                                and then Left.Column < Right.Column));
-   end "<";
 
    --------------------------
    -- Ada_Compilation_Unit --
@@ -1499,10 +1485,13 @@ package body GNATdoc.Frontend is
 
          private
             type Extended_Cursor is record
-               Entities       : access EInfo_List.Vector;
-               Cursor         : EInfo_List.Cursor;
-               Element        : Entity_Id := Atree.No_Entity;
-               Prev_Element   : Entity_Id := Atree.No_Entity;
+               Entities          : access EInfo_List.Vector;
+               Cursor            : EInfo_List.Cursor;
+               Element           : Entity_Id := Atree.No_Entity;
+               Prev_Element      : Entity_Id := Atree.No_Entity;
+               Saved_Next_Entity : Entity_Id := Atree.No_Entity;
+
+               --  Internal flags
                Marks_Required : Boolean := False;
                Element_Seen   : Boolean := False;
             end record;
@@ -5536,9 +5525,6 @@ package body GNATdoc.Frontend is
          ---------------------
 
          package body Extended_Cursor is
-            Saved_Next_Entity : Entity_Id := Atree.No_Entity;
-            --  Pending code cleanup: Move it inside the extended cursor
-            --  record???
 
             procedure Update_Entity (Cursor : in out Extended_Cursor);
             procedure Update_Entity (Cursor : in out Extended_Cursor) is
@@ -5570,9 +5556,9 @@ package body GNATdoc.Frontend is
               (Cursor         : in out Extended_Cursor;
                Check_Disabled : Boolean := False) is
             begin
-               if Present (Saved_Next_Entity) then
-                  Cursor.Element := Saved_Next_Entity;
-                  Saved_Next_Entity := Atree.No_Entity;
+               if Present (Cursor.Saved_Next_Entity) then
+                  Cursor.Element := Cursor.Saved_Next_Entity;
+                  Cursor.Saved_Next_Entity := Atree.No_Entity;
                else
                   if Cursor.Marks_Required
                     and then not Check_Disabled
@@ -5596,9 +5582,9 @@ package body GNATdoc.Frontend is
               (Cursor : in out Extended_Cursor;
                Entity : Entity_Id) is
             begin
-               pragma Assert (No (Saved_Next_Entity));
+               pragma Assert (No (Cursor.Saved_Next_Entity));
                pragma Assert (not Cursor.Element_Seen);
-               Saved_Next_Entity := Cursor.Element;
+               Cursor.Saved_Next_Entity := Cursor.Element;
                Cursor.Element := Entity;
             end Set_Next_Entity;
 
@@ -5614,12 +5600,13 @@ package body GNATdoc.Frontend is
                Marks_Required : Boolean) is
             begin
                Cursor :=
-                 (Entities       => Entities,
-                  Cursor         => Entities.First,
-                  Element        => Atree.No_Entity,
-                  Prev_Element   => Atree.No_Entity,
-                  Marks_Required => Marks_Required,
-                  Element_Seen   => False);
+                 (Entities          => Entities,
+                  Cursor            => Entities.First,
+                  Element           => Atree.No_Entity,
+                  Prev_Element      => Atree.No_Entity,
+                  Saved_Next_Entity => Atree.No_Entity,
+                  Marks_Required    => Marks_Required,
+                  Element_Seen      => False);
 
                Update_Entity (Cursor);
             end Initialize;

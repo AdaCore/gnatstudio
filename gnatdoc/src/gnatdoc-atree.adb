@@ -192,31 +192,42 @@ package body GNATdoc.Atree is
 
    end Hash_Table;
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : General_Location) return Boolean is
+   begin
+      return Left.File = Right.File
+        and then Left.Line = Right.Line
+        and then Left.Column = Right.Column;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "<" (Left, Right : General_Location) return Boolean is
+   begin
+      return Left.File = Right.File
+        and then (Left.Line < Right.Line
+                    or else (Left.Line = Right.Line
+                               and then Left.Column < Right.Column));
+   end "<";
+
    ------------------
    -- Acts_As_Spec --
    ------------------
 
    function Acts_As_Spec (E : Entity_Id) return Boolean is
-      Loc      : General_Location;
-      Body_Loc : General_Location;
-
    begin
       if No (E) then
          return False;
       end if;
 
-      Loc      := LL.Get_Location (E);
-      Body_Loc := LL.Get_Body_Loc (E);
-
-      --  ??? Need to investigate this issue: sometimes the files associated
-      --  by Xref matches but the comparison fails???
-
       return Present (E)
         and then Is_Subprogram (E)
-      --  and then LL.Get_Location (E) = LL.Get_Body_Loc (E);
-        and then Loc.File.Base_Name = Body_Loc.File.Base_Name
-        and then Loc.Line = Body_Loc.Line
-        and then Loc.Column = Body_Loc.Column;
+        and then LL.Get_Location (E) = LL.Get_Body_Loc (E);
    end Acts_As_Spec;
 
    -----------------------------

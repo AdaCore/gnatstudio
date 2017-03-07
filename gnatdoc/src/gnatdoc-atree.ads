@@ -560,6 +560,17 @@ private package GNATdoc.Atree is
    function Present (E : Entity_Id) return Boolean;
    --  Return true if E is not null
 
+   function "=" (Left, Right : General_Location) return Boolean;
+   --  Return True if Left and Right reference the same location in the same
+   --  file. Used to workaround the underlying Xref comparison of locations
+   --  because General_Locations are composed of three fields but its
+   --  decoration is not always complete (their Project field is sometimes
+   --  not set by Xref, thus causing wrong comparisons).
+
+   function "<" (Left, Right : General_Location) return Boolean;
+   --  Return True if both locations reference the same file and Left is
+   --  located before Right.
+
    -----------------
    -- Entity_Info --
    -----------------
