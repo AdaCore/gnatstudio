@@ -263,6 +263,7 @@ class Git(core.VCS):
              '--branches' if not current_branch_only else '',
              '--tags' if not current_branch_only else '',
              '--remotes' if not current_branch_only else '',
+             '--follow',
              '--topo-order',  # children before parents
              filter_switch,
 
