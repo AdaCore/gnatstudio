@@ -42,6 +42,7 @@ with GPS.Markers;               use GPS.Markers;
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -76,20 +77,22 @@ with GVD.Types;                 use GVD.Types;
 with GVD_Module;                use GVD_Module;
 
 package body GVD.Breakpoints is
-   Col_Num       : constant Gint := 0;
-   Col_Enb       : constant Gint := 1;
-   Col_Type      : constant Gint := 2;
-   Col_Disp      : constant Gint := 3;
-   Col_File      : constant Gint := 4;
-   Col_Line      : constant Gint := 5;
-   Col_Exception : constant Gint := 6;
-   Col_Subprogs  : constant Gint := 7;
+   Col_Num         : constant Gint := 0;
+   Col_Enb         : constant Gint := 1;
+   Col_Type        : constant Gint := 2;
+   Col_Disp        : constant Gint := 3;
+   Col_File        : constant Gint := 4;
+   Col_Line        : constant Gint := 5;
+   Col_Exception   : constant Gint := 6;
+   Col_Subprogs    : constant Gint := 7;
+   Col_Activatable : constant Gint := 8;
 
-   Column_Types : constant Glib.GType_Array (0 .. 7) :=
-     (Guint (Col_Enb) => GType_Boolean,
-      others          => GType_String);
+   Column_Types : constant Glib.GType_Array (0 .. 8) :=
+     (Guint (Col_Enb)         => GType_Boolean,
+      Guint (Col_Activatable) => GType_Boolean,
+      others                  => GType_String);
 
-   Column_Names : constant GNAT.Strings.String_List (1 .. 8) :=
+   Column_Names : constant GNAT.Strings.String_List (1 .. 9) :=
      (new String'("Num"),
       new String'("Enb"),
       new String'("Type"),
@@ -97,7 +100,8 @@ package body GVD.Breakpoints is
       new String'("File/Variable"),
       new String'("Line"),
       new String'("Exception"),
-      new String'("Subprograms"));
+      new String'("Subprograms"),
+      new String'("Activatable"));
 
    type Breakpoint_Type is
      (Break_On_Source_Loc,
@@ -110,9 +114,10 @@ package body GVD.Breakpoints is
 
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
-         Breakpoint_List  : Gtk_Tree_View;
-         Multipress       : Gtk_Gesture_Multi_Press;
-         Longpress        : Gtk_Gesture_Long_Press;
+         Breakpoint_List : Gtk_Tree_View;
+         Multipress      : Gtk_Gesture_Multi_Press;
+         Longpress       : Gtk_Gesture_Long_Press;
+         Activatable     : Boolean := True;
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
@@ -120,6 +125,9 @@ package body GVD.Breakpoints is
      (View   : not null access Breakpoint_Editor_Record);
    overriding procedure On_Process_Terminated
      (View : not null access Breakpoint_Editor_Record);
+   overriding procedure On_State_Changed
+     (View      : not null access Breakpoint_Editor_Record;
+      New_State : Debugger_State);
    --  See inherited documentation
 
    type Properties_Editor_Record is new Gtk_Dialog_Record with record
@@ -340,7 +348,7 @@ package body GVD.Breakpoints is
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
       Iter      : Gtk_Tree_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
-      Values    : Glib.Values.GValue_Array (1 .. 8);
+      Values    : Glib.Values.GValue_Array (1 .. 9);
       Columns   : Columns_Array (Values'Range);
       Last      : Gint;
 
@@ -356,23 +364,25 @@ package body GVD.Breakpoints is
       for Br of Get_Stored_List_Of_Breakpoints (Process).List loop
          Append (Model, Iter, Null_Iter);
 
-         Columns (1 .. 4) := (Col_Num, Col_Enb, Col_Type, Col_Disp);
-         Values  (1 .. 2) :=
+         Columns (1 .. 5) :=
+           (Col_Num, Col_Enb, Col_Activatable, Col_Type, Col_Disp);
+         Values  (1 .. 3) :=
            (1 => As_String (
                   if Br.Num = Breakpoint_Identifier'Last
                   then "0"
                   else Breakpoint_Identifier'Image (Br.Num)),
-            2 => As_Boolean (Br.Enabled));
-         Last := 4;
+            2 => As_Boolean (Br.Enabled),
+            3 => As_Boolean (View.Activatable));
+         Last := 5;
 
          case Br.The_Type is
             when Breakpoint =>
-               Glib.Values.Init_Set_String (Values (3), "break");
+               Glib.Values.Init_Set_String (Values (4), "break");
             when Watchpoint =>
-               Glib.Values.Init_Set_String (Values (3), "watch");
+               Glib.Values.Init_Set_String (Values (4), "watch");
          end case;
          Glib.Values.Init_Set_String
-           (Values (4), To_Lower (Br.Disposition'Img));
+           (Values (5), To_Lower (Br.Disposition'Img));
 
          if Br.Expression /= "" then
             Last := Last + 1;
@@ -382,7 +392,7 @@ package body GVD.Breakpoints is
          end if;
 
          if Br.Location /= No_Marker then
-            if Last < 5 then
+            if Last < 6 then
                Last := Last + 1;
                Columns (Last) := Col_File;
                Glib.Values.Init
@@ -502,8 +512,8 @@ package body GVD.Breakpoints is
    function Initialize
      (Self : access Breakpoint_Editor_Record'Class) return Gtk_Widget
    is
-      Main_Vbox  : Gtk_Box;
-      Scroll     : Gtk_Scrolled_Window;
+      Main_Vbox : Gtk_Box;
+      Scroll    : Gtk_Scrolled_Window;
    begin
       Gtk.Box.Initialize_Hbox (Self);
 
@@ -523,6 +533,19 @@ package body GVD.Breakpoints is
       Self.Breakpoint_List.On_Button_Press_Event
         (Breakpoint_Clicked'Access, Self);
       Main_Vbox.Pack_Start (Self.Breakpoint_List);
+
+      Self.Breakpoint_List.Get_Column (Col_Activatable).Set_Visible (False);
+
+      declare
+         List : Cell_Renderer_List.Glist;
+      begin
+         List := Self.Breakpoint_List.Get_Column (Col_Enb).Get_Cells;
+         Self.Breakpoint_List.Get_Column (Col_Enb).Add_Attribute
+           (Cell_Renderer_List.Get_Data (List),
+            "activatable",
+            Col_Activatable);
+         Cell_Renderer_List.Free (List);
+      end;
 
       Gtk_New (Self.Multipress, Widget => Self.Breakpoint_List);
       Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
@@ -951,14 +974,16 @@ package body GVD.Breakpoints is
          -("Delete the currently selected breakpoint"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-remove-symbolic",
-         Category  => -"Debug");
+         Category  => -"Debug",
+         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
 
       Register_Action
         (Kernel,
          "debug clear breakpoints", new Clear_Breakpoints_Command,
          -"Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
-         Category  => -"Debug");
+         Category  => -"Debug",
+         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
 
       Register_Action
         (Kernel,
@@ -975,14 +1000,16 @@ package body GVD.Breakpoints is
            & " like its condition, repeat count,..."
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-settings-symbolic",
-         Category  => -"Debug");
+         Category  => -"Debug",
+         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
 
       Register_Action
         (Kernel,
          "debug create breakpoint", new Add_Command,
          -"Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
-         Category  => -"Debug");
+         Category  => -"Debug",
+         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
    end Register_Module;
 
    ----------
@@ -1109,7 +1136,8 @@ package body GVD.Breakpoints is
       Col   : Gtk_Tree_View_Column;
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
    begin
-      if Event.Button = 1
+      if View.Activatable
+        and then Event.Button = 1
         and then Event.The_Type = Button_Press
       then
          Coordinates_For_Event
@@ -1539,7 +1567,7 @@ package body GVD.Breakpoints is
    procedure Show_Selected_Breakpoint_In_Editor
      (View : not null access Breakpoint_Editor_Record'Class)
    is
-            Selection : Breakpoint_Data;
+      Selection : Breakpoint_Data;
    begin
       Selection := Get_Selection (View);
       if Selection /= Null_Breakpoint then
@@ -1569,6 +1597,31 @@ package body GVD.Breakpoints is
       end if;
       return Success;
    end Execute;
+
+   ----------------------
+   -- On_State_Changed --
+   ----------------------
+
+   overriding procedure On_State_Changed
+     (View      : not null access Breakpoint_Editor_Record;
+      New_State : Debugger_State)
+   is
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      if New_State = Debug_Busy then
+         View.Activatable := False;
+      else
+         View.Activatable := True;
+      end if;
+
+      Iter := Model.Get_Iter_First;
+      while Iter /= Null_Iter loop
+         Model.Set_Value
+           (Iter, Col_Activatable, As_Boolean (View.Activatable));
+         Model.Next (Iter);
+      end loop;
+   end On_State_Changed;
 
    ---------------------
    -- On_Type_Changed --

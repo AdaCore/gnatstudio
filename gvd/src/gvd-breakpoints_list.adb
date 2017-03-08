@@ -117,6 +117,12 @@ package body GVD.Breakpoints_List is
    --  Create a new message to display information on the side of editors for
    --  that breakpoint.
 
+   function Is_Interactive
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Process : not null access Base_Visual_Debugger'Class)
+      return Boolean;
+   --  return True if debuger can process commands
+
    --------------
    -- Commands --
    --------------
@@ -196,7 +202,7 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
-      return Process = null or else not Command_In_Process (Process);
+      return Process = null or else not Process.Command_In_Process;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -227,8 +233,7 @@ package body GVD.Breakpoints_List is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : Breakpoint_Command_Mode;
       File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Editable_Line_Type) return Command_Access
-   is
+      Line   : Editable_Line_Type) return Command_Access is
    begin
       return new Set_Breakpoint_Command_At_Line'
         (Root_Command with
@@ -257,12 +262,7 @@ package body GVD.Breakpoints_List is
       is
          Num : Breakpoint_Identifier with Unreferenced;
       begin
-         if Self.Command_In_Process then
-            Insert
-              (Kernel,
-               -"The debugger is busy processing a command",
-               Mode => Error);
-         else
+         if Is_Interactive (Kernel, Self) then
             Num := Visual_Debugger (Self).Debugger.Break_Source
               (File, Line, Temporary => Temporary);
          end if;
@@ -308,12 +308,7 @@ package body GVD.Breakpoints_List is
       procedure On_Debugger
         (Self : not null access Base_Visual_Debugger'Class) is
       begin
-         if Self.Command_In_Process then
-            Insert
-              (Kernel,
-               -"The debugger is busy processing a command",
-               Mode => Error);
-         else
+         if Is_Interactive (Kernel, Self) then
             if Num = GVD.Types.No_Breakpoint then
                Visual_Debugger (Self).Debugger.Remove_Breakpoint_At
                  (File, Line, Mode => Visible);
@@ -378,8 +373,12 @@ package body GVD.Breakpoints_List is
          end loop;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
+
       else
-         Process.Debugger.Remove_Breakpoint (Num, Mode => GVD.Types.Visible);
+         if Is_Interactive (Kernel, Process) then
+            Process.Debugger.Remove_Breakpoint
+              (Num, Mode => GVD.Types.Visible);
+         end if;
       end if;
    end Delete_Breakpoint;
 
@@ -397,13 +396,15 @@ package body GVD.Breakpoints_List is
          Module.Breakpoints.List.Clear;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
-      else
-         --  Only for the current breakpoint, not all
-         for Br of Process.Breakpoints.List loop
-            Process.Debugger.Remove_Breakpoint
-              (Br.Num, Mode => GVD.Types.Visible);
-         end loop;
 
+      else
+         if Is_Interactive (Kernel, Process) then
+            --  Only for the current breakpoint, not all
+            for Br of Process.Breakpoints.List loop
+               Process.Debugger.Remove_Breakpoint
+                 (Br.Num, Mode => GVD.Types.Visible);
+            end loop;
+         end if;
       end if;
    end Clear_All_Breakpoints;
 
@@ -428,12 +429,7 @@ package body GVD.Breakpoints_List is
       is
          Num      : Breakpoint_Identifier with Unreferenced;
       begin
-         if Self.Command_In_Process then
-            Insert
-              (Kernel,
-               -"The debugger is busy processing a command",
-               Mode => Error);
-         else
+         if Is_Interactive (Kernel, Self) then
             Num := Process.Debugger.Break_Subprogram
               (Subprogram, Temporary => Temporary, Mode => GVD.Types.Visible);
          end if;
@@ -472,7 +468,9 @@ package body GVD.Breakpoints_List is
    begin
       if Command.Continue_Till then
          --  Only works if there is a current debugger
-         if Process /= null then
+         if Process /= null
+           and then Is_Interactive (Kernel, Process)
+         then
             Num := Process.Debugger.Break_Source
               (File_Information (Context.Context),
                Editable_Line_Type
@@ -844,7 +842,9 @@ package body GVD.Breakpoints_List is
       for B of Get_Stored_List_Of_Breakpoints (Process).List loop
          if B.Num = Breakpoint_Num then
             B.Enabled := not B.Enabled;
-            if Process /= null then
+            if Process /= null
+              and then Is_Interactive (Kernel, Process)
+            then
                Process.Debugger.Enable_Breakpoint
                  (B.Num, B.Enabled, Mode => GVD.Types.Visible);
             end if;
@@ -1012,6 +1012,27 @@ package body GVD.Breakpoints_List is
          return Visual_Debugger (Debugger).Breakpoints'Access;
       end if;
    end Get_Stored_List_Of_Breakpoints;
+
+   --------------------
+   -- Is_Interactive --
+   --------------------
+
+   function Is_Interactive
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Process : not null access Base_Visual_Debugger'Class)
+      return Boolean is
+   begin
+      if Process.Command_In_Process then
+         Insert
+           (Kernel,
+            -"The debugger is busy processing a command",
+            Mode => Error);
+         return False;
+
+      else
+         return True;
+      end if;
+   end Is_Interactive;
 
    ---------------------
    -- Register_Module --
