@@ -20,7 +20,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language_Handlers; use Language_Handlers;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
 with GNATCOLL.VFS;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Libclang.Index; use Libclang.Index;
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
@@ -29,12 +28,9 @@ with GNATCOLL.Symbols;
 
 package Clang_Xref is
 
-   type Clang_Database is new Lang_Specific_Database with record
-      Kernel : Core_Kernel;
-   end record;
+   type Clang_Database is new Lang_Specific_Database with null record;
 
    type Clang_Entity is new Root_Entity with record
-      Kernel       : Core_Kernel;
       Db           : Clang_Database;
       Name         : Unbounded_String;
       Loc, Ref_Loc : General_Location;
@@ -405,7 +401,7 @@ private
      (Left, Right : Clang_Reference_Iterator) return Boolean;
 
    No_Clang_Entity : constant Clang_Entity :=
-     (null, (Kernel => null),
+     (Clang_Database'(null record),
       Null_Unbounded_String, No_Location, No_Location,
       Null_Unbounded_String, False, (others => <>));
 

@@ -31,13 +31,11 @@ with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with Commands;                      use Commands;
 with Commands.Generic_Asynchronous;
 with Default_Preferences;           use Default_Preferences;
-with Glib.Main;
 with String_Utils;                  use String_Utils;
 
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel;                    use GPS.Kernel;
-with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 
@@ -53,10 +51,6 @@ package body Language.Libclang is
 
    Nb_Tasks_Preference : Integer_Preference;
    --  Number of concurrent tasks used for parsing.
-
-   Max_Nb_Tasks        : constant Natural := 6;
-   --  We have made experiments and determined that above 6 tasks there was no
-   --  improvement in analysis speed, even on machines with many processors.
 
    Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
    --  Main libclang trace
@@ -97,11 +91,6 @@ package body Language.Libclang is
    function Parsing_Timeout_Handler return Boolean;
    --  Handler that will handle re-index files that have been parsed.
    --  Underneath will just call Index_One_File until the end of times.
-
-   package Task_Parser_Pool is new Pool (User_Data => Core_Kernel);
-   use Task_Parser_Pool;
-   --  Parser pools using to parse clang translation unit in tasks
-   --  asynchronously.
 
    procedure Enqueue_Translation_Unit
      (Kernel        : Core_Kernel;
@@ -161,48 +150,6 @@ package body Language.Libclang is
    package Parse_Files_Command is
      new Commands.Generic_Asynchronous (Parse_Files_Data_Type_Access,
                                         Free => Unchecked_Free);
-
-   type Clang_Module_Record is new Module_ID_Record with record
-      Parsing_Timeout_Id   : Glib.Main.G_Source_Id;
-      --  Id of the global timeout that is used to regularly index files that
-      --  have been parsed
-
-      Parsing_Tasks        : Parsing_Task_Array (1 .. Max_Nb_Tasks);
-      --  Array of parsing tasks.
-
-      Indexing_Active      : Boolean := True;
-      --  Global variable used by the indexing timeout handler to know if it
-      --  should index parsed files or not. This is used by procedures using
-      --  the references cache, to notify the libclang engine that the cache
-      --  is currently inspected and should not be modified
-
-      TU_Cache             : Tu_Map_Access;
-      LRU                  : LRU_Vector_Access;
-      --  Those two components, together, constitute the LRU cache. The
-      --  TU_Cache map is used to retrieve translation units by name, while
-      --  the LRU vector is used to evict old translation units.
-
-      Clang_Indexer        : Clang_Index;
-      --  This is the global clang indexer, that is the gateway to the
-      --  underlying libclang API. We have only one Indexer for everything
-      --  for convenience, and because there is no pro to do it another way.
-
-      Index_Action         : Clang_Index_Action;
-      --  Index action used by the cross reference indexing machinery.
-
-      Refs                 : Clang_Crossrefs_Cache;
-      --  Clang cross references cache entry point.
-
-      Active_Files         : File_Cache_Array_Access := null;
-      --  Cache used because iteration on Hashed Maps is very slow.
-   end record;
-   --  This is the global cache record, containing information that is globally
-   --  useful to the clang module
-
-   overriding procedure Destroy (Id : in out Clang_Module_Record);
-   --  Destroy procedure, freeing every resources associated with libclang
-
-   Clang_Module_Id : access Clang_Module_Record := null;
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -1393,10 +1340,10 @@ package body Language.Libclang is
       --  Register cross references databases for c and c++
       if Active (Activate_Clang_XRef) then
          Kernel.Databases.Lang_Specific_Databases.Include
-           ("c", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+           ("c", Clang_Database'(null record));
 
          Kernel.Databases.Lang_Specific_Databases.Include
-           ("c++", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+           ("c++", Clang_Database'(null record));
       end if;
 
       Clang_Module_Id := new Clang_Module_Record;

@@ -25,6 +25,7 @@ with GNATCOLL.Projects;
 use GNATCOLL.Projects;
 with Language.Libclang; use Language.Libclang;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 with GPS.Editors; use GPS.Editors;
 with Basic_Types; use Basic_Types;
 with Interfaces.C.Pointers;
@@ -55,6 +56,10 @@ package body Clang_Xref is
 
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
+   function Kernel return Core_Kernel is
+     (Core_Kernel (Clang_Module_Id.Get_Kernel));
+   --  Shortcut to get the kernel
+
    use Libclang.Index;
    use GNATCOLL.VFS;
 
@@ -83,7 +88,7 @@ package body Clang_Xref is
    function Cursor_As_Entity
      (From_Entity : Clang_Entity; Cursor : Clang_Cursor) return Clang_Entity
    is
-     (Cursor_As_Entity (From_Entity.Db, From_Entity.Kernel, Cursor));
+     (Cursor_As_Entity (From_Entity.Db, Kernel, Cursor));
    --  Creates an entity from a Clang cursor
 
    function Methods
@@ -253,14 +258,14 @@ package body Clang_Xref is
    is
       Ret : Clang_Cursor;
    begin
-      Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
+      Ret := Get_Clang_Cursor (Kernel, E.Ref_Loc);
 
       if Kind (Ret) = CXCursor_InclusionDirective then
          return Ret;
       end if;
 
       if Offset (Location (Ret)) = 0 then
-         Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
+         Ret := Get_Clang_Cursor (Kernel, E.Ref_Loc);
       else
          Ret := Referenced (Ret);
       end if;
@@ -342,7 +347,7 @@ package body Clang_Xref is
 
       pragma Unreferenced (Name, General_Db);
 
-      C : constant Clang_Cursor := Get_Clang_Cursor (Db.Kernel, Loc);
+      C : constant Clang_Cursor := Get_Clang_Cursor (Kernel, Loc);
    begin
       if C = No_Cursor then
 
@@ -356,7 +361,6 @@ package body Clang_Xref is
          --  time a TU is parsed.
 
          return Cursor_As_Entity (Clang_Entity'(Db => Db,
-                                                Kernel => Db.Kernel,
                                                 others => <>), C);
       end if;
    end Get_Entity;
@@ -489,13 +493,12 @@ package body Clang_Xref is
            Name            => +Spelling (Referenced (Cursor)),
            Loc             =>
              To_General_Location
-               (Db.Kernel,
+               (Kernel,
                 Location (Referenced (Cursor))),
            Ref_Loc         =>
              To_General_Location
-               (Db.Kernel,
+               (Kernel,
                 Location (Cursor)),
-           Kernel          => Kernel,
            Has_Type_Inst   => False,
            From_Lang       => +Lang,
            Clang_Type_Inst => <>);
@@ -575,7 +578,7 @@ package body Clang_Xref is
       end if;
 
       return General_Entity_Declaration'
-        (Loc => To_General_Location (Entity.Kernel, Location (Def)),
+        (Loc => To_General_Location (Kernel, Location (Def)),
          Name => +Spelling (Def),
          Body_Is_Full_Declaration => Is_Definition (Def));
    end Get_Declaration;
@@ -659,7 +662,7 @@ package body Clang_Xref is
          end if;
 
          if Entity_Body /= No_Cursor then
-            return To_General_Location (Entity.Kernel, Location (Entity_Body));
+            return To_General_Location (Kernel, Location (Entity_Body));
          else
 
             --  TODO ??? It might be interesting to have a toplevel cache that
@@ -696,7 +699,7 @@ package body Clang_Xref is
                end if;
             end loop Toplevel_Loop;
 
-            return To_General_Location (Entity.Kernel, File, Loc);
+            return To_General_Location (Kernel, File, Loc);
 
          end if;
       end;
@@ -710,7 +713,7 @@ package body Clang_Xref is
    is
    begin
       return Cursor_As_Entity
-        (Entity, Get_Clang_Cursor (Entity.Kernel, Get_Body (Entity)));
+        (Entity, Get_Clang_Cursor (Kernel, Get_Body (Entity)));
    end Get_Body;
 
    -----------------
@@ -747,11 +750,10 @@ package body Clang_Xref is
       --  to a location when we can, and let As_Type do its job.
 
       return
-        Clang_Entity'(From_Entity.Kernel,
-                      From_Entity.Db,
+        Clang_Entity'(From_Entity.Db,
                       +Spelling (Typ),
                       To_General_Location
-                        (From_Entity.Kernel, Location (Declaration (Typ))),
+                        (Kernel, Location (Declaration (Typ))),
                       No_Location,
                       From_Entity.From_Lang,
                       True, Typ);
@@ -765,7 +767,7 @@ package body Clang_Xref is
      (Entity : Clang_Entity) return Root_Entity'Class
    is
       Cursor : constant Clang_Cursor :=
-        Get_Clang_Cursor (Entity.Kernel, Entity.Get_Declaration.Loc);
+        Get_Clang_Cursor (Kernel, Entity.Get_Declaration.Loc);
       T : Clang_Type;
    begin
 
@@ -1098,7 +1100,7 @@ package body Clang_Xref is
       --  We'll need the buffer to get the comment's text.
 
       Buf : constant Editor_Buffer'Class :=
-        Entity.Kernel.Get_Buffer_Factory.Get
+        Kernel.Get_Buffer_Factory.Get
           (Entity.Loc.File, Open_View => False, Focus => False);
 
       --  We get the range for the comment associated with the entity's cursor
@@ -1133,7 +1135,7 @@ package body Clang_Xref is
 
    is
      (To_General_Location
-        (Entity.Kernel,
+        (Kernel,
          Range_End
            (Extent (Get_Clang_Cursor (Entity)))));
 
@@ -1420,18 +1422,18 @@ package body Clang_Xref is
         (Base_Cursor : Clang_Cursor) return Clang_Cursor
       is
          Loc : General_Location :=
-           To_General_Location (Entity.Kernel, Location (Base_Cursor));
+           To_General_Location (Kernel, Location (Base_Cursor));
          use type Basic_Types.Visible_Column_Type;
       begin
          Loc.Column := Loc.Column - 1;
-         return Get_Clang_Cursor (Entity.Kernel, Loc);
+         return Get_Clang_Cursor (Kernel, Loc);
       end Get_Class_For_Base;
 
    begin
       for Ref of Refs.all loop
          if Ref.Kind = CXCursor_CXXBaseSpecifier then
             Cursors (Count) :=
-              Get_Clang_Cursor (Entity.Kernel, Ref.Get_Location);
+              Get_Clang_Cursor (Kernel, Ref.Get_Location);
             Count := Count + 1;
          end if;
       end loop;
@@ -1683,7 +1685,7 @@ package body Clang_Xref is
       then
          Client_Data.Ret_Iterator.Elements.Append
            (Clang_Reference'
-              (To_General_Location (Client_Data.Clang_Db.Kernel, Loc),
+              (To_General_Location (Kernel, Loc),
                Client_Data.Entity_Name, Client_Data.Clang_Db,
                Info.cursor.kind));
       end if;
@@ -1707,7 +1709,7 @@ package body Clang_Xref is
          then
             Client_Data.Ret_Iterator.Elements.Append
               (Clang_Reference'
-                 (To_General_Location (Client_Data.Clang_Db.Kernel, Loc),
+                 (To_General_Location (Kernel, Loc),
                   Client_Data.Entity_Name, Client_Data.Clang_Db,
                   Info.cursor.kind));
          end if;
@@ -1767,7 +1769,7 @@ package body Clang_Xref is
    begin
       Indexer.Index_Translation_Unit
         (Get_Index_Action, Index_Data, CXIndexOpt_IndexFunctionLocalSymbols,
-         Translation_Unit (Entity.Kernel, Entity.Ref_Loc.File));
+         Translation_Unit (Kernel, Entity.Ref_Loc.File));
 
       return Ret;
    end Find_All_References_Local;
@@ -1830,7 +1832,7 @@ package body Clang_Xref is
          begin
             Ret_Vec.Append
               (Clang_Reference'
-                 (To_General_Location (Entity.Kernel, Location (Cursor)),
+                 (To_General_Location (Kernel, Location (Cursor)),
                   Clang_Symbol_Table.Find (+Entity.Name),
                   Real_Scope.Db,
                   Kind (Cursor)));
@@ -1910,7 +1912,7 @@ package body Clang_Xref is
                Ret.Elements.Append
                  (Clang_Reference'
                     (Loc      => To_General_Location
-                       (Entity.Kernel, F, V.Decls.Element (I).Loc),
+                       (Kernel, F, V.Decls.Element (I).Loc),
                      Clang_Db => Entity.Db,
                      Name     => Name,
                      Kind     =>
@@ -1921,7 +1923,7 @@ package body Clang_Xref is
                Ret.Elements.Append
                  (Clang_Reference'
                     (Loc      => To_General_Location
-                         (Entity.Kernel, F, V.Refs.Element (I).Loc),
+                         (Kernel, F, V.Refs.Element (I).Loc),
                      Clang_Db => Entity.Db,
                      Name     => Name,
                      Kind     =>
@@ -1934,11 +1936,11 @@ package body Clang_Xref is
 
       if In_File /= No_File then
          if Crossrefs_Cache.Map.Contains
-           (Construct_Cache_Key (Entity.Kernel, In_File))
+           (Construct_Cache_Key (Kernel, In_File))
          then
             Find_References_In_File_Map
               (Crossrefs_Cache.Map.Element
-                 (Construct_Cache_Key (Entity.Kernel, In_File)));
+                 (Construct_Cache_Key (Kernel, In_File)));
          end if;
       else
          for C of Get_Active_Files loop
@@ -1966,7 +1968,7 @@ package body Clang_Xref is
       return
         Get_Entity
           (Ref.Clang_Db,
-           Ref.Clang_Db.Kernel.Databases, "",
+           Kernel.Databases, "",
            Ref.Get_Location);
    end Get_Entity;
 
@@ -2100,7 +2102,7 @@ package body Clang_Xref is
                                         Index  => 0);
 
       File_Tree : constant Semantic_Tree'Class :=
-        Clang_Db.Kernel.Get_Abstract_Tree_For_File (Ref_Loc.File);
+        Kernel.Get_Abstract_Tree_For_File (Ref_Loc.File);
 
       Sem_Parent : constant Semantic_Node'Class :=
         File_Tree.Node_At (Sloc, (Cat_Function, Cat_Method, Cat_Constructor));
@@ -2118,7 +2120,7 @@ package body Clang_Xref is
 
             Ret    : constant Clang_Entity :=
               Cursor_As_Entity
-                (Clang_Db, Clang_Db.Kernel, Parent.Cursor);
+                (Clang_Db, Kernel, Parent.Cursor);
          begin
             return
               (if Ret.Ref_Loc = Ref_Loc then No_Root_Entity

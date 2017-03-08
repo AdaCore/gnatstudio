@@ -31,13 +31,20 @@ with GNATCOLL.Symbols.Streamable_Symbol_Table;
 with Streamable_Access_Type;
 with Array_Utils;
 
+with Glib.Main;
+
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with GPS.Kernel;
+with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 
 with Libclang.Task_Parser_Pool;       use Libclang.Task_Parser_Pool;
 with clang_c_Index_h;                 use clang_c_Index_h;
 with Libclang.Index;                  use Libclang.Index;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+
+-----------------------
+-- Language.Libclang --
+-----------------------
 
 package Language.Libclang is
 
@@ -65,6 +72,9 @@ package Language.Libclang is
    --  non blocking way of getting the translation units, and GPS should be
    --  adjusted to not block on semantic operations. This will be done by
    --  means of a task
+
+   type Clang_Module_Record is new Module_ID_Record with private;
+   Clang_Module_Id : access Clang_Module_Record := null;
 
    --------------------------------
    --  Cache information records --
@@ -309,6 +319,55 @@ package Language.Libclang is
    --  Register the clang module globally
 
 private
+
+   Max_Nb_Tasks        : constant Natural := 6;
+   --  We have made experiments and determined that above 6 tasks there was no
+   --  improvement in analysis speed, even on machines with many processors.
+
+   package Task_Parser_Pool is new Pool (User_Data => Core_Kernel);
+   use Task_Parser_Pool;
+   --  Parser pools using to parse clang translation unit in tasks
+   --  asynchronously.
+
+   type Clang_Module_Record is new Module_ID_Record with record
+      Parsing_Timeout_Id   : Glib.Main.G_Source_Id;
+      --  Id of the global timeout that is used to regularly index files that
+      --  have been parsed
+
+      Parsing_Tasks        : Parsing_Task_Array (1 .. Max_Nb_Tasks);
+      --  Array of parsing tasks.
+
+      Indexing_Active      : Boolean := True;
+      --  Global variable used by the indexing timeout handler to know if it
+      --  should index parsed files or not. This is used by procedures using
+      --  the references cache, to notify the libclang engine that the cache
+      --  is currently inspected and should not be modified
+
+      TU_Cache             : Tu_Map_Access;
+      LRU                  : LRU_Vector_Access;
+      --  Those two components, together, constitute the LRU cache. The
+      --  TU_Cache map is used to retrieve translation units by name, while
+      --  the LRU vector is used to evict old translation units.
+
+      Clang_Indexer        : Clang_Index;
+      --  This is the global clang indexer, that is the gateway to the
+      --  underlying libclang API. We have only one Indexer for everything
+      --  for convenience, and because there is no pro to do it another way.
+
+      Index_Action         : Clang_Index_Action;
+      --  Index action used by the cross reference indexing machinery.
+
+      Refs                 : Clang_Crossrefs_Cache;
+      --  Clang cross references cache entry point.
+
+      Active_Files         : File_Cache_Array_Access := null;
+      --  Cache used because iteration on Hashed Maps is very slow.
+   end record;
+   --  This is the global cache record, containing information that is globally
+   --  useful to the clang module
+
+   overriding procedure Destroy (Id : in out Clang_Module_Record);
+   --  Destroy procedure, freeing every resources associated with libclang
 
    type Use_Index is new Ada.Finalization.Controlled with null record;
 
