@@ -26,7 +26,7 @@ package LAL.Module is
      new GPS.Core_Kernels.Abstract_Module_Record with record
       Kernel        : GPS.Core_Kernels.Core_Kernel;
       Context       : Libadalang.Analysis.Analysis_Context;
-      Unit_Provider : aliased LAL.Unit_Providers.Unit_File_Provider;
+      Unit_Provider : aliased LAL.Unit_Providers.Unit_Provider;
    end record;
 
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;

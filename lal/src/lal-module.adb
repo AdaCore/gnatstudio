@@ -30,7 +30,7 @@ package body LAL.Module is
       Module         := new LAL_Module_Id_Record;
       Module.Kernel  := GPS.Core_Kernels.Core_Kernel (Kernel);
       Module.Context := Libadalang.Analysis.Create
-        (Unit_File_Provider => Module.Unit_Provider'Access);
+        (Unit_Provider => Module.Unit_Provider'Access);
 
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
 

@@ -21,30 +21,37 @@ with Libadalang.Analysis;
 
 package LAL.Unit_Providers is
 
-   type Unit_File_Provider is
-     new Libadalang.Analysis.Unit_File_Provider_Interface with private;
+   type Unit_Provider is
+     new Libadalang.Analysis.Unit_Provider_Interface with private;
 
    procedure Initialize
-     (Self   : in out Unit_File_Provider'Class;
+     (Self   : in out Unit_Provider'Class;
       Kernel : GPS.Core_Kernels.Core_Kernel);
 
 private
 
-   type Unit_File_Provider is
-     new Libadalang.Analysis.Unit_File_Provider_Interface with
+   type Unit_Provider is
+     new Libadalang.Analysis.Unit_Provider_Interface with
    record
        Kernel : GPS.Core_Kernels.Core_Kernel;
    end record;
 
-   overriding function Get_File
-     (Provider : Unit_File_Provider;
-      Node     : Libadalang.Analysis.Ada_Node;
-      Kind     : Libadalang.Analysis.Unit_Kind) return String;
+   overriding function Get_Unit
+     (Provider    : Unit_Provider;
+      Context     : Libadalang.Analysis.Analysis_Context;
+      Node        : Libadalang.Analysis.Ada_Node;
+      Kind        : Libadalang.Analysis.Unit_Kind;
+      Charset     : String := "";
+      Reparse     : Boolean := False;
+      With_Trivia : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
 
-   overriding function Get_File
-     (Provider : Unit_File_Provider;
-      Name     : Wide_Wide_String;
-      Kind     : Libadalang.Analysis.Unit_Kind)
-      return String;
+   overriding function Get_Unit
+     (Provider    : Unit_Provider;
+      Context     : Libadalang.Analysis.Analysis_Context;
+      Name        : Wide_Wide_String;
+      Kind        : Libadalang.Analysis.Unit_Kind;
+      Charset     : String := "";
+      Reparse     : Boolean := False;
+      With_Trivia : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
 
 end LAL.Unit_Providers;

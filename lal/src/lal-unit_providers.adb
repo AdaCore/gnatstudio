@@ -24,13 +24,18 @@ with GNATCOLL.VFS;
 package body LAL.Unit_Providers is
 
    --------------
-   -- Get_File --
+   -- Get_Unit --
    --------------
 
-   overriding function Get_File
-     (Provider : Unit_File_Provider;
-      Node     : Libadalang.Analysis.Ada_Node;
-      Kind     : Libadalang.Analysis.Unit_Kind) return String is
+   overriding function Get_Unit
+     (Provider    : Unit_Provider;
+      Context     : Libadalang.Analysis.Analysis_Context;
+      Node        : Libadalang.Analysis.Ada_Node;
+      Kind        : Libadalang.Analysis.Unit_Kind;
+      Charset     : String := "";
+      Reparse     : Boolean := False;
+      With_Trivia : Boolean := False)
+      return Libadalang.Analysis.Analysis_Unit is
    begin
       case Node.Kind is
          when Libadalang.Analysis.Ada_Identifier |
@@ -40,8 +45,13 @@ package body LAL.Unit_Providers is
                Token : constant Libadalang.Analysis.Token_Type :=
                  Node.Token_Start;
             begin
-               return Provider.Get_File
-                 (Libadalang.Analysis.Text (Token), Kind);
+               return Provider.Get_Unit
+                 (Context     => Context,
+                  Name        => Libadalang.Analysis.Text (Token),
+                  Kind        => Kind,
+                  Charset     => Charset,
+                  Reparse     => Reparse,
+                  With_Trivia => With_Trivia);
             end;
 
          when Libadalang.Analysis.Ada_Dotted_Name =>
@@ -53,24 +63,34 @@ package body LAL.Unit_Providers is
                   Append (Image, Libadalang.Analysis.Text (Token));
                end loop;
 
-               return Provider.Get_File
-                 (To_Wide_Wide_String (Image), Kind);
+               return Provider.Get_Unit
+                 (Context     => Context,
+                  Name        => To_Wide_Wide_String (Image),
+                  Kind        => Kind,
+                  Charset     => Charset,
+                  Reparse     => Reparse,
+                  With_Trivia => With_Trivia);
             end;
 
          when others =>
             raise Constraint_Error;
 
       end case;
-   end Get_File;
+   end Get_Unit;
 
    --------------
-   -- Get_File --
+   -- Get_Unit --
    --------------
 
-   overriding function Get_File
-     (Provider : Unit_File_Provider;
-      Name     : Wide_Wide_String;
-      Kind     : Libadalang.Analysis.Unit_Kind) return String
+   overriding function Get_Unit
+     (Provider    : Unit_Provider;
+      Context     : Libadalang.Analysis.Analysis_Context;
+      Name        : Wide_Wide_String;
+      Kind        : Libadalang.Analysis.Unit_Kind;
+      Charset     : String := "";
+      Reparse     : Boolean := False;
+      With_Trivia : Boolean := False)
+      return Libadalang.Analysis.Analysis_Unit
    is
       Map : constant array (Libadalang.Analysis.Unit_Kind) of
         GNATCOLL.Projects.Unit_Parts :=
@@ -88,15 +108,21 @@ package body LAL.Unit_Providers is
            Part      => Map (Kind),
            Language  => "Ada");
    begin
-      return String (File);
-   end Get_File;
+
+      return Libadalang.Analysis.Get_From_File
+        (Context     => Context,
+         Filename    => String (File),
+         Charset     => Charset,
+         Reparse     => Reparse,
+         With_Trivia => With_Trivia);
+   end Get_Unit;
 
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Self   : in out Unit_File_Provider'Class;
+     (Self   : in out Unit_Provider'Class;
       Kernel : GPS.Core_Kernels.Core_Kernel) is
    begin
       Self.Kernel := Kernel;
