@@ -808,6 +808,12 @@ package GPS.Editors is
      (This   : Editor_Buffer_Factory) return Buffer_Lists.List is abstract;
    --  Return the list of all buffers
 
+   function Buffer_From_Instance
+     (This       : Editor_Buffer_Factory;
+      Instance   : Class_Instance) return Editor_Buffer'Class is abstract;
+   --  Get buffer from class instance or raise exception if no object is
+   --  stored in the instance.
+
    ---------------------
    -- Editor_Listener --
    ---------------------

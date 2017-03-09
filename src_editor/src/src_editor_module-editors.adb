@@ -3477,7 +3477,7 @@ package body Src_Editor_Module.Editors is
    -- Buffer_From_Instance --
    --------------------------
 
-   function Buffer_From_Instance
+   overriding function Buffer_From_Instance
      (This       : Src_Editor_Buffer_Factory;
       Instance   : Class_Instance) return Editor_Buffer'Class
    is

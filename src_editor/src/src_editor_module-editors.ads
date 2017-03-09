@@ -91,7 +91,7 @@ package Src_Editor_Module.Editors is
      (Script  : access Scripting_Language_Record'Class;
       Class   : Class_Type;
       Buffer  : Editor_Buffer'Class) return Class_Instance;
-   function Buffer_From_Instance
+   overriding function Buffer_From_Instance
      (This       : Src_Editor_Buffer_Factory;
       Instance   : Class_Instance) return Editor_Buffer'Class;
    --  See comment above
