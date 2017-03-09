@@ -128,35 +128,31 @@ class Watchpoint_Add (gdb.Command):
 
     def invoke(self, args, from_tty):
         """
-        Takes an optional watchpoint number, variable name and desired value
-        If there is no watchpoint number the command will set a watchpoint on
-        the variable name and print the number of the watchpoint set
+        Takes a variable name and desired value.
+        The command will set a watchpoint on the variable name.
         """
         args = gdb.string_to_argv(args)
         symbol = args[0].split('/')  # Remove the "context/" part
         context = symbol[0]
         symbol = symbol[-1].strip()
-
         if len(args) == 2:
             # If there is not watchdog for that context, create one
             if not watchdog_dict.get(context):
-                watchdog_dict[context] = (Watchpoint_Watchdog(
-                    context, gdb.BP_BREAKPOINT
-                ), 0)
+                watchdog_dict[context] = Watchpoint_Watchdog(
+                    context, gdb.BP_BREAKPOINT)
 
-            wp = watchdog_dict[context][0].watchpoint_dict.get(symbol)
+            wp = watchdog_dict[context].watchpoint_dict.get(symbol)
             if not wp:
                 try:
                     wp = Qgen_Watchpoint(
                         symbol, args[1], gdb.BP_WATCHPOINT
                     )
-                    watchdog_dict[context][0].watchpoint_dict[symbol] = (wp, 0)
+                    watchdog_dict[context].watchpoint_dict[symbol] = wp
                     Utils.set_variable(symbol, args[1])
                 except RuntimeError:
                     # If the current scope is not the context one
                     # store the value to set the watchpoint later
-                    watchdog_dict[context][0].watchpoint_dict[symbol] \
-                        = (args[1], 0)
+                    watchdog_dict[context].watchpoint_dict[symbol] = args[1]
             else:
                 # If the watchpoint already exists just update the value
                 wp[0].value = args[1]
@@ -182,16 +178,15 @@ class Watchpoint_Delete (gdb.Command):
             symbol = symbol[-1].strip()
 
             if watchdog_dict.get(context):
-                wp = watchdog_dict[context][0].watchpoint_dict.get(symbol)[0]
+                wp = watchdog_dict[context].watchpoint_dict.get(symbol)
                 if wp:
-                    del watchdog_dict[context][0].watchpoint_dict[symbol]
+                    del watchdog_dict[context].watchpoint_dict[symbol]
                     gdb.execute("delete %s" % wp.number)
                     # Delete watchdog breakpoint if there is no more watchpoint
                     # associated to it
-                    if not watchdog_dict[context][0].watchpoint_dict:
+                    if not watchdog_dict[context].watchpoint_dict:
                         gdb.execute(
-                            "delete %s" % watchdog_dict[context][0].number
-                        )
+                            "delete %s" % watchdog_dict[context].number)
                         del watchdog_dict[context]
 
 Watchpoint_Delete()
@@ -245,54 +240,35 @@ class Qgen_Set_Logpoint(gdb.Command):
 Qgen_Set_Logpoint()
 
 
-class Watchpoint_Action (gdb.Command):
-
-    def __init__(self):
-        super(Watchpoint_Action, self).__init__(
-            "qgen_breakpoint_action", gdb.COMMAND_NONE
-            )
-
-    def invoke(self, args, from_tty):
-        for context, (bp, hit) in watchdog_dict.iteritems():
-            if bp.hit_count > hit:
-                watchdog_dict[context] = (bp, bp.hit_count)
-                for symbol, (wp, whit) in bp.watchpoint_dict.iteritems():
-
-                    # The watchpoint was never added because not in the scope,
-                    # add it now
-                    if wp.__class__ != Qgen_Watchpoint:
-                        value = wp
-                        del bp.watchpoint_dict[symbol]
-                        bp.watchpoint_dict[symbol] = (Qgen_Watchpoint(
-                            symbol, value, gdb.BP_WATCHPOINT
-                        ), 0)
-
-                    # The watchpoint has been deleted, add it back
-                    elif not wp.is_valid():
-                        del bp.watchpoint_dict[symbol]
-                        bp.watchpoint_dict[symbol] = (Qgen_Watchpoint(
-                            symbol, wp.value, gdb.BP_WATCHPOINT
-                        ), 0)
-                    # A watchpoint will not trigger if the value written
-                    # is equal to its previous value.
-                    # By forcing the value at the beginning
-                    # of the scope we ensure that the desired value will be set
-                    # or force the watchpoint to trigger
-                    Utils.set_variable(symbol, wp.value)
-
-            for symbol, (wp, whit) in bp.watchpoint_dict.iteritems():
-                if wp.hit_count > whit:
-                    bp.watchpoint_dict[symbol] = (wp, wp.hit_count)
-                    Utils.set_variable(wp.var, wp.value)
-
-Watchpoint_Action()
-
-
 class Watchpoint_Watchdog (gdb.Breakpoint):
 
     def __init__(self, spec, ty):
         super(Watchpoint_Watchdog, self).__init__(spec, ty, internal=True)
         self.watchpoint_dict = {}
+
+    def stop(self):
+        for symbol, wp in self.watchpoint_dict.iteritems():
+            # The watchpoint was never added because not in the scope,
+            # and is just the value to set instead
+            if wp.__class__ != Qgen_Watchpoint:
+                del self.watchpoint_dict[symbol]
+                wp = Qgen_Watchpoint(symbol, wp, gdb.BP_WATCHPOINT)
+                self.watchpoint_dict[symbol] = wp
+
+            # The watchpoint has been deleted, add it back
+            else:
+                self.watchpoint_dict[symbol].delete()
+                del self.watchpoint_dict[symbol]
+                self.watchpoint_dict[symbol] = Qgen_Watchpoint(
+                    symbol, wp.value, gdb.BP_WATCHPOINT)
+
+            # A watchpoint will not trigger if the value written
+            # is equal to its previous value.
+            # By forcing the value at the beginning
+            # of the scope we ensure that the desired value will be set
+            # or force the watchpoint to trigger
+            Utils.set_variable(symbol, wp.value)
+        return False
 
 
 class Qgen_Logpoint (gdb.Breakpoint):
@@ -364,3 +340,11 @@ class Qgen_Watchpoint (gdb.Breakpoint):
         super(Qgen_Watchpoint, self).__init__(spec, ty, internal=True)
         self.var = spec
         self.value = value
+
+    def stop(self):
+        try:
+            Utils.set_variable(self.var, self.value)
+            gdb.write("{0} set to {1}\n".format(self.var, self.value))
+        except:
+            pass
+        return False

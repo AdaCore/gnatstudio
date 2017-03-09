@@ -890,7 +890,6 @@ else:
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
-            debugger.send("qgen_breakpoint_action", output=False)
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
