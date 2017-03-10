@@ -2,7 +2,7 @@ with "../kernel/kernel_core";
 with "../shared";
 
 with "libadalang";
-
+with "gnatcoll_python";
 project LAL is
 
    for Source_Dirs use ("src");

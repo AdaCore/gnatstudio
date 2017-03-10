@@ -3663,6 +3663,14 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def get_analysis_unit(self):
+        """
+        Returns the corresponding libadalang AnalysisUnit.
+
+        :rtype: libadalang.AnalysisUnit
+        """
+        pass  # implemented in Ada
+
     def get_chars(self, frm='beginning of buffer', to='end of buffer'):
         """
         Returns the contents of the buffer between the two locations given in

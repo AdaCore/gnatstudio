@@ -733,6 +733,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get
 
+   .. automethod:: GPS.EditorBuffer.get_analysis_unit
+
    .. automethod:: GPS.EditorBuffer.get_chars
 
    .. automethod:: GPS.EditorBuffer.get_cursors
