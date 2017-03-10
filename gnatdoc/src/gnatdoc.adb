@@ -345,21 +345,15 @@ package body GNATdoc is
                     Count'Img & "/" & To_String (Num_Trees) & " files");
                end if;
 
-               --  Vadim: the call to the backend is temporarily disabled
-               --  for adb files because it crashes procesing them. Remove
-               --  the following if-statement leaving its inner code to
-               --  enable the calls???
+               begin
+                  Backend.Process_File (Tree'Access);
 
-               if Is_Spec_File (Context.Kernel, Tree.File) then
-                  begin
-                     Backend.Process_File (Tree'Access);
-                  exception
-                     when E : others =>
-                        Report_Error (All_Src_Files, Tree.File, Backend_Stage);
-                        Trace (Me, E);
-                        raise;
-                  end;
-               end if;
+               exception
+                  when E : others =>
+                     Report_Error (All_Src_Files, Tree.File, Backend_Stage);
+                     Trace (Me, E);
+                     raise;
+               end;
             end loop;
          end Call_Backend;
 
