@@ -447,7 +447,7 @@ package body GNATdoc.Frontend is
       procedure Clean_Entities;
       --  Remove sources and documentation of skipped entities. Remove also
       --  sources attached to the internal entities associated with the
-      --  corresponding bodies.
+      --  corresponding bodies, and entities defined in subprogram bodies.
 
       function Build_Corresponding_Body
         (E       : Entity_Id;
@@ -5968,6 +5968,29 @@ package body GNATdoc.Frontend is
          for E of File_Entities.All_Entities loop
             if Present (Get_Corresponding_Spec (E)) then
                Remove_Src (E);
+            end if;
+         end loop;
+
+         --  Remove nested entities of subprogram bodies
+
+         for E of File_Entities.All_Entities loop
+            if Present (Get_Corresponding_Spec (E))
+              and then Is_Subprogram_Or_Entry (E)
+            then
+               declare
+                  Removed_Entities : aliased EInfo_List.Vector;
+
+               begin
+                  for Entity of Get_Entities (E).all loop
+                     if Get_Kind (Entity) /= E_Formal then
+                        Removed_Entities.Append (Entity);
+                     end if;
+                  end loop;
+
+                  for Entity of Removed_Entities loop
+                     Remove_From_List (Get_Entities (E), Entity);
+                  end loop;
+               end;
             end if;
          end loop;
       end Clean_Entities;
