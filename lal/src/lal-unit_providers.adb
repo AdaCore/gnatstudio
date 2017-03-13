@@ -21,6 +21,8 @@ with Ada.Strings.Wide_Wide_Unbounded;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
+with GPS.Editors; use GPS.Editors;
+
 package body LAL.Unit_Providers is
 
    --------------
@@ -107,14 +109,30 @@ package body LAL.Unit_Providers is
           (Unit_Name => Unit_Name,
            Part      => Map (Kind),
            Language  => "Ada");
-   begin
 
-      return Libadalang.Analysis.Get_From_File
-        (Context     => Context,
-         Filename    => String (File),
-         Charset     => Charset,
-         Reparse     => Reparse,
-         With_Trivia => With_Trivia);
+      Buffer : constant Editor_Buffer'Class :=
+        Provider.Kernel.Get_Buffer_Factory.Get
+          (File        => GNATCOLL.VFS.Create (File),
+           Open_Buffer => False,
+           Open_View   => False);
+   begin
+      if Buffer = Nil_Editor_Buffer then
+
+         return Libadalang.Analysis.Get_From_File
+           (Context     => Context,
+            Filename    => String (File),
+            Charset     => Charset,
+            Reparse     => Reparse,
+            With_Trivia => With_Trivia);
+      else
+
+         return Libadalang.Analysis.Get_From_Buffer
+           (Context     => Context,
+            Filename    => String (File),
+            Buffer      => Buffer.Get_Chars,
+            Charset     => Charset,
+            With_Trivia => With_Trivia);
+      end if;
    end Get_Unit;
 
    ----------------
