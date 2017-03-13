@@ -1542,6 +1542,10 @@ package body Vsearch is
    is
       pragma Unreferenced (Self);
    begin
+      --  Update the 'From Project %p' entry in the Search scope selector when
+      --  the project view has changed.
+      Set_Selected_Project (Kernel, Kernel.Get_Current_Context);
+
       Reset_Search (null, Kernel_Handle (Kernel));
    end Execute;
 
@@ -3477,8 +3481,6 @@ package body Vsearch is
    is
       pragma Unreferenced (Object);
    begin
-      --  Call this to avoid dangling pointers in View.Projects
-      Set_Selected_Project (Kernel, Kernel.Get_Current_Context);
       Search_Reset_Hook.Run (Kernel);
    end Reset_Search;
 

@@ -2420,6 +2420,18 @@ package body Src_Editor_Module is
          Module     => Module,
          Is_Default => True);
 
+      Module := new Files_From_Root_Project_Search_Module;
+      Initialize
+        (Module,
+         Label    => -"Files From Project '%p'",
+         Selector => Selector,
+         Id       => Src_Editor_Module_Id,
+         Mask     => Default_Options_Mask);
+
+      Register_Search_Function
+        (Kernel     => Kernel,
+         Module     => Module);
+
       Module := new Runtime_Files_Search_Module;
       Initialize
         (Module,
