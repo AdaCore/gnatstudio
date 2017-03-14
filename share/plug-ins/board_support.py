@@ -545,7 +545,7 @@ class BoardLoader(Module):
 
         # Load the executable
         r2 = yield debugger_promise.wait_and_send(
-            cmd="load",
+            cmd='load "%s"' % (exe),
             block=True)
 
         # Reset the board
