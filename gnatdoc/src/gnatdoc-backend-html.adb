@@ -129,7 +129,10 @@ package body GNATdoc.Backend.HTML is
          return True;
 
       elsif LN = RN then
-         if LL.File < RL.File then
+         if Get_Corresponding_Body (Left) = Right then
+            return True;
+
+         elsif LL.File < RL.File then
             return True;
 
          elsif LL.File = RL.File then
