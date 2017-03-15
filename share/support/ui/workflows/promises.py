@@ -445,8 +445,10 @@ class ProcessWrapper(object):
 
     """
 
-    def __init__(self, cmdargs=[], spawn_console=False, directory=None,
-                 regexp='.+', single_line_regexp=True, block_exit=True):
+    def __init__(self, cmdargs=[], spawn_console=False,
+                 directory=None, regexp='.+',
+                 single_line_regexp=True, block_exit=True,
+                 give_focus_on_create=False):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -469,6 +471,8 @@ class ProcessWrapper(object):
            the output at once.
         :param bool block_exit: whether the user should be asked when GPS
            exits and this process is still running.
+        :param bool give_focus_on_create: set it to True to give the focus
+           to the spawned console, if any.
         """
 
         # __current_promise = about on waiting wish for match something
@@ -485,6 +489,10 @@ class ProcessWrapper(object):
 
         # __whether process has finished
         self.finished = False
+
+        # Used to know when the attached process is being relaunched via
+        # th relaunch button.
+        self.__relaunched = False
 
         # handler of process will be created -> start running
         # Remove empty command line arguments
@@ -526,7 +534,7 @@ class ProcessWrapper(object):
                 accept_input=False,
                 on_destroy=self.__on_console_destroy,
                 toolbar_name=toolbar_name,
-                give_focus_on_create=False)
+                give_focus_on_create=give_focus_on_create)
             self.__action = GPS.Action('launch ' + cmdargs[0])
 
             self.__console.write("%s\n" % ' '.join(self.__command))
@@ -551,10 +559,15 @@ class ProcessWrapper(object):
                     output += " process exited with status " + str(status)
                 output += ", elapsed time: " + TimeDisplay.get_elapsed(
                     self.__start_time, end_time) + "\n"
-                self.__console.write(output)
+                if self.__console:
+                    self.__console.write(output)
+
+            def __display_output(out):
+                if self.__console:
+                     self.__console.write("%s\n" % out)
 
             self.stream.subscribe(
-                lambda out: self.__console.write("%s\n" % out),
+                __display_output,
                 oncompleted=__show_console_on_exit)
 
     def __on_match(self, process, match, unmatch):
@@ -599,14 +612,23 @@ class ProcessWrapper(object):
            Current_promise will be solved with False
         """
         self.finished = True
-
         if self.__current_promise is not None:
             self.__output += remaining_output
             self.__check_pattern_and_resolve()
 
         if self.__stream is not None:
             self.__stream.emit(remaining_output)
-            self.__stream.resolve(status)
+
+            # Don't resolve the stream when the process is being
+            # relaunched: we don't want to lose the process output
+            # in this case.
+            if not self.__relaunched:
+                self.__stream.resolve(status)
+
+        # Don't consider the process as finished when it's being
+        # relaunched.
+        self.finished = not self.__relaunched
+        self.__relaunched = False
 
     def wait_until_match(self, pattern, timeout=0):
         """
@@ -784,7 +806,6 @@ class ProcessWrapper(object):
 
         # get end timestamp
         end_time = time.time()
-
         # Interrupt the process, if any
         if not self.finished:
             self.__process.interrupt()
@@ -808,7 +829,7 @@ class ProcessWrapper(object):
         console toolbar.
         Terminate the process and relaunch it again.
         """
-
+        self.__relaunched = True
         self.terminate()
         self.__process = GPS.Process(
             command=self.__command,
