@@ -292,12 +292,17 @@ function buildDocumentationPage() {
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++) {
             var list = null;
             var entity = entity_set.entities[eindex];
+            var titleText;
 
             if (entity.href === undefined) {
+                titleText = entity.label;
+                if (entity.qualifier !== '')
+                    titleText += ' ' + entity.qualifier;
+
                 header = document.createElement('h3');
                 header.id = 'L' + entity.line.toString() +
                   'C' + entity.column.toString();
-                header.appendChild(document.createTextNode(entity.label));
+                header.appendChild(document.createTextNode(titleText));
                 if (entity.src !== undefined) {
                     var sup = document.createElement('sup');
                     sup.className = 'srcHref';
