@@ -65,7 +65,9 @@ switch --help::
   -X ARG                       Specify an external reference in the project
   -R, --regexp=ARG             Regular expression to select documentation comments
   --preserve-source-formatting Preserve formatting of comments
-  -b                           Process bodies
+  -e, --encoding=ARG           The character encoding used for source and ALI files
+  -b                           Process bodies to complete the spec documentation
+  -d                           Document bodies
   --ignore-files=ARG           List of files ignored by GNATdoc
   -l                           Leading documentation
   --no-subprojects             Do not process subprojects
@@ -74,9 +76,11 @@ switch --help::
   --single-file=ARG            Single file processed by GNATdoc
   -w                           Enable warnings for missing documentation
   --enable-build               Rebuild the project before processing it
+  --version                    Shows GNATdoc's version
   --output=ARG                 Format of generated documentation
-  --custom-tags-definition=ARG Load custom tag definitions from the given file
+  --custom-tags-definition=ARG Load custom tag definition from the file
   --symlinks                   Take additional time to resolve symbolic links
+
 
 *Project (-P)*
 
@@ -112,14 +116,20 @@ switch --help::
    --  TODO: what is the unit for Minutes?
    --- @return True iff the alarm was successfully registered
 
-*Process bodies (-b)*
+*Process bodies to complete the spec documentation(-b)*
 
   By default GNATdoc does not process the body of packages. This switch
-  enables retrieving documentation of subprograms from the body of
-  packages. GNATdoc first looks for the documentation in the package
-  specification; if no documentation is found in the spec and this
-  switch is enabled then searchs for the documentation in the
-  body of the subprogram.
+  enables looking at subprograms in package bodies, as a fallback for finding
+  documentation. When this switch is provided, GNATdoc first looks for the
+  documentation in the package specification; if no documentation is found in
+  the spec and then searches for documentation in the body of the subprogram.
+
+*Document bodies (-d)*
+
+  When this switch is passed, GNATdoc processes bodies and extracts
+  documentation for library-level entities. In the HTML output, GNATdoc
+  emits separate pages for the documentaion extracted from bodies.
+  This switch is incompatible with the -b switch.
 
 *Ignore files (--ignore-files)*
 

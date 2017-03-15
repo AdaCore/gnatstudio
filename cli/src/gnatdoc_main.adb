@@ -279,7 +279,12 @@ begin
      (Cmdline,
       Output       => Process_Bodies'Access,
       Switch       => "-b",
-      Help         => "Process bodies to complete their spec documentation");
+      Help         => "Process bodies to complete the spec documentation");
+   Define_Switch
+     (Cmdline,
+      Output       => Document_Bodies'Access,
+      Switch       => "-d",
+      Help         => "Document bodies");
 
    --  Search for the hidden switch -c in the command line arguments; if
    --  found then enable it. Done to temporarily hide the support for C/C++
@@ -295,13 +300,6 @@ begin
             Output       => Process_C_Files'Access,
             Switch       => "-c",
             Help         => "Process C/C++ files");
-
-      elsif Ada.Command_Line.Argument (J) = "-d" then
-         Define_Switch
-           (Cmdline,
-            Output       => Document_Bodies'Access,
-            Switch       => "-d",
-            Help         => "Document bodies");
       end if;
    end loop;
 
