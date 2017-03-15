@@ -1029,9 +1029,16 @@ package body GNATdoc.Backend.HTML is
          Summary           : JSON_Array;
          Description       : JSON_Array;
          Printer           : Source_Code_Printer (Self.Context.Kernel);
+         Sorted_Entities   : Entity_Id_Ordered_Sets.Set;
 
       begin
+         --  Copy entities into ordered set to sort them.
+
          for E of Entities loop
+            Sorted_Entities.Insert (E);
+         end loop;
+
+         for E of Sorted_Entities loop
             Self.Extract_Summary_And_Description (E, Summary, Description);
 
             if Present (Get_Src (E)) then
