@@ -1911,6 +1911,26 @@ package body GNATdoc.Atree is
           and then Present (Get_Corresponding_Spec (E));
    end Is_Entry_Body;
 
+   -----------------------------
+   -- Is_Library_Level_Entity --
+   -----------------------------
+
+   function Is_Library_Level_Entity
+     (E : Entity_Id) return Boolean
+   is
+      Scope : constant Entity_Id := Get_Scope (E);
+   begin
+      if No (Scope) then
+         return False;
+
+      elsif Is_Package (Scope) then
+         return Is_Standard_Entity (Get_Scope (Scope));
+
+      else
+         return Is_Standard_Entity (Scope);
+      end if;
+   end Is_Library_Level_Entity;
+
    ---------------------
    -- Is_Package_Body --
    ---------------------

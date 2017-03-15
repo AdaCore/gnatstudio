@@ -1440,7 +1440,7 @@ package body GNATdoc.Frontend is
          Doc            : Unbounded_String;
 
          Printout       : Unbounded_String;
-         Printout_Plain : Unbounded_String;
+         Src_Conc_Type  : Unbounded_String;
 
          New_Entities       : EInfo_List.Vector;
          Body_File_Entities : aliased EInfo_List.Vector;
@@ -1501,9 +1501,9 @@ package body GNATdoc.Frontend is
          pragma Inline (Append_Comment);
          --  Append Text to Comment
 
-         procedure Append_Plain_Sources (Text : String);
-         pragma Inline (Append_Plain_Sources);
-         --  Append Text to Printout
+         procedure Append_Conc_Type_Sources (Text : String);
+         pragma Inline (Append_Conc_Type_Sources);
+         --  Append Text to Src_Conc_Type
 
          procedure Append_Sources (Text : String);
          pragma Inline (Append_Sources);
@@ -1564,10 +1564,10 @@ package body GNATdoc.Frontend is
             Doc := Doc & Text (Text'First + 2 .. Text'Last);
          end Append_Comment;
 
-         procedure Append_Plain_Sources (Text : String) is
+         procedure Append_Conc_Type_Sources (Text : String) is
          begin
-            Printout_Plain := Printout_Plain & Text;
-         end Append_Plain_Sources;
+            Src_Conc_Type := Src_Conc_Type & Text;
+         end Append_Conc_Type_Sources;
 
          procedure Append_Sources (Text : String) is
          begin
@@ -1613,8 +1613,8 @@ package body GNATdoc.Frontend is
 
          procedure Clear_Plain_Sources is
          begin
-            if Present (Printout_Plain) then
-               Printout_Plain := Null_Unbounded_String;
+            if Present (Src_Conc_Type) then
+               Src_Conc_Type := Null_Unbounded_String;
             end if;
          end Clear_Plain_Sources;
 
@@ -3667,7 +3667,7 @@ package body GNATdoc.Frontend is
                      end;
                   end if;
 
-                  Append_Plain_Sources (Text);
+                  Append_Conc_Type_Sources (Text);
                end Append_Src;
 
                ---------------
@@ -3678,6 +3678,10 @@ package body GNATdoc.Frontend is
                begin
                   Clear_Sources;
                end Clear_Src;
+
+               --  Local variables
+
+               Scope : constant Entity_Id := Get_Scope (Current_Context);
 
             --  Start of processing for Handle_Sources
 
@@ -3691,7 +3695,7 @@ package body GNATdoc.Frontend is
                if Last_Idx /= 0 then
                   Append_Sources
                     (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
-                  Append_Plain_Sources
+                  Append_Conc_Type_Sources
                     (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
                end if;
 
@@ -3715,27 +3719,38 @@ package body GNATdoc.Frontend is
 
                      Append_Src (S);
 
+                  when Tok_Is =>
+
+                     Append_Src (S);
+
+                     --  For library level subprograms we only store their
+                     --  profile.
+
+                     if Processing_Body
+                       and then Is_Library_Level_Entity (Scope)
+                       and then (Present (Get_Corresponding_Spec (Scope))
+                                   or else Acts_As_Spec (Scope))
+                     then
+                        Set_Src (Scope, Printout);
+                        Clear_Src;
+                     end if;
+
                   when Tok_Task      |
                        Tok_Protected =>
-                     declare
-                        Scope : constant Entity_Id :=
-                          Get_Scope (Current_Context);
-                     begin
-                        if Get_Kind (Scope) = E_Interface then
-                           Append_Src (S);
-                        else
-                           Clear_Src;
-                           Clear_Plain_Sources;
+                     if Get_Kind (Scope) = E_Interface then
+                        Append_Src (S);
+                     else
+                        Clear_Src;
+                        Clear_Plain_Sources;
 
-                           declare
-                              Spaces : constant String
-                                (1 .. Sloc_Start.Column - 1)
-                                := (others => ' ');
-                           begin
-                              Append_Plain_Sources (Spaces & S);
-                           end;
-                        end if;
-                     end;
+                        declare
+                           Spaces : constant String
+                             (1 .. Sloc_Start.Column - 1)
+                             := (others => ' ');
+                        begin
+                           Append_Conc_Type_Sources (Spaces & S);
+                        end;
+                     end if;
 
                   when Tok_Type    |
                        Tok_Subtype =>
@@ -3789,8 +3804,6 @@ package body GNATdoc.Frontend is
                        and then End_Decl_Found
                      then
                         declare
-                           Scope : constant Entity_Id :=
-                                     Get_Scope (Current_Context);
                            E : constant Entity_Id :=
                              Get_Current_Entity (Current_Context);
                         begin
@@ -3801,7 +3814,7 @@ package body GNATdoc.Frontend is
                               if Is_Concurrent_Type_Or_Object (E)
                                 and then No (Get_Corresponding_Spec (E))
                               then
-                                 Set_Src (E, Printout_Plain);
+                                 Set_Src (E, Src_Conc_Type);
                                  Clear_Plain_Sources;
 
                                  Clear_Src;
@@ -3853,7 +3866,7 @@ package body GNATdoc.Frontend is
                              and then No (E)
                              and then No (Get_Corresponding_Spec (Scope))
                            then
-                              Set_Src (Scope, Printout_Plain);
+                              Set_Src (Scope, Src_Conc_Type);
                               Clear_Plain_Sources;
 
                               Clear_Src;

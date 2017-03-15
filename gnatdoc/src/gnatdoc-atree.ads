@@ -275,6 +275,9 @@
 --       Defined in all entities. True for entities internally built by the
 --       frontend of GNATdoc.
 
+--    Is_Library_Level_Entity (synthesized)
+--       Defined in all entities. True for library level entities.
+
 --    Is_Package (synthesized)
 --       Defined in all entities. True for packages and generic package.
 
@@ -925,6 +928,8 @@ private package GNATdoc.Atree is
    function Is_Incomplete
      (E : Entity_Id) return Boolean;
    function Is_Internal
+     (E : Entity_Id) return Boolean;
+   function Is_Library_Level_Entity
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
