@@ -564,7 +564,7 @@ class ProcessWrapper(object):
 
             def __display_output(out):
                 if self.__console:
-                     self.__console.write("%s\n" % out)
+                    self.__console.write("%s\n" % out)
 
             self.stream.subscribe(
                 __display_output,

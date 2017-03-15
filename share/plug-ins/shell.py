@@ -36,11 +36,11 @@ from gps_utils.console_process import *
 
 class Unix_Shell(ANSI_Console_Process):
 
-    def __init__(self, process, args=""):
+    def __init__(self, command):
         oldterm = os.environ["TERM"]
         os.environ["TERM"] = "xterm"
         os.environ["GPSSHELL"] = "1"
-        ANSI_Console_Process.__init__(self, process, args)
+        ANSI_Console_Process.__init__(self, command)
         if GPS.Preference("Plugins/shell/stty").get():
             self.send('stty echo; PS1="\[\e[1G\]$PS1"; clear')
         os.environ["TERM"] = oldterm
@@ -48,9 +48,9 @@ class Unix_Shell(ANSI_Console_Process):
 
 class Win32_Shell(Console_Process):
 
-    def __init__(self, process, args=""):
+    def __init__(self, command):
         os.environ["GPSSHELL"] = "1"
-        Console_Process.__init__(self, process, args)
+        Console_Process.__init__(self, command)
 
 
 def on_label(context):
@@ -75,9 +75,9 @@ def create_default_shell():
         pass
 
     if os.getenv("SHELL") and os.getenv("TERM"):
-        Unix_Shell(os.getenv("SHELL"), "-i")
+        Unix_Shell([os.getenv("SHELL"), "-i"])
     elif os.getenv("COMSPEC"):
-        Win32_Shell(os.getenv("COMSPEC"), "/Q")
+        Win32_Shell([os.getenv("COMSPEC"), "/Q"])
 
 
 def if_has_directory(context):

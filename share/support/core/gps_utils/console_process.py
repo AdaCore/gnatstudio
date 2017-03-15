@@ -36,8 +36,8 @@ class Console_Process(GPS.Console, GPS.Process):
            def write (self, txt): ...
 
         class My_Process (ANSI_Console, Console_Process):
-           def __init__ (self, process, args=""):
-             Console_Process.__init__ (self, process, args)
+           def __init__ (self, command):
+             Console_Process.__init__ (self, command)
 
      In the list of base classes for My_Process, you must put
      ANSI_Console before Console_Process. This is because python
@@ -69,13 +69,13 @@ class Console_Process(GPS.Console, GPS.Process):
           user.
      """
 
-    def __init__(self, process, args='', close_on_exit=True, force=False,
+    def __init__(self, command, close_on_exit=True, force=False,
                  ansi=False, manage_prompt=True, task_manager=False):
         self.close_on_exit = close_on_exit
         try:
             GPS.Console.__init__(
                 self,
-                process.split()[0],
+                command[0],
                 manage_prompt=manage_prompt,
                 on_input=self.on_input,
                 on_destroy=self.on_destroy,
@@ -87,8 +87,8 @@ class Console_Process(GPS.Console, GPS.Process):
                 force=force)
             GPS.Process.__init__(
                 self,
-                process + ' ' + args,
-                '.+',
+                command=command,
+                regexp='.+',
                 single_line_regexp=True,  # For efficiency
                 strip_cr=not ansi,        # if ANSI terminal, CR is irrelevant
                 task_manager=task_manager,
@@ -102,8 +102,7 @@ class Console_Process(GPS.Console, GPS.Process):
                 self.kill()
             except:
                 pass
-            GPS.Console().write('Could not spawn: ' + process + ' ' + args
-                                + '\n')
+            GPS.Console().write('Could not spawn: %s\n' % (' '.join(command)))
 
     def on_output(self, matched, unmatched):
         """This method is called when the process has emitted some output.
@@ -202,8 +201,8 @@ class ANSI_Console_Process(Console_Process):
       can thus send escape sequences to change colors, cursor position,...
     """
 
-    def __init__(self, process, args=''):
-        Console_Process.__init__(self, process, args, force=True, ansi=True,
+    def __init__(self, command):
+        Console_Process.__init__(self, command, force=True, ansi=True,
                                  manage_prompt=False)
 
     def on_input(self, input):
