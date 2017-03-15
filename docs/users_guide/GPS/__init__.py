@@ -1671,18 +1671,18 @@ class Console(GUI):
             def on_destroy(self):
               self.kill()  # Will call on_exit
 
-            def __init__(self, process, args=""):
+            def __init__(self, command):
               GPS.Console.__init__(
-                 self, process,
+                 command[0],
                  on_input=Console_Process.on_input,
                  on_destroy=Console_Process.on_destroy,
                  force=True)
               GPS.Process.__init__(
-                 self, process + ' ' + args, ".+",
+                 self, command, ".+",
                  on_exit=Console_Process.on_exit,
                  on_match=Console_Process.on_output)
 
-        bash = Console_Process("/bin/sh", "-i")
+        bash = Console_Process(["/bin/sh", "-i"])
     """
 
     def __init__(self, name, force=False, on_input=None, on_destroy=None,
