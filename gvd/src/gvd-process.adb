@@ -36,7 +36,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib;                       use Glib;
-with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 
 with Gtk.Widget;                 use Gtk.Widget;
@@ -57,6 +56,7 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Remote;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -640,6 +640,10 @@ package body GVD.Process is
          Load_Perspective (Kernel, "Default");
       end if;
 
+      --  Interrupt the monitoring of debugger output
+
+      Get_Task_Manager (Kernel).Interrupt_Queue (Debug_Queue_Name);
+
       --  Let all views know that they should close
 
       Debugger_State_Changed_Hook.Run (Process.Kernel, Process, Debug_None);
@@ -659,12 +663,6 @@ package body GVD.Process is
       end if;
 
       Process.Debugger := null;
-
-      if Process.Timeout_Id /= 0 then
-         Glib.Main.Remove (Process.Timeout_Id);
-         Process.Timeout_Id := 0;
-      end if;
-
       Remove_Debugger (Kernel, Process);
       Unref (Process);
 

@@ -340,18 +340,26 @@ def wait_idle():
     return p
 
 
-def wait_tasks():
+known_tasks = ["debugger output monitor", "refreshing Runtime menu"]
+# List of background tasks that are known to be running in the background
+
+
+def wait_tasks(other_than=None):
     """
     This primitive allows the user to delay the execution of the rest of a
     workflow until all active tasks are terminated. If you are waiting on
     tasks that you spawned yourself, it is better to use ProcessWrapper
     or TargetWrapper below to spawn the task.
+
+    If other_than is specified, wait for the tasks that have a name different
+    than the ones in other_than.
     """
 
     p = Promise()
+    filt = other_than or []
 
     def timeout_handler():
-        if not GPS.Task.list():
+        if not filter(lambda x: x.name() not in filt, GPS.Task.list()):
             process_all_events()
             GLib.idle_add(lambda: p.resolve())
             return False

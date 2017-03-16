@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;
-with Glib.Main;
 with Glib.Object;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -32,7 +31,6 @@ with GPS.Debuggers;        use GPS.Debuggers;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Breakpoints_List; use GVD.Breakpoints_List;
-with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
@@ -49,6 +47,10 @@ package GVD.Process is
 
    package String_History is new GVD.Histories (History_Data);
    use String_History;
+
+   Debug_Queue_Name : constant String := "debugger output monitor";
+   --  Name to use for the command queue that contains the command which
+   --  monitors the debug output.
 
    ---------------------
    -- Visual_Debugger --
@@ -93,9 +95,6 @@ package GVD.Process is
       Descriptor              : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
-
-      Timeout_Id              : Glib.Main.G_Source_Id := 0;
-      --  Timeout Id used to handle async. commands.
 
       Current_Command         : String_Access;
       --  Async command currently running in the underlying debugger, if any.

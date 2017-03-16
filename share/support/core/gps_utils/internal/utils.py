@@ -14,7 +14,7 @@ from pygps.project import *
 import traceback
 import platform
 
-from workflows.promises import Promise, timeout
+from workflows.promises import Promise, timeout, known_tasks
 
 
 system_is_cygwin = ('uname' in os.__dict__ and

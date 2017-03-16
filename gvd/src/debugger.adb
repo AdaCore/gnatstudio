@@ -30,13 +30,13 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Convert;
-with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Types;               use Gtkada.Types;
 
+with Commands;                   use Commands;
 with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -44,6 +44,7 @@ with GVD.Process;                use GVD.Process;
 with GVD.Types;                  use GVD.Types;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Intl;                   use GPS.Intl;
 with Items;                      use Items;
 with Language;                   use Language;
@@ -59,24 +60,23 @@ package body Debugger is
 
    Me : constant Trace_Handle := Create ("Debugger");
 
-   Debug_Timeout : constant Guint := 100;
-   --  Timeout in millisecond to check input from the underlying debugger
-   --  when handling asynchronous commands.
-
-   package Debugger_Timeout is new Glib.Main.Generic_Sources (Visual_Debugger);
-
    procedure Free is new
      Ada.Unchecked_Deallocation (Command_Record, Command_Access);
 
-   ---------------------
-   -- Local Functions --
-   ---------------------
-
-   function Output_Available (Process : Visual_Debugger) return Boolean;
+   type Output_Monitor_Command is new Root_Command with record
+      Process : Visual_Debugger;
+   end record;
+   type Output_Monitor_Command_Access is access Output_Monitor_Command;
+   overriding function Execute (Command : access Output_Monitor_Command)
+     return Command_Return_Type;
    --  Called when waiting output from the debugger.
    --  This procedure is activated to handle asynchronous commands.
    --  All it does is read all the available data and call the filters
    --  that were set for the debugger, until a prompt is found.
+
+   ---------------------
+   -- Local Functions --
+   ---------------------
 
    procedure Send_Internal_Pre
      (Debugger         : access Debugger_Root'Class;
@@ -306,9 +306,26 @@ package body Debugger is
       Process := GVD.Process.Convert (Debugger);
 
       if Process /= null then
-         pragma Assert (Process.Timeout_Id = 0);
-         Process.Timeout_Id := Debugger_Timeout.Timeout_Add
-           (Debug_Timeout, Output_Available'Access, Process);
+         declare
+            C : constant Output_Monitor_Command_Access :=
+              new Output_Monitor_Command;
+         begin
+            C.Process := Process;
+            Launch_Background_Command
+              (Kernel            => Kernel,
+               Command           => C,
+               Active            => False,
+               Show_Bar          => False,
+               Queue_Id          => Debug_Queue_Name,
+               Block_Exit        => False,
+               Start_Immediately => False);
+
+            --  We have an issue with the monitoring of the lifecycle of the
+            --  Process above: we want to stop processing this command as
+            --  soon as we free the data structures. Right now there is no
+            --  way to do this as part of Process itself, so we rely on
+            --  GVD.Process.Close_Debugger to interrupt the queue.
+         end;
       end if;
    end General_Spawn;
 
@@ -379,7 +396,11 @@ package body Debugger is
    Line_Regexp : constant Pattern_Matcher := Compile ("^.*?\n");
    --  Matches a complete line
 
-   function Output_Available (Process : Visual_Debugger) return Boolean is
+   overriding function Execute
+     (Command : access Output_Monitor_Command)
+      return Command_Return_Type
+   is
+      Process  : Visual_Debugger renames Command.Process;
       Debugger : constant Debugger_Access := Process.Debugger;
       Mode     : Command_Type;
       Match    : Expect_Match;
@@ -425,9 +446,7 @@ package body Debugger is
       --  indirectly call the output filter.
 
       if Debugger = null then
-         Glib.Main.Remove (Process.Timeout_Id);
-         Process.Timeout_Id := 0;
-         return False;
+         return Success;
       end if;
 
       case Debugger.State is
@@ -437,12 +456,12 @@ package body Debugger is
 
          when Idle =>
             Flush_Async_Output;
-            return True;
+            return Execute_Again;
 
          when Sync_Wait =>
             --  In therory this shouldn't happen since calls are blocking
             --  and this subprogram will never get a chance to be called
-            return True;
+            return Execute_Again;
       end case;
 
       pragma Assert (Debugger.State = Async_Wait);
@@ -457,14 +476,14 @@ package body Debugger is
          Send_Internal_Post (Debugger, Mode, Always_Emit_Hooks => True);
       end if;
 
-      return True;
+      return Execute_Again;
 
    exception
       when E : Process_Died =>
          Trace (Me, E);
 
          On_Debugger_Died (Debugger);
-         return False;
+         return Failure;
 
       when E : others =>
          --  Will close the debugger in GVD.Process when getting this
@@ -472,19 +491,14 @@ package body Debugger is
 
          Trace (Me, E);
 
-         if Process.Timeout_Id > 0 then
-            Glib.Main.Remove (Process.Timeout_Id);
-         end if;
-         Process.Timeout_Id := 0;
-
          if Debugger /= null and then Debugger.Get_Process /= null then
             Debugger.Get_Process.Set_Command_In_Process (False);
          end if;
 
          Free (Process.Current_Command);
          Process.Unregister_Dialog;
-         return False;
-   end Output_Available;
+         return Failure;
+   end Execute;
 
    -----------------------
    -- Send_Internal_Pre --
