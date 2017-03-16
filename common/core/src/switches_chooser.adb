@@ -27,7 +27,8 @@ package body Switches_Chooser is
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
       Switch    : String;
-      Separator : Character);
+      Separator : Character;
+      Section   : String);
    --  Add Switch to the automatically constructed getopt string.
    --  If Separator is ASCII.NUL, then the switches takes a parameter, but
    --  might have no separator.
@@ -172,17 +173,11 @@ package body Switches_Chooser is
 
       while Stop <= Sections'Last loop
          if Sections (Stop) = ' ' then
-            Add_To_Getopt (Config    => Config,
-                           Switch    => Sections (Start .. Stop - 1),
-                           Separator => ASCII.LF);
             Define_Section (Config.Config, Sections (Start .. Stop - 1));
             Start := Stop + 1;
             Stop := Start;
 
          elsif Stop = Sections'Last then
-            Add_To_Getopt (Config    => Config,
-                           Switch    => Sections (Start .. Stop),
-                           Separator => ASCII.LF);
             Define_Section (Config.Config, Sections (Start .. Stop));
          end if;
 
@@ -264,20 +259,21 @@ package body Switches_Chooser is
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
       Switch    : String;
-      Separator : Character)
+      Separator : Character;
+      Section   : String)
    is
    begin
       if Separator = ASCII.LF then
          --  No parameter
-         Define_Switch (Config.Config, Switch);
+         Define_Switch (Config.Config, Switch, Section);
       elsif Separator = ASCII.NUL then
-         Define_Switch_With_Parameter (Config.Config, Switch);
+         Define_Switch_With_Parameter (Config.Config, Switch, Section);
       elsif Separator = ASCII.CR then
          Define_Switch_With_Parameter
-           (Config.Config, Switch, Optional => True);
+           (Config.Config, Switch, Section, Optional => True);
       else
          Define_Switch_With_Parameter
-           (Config.Config, Switch, Separator => Separator);
+           (Config.Config, Switch, Section, Separator => Separator);
       end if;
    end Add_To_Getopt;
 
@@ -320,11 +316,19 @@ package body Switches_Chooser is
             Active        => True));
 
       if Switch_Set /= "" then
-         Add_To_Getopt (Config, Switch_Set, ASCII.LF);
+         Add_To_Getopt
+           (Config,
+            Switch    => Switch_Set,
+            Separator => ASCII.LF,
+            Section   => Section);
       end if;
 
       if Switch_Unset /= "" then
-         Add_To_Getopt (Config, Switch_Unset, ASCII.LF);
+         Add_To_Getopt
+           (Config,
+            Switch    => Switch_Unset,
+            Separator => ASCII.LF,
+            Section   => Section);
       end if;
 
       if Filter /= "" then
@@ -377,7 +381,11 @@ package body Switches_Chooser is
             Add_First    => Add_Before,
             Popup        => Popup,
             Active       => True));
-      Add_To_Getopt (Config, Switch, Sep);
+      Add_To_Getopt
+        (Config,
+         Switch    => Switch,
+         Separator => Sep,
+         Section   => Section);
 
       if Filter /= "" then
          Config.Filters.Append
@@ -404,7 +412,7 @@ package body Switches_Chooser is
          Sep := Separator (Separator'First);
       end if;
 
-      Add_To_Getopt (Config, Switch, Sep);
+      Add_To_Getopt (Config, Switch, Sep, Section => "");
    end Add_Hidden;
 
    --------------
@@ -449,7 +457,11 @@ package body Switches_Chooser is
             Add_First => Add_Before,
             Popup     => Popup,
             Active    => True));
-      Add_To_Getopt (Config, Switch, Sep);
+      Add_To_Getopt
+        (Config,
+         Switch    => Switch,
+         Separator => Sep,
+         Section   => Section);
 
       if Filter /= "" then
          Config.Filters.Append
@@ -510,9 +522,18 @@ package body Switches_Chooser is
             Active    => True));
 
       if Separator = "" then
-         Add_To_Getopt (Config, Switch, ASCII.CR);      --  optional parameter
+         --  optional parameter
+         Add_To_Getopt
+           (Config,
+            Switch    => Switch,
+            Separator => ASCII.CR,
+            Section   => Section);
       else
-         Add_To_Getopt (Config, Switch, Separator (Separator'First));
+         Add_To_Getopt
+           (Config,
+            Switch    => Switch,
+            Separator => Separator (Separator'First),
+            Section   => Section);
       end if;
 
       if Filter /= "" then
@@ -619,7 +640,11 @@ package body Switches_Chooser is
             Active    => True));
 
       if Switch /= "" then
-         Add_To_Getopt (Config, Switch, ASCII.LF);
+         Add_To_Getopt
+           (Config,
+            Switch    => Switch,
+            Separator => ASCII.LF,
+            Section   => Section);
       end if;
 
       if Filter /= "" then
