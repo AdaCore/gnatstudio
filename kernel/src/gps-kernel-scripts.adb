@@ -684,12 +684,10 @@ package body GPS.Kernel.Scripts is
    is
       On_Completion : constant Subprogram_Type := Convert (User_Data);
       Console  : constant Interactive_Console := From_View (View);
-      Instance : constant Class_Instance :=
-        Get_Instance (Get_Script (On_Completion.all), Console);
-      C        : Callback_Data'Class :=
-        Create (Get_Script (On_Completion.all), 2);
-      Tmp      : Boolean;
-      pragma Unreferenced (Tmp);
+      Script   : constant Scripting_Language := Get_Script (On_Completion.all);
+      Instance : constant Class_Instance := Get_Instance (Script, Console);
+      C        : Callback_Data'Class := Create (Script, 2);
+      Tmp      : Boolean with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Instance);
       Set_Nth_Arg (C, 2, Input);
@@ -706,12 +704,11 @@ package body GPS.Kernel.Scripts is
      (Console : access Interactive_Console_Record'Class;
       Input   : String; User_Data : System.Address) return String
    is
-      On_Input : constant Subprogram_Type := Convert (User_Data);
-      Instance : constant Class_Instance :=
-                   Get_Instance (Get_Script (On_Input.all), Console);
-      C        : Callback_Data'Class := Create (Get_Script (On_Input.all), 2);
-      Tmp      : Boolean;
-      pragma Unreferenced (Tmp);
+      On_Input : constant Subprogram_Type    := Convert (User_Data);
+      Script   : constant Scripting_Language := Get_Script (On_Input.all);
+      Instance : constant Class_Instance     := Get_Instance (Script, Console);
+      C        : Callback_Data'Class         := Create (Script, 2);
+      Tmp      : Boolean with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Instance);
       Set_Nth_Arg (C, 2, Input);
@@ -731,10 +728,10 @@ package body GPS.Kernel.Scripts is
       Uni       : Glib.Gunichar := 0;
       User_Data : System.Address) return Boolean
    is
-      On_Key   : constant Subprogram_Type := Convert (User_Data);
-      Instance : constant Class_Instance :=
-                   Get_Instance (Get_Script (On_Key.all), Console);
-      C        : Callback_Data'Class := Create (Get_Script (On_Key.all), 4);
+      On_Key   : constant Subprogram_Type    := Convert (User_Data);
+      Script   : constant Scripting_Language := Get_Script (On_Key.all);
+      Instance : constant Class_Instance     := Get_Instance (Script, Console);
+      C        : Callback_Data'Class         := Create (Script, 4);
       Tmp      : Boolean;
 
       --  Remove any num-lock and caps-lock modifiers
@@ -759,15 +756,13 @@ package body GPS.Kernel.Scripts is
      (Console    : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type)
    is
-      Inst   : constant Class_Instance :=
-                 Get_Instance (Get_Script (Subprogram.all), Console);
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
+      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
    begin
       if Script /= null then
          declare
-            C : Callback_Data'Class := Create (Script, 1);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
+            C   : Callback_Data'Class := Create (Script, 1);
+            Tmp : Boolean with Unreferenced;
          begin
             Set_Nth_Arg (C, 1, Inst);
             Tmp := Execute (Subprogram, C);
@@ -796,9 +791,8 @@ package body GPS.Kernel.Scripts is
             W2, H2, Tmp2 : Gint;
             Layout : Pango_Layout;
 
-            C : Callback_Data'Class := Create (Script, 3);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
+            C   : Callback_Data'Class := Create (Script, 3);
+            Tmp : Boolean with Unreferenced;
          begin
             Layout := Create_Pango_Layout
               (Get_View (Interactive_Console (Console)));
@@ -826,17 +820,14 @@ package body GPS.Kernel.Scripts is
      (Console : access Interactive_Console_Record'Class;
       Data    : System.Address) return Boolean
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Subprogram_Type);
-      Subprogram : constant Subprogram_Type := Convert (Data);
-      Script : constant Scripting_Language := Get_Script (Subprogram.all);
+      Sub    : constant Subprogram_Type    := Convert (Data);
+      Script : constant Scripting_Language := Get_Script (Sub.all);
       Inst   : constant Class_Instance     := Get_Instance (Script, Console);
       C      : Callback_Data'Class         := Create (Script, 1);
-      Tmp : Boolean;
-      pragma Unreferenced (Tmp);
+      Tmp    : Boolean with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Inst);
-      Tmp := Execute (Subprogram, C);
+      Tmp := Execute (Sub, C);
       Free (C);
 
       return True;
@@ -1055,8 +1046,7 @@ package body GPS.Kernel.Scripts is
    -----------------------------
 
    procedure History_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Cannot create instance of GPS.History");
@@ -1512,8 +1502,7 @@ package body GPS.Kernel.Scripts is
    --------------------
 
    procedure Filter_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "list" then
          Data.Set_Return_Value_As_List;
@@ -1560,8 +1549,7 @@ package body GPS.Kernel.Scripts is
    is
       Output : constant String := Execute_Command_With_Args
         (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         CL);
-      pragma Unreferenced (Output);
+         CL) with Unreferenced;
    begin
       if Active (Me) then
          Trace (Me, "Executing " & To_Display_String (CL));
