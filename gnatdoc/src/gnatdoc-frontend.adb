@@ -1526,7 +1526,7 @@ package body GNATdoc.Frontend is
          procedure Clear_Sources;
          --  Clear the accumulated sources
 
-         procedure Clear_Plain_Sources;
+         procedure Clear_Conc_Type_Sources;
          --  Clear the accumulated sources
 
          procedure Clear_Parser_State;
@@ -1611,12 +1611,12 @@ package body GNATdoc.Frontend is
             end if;
          end Clear_Doc;
 
-         procedure Clear_Plain_Sources is
+         procedure Clear_Conc_Type_Sources is
          begin
             if Present (Src_Conc_Type) then
                Src_Conc_Type := Null_Unbounded_String;
             end if;
-         end Clear_Plain_Sources;
+         end Clear_Conc_Type_Sources;
 
          procedure Clear_Sources is
          begin
@@ -1799,7 +1799,7 @@ package body GNATdoc.Frontend is
                     and then At_Valid_Line_After (Doc_Start_Line,
                                Get_End_Of_Profile_Location (Scope).Line)
                   then
-                     Set_Doc_After (Scope);
+                     Set_Doc_After (Scope, Forced_Update => True);
 
                   --  Documentation after the declaration of a concurrent type,
                   --  subprogram or package.
@@ -2913,6 +2913,8 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
+                     Clear_Doc;
+
                   when Tok_Is =>
                      if Processing_Body and then Present (Doc) then
                         declare
@@ -3723,16 +3725,41 @@ package body GNATdoc.Frontend is
 
                      Append_Src (S);
 
-                     --  For library level subprograms we only store their
-                     --  profile.
+                     --  For bodies of library level tasks, protected types,
+                     --  subprograms and entries store only their profile.
 
-                     if Processing_Body
-                       and then Is_Library_Level_Entity (Scope)
-                       and then (Present (Get_Corresponding_Spec (Scope))
-                                   or else Acts_As_Spec (Scope))
-                     then
-                        Set_Src (Scope, Printout);
-                        Clear_Src;
+                     if Processing_Body then
+
+                        --  Handle body of library level packages, concurrent
+                        --  types and subprograms.
+
+                        if Is_Library_Level_Entity (Scope)
+                          and then (Present (Get_Corresponding_Spec (Scope))
+                                      or else Acts_As_Spec (Scope))
+                        then
+                           if Is_Concurrent_Type_Or_Object (Scope) then
+                              Set_Src (Scope, Src_Conc_Type);
+                              Clear_Conc_Type_Sources;
+
+                           elsif Is_Package (Scope)
+                             or else Is_Subprogram (Scope)
+                           then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+                           end if;
+
+                        --  Handle entries and subprogram bodies of library
+                        --  level concurrent types.
+
+                        elsif (Is_Subprogram_Body (Scope)
+                                 or else Is_Entry_Body (Scope))
+                          and then
+                            Is_Concurrent_Type_Or_Object (Get_Scope (Scope))
+                          and then Is_Library_Level_Entity (Get_Scope (Scope))
+                        then
+                           Set_Src (Scope, Printout);
+                           Clear_Src;
+                        end if;
                      end if;
 
                   when Tok_Task      |
@@ -3741,7 +3768,7 @@ package body GNATdoc.Frontend is
                         Append_Src (S);
                      else
                         Clear_Src;
-                        Clear_Plain_Sources;
+                        Clear_Conc_Type_Sources;
 
                         declare
                            Spaces : constant String
@@ -3815,7 +3842,7 @@ package body GNATdoc.Frontend is
                                 and then No (Get_Corresponding_Spec (E))
                               then
                                  Set_Src (E, Src_Conc_Type);
-                                 Clear_Plain_Sources;
+                                 Clear_Conc_Type_Sources;
 
                                  Clear_Src;
 
@@ -3867,7 +3894,7 @@ package body GNATdoc.Frontend is
                              and then No (Get_Corresponding_Spec (Scope))
                            then
                               Set_Src (Scope, Src_Conc_Type);
-                              Clear_Plain_Sources;
+                              Clear_Conc_Type_Sources;
 
                               Clear_Src;
 
@@ -5744,7 +5771,7 @@ package body GNATdoc.Frontend is
                begin
                   Clear_Doc;
                   Clear_Sources;
-                  Clear_Plain_Sources;
+                  Clear_Conc_Type_Sources;
 
                   Enable_Enter_Scope;
                   Enter_Scope (Std_Entity);
@@ -5980,7 +6007,31 @@ package body GNATdoc.Frontend is
 
          for E of File_Entities.All_Entities loop
             if Present (Get_Corresponding_Spec (E)) then
-               Remove_Src (E);
+
+               --  Do not remove the sources of the body of library level
+               --  packages, concurrent types and subprograms.
+
+               if Is_Library_Level_Entity (E)
+                 and then (Present (Get_Corresponding_Spec (E))
+                            or else Acts_As_Spec (E))
+                 and then (Is_Package (E)
+                            or else Is_Concurrent_Type_Or_Object (E)
+                            or else Is_Subprogram (E))
+               then
+                  null;
+
+               --  Do not remove the sources of the body of subprograms and
+               --  entry bodies of library level concurrent types.
+
+               elsif (Is_Subprogram_Body (E) or else Is_Entry_Body (E))
+                 and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
+                 and then Is_Library_Level_Entity (Get_Scope (E))
+               then
+                  null;
+
+               else
+                  Remove_Src (E);
+               end if;
             end if;
          end loop;
 
