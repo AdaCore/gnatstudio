@@ -14,8 +14,8 @@ import gps_utils
 import colorschemes
 
 light_common = {
-    "@theme_selected_bg_color": "#2280d2",
-    "@editor_bg_selection":     "#2280d2",
+    "@theme_selected_bg_color": "#B5D6FE",
+    "@editor_bg_selection":     "#B5D6FE",
     "@editor_fg_selection":     "black",
 
     "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
