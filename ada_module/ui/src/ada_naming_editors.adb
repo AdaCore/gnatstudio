@@ -445,6 +445,7 @@ package body Ada_Naming_Editors is
       Create_Exceptions_List_Column ("Body filename");
 
       Self.Standard_Scheme.Set_Sensitive (not Read_Only);
+      Self.Casing.Set_Sensitive (not Read_Only);
       Self.Dot_Replacement.Set_Sensitive (not Read_Only);
       Self.Spec_Extension.Set_Sensitive (not Read_Only);
       Self.Body_Extension.Set_Sensitive (not Read_Only);
