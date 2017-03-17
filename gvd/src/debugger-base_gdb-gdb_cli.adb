@@ -129,8 +129,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Multiloc_Breakpoint_Instance_Pattern : constant Pattern_Matcher := Compile
      ("^\d+\.\d+\s+[yn]\s+(.*)$", Multiple_Lines);
 
-   File_Name_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("\bat (.+):(\d+)$", Multiple_Lines);
+   File_Name_In_Breakpoint                 : constant Pattern_Matcher :=
+     Compile ("\bat (.+):(\d+)$", Multiple_Lines);
+   File_Name_Without_Method_In_Breakpoint  : constant Pattern_Matcher :=
+     Compile ("^(.+):(\d+)$", Multiple_Lines);
    --  How to find file names in the info given by "info breakpoint".
    --  Note that we have to allow for special characters in the directory
    --  or file name, since the user might be using some strange names. The only
@@ -2630,6 +2632,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Has_Matched := False;
 
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
+         if Matched (0) = No_Match then
+            Match (File_Name_Without_Method_In_Breakpoint,
+                   S (First .. Last - 2), Matched);
+         end if;
          if Matched (0) /= No_Match then
             F := To_File (Kernel, S (Matched (1).First .. Matched (1).Last));
             Current.Location := Kernel.Get_Buffer_Factory.Create_Marker
