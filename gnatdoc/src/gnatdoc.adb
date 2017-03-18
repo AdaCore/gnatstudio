@@ -947,11 +947,15 @@ package body GNATdoc is
             if Lang.all not in Language.Ada.Ada_Language'Class
               and then Lang.all not in Language.C.C_Language'Class
             then
-               Kernel.Messages_Window.Insert
-                 (-("info: Documentation not generated for ") &
-                    Display_Base_Name (File) &
-                  (-" since this language is not supported."),
-                  Mode => GPS.Messages_Windows.Info);
+               if not Skipped_Files.Contains (File) then
+                  Kernel.Messages_Window.Insert
+                    (-("info: Documentation not generated for ") &
+                       Display_Base_Name (File) &
+                     (-" since this language is not supported."),
+                     Mode => GPS.Messages_Windows.Info);
+
+                  Skipped_Files.Append (File);
+               end if;
 
                return True;
             end if;
@@ -2191,13 +2195,13 @@ package body GNATdoc is
      (Kernel : Core_Kernel;
       File   : Virtual_File) is
    begin
-      Kernel.Messages_Window.Insert
-        (-("warning: cross references for file ") &
-           Display_Base_Name (File) &
-        (-" are not up-to-date. Documentation not generated."),
-        Mode => GPS.Messages_Windows.Error);
-
       if not Skipped_Files.Contains (File) then
+         Kernel.Messages_Window.Insert
+           (-("warning: cross references for file ") &
+              Display_Base_Name (File) &
+           (-" are not up-to-date. Documentation not generated."),
+           Mode => GPS.Messages_Windows.Error);
+
          Skipped_Files.Append (File);
       end if;
    end Report_Skipped_File;

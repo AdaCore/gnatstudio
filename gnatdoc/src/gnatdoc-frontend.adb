@@ -3648,8 +3648,17 @@ package body GNATdoc.Frontend is
 
                procedure Append_Src
                  (Text : String; Column : Natural := 0);
+               --  Append Text to the accumulated sources stored on Printout
+               --  prepending Column spaces. Append it also to Src_Conc_Type
+               --  (without prepending any space).
 
                procedure Clear_Src;
+               --  Clear sources accumulated in Printout and Src_Conc_Type.
+
+               procedure Set_Src
+                 (E : Entity_Id; Value : Unbounded_String);
+               --  Set the sources of E if not previously set; otherwise do
+               --  nothing.
 
                ----------------
                -- Append_Src --
@@ -3680,6 +3689,17 @@ package body GNATdoc.Frontend is
                begin
                   Clear_Sources;
                end Clear_Src;
+
+               --------------
+               --  Set_Src --
+               --------------
+
+               procedure Set_Src (E : Entity_Id; Value : Unbounded_String) is
+               begin
+                  if No (Get_Src (E)) then
+                     Atree.Set_Src (E, Value);
+                  end if;
+               end Set_Src;
 
                --  Local variables
 
@@ -6024,6 +6044,7 @@ package body GNATdoc.Frontend is
                --  entry bodies of library level concurrent types.
 
                elsif (Is_Subprogram_Body (E) or else Is_Entry_Body (E))
+                 and then Present (Get_Scope (E))
                  and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
                  and then Is_Library_Level_Entity (Get_Scope (E))
                then
