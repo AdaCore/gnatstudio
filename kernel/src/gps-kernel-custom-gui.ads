@@ -19,7 +19,7 @@
 --  possible initialization strings. A large part of the work is done in
 --  GPS.Kernel.Modules;
 
-with GNAT.Strings;
+with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Gtk.Notebook;
@@ -32,7 +32,7 @@ with Default_Preferences.GUI; use Default_Preferences.GUI;
 with GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 
-package Startup_Module is
+package GPS.Kernel.Custom.GUI is
 
    type Startup_Module_ID_Record is new Module_ID_Record with private;
    type Startup_Module_ID is access all Startup_Module_ID_Record'Class;
@@ -49,6 +49,15 @@ package Startup_Module is
 
    overriding function Get_Widget
      (Self    : not null access Root_Plugins_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentation.
+
+   type Plugins_Preferences_Assistant_Page_Record is
+     new Root_Plugins_Preferences_Page_Record with null record;
+
+   overriding function Get_Widget
+     (Self    : not null access Plugins_Preferences_Assistant_Page_Record;
       Manager : not null Preferences_Manager)
       return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
@@ -84,6 +93,10 @@ package Startup_Module is
      (Self : not null access Plugin_Preferences_Page_Record) return String;
    --  Return the name of the plugin associated to this page
 
+   function Get_Plugin_Label
+     (Self : not null access Plugin_Preferences_Page_Record) return String;
+   --  Return a suitable label for the plugin associated with this page
+
    type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
    with private;
    type Startup_Editor is access all Startup_Editor_Page_View_Record'Class;
@@ -107,12 +120,12 @@ private
          Plugin_Name       : GNAT.Strings.String_Access;
          --  Name of the plugin associated to this page.
 
+         Plugin_Label      : GNAT.Strings.String_Access;
+         --  Suitable label used to identify the plugin in the 'Plugins' page
+         --  of the Preferences Editor (or Preferences Assistant).
+
          File              : GNATCOLL.VFS.Virtual_File;
          --  Plugin file associated to this preferences page.
-
-         Loaded_At_Startup : Boolean;
-         --  Used to know if the corresponding plugin is set to be loaded
-         --  at startup or not.
 
          Explicit          : Boolean;
          --  Used to know if the plugin has been loaded at startup or not
@@ -124,15 +137,16 @@ private
 
    type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
    with record
-      Tree                  : Gtk.Tree_View.Gtk_Tree_View;
-      Model                 : Gtk.Tree_Store.Gtk_Tree_Store;
-      Plugins_Notebook      : Gtk.Notebook.Gtk_Notebook;
+      Tree                : Gtk.Tree_View.Gtk_Tree_View;
+      Model               : Gtk.Tree_Store.Gtk_Tree_Store;
+      Plugins_Notebook    : Gtk.Notebook.Gtk_Notebook;
+
+      Show_Restart_Dialog : Boolean := True;
+      --  Used to know if a dialog asking if the user wants to restart GPS
+      --  to take into account the modifications in the list of startup scripts
+      --  should be displayed or not.
    end record;
 
-   type Startup_Module_ID_Record is new Module_ID_Record with record
-      Has_Changed : Boolean := False;
-      --  Boolean used to indicate if the set of startup scripts to load has
-      --  been modified since GPS started.
-   end record;
+   type Startup_Module_ID_Record is new Module_ID_Record with null record;
 
-end Startup_Module;
+end GPS.Kernel.Custom.GUI;

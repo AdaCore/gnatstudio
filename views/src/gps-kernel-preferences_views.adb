@@ -42,6 +42,7 @@ with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
 with Gtk.Widget;                    use Gtk.Widget;
 with Gtkada.Handlers;               use Gtkada.Handlers;
 
+with GPS.Kernel.Custom.GUI;        use GPS.Kernel.Custom.GUI;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
@@ -50,7 +51,6 @@ with GPS.Kernel.Search.Plugins;     use GPS.Kernel.Search.Plugins;
 with GPS.Kernel.Search.Preferences; use GPS.Kernel.Search.Preferences;
 with GPS.Search;                    use GPS.Search;
 with GPS.Search.GUI;                use GPS.Search.GUI;
-with Startup_Module;                use Startup_Module;
 
 with Language;                      use Language;
 
@@ -129,7 +129,7 @@ package body GPS.Kernel.Preferences_Views is
 
    overriding function Create_Plugins_Search_Result
      (Self        : not null access Custom_Plugins_Search_Provider;
-      Plugin_Page : not null Startup_Module.Plugin_Preferences_Page;
+      Plugin_Page : not null GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
       Short       : GNAT.Strings.String_Access;
       Long        : GNAT.Strings.String_Access;
       Score       : Natural) return GPS.Search.Search_Result_Access;
@@ -293,7 +293,7 @@ package body GPS.Kernel.Preferences_Views is
 
    overriding function Create_Plugins_Search_Result
      (Self        : not null access Custom_Plugins_Search_Provider;
-      Plugin_Page : not null Startup_Module.Plugin_Preferences_Page;
+      Plugin_Page : not null GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
       Short       : GNAT.Strings.String_Access;
       Long        : GNAT.Strings.String_Access;
       Score       : Natural) return GPS.Search.Search_Result_Access is

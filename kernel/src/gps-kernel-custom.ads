@@ -192,6 +192,12 @@ private
    --
    --  Loaded indicates whether the script was loaded
 
+   function Get_Script_From_Base_Name
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Base_Name : String) return Script_Description_Access;
+   --  Return the script description for the given Base_Name, or null if not
+   --  Found.
+
    procedure Free (File : in out Script_Description_Access);
    --  Free the memory occupied by File
 

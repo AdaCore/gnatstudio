@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;                           use GNAT.OS_Lib;
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;                      use Ada.Strings.Maps;
 with GNAT.Directory_Operations;             use GNAT.Directory_Operations;
 with GNATCOLL.Projects;
 with GNATCOLL.Utils;                        use GNATCOLL.Utils;
@@ -49,17 +50,14 @@ with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
 with Gtk.Widget;                            use Gtk.Widget;
 with Gtkada.Handlers;                       use Gtkada.Handlers;
 
+with Case_Handling;                         use Case_Handling;
 with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel;                            use GPS.Kernel;
 with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
 with GPS.Intl;                              use GPS.Intl;
 with GPS.Main_Window;                       use GPS.Main_Window;
 
---------------------
--- Startup_Module --
---------------------
-
-package body Startup_Module is
+package body GPS.Kernel.Custom.GUI is
 
    Startup_Module : Startup_Module_ID;
 
@@ -71,7 +69,7 @@ package body Startup_Module is
    Column_Explicit      : constant := 2;
    Column_Modified      : constant := 3;
    Column_Background    : constant := 4;
-   Column_Name_With_Ext : constant := 5;
+   Column_Plugin_Name   : constant := 5;
    Column_Subpage_Name  : constant := 6;
    Column_Page          : constant := 7;
 
@@ -81,7 +79,7 @@ package body Startup_Module is
       Column_Explicit      => GType_Boolean,
       Column_Modified      => GType_Boolean,
       Column_Background    => GType_String,
-      Column_Name_With_Ext => GType_String,
+      Column_Plugin_Name   => GType_String,
       Column_Subpage_Name  => GType_String,
       Column_Page          => GType_Int);
 
@@ -304,11 +302,12 @@ package body Startup_Module is
             declare
                Plugin_Subpage : constant Plugin_Preferences_Page :=
                                   Plugin_Preferences_Page (Subpage);
-               Name           : constant String :=
-                                  (if Plugin_Subpage.Plugin_Name /= null then
-                                      Plugin_Subpage.Plugin_Name.all
-                                   else
-                                      "");
+               Plugin_Name    : constant String :=
+                                  Plugin_Subpage.Get_Plugin_Name;
+               Script         : constant Script_Description_Access :=
+                                  Get_Script_From_Base_Name
+                                    (Kernel    => Startup_Module.Get_Kernel,
+                                     Base_Name => Plugin_Name);
             begin
                --  Append a node to the model
                Append (Editor.Model, Iter, Null_Iter);
@@ -316,13 +315,14 @@ package body Startup_Module is
                Set_And_Clear
                  (Editor.Model, Iter,
                   (Column_Load, Column_Name, Column_Explicit, Column_Modified,
-                   Column_Name_With_Ext, Column_Subpage_Name, Column_Page),
-                  (1 => As_Boolean (Plugin_Subpage.Loaded_At_Startup),
-                   2 => As_String  (Base_Name (Name, File_Extension (Name))),
+                   Column_Plugin_Name, Column_Subpage_Name, Column_Page),
+                  (1 => As_Boolean
+                       (Script.Loaded or else Script.Mode = Explicit_On),
+                   2 => As_String  (Plugin_Subpage.Get_Plugin_Label),
                    3 => As_Boolean (Plugin_Subpage.Explicit),
                    4 => As_Boolean (False),
-                   5 => As_String  (Name),
-                   6 => As_String  (Subpage.Get_Name),
+                   5 => As_String  (Plugin_Name),
+                   6 => As_String  (Plugin_Subpage.Get_Name),
                    7 => As_Int     (Editor.Plugins_Notebook.Get_N_Pages)));
 
                --  Append the plugin page widget to the notebook
@@ -391,6 +391,24 @@ package body Startup_Module is
 
       --  Select the first row of the plugins list
       Select_First_Row (Editor.Tree);
+
+      return Gtk_Widget (Editor);
+   end Get_Widget;
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self    : not null access Plugins_Preferences_Assistant_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Editor : constant Startup_Editor := Startup_Editor
+        (Root_Plugins_Preferences_Page_Record
+           (Self.all).Get_Widget (Manager));
+   begin
+      Editor.Show_Restart_Dialog := False;
 
       return Gtk_Widget (Editor);
    end Get_Widget;
@@ -490,7 +508,17 @@ package body Startup_Module is
    function Get_Plugin_Name
      (Self : not null access Plugin_Preferences_Page_Record) return String
    is
-      (Self.Plugin_Name.all);
+     (if Self.Plugin_Name /= null then Self.Plugin_Name.all else "");
+
+   ----------------------
+   -- Get_Plugin_Label --
+   ----------------------
+
+   function Get_Plugin_Label
+     (Self : not null access Plugin_Preferences_Page_Record)
+      return String
+   is
+     (if Self.Plugin_Label /= null then Self.Plugin_Label.all else "");
 
    --------------------------------------------
    -- Register_All_Plugins_Preferences_Pages --
@@ -500,13 +528,21 @@ package body Startup_Module is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Manager   : constant Preferences_Manager := Kernel.Get_Preferences;
-      Root_Page : constant Root_Plugins_Preferences_Page :=
+      Root_Page : Root_Plugins_Preferences_Page :=
                     new Root_Plugins_Preferences_Page_Record;
+
       procedure Register_Plugin_Preferences_Page
         (Name     : String;
          File     : GNATCOLL.VFS.Virtual_File;
          Loaded   : Boolean;
          Explicit : Boolean);
+
+      procedure Register_Plugin_Preferences_Assistant_Page
+        (Base_Name : String);
+
+      --------------------------------------
+      -- Register_Plugin_Preferences_Page --
+      --------------------------------------
 
       procedure Register_Plugin_Preferences_Page
         (Name     : String;
@@ -514,15 +550,24 @@ package body Startup_Module is
          Loaded   : Boolean;
          Explicit : Boolean)
       is
-         Plugin_Page : constant Plugin_Preferences_Page :=
-                         new Plugin_Preferences_Page_Record;
-         Page_Name   : constant String := "Plugins/" &
-                         Base_Name (Name, File_Extension (Name)) & '/';
+         pragma Unreferenced (Loaded);
+         Plugin_Page      : constant Plugin_Preferences_Page :=
+                              new Plugin_Preferences_Page_Record;
+         Name_Without_Ext : constant String :=
+                              Base_Name (Name, File_Extension (Name));
+         Page_Name        : constant String :=
+                              Root_Page.Get_Name & Name_Without_Ext & '/';
+         Label            : constant String := Mixed_Case
+           (Ada.Strings.Fixed.Translate
+              (Source  => Name_Without_Ext,
+               Mapping => To_Mapping
+                 (From => To_Sequence (To_Set (('_'))),
+                  To   => To_Sequence (To_Set ((' '))))));
       begin
          --  Set the plugin page attributes
          Plugin_Page.Plugin_Name := new String'(Name);
+         Plugin_Page.Plugin_Label := new String'(Label);
          Plugin_Page.File := File;
-         Plugin_Page.Loaded_At_Startup := Loaded;
          Plugin_Page.Explicit := Explicit;
          Plugin_Page.Doc := Get_Plugin_Doc (File);
 
@@ -535,11 +580,33 @@ package body Startup_Module is
             Replace_If_Exist => True);
       end Register_Plugin_Preferences_Page;
 
+      ------------------------------------------------
+      -- Register_Plugin_Preferences_Assistant_Page --
+      ------------------------------------------------
+
+      procedure Register_Plugin_Preferences_Assistant_Page
+        (Base_Name : String)
+      is
+         Script : constant Script_Description_Access :=
+                    Get_Script_From_Base_Name
+                      (Kernel    => Kernel,
+                       Base_Name => Base_Name);
+      begin
+         if Script = null then
+            return;
+         end if;
+
+         Register_Plugin_Preferences_Page
+           (Name     => Base_Name,
+            File     => Script.File,
+            Loaded   => Script.Loaded,
+            Explicit => Script.Mode /= Automatic);
+      end Register_Plugin_Preferences_Assistant_Page;
+
    begin
       --  Register the root 'Plugins' page
-      Register_Page
-        (Self             => Manager,
-         Name             => "Plugins/",
+      Manager.Register_Page
+        (Name             => "Plugins/",
          Page             => Preferences_Page (Root_Page),
          Priority         => -2,
          Replace_If_Exist => True);
@@ -547,6 +614,20 @@ package body Startup_Module is
       --  Register all the plugins subpages
       For_All_Startup_Scripts
         (Kernel, Register_Plugin_Preferences_Page'Access);
+
+      --  Create a plugins preferences page for the Preferences Assistant and
+      --  register only the relevant plugins for newcomers.
+
+      Root_Page := new Plugins_Preferences_Assistant_Page_Record;
+      Manager.Register_Page
+        (Name             => "Preferences Assistant Plugins/",
+         Page             => Preferences_Page (Root_Page),
+         Page_Type        => Integrated_Page);
+
+      Register_Plugin_Preferences_Assistant_Page ("copy_paste.py");
+      Register_Plugin_Preferences_Assistant_Page ("copy_paste_toolbar.py");
+      Register_Plugin_Preferences_Assistant_Page ("closeold.py");
+      Register_Plugin_Preferences_Assistant_Page ("ispell.py");
    end Register_All_Plugins_Preferences_Pages;
 
    ----------
@@ -561,10 +642,8 @@ package body Startup_Module is
       Override_Startup_Script
         (Kernel    => Kernel,
          Base_Name =>
-           Get_String (Editor.Model, Iter, Column_Name_With_Ext),
+           Get_String (Editor.Model, Iter, Column_Plugin_Name),
          Load      => Get_Boolean (Editor.Model, Iter, Column_Load));
-
-      Startup_Module.Has_Changed := True;
    end Save;
 
    -----------------------------------
@@ -599,14 +678,16 @@ package body Startup_Module is
       end Is_Modified;
 
    begin
-      --  If the set of startup scripts to load has changed, display a dialog
-      --  asking if the user wants to restart or not.
-      if Is_Modified then
+      --  If the editor should display a dialog when closed and if the set of
+      --  startup scripts to load has changed, display a dialog asking if the
+      --  user wants to restart or not.
+
+      if Editor.Show_Restart_Dialog and then Is_Modified then
          declare
             Dialog       : Gtk_Dialog;
             Button       : Gtk_Widget;
             Label        : Gtk_Label;
-            Must_Restart : Boolean := False;
+            Response     : Gtk_Response_Type;
          begin
             Gtk_New (Dialog,
                      Title  => -"Restart GPS ?",
@@ -627,19 +708,21 @@ package body Startup_Module is
               (Dialog, -"Will restart later", Gtk_Response_Cancel);
             Grab_Default (Button);
 
-            Show_All (Dialog);
-            Must_Restart := Run (Dialog) = Gtk_Response_OK;
+            Dialog.Show_All;
+            Response := Dialog.Run;
             Destroy (Dialog);
 
-            if Must_Restart then
+            Save_Startup_Scripts_List (Kernel);
+
+            --  Quit GPS if the user wants to restart imediately
+            if Response = Gtk_Response_OK then
                Quit (GPS_Window (Get_Main_Window (Kernel)),
                      Status => 100);
             end if;
          end;
+      else
+         Save_Startup_Scripts_List (Kernel);
       end if;
-
-      --  Save the startup scripts
-      Save_Startup_Scripts_List (Kernel);
    end On_Destroy_Preferences_Dialog;
 
    ---------------------
@@ -655,4 +738,4 @@ package body Startup_Module is
       Register_All_Plugins_Preferences_Pages (Kernel);
    end Register_Module;
 
-end Startup_Module;
+end GPS.Kernel.Custom.GUI;

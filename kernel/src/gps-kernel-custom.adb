@@ -625,6 +625,21 @@ package body GPS.Kernel.Custom is
       return Startup.Loaded;
    end Load_File_At_Startup;
 
+   -------------------------------
+   -- Get_Script_From_Base_Name --
+   -------------------------------
+
+   function Get_Script_From_Base_Name
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Base_Name : String) return Script_Description_Access
+   is
+      Script : constant Script_Description_Access :=
+                 Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                      K => Base_Name);
+   begin
+      return Script;
+   end Get_Script_From_Base_Name;
+
    ----------
    -- Free --
    ----------

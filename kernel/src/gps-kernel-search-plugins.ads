@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Startup_Module;
+with GPS.Kernel.Custom.GUI;
 with GPS.Search;
 
 package GPS.Kernel.Search.Plugins is
@@ -40,13 +40,13 @@ package GPS.Kernel.Search.Plugins is
      (Provider_Plugins);
 
    type Plugins_Search_Result is new Kernel_Search_Result with record
-      Plugin_Page : Startup_Module.Plugin_Preferences_Page;
+      Plugin_Page : GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
       --  The page that has been selected
    end record;
 
    function Create_Plugins_Search_Result
      (Self        : not null access Plugins_Search_Provider;
-      Plugin_Page : not null Startup_Module.Plugin_Preferences_Page;
+      Plugin_Page : not null GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
       Short       : GNAT.Strings.String_Access;
       Long        : GNAT.Strings.String_Access;
       Score       : Natural) return GPS.Search.Search_Result_Access;

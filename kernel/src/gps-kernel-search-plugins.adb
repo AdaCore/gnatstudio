@@ -28,7 +28,7 @@ with Default_Preferences;     use Default_Preferences;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Search;              use GPS.Search;
-with Startup_Module;          use Startup_Module;
+with GPS.Kernel.Custom.GUI;   use GPS.Kernel.Custom.GUI;
 
 package body GPS.Kernel.Search.Plugins is
 
@@ -105,20 +105,20 @@ package body GPS.Kernel.Search.Plugins is
             Doc_First_Line : constant String :=
                                Get_Surrounding_Line
                                  (Doc, Doc'First, Doc'First);
-            Plugin_Name    : constant String := Plugin_Page.Get_Plugin_Name;
+            Plugin_Label   : constant String := Plugin_Page.Get_Plugin_Label;
             Name_Context   : Search_Context;
             Doc_Context    : Search_Context;
             Short          : GNAT.Strings.String_Access;
             Long           : GNAT.Strings.String_Access;
          begin
             Result := null;
-            Name_Context := Self.Pattern.Search_Best_Match (Plugin_Name);
+            Name_Context := Self.Pattern.Search_Best_Match (Plugin_Label);
 
             --  Try to match the plugin's name
             if Name_Context /= GPS.Search.No_Match then
                Short := new String'
                  (Self.Pattern.Highlight_Match
-                    (Buffer  => Plugin_Name,
+                    (Buffer  => Plugin_Label,
                      Context => Name_Context));
                Long := new String'(Doc_First_Line);
 
@@ -135,7 +135,7 @@ package body GPS.Kernel.Search.Plugins is
                Doc_Context := Self.Pattern.Search_Best_Match (Doc_First_Line);
 
                if Doc_Context /= GPS.Search.No_Match then
-                  Short := new String'(Plugin_Name);
+                  Short := new String'(Plugin_Label);
                   Long := new String'
                     (Self.Pattern.Highlight_Match
                        (Buffer  => Doc_First_Line,
@@ -161,7 +161,7 @@ package body GPS.Kernel.Search.Plugins is
 
    function Create_Plugins_Search_Result
      (Self        : not null access Plugins_Search_Provider;
-      Plugin_Page : not null Startup_Module.Plugin_Preferences_Page;
+      Plugin_Page : not null GPS.Kernel.Custom.GUI.Plugin_Preferences_Page;
       Short       : GNAT.Strings.String_Access;
       Long        : GNAT.Strings.String_Access;
       Score       : Natural) return GPS.Search.Search_Result_Access is

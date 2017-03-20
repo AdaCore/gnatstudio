@@ -88,6 +88,7 @@ with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;                use GPS.Kernel.Custom;
+with GPS.Kernel.Custom.GUI;            use GPS.Kernel.Custom.GUI;
 with GPS.Kernel.Entities;              use GPS.Kernel.Entities;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
@@ -176,7 +177,6 @@ with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
 with Src_Editor_Module;
-with Startup_Module;
 with Switches_Chooser.Scripts;
 with Toolchains_Editor;
 with VCS_Module;
@@ -2246,12 +2246,12 @@ procedure GPS.Main is
          Python_Module.Load_User_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
-      --  Register the Startup_Module afer loading both system and user custom
-      --  files so that each custom file is known before registering all
+      --  Register the GPS.Kernel.Custom.GUI afer loading both system and user
+      --  custom files so that each custom file is known before registering all
       --  the 'Plugins' subpages in the preferences editor dialog.
 
       if Active (Startup_Trace) then
-         Startup_Module.Register_Module (GPS_Main.Kernel);
+         GPS.Kernel.Custom.GUI.Register_Module (GPS_Main.Kernel);
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
@@ -2310,10 +2310,17 @@ procedure GPS.Main is
                       4 => Create
                         (Pref_Page =>
                            GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                             ("Plugins"),
+                             ("Preferences Assistant Plugins"),
                          Label     => "Select your plugins",
                          Message   => "Enabled plugins can be changed later "
                          & "via <b>Edit/Preferences/Plugins</b>.")));
+
+         --  The list of plugins to load at startup may have been changed by
+         --  the user: reload the system custom files (XML and Python plugins)
+         --  with the potentially modified list.
+
+         Load_System_Custom_Files (GPS_Main.Kernel);
+         Python_Module.Load_System_Python_Startup_Files (GPS_Main.Kernel);
       end if;
 
       --  All/most actions are now loaded, we can reset the toolbars.
