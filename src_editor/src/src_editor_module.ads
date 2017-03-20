@@ -57,12 +57,12 @@ package Src_Editor_Module is
    -- Module-specific graphical objects --
    ---------------------------------------
 
-   Hide_Block_Pixbuf   : constant String := "gps-fold-block-symbolic";
-   Unhide_Block_Pixbuf : constant String := "gps-unfold-block-symbolic";
+   Hide_Block_Pixbuf    : constant String := "gps-fold-block-symbolic";
+   Unhide_Block_Pixbuf  : constant String := "gps-unfold-block-symbolic";
 
-   File_Pixbuf : constant String := "gps-emblem-file-unmodified";
+   File_Pixbuf          : constant String := "gps-emblem-file-unmodified";
    File_Modified_Pixbuf : constant String := "gps-emblem-file-modified";
-   File_Unsaved_Pixbuf : constant String := "gps-emblem-file-unsaved";
+   File_Unsaved_Pixbuf  : constant String := "gps-emblem-file-unsaved";
 
    -----------------------
    -- Local subprograms --
