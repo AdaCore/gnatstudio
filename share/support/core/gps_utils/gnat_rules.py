@@ -29,16 +29,23 @@ def EnsureInitialized():
 
 
 def Label(switch, default):
+    str = None
+
     if switch in gnat_switches.switches_comments:
         str = re.sub("^(Activate warnings|Validity checks) (on|for) ",
                      "",
                      gnat_switches.switches_comments[switch][0].strip())
-    else:
+    if not str:
         str = re.sub("^turn on (checking|warnings) (on|for) ",
                      "",
                      default.strip())
-    str = str[0].upper() + str[1:]
-    str = re.sub("[.] *$", "", str)
+    try:
+        str = str[0].upper() + str[1:]
+        str = re.sub("[.] *$", "", str)
+    except:
+        GPS.Logger("GNAT_SWITCHES").write(
+            "Label could not be parsed for switch: %s" % (switch))
+
     return str
 
 
@@ -296,9 +303,9 @@ class gnatMakeProc:
                     # include only on warnings, and a limited list of global
                     # warnings (gnatwa, gnatws, gnatw.e)
                     elif (
-                        not re.search("turn off", res[i_desc])
-                        and not re.search("(all|every)", res[i_desc])
-                        and not re.search("^normal warning", res[i_desc])
+                        not re.search("turn off", res[i_desc]) and not
+                            re.search("(all|every)", res[i_desc]) and not
+                            re.search("^normal warning", res[i_desc])
                     ):
                         # two ways to determine if the switch is part of gnatwa
                         # or not: the old way used the gnatwa exception list,
