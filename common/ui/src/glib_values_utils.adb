@@ -115,6 +115,18 @@ package body Glib_Values_Utils is
       end return;
    end As_String;
 
+   -------------
+   -- As_RGBA --
+   -------------
+
+   function As_RGBA  (Value : Gdk.RGBA.Gdk_RGBA) return Glib.Values.GValue is
+   begin
+      return Result : Glib.Values.GValue do
+         Glib.Values.Init (Result, Gdk.RGBA.Get_Type);
+         Gdk.RGBA.Set_Value (Result, Value);
+      end return;
+   end As_RGBA;
+
    ----------
    -- Init --
    ----------
