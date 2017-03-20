@@ -1,5 +1,5 @@
 [gerrit]
 host = git.adacore.com
 project = gps
-defaultbranch = 17
+defaultbranch = 17.2
 defaultremote = origin
