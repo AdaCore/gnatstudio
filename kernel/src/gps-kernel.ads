@@ -927,8 +927,7 @@ private
    package Selection_Pointers is new GNATCOLL.Refcount.Shared_Pointers
       (Element_Type           => Selection_Context_Data_Record,
        Release                => Free,
-       Atomic_Counters        => True,
-       Potentially_Controlled => True);
+       Atomic_Counters        => True);
 
    type Selection_Context is record
       Ref : Selection_Pointers.Ref;
