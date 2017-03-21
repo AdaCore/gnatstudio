@@ -1670,7 +1670,8 @@ package body GNATdoc.Frontend is
          --  Set to true when we see "procedure", "function" or "entry"
 
          In_Aspect_Spec   : Boolean := False;
-         --  Set to true when In_Item_Decl is True and we see "with"
+         --  Set to true when (In_Item_Decl or In_Subtype_Declaration) is True
+         --  and we see "with"
 
          In_Null_Record   : Boolean := False;
          --  Set to true when we see the sequence of tokens "record null"
@@ -4050,7 +4051,9 @@ package body GNATdoc.Frontend is
                            end if;
 
                         when Tok_With =>
-                           if In_Item_Decl then
+                           if In_Item_Decl
+                             or else In_Subtype_Declaration
+                           then
                               In_Aspect_Spec := True;
                            end if;
 
