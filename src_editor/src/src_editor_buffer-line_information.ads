@@ -25,6 +25,8 @@ with Gtk.Text_View;        use Gtk.Text_View;
 with Gtk.Widget;           use Gtk.Widget;
 with Pango.Layout;         use Pango.Layout;
 
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+
 with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
 
 package Src_Editor_Buffer.Line_Information is
@@ -89,6 +91,11 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type) return Line_Info_Width_Array_Access;
    --  Return the side information for the given line
+
+   function Get_Internal_Tooltip
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return String;
+   --  Returns representation of internal data
 
    procedure Draw_Line_Info
      (Buffer       : access Source_Buffer_Record'Class;
@@ -309,5 +316,9 @@ package Src_Editor_Buffer.Line_Information is
       Line_End   : Buffer_Line_Type) return Boolean;
    --  Return True if there are special lines between line_start and line_end,
    --  included
+
+   Visualize_Internal_Buffers : constant Trace_Handle := Create
+     ("Source_Editor_Buffer.Visualize_Internals", Default => Off);
+   --  Controls whether framework for displaying buffer internal data is active
 
 end Src_Editor_Buffer.Line_Information;

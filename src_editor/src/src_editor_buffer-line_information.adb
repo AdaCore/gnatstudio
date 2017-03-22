@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Tags;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
@@ -288,6 +288,11 @@ package body Src_Editor_Buffer.Line_Information is
             Dummy := Dummy * Default_Icon_Width;
             exit when Dummy > Buffer.Last_Editable_Line;
          end loop;
+
+         if Visualize_Internal_Buffers.Is_Active then
+            Buffer.Line_Numbers_Width := Buffer.Line_Numbers_Width * 3 + 4;
+         end if;
+
       else
          Buffer.Line_Numbers_Width := 0;
       end if;
@@ -468,6 +473,274 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       return Buffer.Line_Data (Line).Side_Info_Data;
    end Get_Side_Information;
+
+   --------------------------
+   -- Get_Internal_Tooltip --
+   --------------------------
+
+   function Get_Internal_Tooltip
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return String
+   is
+      Result : Unbounded_String;
+      BL     : Line_Data_Record renames Buffer.Line_Data (Line);
+      EL     : Editable_Line_Data renames
+        Buffer.Editable_Lines (Editable_Line_Type (Line));
+
+      Send_To_Messages : Boolean := False;
+
+      function Image (Data : Line_Info_Width_Array_Access) return String;
+      function Image (Data : Line_Info_Width) return String;
+      function Image (Data : Line_Information_Access) return String;
+      function Image (Data : Commands.Command_Access) return String;
+      function Image (Data : Message_Reference) return String;
+      function Image (Data : Highlighting_Data_Array) return String;
+      function Image (Data : Boolean_Array_Access) return String;
+      function Image (Data : Universal_Line_Access) return String;
+      function Image (Data : Universal_Line) return String;
+      function Image (Data : Gtk_Text_Mark) return String;
+      function Image (Data : Lines_List.List) return String;
+
+      function Image (Data : Lines_List.List) return String is
+         Result : Unbounded_String;
+      begin
+         if Data.Is_Empty then
+            return " empty" & ASCII.LF;
+         end if;
+
+         if Natural (Data.Length) > 2 then
+            Send_To_Messages := True;
+         end if;
+
+         for Item of Data loop
+            Append (Result, Image (Item));
+         end loop;
+
+         return To_String (Result);
+      end Image;
+
+      function Image (Data : Gtk_Text_Mark) return String is
+      begin
+         if Data = null then
+            return " null" & ASCII.LF;
+         else
+            return " Name:" & BL.Line_Mark.Get_Name &
+              " Visible:" & BL.Line_Mark.Get_Visible'Img & ASCII.LF;
+         end if;
+      end Image;
+
+      function Image (Data : Universal_Line_Access) return String is
+      begin
+         if Data = null then
+            return " null" & ASCII.LF;
+         else
+            return Image (Data.all);
+         end if;
+
+      end Image;
+
+      function Image (Data : Universal_Line) return String is
+      begin
+         return ASCII.LF & "    Nature:" & Data.Nature'Img & ASCII.LF &
+           "    Data:" & ASCII.LF &
+           "      Editable_Line:" & Data.Data.Editable_Line'Img & ASCII.LF &
+           "      File_Line:" & Data.Data.File_Line'Img & ASCII.LF &
+           "    Text:" &
+                 (if Data.Text = null
+                    then " null"
+                    else Data.Text.all) & ASCII.LF &
+           "    Line_Mark:" & Image (Data.Line_Mark);
+      end Image;
+
+      function Image (Data : Boolean_Array_Access) return String is
+         Result : Unbounded_String;
+         Prev   : Boolean;
+         Cnt    : Natural := 0;
+      begin
+         if Data = null then
+            return " null" & ASCII.LF;
+         end if;
+
+         if Data'Length = 0 then
+            return " empty" & ASCII.LF;
+         end if;
+
+         Append (Result, ASCII.LF);
+         Prev := Data (Data'First);
+
+         for Index in Data'Range loop
+            if Data (Index) = Prev then
+               Cnt := Cnt + 1;
+
+            else
+               Append
+                 (Result, "        " & Prev'Img &
+                  (if Cnt > 1 then '<' & Cnt'Img & '>' else "") &
+                    ASCII.LF);
+
+               Prev := Data (Index);
+               Cnt  := 1;
+            end if;
+         end loop;
+         Append
+           (Result, "        " & Prev'Img &
+            (if Cnt > 1 then '<' & Cnt'Img & '>' else "") & ASCII.LF);
+
+         return To_String (Result);
+      end Image;
+
+      function Image (Data : Highlighting_Data_Array) return String is
+         Result : Unbounded_String;
+      begin
+         if Data'Length = 0 then
+            return " empty";
+         end if;
+
+         for Index in Data'Range loop
+            Append (Result, "   " & Index'Img & ":" & ASCII.LF);
+            Append (Result, "      Enabled:" & Image (Data (Index).Enabled));
+            Append (Result, "      Active:"
+                    & Data (Index).Active'Img & ASCII.LF);
+         end loop;
+
+         return ASCII.LF & To_String (Result);
+      end Image;
+
+      function Image (Data : Message_Reference) return String is
+      begin
+         if Data.Message = null then
+            return "null";
+         else
+            return To_String (Data.Message.Get_Category) &
+              ":" & To_String (Data.Message.Get_Text);
+         end if;
+      end Image;
+
+      function Image (Data : Commands.Command_Access) return String is
+      begin
+         if Data = null then
+            return " null" & ASCII.LF;
+         else
+            return ASCII.LF & "          Tag:" &
+              Ada.Tags.External_Tag (Data'Tag) & ASCII.LF
+              & "          Name:" & Data.Name & ASCII.LF;
+         end if;
+      end Image;
+
+      function Image (Data : Line_Information_Access) return String is
+         Result : Unbounded_String;
+      begin
+         if Data = null then
+            return "null" & ASCII.LF;
+         end if;
+
+         Append (Result, ASCII.LF);
+         Append (Result, "        Text:" & Data.Text & ASCII.LF);
+         Append (Result, "        Tooltip_Text:" &
+                   Data.Tooltip_Text & ASCII.LF);
+         Append (Result, "        Image:" & Data.Image & ASCII.LF);
+         Append (Result, "        Message:" & Image (Data.Message) & ASCII.LF);
+         Append (Result, "        Associated_Command:" &
+                   Image (Data.Associated_Command));
+
+         return To_String (Result);
+      end Image;
+
+      function Image (Data : Line_Info_Width) return String is
+         Result : Unbounded_String;
+         Cnt    : Natural := 0;
+      begin
+         if Data.Messages.Is_Empty then
+            Append (Result, "      Messages: empty" & ASCII.LF);
+         else
+            for M of Data.Messages loop
+               if M.Message = null then
+                  Cnt := Cnt + 1;
+               else
+                  if Cnt > 0 then
+                     Append (Result, "      Message: null");
+
+                     if Cnt = 1 then
+                        Append (Result, ASCII.LF);
+                     else
+                        Append (Result, " <" & Cnt'Img & '>' & ASCII.LF);
+                     end if;
+                  end if;
+                  Cnt := 0;
+
+                  Append (Result, "      Message:" & Image (M) & ASCII.LF);
+               end if;
+            end loop;
+
+            if Cnt /= 0 then
+               Append (Result, "      Message: null <" &
+                         Cnt'Img & '>' & ASCII.LF);
+            end if;
+         end if;
+
+         return To_String (Result) &
+           "      Action:" & Image (Data.Action) &
+           "      Set:" & Data.Set'Img & ASCII.LF;
+      end Image;
+
+      function Image (Data : Line_Info_Width_Array_Access) return String is
+         Result : Unbounded_String;
+      begin
+         if Data = null then
+            return "    null" & ASCII.LF;
+         else
+            for Index in Data'Range loop
+               Append
+                 (Result,
+                  "   " & Index'Img & ": "  & ASCII.LF & Image (Data (Index)));
+            end loop;
+
+            return To_String (Result);
+         end if;
+      end Image;
+
+   begin
+      if Line in Buffer.Line_Data'Range then
+         Append
+           (Result,
+            "Number:" & Line'Img & ASCII.LF &
+              "Line_Data:" & ASCII.LF &
+              "  Side_Info_Data:" & ASCII.LF & Image (BL.Side_Info_Data) &
+              "  Editable_Line:" & BL.Editable_Line'Img & ASCII.LF &
+              "  Line_Mark:" & Image (BL.Line_Mark) &
+              "  File_Line:" & BL.File_Line'Img & ASCII.LF &
+              "  Highlighting:" & Image (BL.Highlighting));
+      end if;
+
+      if Editable_Line_Type (Line) <= Buffer.Last_Editable_Line then
+         Append (Result, ASCII.LF & "Editable_Line:" & ASCII.LF);
+         Append (Result, "  Where:" & EL.Where'Img & ASCII.LF);
+         Append (Result, "  Stored_Lines:" & Image (EL.Stored_Lines));
+         Append (Result, "  Stored_Editable_Lines:" &
+                   EL.Stored_Editable_Lines'Img & ASCII.LF);
+         Append (Result, "  Stored_Editable_Lines:" &
+                   EL.Stored_Editable_Lines'Img & ASCII.LF);
+
+         case EL.Where is
+            when In_Buffer =>
+               Append (Result, "  Buffer_Line:" &
+                         EL.Buffer_Line'Img & ASCII.LF);
+
+            when In_Mark =>
+               Append (Result, "  Text:" &
+                       (if EL.Text = null then " null" else EL.Text.all)
+                       & ASCII.LF);
+
+               Append (Result, "  UL:" & Image (EL.UL));
+         end case;
+      end if;
+
+      if Send_To_Messages then
+         Buffer.Kernel.Messages_Window.Insert (To_String (Result));
+      end if;
+
+      return To_String (Result);
+   end Get_Internal_Tooltip;
 
    --------------------------
    -- Get_Side_Information --
@@ -767,9 +1040,9 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Extra_Information := new Extra_Information_Array'
            (1 => new Extra_Information_Record'
               (Identifier => new String'(Identifier),
-               Tooltip => new String'(Tooltip),
-               Icon    => new String'(Icon),
-               Info    => new Line_Information_Record'(Info (Info'First))));
+               Tooltip    => new String'(Tooltip),
+               Icon       => new String'(Icon),
+               Info       => new Line_Information_Record'(Info (Info'First))));
 
       else
          for J in Buffer.Extra_Information'Range loop
@@ -779,7 +1052,8 @@ package body Src_Editor_Buffer.Line_Information is
                Free (Buffer.Extra_Information (J).Icon);
 
                Buffer.Extra_Information (J).all :=
-                 (Info     => new Line_Information_Record'(Info (Info'First)),
+                 (Info       => new Line_Information_Record'
+                    (Info (Info'First)),
                   Tooltip    => new String'(Tooltip),
                   Icon       => new String'(Icon),
                   Identifier => Buffer.Extra_Information (J).Identifier);
@@ -799,9 +1073,9 @@ package body Src_Editor_Buffer.Line_Information is
                A (Buffer.Extra_Information'Last + 1) :=
                  new Extra_Information_Record'
                    (Info       => new Line_Information_Record'
-                        (Info (Info'First)),
-                    Tooltip => new String'(Tooltip),
-                    Icon    => new String'(Icon),
+                      (Info (Info'First)),
+                    Tooltip    => new String'(Tooltip),
+                    Icon       => new String'(Icon),
                     Identifier => new String'(Identifier));
             end;
          end if;
@@ -956,8 +1230,9 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Line_Nums : constant Line_Number_Policy := Display_Line_Numbers.Get_Pref;
       BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Ctxt      : constant Gtk_Style_Context := Get_Style_Context (Area);
-      Max_Width : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
+      Ctxt       : constant Gtk_Style_Context := Get_Style_Context (Area);
+      Max_Width  : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
+      Prev_Width : Gdouble;
 
       procedure Draw_Line_Info
         (Y             : Gdouble;
@@ -980,6 +1255,7 @@ package body Src_Editor_Buffer.Line_Information is
            Buffer.Line_Data (Line).Side_Info_Data;
          Editable_Line : constant Editable_Line_Type :=
            Get_Editable_Line (Buffer, Line);
+         El : constant Editable_Line_Type := Editable_Line_Type (Line);
 
          --  Size depends on actual line height, but also on the size
          --  we reserved for the column
@@ -990,6 +1266,27 @@ package body Src_Editor_Buffer.Line_Information is
          X             : Gdouble;
          Action        : Line_Information_Record;
          Height, Width : Gint;
+
+         procedure Draw_Number
+           (Num         : Integer;
+            From        : in out Gdouble;
+            Indentation : Gdouble);
+         --  Draws the number e.g. the line number.
+         --  Right side will be "From" minus "Indentation".
+         --  Returns left side in "From".
+
+         procedure Draw_Number
+           (Num         : Integer;
+            From        : in out Gdouble;
+            Indentation : Gdouble) is
+         begin
+            Layout.Set_Markup (Image (Num, Min_Width => 0));
+            Get_Pixel_Size (Layout, Width, Height);
+            From := From - Gdouble (Width) - Indentation;
+            Move_To (Cr, From, Y);
+            Show_Layout (Cr, Layout);
+         end Draw_Number;
+
       begin
          --  Draw line numbers background
 
@@ -1021,11 +1318,23 @@ package body Src_Editor_Buffer.Line_Information is
          if Line_Nums = All_Lines
            or else (Line_Nums = Some_Lines and then Editable_Line mod 5 = 0)
          then
-            Layout.Set_Markup
-              (Image (Integer (Editable_Line), Min_Width => 0));
-            Get_Pixel_Size (Layout, Width, Height);
-            Move_To (Cr, Max_Width - Gdouble (Width), Y);
-            Show_Layout (Cr, Layout);
+            Draw_Number (Integer (Editable_Line), Prev_Width, 0.0);
+
+            if Visualize_Internal_Buffers.Is_Active then
+               --  Draw File_Line
+               Draw_Number
+                 (Integer (Buffer.Line_Data (Line).File_Line),
+                  Prev_Width, 2.0);
+
+               --  Draw Editable_Lines
+               if Buffer.Last_Editable_Line >= El then
+                  if Buffer.Editable_Lines (El).Where = In_Buffer then
+                     Draw_Number
+                       (Integer (Buffer.Editable_Lines (El).Buffer_Line),
+                        Prev_Width, 2.0);
+                  end if;
+               end if;
+            end if;
          end if;
 
          --  Draw messages

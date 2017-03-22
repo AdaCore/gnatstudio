@@ -129,7 +129,7 @@ package body Src_Editor_Box.Tooltips is
       pragma Unreferenced (Widget);
       use type GNAT.Strings.String_Access;
       Box              : constant Source_Editor_Box := Tooltip.Box;
-      View             : constant Source_View := Get_View (Tooltip.Box);
+      View             : constant Source_View       := Get_View (Tooltip.Box);
       Line, Col        : Gint;
       Win_X, Win_Y     : Gint;
       Start_Iter       : Gtk_Text_Iter;
@@ -223,6 +223,19 @@ package body Src_Editor_Box.Tooltips is
                      Message_Reference_List.Previous (C);
                   end loop;
                end loop;
+            end if;
+
+            --  visualization framework of internal data
+            if Visualize_Internal_Buffers.Is_Active then
+               Has_Info := True;
+               if Content /= Null_Unbounded_String then
+                  Append (Content, ASCII.LF);
+               end if;
+
+               Append
+                 (Content, Get_Internal_Tooltip
+                    (Box.Source_Buffer,
+                     Buffer_Line_Type (Line + 1)));
             end if;
 
             if Has_Info then
@@ -334,7 +347,6 @@ package body Src_Editor_Box.Tooltips is
                   end loop;
 
                   if Text /= Null_Unbounded_String then
-
                      if Message.Get_Action /= null
                        and then Message.Get_Action.Image /=
                          Null_Unbounded_String
