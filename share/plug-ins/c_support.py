@@ -216,6 +216,13 @@ XML = r"""<?xml version="1.0" ?>
   return 0;
 }</text>
   </alias>
+  <alias name="c++_class">
+    <param name="name" />
+    <text>class %(name) {
+  public:
+    %_
+};</text>
+  </alias>
 </GPS>
 """
 
@@ -231,3 +238,10 @@ def __on_gps_started():
         unit_param="name",
         language="c",
         is_impl=True)
+
+    GPS.FileTemplate.register(
+        alias_name="c++_class",
+        label="C++ Class",
+        unit_param="name",
+        language="c++",
+        is_impl=False)
