@@ -1264,7 +1264,11 @@ package body GNATdoc.Backend.HTML is
       Default_Group  : Boolean := True;
 
    begin
-      if Present (LL.Get_Instance_Of (Entity)) then
+      --  Skip generic instantiations and separates.
+
+      if Present (LL.Get_Instance_Of (Entity))
+        or else Is_Separate_Unit (Entity)
+      then
          return;
       end if;
 
