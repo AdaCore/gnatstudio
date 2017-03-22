@@ -79,8 +79,9 @@ package Language.Abstract_Construct_Tree is
    function Create (K : Kernel_Handle) return Semantic_Tree_Provider_Access;
 
    overriding function Get_Tree_For_File
-     (Self : Construct_Tree_Provider;
-      File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
+     (Self    : Construct_Tree_Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
 
    overriding function Root_Nodes
      (Self : Abstract_Construct_Tree) return Semantic_Node_Array'Class;

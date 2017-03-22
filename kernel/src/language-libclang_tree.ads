@@ -80,8 +80,9 @@ package Language.Libclang_Tree is
    function Create (K : Core_Kernel) return Semantic_Tree_Provider_Access;
 
    overriding function Get_Tree_For_File
-     (Self : Clang_Tree_Provider;
-      File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
+     (Self    : Clang_Tree_Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
 
    ------------------------------------
    -- Abstract_Clang_Tree primitives --

@@ -1322,7 +1322,7 @@ package body Navigation_Module is
       Unit_Visibility : out Construct_Visibility)
    is
       Tree   : constant Semantic_Tree'Class :=
-        Kernel.Get_Abstract_Tree_For_File (File);
+        Kernel.Get_Abstract_Tree_For_File ("INFO", File);
       Root   : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
    begin
       Unit_Name       := No_Symbol;

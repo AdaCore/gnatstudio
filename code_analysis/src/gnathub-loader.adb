@@ -244,7 +244,7 @@ package body GNAThub.Loader is
          use type Basic_Types.Visible_Column_Type;
 
          Tree   : constant Semantic_Tree'Class :=
-           Self.Module.Get_Kernel.Get_Abstract_Tree_For_File (File);
+           Self.Module.Get_Kernel.Get_Abstract_Tree_For_File ("GNATHUB", File);
          Result : GNAThub_Subprogram_Access := null;
       begin
          if Tree = No_Semantic_Tree then

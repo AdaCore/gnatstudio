@@ -280,7 +280,7 @@ package body Outline_View is
          declare
             SN : constant Semantic_Node'Class :=
               Tooltip.Outline.Kernel.Get_Abstract_Tree_For_File
-                (Tooltip.Outline.File).Node_At
+                ("OUTLINE", Tooltip.Outline.File).Node_At
               (Get_Info (Get_Outline_Model (Tooltip.Outline), Iter)
                .Sloc_Start_No_Tab);
          begin
@@ -827,7 +827,8 @@ package body Outline_View is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
       if Outline.File /= No_File then
-         Outline.Kernel.Get_Abstract_Tree_For_File (Outline.File).Update_Async;
+         Outline.Kernel.Get_Abstract_Tree_For_File
+           ("OUTLINE", Outline.File).Update_Async;
          --  will be completed after trigger Semantic_Tree_Updated_Hook
       end if;
    end Refresh;
@@ -992,7 +993,7 @@ package body Outline_View is
       Filter      : constant Tree_Filter :=
         Get_Filter_Record (Outline.Kernel);
       Tree : constant Semantic_Tree'Class :=
-        Outline.Kernel.Get_Abstract_Tree_For_File (File);
+        Outline.Kernel.Get_Abstract_Tree_For_File ("OUTLINE", File);
    begin
       Outline.File := File;
       Model := Get_Outline_Model (Outline_View_Access (Outline));
@@ -1078,7 +1079,7 @@ package body Outline_View is
         Outline_Views.Retrieve_View (Kernel);
 
       Tree : constant Semantic_Tree'Class :=
-        Outline.Kernel.Get_Abstract_Tree_For_File (File);
+        Outline.Kernel.Get_Abstract_Tree_For_File ("OUTLINE", File);
    begin
       if Outline /= null and then Outline.File /= No_File
         and then Outline.File = File

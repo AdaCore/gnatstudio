@@ -1119,7 +1119,7 @@ package body Src_Editor_Buffer is
 
       if Buffer.Filename /= No_File then
          Buffer.Kernel.Get_Abstract_Tree_For_File
-           (Buffer.Filename).Update_Async;
+           ("EDIT", Buffer.Filename).Update_Async;
       end if;
 
       --  Unregister the timeout
@@ -6272,7 +6272,7 @@ package body Src_Editor_Buffer is
 
       declare
          Tree : constant Semantic_Tree'Class :=
-           Editor.Kernel.Get_Abstract_Tree_For_File (Editor.Filename);
+           Editor.Kernel.Get_Abstract_Tree_For_File ("EDIT", Editor.Filename);
       begin
          if Update_Immediately then
             Tree.Update;
@@ -8267,7 +8267,8 @@ package body Src_Editor_Buffer is
    function Get_Tree
      (Buffer : access Source_Buffer_Record) return Semantic_Tree'Class is
    begin
-      return Buffer.Kernel.Get_Abstract_Tree_For_File (Buffer.Filename);
+      return Buffer.Kernel.Get_Abstract_Tree_For_File
+        ("EDIT", Buffer.Filename);
    end Get_Tree;
 
    ----------------------

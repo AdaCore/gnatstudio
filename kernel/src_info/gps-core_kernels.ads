@@ -89,12 +89,14 @@ package GPS.Core_Kernels is
    --  register their implementation via this function.
 
    function Get_Abstract_Tree_For_File
-     (Kernel : not null access Core_Kernel_Record;
-      File   : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
+     (Kernel  : not null access Core_Kernel_Record;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
    --  Returns the abstract tree for the given file. This is the entry point
    --  for clients of the Abstract_Language_Tree API. You get the tree for a
    --  specific file with this function, and the kernel will take care of
    --  dispatching on the correct underlying implementation of the tree API.
+   --  See Abstract_Language_Tree for Context description.
 
    function Registry
      (Kernel : access Core_Kernel_Record'Class)

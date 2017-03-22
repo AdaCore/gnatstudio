@@ -2102,7 +2102,7 @@ package body Clang_Xref is
                                         Index  => 0);
 
       File_Tree : constant Semantic_Tree'Class :=
-        Kernel.Get_Abstract_Tree_For_File (Ref_Loc.File);
+        Kernel.Get_Abstract_Tree_For_File ("CLANG", Ref_Loc.File);
 
       Sem_Parent : constant Semantic_Node'Class :=
         File_Tree.Node_At (Sloc, (Cat_Function, Cat_Method, Cat_Constructor));

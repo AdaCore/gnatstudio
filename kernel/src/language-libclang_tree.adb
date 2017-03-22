@@ -118,9 +118,11 @@ package body Language.Libclang_Tree is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self : Clang_Tree_Provider;
-      File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
+     (Self    : Clang_Tree_Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
+      pragma Unreferenced (Context);
    begin
       return Abstract_Clang_Tree'(Self.Kernel, File);
    end Get_Tree_For_File;

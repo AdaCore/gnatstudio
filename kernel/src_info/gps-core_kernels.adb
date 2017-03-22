@@ -255,8 +255,9 @@ package body GPS.Core_Kernels is
    --------------------------------
 
    function Get_Abstract_Tree_For_File
-     (Kernel : not null access Core_Kernel_Record;
-      File   : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
+     (Kernel  : not null access Core_Kernel_Record;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
       Language : constant Language_Access :=
         Kernel.Lang_Handler.Get_Language_From_File (File);
@@ -274,7 +275,7 @@ package body GPS.Core_Kernels is
 
          if Core_Kernel (Kernel).Default_Language_Tree_Provider /= null then
             return Core_Kernel (Kernel).Default_Language_Tree_Provider
-              .Get_Tree_For_File (File);
+              .Get_Tree_For_File (Context, File);
          else
             return No_Semantic_Tree;
          end if;
@@ -284,7 +285,7 @@ package body GPS.Core_Kernels is
          --  If there is a specific provider for Language, use that to return
          --  the file
          return Kernel.Semantic_Tree_Providers
-           .Element (Language).Get_Tree_For_File (File);
+           .Element (Language).Get_Tree_For_File (Context, File);
       end if;
    end Get_Abstract_Tree_For_File;
 

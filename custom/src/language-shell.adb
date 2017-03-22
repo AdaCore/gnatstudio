@@ -195,7 +195,7 @@ package body Language.Shell is
            (Ins, Semantic_Tree_Class_Name);
       begin
          return Kernel.Get_Abstract_Tree_For_File
-           (Semantic_Tree_Properties_Record (R.all).File);
+           ("SHELL", Semantic_Tree_Properties_Record (R.all).File);
       end Get_Tree;
 
    begin

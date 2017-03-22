@@ -171,11 +171,15 @@ package Language.Abstract_Language_Tree is
    -------------------------------------------
 
    function Get_Tree_For_File
-     (Self : Semantic_Tree_Provider;
-      File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
+     (Self    : Semantic_Tree_Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
       is abstract;
    --  Get the tree for the given file. This function should not be called
-   --  outside of GPS kernel
+   --  outside of GPS kernel. Context lets the provider know how the tree will
+   --  be used. We use it for step by step migration to libadalang trees.
+   --  Depending on Context Ada provider return legacy construct tree or
+   --  libadalang tree.
 
    ----------------------------------
    -- Primitives for Semantic_Tree --

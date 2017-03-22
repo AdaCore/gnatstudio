@@ -374,7 +374,7 @@ package body Src_Editor_Box.Tooltips is
 
          declare
             Tree : constant Semantic_Tree'Class :=
-              Box.Kernel.Get_Abstract_Tree_For_File (Box.Get_Filename);
+              Box.Kernel.Get_Abstract_Tree_For_File ("XREF", Box.Get_Filename);
          begin
             --  We do not want to compute an xref-based tooltip if the source
             --  is not indexed.

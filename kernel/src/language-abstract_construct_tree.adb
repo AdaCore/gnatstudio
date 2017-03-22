@@ -60,9 +60,12 @@ package body Language.Abstract_Construct_Tree is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self : Construct_Tree_Provider;
-      File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
+     (Self    : Construct_Tree_Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
+      pragma Unreferenced (Context);
+
       Struct_File : constant Structured_File_Access :=
         Get_Or_Create
           (Self.Kernel.Get_Construct_Database, File);

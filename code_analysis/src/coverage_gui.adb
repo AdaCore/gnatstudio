@@ -161,7 +161,7 @@ package body Coverage_GUI is
                   declare
                      Tree : aliased Semantic_Tree'Class :=
                               Kernel.Get_Abstract_Tree_For_File
-                                (File_Node.Name);
+                                ("COV", File_Node.Name);
                   begin
                      Add_Subprogram_Info
                        (File_Node, Tree'Access);
