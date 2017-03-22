@@ -17,6 +17,8 @@
 
 with System.Storage_Elements;
 with Interfaces.C;
+with LAL.Switching_Tree_Providers; use LAL.Switching_Tree_Providers;
+with Language.Ada;
 with Libadalang.Analysis.C;
 with GNATCOLL.Python;
 with GNATCOLL.Scripts.Python;      use GNATCOLL.Scripts.Python;
@@ -83,7 +85,8 @@ package body LAL.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Config : Use_LAL_Configuration)
    is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
@@ -99,6 +102,10 @@ package body LAL.Module is
         (Command => "get_analysis_unit",
          Class   => Editor_Buffer_Class,
          Handler => Get_Analysis_Unit_Shell'Access);
+
+      Kernel.Register_Tree_Provider
+        (Language.Ada.Ada_Lang,
+         new Provider'(Config, (Module.Kernel, Module.Context)));
 
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
    end Register_Module;

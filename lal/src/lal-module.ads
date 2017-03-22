@@ -32,7 +32,8 @@ package LAL.Module is
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;
 
    procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class);
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Config : Use_LAL_Configuration);
    --  Register module
 
 end LAL.Module;

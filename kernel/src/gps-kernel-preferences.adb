@@ -467,6 +467,51 @@ package body GPS.Kernel.Preferences is
              & " support it (OSX and Unity). No effect on other systems."),
          Default  => False);
 
+      --  LibAdaLang --
+      Use_LAL_In_Editor := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-editor",
+         Label    => -"Use LAL in editor",
+         Doc      => -("Enable usage of libadalang in a source editor."),
+         Default  => False);
+
+      Use_LAL_In_Outline := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-outline",
+         Label    => -"Use LAL in Outline",
+         Doc      => -("Enable usage of libadalang in the Outline View."),
+         Default  => False);
+
+      Use_LAL_In_Shell := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-shell",
+         Label    => -"Use LAL in Shell",
+         Doc      => -("Enable usage of libadalang in GPS.SemanticTree " &
+                        " shell commands."),
+         Default  => False);
+
+      Use_LAL_In_Info := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-info",
+         Label    => -"Use LAL in menu",
+         Doc      => -("Enable usage of libadalang to generate " &
+                        " 'GNAT Runtime' menu."),
+         Default  => False);
+
+      Use_LAL_In_GNATHUB := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-gnathub",
+         Label    => -"Use LAL in gnathub",
+         Doc      => -("Enable usage of libadalang in gnathub module."),
+         Default  => False);
+
+      Use_LAL_In_COV := Manager.Create_Invisible_Pref
+        (
+         Name     => "use-lal-in-cov",
+         Label    => -"Use LAL in cov",
+         Doc      => -("Enable usage of libadalang in coverage module."),
+         Default  => False);
+
       -- General --
 
       Gtk_Theme := Manager.Create

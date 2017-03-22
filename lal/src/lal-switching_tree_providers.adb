@@ -14,20 +14,32 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Root package of libAdaLang integration module.
 
-package LAL is
+package body LAL.Switching_Tree_Providers is
 
-   pragma Pure;
+   -----------------------
+   -- Get_Tree_For_File --
+   -----------------------
 
-   type Use_LAL_Kinds is
-     (Use_LAL_In_Editor,
-      Use_LAL_In_Outline,
-      Use_LAL_In_Shell,
-      Use_LAL_In_Info,
-      Use_LAL_In_GNATHUB,
-      Use_LAL_In_COV);
+   overriding function Get_Tree_For_File
+     (Self    : Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File)
+      return Semantic_Tree'Class
+   is
+   begin
+      if (Self.Config (Use_LAL_In_Editor) and then Context = "EDIT") or else
+        (Self.Config (Use_LAL_In_Outline) and then Context = "OUTLINE") or else
+        (Self.Config (Use_LAL_In_Shell) and then Context = "SHELL") or else
+        (Self.Config (Use_LAL_In_Info) and then Context = "INFO") or else
+        (Self.Config (Use_LAL_In_COV) and then Context = "COV") or else
+        (Self.Config (Use_LAL_In_GNATHUB) and then Context = "GNATHUB")
+      then
+         return Self.Nested.Get_Tree_For_File (Context, File);
+      end if;
 
-   type Use_LAL_Configuration is array (Use_LAL_Kinds) of Boolean;
+      return Self.Nested.Kernel.Default_Language_Tree_Provider.
+        Get_Tree_For_File (Context, File);
+   end Get_Tree_For_File;
 
-end LAL;
+end LAL.Switching_Tree_Providers;

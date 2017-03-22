@@ -14,20 +14,26 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Root package of libAdaLang integration module.
+--  This package defines Semantic_Tree_Provider for Ada language implemented
+--  over libAdaLang
 
-package LAL is
+with GNATCOLL.VFS;
 
-   pragma Pure;
+with GPS.Core_Kernels;
 
-   type Use_LAL_Kinds is
-     (Use_LAL_In_Editor,
-      Use_LAL_In_Outline,
-      Use_LAL_In_Shell,
-      Use_LAL_In_Info,
-      Use_LAL_In_GNATHUB,
-      Use_LAL_In_COV);
+with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
+with Libadalang.Analysis;               use Libadalang.Analysis;
 
-   type Use_LAL_Configuration is array (Use_LAL_Kinds) of Boolean;
+package LAL.Semantic_Trees is
 
-end LAL;
+   type Provider is new Semantic_Tree_Provider with record
+      Kernel  : GPS.Core_Kernels.Core_Kernel;
+      Context : Libadalang.Analysis.Analysis_Context;
+   end record;
+
+   overriding function Get_Tree_For_File
+     (Self    : Provider;
+      Context : String;
+      File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
+
+end LAL.Semantic_Trees;

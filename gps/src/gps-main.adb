@@ -2192,7 +2192,15 @@ procedure GPS.Main is
       --  Register the supported languages and their associated LI handlers
 
       Ada_Module.Register_Module (GPS_Main.Kernel);
-      LAL.Module.Register_Module (GPS_Main.Kernel);
+
+      LAL.Module.Register_Module
+        (GPS_Main.Kernel,
+         (LAL.Use_LAL_In_Editor  => Use_LAL_In_Editor.Get_Pref,
+          LAL.Use_LAL_In_Outline => Use_LAL_In_Outline.Get_Pref,
+          LAL.Use_LAL_In_Shell   => Use_LAL_In_Shell.Get_Pref,
+          LAL.Use_LAL_In_Info    => Use_LAL_In_Info.Get_Pref,
+          LAL.Use_LAL_In_GNATHUB => Use_LAL_In_GNATHUB.Get_Pref,
+          LAL.Use_LAL_In_COV     => Use_LAL_In_COV.Get_Pref));
 
       if Active (CPP_Trace) then
          Cpp_Module.Register_Module (GPS_Main.Kernel);
