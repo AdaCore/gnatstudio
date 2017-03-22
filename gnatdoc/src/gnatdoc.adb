@@ -460,19 +460,22 @@ package body GNATdoc is
                      procedure Error_Msg (Msg : String) is
                         Debug : constant Boolean := False;
                      begin
-                        Serious_Errors := Serious_Errors + 1;
-
                         if not Skipped_Files.Contains
                              (LL.Get_Location (Entity).File)
                         then
                            GNAT.IO.Put_Line
-                             (Image (LL.Get_Location (Entity))
-                                & ":"
-                                & Get_Short_Name (Entity)
-                                & ":"
-                                & Msg);
+                             ("Warning: " & Image (LL.Get_Location (Entity))
+                                & ": may not be documented");
 
                            if Debug then
+                              Serious_Errors := Serious_Errors + 1;
+
+                              GNAT.IO.Put_Line
+                                (Image (LL.Get_Location (Entity))
+                                   & ":"
+                                   & Get_Short_Name (Entity)
+                                   & ":"
+                                   & Msg);
                               Atree.pns (Entity);
 
                               if Present (Get_Full_View (Entity)) then

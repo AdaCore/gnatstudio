@@ -2041,7 +2041,16 @@ package body GNATdoc.Frontend is
                   else
                      case Prev_Token is
                         when Tok_Subtype =>
-                           pragma Assert (LL.Is_Type (E));
+                           --  Assertion disabled on generic formals because
+                           --  Xref decorates subtypes of generic formals as
+                           --  generic formals whose decoration is incomplete
+                           --  and we don't have yet a way to fix this wrong
+                           --  decoration in the frontend ???
+
+                           if Get_Kind (E) /= E_Generic_Formal then
+                              pragma Assert (LL.Is_Type (E));
+                           end if;
+
                            Set_Is_Subtype (E);
 
                         when Tok_Protected =>

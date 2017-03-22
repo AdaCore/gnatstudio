@@ -3414,7 +3414,11 @@ package body GNATdoc.Atree is
             return E_Function;
 
          elsif Kind = "generic formal" then
-            --  In practice this value is never returned by Xref. Xref bug???
+
+            --  This case must be handled with special care because Xref
+            --  leaves decorated explicit subtype declations of generic
+            --  formals as generic formals.
+
             return E_Generic_Formal;
 
          elsif Kind = "generic package" then
@@ -3427,7 +3431,7 @@ package body GNATdoc.Atree is
             return E_Generic_Procedure;
 
          elsif Kind = "interface" then
-            return E_Interface;  -- Interface type ???
+            return E_Interface;
 
          elsif Kind = "integer type"
            or else Kind = "unsigned integer type"
