@@ -350,9 +350,16 @@ package body GNATdoc is
 
                exception
                   when E : others =>
-                     Report_Error (All_Src_Files, Tree.File, Backend_Stage);
-                     Trace (Me, E);
-                     raise;
+                     if Resilient_Mode then
+                        GNAT.IO.Put_Line
+                          (">>> GNATdoc internal error: "
+                             & "internal problem processing "
+                             & (+Tree.File.Base_Name));
+                     else
+                        Report_Error (All_Src_Files, Tree.File, Backend_Stage);
+                        Trace (Me, E);
+                        raise;
+                     end if;
                end;
             end loop;
          end Call_Backend;
