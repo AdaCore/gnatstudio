@@ -99,6 +99,10 @@ package body GNATdoc.Backend.HTML is
    --  Returns basename to be used to construct filenames for enclosing
    --  compilation unit of given entity.
 
+   function Get_Qualifier
+     (Entity : Entity_Id; Include_Nested : Boolean := True) return String;
+   --  Returns qualifier text for entity.
+
    procedure Print_Source_Code
      (Self       : HTML_Backend'Class;
       File       : GNATCOLL.VFS.Virtual_File;
@@ -888,10 +892,8 @@ package body GNATdoc.Backend.HTML is
 
             Scope := Get_Scope (Entity);
             Object.Set_Field ("declared", Get_Full_Name (Scope));
-            Object.Set_Field
-              ("declared_qualifier",
-               (if From_Spec (Self.Context.Kernel, Entity)
-                then "" else "(body)"));
+            Object.Set_Field ("declared_qualifier", Get_Qualifier (Entity));
+
             if Self.Get_Srcs_Href (Entity) /= "" then
                Object.Set_Field ("srcHref", Self.Get_Srcs_Href (Entity));
             end if;
@@ -1063,14 +1065,7 @@ package body GNATdoc.Backend.HTML is
 
             Entity_Entry := Create_Object;
             Entity_Entry.Set_Field ("label", Get_Short_Name (E));
-            Entity_Entry.Set_Field
-              ("qualifier",
-               (if (Is_Subprogram (E)
-                      and then Present (Get_Corresponding_Spec (E)))
-                  or else Is_Task_Body (E)
-                  or else Is_Protected_Body (E)
-                  or else Is_Package_Body (E)
-                then "(body)" else ""));
+            Entity_Entry.Set_Field ("qualifier", Get_Qualifier (E));
             Entity_Entry.Set_Field ("line", LL.Get_Location (E).Line);
             Entity_Entry.Set_Field
               ("column", Integer (LL.Get_Location (E).Column));
@@ -1277,9 +1272,7 @@ package body GNATdoc.Backend.HTML is
       end if;
 
       Documentation.Set_Field ("label", Get_Full_Name (Entity));
-      Documentation.Set_Field
-        ("qualifier",
-         (if From_Spec (Self.Context.Kernel, Entity) then "" else "(body)"));
+      Documentation.Set_Field ("qualifier", Get_Qualifier (Entity));
 
       --  Extract package's "summary" and "description".
 
@@ -1357,6 +1350,7 @@ package body GNATdoc.Backend.HTML is
                Entity_Entry := Create_Object;
                Entity_Entry.Set_Field ("label", Get_Short_Name (E));
                Entity_Entry.Set_Field ("href", "../" & Get_Docs_Href (E));
+               Entity_Entry.Set_Field ("qualifier", Get_Qualifier (E, False));
                Entity_Entry.Set_Field ("summary", Summary);
                Entity_Entry.Set_Field ("description", Description);
                Append (Aux, Entity_Entry);
@@ -1411,9 +1405,7 @@ package body GNATdoc.Backend.HTML is
       --  Construct documentation index entry for generated page
 
       Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
-      Index_Entry.Set_Field
-        ("qualifier",
-         (if From_Spec (Self.Context.Kernel, Entity) then "" else "(body)"));
+      Index_Entry.Set_Field ("qualifier", Get_Qualifier (Entity));
       Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
 
       if Present (Get_Comment (Entity)) then
@@ -1474,6 +1466,29 @@ package body GNATdoc.Backend.HTML is
         & Trim
         (Natural'Image (Natural (LL.Get_Location (Entity).Column)), Both);
    end Get_Docs_Href;
+
+   -------------------
+   -- Get_Qualifier --
+   -------------------
+
+   function Get_Qualifier
+     (Entity : Entity_Id; Include_Nested : Boolean := True) return String is
+   begin
+      if Include_Nested
+        and then Get_Kind (Entity) in E_Package | E_Generic_Package
+        and then Present (Get_Scope (Entity))
+        and then LL.Get_Location (Entity).File
+                   = LL.Get_Location (Get_Scope (Entity)).File
+      then
+         return
+           (if No (Get_Corresponding_Spec (Entity))
+            then "(nested)" else "(nested, body)");
+
+      else
+         return
+           (if No (Get_Corresponding_Spec (Entity)) then "" else "(body)");
+      end if;
+   end Get_Qualifier;
 
    ------------------------
    -- Get_Srcs_Base_Href --
