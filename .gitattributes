@@ -16,9 +16,10 @@ libclang/gen/* no-precommit-check
 share/plug-ins/vcs/*.py           no-precommit-check
 
 # Long lines in XML string
-share/support/core/languages.py   no-precommit-check
-share/support/core/projects.py    no-precommit-check
-share/plug-ins/subversion.py      no-precommit-check
+share/support/core/languages.py       no-precommit-check
+share/support/core/projects.py        no-precommit-check
+share/support/languages/c_support.py  no-precommit-check
+share/plug-ins/subversion.py          no-precommit-check
 
 # Long lines for external commands to execute
 share/plug-ins/clearcase.py   no-precommit-check

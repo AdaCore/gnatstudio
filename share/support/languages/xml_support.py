@@ -37,6 +37,7 @@ class StopProcessing (Exception):
 
 
 class GPSErrorHandler (xml.sax.handler.ErrorHandler):
+
     def __init__(self):
         self.output = ''
 

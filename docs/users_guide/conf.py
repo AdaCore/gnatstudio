@@ -22,6 +22,7 @@ sys.path.insert(0, "../../share/library")
 sys.path.insert(0, "../../share/plug-ins")
 sys.path.insert(0, "../../share/support/ui")
 sys.path.insert(0, "../../share/support/core")
+sys.path.insert(0, "../../share/support/languages")
 sys.path.insert(0, ".")   # access to GPS.py
 
 import GPS

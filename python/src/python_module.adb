@@ -361,6 +361,9 @@ package body Python_Module is
       Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
                 Ignore_User_Config => True);
       Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config                                => True);
+      Load_Dir (Kernel, Support_Languages_Dir (Kernel),
+                Default_Autoload   => True,
                 Ignore_User_Config => True);
       Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
                 Default_Autoload => False, Ignore_User_Config => True);

@@ -110,6 +110,17 @@ package body GPS.Kernel.Custom is
          (Get_System_Dir (Kernel), "share/gps/support/ui");
    end Support_UI_Dir;
 
+   ---------------------------
+   -- Support_Languages_Dir --
+   ---------------------------
+
+   function Support_Languages_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+   begin
+      return Create_From_Dir
+         (Get_System_Dir (Kernel), "share/gps/support/languages");
+   end Support_Languages_Dir;
+
    -----------------------------
    -- Support_No_Autoload_Dir --
    -----------------------------

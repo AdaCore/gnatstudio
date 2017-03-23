@@ -310,13 +310,13 @@ documentation for the standard python library. It is accessed through the
         end = start
         previous_indent = 0
 
-        for i in range(len(source)-1, -1, -1):
+        for i in range(len(source) - 1, -1, -1):
             # ident is same as last non-comment not-empty line, no level change
             tmpstring = source[i].lstrip(" ")
             if tmpstring != "" and not tmpstring.startswith("#"):
                 last = source[i]
                 previous_indent = len(last) - len(tmpstring)
-                end = e.at(i+1, 1).end_of_line()
+                end = e.at(i + 1, 1).end_of_line()
                 break
 
         # STEP 1 parse parenthesis
@@ -344,7 +344,7 @@ documentation for the standard python library. It is accessed through the
         begin = 0
         # only when level changes
         if level != 0:
-            for i in range(end.line()-1, -1, -1):
+            for i in range(end.line() - 1, -1, -1):
                 for pref in group:
                     if source[i].lstrip(" ").startswith(pref):
                         begin = i
@@ -358,11 +358,11 @@ documentation for the standard python library. It is accessed through the
 
         # STEP 3 find the correct indent number
         level = 0 if level < 0 else level
-        indent = previous_indent + level*4
+        indent = previous_indent + level * 4
 
         # STEP 4 do indentation and move the cursor
-        e.insert(e.at(start.line()+1, 1), " "*indent)
-        e.main_cursor().move(e.at(start.line()+1, indent+1))
+        e.insert(e.at(start.line() + 1, 1), " " * indent)
+        e.main_cursor().move(e.at(start.line() + 1, indent + 1))
         return indent
 
     def reload_file(self):

@@ -108,6 +108,8 @@ package GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    function Support_UI_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
+   function Support_Languages_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    function Support_No_Autoload_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  The two directories that contain support python files to be loaded at
