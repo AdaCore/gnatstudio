@@ -236,7 +236,9 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="System"
        description="Name of the version control system that you are using."
        label="System">
-       <shell default="None" >VCS.supported_systems</shell>
+       <shell default="None" lang="python">
+GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_systems()
+       </shell>
    </project_attribute>
 
    <project_attribute
