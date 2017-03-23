@@ -95,9 +95,7 @@ package body GNATdoc.Backend.HTML is
    --  Returns href to source file where this entity is declared. Returned URI
    --  includes fragment identifier to navigate to source code line.
 
-   function Compilation_Unit_File_Basename
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Entity : Entity_Id) return String;
+   function Compilation_Unit_File_Basename (Entity : Entity_Id) return String;
    --  Returns basename to be used to construct filenames for enclosing
    --  compilation unit of given entity.
 
@@ -153,11 +151,8 @@ package body GNATdoc.Backend.HTML is
    ------------------------------------
 
    function Compilation_Unit_File_Basename
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Entity : Entity_Id) return String
+     (Entity : Entity_Id) return String
    is
-      pragma Unreferenced (Kernel);
-
       Source : constant Virtual_File := LL.Get_Location (Entity).File;
       Parent : Entity_Id := Entity;
       Suffix : Unbounded_String;
@@ -442,7 +437,7 @@ package body GNATdoc.Backend.HTML is
             Build (D, Derived);
          end loop;
 
-         Self.Set_Label_And_Href (Object, Entity);
+         Set_Label_And_Href (Object, Entity);
 
          if Derived /= Empty_Array then
             Object.Set_Field ("inherited", Derived);
@@ -889,7 +884,7 @@ package body GNATdoc.Backend.HTML is
 
          for Entity of Set loop
             Object := Create_Object;
-            Self.Set_Label_And_Href (Object, Entity);
+            Set_Label_And_Href (Object, Entity);
 
             Scope := Get_Scope (Entity);
             Object.Set_Field ("declared", Get_Full_Name (Scope));
@@ -1015,8 +1010,7 @@ package body GNATdoc.Backend.HTML is
                      Type_Data.Set_Field
                        ("label", Get_Full_Name (Entity_Type));
                      Type_Data.Set_Field
-                       ("docHref",
-                        Get_Docs_Href (Self.Context.Kernel, Entity_Type));
+                       ("docHref", Get_Docs_Href (Entity_Type));
 
                   else
                      Type_Data.Set_Field ("label", Declaration.Name);
@@ -1170,13 +1164,13 @@ package body GNATdoc.Backend.HTML is
 
                   if Present (Super) then
                      Object := Create_Object;
-                     Self.Set_Label_And_Href (Object, Super);
+                     Set_Label_And_Href (Object, Super);
                      Append (Inherits, Object);
                   end if;
 
                   for Progenitor of Get_Progenitors (E).all loop
                      Object := Create_Object;
-                     Self.Set_Label_And_Href (Object, Progenitor);
+                     Set_Label_And_Href (Object, Progenitor);
                      Append (Inherits, Object);
                   end loop;
 
@@ -1188,7 +1182,7 @@ package body GNATdoc.Backend.HTML is
 
                   for Derived of Get_Direct_Derivations (E).all loop
                      Object := Create_Object;
-                     Self.Set_Label_And_Href (Object, Derived);
+                     Set_Label_And_Href (Object, Derived);
                      Append (Inherited, Object);
                   end loop;
 
@@ -1263,7 +1257,7 @@ package body GNATdoc.Backend.HTML is
       Docs_Dir       : constant Virtual_File :=
         Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
       File_Base_Name : constant String :=
-        Compilation_Unit_File_Basename (Self.Context.Kernel, Entity);
+        Compilation_Unit_File_Basename (Entity);
       HTML_File_Name : constant String := File_Base_Name & ".html";
       JS_File_Name   : constant String := File_Base_Name & ".js";
       Documentation  : constant JSON_Value := Create_Object;
@@ -1362,8 +1356,7 @@ package body GNATdoc.Backend.HTML is
                Self.Extract_Summary_And_Description (E, Summary, Description);
                Entity_Entry := Create_Object;
                Entity_Entry.Set_Field ("label", Get_Short_Name (E));
-               Entity_Entry.Set_Field
-                 ("href", "../" & Get_Docs_Href (Self.Context.Kernel, E));
+               Entity_Entry.Set_Field ("href", "../" & Get_Docs_Href (E));
                Entity_Entry.Set_Field ("summary", Summary);
                Entity_Entry.Set_Field ("description", Description);
                Append (Aux, Entity_Entry);
@@ -1459,26 +1452,22 @@ package body GNATdoc.Backend.HTML is
    ------------------------
 
    procedure Set_Label_And_Href
-     (Self   : HTML_Backend'Class;
-      Object : JSON_Value;
+     (Object : JSON_Value;
       Entity : Entity_Id) is
    begin
       Object.Set_Field ("label", Get_Short_Name (Entity));
-      Object.Set_Field
-        ("docHref", Get_Docs_Href (Self.Context.Kernel, Entity));
+      Object.Set_Field ("docHref", Get_Docs_Href (Entity));
    end Set_Label_And_Href;
 
    -------------------
    -- Get_Docs_Href --
    -------------------
 
-   function Get_Docs_Href
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Entity : Entity_Id) return String is
+   function Get_Docs_Href (Entity : Entity_Id) return String is
    begin
       return
         "docs/"
-        & Compilation_Unit_File_Basename (Kernel, Entity)
+        & Compilation_Unit_File_Basename (Entity)
         & ".html#L"
         & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both)
         & "C"

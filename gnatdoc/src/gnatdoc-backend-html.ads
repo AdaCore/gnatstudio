@@ -80,14 +80,11 @@ private
    overriding function Name (Self : HTML_Backend) return String;
    --  Returns name of the backend.
 
-   function Get_Docs_Href
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Entity : Entity_Id) return String;
+   function Get_Docs_Href (Entity : Entity_Id) return String;
    --  Returns hyper reference to documentation of entity.
 
    procedure Set_Label_And_Href
-     (Self   : HTML_Backend'Class;
-      Object : GNATCOLL.JSON.JSON_Value;
+     (Object : GNATCOLL.JSON.JSON_Value;
       Entity : Entity_Id);
    --  Set the "label" field of Object from the Short_Name of Entity.
    --  If Entity contain hyper reference information, set the "href" field

@@ -340,7 +340,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
       else
          Self.Append_Text_Object
-           ("identifier", Identifier, Get_Docs_Href (Self.Kernel, Entity));
+           ("identifier", Identifier, Get_Docs_Href (Entity));
       end if;
    end Identifier_Text;
 
