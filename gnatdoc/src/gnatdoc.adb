@@ -269,6 +269,7 @@ package body GNATdoc is
 
             --  Local variables
 
+            P_Tree    : Project_Tree_Access renames Kernel.Registry.Tree;
             Num_Files : constant Natural := Natural (All_Src_Files.Length);
 
          --  Start of processing for Build_Trees_In_Category
@@ -279,6 +280,7 @@ package body GNATdoc is
                   declare
                      Tree      : aliased Tree_Type;
                      Tree_Spec : aliased Tree_Type;
+                     Spec_File : Virtual_File;
 
                   begin
                      Count_Files := Count_Files + 1;
@@ -295,12 +297,18 @@ package body GNATdoc is
                                 File    => File);
 
                         when Bodies =>
-                           Tree_Spec := Spec_Tree_Of_Body (File);
-                           Tree :=
-                             Frontend.Build_Tree
-                               (Context   => Context,
-                                File      => File,
-                                Tree_Spec => Tree_Spec'Access);
+                           Spec_File := P_Tree.Other_File (File);
+
+                           if not Files_Without_Tree.Contains (Spec_File)
+                             and then not Skipped_Files.Contains (Spec_File)
+                           then
+                              Tree_Spec := Spec_Tree_Of_Body (File);
+                              Tree :=
+                                Frontend.Build_Tree
+                                  (Context   => Context,
+                                   File      => File,
+                                   Tree_Spec => Tree_Spec'Access);
+                           end if;
                      end case;
 
                      if Tree /= No_Tree
@@ -319,6 +327,7 @@ package body GNATdoc is
                           (">>> GNATdoc internal error: "
                              & "internal problem processing "
                              & (+File.Base_Name));
+                        Files_Without_Tree.Append (File);
                      else
                         Report_Error (All_Src_Files, File, Frontend_Stage);
                         raise;
