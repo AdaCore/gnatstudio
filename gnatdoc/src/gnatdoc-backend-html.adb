@@ -156,12 +156,20 @@ package body GNATdoc.Backend.HTML is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Entity : Entity_Id) return String
    is
+      pragma Unreferenced (Kernel);
+
+      Source : constant Virtual_File := LL.Get_Location (Entity).File;
       Parent : Entity_Id := Entity;
+      Suffix : Unbounded_String;
 
    begin
-      while Get_Kind (Parent) /= E_Package
-        and then Get_Scope (Parent) /= null
+      while Present (Get_Scope (Parent))
+        and then LL.Get_Location (Get_Scope (Parent)).File = Source
       loop
+         if Get_Kind (Parent) in E_Package | E_Generic_Package then
+            Suffix := "___" & To_Lower (Get_Short_Name (Parent)) & Suffix;
+         end if;
+
          Parent := Get_Scope (Parent);
       end loop;
 
@@ -179,7 +187,9 @@ package body GNATdoc.Backend.HTML is
             end if;
          end loop;
 
-         if From_Spec (Kernel, Entity) then
+         Append (File, Suffix);
+
+         if No (Get_Corresponding_Spec (Entity)) then
             return To_String (File) & "___spec";
 
          else
