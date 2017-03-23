@@ -394,6 +394,40 @@ package body VCS2.Engines is
       end if;
    end Get_VCS;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out VCS_Engine) is
+   begin
+      if Self.Queue_Id /= No_Source_Id then
+         Trace (Me, "Cancel queued tasks for an engine we are removing");
+         Remove (Self.Queue_Id);
+      end if;
+      Free (Abstract_VCS_Engine (Self));   --  inherited
+   end Free;
+
+   -----------------------
+   -- Reset_VCS_Engines --
+   -----------------------
+
+   procedure Reset_VCS_Engines
+      (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+      E      : VCS_Engine_Access;
+   begin
+      while not Global_Data.All_Engines.Is_Empty loop
+         E := Global_Data.All_Engines.First_Element;
+         Free (E.all);
+         Unchecked_Free (E);
+         Global_Data.All_Engines.Delete_First;
+      end loop;
+
+      Global_Data.VCS_Engines.Clear;
+      Global_Data.Active_VCS := null;
+   end Reset_VCS_Engines;
+
    -------------------------
    -- Compute_VCS_Engines --
    -------------------------
@@ -572,10 +606,6 @@ package body VCS2.Engines is
            and then not Global_Data.Active_VCS.In_Use
          then
             Global_Data.Active_VCS := null;
-
-            --  Let listeners know: at this point, the VCS is still active, for
-            --  views that have cached it.
-            Set_Active_VCS (Kernel, Global_Data.All_Engines.First_Element);
          end if;
 
          while Engine_Lists.Has_Element (C) loop
@@ -1265,8 +1295,10 @@ package body VCS2.Engines is
       end if;
 
       --  In case there are more commands in the queue
-      Self.Queue_Id := Engine_Sources.Idle_Add
-        (On_Idle_Start_Queue'Access, VCS_Engine_Access (Self));
+      if Self.Queue_Id = No_Source_Id then
+         Self.Queue_Id := Engine_Sources.Idle_Add
+           (On_Idle_Start_Queue'Access, VCS_Engine_Access (Self));
+      end if;
    end Command_Terminated;
 
    -------------------------
@@ -1494,18 +1526,9 @@ package body VCS2.Engines is
    --------------
 
    procedure Finalize (Kernel : not null access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
-      E      : VCS_Engine_Access;
       F2     : VCS_Engine_Factory_Access;
    begin
-      Global_Data.VCS_Engines.Clear;
-
-      while not Global_Data.All_Engines.Is_Empty loop
-         E := Global_Data.All_Engines.First_Element;
-         Free (E.all);
-         Unchecked_Free (E);
-         Global_Data.All_Engines.Delete_First;
-      end loop;
+      Reset_VCS_Engines (Kernel);
 
       Free (Global_Data.No_VCS_Engine.all);
       Unchecked_Free (Global_Data.No_VCS_Engine);

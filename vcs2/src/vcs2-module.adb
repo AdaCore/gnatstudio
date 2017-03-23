@@ -49,6 +49,12 @@ package body VCS2.Module is
    --  This looks for what VCS engine to use for each project. It tries to
    --  reuse existing engines when possible, to benefit from their caches.
 
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the user loads a new project.
+
    type On_File_Saved is new File_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_File_Saved;
@@ -210,6 +216,19 @@ package body VCS2.Module is
    -------------
 
    overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Reset_VCS_Engines (Kernel);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -273,6 +292,8 @@ package body VCS2.Module is
       Kernel.Set_VCS (V);
 
       VCS2.Scripts.Register_Scripts (Kernel);
+
+      Project_Changed_Hook.Add (new On_Project_Changed);
 
       After_File_Changed_Detected_Hook.Add (new On_File_Changed_Detected);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);

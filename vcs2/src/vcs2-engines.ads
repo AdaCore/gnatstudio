@@ -76,9 +76,16 @@ package VCS2.Engines is
    -- Engines --
    -------------
 
+   overriding procedure Free (Self : in out VCS_Engine);
+
    type VCS_Repository is new Abstract_VCS_Repository with record
       Kernel    : not null access Kernel_Handle_Record'Class;
    end record;
+
+   procedure Reset_VCS_Engines
+      (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Reset all stored VCS engines.
+   --  This should be called every time the project changes
 
    procedure Compute_VCS_Engines
       (Kernel : not null access Kernel_Handle_Record'Class);
