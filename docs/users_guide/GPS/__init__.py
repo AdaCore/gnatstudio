@@ -9674,6 +9674,15 @@ class VCS2(object):
         :rtype: `GPS.VCS2`
         """
 
+    @staticmethod
+    def supported_systems():
+        """
+        Shows the list of supported VCS systems.
+
+        :return: List of strings
+        """
+        pass  # implemented in Ada
+
     @property
     def name(self):
         """

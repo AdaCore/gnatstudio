@@ -2052,6 +2052,8 @@ Classes
 
    .. automethod:: GPS.VCS2.set_run_in_background
 
+   .. automethod:: GPS.VCS2.supported_systems
+
    .. automethod:: GPS.VCS2.vcs_in_use
 
 :class:`GPS.VCS2_Task_Visitor`

@@ -342,6 +342,23 @@ package body VCS2.Engines is
       Global_Data.Factories.Include (N, VCS_Engine_Factory_Access (Factory));
    end Register_Factory;
 
+   ---------------------------------
+   -- For_Each_Registered_Factory --
+   ---------------------------------
+
+   procedure For_Each_Registered_Factory
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : not null access procedure (Name : String))
+   is
+      pragma Unreferenced (Kernel);
+      C : Name_To_Factory.Cursor := Global_Data.Factories.First;
+   begin
+      while Name_To_Factory.Has_Element (C) loop
+         Callback (Name_To_Factory.Key (C));
+         Name_To_Factory.Next (C);
+      end loop;
+   end For_Each_Registered_Factory;
+
    ---------------------
    -- Get_VCS_Factory --
    ---------------------

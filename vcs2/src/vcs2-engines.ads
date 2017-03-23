@@ -72,6 +72,11 @@ package VCS2.Engines is
    --  Name is the value that should be used for the IDE'VCS_Kind project
    --  property.
 
+   procedure For_Each_Registered_Factory
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : not null access procedure (Name : String));
+   --  Executes Callback for each registered VCS system
+
    -------------
    -- Engines --
    -------------
