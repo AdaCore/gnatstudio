@@ -180,7 +180,7 @@
          <menu label='Show local changes for file' action='diff against head for file'/>
          <menu label='Show local changes for file (in editor)'
             action='diff against head for file in editor'/>
-         <menu label='Show all local changes' action='diff against head'/>
+         <menu label='Show all local changes' action='diff all against head'/>
          <separator id='editors'/>
          <menu label='Show last modification for lines'  action='vcs annotate'/>
          <menu label='Hide last modification for lines'  action='vcs remove annotate'/>

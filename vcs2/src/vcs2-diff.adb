@@ -401,17 +401,12 @@ package body VCS2.Diff is
          Label    => "Version Control/Show local changes for %f (in editor)");
 
       Register_Action
-        (Kernel, "diff against head",
+        (Kernel, "diff all against head",
          Description =>
            -("Display all the local changes for the current version control"
              & " system"),
          Command  => new Diff_Head,
          Category => "VCS2");
-
-      Register_Contextual_Menu
-        (Kernel,
-         Action   => "diff against head",
-         Label    => "Version Control/Show all local changes");
    end Register_Module;
 
 end VCS2.Diff;
