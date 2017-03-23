@@ -139,6 +139,17 @@ package body GPS.Scripts is
          Set (Self.Instances, Inst);
       end Store_In_Instance;
 
+      -----------------
+      -- Has_Element --
+      -----------------
+
+      function Has_Element (Inst : Class_Instance) return Boolean is
+         P : Proxy;  --  Only to retrieve class name
+         Data : constant Instance_Property := Get_Data (Inst, P.Class_Name);
+      begin
+         return Data /= null;
+      end Has_Element;
+
       -------------------
       -- From_Instance --
       -------------------

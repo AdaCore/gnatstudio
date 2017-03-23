@@ -78,6 +78,7 @@ package GPS.VCS is
    function Get_VCS
      (Inst   : Class_Instance)
       return not null access Abstract_VCS_Engine'Class;
+   function Has_VCS (Inst   : Class_Instance) return Boolean;
    procedure Set_VCS_Instance
      (VCS    : not null access Abstract_VCS_Engine'Class;
       Inst   : Class_Instance);

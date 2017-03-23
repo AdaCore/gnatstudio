@@ -560,9 +560,18 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : constant Class_Instance := Data.Nth_Arg (1);
-      VCS  : constant not null Script_Engine_Access :=
-        Script_Engine_Access (Get_VCS (Inst));
+      VCS  : Script_Engine_Access;
    begin
+      if not Has_VCS (Inst) then
+         --  the VCS engine has been freed, likely because the user
+         --  has loaded another project
+         --  ??? A better approach would be to stop background processing
+         --  when we kill a VCS engine, but this is tricky to do.
+         return;
+      end if;
+
+      VCS := Script_Engine_Access (Get_VCS (Inst));
+
       if Command = "name" then
          Data.Set_Return_Value (VCS.Name);
 

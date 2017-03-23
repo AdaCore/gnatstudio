@@ -53,6 +53,15 @@ package body GPS.VCS is
       return Engine_Proxies.From_Instance (Inst);
    end Get_VCS;
 
+   -------------
+   -- Has_VCS --
+   -------------
+
+   function Has_VCS (Inst   : Class_Instance) return Boolean is
+   begin
+      return Engine_Proxies.Has_Element (Inst);
+   end Has_VCS;
+
    ----------------------
    -- Set_VCS_Instance --
    ----------------------

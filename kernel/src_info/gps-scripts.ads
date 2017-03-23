@@ -138,6 +138,9 @@ package GPS.Scripts is
       --  independently, for instance when implementing a Constructor_Method
       --  in Ada. Otherwise, better to use Get_Or_Create_Instance.
 
+      function Has_Element (Inst : Class_Instance) return Boolean;
+      --  Whether there is an element associated with Inst.
+
       function From_Instance (Inst : Class_Instance) return Element_Type;
       --  Return the element stored in the instance.
       --  This will raise No_Data_Set_For_Instance if no element was associated
