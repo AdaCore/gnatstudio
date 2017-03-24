@@ -1215,7 +1215,7 @@ package body GNATdoc.Frontend.Builder is
            and then Entities_Count mod 3000 = 0
          then
             GNAT.IO.Put_Line
-              ("INFO: processing large file " & (+File.Base_Name));
+              ("info: processing large file " & (+File.Base_Name));
             Is_Large_File := True;
          end if;
 
@@ -1645,7 +1645,7 @@ package body GNATdoc.Frontend.Builder is
            and then Entities_Count mod 3000 = 0
          then
             GNAT.IO.Put_Line
-              ("INFO: processing large file " & (+File.Base_Name));
+              ("info: processing large file " & (+File.Base_Name));
             Is_Large_File := True;
          end if;
 
