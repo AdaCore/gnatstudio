@@ -2855,14 +2855,6 @@ package body GNATdoc.Frontend is
                                    Prev_E_End_Loc.Line = Doc_Start_Line - 1)
                               then
                                  Set_Doc_After (Prev_E);
-
-                              --  Do not attach the comment to the previous
-                              --  line if it precedes the current entity
-
-                              elsif Doc_End_Line
-                                /= LL.Get_Location (E).Line - 1
-                              then
-                                 Set_Doc_After (Prev_E);
                               end if;
                            end if;
 
