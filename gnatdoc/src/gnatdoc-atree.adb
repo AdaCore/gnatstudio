@@ -470,26 +470,63 @@ package body GNATdoc.Atree is
      (List : EInfo_List.Vector;
       Name : String) return Entity_Id
    is
+      Name_First : Natural := Name'First;
+
+      function Can_Use_Full_Name return Boolean;
+      --  Return True if all the entities in the List have set their Scope.
+      --  Check required before relying on Get_Full_Name() since it relies
+      --  on the Scope attribute to generate their full name.
+
+      function Is_Expanded_Name return Boolean;
+      --  Return True if Name is an Expanded_Name and update Name_First with
+      --  the index of the first letter of its short name.
+
+      -----------------------
+      -- Can_Use_Full_Name --
+      -----------------------
+
+      function Can_Use_Full_Name return Boolean is
+      begin
+         for E of List loop
+            if No (Get_Scope (E)) then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Can_Use_Full_Name;
+
+      ----------------------
+      -- Is_Expanded_Name --
+      ----------------------
+
+      function Is_Expanded_Name return Boolean is
+      begin
+         for J in reverse Name'Range loop
+            if Name (J) = '.' then
+               Name_First := J + 1;
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Is_Expanded_Name;
+
+      --  Local variables
+
       Cursor : EInfo_List.Cursor;
       E      : Entity_Id;
-
-      Is_Expanded_Name : Boolean := False;
 
    begin
       if not EInfo_List.Has_Element (List.First) then
          return null;
       end if;
 
-      for J in Name'Range loop
-         if Name (J) = '.' then
-            Is_Expanded_Name := True;
-            exit;
-         end if;
-      end loop;
-
       Cursor := List.First;
 
-      if Is_Expanded_Name then
+      if Is_Expanded_Name
+        and then Can_Use_Full_Name
+      then
          while EInfo_List.Has_Element (Cursor) loop
             E := EInfo_List.Element (Cursor);
 
@@ -518,7 +555,7 @@ package body GNATdoc.Atree is
          while EInfo_List.Has_Element (Cursor) loop
             E := EInfo_List.Element (Cursor);
 
-            if Get_Short_Name (E) = Name then
+            if Get_Short_Name (E) = Name (Name_First .. Name'Last) then
                return E;
             end if;
 
