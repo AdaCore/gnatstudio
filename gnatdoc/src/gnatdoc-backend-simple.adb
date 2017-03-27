@@ -2361,6 +2361,13 @@ package body GNATdoc.Backend.Simple is
             if not Backend.Entities.Subprgs.Contains (Entity) then
                Backend.Entities.Subprgs.Append (Entity);
             end if;
+
+         elsif Is_Concurrent_Type_Or_Object (Entity) then
+            --  Concurrent types and objects are handled "twice" for purposes
+            --  of HTML backend. Simple backend generates documentation for
+            --  them at time of processing of enclosing package.
+
+            return;
          end if;
       end if;
 

@@ -165,7 +165,9 @@ package body GNATdoc.Backend.HTML is
       while Present (Get_Scope (Parent))
         and then LL.Get_Location (Get_Scope (Parent)).File = Source
       loop
-         if Get_Kind (Parent) in E_Package | E_Generic_Package then
+         if Get_Kind (Parent) in E_Package | E_Generic_Package
+           or else Is_Concurrent_Type_Or_Object (Parent)
+         then
             Suffix := "___" & To_Lower (Get_Short_Name (Parent)) & Suffix;
          end if;
 
@@ -1047,7 +1049,13 @@ package body GNATdoc.Backend.HTML is
          for E of Sorted_Entities loop
             Self.Extract_Summary_And_Description (E, Summary, Description);
 
-            if Present (Get_Src (E)) then
+            if Present (Get_Src (E))
+              and not Is_Concurrent_Type_Or_Object (E)
+            then
+               --  Source code snippet doesn't generated when source code is
+               --  not available. It is not generated for tasks & protecteds
+               --  either.
+
                declare
                   Buffer : aliased String := To_String (Get_Src (E));
                   Code   : JSON_Value;
@@ -1075,7 +1083,15 @@ package body GNATdoc.Backend.HTML is
             end if;
 
             Entity_Entry.Set_Field ("summary", Summary);
-            Entity_Entry.Set_Field ("description", Description);
+
+            if Is_Concurrent_Type_Or_Object (E) then
+               --  Description is not filled for tasks & protecteds
+
+               Entity_Entry.Set_Field ("href", "../" & Get_Docs_Href (E));
+
+            else
+               Entity_Entry.Set_Field ("description", Description);
+            end if;
 
             if Is_Subprogram_Or_Entry (E)
               and then Present (Get_Comment (E))
@@ -1328,6 +1344,10 @@ package body GNATdoc.Backend.HTML is
             Entities.Protected_Objects);
       end if;
 
+      if not Entities.Entries.Is_Empty then
+         Build_Entity_Entries (Entity_Entries, "Entries", Entities.Entries);
+      end if;
+
       if not Entities.Subprgs.Is_Empty then
          Build_Entity_Entries
            (Entity_Entries, "Subprograms", Entities.Subprgs);
@@ -1402,40 +1422,42 @@ package body GNATdoc.Backend.HTML is
                Cached => True));
       end;
 
-      --  Construct documentation index entry for generated page
+      if not Is_Concurrent_Type_Or_Object (Entity) then
+         --  Construct documentation index entry for generated page
 
-      Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
-      Index_Entry.Set_Field ("qualifier", Get_Qualifier (Entity));
-      Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
+         Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
+         Index_Entry.Set_Field ("qualifier", Get_Qualifier (Entity));
+         Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
 
-      if Present (Get_Comment (Entity)) then
-         declare
-            Cursor : Tag_Cursor := New_Cursor (Get_Comment (Entity));
-            Tag    : Tag_Info_Ptr;
+         if Present (Get_Comment (Entity)) then
+            declare
+               Cursor : Tag_Cursor := New_Cursor (Get_Comment (Entity));
+               Tag    : Tag_Info_Ptr;
 
-         begin
-            while not At_End (Cursor) loop
-               Tag := Get (Cursor);
+            begin
+               while not At_End (Cursor) loop
+                  Tag := Get (Cursor);
 
-               if Tag.Tag = "group" then
-                  Default_Group := False;
+                  if Tag.Tag = "group" then
+                     Default_Group := False;
 
-                  if not Self.Doc_Groups.Contains (Tag.Text) then
-                     Self.Doc_Groups.Insert
-                       (Tag.Text,
-                        new Docs_Group'(Name => Tag.Text, Doc_Files => <>));
+                     if not Self.Doc_Groups.Contains (Tag.Text) then
+                        Self.Doc_Groups.Insert
+                          (Tag.Text,
+                           new Docs_Group'(Name => Tag.Text, Doc_Files => <>));
+                     end if;
+
+                     Self.Doc_Groups (Tag.Text).Doc_Files.Insert (Index_Entry);
                   end if;
 
-                  Self.Doc_Groups (Tag.Text).Doc_Files.Insert (Index_Entry);
-               end if;
+                  Next (Cursor);
+               end loop;
+            end;
+         end if;
 
-               Next (Cursor);
-            end loop;
-         end;
-      end if;
-
-      if Default_Group then
-         Self.Doc_Files.Insert (Index_Entry);
+         if Default_Group then
+            Self.Doc_Files.Insert (Index_Entry);
+         end if;
       end if;
    end Generate_Lang_Documentation;
 

@@ -226,6 +226,10 @@ package body GNATdoc.Backend.Base is
                   Entities.Subprgs.Append (Entity);
                   Self.Entities.Subprgs.Append (Entity);
                end if;
+
+            elsif Get_Kind (Entity) = E_Entry then
+               Entities.Entries.Append (Entity);
+               Self.Entities.Entries.Append (Entity);
             end if;
          end Classify_Entity;
 
@@ -254,6 +258,18 @@ package body GNATdoc.Backend.Base is
          All_Pkgs := Entities.Pkgs & Entities.Pkgs_Instances;
 
          for Nested of All_Pkgs loop
+            Generate_Documentation (Nested, Scope_Level + 1);
+         end loop;
+
+         --  Handle Ada tasks
+
+         for Nested of Entities.Tasks loop
+            Generate_Documentation (Nested, Scope_Level + 1);
+         end loop;
+
+         --  Handle Ada protecteds
+
+         for Nested of Entities.Protected_Objects loop
             Generate_Documentation (Nested, Scope_Level + 1);
          end loop;
 

@@ -40,6 +40,7 @@ package GNATdoc.Backend.Base is
       Variables         : EInfo_List.Vector;
       Tasks             : EInfo_List.Vector;
       Protected_Objects : EInfo_List.Vector;
+      Entries           : EInfo_List.Vector;
    end record;
 
    type Base_Backend is
