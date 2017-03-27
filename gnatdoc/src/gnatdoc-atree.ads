@@ -149,7 +149,14 @@
 --       the value computed by the GNATdoc frontend.
 
 --    Full_Name (synthesized)
---       Defined in all entities.
+--       Defined in all entities. This attribute computes the full name of an
+--       entity by means of climbing in the tree through the enclosing scopes.
+--       The generated full name is composed of all the simple names of the
+--       enclosing scopes separated by dot (for example, Pkg.Child). If the
+--       full name cannot be computed then this service returns a truncated
+--       name composed of full nmake until the ultimate enclosing scope to
+--       which it could climb). This latter case can be identified using the
+--       function Has_Truncated_Full_Name().
 
 --    Full_View
 --       Defined in the partial view of incomplete types and private types.
@@ -874,6 +881,11 @@ private package GNATdoc.Atree is
    function Has_Private_Parent
      (E : Entity_Id) return Boolean;
    --  True if E has a parent which is visible only in its full view
+
+   function Has_Truncated_Full_Name
+     (E : Entity_Id) return Boolean;
+   --  Return True if Get_Full_Name cannot compute the full name of E and
+   --  returns a truncated full name (see documentation of Full_Name).
 
    function Has_Unknown_Discriminants
      (E : Entity_Id) return Boolean;

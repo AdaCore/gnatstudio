@@ -35,6 +35,10 @@ package body GNATdoc.Atree is
    Me : constant Trace_Handle := Create ("DOCGEN.ATREE");
    Enhancements : constant Boolean := False;
 
+   Truncated_Full_Name_Separator : constant String := "__";
+   --  Separator used by Internal_Get_Full_Name to build a truncated full name
+   --  when the full name of an entity cannot be computed.
+
    Unique_Id : Natural := 0;
    --  Internal counter used to associate an unique identifier to all the
    --  nodes.
@@ -72,9 +76,29 @@ package body GNATdoc.Atree is
    --  Return True if the container has an Entity whose location matches the
    --  location of Entity.
 
+   function Get_Non_Truncated_Full_Name
+     (E : Entity_Id) return String;
+   --  If the full name of E is a truncated full name then return its full name
+   --  without its internal prefix. If the full name of E is not a truncated
+   --  full name then return its full name.
+
    function Get_Subprograms_And_Entries
      (E : Entity_Id) return EInfo_List.Vector;
    --  Applicable to record types, concurrent types and concurrent objects
+
+   function Internal_Get_Full_Name
+     (E : Entity_Id) return String;
+   --  Return the Xref full name of E. If it is not available then compute its
+   --  full name climbing in the tree through the enclosing scopes. The built
+   --  full name is composed of all the simple names of the enclosing scopes
+   --  separated by dot (for example, Pkg.Child). If the full name cannot be
+   --  computed because some enclosing scope is not decorated then this service
+   --  returns a truncated name composed of a prefix (the file name of the
+   --  ultimate enclosing scope to which we could climb) followed by the full
+   --  name computed until that entity (for example, s-finroo.ads__adjust).
+   --  This latter case can be identified using Has_Truncated_Full_Name();
+   --  for entities with truncated full names Get_Non_Truncated_Full_Name()
+   --  returns their full name without the internal prefix.
 
    function Internal_New_Entity
      (Context     : access constant Docgen_Context;
@@ -950,71 +974,49 @@ package body GNATdoc.Atree is
    -------------------
 
    function Get_Full_Name (E : Entity_Id) return String is
-      Full_Name  : Unbounded_String;
-      Scope      : Entity_Id := Get_Scope (E);
-      Prev_Scope : Entity_Id;
+   begin
+      if Has_Truncated_Full_Name (E) then
+         return Get_Non_Truncated_Full_Name (E);
+      else
+         return Internal_Get_Full_Name (E);
+      end if;
+   end Get_Full_Name;
 
-      function In_Neverending_Loop return Boolean;
-      --  Return True if the computation enters into a never ending loop
+   ---------------------------------
+   -- Get_Non_Truncated_Full_Name --
+   ---------------------------------
 
-      Parents : array (1 .. 50) of Entity_Id;
-      P_Count : Natural := 0;
-
-      function In_Neverending_Loop return Boolean is
-      begin
-         for J in 1 .. P_Count loop
-            if Parents (J) = Scope then
-               pragma Assert (False);
-               return True;
-            end if;
-         end loop;
-
-         P_Count := P_Count + 1;
-         Parents (P_Count) := Scope;
-
-         return False;
-      end In_Neverending_Loop;
+   function Get_Non_Truncated_Full_Name (E : Entity_Id) return String is
+      Sep_Len : constant Natural := Truncated_Full_Name_Separator'Length;
+      Name    : constant String := Internal_Get_Full_Name (E);
 
    begin
-      --  Workaround missing value of LL.Scope() in subprogram which causes
-      --  wrong computation of the full name.
-
-      if No (LL.Get_Scope (E))
-        and then Is_Subprogram (E)
-        and then Is_Expanded_Name (LL_Get_Full_Name (E))
-      then
-         return LL_Get_Full_Name (E);
-      end if;
-
-      Set_Unbounded_String (Full_Name, Get_Short_Name (E));
-
-      Prev_Scope := E;
-      while Present (Scope)
-        and then not Is_Standard_Entity (Scope)
-      loop
-         if In_Neverending_Loop then
-            return To_String (Full_Name);
+      for J in Name'First .. Name'Last - Sep_Len loop
+         if Name (J .. J + Sep_Len - 1) = Truncated_Full_Name_Separator then
+            return Name (J + Sep_Len .. Name'Last);
          end if;
-
-         --  ---
-         Full_Name  := Get_Short_Name (Scope) & "." & Full_Name;
-         Prev_Scope := Scope;
-         Scope      := Get_Scope (Scope);
       end loop;
 
-      Scope := Prev_Scope;
-      while Present (Get_Parent_Package (Scope)) loop
-         Scope := Get_Parent_Package (Scope);
+      return Name;
+   end Get_Non_Truncated_Full_Name;
 
-         if In_Neverending_Loop then
-            return To_String (Full_Name);
+   -----------------------------
+   -- Has_Truncated_Full_Name --
+   -----------------------------
+
+   function Has_Truncated_Full_Name (E : Entity_Id) return Boolean is
+      Sep_Len : constant Natural := Truncated_Full_Name_Separator'Length;
+      Name    : constant String := Internal_Get_Full_Name (E);
+
+   begin
+      for J in Name'First .. Name'Last - Sep_Len loop
+         if Name (J .. J + Sep_Len - 1) = Truncated_Full_Name_Separator then
+            return True;
          end if;
-
-         Full_Name := Get_Short_Name (Scope) & "." & Full_Name;
       end loop;
 
-      return To_String (Full_Name);
-   end Get_Full_Name;
+      return False;
+   end Has_Truncated_Full_Name;
 
    -------------------
    -- Get_Full_View --
@@ -1368,7 +1370,116 @@ package body GNATdoc.Atree is
       Unique_Id := 0;
    end Initialize;
 
-   --  Initialize internal state
+   ----------------------------
+   -- Internal_Get_Full_Name --
+   ----------------------------
+
+   function Internal_Get_Full_Name (E : Entity_Id) return String is
+      Parents : array (1 .. 50) of Entity_Id;
+      P_Count : Natural := 0;
+
+      function Get_Enclosing_Scope (E : Entity_Id) return Entity_Id;
+      --  Return the enclosing scope of E
+
+      function In_Neverending_Loop (Scope : Entity_Id) return Boolean;
+      --  Return True if the computation enters into a never ending loop
+
+      -------------------------
+      -- Get_Enclosing_Scope --
+      -------------------------
+
+      function Get_Enclosing_Scope (E : Entity_Id) return Entity_Id is
+      begin
+         if Present (Get_Parent_Package (E))
+           and then not Is_Standard_Entity (Get_Parent_Package (E))
+         then
+            return Get_Parent_Package (E);
+
+         elsif Present (Get_Corresponding_Spec (E))
+           and then Present (Get_Parent_Package (Get_Corresponding_Spec (E)))
+           and then not Is_Standard_Entity
+                          (Get_Parent_Package (Get_Corresponding_Spec (E)))
+         then
+            return Get_Parent_Package (Get_Corresponding_Spec (E));
+
+         else
+            return Get_Scope (E);
+         end if;
+      end Get_Enclosing_Scope;
+
+      -------------------------
+      -- In_Neverending_Loop --
+      -------------------------
+
+      function In_Neverending_Loop (Scope : Entity_Id) return Boolean is
+      begin
+         for J in 1 .. P_Count loop
+            if Parents (J) = Scope then
+               pragma Assert (False);
+               return True;
+            end if;
+         end loop;
+
+         P_Count := P_Count + 1;
+         Parents (P_Count) := Scope;
+
+         return False;
+      end In_Neverending_Loop;
+
+      --  Local variables
+
+      Full_Name  : Unbounded_String;
+      Scope      : Entity_Id;
+      Prev_Scope : Entity_Id;
+
+   begin
+      --  Workaround missing value of LL.Scope() in subprogram which causes
+      --  wrong computation of the full name.
+
+      if No (LL.Get_Scope (E))
+        and then Is_Subprogram (E)
+        and then Is_Expanded_Name (LL_Get_Full_Name (E))
+      then
+         return LL_Get_Full_Name (E);
+      end if;
+
+      Set_Unbounded_String (Full_Name, Get_Short_Name (E));
+
+      Scope := Get_Enclosing_Scope (E);
+      Prev_Scope := E;
+      while Present (Scope)
+        and then not Is_Standard_Entity (Scope)
+      loop
+         if In_Neverending_Loop (Scope) then
+            return To_String (Full_Name);
+         end if;
+
+         Full_Name  := Get_Short_Name (Scope) & "." & Full_Name;
+         Prev_Scope := Scope;
+         Scope      := Get_Enclosing_Scope (Scope);
+      end loop;
+
+      --  If the ultimate parent is available then we return its computed
+      --  full name.
+
+      if Present (Scope) then
+         return To_String (Full_Name);
+
+      --  Otherwise it means that some of the parent packages is not available
+      --  to GNATdoc and we return a truncated full name composed of the name
+      --  of the ultimate parent to which we could climb followed by the full
+      --  name compited after that entity.
+
+      else
+         declare
+            Loc : constant General_Location := LL.Get_Location (Prev_Scope);
+         begin
+            return (+Loc.File.Base_Name)
+                   & Truncated_Full_Name_Separator
+                   & To_String (Full_Name);
+         end;
+      end if;
+   end Internal_Get_Full_Name;
 
    -------------------------
    -- Internal_New_Entity --
