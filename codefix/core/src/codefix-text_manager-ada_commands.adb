@@ -1161,6 +1161,33 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Make_Constant_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
+      function Skip_Colon_And_Aliased
+        (Cursor : File_Cursor) return File_Cursor;
+      --  Find ':' after Cursor. If next token is 'aliased' then skip it
+
+      ----------------------------
+      -- Skip_Colon_And_Aliased --
+      ----------------------------
+
+      function Skip_Colon_And_Aliased
+        (Cursor : File_Cursor) return File_Cursor
+      is
+         Colon  : Word_Cursor'Class :=
+           Current_Text.Search_Token (Cursor, Colon_Tok);
+         Alias  : Word_Cursor'Class :=
+           Current_Text.Search_Tokens (Cursor, (Semicolon_Tok, Aliased_Tok));
+      begin
+         if Alias.Get_Word in "" | ";" then
+            Colon.Set_Column (Colon.Get_Column + 1);
+
+            return File_Cursor (Colon);
+         else
+            Alias.Set_Column (Alias.Get_Column + 7);
+
+            return File_Cursor (Alias);
+         end if;
+      end Skip_Colon_And_Aliased;
+
       New_Word      : constant String := To_Reserved_Word_Case ("constant");
       Cursor        : File_Cursor;
       Work_Extract  : Ada_Statement;
@@ -1203,10 +1230,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       Current_Text.Replace
-        (Position      => File_Cursor'Class
-           (Current_Text.Search_Token (Cursor, Colon_Tok)),
-         Len           => 1,
-         New_Text      => ": " & New_Word,
+        (Position      => Skip_Colon_And_Aliased (Cursor),
+         Len           => 0,
+         New_Text      => " " & New_Word,
          Blanks_Before => Keep,
          Blanks_After  => One);
 

@@ -292,6 +292,8 @@ package Codefix.Text_Manager is
      (Kind => Operator_Text, Name => To_Unbounded_String ("="));
    Not_Equals_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("/="));
+   Aliased_Tok : constant Token_Record :=
+     (Kind => Keyword_Text, Name => To_Unbounded_String ("aliased"));
    Renames_Tok : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("renames"));
    Is_Tok : constant Token_Record :=
