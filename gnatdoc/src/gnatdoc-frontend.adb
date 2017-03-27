@@ -3759,15 +3759,25 @@ package body GNATdoc.Frontend is
                           and then (Present (Get_Corresponding_Spec (Scope))
                                       or else Acts_As_Spec (Scope))
                         then
-                           if Is_Concurrent_Type_Or_Object (Scope) then
-                              Set_Src (Scope, Src_Conc_Type);
-                              Clear_Conc_Type_Sources;
-
-                           elsif Is_Package (Scope)
-                             or else Is_Subprogram (Scope)
+                           if Present (Get_End_Of_Profile_Location (Scope))
+                             and then
+                               Sloc_Start.Line
+                                 = Get_End_Of_Profile_Location (Scope).Line
+                             and then
+                               Sloc_Start.Column
+                                 = Natural (Get_End_Of_Profile_Location
+                                              (Scope).Column)
                            then
-                              Set_Src (Scope, Printout);
-                              Clear_Src;
+                              if Is_Concurrent_Type_Or_Object (Scope) then
+                                 Set_Src (Scope, Src_Conc_Type);
+                                 Clear_Conc_Type_Sources;
+
+                              elsif Is_Package (Scope)
+                                or else Is_Subprogram (Scope)
+                              then
+                                 Set_Src (Scope, Printout);
+                                 Clear_Src;
+                              end if;
                            end if;
 
                         --  Handle entries and subprogram bodies of library
