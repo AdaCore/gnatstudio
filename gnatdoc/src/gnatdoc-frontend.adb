@@ -3909,10 +3909,10 @@ package body GNATdoc.Frontend is
                                  Set_Src (Scope, Printout);
                                  Clear_Src;
                               else
-                                 if Get_End_Of_Scope_Loc (Scope).Line
+                                 if Get_End_Of_Syntax_Scope_Loc (Scope).Line
                                       = Sloc_Start.Line
                                    and then
-                                     Natural (Get_End_Of_Scope_Loc
+                                     Natural (Get_End_Of_Syntax_Scope_Loc
                                                 (Scope).Column)
                                       = Sloc_Start.Column
                                  then
