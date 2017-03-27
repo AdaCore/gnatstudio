@@ -22,7 +22,6 @@ with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 with Case_Handling;                 use Case_Handling;
 with Codefix.Ada_Tools;             use Codefix.Ada_Tools;
-with String_Utils;                  use String_Utils;
 with Language.Ada;                  use Language.Ada;
 with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 
@@ -1166,7 +1165,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor        : File_Cursor;
       Work_Extract  : Ada_Statement;
       New_Instr     : Unbounded_String;
-      Col_Decl      : Natural;
       End_Decl      : aliased Universal_Location;
 
    begin
@@ -1181,47 +1179,36 @@ package body Codefix.Text_Manager.Ada_Commands is
             Cursor.Line,
             Cursor.Col));
 
-      if Number_Of_Declarations (Work_Extract) = 1 then
-         Current_Text.Replace
-           (Position      => File_Cursor'Class
-              (Current_Text.Search_Token (Cursor, Colon_Tok)),
-            Len           => 1,
-            New_Text      => ": " & New_Word,
-            Blanks_Before => Keep,
-            Blanks_After  => One);
-      else
+      if Number_Of_Declarations (Work_Extract) > 1 then
          Extract_Element
            (Work_Extract,
             New_Instr,
             Find_Normalized
               (Get_Context (Current_Text).Db.Symbols, To_String (This.Name)));
 
-         Col_Decl := 1;
-         Skip_To_Char (New_Instr, Col_Decl, ':');
-
-         if Element (New_Instr, Col_Decl + 1) /= ' ' then
-            New_Instr :=
-              Unbounded_Slice (New_Instr, 1, Col_Decl)
-              & " " & New_Word & " "
-              & Unbounded_Slice (New_Instr, Col_Decl + 1, Length (New_Instr));
-
-         else
-            New_Instr :=
-              Unbounded_Slice (New_Instr, 1, Col_Decl)
-              & " " & New_Word
-              & Unbounded_Slice (New_Instr, Col_Decl + 1, Length (New_Instr));
-         end if;
-
          End_Decl := Get_End (Work_Extract);
-         Current_Text.Add_Line
-           (File_Cursor'
-              (Line => Get_Line (End_Decl'Access),
-               Col  => Get_Column (End_Decl'Access),
-               File => Get_File_Path (Get_File (End_Decl'Access))),
-            To_String (New_Instr), True);
+
+         Cursor := File_Cursor'
+           (Line => Get_Line (End_Decl'Access),
+            Col  => Get_Column (End_Decl'Access),
+            File => Get_File_Path (Get_File (End_Decl'Access)));
+
+         Current_Text.Add_Line (Cursor, To_String (New_Instr), True);
+
+         --  Skip to new added line
+         Cursor.Set_Line (Cursor.Line + 1);
+         Cursor.Set_Column (1);
 
          Free (New_Instr);
       end if;
+
+      Current_Text.Replace
+        (Position      => File_Cursor'Class
+           (Current_Text.Search_Token (Cursor, Colon_Tok)),
+         Len           => 1,
+         New_Text      => ": " & New_Word,
+         Blanks_Before => Keep,
+         Blanks_After  => One);
 
       Free (Work_Extract);
       Free (Cursor);
