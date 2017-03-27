@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Equal_Case_Insensitive; use Ada.Strings;
 with Ada.Unchecked_Deallocation;
@@ -1107,7 +1108,8 @@ package body GUI_Utils is
       declare
          use String_List_Utils.String_List;
          Text          : constant String :=
-                           Get_Slice (Buffer, Prompt_Iter, Last_Iter);
+           Ada.Strings.Fixed.Trim
+             (Get_Slice (Buffer, Prompt_Iter, Last_Iter), Left);
          Completions   : constant Vector := Completion (Text, View, User_Data);
          Prefix        : constant String := Longest_Prefix (Completions);
          Line          : Gint;
