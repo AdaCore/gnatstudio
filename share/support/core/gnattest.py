@@ -10,7 +10,7 @@ import os.path
 import GPS
 from gps_utils import hook, interactive
 
-GPS.Preference("Plugins/gnattest/read_only_color"
+GPS.Preference("GNATtest:Colors/read_only_color"
                ).create("Highlight color", "color",
                         """Background color for read-only areas""",
                         "#e0e0e0")
@@ -203,7 +203,7 @@ def mark_read_only_areas(buffer):
             # if overlay hasn't exist yet, create one
             if not read_only_overlay:
                 read_only_overlay = buffer.create_overlay()
-                color = GPS.Preference("Plugins/gnattest/read_only_color"
+                color = GPS.Preference("GNATtest:Colors/read_only_color"
                                        ).get()
                 read_only_overlay.set_property("paragraph-background", color)
                 read_only_overlay.set_property("editable", False)

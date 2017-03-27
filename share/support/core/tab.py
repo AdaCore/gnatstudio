@@ -9,9 +9,7 @@ This function is available in GPS through the action
 """
 
 import GPS
-from gps_utils import interactive, make_interactive, in_editor
-import text_utils
-import pygps
+from gps_utils import interactive
 import aliases
 import align
 from gi.repository import Gtk

@@ -19,19 +19,14 @@ share/plug-ins/vcs/*.py           no-precommit-check
 share/support/core/languages.py       no-precommit-check
 share/support/core/projects.py        no-precommit-check
 share/support/languages/c_support.py  no-precommit-check
-share/plug-ins/subversion.py          no-precommit-check
+share/support/core/gpr.py             no-precommit-check
+share/support/core/vcs/*              no-precommit-check
 
 # Long lines for external commands to execute
-share/plug-ins/clearcase.py   no-precommit-check
-share/plug-ins/cvs.py         no-precommit-check
-share/plug-ins/git.py         no-precommit-check
-share/plug-ins/gnatdist.py    no-precommit-check
-share/plug-ins/mercurial.py   no-precommit-check
-share/plug-ins/spark.py       no-precommit-check
-share/plug-ins/subversion.py  no-precommit-check
-share/library/parasail.py     no-precommit-check
-share/plug-ins/c_support.py   no-precommit-check
-kernel/src/hooks.py           no-precommit-check
+share/support/core/gnatdist.py        no-precommit-check
+share/support/core/spark.py           no-precommit-check
+share/library/parasail.py             no-precommit-check
+kernel/src/hooks.py                   no-precommit-check
 
 # Automatically generated
 share/support/core/runtime.py no-precommit-check

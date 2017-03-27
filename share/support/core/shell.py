@@ -41,7 +41,7 @@ class Unix_Shell(ANSI_Console_Process):
         os.environ["TERM"] = "xterm"
         os.environ["GPSSHELL"] = "1"
         ANSI_Console_Process.__init__(self, command)
-        if GPS.Preference("Plugins/shell/stty").get():
+        if GPS.Preference("External Commands:Shell/stty").get():
             self.send('stty echo; PS1="\[\e[1G\]$PS1"; clear')
         os.environ["TERM"] = oldterm
 
@@ -87,19 +87,19 @@ def if_has_directory(context):
         return False
 
 
-GPS.Preference("Plugins/shell/contextual").create(
+GPS.Preference("External Commands:Shell/contextual").create(
     "Contextual menu", "boolean",
     """Add contextual menu to start OS shell from project view
 (needs to restart GPS)""",
     True)
-GPS.Preference("Plugins/shell/stty").create(
+GPS.Preference("External Commands:Shell/stty").create(
     "Send stty setup", "boolean",
     """"Send the 'stty echo' command automatically. This command
 is needed in some shells to see the keys typed on the keyboard.
 This is only applicable to Unix shells.""",
     True)
 
-if GPS.Preference("Plugins/shell/contextual").get():
+if GPS.Preference("External Commands:Shell/contextual").get():
     make_interactive(
         create_default_shell, name='open os shell for contextual menu',
         contextual=on_label, filter=if_has_directory)

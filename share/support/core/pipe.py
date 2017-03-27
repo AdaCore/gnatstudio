@@ -29,7 +29,7 @@ from GPS import *
 import os_utils
 from gps_utils import *
 
-Preference("Plugins/pipe/bgcolor").create(
+Preference("External Commands:Pipe/bgcolor").create(
     "Background color", "color",
     "Background color for the command window"
     " where you enter the command to execute", "yellow")
@@ -92,7 +92,7 @@ class ShellProcess (CommandWindow):
         CommandWindow.__init__(self, global_window=True,
                                prompt="Shell command:",
                                on_activate=self.on_activate)
-        self.set_background(Preference("Plugins/pipe/bgcolor").get())
+        self.set_background(Preference("External Commands:Pipe/bgcolor").get())
 
     def on_activate(self, shell_command):
         sel_pipe(shell_command)

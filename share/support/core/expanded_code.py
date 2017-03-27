@@ -104,8 +104,8 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
     for line in txt.split("\n"):
         if line.startswith("-- "):
             if current_code:
-                if (block_first == 0
-                        or (block_first < current_line < block_last)):
+                if (block_first == 0 or
+                        (block_first < current_line < block_last)):
                     mark = srcbuf.add_special_line(current_line + 1,
                                                    "\n".join(current_code),
                                                    highlighting)
