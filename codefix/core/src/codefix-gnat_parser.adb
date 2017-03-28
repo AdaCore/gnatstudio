@@ -74,7 +74,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'possible mispelling of "=>"'
 
-   type Light_Misspelling is new Error_Parser (2) with null record;
+   type Light_Misspelling is new Error_Parser (3) with null record;
 
    overriding
    procedure Initialize (This : in out Light_Misspelling);
@@ -1372,7 +1372,9 @@ package body Codefix.GNAT_Parser is
         (new Pattern_Matcher'
            (Compile ("misspelling of ""([^""]+)""$")),
          new Pattern_Matcher'
-           (Compile ("incorrect spelling of keyword ""([^""]+)""$")));
+           (Compile ("incorrect spelling of keyword ""([^""]+)""$")),
+         new Pattern_Matcher'
+           (Compile (" expected ""([^""]+)""$")));
    end Initialize;
 
    overriding procedure Fix
