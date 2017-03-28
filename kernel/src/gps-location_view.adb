@@ -1799,18 +1799,6 @@ package body GPS.Location_View is
       List      : Gtk_Tree_Path_List.Glist;
       G_Iter    : Gtk_Tree_Path_List.Glist;
 
-      procedure Get_Path_And_Iter;
-
-      -----------------------
-      -- Get_Path_And_Iter --
-      -----------------------
-
-      procedure Get_Path_And_Iter is
-      begin
-         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-         Iter := Get_Iter (Model, Path);
-      end Get_Path_And_Iter;
-
       use type Gtk_Tree_Path_List.Glist;
    begin
       if View = null then
@@ -1827,9 +1815,12 @@ package body GPS.Location_View is
          return Commands.Failure;
       end if;
 
-      G_Iter := Gtk_Tree_Path_List.First (List);
+      G_Iter := Gtk_Tree_Path_List.Last (List);
       while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-         Get_Path_And_Iter;
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         if Path /= Null_Gtk_Tree_Path then
+            Iter := Get_Iter (Model, Path);
+         end if;
 
          if Iter /= Null_Iter then
             if Path.Get_Depth = 1 then
@@ -1854,19 +1845,9 @@ package body GPS.Location_View is
          end if;
 
          Path_Free (Path);
-         G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+         G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
       end loop;
       Gtk_Tree_Path_List.Free (List);
-
-      --  We just selected a new row,
-      Next (Model, Iter);
-      if Iter /= Null_Iter then
-         Path := Get_Path (Model, Iter);
-         if Path /= Null_Gtk_Tree_Path then
-            View.View.Location_Clicked (Path, Iter);
-            Path_Free (Path);
-         end if;
-      end if;
 
       return Commands.Success;
    end Execute;
