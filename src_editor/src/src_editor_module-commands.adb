@@ -1125,53 +1125,58 @@ package body Src_Editor_Module.Commands is
       Comment : Boolean;
       Context : GPS.Kernel.Selection_Context)
    is
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type;
-      Buffer     : Source_Buffer;
+      pragma Unreferenced (Context);
+      Editor : constant MDI_Child := Find_Current_Editor (Kernel);
    begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
-      then
+      if Editor /= null then
          declare
-            Lang  : Language_Access;
-            File  : constant Virtual_File := File_Information (Context);
-            Block : Unbounded_String      := Null_Unbounded_String;
+            Start_Line : Editable_Line_Type;
+            Start_Col  : Character_Offset_Type;
+            End_Line   : Editable_Line_Type;
+            End_Col    : Character_Offset_Type;
+            Buffer     : Source_Buffer;
+            Lang       : Language_Access;
+            Found      : Boolean;
+            Block      : Unbounded_String := Null_Unbounded_String;
          begin
-            declare
-               Prj    : constant Project_Type := Project_Information (Context);
-               Editor : MDI_Child := Find_Editor (Kernel, File, Prj);
-            begin
-               if Editor = null then
-                  Editor := Find_Editor (Kernel, File, No_Project);
-               end if;
-               Buffer := Get_Buffer (Get_Source_Box_From_MDI (Editor));
-            end;
+            Buffer := Get_Buffer (Get_Source_Box_From_MDI (Editor));
+
+            --  Return immediately if the editor is not writable
 
             if not Get_Writable (Buffer) then
                return;
             end if;
 
-            if Has_Area_Information (Context) then
-               Get_Area (Context, Natural (Start_Line), Natural (End_Line));
+            --  Get the selection bounds of the current editor
 
-            elsif Has_Line_Information (Context) then
-               Start_Line :=
-                 Editable_Line_Type (Contexts.Line_Information (Context));
+            Buffer.Get_Selection_Bounds
+              (Start_Line   => Start_Line,
+               Start_Column => Start_Col,
+               End_Line     => End_Line,
+               End_Column   => End_Col,
+               Found        => Found);
+
+            --  Comment the selected text if any or the current line if there
+            --  is no selection. Don't comment the ending line of the selection
+            --  if no character is selected on this line
+            --  (i.e: when End_Col = 1).
+
+            if not Found then
+               Buffer.Get_Cursor_Position
+                 (Line   => Start_Line,
+                  Column => Start_Col);
                End_Line := Start_Line;
-            else
-               return;
+            elsif End_Col = 1 and then End_Line > Start_Line then
+               End_Line := End_Line - 1;
             end if;
-
-            Lang :=
-              Get_Language_From_File (Get_Language_Handler (Kernel), File);
-
-            --  Create a String representing the selected block
 
             for J in Start_Line .. End_Line loop
                Append
                  (Block,
                   Get_Chars (Buffer => Buffer, Line => J, Column => 1));
             end loop;
+
+            Lang := Buffer.Get_Language;
 
             Replace_Slice
               (Buffer,

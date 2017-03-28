@@ -7808,15 +7808,24 @@ package body Src_Editor_Buffer is
    -- Is_Editor --
    ---------------
 
-   function Is_Editor (Ctxt : Selection_Context) return Boolean is
+   function Is_Editor (Ctxt : Selection_Context) return Boolean
+   is
    begin
       --  Do not check the current focus widget ourselves. Instead, we know
       --  it has been properly checked when the context was created, and we
       --  just check the current module from there.
-      return not Completion_Module.In_Smart_Completion
-        and then GPS.Kernel.Modules.Module_ID
-          (Get_Creator (Ctxt)) = Src_Editor_Module_Id
-            and then not Get_Kernel (Ctxt).Get_Contextual_Menu_Open;
+      if Completion_Module.In_Smart_Completion
+        or else Get_Kernel (Ctxt).Get_Contextual_Menu_Open
+      then
+         return False;
+      else
+         declare
+            Creator : constant Module_ID := Module_ID (Get_Creator (Ctxt));
+         begin
+            return Creator = Src_Editor_Module_Id
+              or else Get_Name (Creator) = "Actions_Search";
+         end;
+      end if;
    end Is_Editor;
 
    ------------------------------

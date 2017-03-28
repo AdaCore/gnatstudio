@@ -28,6 +28,23 @@ with Pango.Enums;         use Pango.Enums;
 
 package body GPS.Kernel.Search.Actions is
 
+   Module : Actions_Search_Module_ID;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   overriding procedure Register_Module
+     (Self : not null access Actions_Search_Provider) is
+   begin
+      Module := new Actions_Search_Module_ID_Record;
+
+      Register_Module
+        (Module      => Module,
+         Kernel      => Self.Kernel,
+         Module_Name => "Actions_Search");
+   end Register_Module;
+
    -------------------
    -- Documentation --
    -------------------
@@ -162,10 +179,17 @@ package body GPS.Kernel.Search.Actions is
       Give_Focus : Boolean)
    is
       Dummy : Boolean;
+      Ctxt  : constant Selection_Context :=
+                New_Context
+                  (Kernel  => Self.Kernel,
+                   Creator => Module);
       pragma Unreferenced (Dummy, Give_Focus);
    begin
       Dummy := Execute_Action
-         (Self.Kernel, Self.Name.all, Error_Msg_In_Console => True);
+        (Self.Kernel,
+         Action               => Self.Name.all,
+         Context              => Ctxt,
+         Error_Msg_In_Console => True);
    end Execute;
 
    ----------

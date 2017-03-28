@@ -49,6 +49,12 @@ package GPS.Kernel.Search is
    type On_Settings_Changed_Callback is access procedure
      (Data : access Glib.Object.GObject_Record'Class);
 
+   procedure Register_Module (Self : not null access Kernel_Search_Provider)
+   is null;
+   --  Register the module corresponding to the given search provider.
+   --  This procedure does nothing by default: override it if the inherited
+   --  search provider needs to store some global data in a module.
+
    procedure Edit_Settings
      (Self : not null access Kernel_Search_Provider;
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;

@@ -150,6 +150,9 @@ package body GPS.Search.GUI is
    begin
       Provider.Kernel := Kernel_Handle (Kernel);
 
+      --  Register the provider's module
+      Provider.Register_Module;
+
       --  Initialize the registry if it's the first time
       if Module.Registry = null then
          Module.Registry := new Search_Provider_Registry;

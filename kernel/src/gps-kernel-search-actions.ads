@@ -18,12 +18,19 @@
 --  A search provider that matches actions.
 
 with GPS.Kernel.Actions;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Search;
 
 package GPS.Kernel.Search.Actions is
 
+   type Actions_Search_Module_ID_Record is new Module_ID_Record with private;
+   type Actions_Search_Module_ID is
+     access all Actions_Search_Module_ID_Record'Class;
+
    type Actions_Search_Provider is new Kernel_Search_Provider
-     with private;
+   with private;
+   overriding procedure Register_Module
+     (Self : not null access Actions_Search_Provider);
    overriding function Documentation
      (Self    : not null access Actions_Search_Provider) return String;
    overriding procedure Set_Pattern
@@ -46,6 +53,10 @@ package GPS.Kernel.Search.Actions is
    overriding procedure Free (Self : in out Actions_Search_Result);
 
 private
+
+   type Actions_Search_Module_ID_Record is
+     new Module_ID_Record with null record;
+
    type Actions_Search_Provider is new Kernel_Search_Provider with record
       Pattern : GPS.Search.Search_Pattern_Access;
       --  Current pattern, do not free
