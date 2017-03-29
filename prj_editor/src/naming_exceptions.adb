@@ -15,161 +15,138 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
-with Glib;                   use Glib;
-with Glib_Values_Utils;      use Glib_Values_Utils;
+with Glib;                     use Glib;
+with Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Widget;               use Gtk.Widget;
 
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Types.Keysyms;      use Gdk.Types, Gdk.Types.Keysyms;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Button;             use Gtk.Button;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.GEntry;             use Gtk.GEntry;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Gtk.Tree_View;          use Gtk.Tree_View;
-with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-
-with GPS.Intl;               use GPS.Intl;
 with Basic_Types;
-with GUI_Utils;              use GUI_Utils;
+with GUI_Utils;                use GUI_Utils;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
 package body Naming_Exceptions is
 
    Empty_Filename : constant String := "<filename>";
+   --  Used to initialize a new tree view row
 
-   procedure Destroy_Editor (Editor : access Gtk_Widget_Record'Class);
-   --  Called when the editor is destroyed
+   Is_Spec_Column  : constant := 0;
+   --  Column used to know if a the row's filename designates a specification
+   --  file.
 
-   procedure On_Add (Editor : access Gtk_Widget_Record'Class);
-   --  Called when a new exception is added
+   Filename_Column : constant := 1;
+   --  Column where the file name of the naming exception is stored
 
-   function On_Edit_Filename
-     (Editor : access Gtk_Widget_Record'Class) return Boolean;
-   --  Called when the user starts editing the filename
+   Editable_Column : constant := 2;
+   --  Column indicating if the row is editable or not
 
-   function Delete_Exception
-     (Editor : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
-   --  Called when the user presses a key in the list of exceptions
+   Is_Spec_Column_Name  : aliased String := "Specification File";
+   Filename_Column_Name : aliased String := "Filename";
+   --  Column titles
 
-   procedure Exception_Edited (Editor : access Gtk_Widget_Record'Class);
-   --  Called when an existing exception has been edited
+   Column_Types   : constant GType_Array :=
+     (Is_Spec_Column    => GType_Boolean,
+      Filename_Column   => GType_String,
+      Editable_Column   => GType_Boolean);
+   --  Column types of the exceptions list tree view
 
-   --------------------
-   -- Destroy_Editor --
-   --------------------
+   procedure Add_Naming_Exception
+     (Self           : not null access Exceptions_Editor_Record'Class;
+      Filename       : String;
+      Is_Spec        : Boolean;
+      Editable       : Boolean := True;
+      Scroll_To_Cell : Boolean := False);
+   --  Add a new row in the execptions list tree view
 
-   procedure Destroy_Editor (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Exceptions_Editor := Exceptions_Editor (Editor);
-   begin
-      Free (Ed.Language);
-   end Destroy_Editor;
+   procedure On_Add_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when clicking on the '+' button of the exception list view
 
-   ----------------------
-   -- Exception_Edited --
-   ----------------------
+   procedure On_Remove_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when clicking on the '-' button of the exception list view
 
-   procedure Exception_Edited (Editor : access Gtk_Widget_Record'Class) is
-      Ed    : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-   begin
-      Get_Selected (Get_Selection (Ed.Exceptions_List), Model, Iter);
-      if Iter /= Null_Iter then
-         if Get_String (Ed.Exceptions, Iter, 0) = "" then
-            Remove (Ed.Exceptions, Iter);
-         end if;
-      end if;
-   end Exception_Edited;
+   --------------------------
+   -- Add_Naming_Exception --
+   --------------------------
 
-   ----------------------
-   -- Delete_Exception --
-   ----------------------
-
-   function Delete_Exception
-     (Editor : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+   procedure Add_Naming_Exception
+     (Self           : not null access Exceptions_Editor_Record'Class;
+      Filename       : String;
+      Is_Spec        : Boolean;
+      Editable       : Boolean := True;
+      Scroll_To_Cell : Boolean := False)
    is
-      Ed    : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
+      New_Iter : Gtk_Tree_Iter;
    begin
-      if Get_Event_Type (Event) = Key_Press
-        and then (Get_Key_Val (Event) = GDK_BackSpace
-                  or else Get_Key_Val (Event) = GDK_Delete)
-      then
-         Get_Selected (Get_Selection (Ed.Exceptions_List), Model, Iter);
-         if Iter /= Null_Iter then
-            Remove (Ed.Exceptions, Iter);
-            return True;
-         end if;
-      end if;
-      return False;
-   end Delete_Exception;
+      Self.Exceptions_List_Model.Append (New_Iter, Parent => Null_Iter);
 
-   ------------
-   -- On_Add --
-   ------------
+      Set_And_Clear
+        (Self.Exceptions_List_Model,
+         Iter   => New_Iter,
+         Values =>
+           (Filename_Column    => As_String (Filename),
+            Is_Spec_Column     => As_Boolean (Is_Spec),
+            Editable_Column    => As_Boolean (Editable)));
 
-   procedure On_Add (Editor : access Gtk_Widget_Record'Class) is
-      Ed       : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Filename : constant String := Get_Text (Ed.Filename_Entry);
-      Iter     : Gtk_Tree_Iter;
-      Found    : Boolean := False;
-
-   begin
-      if Filename /= -Empty_Filename then
-         --  Check if there is already an entry for this file
-         Iter := Get_Iter_First (Ed.Exceptions);
-         while Iter /= Null_Iter loop
-            if Get_String (Ed.Exceptions, Iter, 0) = Filename then
-               Found := True;
-               exit;
-            end if;
-            Next (Ed.Exceptions, Iter);
-         end loop;
-
-         if not Found then
-            Append (Ed.Exceptions, Iter, Null_Iter);
-            Set_And_Clear (Ed.Exceptions, Iter,
-                           (0 => As_String  (Filename),
-                            1 => As_Boolean (True)));
-
-            Set_Text (Ed.Filename_Entry, -Empty_Filename);
-         end if;
-
-         Scroll_To_Cell
-           (Ed.Exceptions_List,
-            Get_Path (Ed.Exceptions, Iter),
-            Column => Get_Column (Ed.Exceptions_List, 0),
+      if Scroll_To_Cell then
+         Self.Exceptions_List_Tree.Scroll_To_Cell
+           (Get_Path (Self.Exceptions_List_Model, New_Iter),
+            Column    => Get_Column
+              (Self.Exceptions_List_Tree, Filename_Column),
             Use_Align => False,
             Row_Align => 0.0,
             Col_Align => 0.0);
+         Self.Exceptions_List_Tree.Set_Cursor_On_Cell
+           (Get_Path (Self.Exceptions_List_Model, New_Iter),
+            Focus_Column  => Get_Column
+              (Self.Exceptions_List_Tree, Filename_Column),
+            Focus_Cell    => null,
+            Start_Editing => True);
       end if;
-   end On_Add;
+   end Add_Naming_Exception;
 
-   ----------------------
-   -- On_Edit_Filename --
-   ----------------------
+   -----------------------------
+   -- On_Add_Naming_Exception --
+   -----------------------------
 
-   function On_Edit_Filename
-     (Editor : access Gtk_Widget_Record'Class) return Boolean
+   procedure On_Add_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class)
    is
-      Ed       : constant Exceptions_Editor := Exceptions_Editor (Editor);
-      Filename : constant String := Get_Text (Ed.Filename_Entry);
+      Editor   : constant Exceptions_Editor := Exceptions_Editor (Self);
    begin
-      if Filename = -Empty_Filename then
-         Set_Text (Ed.Filename_Entry, "");
+      Editor.Add_Naming_Exception
+        (Filename       => Empty_Filename,
+         Is_Spec        => False,
+         Scroll_To_Cell => True);
+   end On_Add_Naming_Exception;
+
+   --------------------------------
+   -- On_Remove_Naming_Exception --
+   --------------------------------
+
+   procedure On_Remove_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      Editor : constant Exceptions_Editor := Exceptions_Editor (Self);
+      Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+   begin
+      Get_Selected (Get_Selection (Editor.Exceptions_List_Tree), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Editor.Exceptions_List_Model.Remove (Iter);
       end if;
-      return False;
-   end On_Edit_Filename;
+   end On_Remove_Naming_Exception;
 
    -------------
    -- Gtk_New --
@@ -179,64 +156,54 @@ package body Naming_Exceptions is
      (Editor   : out Exceptions_Editor;
       Language : String)
    is
-      Render   : Gtk_Cell_Renderer_Text;
-      Col      : Gtk_Tree_View_Column;
-      Num      : Gint;
-      Box      : Gtk_Box;
-      Button   : Gtk_Button;
-      Scrolled : Gtk_Scrolled_Window;
-      pragma Unreferenced (Num);
+      Button     : Gtk_Button;
+      Col_Number : Gint with Unreferenced;
    begin
       Editor := new Exceptions_Editor_Record;
-      Editor.Language := new String'(Language);
-      Initialize_Vbox (Editor, Homogeneous => False);
-      Widget_Callback.Connect (Editor, Signal_Destroy, Destroy_Editor'Access);
+      Dialog_Utils.Initialize
+        (Editor,
+         Position => Pos_Left);
+      Editor.Language := To_Unbounded_String (To_Lower (Language));
 
-      Gtk_New (Scrolled);
-      Pack_Start (Editor, Scrolled, Expand => True, Fill => True);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      --  Create the exceptions list tree view
 
-      Gtk_New (Editor.Exceptions, (0 => GType_String, 1 => GType_Boolean));
-      Gtk_New (Editor.Exceptions_List, Editor.Exceptions);
-      Add (Scrolled, Editor.Exceptions_List);
-      Set_Mode (Get_Selection (Editor.Exceptions_List), Selection_Single);
-      Return_Callback.Object_Connect
-        (Editor.Exceptions_List, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (Delete_Exception'Access), Editor);
+      Editor.Exceptions_List_Tree := Create_Tree_View
+        (Column_Types       => Column_Types,
+         Column_Names       =>
+           (Is_Spec_Column + 1  => Is_Spec_Column_Name'Unchecked_Access,
+            Filename_Column + 1 => Filename_Column_Name'Unchecked_Access),
+         Show_Column_Titles => True,
+         Editable_Columns   => (Is_Spec_Column  => Editable_Column,
+                                Filename_Column => Editable_Column),
+         Selection_Mode     => Selection_Single);
+      Editor.Exceptions_List_Model := -Get_Model (Editor.Exceptions_List_Tree);
 
-      Gtk_New (Render);
+      Editor.Append
+        (Widget        => Editor.Exceptions_List_Tree,
+         Expand        => True,
+         Fill          => True);
 
-      Gtk_New (Col);
-      Set_Clickable (Col, True);
-      Set_Sort_Column_Id (Col, 0);
-      Num := Append_Column (Editor.Exceptions_List, Col);
-      Set_Title (Col, -"Filename");
-      Pack_Start (Col, Render, True);
-      Add_Attribute (Col, Render, "text", 0);
-      Add_Attribute (Col, Render, "editable", 1);
-      Set_Editable_And_Callback (Editor.Exceptions, Render, 0);
-      Widget_Callback.Object_Connect
-        (Render, Signal_Edited, Exception_Edited'Access, Editor);
+      --  Create the 'add' and 'remove' buttons
 
-      Clicked (Col);
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked
+        (Call  => On_Add_Naming_Exception'Access,
+         Slot  => Editor);
+      Editor.Append_Button (Button);
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Editor, Box, Expand => False);
-
-      Gtk_New (Editor.Filename_Entry);
-      Set_Text (Editor.Filename_Entry, Empty_Filename);
-      Pack_Start (Box, Editor.Filename_Entry, Expand => True, Fill => True);
-      Return_Callback.Object_Connect
-        (Editor.Filename_Entry, Signal_Key_Press_Event,
-         On_Edit_Filename'Access, Editor);
-      Widget_Callback.Object_Connect
-        (Editor.Filename_Entry,
-         Gtk.GEntry.Signal_Activate, On_Add'Access, Editor);
-
-      Gtk_New (Button, -"Add");
-      Pack_Start (Box, Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Button.Signal_Clicked, On_Add'Access, Editor);
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked
+        (Call  => On_Remove_Naming_Exception'Access,
+         Slot  => Editor);
+      Editor.Append_Button (Button);
    end Gtk_New;
 
    --------------------------
@@ -249,47 +216,141 @@ package body Naming_Exceptions is
       Scenario_Variables : Scenario_Variable_Array)
       return Boolean
    is
-      Num_Rows : constant Gint := N_Children (Editor.Exceptions);
-      Bodies   : Argument_List (1 .. Integer (Num_Rows));
-      Changed  : Boolean := False;
-      Iter     : Gtk_Tree_Iter := Get_Iter_First (Editor.Exceptions);
+      Model     : Gtk_Tree_Store renames Editor.Exceptions_List_Model;
+      Language  : constant String := To_String (Editor.Language);
 
+      function Get_Number_Of_Spec_Exceptions return Integer;
+      --  Return the number of naming exceptions that are for specification
+      --  files in the exceptions list tree view model
+
+      procedure Fetch_Exceptions_From_Model
+        (Impls : out Argument_List;
+         Specs : out Argument_List);
+      --  Fetch the implementation and specification naming exceptions from
+      --  the model.
+
+      function Change_Exception_Attr_If_Needed
+        (Attr       : Attribute_Pkg_List;
+         Exceptions : Argument_List) return Boolean;
+      --  Change the given attribute if needed, giving Exceptions as a new
+      --  value for it.
+      --  Return True if the attribute has been changed.
+
+      -----------------------------------
+      -- Get_Number_Of_Spec_Exceptions --
+      -----------------------------------
+
+      function Get_Number_Of_Spec_Exceptions return Integer is
+         Result : Integer := 0;
+         Iter   : Gtk_Tree_Iter := Get_Iter_First
+           (Editor.Exceptions_List_Model);
+      begin
+         while Iter /= Null_Iter loop
+            if Get_Boolean (Model, Iter, Is_Spec_Column) then
+               Result := Result + 1;
+            end if;
+            Next (Model, Iter);
+         end loop;
+
+         return Result;
+      end Get_Number_Of_Spec_Exceptions;
+
+      ---------------------------------
+      -- Fetch_Exceptions_From_Model --
+      ---------------------------------
+
+      procedure Fetch_Exceptions_From_Model
+        (Impls : out Argument_List;
+         Specs : out Argument_List)
+      is
+         Impl_Idx : Integer := Impls'First;
+         Spec_Idx : Integer := Specs'First;
+         Iter     : Gtk_Tree_Iter := Get_Iter_First
+           (Editor.Exceptions_List_Model);
+      begin
+         while Iter /= Null_Iter loop
+            if Get_Boolean (Model, Iter, Is_Spec_Column) then
+               Specs (Spec_Idx) := new String'
+                 (Get_String (Model, Iter, Filename_Column));
+               Spec_Idx := Spec_Idx + 1;
+            else
+               Impls (Impl_Idx) := new String'
+                 (Get_String (Model, Iter, Filename_Column));
+               Impl_Idx := Impl_Idx + 1;
+            end if;
+
+            Next (Model, Iter);
+         end loop;
+      end Fetch_Exceptions_From_Model;
+
+      -------------------------------------
+      -- Change_Exception_Attr_If_Needed --
+      -------------------------------------
+
+      function Change_Exception_Attr_If_Needed
+        (Attr       : Attribute_Pkg_List;
+         Exceptions : Argument_List) return Boolean
+      is
+         Need_Change    : Boolean := False;
+         Old_Exceptions : String_List_Access := Project.Attribute_Value
+           (Attribute => Attr,
+            Index     => Language);
+      begin
+         --  Compare the exceptions list with the one currently set in the
+         --  project to know if we should change the project.
+
+         if Old_Exceptions = null then
+            Need_Change := Exceptions'Length > 0;
+         else
+            Need_Change := not Basic_Types.Is_Equal
+              (Exceptions, Old_Exceptions.all);
+         end if;
+
+         Free (Old_Exceptions);
+
+         if Need_Change then
+            if Exceptions'Length > 0 then
+               Project.Set_Attribute
+                 (Scenario  => Scenario_Variables,
+                  Attribute => Attr,
+                  Values    => Exceptions,
+                  Index     => Language);
+            else
+               Project.Delete_Attribute
+                 (Scenario  => Scenario_Variables,
+                  Attribute => Attr,
+                  Index     => Language);
+            end if;
+         end if;
+
+         return Need_Change;
+      end Change_Exception_Attr_If_Needed;
+
+      Nb_Rows   : constant Integer :=
+                    Integer (N_Children (Editor.Exceptions_List_Model));
+      Nb_Specs  : constant Integer := Get_Number_Of_Spec_Exceptions;
+      Nb_Impls  : constant Integer := Nb_Rows - Nb_Specs;
+      Specs     : Argument_List (1 .. Nb_Specs);
+      Impls     : Argument_List (1 .. Nb_Impls);
+      Changed   : Boolean := False;
    begin
-      for J in 0 .. Num_Rows - 1 loop
-         Bodies (Integer (J + 1)) := new String'
-           (Get_String (Editor.Exceptions, Iter, 0));
-         Next (Editor.Exceptions, Iter);
-      end loop;
+      --  Get the exceptions from the exceptions list tree view model
+
+      Fetch_Exceptions_From_Model
+        (Impls => Impls,
+         Specs => Specs);
 
       if Project = No_Project then
          Changed := True;
       else
-         declare
-            Old_Exceptions : String_List_Access := Project.Attribute_Value
-              (Attribute => Impl_Exception_Attribute,
-               Index     => Editor.Language.all);
-         begin
-            Changed := Old_Exceptions /= null
-              and then not Basic_Types.Is_Equal (Bodies, Old_Exceptions.all);
-            Free (Old_Exceptions);
-         end;
-      end if;
+         --  Change the corresponding project attributes, if needed
 
-      if Changed then
-         if Num_Rows /= 0 then
-            Project.Set_Attribute
-              (Scenario  => Scenario_Variables,
-               Attribute => Impl_Exception_Attribute,
-               Values    => Bodies,
-               Index     => Editor.Language.all);
-         else
-            Project.Delete_Attribute
-              (Scenario  => Scenario_Variables,
-               Attribute => Impl_Exception_Attribute,
-               Index     => Editor.Language.all);
-         end if;
-
-         Changed := True;
+         Changed := Change_Exception_Attr_If_Needed
+           (Attr       => Impl_Exception_Attribute,
+            Exceptions => Impls);
+         Changed := Changed or Change_Exception_Attr_If_Needed
+           (Attr       => Spec_Exception_Attribute,
+            Exceptions => Specs);
       end if;
 
       return Changed;
@@ -303,29 +364,39 @@ package body Naming_Exceptions is
      (Editor             : access Exceptions_Editor_Record;
       Project            : Project_Type)
    is
-      Iter   : Gtk_Tree_Iter := Null_Iter;
-      Freeze : Gint;
+      procedure Add_Exceptions_From_Project_Attribute
+        (Attr : Attribute_Pkg_List);
+      --  Add the filename exceptions stored for the given attribute
+
+      -------------------------------------------
+      -- Add_Exceptions_From_Project_Attribute --
+      -------------------------------------------
+
+      procedure Add_Exceptions_From_Project_Attribute
+        (Attr : Attribute_Pkg_List)
+      is
+         Filenames : String_List_Access := Project.Attribute_Value
+              (Attribute => Attr,
+               Index     => To_String (Editor.Language));
+         Is_Spec   : constant Boolean := Attr = Spec_Exception_Attribute;
+      begin
+         if Filenames /= null then
+            for Filename of Filenames.all loop
+               Editor.Add_Naming_Exception
+                 (Filename       => Filename.all,
+                  Is_Spec        => Is_Spec);
+            end loop;
+
+            Free (Filenames);
+         end if;
+      end Add_Exceptions_From_Project_Attribute;
+
    begin
-      Clear (Editor.Exceptions);
+      Clear (Editor.Exceptions_List_Model);
 
       if Project /= No_Project then
-         declare
-            Bodies : String_List_Access := Project.Attribute_Value
-              (Attribute => Impl_Exception_Attribute,
-               Index     => Editor.Language.all);
-         begin
-            if Bodies /= null then
-               Freeze := Freeze_Sort (Editor.Exceptions);
-               for B in Bodies'Range loop
-                  Append (Editor.Exceptions, Iter, Null_Iter);
-                  Set_And_Clear (Editor.Exceptions, Iter,
-                                 (0 => As_String  (Bodies (B).all),
-                                  1 => As_Boolean (True)));
-               end loop;
-               Thaw_Sort (Editor.Exceptions, Freeze);
-               Free (Bodies);
-            end if;
-         end;
+         Add_Exceptions_From_Project_Attribute (Impl_Exception_Attribute);
+         Add_Exceptions_From_Project_Attribute (Spec_Exception_Attribute);
       end if;
    end Show_Project_Settings;
 

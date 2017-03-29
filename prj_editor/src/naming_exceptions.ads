@@ -19,16 +19,18 @@
 --  It is only suitable for languages that do not distinguish between spec
 --  and bodies
 
-with Gtk.Box;
-with GNAT.Strings;
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with Gtk.GEntry;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+
 with Gtk.Tree_View;
 with Gtk.Tree_Store;
 
+with Dialog_Utils;          use Dialog_Utils;
+
 package Naming_Exceptions is
 
-   type Exceptions_Editor_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Exceptions_Editor_Record is new Dialog_View_With_Button_Box_Record
+   with private;
    type Exceptions_Editor is access all Exceptions_Editor_Record'Class;
 
    procedure Gtk_New
@@ -46,10 +48,10 @@ package Naming_Exceptions is
    --  See doc for homonym subprograms in naming_editors.ads
 
 private
-   type Exceptions_Editor_Record is new Gtk.Box.Gtk_Box_Record with record
-      Language        : GNAT.Strings.String_Access;
-      Filename_Entry  : Gtk.GEntry.Gtk_Entry;
-      Exceptions_List : Gtk.Tree_View.Gtk_Tree_View;
-      Exceptions      : Gtk.Tree_Store.Gtk_Tree_Store;
+   type Exceptions_Editor_Record is new Dialog_View_With_Button_Box_Record
+     with record
+      Language              : Unbounded_String;
+      Exceptions_List_Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      Exceptions_List_Model : Gtk.Tree_Store.Gtk_Tree_Store;
    end record;
 end Naming_Exceptions;
