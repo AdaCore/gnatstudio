@@ -3211,10 +3211,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       Debugger.Process.Set_Parse_File_Name (False);
       declare
+         S : constant String := Address_To_String (Start_Address);
+         E : constant String := Address_To_String (End_Address);
+
          Disassembled : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-data-disassemble -s " &
-              Address_To_String (Start_Address) & " -e " &
-              Address_To_String (End_Address) & " -- 0",
+           ("-data-disassemble" &
+            (if S /= "" and then E /= ""
+               then " -s " & S & " -e " & E else "") & " -- 0",
             Mode => Internal);
 
          Start_Index, End_Index : Integer;

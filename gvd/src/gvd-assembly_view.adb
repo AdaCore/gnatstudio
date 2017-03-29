@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GNAT.Strings;            use GNAT.Strings;
 with GNAT.Regpat;             use GNAT.Regpat;
 
@@ -258,6 +260,17 @@ package body GVD.Assembly_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
+   procedure Free (Data : in out Cache_Data_Access);
+
+   procedure Unchecked_Free is
+     new Ada.Unchecked_Deallocation (Cache_Data, Cache_Data_Access);
+
+   Invalid_Cache_Data : constant Cache_Data_Access := new Cache_Data'
+     (Low  => Invalid_Address,
+      High => Invalid_Address,
+      Data => new String'(-"Couldn't get assembly code"),
+      Next => null);
+
    ---------------
    -- Configure --
    ---------------
@@ -330,7 +343,7 @@ package body GVD.Assembly_View is
       Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self, Kernel);
-      Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
+      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
       Set_Source_Line (Get_View (Process), Process.Current_Line);
    end Execute;
@@ -596,6 +609,12 @@ package body GVD.Assembly_View is
       return null;
    end Find_In_Cache;
 
+   procedure Free (Data : in out Cache_Data_Access) is
+   begin
+      Free (Data.Data);
+      Unchecked_Free (Data);
+   end Free;
+
    -----------------
    -- Meta_Scroll --
    -----------------
@@ -720,16 +739,41 @@ package body GVD.Assembly_View is
       Start_Address : Address_Type;
       End_Address   : Address_Type)
    is
-      Process               : Visual_Debugger;
-      S                     : String_Access;
-      S2                    : String_Access;
-      S3                    : String_Access;
-      Start                 : Address_Type;
-      Last                  : Address_Type;
-      Low_Range, High_Range : Address_Type;
-      Start_In_Range        : Boolean;
-      End_In_Range          : Boolean;
-      S_First               : Natural;
+      Process        : Visual_Debugger;
+      S              : String_Access;
+      S2             : String_Access;
+      S3             : String_Access;
+      Start, Last    : Address_Type;
+      Low, High      : Address_Type;
+      Start_In_Range : Boolean := False;
+      End_In_Range   : Boolean := False;
+      S_First        : Natural;
+
+      procedure Free_Current;
+      procedure Free_Current is
+         Prev, Tmp : Cache_Data_Access;
+      begin
+         if View.Current_Range /= Invalid_Cache_Data then
+            Tmp := View.Cache;
+            while Tmp /= null
+              and then Tmp /= View.Current_Range
+            loop
+               Prev := Tmp;
+               Tmp  := Tmp.Next;
+            end loop;
+
+            if Tmp /= null then
+               if Prev /= null then
+                  Prev.Next := Tmp.Next;
+               else
+                  View.Cache := Tmp.Next;
+               end if;
+               Free (Tmp);
+            end if;
+         end if;
+
+         View.Current_Range := null;
+      end Free_Current;
 
    begin
       if View = null then
@@ -740,10 +784,21 @@ package body GVD.Assembly_View is
 
       --  Is the range already visible ?
 
-      Start_In_Range := In_Range (Start_Address, View.Current_Range);
-      End_In_Range := In_Range (End_Address, View.Current_Range);
+      if View.Current_Range /= null then
+         if View.Current_Range.Low = Invalid_Address
+           or else View.Current_Range.High = Invalid_Address
+         then
+            Free_Current;
 
-      if Start_In_Range and then End_In_Range then
+         else
+            Start_In_Range := In_Range (Start_Address, View.Current_Range);
+            End_In_Range   := In_Range (End_Address, View.Current_Range);
+         end if;
+      end if;
+
+      if Start_In_Range
+        and then End_In_Range
+      then
          return;
       end if;
 
@@ -757,12 +812,20 @@ package body GVD.Assembly_View is
             Start_Address   => Start_Address,
             End_Address     => View.Current_Range.Low);
 
-         View.Current_Range.Low := Start_Address;
+         if Start /= Invalid_Address
+           and then Last /= Invalid_Address
+           and then Last = View.Current_Range.Low
+         then
+            View.Current_Range.Low := Start;
 
-         S2 := View.Current_Range.Data;
-         View.Current_Range.Data := new String'
-           (Do_Tab_Expansion (S.all, 8) & ASCII.LF & S2.all);
-         Free (S2);
+            S2 := View.Current_Range.Data;
+            View.Current_Range.Data := new String'
+              (Do_Tab_Expansion (S.all, 8) & ASCII.LF & S2.all);
+            Free (S2);
+
+         else
+            Free_Current;
+         end if;
 
       --  Should we append to the current buffer ?
       elsif Start_In_Range then
@@ -774,96 +837,110 @@ package body GVD.Assembly_View is
             Start_Address   => View.Current_Range.High,
             End_Address     => Set_Offset (End_Address, 1));
 
-         View.Current_Range.High := End_Address;
+         if Start /= Invalid_Address
+           and then Start = View.Current_Range.High
+           and then Last /= Invalid_Address
+         then
+            View.Current_Range.High := Last;
 
-         --  Avoid duplicating the first assembly line since it was already
-         --  displayed.
-         S_First := S'First;
-         Skip_To_Char (S.all, S_First, ASCII.LF);
-         S_First := S_First + 1;
+            --  Avoid duplicating the first assembly line since it
+            --  was already displayed.
+            S_First := S'First;
+            Skip_To_Char (S.all, S_First, ASCII.LF);
+            S_First := S_First + 1;
 
-         S2 := View.Current_Range.Data;
-         View.Current_Range.Data := new String'
-           (S2.all & ASCII.LF &
-            Do_Tab_Expansion (S (S_First .. S'Last), 8));
-         Free (S2);
+            S2 := View.Current_Range.Data;
+            View.Current_Range.Data := new String'
+              (S2.all & ASCII.LF &
+                 Do_Tab_Expansion (S (S_First .. S'Last), 8));
+            Free (S2);
+
+         else
+            Free_Current;
+         end if;
+
+      else
+         View.Current_Range := null;
+      end if;
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
-      else
+      if View.Current_Range = null then
          View.Current_Range := Find_In_Cache (View, Start_Address);
-         if View.Current_Range = null then
+      end if;
+
+      if View.Current_Range = null then
+         if Assembly_Range_Size.Get_Pref = 0
+           or else End_Address = Invalid_Address
+         then
+            Get_Machine_Code
+              (Process.Debugger,
+               Range_Start     => Start,
+               Range_End       => Last,
+               Code            => S);
+         else
+            Get_Machine_Code
+              (Process.Debugger,
+               Range_Start     => Start,
+               Range_End       => Last,
+               Code            => S,
+               Start_Address   => Start_Address,
+               End_Address     => Set_Offset
+                 (Start_Address, Assembly_Range_Size.Get_Pref));
+         end if;
+
+         --  If both are null, this means that gdb couldn't get the assembly
+         --  at all, and there's no point in trying again afterwards.
+         --  We just pretend things worked....
+
+         if Start = Invalid_Address
+           and then Last = Invalid_Address
+         then
+            View.Current_Range := Invalid_Cache_Data;
+         else
+            Low  := Start;
+            High := Last;
+
+            --  If the end address is not visible, disassemble a little
+            --  bit more...
+
             if Assembly_Range_Size.Get_Pref = 0
-              or else End_Address = Invalid_Address
+              and then End_Address /= Invalid_Address
+              and then High /= Invalid_Address
+              and then End_Address > High
             then
                Get_Machine_Code
                  (Process.Debugger,
                   Range_Start     => Start,
                   Range_End       => Last,
-                  Code            => S);
-            else
-               Get_Machine_Code
-                 (Process.Debugger,
-                  Range_Start     => Start,
-                  Range_End       => Last,
-                  Code            => S,
-                  Start_Address   => Start_Address,
-                  End_Address     => Set_Offset
-                    (Start_Address, Assembly_Range_Size.Get_Pref));
-            end if;
+                  Code            => S2,
+                  Start_Address   => High,
+                  End_Address     => Set_Offset (End_Address, 1));
 
-            if Start /= Invalid_Address then
-               Low_Range := Start;
-            end if;
-
-            if Last /= Invalid_Address then
-               High_Range := Last;
-            end if;
-
-            --  If both are null, this means that gdb couldn't get the assembly
-            --  at all, and there's no point in trying again afterwards.
-            --  We just pretend things worked....
-
-            if Start = Invalid_Address and then Last = Invalid_Address then
-               View.Cache := new Cache_Data'
-                 (Low  => Start_Address,
-                  High => Start_Address,
-                  Data => new String'(-"Couldn't get assembly code"),
-                  Next => View.Cache);
-            else
-
-               --  If the end address is not visible, disassemble a little
-               --  bit more...
-
-               if High_Range /= Invalid_Address
-                 and then End_Address > High_Range
+               if Start /= Invalid_Address
+                 and then Last /= Invalid_Address
                then
-                  Get_Machine_Code
-                    (Process.Debugger,
-                     Range_Start     => Start,
-                     Range_End       => Last,
-                     Code            => S2,
-                     Start_Address   => High_Range,
-                     End_Address     => Set_Offset (End_Address, 1));
-                  S3 := new String'(S.all & S2.all);
+                  High := Last;
+
+                  S_First := S2'First;
+                  Skip_To_Char (S2.all, S_First, ASCII.LF);
+                  S_First := S_First + 1;
+                  S3 := new String'(S.all & S2 (S_First .. S2'Last));
                   Free (S);
                   Free (S2);
                   S := S3;
-
-                  if Last /= Invalid_Address then
-                     High_Range := Last;
-                  end if;
                end if;
-
-               View.Cache := new Cache_Data'
-                 (Low  => Low_Range,
-                  High => High_Range,
-                  Data => new String'(Do_Tab_Expansion (S.all, 8)),
-                  Next => View.Cache);
             end if;
 
-            Free (S);
+            View.Cache := new Cache_Data'
+              (Low  => Low,
+               High => High,
+               Data => new String'(Do_Tab_Expansion (S.all, 8)),
+               Next => View.Cache);
+
             View.Current_Range := View.Cache;
          end if;
+
+         Free (S);
       end if;
 
       Set_Text (View, View.Current_Range.Data.all);
@@ -889,7 +966,7 @@ package body GVD.Assembly_View is
 
       Set_Source_Line (Assembly_View (View), Process.Current_Line);
 
-      Address_Low := View.Source_Line_Start;
+      Address_Low  := View.Source_Line_Start;
       Address_High := View.Source_Line_End;
 
       if Process.Pc /= Invalid_Address

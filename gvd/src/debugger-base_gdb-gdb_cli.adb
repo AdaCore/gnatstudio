@@ -3062,6 +3062,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       function Code_Address_To_String (Address : Address_Type) return String is
       begin
+         if Address = GVD.Types.Invalid_Address then
+            return "";
+         end if;
+
          return "(void (*)())" & Address_To_String (Address);
       end Code_Address_To_String;
 
@@ -3116,8 +3120,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             S : constant String := Send_And_Get_Clean_Output
               (Debugger,
                "disassemble " &
-                 Code_Address_To_String (Start_Address) & Separator &
-                 Code_Address_To_String (End_Address),
+                 Code_Address_To_String (Start_Address) &
+               (if End_Address /= GVD.Types.Invalid_Address
+                  then Separator & Code_Address_To_String (End_Address)
+                  else ""),
                Mode => Internal);
          begin
             Restore_Language (Debugger);
