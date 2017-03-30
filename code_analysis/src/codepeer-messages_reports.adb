@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2016, AdaCore                     --
+--                     Copyright (C) 2008-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -512,6 +512,7 @@ package body CodePeer.Messages_Reports is
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Ranking_High_History, True);
 
+      Self.Show_Ranking (CodePeer.Not_An_Error) := False;
       Self.Show_Ranking (CodePeer.Suppressed) :=
         Histories.Get_History
           (Kernel.Get_History.all, Ranking_Suppressed_History);
