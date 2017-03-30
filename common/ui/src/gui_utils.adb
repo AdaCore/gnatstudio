@@ -25,6 +25,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Glib.Main;
@@ -810,11 +811,12 @@ package body GUI_Utils is
    is
       M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Text_Value  : constant GValue := Nth (Params, 2);
+      Text_Value  : constant String := Escape_Text
+        (Get_String (Nth (Params, 2)));
       Iter        : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
-      Set_Value (M, Iter, Data, Text_Value);
+      Set (M, Iter, Data, Text_Value);
    end Edited_Callback;
 
    -------------------------
