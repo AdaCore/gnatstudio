@@ -509,15 +509,20 @@ package body CodePeer.Messages_Reports is
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Ranking_High_History, True);
 
-      Self.Show_Ranking (CodePeer.Info) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Ranking_Informational_History);
-      Self.Show_Ranking (CodePeer.Low) :=
-        Histories.Get_History (Kernel.Get_History.all, Ranking_Low_History);
-      Self.Show_Ranking (CodePeer.Medium) :=
-        Histories.Get_History (Kernel.Get_History.all, Ranking_Medium_History);
-      Self.Show_Ranking (CodePeer.High) :=
-        Histories.Get_History (Kernel.Get_History.all, Ranking_High_History);
+      Self.Show_Ranking :=
+        (Not_An_Error => False,
+         Suppressed   => False,
+         Info         =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Ranking_Informational_History),
+         Low          =>
+           Histories.Get_History (Kernel.Get_History.all, Ranking_Low_History),
+         Medium       =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Ranking_Medium_History),
+         High         =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Ranking_High_History));
 
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Status_Unclassified_History, True);
@@ -532,22 +537,24 @@ package body CodePeer.Messages_Reports is
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Status_Bug_History, True);
 
-      Self.Show_Status (Unclassified) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Status_Unclassified_History);
-      Self.Show_Status (Pending) :=
-        Histories.Get_History (Kernel.Get_History.all, Status_Pending_History);
-      Self.Show_Status (Not_A_Bug) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Status_Not_A_Bug_History);
-      Self.Show_Status (False_Positive) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Status_False_Positive_History);
-      Self.Show_Status (Intentional) :=
-        Histories.Get_History
-          (Kernel.Get_History.all, Status_Intentional_History);
-      Self.Show_Status (Bug) :=
-        Histories.Get_History (Kernel.Get_History.all, Status_Bug_History);
+      Self.Show_Status :=
+        (Unclassified   =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Status_Unclassified_History),
+         Pending        =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Status_Pending_History),
+         Not_A_Bug      =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Status_Not_A_Bug_History),
+         False_Positive =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Status_False_Positive_History),
+         Intentional    =>
+           Histories.Get_History
+             (Kernel.Get_History.all, Status_Intentional_History),
+         Bug            =>
+           Histories.Get_History (Kernel.Get_History.all, Status_Bug_History));
 
       --  Create report's widgets
 
