@@ -3795,22 +3795,34 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  Fill the string array with the proper values
       declare
          Result : GNAT.Strings.String_List (1 .. Num);
+         Last   : Natural := 0;
       begin
-         for Index in 1 .. Num loop
-            while S (Last_Index) /= ASCII.LF and then Last_Index < S'Last loop
+         while Last_Index < S'Last loop
+            if S (Last_Index) = '&'
+              or else S (Last_Index) = '^'
+            then
+               --  skip &"complete .." and ^done
+               Skip_To_Char (S, Last_Index, ASCII.LF);
                Last_Index := Last_Index + 1;
-            end loop;
 
-            if Last_Index = S'Last then
+            else
+               --  line looks like ~"...\n", skip ~" at begin
+               Skip_To_Char (S, Last_Index, '"');
+               Last_Index := Last_Index + 1;
+               First_Index := Last_Index;
+
+               --  find ending '"'
+               Skip_To_Char (S, Last_Index, '"');
+               Last := Last + 1;
+
+               --  get contents between ~"...\n"
+               Result (Last) := new String'(S (First_Index .. Last_Index - 3));
+               Skip_To_Char (S, Last_Index, ASCII.LF);
                Last_Index := Last_Index + 1;
             end if;
-
-            Result (Index) := new String'(S (First_Index .. Last_Index - 1));
-            Last_Index  := Last_Index + 1;
-            First_Index := Last_Index;
          end loop;
 
-         return Result;
+         return Result (1 .. Last);
       end;
    end Complete;
 
