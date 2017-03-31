@@ -211,7 +211,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
             # View might have been destroyed
             mdi.raise_window()
             view.goto(cursor)
-        except Exception:
+        except:
             # In this case use the next view available if any
             view = buffer.current_view()
             if not view:

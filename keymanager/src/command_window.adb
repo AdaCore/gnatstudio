@@ -484,7 +484,7 @@ package body Command_Window is
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 
-      Grab_Focus (Window.Line);
+      Grab_Toplevel_Focus (Get_MDI (Kernel), Window.Line);
 
       KeyManager_Module.Block_Key_Shortcuts (Kernel);
 

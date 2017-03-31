@@ -202,7 +202,7 @@ class Zap_To_Char(CommandWindow):
     @with_save_excursion
     def on_changed(self, input, cursor_pos):
         delete_until_char(char=input)
-        self.destroy()
+        self.hide()
 
 
 @interactive("Editor",  name="toggle wrapping")
