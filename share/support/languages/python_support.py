@@ -170,13 +170,14 @@ class PythonSupport(object):
         Various initializations done before the gps_started hook
         """
 
-        self.port_pref = GPS.Preference("Plugins/python_support/port")
+        self.port_pref = GPS.Preference("Documentation:Python/port")
         self.port_pref.create(
             "Pydoc port", "integer",
-            """Port that should be used when spawning the pydoc daemon.
-This is a small local server to which your web browser connects to display the
-documentation for the standard python library. It is accessed through the
-/Python menu when editing a python file""",
+            "Port that should be used when spawning the pydoc daemon. "
+            "This is a small local server to which your web browser "
+            "connects to display the documentation for the standard "
+            "python library. It is accessed through the /Python menu when "
+            "editing a python file",
             9432)
 
         # Add the language definition before the gps_started hook, so that

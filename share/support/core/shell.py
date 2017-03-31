@@ -89,14 +89,14 @@ def if_has_directory(context):
 
 GPS.Preference("External Commands:Shell/contextual").create(
     "Contextual menu", "boolean",
-    """Add contextual menu to start OS shell from project view
-(needs to restart GPS)""",
+    "Add contextual menu to start OS shell from project view "
+    "(needs to restart GPS)",
     True)
 GPS.Preference("External Commands:Shell/stty").create(
     "Send stty setup", "boolean",
-    """"Send the 'stty echo' command automatically. This command
-is needed in some shells to see the keys typed on the keyboard.
-This is only applicable to Unix shells.""",
+    "Send the 'stty echo' command automatically. This command "
+    "is needed in some shells to see the keys typed on the keyboard. "
+    "This is only applicable to Unix shells.",
     True)
 
 if GPS.Preference("External Commands:Shell/contextual").get():
