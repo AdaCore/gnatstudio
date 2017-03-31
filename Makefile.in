@@ -48,14 +48,14 @@ install-common:
 ifeq ($(OS),Windows_NT)
 # On Windows we distribute two versions of subversion.py, one that
 # supports Cygwin/Subversion and one for native Subversion.
-	mv share/plug-ins/vcs/subversion.py share/plug-ins/vcs/_subversion_
+	mv share/support/core/vcs/subversion.py share/support/core/vcs/_subversion_
 	sed -e "s/System_Default/CYGWIN/" \
-		share/plug-ins/vcs/_subversion_ \
-		> share/plug-ins/vcs/subversion.py
+		share/support/core/vcs/_subversion_ \
+		> share/support/core/vcs/subversion.py
 	sed -e "s/generic_svn/generic_win_svn/g" \
 		-e "s/Subversion/Subversion Windows/g" \
-		share/plug-ins/vcs/_subversion_ \
-		> share/plug-ins/vcs/subversion_native_windows.py
+		share/support/core/vcs/_subversion_ \
+		> share/support/core/vcs/subversion_native_windows.py
 endif
 	$(RM) -f $(sharedir)/gps/GPS_old
 	$(RM) -rf $(sharedir)/gps/library/
@@ -68,8 +68,8 @@ endif
 	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
 # Clean-up changes made above for Windows.
-	$(MV) share/plug-ins/vcs/_subversion_ share/plug-ins/vcs/subversion.py
-	$(RM) share/plug-ins/vcs/subversion_native_windows.py
+	$(MV) share/support/core/vcs/_subversion_ share/support/core/vcs/subversion.py
+	$(RM) share/support/core/vcs/subversion_native_windows.py
 endif
 
 # Regenerate predefined_ada.xml before we install it
