@@ -396,7 +396,7 @@ package body GVD.Assembly_View is
       Dummy      : Boolean;
    begin
       if View /= null then
-         Buffer := Get_Buffer (View.View);
+         Buffer  := Get_Buffer (View.View);
          Process := Get_Process (View);
 
          --  Reset the current highlighting
@@ -969,17 +969,41 @@ package body GVD.Assembly_View is
       Address_Low  := View.Source_Line_Start;
       Address_High := View.Source_Line_End;
 
-      if Process.Pc /= Invalid_Address
-        and then (View.Source_Line_End = Invalid_Address
-                  or else Process.Pc > View.Source_Line_End)
-      then
-         Address_High := Process.Pc;
+      if Process.Pc /= Invalid_Address then
+         if Address_Low = Invalid_Address
+           and then Address_High = Invalid_Address
+         then
+            --  don't have adresses for the current line, use $pc
+            Address_Low  := Process.Pc;
+            Address_High := Process.Pc;
 
-      elsif Process.Pc /= Invalid_Address
-        and then (View.Source_Line_Start /= Invalid_Address
-                  or else Process.Pc < View.Source_Line_Start)
-      then
-         Address_Low := Process.Pc;
+         elsif Address_Low /= Invalid_Address
+           and then Address_High /= Invalid_Address
+         then
+            if Address_Low > Process.Pc
+              or else Address_High < Process.Pc
+            then
+               --  line addresses are incorrect, use $pc
+               Address_Low  := Process.Pc;
+               Address_High := Process.Pc;
+            end if;
+
+         else
+            --  have only one address for current line,
+            --  try use $pc for opposite address
+            if Address_Low = Invalid_Address then
+               Address_Low := Process.Pc;
+
+            elsif Address_High = Invalid_Address then
+               Address_High := Process.Pc;
+            end if;
+
+            if Set_Offset (Address_Low, 200) < Address_High then
+               --  frame is too big which can hang gdb/gps
+               Address_Low  := Process.Pc;
+               Address_High := Process.Pc;
+            end if;
+         end if;
       end if;
 
       if not In_Range (Address_Low, View.Current_Range)
@@ -989,6 +1013,16 @@ package body GVD.Assembly_View is
            (Assembly_View (View),
             Address_Low,
             Address_High);
+      end if;
+
+      if Process.Pc < View.Source_Line_Start
+        or else Process.Pc > View.Source_Line_End
+      then
+         --  sometimes "info line" returns addresses of previous line
+         --  instead current line where $pc is, so remove Highlight
+         --  to don't confuse user
+         View.Source_Line_Start := Invalid_Address;
+         View.Source_Line_End   := Invalid_Address;
       end if;
 
       --  Redo the highlighting

@@ -134,6 +134,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("\b(on (exception ([-\w_:]+)|all|unhandled))" &
       "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
 
+   Error_Pattern             : constant Pattern_Matcher := Compile
+     ("^\^error,msg=", Multiple_Lines);
+   --  Pattern used to detect error
+
    procedure Breakpoint_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -3203,26 +3207,43 @@ package body Debugger.Base_Gdb.Gdb_MI is
       End_Address   : Address_Type := GVD.Types.Invalid_Address)
    is
       use Token_Lists;
+
+      S : constant String := Address_To_String (Start_Address);
+      E : constant String := Address_To_String (End_Address);
+
       Tokens  : Token_List_Controller;
       C, Last : Token_Lists.Cursor;
 
       Result : Unbounded_String;
 
    begin
+      Range_Start := Invalid_Address;
+      Range_End   := Invalid_Address;
+
+      if S = "" or else E = "" then
+         Trace (Me, "Can't disasemble, addresses aren't set.");
+         Code := new String'("");
+         return;
+      end if;
+
       Debugger.Process.Set_Parse_File_Name (False);
       declare
-         S : constant String := Address_To_String (Start_Address);
-         E : constant String := Address_To_String (End_Address);
-
          Disassembled : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-data-disassemble" &
-            (if S /= "" and then E /= ""
-               then " -s " & S & " -e " & E else "") & " -- 0",
+           ("-data-disassemble -s " & S & " -e " & E & " -- 0",
             Mode => Internal);
 
-         Start_Index, End_Index : Integer;
+         Start_Index,
+         End_Index    : Integer;
+         Matched      : Match_Array (0 .. 2);
+
       begin
          Debugger.Process.Set_Parse_File_Name (True);
+         Match (Error_Pattern, Disassembled, Matched);
+
+         if Matched (0) /= No_Match then
+            Code := new String'("");
+            return;
+         end if;
 
          Start_Index := Disassembled'First;
          Skip_To_Char (Disassembled, Start_Index, '[');
@@ -3238,8 +3259,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       C := Find_Identifier (First (Tokens.List), "address");
 
       if C = Token_Lists.No_Element then
-         Range_Start := Invalid_Address;
-         Range_End   := Invalid_Address;
          Code := new String'("");
          return;
       end if;

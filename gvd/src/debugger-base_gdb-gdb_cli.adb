@@ -3089,6 +3089,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             begin
                --  Process the output to strip the blanks or the "=>" leading
                --  to the addresses
+               if S'Length = 0 then
+                  return "";
+               end if;
+
                R := A (A'First) & ASCII.LF;
                for J in A'First + 1 .. A'Last - 1 loop
                   declare
@@ -3117,17 +3121,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Switch_Language (Debugger, "c");
 
          declare
-            S : constant String := Send_And_Get_Clean_Output
+            S : constant String := Code_Address_To_String (Start_Address);
+            E : constant String := Code_Address_To_String (End_Address);
+
+            R : constant String := Send_And_Get_Clean_Output
               (Debugger,
-               "disassemble " &
-                 Code_Address_To_String (Start_Address) &
-               (if End_Address /= GVD.Types.Invalid_Address
-                  then Separator & Code_Address_To_String (End_Address)
+               "disassemble " & S &
+               (if S /= "" and then E /= ""
+                  then Separator & E
                   else ""),
                Mode => Internal);
          begin
             Restore_Language (Debugger);
-            return S;
+            return R;
          end;
       end Raw_Disassembled;
 
@@ -3157,7 +3163,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Code.all = "" then
          Range_Start := Invalid_Address;
-         Range_End := Invalid_Address;
+         Range_End   := Invalid_Address;
          return;
       end if;
 
