@@ -459,8 +459,7 @@ package body GPS.Kernel.Preferences is
 
       --  Advanced  --
       System_Menus := Manager.Create_Invisible_Pref
-        (
-         Name     => "system-menus",
+        (Name     => "system-menus",
          Label    => -"System menus",
          Doc      =>
            -("Display menubar outside of the GPS window on systems that"
@@ -469,45 +468,39 @@ package body GPS.Kernel.Preferences is
 
       --  LibAdaLang --
       Use_LAL_In_Editor := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-editor",
+        (Name     => "use-lal-in-editor",
          Label    => -"Use LAL in editor",
          Doc      => -("Enable usage of libadalang in a source editor."),
          Default  => False);
 
       Use_LAL_In_Outline := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-outline",
+        (Name     => "use-lal-in-outline",
          Label    => -"Use LAL in Outline",
          Doc      => -("Enable usage of libadalang in the Outline View."),
          Default  => False);
 
       Use_LAL_In_Shell := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-shell",
+        (Name     => "use-lal-in-shell",
          Label    => -"Use LAL in Shell",
          Doc      => -("Enable usage of libadalang in GPS.SemanticTree " &
                         " shell commands."),
          Default  => False);
 
       Use_LAL_In_Info := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-info",
+        (Name     => "use-lal-in-info",
          Label    => -"Use LAL in menu",
          Doc      => -("Enable usage of libadalang to generate " &
                         " 'GNAT Runtime' menu."),
          Default  => False);
 
       Use_LAL_In_GNATHUB := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-gnathub",
+        (Name     => "use-lal-in-gnathub",
          Label    => -"Use LAL in gnathub",
          Doc      => -("Enable usage of libadalang in gnathub module."),
          Default  => False);
 
       Use_LAL_In_COV := Manager.Create_Invisible_Pref
-        (
-         Name     => "use-lal-in-cov",
+        (Name     => "use-lal-in-cov",
          Label    => -"Use LAL in cov",
          Doc      => -("Enable usage of libadalang in coverage module."),
          Default  => False);
@@ -737,6 +730,16 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Enable block folding: subprograms, if statements,...",
          Label   => -"Block folding",
+         Path    => -"Editor:Behavior");
+
+      Transient_Mark := Manager.Create
+        (Name    => "Src-Editor-Transient-Mark",
+         Default => False,
+         Doc     =>
+           -("If unset, the selected region is never unselected when "
+           & "the clipboard is modified by a Cut/Copy/Paste operation. "
+           & "This is broadly similar to the Emacs mode with the same name"),
+         Label   => -"Transient mark",
          Path    => -"Editor:Behavior");
 
       Periodic_Save := Manager.Create
@@ -1428,6 +1431,9 @@ package body GPS.Kernel.Preferences is
       Group.Add_Pref
         (Manager => Manager,
          Pref    => Preference (Save_Desktop_On_Exit));
+      Group.Add_Pref
+        (Manager => Manager,
+         Pref    => Preference (Transient_Mark));
 
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;

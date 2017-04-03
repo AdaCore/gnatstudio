@@ -29,12 +29,7 @@ from gps_utils import *
 should_extend_selection = False
 # Whether the selection should be extended when moving the cursor
 
-GPS.Preference("Plugins/emacs/transient_mark").create(
-    "Transient Mark", "boolean",
-    """If unset, the selected region is never unselected when the clipboard is
-modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
-mode with the same name""",
-    False)
+transient_mark_pref = GPS.Preference("Src-Editor-Transient-Mark")
 
 SUBPROGRAM_BLOCKS = set(["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
                          "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"])
@@ -1396,7 +1391,7 @@ def cancel_mark_command(buffer=None):
 @hook("clipboard_changed")
 def __on_clipboard_changed():
     """Called when the contents of the clipboard has changed"""
-    if GPS.Preference("Plugins/emacs/transient_mark").get():
+    if transient_mark_pref.get():
         cancel_mark_command()
 
 

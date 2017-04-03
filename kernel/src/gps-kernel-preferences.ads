@@ -218,6 +218,7 @@ package GPS.Kernel.Preferences is
    Ephemeral_Highlighting_Smart  : Variant_Preference;
 
    Block_Folding             : Boolean_Preference;
+   Transient_Mark            : Boolean_Preference;
    Block_Highlighting        : Boolean_Preference;
    Automatic_Syntax_Check    : Boolean_Preference;
    Current_Line_Color        : Color_Preference;
