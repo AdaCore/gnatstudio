@@ -146,25 +146,27 @@ package GPS.Kernel.Preferences is
    --  preference.
 
    -- General --
-   Gtk_Theme              : Theme_Preference;
+   Gtk_Theme                : Theme_Preference;
 
-   Default_Font           : Font_Preference;
-   View_Fixed_Font        : Font_Preference;
-   Small_Font             : Font_Preference;
-   Tooltips_Background    : Color_Preference;
+   Default_Font             : Font_Preference;
+   View_Fixed_Font          : Font_Preference;
+   Small_Font               : Font_Preference;
 
-   Use_Native_Dialogs     : Boolean_Preference;
-   Splash_Screen          : Boolean_Preference;
-   Display_Welcome        : Boolean_Preference;
-   Auto_Save              : Boolean_Preference;
-   Save_Desktop_On_Exit   : Boolean_Preference;
-   Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
-   Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
-   Hyper_Mode             : Boolean_Preference;
-   Tip_Of_The_Day         : Boolean_Preference;
-   System_Menus           : Boolean_Preference;
+   Tooltips_Background      : Color_Preference;
+   Command_Windows_Bg_Color : Color_Preference;
 
-   Show_Ellipsis       : Boolean_Preference;
+   Use_Native_Dialogs       : Boolean_Preference;
+   Splash_Screen            : Boolean_Preference;
+   Display_Welcome          : Boolean_Preference;
+   Auto_Save                : Boolean_Preference;
+   Save_Desktop_On_Exit     : Boolean_Preference;
+   Save_Editor_Desktop      : Editor_Desktop_Policy_Prefs.Preference;
+   Multi_Language_Builder   : Multi_Language_Builder_Policy_Prefs.Preference;
+   Hyper_Mode               : Boolean_Preference;
+   Tip_Of_The_Day           : Boolean_Preference;
+   System_Menus             : Boolean_Preference;
+
+   Show_Ellipsis            : Boolean_Preference;
    --  Whether to use ellipsis for long filenames
 
    -- Messages --

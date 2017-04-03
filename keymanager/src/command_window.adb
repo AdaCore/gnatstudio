@@ -18,6 +18,7 @@
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.VFS;
 
 with Gdk.Event;               use Gdk.Event;
 with Gdk.RGBA;                use Gdk.RGBA;
@@ -31,7 +32,6 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Frame;               use Gtk.Frame;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
@@ -41,6 +41,7 @@ with Gtk.Window;              use Gtk.Window;
 with Pango.Enums;             use Pango.Enums;
 with Pango.Font;              use Pango.Font;
 
+with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
@@ -94,6 +95,11 @@ package body Command_Window is
 
    CW_Module : CW_Module_ID;
 
+   procedure Set_Background_Color
+     (Window : not null access Command_Window_Record'Class;
+      Color  : Gdk.RGBA.Gdk_RGBA);
+   --  Set the bakcground color of the command window
+
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands for the CommandWindow class
@@ -140,6 +146,22 @@ package body Command_Window is
    Cursor_Cst            : aliased constant String := "cursor";
    Color_Cst             : aliased constant String := "color";
    Close_On_Activate_Cst : aliased constant String := "close_on_activate";
+
+   --------------------------
+   -- Set_Background_Color --
+   --------------------------
+
+   procedure Set_Background_Color
+     (Window : not null access Command_Window_Record'Class;
+      Color  : Gdk.RGBA.Gdk_RGBA) is
+   begin
+      Window.Line.Override_Background_Color
+        (Gtk_State_Flag_Normal, Color);
+      Window.Line.Override_Background_Color
+        (Gtk_State_Flag_Active, Color);
+      Window.Line.Override_Background_Color
+        (Gtk_State_Flag_Selected, Color);
+   end Set_Background_Color;
 
    --------------
    -- Get_Text --
@@ -377,9 +399,11 @@ package body Command_Window is
       Applies_To_Global : Boolean := True)
    is
       X, Y             : Gint;
-      Frame            : Gtk_Frame;
       Applies_To       : Gtk_Widget;
       Min_H, Natural_H : Gint;
+      Current_Editor   : constant MDI_Child := Get_File_Editor
+        (Kernel,
+         File => GNATCOLL.VFS.No_File);
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -397,15 +421,15 @@ package body Command_Window is
 
       Window.Kernel := Kernel_Handle (Kernel);
 
-      Gtk_New (Frame);
-      Add (Window, Frame);
-
       Gtk_New_Hbox (Window.Box, Homogeneous => False);
-      Add (Frame, Window.Box);
+      Window.Add (Window.Box);
 
       Gtk_New (Window.Prompt, Prompt);
       Pack_Start
-        (Window.Box, Window.Prompt, Expand => False, Fill => False);
+        (Window.Box,
+         Window.Prompt,
+         Expand  => False,
+         Padding => 10);
       Set_Alignment (Window.Prompt, 0.0, 0.5);
       Modify_Font (Window.Prompt, Default_Font.Get_Pref);
 
@@ -436,12 +460,12 @@ package body Command_Window is
 
       --  Compute size and placement of the window
       if Applies_To_Global
-        or else Get_Focus_Child (Get_MDI (Kernel)) = null
+        or else Current_Editor = null
       then
          Applies_To := Gtk_Widget (Get_Main_Window (Kernel));
          Set_Transient_For (Window, Gtk_Window (Applies_To));
       else
-         Applies_To := Get_Widget (Get_Focus_Child (Get_MDI (Kernel)));
+         Applies_To := Get_Widget (Current_Editor);
          Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
@@ -487,6 +511,12 @@ package body Command_Window is
       Grab_Toplevel_Focus (Get_MDI (Kernel), Window.Line);
 
       KeyManager_Module.Block_Key_Shortcuts (Kernel);
+
+      --  Set the default background color of the command window from the
+      --  associated preference.
+      Set_Background_Color
+        (Window,
+         Color => Command_Windows_Bg_Color.Get_Pref);
 
    exception
       when E : others =>
@@ -615,12 +645,7 @@ package body Command_Window is
             else
                Parse (Color, Nth_Arg (Data, 2), Success);
             end if;
-            Window.Line.Override_Background_Color
-              (Gtk_State_Flag_Normal, Color);
-            Window.Line.Override_Background_Color
-              (Gtk_State_Flag_Active, Color);
-            Window.Line.Override_Background_Color
-              (Gtk_State_Flag_Selected, Color);
+            Set_Background_Color (Window, Color);
          end if;
       end if;
    end Command_Handler;

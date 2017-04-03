@@ -539,7 +539,7 @@ package body GPS.Kernel.Preferences is
          Name    => "General-Fixed-Font",
          Default => Defaults.Default_Fixed_Font,
          Doc     => -("Fixed-size font used in most views "
-                      & "(Outline, Locations, Messages, ...)"),
+                      & "(Outline, Locations, Messages, ...)."),
          Label   => -"Monospace font");
 
       Tooltips_Background := Manager.Create
@@ -547,6 +547,14 @@ package body GPS.Kernel.Preferences is
          Name    => "Tooltips-Background-Color",
          Label   => -"Tooltips background",
          Doc     => -"Background color for tooltips, defaults to gtk+ theme.",
+         Default => "#FFFFFF");
+
+      Command_Windows_Bg_Color := Manager.Create
+        (Path    => -"General/Custom Styles:Other",
+         Name    => "Command-Windows-Background-Color",
+         Label   => -"Command windows background",
+         Doc     => -("Background color for command windows "
+           & "(isearch, zap to char, ...)."),
          Default => "#FFFFFF");
 
       Use_Native_Dialogs := Manager.Create

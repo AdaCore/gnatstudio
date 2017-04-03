@@ -30,7 +30,7 @@ light_common = {
         "DEFAULT", "transparent", "rgba(134,134,134,0.35)"),
 
     'Plugins/isearch/nextmatchcolor': 'cyan',
-    'Plugins/isearch/bgcolor': 'red',
+    'Command-Windows-Background-Color': 'white',
 
     "Search-Src-Highlight-Color": "rgb(189,215,255)",
     "Messages-Highlight-Color": "rgb(255,0,0)",
@@ -72,7 +72,7 @@ dark_common = {
         "DEFAULT", "transparent", "rgba(180,180,180,0.5)"),
 
     'Plugins/isearch/nextmatchcolor': 'rgb(9,60,60)',
-    'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
+    'Command-Windows-Background-Color': 'rgb(38, 38, 38)',
 
     "Search-Src-Highlight-Color": "rgb(0,113,128)",
     "Messages-Highlight-Color": "rgb(200,42,42)",

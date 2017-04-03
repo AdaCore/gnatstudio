@@ -36,11 +36,6 @@ modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
 mode with the same name""",
     False)
 
-GPS.Preference("Plugins/emacs/bgcolor").create(
-    "Background color", "color",
-    """Background color for popup windows (zap-to-char,...)""",
-    "yellow")
-
 SUBPROGRAM_BLOCKS = set(["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
                          "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"])
 # The block_types that are considered to be "subprogram" blocks
@@ -197,7 +192,6 @@ class Zap_To_Char(CommandWindow):
             self,
             prompt="Zap to char:",
             on_changed=self.on_changed)
-        self.set_background(GPS.Preference("Plugins/emacs/bgcolor").get())
 
     @with_save_excursion
     def on_changed(self, input, cursor_pos):

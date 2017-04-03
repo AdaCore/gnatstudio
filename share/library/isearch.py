@@ -67,18 +67,9 @@ Preference('Plugins/isearch/highlightnext').create(
     " To cancel, start an isearch and press Esc immediately",
     True)
 
-Preference('Plugins/isearch/nextmatchcolor').create(
-    'Matches color', 'color',
-    """Color to use when highlighting the next matches""", 'cyan')
-
-Preference('Plugins/isearch/bgcolor').create(
-    'Background color', 'color',
-    'Background color to use for the search field', 'yellow')
-
-Preference('Plugins/isearch/errcolor').create(
-    'Error color', 'color',
-    'Background color to use for the search field when no match is found',
-    'red')
+bg_next_match_pref = Preference('Search-Src-Highlight-Color')
+bg_color_pref = Preference('Command-Windows-Background-Color')
+bg_error_pref = Preference('Errors-Src-Highlight-Color')
 
 isearch_action_name = 'isearch'
 isearch_backward_action_name = 'isearch backward'
@@ -115,7 +106,7 @@ class Isearch(CommandWindow):
             self.overlay = self.editor.create_overlay('isearch')
             self.overlay.set_property(
                 'background',
-                Preference('Plugins/isearch/nextmatchcolor').get())
+                bg_next_match_pref.get())
             self.insert_overlays_id = 0
             self.remove_overlays()
             CommandWindow.__init__(
@@ -125,7 +116,6 @@ class Isearch(CommandWindow):
                 on_cancel=self.on_cancel,
                 on_key=self.on_key,
                 on_activate=self.on_activate)
-            self.set_background(Preference('Plugins/isearch/bgcolor').get())
 
         except:
             pass
@@ -249,8 +239,7 @@ class Isearch(CommandWindow):
                     self.remove_overlays()
                 self.write(pattern)
                 self.highlight_match(save_in_stack=0)
-                self.set_background(
-                    Preference('Plugins/isearch/bgcolor').get())
+                self.set_background(bg_color_pref.get())
                 if changed:
                     self.insert_overlays()
                 self.locked = False
@@ -341,8 +330,7 @@ class Isearch(CommandWindow):
                                      case_sensitive=self.case_sensitive,
                                      dialog_on_failure=False, backward=False)
             if result and result[0] == self.loc:
-                self.set_background(
-                    Preference('Plugins/isearch/bgcolor').get())
+                self.set_background(bg_color_pref.get())
                 (match_from, match_to) = result
                 self.end_loc = match_to
                 self.highlight_match()
@@ -354,7 +342,7 @@ class Isearch(CommandWindow):
                                  dialog_on_failure=False,
                                  backward=self.backward)
         if result:
-            self.set_background(Preference('Plugins/isearch/bgcolor').get())
+            self.set_background(bg_color_pref.get())
             (self.loc, self.end_loc) = result
             self.highlight_match()
             if redo_overlays:
@@ -371,7 +359,7 @@ class Isearch(CommandWindow):
             else:
                 self.loc = self.loc.buffer().beginning_of_buffer()
             self.end_loc = self.loc
-            self.set_background(Preference('Plugins/isearch/errcolor').get())
+            self.set_background(bg_error_pref.get())
             Hook('stop_macro_action_hook').run()
 
     def on_activate(self, input):
@@ -383,7 +371,7 @@ class Isearch(CommandWindow):
     def on_cancel(self, input):
         """The user has cancelled the search"""
 
-        self.cancel_idle_overlays()
+        self.remove_overlays()
         self.editor.unselect()
 
 
