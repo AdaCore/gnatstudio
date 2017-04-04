@@ -52,7 +52,8 @@ import os_utils
 import re
 import workflows
 import constructs
-from workflows.promises import Promise, ProcessWrapper, TargetWrapper
+from workflows.promises import Promise, ProcessWrapper, \
+    TargetWrapper, wait_idle, timeout
 from project_support import Project_Support
 from . import mapping
 from sig_utils import Signal
@@ -669,6 +670,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :param update_prev: If true, store the previous subsystem
         for navigation purposes
         """
+        if QGEN_Module.idx_workflow > 0:
+            QGEN_Module.cancel_flag = True
         if diag and diag != self.diagram:
             if update_prev:
                 navigation_info = diag.get_item('qgen_navigation_info')
@@ -710,8 +713,99 @@ if not CLI.is_available():
 else:
     Project_Support.register_tool()
 
+    class AsyncDebugger(object):
+        __query_interval = 200
+
+        def __init__(self, debugger):
+            self._debugger = debugger
+            self._this_promise = None
+            self._symbol = None
+            self._output = None
+            self._timer = None
+            self._deadline = None
+
+        def _is_busy(self, timeout):
+            """
+            Called by GPS at each interval.
+            """
+
+            # if the debugger is not busy
+            if not self._debugger.is_busy():
+
+                # remove all timers
+                self._remove_timers()
+
+                # and if there's cmd to run, send it
+                if self._symbol is not None:
+
+                    if self._symbol is not "":
+                        self._output = self._debugger.value_of(self._symbol)
+                        self._symbol = None
+                        self._remove_timers()
+                        self._this_promise.resolve(self._output)
+
+                    # "" cmd are default value when making promise,
+                    # it's also a maker for pure checker
+                    else:
+                        self._this_promise.resolve(True)
+
+        def _on_cmd_timeout(self, timeout):
+            """
+            Called by GPS at when the deadline defined by user is reached
+            """
+
+            # remove all timers
+            self._remove_timers()
+
+            # answer the promise with the output
+            if self._this_promise:
+                self._symbol = None
+                self._this_promise.resolve(self._output)
+
+        def _remove_timers(self):
+            """
+            Called in timers to remove both: prepare for new timer registration
+            """
+            if self._deadline:
+                try:
+                    self._deadline.remove()
+                except:
+                    pass
+                self._deadline = None
+
+            if self._timer:
+                try:
+                    self._timer.remove()
+                except:
+                    pass
+                self._timer = None
+
+        def async_print_value(self, symbol, timeout=0, block=False):
+            """
+            Called by user on request for command within deadline (time)
+            Promise returned here will be answered with: output
+
+            This method may also function as a pure block-debugger-and-wait-
+            until-not-busy call, when block=True.
+            Promise returned for this purpose will be answered with: True/False
+            """
+
+            self._this_promise = Promise()
+            self._symbol = symbol
+            self._output = None
+
+            self._timer = GPS.Timeout(self.__query_interval, self._is_busy)
+
+            # only register deadline for real command waiting
+            if not block:
+                if timeout > 0:
+                    self._deadline = GPS.Timeout(timeout, self._on_cmd_timeout)
+            return self._this_promise
+
     class QGEN_Module(modules.Module):
 
+        cancel_flag = False
+        idx_workflow = 0
         modeling_map = None   # a Mapping_File instance
 
         # id => Signal object
@@ -741,6 +835,8 @@ else:
             """
             Resets the diagram display when a new debugger is used
             """
+            if QGEN_Module.idx_workflow > 0:
+                QGEN_Module.cancel_flag = True
             for id, sig in QGEN_Module.signal_attributes.iteritems():
                 sig.reset()
 
@@ -755,7 +851,26 @@ else:
             del QGEN_Module.previous_breakpoints[:]
 
         @staticmethod
-        def compute_item_values(debugger, diagram, toplevel, item):
+        @workflows.run_as_workflow
+        def compute_all_item_values(debugger, diagram):
+            # Compute the value for all items with an "auto" property
+            id = QGEN_Module.idx_workflow
+            for diag, toplevel, it in Diagram_Utils.forall_auto_items(
+                    [diagram]):
+                yield QGEN_Module.compute_item_values(
+                    debugger, diag, toplevel=toplevel, item=it)
+                if QGEN_Module.cancel_flag:
+                    break
+                yield wait_idle()
+                diagram.changed()
+                yield wait_idle()
+                if QGEN_Module.cancel_flag:
+                    break
+            QGEN_Module.idx_workflow = QGEN_Module.idx_workflow - 1
+
+        @staticmethod
+        @workflows.run_as_workflow
+        def compute_item_values(debugger, promise, toplevel, item):
             """
             Recompute the value for all symbols related to item, and update
             the display of item to show their values.
@@ -770,9 +885,10 @@ else:
             # Find the parent with an id. When item is the label of a link, the
             # parent will be set to None, so we default to toplevel (the link,
             # in that case)
-
             parent = item.get_parent_with_id() or toplevel
-
+            yield wait_idle()
+            if QGEN_Module.cancel_flag:
+                return
             # Find the parent to hide (the one that contains the label)
 
             item_parent = item
@@ -780,51 +896,58 @@ else:
             while p is not None:
                 item_parent = p
                 p = item_parent.parent
+            yield wait_idle()
+            if QGEN_Module.cancel_flag:
+                return
+
+            def update_item_value(value):
+                # Skip case when the variable is unknown
+                if value is None:
+                    item_parent.hide()
+                else:
+                    # Check whether the value is a float or is an integer
+                    # with more than 6 digits then display it
+                    # in scientific notation.
+                    # Otherwise no formatting is done on the value
+                    try:
+                        if (len(value) >= 7 or
+                                float(value) != int(value)):
+                            value = '%.2e' % float(value)
+                    except ValueError:
+                        if len(value) >= 7:
+                            value = '%s ..' % value[:6]
+
+                    if value:
+                        item_parent.show()
+                        item.text = value
+                    else:
+                        item_parent.hide()
 
             # The list of symbols to compute from the debugger
-
             symbols = QGEN_Module.modeling_map.get_symbols(blockid=parent.id)
+            yield wait_idle()
+            if QGEN_Module.cancel_flag:
+                return
 
             if symbols and debugger is not None:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
                 if '/' in s:
                     ss = s.split('/')[-1].strip()  # Remove the "context/" part
-
                     # ??? Should check that the context matches the current
                     # debugger frame. For now, we assume this is true since the
                     # diagram corresponds to the current frame.
-
-                    value = debugger.value_of("%s" % (ss, ))
-
-                    # Skip case when the variable is unknown
-                    if value is None:
-                        item_parent.hide()
-
-                    else:
-                        # Check whether the value is a float or is an integer
-                        # with more than 6 digits then display it
-                        # in scientific notation.
-                        # Otherwise no formatting is done on the value
-
-                        try:
-                            if (len(value) >= 7 or
-                                    float(value) != int(value)):
-                                value = '%.2e' % float(value)
-                        except ValueError:
-                            if len(value) >= 7:
-                                value = '%s ..' % value[:6]
-
-                        if value:
-                            item_parent.show()
-                            item.text = value
-                        else:
-                            item_parent.hide()
-
+                    async_debugger = AsyncDebugger(debugger)
+                    yield async_debugger.async_print_value(ss).then(
+                        update_item_value)
+                    yield wait_idle()
+                    if QGEN_Module.cancel_flag:
+                        return
             else:
                 item_parent.hide()
 
         @staticmethod
+        @workflows.run_as_workflow
         def on_diagram_changed(viewer, diag, clear=False):
             """
             Called whenever a new diagram is displayed in viewer. This change
@@ -841,11 +964,13 @@ else:
                 debugger = GPS.Debugger.get()
             except:
                 debugger = None
-
             # Compute the value for all items with an "auto" property
-            for diag, toplevel, it in Diagram_Utils.forall_auto_items([diag]):
-                QGEN_Module.compute_item_values(
-                    debugger, diag, toplevel=toplevel, item=it)
+            if QGEN_Module.cancel_flag:
+                while QGEN_Module.idx_workflow > 0:
+                    yield timeout(100)
+            QGEN_Module.cancel_flag = False
+            QGEN_Module.idx_workflow = QGEN_Module.idx_workflow + 1
+            QGEN_Module.compute_all_item_values(debugger, diag)
 
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
