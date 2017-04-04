@@ -189,6 +189,10 @@ package Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding function Current_Frame
+     (Debugger : access Gdb_Debugger)
+      return Integer;
+
    overriding procedure Interrupt (Debugger : access Gdb_Debugger);
 
    overriding function Command_Kind
@@ -453,6 +457,8 @@ private
       --  Whether we should use "catch" or "break" to set a breakpoint on
       --  exceptions. This is initialized the first time we set a breakpoint
       --  on exception
+
+      Current_Frame_Num : Integer := -1;
    end record;
 
 end Debugger.Base_Gdb.Gdb_CLI;

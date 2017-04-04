@@ -24,6 +24,7 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Basic_Types;             use Basic_Types;
+with Config;
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
@@ -417,6 +418,40 @@ package body GVD.Scripts is
             Data.Set_Return_Value
               (Create_Debugger_Breakpoint (Data.Get_Script, B));
          end loop;
+
+      elsif Command = "frames" then
+         declare
+            Bt  : Backtrace_Array (1 .. Config.Max_Frame);
+            Len : Natural;
+         begin
+            Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+            Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+            Process.Debugger.Backtrace (Bt, Len);
+            Data.Set_Return_Value_As_List;
+            for Index in 1 .. Len loop
+               Data.Set_Return_Value (Bt (Index).Subprogram.all);
+            end loop;
+         end;
+
+      elsif Command = "current_frame" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Process.Debugger.Current_Frame);
+
+      elsif Command = "frame_up" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Stack_Up;
+
+      elsif Command = "frame_down" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Stack_Down;
+
+      elsif Command = "select_frame" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Stack_Frame (Nth_Arg (Data, 2, 0) + 1);
       end if;
    end Shell_Handler;
 
@@ -547,6 +582,28 @@ package body GVD.Scripts is
                           2 => Param ("line")),
          Handler      => Shell_Handler'Access,
          Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frames",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("current_frame",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frame_up",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frame_down",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("select_frame",
+         Params       => (1 => Param ("num")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+
       Kernel.Scripts.Register_Property
         ("breakpoints",
          Getter       => Shell_Handler'Access,

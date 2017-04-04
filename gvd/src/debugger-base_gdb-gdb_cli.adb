@@ -252,6 +252,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Return the GDB command corresponding to a break on exception, given
    --  Name/Temporary/Unhandled.
 
+   procedure Update_Frame_Info (Debugger : access Gdb_Debugger);
+
    -------------------------
    -- Break_Exception_Cmd --
    -------------------------
@@ -1407,6 +1409,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Debugger.Send ("continue", Mode => Mode);
    end Continue;
 
+   overriding function Current_Frame
+     (Debugger : access Gdb_Debugger)
+      return Integer is
+   begin
+      Update_Frame_Info (Debugger);
+      return Debugger.Current_Frame_Num;
+   end Current_Frame;
+
    ---------------
    -- Interrupt --
    ---------------
@@ -1447,7 +1457,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Command_Category
    is
-      pragma Unreferenced (Debugger);
       Index : Natural;
    begin
       if Command = "" then
@@ -1459,6 +1468,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "wtx add-symbol-file")
         or else Starts_With (Command, "load")
       then
+         Debugger.Current_Frame_Num := -1;
          return Load_Command;
       end if;
 
@@ -1467,6 +1477,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
       then
+         Debugger.Current_Frame_Num := -1;
          return Context_Command;
       end if;
 
@@ -1494,6 +1505,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         or else Starts_With (Command, "start")
         or else Starts_With (Command, "set variable")
       then
+         Debugger.Current_Frame_Num := -1;
          return Execution_Command;
       end if;
 
@@ -1544,6 +1556,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "down", Mode => Mode);
+      Update_Frame_Info (Debugger);
    end Stack_Down;
 
    --------------
@@ -1555,6 +1568,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "up", Mode => Mode);
+      Update_Frame_Info (Debugger);
    end Stack_Up;
 
    -----------------
@@ -1569,6 +1583,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Str : constant String := "frame" & Natural'Image (Frame - 1);
    begin
       Send (Debugger, Str, Mode => Mode);
+      Update_Frame_Info (Debugger);
    end Stack_Frame;
 
    --------------------------
@@ -1649,6 +1664,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Parse_Backtrace_Info
         (Send_And_Get_Clean_Output
            (Debugger, "where", Mode => Internal), Value, Len);
+
+      if Len >= Value'First then
+         Debugger.Current_Frame_Num := Value (Value'First).Frame_Id;
+      end if;
    end Backtrace;
 
    -----------------------------
@@ -2427,8 +2446,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type)
    is
-      pragma Unreferenced (Debugger);
-
       Matched : Match_Array (0 .. 1);
    begin
       Match (Frame_Pattern, Str, Matched);
@@ -2436,6 +2453,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       if Matched (1) /= No_Match then
          Set_Unbounded_String
            (Frame, Str (Matched (1).First .. Matched (1).Last));
+         Debugger.Current_Frame_Num := Integer'Value
+           (Str (Matched (1).First .. Matched (1).Last));
+
          Match (Frame_Pattern_With_File, Str, Matched);
 
          if Matched (1) /= No_Match then
@@ -2445,7 +2465,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end if;
 
       else
-         Frame := Null_Unbounded_String;
+         Frame   := Null_Unbounded_String;
          Message := Location_Not_Found;
       end if;
    end Found_Frame_Info;
@@ -3793,5 +3813,23 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          return False;
       end if;
    end Is_Quit_Command;
+
+   -----------------------
+   -- Update_Frame_Info --
+   -----------------------
+
+   procedure Update_Frame_Info (Debugger : access Gdb_Debugger) is
+      R : constant String := Debugger.Send_And_Get_Clean_Output
+        ("frame", Mode => Internal);
+
+      Matched : Match_Array (0 .. 1);
+   begin
+      Match (Frame_Pattern, R, Matched);
+
+      if Matched (1) /= No_Match then
+         Debugger.Current_Frame_Num := Integer'Value
+           (R (Matched (1).First .. Matched (1).Last));
+      end if;
+   end Update_Frame_Info;
 
 end Debugger.Base_Gdb.Gdb_CLI;

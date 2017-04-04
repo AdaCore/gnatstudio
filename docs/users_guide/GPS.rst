@@ -512,6 +512,14 @@ Classes
 
    .. automethod:: GPS.Debugger.command
 
+   .. automethod:: GPS.Debugger.current_frame
+
+   .. automethod:: GPS.Debugger.frame_down
+
+   .. automethod:: GPS.Debugger.frame_up
+
+   .. automethod:: GPS.Debugger.frames
+
    .. automethod:: GPS.Debugger.get
 
    .. automethod:: GPS.Debugger.get_console
@@ -531,6 +539,8 @@ Classes
    .. automethod:: GPS.Debugger.list
 
    .. automethod:: GPS.Debugger.non_blocking_send
+
+   .. automethod:: GPS.Debugger.select_frame
 
    .. automethod:: GPS.Debugger.send
 

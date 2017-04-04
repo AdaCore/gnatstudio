@@ -575,6 +575,11 @@ package Debugger is
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
 
+   function Current_Frame
+     (Debugger : access Debugger_Root)
+      return Integer is abstract;
+   --  Return the number of current frame. Should return -1 if no frames.
+
    procedure Configure_Backtrace
      (Self                 : not null access Debugger_Root;
       Show_Id              : Boolean := True;

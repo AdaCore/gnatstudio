@@ -2507,6 +2507,42 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def frames(self):
+        """
+        Returns list of frames.
+
+        :return: A list of frames subprograms
+        """
+        pass  # implemented in Ada
+
+    def current_frame(self):
+        """
+        Returns the number of current frame.
+
+        :return: integer, the number of frame
+        """
+        pass  # implemented in Ada
+
+    def frame_up(self):
+        """
+        Select next frame.
+        """
+        pass  # implemented in Ada
+
+    def frame_down(self):
+        """
+        Select previous frame.
+        """
+        pass  # implemented in Ada
+
+    def select_frame(self, num):
+        """
+        Select frame by number.
+
+        :param num: The number of frame where 0 is the first frame
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # DebuggerBreakpoint

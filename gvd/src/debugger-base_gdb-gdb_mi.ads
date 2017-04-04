@@ -192,6 +192,10 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding function Current_Frame
+     (Debugger : access Gdb_MI_Debugger)
+      return Integer;
+
    overriding procedure Interrupt (Debugger : access Gdb_MI_Debugger);
 
    overriding function Command_Kind
