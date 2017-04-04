@@ -989,6 +989,7 @@ package body CodePeer.Messages_Reports is
                      CodePeer.Module.CodePeer_Category_Name,
                      File_Node.Name,
                      Goto_First => False);
+                  Raise_Locations_Window (Self.Kernel);
                end if;
             end;
          end if;

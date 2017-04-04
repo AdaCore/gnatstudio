@@ -42,6 +42,8 @@ package GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class) return Location_View_Access;
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
+   --  This does not give the focus or raise the locations view: use
+   --  Raise_Location_Window for this.
 
    procedure Next_Item
      (Self      : Location_View_Access;

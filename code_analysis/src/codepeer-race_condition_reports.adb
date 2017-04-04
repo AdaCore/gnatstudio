@@ -215,6 +215,7 @@ package body CodePeer.Race_Condition_Reports is
          Ada.Strings.Unbounded.To_String (Message.Get_Category),
          Message.Get_File,
          False);
+      GPS.Location_View.Raise_Locations_Window (Self.Kernel);
    end On_Summary_Activated;
 
 end CodePeer.Race_Condition_Reports;

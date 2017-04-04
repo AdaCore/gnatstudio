@@ -655,7 +655,8 @@ The local settings menu contains the following entries:
 
   Every time a new category is created, for example, as a result of a
   compilation or search operation, the first message in that category is
-  automatically selected and the corresponding editor opened.
+  automatically selected and the corresponding editor opened, and the focus
+  is given to the Locations view.
 
 * :menuselection:`Warp around on next/previous`
 

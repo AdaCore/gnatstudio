@@ -356,7 +356,6 @@ package body Build_Command_Manager.End_Of_Build is
            (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
             Commands.Builder.Error_Category,
             Self.Force_File);
-         GPS.Location_View.Raise_Locations_Window (Kernel);
       end if;
    end End_Of_Stream;
 

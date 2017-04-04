@@ -1336,7 +1336,8 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class)
       return Location_View_Access is
    begin
-      return Location_View_Access (Location_Views.Get_Or_Create_View (Kernel));
+      return Location_View_Access
+        (Location_Views.Get_Or_Create_View (Kernel, Focus => False));
    end Get_Or_Create_Location_View;
 
    -------------

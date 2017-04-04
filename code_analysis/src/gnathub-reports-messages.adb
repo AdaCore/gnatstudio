@@ -276,6 +276,7 @@ package body GNAThub.Reports.Messages is
                GNAThub.Messages.Category,
                File_Node.Name,
                Goto_First => True);
+            GPS.Location_View.Raise_Locations_Window (View.Kernel);
          end if;
       end;
 
