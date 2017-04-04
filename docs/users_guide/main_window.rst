@@ -407,7 +407,7 @@ The tool bar provides shortcuts to some common actions:
 
 * Multiple customizable
   :index:`buttons <single: build; toolbar buttons>`
-  to build, clean, or run your project
+  to build, clean, run or debug your project
 
 * multiple
   :index:`buttons <single: debugger; toolbar buttons>` to stop and continue

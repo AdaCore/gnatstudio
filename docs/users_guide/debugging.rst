@@ -20,7 +20,8 @@ you can edit files and navigate through your sources while debugging.
 .. index:: menu; debug --> initialize
 .. index:: menu; debug --> debug --> load file
 
-To start a debug session, go to the :menuselection:`Debug --> Initialize`
+To start a debug session, click on the :guilabel:`Debug` button in the main
+toolbar or go to the :menuselection:`Debug --> Initialize`
 menu and choose either the name of your executable, if you specified the
 name of your main program(s) in the project properties, or start an empty
 debug session using the :menuselection:`<no main file>` menu.  You can then
@@ -32,13 +33,13 @@ You first need to build your executable with debug information
 properties or via the :guilabel:`Debug` build mode (see
 :ref:`The_Build_Mode` for more details).
 
-Create multiple debuggers by using the :menuselection:`Debug -->
-Initialize` menu several times: this creates a new debugger each time.  All
-debugger-related actions (e.g. stepping, running) are performed in the
-current debugger, represented by the current debugger console.  To switch
-to a different debugger, select its corresponding console. Setting
-breakpoints, though, will be done for all debuggers, to help debug when you
-work on multiple executables that share code.
+Create multiple debuggers by using the :menuselection:`Debug --> Initialize` (or
+the corrsponding toolbar button) menu several times: this creates a new debugger
+each time.  All debugger-related actions (e.g. stepping, running) are performed
+in the current debugger, represented by the current debugger console.  To switch
+to a different debugger, select its corresponding console. Setting breakpoints,
+though, will be done for all debuggers, to help debug when you work on multiple
+executables that share code.
 
 After the debugger has been initialized, you have access several new views: the
 debugger console (in a new page, after the :guilabel:`Messages` window), the

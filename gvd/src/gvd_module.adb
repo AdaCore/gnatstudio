@@ -1352,6 +1352,8 @@ package body GVD_Module is
       pragma Unreferenced (Self);
       use GNAT.OS_Lib;
 
+      Debug_Init_Group : constant String := "Initialize debug";
+
       procedure Create_Action_And_Menu
         (Prj : Project_Type; Main : Virtual_File);
       --  Create the action and menu to initialize a specific executable
@@ -1375,13 +1377,14 @@ package body GVD_Module is
             else
                Escape_Underscore (Escape_Menu_Name (Main.Display_Base_Name)));
 
-         Action  : constant String :=
-            "debug initialize " & Prj.Name & ":" & Main_Name;
-         Menu    : constant String :=
-           "/Debug/Initialize/"
-           & (if not Show_Project_In_Menu or else Main = No_File
-              then "" else Escape_Underscore (Prj.Name) & '/')
-           & Main_Name;
+         Button_Label : constant String := "Debug " & Main_Name;
+         Action       : constant String :=
+                          "debug initialize " & Prj.Name & ":" & Main_Name;
+         Menu         : constant String :=
+                          "/Debug/Initialize/"
+                          & (if not Show_Project_In_Menu or else Main = No_File
+                             then "" else Escape_Underscore (Prj.Name) & '/')
+                          & Main_Name;
          Command : Interactive_Command_Access;
       begin
          Command := new Initialize_Debugger_Command'
@@ -1396,8 +1399,15 @@ package body GVD_Module is
              then (-"Initialize the debugger on the file "
                & Main.Display_Full_Name)
              else -"Initialize the debugger, no file specified"),
-            Category => -"Debug");
+            Category  => -"Debug",
+            Icon_Name => "gps-debugger-initialize-symbolic");
          Register_Menu (Kernel, Menu, Action => Action);
+         Register_Button
+           (Kernel,
+            Action    => Action,
+            Label     => Button_Label,
+            Section   => "debug",
+            Group     => Debug_Init_Group);
       end Create_Action_And_Menu;
 
    begin
