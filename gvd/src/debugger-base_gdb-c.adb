@@ -297,134 +297,139 @@ package body Debugger.Base_Gdb.C is
       end if;
 
       --  Else a simple type
-      case Type_Str (Index) is
-         when '<' =>
-            --  Simple types, like <4-byte integer> and <4-byte float>
-            Skip_To_Char (Type_Str, Index, '>');
-            Result := New_Simple_Type;
-            Set_Type_Name (Result, Type_Str (Tmp .. Index));
-            Index := Index + 1;
-            return;
-
-         when 'e' =>
-            --  Enumeration type.
-            --  Either this is the type itself "enum {....}", or this is the
-            --  field of a struct or union "enum name;".
-
-            if Looking_At (Type_Str, Index, "enum ") then
-               if Type_Str (Index + 5) = '{' then
-                  --  We are in the "enum {....}" case
-                  Result := New_Enum_Type;
-                  Set_Type_Name (Result, "enum");
-                  return;
-               end if;
-
-               Index := Index + 5;
-               Skip_CPP_Token (Type_Str, Index);  --  skips enum name
+      if Index in Type_Str'Range then
+         case Type_Str (Index) is
+            when '<' =>
+               --  Simple types, like <4-byte integer> and <4-byte float>
+               Skip_To_Char (Type_Str, Index, '>');
+               Result := New_Simple_Type;
+               Set_Type_Name (Result, Type_Str (Tmp .. Index));
                Index := Index + 1;
-
-               if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
-                  Skip_To_Char (Type_Str, Index, '}');
-                  Index := Index + 1;
-               end if;
-
-               Result := New_Enum_Type;
-               Set_Type_Name (Result, Type_Str (Type_Str'First .. Index - 1));
                return;
-            end if;
 
-            --  Else falls through
+            when 'e' =>
+               --  Enumeration type.
+               --  Either this is the type itself "enum {....}", or this is the
+               --  field of a struct or union "enum name;".
 
-         when 'r' =>
-            --  Range types
+               if Looking_At (Type_Str, Index, "enum ") then
+                  if Type_Str (Index + 5) = '{' then
+                     --  We are in the "enum {....}" case
+                     Result := New_Enum_Type;
+                     Set_Type_Name (Result, "enum");
+                     return;
+                  end if;
 
-            if Looking_At (Type_Str, Index, "range ") then
-               declare
-                  Min, Max : Long_Integer;
-               begin
-                  Index := Index + 6;
-                  Parse_Num (Type_Str, Index, Min);
-                  Index := Index + 4; --  skips ' .. '
-                  Parse_Num (Type_Str, Index, Max);
-                  Result := New_Range_Type (Min, Max);
-                  Set_Type_Name (Result, Type_Str (Start .. Index - 1));
+                  Index := Index + 5;
+                  Skip_CPP_Token (Type_Str, Index);  --  skips enum name
+                  Index := Index + 1;
+
+                  if Index <= Type_Str'Last
+                    and then Type_Str (Index) = '{'
+                  then
+                     Skip_To_Char (Type_Str, Index, '}');
+                     Index := Index + 1;
+                  end if;
+
+                  Result := New_Enum_Type;
+                  Set_Type_Name
+                    (Result, Type_Str (Type_Str'First .. Index - 1));
                   return;
-               end;
-            end if;
-
-         when 's' =>
-            --  Structures.
-            --  There are several possible cases here:
-            --      "struct My_Record { ... }"
-            --   or "struct My_Record a"
-            --   or "struct { ... } a"   (anonymous types)
-            --  The second case needs a further ptype to get the real
-            --  definition.
-
-            if Looking_At (Type_Str, Index, "struct ") then
-               Tmp   := Index;
-               Index := Index + 7;           --  skips "struct "
-
-               if Type_Str (Index) /= Context.Record_Start then
-                  Skip_CPP_Token (Type_Str, Index);  --  skips struct name
-                  while Index + 1 <= Type_Str'Last
-                    and then Type_Str (Index .. Index + 1) = "::"
-                  loop
-                     Index := Index + 2;
-                     Skip_CPP_Token (Type_Str, Index);
-                  end loop;
                end if;
 
-               Skip_Blanks (Type_Str, Index);
+               --  Else falls through
 
-               if Index <= Type_Str'Last
-                 and then Type_Str (Index) = Context.Record_Start
-               then
-                  Index := Index + 1;
-                  Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index,
-                     Is_Union => False, Result => Result, End_On => "}");
+            when 'r' =>
+               --  Range types
 
-               else
-                  Result := Parse_Type
-                    (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+               if Looking_At (Type_Str, Index, "range ") then
+                  declare
+                     Min, Max : Long_Integer;
+                  begin
+                     Index := Index + 6;
+                     Parse_Num (Type_Str, Index, Min);
+                     Index := Index + 4; --  skips ' .. '
+                     Parse_Num (Type_Str, Index, Max);
+                     Result := New_Range_Type (Min, Max);
+                     Set_Type_Name (Result, Type_Str (Start .. Index - 1));
+                     return;
+                  end;
                end if;
 
-               return;
-            end if;
-            --  Else falls through
+            when 's' =>
+               --  Structures.
+               --  There are several possible cases here:
+               --      "struct My_Record { ... }"
+               --   or "struct My_Record a"
+               --   or "struct { ... } a"   (anonymous types)
+               --  The second case needs a further ptype to get the real
+               --  definition.
 
-         when 'u' =>
-            if Looking_At (Type_Str, Index, "union ") then
-               Tmp   := Index;
-               Index := Index + 6;           --  skips "union "
+               if Looking_At (Type_Str, Index, "struct ") then
+                  Tmp   := Index;
+                  Index := Index + 7;           --  skips "struct "
 
-               if Type_Str (Index) /= Context.Record_Start then
-                  Skip_CPP_Token (Type_Str, Index);  --  skips union name
+                  if Type_Str (Index) /= Context.Record_Start then
+                     Skip_CPP_Token (Type_Str, Index);  --  skips struct name
+                     while Index + 1 <= Type_Str'Last
+                       and then Type_Str (Index .. Index + 1) = "::"
+                     loop
+                        Index := Index + 2;
+                        Skip_CPP_Token (Type_Str, Index);
+                     end loop;
+                  end if;
+
+                  Skip_Blanks (Type_Str, Index);
+
+                  if Index <= Type_Str'Last
+                    and then Type_Str (Index) = Context.Record_Start
+                  then
+                     Index := Index + 1;
+                     Parse_Record_Type
+                       (Lang, Type_Str, Entity, Index,
+                        Is_Union => False, Result => Result, End_On => "}");
+
+                  else
+                     Result := Parse_Type
+                       (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+                  end if;
+
+                  return;
                end if;
+               --  Else falls through
 
-               Skip_Blanks (Type_Str, Index);
+            when 'u' =>
+               if Looking_At (Type_Str, Index, "union ") then
+                  Tmp   := Index;
+                  Index := Index + 6;           --  skips "union "
 
-               if Index <= Type_Str'Last
-                 and then Type_Str (Index) = Context.Record_Start
-               then
-                  Index := Index + 1;
-                  Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index, Is_Union => True,
-                     Result => Result, End_On => "}");
+                  if Type_Str (Index) /= Context.Record_Start then
+                     Skip_CPP_Token (Type_Str, Index);  --  skips union name
+                  end if;
 
-               else
-                  Result := Parse_Type
-                    (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+                  Skip_Blanks (Type_Str, Index);
+
+                  if Index <= Type_Str'Last
+                    and then Type_Str (Index) = Context.Record_Start
+                  then
+                     Index := Index + 1;
+                     Parse_Record_Type
+                       (Lang, Type_Str, Entity, Index, Is_Union => True,
+                        Result => Result, End_On => "}");
+
+                  else
+                     Result := Parse_Type
+                       (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+                  end if;
+
+                  return;
                end if;
+               --  Else falls through
 
-               return;
-            end if;
-            --  Else falls through
-
-         when others =>
-            null;
-      end case;
+            when others =>
+               null;
+         end case;
+      end if;
 
       --  Do we have a simple type ?
 
