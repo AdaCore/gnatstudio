@@ -53,7 +53,7 @@ import re
 import workflows
 import constructs
 from workflows.promises import Promise, ProcessWrapper, \
-    TargetWrapper, wait_idle, timeout
+    TargetWrapper, wait_idle, timeout, wait_tasks, known_tasks
 from project_support import Project_Support
 from . import mapping
 from sig_utils import Signal
@@ -68,6 +68,7 @@ class MDL_Language(GPS.Language):
     A class that describes the MDL and Simulink language for GPS.
     """
     const_split = re.compile('#QGEN.*#')
+
     # @overriding
 
     def __init__(self):
@@ -86,9 +87,120 @@ class MDL_Language(GPS.Language):
 
     # @overriding
     def should_refresh_constructs(self, file):
-        # Always refresh when GPS believes the file has changed (for instance
-        # after the buffer_edited hook).
-        return True
+        """
+        If we did not generate constructs for the model yet, parse the
+        file asynchronously, otherwise use the stored constructs
+        """
+        flat = GPS.Preference('outline-flat-view').get()
+
+        def redraw(value):
+            GPS.Hook('file_edited').run(file)
+        logger.log("Asking if refreshing constructs")
+
+        @workflows.run_as_workflow
+        def workflow_gen_constructs(viewer):
+            if viewer.diags and not viewer.constructs:
+                logger.log("Starting constructs parsing")
+                yield parse_model_tree(viewer).then(redraw)
+
+        @workflows.run_as_workflow
+        def parse_model_tree(viewer):
+            offset = 1
+            GPS.Console().write(
+                "Generating outline view for the model in the background...\n")
+            id, val = viewer.diags.index[0]
+            idx = 0
+            for it_name, it_id, sloc_start, sloc_end, type in process_item(
+                    id, id, val, 0, viewer):
+                idx = idx + 1
+                if idx % 200 == 0:
+                    logger.log("Yield while adding constructs to outline \n")
+                    yield wait_tasks(other_than=known_tasks)
+                offset = max(offset, sloc_end[2]) + 1
+                c_id = "{0}{1}{2}#{3}".format(
+                    it_name, self.const_id, sloc_end, it_id)
+                c_name = it_name if flat else Diagram_Utils.block_split(
+                    it_name, count=1, backward=True)[-1]
+                viewer.constructs.append(
+                    (c_name, c_id, sloc_start, sloc_end, type))
+            viewer.parsing_complete = True
+            GPS.Console().write("Outline view generated\n")
+
+        def process_item(item, item_id, children, start_offset, viewer):
+            """
+            Return an item and its simulated sloc.
+            The source locations are simulated so that nesting can be computed
+            automatically by GPS based on the line/column info. GPS uses
+            indexes when they are positive.
+
+            :return: (item, sloc_start, sloc_end, constructs_CAT)
+            """
+            max_offset = start_offset
+            subsystem_list = []
+            # When processing the current diagram, this list stores what
+            # subsystems where already added in the Outline to avoid
+            # duplication when adding items
+
+            # The index entry contains a JSON_Array of entries with
+            # a 'name' and 'diagram' fields. They respectively correspond
+            # to the simulink name of the item and its corresponding JSON id
+            if children is not []:
+                for child in children:
+                    child_name = child["name"]
+                    child_id = child["diagram"]
+                    subsystem_list.append(child_name)
+                    for child_entry_name, child_children in viewer.diags.index:
+                        # Each child of the current diagram is processed
+                        if child_entry_name == child_id:
+                            for result in process_item(
+                                    child_name, child_id, child_children,
+                                    start_offset=max_offset + 1,
+                                    viewer=viewer):
+                                max_offset = result[3][2]
+                                yield result
+                            break
+
+            # Avoid corrupting the outline when processing an
+            # unsupported diagram
+            try:
+                diag_items = viewer.diags.get(item_id).items
+            except:
+                diag_items = []
+
+            # Adding all generic blocks to the outline
+            # for the current diagram
+            for it in diag_items:
+                if isinstance(it, GPS.Browsers.Link):
+                    continue
+                try:
+                    for child in it.children:
+                        # The qgen_navigation_info is a custom item
+                        # used by this plugin for navigation we do not
+                        # want to display it
+                        if child.id != 'qgen_navigation_info' and \
+                           child.id not in subsystem_list:
+                            max_offset = max_offset + 2
+                            # A block item will have the same name and id
+                            # both set to child.id
+                            yield (child.id, child.id,
+                                   (0, 0, max_offset - 1),
+                                   (0, 0, max_offset),
+                                   constructs.CAT_ENTRY)
+                except:
+                    None
+            yield (item, item_id,
+                   (0, 0, start_offset),
+                   (0, 0, max_offset + 1),
+                   constructs.CAT_CLASS)
+
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+
+        if viewer and not viewer.parsing_complete:
+            logger.log("Running construct workflow")
+            workflow_gen_constructs(viewer)
+            return False
+        else:
+            return True
 
     # @overriding
     def clicked_on_construct(self, construct):
@@ -119,98 +231,29 @@ class MDL_Language(GPS.Language):
         Provides support for the Outline view
         """
 
-        flat = GPS.Preference('outline-flat-view').get()
-
-        def process_item(item, item_id, children, start_offset):
-            """
-            Return an item and its simulated sloc.
-            The source locations are simulated so that nesting can be computed
-            automatically by GPS based on the line/column info. GPS uses
-            indexes when they are positive.
-
-            :return: (item, sloc_start, sloc_end, constructs_CAT)
-            """
-            max_offset = start_offset
-            subsystem_list = []
-            # When processing the current diagram, this list stores what
-            # subsystems where already added in the Outline to avoid
-            # duplication when adding items
-
-            # The index entry contains a JSON_Array of entries with
-            # a 'name' and 'diagram' fields. They respectively correspond
-            # to the simulink name of the item and its corresponding JSON id
-            if children is not []:
-                for child in children:
-                    child_name = child["name"]
-                    child_id = child["diagram"]
-                    subsystem_list.append(child_name)
-                    for child_entry_name, child_children in viewer.diags.index:
-                        # Each child of the current diagram is processed
-                        if child_entry_name == child_id:
-                            for result in process_item(
-                                    child_name, child_id, child_children,
-                                    start_offset=max_offset + 1):
-                                max_offset = result[3][2]
-                                yield result
-                            break
-
-            # Avoid corrupting the outline when processing an
-            # unsupported diagram
-            try:
-                diag_items = viewer.diags.get(item_id).items
-            except:
-                diag_items = []
-
-            # Adding all generic blocks to the outline for the current diagram
-            for it in diag_items:
-                if isinstance(it, GPS.Browsers.Link):
-                    continue
-                try:
-                    for child in it.children:
-                        # The qgen_navigation_info is a custom item
-                        # used by this plugin for navigation we do not
-                        # want to display it
-                        if child.id != 'qgen_navigation_info' and \
-                           child.id not in subsystem_list:
-                            max_offset = max_offset + 2
-                            # A block item will have the same name and id
-                            # both set to child.id
-                            yield (child.id, child.id,
-                                   (0, 0, max_offset - 1),
-                                   (0, 0, max_offset),
-                                   constructs.CAT_ENTRY)
-                except:
-                    None
-            yield (item, item_id,
-                   (0, 0, start_offset),
-                   (0, 0, max_offset + 1),
-                   constructs.CAT_CLASS)
-
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if not viewer:
+            return
 
-        if viewer and viewer.diags:
-            offset = 1
-            id, val = viewer.diags.index[0]
-            for it_name, it_id, sloc_start, sloc_end, type in process_item(
-                    id, id, val, 0):
-                offset = max(offset, sloc_end[2]) + 1
-                clist.add_construct(
-                    category=type,
-                    is_declaration=True,
-                    visibility=constructs.VISIBILITY_PUBLIC,
-                    name=it_name if flat else Diagram_Utils.block_split(
-                        it_name, count=1, backward=True)[-1],
-                    profile='',
-                    # We combine the name of the block with its id and a #QGEN#
-                    # string to both create a unique id (it_name is unique) and
-                    # be able to retrieve the id to display the correct diagram
-                    # when the construct is clicked (as long as the name did
-                    # not contain #QGEN# already, which is unlikely).
-                    id="{0}{1}{2}#{3}".format(
-                        it_name, self.const_id, sloc_end, it_id),
-                    sloc_start=sloc_start,
-                    sloc_end=sloc_end,
-                    sloc_entity=sloc_start)
+        def add_construct(c_name, c_id, sloc_start, sloc_end, type):
+            clist.add_construct(
+                category=type,
+                is_declaration=True,
+                visibility=constructs.VISIBILITY_PUBLIC,
+                name=c_name,
+                profile='',
+                # We combine the name of the block with its id and a #QGEN#
+                # string to both create a unique id (it_name is unique) and
+                # be able to retrieve the id to display the correct diagram
+                # when the construct is clicked (as long as the name did
+                # not contain #QGEN# already, which is unlikely).
+                id=c_id,
+                sloc_start=sloc_start,
+                sloc_end=sloc_end,
+                sloc_entity=sloc_start)
+
+        for (c_name, c_id, sloc_start, sloc_end, type) in viewer.constructs:
+            add_construct(c_name, c_id, sloc_start, sloc_end, type)
 
 
 class CLI(GPS.Process):
@@ -507,14 +550,16 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
     A Simulink diagram viewer. It might be associated with several
     diagrams, which are used as the user opens blocks.
     """
-    # The associated .mdl file
-    file = None
-    # The list of diagrams read from this file a JSON_Diagram_File instance
-    diags = None
 
     def __init__(self):
         # The set of callbacks to call when a new diagram is displayed
         super(QGEN_Diagram_Viewer, self).__init__()
+        self.constructs = []
+        self.parsing_complete = False
+        # The associated .mdl file
+        file = None
+        # The list of diagrams read from this file a JSON_Diagram_File instance
+        diags = None
 
     @staticmethod
     def retrieve_qgen_viewers():
@@ -606,6 +651,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             if on_loaded:
                 on_loaded(v)
 
+        GPS.Hook('file_edited').run(file)
         return v
 
     @staticmethod
@@ -670,8 +716,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :param update_prev: If true, store the previous subsystem
         for navigation purposes
         """
-        if QGEN_Module.idx_workflow > 0:
-            QGEN_Module.cancel_flag = True
+        QGEN_Module.cancel_workflows()
         if diag and diag != self.diagram:
             if update_prev:
                 navigation_info = diag.get_item('qgen_navigation_info')
@@ -680,12 +725,6 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.scale_to_fit(2)
 
         QGEN_Module.on_diagram_changed(self, self.diagram)
-
-        # Let GPS views, in particular the outline, know when we select
-        # a new diagram
-        # If outline item selection is enabled in the future
-        # an update can be forced by GPS.SemanticTree(self.file).update()
-        GPS.Hook('semantic_tree_updated').run(self.file)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):
@@ -815,6 +854,12 @@ else:
         debugger = None
 
         @staticmethod
+        def cancel_workflows():
+            if QGEN_Module.idx_workflow > 0:
+                logger.log("Canceling running display workflows\n")
+                QGEN_Module.cancel_flag = True
+
+        @staticmethod
         @gps_utils.hook('project_view_changed')
         def __on_project_view_changed():
             """
@@ -835,18 +880,17 @@ else:
             """
             Resets the diagram display when a new debugger is used
             """
-            if QGEN_Module.idx_workflow > 0:
-                QGEN_Module.cancel_flag = True
+            # Starting the debugger kills running workflows
+            QGEN_Module.cancel_workflows()
             for id, sig in QGEN_Module.signal_attributes.iteritems():
                 sig.reset()
 
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
-                for diag in viewer.diags.diagrams:
-                    diag.clear_selection()
-                    QGEN_Module.on_diagram_changed(viewer, diag, clear=True)
+                viewer.diagram.clear_selection()
+                QGEN_Module.on_diagram_changed(
+                    viewer, viewer.diagram, clear=True)
 
             QGEN_Module.previous_breakpoints = debugger.breakpoints
-
             QGEN_Module.signal_attributes.clear()
             del QGEN_Module.previous_breakpoints[:]
 
@@ -855,17 +899,21 @@ else:
         def compute_all_item_values(debugger, diagram):
             # Compute the value for all items with an "auto" property
             id = QGEN_Module.idx_workflow
+            logger.log("Starting workflow %d\n" % id)
             for diag, toplevel, it in Diagram_Utils.forall_auto_items(
                     [diagram]):
                 yield QGEN_Module.compute_item_values(
                     debugger, diag, toplevel=toplevel, item=it)
                 if QGEN_Module.cancel_flag:
+                    logger.log("Canceling workflow %d\n" % id)
                     break
-                yield wait_idle()
+                yield wait_tasks(other_than=known_tasks)
+                logger.log("Yield in computing values")
                 diagram.changed()
-                yield wait_idle()
                 if QGEN_Module.cancel_flag:
+                    logger.log("Canceling workflow %d\n" % id)
                     break
+            logger.log("workflow %d done\n" % id)
             QGEN_Module.idx_workflow = QGEN_Module.idx_workflow - 1
 
         @staticmethod
@@ -886,17 +934,15 @@ else:
             # parent will be set to None, so we default to toplevel (the link,
             # in that case)
             parent = item.get_parent_with_id() or toplevel
-            yield wait_idle()
             if QGEN_Module.cancel_flag:
                 return
-            # Find the parent to hide (the one that contains the label)
 
+            # Find the parent to hide (the one that contains the label)
             item_parent = item
             p = item.parent
             while p is not None:
                 item_parent = p
                 p = item_parent.parent
-            yield wait_idle()
             if QGEN_Module.cancel_flag:
                 return
 
@@ -971,7 +1017,6 @@ else:
             QGEN_Module.cancel_flag = False
             QGEN_Module.idx_workflow = QGEN_Module.idx_workflow + 1
             QGEN_Module.compute_all_item_values(debugger, diag)
-
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
 
@@ -1124,7 +1169,6 @@ else:
                                           package="QGen")
                 if debug_args != "":
                     debugger.send("set args %s" % debug_args)
-
                 QGEN_Module.__clear(debugger)
             else:
                 # Show blocks with breakpoints
@@ -1232,6 +1276,8 @@ else:
                     f, open(f.path).read())
             viewer.scale = info['scale']
             viewer.topleft = info['topleft']
+            GPS.Hook('file_edited').run(f)
+
             return GPS.MDI.get_by_child(viewer)
 
         def __contextual_filter_debug_and_sources(self, context):
