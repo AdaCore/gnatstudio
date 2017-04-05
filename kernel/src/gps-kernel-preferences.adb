@@ -1247,7 +1247,7 @@ package body GPS.Kernel.Preferences is
 
       Preserve_Messages := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-preserve-messages", True,
-         Label => -"Preserve messagse",
+         Label => -"Preserve messages",
          Doc => -"Keep build messages for files that are not being compiled");
 
       -- Project Editor --
