@@ -887,12 +887,24 @@ package body GVD_Module is
       end if;
 
       if Continue then
-         Connect_To_Target
-           (Process.Debugger,
-            Target   => Process.Debugger.Get_Remote_Target,
-            Protocol => Process.Debugger.Get_Remote_Protocol,
-            Force    => True,
-            Mode     => GVD.Types.Internal);
+         declare
+            Remote_Target   : constant String :=
+                                Process.Debugger.Get_Remote_Target;
+            Remote_Protocol : constant String :=
+                                Process.Debugger.Get_Remote_Protocol;
+         begin
+            --  Try to connect only if the remote target and a protocol have
+            --  been specified.
+
+            if Remote_Target /= "" and then Remote_Protocol /= "" then
+               Connect_To_Target
+                 (Process.Debugger,
+                  Target   => Remote_Target,
+                  Protocol => Remote_Protocol,
+                  Force    => True,
+                  Mode     => GVD.Types.Internal);
+            end if;
+         end;
       end if;
 
       return Commands.Success;

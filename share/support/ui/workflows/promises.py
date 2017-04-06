@@ -886,10 +886,10 @@ class DebuggerWrapper(object):
                     self.__debugger.get_console()).raise_window()
 
                 # if we reach this, a debugger is running: interrupt it
-                GPS.execute_action("/Debug/Interrupt")
+                GPS.execute_action("debug interrupt")
 
                 # Try to reconnect to the previous remote connection, if any
-                GPS.execute_action("/Debug/Debug/Connect to board...")
+                GPS.execute_action("debug connect to board")
             except:
                 self.__debugger = GPS.Debugger.spawn(
                     executable=f,
