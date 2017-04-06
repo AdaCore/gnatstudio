@@ -113,9 +113,11 @@ class MDL_Language(GPS.Language):
             for it_name, it_id, sloc_start, sloc_end, type in process_item(
                     id, id, val, 0, viewer):
                 idx = idx + 1
-                if idx % 200 == 0:
+                if QGEN_Module.idx_workflow > 0 and idx % 200 == 0:
                     logger.log("Yield while adding constructs to outline \n")
                     yield wait_tasks(other_than=known_tasks)
+                else:
+                    yield wait_idle()
                 offset = max(offset, sloc_end[2]) + 1
                 c_id = "{0}{1}{2}#{3}".format(
                     it_name, self.const_id, sloc_end, it_id)
@@ -753,7 +755,7 @@ else:
     Project_Support.register_tool()
 
     class AsyncDebugger(object):
-        __query_interval = 200
+        __query_interval = 5
 
         def __init__(self, debugger):
             self._debugger = debugger
@@ -896,7 +898,7 @@ else:
 
         @staticmethod
         @workflows.run_as_workflow
-        def compute_all_item_values(debugger, diagram):
+        def compute_all_item_values(debugger, diagram, viewer):
             # Compute the value for all items with an "auto" property
             id = QGEN_Module.idx_workflow
             logger.log("Starting workflow %d\n" % id)
@@ -907,12 +909,12 @@ else:
                 if QGEN_Module.cancel_flag:
                     logger.log("Canceling workflow %d\n" % id)
                     break
-                yield wait_tasks(other_than=known_tasks)
-                logger.log("Yield in computing values")
+                if not viewer.parsing_complete:
+                    yield wait_tasks(other_than=known_tasks)
+                    logger.log("Yield in computing values")
+                else:
+                    yield wait_idle()
                 diagram.changed()
-                if QGEN_Module.cancel_flag:
-                    logger.log("Canceling workflow %d\n" % id)
-                    break
             logger.log("workflow %d done\n" % id)
             QGEN_Module.idx_workflow = QGEN_Module.idx_workflow - 1
 
@@ -934,8 +936,6 @@ else:
             # parent will be set to None, so we default to toplevel (the link,
             # in that case)
             parent = item.get_parent_with_id() or toplevel
-            if QGEN_Module.cancel_flag:
-                return
 
             # Find the parent to hide (the one that contains the label)
             item_parent = item
@@ -943,7 +943,9 @@ else:
             while p is not None:
                 item_parent = p
                 p = item_parent.parent
-            if QGEN_Module.cancel_flag:
+
+            if debugger is None:
+                item_parent.hide()
                 return
 
             def update_item_value(value):
@@ -975,7 +977,7 @@ else:
             if QGEN_Module.cancel_flag:
                 return
 
-            if symbols and debugger is not None:
+            if symbols is not None:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
                 if '/' in s:
@@ -986,7 +988,6 @@ else:
                     async_debugger = AsyncDebugger(debugger)
                     yield async_debugger.async_print_value(ss).then(
                         update_item_value)
-                    yield wait_idle()
                     if QGEN_Module.cancel_flag:
                         return
             else:
@@ -1016,7 +1017,7 @@ else:
                     yield timeout(100)
             QGEN_Module.cancel_flag = False
             QGEN_Module.idx_workflow = QGEN_Module.idx_workflow + 1
-            QGEN_Module.compute_all_item_values(debugger, diag)
+            QGEN_Module.compute_all_item_values(debugger, diag, viewer)
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
 
