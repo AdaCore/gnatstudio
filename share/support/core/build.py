@@ -534,7 +534,7 @@ name="U_pdate file XRef in background">
 
 <!-- Targets to launch runs  -->
 <target model="execute" category="_Run" name="Run _Main">
-    <in-toolbar>TRUE</in-toolbar>
+    <in-toolbar>FALSE</in-toolbar>
     <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <iconname>gps-run-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
