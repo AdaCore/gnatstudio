@@ -960,13 +960,17 @@ package body GVD.Breakpoints is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Filter : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
         (Kernel,
          Action_Name => "open breakpoints editor",
          Description => -"Open the Breakpoints Editor for the debugger");
+
+      Filter := Kernel.Lookup_Filter ("Debugger inactive or stopped");
 
       Register_Action
         (Kernel,
@@ -975,7 +979,7 @@ package body GVD.Breakpoints is
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-remove-symbolic",
          Category  => -"Debug",
-         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
+         Filter    => Filter);
 
       Register_Action
         (Kernel,
@@ -983,7 +987,7 @@ package body GVD.Breakpoints is
          -"Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
          Category  => -"Debug",
-         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
+         Filter    => Filter);
 
       Register_Action
         (Kernel,
@@ -1001,7 +1005,7 @@ package body GVD.Breakpoints is
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-settings-symbolic",
          Category  => -"Debug",
-         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
+         Filter    => Filter);
 
       Register_Action
         (Kernel,
@@ -1009,7 +1013,7 @@ package body GVD.Breakpoints is
          -"Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
          Category  => -"Debug",
-         Filter    => Kernel.Lookup_Filter ("Debugger stopped"));
+         Filter    => Filter);
    end Register_Module;
 
    ----------

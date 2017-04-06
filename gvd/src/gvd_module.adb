@@ -272,6 +272,14 @@ package body GVD_Module is
    -- Contextual --
    ----------------
 
+   type Debugger_Inactive_Or_Stopped_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Inactive_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if the debugger has not been started or now idle waiting for new
+   --  commands.
+
    type Debugger_Stopped_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Stopped_Filter;
@@ -1082,6 +1090,23 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Inactive_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
+   begin
+      return Process = null
+        or else Process.Debugger = null
+        or else not Command_In_Process (Process);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Stopped_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1477,6 +1502,10 @@ package body GVD_Module is
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
       GVD.Scripts.Create_Hooks (Kernel);
+
+      Debugger_Filter := new Debugger_Inactive_Or_Stopped_Filter;
+      Register_Filter
+        (Kernel, Debugger_Filter, "Debugger inactive or stopped");
 
       Debugger_Filter := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger stopped");
