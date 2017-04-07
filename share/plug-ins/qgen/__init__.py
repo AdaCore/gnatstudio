@@ -950,7 +950,7 @@ else:
 
             def update_item_value(value):
                 # Skip case when the variable is unknown
-                if value is None:
+                if value is None or "":
                     item_parent.hide()
                 else:
                     # Check whether the value is a float or is an integer
@@ -977,7 +977,7 @@ else:
             if QGEN_Module.cancel_flag:
                 return
 
-            if symbols is not None:
+            if symbols:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
                 if '/' in s:
