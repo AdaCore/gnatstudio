@@ -154,6 +154,18 @@ package body GVD.Breakpoints_List is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Set a breakpoint at the line given in the context
 
+   type Remove_Breakpoint_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Remove_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Remove a breakpoint from the line given in the context
+
+   type Toggle_Breakpoint_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Toggle_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Toggle a breakpoint at the line given in the context
+
    -------------
    -- Filters --
    -------------
@@ -169,6 +181,24 @@ package body GVD.Breakpoints_List is
    overriding function Filter_Matches_Primitive
      (Filter  : access No_Debugger_Or_Stopped_Filter;
       Context : Selection_Context) return Boolean;
+
+   type Find_Breakpoint_Filter is new Action_Filter_Record with record
+      Found : Boolean := True;
+   end record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Find_Breakpoint_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Return Found if breakpoint is set for current line
+
+   type Is_Breakpoint_Active_Filter is
+     new Action_Filter_Record with record
+      Invert : Boolean := False;
+   end record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Breakpoint_Active_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Return True if breakpoint is active for current line. Inverts result if
+   --  Invert property is set.
 
    ----------------
    -- Properties --
@@ -189,6 +219,78 @@ package body GVD.Breakpoints_List is
    procedure Save_Persistent_Breakpoints
      (Kernel   : not null access Kernel_Handle_Record'Class);
    --  Save persistent breakpoints to properties.
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Breakpoint_Active_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Kernel  : constant Kernel_Handle   := Get_Kernel (Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+      Loc  : Location_Marker;
+   begin
+      if not Has_File_Information (Context)
+        or else not Has_Line_Information (Context)
+      then
+         return False;
+      end if;
+
+      Loc := Kernel.Get_Buffer_Factory.Create_Marker
+        (File   => File_Information (Context),
+         Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
+         Column => 1);
+
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         if Similar (B.Location, Loc) then
+            if Filter.Invert then
+               return not B.Enabled;
+            else
+               return B.Enabled;
+            end if;
+         end if;
+      end loop;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Find_Breakpoint_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Kernel  : constant Kernel_Handle   := Get_Kernel (Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+      Loc  : Location_Marker;
+   begin
+      if not Has_File_Information (Context)
+        or else not Has_Line_Information (Context)
+      then
+         return not Filter.Found;
+      end if;
+
+      Loc := Kernel.Get_Buffer_Factory.Create_Marker
+        (File   => File_Information (Context),
+         Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
+         Column => 1);
+
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         if Similar (B.Location, Loc) then
+            return Filter.Found;
+         end if;
+      end loop;
+
+      return not Filter.Found;
+   end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -513,6 +615,70 @@ package body GVD.Breakpoints_List is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Remove_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      if not Has_File_Information (Context.Context)
+        or else not Has_Line_Information (Context.Context)
+      then
+         return Commands.Failure;
+      end if;
+
+      Unbreak_Source
+        (Get_Kernel (Context.Context),
+         File  => File_Information (Context.Context),
+         Line  => Editable_Line_Type
+           (GPS.Kernel.Contexts.Line_Information (Context.Context)));
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Toggle_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+      Loc     : Location_Marker;
+      Res     : Boolean with Unreferenced;
+
+   begin
+      if not Has_File_Information (Context.Context)
+        or else not Has_Line_Information (Context.Context)
+      then
+         return Commands.Failure;
+      end if;
+
+      Loc := Kernel.Get_Buffer_Factory.Create_Marker
+        (File   => File_Information (Context.Context),
+         Line   => Editable_Line_Type
+           (Contexts.Line_Information (Context.Context)),
+         Column => 1);
+
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         if Similar (B.Location, Loc) then
+            Res := Toggle_Breakpoint (Kernel, B.Num);
+            return Commands.Success;
+         end if;
+      end loop;
+
+      return Commands.Failure;
+   end Execute;
+
    ----------
    -- Save --
    ----------
@@ -599,7 +765,7 @@ package body GVD.Breakpoints_List is
             end if;
 
             B :=
-              (Num         => Breakpoint_Identifier'Last,
+              (Num         => Module.Breakpoints.Dummy_Id,
                Trigger     => Write,
                The_Type    => Breakpoint_Type'Value (Item.Get ("type")),
                Disposition => Breakpoint_Disposition'Value
@@ -615,6 +781,8 @@ package body GVD.Breakpoints_List is
                Commands    => Item.Get ("command"),
                Scope       => Scope_Type'Value (Item.Get ("scope")),
                Action      => Action_Type'Value (Item.Get ("action")));
+
+            Module.Breakpoints.Dummy_Id := Module.Breakpoints.Dummy_Id + 1;
             Property.Breakpoints.Append (B);
          end;
       end loop;
@@ -1078,7 +1246,9 @@ package body GVD.Breakpoints_List is
       Register_Contextual_Menu
         (Kernel => Kernel,
          Label  => -"Debug/Set breakpoint on line %l",
-         Action => "debug set line breakpoint");
+         Action => "debug set line breakpoint",
+         Filter => new Find_Breakpoint_Filter'
+           (Action_Filter_Record with Found => False));
 
       Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
 
@@ -1094,6 +1264,48 @@ package body GVD.Breakpoints_List is
         (Kernel => Kernel,
          Label  => -"Debug/Continue until line %l",
          Action => "debug continue until");
+
+      Register_Action
+        (Kernel, "debug remove breakpoint",
+         Command     => new Remove_Breakpoint_Command,
+         Description => "Remove breakpoint",
+         Filter      => No_Debugger_Or_Stopped and
+           Kernel.Lookup_Filter ("Source editor"),
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Remove breakpoint",
+         Action => "debug remove breakpoint",
+         Filter => new Find_Breakpoint_Filter'
+           (Action_Filter_Record with Found => True));
+
+      Register_Action
+        (Kernel, "debug disable breakpoint",
+         Command     => new Toggle_Breakpoint_Command,
+         Description => "Disable breakpoint",
+         Filter      => No_Debugger_Or_Stopped and
+           Kernel.Lookup_Filter ("Source editor"),
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Disable breakpoint",
+         Action => "debug disable breakpoint",
+         Filter => new Is_Breakpoint_Active_Filter'
+           (Action_Filter_Record with Invert => False));
+
+      Register_Action
+        (Kernel, "debug enable breakpoint",
+         Command     => new Toggle_Breakpoint_Command,
+         Description => "Enable breakpoint",
+         Filter      => No_Debugger_Or_Stopped and
+           Kernel.Lookup_Filter ("Source editor"),
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Enable breakpoint",
+         Action => "debug enable breakpoint",
+         Filter => new Is_Breakpoint_Active_Filter'
+           (Action_Filter_Record with Invert => True));
    end Register_Module;
 
 end GVD.Breakpoints_List;
