@@ -101,7 +101,7 @@ package body Time_Utils is
       Days   : Integer := 0;
    begin
       if In_Day >= 86_400.0 then
-         Days := Integer (In_Day / 86_400.0);
+         Days := Integer (Float'Floor (Float (In_Day / 86_400.0)));
          In_Day := End_Time - Start_Time - 86_400.0 * Days;
       end if;
 
@@ -121,7 +121,7 @@ package body Time_Utils is
             Elapsed_Start := Elapsed_Start + 3;
          end if;
 
-         return (if Days > 0 then Image (Days, 1) & "days " else "")
+         return (if Days > 0 then Image (Days, 1) & " days " else "")
            & Elapsed (Elapsed_Start .. Elapsed'Last);
       end;
    end Elapsed;
