@@ -515,7 +515,7 @@ messages. Full: same as normal, plus run-time checks related messages">
     </target>
 
     <target model="codepeer" category="CodePeer" name="Run CodePeer File"
-            messages_category="CodePeer">
+            messages_category="CodePeer (one file)">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>

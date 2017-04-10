@@ -19,6 +19,7 @@ with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
 with CodePeer.Module.Bridge;
 with CodePeer.Shell_Commands;
@@ -75,6 +76,14 @@ package body CodePeer.Module.Actions is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
 
    begin
+      --  Clean up all the messages from the previous run of CodePeer on
+      --  one file.
+
+      Get_Messages_Container (Kernel).Remove_Category
+        ("CodePeer (one file)", Flags => (others => True));
+
+      --  Run the CodePeer target
+
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   => CodePeer.Shell_Commands.Build_Target (Kernel,
