@@ -202,8 +202,6 @@ package body Task_Manager is
          New_Queues : Task_Queue_Array
            (Manager.Queues'First .. Manager.Queues'Last - 1);
       begin
-         GNAT.Strings.Free (Queue.Id);
-
          if Manager.Queues'Length = 1 then
             Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
@@ -417,15 +415,13 @@ package body Task_Manager is
       Block_Exit : Boolean;
       Status     : Queue_Status) return Integer
    is
-      use GNAT.Strings;
-
       procedure Init (Q : out Task_Queue_Access);
       --  Set the fields of the queue
 
       procedure Init (Q : out Task_Queue_Access) is
       begin
          Q := new Task_Queue_Record;
-         Q.Id := new String'(Queue_Id);
+         Q.Id := To_Unbounded_String (Queue_Id);
          Q.Show_Bar := Show_Bar;
          Q.Block_Exit := Block_Exit;
          Q.Status := Status;
@@ -447,8 +443,8 @@ package body Task_Manager is
       else
          if Queue_Id /= "" then
             for J in Manager.Queues'Range loop
-               if Manager.Queues (J).Id /= null
-                 and then Manager.Queues (J).Id.all = Queue_Id
+               if Manager.Queues (J).Id /= Null_Unbounded_String
+                 and then Manager.Queues (J).Id = Queue_Id
                  and then Manager.Queues (J).Status /= Completed
                then
                   Manager.Queues (J).Show_Bar := Show_Bar;
@@ -495,15 +491,14 @@ package body Task_Manager is
      (Manager  : not null access Task_Manager_Record;
       Queue_Id : String) return Boolean
    is
-      use GNAT.Strings;
    begin
       if Manager.Queues = null then
          return False;
       end if;
 
       for J in Manager.Queues'Range loop
-         if Manager.Queues (J).Id /= null
-           and then Manager.Queues (J).Id.all = Queue_Id
+         if Manager.Queues (J).Id /= Null_Unbounded_String
+           and then Manager.Queues (J).Id = Queue_Id
          then
             return True;
          end if;
@@ -616,17 +611,15 @@ package body Task_Manager is
 
    procedure Interrupt_Queue
      (Manager  : not null access Task_Manager_Record;
-      Queue_Id : String)
-   is
-      use type GNAT.Strings.String_Access;
+      Queue_Id : String) is
    begin
       if Manager.Queues = null then
          return;
       end if;
 
       for J in Manager.Queues'Range loop
-         if Manager.Queues (J).Id /= null
-           and then Manager.Queues (J).Id.all = Queue_Id
+         if Manager.Queues (J).Id /= Null_Unbounded_String
+           and then Manager.Queues (J).Id = Queue_Id
          then
             Interrupt_Queue_N (Manager, J);
             return;
@@ -640,14 +633,12 @@ package body Task_Manager is
 
    function Head
      (Manager : not null access Task_Manager_Record; Id : String)
-     return Scheduled_Command_Access
-   is
-      use GNAT.Strings;
+     return Scheduled_Command_Access is
    begin
       if Manager.Queues /= null then
          for J in Manager.Queues'Range loop
-            if Manager.Queues (J).Id /= null
-              and then Manager.Queues (J).Id.all = Id
+            if Manager.Queues (J).Id /= Null_Unbounded_String
+              and then Manager.Queues (J).Id = Id
             then
                if Manager.Queues (J).Queue.Is_Empty then
                   return null;
@@ -673,7 +664,6 @@ package body Task_Manager is
          Manager.Interrupt_All_Tasks;
          for J in Manager.Queues'Range loop
             Free (Manager.Queues (J).Queue);
-            GNAT.Strings.Free (Manager.Queues (J).Id);
             Unchecked_Free (Manager.Queues (J));
          end loop;
 

@@ -148,7 +148,7 @@ package body Task_Manager.Shell is
                N : constant String := Q.Queue.First_Element.Name;
             begin
                if N = "" then
-                  Data.Set_Return_Value (Q.Id.all);
+                  Data.Set_Return_Value (To_String (Q.Id));
                else
                   Data.Set_Return_Value (N);
                end if;

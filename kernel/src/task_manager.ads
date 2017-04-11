@@ -27,8 +27,8 @@
 
 with Commands;             use Commands;
 with Glib.Main;            use Glib.Main;
-with GNAT.Strings;
 with GPS.Scripts.Commands; use GPS.Scripts.Commands;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 
@@ -147,7 +147,7 @@ private
       Done     : Integer := 0;
       --  The number of items done in queue
 
-      Id       : GNAT.Strings.String_Access;
+      Id       : Unbounded_String := Null_Unbounded_String;
 
       Current_Priority : Integer := 0;
 
