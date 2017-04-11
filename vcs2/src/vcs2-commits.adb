@@ -1021,7 +1021,7 @@ package body VCS2.Commits is
                    Column_Foreground    => Gdk.RGBA.Get_Type,
                    Column_Check_Visible => GType_Boolean,
                    Column_Staged        => GType_Boolean),
-                  Filtered         => True,
+                  Capability_Type  => Filtered,
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);

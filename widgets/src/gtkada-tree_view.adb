@@ -444,6 +444,35 @@ package body Gtkada.Tree_View is
    end Convert_To_Store_Iter;
 
    ------------------------------------
+   -- Convert_To_Sortable_Model_Iter --
+   ------------------------------------
+
+   function Convert_To_Sortable_Model_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Iter
+   is
+      Filter_Iter         : Gtk_Tree_Iter;
+      Sortable_Model_Iter : aliased Gtk_Tree_Iter;
+      Result              : Boolean;
+   begin
+      if Self.Filter /= null and then Store_Iter /= Null_Iter then
+         Self.Filter.Convert_Child_Iter_To_Iter
+           (Filter_Iter, Store_Iter);
+
+         if Self.Sortable_Model /= null and then Filter_Iter /= Null_Iter then
+            Result := Self.Sortable_Model.Convert_Child_Iter_To_Iter
+              (Sortable_Model_Iter'Access, Filter_Iter);
+            return (if Result then Sortable_Model_Iter else Store_Iter);
+         else
+            return Store_Iter;
+         end if;
+      else
+         return Store_Iter;
+      end if;
+   end Convert_To_Sortable_Model_Iter;
+
+   ------------------------------------
    -- Get_Filter_Path_For_Store_Iter --
    ------------------------------------
 
@@ -725,12 +754,15 @@ package body Gtkada.Tree_View is
    -------------
 
    procedure Gtk_New
-     (Widget       : out Tree_View;
-      Column_Types : GType_Array;
-      Filtered     : Boolean := False) is
+     (Widget          : out Tree_View;
+      Column_Types    : Glib.GType_Array;
+      Capability_Type : Tree_View_Capability_Type := Sortable) is
    begin
       Widget := new Tree_View_Record;
-      Initialize (Widget, Column_Types, Filtered => Filtered);
+      Initialize
+        (Widget,
+         Column_Types    => Column_Types,
+         Capability_Type => Capability_Type);
    end Gtk_New;
 
    ----------------
@@ -739,8 +771,8 @@ package body Gtkada.Tree_View is
 
    procedure Initialize
      (Widget           : access Tree_View_Record'Class;
-      Column_Types     : GType_Array;
-      Filtered         : Boolean;
+      Column_Types     : Glib.GType_Array;
+      Capability_Type  : Tree_View_Capability_Type := Sortable;
       Set_Visible_Func : Boolean := False)
    is
       Params            : GParameter_Array (1 .. 1);
@@ -753,7 +785,8 @@ package body Gtkada.Tree_View is
 
       Gtk_New (Widget.Model, Real_Column_Types);
 
-      if Filtered then
+      case Capability_Type is
+      when Filtered | Filtered_And_Sortable =>
          Init (Params (1).Value, Gtk.Tree_Model.Get_Type);
          Set_Object (Params (1).Value, Widget.Model);
          Params (1).Name := New_String ("child-model");
@@ -765,8 +798,16 @@ package body Gtkada.Tree_View is
 
          Unref (Widget.Model);  --  owned by the filter
 
-         Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
-         Unref (Widget.Filter);  --  owned by the widget
+         --  Create a Tree_Model_Sort wrapper around the Tree_Model_Filter to
+         --  when the tree view needs sorting capabilities.
+         if Capability_Type = Filtered_And_Sortable then
+            Gtk_New_With_Model (Widget.Sortable_Model, +Widget.Filter);
+            Initialize (Gtk_Tree_View (Widget), +Widget.Sortable_Model);
+         else
+            Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
+         end if;
+
+         Unref (Widget.Filter);  --  owned by the widget or the sortable model
 
          Widget.On_Drag_Begin (On_Drag_Begin'Access, Slot => Widget);
          Widget.On_Drag_End (On_Drag_End'Access, Slot => Widget);
@@ -776,10 +817,10 @@ package body Gtkada.Tree_View is
               (Widget.Filter, Is_Visible'Access, Data => Widget);
          end if;
 
-      else
+      when Sortable =>
          Initialize (Gtk_Tree_View (Widget), +Widget.Model);
          Unref (Widget.Model);  --  owned by the widget
-      end if;
+      end case;
 
       --  We can't connect with After => True, because then the Gtk_Tree_Iter
       --  might have been modified, and in particular would no longer be
@@ -1133,7 +1174,10 @@ package body Gtkada.Tree_View is
                Thaw_Sort (Data.Tree.Model, Data.Sort_Col);
             end if;
 
-            if Data.Tree.Filter /= null then
+            if Data.Tree.Sortable_Model /= null then
+               Data.Tree.Set_Model (+Data.Tree.Sortable_Model);
+               Unref (Data.Tree.Sortable_Model);
+            elsif Data.Tree.Filter /= null then
                Data.Tree.Set_Model (+Data.Tree.Filter);
                Unref (Data.Tree.Filter);
             else

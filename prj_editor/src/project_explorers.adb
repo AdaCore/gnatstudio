@@ -595,7 +595,7 @@ package body Project_Explorers is
       Explorer.Tree.Kernel := Explorer.Kernel;
       Explorer.Tree.Initialize
         (Column_Types     => Columns_Types,
-         Filtered         => True,
+         Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Explorer.Tree.Set_Propagate_Filtered_Status (False);
       Set_Headers_Visible (Explorer.Tree, False);

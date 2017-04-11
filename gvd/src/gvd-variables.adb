@@ -945,7 +945,7 @@ package body GVD.Variables is
                               Column_Fg           => GType_String,
                               Column_Generic_Type => GType_Pointer,
                               Column_Full_Name    => GType_String),
-         Filtered         => True,
+         Capability_Type  => Filtered,
          Set_Visible_Func => True);
 
       Scrolled.Add (Self.Tree);

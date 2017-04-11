@@ -59,6 +59,7 @@ with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;  use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;    use Gtk.Tree_Model_Sort;
 with Glib;                   use Glib;
 with Glib.Main;              use Glib.Main;
 private with Glib.Object;
@@ -69,21 +70,39 @@ package Gtkada.Tree_View is
    type Tree_View_Record is new Gtk_Tree_View_Record with private;
    type Tree_View is access all Tree_View_Record'Class;
 
+   type Tree_View_Capability_Type is
+     (Sortable, Filtered, Filtered_And_Sortable);
+   --  Type enumerating the possible capabilities for Gtkada.Tree_View
+   --  widgets.
+   --
+   --  . Sortable: Simple tree view. Sorting on columns can be enabled via the
+   --    Gtk.Tree_View_column.Sort_Column_Id procedure.
+   --
+   --  . Filtered: Filtered tree view. Sorting on columns is disabled on this
+   --    kind of tree views.
+   --
+   --  . Filtered_And_Sortable: A tree view that can be filtered and also
+   --    sorted on its columns. Sorting on columns can be enabled via the
+   --    Gtk.Tree_View_column.Sort_Column_Id procedure.
+
    overriding procedure Expand_All (Self : not null access Tree_View_Record);
 
    procedure Gtk_New
-     (Widget       : out Tree_View;
-      Column_Types : Glib.GType_Array;
-      Filtered     : Boolean := False);
+     (Widget          : out Tree_View;
+      Column_Types    : Glib.GType_Array;
+      Capability_Type : Tree_View_Capability_Type := Sortable);
    procedure Initialize
      (Widget           : access Tree_View_Record'Class;
       Column_Types     : Glib.GType_Array;
-      Filtered         : Boolean;
+      Capability_Type  : Tree_View_Capability_Type := Sortable;
       Set_Visible_Func : Boolean := False);
    --  Create a new Tree_View with column types given by Column_Types.
    --  All callbacks set on the view (collapse_row, ...) will receive a
    --  Filter_Iter, which needs to be converted to an iterator on the user
    --  model via one of the functions below.
+   --
+   --  Capability_Type is used to determine which capabilities the tree view
+   --  will have (e.g: sorting, filtering).
    --
    --  If Set_Visible_Func is true and a filter is set, then the visibility of
    --  a row is given by an extra column in the model. This column can be
@@ -102,6 +121,11 @@ package Gtkada.Tree_View is
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
      with Inline;
    --  Optional view filter
+
+   function Sortable_Model
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Sort
+     with Inline;
+   --  Optional sortable model
 
    ---------------
    -- Expansion --
@@ -338,10 +362,10 @@ package Gtkada.Tree_View is
    ----------------
    -- Converters --
    ----------------
-   --  These various subprograms convert between the user model and the filter
-   --  model. It is valid (and even encouraged) to call them even if the tree
-   --  view wasn't created with a filter. In this case, the subprograms do
-   --  nothing.
+   --  These various subprograms convert between the user model, the filter
+   --  model and the sortable model. It is valid (and even encouraged) to call
+   --  them even if the tree view wasn't created with a filter or a sortable
+   --  model. In this case, the subprograms do nothing.
 
    function Convert_To_Store_Iter
      (Self        : access Tree_View_Record'Class;
@@ -354,6 +378,12 @@ package Gtkada.Tree_View is
       Store_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Converts model store iter into filter store iter
+
+   function Convert_To_Sortable_Model_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Converts a model store iter into sortable model iter
 
    function Get_Store_Iter_For_Filter_Path
      (Self        : access Tree_View_Record'Class;
@@ -388,6 +418,9 @@ private
       Filter : Gtk_Tree_Model_Filter;
       --  Optional view filter
 
+      Sortable_Model : Gtk_Tree_Model_Sort;
+      --  Optional sort model
+
       Column_Extra : Glib.Gint := -1;
       --  The extra column added to the model, which stores information like
       --  whether a node was expanded or filtered by the model.
@@ -413,9 +446,15 @@ private
 
    function Model
      (Self : not null access Tree_View_Record) return Gtk_Tree_Store
-     is (Self.Model);
+   is
+     (Self.Model);
    function Filter
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
-     is (Self.Filter);
+   is
+     (Self.Filter);
+   function Sortable_Model
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Sort
+   is
+     (Self.Sortable_Model);
 
 end Gtkada.Tree_View;

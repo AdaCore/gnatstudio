@@ -947,7 +947,7 @@ package body VCS2.History is
                    Column_Author  => GType_String,
                    Column_Date    => GType_String,
                    Column_Subject => GType_String),
-                  Filtered         => True,
+                  Capability_Type  => Filtered,
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (True);
       Self.Tree.Set_Fixed_Height_Mode (True);

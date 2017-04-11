@@ -741,7 +741,7 @@ package body Buffer_Views is
       Initialize
         (View.Tree,
          Column_Types       => Column_Types,
-         Filtered           => True,
+         Capability_Type    => Filtered,
          Set_Visible_Func   => True);
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);

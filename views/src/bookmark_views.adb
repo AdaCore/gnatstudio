@@ -1805,9 +1805,9 @@ package body Bookmark_Views is
       View.Tree := new Bookmark_Tree_Record;
       View.Tree.View := View;
       View.Tree.Initialize
-        (Column_Types     => Column_Types,
-         Filtered         => True,
-         Set_Visible_Func => True);
+           (Column_Types     => Column_Types,
+            Capability_Type  => Filtered,
+            Set_Visible_Func => True);
       View.Tree.Set_Name ("Bookmark TreeView"); --  For the testsuite
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);

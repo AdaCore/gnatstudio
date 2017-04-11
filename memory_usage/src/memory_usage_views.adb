@@ -335,7 +335,7 @@ package body Memory_Usage_Views is
       Gtkada.Tree_View.Initialize
         (Widget           => Self.Memory_Tree,
          Column_Types     => Column_Types,
-         Filtered         => True,
+         Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
       Self.Memory_Tree_Model := Self.Memory_Tree.Model;
       Self.Memory_Tree.Get_Selection.Set_Mode (Selection_None);

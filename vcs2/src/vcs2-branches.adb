@@ -932,7 +932,7 @@ package body VCS2.Branches is
           Column_Icon_Visible   => GType_Boolean,
           Column_Id             => GType_String,
           Column_Can_Rename     => GType_Boolean),
-         Filtered         => True,
+         Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Get_Selection.Set_Mode (Selection_Single);
