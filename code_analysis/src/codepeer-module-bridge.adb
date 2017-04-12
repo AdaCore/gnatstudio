@@ -120,23 +120,23 @@ package body CodePeer.Module.Bridge is
       Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
 
-      Project           : constant Project_Type :=
+      Project               : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
+      Object_Directory      : constant Virtual_File :=
         CodePeer_Object_Directory (Project);
-      Command_File_Name : constant Virtual_File :=
+      Command_File_Name     : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Request_File_Name);
-      Reply_File_Name   : constant Virtual_File :=
+      Reply_File_Name       : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
-      Status_File_Name  : constant Virtual_File :=
+      Status_File_Name      : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Review_Status_File_Name);
-      DB_File_Name      : constant Virtual_File :=
+      DB_File_Name          : constant Virtual_File :=
         Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
-      Output_Directory  : constant Virtual_File :=
+      Output_Directory      : constant Virtual_File :=
         Codepeer_Output_Directory (Module.Kernel);
-      Bts_Directory     : constant Virtual_File :=
+      Bts_Directory         : constant Virtual_File :=
         Output_Directory.Create_From_Dir ("bts");
-      Success           : Boolean;
+      Success               : Boolean;
       pragma Warnings (Off, Success);
 
    begin
@@ -172,14 +172,16 @@ package body CodePeer.Module.Bridge is
          --  Generate command file
 
          CodePeer.Bridge.Commands.Inspection
-           (Command_File_Name,
-            Output_Directory,
-            Codepeer_Database_Directory (Project),
-            Reply_File_Name,
-            Status_File_Name,
-            Module.Import_Annotations.Get_Pref,
-            Format_Version'Min
-              (Module.Version_Limit, Supported_Format_Version'Last));
+           (Command_File_Name    => Command_File_Name,
+            Output_Directory     => Output_Directory,
+            DB_Directory         =>
+              Codepeer_Database_Directory (Project),
+            Inspection_File_Name => Reply_File_Name,
+            Status_File_Name     => Status_File_Name,
+            Import_Annotations   => Module.Import_Annotations.Get_Pref,
+            Maximum_Version      =>
+              Format_Version'Min
+                (Module.Version_Limit, Supported_Format_Version'Last));
 
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
