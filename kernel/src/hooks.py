@@ -91,7 +91,7 @@ class Hook(object):
 types = {
     '__hookname__': Mapping(None, 'str', topython='Self.Name.all'),
     'Task': Mapping(
-        ada='Integer',
+        ada='String',
         python='GPS.Task',
         topython='Task_Manager.Shell.Get_Or_Create_Instance (Data, %(ada)s)',
         toada='Get_Data (Data.Nth_Arg (%(idx)d), ' +

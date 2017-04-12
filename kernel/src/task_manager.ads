@@ -69,8 +69,8 @@ package Task_Manager is
 
    procedure Interrupt_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer);
-   --  Interrupt command referenced by Index
+      Id      : String);
+   --  Interrupt command referenced by Id
 
    function Head
      (Manager : not null access Task_Manager_Record; Id : String)
@@ -87,13 +87,13 @@ package Task_Manager is
 
    procedure Pause_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer);
-   --  Pause command referenced by Index
+      Id      : String);
+   --  Pause command referenced by Id
 
    procedure Resume_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer);
-   --  Resume paused command referenced by Index
+      Id      : String);
+   --  Resume paused command referenced by Id
 
    procedure Destroy
      (Manager : Task_Manager_Access);
@@ -139,8 +139,6 @@ private
       Queue         : Command_Lists.List;
       --  Each element is a Scheduled_Command
 
-      Stored_Status : Command_Return_Type := Success;
-
       Total    : Integer := 0;
       --  The total number of items inserted so far in Queue
 
@@ -148,6 +146,9 @@ private
       --  The number of items done in queue
 
       Id       : Unbounded_String := Null_Unbounded_String;
+      --  An unique ID that allows identifying this task queue in a stable
+      --  manner. There should be no two queues with the same Id at the same
+      --  time in the task manager.
 
       Current_Priority : Integer := 0;
 
@@ -160,6 +161,8 @@ private
 
       To_Refresh : Boolean := False;
       --  Whether we should refresh the GUI for this queue
+
+      Active : Boolean := False;
    end record;
    type Task_Queue_Access is access Task_Queue_Record;
 
@@ -192,5 +195,11 @@ private
    end record;
 
    No_Task_Manager : constant Task_Manager_Access := null;
+
+   function Queue_From_Id
+     (Manager : not null access Task_Manager_Record;
+      Id      : String) return Task_Queue_Access;
+   --  Return the queue currently running from the given Id, null if there
+   --  isn't one.
 
 end Task_Manager;

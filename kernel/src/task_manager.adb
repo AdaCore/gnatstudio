@@ -22,6 +22,10 @@ package body Task_Manager is
 
    Timeout : constant := 100;
 
+   Queue_Id_Counter : Natural := 0;
+   --  This is a counter used to generate unique queue Ids - OK to leave this
+   --  a global variable.
+
    package Task_Manager_Idle is new Glib.Main.Generic_Sources
      (Task_Manager_Access);
    package Task_Manager_Timeout is new Glib.Main.Generic_Sources
@@ -35,6 +39,9 @@ package body Task_Manager is
       Block_Exit : Boolean;
       Status     : Queue_Status) return Integer;
    --  Return an index in Manager.Queues corresponding to Queue_Id
+   --  If Queue_Id corresponds to an identified queue, the index for this
+   --  queue is returned.
+   --  If Queue_Id is empty, the queue will be given an unique identifier.
 
    function Active_Incremental
      (Manager : Task_Manager_Access) return Boolean;
@@ -65,32 +72,66 @@ package body Task_Manager is
    --  Internal factorization function.
    --  Interrupt the queue at the given index.
 
+   procedure Interrupt_Task
+     (Manager : not null access Task_Manager_Record;
+      Task_Q  : Task_Queue_Access);
+   --  Interrupt the given task
+
+   -------------------
+   -- Queue_From_Id --
+   -------------------
+
+   function Queue_From_Id
+     (Manager : not null access Task_Manager_Record;
+      Id      : String) return Task_Queue_Access is
+   begin
+      if Manager.Queues = null then
+         return null;
+      end if;
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Id = Id then
+            return Manager.Queues (J);
+         end if;
+      end loop;
+      return null;
+   end Queue_From_Id;
+
+   --------------------
+   -- Interrupt_Task --
+   --------------------
+
+   procedure Interrupt_Task
+     (Manager : not null access Task_Manager_Record;
+      Task_Q  : Task_Queue_Access)
+   is
+      Command : Command_Access;
+   begin
+      if not Task_Q.Queue.Is_Empty then
+         --  Safety checks, allowing clients to interrupt
+         --  several times the same queue.
+         Command := Task_Q.Queue.First_Element;
+
+         if Command /= null then
+            Interrupt (Command.all);
+         end if;
+      end if;
+
+      Task_Q.Status := Completed;
+      Run (Task_Manager_Access (Manager), Active => Task_Q.Active);
+   end Interrupt_Task;
+
    -----------------------
    -- Interrupt_Command --
    -----------------------
 
    procedure Interrupt_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer)
+      Id      : String)
    is
-      Command : Command_Access;
+      Task_Q  : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
-      if Manager.Queues /= null then
-         if Index in Manager.Queues'Range then
-            if not Manager.Queues (Index).Queue.Is_Empty then
-               --  Safety checks, allowing clients to interrupt
-               --  several times the same queue.
-               Command := Manager.Queues (Index).Queue.First_Element;
-
-               if Command /= null then
-                  Interrupt (Command.all);
-               end if;
-            end if;
-
-            Manager.Queues (Index).Status := Completed;
-            Run (Task_Manager_Access (Manager),
-                 Active => Index < Manager.Passive_Index);
-         end if;
+      if Task_Q /= null then
+         Interrupt_Task (Manager, Task_Q);
       end if;
    end Interrupt_Command;
 
@@ -415,15 +456,37 @@ package body Task_Manager is
       Block_Exit : Boolean;
       Status     : Queue_Status) return Integer
    is
+      function To_Queue_Id return String;
+      --  Return an unique queue Id, either based on Queue_Id or based on
+      --  an internal counter.
+
+      function To_Queue_Id return String is
+      begin
+         if Queue_Id /= "" then
+            return Queue_Id;
+         else
+            if Queue_Id_Counter = Natural'Last then
+               --  So extremely unlikely, but...
+               Queue_Id_Counter := 0;
+            else
+               Queue_Id_Counter := Queue_Id_Counter + 1;
+            end if;
+            return Queue_Id_Counter'Img;
+         end if;
+      end To_Queue_Id;
+
+      The_Queue_Id : constant String := To_Queue_Id;
+
       procedure Init (Q : out Task_Queue_Access);
       --  Set the fields of the queue
 
       procedure Init (Q : out Task_Queue_Access) is
       begin
          Q := new Task_Queue_Record;
-         Q.Id := To_Unbounded_String (Queue_Id);
+         Q.Id := To_Unbounded_String (The_Queue_Id);
          Q.Show_Bar := Show_Bar;
          Q.Block_Exit := Block_Exit;
+         Q.Active := Active;
          Q.Status := Status;
       end Init;
 
@@ -441,17 +504,15 @@ package body Task_Manager is
          return 1;
 
       else
-         if Queue_Id /= "" then
-            for J in Manager.Queues'Range loop
-               if Manager.Queues (J).Id /= Null_Unbounded_String
-                 and then Manager.Queues (J).Id = Queue_Id
-                 and then Manager.Queues (J).Status /= Completed
-               then
-                  Manager.Queues (J).Show_Bar := Show_Bar;
-                  return J;
-               end if;
-            end loop;
-         end if;
+         for J in Manager.Queues'Range loop
+            if Manager.Queues (J).Id /= Null_Unbounded_String
+              and then Manager.Queues (J).Id = The_Queue_Id
+              and then Manager.Queues (J).Status /= Completed
+            then
+               Manager.Queues (J).Show_Bar := Show_Bar;
+               return J;
+            end if;
+         end loop;
 
          declare
             New_Queues : Task_Queue_Array
@@ -552,7 +613,11 @@ package body Task_Manager is
      (Manager : not null access Task_Manager_Record;
       Index   : Natural) is
    begin
-      Interrupt_Command (Manager, Index);
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      Interrupt_Task (Manager, Manager.Queues (Index));
 
       if Index >= Manager.Passive_Index then
          Manager.Minimal_Passive_Priority := 0;
@@ -677,13 +742,13 @@ package body Task_Manager is
 
    procedure Pause_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer) is
+      Id      : String)
+   is
+      Task_Q : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
-      if Manager.Queues /= null then
-         if Index in Manager.Queues'Range then
-            if Manager.Queues (Index).Status = Running then
-               Manager.Queues (Index).Status := Paused;
-            end if;
+      if Task_Q /= null then
+         if Task_Q.Status = Running then
+            Task_Q.Status := Paused;
          end if;
       end if;
    end Pause_Command;
@@ -694,15 +759,14 @@ package body Task_Manager is
 
    procedure Resume_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer) is
+      Id      : String)
+   is
+      Task_Q : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
-      if Manager.Queues /= null then
-         if Index in Manager.Queues'Range then
-            if Manager.Queues (Index).Status = Paused then
-               Manager.Queues (Index).Status := Running;
-               Run (Task_Manager_Access (Manager),
-                    Active => Index < Manager.Passive_Index);
-            end if;
+      if Task_Q /= null then
+         if Task_Q.Status = Paused then
+            Task_Q.Status := Running;
+            Run (Task_Manager_Access (Manager), Active => Task_Q.Active);
          end if;
       end if;
    end Resume_Command;
@@ -715,7 +779,11 @@ package body Task_Manager is
       (Manager : not null access Task_Manager_Record) is
    begin
       if Manager.Queues /= null then
-         Interrupt_Command (Manager, Manager.Queues'Last);
+         --  Suboptimal to get the ID from the queue and then look up this
+         --  queue again, but this operation should be rare.
+         Interrupt_Command
+           (Manager,
+            To_String (Manager.Queues (Manager.Queues'Last).Id));
       end if;
    end Interrupt_Latest_Task;
 

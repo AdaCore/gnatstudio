@@ -36,17 +36,21 @@ package body Task_Manager.Shell is
 
    function Get_Or_Create_Instance
      (Data  : Callback_Data'Class;
-      Index : Integer) return Class_Instance
+      Id    : String) return Class_Instance
    is
       Manager : constant Task_Manager_Access :=
         Get_Task_Manager (Get_Kernel (Data));
-      Queue   : constant Task_Queue_Access := Manager.Queues (Index);
+      Queue   : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
+      if Queue = null then
+         return No_Class_Instance;
+      end if;
+
       if Queue.Inst = No_Class_Instance then
          Queue.Inst := New_Instance (Get_Script (Data), Task_Class);
       end if;
 
-      Set_Data (Queue.Inst, Task_Class, Index);
+      Set_Data (Queue.Inst, Task_Class, Id);
       return Queue.Inst;
    end Get_Or_Create_Instance;
 
@@ -63,7 +67,25 @@ package body Task_Manager.Shell is
       Q         : Task_Queue_Access;
       C         : Command_Access;
       Progress  : Progress_Record;
-      Id        : Integer;
+
+      function Get_Id_Arg_1 return String;
+      --  Convenience function to get the Task Id contained in Arg 1
+
+      function Get_Task_Arg_1 return Task_Queue_Access;
+      --  Convenience function to get the task contained in Arg 1
+
+      function Get_Id_Arg_1 return String is
+         Task_Inst : Class_Instance;
+      begin
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         return Get_Data (Task_Inst, Task_Class);
+      end Get_Id_Arg_1;
+
+      function Get_Task_Arg_1 return Task_Queue_Access is
+      begin
+         return Queue_From_Id (Manager, Get_Id_Arg_1);
+      end Get_Task_Arg_1;
+
    begin
       if Manager = null then
          return;
@@ -83,54 +105,47 @@ package body Task_Manager.Shell is
             --  of the task manager. So, do not include in the list of
             --  tasks.
             if Manager.Queues (J).Status /= Completed then
-               Task_Inst := Get_Or_Create_Instance (Data, J);
-               Set_Return_Value (Data, Task_Inst);
+               Task_Inst := Get_Or_Create_Instance
+                 (Data,
+                  To_String (Manager.Queues (J).Id));
+               if Task_Inst /= No_Class_Instance then
+                  Set_Return_Value (Data, Task_Inst);
+               end if;
             end if;
          end loop;
 
       elsif Command = "interrupt" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Interrupt_Command (Manager, Get_Data (Task_Inst, Task_Class));
+         Interrupt_Command (Manager, Get_Id_Arg_1);
 
       elsif Command = "pause" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Pause_Command (Manager, Get_Data (Task_Inst, Task_Class));
+         Pause_Command (Manager, Get_Id_Arg_1);
 
       elsif Command = "resume" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Resume_Command (Manager, Get_Data (Task_Inst, Task_Class));
+         Resume_Command (Manager, Get_Id_Arg_1);
 
       elsif Command = "status" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Id := Get_Data (Task_Inst, Task_Class);
-         Set_Return_Value (Data, Manager.Queues (Id).Status'Img);
+         Set_Return_Value (Data, Get_Task_Arg_1.Status'Img);
 
       elsif Command = "block_exit" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Id := Get_Data (Task_Inst, Task_Class);
-         Set_Return_Value
-           (Data, Manager.Queues (Id).Block_Exit
-            and then Manager.Queues (Id).Show_Bar);
+         Q := Get_Task_Arg_1;
+         Set_Return_Value (Data, Q.Block_Exit and then Q.Show_Bar);
 
       elsif Command = "visible" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Id := Get_Data (Task_Inst, Task_Class);
-         Data.Set_Return_Value (Manager.Queues (Id).Show_Bar);
+         Data.Set_Return_Value (Get_Task_Arg_1.Show_Bar);
 
       elsif Command = "progress" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Id := Get_Data (Task_Inst, Task_Class);
-         if Manager.Queues (Id).Queue.Is_Empty then
+         Q := Get_Task_Arg_1;
+         if Q.Queue.Is_Empty then
             --  the task might have been terminated already, or not be started
             --  yet (since a GPS.Task represents a queue, it might not contain
             --  a command yet).
 
             Set_Return_Value_As_List (Data);
-            Set_Return_Value (Data, Manager.Queues (Id).Done);
-            Set_Return_Value (Data, Manager.Queues (Id).Total);
+            Set_Return_Value (Data, Q.Done);
+            Set_Return_Value (Data, Q.Total);
 
          else
-            C := Manager.Queues (Id).Queue.First_Element;
+            C := Q.Queue.First_Element;
             Progress := C.Progress;
 
             Set_Return_Value_As_List (Data);
@@ -139,8 +154,7 @@ package body Task_Manager.Shell is
          end if;
 
       elsif Command = "name" then
-         Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         Q := Manager.Queues (Get_Data (Task_Inst, Task_Class));
+         Q := Get_Task_Arg_1;
          if Q.Queue.Is_Empty then
             Data.Set_Return_Value (String'(""));
          else
