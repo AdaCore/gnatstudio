@@ -282,7 +282,7 @@ dnl
   AC_PATH_PROG(GNATDRV, gnat, no)
   min_gtk_version=ifelse([$1], ,2.0.0,$1)
   AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
-  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2`
+  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2 | head -1`
   no_gtk=""
   if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes

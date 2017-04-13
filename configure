@@ -4331,7 +4331,7 @@ fi
   min_gtk_version=17.0
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
-  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2`
+  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2 | head -1`
   no_gtk=""
   if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes
