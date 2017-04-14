@@ -677,12 +677,12 @@ package body Generic_Views is
          Gtk_New (F.Pattern_Config_Menu);
          Ref (F.Pattern_Config_Menu);  --  unref'ed in On_Destroy
 
-         Gtk_New (F.Full_Text, Widget_SList.Null_List, -"Full text match");
+         Gtk_New (F.Full_Text, Widget_SList.Null_List, -Get_Label (Full_Text));
          F.Full_Text.On_Toggled (Report_Filter_Changed'Access, Self);
          F.Pattern_Config_Menu.Add (F.Full_Text);
 
          if (Options and Has_Regexp) /= 0 then
-            Gtk_New (F.Regexp, Label => -"Regular Expression",
+            Gtk_New (F.Regexp, Label => -Get_Label (Regexp),
                      Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-is-regexp",
@@ -694,7 +694,7 @@ package body Generic_Views is
          end if;
 
          if (Options and Has_Approximate) /= 0 then
-            Gtk_New (F.Approximate, Label => -"Approximate matching",
+            Gtk_New (F.Approximate, Label => -Get_Label (Approximate),
                      Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-approximate",
@@ -706,7 +706,7 @@ package body Generic_Views is
          end if;
 
          if (Options and Has_Fuzzy) /= 0 then
-            Gtk_New (F.Fuzzy, Label => -"Fuzzy matching",
+            Gtk_New (F.Fuzzy, Label => -Get_Label (Fuzzy),
                      Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-fuzzy",

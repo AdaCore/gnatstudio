@@ -23,8 +23,6 @@ with Gdk.RGBA;
 with Glib.Main;
 with Gtk.Box;
 with Gtk.Toggle_Button;
-with Gtk.Check_Button;
-with Gtk.Combo_Box_Text;
 with Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;
 with Gtk.List_Store;
@@ -132,6 +130,9 @@ private
       Pattern            : GPS.Search.Search_Pattern_Access;
       Kernel             : GPS.Kernel.Kernel_Handle;
 
+      Search_Kind        : GPS.Search.Search_Kind := GPS.Search.Fuzzy;
+      --  The currently used search kind
+
       Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Need_Clear       : Boolean := False;
 
@@ -162,9 +163,8 @@ private
       Settings_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
       --  The button that toggles the settings on/off
 
-      Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
-      Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
-      Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+      Settings_Case_Sensitive : Gtk.Toggle_Button.Gtk_Toggle_Button;
+      Settings_Whole_Word     : Gtk.Toggle_Button.Gtk_Toggle_Button;
       Settings_Width          : Gtk.Spin_Button.Gtk_Spin_Button;
 
       Completions      : Gtk.List_Store.Gtk_List_Store;

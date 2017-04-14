@@ -39,8 +39,6 @@ with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
-with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -49,10 +47,12 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
+with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Style_Context;          use Gtk.Style_Context;
+with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
@@ -100,6 +100,19 @@ package body Gtkada.Entry_Completion is
    Provider_Column_Bg_Modifier : constant := 0.05;
    --  Color modifier amount for the provider column of the popup tree view
 
+   type Search_Kind_Radio_Button_Record is new Gtk_Radio_Button_Record
+   with record
+      Entry_View : Gtkada_Entry;
+      Kind       : Search_Kind;
+   end record;
+   type Search_Kind_Radio_Button is
+     access all Search_Kind_Radio_Button_Record'Class;
+   --  Type used to represent a radio button used to set the search kind
+   --  of the omnisearch.
+
+   type Search_Kind_Radio_Button_Array is
+     array (Integer range <>) of Search_Kind_Radio_Button;
+
    type On_Pref_Changed is new Preferences_Hooks_Function with
       record
          Entry_View : Gtkada_Entry;
@@ -125,7 +138,7 @@ package body Gtkada.Entry_Completion is
    --  Called on idle to complete the completions
 
    function On_Preview_Idle (Self : Gtkada_Entry) return Boolean;
-   --  Called on idle to display the preview of the current selection
+   --  Called on idle to display the preview of the  selection
 
    function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean;
    --  Called in an idle callback to check whether S has the focus, and
@@ -155,6 +168,10 @@ package body Gtkada.Entry_Completion is
 
    procedure On_Settings_Changed (Self : access GObject_Record'Class);
    --  One of the settings has changed
+
+   procedure On_Search_Kind_Changed
+     (Self : access Gtk_Toggle_Button_Record'Class);
+   --  Called when the search kind has changed
 
    procedure Reset (Self : not null access Gtkada_Entry_Record'Class);
    --  Reset the search field and completion engine
@@ -506,9 +523,99 @@ package body Gtkada.Entry_Completion is
       Color  : Gdk_RGBA;
       Filter : Comp_Filter_Model;
       Frame  : Gtk_Frame;
-      Popup  : Gtk_Window;
-      Image  : Gtk_Image;
+      Popup    : Gtk_Window;
+      Padding  : constant Guint := 5;
       pragma Unreferenced (Col, Dummy);
+
+      procedure Create_Setting_Toggle_Button
+        (Button        : out Gtk_Toggle_Button;
+         Button_Name   : String;
+         Icon_Name     : String;
+         Tooltip       : String;
+         Hist_Key      : Histories.History_Key := "";
+         Default_Value : Boolean := False);
+      --  Used to create the various settings toogle buttons
+
+      procedure Create_Search_Kind_Radio_Buttons
+        (Parent_Box : Gtk_Box);
+
+      ----------------------------------
+      -- Create_Setting_Toggle_Button --
+      ----------------------------------
+
+      procedure Create_Setting_Toggle_Button
+        (Button        : out Gtk_Toggle_Button;
+         Button_Name   : String;
+         Icon_Name     : String;
+         Tooltip       : String;
+         Hist_Key      : Histories.History_Key := "";
+         Default_Value : Boolean := False)
+      is
+         Image : Gtk_Image;
+      begin
+         Gtk_New_From_Icon_Name
+           (Image     => Image,
+            Icon_Name => Icon_Name,
+            Size      => Icon_Size_Small_Toolbar);
+
+         Gtk_New (Button);
+         Button.Set_Relief (Relief_None);
+         Button.Set_Name (Button_Name);
+         Button.Set_Image (Image);
+         Button.Set_Tooltip_Text (-Tooltip);
+
+         if Hist_Key /= "" then
+            Associate (Get_History (Kernel).all,
+                       Name & Hist_Key,
+                       Button,
+                       Default => Default_Value);
+         end if;
+      end Create_Setting_Toggle_Button;
+
+      --------------------------------------
+      -- Create_Search_Kind_Radio_Buttons --
+      --------------------------------------
+
+      procedure Create_Search_Kind_Radio_Buttons
+        (Parent_Box : Gtk_Box)
+      is
+         Current_Search_Kind : constant String := Most_Recent
+           (Get_History (Kernel),
+            Name & "-kind",
+            Search_Kind'Image (Fuzzy));
+         Search_Kind_Radios  : Search_Kind_Radio_Button_Array (1 .. 3);
+         Idx                 : Integer := Search_Kind_Radios'First;
+      begin
+         for Kind in Full_Text .. Fuzzy loop
+            Search_Kind_Radios (Idx) := new Search_Kind_Radio_Button_Record'
+              (GObject_Record with
+               Entry_View => Gtkada_Entry (Self),
+               Kind       => Kind);
+            Initialize
+              (Radio_Button =>
+                 Gtk_Radio_Button
+                   (Search_Kind_Radios (Idx)),
+               Group        =>
+                 Gtk_Radio_Button
+                   (Search_Kind_Radios (Search_Kind_Radios'First)),
+               Label        => Get_Label (Kind));
+
+            Parent_Box.Pack_Start
+              (Search_Kind_Radios (Idx), Expand => False, Padding => Padding);
+
+            if Search_Kind'Image (Kind) = Current_Search_Kind then
+               Search_Kind_Radios (Idx).Set_Active (True);
+            end if;
+
+            Search_Kind_Radios (Idx).On_Toggled
+              (On_Search_Kind_Changed'Access);
+            Idx := Idx + 1;
+         end loop;
+
+         Create_New_Key_If_Necessary
+           (Get_History (Kernel).all, Name & "-kind", Strings);
+         Set_Max_Length (Get_History (Kernel).all, 1, Name & "-kind");
+      end Create_Search_Kind_Radio_Buttons;
 
    begin
       G_New (Self, Get_Type);
@@ -559,7 +666,6 @@ package body Gtkada.Entry_Completion is
          Popup.Set_Skip_Taskbar_Hint (True);
          Popup.Set_Skip_Pager_Hint (True);
          Get_Style_Context (Popup).Add_Class ("completion");
-
       else
          Box := Gtk_Box (Self);
       end if;
@@ -663,63 +769,62 @@ package body Gtkada.Entry_Completion is
       Create_Settings (Self);
       Self.Settings_Area.Set_No_Show_All (True);
 
-      Gtk_New (Self.Settings_Case_Sensitive, -"Case Sensitive");
-      Self.Settings_Case_Sensitive.Set_Name ("global-search-case-sensitive");
-      Associate (Get_History (Kernel).all,
-                 Name & "-case_sensitive",
-                 Self.Settings_Case_Sensitive,
-                 Default => Case_Sensitive);
-      Self.Settings.Pack_Start
-        (Self.Settings_Case_Sensitive, Expand => False, Padding => 3);
+      --  Create the 'Show settings' toggle button
 
-      Gtk_New (Self.Settings_Whole_Word, -"Whole Word");
-      Self.Settings_Whole_Word.Set_Name ("global-search-whole-word");
-      Associate (Get_History (Kernel).all,
-                 Name & "-whole_word",
-                 Self.Settings_Whole_Word,
-                 Default => False);
+      Create_Setting_Toggle_Button
+        (Button        => Self.Settings_Toggle,
+         Button_Name   => "global-search-settings-toggle",
+         Icon_Name     => "gps-settings-symbolic",
+         Tooltip       => "Display a settings panel to customize the "
+         & "omnisearch.");
+      Self.Settings.Pack_Start (Self.Settings_Toggle, Expand => False);
+
+      --  Create the 'Case sensitive' toggle button
+
+      Create_Setting_Toggle_Button
+        (Button        => Self.Settings_Case_Sensitive,
+         Button_Name   => "global-search-case-sensitive",
+         Icon_Name     => "gps-case-sensitive-symbolic",
+         Tooltip       => "Select this to differenciate upper "
+         & "from lower casing in search results",
+         Hist_Key      => Name & "-case_sensitive",
+         Default_Value => Case_Sensitive);
+      Self.Settings.Pack_Start (Self.Settings_Case_Sensitive, Expand => False);
+
+      --  Create the 'Whole word' toggle button
+
+      Create_Setting_Toggle_Button
+        (Button        => Self.Settings_Whole_Word,
+         Button_Name   => "global-search-whole-word",
+         Icon_Name     => "gps-whole-word-symbolic",
+         Tooltip       => "Select this if the pattern should only "
+         & "match a whole word, never part of a word",
+         Hist_Key      => Name & "-whole_word",
+         Default_Value => False);
       Self.Settings.Pack_Start (Self.Settings_Whole_Word, Expand => False);
 
-      Gtk_New (Self.Settings_Kind);
-      Self.Settings_Kind.Set_Name ("global-search-kind");
-      Self.Settings_Kind.Append
-         (Search_Kind'Image (Full_Text), -"Substrings match");
-      Self.Settings_Kind.Append
-         (Search_Kind'Image (Fuzzy), -"Fuzzy match");
-      Self.Settings_Kind.Append
-         (Search_Kind'Image (Regexp), -"Regular expression");
-      Self.Settings.Pack_Start (Self.Settings_Kind, Expand => False);
+      Gtk_New_Vseparator (Sep);
+      Self.Settings.Pack_Start (Sep, Expand => False, Padding => Padding);
 
-      Create_New_Key_If_Necessary
-         (Get_History (Kernel).all, Name & "-kind", Strings);
-      Set_Max_Length (Get_History (Kernel).all, 1, Name & "-kind");
-      Dummy := Self.Settings_Kind.Set_Active_Id
-         (Most_Recent (Get_History (Kernel), Name & "-kind",
-                       Search_Kind'Image (Fuzzy)));
+      --  Create the radio buttons for the different search kinds
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Name & "-preview",
-         Default_Value => True);
+      Create_Search_Kind_Radio_Buttons (Parent_Box => Self.Settings);
 
-      Gtk_New_From_Icon_Name
-         (Image, "gps-settings-symbolic", Size => Icon_Size_Menu);
-      Gtk_New (Self.Settings_Toggle);
-      Self.Settings_Toggle.Add (Image);
-      Self.Settings.Pack_Start (Self.Settings_Toggle, Expand => False);
+      --  Callbacks
+
       Self.Settings_Toggle.On_Toggled
         (Toggle_Settings'Access, Self, After => True);
-
       Self.Settings_Case_Sensitive.On_Toggled
+        (On_Settings_Changed'Access, Self);
+      Self.Settings_Whole_Word.On_Toggled
          (On_Settings_Changed'Access, Self);
-      Self.Settings_Whole_Word.On_Toggled (On_Settings_Changed'Access, Self);
-      Self.Settings_Kind.On_Changed (On_Settings_Changed'Access, Self);
-
       Self.On_Destroy (On_Entry_Destroy'Access);
       Self.View.On_Button_Press_Event (On_Button_Event'Access, Self);
       Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
       Self.GEntry.On_Focus_Out_Event (On_Focus_Out'Access, Self);
       Self.GEntry.On_Focus_In_Event (On_Focus_In'Access, Self);
 
+      --  Let the entry grab the focus
       Grab_Toplevel_Focus (Get_MDI (Kernel), Self.GEntry);
 
       --  Connect after setting the default entry, so that we do not
@@ -1470,9 +1575,7 @@ package body Gtkada.Entry_Completion is
    -------------------------
 
    procedure On_Settings_Changed (Self : access GObject_Record'Class) is
-      S : constant Gtkada_Entry := Gtkada_Entry (Self);
-      T : constant String := S.Settings_Kind.Get_Active_Id;
-      K : constant Search_Kind := Search_Kind'Value (T);
+      S    : constant Gtkada_Entry := Gtkada_Entry (Self);
       Size : Gint;
    begin
       Size := Gint (S.Settings_Width.Get_Value);
@@ -1481,13 +1584,30 @@ package body Gtkada.Entry_Completion is
       Add_To_History
         (Get_History (S.Kernel).all, S.Name.all & "-width", Size'Img);
 
-      S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
-      S.Settings_Whole_Word.Set_Visible (K = Regexp);
-      S.Settings_Whole_Word.Set_No_Show_All (K /= Regexp);
-      Add_To_History (Get_History (S.Kernel).all, S.Name.all & "-kind", T);
       Show_Preview (S);
       On_Entry_Changed (S);
    end On_Settings_Changed;
+
+   ----------------------------
+   -- On_Search_Kind_Changed --
+   ----------------------------
+
+   procedure On_Search_Kind_Changed
+     (Self : access Gtk_Toggle_Button_Record'Class)
+   is
+      Radio : constant Search_Kind_Radio_Button :=
+                Search_Kind_Radio_Button (Self);
+   begin
+      Radio.Entry_View.Search_Kind := Radio.Kind;
+
+      Add_To_History
+        (Get_History (Radio.Entry_View.Kernel).all,
+         Radio.Entry_View.Name.all & "-kind",
+         Search_Kind'Image (Radio.Kind));
+
+      Show_Preview (Radio.Entry_View);
+      On_Entry_Changed (Radio.Entry_View);
+   end On_Search_Kind_Changed;
 
    ---------------------
    -- Start_Searching --
@@ -1503,7 +1623,7 @@ package body Gtkada.Entry_Completion is
          Allow_Highlight => True,
          Case_Sensitive  => Self.Settings_Case_Sensitive.Get_Active,
          Whole_Word      => Self.Settings_Whole_Word.Get_Active,
-         Kind        => Search_Kind'Value (Self.Settings_Kind.Get_Active_Id));
+         Kind            => Self.Search_Kind);
       Self.Completion.Set_Pattern (Self.Pattern);
       Self.Need_Clear := True;
 

@@ -168,6 +168,24 @@ package body GPS.Search is
 
    package Sorting_By_Rank is new Provider_Lists.Generic_Sorting ("<");
 
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Kind : Search_Kind) return String is
+   begin
+      case Kind is
+         when Full_Text =>
+            return "Full text";
+         when Regexp =>
+            return "Regular expression";
+         when Fuzzy =>
+            return "Fuzzy";
+         when Approximate =>
+            return "Approximate";
+      end case;
+   end Get_Label;
+
    ---------------------
    -- Update_Location --
    ---------------------

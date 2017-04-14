@@ -49,6 +49,10 @@ package GPS.Search is
    --      patterns of length <= 10 => one error allowed
    --      long patterns            => up to two errors
 
+   function Get_Label (Kind : Search_Kind) return String;
+   --  Return a suitable label for the given search kind
+   --  (e.g : Fuzzy -  > "Fuzzy matching").
+
    Max_Capturing_Groups : constant := 10;
    --  Maximum number of capturing parenthesis groups for which we want to
    --  store the range in the search_context.
