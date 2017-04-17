@@ -1477,12 +1477,13 @@ package body Navigation_Module is
          Ele := Element (C);
          declare
             Path : constant String := To_String (Ele.Path);
+            Has_Slash : Boolean;
          begin
             --  Filter out "/Ada" for instance
-            if not (Starts_With (Path, "Ada/")
-                      or else Starts_With (Path, "GNAT/")
-                      or else Starts_With (Path, "System/")
-                      or else Starts_With (Path, "Interfaces/"))
+            if not (Starts_With (Path, "Ada")
+                      or else Starts_With (Path, "GNAT")
+                      or else Starts_With (Path, "System")
+                      or else Starts_With (Path, "Interfaces"))
             then
                Ele.Path := Null_Unbounded_String;
                Command.Menus_To_Create.Replace_Element (C, Ele);
@@ -1493,8 +1494,10 @@ package body Navigation_Module is
                if Pre /= Null_Unbounded_String
                  and then Starts_With (To_String (Pre), Path)
                then
+                  Has_Slash := False;
                   for J in reverse Path'Range loop
                      if Path (J) = '/' then
+                        Has_Slash := True;
                         Ele.Path := To_Unbounded_String
                             (Path & "/<" & Path (J + 1 .. Path'Last) & ">");
 
@@ -1502,6 +1505,14 @@ package body Navigation_Module is
                         exit;
                      end if;
                   end loop;
+
+                  --  Transform elements of the form "Ada" into "Ada/<Ada>"
+                  if not Has_Slash then
+                     Ele.Path := To_Unbounded_String
+                       (Path & "/<" & Path & ">");
+
+                     Command.Menus_To_Create.Replace_Element (C, Ele);
+                  end if;
                end if;
             end if;
          end;
