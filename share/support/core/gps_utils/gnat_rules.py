@@ -17,6 +17,7 @@ import os_utils
 import gnat_switches
 import gps_utils
 from gps_utils.switches import *
+from xml.sax.saxutils import escape
 
 gnatmakeproc = None
 
@@ -37,16 +38,23 @@ def Label(switch, default):
         str = re.sub("^turn on (checking|warnings) (on|for) ",
                      "",
                      default.strip())
-    str = str[0].upper() + str[1:]
-    str = re.sub("[.] *$", "", str)
-    return str
+    try:
+        str = str[0].upper() + str[1:]
+        str = re.sub("[.] *$", "", str)
+    except:
+        GPS.Logger("GNAT_SWITCHES").write(
+            "Label could not be parsed for switch: %s" % (switch))
+
+    return escape(str)
 
 
 def Tip(switch, default):
     if switch in gnat_switches.switches_comments:
-        return gnat_switches.switches_comments[switch][1].strip()
+        str = gnat_switches.switches_comments[switch][1].strip()
     else:
-        return default.strip()
+        str = default.strip()
+
+    return escape(str)
 
 
 def Warning(switch, defaulttip, defaultstate, before=False):
