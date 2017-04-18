@@ -1911,8 +1911,22 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Task.EXECUTE_AGAIN
+
+
+
+   .. autoattribute:: GPS.Task.FAILURE
+
+
+
+   .. autoattribute:: GPS.Task.SUCCESS
+
+
+
    .. autoattribute:: GPS.Task.visible
 
+
+   .. automethod:: GPS.Task.__init__
 
    .. automethod:: GPS.Task.block_exit
 
@@ -1927,6 +1941,8 @@ Classes
    .. automethod:: GPS.Task.progress
 
    .. automethod:: GPS.Task.resume
+
+   .. automethod:: GPS.Task.set_progress
 
    .. automethod:: GPS.Task.status
 

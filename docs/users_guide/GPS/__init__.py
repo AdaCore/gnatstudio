@@ -9242,15 +9242,39 @@ class Task(object):
     GPS, such as the build commands, the query of cross references,
     etc. These are the same tasks that are visible through the GPS
     :guilabel:`Tasks` view.
-
-    Note that the classes represented with this class cannot be stored.
     """
 
     visible = False
+
+    EXECUTE_AGAIN = "execute_again"
+    SUCCESS = "success"
+    FAILURE = "failure"
+
     """
     Whether the task has a visible progress bar in GPS's toolbar or the
     Tasks view.
     """
+
+    def __init__(self, name, execute, active=False, block_exit=False):
+        """
+        Create a task.
+
+        :param name: A string identifying the task.
+        :param execute: a function which takes the task as parameter and
+            returns one of the constants:
+                GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GPS
+                GPS.Task.SUCCESS if the task has terminated successfully
+                GPS.Task.FAILURE if the task has terminated unsuccessfully
+        :param active: A boolean. By default the 'execute' functions are
+            executed in the background approximately every 100ms - setting
+            this to True makes GPS run the 'execute' function much more
+            aggressively, every time the GUI is idle. Use this with caution,
+            as this might impact the responsiveness of the user interface.
+        :param block_exit: A boolean. Set this to True if a confirmation
+            popup should appear when the task is running and GPS has been
+            asked to quit.
+        """
+        pass  # implemented in Ada
 
     def interrupt(self):
         """
@@ -9308,6 +9332,15 @@ class Task(object):
         :return: A string
         """
         pass  # implemented in Ada
+
+    def set_progress(self, current, total):
+        """
+        Sets the progress indication for this task.
+
+        :param current: an integer, the current progress.
+        :param total: an integer, the total progress.
+        """
+        pass  # implememnted in Ada
 
 
 ###########################################################

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
@@ -26,20 +27,96 @@ package body Task_Manager.Shell is
    Class      : constant String := "Task";
    Task_Class : Class_Type;
 
+   -------------------
+   -- Shell_Command --
+   -------------------
+
+   --  This is a command type that can be created from Python
+
+   type Shell_Command is new Root_Command with record
+      Kernel  : Kernel_Handle;
+      Name    : Unbounded_String;
+      Execute : Subprogram_Type;
+   end record;
+   type Shell_Command_Access is access all Shell_Command'Class;
+
+   overriding function Name (Command : access Shell_Command) return String
+     is (To_String (Command.Name));
+
+   overriding function Execute
+     (Command : access Shell_Command) return Command_Return_Type;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
    procedure Task_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the Task commands
+
+   function Get_Or_Create_Instance
+     (Kernel : Kernel_Handle;
+      Script : Scripting_Language;
+      Id     : String) return Class_Instance;
+   --  Get or create a task instance
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Shell_Command) return Command_Return_Type
+   is
+      S : constant Scripting_Language := Command.Execute.Get_Script;
+      The_Task : constant Class_Instance := Get_Or_Create_Instance
+        (Command.Kernel, S, To_String (Command.Name));
+      C : Callback_Data'Class := Create
+        (S, Arguments_Count => 1);
+   begin
+      Set_Nth_Arg (C, 1, The_Task);
+      declare
+         Result : constant String := To_Upper (Execute (Command.Execute, C));
+      begin
+         --  Do this to avoid raising Constraint_Errors
+         for J in Command_Return_Type loop
+            if Result = J'Img then
+               return J;
+            end if;
+         end loop;
+
+         --  If we reach this, this means the command didn't return a valid
+         --  string: print an error and abort the command.
+
+         Command.Kernel.Insert
+           (Text => "Task 'execute' method didn't return an expected value",
+            Add_LF => True,
+            Mode   => Error);
+         return Failure;
+      end;
+   end Execute;
 
    ----------------------------
    -- Get_Or_Create_Instance --
    ----------------------------
 
    function Get_Or_Create_Instance
-     (Data  : Callback_Data'Class;
-      Id    : String) return Class_Instance
+     (Data  : GNATCOLL.Scripts.Callback_Data'Class;
+      Id    : String) return GNATCOLL.Scripts.Class_Instance is
+   begin
+      return Get_Or_Create_Instance
+        (Get_Kernel (Data), Get_Script (Data), Id);
+   end Get_Or_Create_Instance;
+
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
+
+   function Get_Or_Create_Instance
+     (Kernel : Kernel_Handle;
+      Script : Scripting_Language;
+      Id     : String) return Class_Instance
    is
-      Manager : constant Task_Manager_Access :=
-        Get_Task_Manager (Get_Kernel (Data));
+      Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Queue   : constant Task_Queue_Access := Queue_From_Id (Manager, Id);
    begin
       if Queue = null then
@@ -47,7 +124,7 @@ package body Task_Manager.Shell is
       end if;
 
       if Queue.Inst = No_Class_Instance then
-         Queue.Inst := New_Instance (Get_Script (Data), Task_Class);
+         Queue.Inst := New_Instance (Script, Task_Class);
       end if;
 
       Set_Data (Queue.Inst, Task_Class, Id);
@@ -66,6 +143,7 @@ package body Task_Manager.Shell is
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Q         : Task_Queue_Access;
       C         : Command_Access;
+      S         : Scheduled_Command_Access;
       Progress  : Progress_Record;
 
       function Get_Id_Arg_1 return String;
@@ -91,7 +169,32 @@ package body Task_Manager.Shell is
          return;
       end if;
 
-      if Command = "list" then
+      if Command = Constructor_Method then
+         declare
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Task_Class);
+            Name : constant String := Nth_Arg (Data, 2);
+            Active     : constant Boolean := Nth_Arg (Data, 3, False);
+            Block_Exit : constant Boolean := Nth_Arg (Data, 4, False);
+            TC   : Shell_Command_Access;
+         begin
+            TC := new Shell_Command;
+            TC.Kernel := Kernel;
+            --  ??? name_arguments here or something
+            TC.Name := To_Unbounded_String (Name);
+            TC.Execute := Nth_Arg (Data, 3);
+
+            Launch_Background_Command (Kernel            => Kernel,
+                                       Command           => TC,
+                                       Active            => Active,
+                                       Show_Bar          => True,
+                                       Queue_Id          => Name,
+                                       Block_Exit        => Block_Exit,
+                                       Start_Immediately => True);
+
+            Set_Data (Inst, Task_Class, Name);
+         end;
+
+      elsif Command = "list" then
          Set_Return_Value_As_List (Data);
 
          if Manager.Queues = null then
@@ -168,6 +271,15 @@ package body Task_Manager.Shell is
                end if;
             end;
          end if;
+
+      elsif Command = "set_progress" then
+         S := Head (Get_Task_Manager (Kernel), Get_Id_Arg_1);
+         if S /= null then
+            Set_Progress (Command  => S,
+                          Progress => (Unknown,
+                                       Nth_Arg (Data, 2),
+                                       Nth_Arg (Data, 3)));
+         end if;
       end if;
    end Task_Command_Handler;
 
@@ -180,6 +292,14 @@ package body Task_Manager.Shell is
    begin
       Task_Class := New_Class (Kernel, Class);
 
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Params  => (Param ("name"),
+                     Param ("execute"),
+                     Param ("active",     Optional => True),
+                     Param ("block_exit", Optional => True)),
+         Handler => Task_Command_Handler'Access,
+         Class   => Task_Class);
       Register_Command
         (Kernel, "list", 0, 0, Task_Command_Handler'Access, Task_Class, True);
       Register_Command
@@ -198,6 +318,12 @@ package body Task_Manager.Shell is
         ("visible", Task_Class, Getter => Task_Command_Handler'Access);
       Register_Command
         (Kernel, "progress", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Kernel.Scripts.Register_Command
+        ("set_progress",
+         Params  => (Param ("current"),
+                     Param ("total")),
+         Handler => Task_Command_Handler'Access,
+         Class   => Task_Class);
    end Register_Commands;
 
 end Task_Manager.Shell;

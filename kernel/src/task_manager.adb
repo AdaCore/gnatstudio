@@ -583,6 +583,14 @@ package body Task_Manager is
       Task_Queue : Integer;
       Status     : Queue_Status := Running;
    begin
+      Task_Queue := Get_Or_Create_Task_Queue
+        (Manager, Queue_Id, Active, Show_Bar, Block_Exit,
+         Status => Status);
+
+      Manager.Queues (Task_Queue).Queue.Append (Command);
+      Manager.Queues (Task_Queue).Total :=
+        Manager.Queues (Task_Queue).Total + 1;
+
       --  Active commands are always started immediately
       if Start_Immediately and then not Active then
          case Command.Execute is
@@ -593,14 +601,6 @@ package body Task_Manager is
                Status := Running;
          end case;
       end if;
-
-      Task_Queue := Get_Or_Create_Task_Queue
-        (Manager, Queue_Id, Active, Show_Bar, Block_Exit,
-         Status => Status);
-
-      Manager.Queues (Task_Queue).Queue.Append (Command);
-      Manager.Queues (Task_Queue).Total :=
-        Manager.Queues (Task_Queue).Total + 1;
 
       Run (Task_Manager_Access (Manager),  Active);
    end Add_Command;

@@ -50,6 +50,9 @@ GPS.Message.MESSAGE_IN_SIDEBAR = 1
 GPS.Message.MESSAGE_IN_LOCATIONS = 2
 GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
 
+GPS.Task.EXECUTE_AGAIN = "execute_again"
+GPS.Task.SUCCESS = "success"
+GPS.Task.FAILURE = "failure"
 
 import GPS.Browsers
 GPS.Browsers.Style.Arrow = enum(NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
