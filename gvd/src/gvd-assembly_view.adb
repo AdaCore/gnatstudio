@@ -15,58 +15,73 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Strings;            use GNAT.Strings;
-with GNAT.Regpat;             use GNAT.Regpat;
+with Gdk.RGBA;                  use Gdk.RGBA;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;
 
-with Gdk.RGBA;                use Gdk.RGBA;
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Handlers;            use Gtk.Handlers;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Widget;                use Gtk.Widget;
 
-with Pango.Font;              use Pango.Font;
+with Pango.Font;                use Pango.Font;
 
-with Gtkada.MDI;              use Gtkada.MDI;
+with Gtkada.MDI;                use Gtkada.MDI;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Debugger;                use Debugger;
-with Default_Preferences;     use Default_Preferences;
-with Generic_Views;           use Generic_Views;
-with GPS.Debuggers;           use GPS.Debuggers;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GVD.Breakpoints_List;    use GVD.Breakpoints_List;
-with GVD.Generic_View;        use GVD.Generic_View;
-with GVD.Preferences;         use GVD.Preferences;
-with GVD.Process;             use GVD.Process;
-with GVD.Types;               use GVD.Types;
-with GVD_Module;              use GVD_Module;
-with String_Utils;            use String_Utils;
+with Debugger;                  use Debugger;
+with Debugger_Pixmaps;
+with Default_Preferences;       use Default_Preferences;
+with Generic_Views;             use Generic_Views;
+
+with GPS.Debuggers;             use GPS.Debuggers;
+with GPS.Default_Styles;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Style_Manager;
+with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
+with GVD.Generic_View;          use GVD.Generic_View;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Process;               use GVD.Process;
+with GVD.Types;                 use GVD.Types;
+with GVD_Module;                use GVD_Module;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body GVD.Assembly_View is
+
+   Me : constant Trace_Handle := Create ("GVD.Assembly_View");
+
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
    type Cache_Data is record
       Low, High : GVD.Types.Address_Type;
       --  The low and high ranges for this item
 
-      Data      : GNAT.Strings.String_Access;
+      Data      : Disassemble_Elements;
       --  The assembly code for that range
 
       Next      : Cache_Data_Access;
@@ -77,24 +92,17 @@ package body GVD.Assembly_View is
 
    type Assembly_View_Record is new Process_View_Record with
       record
-         View                : Gtk.Text_View.Gtk_Text_View;
+         Tree                : Gtk.Tree_View.Gtk_Tree_View;
+         Model               : Gtk.Tree_Store.Gtk_Tree_Store;
+         --  The actual contents of the viewer
 
          Cache               : Cache_Data_Access;
          Current_Range       : Cache_Data_Access;
          --  The range of assembly code being displayed.
 
-         Current_Line        : Natural := 0;
-         --  ??? Not sure we need to keep that.
-
-         Highlight_Tag       : Gtk.Text_Tag.Gtk_Text_Tag;
+         Highlight_Color     : Gdk_RGBA;
          --  The way the assembly range corresponding to the current source
          --  line should be displayed.
-
-         Pc_Tag              : Gtk.Text_Tag.Gtk_Text_Tag;
-         --  Tag used to materialized the PC.
-
-         Breakpoint_Tag      : Gtk.Text_Tag.Gtk_Text_Tag;
-         --  Tag used to materialized breakpoints.
 
          Source_Line_Start   : GVD.Types.Address_Type :=
                                  GVD.Types.Invalid_Address;
@@ -102,6 +110,10 @@ package body GVD.Assembly_View is
                                  GVD.Types.Invalid_Address;
       end record;
    type Assembly_View is access all Assembly_View_Record'Class;
+
+   overriding procedure Create_Menu
+     (View : not null access Assembly_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    procedure Configure
      (View : Assembly_View;
@@ -129,10 +141,10 @@ package body GVD.Assembly_View is
    --  Set the font used for the box.
    --  This is called by Configure internally.
 
-   procedure Set_Text
-     (View : Assembly_View;
-      Text : String);
-   --  Set the text associated with the box. The Hightlighting is reset.
+   procedure Fill_Model
+     (View     : Assembly_View;
+      Elements : Disassemble_Elements);
+   --  Set models data. The Hightlighting is reset.
 
    function Get_View
      (Process : not null access Base_Visual_Debugger'Class)
@@ -147,12 +159,15 @@ package body GVD.Assembly_View is
       View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
+      Reuse_If_Exist     => True,
       Commands_Category  => "",
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Areas              => Gtkada.MDI.Both,
-      Initialize         => Initialize);
+      Initialize         => Initialize,
+      Local_Config       => True,
+      Local_Toolbar      => True);
+
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Views              => Assembly_MDI_Views,
       Formal_View_Record => Assembly_View_Record,
@@ -180,18 +195,10 @@ package body GVD.Assembly_View is
    procedure Iter_From_Address
      (View     : not null access Assembly_View_Record'Class;
       Address  : Address_Type;
-      Iter     : out Gtk_Text_Iter;
+      Iter     : out Gtk_Tree_Iter;
       Found    : out Boolean);
-   --  Return an iterator pointing at the beginning of the Address in the
-   --  text buffer. Addresses are searched at the begginning of lines in the
-   --  buffer.
+   --  Return an iterator pointing to the row belong to the Address.
    --  Found indicates whether the address was found.
-
-   function Address_From_Line
-     (View : Assembly_View;
-      Line : Natural) return Address_Type;
-   --  Return the address associated with a given line in the text widget.
-   --  "" is returned if no address was found.
 
    procedure Is_Breakpoint_Address
      (View   : Assembly_View;
@@ -226,15 +233,15 @@ package body GVD.Assembly_View is
    --  Return the cached data that contains Address.
    --  null is returned if none is found.
 
-   function Add_Address (Addr : String; Offset : Integer) return String;
-   --  Add the value of Offset to the hexadecimal number Addr.
-   --  Addr is coded in C (0x....), and so is the returned string
-
    procedure Meta_Scroll
      (View : Assembly_View;
       Down : Boolean);
    --  The user has asked to see the assembly range outside what is currently
    --  displayed in the assembly editor.
+
+   procedure Meta_Scroll_PC
+     (View : Assembly_View);
+   --  Scroll to current PC position
 
    procedure Meta_Scroll_Down
      (View : access Assembly_View_Record'Class);
@@ -265,11 +272,57 @@ package body GVD.Assembly_View is
    procedure Unchecked_Free is
      new Ada.Unchecked_Deallocation (Cache_Data, Cache_Data_Access);
 
+   --------------
+   -- Commands --
+   --------------
+
+   type Scroll_Command_Context is new Interactive_Command with record
+      Down : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Scroll_Command_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Disassemble next/previuos code block
+
+   type Scroll_PC_Command_Context is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Scroll_PC_Command_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Disassemble $pc code block
+
+   ---------------
+   --  Defaults --
+   ---------------
+
    Invalid_Cache_Data : constant Cache_Data_Access := new Cache_Data'
      (Low  => Invalid_Address,
       High => Invalid_Address,
-      Data => new String'(-"Couldn't get assembly code"),
+      Data => <>,
       Next => null);
+
+   PC_Pixmap_Column     : constant := 0;
+   Address_Column       : constant := 1;
+   Method_Offset_Column : constant := 2;
+   Instr_Column         : constant := 3;
+   Opcodes_Column       : constant := 4;
+   Location_Column      : constant := 5;
+   FG_Color_Column      : constant := 6;
+   BG_Color_Column      : constant := 7;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Menu
+     (View : not null access Assembly_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      K : constant Kernel_Handle := View.Kernel;
+   begin
+      Append_Menu (Menu, K, Asm_Show_Addresses);
+      Append_Menu (Menu, K, Asm_Show_Offset);
+      Append_Menu (Menu, K, Asm_Show_Opcodes);
+   end Create_Menu;
 
    ---------------
    -- Configure --
@@ -277,11 +330,7 @@ package body GVD.Assembly_View is
 
    procedure Configure
      (View : Assembly_View;
-      Font : Pango.Font.Pango_Font_Description)
-   is
-      Tag_Table : constant Gtk_Text_Tag_Table :=
-                    Get_Tag_Table (Get_Buffer (View.View));
-      Color     : Gdk_RGBA;
+      Font : Pango.Font.Pango_Font_Description) is
    begin
       --  Font
 
@@ -289,31 +338,7 @@ package body GVD.Assembly_View is
 
       --  Current address range highlighting
 
-      Gtk_New (View.Highlight_Tag);
-      Set_Property
-        (View.Highlight_Tag, Foreground_Rgba_Property,
-         Asm_Highlight_Color.Get_Pref);
-      Add (Tag_Table, View.Highlight_Tag);
-
-      --  Breakpoints highlighting
-
-      Gtk_New (View.Breakpoint_Tag);
-      Set_Property
-        (View.Breakpoint_Tag, Background_Rgba_Property,
-         Asm_Breakpoint_Color.Get_Pref);
-      Add (Tag_Table, View.Breakpoint_Tag);
-
-      --  Pc Hightlighting
-
-      --  ??? This a temporary solution used to materialized the program
-      --  counter at the Gtk_Text_Buffer level.
-
-      Gtk_New (View.Pc_Tag);
-      Color := (Red => 0.0, Green => 1.0, Blue => 0.0, Alpha => 1.0);
-      Set_Property
-        (View.Pc_Tag, Background_Rgba_Property, Color);
-      Add (Tag_Table, View.Pc_Tag);
-
+      View.Highlight_Color := Asm_Highlight_Color.Get_Pref;
    end Configure;
 
    ---------------------
@@ -352,21 +377,77 @@ package body GVD.Assembly_View is
    -- Set_Text --
    --------------
 
-   procedure Set_Text
-     (View : Assembly_View;
-      Text : String)
+   procedure Fill_Model
+     (View     : Assembly_View;
+      Elements : Disassemble_Elements)
    is
-      Buffer : Gtk_Text_Buffer;
+      use Ada.Strings.Unbounded;
+
+      Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Row      : Gtk_Tree_Iter;
+      Values   : Glib.Values.GValue_Array (1 .. 5);
+      Columns  : Columns_Array (Values'Range);
+      Last     : Gint := 0;
+
+      Detached : Gtk.Tree_Model.Gtk_Tree_Model;
    begin
       if View = null then
          return;
       end if;
 
-      Buffer := Get_Buffer (View.View);
-      Begin_User_Action (Buffer);
-      Set_Text (Buffer, Text);
-      End_User_Action (Buffer);
-   end Set_Text;
+      Detached := View.Tree.Get_Model;
+      View.Tree.Set_Model (Null_Gtk_Tree_Model);
+
+      Model.Clear;
+
+      for El of Elements loop
+         Model.Append (Row, Null_Iter);
+         Last := 0;
+
+         declare
+            S : constant String := Address_To_String (El.Address);
+         begin
+            if S /= "" then
+               Last           := Last + 1;
+               Columns (Last) := Address_Column;
+               Values  (Last) := As_String (S);
+            end if;
+         end;
+
+         if El.Method_Offset /= Null_Unbounded_String then
+            Last           := Last + 1;
+            Columns (Last) := Method_Offset_Column;
+            Values  (Last) := As_String (To_String (El.Method_Offset));
+         end if;
+
+         if El.Instr /= Null_Unbounded_String then
+            Last           := Last + 1;
+            Columns (Last) := Instr_Column;
+            Values  (Last) := As_String (To_String (El.Instr));
+         end if;
+
+         if El.Opcodes /= Null_Unbounded_String then
+            Last        := Last + 1;
+            Columns (Last) := Opcodes_Column;
+            Values  (Last) := As_String (To_String (El.Opcodes));
+         end if;
+
+         if El.File /= No_File
+           and then El.Line /= 0
+         then
+            Last           := Last + 1;
+            Columns (Last) := Location_Column;
+            Values  (Last) := As_String
+              (+Base_Name (El.File) & ":" & El.Line'Img);
+         end if;
+
+         Model.Set
+           (Row, Glib.Gint_Array (Columns (1 .. Last)), Values (1 .. Last));
+         Unset (Values (1 .. Last));
+      end loop;
+
+      View.Tree.Set_Model (Detached);
+   end Fill_Model;
 
    --------------
    -- Set_Font --
@@ -380,7 +461,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Modify_Font (View.View, Font);
+      Modify_Font (View.Tree, Font);
    end Set_Font;
 
    ---------------
@@ -388,69 +469,107 @@ package body GVD.Assembly_View is
    ---------------
 
    procedure Highlight (View : access Assembly_View_Record'Class) is
+      use Ada.Strings.Unbounded;
+
       Process    : Visual_Debugger;
-      Buffer     : Gtk_Text_Buffer;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Found      : Boolean := False;
-      Dummy      : Boolean;
+      Model      : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Values     : Glib.Values.GValue_Array (1 .. 3);
+      Columns    : Columns_Array (Values'Range);
+      Start_Iter : Gtk_Tree_Iter;
+      Found      : Boolean;
+
+      Detached   : Gtk.Tree_Model.Gtk_Tree_Model;
    begin
-      if View /= null then
-         Buffer  := Get_Buffer (View.View);
-         Process := Get_Process (View);
+      if View = null then
+         return;
+      end if;
 
-         --  Reset the current highlighting
+      Detached := View.Tree.Get_Model;
+      View.Tree.Set_Model (Null_Gtk_Tree_Model);
 
-         Get_Bounds (Buffer, Start_Iter, End_Iter);
-         Remove_Tag (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
-         Remove_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
-         Remove_Tag (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
+      Process := Get_Process (View);
 
-         --  Highlight address range
+      --  Reset the current highlighting
 
-         if View.Source_Line_Start /= Invalid_Address
-           and then View.Source_Line_End /= Invalid_Address
-         then
-            Iter_From_Address
-              (View, View.Source_Line_Start, Start_Iter,
-               Found);
+      Columns := (FG_Color_Column, BG_Color_Column, PC_Pixmap_Column);
 
-            if Found then
-               Iter_From_Address
-                 (View, View.Source_Line_End, End_Iter, Found);
-            end if;
+      Start_Iter := Model.Get_Iter_First;
+      Gdk.RGBA.Set_Value (Values (1), Null_RGBA);
+      Gdk.RGBA.Set_Value (Values (2), Null_RGBA);
+      Values (3) := As_String ("");
 
-            --  Highlight the new range
+      while Start_Iter /= Null_Iter loop
+         Model.Set (Start_Iter, Glib.Gint_Array (Columns), Values);
+         Model.Next (Start_Iter);
+      end loop;
+      Unset (Values);
 
-            if Found then
-               Begin_User_Action (Buffer);
-               Apply_Tag
-                 (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
-               End_User_Action (Buffer);
-            end if;
+      --  Highlight address range
+
+      if View.Source_Line_Start /= Invalid_Address
+        and then View.Source_Line_End /= Invalid_Address
+      then
+         Iter_From_Address
+           (View, View.Source_Line_Start, Start_Iter,
+            Found);
+
+         --  Highlight the new range
+
+         if Found then
+            while Start_Iter /= Null_Iter
+              and then String_To_Address
+                (Model.Get_String (Start_Iter, Address_Column)) <=
+                  View.Source_Line_End
+            loop
+               Model.Set
+                 (Start_Iter,
+                  FG_Color_Column,
+                  To_Proxy (View.Highlight_Color'Address));
+
+               Model.Next (Start_Iter);
+            end loop;
          end if;
+      end if;
 
          --  Highlight breakpoint lines
 
-         for B of Get_Stored_List_Of_Breakpoints (Process).List loop
-            if B.Address /= Invalid_Address then
-               Iter_From_Address (View, B.Address, Start_Iter, Found);
-               if Found then
-                  Copy (Start_Iter, Dest => End_Iter);
-                  Forward_To_Line_End (End_Iter, Dummy);
-                  Apply_Tag
-                    (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
-               end if;
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         Columns (1) := BG_Color_Column;
+
+         if B.Address /= Invalid_Address then
+            Iter_From_Address (View, B.Address, Start_Iter, Found);
+            if Found then
+               Gdk.RGBA.Set_Value
+                 (Values (1),
+                  (if not B.Enabled then
+                        GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
+                   elsif B.Condition /= "" then
+                      GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
+                   else
+                      GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Breakpoint_Style)));
+
+               Set_And_Clear
+                 (Model,
+                  Start_Iter,
+                  Columns (1 .. 1),
+                  Values (1 .. 1));
             end if;
-         end loop;
+         end if;
+      end loop;
 
-         --  Highlight PC line
+      --  Highlight PC line
 
-         Iter_From_Address (View, Process.Pc, Start_Iter, Dummy);
-         Copy (Start_Iter, Dest => End_Iter);
-         Forward_To_Line_End (End_Iter, Dummy);
-         Apply_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
+      Iter_From_Address (View, Process.Pc, Start_Iter, Found);
+      if Found then
+         Model.Set
+           (Start_Iter, PC_Pixmap_Column,
+            To_String (Debugger_Pixmaps.Current_Line_Pixbuf));
       end if;
+
+      View.Tree.Set_Model (Detached);
    end Highlight;
 
    -----------------------
@@ -460,82 +579,25 @@ package body GVD.Assembly_View is
    procedure Iter_From_Address
      (View     : not null access Assembly_View_Record'Class;
       Address : Address_Type;
-      Iter    : out Gtk_Text_Iter;
+      Iter    : out Gtk_Tree_Iter;
       Found   : out Boolean)
    is
-      Buffer   : Gtk_Text_Buffer;
-      End_Iter : Gtk_Text_Iter;
-      Result   : Boolean := True;
+      Model : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
    begin
-      Buffer := Get_Buffer (View.View);
-
-      Get_Start_Iter (Buffer, Iter);
-
-      while Result loop
-         Copy (Iter, End_Iter);
-         Forward_To_Line_End (End_Iter, Result);
-
-         declare
-            Line  : constant String := Get_Text (Buffer, Iter, End_Iter);
-            Index : Natural := Line'First;
-         begin
-            Skip_Hexa_Digit (Line, Index);
-
-            if
-              String_To_Address (Line (Line'First .. Index - 1)) = Address
-            then
-               Found := True;
-               return;
-            end if;
-         end;
-
-         Forward_Line (Iter, Result);
-      end loop;
-
+      Iter  := Model.Get_Iter_First;
       Found := False;
-   end Iter_From_Address;
 
-   -----------------------
-   -- Address_From_Line --
-   -----------------------
-
-   function Address_From_Line
-     (View : Assembly_View;
-      Line : Natural) return Address_Type
-   is
-      Buffer     : Gtk_Text_Buffer;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Result     : Boolean;
-      Matched    : Match_Array (0 .. 1);
-
-   begin
-      if View = null then
-         return Invalid_Address;
-      end if;
-
-      Buffer := Get_Buffer (View.View);
-
-      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line));
-      Copy (Start_Iter, End_Iter);
-      Forward_To_Line_End (End_Iter, Result);
-
-      declare
-         Line_Text : constant String :=
-                       Get_Text (Buffer, Start_Iter, End_Iter);
-      begin
-         --  ??? Regexp should depend on the debugger.
-         --  It does not include any 0 right after "0x"
-         Match ("^0x0*([0-9a-f]+)", Line_Text, Matched);
-
-         if Matched (1) /= No_Match then
-            return String_To_Address
-              ("0x" & Line_Text (Matched (1).First .. Matched (1).Last));
+      while Iter /= Null_Iter loop
+         if String_To_Address
+           (Model.Get_String (Iter, Address_Column)) = Address
+         then
+            Found := True;
+            return;
          end if;
-      end;
 
-      return Invalid_Address;
-   end Address_From_Line;
+         Model.Next (Iter);
+      end loop;
+   end Iter_From_Address;
 
    ---------------------------
    -- Is_Breakpoint_Address --
@@ -611,7 +673,6 @@ package body GVD.Assembly_View is
 
    procedure Free (Data : in out Cache_Data_Access) is
    begin
-      Free (Data.Data);
       Unchecked_Free (Data);
    end Free;
 
@@ -621,73 +682,70 @@ package body GVD.Assembly_View is
 
    procedure Meta_Scroll
      (View : Assembly_View;
-      Down : Boolean) is
+      Down : Boolean)
+   is
+      Address : Address_Type;
    begin
-      if View /= null
-        and then View.Current_Range /= null
-        and then Assembly_Range_Size.Get_Pref /= 0
+      if View = null
+        or else View.Current_Range = null
+        or else Assembly_Range_Size.Get_Pref = 0
       then
-         if Down then
-            declare
-               Addr : constant Address_Type :=
-                        Address_From_Line
-                          (View, View.Current_Line);
-               Iter  : Gtk_Text_Iter;
-               Found : Boolean;
-            begin
-               On_Frame_Changed
-                 (View, Invalid_Address, Invalid_Address);
+         return;
+      end if;
 
-               Iter_From_Address (View, Addr, Iter, Found);
-            end;
-         elsif View.Current_Range.High /= Invalid_Address then
-            On_Frame_Changed
-              (View,
-               View.Current_Range.High,
-               String_To_Address
-                 (Add_Address
-                    (Address_To_String (View.Current_Range.High),
-                     Assembly_Range_Size.Get_Pref)));
+      if Down then
+         if View.Current_Range.High /= Invalid_Address then
+            Address := Add_Address
+              (View.Current_Range.High, Assembly_Range_Size.Get_Pref);
+
+            if Address /= Invalid_Address then
+               On_Frame_Changed (View, View.Current_Range.High, Address);
+            end if;
          end if;
 
-         Highlight (View);
+      else
+         if View.Current_Range.Low /= Invalid_Address then
+            Address := Add_Address
+              (View.Current_Range.Low, -Assembly_Range_Size.Get_Pref);
+
+            if Address /= Invalid_Address then
+               On_Frame_Changed (View, Address, View.Current_Range.Low);
+            end if;
+         end if;
       end if;
+
+      Highlight (View);
    end Meta_Scroll;
 
-   -----------------
-   -- Add_Address --
-   -----------------
+   --------------------
+   -- Meta_Scroll_PC --
+   --------------------
 
-   function Add_Address
-     (Addr   : String;
-      Offset : Integer) return String
+   procedure Meta_Scroll_PC
+     (View : Assembly_View)
    is
-      Convert : constant String := "0123456789abcdef";
-      Buffer  : String (1 .. 32);
-      Pos     : Natural := Buffer'Last;
-
+      Process : Visual_Debugger;
+      Iter    : Gtk_Tree_Iter;
+      Path    : Gtk_Tree_Path;
+      Found   : Boolean;
    begin
-      if Addr'Length < 2
-        or else Addr (Addr'First .. Addr'First + 1) /= "0x"
-      then
-         return "0x0";
+      if View /= null then
+         Process := Get_Process (View);
+
+         if Process /= null then
+            On_Frame_Changed (View, Process.Pc, Process.Pc);
+
+            Highlight (View);
+
+            Iter_From_Address (View, Process.Pc, Iter, Found);
+            if Found then
+               Path := View.Model.Get_Path (Iter);
+               View.Tree.Scroll_To_Cell (Path, null, True, 0.5, 0.0);
+               Path_Free (Path);
+            end if;
+         end if;
       end if;
-
-      declare
-         Str     : constant String :=
-           "16#" & Addr (Addr'First + 2 .. Addr'Last) & '#';
-         Value   : Long_Long_Integer := Long_Long_Integer'Value (Str) +
-           Long_Long_Integer (Offset);
-      begin
-         while Value > 0 loop
-            Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
-            Pos := Pos - 1;
-            Value := Value / 16;
-         end loop;
-
-         return "0x" & Buffer (Pos + 1 .. Buffer'Last);
-      end;
-   end Add_Address;
+   end Meta_Scroll_PC;
 
    ----------------------
    -- Meta_Scroll_Down --
@@ -717,11 +775,15 @@ package body GVD.Assembly_View is
    begin
       case Get_Key_Val (Event) is
          when GDK_Page_Down =>
-            Meta_Scroll_Up (Assembly_View (View));
+            Meta_Scroll_Down (Assembly_View (View));
             return True;
 
          when GDK_Page_Up =>
-            Meta_Scroll_Down (Assembly_View (View));
+            Meta_Scroll_Up (Assembly_View (View));
+            return True;
+
+         when GDK_Home =>
+            Meta_Scroll_PC (Assembly_View (View));
             return True;
 
          when others => null;
@@ -740,14 +802,12 @@ package body GVD.Assembly_View is
       End_Address   : Address_Type)
    is
       Process        : Visual_Debugger;
-      S              : String_Access;
-      S2             : String_Access;
-      S3             : String_Access;
+      S              : Disassemble_Elements;
+      S2             : Disassemble_Elements;
       Start, Last    : Address_Type;
       Low, High      : Address_Type;
       Start_In_Range : Boolean := False;
       End_In_Range   : Boolean := False;
-      S_First        : Natural;
 
       procedure Free_Current;
       procedure Free_Current is
@@ -814,14 +874,9 @@ package body GVD.Assembly_View is
 
          if Start /= Invalid_Address
            and then Last /= Invalid_Address
-           and then Last = View.Current_Range.Low
          then
             View.Current_Range.Low := Start;
-
-            S2 := View.Current_Range.Data;
-            View.Current_Range.Data := new String'
-              (Do_Tab_Expansion (S.all, 8) & ASCII.LF & S2.all);
-            Free (S2);
+            View.Current_Range.Data.Prepend (S);
 
          else
             Free_Current;
@@ -838,22 +893,14 @@ package body GVD.Assembly_View is
             End_Address     => Set_Offset (End_Address, 1));
 
          if Start /= Invalid_Address
-           and then Start = View.Current_Range.High
            and then Last /= Invalid_Address
          then
             View.Current_Range.High := Last;
 
             --  Avoid duplicating the first assembly line since it
             --  was already displayed.
-            S_First := S'First;
-            Skip_To_Char (S.all, S_First, ASCII.LF);
-            S_First := S_First + 1;
-
-            S2 := View.Current_Range.Data;
-            View.Current_Range.Data := new String'
-              (S2.all & ASCII.LF &
-                 Do_Tab_Expansion (S (S_First .. S'Last), 8));
-            Free (S2);
+            S.Delete_First;
+            View.Current_Range.Data.Append (S);
 
          else
             Free_Current;
@@ -869,14 +916,14 @@ package body GVD.Assembly_View is
       end if;
 
       if View.Current_Range = null then
-         if Assembly_Range_Size.Get_Pref = 0
-           or else End_Address = Invalid_Address
-         then
+         if Assembly_Range_Size.Get_Pref = 0 then
             Get_Machine_Code
               (Process.Debugger,
                Range_Start     => Start,
                Range_End       => Last,
-               Code            => S);
+               Code            => S,
+               Start_Address   => Start_Address,
+               End_Address     => End_Address);
          else
             Get_Machine_Code
               (Process.Debugger,
@@ -921,29 +968,22 @@ package body GVD.Assembly_View is
                then
                   High := Last;
 
-                  S_First := S2'First;
-                  Skip_To_Char (S2.all, S_First, ASCII.LF);
-                  S_First := S_First + 1;
-                  S3 := new String'(S.all & S2 (S_First .. S2'Last));
-                  Free (S);
-                  Free (S2);
-                  S := S3;
+                  S2.Delete_First;
+                  S.Append (S2);
                end if;
             end if;
 
             View.Cache := new Cache_Data'
               (Low  => Low,
                High => High,
-               Data => new String'(Do_Tab_Expansion (S.all, 8)),
+               Data => S,
                Next => View.Cache);
 
             View.Current_Range := View.Cache;
          end if;
-
-         Free (S);
       end if;
 
-      Set_Text (View, View.Current_Range.Data.all);
+      Fill_Model (View, View.Current_Range.Data);
    end On_Frame_Changed;
 
    ------------
@@ -952,13 +992,13 @@ package body GVD.Assembly_View is
 
    overriding procedure Update (View : not null access Assembly_View_Record) is
       Process      : constant Visual_Debugger := Get_Process (View);
-      Buffer       : constant Gtk_Text_Buffer := Get_Buffer (View.View);
 
-      Start_Iter   : Gtk_Text_Iter;
-      Dummy        : Boolean;
+      Iter         : Gtk_Tree_Iter;
+      Path         : Gtk_Tree_Path;
+      Found        : Boolean;
       Address_Low  : Address_Type;
       Address_High : Address_Type;
-
+      Size         : Integer;
    begin
       if Process = null then
          return;
@@ -980,8 +1020,8 @@ package body GVD.Assembly_View is
          elsif Address_Low /= Invalid_Address
            and then Address_High /= Invalid_Address
          then
-            if Address_Low > Process.Pc
-              or else Address_High < Process.Pc
+            if Process.Pc < Address_Low
+              or else Process.Pc > Address_High
             then
                --  line addresses are incorrect, use $pc
                Address_Low  := Process.Pc;
@@ -998,7 +1038,12 @@ package body GVD.Assembly_View is
                Address_High := Process.Pc;
             end if;
 
-            if Set_Offset (Address_Low, 200) < Address_High then
+            Size := Assembly_Range_Size.Get_Pref;
+            if Size = 0 then
+               Size := 200;
+            end if;
+
+            if Set_Offset (Address_Low, Size) < Address_High then
                --  frame is too big which can hang gdb/gps
                Address_Low  := Process.Pc;
                Address_High := Process.Pc;
@@ -1015,12 +1060,14 @@ package body GVD.Assembly_View is
             Address_High);
       end if;
 
-      if Process.Pc < View.Source_Line_Start
-        or else Process.Pc > View.Source_Line_End
+      if Process.Pc < View.Current_Range.Low
+        or else Process.Pc > View.Current_Range.High
       then
          --  sometimes "info line" returns addresses of previous line
          --  instead current line where $pc is, so remove Highlight
          --  to don't confuse user
+         Trace (Me, "PC not in addresses range");
+
          View.Source_Line_Start := Invalid_Address;
          View.Source_Line_End   := Invalid_Address;
       end if;
@@ -1032,9 +1079,12 @@ package body GVD.Assembly_View is
       --  Make sure that the Pc line is visible
 
       Iter_From_Address
-        (Assembly_View (View), Process.Pc, Start_Iter, Dummy);
-      Place_Cursor (Buffer, Start_Iter);
-      Scroll_Mark_Onscreen (View.View, Get_Insert (Buffer));
+        (Assembly_View (View), Process.Pc, Iter, Found);
+      if Found then
+         Path := Assembly_View (View).Model.Get_Path (Iter);
+         Assembly_View (View).Tree.Scroll_To_Cell (Path, null, True, 0.5, 0.0);
+         Path_Free (Path);
+      end if;
    end Update;
 
    --------------
@@ -1056,12 +1106,12 @@ package body GVD.Assembly_View is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Assembly_View_Record'Class := null)
    is
-      V : constant Visual_Debugger := Visual_Debugger (Process);
-      Old : constant Assembly_View := Get_View (Process);
+      V   : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Assembly_View   := Get_View (Process);
    begin
       --  If we are detaching, clear the old view
       if Old /= null then
-         Set_Text (Old, "");
+         Old.Model.Clear;
       end if;
 
       V.Assembly := Abstract_View_Access (View);
@@ -1092,8 +1142,16 @@ package body GVD.Assembly_View is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      No_Debugger_Or_Stopped : Action_Filter;
    begin
+      Invalid_Cache_Data.Data.Append
+        ((Address => Invalid_Address,
+          Instr   => Ada.Strings.Unbounded.To_Unbounded_String
+            ("Couldn't get assembly code"),
+          others  => <>));
+
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
         (Kernel,
@@ -1101,6 +1159,35 @@ package body GVD.Assembly_View is
          Description => -"Open the Assembly view for the debugger");
 
       Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
+
+      No_Debugger_Or_Stopped := Kernel.Lookup_Filter
+        ("Debugger inactive or stopped");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble next",
+         Command     => new Scroll_Command_Context'
+           (Interactive_Command with Down => True),
+         Description => "Disassemble next code block",
+         Icon_Name   => "gps-debugger-down",
+         Category    => -"Debug",
+         Filter      => No_Debugger_Or_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble previous",
+         Command     => new Scroll_Command_Context'
+           (Interactive_Command with Down => False),
+         Description => "Disassemble previous code block",
+         Icon_Name   => "gps-debugger-up",
+         Category    => -"Debug",
+         Filter      => No_Debugger_Or_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view disassemble pc",
+         Command     => new Scroll_PC_Command_Context,
+         Description => "Disassemble $pc code block",
+         Icon_Name   => "gps-debugger-step",
+         Category    => -"Debug",
+         Filter      => No_Debugger_Or_Stopped);
    end Register_Module;
 
    ----------------
@@ -1110,8 +1197,23 @@ package body GVD.Assembly_View is
    function Initialize
      (Widget : access Assembly_View_Record'Class) return Gtk_Widget
    is
-      Hook : access On_Pref_Changed;
+      Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
+
+      Column_Types : constant GType_Array :=
+        (PC_Pixmap_Column     => GType_String,
+         Address_Column       => GType_String,
+         Method_Offset_Column => GType_String,
+         Instr_Column         => GType_String,
+         Opcodes_Column       => GType_String,
+         Location_Column      => GType_String,
+         FG_Color_Column      => Gdk.RGBA.Get_Type,
+         BG_Color_Column      => Gdk.RGBA.Get_Type);
+
+      Col           : Gtk_Tree_View_Column;
+      Render        : Gtk_Cell_Renderer_Text;
+      Pixmap_Render : Gtk_Cell_Renderer_Pixbuf;
+      Col_Number    : Gint with Unreferenced;
    begin
       Initialize_Vbox (Widget, Homogeneous => False);
 
@@ -1119,14 +1221,76 @@ package body GVD.Assembly_View is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Gtk_New (Widget.View);
-      Widget.View.Get_Buffer.Insert_At_Cursor ("");
-      Scrolled.Add (Widget.View);
-      Set_Editable (Widget.View, False);
-      Set_Wrap_Mode (Widget.View, Wrap_None);
+      Gtk_New (Widget.Model, Column_Types);
+      Gtk_New (Widget.Tree,  Widget.Model);
+      Widget.Tree.Get_Selection.Set_Mode (Selection_None);
+      Widget.Tree.Set_Headers_Visible (False);
+      Add (Scrolled, Widget.Tree);
+
+      Gtk_New (Col);
+      Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Resizable (True);
+      Col.Set_Reorderable (False);
+      Col.Set_Clickable (False);
+      Gtk_New (Pixmap_Render);
+      Col.Pack_Start (Pixmap_Render, False);
+      Col.Add_Attribute (Pixmap_Render, "icon-name", PC_Pixmap_Column);
+
+      Gtk_New (Col);
+      Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Resizable (True);
+      Col.Set_Reorderable (False);
+      Col.Set_Clickable (False);
+      Gtk_New (Render);
+      Col.Pack_Start (Render, False);
+      Col.Add_Attribute (Render, "text", Address_Column);
+      Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
+      Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
+      if not Asm_Show_Addresses.Get_Pref then
+         Col.Set_Visible (False);
+      end if;
+
+      Gtk_New (Col);
+      Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Resizable (False);
+      Col.Set_Reorderable (False);
+      Col.Set_Clickable (False);
+      Gtk_New (Render);
+      Col.Pack_Start (Render, False);
+      Col.Add_Attribute (Render, "text", Method_Offset_Column);
+      Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
+      Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
+      if not Asm_Show_Offset.Get_Pref then
+         Col.Set_Visible (False);
+      end if;
+
+      Gtk_New (Col);
+      Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Resizable (False);
+      Col.Set_Reorderable (False);
+      Col.Set_Clickable (False);
+      Gtk_New (Render);
+      Col.Pack_Start (Render, False);
+      Col.Add_Attribute (Render, "text", Instr_Column);
+      Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
+      Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
+
+      Gtk_New (Col);
+      Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Resizable (False);
+      Col.Set_Reorderable (False);
+      Col.Set_Clickable (False);
+      Gtk_New (Render);
+      Col.Pack_Start (Render, False);
+      Col.Add_Attribute (Render, "text", Opcodes_Column);
+      Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
+      Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
+      if not Asm_Show_Opcodes.Get_Pref then
+         Col.Set_Visible (False);
+      end if;
 
       Assembly_View_Event_Cb.Object_Connect
-        (Widget.View, Signal_Key_Press_Event,
+        (Widget.Tree, Signal_Key_Press_Event,
          Assembly_View_Event_Cb.To_Marshaller (Key_Press_Cb'Access),
          Widget);
 
@@ -1139,8 +1303,43 @@ package body GVD.Assembly_View is
       Debugger_Location_Changed_Hook.Add
         (new On_Location_Changed, Watch => Widget);
 
-      return Gtk_Widget (Widget.View);
+      return Gtk_Widget (Widget.Tree);
    end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Scroll_PC_Command_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View    : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
+
+   begin
+      Meta_Scroll_PC (View);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Scroll_Command_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View    : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
+
+   begin
+      Meta_Scroll (View, Down => Command.Down);
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -1156,25 +1355,45 @@ package body GVD.Assembly_View is
       if Pref = null
         or else Pref = Preference (Asm_Highlight_Color)
       then
-         Set_Property
-           (Self.View.Highlight_Tag,
-            Foreground_Rgba_Property,
-            Asm_Highlight_Color.Get_Pref);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Asm_Breakpoint_Color)
-      then
-         Set_Property
-           (Self.View.Breakpoint_Tag,
-            Background_Rgba_Property,
-            Asm_Breakpoint_Color.Get_Pref);
+         Self.View.Highlight_Color := Asm_Highlight_Color.Get_Pref;
       end if;
 
       if Pref = null
         or else Pref = Preference (Default_Style)
       then
          Set_Font (Self.View, Default_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Asm_Show_Addresses)
+      then
+         if Asm_Show_Addresses.Get_Pref then
+            Self.View.Tree.Get_Column (Address_Column).Set_Visible (True);
+         else
+            Self.View.Tree.Get_Column (Address_Column).Set_Visible (False);
+         end if;
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Asm_Show_Offset)
+      then
+         if Asm_Show_Offset.Get_Pref then
+            Self.View.Tree.Get_Column
+              (Method_Offset_Column).Set_Visible (True);
+         else
+            Self.View.Tree.Get_Column
+              (Method_Offset_Column).Set_Visible (False);
+         end if;
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Asm_Show_Opcodes)
+      then
+         if Asm_Show_Opcodes.Get_Pref then
+            Self.View.Tree.Get_Column (Opcodes_Column).Set_Visible (True);
+         else
+            Self.View.Tree.Get_Column (Opcodes_Column).Set_Visible (False);
+         end if;
       end if;
 
       Update (Self.View);

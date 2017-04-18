@@ -3255,7 +3255,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger      : access Gdb_MI_Debugger;
       Range_Start   : out Address_Type;
       Range_End     : out Address_Type;
-      Code          : out GNAT.Strings.String_Access;
+      Code          : out Disassemble_Elements;
       Start_Address : Address_Type := GVD.Types.Invalid_Address;
       End_Address   : Address_Type := GVD.Types.Invalid_Address)
    is
@@ -3264,90 +3264,111 @@ package body Debugger.Base_Gdb.Gdb_MI is
       S : constant String := Address_To_String (Start_Address);
       E : constant String := Address_To_String (End_Address);
 
-      Tokens  : Token_List_Controller;
-      C, Last : Token_Lists.Cursor;
+      procedure Parse (S : String);
 
-      Result : Unbounded_String;
+      -----------
+      -- Parse --
+      -----------
 
-   begin
-      Range_Start := Invalid_Address;
-      Range_End   := Invalid_Address;
-
-      if S = "" or else E = "" then
-         Trace (Me, "Can't disasemble, addresses aren't set.");
-         Code := new String'("");
-         return;
-      end if;
-
-      Debugger.Process.Set_Parse_File_Name (False);
-      declare
-         Disassembled : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-data-disassemble -s " & S & " -e " & E & " -- 0",
-            Mode => Internal);
-
+      procedure Parse (S : String) is
+         Tokens       : Token_List_Controller;
+         C            : Token_Lists.Cursor;
          Start_Index,
          End_Index    : Integer;
          Matched      : Match_Array (0 .. 2);
 
       begin
          Debugger.Process.Set_Parse_File_Name (True);
-         Match (Error_Pattern, Disassembled, Matched);
+         Match (Error_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
-            Code := new String'("");
             return;
          end if;
 
-         Start_Index := Disassembled'First;
-         Skip_To_Char (Disassembled, Start_Index, '[');
+         Start_Index := S'First;
+         Skip_To_Char (S, Start_Index, '[');
          Start_Index := Start_Index + 1;
 
-         End_Index := Disassembled'Last;
-         Skip_To_Char (Disassembled, End_Index, ']', Step => -1);
+         End_Index := S'Last;
+         Skip_To_Char (S, End_Index, ']', Step => -1);
          End_Index := End_Index - 1;
 
-         Tokens.List := Build_Tokens (Disassembled (Start_Index .. End_Index));
-      end;
+         Tokens.List := Build_Tokens (S (Start_Index .. End_Index));
 
-      C := Find_Identifier (First (Tokens.List), "address");
-
-      if C = Token_Lists.No_Element then
-         Code := new String'("");
-         return;
-      end if;
-
-      Next (C, 2);
-      Range_Start := String_To_Address (Element (C).Text.all);
-
-      while C /= Token_Lists.No_Element loop
-         Last := C;
-         Append (Result, Element (C).Text.all & " <");
-         C := Find_Identifier (C, "func-name");
-         if C /= Token_Lists.No_Element then
-            Next (C, 2);
-            Append (Result, Element (C).Text.all & "+");
-         end if;
-
-         C := Find_Identifier (C, "offset");
-         if C /= Token_Lists.No_Element then
-            Next (C, 2);
-            Append (Result, Element (C).Text.all & ">: ");
-         end if;
-
-         C := Find_Identifier (C, "inst");
-         if C /= Token_Lists.No_Element then
-            Next (C, 2);
-            Append (Result, Element (C).Text.all & ASCII.LF);
+         C := First (Tokens.List);
+         if Element (C).Code = Identifier
+           and then Element (C).Text.all = "src_and_asm_line"
+         then
+            C := Find_Identifier (C, "line_asm_insn");
          end if;
 
          C := Find_Identifier (C, "address");
-         if C /= Token_Lists.No_Element then
-            Next (C, 2);
-         end if;
-      end loop;
 
-      Range_End := String_To_Address (Element (Last).Text.all);
-      Code := new String'(To_String (Result));
+         if C = Token_Lists.No_Element then
+            return;
+         end if;
+
+         Next (C, 2);
+         Range_Start := String_To_Address (Element (C).Text.all);
+
+         while C /= Token_Lists.No_Element loop
+            declare
+               El : Disassemble_Element;
+            begin
+               El.Address := String_To_Address (Element (C).Text.all);
+               C := Find_Identifier (C, "func-name");
+               if C /= Token_Lists.No_Element then
+                  Next (C, 2);
+                  El.Method_Offset := To_Unbounded_String
+                    (Element (C).Text.all);
+               end if;
+
+               C := Find_Identifier (C, "offset");
+               if C /= Token_Lists.No_Element then
+                  Next (C, 2);
+                  Append (El.Method_Offset, "+" & Element (C).Text.all);
+               end if;
+
+               C := Find_Identifier (C, "inst");
+               if C /= Token_Lists.No_Element then
+                  Next (C, 2);
+                  El.Instr := To_Unbounded_String (Element (C).Text.all);
+               end if;
+
+               C := Find_Identifier (C, "opcodes");
+               if C /= Token_Lists.No_Element then
+                  Next (C, 2);
+                  El.Opcodes := To_Unbounded_String (Element (C).Text.all);
+               end if;
+
+               C := Find_Identifier (C, "address");
+               if C /= Token_Lists.No_Element then
+                  Next (C, 2);
+               end if;
+
+               Code.Append (El);
+            end;
+         end loop;
+      end Parse;
+
+   begin
+      Range_Start := Invalid_Address;
+      Range_End   := Invalid_Address;
+
+      Debugger.Process.Set_Parse_File_Name (False);
+
+      if S = "" or else E = "" then
+         Parse (Debugger.Send_And_Get_Clean_Output
+                ("-data-disassemble -s $pc -e $pc+1 -- 3", Mode => Internal));
+      else
+         Parse (Debugger.Send_And_Get_Clean_Output
+                ("-data-disassemble -s " & S & " -e " & E & " -- 2",
+                   Mode => Internal));
+      end if;
+
+      if not Code.Is_Empty then
+         Range_End := Code.Last_Element.Address;
+      end if;
    end Get_Machine_Code;
 
    ----------------------

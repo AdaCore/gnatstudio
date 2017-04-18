@@ -19,6 +19,58 @@ with String_Utils;
 
 package body GVD.Types is
 
+   Convert : constant String := "0123456789abcdef";
+
+   function Add_Address
+     (Address : Address_Type;
+      Offset  : Integer) return Address_Type
+   is
+      Value  : Long_Long_Integer;
+      Buffer : String (1 .. 32);
+      Pos    : Natural := Buffer'Last;
+   begin
+      if Address = Invalid_Address then
+         return Invalid_Address;
+      end if;
+
+      Value := Address_To_Integer (Address) + Long_Long_Integer (Offset);
+
+      if Value < 0 then
+         return Invalid_Address;
+      end if;
+
+      while Value > 0 loop
+         Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
+         Pos := Pos - 1;
+         Value := Value / 16;
+      end loop;
+
+      return String_To_Address ("0x" & Buffer (Pos + 1 .. Buffer'Last));
+   end Add_Address;
+
+   ------------------------
+   -- Address_To_Integer --
+   ------------------------
+
+   function Address_To_Integer
+     (Address : Address_Type) return Long_Long_Integer is
+   begin
+      if Address = Invalid_Address then
+         return -1;
+      end if;
+
+      declare
+         Str : constant String := "16#" &
+           Address.Address_String
+           (Address.Address_String'First + 2 .. Address.Last) & "#";
+         Value : Long_Long_Integer;
+      begin
+         Value := Long_Long_Integer'Value (Str) +
+           Long_Long_Integer (Address.Offset);
+         return Value;
+      end;
+   end Address_To_Integer;
+
    -----------------------
    -- String_To_Address --
    -----------------------
@@ -90,7 +142,8 @@ package body GVD.Types is
       return Address_1.Address_String
         (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) =
         Address_2.Address_String
-          (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+          (Address_2.Last - Address_2.Length + 1 .. Address_2.Last)
+        and then Address_1.Offset = Address_2.Offset;
    end "=";
 
    ----------------
@@ -99,7 +152,7 @@ package body GVD.Types is
 
    function Set_Offset
      (Address : Address_Type;
-      Offset  : Natural) return Address_Type
+      Offset  : Integer) return Address_Type
    is
       Address_With_Offset : Address_Type := Address;
    begin
@@ -117,15 +170,23 @@ package body GVD.Types is
       Address_2 : Address_Type)
       return Boolean is
    begin
-      if Address_1.Length > Address_2.Length then
-         return True;
-      elsif Address_1.Length < Address_2.Length then
-         return False;
+      if Address_1.Offset = Address_2.Offset then
+         if Address_1.Length > Address_2.Length then
+            return True;
+
+         elsif Address_1.Length < Address_2.Length then
+            return False;
+
+         else
+            return Address_1.Address_String
+              (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >
+              Address_2.Address_String
+                (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+         end if;
+
       else
-         return Address_1.Address_String
-           (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >
-           Address_2.Address_String
-             (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+         return Address_To_Integer (Address_1) >
+           Address_To_Integer (Address_2);
       end if;
    end ">";
 
@@ -138,15 +199,23 @@ package body GVD.Types is
       Address_2 : Address_Type)
       return Boolean is
    begin
-      if Address_1.Length > Address_2.Length then
-         return True;
-      elsif Address_1.Length < Address_2.Length then
-         return False;
+      if Address_1.Offset = Address_2.Offset then
+         if Address_1.Length > Address_2.Length then
+            return True;
+
+         elsif Address_1.Length < Address_2.Length then
+            return False;
+
+         else
+            return Address_1.Address_String
+              (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >=
+              Address_2.Address_String
+                (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+         end if;
+
       else
-         return Address_1.Address_String
-           (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >=
-           Address_2.Address_String
-             (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+         return Address_To_Integer (Address_1) >=
+           Address_To_Integer (Address_2);
       end if;
    end ">=";
 

@@ -67,7 +67,14 @@ package GVD.Types is
 
    function Set_Offset
      (Address : Address_Type;
-      Offset  : Natural) return Address_Type;
+      Offset  : Integer) return Address_Type;
+
+   function Add_Address
+     (Address : Address_Type;
+      Offset  : Integer) return Address_Type;
+
+   function Address_To_Integer
+     (Address : Address_Type) return Long_Long_Integer;
 
    overriding function "="
      (Address_1 : Address_Type;
@@ -166,6 +173,16 @@ package GVD.Types is
    end record;
    --  This record contains all the information about how a debugger was
    --  started.
+
+   type Disassemble_Element is record
+      Address       :  Address_Type := Invalid_Address;
+      Method_Offset : Ada.Strings.Unbounded.Unbounded_String;
+      Instr         : Ada.Strings.Unbounded.Unbounded_String;
+      Opcodes       : Ada.Strings.Unbounded.Unbounded_String;
+      File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line          : Natural := 0;
+   end record;
+
 private
    subtype Address_Range is Integer range 0 .. 20;
 

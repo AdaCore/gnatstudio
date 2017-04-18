@@ -356,7 +356,7 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger      : access Gdb_MI_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out GVD.Types.Address_Type;
-      Code          : out GNAT.Strings.String_Access;
+      Code          : out Disassemble_Elements;
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address);
 

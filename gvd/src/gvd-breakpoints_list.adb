@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands;                     use Commands;
-with Commands.Interactive;         use Commands.Interactive;
-with Debugger;                     use Debugger;
+with Commands;                       use Commands;
+with Commands.Interactive;           use Commands.Interactive;
+with Debugger;                       use Debugger;
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GPS.Default_Styles;           use GPS.Default_Styles;
-with GPS.Editors;                  use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GPS.Default_Styles;             use GPS.Default_Styles;
+with GPS.Editors;                    use GPS.Editors;
+with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
-with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Project;           use GPS.Kernel.Project;
-with GPS.Kernel.Properties;        use GPS.Kernel.Properties;
-with GPS.Intl;                     use GPS.Intl;
-with GPS.Properties;               use GPS.Properties;
-with GVD_Module;                   use GVD_Module;
-with GVD.Preferences;              use GVD.Preferences;
-with GVD.Process;                  use GVD.Process;
-with Xref;                         use Xref;
+with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Kernel.Properties;          use GPS.Kernel.Properties;
+with GPS.Intl;                       use GPS.Intl;
+with GPS.Properties;                 use GPS.Properties;
+with GVD_Module;                     use GVD_Module;
+with GVD.Preferences;                use GVD.Preferences;
+with GVD.Process;                    use GVD.Process;
+with Xref;                           use Xref;
 with JSON_Utils;
 
 package body GVD.Breakpoints_List is
@@ -176,12 +176,6 @@ package body GVD.Breakpoints_List is
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
-   type No_Debugger_Or_Stopped_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access No_Debugger_Or_Stopped_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Find_Breakpoint_Filter is new Action_Filter_Record with record
       Found : Boolean := True;
    end record;
@@ -290,21 +284,6 @@ package body GVD.Breakpoints_List is
       end loop;
 
       return not Filter.Found;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access No_Debugger_Or_Stopped_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
-   begin
-      return Process = null or else not Process.Command_In_Process;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1024,6 +1003,8 @@ package body GVD.Breakpoints_List is
             then
                Process.Debugger.Enable_Breakpoint
                  (B.Num, B.Enabled, Mode => GVD.Types.Visible);
+            else
+               Show_Breakpoints_In_All_Editors (Kernel);
             end if;
             return B.Enabled;
          end if;
@@ -1230,7 +1211,8 @@ package body GVD.Breakpoints_List is
       Debugger_Started_Hook.Add (new On_Debugger_Started);
       Debugger_Location_Changed_Hook.Add (new On_Debugger_Location_Changed);
 
-      No_Debugger_Or_Stopped := new No_Debugger_Or_Stopped_Filter;
+      No_Debugger_Or_Stopped := Kernel.Lookup_Filter
+        ("Debugger inactive or stopped");
 
       Register_Action
         (Kernel, "debug set subprogram breakpoint",

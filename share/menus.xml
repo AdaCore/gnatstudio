@@ -571,6 +571,12 @@
       <button action="debug tree display registers"/>
    </toolbar>
 
+   <toolbar id='Assembly'>
+      <button action='assembly_view disassemble previous'/>
+      <button action='assembly_view disassemble pc'/>
+      <button action='assembly_view disassemble next'/>
+   </toolbar>
+
    <toolbar id='Browser'>
       <separator id='zoom'/>
       <button action='browser zoom out'/>

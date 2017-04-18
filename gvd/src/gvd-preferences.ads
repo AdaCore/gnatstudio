@@ -47,8 +47,10 @@ package GVD.Preferences is
 
    -- Assembly Window --
    Asm_Highlight_Color           : Color_Preference;
-   Asm_Breakpoint_Color          : Color_Preference;
    Assembly_Range_Size           : Integer_Preference;
+   Asm_Show_Addresses            : Boolean_Preference;
+   Asm_Show_Offset               : Boolean_Preference;
+   Asm_Show_Opcodes              : Boolean_Preference;
 
    -- Data Window --
    Change_Color                  : Color_Preference;

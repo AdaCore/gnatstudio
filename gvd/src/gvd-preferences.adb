@@ -110,13 +110,23 @@ package body GVD.Preferences is
          Doc      => -"Color to highlight current line in assembly view.",
          Default  => "#0000FF");
 
-      Asm_Breakpoint_Color := Create
+      Asm_Show_Addresses := Create_Invisible_Pref
         (Manager  => Prefs,
-         Name     => "Debugger-Asm-Breakpoint-Color",
-         Path     => -"Debugger:Assembly",
-         Label    => -"Breakpoint line",
-         Doc      => -"Color to highlight breakpoints in assembly view.",
-         Default  => "#FF0000");
+         Name     => "assembly_view-show-addresses",
+         Label    => -"Show addresses",
+         Default  => True);
+
+      Asm_Show_Offset := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-show-offset",
+         Label    => -"Show offsets",
+         Default  => True);
+
+      Asm_Show_Opcodes := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-show-opcodes",
+         Label    => -"Show opcodes",
+         Default  => False);
 
       Change_Color := Create
         (Manager  => Prefs,

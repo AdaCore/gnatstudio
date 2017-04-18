@@ -3063,7 +3063,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out Address_Type;
-      Code          : out GNAT.Strings.String_Access;
+      Code          : out Disassemble_Elements;
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
@@ -3075,6 +3075,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       function Code_Address_To_String (Address : Address_Type) return String;
       --  return address with explicit convertion to code
+
+      procedure Parse_Line (Line : String);
+      --  parse one line from GDB output
 
       ----------------------------
       -- Code_Address_To_String --
@@ -3157,12 +3160,55 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end;
       end Raw_Disassembled;
 
+      ----------------
+      -- Parse_Line --
+      ----------------
+
+      procedure Parse_Line (Line : String) is
+         Idx,
+         Idx1 : Integer;
+         El   : Disassemble_Element;
+
+      begin
+         --  Get the actual end address, in case the disassembled zone
+         --  doesn't end exactly on End_Address.
+         --  The output line from gdb can look like:
+         --       0x379214 <_ada_main+260>:\tmr\tr1,r11
+         --    or 0x379250:\tstfd\tf14,160(r1)
+
+         Idx := Line'First;
+         Skip_To_Char (Line, Idx, ':');
+
+         Idx1 := Line'First;
+         Skip_To_Char (Line, Idx1, '<');
+
+         if Idx1 < Idx then
+            El.Address := String_To_Address (Line (Line'First .. Idx1 - 2));
+            El.Method_Offset := To_Unbounded_String
+              (Line (Idx1 + 1 .. Idx - 2));
+
+         else
+            El.Address := String_To_Address (Line (Line'First .. Idx - 1));
+         end if;
+
+         El.Instr := To_Unbounded_String
+           (Do_Tab_Expansion (Line (Idx + 2 .. Line'Last), 8));
+
+         Code.Append (El);
+      end Parse_Line;
+
       Disassembled : constant String := Get_Disassembled;
       Tmp,
       Start_Index,
       End_Index    : Integer;
 
    begin
+      Range_Start := Invalid_Address;
+      Range_End   := Invalid_Address;
+
+      --  Gdb always return a leading and tailing line, which we don't want
+      --  to return.
+
       Start_Index := Disassembled'First;
       Skip_To_Char (Disassembled, Start_Index, ASCII.LF);
       Start_Index := Start_Index + 1;
@@ -3171,56 +3217,25 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Skip_To_Char (Disassembled, End_Index, ASCII.LF, Step => -1);
       End_Index := End_Index - 1;
 
-      --  Gdb always return a leading and tailing line, which we don't want
-      --  to return.
-
-      Code := new String'(Disassembled (Start_Index .. End_Index));
-
       --  If there is nothing left, this means gdb couldn't disassemble that
       --  part.
       --  For instance: "No function contains specified address" is returned
       --  when the user program wasn't compiled with -g.
 
-      if Code.all = "" then
-         Range_Start := Invalid_Address;
-         Range_End   := Invalid_Address;
+      if Start_Index >= End_Index then
          return;
       end if;
 
-      --  Always read the actual start and end address from the output of
-      --  gdb, in case gdb didn't start disassembling at the exact location,
-
-      Tmp := Start_Index;
-      Skip_To_Char (Disassembled, Tmp, ' ');
-
-      if Start_Index < Disassembled'Last then
-         Range_Start :=
-           String_To_Address (Disassembled (Start_Index .. Tmp - 1));
-      else
-         Range_Start := Invalid_Address;
-      end if;
-
-      --  Get the actual end address, in case the disassembled zone doesn't end
-      --  exactly on End_Address.
-      --  The output line from gdb can look like:
-      --       0x379214 <_ada_main+260>:\tmr\tr1,r11
-      --    or 0x379250:\tstfd\tf14,160(r1)
-
-      Skip_To_Char (Disassembled, End_Index, ASCII.LF, Step => -1);
-      End_Index := End_Index + 1;
-      Tmp := End_Index;
-      while Tmp <= Disassembled'Last
-        and then Disassembled (Tmp) /= ' '
-        and then Disassembled (Tmp) /= ':'
-      loop
-         Tmp := Tmp + 1;
+      while Start_Index <= End_Index loop
+         Tmp := Start_Index;
+         Skip_To_Char (Disassembled, Tmp, ASCII.LF);
+         Parse_Line (Disassembled (Start_Index .. Tmp - 1));
+         Start_Index := Tmp + 1;
       end loop;
-      --  Skip_To_Char (Disassembled, Tmp, ' ');
 
-      if End_Index < Disassembled'Last then
-         Range_End := String_To_Address (Disassembled (End_Index .. Tmp - 1));
-      else
-         Range_End := Invalid_Address;
+      if not Code.Is_Empty then
+         Range_Start := Code.First_Element.Address;
+         Range_End   := Code.Last_Element.Address;
       end if;
    end Get_Machine_Code;
 

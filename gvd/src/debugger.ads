@@ -15,20 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with GNAT.Regpat;
+with GNAT.Strings;
+
+with GNATCOLL.VFS;
+
 with Language;
 with Items;
-with GNAT.Strings;
 with Process_Proxies;
-with GNAT.Regpat;
 with Basic_Types;              use Basic_Types;
 with GVD.Breakpoints_List;     use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Proc_Utils;
 with GPS.Kernel;               use GPS.Kernel;
-with GNATCOLL.VFS;
-with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
 package Debugger is
 
@@ -850,11 +853,16 @@ package Debugger is
    -- Assembly code --
    -------------------
 
+   package Disassemble_Element_Vectors is new Ada.Containers.Vectors
+     (Positive, GVD.Types.Disassemble_Element, "=" => GVD.Types."=");
+
+   subtype Disassemble_Elements is Disassemble_Element_Vectors.Vector;
+
    procedure Get_Machine_Code
      (Debugger        : access Debugger_Root;
       Range_Start     : out GVD.Types.Address_Type;
       Range_End       : out GVD.Types.Address_Type;
-      Code            : out GNAT.Strings.String_Access;
+      Code            : out Disassemble_Elements;
       Start_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address     : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is abstract;
