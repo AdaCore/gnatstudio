@@ -80,15 +80,19 @@ package GPS.Markers is
      renames Markers."=";
 
    function Go_To (Self  : Location_Marker) return Boolean
-      is (Self.Unchecked_Get.Go_To);
+      is (Self /= No_Marker and then Self.Unchecked_Get.Go_To);
    function To_String (Self : Location_Marker) return String
-      is (Self.Unchecked_Get.To_String);
+      is (if Self = No_Marker then "" else Self.Unchecked_Get.To_String);
    function Save (Self : Location_Marker) return XML_Utils.Node_Ptr
-      is (Self.Unchecked_Get.Save);
+      is (if Self = No_Marker then null else Self.Unchecked_Get.Save);
    function Similar (Left, Right  : Location_Marker) return Boolean
-      is (Left.Unchecked_Get.Similar (Right.Unchecked_Get));
+   is ((Left = No_Marker and then Right = No_Marker)
+       or else (Left /= No_Marker
+                and then Right /= No_Marker
+                and then Left.Unchecked_Get.Similar (Right.Unchecked_Get)));
    function Distance (Left, Right  : Location_Marker) return Integer
-      is (Left.Unchecked_Get.Distance (Right.Unchecked_Get));
+   is (if Left = No_Marker or else Right = No_Marker then Integer'Last
+       else Left.Unchecked_Get.Distance (Right.Unchecked_Get));
    --  Convenience functions
 
 end GPS.Markers;
