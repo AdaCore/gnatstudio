@@ -801,6 +801,9 @@ package body GVD.Breakpoints_List is
       Found : Boolean;
    begin
       Module.Breakpoints.List.Clear;
+      Get_Messages_Container (Kernel).Remove_Category
+        (Messages_Category_For_Breakpoints,
+         Breakpoints_Message_Flags);
 
       if not Preserve_State_On_Exit.Get_Pref then
          Trace (Me, "Not loading persistent breakpoints");
@@ -867,6 +870,12 @@ package body GVD.Breakpoints_List is
       if Visual_Debugger (Debugger).Debugger.Get_Executable = No_File then
          --  If there was no executable, we did not even try to set
          --  breakpoints, so don't save them either
+
+         --  Remove breakpoint markers from sources
+         Get_Messages_Container (Kernel).Remove_Category
+           (Messages_Category_For_Breakpoints,
+            Breakpoints_Message_Flags);
+
          return;
       end if;
 
