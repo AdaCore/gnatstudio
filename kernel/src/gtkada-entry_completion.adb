@@ -587,29 +587,38 @@ package body Gtkada.Entry_Completion is
          Idx                 : Integer := Search_Kind_Radios'First;
       begin
          for Kind in Full_Text .. Fuzzy loop
-            Search_Kind_Radios (Idx) := new Search_Kind_Radio_Button_Record'
-              (GObject_Record with
-               Entry_View => Gtkada_Entry (Self),
-               Kind       => Kind);
-            Initialize
-              (Radio_Button =>
-                 Gtk_Radio_Button
-                   (Search_Kind_Radios (Idx)),
-               Group        =>
-                 Gtk_Radio_Button
-                   (Search_Kind_Radios (Search_Kind_Radios'First)),
-               Label        => Get_Label (Kind));
+            declare
+               Kind_Image : constant String := Search_Kind'Image (Kind);
+            begin
+               Search_Kind_Radios (Idx) := new Search_Kind_Radio_Button_Record'
+                 (GObject_Record with
+                  Entry_View => Gtkada_Entry (Self),
+                  Kind       => Kind);
+               Initialize
+                 (Radio_Button =>
+                    Gtk_Radio_Button
+                      (Search_Kind_Radios (Idx)),
+                  Group        =>
+                    Gtk_Radio_Button
+                      (Search_Kind_Radios (Search_Kind_Radios'First)),
+                  Label        => Get_Label (Kind));
+               Search_Kind_Radios (Idx).Set_Name
+                 (String (Name) & "-kind-" & Kind_Image);
 
-            Parent_Box.Pack_Start
-              (Search_Kind_Radios (Idx), Expand => False, Padding => Padding);
+               Parent_Box.Pack_Start
+                 (Search_Kind_Radios (Idx),
+                  Expand  => False,
+                  Padding => Padding);
 
-            if Search_Kind'Image (Kind) = Current_Search_Kind then
-               Search_Kind_Radios (Idx).Set_Active (True);
-            end if;
+               if Kind_Image = Current_Search_Kind then
+                  Search_Kind_Radios (Idx).Set_Active (True);
+                  Self.Search_Kind := Kind;
+               end if;
 
-            Search_Kind_Radios (Idx).On_Toggled
-              (On_Search_Kind_Changed'Access);
-            Idx := Idx + 1;
+               Search_Kind_Radios (Idx).On_Toggled
+                 (On_Search_Kind_Changed'Access);
+               Idx := Idx + 1;
+            end;
          end loop;
 
          Create_New_Key_If_Necessary
