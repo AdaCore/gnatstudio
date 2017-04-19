@@ -53,6 +53,7 @@ with String_Utils;
 
 with BT.Xml.Reader;
 with CodePeer.Backtrace_View;
+with CodePeer.Bridge.Annotations_Readers;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
@@ -930,6 +931,7 @@ package body CodePeer.Module is
               (Input,
                GPS.Kernel.Kernel_Handle (Self.Kernel),
                Self.Tree,
+               Self.Annotation_Categories,
                Self.Messages,
                Self.Version,
                Self.Race_Category);
@@ -1012,7 +1014,7 @@ package body CodePeer.Module is
 
          --  Update location view
 
-         Editors.Show_Annotations_In_Opened_Editors (Self);
+         Editors.Show_Annotations_In_Opened_Editors (Self.all);
          Self.Fill_Object_Races;
          Self.Update_Location_View;
          GPS.Location_View.Raise_Locations_Window
@@ -1043,6 +1045,37 @@ package body CodePeer.Module is
             Mode => GPS.Kernel.Error);
       end if;
    end Load;
+
+   ----------------------
+   -- Load_Annotations --
+   ----------------------
+
+   procedure Load_Annotations
+     (Self : access Module_Id_Record'Class;
+      File : in out Code_Analysis.File'Class)
+   is
+      Input  : Input_Sources.File.File_Input;
+      Reader : CodePeer.Bridge.Annotations_Readers.Reader;
+      Data   : CodePeer.File_Data'Class renames
+        CodePeer.File_Data'Class (File.Analysis_Data.CodePeer_Data.all);
+
+   begin
+      if Data.Annotations_File.Is_Regular_File then
+
+         --  Load inspection information
+
+         Data.Annotations_Loaded := True;
+         Input_Sources.File.Open (+Data.Annotations_File.Full_Name, Input);
+         Reader.Parse (Input, Self.Annotation_Categories, File);
+         Input_Sources.File.Close (Input);
+
+      else
+         Self.Kernel.Insert
+           (Data.Annotations_File.Display_Full_Name &
+            (-" does not exist. Please perform a full analysis first"),
+            Mode => GPS.Kernel.Error);
+      end if;
+   end Load_Annotations;
 
    --------------
    -- Load_CSV --
@@ -1419,7 +1452,7 @@ package body CodePeer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Editors.Show_Annotations (Context.Module, Context.File);
+      Editors.Show_Annotations (Context.Module.all, Context.File);
    exception
       when E : others =>
          Trace (Me, E);

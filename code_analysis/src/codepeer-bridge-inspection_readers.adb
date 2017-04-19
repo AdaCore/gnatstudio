@@ -40,6 +40,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
 
+   Annotations_Attribute    : constant String := "annotations";
    Category_Attribute       : constant String := "category";
    Checks_Attribute         : constant String := "checks";
    Column_Attribute         : constant String := "column";
@@ -121,15 +122,6 @@ package body CodePeer.Bridge.Inspection_Readers is
       return Ada.Containers.Hash_Type (Item);
    end Hash;
 
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Item : Natural) return Ada.Containers.Hash_Type is
-   begin
-      return Ada.Containers.Hash_Type (Item);
-   end Hash;
-
    --------------------------
    -- Include_CWE_Category --
    --------------------------
@@ -155,18 +147,21 @@ package body CodePeer.Bridge.Inspection_Readers is
    -----------
 
    procedure Parse
-     (Self          : in out Reader;
-      Input         : in out Input_Sources.Input_Source'Class;
-      Kernel        : GPS.Kernel.Kernel_Handle;
-      Tree          : out Code_Analysis.Code_Analysis_Tree;
-      Messages      : out CodePeer.Message_Maps.Map;
-      Version       : out Supported_Format_Version;
-      Race_Category : out CodePeer.Message_Category_Access)
+     (Self                  : in out Reader;
+      Input                 : in out Input_Sources.Input_Source'Class;
+      Kernel                : GPS.Kernel.Kernel_Handle;
+      Tree                  : out Code_Analysis.Code_Analysis_Tree;
+      Annotation_Categories : out Annotation_Category_Maps.Map;
+      Messages              : out CodePeer.Message_Maps.Map;
+      Version               : out Supported_Format_Version;
+      Race_Category         : out CodePeer.Message_Category_Access)
    is
       Root_Project : Code_Analysis.Project_Access;
 
    begin
       Self.Kernel          := Kernel;
+      Self.Base_Directory  :=
+        GNATCOLL.VFS.Create (Filesystem_String (Input.Get_System_Id)).Dir;
       Self.Version         := Supported_Format_Version'First;
       Self.Ignore_Depth    := 0;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
@@ -182,9 +177,10 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Self.Parse (Input);
 
-      Tree          := Self.Projects;
-      Version       := Self.Version;
-      Race_Category := Self.Race_Category;
+      Tree                  := Self.Projects;
+      Version               := Self.Version;
+      Race_Category         := Self.Race_Category;
+      Annotation_Categories := Self.Annotation_Categories;
    end Parse;
 
    --------------------
@@ -236,6 +232,11 @@ package body CodePeer.Bridge.Inspection_Readers is
       --  Returns value of "is_check" attribute is any, otherwise returns
       --  False.
 
+      function Get_Optional_Annotations return GNATCOLL.VFS.Virtual_File;
+      --  Returns full name of the file spewcified by "annotations"  attribute,
+      --  or No_File when it is not specified. Relative names are resolved to
+      --  full names using directory name of the inspection data file.
+
       function Get_Optional_Column return Positive;
       --  Returns value of "column" attribute is specified and 1 instead.
 
@@ -272,6 +273,25 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Natural'Value (Attrs.Get_Value (Index));
          end if;
       end Checks;
+
+      ------------------------------
+      -- Get_Optional_Annotations --
+      ------------------------------
+
+      function Get_Optional_Annotations return GNATCOLL.VFS.Virtual_File is
+         Index : constant Integer := Attrs.Get_Index (Annotations_Attribute);
+
+      begin
+         if Index /= -1 then
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (Filesystem_String (Attrs.Get_Value (Index)),
+                 Self.Base_Directory.Full_Name.all);
+
+         else
+            return GNATCOLL.VFS.No_File;
+         end if;
+      end Get_Optional_Annotations;
 
       -----------------------
       -- Get_Optional_File --
@@ -555,8 +575,10 @@ package body CodePeer.Bridge.Inspection_Readers is
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
          Self.File_Node.Analysis_Data.CodePeer_Data :=
            new CodePeer.File_Data'
-                 (Lifeage      => Lifeage,
-                  Total_Checks => Checks);
+                 (Lifeage            => Lifeage,
+                  Total_Checks       => Checks,
+                  Annotations_File   => Get_Optional_Annotations,
+                  Annotations_Loaded => False);
 
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=

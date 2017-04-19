@@ -89,7 +89,7 @@ package body CodePeer.Module.Bridge is
                Messages.First_Element.Audit_V3.First_Element.Approved_By,
                Messages.First_Element.Audit_V3.First_Element.Comment);
 
-         when 4 =>
+         when 4 | 5 =>
             for Message of Messages loop
                All_Messages.Append (Message);
 
@@ -98,11 +98,12 @@ package body CodePeer.Module.Bridge is
                end loop;
             end loop;
 
-            CodePeer.Bridge.Commands.Add_Audit_Record_V4
+            CodePeer.Bridge.Commands.Add_Audit_Record_V4_V5
               (Command_File_Name,
                Codepeer_Output_Directory (Module.Kernel),
                Codepeer_Database_Directory (Project),
-               All_Messages);
+               All_Messages,
+               Module.Version);
       end case;
 
       Module.Action := None;

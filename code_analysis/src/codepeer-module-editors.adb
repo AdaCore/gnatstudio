@@ -41,7 +41,8 @@ package body CodePeer.Module.Editors is
    --  Called when a file has been opened
 
    procedure Show_Annotations
-     (Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
+     (Module : in out Module_Id_Record'Class;
+      Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
       File   : Code_Analysis.File_Access);
    --  Show annotations for the specified file in the specified buffer
 
@@ -156,7 +157,7 @@ package body CodePeer.Module.Editors is
          Project_Node := Module.Tree.Element (Project);
 
          if Project_Node.Files.Contains (File) then
-            Show_Annotations (Module, Project_Node.Files.Element (File));
+            Show_Annotations (Module.all, Project_Node.Files.Element (File));
          end if;
       end if;
    end Execute;
@@ -179,7 +180,8 @@ package body CodePeer.Module.Editors is
    ----------------------
 
    procedure Show_Annotations
-     (Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
+     (Module : in out Module_Id_Record'Class;
+      Buffer : GPS.Editors.Line_Information.GPS_Editor_Buffer'Class;
       File   : Code_Analysis.File_Access)
    is
 
@@ -285,7 +287,18 @@ package body CodePeer.Module.Editors is
          end if;
       end Process_Subprogram;
 
+      Data : CodePeer.File_Data'Class renames CodePeer.File_Data'Class
+        (File.Analysis_Data.CodePeer_Data.all);
+
    begin
+      --  Load annotations data.
+
+      if Data.Annotations_File /= No_File
+        and then not Data.Annotations_Loaded
+      then
+         Module.Load_Annotations (File.all);
+      end if;
+
       File.Subprograms.Iterate (Process_Subprogram'Access);
    end Show_Annotations;
 
@@ -294,17 +307,17 @@ package body CodePeer.Module.Editors is
    ----------------------
 
    procedure Show_Annotations
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
+     (Module : in out Module_Id_Record'Class;
+      File   : Code_Analysis.File_Access)
    is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Self.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
+                 Module.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
 
    begin
       if Buffer /= GPS.Editors.Nil_Editor_Buffer
         and then Buffer in GPS_Editor_Buffer'Class
       then
-         Show_Annotations (GPS_Editor_Buffer'Class (Buffer), File);
+         Show_Annotations (Module, GPS_Editor_Buffer'Class (Buffer), File);
       end if;
    end Show_Annotations;
 
@@ -313,16 +326,16 @@ package body CodePeer.Module.Editors is
    ----------------------------------------
 
    procedure Show_Annotations_In_Opened_Editors
-     (Self : access Module_Id_Record'Class)
+     (Module : in out Module_Id_Record'Class)
    is
       use Code_Analysis.Project_Maps;
       use Code_Analysis.File_Maps;
       use GPS.Editors.Buffer_Lists;
 
       Buffers          : GPS.Editors.Buffer_Lists.List :=
-        Self.Kernel.Get_Buffer_Factory.Buffers;
+        Module.Kernel.Get_Buffer_Factory.Buffers;
       Project_Position : Code_Analysis.Project_Maps.Cursor :=
-        Self.Tree.First;
+        Module.Tree.First;
       File_Position    : Code_Analysis.File_Maps.Cursor;
       File             : GNATCOLL.VFS.Virtual_File;
       Buffer_Position  : GPS.Editors.Buffer_Lists.Cursor;
@@ -340,7 +353,8 @@ package body CodePeer.Module.Editors is
                if Element (Buffer_Position).File = File then
                   if Element (Buffer_Position) in GPS_Editor_Buffer'Class then
                      Show_Annotations
-                       (GPS_Editor_Buffer'Class (Element (Buffer_Position)),
+                       (Module,
+                        GPS_Editor_Buffer'Class (Element (Buffer_Position)),
                         Element (File_Position));
                   end if;
 

@@ -33,7 +33,7 @@ package CodePeer is
    type Format_Version is new Positive;
    --  Version of format of interchange files.
 
-   subtype Supported_Format_Version is Format_Version range 3 .. 4;
+   subtype Supported_Format_Version is Format_Version range 3 .. 5;
    --  Range of suppoted versions of format of interchange file.
 
    ----------------
@@ -265,8 +265,13 @@ package CodePeer is
    overriding procedure Finalize (Self : access Project_Data);
 
    type File_Data is new Code_Analysis.CodePeer_Data_Root with record
-      Lifeage      : Lifeage_Kinds;
-      Total_Checks : Natural;
+      Lifeage            : Lifeage_Kinds;
+      Total_Checks       : Natural;
+
+      Annotations_File   : GNATCOLL.VFS.Virtual_File;
+      Annotations_Loaded : Boolean;
+      --  File that contains annotations and flag to mark that they was loaded.
+      --  Introduced in version 5.
    end record;
 
    type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;

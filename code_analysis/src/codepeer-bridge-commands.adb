@@ -28,13 +28,14 @@ package body CodePeer.Bridge.Commands is
       Message_Id        : Positive);
    --  Generates request of message's audit trail in format version 3.
 
-   procedure Audit_Trail_V4
+   procedure Audit_Trail_V4_V5
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       DB_Directory      : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector);
-   --  Generates request of messages' audit trail in format version 4.
+      Messages          : CodePeer.Message_Vectors.Vector;
+      Version           : Supported_Format_Version);
+   --  Generates request of messages' audit trail in format version 4 and 5.
 
    -------------------------
    -- Add_Audit_Record_V3 --
@@ -86,15 +87,16 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record_V3;
 
-   -------------------------
-   -- Add_Audit_Record_V4 --
-   -------------------------
+   ----------------------------
+   -- Add_Audit_Record_V4_V5 --
+   ----------------------------
 
-   procedure Add_Audit_Record_V4
+   procedure Add_Audit_Record_V4_V5
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       DB_Directory      : Virtual_File;
-      Messages          : Message_Vectors.Vector)
+      Messages          : Message_Vectors.Vector;
+      Version           : Supported_Format_Version)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
                          new XML_Utils.Node'
@@ -107,7 +109,8 @@ package body CodePeer.Bridge.Commands is
       Message_Node   : XML_Utils.Node_Ptr;
 
    begin
-      XML_Utils.Set_Attribute (Database_Node, "format", "4");
+      XML_Utils.Set_Attribute
+        (Database_Node, "format", Supported_Format_Version'Image (Version));
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       XML_Utils.Set_Attribute
@@ -140,7 +143,7 @@ package body CodePeer.Bridge.Commands is
 
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Add_Audit_Record_V4;
+   end Add_Audit_Record_V4_V5;
 
    -----------------
    -- Audit_Trail --
@@ -162,13 +165,14 @@ package body CodePeer.Bridge.Commands is
                Export_File_Name,
                Messages.First_Element.Id);
 
-         when 4 =>
-            Audit_Trail_V4
+         when 4 | 5 =>
+            Audit_Trail_V4_V5
               (Command_File_Name,
                Output_Directory,
                DB_Directory,
                Export_File_Name,
-               Messages);
+               Messages,
+               Version);
       end case;
    end Audit_Trail;
 
@@ -208,16 +212,17 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Free (Database_Node);
    end Audit_Trail_V3;
 
-   --------------------
-   -- Audit_Trail_V4 --
-   --------------------
+   -----------------------
+   -- Audit_Trail_V4_V5 --
+   -----------------------
 
-   procedure Audit_Trail_V4
+   procedure Audit_Trail_V4_V5
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       DB_Directory      : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector)
+      Messages          : CodePeer.Message_Vectors.Vector;
+      Version           : Supported_Format_Version)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
@@ -239,7 +244,8 @@ package body CodePeer.Bridge.Commands is
          end if;
       end loop;
 
-      XML_Utils.Set_Attribute (Database_Node, "format", "4");
+      XML_Utils.Set_Attribute
+        (Database_Node, "format", Supported_Format_Version'Image (Version));
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       XML_Utils.Set_Attribute
@@ -254,7 +260,7 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Audit_Trail_V4;
+   end Audit_Trail_V4_V5;
 
    ----------------
    -- Inspection --

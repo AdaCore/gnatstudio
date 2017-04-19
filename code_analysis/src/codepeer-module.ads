@@ -38,6 +38,7 @@ with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
 with Code_Analysis;
 
+private with CodePeer.Bridge;
 private with CodePeer.Listeners;
 private with CodePeer.Reports;
 
@@ -156,6 +157,9 @@ private
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Messages               : CodePeer.Message_Maps.Map;
       --  Maps of message identifiers to messages.
+      Annotation_Categories  : CodePeer.Bridge.Annotation_Category_Maps.Map;
+      --  Map of identifiers to annotation categories to be used for lazy
+      --  annotations loading.
       Race_Category          : CodePeer.Message_Category_Access;
       Has_Backtraces         : Boolean := False;
       Report_Subwindow       : Codepeer_Child;
@@ -198,6 +202,11 @@ private
      (Module  : access Module_Id_Record;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
    --  Creates tooltip when backtraces data is available.
+
+   procedure Load_Annotations
+     (Self : access Module_Id_Record'Class;
+      File : in out Code_Analysis.File'Class);
+   --  Loads annotations for subprograms of given source file.
 
    function Codepeer_Database_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;

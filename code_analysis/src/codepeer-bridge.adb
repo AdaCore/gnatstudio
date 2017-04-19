@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2017, AdaCore                     --
+--                        Copyright (C) 2017, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,13 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Hashed_Maps;
+package body CodePeer.Bridge is
 
-package CodePeer.Bridge is
+   ----------
+   -- Hash --
+   ----------
 
-   function Hash (Item : Natural) return Ada.Containers.Hash_Type;
-
-   package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Annotation_Category_Access, Hash, "=");
+   function Hash (Item : Natural) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Containers.Hash_Type (Item);
+   end Hash;
 
 end CodePeer.Bridge;

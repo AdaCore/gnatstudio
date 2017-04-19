@@ -30,17 +30,16 @@ package CodePeer.Bridge.Inspection_Readers is
    type Reader is new Sax.Readers.Reader with private;
 
    procedure Parse
-     (Self          : in out Reader;
-      Input         : in out Input_Sources.Input_Source'Class;
-      Kernel        : GPS.Kernel.Kernel_Handle;
-      Tree          : out Code_Analysis.Code_Analysis_Tree;
-      Messages      : out CodePeer.Message_Maps.Map;
-      Version       : out Supported_Format_Version;
-      Race_Category : out CodePeer.Message_Category_Access);
+     (Self                  : in out Reader;
+      Input                 : in out Input_Sources.Input_Source'Class;
+      Kernel                : GPS.Kernel.Kernel_Handle;
+      Tree                  : out Code_Analysis.Code_Analysis_Tree;
+      Annotation_Categories : out Annotation_Category_Maps.Map;
+      Messages              : out CodePeer.Message_Maps.Map;
+      Version               : out Supported_Format_Version;
+      Race_Category         : out CodePeer.Message_Category_Access);
 
 private
-
-   function Hash (Item : Natural) return Ada.Containers.Hash_Type;
 
    function Hash (Item : CWE_Identifier) return Ada.Containers.Hash_Type;
 
@@ -49,9 +48,6 @@ private
 
    package CWE_Category_Maps is new Ada.Containers.Hashed_Maps
      (CWE_Identifier, CWE_Category_Access, Hash, "=", "=");
-
-   package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Annotation_Category_Access, Hash, "=");
 
    package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Entry_Point_Information_Access, Hash, "=");
@@ -84,6 +80,10 @@ private
       Messages              : access CodePeer.Message_Maps.Map;
       Current_Message       : CodePeer.Message_Access;
       Race_Category         : CodePeer.Message_Category_Access;
+
+      Base_Directory        : GNATCOLL.VFS.Virtual_File;
+      --  base directory to reconstruct full paths to referenced data files
+      --  (values, backtraces, annotations). Added in version 5.
    end record;
 
    overriding procedure Start_Element
