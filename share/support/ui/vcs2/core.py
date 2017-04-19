@@ -634,12 +634,14 @@ def find_admin_directory(file, basename, allow_file=False):
       The parent directory `basename`, i.e. the root repository
     """
     parent = os.path.expanduser('~')
-    dir = os.path.dirname(file.path)
-    while dir != '/' and dir != parent:
+    prev = file.path
+    dir = os.path.dirname(prev)
+    while dir != prev and dir != parent:
         d = os.path.join(dir, basename)
         if os.path.isdir(d) or (allow_file and os.path.isfile(d)):
             return os.path.normpath(os.path.join(d, '..'))
-        dir = os.path.dirname(dir)
+        prev = dir
+        dir = os.path.dirname(prev)
     return ""
 
 
