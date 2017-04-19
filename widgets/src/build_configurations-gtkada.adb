@@ -854,7 +854,6 @@ package body Build_Configurations.Gtkada is
             end if;
 
             Set_Editable (Scrolled.Expanded_Entry, False);
-            Set_Sensitive (Scrolled.Expanded_Entry, False);
             Set_Wrap_Mode (Scrolled.Expanded_Entry, Wrap_Word);
             Get_Style_Context (Scrolled.Expanded_Entry).Add_Class
               ("command_line_preview");
