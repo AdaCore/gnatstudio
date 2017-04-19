@@ -227,18 +227,40 @@ package body Task_Manager.Shell is
          Resume_Command (Manager, Get_Id_Arg_1);
 
       elsif Command = "status" then
-         Set_Return_Value (Data, Get_Task_Arg_1.Status'Img);
+         Q := Get_Task_Arg_1;
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
+            Set_Return_Value (Data, Completed'Img);
+         else
+            Set_Return_Value (Data, Q.Status'Img);
+         end if;
 
       elsif Command = "block_exit" then
          Q := Get_Task_Arg_1;
-         Set_Return_Value (Data, Q.Block_Exit and then Q.Show_Bar);
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
+            Set_Return_Value (Data, False);
+         else
+            Set_Return_Value (Data, Q.Block_Exit and then Q.Show_Bar);
+         end if;
 
       elsif Command = "visible" then
-         Data.Set_Return_Value (Get_Task_Arg_1.Show_Bar);
+         Q := Get_Task_Arg_1;
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
+            Data.Set_Return_Value (False);
+         else
+            Data.Set_Return_Value (Q.Show_Bar);
+         end if;
 
       elsif Command = "progress" then
          Q := Get_Task_Arg_1;
-         if Q.Queue.Is_Empty then
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
             --  the task might have been terminated already, or not be started
             --  yet (since a GPS.Task represents a queue, it might not contain
             --  a command yet).
@@ -258,7 +280,9 @@ package body Task_Manager.Shell is
 
       elsif Command = "name" then
          Q := Get_Task_Arg_1;
-         if Q.Queue.Is_Empty then
+         if Q = null
+           or else Q.Queue.Is_Empty
+         then
             Data.Set_Return_Value (String'(""));
          else
             declare
