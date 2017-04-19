@@ -176,6 +176,7 @@ package body Task_Manager.Shell is
             Active     : constant Boolean := Nth_Arg (Data, 3, False);
             Block_Exit : constant Boolean := Nth_Arg (Data, 4, False);
             TC   : Shell_Command_Access;
+            Q    : Task_Queue_Access;
          begin
             TC := new Shell_Command;
             TC.Kernel := Kernel;
@@ -189,9 +190,18 @@ package body Task_Manager.Shell is
                                        Show_Bar          => True,
                                        Queue_Id          => Name,
                                        Block_Exit        => Block_Exit,
-                                       Start_Immediately => True);
+                                       Start_Immediately => False);
 
+            --  We have just created a queue for the given task: set the
+            --  data in our instance...
             Set_Data (Inst, Task_Class, Name);
+
+            --  ... and set the instance in the queue, so that the same
+            --  object will be returned when querying this queue. This allows
+            --  Python clients to add data to the object and find this data
+            --  in their execute function.
+            Q := Queue_From_Id (Manager, Name);
+            Q.Inst := Inst;
          end;
 
       elsif Command = "list" then

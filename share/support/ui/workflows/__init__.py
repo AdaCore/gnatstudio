@@ -357,6 +357,114 @@ def run_as_workflow(workflow):
     return internal_run_as_wf
 
 
+def task_workflow(task_name, workflow):
+    """Run a workflow monitored by a task.
+
+    The workflow is launched as the same time as the task, and runs for
+    as long as the task is running - if the task is interrupted, the workflow
+    is never resumed.
+
+    Unless it is interrupted, the task returns with success once the workflow
+    completes.
+
+    For instance:
+
+        # this is the definition of the workflow
+        def my_function(task):
+            # let's pretend this is a process which returns 100 lines
+            p = ProcessWrapper([...])
+            counter = 1
+
+            while True:
+                # use this to set the progress counter on the task
+                task.set_progress(counter, 100)
+
+                counter += 1
+                line = yield p.wait_until_match('^.+$')
+                if line is None:
+                    break
+
+        # this creates the task and launches the workflow
+        GPS.workflows.task_workflow("my_task_name", my_function)
+
+    :param task_name: the name to give to the task
+    :param workflow: the workflow to launch: this is a function which
+        receives the task as a parameter.
+    :return: the task which monitors the workflow.
+    """
+
+    def execute(t):
+        """ The execute function for our task """
+
+        # The task manager might try to run "execute" right after the creation
+        # of the task, ie before it has been given the necessary attributes
+        # to manage the workflow. In this case, simply wait.
+        if not hasattr(t, 'gen_stack'):
+            return GPS.Task.EXECUTE_AGAIN
+
+        # If there are no generators left, nothing to do, leave the task.
+        if not t.gen_stack:
+            return GPS.Task.SUCCESS
+
+        # If this is set, this means that a promise is running. Simply wait
+        # for this promise to return.
+        if t.wait:
+            return GPS.Task.EXECUTE_AGAIN
+
+        # Act on the first generator in the stack
+        gen = t.gen_stack[-1]
+
+        try:
+            if t.return_val is not None:
+                # If we previously had a value to return, send it to the
+                # generator...
+                el = gen.send(t.return_val)
+                t.return_val = None
+            else:
+                # ... otherwise simply next the generator
+                el = gen.next()
+        except StopIteration:
+            # We reached the end of the generator: pop the stack and continue.
+            t.gen_stack.pop()
+            return GPS.Task.EXECUTE_AGAIN
+
+        if isinstance(el, types.GeneratorType):
+            # The last generator performed some kind of "call": schedule to
+            # run the child generator for the next round.
+            t.gen_stack.append(el)
+            el = None
+            return GPS.Task.EXECUTE_AGAIN
+
+        elif isinstance(el, promises.Promise):
+            # If the last generator yielded a promise, schedule to resume
+            # its execution when the promise is ready.
+
+            def resume(rv):
+                t.return_val = rv
+                t.wait = False
+
+            # We set 'wait' to True, this will be unset when the promise
+            # resolves.
+            t.wait = True
+            el.then(resume)
+            return GPS.Task.EXECUTE_AGAIN
+        else:
+            # The generator returned something which is neither a promise
+            # nor another generator: treat this as a yielded result.
+            t.return_val = el
+            return GPS.Task.EXECUTE_AGAIN
+
+    # Create a task with our execute function
+    t = GPS.Task(task_name, execute)
+
+    # We have created a task object: here are the fields that are going
+    # to be used for handling the workflow for it.
+    t.gen_stack = [workflow(t)]  # The stack of generators
+    t.return_val = None    # the value returned by the last generator call
+    t.wait = False         # A promise is running and the task should wait
+    return t
+
+
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gps-print-symbolic",
                                 in_toolbar=True,
