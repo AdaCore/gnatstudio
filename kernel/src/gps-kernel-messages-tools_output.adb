@@ -74,6 +74,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access
    is
       Locs                   : Locations_List.Vector;
+      Primary_Locs           : Locations_List.Vector;
       Has_Secondary_Location : Boolean := False;
       Returned               : Message_Access;
    begin
@@ -121,7 +122,6 @@ package body GPS.Kernel.Messages.Tools_Output is
       if Look_For_Secondary then
          Locs := Extract_Locations (Container.Kernel, Text);
          Has_Secondary_Location := not Is_Empty (Locs);
-
       else
          Has_Secondary_Location := False;
       end if;
@@ -130,12 +130,32 @@ package body GPS.Kernel.Messages.Tools_Output is
 
       declare
          Primary : Message_Access;
-
       begin
          if Has_Secondary_Location then
             Primary :=
               GPS.Kernel.Messages.Legacy.Get_Message_At
                 (Container, Category, File, Line, Column);
+
+            --  Check if the primary message's text contains locations
+            --  information.
+            --  If it's the case, don't consider it as a primary message. This
+            --  is needed in order to avoid creating secondary messages
+            --  (i.e: children of primary messages in the Locations tree view)
+            --  for messages that point to the same line in a generic unit,
+            --  since these messages can have different weights.
+            --
+            --  e.g : avoid having a SPARK 2014 "check proved" message on a
+            --  generic unit line as a parent and having a "check fail" message
+            --  on the same line as a secondary message.
+
+            if Primary /= null then
+               Primary_Locs := Extract_Locations
+                 (Container.Kernel, To_String (Primary.Get_Text));
+
+               if not Primary_Locs.Is_Empty then
+                  Primary := null;
+               end if;
+            end if;
          end if;
 
          if Primary = null then
