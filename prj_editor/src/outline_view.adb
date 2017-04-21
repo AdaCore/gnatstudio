@@ -59,7 +59,9 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Properties;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
@@ -989,20 +991,49 @@ package body Outline_View is
      (Outline : access Outline_View_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File)
    is
-      Model       : Outline_Model;
-      Filter      : constant Tree_Filter :=
+      Model  : Outline_Model;
+      Filter : constant Tree_Filter :=
         Get_Filter_Record (Outline.Kernel);
-      Tree : constant Semantic_Tree'Class :=
+      Tree   : constant Semantic_Tree'Class :=
         Outline.Kernel.Get_Abstract_Tree_For_File ("OUTLINE", File);
+
+      Iter   : Gtk_Tree_Iter;
+      Path   : Gtk_Tree_Path;
+      Node   : Gint := 0;
    begin
-      Outline.File := File;
       Model := Get_Outline_Model (Outline_View_Access (Outline));
 
       if Model = null then
          Model := new Outline_Model_Record;
          Gtkada.Abstract_Tree_Model.Initialize (Model);
          Outline.Tree.Set_Model (To_Interface (Model));
+
+      elsif not Flat_View.Get_Pref
+        and then Show_With.Get_Pref
+        and then Outline.File /= No_File
+      then
+         --  Store state of Root_With node
+         Iter := Model.Root_With_Iter;
+         if Iter /= Null_Iter then
+            declare
+               Value : access GPS.Properties.Boolean_Property;
+            begin
+               Path  := Model.Get_Path (Model.Root_With_Iter);
+               Value := new GPS.Properties.Boolean_Property'
+                 (Value => Outline.Tree.Row_Expanded (Path));
+
+               GPS.Kernel.Properties.Set_Property
+                 (Outline.Kernel,
+                  Outline.File,
+                  "Outline_Root_With",
+                  Value,
+                  False);
+               Path_Free (Path);
+            end;
+         end if;
       end if;
+
+      Outline.File := File;
 
       --  This function is called directly after the settings have changed,
       --  and should take their new value into account.
@@ -1013,15 +1044,37 @@ package body Outline_View is
 
       if Tree /= No_Semantic_Tree
         and then Tree.Is_Ready
+        and then not Flat_View.Get_Pref
       then
-         declare
-            Path : Gtk_Tree_Path;
-         begin
-            Gtk_New (Path);
-            Append_Index (Path, 0);
-            Expand_To_Path (Outline.Tree, Path);
-            Path_Free (Path);
-         end;
+         if Show_With.Get_Pref then
+            Node := 1;  -- package node is second
+
+            --  Restore state of Root_With node
+            declare
+               Value  : GPS.Properties.Boolean_Property;
+               Found  : Boolean;
+            begin
+               GPS.Properties.Get_Property
+                 (Value, Outline.File, "Outline_Root_With", Found);
+
+               if Found
+                 and then Value.Value
+               then
+                  Iter := Model.Root_With_Iter;
+                  if Iter /= Null_Iter then
+                     Path := Model.Get_Path (Model.Root_With_Iter);
+                     Outline.Tree.Expand_To_Path (Path);
+                     Path_Free (Path);
+                  end if;
+               end if;
+            end;
+         end if;
+
+         --  Expand package node
+         Gtk_New (Path);
+         Append_Index (Path, Node);
+         Expand_To_Path (Outline.Tree, Path);
+         Path_Free (Path);
       end if;
    end Set_File;
 

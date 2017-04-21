@@ -1135,4 +1135,18 @@ package body Outline_View.Model is
       end;
    end Get_Path_Enclosing_Location;
 
+   --------------------
+   -- Root_With_Iter --
+   --------------------
+
+   function Root_With_Iter
+     (Model : access Outline_Model_Record) return Gtk_Tree_Iter is
+   begin
+      if Model.Root_With /= null then
+         return New_Iter (Model.Root_With);
+      else
+         return Null_Iter;
+      end if;
+   end Root_With_Iter;
+
 end Outline_View.Model;

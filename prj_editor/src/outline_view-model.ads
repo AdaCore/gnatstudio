@@ -178,6 +178,10 @@ private package Outline_View.Model is
    function Get_Sorted_Node (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
    --  Return the node stored in the iter
 
+   function Root_With_Iter
+     (Model : access Outline_Model_Record) return Gtk_Tree_Iter;
+   --  Return the iter for root node which includes withes or Null_Iter
+
 private
 
    function "<" (L, R : Sorted_Node_Access) return Boolean;
