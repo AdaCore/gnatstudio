@@ -54,7 +54,6 @@ package body VCS2.Scripts is
       Factory : access Script_Engine_Factory'Class;
       Script  : Scripting_Language;
    end record;
-   type Script_Engine_Access is access all Script_Engine'Class;
    overriding function Name
      (Self : not null access Script_Engine) return String;
    overriding procedure Async_Fetch_Status_For_Files
@@ -560,7 +559,7 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : constant Class_Instance := Data.Nth_Arg (1);
-      VCS  : Script_Engine_Access;
+      VCS  : VCS_Engine_Access;
    begin
       if not Has_VCS (Inst) then
          --  the VCS engine has been freed, likely because the user
@@ -570,7 +569,7 @@ package body VCS2.Scripts is
          return;
       end if;
 
-      VCS := Script_Engine_Access (Get_VCS (Inst));
+      VCS := VCS_Engine_Access (Get_VCS (Inst));
 
       if Command = "name" then
          Data.Set_Return_Value (VCS.Name);
