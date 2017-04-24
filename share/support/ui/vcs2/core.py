@@ -36,6 +36,14 @@ GPS.VCS2.Actions = gps_utils.enum(
         RENAME=4)
 
 
+Traverse_Limit_Pref = GPS.Preference(":VCS/Traverse-Limit")
+Traverse_Limit_Pref.create(
+    "Max project depth",
+    "integer",
+    "How much directories should GPS traverse when looking for " +
+    "VCS root counting from project file directory.", 99, 0)
+
+
 class _Branch(list):
     """
     A convenience class to create the tuples to pass to
@@ -633,10 +641,14 @@ def find_admin_directory(file, basename, allow_file=False):
     :return: A str
       The parent directory `basename`, i.e. the root repository
     """
+    limit = os.path.dirname(GPS.Project.root().file().path)
+    for step in range(-1, Traverse_Limit_Pref.get()):
+        limit = os.path.dirname(limit)
+
     parent = os.path.expanduser('~')
     prev = file.path
     dir = os.path.dirname(prev)
-    while dir != prev and dir != parent:
+    while dir not in [prev, parent, limit]:
         d = os.path.join(dir, basename)
         if os.path.isdir(d) or (allow_file and os.path.isfile(d)):
             return os.path.normpath(os.path.join(d, '..'))
