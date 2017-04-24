@@ -7518,7 +7518,7 @@ class Preference(object):
         be edited by users.
 
         The parameters to this function cannot be named (since it uses a
-        avariable number of parameters, see the documentation below).
+        variable number of parameters, see the documentation below).
 
         The additional parameters depend on the type of preference you are
         creating:
