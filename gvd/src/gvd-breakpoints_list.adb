@@ -170,12 +170,6 @@ package body GVD.Breakpoints_List is
    -- Filters --
    -------------
 
-   type Subprogram_Variable_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Find_Breakpoint_Filter is new Action_Filter_Record with record
       Found : Boolean := True;
    end record;
@@ -284,26 +278,6 @@ package body GVD.Breakpoints_List is
       end loop;
 
       return not Filter.Found;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity) or else Is_Subprogram (Entity);
-         end;
-      end if;
-      return False;
    end Filter_Matches_Primitive;
 
    -----------------------------------
@@ -1219,7 +1193,7 @@ package body GVD.Breakpoints_List is
          Command     => new Set_Breakpoint_Command_Context,
          Description => "Set a breakpoint on subprogram",
          Filter      => No_Debugger_Or_Stopped and
-            new Subprogram_Variable_Filter,
+            Kernel.Lookup_Filter ("Debugger subprogram"),
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,

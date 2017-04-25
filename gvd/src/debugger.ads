@@ -873,6 +873,15 @@ package Debugger is
    --  If Start_Address is Invalid_Address, then the code for the current frame
    --  is returned.
 
+   procedure Get_Machine_Code
+     (Debugger : access Debugger_Root;
+      File     : String;
+      From     : Natural;
+      To       : Natural;
+      Code     : out Disassemble_Elements)
+   is abstract;
+   --  Disassemble whole subpgogram
+
    procedure Get_Line_Address
      (Debugger        : access Debugger_Root;
       Line            : Natural;

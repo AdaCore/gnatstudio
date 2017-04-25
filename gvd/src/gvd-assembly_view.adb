@@ -55,8 +55,10 @@ with GPS.Default_Styles;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;
 with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
@@ -70,6 +72,7 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with Xref;                      use Xref;
 
 package body GVD.Assembly_View is
 
@@ -84,7 +87,8 @@ package body GVD.Assembly_View is
       Data      : Disassemble_Elements;
       --  The assembly code for that range
 
-      Next      : Cache_Data_Access;
+      Next       : Cache_Data_Access;
+      Subprogram : Boolean := False;
    end record;
    --  This implements a cache for the assembly code, for specific ranges.
    --  Some debuggers (gdb) might take a long time to output the assembly code
@@ -222,6 +226,13 @@ package body GVD.Assembly_View is
    --  "-1", in which case the assembly code for the whole current function is
    --  displayed (??? To be updated).
 
+   procedure On_Frame_Changed
+     (View : Assembly_View;
+      File : GNATCOLL.VFS.Virtual_File;
+      From : Natural;
+      To   : Natural);
+   --  Disasemble subprogram
+
    function In_Range
      (Address : Address_Type;
       R       : Cache_Data_Access) return Boolean;
@@ -290,15 +301,33 @@ package body GVD.Assembly_View is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Disassemble $pc code block
 
+   type Disassemble_Subprogram_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Disassemble_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Disassemble subprogram
+
+   -------------
+   -- Filters --
+   -------------
+
+   type Subprogram_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Filter;
+      Context : Selection_Context) return Boolean;
+
    ---------------
    --  Defaults --
    ---------------
 
    Invalid_Cache_Data : constant Cache_Data_Access := new Cache_Data'
-     (Low  => Invalid_Address,
-      High => Invalid_Address,
-      Data => <>,
-      Next => null);
+     (Low        => Invalid_Address,
+      High       => Invalid_Address,
+      Data       => <>,
+      Next       => null,
+      Subprogram => False);
 
    PC_Pixmap_Column     : constant := 0;
    Address_Column       : constant := 1;
@@ -644,6 +673,26 @@ package body GVD.Assembly_View is
         and then Address <= R.High;
    end In_Range;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Has_Entity_Name_Information (Context) then
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Is_Subprogram (Entity);
+         end;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
    -------------------
    -- Find_In_Cache --
    -------------------
@@ -842,6 +891,12 @@ package body GVD.Assembly_View is
 
       Process := Get_Process (View);
 
+      if View.Current_Range /= null
+        and then View.Current_Range.Subprogram
+      then
+         Free (View.Current_Range);
+      end if;
+
       --  Is the range already visible ?
 
       if View.Current_Range /= null then
@@ -974,13 +1029,62 @@ package body GVD.Assembly_View is
             end if;
 
             View.Cache := new Cache_Data'
-              (Low  => Low,
-               High => High,
-               Data => S,
-               Next => View.Cache);
+              (Low        => Low,
+               High       => High,
+               Data       => S,
+               Next       => View.Cache,
+               Subprogram => False);
 
             View.Current_Range := View.Cache;
          end if;
+      end if;
+
+      Fill_Model (View, View.Current_Range.Data);
+   end On_Frame_Changed;
+
+   ----------------------
+   -- On_Frame_Changed --
+   ----------------------
+
+   procedure On_Frame_Changed
+     (View : Assembly_View;
+      File : GNATCOLL.VFS.Virtual_File;
+      From : Natural;
+      To   : Natural)
+   is
+      Process : Visual_Debugger;
+      S       : Disassemble_Elements;
+
+   begin
+      if View = null then
+         return;
+      end if;
+
+      if View.Current_Range /= null
+        and then View.Current_Range.Subprogram
+      then
+         Free (View.Current_Range);
+      end if;
+
+      Process := Get_Process (View);
+
+      Get_Machine_Code
+        (Process.Debugger,
+         File => +Base_Name (File),
+         From => From,
+         To   => To,
+         Code => S);
+
+      if S.Is_Empty then
+         View.Current_Range := Invalid_Cache_Data;
+
+      else
+         View.Current_Range := new Cache_Data'
+           (Low        => S.First_Element.Address,
+            High       => S.Last_Element.Address,
+            Data       => S,
+            Next       => null,
+            Subprogram => True);
       end if;
 
       Fill_Model (View, View.Current_Range.Data);
@@ -1144,7 +1248,7 @@ package body GVD.Assembly_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      No_Debugger_Or_Stopped : Action_Filter;
+      Debugger_Stopped : Action_Filter;
    begin
       Invalid_Cache_Data.Data.Append
         ((Address => Invalid_Address,
@@ -1160,8 +1264,8 @@ package body GVD.Assembly_View is
 
       Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
 
-      No_Debugger_Or_Stopped := Kernel.Lookup_Filter
-        ("Debugger inactive or stopped");
+      Debugger_Stopped := Kernel.Lookup_Filter
+        ("Debugger stopped");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble next",
@@ -1170,7 +1274,7 @@ package body GVD.Assembly_View is
          Description => "Disassemble next code block",
          Icon_Name   => "gps-debugger-down",
          Category    => -"Debug",
-         Filter      => No_Debugger_Or_Stopped);
+         Filter      => Debugger_Stopped);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble previous",
@@ -1179,7 +1283,7 @@ package body GVD.Assembly_View is
          Description => "Disassemble previous code block",
          Icon_Name   => "gps-debugger-up",
          Category    => -"Debug",
-         Filter      => No_Debugger_Or_Stopped);
+         Filter      => Debugger_Stopped);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble pc",
@@ -1187,7 +1291,21 @@ package body GVD.Assembly_View is
          Description => "Disassemble $pc code block",
          Icon_Name   => "gps-debugger-step",
          Category    => -"Debug",
-         Filter      => No_Debugger_Or_Stopped);
+         Filter      => Debugger_Stopped);
+
+      if GVD.Preferences.Debugger_Kind.Get_Pref = Gdb_MI then
+         GPS.Kernel.Actions.Register_Action
+           (Kernel, "assembly_view disassemble subprogram",
+            Command     => new Disassemble_Subprogram_Command,
+            Description => "Disassemble current subprogram",
+            Category    => -"Debug",
+            Filter      => Debugger_Stopped and
+              new Subprogram_Filter);
+         GPS.Kernel.Modules.UI.Register_Contextual_Menu
+           (Kernel => Kernel,
+            Label  => -"Debug/Disassemble subprogram %e",
+            Action => "assembly_view disassemble subprogram");
+      end if;
    end Register_Module;
 
    ----------------
@@ -1397,6 +1515,67 @@ package body GVD.Assembly_View is
       end if;
 
       Update (Self.View);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Disassemble_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View     : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
+      Process  : Visual_Debugger;
+      File     : Virtual_File;
+      From, To : Natural := 0;
+
+   begin
+
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      if Has_Entity_Name_Information (Context.Context) then
+         declare
+            Entity : constant Root_Entity'Class :=
+              Get_Entity (Context.Context);
+            Loc    : General_Location;
+         begin
+            Loc  := Entity.Get_Body;
+            File := Loc.File;
+            From := Loc.Line;
+            To   := Entity.End_Of_Scope.Line;
+         end;
+      end if;
+
+      if (File = No_File or else From = 0)
+        and then Has_File_Information (Context.Context)
+        and then Has_Line_Information (Context.Context)
+      then
+         declare
+            Files : constant GNATCOLL.VFS.File_Array :=
+              File_Information (Context.Context);
+         begin
+            File := Files (Files'First);
+            From := Line_Information (Context.Context);
+         end;
+      end if;
+
+      Process := Get_Process (View);
+      if Process /= null
+        and then File /= No_File
+      then
+         On_Frame_Changed (View, File, From, To);
+         Highlight (View);
+         return Commands.Success;
+
+      else
+         return Commands.Failure;
+      end if;
    end Execute;
 
 end GVD.Assembly_View;

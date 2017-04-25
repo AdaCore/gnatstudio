@@ -297,6 +297,12 @@ package body GVD_Module is
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Subprogram_Variable_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context) return Boolean;
+
    type Set_Value_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Value_Command;
@@ -1169,6 +1175,26 @@ package body GVD_Module is
       return False;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Has_Entity_Name_Information (Context) then
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Is_Fuzzy (Entity) or else Is_Subprogram (Entity);
+         end;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Tooltip_Handler --
    ---------------------
@@ -1500,6 +1526,7 @@ package body GVD_Module is
       Debugger_Filter   : Action_Filter;
       Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
+      Subprogram_Filter : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -1518,6 +1545,10 @@ package body GVD_Module is
       Printable_Filter  := new Printable_Variable_Filter;
       Register_Filter
         (Kernel, Printable_Filter, "Debugger printable variable");
+
+      Subprogram_Filter := new Subprogram_Variable_Filter;
+      Register_Filter
+        (Kernel, Subprogram_Filter, "Debugger subprogram");
 
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 

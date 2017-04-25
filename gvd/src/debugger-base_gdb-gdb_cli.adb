@@ -3240,6 +3240,24 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    end Get_Machine_Code;
 
    ----------------------
+   -- Get_Machine_Code --
+   ----------------------
+
+   overriding procedure Get_Machine_Code
+     (Debugger : access Gdb_Debugger;
+      File     : String;
+      From     : Natural;
+      To       : Natural;
+      Code     : out Disassemble_Elements)
+   is
+      pragma Unreferenced (Debugger, File, From, To);
+
+      Result : Disassemble_Elements;
+   begin
+      Code := Result;
+   end Get_Machine_Code;
+
+   ----------------------
    -- Get_Line_Address --
    ----------------------
 

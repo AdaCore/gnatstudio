@@ -360,6 +360,13 @@ package Debugger.Base_Gdb.Gdb_MI is
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address);
 
+   overriding procedure Get_Machine_Code
+     (Debugger : access Gdb_MI_Debugger;
+      File     : String;
+      From     : Natural;
+      To       : Natural;
+      Code     : out Disassemble_Elements);
+
    overriding procedure Get_Line_Address
      (Debugger        : access Gdb_MI_Debugger;
       Line            : Natural;

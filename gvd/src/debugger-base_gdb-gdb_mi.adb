@@ -229,6 +229,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    function Parse_Frame_Info (Info : String) return Frame_Info;
 
+   procedure Parse_Disassembled
+     (Debugger : access Gdb_MI_Debugger;
+      S        : String;
+      Code     : out Disassemble_Elements);
+   --  Parse result of disassemble request
+
    ---------------------
    -- Find_Identifier --
    ---------------------
@@ -3247,6 +3253,96 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end;
    end Find_File;
 
+   ------------------------
+   -- Parse_Disassembled --
+   ------------------------
+
+   procedure Parse_Disassembled
+     (Debugger : access Gdb_MI_Debugger;
+      S        : String;
+      Code     : out Disassemble_Elements)
+   is
+      use Token_Lists;
+
+      Tokens       : Token_List_Controller;
+      C            : Token_Lists.Cursor;
+      Start_Index,
+      End_Index    : Integer;
+      Matched      : Match_Array (0 .. 2);
+
+   begin
+      Debugger.Process.Set_Parse_File_Name (True);
+      Match (Error_Pattern, S, Matched);
+
+      if Matched (0) /= No_Match then
+         return;
+      end if;
+
+      Start_Index := S'First;
+      Skip_To_Char (S, Start_Index, '[');
+      Start_Index := Start_Index + 1;
+
+      End_Index := S'Last;
+      Skip_To_Char (S, End_Index, ']', Step => -1);
+      End_Index := End_Index - 1;
+
+      Tokens.List := Build_Tokens (S (Start_Index .. End_Index));
+
+      C := First (Tokens.List);
+      if Element (C).Code = Identifier
+        and then Element (C).Text.all = "src_and_asm_line"
+      then
+         C := Find_Identifier (C, "line_asm_insn");
+      end if;
+
+      C := Find_Identifier (C, "address");
+
+      if C = Token_Lists.No_Element then
+         return;
+      end if;
+
+      Next (C, 2);
+
+      while C /= Token_Lists.No_Element loop
+         declare
+            El : Disassemble_Element;
+         begin
+            El.Address := String_To_Address (Element (C).Text.all);
+            C := Find_Identifier (C, "func-name");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               El.Method_Offset := To_Unbounded_String
+                 (Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (C, "offset");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               Append (El.Method_Offset, "+" & Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (C, "inst");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               El.Instr := To_Unbounded_String (Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (C, "opcodes");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               El.Opcodes := To_Unbounded_String (Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (C, "address");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+            end if;
+
+            Code.Append (El);
+         end;
+      end loop;
+   end Parse_Disassembled;
+
    ----------------------
    -- Get_Machine_Code --
    ----------------------
@@ -3259,97 +3355,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Start_Address : Address_Type := GVD.Types.Invalid_Address;
       End_Address   : Address_Type := GVD.Types.Invalid_Address)
    is
-      use Token_Lists;
-
       S : constant String := Address_To_String (Start_Address);
       E : constant String := Address_To_String (End_Address);
-
-      procedure Parse (S : String);
-
-      -----------
-      -- Parse --
-      -----------
-
-      procedure Parse (S : String) is
-         Tokens       : Token_List_Controller;
-         C            : Token_Lists.Cursor;
-         Start_Index,
-         End_Index    : Integer;
-         Matched      : Match_Array (0 .. 2);
-
-      begin
-         Debugger.Process.Set_Parse_File_Name (True);
-         Match (Error_Pattern, S, Matched);
-
-         if Matched (0) /= No_Match then
-            return;
-         end if;
-
-         Start_Index := S'First;
-         Skip_To_Char (S, Start_Index, '[');
-         Start_Index := Start_Index + 1;
-
-         End_Index := S'Last;
-         Skip_To_Char (S, End_Index, ']', Step => -1);
-         End_Index := End_Index - 1;
-
-         Tokens.List := Build_Tokens (S (Start_Index .. End_Index));
-
-         C := First (Tokens.List);
-         if Element (C).Code = Identifier
-           and then Element (C).Text.all = "src_and_asm_line"
-         then
-            C := Find_Identifier (C, "line_asm_insn");
-         end if;
-
-         C := Find_Identifier (C, "address");
-
-         if C = Token_Lists.No_Element then
-            return;
-         end if;
-
-         Next (C, 2);
-         Range_Start := String_To_Address (Element (C).Text.all);
-
-         while C /= Token_Lists.No_Element loop
-            declare
-               El : Disassemble_Element;
-            begin
-               El.Address := String_To_Address (Element (C).Text.all);
-               C := Find_Identifier (C, "func-name");
-               if C /= Token_Lists.No_Element then
-                  Next (C, 2);
-                  El.Method_Offset := To_Unbounded_String
-                    (Element (C).Text.all);
-               end if;
-
-               C := Find_Identifier (C, "offset");
-               if C /= Token_Lists.No_Element then
-                  Next (C, 2);
-                  Append (El.Method_Offset, "+" & Element (C).Text.all);
-               end if;
-
-               C := Find_Identifier (C, "inst");
-               if C /= Token_Lists.No_Element then
-                  Next (C, 2);
-                  El.Instr := To_Unbounded_String (Element (C).Text.all);
-               end if;
-
-               C := Find_Identifier (C, "opcodes");
-               if C /= Token_Lists.No_Element then
-                  Next (C, 2);
-                  El.Opcodes := To_Unbounded_String (Element (C).Text.all);
-               end if;
-
-               C := Find_Identifier (C, "address");
-               if C /= Token_Lists.No_Element then
-                  Next (C, 2);
-               end if;
-
-               Code.Append (El);
-            end;
-         end loop;
-      end Parse;
 
    begin
       Range_Start := Invalid_Address;
@@ -3358,17 +3365,46 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Process.Set_Parse_File_Name (False);
 
       if S = "" or else E = "" then
-         Parse (Debugger.Send_And_Get_Clean_Output
-                ("-data-disassemble -s $pc -e $pc+1 -- 3", Mode => Internal));
+         Parse_Disassembled
+           (Debugger, Debugger.Send_And_Get_Clean_Output
+              ("-data-disassemble -s $pc -e $pc+1 -- 3", Mode => Internal),
+            Code);
       else
-         Parse (Debugger.Send_And_Get_Clean_Output
-                ("-data-disassemble -s " & S & " -e " & E & " -- 2",
-                   Mode => Internal));
+         Parse_Disassembled
+           (Debugger, Debugger.Send_And_Get_Clean_Output
+              ("-data-disassemble -s " & S & " -e " & E & " -- 2",
+               Mode => Internal),
+            Code);
       end if;
 
       if not Code.Is_Empty then
-         Range_End := Code.Last_Element.Address;
+         Range_Start := Code.First_Element.Address;
+         Range_End   := Code.Last_Element.Address;
       end if;
+   end Get_Machine_Code;
+
+   ----------------------
+   -- Get_Machine_Code --
+   ----------------------
+
+   overriding procedure Get_Machine_Code
+     (Debugger : access Gdb_MI_Debugger;
+      File     : String;
+      From     : Natural;
+      To       : Natural;
+      Code     : out Disassemble_Elements) is
+   begin
+      Debugger.Process.Set_Parse_File_Name (False);
+
+      Parse_Disassembled
+        (Debugger, Debugger.Send_And_Get_Clean_Output
+           ("-data-disassemble -f " & File & " -l" &
+              From'Img & " -n" &
+            (if To > 0
+               then Natural'Image (To - From + 1)
+               else " -1") &
+              " -- 2", Mode => Internal),
+         Code);
    end Get_Machine_Code;
 
    ----------------------
