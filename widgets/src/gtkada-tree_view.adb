@@ -803,6 +803,7 @@ package body Gtkada.Tree_View is
          if Capability_Type = Filtered_And_Sortable then
             Gtk_New_With_Model (Widget.Sortable_Model, +Widget.Filter);
             Initialize (Gtk_Tree_View (Widget), +Widget.Sortable_Model);
+            Unref (Widget.Sortable_Model); --  owned by the widget
          else
             Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
          end if;
@@ -1089,7 +1090,9 @@ package body Gtkada.Tree_View is
          D : constant Detached_Data_Access := Convert (Data);
       begin
          if not D.Was_Detached then
-            if D.Tree.Filter /= null then
+            if D.Tree.Sortable_Model /= null then
+               Unref (D.Tree.Sortable_Model);
+            elsif D.Tree.Filter /= null then
                Unref (D.Tree.Filter);
             else
                Unref (D.Tree.Model);
@@ -1134,7 +1137,9 @@ package body Gtkada.Tree_View is
                  (Self, Data.Expansion, Save_Scrolling => Save_Scrolling);
             end if;
 
-            if Self.Filter /= null then
+            if Self.Sortable_Model /= null then
+               Ref (Self.Sortable_Model);
+            elsif Self.Filter /= null then
                Ref (Self.Filter);
             else
                Ref (Self.Model);
