@@ -123,6 +123,66 @@ package body Code_Coverage is
       Subp_Name  : String_Access;
       Subp_Cov   : access Subprogram_Coverage := null;
       Line_Count : Natural := 0;
+
+      procedure Update_Subprogram_Info_From_Line_Info
+        (Line_Info : Code_Analysis.Line;
+         Node      : Semantic_Node'Class);
+      --  Update the subprogram coverage information related to the given Node
+      --  from the given Line's coverage information.
+
+      -------------------------------------------
+      -- Update_Subprogram_Info_From_Line_Info --
+      -------------------------------------------
+
+      procedure Update_Subprogram_Info_From_Line_Info
+        (Line_Info : Code_Analysis.Line;
+         Node      : Semantic_Node'Class)
+      is
+         Line_Coverage_Data : constant Coverage_Access :=
+                                Line_Info.Analysis_Data.Coverage_Data;
+      begin
+         if Line_Coverage_Data /= null then
+
+            --   Create the subprogram information if not created yet
+            if Subp_Cov = null then
+               Subp_Name := new String'(Get (Node.Name).all);
+               Subp_Node := Get_Or_Create
+                 (File_Node,
+                  Key => Subp_Name.all
+                  & ' ' & Get (Node.Profile).all);
+               Subp_Node.Name   := Subp_Name;
+               Subp_Node.Line   := Node.Sloc_Def.Line;
+               Subp_Node.Column := Integer (Node.Sloc_Def.Column);
+               Subp_Node.Start  := Node.Sloc_Start.Line;
+               Subp_Node.Stop   := Node.Sloc_End.Line;
+               Subp_Node.Analysis_Data.Coverage_Data := new
+                 Subprogram_Coverage'
+                   (Coverage => 0,
+                    Status   => Valid,
+                    Called   => Line_Coverage_Data.Coverage,
+                    Children => 1);
+               --  ??? Here we make the hypothesis that the 1st
+               --  executed line of the subprogram was executed
+               --  exactly once by subprogram calls
+               --  It fits with GCC 4.1 series
+               Subp_Cov := Subprogram_Coverage
+                 (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
+            elsif not Line_Coverage_Data.Is_Exempted then
+               --  Do not consider an exempted line as a child of the
+               --  subprogram node.
+               Subp_Cov.Children := Subp_Cov.Children + 1;
+            end if;
+
+            --  Do not take into account exempted lines for the coverage
+            --  percentage.
+            if not Line_Coverage_Data.Is_Exempted
+              and then Line_Coverage_Data.Coverage = 0
+            then
+               Subp_Cov.Coverage := Subp_Cov.Coverage + 1;
+            end if;
+         end if;
+      end Update_Subprogram_Info_From_Line_Info;
+
    begin
       while Has_Element (Current) loop
          declare
@@ -142,43 +202,9 @@ package body Code_Coverage is
                      Trace (Me, +Full_Name (File_Node.Name) &
                               ": invalid construct at line" & Start_Line'Img);
                   else
-                     if File_Node.Lines (J).Analysis_Data.Coverage_Data
-                       /= null
-                     then
-                        if Subp_Cov = null then
-                           Subp_Name := new String'(Get (Node.Name).all);
-                           Subp_Node := Get_Or_Create
-                             (File_Node,
-                              Key => Subp_Name.all
-                              & ' ' & Get (Node.Profile).all);
-                           Subp_Node.Name   := Subp_Name;
-                           Subp_Node.Line   := Node.Sloc_Def.Line;
-                           Subp_Node.Column := Integer (Node.Sloc_Def.Column);
-                           Subp_Node.Start  := Node.Sloc_Start.Line;
-                           Subp_Node.Stop   := Node.Sloc_End.Line;
-                           Subp_Node.Analysis_Data.Coverage_Data := new
-                             Subprogram_Coverage'
-                               (Coverage => 0,
-                                Status   => Valid,
-                                Called   => File_Node.Lines
-                                  (J).Analysis_Data.Coverage_Data.Coverage,
-                                Children => 1);
-                           --  ??? Here we make the hypothesis that the 1st
-                           --  executed line of the subprogram was executed
-                           --  excatly one time by subprogram calls
-                           --  It fits with GCC 4.1 series
-                           Subp_Cov := Subprogram_Coverage
-                            (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
-                        else
-                           Subp_Cov.Children := Subp_Cov.Children + 1;
-                        end if;
-
-                        if File_Node.Lines
-                          (J).Analysis_Data.Coverage_Data.Coverage = 0
-                        then
-                           Subp_Cov.Coverage := Subp_Cov.Coverage + 1;
-                        end if;
-                     end if;
+                     Update_Subprogram_Info_From_Line_Info
+                       (Line_Info => File_Node.Lines (J),
+                        Node      => Node);
                   end if;
                end loop;
 

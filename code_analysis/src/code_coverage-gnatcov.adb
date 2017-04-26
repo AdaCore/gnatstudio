@@ -41,24 +41,28 @@ package body Code_Coverage.GNATcov is
       No_Code                  => ' ',
       Not_Covered              => '-',
       Partially_Covered        => '!',
-      Branch_Partially_Covered => '?',
       Branch_Taken             => '>',
       Branch_Fallthrough       => 'v',
-      Branch_Covered           => '*',
+      Exempted_Violated        => '*',
+      Exempted_Not_Violated    => '#',
       Covered_No_Branch        => '+');
 
    type Cst_String_Access is access constant String;
    type Coverage_Status_Color_Type is
      array (GNATcov_Line_Coverage_Status) of Cst_String_Access;
-   Not_Covered_Color       : aliased constant String := "red";
-   Partially_Covered_Color : aliased constant String := "orange";
-   Fully_Covered_Color     : aliased constant String := "green";
+   Not_Covered_Color           : aliased constant String := "red";
+   Partially_Covered_Color     : aliased constant String := "orange";
+   Fully_Covered_Color         : aliased constant String := "green";
+   Exempted_Violated_Color     : aliased constant String := "#b895f4";
+   Exempted_Not_Violated_Color : aliased constant String := "#95b9f4";
+
    Coverage_Status_Color : constant Coverage_Status_Color_Type :=
-     (Undetermined              => null,
-      No_Code                   => null,
-      Not_Covered               => Not_Covered_Color'Access,
-      GNATcov_Partially_Covered => Partially_Covered_Color'Access,
-      GNATcov_Fully_Covered     => Fully_Covered_Color'Access);
+     (Not_Covered                 => Not_Covered_Color'Access,
+      GNATcov_Partially_Covered   => Partially_Covered_Color'Access,
+      Covered_No_Branch           => Fully_Covered_Color'Access,
+      Exempted_Violated           => Exempted_Violated_Color'Access,
+      Exempted_Not_Violated       => Exempted_Not_Violated_Color'Access,
+      others                      => null);
 
    function Coverage_Verbose_Message
      (Coverage : GNATcov_Line_Coverage)
@@ -86,7 +90,7 @@ package body Code_Coverage.GNATcov is
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ *(\d+) ([-!?+>v*]):(.*$)", Multiple_Lines);
+        ("^ *(\d+) ([-!?+>v*#]):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
         ("^ *(\d+) (.):", Multiple_Lines);
@@ -171,7 +175,6 @@ package body Code_Coverage.GNATcov is
 
          exit when Line_Matches (0) = No_Match;
 
-         Lines_Count := Lines_Count + 1;
          Line_Num := Natural'Value
            (File_Contents (Line_Matches (1).First .. Line_Matches (1).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
@@ -193,9 +196,6 @@ package body Code_Coverage.GNATcov is
                Line_Coverage.Status := Partially_Covered;
                Not_Cov_Count := Not_Cov_Count + 1;
 
-            when '?' =>
-               Line_Coverage.Status := Branch_Partially_Covered;
-
             when '+' =>
                Line_Coverage.Status := Covered_No_Branch;
 
@@ -206,7 +206,10 @@ package body Code_Coverage.GNATcov is
                Line_Coverage.Status := Branch_Fallthrough;
 
             when '*' =>
-               Line_Coverage.Status := Branch_Covered;
+               Line_Coverage.Status := Exempted_Violated;
+
+            when '#' =>
+               Line_Coverage.Status := Exempted_Not_Violated;
 
             when others =>
                Trace
@@ -215,6 +218,13 @@ package body Code_Coverage.GNATcov is
                   & File_Contents (Line_Matches (2).First));
                pragma Assert (False);
          end case;
+
+         --  Do not take into account exempted lines when calculating the total
+         --  number of lines.
+
+         if Line_Coverage.Status not in GNATcov_Exempted_Line then
+            Lines_Count := Lines_Count + 1;
+         end if;
 
          --  Set Coverage to 1 for fully covered lines
 
@@ -439,25 +449,27 @@ package body Code_Coverage.GNATcov is
          when Partially_Covered =>
             return -"The code for this line has been partially executed.";
 
-         when Branch_Partially_Covered =>
-            return -("The code for this line has been executed,"
-                     & " but not all decisions taken");
-
          when Covered_No_Branch =>
             return -"The code for this line has been executed, no branches";
 
          when Branch_Taken =>
-            return -("The code for this line has been executed, branch taken");
+            return -("The code for this line has been executed "
+                     & "branch taken.");
 
          when Branch_Fallthrough =>
             return -("The code for this line has been executed,"
-                     & " branch fallthrough");
+                     & " branch fallthrough.");
 
-         when Branch_Covered =>
-            return -"The code for this line has been executed, branch covered";
+         when Exempted_Violated =>
+            return -("The code for this line has been exempted and a "
+                     & "violation has occurred.");
+
+         when Exempted_Not_Violated =>
+            return -("The code for this line has been exempted but no "
+                     & "violation has occurred.");
 
          when Undetermined =>
-            return -"Undetermined";
+            return -"Undetermined.";
       end case;
    end Coverage_Verbose_Message;
 

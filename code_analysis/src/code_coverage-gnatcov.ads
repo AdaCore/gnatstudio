@@ -34,18 +34,20 @@ package Code_Coverage.GNATcov is
       No_Code,
       Not_Covered,
       Partially_Covered,
-      Branch_Partially_Covered,
       Branch_Taken,
       Branch_Fallthrough,
-      Branch_Covered,
+      Exempted_Violated,
+      Exempted_Not_Violated,
       Covered_No_Branch);
 
-   subtype GNATcov_Partially_Covered is
-     GNATcov_Line_Coverage_Status
-       range Partially_Covered .. Branch_Fallthrough;
+   subtype GNATcov_Partially_Covered is GNATcov_Line_Coverage_Status
+     range Partially_Covered .. Branch_Fallthrough;
 
-   subtype GNATcov_Fully_Covered is
-     GNATcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
+   subtype GNATcov_Exempted_Line is GNATcov_Line_Coverage_Status
+     range Exempted_Violated .. Exempted_Not_Violated;
+
+   subtype GNATcov_Fully_Covered is GNATcov_Line_Coverage_Status
+     range Covered_No_Branch .. Covered_No_Branch;
 
    type GNATcov_Message_Style_Categories is
      array (GNATcov_Line_Coverage_Status) of Analysis_Message_Category;
@@ -81,6 +83,11 @@ package Code_Coverage.GNATcov is
       --  Detailed description about what/why not covered for each not fully
       --  covered item.
    end record;
+
+   overriding function Is_Exempted
+     (Self : GNATcov_Line_Coverage) return Boolean
+   is
+     (Self.Status in GNATcov_Exempted_Line);
 
    type GNATcov_Line_Coverage_Access is access all GNATcov_Line_Coverage'Class;
 

@@ -68,6 +68,19 @@ package Code_Analysis is
    function Is_Valid
      (Self : Coverage) return Boolean is abstract;
 
+   function Is_Exempted (Self : Coverage) return Boolean
+   is
+     (False);
+   --  Should return True if this coverage information is related to exempted
+   --  code.
+   --
+   --  This is used in order to know if the related code should be taken
+   --  into account when calculating coverage percentages (e.g: percentage
+   --  of covered lines in a subprogram).
+   --
+   --  Override this subprogram if your coverage analysis tool distinguishes
+   --  exempted code (e.g: GNATcov).
+
    type Line_Coverage is abstract new Coverage with null record;
 
    function Line_Coverage_Info
