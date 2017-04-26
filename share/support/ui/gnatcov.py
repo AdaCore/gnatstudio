@@ -56,6 +56,10 @@ GNATcoverage session would be:
   5 - edit the code or the test driver, then rerun
       steps 2, 3, 4
 
+All these steps can be executed at once via the 'Run GNATcov'
+button, which is added to the main toolbar when the plugin
+is enabled.
+
 Note: this plugin activates only when the command-line tool
 "gnatcov" is found on the PATH.
 """
@@ -69,6 +73,9 @@ import os.path
 import GPS
 from extensions.private.xml import X
 import os_utils
+import workflows.promises as promises
+import workflows
+from workflow_buttons import WorkflowButtons
 
 
 def list_to_xml(items):
@@ -299,8 +306,41 @@ class GNATcovPlugin(object):
         ):
             GPS.parse_xml(list_to_xml(xml_nodes))
 
+        # Create the GNATcoverage toolbar button
+        self.create_toolbar_button()
+
         # Defer further initialization to when GPS is completely ready.
         GPS.Hook('gps_started').add(self.on_gps_started)
+
+    def create_toolbar_button(self):
+        workflows.create_target_from_workflow(
+            target_name="Run GNATcoverage",
+            workflow_name="run-gnatcov",
+            workflow=self.run_gnatcov_wf,
+            icon_name="gps-run-gnatcov-symbolic")
+
+    def run_gnatcov_wf(self, main_name):
+        # Set the build mode to 'gnatcov' if it's not set yet and force
+        # the rebuild of the selected main in that case.
+        if GPS.get_build_mode() != "gnatcov":
+            GPS.set_build_mode("gnatcov")
+            WorkflowButtons.force_rebuild_main()
+
+        # Build the selected mainB
+        yield WorkflowButtons.build_main(main_name)
+
+        # Get the executable to analyze
+        exe = str(GPS.File(main_name).executable_path)
+
+        # Run GNATcov on it
+        p = promises.TargetWrapper("Run under GNATcov")
+        r = yield p.wait_on_execute(exe)
+        if r is not 0:
+            return
+
+        # Generate and display the GNATcov Coverage Report
+        p = promises.TargetWrapper("Generate GNATcov Main Report")
+        r = yield p.wait_on_execute(exe)
 
     def on_gps_started(self, hook):
         # Now the parent menu is present, fill it with custom targets.

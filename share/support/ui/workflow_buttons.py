@@ -45,6 +45,14 @@ class WorkflowButtons(object):
             WorkflowButtons.__connect_hooks()
 
     @staticmethod
+    def force_rebuild_main():
+        """
+        Force the rebuild next time 'build_main' is called.
+        """
+
+        WorkflowButtons.__needs_build = False
+
+    @staticmethod
     def __connect_hooks():
         """
         Connect to the 'file_changed_on_disk' and 'buffer_edited' hooks to
@@ -85,7 +93,7 @@ class WorkflowButtons(object):
 
     @staticmethod
     @workflows.run_as_workflow
-    def __build_main(main_name):
+    def build_main(main_name):
         """
         Try to launch the 'Build Main' build target with the given
         :param str main_name:.
@@ -124,7 +132,7 @@ class WorkflowButtons(object):
         """
 
         # Build the executable
-        yield WorkflowButtons.__build_main(main_name)
+        yield WorkflowButtons.build_main(main_name)
         if not WorkflowButtons.__build_succeed:
             return
 
@@ -140,7 +148,7 @@ class WorkflowButtons(object):
         """
 
         # Build the executable
-        yield WorkflowButtons.__build_main(main_name)
+        yield WorkflowButtons.build_main(main_name)
         if not WorkflowButtons.__build_succeed:
             return
 
