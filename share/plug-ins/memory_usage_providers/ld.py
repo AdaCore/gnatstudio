@@ -59,6 +59,15 @@ class LD(core.MemoryUsageProvider):
         map_dir = project.file().directory() if not obj_dirs else obj_dirs[0]
         map_file_name = os.path.join(map_dir, MAP_FILE_BASE_NAME)
 
+        # If the map file is not found, it means that the ld linker has not
+        # been invoked (e.g: when building a library). Return imediately in
+        # that case.
+        if not os.path.isfile(map_file_name):
+            GPS.Logger("MEMORY_USAGE_VIEWS.LD").log(
+                "map file not found. Skipping.")
+            visitor.on_memory_usage_data_fetched([], [], [])
+            return
+
         # The information we want to fetch: memory regions and memory sections
         # ??? Find a way to have a finer grain view (symbols? compilation
         # units?)
