@@ -326,7 +326,7 @@ class GNATcovPlugin(object):
             GPS.set_build_mode("gnatcov")
             WorkflowButtons.force_rebuild_main()
 
-        # Build the selected mainB
+        # Build the selected main
         yield WorkflowButtons.build_main(main_name)
 
         # Get the executable to analyze

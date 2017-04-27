@@ -50,7 +50,7 @@ class WorkflowButtons(object):
         Force the rebuild next time 'build_main' is called.
         """
 
-        WorkflowButtons.__needs_build = False
+        WorkflowButtons.__needs_build = True
 
     @staticmethod
     def __connect_hooks():
