@@ -13,7 +13,7 @@ from pygps.notebook import *
 from pygps.project import *
 import traceback
 import platform
-
+import workflows
 from workflows.promises import Promise, timeout, known_tasks
 
 
@@ -55,15 +55,13 @@ def test_pygtk():
 
 
 def sort_by_value(hash):
-    items = [(v, k) for (k, v) in hash.items()]
-    items.sort()
+    items = sorted([(v, k) for (k, v) in hash.items()])
     items = [(k, v) for (v, k) in items]
     return items
 
 
 def sort_by_key(hash):
-    items = [(k, v) for (k, v) in hash.items()]
-    items.sort()
+    items = sorted([(k, v) for (k, v) in hash.items()])
     return items
 
 
@@ -177,6 +175,20 @@ def safe_exit(expected_commands=[], delay=0, force=1):
                 lambda timeout: GPS.exit(force, status=exit_status))
 
 
+@workflows.run_as_workflow
+def wait_for_mdi_child(name, step=500, n=10):
+    """
+    Wait for the MDI child designated by :param str name: to be added
+    to the MDI, waiting for the time specified in :param int step: n
+    times.
+    """
+
+    k = 0
+    while GPS.MDI.get(name) is None and k < 10:
+        yield timeout(step)
+        k += 1
+
+
 def wait_for_entities(cb, *args, **kwargs):
     """Execute cb when all entities have finished loading.
        This function is not blocking"""
@@ -184,7 +196,7 @@ def wait_for_entities(cb, *args, **kwargs):
     def on_timeout(timeout):
         if GPS.Command.list() == []:
             timeout.remove()
-            apply(cb, args, kwargs)
+            cb(*args, **kwargs)
 
     GPS.Timeout(200, on_timeout)
 
@@ -193,7 +205,7 @@ def wait_for_tasks(cb, *args, **kwargs):
     """Execute cb when all tasks have completed."""
 
     def internal_on_idle():
-        apply(cb, args, kwargs)
+        cb(*args, **kwargs)
 
     def internal_wait_until_no_tasks(timeout):
         if GPS.Task.list() == []:
@@ -211,7 +223,7 @@ def wait_for_tasks(cb, *args, **kwargs):
 def wait_for_idle(cb, *args, **kwargs):
 
     def internal_on_idle():
-        apply(cb, args, kwargs)
+        cb(*args, **kwargs)
 
     process_all_events()
     windows = Gtk.Window.list_toplevels()
@@ -289,7 +301,7 @@ def get_completion():
             if comps[-1] != 'Computing...':
                 t.remove()
                 p.resolve(comps)
-        except Exception, e:
+        except Exception as e:
             pass
 
     GPS.Timeout(100, timeout_handler)
@@ -465,7 +477,7 @@ try:
 
             tree = get_widgets_by_type(Gtk.TreeView, popup)[0]
 
-            apply(on_open, (popup, field, tree) + args, kwargs)
+            on_open(*(popup, field, tree) + args, **kwargs)
 
         GPS.Timeout(200, on_timeout)
 
@@ -488,7 +500,7 @@ try:
             mdi = GPS.MDI.get('Project Switches')
             tree = get_widgets_by_type(Gtk.TreeView,
                                        mdi.get_child().pywidget())[0]
-            apply(on_open, (mdi, tree) + args, kwargs)
+            on_open(*(mdi, tree) + args, **kwargs)
 
         GPS.Timeout(1000, on_timeout)
         GPS.Menu.get(
@@ -502,7 +514,7 @@ try:
             m = GPS.MDI.get('Breakpoints')
             if not m:
                 return True  # Wait again
-            apply(on_open, (m, ) + args, kwargs)
+            on_open(*(m, ) + args, **kwargs)
             return False
 
         GLib.timeout_add(200, __internal)
@@ -614,7 +626,7 @@ try:
             else:
                 params = [None]
 
-            apply(callback, params + args, kwargs)
+            callback(*params + args, **kwargs)
 
         windows = Gtk.Window.list_toplevels()
         GLib.idle_add(on_dialog, windows)
@@ -707,7 +719,7 @@ try:
 
         def internal_onselected(windows):
             process_all_events()
-            apply(onselected, args, kwargs)
+            onselected(*args, **kwargs)
 
         GLib.idle_add(internal_onselected, windows)
         activate_contextual(windows, menuName)
@@ -727,7 +739,7 @@ try:
             close_contextual(windows)
             process_all_events()
             if onselected:
-                apply(onselected, args, kwargs)
+                onselected(*args, **kwargs)
 
         GLib.idle_add(internal_onselected, windows)
         activate_contextual(windows, menuName)
@@ -795,7 +807,7 @@ try:
             def internal_onselected(windows):
                 close_contextual(windows)
                 process_all_events()
-                apply(onselected, args, kwargs)
+                onselected(*args, **kwargs)
 
             GLib.idle_add(internal_onselected, windows)
             activate_contextual(windows, menuName)
@@ -823,7 +835,7 @@ try:
             def internal_onselected(windows):
                 close_contextual(windows)
                 process_all_events()
-                apply(onselected, args, kwargs)
+                onselected(*args, **kwargs)
 
             GLib.idle_add(internal_onselected, windows)
             activate_contextual(windows, menuName)
@@ -847,7 +859,7 @@ try:
         """
 
         def internal_onloaded():
-            apply(onload, args, kwargs)
+            onload(*args, **kwargs)
 
         def internal_onfileopendialog(dialog):
             entry = pygps.get_widgets_by_type(Gtk.Entry, dialog)[0]
@@ -911,7 +923,7 @@ try:
 
             if self.list:
                 (callback, args, kwargs) = self.list.pop(0)
-                apply(callback, args, kwargs)
+                callback(*args, **kwargs)
             else:
                 safe_exit(force=1)
 
