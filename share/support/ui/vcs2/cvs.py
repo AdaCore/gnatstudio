@@ -63,7 +63,8 @@ class CVS(core_staging.Emulate_Staging,
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(all_files) as s:
-            p = self._cvs(['-f', 'status'] + args)
+            list = [self._relpath(arg) for arg in args]
+            p = self._cvs(['-f', 'status'] + list)
             current_file = None
             dir = None
             while True:
@@ -115,10 +116,11 @@ class CVS(core_staging.Emulate_Staging,
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
-                p = self._cvs(['add', f.path], block_exit=True)
+                p = self._cvs(['add', self._relpath(f.path)], block_exit=True)
                 yield p.wait_until_terminate()
             elif status & GPS.VCS2.Status.STAGED_DELETED:
-                p = self._cvs(['remove', f.path], block_exit=True)
+                p = self._cvs(['remove', self._relpath(f.path)],
+                              block_exit=True)
                 yield p.wait_until_terminate()
 
         yield self._internal_commit_staged_files(
@@ -130,6 +132,9 @@ class CVS(core_staging.Emulate_Staging,
 
     def _parse_unique_id(self, id):
         return id.split(' ', 1)
+
+    def _relpath(self, path):
+        return os.path.relpath(path, self.working_dir.path)
 
     def _log_stream(self, args=[]):
         """
@@ -223,13 +228,9 @@ class CVS(core_staging.Emulate_Staging,
 
                 result.append(log)
 
-        f = ''
-        if for_file:
-            f = os.path.relpath(for_file.path, self.working_dir.path)
+        f = [self._relpath(for_file.path)] if for_file else []
 
-        yield self._log_stream([
-            f
-        ]).subscribe(add_log)
+        yield self._log_stream(f).subscribe(add_log)
         visitor.history_lines(result)
 
     @core.run_in_background
@@ -250,7 +251,7 @@ class CVS(core_staging.Emulate_Staging,
         if ' ' in ref:
             ref, f = self._parse_unique_id(ref)
         p = self._cvs(['diff', '-r%s' % ref, '-u', '--new-file',
-                       file.path if file else ''])
+                       self._relpath(file.path) if file else ''])
         status, output = yield p.wait_until_terminate()
         # CVS returns status==0 if no diff was found
         visitor.diff_computed(output)
@@ -259,7 +260,8 @@ class CVS(core_staging.Emulate_Staging,
     def async_view_file(self, visitor, ref, file):
         if ' ' in ref:
             ref, f = self._parse_unique_id(ref)
-        p = self._cvs(['-q', 'update', '-p', '-r%s' % ref, file.path])
+        p = self._cvs(['-q', 'update', '-p', '-r%s' % ref,
+                       self._relpath(file.path)])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
 
@@ -274,7 +276,7 @@ class CVS(core_staging.Emulate_Staging,
         lines = []
         ids = []
 
-        p = self._cvs(['annotate', file.path])
+        p = self._cvs(['annotate', self._relpath(file.path)])
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -345,5 +347,5 @@ class CVS(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_discard_local_changes(self, files):
-        n = [f.path for f in files]
+        n = [self._relpath(f.path) for f in files]
         yield self._cvs(['update', '-C'] + n).wait_until_terminate()
