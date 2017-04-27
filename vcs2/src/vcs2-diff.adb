@@ -26,8 +26,9 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Intl;                 use GPS.Intl;
-with GNAT.Expect;              use GNAT.Expect;
 with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Files;   use GNATCOLL.Scripts.Files;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -233,10 +234,12 @@ package body VCS2.Diff is
      (Self     : not null access On_Diff_Visitor;
       Contents : String)
    is
+      Script : constant Scripting_Language :=
+        Lookup_Scripting_Language (Self.Kernel.Scripts, "Python");
+      Args : Callback_Data'Class := Create (Script, 3);
       Dummy    : Boolean;
       Tmp_File, Diff_File : Virtual_File;
       W        : Writable_File;
-      Status   : aliased Integer;
    begin
       --  ??? Due to limitations in the vdiff module, this must be the same
       --  name as returned by Vdiff2_Module.Callback.Get_Ref_Filename
@@ -252,24 +255,13 @@ package body VCS2.Diff is
       --  Also, vcs systems are in general pretty good at generating diff (git
       --  is much better than "diff") so we should take advantage of that.
 
-      declare
-         Args     : GNAT.Strings.String_List :=
-           (1 => new String'("--normal"),
-            2 => new String'(Tmp_File.Display_Full_Name),
-            3 => new String'(Self.File.Display_Full_Name));
-         Diff : constant String := Get_Command_Output
-           ("diff", Args, Input => "", Status => Status'Access);
-      begin
-         --  ??? Should check exit status
+      Diff_File := Create_From_Dir
+        (Get_Tmp_Directory, Self.File.Base_Name & ".diff");
 
-         Free (Args);
-
-         Diff_File := Create_From_Dir
-           (Get_Tmp_Directory, Self.File.Base_Name & ".diff");
-         W := Write_File (Diff_File, Append => False);
-         Write (W, Diff);
-         Close (W);
-      end;
+      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 1, Tmp_File);
+      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 2, Self.File);
+      GNATCOLL.Scripts.Files.Set_Nth_Arg (Args, 3, Diff_File);
+      Args.Execute_Command ("GPS.VCS2._diff");
 
       Dummy := Diff_Action_Hook.Run
         (Kernel    => Self.Kernel,
