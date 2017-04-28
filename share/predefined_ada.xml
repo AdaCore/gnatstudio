@@ -12,9 +12,10 @@
    <ASPECT id="4/3" name="Alignment" origin="Ada RM" category="unknown">
        <DOC>Alignment of a subtype. See 13.3.</DOC>
    </ASPECT>
-   <ASPECT id="5/3" name="All_Calls_Remote" origin="Ada RM" category="unknown">
-       <DOC>All remote procedure calls should use the Partition
-Communication Subsystem, even if they are local. See E.2.3.</DOC>
+   <ASPECT id="5/4" name="All_Calls_Remote" origin="Ada RM" category="unknown">
+       <DOC>All indirect or dispatching remote subprogram calls and all
+direct remote subprogram calls should use the Partition
+Communication Subsystem. See E.2.3.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Annotate" origin="GNAT RM" category="unknown">
        <DOC>There are three forms of this aspect (where ID is an identifier, and
@@ -95,7 +96,11 @@ subtype. See 3.6.</DOC>
        <DOC>Default storage pool for a generic instance. See 13.11.3.</DOC>
    </ASPECT>
    <ASPECT id="19/3" name="Default_Value" origin="Ada RM" category="unknown">
-       <DOC>Default value for a scalar subtype. See 3.5.</DOC>
+       <DOC>Default value for a scalar subtype. See 3.5.
+
+19.1/4 Discard_Names
+Requests a reduction in storage for names associated with an
+entity. See C.5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Depends" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to *note pragma Depends: 51.</DOC>
@@ -200,7 +205,11 @@ the subtype is not static. See 3.2.4.</DOC>
    </ASPECT>
    <ASPECT id="22/3" name="Elaborate_Body" origin="Ada RM" category="unknown">
        <DOC>A given package must have a body, and that body is elaborated
-immediately after the declaration. See 10.2.1.</DOC>
+immediately after the declaration. See 10.2.1.
+
+22.1/4 Exclusive_Functions
+Specifies mutual exclusion behavior of protected functions in
+a protected type. See 9.5.1.</DOC>
    </ASPECT>
    <ASPECT id="23/3" name="Export" origin="Ada RM" category="unknown">
        <DOC>Entity is exported to another language. See B.1.</DOC>
@@ -253,7 +262,12 @@ See 6.3.2.</DOC>
    </ASPECT>
    <ASPECT id="31/3" name="Input" origin="Ada RM" category="unknown">
        <DOC>Function to read a value from a stream for a given type,
-including any bounds and discriminants. See 13.13.2.</DOC>
+including any bounds and discriminants. See 13.13.2.
+
+31.1/4 Input'Class
+Function to read a value from a stream for a the class-wide
+type associated with a given type, including any bounds and
+discriminants. See 13.13.2.</DOC>
    </ASPECT>
    <ASPECT id="32/3" name="Interrupt_Handler" origin="Ada RM" category="unknown">
        <DOC>Protected procedure may be attached to interrupts. See C.3.1.</DOC>
@@ -270,7 +284,7 @@ is separately controllable using pragma `Assertion_Policy'.
 
 3.22 Aspect Invariant'Class
 
-This aspect is equivalent to *note pragma Type_Invariant_Class: fd. It
+This aspect is equivalent to *note pragma Type_Invariant_Class: ff. It
 is a synonym for the language defined aspect `Type_Invariant'Class'
 except that it is separately controllable using pragma
 `Assertion_Policy'.</DOC>
@@ -342,40 +356,45 @@ See B.1.</DOC>
 point type. See F.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Max_Queue_Length" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to `pragma Max_Queue_Length'.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Max_Queue_Length: 9b.</DOC>
    </ASPECT>
    <ASPECT id="0" name="No_Elaboration_Code_All" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma No_Elaboration_Code_All: 9d.
+       <DOC>This aspect is equivalent to *note pragma No_Elaboration_Code_All: 9f.
 for a program unit.</DOC>
    </ASPECT>
    <ASPECT id="38/3" name="No_Return" origin="Ada RM" category="unknown">
        <DOC>A procedure will not return normally. See 6.5.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="No_Tagged_Streams" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma No_Tagged_Streams: a3. with an
+       <DOC>This aspect is equivalent to *note pragma No_Tagged_Streams: a5. with an
 argument specifying a root tagged type (thus this aspect can only be
 applied to such a type).</DOC>
    </ASPECT>
    <ASPECT id="0" name="Object_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Object_Size: 13b.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Object_Size: 13d.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Obsolescent" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Obsolescent: a6. Note that the
+       <DOC>This aspect is equivalent to *note pragma Obsolescent: a8. Note that the
 evaluation of this aspect happens at the point of occurrence, it is not
 delayed until the freeze point.</DOC>
    </ASPECT>
    <ASPECT id="39/3" name="Output" origin="Ada RM" category="unknown">
        <DOC>Procedure to write a value to a stream for a given type,
-including any bounds and discriminants. See 13.13.2.</DOC>
+including any bounds and discriminants. See 13.13.2.
+
+39.1/4 Output'Class
+Procedure to write a value to a stream for a the class-wide
+type associated with a given type, including any bounds and
+discriminants. See 13.13.2.</DOC>
    </ASPECT>
    <ASPECT id="40/3" name="Pack" origin="Ada RM" category="unknown">
        <DOC>Minimize storage when laying out records and arrays. See</DOC>
    </ASPECT>
    <ASPECT id="0" name="Part_Of" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Part_Of: ae.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Part_Of: af.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Persistent_BSS" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Persistent_BSS: b0.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Persistent_BSS: b2.</DOC>
    </ASPECT>
    <ASPECT id="41/3" name="Post" origin="Ada RM" category="unknown">
        <DOC>Postcondition; a condition that must hold true after a call.
@@ -389,10 +408,13 @@ See 6.1.1.</DOC>
 See 6.1.1.</DOC>
    </ASPECT>
    <ASPECT id="44/3" name="Pre'Class" origin="Ada RM" category="unknown">
-       <DOC>Precondition inherited on type derivation. See 6.1.1.</DOC>
+       <DOC>Precondition inherited on type derivation. See 6.1.1.
+
+44.1/4 Predicate_Failure
+Action to be performed when a predicate check fails. See</DOC>
    </ASPECT>
    <ASPECT id="0" name="Predicate" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Predicate: b9. It is thus
+       <DOC>This aspect is equivalent to *note pragma Predicate: bc. It is thus
 similar to the language defined aspects `Dynamic_Predicate' and
 `Static_Predicate' except that whether the resulting predicate is
 static or dynamic is controlled by the form of the expression. It is
@@ -412,10 +434,15 @@ See D.1.</DOC>
 package. See 10.2.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Pure_Function" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Pure_Function: c5.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Pure_Function: c7.</DOC>
    </ASPECT>
    <ASPECT id="48/3" name="Read" origin="Ada RM" category="unknown">
-       <DOC>Procedure to read a value from a stream for a given type. See</DOC>
+       <DOC>Procedure to read a value from a stream for a given type. See
+
+
+48.1/4 Read'Class
+Procedure to read a value from a stream for the class-wide
+type associated with a given type. See 13.13.2.</DOC>
    </ASPECT>
    <ASPECT id="49/3" name="Record" origin="Ada RM" category="unknown">
        <DOC>layout
@@ -423,23 +450,23 @@ package. See 10.2.1.</DOC>
 See Layout. See 13.5.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Depends" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Depends: ca.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Depends: cb.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Global" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Global: cb.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Global: cd.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Post" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Post: cd.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Post: cf.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_State" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_State: cf.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_State: d1.</DOC>
    </ASPECT>
    <ASPECT id="50/3" name="Relative_Deadline" origin="Ada RM" category="unknown">
        <DOC>Task parameter used in Earliest Deadline First Dispatching.
 See D.2.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Remote_Access_Type" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Remote_Access_Type: d3.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Remote_Access_Type: d5.</DOC>
    </ASPECT>
    <ASPECT id="51/3" name="Remote_Call_Interface" origin="Ada RM" category="unknown">
        <DOC>Subprograms in a given package may be used in remote procedure
@@ -450,19 +477,19 @@ calls. See E.2.3.</DOC>
 calls. See E.2.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="SPARK_Mode" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma SPARK_Mode: e6. and may be
+       <DOC>This aspect is equivalent to *note pragma SPARK_Mode: e8. and may be
 specified for either or both of the specification and body of a
 subprogram or package.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Scalar_Storage_Order" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to a *note attribute Scalar_Storage_Order:
-148.</DOC>
+14a.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Secondary_Stack_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Secondary_Stack_Size: d8.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Secondary_Stack_Size: da.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Shared" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Shared: db.  and is
+       <DOC>This boolean aspect is equivalent to *note pragma Shared: dd.  and is
 thus a synonym for aspect `Atomic'.</DOC>
    </ASPECT>
    <ASPECT id="53/3" name="Shared_Passive" origin="Ada RM" category="unknown">
@@ -470,11 +497,11 @@ thus a synonym for aspect `Atomic'.</DOC>
 distributed system. See E.2.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Simple_Storage_Pool" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Simple_Storage_Pool: e0.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Simple_Storage_Pool: e2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Simple_Storage_Pool_Type" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma
-Simple_Storage_Pool_Type: de.</DOC>
+Simple_Storage_Pool_Type: e0.</DOC>
    </ASPECT>
    <ASPECT id="54/3" name="Size" origin="Ada RM" category="unknown">
        <DOC>Size in bits of an object. See 13.3.</DOC>
@@ -506,11 +533,11 @@ See 13.13.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Suppress_Debug_Info" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Suppress_Debug_Info:
-ee.</DOC>
+f0.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Suppress_Initialization" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma
-Suppress_Initialization: f2.</DOC>
+Suppress_Initialization: f4.</DOC>
    </ASPECT>
    <ASPECT id="62/3" name="Synchronization" origin="Ada RM" category="unknown">
        <DOC>Defines whether a given primitive operation of a synchronized
@@ -518,7 +545,7 @@ interface must be implemented by an entry or protected
 procedure. See 9.5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Test_Case" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Test_Case: f5.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Test_Case: f7.</DOC>
    </ASPECT>
    <ASPECT id="1/3" name="This" origin="Ada RM" category="unknown">
        <DOC>subclause summarizes the definitions given elsewhere of the
@@ -528,7 +555,7 @@ specified using an aspect_specification.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Thread_Local_Storage" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Thread_Local_Storage:
-f7.</DOC>
+f9.</DOC>
    </ASPECT>
    <ASPECT id="63/3" name="Type_Invariant" origin="Ada RM" category="unknown">
        <DOC>A condition that must hold true for all objects of a type. See</DOC>
@@ -542,26 +569,26 @@ types. See 7.3.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Universal_Aliasing" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Universal_Aliasing:
-102.</DOC>
+104.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Universal_Data" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Universal_Data: 103.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Universal_Data: 105.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unmodified" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Unmodified: 106.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Unmodified: 107.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unreferenced" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Unreferenced: 107.
+       <DOC>This boolean aspect is equivalent to *note pragma Unreferenced: 109.
 Note that in the case of formal parameters, it is not permitted to have
 aspects for a formal parameter, so in this case the pragma form must be
 used.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unreferenced_Objects" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Unreferenced_Objects:
-109.</DOC>
+10b.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Value_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Value_Size: 157.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Value_Size: 159.</DOC>
    </ASPECT>
    <ASPECT id="66/3" name="Variable_Indexing" origin="Ada RM" category="unknown">
        <DOC>Defines function(s) to implement user-defined
@@ -577,19 +604,24 @@ volatile. See C.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Volatile_Full_Access" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Volatile_Full_Access:
-112.</DOC>
+114.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Volatile_Function" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Volatile_Function:
-115.</DOC>
+116.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Warnings" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to the two argument form of *note pragma
-Warnings: 117, where the first argument is `ON' or `OFF' and the second
+Warnings: 119, where the first argument is `ON' or `OFF' and the second
 argument is the entity.</DOC>
    </ASPECT>
    <ASPECT id="69/3" name="Write" origin="Ada RM" category="unknown">
-       <DOC>Procedure to write a value to a stream for a given type. See</DOC>
+       <DOC>Procedure to write a value to a stream for a given type. See
+
+
+69.1/4 Write'Class
+Procedure to write a value to a stream for a the class-wide
+type associated with a given type. See 13.13.2.</DOC>
    </ASPECT>
    <ATTRIBUTE id="0" name="Abort_Signal" origin="GNAT RM" category="variable">
        
@@ -1138,15 +1170,15 @@ the first bit occupied by C. This offset is measured in bits.
 The first bit of a storage element is numbered zero. The value
 of this attribute is of the type universal_integer. See</DOC>
    </ATTRIBUTE>
-   <ATTRIBUTE id="73.1/3" name="First_Valid" origin="Ada RM" category="unknown">
+   <ATTRIBUTE id="73.1/4" name="First_Valid" origin="Ada RM" category="unknown">
        
        <DOC>For every static discrete subtype S for which there exists at
-least one value belonging to S that satisfies any predicate of
-S:
+least one value belonging to S that satisfies the predicates
+of S:
 
 
 S'First_Valid denotes the smallest value that belongs to S and
-satisfies the predicate of S. The value of this attribute is
+satisfies the predicates of S. The value of this attribute is
 of the type of S. See 3.5.5.</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="0" name="Fixed_Value" origin="GNAT RM" category="function">
@@ -1228,11 +1260,11 @@ return Boolean
 
 The actual parameter shall be a name that denotes an object.
 The object denoted by the actual parameter can be of any type.
-This function evaluates the names of the objects involved and
+This function evaluates the names of the objects involved. It
 returns True if the representation of the object denoted by
 the actual parameter occupies exactly the same bits as the
-representation of the object denoted by X; otherwise, it
-returns False. See 13.3.</DOC>
+representation of the object denoted by X and the objects
+occupy at least one bit; otherwise, it returns False. See</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="84/1" name="Identity" origin="Ada RM" category="variable">
        
@@ -1265,6 +1297,15 @@ return String
 
 The function returns an image of the value of Arg as a String.
 See 3.5.</DOC>
+   </ATTRIBUTE>
+   <ATTRIBUTE id="91.1/4" name="Image" origin="Ada RM" category="function">
+       
+       <DOC>For a prefix X that denotes an object of a scalar type (after
+any implicit dereference):
+
+
+X'Image denotes the result of calling function S'Image with
+Arg being X, where S is the nominal subtype of X. See 3.5.</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="0" name="Img" origin="GNAT RM" category="function">
        
@@ -1343,15 +1384,15 @@ the last bit occupied by C. This offset is measured in bits.
 The value of this attribute is of the type universal_integer.
 See 13.5.2.</DOC>
    </ATTRIBUTE>
-   <ATTRIBUTE id="107.1/3" name="Last_Valid" origin="Ada RM" category="unknown">
+   <ATTRIBUTE id="107.1/4" name="Last_Valid" origin="Ada RM" category="unknown">
        
        <DOC>For every static discrete subtype S for which there exists at
-least one value belonging to S that satisfies any predicate of
-S:
+least one value belonging to S that satisfies the predicates
+of S:
 
 
 S'Last_Valid denotes the largest value that belongs to S and
-satisfies the predicate of S. The value of this attribute is
+satisfies the predicates of S. The value of this attribute is
 of the type of S. See 3.5.5.</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="108" name="Leading_Part" origin="Ada RM" category="function">
@@ -1715,14 +1756,10 @@ the type universal_integer. See 3.5.4.</DOC>
        <DOC>For a prefix X that denotes an object of a nonlimited type:
 
 
-For each X'Old in a postcondition expression that is enabled,
-a constant is implicitly declared at the beginning of the
-subprogram or entry. The constant is of the type of X and is
-initialized to the result of evaluating X (as an expression)
-at the point of the constant declaration. The value of X'Old
-in the postcondition expression is the value of this constant;
-the type of X'Old is the type of X. These implicit constant
-declarations occur in an arbitrary order. See 6.1.1.</DOC>
+Each X'Old in a postcondition expression that is enabled
+denotes a constant that is implicitly declared at the
+beginning of the subprogram body, entry body, or accept
+statement. See 6.1.1.</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="169" name="Output" origin="Ada RM" category="procedure">
        
@@ -2131,7 +2168,7 @@ control block" used by some implementations.) See 13.3.</DOC>
        
        <DOC>===========================</DOC>
    </ATTRIBUTE>
-   <ATTRIBUTE id="237.1/3" name="Stream_Size" origin="Ada RM" category="unknown">
+   <ATTRIBUTE id="237.1/2" name="Stream_Size" origin="Ada RM" category="unknown">
        
        <DOC>For every subtype S of an elementary type T:
 
@@ -2319,9 +2356,10 @@ implicit dereference):
 
 
 Yields True if and only if the object denoted by X is normal,
-has a valid representation, and the predicate of the nominal
-subtype of X evaluates to True. The value of this attribute is
-of the predefined type Boolean. See 13.9.2.</DOC>
+has a valid representation, and then, if the preceding
+conditions hold, the value of X also satisfies the predicates
+of the nominal subtype of X. The value of this attribute is of
+the predefined type Boolean. See 13.9.2.</DOC>
    </ATTRIBUTE>
    <ATTRIBUTE id="0" name="Valid_Scalars" origin="GNAT RM" category="unknown">
        
@@ -2375,6 +2413,16 @@ return Wide_String
 The function returns an image of the value of Arg as a
 Wide_String. See 3.5.</DOC>
    </ATTRIBUTE>
+   <ATTRIBUTE id="273.1/4" name="Wide_Image" origin="Ada RM" category="function">
+       
+       <DOC>For a prefix X that denotes an object of a scalar type (after
+any implicit dereference):
+
+
+X'Wide_Image denotes the result of calling function
+S'Wide_Image with Arg being X, where S is the nominal subtype
+of X. See 3.5.</DOC>
+   </ATTRIBUTE>
    <ATTRIBUTE id="274" name="Wide_Value" origin="Ada RM" category="function">
        
        <DOC>For every scalar subtype S:
@@ -2408,7 +2456,17 @@ The function returns an image of the value of Arg, that is, a
 sequence of characters representing the value in display form.
 See 3.5.</DOC>
    </ATTRIBUTE>
-   <ATTRIBUTE id="277.5/2" name="Wide_Wide_Value" origin="Ada RM" category="function">
+   <ATTRIBUTE id="277.5/4" name="Wide_Wide_Image" origin="Ada RM" category="function">
+       
+       <DOC>For a prefix X that denotes an object of a scalar type (after
+any implicit dereference):
+
+
+X'Wide_Wide_Image denotes the result of calling function
+S'Wide_Wide_Image with Arg being X, where S is the nominal
+subtype of X. See 3.5.</DOC>
+   </ATTRIBUTE>
+   <ATTRIBUTE id="277.7/2" name="Wide_Wide_Value" origin="Ada RM" category="function">
        
        <DOC>For every scalar subtype S:
 
@@ -2424,7 +2482,7 @@ return S'Base
 This function returns a value given an image of the value as a
 Wide_Wide_String, ignoring any leading or trailing spaces. See</DOC>
    </ATTRIBUTE>
-   <ATTRIBUTE id="277.9/2" name="Wide_Wide_Width" origin="Ada RM" category="variable">
+   <ATTRIBUTE id="277.11/2" name="Wide_Wide_Width" origin="Ada RM" category="variable">
        
        <DOC>For every scalar subtype S:
 
@@ -2966,12 +3024,12 @@ pragma Annotate (IDENTIFIER [, IDENTIFIER {, ARG}] [, entity =&gt; local_NAME]);
 
 ARG ::= NAME | EXPRESSION
 
-This pragma is used to annotate programs.  `identifier' identifies the
+This pragma is used to annotate programs.  IDENTIFIER identifies the
 type of annotation.  GNAT verifies that it is an identifier, but does
 not otherwise analyze it. The second optional identifier is also left
 unanalyzed, and by convention is used to control the action of the tool
-to which the annotation is addressed.  The remaining `arg' arguments
-can be either string literals or more generally expressions.  String
+to which the annotation is addressed.  The remaining ARG arguments can
+be either string literals or more generally expressions.  String
 literals are assumed to be either of type `Standard.String' or else
 `Wide_String' or `Wide_Wide_String' depending on the character literals
 they contain.  All other kinds of arguments are analyzed as
@@ -3933,9 +3991,10 @@ a : Integer;
 end record;
 end DSSO1;
 
-In this example record types L.. have `Low_Order_First' scalar storage
-order, and record types H.. have `High_Order_First'.  Note that in the
-case of `H4a', the order is not inherited from the parent type. Only an
+In this example record types with names starting with `L' have
+`Low_Order_First' scalar storage order, and record types with names
+starting with `H' have `High_Order_First'.  Note that in the case of
+`H4a', the order is not inherited from the parent type. Only an
 explicitly set `Scalar_Storage_Order' gets inherited on type derivation.
 
 If this pragma is used as a configuration pragma which appears within a
@@ -4076,74 +4135,134 @@ the chapter on elaboration order handling in the `GNAT User's Guide'.</DOC>
    <PRAGMA id="0" name="Eliminate" origin="GNAT RM">
       <DOC>Syntax:
 
-pragma Eliminate ([Entity          =&gt;] DEFINING_DESIGNATOR,
-[Source_Location =&gt;] STRING_LITERAL);
+pragma Eliminate (
+[  Unit_Name       =&gt; ] IDENTIFIER | SELECTED_COMPONENT ,
+[  Entity          =&gt; ] IDENTIFIER |
+SELECTED_COMPONENT |
+STRING_LITERAL
+[, Source_Location =&gt;   SOURCE_TRACE ] );
 
-The string literal given for the source location is a string which
-specifies the line number of the occurrence of the entity, using the
-syntax for SOURCE_TRACE given below:
-
-SOURCE_TRACE     ::= SOURCE_REFERENCE [LBRACKET SOURCE_TRACE RBRACKET]
-
-LBRACKET         ::= [
-RBRACKET         ::= ]
-
-SOURCE_REFERENCE ::= FILE_NAME : LINE_NUMBER
-
-LINE_NUMBER      ::= DIGIT {DIGIT}
-
-Spaces around the colon in a `Source_Reference' are optional.
-
-The `DEFINING_DESIGNATOR' matches the defining designator used in an
-explicit subprogram declaration, where the `entity' name in this
-designator appears on the source line specified by the source location.
-
-The source trace that is given as the `Source_Location' shall obey the
-following rules. The `FILE_NAME' is the short name (with no directory
-information) of an Ada source file, given using exactly the required
-syntax for the underlying file system (e.g. case is important if the
-underlying operating system is case sensitive). `LINE_NUMBER' gives the
-line number of the occurrence of the `entity' as a decimal literal
-without an exponent or point. If an `entity' is not declared in a
-generic instantiation (this includes generic subprogram instances), the
-source trace includes only one source reference. If an entity is
-declared inside a generic instantiation, its source trace (when parsing
-from left to right) starts with the source location of the declaration
-of the entity in the generic unit and ends with the source location of
-the instantiation (it is given in square brackets). This approach is
-recursively used in case of nested instantiations: the rightmost
-(nested most deeply in square brackets) element of the source trace is
-the location of the outermost instantiation, the next to left element
-is the location of the next (first nested) instantiation in the code of
-the corresponding generic unit, and so on, and the leftmost element
-(that is out of any square brackets) is the location of the declaration
-of the entity to eliminate in a generic unit.
-
-Note that the `Source_Location' argument specifies which of a set of
-similarly named entities is being eliminated, dealing both with
-overloading, and also appearance of the same entity name in different
-scopes.
+SOURCE_TRACE    ::= STRING_LITERAL
 
 This pragma indicates that the given entity is not used in the program
-to be compiled and built. The effect of the pragma is to allow the
-compiler to eliminate the code or data associated with the named
-entity. Any reference to an eliminated entity causes a compile-time or
-link-time error.
+to be compiled and built, thus allowing the compiler to eliminate the
+code or data associated with the named entity. Any reference to an
+eliminated entity causes a compile-time or link-time error.
 
-The intention of pragma `Eliminate' is to allow a program to be compiled
-in a system-independent manner, with unused entities eliminated, without
-needing to modify the source text. Normally the required set of
-`Eliminate' pragmas is constructed automatically using the gnatelim
+The pragma has the following semantics, where `U' is the unit specified
+by the `Unit_Name' argument and `E' is the entity specified by the
+`Entity' argument:
+
+* `E' must be a subprogram that is explicitly declared either:
+
+o  Within `U', or
+
+o  Within a generic package that is instantiated in `U', or
+
+o  As an instance of generic subprogram instantiated in `U'.
+
+Otherwise the pragma is ignored.
+
+* If `E' is overloaded within `U' then, in the absence of a
+`Source_Location' argument, all overloadings are eliminated.
+
+* If `E' is overloaded within `U' and only some overloadings are to
+be eliminated, then each overloading to be eliminated must be
+specified in a corresponding pragma `Eliminate' with a
+`Source_Location' argument identifying the line where the
+declaration appears, as described below.
+
+* If `E' is declared as the result of a generic instantiation, then
+a `Source_Location' argument is needed, as described below
+
+Pragma `Eliminate' allows a program to be compiled in a
+system-independent manner, so that unused entities are eliminated but
+without needing to modify the source text. Normally the required set of
+`Eliminate' pragmas is constructed automatically using the `gnatelim'
 tool.
 
 Any source file change that removes, splits, or adds lines may make the
-set of Eliminate pragmas invalid because their `Source_Location'
+set of `Eliminate' pragmas invalid because their `Source_Location'
 argument values may get out of date.
 
 Pragma `Eliminate' may be used where the referenced entity is a
 dispatching operation. In this case all the subprograms to which the
 given operation can dispatch are considered to be unused (are never
-called as a result of a direct or a dispatching call).</DOC>
+called as a result of a direct or a dispatching call).
+
+The string literal given for the source location specifies the line
+number of the declaration of the entity, using the following syntax for
+`SOURCE_TRACE':
+
+SOURCE_TRACE     ::= SOURCE_REFERENCE [ LBRACKET SOURCE_TRACE RBRACKET ]
+
+LBRACKET         ::= '['
+RBRACKET         ::= ']'
+
+SOURCE_REFERENCE ::= FILE_NAME : LINE_NUMBER
+
+LINE_NUMBER      ::= DIGIT {DIGIT}
+
+Spaces around the colon in a `SOURCE_REFERENCE' are optional.
+
+The source trace that is given as the `Source_Location' must obey the
+following rules (or else the pragma is ignored), where `U' is the unit
+`U' specified by the `Unit_Name' argument and `E' is the subprogram
+specified by the `Entity' argument:
+
+* `FILE_NAME' is the short name (with no directory information) of
+the Ada source file for `U', using the required syntax for the
+underlying file system (e.g. case is significant if the underlying
+operating system is case sensitive).  If `U' is a package and `E'
+is a subprogram declared in the package specification and its full
+declaration appears in the package body, then the  relevant source
+file is the one for the package specification; analogously if `U'
+is a generic package.
+
+* If `E' is not declared in a generic instantiation (this includes
+generic subprogram instances), the source trace includes only one
+source line reference. `LINE_NUMBER' gives the line number of the
+occurrence of the declaration of `E' within the source file (as a
+decimal literal without an exponent or point).
+
+* If `E' is declared by a generic instantiation, its source trace
+(from left to right) starts with the source location of the
+declaration of `E' in the generic unit and ends with the source
+location of the instantiation, given in square brackets. This
+approach is applied recursively with nested instantiations: the
+rightmost (nested most deeply in square brackets) element of the
+source trace is the location of the outermost instantiation, and
+the leftmost element (that is, outside of any square brackets) is
+the location of the declaration of `E' in the generic unit.
+
+Examples:
+
+pragma Eliminate (Pkg0, Proc);
+-- Eliminate (all overloadings of) Proc in Pkg0
+
+pragma Eliminate (Pkg1, Proc,
+Source_Location =&gt; "pkg1.ads:8");
+-- Eliminate overloading of Proc at line 8 in pkg1.ads
+
+-- Assume the following file contents:
+--   gen_pkg.ads
+--   1: generic
+--   2:   type T is private;
+--   3: package Gen_Pkg is
+--   4:   procedure Proc(N : T);
+--  ...   ...
+--  ... end Gen_Pkg;
+--
+--    q.adb
+--   1: with Gen_Pkg;
+--   2: procedure Q is
+--   3:   package Inst_Pkg is new Gen_Pkg(Integer);
+--  ...   -- No calls on Inst_Pkg.Proc
+--  ... end Q;
+
+-- The following pragma eliminates Inst_Pkg.Proc from Q
+pragma Eliminate (Q, Proc,
+Source_Location =&gt; "gen_pkg.ads:4[q.adb:3]");</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Enable_Atomic_Synchronization" origin="GNAT RM">
       <DOC>Syntax:
@@ -4215,15 +4334,14 @@ convention.  Pragma `Export_Function' (and `Export', if present) must
 appear in the same declarative region as the function to which they
 apply.
 
-`internal_name' must uniquely designate the function to which the
+The `internal_name' must uniquely designate the function to which the
 pragma applies.  If more than one function name exists of this name in
 the declarative part you must use the `Parameter_Types' and
-`Result_Type' parameters is mandatory to achieve the required unique
-designation.  `subtype_mark`s in these parameters must exactly match
-the subtypes in the corresponding function specification, using
-positional notation to match parameters with subtype marks. The form
-with an `'Access' attribute can be used to match an anonymous access
-parameter.
+`Result_Type' parameters to achieve the required unique designation.
+The `subtype_mark's in these parameters must exactly match the subtypes
+in the corresponding function specification, using positional notation
+to match parameters with subtype marks.  The form with an `'Access'
+attribute can be used to match an anonymous access parameter.
 
 Special treatment is given if the EXTERNAL is an explicit null string
 or a static string expressions that evaluates to the null string. In
@@ -4341,9 +4459,9 @@ MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Export_Procedure' except that the first
 parameter of `LOCAL_NAME', which must be present, must be of mode
-`OUT', and externally the subprogram is treated as a function with this
+`out', and externally the subprogram is treated as a function with this
 parameter as the result of the function.  GNAT provides for this
-capability to allow the use of `OUT' and `IN OUT' parameters in
+capability to allow the use of `out' and `in out' parameters in
 interfacing to external functions (which are not permitted in Ada
 functions).  GNAT does not require a separate pragma `Export', but if
 none is present, `Convention Ada' is assumed, which is almost certainly
@@ -4369,13 +4487,13 @@ Ada RM.  However, other implementations, notably the DEC Ada 83
 implementation, provide many extensions to package `System'.
 
 For each such implementation accommodated by this pragma, GNAT provides
-a package `Aux_`xxx`', e.g., `Aux_DEC' for the DEC Ada 83
+a package `Aux_`xxx'', e.g., `Aux_DEC' for the DEC Ada 83
 implementation, which provides the required additional definitions.  You
 can use this package in two ways.  You can `with' it in the normal way
 and access entities either by selection or using a `use' clause.  In
 this case no special processing is required.
 
-However, if existing code contains references such as `System.`xxx`'
+However, if existing code contains references such as `System.`xxx''
 where `xxx' is an entity in the extended definitions provided in
 package `System', you may use this pragma to extend visibility in
 `System' in a non-standard way that provides greater compatibility with
@@ -4383,8 +4501,8 @@ the existing code.  Pragma `Extend_System' is a configuration pragma
 whose single argument is the name of the package containing the
 extended definition (e.g., `Aux_DEC' for the DEC Ada case).  A unit
 compiled under control of this pragma will be processed using special
-visibility processing that looks in package `System.Aux_`xxx`' where
-`Aux_`xxx`' is the pragma argument for any entity referenced in package
+visibility processing that looks in package `System.Aux_`xxx'' where
+`Aux_`xxx'' is the pragma argument for any entity referenced in package
 `System', but not found in package `System'.
 
 You can use this pragma either to access a predefined `System'
@@ -4621,9 +4739,9 @@ simple identifier. Any subsequent use of a pragma whose pragma
 identifier matches this argument will be silently ignored. This may be
 useful when legacy code or code intended for compilation with some
 other compiler contains pragmas that match the name, but not the exact
-implementation, of a `GNAT' pragma. The use of this pragma allows such
-pragmas to be ignored, which may be useful in `CodePeer' mode, or
-during porting of legacy code.</DOC>
+implementation, of a GNAT pragma. The use of this pragma allows such
+pragmas to be ignored, which may be useful in CodePeer mode, or during
+porting of legacy code.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Implementation_Defined" origin="GNAT RM">
       <DOC>Syntax:
@@ -4873,9 +4991,9 @@ MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Import_Procedure' except that the first
 parameter of `LOCAL_NAME', which must be present, must be of mode
-`OUT', and externally the subprogram is treated as a function with this
+`out', and externally the subprogram is treated as a function with this
 parameter as the result of the function.  The purpose of this
-capability is to allow the use of `OUT' and `IN OUT' parameters in
+capability is to allow the use of `out' and `in out' parameters in
 interfacing to external functions (which are not permitted in Ada
 functions).  You may optionally use the `Mechanism' parameters to
 specify passing mechanisms for the parameters.  If you specify a single
@@ -5028,7 +5146,7 @@ pragma Inline_Generic (GNAME {, GNAME});
 GNAME ::= generic_unit_NAME | generic_instance_NAME
 
 This pragma is provided for compatibility with Dec Ada 83. It has no
-effect in `GNAT' (which always inlines generics), other than to check
+effect in GNAT (which always inlines generics), other than to check
 that the given names are all names of generic units or generic
 instances.</DOC>
    </PRAGMA>
@@ -5587,8 +5705,8 @@ pragma Machine_Attribute (
 
 Machine-dependent attributes can be specified for types and/or
 declarations.  This pragma is semantically equivalent to
-`__attribute__((`attribute_name'))` (if `info' is not specified) or
-`__attribute__((`attribute_name`(`info'))) in GNU C, where
+`__attribute__((`attribute_name'))' (if `info' is not specified) or
+`__attribute__((`attribute_name(info')))' in GNU C, where
 `attribute_name' is recognized by the compiler middle-end or the
 `TARGET_ATTRIBUTE_TABLE' machine specific macro.  A string literal for
 the optional parameter `info' is transformed into an identifier, which
@@ -5649,6 +5767,20 @@ This is particularly useful during maintenance when a package is
 modified in such a way that a body needed before is no longer needed.
 The provision of a dummy body with a No_Body pragma ensures that there
 is no interference from earlier versions of the package body.</DOC>
+   </PRAGMA>
+   <PRAGMA id="0" name="No_Component_Reordering" origin="GNAT RM">
+      <DOC>Syntax:
+
+pragma No_Component_Reordering [([Entity =&gt;] type_LOCAL_NAME)];
+
+`type_LOCAL_NAME' must refer to a record type declaration in the current
+declarative part. The effect is to preclude any reordering of components
+for the layout of the record, i.e. the record is laid out by the
+compiler in the order in which the components are declared textually.
+The form with no argument is a configuration pragma which applies to
+all record types declared in units to which the pragma applies and
+there is a requirement that this pragma be used consistently within a
+partition.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="No_Elaboration_Code_All" origin="GNAT RM">
       <DOC>Syntax:
@@ -5733,7 +5865,7 @@ pragma No_Run_Time;
 This is an obsolete configuration pragma that historically was used to
 set up a runtime library with no object code. It is now used only for
 internal testing. The pragma has been superseded by the reconfigurable
-runtime capability of `GNAT'.</DOC>
+runtime capability of GNAT.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="No_Strict_Aliasing" origin="GNAT RM">
       <DOC>Syntax:
@@ -5755,7 +5887,6 @@ types.</DOC>
    <PRAGMA id="0" name="No_Tagged_Streams" origin="GNAT RM">
       <DOC>Syntax:
 
-pragma No_Tagged_Streams;
 pragma No_Tagged_Streams [([Entity =&gt;] tagged_type_LOCAL_NAME)];
 
 Normally when a tagged type is introduced using a full type declaration,
@@ -5879,25 +6010,25 @@ removed later.
 
 The effect of this pragma is to output a warning message on a reference
 to an entity thus marked that the subprogram is obsolescent if the
-appropriate warning option in the compiler is activated. If the Message
-parameter is present, then a second warning message is given containing
-this text. In addition, a reference to the entity is considered to be a
-violation of pragma Restrictions (No_Obsolescent_Features).
+appropriate warning option in the compiler is activated. If the
+`Message' parameter is present, then a second warning message is given
+containing this text. In addition, a reference to the entity is
+considered to be a violation of pragma `Restrictions
+(No_Obsolescent_Features)'.
 
 This pragma can also be used as a program unit pragma for a package, in
 which case the entity name is the name of the package, and the pragma
 indicates that the entire package is considered obsolescent. In this
 case a client `with'ing such a package violates the restriction, and
-the `with' statement is flagged with warnings if the warning option is
-set.
+the `with' clause is flagged with warnings if the warning option is set.
 
-If the Version parameter is present (which must be exactly the
-identifier Ada_05, no other argument is allowed), then the indication
+If the `Version' parameter is present (which must be exactly the
+identifier `Ada_05', no other argument is allowed), then the indication
 of obsolescence applies only when compiling in Ada 2005 mode. This is
 primarily intended for dealing with the situations in the predefined
 library where subprograms or packages have become defined as
-obsolescent in Ada 2005 (e.g., in Ada.Characters.Handling), but may be
-used anywhere.
+obsolescent in Ada 2005 (e.g., in `Ada.Characters.Handling'), but may
+be used anywhere.
 
 The following examples show typical uses of this pragma:
 
@@ -5933,8 +6064,9 @@ end;
 
 Note that, as for all pragmas, if you use a pragma argument identifier,
 then all subsequent parameters must also use a pragma argument
-identifier.  So if you specify "Entity =&gt;" for the Entity argument, and
-a Message argument is present, it must be preceded by "Message =&gt;".</DOC>
+identifier.  So if you specify `Entity =&gt;' for the `Entity' argument,
+and a `Message' argument is present, it must be preceded by `Message
+=&gt;'.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Optimize" origin="Ada RM">
       <DOC>Syntax:
@@ -7305,7 +7437,7 @@ pragma Share_Generic (GNAME {, GNAME});
 GNAME ::= generic_unit_NAME | generic_instance_NAME
 
 This pragma is provided for compatibility with Dec Ada 83. It has no
-effect in `GNAT' (which does not implement shared generics), other than
+effect in GNAT (which does not implement shared generics), other than
 to check that the given names are all names of generic units or generic
 instances.</DOC>
    </PRAGMA>
@@ -7382,7 +7514,7 @@ declared for a simple storage pool type (such as for supporting a
 mark/release storage-management discipline).
 
 An object of a simple storage pool type can be associated with an access
-type by specifying the attribute *note Simple_Storage_Pool: e0. For
+type by specifying the attribute *note Simple_Storage_Pool: e2. For
 example:
 
 My_Pool : My_Simple_Storage_Pool_Type;
@@ -7391,7 +7523,7 @@ type Acc is access My_Data_Type;
 
 for Acc'Simple_Storage_Pool use My_Pool;
 
-See attribute *note Simple_Storage_Pool: e0.  for further details.</DOC>
+See attribute *note Simple_Storage_Pool: e2.  for further details.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Source_File_Name" origin="GNAT RM">
       <DOC>Syntax:
@@ -7476,7 +7608,7 @@ would not be aware of the intended naming conventions. If you are using
 project files, file naming is controlled by Source_File_Name_Project
 pragmas, which are usually supplied automatically by the project
 manager. A pragma Source_File_Name cannot appear after a *note Pragma
-Source_File_Name_Project: e3.
+Source_File_Name_Project: e5.
 
 For more details on the use of the `Source_File_Name' pragma, see the
 sections on `Using Other File Names' and `Alternative File Naming
@@ -7485,7 +7617,7 @@ Schemes' in the :title:`GNAT User's Guide'.</DOC>
    <PRAGMA id="0" name="Source_File_Name_Project" origin="GNAT RM">
       <DOC>This pragma has the same syntax and semantics as pragma
 Source_File_Name.  It is only allowed as a stand-alone configuration
-pragma.  It cannot appear after a *note Pragma Source_File_Name: e2, and
+pragma.  It cannot appear after a *note Pragma Source_File_Name: e3, and
 most importantly, once pragma Source_File_Name_Project appears, no
 further Source_File_Name pragmas are allowed.
 
@@ -7632,12 +7764,12 @@ example the following two methods can be used to enable layout checking:
 
 *     gcc -c -gnatyl ...
 
-The form ALL_CHECKS activates all standard checks (its use is equivalent
-to the use of the `gnaty' switch with no options.  See the `GNAT User's
-Guide' for details.)
+The form `ALL_CHECKS' activates all standard checks (its use is
+equivalent to the use of the `gnaty' switch with no options.  See the
+`GNAT User's Guide' for details.)
 
 Note: the behavior is slightly different in GNAT mode (`-gnatg' used).
-In this case, ALL_CHECKS implies the standard set of GNAT mode style
+In this case, `ALL_CHECKS' implies the standard set of GNAT mode style
 check options (i.e. equivalent to `-gnatyg').
 
 The forms with `Off' and `On' can be used to temporarily disable style
@@ -8154,7 +8286,7 @@ Note that if a warning is desired for all calls to a given subprogram,
 regardless of whether they occur in the same unit as the subprogram
 declaration, then this pragma should not be used (calls from another
 unit would not be flagged); pragma Obsolescent can be used instead for
-this purpose, see *note Pragma Obsolescent: a6.
+this purpose, see *note Pragma Obsolescent: a8.
 
 The second form of pragma `Unreferenced' is used within a context
 clause. In this case the arguments must be unit names of units
@@ -8404,7 +8536,7 @@ class of warnings as errors.
 The above use of patterns to match the message applies only to warning
 messages generated by the front end. This pragma can also be applied to
 warnings provided by the back end and mentioned in *note Pragma
-Warnings: 117.  By using a single full `-Wxxx' switch in the pragma,
+Warnings: 119.  By using a single full `-Wxxx' switch in the pragma,
 such warnings can also be treated as errors.
 
 The pragma can appear either in a global configuration pragma file
@@ -8514,15 +8646,15 @@ configuration pragma.
 The warnings controlled by the `-gnatw' switch are generated by the
 front end of the compiler. The GCC back end can provide additional
 warnings and they are controlled by the `-W' switch. Such warnings can
-be identified by the appearance of a string of the form `[-Wxxx]' in the
-message which designates the `-Wxxx' switch that controls the message.
-The form with a single static_string_EXPRESSION argument also works for
-these warnings, but the string must be a single full `-Wxxx' switch in
-this case. The above reference lists a few examples of these additional
-warnings.
+be identified by the appearance of a string of the form `[-W{xxx}]' in
+the message which designates the `-W`xxx'' switch that controls the
+message.  The form with a single `static_string_EXPRESSION' argument
+also works for these warnings, but the string must be a single full
+`-W`xxx'' switch in this case. The above reference lists a few examples
+of these additional warnings.
 
 The specified warnings will be in effect until the end of the program
-or another pragma Warnings is encountered. The effect of the pragma is
+or another pragma `Warnings' is encountered. The effect of the pragma is
 cumulative. Initially the set of warnings is the standard default set
 as possibly modified by compiler switches. Then each pragma Warning
 modifies this set of warnings as specified. This form of the pragma may
@@ -8548,8 +8680,8 @@ the end of the message, since this is implied).
 The above use of patterns to match the message applies only to warning
 messages generated by the front end. This form of the pragma with a
 string argument can also be used to control warnings provided by the
-back end and mentioned above. By using a single full `-Wxxx' switch in
-the pragma, such warnings can be turned on and off.
+back end and mentioned above. By using a single full `-W`xxx'' switch
+in the pragma, such warnings can be turned on and off.
 
 There are two ways to use the pragma in this form. The OFF form can be
 used as a configuration pragma. The effect is to suppress all warnings
@@ -8575,7 +8707,7 @@ is similar in effect to specifying `pragma Warnings (Off)' except (if
 be required. This can be helpful in avoiding forgetting to turn
 warnings back on.
 
-Note: the debug flag -gnatd.i (`/NOWARNINGS_PRAGMAS' in VMS) can be
+Note: the debug flag `-gnatd.i' (`/NOWARNINGS_PRAGMAS' in VMS) can be
 used to cause the compiler to entirely ignore all WARNINGS pragmas.
 This can be useful in checking whether obsolete pragmas in existing
 programs are hiding real problems.
