@@ -357,7 +357,7 @@ def run_as_workflow(workflow):
     return internal_run_as_wf
 
 
-def task_workflow(task_name, workflow):
+def task_workflow(task_name, workflow, **kwargs):
     """Run a workflow monitored by a task.
 
     The workflow is launched as the same time as the task, and runs for
@@ -459,7 +459,7 @@ def task_workflow(task_name, workflow):
 
     # We have created a task object: here are the fields that are going
     # to be used for handling the workflow for it.
-    t.gen_stack = [workflow(t)]  # The stack of generators
+    t.gen_stack = [workflow(t, **kwargs)]  # The stack of generators
     t.return_val = None    # the value returned by the last generator call
     t.wait = False         # A promise is running and the task should wait
     return t
