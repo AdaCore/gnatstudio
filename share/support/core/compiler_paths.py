@@ -6,6 +6,7 @@ This file implements a generic function that will spawn the compiler and get
 back the search paths
 """
 import GPS
+import os.path
 import subprocess
 import re
 
@@ -48,6 +49,12 @@ def get_compiler_search_paths(project_name, language,
                                        [GPS.get_target(), ccs[language]]))
         else:
             return ''
+
+    # Normalize the compiler path, needed for instance on Windows to transform
+    # forward slashes coming from the project. Do this if the compiler is not
+    # a basename already.
+    if os.path.basename(compiler) != compiler:
+        compiler = os.path.abspath(compiler)
 
     logger.log('Compiler: {}'.format(compiler))
 
