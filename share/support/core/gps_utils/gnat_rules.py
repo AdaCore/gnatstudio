@@ -785,7 +785,7 @@ xmlCompilerTrailer = """
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
 
-         <check label="Code coverage" switch="-fprofile-generate"
+         <check label="Code coverage" switch="--coverage"
                 tip="Create data files for the gcov code-coverage utility" />
          <dependency master-page="Ada" slave-page="Ada Linker"
                      master-switch="-ftest-coverage"
