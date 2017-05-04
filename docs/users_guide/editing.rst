@@ -245,6 +245,11 @@ The source editor provides an extensive set of features, including:
   highlighting color can be customized in the :guilabel:`Plugins` section
   of :menuselection:`Edit --> Preferences` dialog.
 
+.. index:: emacs
+
+GPS also integrates with existing third party editors such as
+:program:`emacs` or :program:`vi`.  See :ref:`Using_an_External_Editor`.
+
 .. index:: editing
 .. index:: source file
 .. _Editing_Sources:
@@ -882,6 +887,12 @@ The :menuselection:`Edit` Menu
 
   Generate an Ada body stub for the current source editor by calling
   the external tool :program:`gnatstub`.
+
+.. index:: menu; edit --> edit with external editor
+
+* :menuselection:`Edit --> Edit with external editor`
+
+  See :ref:`Using_an_External_Editor`.
 
 .. index:: menu; edit --> aliases
 .. index:: alias
@@ -1532,6 +1543,111 @@ just a part of it (or select text between :command:`begin` and
 :command:`end`). Likewise, GPS does not expect you to select any part of the
 variable declarations, just the code.
 
+
+.. index:: external editor
+.. _Using_an_External_Editor:
+
+Using an External Editor
+========================
+
+.. index:: preferences; editor --> external editor
+
+GPS is integrated with a number of external editors, in particular
+:program:`emacs` and :program:`vi`. The choice of the default external
+editor is done in the :menuselection:`Editor --> External editor`
+preference.
+
+The following values are recognized:
+
+.. index:: gnuclient
+
+* :program:`gnuclient`
+
+  This is the recommended client. It is based on Emacs, but needs an extra
+  package to be installed. This is the only client providing a full
+  integration in GPS, since any extended lisp command can be sent to the
+  Emacs server.
+
+  By default, :program:`gnuclient` opens a new Emacs frame for every file
+  you open. You might want to add the following code to your :file:`.emacs`
+  file (create one if needed) so that the same Emacs frame is reused each
+  time::
+
+       (setq gnuserv-frame (car (frame-list)))
+
+  See `http://www.hpl.hp.com/personal/ange/gnuserv/home.html
+  <http://www.hpl.hp.com/personal/ange/gnuserv/home.html>`_ for more
+  information.
+
+
+.. index:: emacsclient
+
+* :program:`emacsclient`
+
+  This is a program that is always available if you have installed Emacs. As
+  opposed to starting a new Emacs every time, it reuses an existing Emacs
+  sessions, so it is extremely fast to open a file.
+
+.. index:: emacs
+
+* :program:`emacs`
+
+  This clients start a new Emacs session every time a file needs to be
+  opened. You should use :program:`emacsclient` instead, since it is much
+  faster and makes it easier to copy and paste between multiple files.  The
+  only reason to use this external editor is if your system does not support
+  :program:`emacsclient`.
+
+
+.. index:: vi
+
+* :program:`vim`
+
+  `Vim` is a vi-like editor that provides a number of enhancements, for
+  example, syntax highlighting for all languages supported by GPS.
+  Selecting this external editor starts an :program:`xterm` (or command
+  window, depending on your system) with a running :program:`vim` process
+  editing the file.
+
+  One limitation of this editor is that if GPS needs to open the same file
+  a second time, it opens a new editor instead of reusing the existing one.
+
+  To enable this capability, the :program:`xterm` executable must be found
+  in the PATH and thus this is not supported on Windows systems.  On
+  Windows systems, use the :command:`program` editor instead.
+
+* :program:`vi`
+
+  This editor works exactly like :program:`vim`, but uses the standard
+  :program:`vi` command instead of :program:`vim`.
+
+.. index:: preferences; editor --> custom editor command
+
+* :program:`custom`
+
+  Specify any external editor by choosing this entry.  Specify the complete
+  command line used to call the editor in the :menuselection:`Editor -->
+  Custom editor command` preference.
+
+* :program:`none`
+
+  No external editor is used and the contextual menus do not appear.
+
+In the cases that require an Emacs server, the project file currently used
+in GPS is set appropriately the first time Emacs is spawned. This means
+that if you load a new project in GPS or modify the paths of the current
+project, you should kill any running Emacs, so a new one is spawned by GPS
+with the appropriate project.
+
+Alternatively, explicitly reload the project from Emacs itself by using the
+:menuselection:`Project --> Load` menu in :program:`emacs` (if
+:command:`ada-mode` is correctly installed).
+
+.. index:: preferences; editor --> always use external editor
+
+The :menuselection:`Editor --> Always use external editor` preference lets
+you chose to use an external editor every time you double-click on a file,
+instead of opening GPS's own editor.
 
 .. index:: clipboard
 .. index:: cut
