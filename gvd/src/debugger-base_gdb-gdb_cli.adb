@@ -2994,6 +2994,36 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end;
    end List_Exceptions;
 
+   ------------------------
+   -- Get_Register_Names --
+   ------------------------
+
+   overriding function Get_Register_Names
+     (Debugger : access Gdb_Debugger)
+      return GVD.Types.Strings_Vectors.Vector
+   is
+      pragma Unreferenced (Debugger);
+      Empty : GVD.Types.Strings_Vectors.Vector;
+   begin
+      return Empty;
+   end Get_Register_Names;
+
+   --------------------------
+   -- Get_Registers_Values --
+   --------------------------
+
+   overriding function Get_Registers_Values
+     (Debugger : access Gdb_Debugger;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+      Format   : GVD.Types.Registers_Format)
+      return GVD.Types.Strings_Vectors.Vector
+   is
+      pragma Unreferenced (Debugger, Names, Format);
+      Empty : GVD.Types.Strings_Vectors.Vector;
+   begin
+      return Empty;
+   end Get_Registers_Values;
+
    -------------------
    -- Get_Type_Info --
    -------------------

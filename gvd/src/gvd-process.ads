@@ -87,6 +87,7 @@ package GVD.Process is
       Breakpoints_Editor      : Generic_Views.Abstract_View_Access;
       Memory_View             : Generic_Views.Abstract_View_Access;
       Variables_View          : Generic_Views.Abstract_View_Access;
+      Registers_View          : Generic_Views.Abstract_View_Access;
       --  All views potentially associated with a debugger
 
       Breakpoints             : aliased GVD.Breakpoints_List.Breakpoint_List;

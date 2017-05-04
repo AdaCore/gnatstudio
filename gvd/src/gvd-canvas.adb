@@ -66,7 +66,7 @@ with GVD.Menu;                 use GVD.Menu;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
 with GVD.Trace;
-with GVD.Types;
+with GVD.Types;                use GVD.Types;
 with GVD_Module;               use GVD_Module;
 with Histories;                use Histories;
 with Items.Simples;            use Items.Simples;
@@ -518,17 +518,24 @@ package body GVD.Canvas is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
+      Result : Boolean with Unreferenced;
 
    begin
       if Process = null or else Process.Debugger = null then
          return Commands.Failure;
       end if;
 
-      --  ???? won't work with GDB/MI
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Registers (Process.Debugger) & '`',
-         Output_Command => True);
+      if GVD.Preferences.Debugger_Kind.Get_Pref = Gdb_MI then
+         Result := Execute_Action
+           (Kernel, "open registers view", Context.Context);
+
+      else
+         Process_User_Command
+           (Process,
+            "graph display `" & Info_Registers (Process.Debugger) & '`',
+            Output_Command => True);
+      end if;
+
       return Commands.Success;
    end Execute;
 

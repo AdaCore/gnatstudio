@@ -890,6 +890,21 @@ package Debugger is
    --  Return the range of addresses for a given source line.
    --  See Get_Machine_Code for an explanation of the parameters.
 
+   ---------------
+   -- Registers --
+   ---------------
+
+   function Get_Register_Names
+     (Debugger : access Debugger_Root)
+      return GVD.Types.Strings_Vectors.Vector is abstract;
+   --  Return names of registers
+
+   function Get_Registers_Values
+     (Debugger : access Debugger_Root;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+      Format   : GVD.Types.Registers_Format)
+      return GVD.Types.Strings_Vectors.Vector is abstract;
+
    ----------------
    -- Exceptions --
    ----------------

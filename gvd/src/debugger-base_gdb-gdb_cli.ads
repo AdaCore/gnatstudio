@@ -434,6 +434,16 @@ package Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Command : String) return Boolean;
 
+   overriding function Get_Register_Names
+     (Debugger : access Gdb_Debugger)
+      return GVD.Types.Strings_Vectors.Vector;
+
+   overriding function Get_Registers_Values
+     (Debugger : access Gdb_Debugger;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+      Format   : GVD.Types.Registers_Format)
+      return GVD.Types.Strings_Vectors.Vector;
+
 private
 
    overriding function Send_And_Get_Clean_Output

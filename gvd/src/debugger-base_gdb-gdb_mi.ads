@@ -419,6 +419,16 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Command : String) return Boolean;
 
+   overriding function Get_Register_Names
+     (Debugger : access Gdb_MI_Debugger)
+      return GVD.Types.Strings_Vectors.Vector;
+
+   overriding function Get_Registers_Values
+     (Debugger : access Gdb_MI_Debugger;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+      Format   : GVD.Types.Registers_Format)
+      return GVD.Types.Strings_Vectors.Vector;
+
 private
 
    overriding function Send_And_Get_Clean_Output
@@ -494,6 +504,8 @@ private
       Command_No           : Integer          := 1;
       Variables            : Vars_Maps.Map;
       Is_Running           : Boolean          := False;
+      Registers            : GVD.Types.Strings_Vectors.Vector;
+      Register_Names       : GVD.Types.Strings_Vectors.Vector;
    end record;
 
    function Find_Var

@@ -52,6 +52,14 @@ package GVD.Preferences is
    Asm_Show_Offset               : Boolean_Preference;
    Asm_Show_Opcodes              : Boolean_Preference;
 
+   -- Registers view --
+   Registers_Hexadecimal         : Boolean_Preference;
+   Registers_Octal               : Boolean_Preference;
+   Registers_Binary              : Boolean_Preference;
+   Registers_Decimal             : Boolean_Preference;
+   Registers_Raw                 : Boolean_Preference;
+   Registers_Natural             : Boolean_Preference;
+
    -- Data Window --
    Change_Color                  : Color_Preference;
    Thaw_Bg_Color                 : Color_Preference;

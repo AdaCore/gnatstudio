@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,15 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package implements a tree view target to the display of assembly
---  code.
+--  This package implements a tree view target to the display of registers.
 
 with GPS.Kernel;
 
-package GVD.Assembly_View is
+package GVD.Registers_View is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register menus and other functions to support the assembly view
+   --  Register menus and other functions to support the registers view
 
-end GVD.Assembly_View;
+end GVD.Registers_View;

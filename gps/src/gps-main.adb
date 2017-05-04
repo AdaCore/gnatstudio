@@ -156,6 +156,7 @@ with GVD.Call_Stack;
 with GVD.Dialogs;
 with GVD.Memory_View;
 with GVD.Variables;
+with GVD.Registers_View;
 with Help_Module;
 with KeyManager_Module;
 with KeyManager_Module.Macros;
@@ -2131,6 +2132,7 @@ procedure GPS.Main is
          GVD.Breakpoints.Register_Module (GPS_Main.Kernel);
          GVD.Call_Stack.Register_Module (GPS_Main.Kernel);
          GVD.Memory_View.Register_Module (GPS_Main.Kernel);
+         GVD.Registers_View.Register_Module (GPS_Main.Kernel);
       end if;
 
       Vdiff2_Module.Register_Module (GPS_Main.Kernel);

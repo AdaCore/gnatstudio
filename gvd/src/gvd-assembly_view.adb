@@ -338,9 +338,9 @@ package body GVD.Assembly_View is
    FG_Color_Column      : constant := 6;
    BG_Color_Column      : constant := 7;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
+   -----------------
+   -- Create_Menu --
+   -----------------
 
    overriding procedure Create_Menu
      (View : not null access Assembly_View_Record;

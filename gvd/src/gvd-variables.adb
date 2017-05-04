@@ -1220,7 +1220,8 @@ package body GVD.Variables is
          Command     => new Tree_Registers_Command,
          Description =>
            -"Display the contents of registers in the Variables view",
-         Filter      => Debugger_Stopped_Filter,
+         Filter      => Kernel.Lookup_Filter ("Debugger in CLI mode") and
+             Debugger_Stopped_Filter,
          Icon_Name   => "gps-debugger-registers-symbolic",
          Category    => -"Debug");
 

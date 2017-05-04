@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Unbounded;                   use Ada.Strings.Unbounded;
+
 with GNATCOLL.VFS;
 with GNAT.Strings;
 
@@ -182,6 +184,13 @@ package GVD.Types is
       File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line          : Natural := 0;
    end record;
+
+   type Registers_Format is
+     (Hexadecimal, Octal, Binary, Decimal, Raw, Naturals);
+   --  Format for representing registers values
+
+   package Strings_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Positive, String);
 
 private
    subtype Address_Range is Integer range 0 .. 20;

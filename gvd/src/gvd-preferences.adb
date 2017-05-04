@@ -221,6 +221,43 @@ package body GVD.Preferences is
          Default => 12000,
          Doc     => -"Maximum height of a box in Data view.",
          Label   => -"Max item height");
+
+      Registers_Hexadecimal := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-hexadecimal",
+         Label    => -"Hexadecimal",
+         Default  => True);
+
+      Registers_Octal := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-octal",
+         Label    => -"Octal",
+         Default  => False);
+
+      Registers_Binary := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-binary",
+         Label    => -"Binary",
+         Default  => False);
+
+      Registers_Decimal := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-decimal",
+         Label    => -"Decimal",
+         Default  => False);
+
+      Registers_Raw := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-raw",
+         Label    => -"Raw",
+         Default  => False);
+
+      Registers_Natural := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-natural",
+         Label    => -"Natural",
+         Default  => False);
+
    end Register_Default_Preferences;
 
 end GVD.Preferences;

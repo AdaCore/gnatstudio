@@ -578,6 +578,11 @@
       <button action='assembly_view disassemble next'/>
    </toolbar>
 
+   <toolbar id='Registers'>
+      <button action='register_view select all'/>
+      <button action='register_view deselect all'/>
+   </toolbar>
+
    <toolbar id='Browser'>
       <separator id='zoom'/>
       <button action='browser zoom out'/>

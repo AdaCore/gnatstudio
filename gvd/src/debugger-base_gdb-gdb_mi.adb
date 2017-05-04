@@ -187,6 +187,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger);
    --  Restore the language that was active before Switch_Language was called
 
+   procedure Get_Register_Names
+     (Debugger : access Gdb_MI_Debugger);
+   --  Retrive names of registers
+
    function Get_Module (Executable : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the name of the module contained in Executable
    --  Assume that the name of the module is the executable file
@@ -528,9 +532,75 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding function Info_Registers
      (Debugger : access Gdb_MI_Debugger) return String
    is
-      pragma Unreferenced (Debugger);
+      Result : Unbounded_String;
    begin
-      return "-data-list-register-values N";
+      Get_Register_Names (Debugger);
+
+      declare
+         use Token_Lists;
+
+         S       : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-data-list-register-values x", Mode => Internal);
+
+         Tokens  : Token_List_Controller;
+         C       : Token_Lists.Cursor;
+         Num     : Natural;
+         Value   : Unbounded.String_Access;
+
+      begin
+         Tokens.List := Build_Tokens (S);
+         C := Find_Identifier (First (Tokens.List), "register-values");
+
+         if C = Token_Lists.No_Element then
+            return "";
+         end if;
+
+         --  Skip register-values=[
+         Next (C, 3);
+         while Element (C).Code /= R_Bracket loop  -- /= ']'
+            if Element (C).Code = L_Brace then
+               Next (C, 1);
+               while Element (C).Code /= R_Brace loop
+                  if Element (C).Code = Identifier then
+                     if Element (C).Text.all = "number" then
+                        Next (C, 2);
+                        Num := Positive'Value (Element (C).Text.all) + 1;
+
+                     elsif Element (C).Text.all = "value" then
+                        Next (C, 2);
+                        Value := Element (C).Text;
+
+                     else
+                        Next (C, 1);
+                     end if;
+                  else
+                     Next (C, 1);
+                  end if;
+               end loop;
+
+               if Debugger.Register_Names.Last_Index >= Num
+                 and then Debugger.Register_Names.Element (Num) /= ""
+                 and then Value /= null
+               then
+                  if Result /= Null_Unbounded_String then
+                     Append (Result, ASCII.LF);
+                  end if;
+
+                  Append
+                    (Result,
+                     Debugger.Register_Names.Element (Num) &
+                       "\t" & Value.all);
+               end if;
+
+               Value := null;
+
+            else
+               Next (C, 1);
+            end if;
+         end loop;
+      end;
+
+      return To_String (Result);
    end Info_Registers;
 
    --------------
@@ -1641,6 +1711,195 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       return Exec (Exec'First .. Dot_Index - 1);
    end Get_Module;
+
+   ------------------------
+   -- Get_Register_Names --
+   ------------------------
+
+   procedure Get_Register_Names
+     (Debugger : access Gdb_MI_Debugger) is
+   begin
+      if not Debugger.Register_Names.Is_Empty then
+         return;
+      end if;
+
+      --  Try to get values first because request -data-list-register-names
+      --  always returns names (incorrect) even gdb has "No registers"
+      declare
+         S  : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-data-list-register-values x 0", Mode => Internal);
+         Matched : Match_Array (0 .. 2);
+      begin
+         Match (Error_Pattern, S, Matched);
+
+         if Matched (0) /= No_Match then
+            return;
+         end if;
+      end;
+
+      declare
+         use Token_Lists;
+
+         S       : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-data-list-register-names", Mode => Internal);
+
+         Tokens  : Token_List_Controller;
+         C       : Token_Lists.Cursor;
+
+      begin
+         Tokens.List := Build_Tokens (S);
+         C := Find_Identifier (First (Tokens.List), "register-names");
+
+         if C = Token_Lists.No_Element then
+            return;
+         end if;
+
+         --  Skip register-names=[
+         Next (C, 3);
+         while Element (C).Code /= R_Bracket loop  -- /= ']'
+            Debugger.Registers.Append (Element (C).Text.all);
+
+            if Element (C).Text.all /= "" then
+               Debugger.Register_Names.Append (Element (C).Text.all);
+            end if;
+
+            Next (C, 1);
+            if Element (C).Code = Comma then
+               Next (C, 1);
+            end if;
+         end loop;
+      end;
+   end Get_Register_Names;
+
+   --------------------------
+   -- Get_Registers_Values --
+   --------------------------
+
+   overriding function Get_Registers_Values
+     (Debugger : access Gdb_MI_Debugger;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+      Format   : GVD.Types.Registers_Format)
+      return GVD.Types.Strings_Vectors.Vector
+   is
+      use Token_Lists;
+
+      Keys : constant array (GVD.Types.Registers_Format) of Character :=
+        (Hexadecimal => 'x',
+         Octal       => 'o',
+         Binary      => 't',
+         Decimal     => 'd',
+         Raw         => 'r',
+         Naturals    => 'N');
+
+      function Get_Indices return String;
+      --  Convert register names to indeces
+
+      -----------------
+      -- Get_Indices --
+      -----------------
+
+      function Get_Indices return String is
+         use GVD.Types.Strings_Vectors;
+
+         Result : Unbounded_String;
+         C      : GVD.Types.Strings_Vectors.Cursor;
+      begin
+         if Names.Is_Empty then
+            return "";
+         else
+            for Item of Names loop
+               C := Debugger.Registers.Find (Item);
+               if Has_Element (C) then
+                  Append (Result, To_Index (C)'Img);
+               end if;
+            end loop;
+
+            return To_String (Result);
+         end if;
+      end Get_Indices;
+
+      Result  : GVD.Types.Strings_Vectors.Vector;
+
+      S       : constant String := Debugger.Send_And_Get_Clean_Output
+        ("-data-list-register-values " & Keys (Format) & Get_Indices,
+         Mode => Internal);
+
+      Tokens  : Token_List_Controller;
+      C       : Token_Lists.Cursor;
+      Num     : Natural;
+      Value   : Unbounded.String_Access;
+      Matched : Match_Array (0 .. 2);
+
+   begin
+      Match (Error_Pattern, S, Matched);
+
+      if Matched (0) /= No_Match then
+         Debugger.Register_Names.Clear;
+         return Result;
+      end if;
+
+      Get_Register_Names (Debugger);
+
+      Tokens.List := Build_Tokens (S);
+      C := Find_Identifier (First (Tokens.List), "register-values");
+
+      if C = Token_Lists.No_Element then
+         return Result;
+      end if;
+
+      --  Skip register-values=[
+      Next (C, 3);
+      while Element (C).Code /= R_Bracket loop  -- /= ']'
+         if Element (C).Code = L_Brace then
+            Next (C, 1);
+            while Element (C).Code /= R_Brace loop
+               if Element (C).Code = Identifier then
+                  if Element (C).Text.all = "number" then
+                     Next (C, 2);
+                     Num := Positive'Value (Element (C).Text.all) + 1;
+
+                  elsif Element (C).Text.all = "value" then
+                     Next (C, 2);
+                     Value := Element (C).Text;
+
+                  else
+                     Next (C, 1);
+                  end if;
+               else
+                  Next (C, 1);
+               end if;
+            end loop;
+
+            if Debugger.Registers.Last_Index >= Num
+              and then Debugger.Registers.Element (Num) /= ""
+            then
+               if Value /= null then
+                  Result.Append (Value.all);
+               else
+                  Result.Append ("");
+               end if;
+            end if;
+            Value := null;
+
+         else
+            Next (C, 1);
+         end if;
+      end loop;
+
+      return Result;
+   end Get_Registers_Values;
+
+   ------------------------
+   -- Get_Register_Names --
+   ------------------------
+
+   overriding function Get_Register_Names
+     (Debugger : access Gdb_MI_Debugger)
+      return GVD.Types.Strings_Vectors.Vector is
+   begin
+      Get_Register_Names (Debugger);
+      return Debugger.Register_Names;
+   end Get_Register_Names;
 
    ---------
    -- Run --
