@@ -115,6 +115,7 @@
          <menu label='_Fold All Blocks'          action='fold all blocks'/>
          <menu label='Unfold All _Blocks'        action='unfold all blocks'/>
          <menu label='Insert _File'              action='insert file'/>
+         <menu label='Edit with External Editor' action='edit with external editor'/>
          <menu label='Create Boo_kmark'          action='bookmark create'/>
          <menu label='_Generate Body'            action='generate body'/>
          <menu label='P_retty Print'             action='pretty print'/>
