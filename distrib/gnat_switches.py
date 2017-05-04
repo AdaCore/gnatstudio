@@ -19,7 +19,7 @@ class Switch(object):
     # document.
 
     BOLD = re.compile('\*(.+?)\*')
-    SAMP = re.compile(':samp:`(.+?)`')
+    SAMP = re.compile(':switch:`(.+?)`')
     COMMENT = re.compile('\.\. .*$')
 
     def __init__(self, name):
@@ -78,12 +78,12 @@ switch = Switch('')   # The current switch
 
 print('switches_comments={')
 
-new_switch = re.compile('^:samp:`-')  # start of line for new switch
+new_switch = re.compile('^:switch:`-')  # start of line for new switch
 
 for line in input.readlines():
     is_new_switch = new_switch.match(line)
     if is_new_switch:
-        name = line[7:-2]
+        name = line[9:-2]
         switch.display()
         switch = Switch(name)
         state = STATE_SHORT_DESCR
