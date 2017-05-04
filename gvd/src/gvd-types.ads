@@ -177,7 +177,7 @@ package GVD.Types is
    --  started.
 
    type Disassemble_Element is record
-      Address       :  Address_Type := Invalid_Address;
+      Address       : Address_Type := Invalid_Address;
       Method_Offset : Ada.Strings.Unbounded.Unbounded_String;
       Instr         : Ada.Strings.Unbounded.Unbounded_String;
       Opcodes       : Ada.Strings.Unbounded.Unbounded_String;

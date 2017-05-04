@@ -21,5 +21,7 @@ package Debugger_Pixmaps is
 
    Current_Line_Pixbuf                  : constant Unbounded_String :=
       To_Unbounded_String ("gps-emblem-debugger-current");
+   Current_Line_Inside_Pixbuf           : constant Unbounded_String :=
+      To_Unbounded_String ("gps-emblem-debugger-current-inside");
 
 end Debugger_Pixmaps;

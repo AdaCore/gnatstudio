@@ -508,6 +508,7 @@ package body GVD.Assembly_View is
       Found      : Boolean;
 
       Detached   : Gtk.Tree_Model.Gtk_Tree_Model;
+      Last       : Address_Type := Invalid_Address;
    begin
       if View = null then
          return;
@@ -596,6 +597,23 @@ package body GVD.Assembly_View is
          Model.Set
            (Start_Iter, PC_Pixmap_Column,
             To_String (Debugger_Pixmaps.Current_Line_Pixbuf));
+
+      elsif In_Range (Process.Pc, View.Current_Range) then
+         for Index in 1 .. Natural (View.Current_Range.Data.Length) loop
+            exit when
+              View.Current_Range.Data.Element (Index).Address > Process.Pc;
+
+            Last := View.Current_Range.Data.Element (Index).Address;
+         end loop;
+
+         if Last /= Invalid_Address then
+            Iter_From_Address (View, Last, Start_Iter, Found);
+            if Found then
+               Model.Set
+                 (Start_Iter, PC_Pixmap_Column,
+                  To_String (Debugger_Pixmaps.Current_Line_Inside_Pixbuf));
+            end if;
+         end if;
       end if;
 
       View.Tree.Set_Model (Detached);
