@@ -847,6 +847,7 @@ private
       Importing_Project : GNATCOLL.Projects.Project_Type :=
         GNATCOLL.Projects.No_Project;
       Line              : Integer := 0;
+      File_Line         : Natural := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
       Browser_Details : Gtkada.Canvas_View.Canvas_Event_Details;

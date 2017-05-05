@@ -197,15 +197,19 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      Files             : GNATCOLL.VFS.File_Array := Empty_File_Array;
-      Project           : Project_Type := No_Project;
-      Importing_Project : Project_Type := No_Project;
+      Files             : GNATCOLL.VFS.File_Array :=
+        GNATCOLL.VFS.Empty_File_Array;
+      Project           : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      Importing_Project : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
       Publish_Project   : Boolean := True;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
-      Revision          : String := "";
-      Other_Revision    : String := "";
-      Tag               : String := "")
+      Revision          : String  := "";
+      Other_Revision    : String  := "";
+      Tag               : String  := "";
+      File_Line         : Natural := 0)
    is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
    begin
@@ -223,9 +227,10 @@ package body GPS.Kernel.Contexts is
       Data.Project                  := Project;
       Data.Importing_Project        := Importing_Project;
 
-      Data.Revision := To_Unbounded_String (Revision);
+      Data.Revision       := To_Unbounded_String (Revision);
       Data.Other_Revision := To_Unbounded_String (Other_Revision);
-      Data.Tag := To_Unbounded_String (Tag);
+      Data.Tag            := To_Unbounded_String (Tag);
+      Data.File_Line      := File_Line;
    end Set_File_Information;
 
    -----------------------------
@@ -541,6 +546,27 @@ package body GPS.Kernel.Contexts is
    begin
       return Context.Ref.Get.Line;
    end Line_Information;
+
+   -------------------------------
+   -- Has_File_Line_Information --
+   -------------------------------
+
+   function Has_File_Line_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return not Context.Ref.Is_Null
+        and then Context.Ref.Get.File_Line /= 0;
+   end Has_File_Line_Information;
+
+   ---------------------------
+   -- File_Line_Information --
+   ---------------------------
+
+   function File_Line_Information
+     (Context : Selection_Context) return Natural is
+   begin
+      return Context.Ref.Get.File_Line;
+   end File_Line_Information;
 
    ----------------------------
    -- Has_Column_Information --

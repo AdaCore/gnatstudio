@@ -38,7 +38,8 @@ package GPS.Kernel.Contexts is
 
    procedure Set_File_Information
      (Context           : in out Selection_Context;
-      Files         : GNATCOLL.VFS.File_Array := GNATCOLL.VFS.Empty_File_Array;
+      Files             : GNATCOLL.VFS.File_Array :=
+        GNATCOLL.VFS.Empty_File_Array;
       Project           : GNATCOLL.Projects.Project_Type :=
         GNATCOLL.Projects.No_Project;
       Importing_Project : GNATCOLL.Projects.Project_Type :=
@@ -46,9 +47,10 @@ package GPS.Kernel.Contexts is
       Publish_Project   : Boolean := True;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
-      Revision          : String := "";
-      Other_Revision    : String := "";
-      Tag               : String := "");
+      Revision          : String  := "";
+      Other_Revision    : String  := "";
+      Tag               : String  := "";
+      File_Line         : Natural := 0);
    --  Set the information in this context.
    --  ??? We should use non-ambiguous types for Line and Column
    --
@@ -83,10 +85,18 @@ package GPS.Kernel.Contexts is
    --  Return True if Context has line information
    function Line_Information
      (Context : Selection_Context) return Integer;
-   --  Return the location of the cursor in the file, when in an editor, or
-   --  the location in the file from the messages window or the explorer for
+   --  Return the location of the cursor in the file/buffer, when in an editor,
+   --  or the location in the file from the messages window or the explorer for
    --  instance.
    --  This information will not be set if multiple lines are selected.
+
+   function Has_File_Line_Information
+     (Context : Selection_Context) return Boolean;
+   --  Return True if Context has file line information
+
+   function File_Line_Information
+     (Context : Selection_Context) return Natural;
+   --  Same as above but return the number of line in the file
 
    function Has_Column_Information
      (Context : Selection_Context) return Boolean;

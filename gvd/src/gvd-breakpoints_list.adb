@@ -515,6 +515,8 @@ package body GVD.Breakpoints_List is
      (Command : access Set_Breakpoint_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      use GPS.Kernel.Contexts;
+
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
@@ -529,7 +531,9 @@ package body GVD.Breakpoints_List is
             Num := Process.Debugger.Break_Source
               (File_Information (Context.Context),
                Editable_Line_Type
-                 (GPS.Kernel.Contexts.Line_Information (Context.Context)),
+                 ((if Has_File_Line_Information (Context.Context)
+                  then File_Line_Information (Context.Context)
+                  else Contexts.Line_Information (Context.Context))),
                Temporary => True);
             Process.Debugger.Continue (Mode => GVD.Types.Visible);
          end if;
@@ -539,7 +543,9 @@ package body GVD.Breakpoints_List is
            (Kernel,
             File  => File_Information (Context.Context),
             Line  => Editable_Line_Type
-              (GPS.Kernel.Contexts.Line_Information (Context.Context)));
+              ((if Has_File_Line_Information (Context.Context)
+               then File_Line_Information (Context.Context)
+               else Contexts.Line_Information (Context.Context))));
       else
          Break_Subprogram
            (Kernel,
