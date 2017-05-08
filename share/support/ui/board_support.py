@@ -264,7 +264,21 @@ class BoardLoader(Module):
         if self.__connection_tool == "openocd":
             args = ["-f", self.__config_file, "-c", "gdb_port %s" % (gdb_port)]
         elif self.__connection_tool == "st-util":
+            has_semihosting = False
+            semihosting_switch = "--semihosting"
+
             args = ["-p", gdb_port]
+
+            # Add semihosting support if it's supported by the used st-util
+            try:
+                process = GPS.Process(["st-util", '--help'])
+                output = process.get_result()
+                has_semihosting = semihosting_switch in output
+            except:
+                has_semihosting = False
+
+            if has_semihosting:
+                args += [semihosting_switch]
 
         return cmd + args
 
