@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2016, AdaCore                     --
+--                     Copyright (C) 2000-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -80,6 +80,9 @@ package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
 
    Detect_Aliases : Boolean_Preference;
+
+   GVD_Canvas_Contextual_Menus_Group : constant Integer := 2;
+   --  The GVD.Canvas actions' contextual menus group
 
    Float_Re : constant String := "([+-]?\d+(?:\.\d+E[+-]\d+))";
    --  regexp for a float number
@@ -1811,8 +1814,9 @@ package body GVD.Canvas is
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
-         Label  => -"Debug/Graph Display %S",
-         Action => "debug display variable");
+         Label  => -"Debug/Display %S in Graph",
+         Action => "debug display variable",
+         Group  => GVD_Canvas_Contextual_Menus_Group);
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
@@ -1828,9 +1832,41 @@ package body GVD.Canvas is
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
-         Label  => -"Debug/Graph Display %C",
+         Label  => -"Debug/Display %C in Graph",
          Custom => Custom_Label_Expansion'Access,
-         Action => "debug display dereferenced variable");
+         Action => "debug display dereferenced variable",
+         Group  => GVD_Canvas_Contextual_Menus_Group);
+
+      Command := new Print_Variable_Command;
+      Register_Action
+        (Kernel, "debug print variable",
+         Command     => Command,
+         Description =>
+           "Print the value of the variable in the debugger console",
+         Filter      => Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Print %S",
+         Action => "debug print variable",
+         Group  => GVD_Canvas_Contextual_Menus_Group);
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug print dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Print the value pointed to by the variable in the debugger"
+           & " console",
+         Filter    => Filter,
+         Category  => "Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => "Debug/Print %C",
+         Custom => Custom_Label_Expansion'Access,
+         Action => "debug print dereferenced variable",
+         Group  => GVD_Canvas_Contextual_Menus_Group);
 
       Filter := Kernel.Lookup_Filter ("Debugger stopped");
 

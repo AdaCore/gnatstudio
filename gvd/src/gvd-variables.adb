@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016, AdaCore                          --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -77,6 +77,9 @@ package body GVD.Variables is
    Me : constant Trace_Handle := Create ("Variables");
 
    Show_Types : Boolean_Preference;
+
+   GVD_Variables_Contextual_Group : constant Integer := 1;
+   --  The GVD.Variables actions' contextual menus group
 
    type Item_ID is new Natural;
    Unknown_Id : constant Item_ID := Item_ID'First;
@@ -1193,8 +1196,9 @@ package body GVD.Variables is
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Debug/Display in Variables view",
-         Action      => "debug tree display variable");
+         Label       => -"Debug/Display %S in Variables view",
+         Action      => "debug tree display variable",
+         Group       => GVD_Variables_Contextual_Group);
 
       Register_Action
         (Kernel, "debug tree display local variables",
