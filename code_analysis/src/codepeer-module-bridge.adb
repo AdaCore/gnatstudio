@@ -102,6 +102,8 @@ package body CodePeer.Module.Bridge is
               (Command_File_Name,
                Codepeer_Output_Directory (Module.Kernel),
                Codepeer_Database_Directory (Project),
+               Codepeer_Message_Patterns (Project),
+               Codepeer_Additional_Patterns (Project),
                All_Messages,
                Module.Version);
       end case;
@@ -175,8 +177,9 @@ package body CodePeer.Module.Bridge is
          CodePeer.Bridge.Commands.Inspection
            (Command_File_Name    => Command_File_Name,
             Output_Directory     => Output_Directory,
-            DB_Directory         =>
-              Codepeer_Database_Directory (Project),
+            DB_Directory         => Codepeer_Database_Directory (Project),
+            Message_Patterns     => Codepeer_Message_Patterns (Project),
+            Additional_Patterns  => Codepeer_Additional_Patterns (Project),
             Inspection_File_Name => Reply_File_Name,
             Status_File_Name     => Status_File_Name,
             Import_Annotations   => Module.Import_Annotations.Get_Pref,
@@ -226,6 +229,8 @@ package body CodePeer.Module.Bridge is
         (Command_File_Name,
          Codepeer_Output_Directory (Module.Kernel),
          Codepeer_Database_Directory (Project),
+         Codepeer_Message_Patterns (Project),
+         Codepeer_Additional_Patterns (Project),
          Reply_File_Name,
          Messages,
          Module.Version);

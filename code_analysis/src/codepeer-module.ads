@@ -201,27 +201,35 @@ private
    overriding function Tooltip_Handler
      (Module  : access Module_Id_Record;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
-   --  Creates tooltip when backtraces data is available.
+   --  Create tooltip when backtraces data is available.
 
    procedure Load_Annotations
      (Self : access Module_Id_Record'Class;
       File : in out Code_Analysis.File'Class);
-   --  Loads annotations for subprograms of given source file.
+   --  Load annotations for subprograms of given source file.
 
    function Codepeer_Database_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
-   --  Returns directory which is used by CodePeer for store SQLite database
+   --  Return directory which is used by CodePeer for store SQLite database
    --  files.
 
    function CodePeer_Object_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
-   --  Returns object directory in 'codepeer' mode.
+   --  Return object directory in 'codepeer' mode.
 
    function Codepeer_Output_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
-   --  Returns directory which is used by CodePeer for output inspection
+   --  Return directory which is used by CodePeer for output inspection
    --  results.
+
+   function Codepeer_Message_Patterns
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Return the project attribute CodePeer'Message_Patterns or No_File.
+
+   function Codepeer_Additional_Patterns
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Return the project attribute CodePeer'Additional_Patterns or No_File.
 
    --  Style names to be used by children packages
    Informational_Probability_Style_Name : constant String

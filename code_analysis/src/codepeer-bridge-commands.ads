@@ -27,6 +27,8 @@ package CodePeer.Bridge.Commands is
      (Command_File_Name    : Virtual_File;
       Output_Directory     : Virtual_File;
       DB_Directory         : Virtual_File;
+      Message_Patterns     : Virtual_File;
+      Additional_Patterns  : Virtual_File;
       Inspection_File_Name : Virtual_File;
       Status_File_Name     : Virtual_File;
       Import_Annotations   : Boolean;
@@ -35,12 +37,14 @@ package CodePeer.Bridge.Commands is
    --  database.
 
    procedure Audit_Trail
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector;
-      Version           : Supported_Format_Version);
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Export_File_Name    : Virtual_File;
+      Messages            : CodePeer.Message_Vectors.Vector;
+      Version             : Supported_Format_Version);
    --  Generates command file for export audit trail information from the
    --  database.
 
@@ -55,11 +59,13 @@ package CodePeer.Bridge.Commands is
    --  version 3 of interchange format.
 
    procedure Add_Audit_Record_V4_V5
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Messages          : Message_Vectors.Vector;
-      Version           : Supported_Format_Version);
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Messages            : Message_Vectors.Vector;
+      Version             : Supported_Format_Version);
    --  Generates command file for add audit record to the database using
    --  version 4 of interchange format.
 

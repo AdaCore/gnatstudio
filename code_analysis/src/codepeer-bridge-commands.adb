@@ -29,12 +29,14 @@ package body CodePeer.Bridge.Commands is
    --  Generates request of message's audit trail in format version 3.
 
    procedure Audit_Trail_V4_V5
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector;
-      Version           : Supported_Format_Version);
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Export_File_Name    : Virtual_File;
+      Messages            : CodePeer.Message_Vectors.Vector;
+      Version             : Supported_Format_Version);
    --  Generates request of messages' audit trail in format version 4 and 5.
 
    -------------------------
@@ -92,11 +94,13 @@ package body CodePeer.Bridge.Commands is
    ----------------------------
 
    procedure Add_Audit_Record_V4_V5
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Messages          : Message_Vectors.Vector;
-      Version           : Supported_Format_Version)
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Messages            : Message_Vectors.Vector;
+      Version             : Supported_Format_Version)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
                          new XML_Utils.Node'
@@ -115,6 +119,18 @@ package body CodePeer.Bridge.Commands is
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       XML_Utils.Set_Attribute
         (Database_Node, "db_directory", +DB_Directory.Full_Name);
+
+      if Message_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
+      end if;
+
+      if Additional_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node,
+            "additional_patterns", +Additional_Patterns.Full_Name);
+      end if;
+
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
@@ -150,12 +166,14 @@ package body CodePeer.Bridge.Commands is
    -----------------
 
    procedure Audit_Trail
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector;
-      Version           : Supported_Format_Version) is
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Export_File_Name    : Virtual_File;
+      Messages            : CodePeer.Message_Vectors.Vector;
+      Version             : Supported_Format_Version) is
    begin
       case Version is
          when 3 =>
@@ -170,6 +188,8 @@ package body CodePeer.Bridge.Commands is
               (Command_File_Name,
                Output_Directory,
                DB_Directory,
+               Message_Patterns,
+               Additional_Patterns,
                Export_File_Name,
                Messages,
                Version);
@@ -217,12 +237,14 @@ package body CodePeer.Bridge.Commands is
    -----------------------
 
    procedure Audit_Trail_V4_V5
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      DB_Directory      : Virtual_File;
-      Export_File_Name  : Virtual_File;
-      Messages          : CodePeer.Message_Vectors.Vector;
-      Version           : Supported_Format_Version)
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File;
+      Export_File_Name    : Virtual_File;
+      Messages            : CodePeer.Message_Vectors.Vector;
+      Version             : Supported_Format_Version)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
@@ -250,6 +272,18 @@ package body CodePeer.Bridge.Commands is
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       XML_Utils.Set_Attribute
         (Database_Node, "db_directory", +DB_Directory.Full_Name);
+
+      if Message_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
+      end if;
+
+      if Additional_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node,
+            "additional_patterns", +Additional_Patterns.Full_Name);
+      end if;
+
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute (Audit_Trail_Node, "messages", To_String (Ids));
@@ -270,6 +304,8 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name    : Virtual_File;
       Output_Directory     : Virtual_File;
       DB_Directory         : Virtual_File;
+      Message_Patterns     : Virtual_File;
+      Additional_Patterns  : Virtual_File;
       Inspection_File_Name : Virtual_File;
       Status_File_Name     : Virtual_File;
       Import_Annotations   : Boolean;
@@ -293,6 +329,18 @@ package body CodePeer.Bridge.Commands is
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       XML_Utils.Set_Attribute
         (Database_Node, "db_directory", +DB_Directory.Full_Name);
+
+      if Message_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
+      end if;
+
+      if Additional_Patterns /= No_File then
+         XML_Utils.Set_Attribute
+           (Database_Node,
+            "additional_patterns", +Additional_Patterns.Full_Name);
+      end if;
+
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute

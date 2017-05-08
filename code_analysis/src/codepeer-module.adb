@@ -199,13 +199,19 @@ package body CodePeer.Module is
 
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
+       GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
    Database_Directory_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
+       GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
+   Message_Patterns_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+       GNATCOLL.Projects.Build ("CodePeer", "Message_Patterns");
+   Additional_Patterns_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+       GNATCOLL.Projects.Build ("CodePeer", "Additional_Patterns");
    CWE_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build ("CodePeer", "CWE");
+       GNATCOLL.Projects.Build ("CodePeer", "CWE");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -777,6 +783,54 @@ package body CodePeer.Module is
               Name (Name'First .. Name'Last - Extension'Length) & ".db");
       end if;
    end Codepeer_Database_Directory;
+
+   -------------------------------
+   -- Codepeer_Message_Patterns --
+   -------------------------------
+
+   function Codepeer_Message_Patterns
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File is
+   begin
+      if Project.Has_Attribute (Message_Patterns_Attribute) then
+         declare
+            File : constant GNATCOLL.VFS.Filesystem_String :=
+              GNATCOLL.VFS.Filesystem_String
+                (Project.Attribute_Value (Message_Patterns_Attribute));
+
+         begin
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (File, Project.Project_Path.Dir.Full_Name.all);
+         end;
+
+      else
+         return GNATCOLL.VFS.No_File;
+      end if;
+   end Codepeer_Message_Patterns;
+
+   ----------------------------------
+   -- Codepeer_Additional_Patterns --
+   ----------------------------------
+
+   function Codepeer_Additional_Patterns
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File is
+   begin
+      if Project.Has_Attribute (Additional_Patterns_Attribute) then
+         declare
+            File : constant GNATCOLL.VFS.Filesystem_String :=
+              GNATCOLL.VFS.Filesystem_String
+                (Project.Attribute_Value (Additional_Patterns_Attribute));
+
+         begin
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (File, Project.Project_Path.Dir.Full_Name.all);
+         end;
+
+      else
+         return GNATCOLL.VFS.No_File;
+      end if;
+   end Codepeer_Additional_Patterns;
 
    -------------------------------
    -- CodePeer_Object_Directory --
