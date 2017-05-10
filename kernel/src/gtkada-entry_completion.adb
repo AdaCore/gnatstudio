@@ -585,6 +585,7 @@ package body Gtkada.Entry_Completion is
             Search_Kind'Image (Fuzzy));
          Search_Kind_Radios  : Search_Kind_Radio_Button_Array (1 .. 3);
          Idx                 : Integer := Search_Kind_Radios'First;
+         Active_Idx          : Integer := Idx;
       begin
          for Kind in Full_Text .. Fuzzy loop
             declare
@@ -611,7 +612,7 @@ package body Gtkada.Entry_Completion is
                   Padding => Padding);
 
                if Kind_Image = Current_Search_Kind then
-                  Search_Kind_Radios (Idx).Set_Active (True);
+                  Active_Idx := Idx;
                   Self.Search_Kind := Kind;
                end if;
 
@@ -620,6 +621,8 @@ package body Gtkada.Entry_Completion is
                Idx := Idx + 1;
             end;
          end loop;
+
+         Search_Kind_Radios (Active_Idx).Set_Active (True);
 
          Create_New_Key_If_Necessary
            (Get_History (Kernel).all, Name & "-kind", Strings);
