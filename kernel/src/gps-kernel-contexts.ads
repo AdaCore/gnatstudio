@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2016, AdaCore                     --
+--                     Copyright (C) 2003-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -48,7 +48,8 @@ package GPS.Kernel.Contexts is
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
       Other_Revision    : String := "";
-      Tag               : String := "");
+      Tag               : String := "";
+      File_Line         : Natural := 0);
    --  Set the information in this context.
    --  ??? We should use non-ambiguous types for Line and Column
    --
@@ -87,6 +88,14 @@ package GPS.Kernel.Contexts is
    --  the location in the file from the messages window or the explorer for
    --  instance.
    --  This information will not be set if multiple lines are selected.
+
+   function Has_File_Line_Information
+     (Context : Selection_Context) return Boolean;
+   --  Return True if Context has file line information
+
+   function File_Line_Information
+     (Context : Selection_Context) return Natural;
+   --  Same as above but return the number of line in the file
 
    function Has_Column_Information
      (Context : Selection_Context) return Boolean;

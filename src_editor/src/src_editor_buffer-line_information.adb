@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2016, AdaCore                     --
+--                     Copyright (C) 2003-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1202,9 +1202,10 @@ package body Src_Editor_Buffer.Line_Information is
          Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
          Set_File_Information
            (Context,
-            Files   => (1 => Buffer.Filename),
-            Line    => Integer (Line),
-            Column  => 0);
+            Files     => (1 => Buffer.Filename),
+            Line      => Integer (Line),
+            File_Line => Natural (Buffer.Line_Data (Line).File_Line),
+            Column    => 0);
          Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
 
       --  Click on other columns

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2016, AdaCore                     --
+--                     Copyright (C) 2003-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -205,7 +205,8 @@ package body GPS.Kernel.Contexts is
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
       Other_Revision    : String := "";
-      Tag               : String := "")
+      Tag               : String := "";
+      File_Line         : Natural := 0)
    is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
    begin
@@ -226,7 +227,29 @@ package body GPS.Kernel.Contexts is
       Data.Revision := To_Unbounded_String (Revision);
       Data.Other_Revision := To_Unbounded_String (Other_Revision);
       Data.Tag := To_Unbounded_String (Tag);
+      Data.File_Line := File_Line;
    end Set_File_Information;
+
+   -------------------------------
+   -- Has_File_Line_Information --
+   -------------------------------
+
+   function Has_File_Line_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return not Context.Ref.Is_Null
+        and then Context.Ref.Get.File_Line /= 0;
+   end Has_File_Line_Information;
+
+   ---------------------------
+   -- File_Line_Information --
+   ---------------------------
+
+   function File_Line_Information
+     (Context : Selection_Context) return Natural is
+   begin
+      return Context.Ref.Get.File_Line;
+   end File_Line_Information;
 
    -----------------------------
    -- Has_Project_Information --
