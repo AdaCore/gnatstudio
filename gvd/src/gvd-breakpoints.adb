@@ -30,7 +30,10 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
 with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
 with GNAT.Strings;              use GNAT.Strings;
+
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with GPS.Debuggers;             use GPS.Debuggers;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
@@ -114,10 +117,12 @@ package body GVD.Breakpoints is
 
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
-         Breakpoint_List : Gtk_Tree_View;
-         Multipress      : Gtk_Gesture_Multi_Press;
-         Longpress       : Gtk_Gesture_Long_Press;
-         Activatable     : Boolean := True;
+         Breakpoint_List      : Gtk_Tree_View;
+         Multipress           : Gtk_Gesture_Multi_Press;
+         Longpress            : Gtk_Gesture_Long_Press;
+         Activatable          : Boolean := True;
+         Prevent_Bp_Selection : Boolean := False;
+         --  Do not select bp when location is chenged
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
@@ -203,6 +208,12 @@ package body GVD.Breakpoints is
      (Self : access Breakpoint_Editor_Record'Class) return Gtk_Widget;
    --  Internal initialization function
    --  Returns the focus child
+
+   procedure Select_Breakpoint_On
+     (Self : access Breakpoint_Editor_Record'Class;
+      File : Virtual_File;
+      Line : Natural);
+   --  Select a breakpoint for the location
 
    function Get_View
      (Process : not null access Base_Visual_Debugger'Class)
@@ -302,6 +313,16 @@ package body GVD.Breakpoints is
       X, Y    : Gdouble);
    --  Called when the user long presses on a breakpoint
 
+   type On_Location_Changed is new File_Location_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type);
+   --  Called when the current editor reaches a new location
+
    --------------
    -- Get_View --
    --------------
@@ -312,6 +333,51 @@ package body GVD.Breakpoints is
    begin
       return Breakpoint_Editor (Visual_Debugger (Process).Breakpoints_Editor);
    end Get_View;
+
+   --------------------------
+   -- Select_Breakpoint_On --
+   --------------------------
+
+   procedure Select_Breakpoint_On
+     (Self : access Breakpoint_Editor_Record'Class;
+      File : Virtual_File;
+      Line : Natural)
+   is
+      Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Id    : Breakpoint_Identifier := 0;
+   begin
+      if Self.Prevent_Bp_Selection then
+         return;
+      end if;
+
+      for Br of Get_Stored_List_Of_Breakpoints (Self.Get_Process).List loop
+
+         if Br.Location /= No_Marker
+           and then Get_File (Br.Location) = File
+           and then Natural (Get_Line (Br.Location)) = Line
+         then
+            Id := Br.Num;
+            exit;
+         end if;
+      end loop;
+
+      if Id /= 0 then
+         Model := -Get_Model (Self.Breakpoint_List);
+         Iter  := Model.Get_Iter_First;
+
+         while Iter /= Null_Iter loop
+            if Breakpoint_Identifier'Value
+              (Model.Get_String (Iter, Col_Num)) = Id
+            then
+               Self.Breakpoint_List.Get_Selection.Select_Iter (Iter);
+               return;
+            end if;
+
+            Model.Next (Iter);
+         end loop;
+      end if;
+   end Select_Breakpoint_On;
 
    --------------
    -- Set_View --
@@ -455,6 +521,27 @@ package body GVD.Breakpoints is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type)
+   is
+      pragma Unreferenced (Self, Column, Project);
+
+      View : constant Breakpoint_Editor :=
+        Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
+   begin
+      if View /= null then
+         Select_Breakpoint_On (View, File, Line);
+      end if;
+   end Execute;
+
    ---------------------------
    -- On_Process_Terminated --
    ---------------------------
@@ -558,6 +645,8 @@ package body GVD.Breakpoints is
       --  Initial display
       Debugger_Breakpoints_Changed_Hook.Add
          (new On_Breakpoints_Changed, Watch => Self);
+
+      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Self);
 
       Update (Self);
 
@@ -1575,11 +1664,13 @@ package body GVD.Breakpoints is
    begin
       Selection := Get_Selection (View);
       if Selection /= Null_Breakpoint then
+         View.Prevent_Bp_Selection := True;
          Set_Current_File_And_Line
            (Kernel  => View.Kernel,
             Process => Get_Process (View),
             File    => Get_File (Selection.Location),
             Line    => Natural (Get_Line (Selection.Location)));
+         View.Prevent_Bp_Selection := False;
       end if;
    end Show_Selected_Breakpoint_In_Editor;
 
