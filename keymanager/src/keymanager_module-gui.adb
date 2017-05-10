@@ -78,6 +78,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Layout;             use Pango.Layout;
 
+with Config;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.GUI;  use Default_Preferences.GUI;
@@ -392,6 +393,10 @@ package body KeyManager_Module.GUI is
       Flow_Box          : Gtk_Flow_Box;
       Radio_Group       : Gtk_Radio_Button;
       Padding           : constant Guint := 5;
+      Default_Key_Theme : constant String := (if Config.Darwin_Target then
+                                                 "mac_os"
+                                              else
+                                                 "default");
 
       procedure Create_Key_Theme_Widget
         (Key_Theme_Name : String;
@@ -525,7 +530,7 @@ package body KeyManager_Module.GUI is
       --  in the flow box.
 
       Create_Key_Theme_Widget
-        (Key_Theme_Name => "default",
+        (Key_Theme_Name => Default_Key_Theme,
          Description    => "The default key shortcuts theme.");
       Flow_Box.Select_Child (Gtk_Flow_Box_Child (Theme_Widget.Get_Parent));
 
@@ -540,8 +545,8 @@ package body KeyManager_Module.GUI is
       --  user does not explicitly choose one in the UI.
 
       Remove_Shortcuts (Self.Kernel, Mode => Standard_Shortcuts);
-      Load_Key_Theme (Self.Kernel, "default");
-      Set_Key_Theme (Self.Kernel, "default");
+      Load_Key_Theme (Self.Kernel, Default_Key_Theme);
+      Set_Key_Theme (Self.Kernel, Default_Key_Theme);
 
       Flow_Box.On_Child_Activated (On_Child_Activated'Access);
 

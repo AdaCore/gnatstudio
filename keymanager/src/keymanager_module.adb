@@ -1344,7 +1344,12 @@ package body KeyManager_Module is
       return String
    is
    begin
-      return Most_Recent (Get_History (Kernel), Hist_Key_Theme, "default");
+      --  Use the 'default_legacy' key theme when there is no key theme
+      --  specified in the history to avoid confusing users with the changes
+      --  in the default key shortcuts (e.g: control-minus bound to 'decrease
+      --  text size' instead of 'comment lines').
+      return Most_Recent
+        (Get_History (Kernel), Hist_Key_Theme, "default_legacy");
    end Get_Key_Theme;
 
    ------------------

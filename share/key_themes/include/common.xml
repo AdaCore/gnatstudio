@@ -64,7 +64,7 @@
   <key action="Python Auto Indentation">Return</key>
 
   <key action="increase text size">primary-plus</key>
-  <key action="decrease text size">primary-alt-plus</key>
+  <key action="decrease text size">primary-minus</key>
 
   <key action="Move to next window">alt-Tab</key>
   <key action="Move to previous window">alt-shift-ISO_Left_Tab</key>
@@ -74,7 +74,4 @@
   <key action="Move to previous tab">primary-alt-Left</key>
 
   <key action="Global Search in context: File Names">shift-F3</key>
-
-  <key action="Complete identifier">primary-slash</key>
-  <key action="Complete identifier (advanced)">primary-space</key>
 </GPS>

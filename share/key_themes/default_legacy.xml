@@ -8,6 +8,11 @@
   <key action="Macro Stop">primary-Escape</key>
   <key action="Repeat Next">primary-y</key>
 
+  <!-- avoid binding control-minus to both 'decrease text size' and
+       'comment lines' in legacy mode-->
+  <key action="" >primary-minus</key>
+  <key action="comment lines">primary-minus</key>
+
   <!--  Do not use gtk+ builtin handling for cut/copy/paste, since that
         preserves the tags. For instance, copy-pasting non-editable text would
         keep the text as read-only. -->
@@ -30,8 +35,7 @@
   <key action="Close current window">primary-w</key>
   <key action="undo">primary-z</key>
   <key action="redo">primary-r</key>
-  <key action="comment lines">primary-slash</key>
-  <key action="uncomment lines">primary-question</key>
+  <key action="uncomment lines">primary-underscore</key>
   <key action="refill">primary-equal</key>
   <key action="goto line">primary-g</key>
   <key action="jump to matching delimiter">primary-apostrophe</key>
@@ -51,6 +55,7 @@
   <key action="Global Search in context: Entities">primary-t</key>
 
   <key action="Complete identifier">primary-slash</key>
+  <key action="Complete identifier (advanced)">primary-space</key>
 
   <key action="exit">primary-q</key>
 </GPS>

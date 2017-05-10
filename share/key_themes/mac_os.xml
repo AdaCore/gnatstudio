@@ -1,0 +1,9 @@
+<?xml version='1.0'?>
+<!--  This file contains shortcuts that are specific to Mac OS.-->
+<GPS>
+  <key load='default'/>
+
+  <key action="goto beginning of line">control-a</key>
+  <key action="goto end of line">control-e</key>
+  <key action="kill line">control-k</key>
+</GPS>
