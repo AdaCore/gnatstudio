@@ -1392,7 +1392,9 @@ package body Ada_Analyzer is
                   begin
                      Skip_Blanks (Buffer, Tmp_Index);
 
-                     if Look_For (Tmp_Index, "=>") then
+                     if Tmp_Index + 1 <= Buffer_Last
+                       and then Buffer (Tmp_Index .. Tmp_Index + 1) = "=>"
+                     then
                         --  May happen with aspects:
                         --  procedure G with
                         --    Pre => F,
