@@ -4,7 +4,7 @@
       way to define the shortcuts in all the key themes.
 -->
 <GPS>
-  <key action="Interrupt">shift-control-C</key>
+  <key action="Interrupt">shift-primary-C</key>
 
   <key action="debug run dialog">F2</key>
   <key action="debug step">F5</key>
@@ -16,10 +16,10 @@
 
   <key action="start of statement">alt-Up</key>
   <key action="end of statement">alt-Down</key>
-  <key action="previous subprogram">control-Up</key>
-  <key action="next subprogram">control-Down</key>
-  <key action="previous tag">control-less</key>
-  <key action="next tag">control-greater</key>
+  <key action="previous subprogram">primary-Up</key>
+  <key action="next subprogram">primary-Down</key>
+  <key action="previous tag">primary-less</key>
+  <key action="next tag">primary-greater</key>
   <key action="backward locations history">alt-Left</key>
   <key action="forward locations history">alt-Right</key>
 
@@ -30,18 +30,18 @@
   <key action="Compile File">shift-F4</key>
 
   <key action="open file">F3</key>
-  <key action="open from host">control-F3</key>
+  <key action="open from host">primary-F3</key>
 
   <key action="Add cursor and go down">shift-alt-Down</key>
   <key action="Add cursor and go up">shift-alt-Up</key>
-  <key action="Add cursors to all references of entity" >shift-control-E</key>
-  <key action="Cursor select next occurence of selection" >shift-control-N</key>
-  <key action="Cursor skip next occurence of selection" >control-alt-n</key>
+  <key action="Add cursors to all references of entity" >shift-primary-E</key>
+  <key action="Cursor select next occurence of selection" >shift-primary-N</key>
+  <key action="Cursor skip next occurence of selection" >primary-alt-n</key>
 
-  <key action="Move to next word">control-Right</key>
-  <key action="Move to previous word">control-Left</key>
-  <key action="Move to next word (extend selection)">shift-control-Right</key>
-  <key action="Move to previous word (extend selection)">shift-control-Left</key>
+  <key action="Move to next word">primary-Right</key>
+  <key action="Move to previous word">primary-Left</key>
+  <key action="Move to next word (extend selection)">shift-primary-Right</key>
+  <key action="Move to previous word (extend selection)">shift-primary-Left</key>
   <key action="Move to previous char">Left</key>
   <key action="Move to next char">Right</key>
   <key action="Move to previous char (extend selection)">shift-Left</key>
@@ -52,28 +52,29 @@
   <key action="Move to next line">Down</key>
   <key action="forward delete" >Delete</key>
   <key action="backward delete" >BackSpace</key>
+  <key action="backward delete" >primary-BackSpace</key>
   <key action="goto beginning of line" >Home</key>
   <key action="goto end of line" >End</key>
   <key action="goto beginning of line (extend selection)" >shift-Home</key>
   <key action="goto end of line (extend selection)" >shift-End</key>
-  <key action="Move block right">control-alt-greater</key>
-  <key action="Move block left">control-alt-less</key>
+  <key action="Move block right">primary-alt-greater</key>
+  <key action="Move block left">primary-alt-less</key>
   <key action="Format selection">Tab</key>
   <key action="smart escape">Escape</key>
   <key action="Python Auto Indentation">Return</key>
 
-  <key action="increase text size">control-plus</key>
-  <key action="decrease text size">control-alt-plus</key>
+  <key action="increase text size">primary-plus</key>
+  <key action="decrease text size">primary-alt-plus</key>
 
   <key action="Move to next window">alt-Tab</key>
   <key action="Move to previous window">alt-shift-ISO_Left_Tab</key>
-  <key action="Move tab to left">shift-control-alt-Left</key>
-  <key action="Move tab to right">shift-control-alt-Right</key>
-  <key action="Move to next tab">control-alt-Right</key>
-  <key action="Move to previous tab">control-alt-Left</key>
+  <key action="Move tab to left">shift-primary-alt-Left</key>
+  <key action="Move tab to right">shift-primary-alt-Right</key>
+  <key action="Move to next tab">primary-alt-Right</key>
+  <key action="Move to previous tab">primary-alt-Left</key>
 
   <key action="Global Search in context: File Names">shift-F3</key>
 
-  <key action="Complete identifier">control-slash</key>
-  <key action="Complete identifier (advanced)">control-space</key>
+  <key action="Complete identifier">primary-slash</key>
+  <key action="Complete identifier (advanced)">primary-space</key>
 </GPS>
