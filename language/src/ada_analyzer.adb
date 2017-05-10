@@ -1392,13 +1392,17 @@ package body Ada_Analyzer is
                   begin
                      Skip_Blanks (Buffer, Tmp_Index);
 
-                     if Tmp_Index + 1 <= Buffer_Last
-                       and then Buffer (Tmp_Index .. Tmp_Index + 1) = "=>"
+                     if (Tmp_Index + 1 <= Buffer_Last
+                         and then Buffer (Tmp_Index .. Tmp_Index + 1) = "=>")
+                       or else (Tmp_Index <= Buffer_Last
+                                and then Buffer (Tmp_Index) in ',' | ';')
                      then
                         --  May happen with aspects:
                         --  procedure G with
                         --    Pre => F,
-                        --    Post => F;
+                        --    Post => F,
+                        --    Volatile,
+                        --    Inline;
 
                         Continuation_Val := Continuation_Val - Indent_Continue;
                      end if;
