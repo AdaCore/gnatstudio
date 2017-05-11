@@ -27,8 +27,6 @@ XML = r"""<?xml version="1.0" ?>
     <title line="1" column="2">Other options</title>
     <field line="1" column="2" label="Execute" switch="--exec="
       tip="Python script to execute (implies --incremental)"/>
-    <field line="1" column="2" label="Plugins" switch="--plugins="
-      tip="Comma separated list of plugins to execute"/>
     <spin line="1" column="2" label="Parallel" switch="-j"
       tip="Number of jobs to run in parallel"
       max="99" min="0" default="0"/>
