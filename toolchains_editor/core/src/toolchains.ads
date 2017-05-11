@@ -308,7 +308,7 @@ package Toolchains is
      (Tc      : Toolchain;
       Lang    : String;
       Runtime : String) return Boolean;
-   --  Return True if the given runtime is valid fos this toolchain and this
+   --  Return True if the given runtime is valid for this toolchain and this
    --  language, False otherwise.
 
    function Is_Default_Runtime_Used

@@ -762,9 +762,7 @@ package body Toolchains_Editor is
             Attr : constant Attribute_Pkg_String := Get_Tool_Attribute (Tool);
          begin
             if Attr /= No_Attribute then
-               if not Is_Default (Tc, Tool)
-                 or else not Is_Base_Name (Tc, Tool)
-               then
+               if not Is_Default (Tc, Tool) then
                   Set_Attribute (Attr, "", Get_Command (Tc, Tool));
                else
                   Clear_Attribute (Attr, "");
@@ -792,8 +790,7 @@ package body Toolchains_Editor is
                   Comp := Get_Compiler (Tc, Lang);
                   if Get_Origin (Comp) /= From_Project_Driver then
                      if Is_Defined (Tc, Lang)
-                       and then (not Is_Default (Tc, Lang)
-                                 or else not Is_Base_Name (Tc, Lang))
+                       and then not Is_Default (Tc, Lang)
                      then
                         Set_Attribute
                           (Compiler_Command_Attribute, Lang, Get_Exe (Comp));
@@ -1181,30 +1178,32 @@ package body Toolchains_Editor is
             if Toolchains.Get_Command (Tc, User_Data.Tool) /= Val then
                Toolchains.Set_Command
                  (Tc, User_Data.Tool, Val, From_User, False);
+            end if;
 
-               --  Set the reset button to be sensitive if it's not the default
-               --  tool.
-               if User_Data.Reset_Button /= null then
-                  User_Data.Reset_Button.Set_Sensitive
-                    (Is_Default (Tc, User_Data.Tool));
-               end if;
+            --  Set the reset button to be sensitive if it's not the default
+            --  tool.
+            if User_Data.Reset_Button /= null then
+               User_Data.Reset_Button.Set_Sensitive
+                 (Is_Default (Tc, User_Data.Tool));
+            end if;
 
-               --  If the tool is not in PATH, show it to the user
-               if not Is_Valid (Tc, User_Data.Tool) then
-                  Self.Details_View.Display_Information_On_Child
-                    (Child_Key => To_String (User_Data.Tool_Label),
-                     Message   =>
-                       Val & " could not be found on PATH",
-                     Is_Error  => True);
-               else
-                  Self.Details_View.Remove_Information_On_Child
-                    (Child_Key => To_String (User_Data.Tool_Label));
-               end if;
+            --  If the tool is not in PATH, show it to the user
+            if not Is_Valid (Tc, User_Data.Tool) then
+               Self.Details_View.Display_Information_On_Child
+                 (Child_Key => To_String (User_Data.Tool_Label),
+                  Message   =>
+                    Val & " could not be found on PATH",
+                  Is_Error  => True);
+            else
+               Self.Details_View.Remove_Information_On_Child
+                 (Child_Key => To_String (User_Data.Tool_Label));
             end if;
 
          when Tool_Kind_Compiler =>
             if Val = "not compiled ..." then
                Set_Compiler_Is_Used (Tc, Lang, False);
+               Self.Details_View.Remove_Information_On_Child
+                    (Child_Key => To_String (User_Data.Tool_Label));
             else
                Set_Compiler (Tc, Lang, Val);
 
@@ -1248,20 +1247,14 @@ package body Toolchains_Editor is
          when Tool_Kind_Runtime =>
             Reset_Runtime_To_Default (Tc, Lang);
             User_Data.Ent.Set_Text (Get_Used_Runtime (Tc, Lang));
-            Self.Details_View.Remove_Information_On_Child
-              (Child_Key => To_String (User_Data.Tool_Label));
 
          when Tool_Kind_Tool =>
             Reset_Tool_To_Default (Tc, User_Data.Tool);
             User_Data.Ent.Set_Text (Get_Command (Tc, User_Data.Tool));
-            Self.Details_View.Remove_Information_On_Child
-              (Child_Key => To_String (User_Data.Tool_Label));
 
          when Tool_Kind_Compiler =>
             Reset_Compiler_To_Default (Tc, Lang);
             User_Data.Ent.Set_Text (Get_Exe (Get_Compiler (Tc, Lang)));
-            Self.Details_View.Remove_Information_On_Child
-              (Child_Key => To_String (User_Data.Tool_Label));
       end case;
    end On_Reset;
 
