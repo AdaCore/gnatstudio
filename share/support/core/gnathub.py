@@ -8,7 +8,7 @@ import os_utils
 
 gnathub_menu = "/Gnathub/"
 tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatmetric',
-         'gnatprove']
+         'spark2014']
 
 
 XML = r"""<?xml version="1.0" ?>
