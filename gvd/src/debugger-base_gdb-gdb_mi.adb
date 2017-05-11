@@ -2472,14 +2472,31 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      Cmd : Unbounded_String;
+      Idx : Integer := Commands'First;
+      To  : Integer;
    begin
-      Debugger.Send
-        ("-break-commands" & Num'Img & " " &
-         (if Commands (Commands'First) = '"'
-            then Commands
-            else '"' & Commands & '"'),
-         Mode => Mode);
+      Append (Cmd, "-break-commands" & Num'Img);
+
+      while Idx < Commands'Last loop
+         To := Standard.Ada.Strings.Fixed.Index (Commands, "" & ASCII.LF, Idx);
+         if To < Commands'First then
+            Append (Cmd, " " & (if Commands (Idx) = '"'
+                    then Commands (Idx .. Commands'Last)
+                    else '"' & Commands (Idx .. Commands'Last) & '"'));
+            exit;
+         else
+            Append (Cmd, " " & (if Commands (Idx) = '"'
+                    then Commands (Idx .. To - 1)
+                    else '"' & Commands (Idx .. To - 1) & '"'));
+
+            Idx := To + 1;
+         end if;
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
    end Set_Breakpoint_Command;
 
    ---------------------------------
@@ -3303,9 +3320,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   while Element (C).Code /= R_Bracket loop
                      Next (C);
                   end loop;
-               end if;
 
-               --  ??? missing Commands
+               elsif Name = "script" then
+                  Next (C); -- skip '{'
+                  while Element (C).Code /= R_Brace loop
+                     if Length (B.Commands) > 0 then
+                        Append (B.Commands, "" & ASCII.LF);
+                     end if;
+
+                     Append (B.Commands, Element (C).Text.all);
+                     Next (C);
+                     if Element (C).Code = Comma then
+                        Next (C);
+                     end if;
+                  end loop;
+                  Next (C); -- skip '}'
+               end if;
             end;
 
             Next (C, 2);

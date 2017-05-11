@@ -1666,10 +1666,11 @@ package body GVD.Breakpoints is
       if Selection /= Null_Breakpoint then
          View.Prevent_Bp_Selection := True;
          Set_Current_File_And_Line
-           (Kernel  => View.Kernel,
-            Process => Get_Process (View),
-            File    => Get_File (Selection.Location),
-            Line    => Natural (Get_Line (Selection.Location)));
+           (Kernel    => View.Kernel,
+            Process   => Get_Process (View),
+            File      => Get_File (Selection.Location),
+            Line      => Natural (Get_Line (Selection.Location)),
+            Highlight => False);
          View.Prevent_Bp_Selection := False;
       end if;
    end Show_Selected_Breakpoint_In_Editor;
