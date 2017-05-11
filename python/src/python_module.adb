@@ -18,6 +18,7 @@
 with Ada.Containers;
 with Ada.Unchecked_Conversion;
 
+with GNATCOLL.Arg_Lists;             use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
@@ -380,6 +381,20 @@ package body Python_Module is
                       Ignore_User_Config => False);
          end if;
       end loop;
+
+      declare
+         Errors : Boolean;
+         Script : constant Scripting_Language :=
+           Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      begin
+         --  Now we are ready to import libadalang
+         Script.Execute_Command
+           (CL           => Create ("import libadalang"),
+            Hide_Output  => True,
+            Errors       => Errors);
+
+         pragma Assert (not Errors);
+      end;
    end Load_System_Python_Startup_Files;
 
    ------------------------------------
