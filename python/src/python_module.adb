@@ -159,6 +159,12 @@ package body Python_Module is
       Console.Enable_Prompt_Display (True);
       Console.Display_Prompt;
 
+      Script.Execute_Command
+        ("import libadalang;",
+         Hide_Output  => True,
+         Show_Command => False,
+         Errors => Errors);
+
       return Gtk_Widget (Console.Get_View);
    end Initialize;
 
