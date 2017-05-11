@@ -44,10 +44,11 @@ package body GVD.Code_Editors is
    -------------------------------
 
    procedure Set_Current_File_And_Line
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Process : access Base_Visual_Debugger'Class := null;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Natural)
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Process   : access Base_Visual_Debugger'Class := null;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Line      : Natural;
+      Highlight : Boolean := True)
    is
       P   : constant Visual_Debugger := Visual_Debugger (Process);
       Msg : Simple_Message_Access;
@@ -72,7 +73,9 @@ package body GVD.Code_Editors is
 
       --  Highlight the current line if the debugger is active
 
-      if P /= null then
+      if Highlight
+        and then P /= null
+      then
          P.Current_File := File;
          P.Current_Line := Line;
 
