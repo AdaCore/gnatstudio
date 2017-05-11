@@ -295,6 +295,18 @@ package body GPS.Kernel.Custom is
          Default_Autoload => True, Force_Load => False);
    end Load_User_Custom_Files;
 
+   -----------------------------------
+   -- Load_No_Autoload_Custom_Files --
+   -----------------------------------
+
+   procedure Load_No_Autoload_Custom_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Parse_Custom_Dir
+        (Kernel, No_Autoload_System_Dir (Kernel), System_Wide,
+         Default_Autoload => False, Force_Load => False);
+   end Load_No_Autoload_Custom_Files;
+
    ------------------------------
    -- Add_Customization_String --
    ------------------------------

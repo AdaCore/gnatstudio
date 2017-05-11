@@ -393,6 +393,18 @@ package body Python_Module is
                 Ignore_User_Config => False);
    end Load_User_Python_Startup_Files;
 
+   -------------------------------------
+   -- Load_No_Autoload_Python_Plugins --
+   -------------------------------------
+
+   procedure Load_No_Autoload_Python_Plugins
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Load_Dir
+        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False,
+         Ignore_User_Config                                        => False);
+   end Load_No_Autoload_Python_Plugins;
+
    ---------------------------------
    -- Python_File_Command_Handler --
    ---------------------------------

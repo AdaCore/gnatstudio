@@ -2336,8 +2336,8 @@ procedure GPS.Main is
          --  the user: reload the system custom files (XML and Python plugins)
          --  with the potentially modified list.
 
-         Load_System_Custom_Files (GPS_Main.Kernel);
-         Python_Module.Load_System_Python_Startup_Files (GPS_Main.Kernel);
+         GPS.Kernel.Custom.Load_No_Autoload_Custom_Files (GPS_Main.Kernel);
+         Python_Module.Load_No_Autoload_Python_Plugins (GPS_Main.Kernel);
       end if;
 
       --  All/most actions are now loaded, we can reset the toolbars.

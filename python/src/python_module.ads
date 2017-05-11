@@ -39,4 +39,9 @@ package Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  As above but load the user's Python plugins
 
+   procedure Load_No_Autoload_Python_Plugins
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Load the python plugins that have not been autoloaded by GPS, using
+   --  startup.xml to identify the ones that need to be loaded.
+
 end Python_Module;

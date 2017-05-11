@@ -67,6 +67,11 @@ package GPS.Kernel.Custom is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  As above but for user's plugins
 
+   procedure Load_No_Autoload_Custom_Files
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Load the customization files s that have not been autoloaded by GPS,
+   --  using startup.xml to identify the ones that need to be loaded.
+
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Customization : Glib.UTF8_String;
