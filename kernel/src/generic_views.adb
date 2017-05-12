@@ -1157,20 +1157,11 @@ package body Generic_Views is
            Local_Formal_MDI_Child_Access (Child);
          View   : constant View_Access := View_From_Child (Self);
          V      : constant Abstract_View_Access := Abstract_View_Access (View);
-
-         Close_Button : Gtk_Button;
-         Req : Gtk_Requisition;
+         Req    : Gtk_Requisition;
       begin
-         --  Add the "Close" button if it doesn't exist
-         if V.Button_Box = null then
-            Gtk_New (Close_Button, -"Close");
-            Gtk_New_Hbox (V.Button_Box);
-            V.Button_Box.Pack_End (Close_Button, False, False, 3);
-            V.Pack_End (V.Button_Box, False, False, 3);
-            Widget_Callback.Object_Connect
-              (Close_Button, Gtk.Button.Signal_Clicked,
-               On_Close_Floating_Child_Access, View);
-            V.Button_Box.Show_All;
+         --  Show the 'Close' button if present
+         if V.Close_Button /= null then
+            V.Close_Button.Show_All;
          end if;
 
          Return_Callback.Object_Connect
@@ -1195,15 +1186,14 @@ package body Generic_Views is
          View   : constant View_Access := View_From_Child (Self);
          V      : constant Abstract_View_Access := Abstract_View_Access (View);
       begin
+         --  Hide the 'Close' button if present
+         if V.Close_Button /= null then
+            V.Close_Button.Hide;
+         end if;
+
          --  Store the position of the floating window
          Store_Position (View);
          View.Set_Size_Request (-1, -1);
-
-         --  Remove the 'Close' button
-         if V.Button_Box /= null then
-            V.Remove (V.Button_Box);
-            V.Button_Box := null;
-         end if;
       end On_Before_Unfloat_Child;
 
       ----------------------
@@ -1220,6 +1210,7 @@ package body Generic_Views is
       is
          Focus_Widget   : Gtk_Widget;
          Finalized_View : Gtk_Widget;
+         Abstract_View  : Abstract_View_Access;
       begin
          if Reuse_If_Exist then
             Find (Kernel, Child, View);
@@ -1239,6 +1230,8 @@ package body Generic_Views is
          Finalized_View := Create_Finalized_View
            (View, Toolbar_Id => Toolbar_Id);
 
+         Abstract_View := Abstract_View_Access (View);
+
          --  A simple check that the widget can indeed get the keyboard focus.
          --  If it can't, this might result in surprising behavior: for
          --  instance, clicking on a MDI tab will send a "child_selected"
@@ -1251,17 +1244,12 @@ package body Generic_Views is
             --  give the focus to the search/filter bar, if any.
             --  If the view does not have any search/filter bar, give it to the
             --  view itself.
-            declare
-               Abstract_View : constant Abstract_View_Access :=
-                                 Abstract_View_Access (View);
-            begin
-               if Abstract_View.Search /= null then
-                  Focus_Widget :=
-                    Gtk_Widget (Abstract_View.Search.Completion_Entry);
-               elsif Abstract_View.Filter /= null then
-                  Focus_Widget := Gtk_Widget (Abstract_View.Filter.Pattern);
-               end if;
-            end;
+            if Abstract_View.Search /= null then
+               Focus_Widget :=
+                 Gtk_Widget (Abstract_View.Search.Completion_Entry);
+            elsif Abstract_View.Filter /= null then
+               Focus_Widget := Gtk_Widget (Abstract_View.Filter.Pattern);
+            end if;
          end if;
 
          Assert
@@ -1289,13 +1277,32 @@ package body Generic_Views is
                      Areas          => Areas);
          Set_Title (Child, View_Name, View_Name);
 
+         --  Create the button box area at the bottom
+
+         Gtk_New
+           (Abstract_View.Button_Box,
+            Orientation_Horizontal);
+         Abstract_View.Button_Box.Set_Layout (Buttonbox_End);
+         View.Pack_End (Abstract_View.Button_Box, Expand => False);
+
+         --  Let the view create its own buttons if needed
+         View.Create_Buttons_Area (Abstract_View.Button_Box);
+
          if Add_Close_Button_On_Float then
             Widget_Callback.Connect
               (Child, Signal_Float_Child, On_Float_Child_Access);
             Widget_Callback.Connect
               (Child, Signal_Before_Unfloat_Child,
                On_Before_Unfloat_Child_Access);
+
+            Gtk_New (Abstract_View.Close_Button, -"Close");
+            Widget_Callback.Object_Connect
+              (Abstract_View.Close_Button, Gtk.Button.Signal_Clicked,
+               On_Close_Floating_Child_Access, View);
+            Abstract_View.Button_Box.Add (Abstract_View.Close_Button);
          end if;
+
+         Abstract_View.Button_Box.Show_All;
 
          --  Put the child in the MDI
 

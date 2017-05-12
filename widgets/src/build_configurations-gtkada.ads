@@ -41,18 +41,19 @@ package Build_Configurations.Gtkada is
    type Build_UI_Record is new Gtk_Hbox_Record with private;
    type Build_UI_Access is access all Build_UI_Record'Class;
 
-   procedure Configuration_Dialog
-     (Registry     : Build_Config_Registry_Access;
-      Parent       : Gtk_Window   := null;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Changes_Made : out Boolean);
-   --  Launch the full configuration dialog
-   --  Changes_Made is set to True if the user caused some changes that
-   --  need to be saved (in other words, if the user clicked "OK" or "Apply").
-   --  Set_Default_Size is called to set a default size for the window. This
-   --  will in general be a function that sets the size by looking at what
-   --  size the user has set before.
+   type Configuration_UI_Record is new Gtk_Vbox_Record with private;
+   type Configuration_UI_Access is access all Configuration_UI_Record;
+   --  Type representing the Build Targets configuration UI, which allows the
+   --  user to configure/add/remove Build Targets.
+
+   procedure Gtk_New
+     (Config_UI : out Configuration_UI_Access;
+      Registry  : Build_Config_Registry_Access);
+   --  Create a new Build Targets configuration UI
+
+   procedure Apply_Changes
+     (Self : not null access Configuration_UI_Record'Class);
+   --  Apply the changes made in the given Build Targets configuration UI
 
    procedure Modes_Dialog
      (Registry     : Build_Config_Registry_Access;
@@ -133,6 +134,10 @@ private
 
       History   : Histories.History;
       --  Reference to the History
+   end record;
+
+   type Configuration_UI_Record is new Gtk_Vbox_Record with record
+      Build_UI : Build_UI_Access;
    end record;
 
 end Build_Configurations.Gtkada;

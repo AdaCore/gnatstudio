@@ -393,11 +393,32 @@ class BuildTargetsEditor(Dialog):
             editor = GPS.BuildTargetsEditor()
             yield editor.open_and_yield()
         """
+        preferences_dialog = Preferences()
+        yield preferences_dialog.open_and_yield()
+        preferences_dialog.select_page("Build Targets")
 
-        yield self._open_and_yield('/Build/Settings/Targets')
-        self.dialog = get_window_by_prefix('Target Configuration')
+        self.editor = get_widget_by_name("Build Targets Editor")
+        self.notebook = pygps.get_widgets_by_type(Gtk.Notebook, self.editor)[0]
+        self.close_button = get_button_from_label(
+            "Close", preferences_dialog.dialog)
+        self.apply_button = get_button_from_label(
+            "Apply", preferences_dialog.dialog)
         self.tree = get_widgets_by_type(Gtk.TreeView,
-                                        self.dialog)[0]
+                                        self.editor)[0]
+
+    def yield_close(self):
+        """
+        Close the Build Targets editor.
+        """
+        self.close_button.clicked()
+        yield wait_idle()
+
+    def yield_apply(self):
+        """
+        Apply the changes made in the Build Targets editor.
+        """
+        self.apply_button.clicked()
+        yield wait_idle()
 
     def select_page(self, page_name):
         """
@@ -415,6 +436,13 @@ class BuildTargetsEditor(Dialog):
         """
 
         select_in_tree(self.tree, 1, page_name)
+
+    def get_current_page_widget(self):
+        """
+        Return the currently displayed page in the Build Targets Editor.
+        """
+
+        return self.notebook.get_nth_page(self.notebook.get_current_page())
 
     def get_switch(self, label, gtk_type):
         """
@@ -435,7 +463,8 @@ class BuildTargetsEditor(Dialog):
             switch_widget = editor.get_switch("Compile only", Gtk.ToggleButton)
         """
 
-        switches = get_widgets_by_type(gtk_type, self.dialog)
+        switches = get_widgets_by_type(
+            gtk_type, self.get_current_page_widget())
 
         result = [switch for switch in switches
                   if BuildTargetsEditor.get_switch_label(

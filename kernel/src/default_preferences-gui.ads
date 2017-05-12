@@ -45,6 +45,18 @@ package Default_Preferences.GUI is
    --  configuration menu.
    --  Override this function if the page needs a local configuration menu.
 
+   function Needs_Apply_Button
+     (Self : not null access Preferences_Page_View_Record) return Boolean
+   is
+     (False);
+   --  Called to know if the editor should set the sensitivity of the 'Apply'
+   --  button.
+   --  Override this function if your page type needs an 'Apply' button.
+
+   procedure On_Apply_Button_Clicked
+     (Self : not null access Preferences_Page_View_Record) is null;
+   --  Called when the 'Apply' button is clicked.
+
    ---------------------------
    -- Preferences_Page_View --
    ---------------------------

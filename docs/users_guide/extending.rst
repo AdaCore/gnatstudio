@@ -3416,7 +3416,7 @@ Customizing Build Targets and Models
 ------------------------------------
 
 You can customize the information displayed in
-:ref:`The_Target_Configuration_Dialog` and in the :guilabel:`Mode
+:ref:`The_Target_Configuration_Editor` and in the :guilabel:`Mode
 selection` via the XML configuration files.
 
 .. _Defining_new_Target_Models:

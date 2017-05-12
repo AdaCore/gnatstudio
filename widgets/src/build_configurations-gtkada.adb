@@ -945,20 +945,15 @@ package body Build_Configurations.Gtkada is
       Refresh (UI, Text);
    end On_Target_Renamed;
 
-   --------------------------
-   -- Configuration_Dialog --
-   --------------------------
+   -------------
+   -- Gtk_New --
+   -------------
 
-   procedure Configuration_Dialog
-     (Registry     : Build_Config_Registry_Access;
-      Parent       : Gtk_Window   := null;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Changes_Made : out Boolean)
+   procedure Gtk_New
+     (Config_UI : out Configuration_UI_Access;
+      Registry  : Build_Config_Registry_Access)
    is
-      UI     : Build_UI_Access;
-      Dialog : Gtk_Dialog;
-      Vbox   : Gtk_Vbox;
+      Vbox          : Gtk_Vbox;
 
       Col           : Gtk_Tree_View_Column;
       Text_Renderer : Gtk_Cell_Renderer_Text;
@@ -969,180 +964,162 @@ package body Build_Configurations.Gtkada is
       Ignore        : Gtk_Button;
       Image         : Gtk_Image;
 
-      Scrolled : Gtk_Scrolled_Window;
+      Scrolled      : Gtk_Scrolled_Window;
 
-      Dummy : Gint;
+      Dummy         : Gint;
       pragma Unreferenced (Dummy, Ignore);
    begin
-      Changes_Made := False;
+      Config_UI := new Configuration_UI_Record;
+      Initialize_Vbox (Config_UI, Homogeneous => False);
+      Config_UI.Set_Name ("Build Targets Editor");
 
-      Gtk_New (Dialog => Dialog,
-               Title  => -"Target Configuration",
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent
-                  or Use_Header_Bar_From_Settings (Parent));
-      Set_Default_Size_From_History (Dialog);
+      Config_UI.Build_UI := new Build_UI_Record;
+      Initialize_Hbox (Config_UI.Build_UI);
 
-      UI := new Build_UI_Record;
-      Initialize_Hbox (UI);
-
-      UI.Registry := Registry;
+      Config_UI.Build_UI.Registry := Registry;
 
       --  Create the tree view
-      Gtk_New (UI.View, Column_Types);
-      Set_Headers_Visible (UI.View, False);
+      Gtk_New (Config_UI.Build_UI.View, Column_Types);
+      Config_UI.Build_UI.View.Set_Headers_Visible (False);
 
       Gtk_New (Col);
 
       Gtk_New (Icon_Renderer);
       Gtk_New (Text_Renderer);
 
-      Pack_Start (Col, Icon_Renderer, False);
-      Pack_Start (Col, Text_Renderer, False);
-      Add_Attribute (Col, Icon_Renderer, "icon-name", Icon_Column);
-      Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
-      Add_Attribute (Col, Text_Renderer, "editable", Editable_Column);
+      Col.Pack_Start (Icon_Renderer, False);
+      Col.Pack_Start (Text_Renderer, False);
+      Col.Add_Attribute (Icon_Renderer, "icon-name", Icon_Column);
+      Col.Add_Attribute (Text_Renderer, "markup", Name_Column);
+      Col.Add_Attribute (Text_Renderer, "editable", Editable_Column);
 
       Build_UI_Callback.Object_Connect
-        (Text_Renderer, Signal_Edited, On_Target_Renamed'Access, UI);
+        (Text_Renderer,
+         Signal_Edited,
+         On_Target_Renamed'Access,
+         Config_UI.Build_UI);
 
-      Dummy := Append_Column (UI.View, Col);
+      Dummy := Config_UI.Build_UI.View.Append_Column (Col);
 
       Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Set_Shadow_Type (Scrolled, Shadow_In);
-      Add (Scrolled, UI.View);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+      Scrolled.Set_Shadow_Type (Shadow_In);
+      Scrolled.Add (Config_UI.Build_UI.View);
 
       Gtk_New_Vbox (Vbox);
-      Pack_Start (Vbox, Scrolled, True, True, 0);
+      Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
       --  Create the Add/Remove/Duplicate buttons
       Gtk_New_Hbox (Buttons, Spacing => 3);
 
       Gtk_New (Button);
       Gtk_New_From_Icon_Name (Image, "gps-add-symbolic", Icon_Size_Menu);
-      Set_Image (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Set_Tooltip_Text (Widget  => Button,
-                        Text    => -"Add new target");
-      Pack_Start (Buttons, Button, False, False, 0);
+      Button.Set_Image (Image);
+      Button.Set_Relief (Relief_None);
+      Button.Set_Tooltip_Text (-"Add new target");
+      Buttons.Pack_Start (Button, Expand => False);
       Object_Connect
         (Widget      => Button,
          Name        => Gtk.Button.Signal_Clicked,
          Cb          => On_Add_Target'Access,
-         Slot_Object => UI,
+         Slot_Object => Config_UI.Build_UI,
          After       => True);
 
       Gtk_New (Button);
       Gtk_New_From_Icon_Name (Image, "gps-remove-symbolic", Icon_Size_Menu);
-      Set_Image (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Set_Tooltip_Text (Widget  => Button,
-                        Text    => -"Remove selected target");
-      Pack_Start (Buttons, Button, False, False, 0);
+      Button.Set_Image (Image);
+      Button.Set_Relief (Relief_None);
+      Button.Set_Tooltip_Text (-"Remove selected target");
+      Buttons.Pack_Start (Button, Expand => False);
       Object_Connect
         (Widget      => Button,
          Name        => Gtk.Button.Signal_Clicked,
          Cb          => On_Remove_Target'Access,
-         Slot_Object => UI,
+         Slot_Object => Config_UI.Build_UI,
          After       => True);
 
       Gtk_New (Button);
       Gtk_New_From_Icon_Name
         (Image, "gps-new-document-symbolic", Icon_Size_Menu);
-      Set_Image (Button, Image);
-      Set_Relief (Button, Relief_None);
-      Set_Tooltip_Text (Widget  => Button,
-                        Text    => -"Clone selected target");
-      Pack_Start (Buttons, Button, False, False, 0);
+      Button.Set_Image (Image);
+      Button.Set_Relief (Relief_None);
+      Button.Set_Tooltip_Text (-"Clone selected target");
+      Buttons.Pack_Start (Button, Expand => False);
       Object_Connect
         (Widget      => Button,
          Name        => Gtk.Button.Signal_Clicked,
          Cb          => On_Duplicate_Target'Access,
-         Slot_Object => UI,
+         Slot_Object => Config_UI.Build_UI,
          After       => True);
 
-      Pack_Start (UI, Vbox, False, True, 0);
+      Config_UI.Build_UI.Pack_Start (Vbox, Expand => False);
 
       Gtk_New_Vbox (Vbox);
-      Pack_Start (UI, Vbox, True, True, 3);
+      Config_UI.Build_UI.Pack_Start
+        (Vbox,
+         Expand => True,
+         Fill   => True);
 
-      Pack_Start (Get_Content_Area (Dialog), Buttons, False, False, 3);
+      Config_UI.Pack_Start (Buttons, Expand => False);
 
       --  Create the main notebook
 
-      Gtk_New (UI.Notebook);
-      Set_Show_Tabs (UI.Notebook, False);
-      Set_Show_Border (UI.Notebook, False);
-      Pack_Start (Vbox, UI.Notebook, True, True, 0);
+      Gtk_New (Config_UI.Build_UI.Notebook);
+      Config_UI.Build_UI.Notebook.Set_Show_Tabs (False);
+      Config_UI.Build_UI.Notebook.Set_Show_Border (False);
+      Vbox.Pack_Start
+        (Config_UI.Build_UI.Notebook,
+         Expand => True,
+         Fill   => True);
 
       --  Create page 0 in the notebook
       declare
          Label : Gtk_Label;
       begin
          Gtk_New (Label);
-         Set_Use_Markup (Label, True);
-         Set_Markup (Label, -"Select a target to configure.");
-         Append_Page (UI.Notebook, Label);
+         Label.Set_Use_Markup (True);
+         Label.Set_Markup (-"Select a target to configure.");
+         Config_UI.Build_UI.Notebook.Append_Page (Label);
       end;
 
       Object_Connect
-        (Widget      => Get_Selection (UI.View),
+        (Widget      => Get_Selection (Config_UI.Build_UI.View),
          Name        => Gtk.Tree_Selection.Signal_Changed,
          Cb          => On_Selection_Changed'Access,
-         Slot_Object => UI,
+         Slot_Object => Config_UI.Build_UI,
          After       => True);
-
-      --  Create the dialog buttons
-
-      Ignore := Gtk_Button (Add_Button (Dialog, -"OK", Gtk_Response_OK));
-      Ignore := Gtk_Button
-        (Add_Button (Dialog, -"Apply", Gtk_Response_Apply));
-      Ignore := Gtk_Button
-        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
-
-      Set_Default_Response (Dialog, Gtk_Response_OK);
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
+      Config_UI.Pack_Start
+        (Config_UI.Build_UI,
+         Expand => True,
+         Fill   => True);
 
-      Refresh (UI, "");
-
-      Show_All (Dialog);
+      Refresh (Config_UI.Build_UI, "");
 
       --  Select the first target of the first category, initially
 
-      Set_Current_Page (UI.Notebook, 1);
+      Set_Current_Page (Config_UI.Build_UI.Notebook, 1);
 
       declare
          Path : Gtk_Tree_Path;
       begin
          Gtk_New (Path, "0:0");
-         Select_Path (Get_Selection (UI.View), Path);
+         Select_Path (Get_Selection (Config_UI.Build_UI.View), Path);
          Path_Free (Path);
       end;
+   end Gtk_New;
 
-      --  Run the dialog
+   -------------------
+   -- Apply_Changes --
+   -------------------
 
-      loop
-         case Run (Dialog) is
-            when Gtk_Response_Apply =>
-               Save_Targets (UI);
-               Changes_Made := True;
-
-            when Gtk_Response_OK =>
-               Save_Targets (UI);
-               Destroy (Dialog);
-               Changes_Made := True;
-               exit;
-
-            when others =>
-               Destroy (Dialog);
-               exit;
-         end case;
-      end loop;
-   end Configuration_Dialog;
+   procedure Apply_Changes
+     (Self : not null access Configuration_UI_Record'Class) is
+   begin
+      Save_Targets (Self.Build_UI);
+   end Apply_Changes;
 
    ------------------
    -- Modes_Dialog --

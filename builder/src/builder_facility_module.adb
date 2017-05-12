@@ -76,6 +76,7 @@ with GPS.Tools_Output;          use GPS.Tools_Output;
 with Build_Command_Manager.Console_Writers;
 with Build_Command_Manager.Location_Parsers;
 with Build_Command_Manager.End_Of_Build;
+with Builder_Facility_Module.GUI;
 with Builder_Facility_Module.Output_Choppers;
 with Builder_Facility_Module.Text_Splitters;
 with Builder_Facility_Module.UTF8_Converters;
@@ -85,7 +86,8 @@ with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
 
-   Me          : constant Trace_Handle := Create ("Builder_Facility_Module");
+   Me          : constant Trace_Handle :=
+                   Create ("Builder_Facility_Module");
    Modes_Trace : constant Trace_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
@@ -1447,32 +1449,19 @@ package body Builder_Facility_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Changes_Made : Boolean;
-
-      procedure Set_Size (W : not null access Gtk_Window_Record'Class);
-      --  Set the default size for the dialog
-
-      procedure Set_Size (W : not null access Gtk_Window_Record'Class) is
-      begin
-         Set_Default_Size_From_History (W, "build-targets", Kernel, 800, 600);
-      end Set_Size;
-
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Success : Boolean;
    begin
-      Configuration_Dialog
-        (Builder_Module_ID.Registry,
-         Get_Main_Window (Kernel),
-         Set_Size'Access,
-         Changes_Made);
+      Success := Execute_Action
+           (Kernel,
+            Action               => "open Preferences",
+            Synchronous          => True,
+            Error_Msg_In_Console => True);
 
-      if Changes_Made then
-         Refresh_Graphical_Elements;
+      Kernel.Get_Preferences.Get_Editor.Display_Page
+        (Page_Name => Builder_Facility_Module.GUI.Build_Targets_Page_Name);
 
-         --  Save the user-defined targets
-         Save_Targets;
-      end if;
-
-      return Commands.Success;
+      return (if Success then Commands.Success else Commands.Failure);
    end Execute;
 
    -------------
@@ -1679,6 +1668,10 @@ package body Builder_Facility_Module is
       if P.Kernel = null then
          raise Program_Error;
       end if;
+
+      --  Register the GUI
+
+      Builder_Facility_Module.GUI.Register_Module (Kernel);
 
       --  Register the menus
 

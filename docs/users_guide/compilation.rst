@@ -30,9 +30,8 @@ The Build Menu
 
 Use the build menu to access capabilities related to checking, parsing,
 and compiling files as well as creating and running executables.  This
-menu is fully configurable via the :guilabel:`Targets` settings;
-what is documented here are the default menus (see
-:menuselection:`Build --> Settings --> Targets` below).
+menu is fully configurable via the :guilabel:`Targets` settings
+(:menuselection:`Edit --> Preferences --> Build Targets`).
 
 .. index:: menu; build --> check syntax
 
@@ -170,7 +169,7 @@ what is documented here are the default menus (see
 
    When using an external terminal, GPS launches an external terminal
    utility to perform your application's execution and input/output.
-   Configure this external utility in the 
+   Configure this external utility in the
    :menuselection:`External Commands --> Execute command` preferences
    dialog.
 
@@ -191,15 +190,6 @@ what is documented here are the default menus (see
    e.g.  :file:`/bin/sh`), then the syntax used to execute the command is
    the one for that shell. Otherwise, GPS spawns the command directly
    without any shell interpretation.
-
-
-.. index:: menu; build --> settings --> targets
-
-* :menuselection:`Build --> Settings --> Targets`
-
-    Opens the Target Configuration Dialog.  See
-    :ref:`The_Target_Configuration_Dialog`.
-
 
 .. index:: menu; build --> settings --> toolchains
 
@@ -236,9 +226,9 @@ probably load the :file:`makefile.py` startup script (see the
 :menuselection:`Edit --> Preferences --> Plugins` menu).
 
 .. index:: build targets
-.. _The_Target_Configuration_Dialog:
+.. _The_Target_Configuration_Editor:
 
-The Target Configuration Dialog
+The Target Configuration Editor
 ===============================
 
 GPS provides an interface for launching operations such as building
@@ -246,12 +236,13 @@ projects, compiling individual files, and performing syntax or semantic
 checks.  These operations all involve launching an external command and
 parsing the output for error messages. In GPS, these operations are called
 "Targets", and can be configured either through the Target Configuration
-dialog or through XML configuration.  See
-:ref:`Customizing_build_Targets_and_Models`.
+Editor, accesible from the :menuselection:`Edit --> Preferences --> Build
+Targets`,or through XML configuration.
+See :ref:`Customizing_build_Targets_and_Models`.
 
-.. image:: target-configuration-dialog.jpg
+.. image:: target-configuration-editor.png
 
-This dialog is divided in two areas: on the left is a tree listing Targets
+This editor is divided in two areas: on the left is a tree listing Targets
 and in the main area is a panel for configuring the Target which is
 currently selected in the tree.
 

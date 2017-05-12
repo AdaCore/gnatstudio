@@ -212,7 +212,6 @@
                optional='True'/>
          <separator />
          <menu label='Settings'>
-            <menu label='_Targets'     action='build open targets settings'/>
             <menu label='_Modes'       action='build open modes settings' optional='True'/>
             <menu label='T_oolchains'  action='open toolchains editor'/>
          </menu>

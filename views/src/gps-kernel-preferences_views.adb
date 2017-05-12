@@ -23,6 +23,8 @@ with Glib.Object;                   use Glib.Object;
 with Glib_Values_Utils;             use Glib_Values_Utils;
 
 with Gtk.Box;                       use Gtk.Box;
+with Gtk.Button;                    use Gtk.Button;
+with Gtk.Button_Box;                use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.List_Box_Row;              use Gtk.List_Box_Row;
@@ -171,6 +173,7 @@ package body GPS.Kernel.Preferences_Views is
       Default_Page         : Preferences_Page;
       Hidden_Page_Index    : Gint;
       Provider_Registry    : Search_Provider_Registry_Access;
+      Apply_Button         : Gtk_Button;
    end record;
    type GPS_Preferences_Editor is
      access all GPS_Preferences_Editor_Record'Class;
@@ -183,6 +186,9 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Create_Menu
      (View    : not null access GPS_Preferences_Editor_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Create_Buttons_Area
+     (View        : not null access GPS_Preferences_Editor_Record;
+      Buttons_Box : not null access Gtk_Button_Box_Record'Class);
    overriding function Get_Widget
      (Self : not null access GPS_Preferences_Editor_Record)
       return Gtk.Widget.Gtk_Widget;
@@ -207,6 +213,10 @@ package body GPS.Kernel.Preferences_Views is
      (Self : access GPS_Preferences_Editor_Record'Class) return Gtk_Widget;
    --  Initialize and add all the widgets needed for the
    --  Preferences_Editor_Record view given in parameter.
+
+   procedure On_Apply_Button_Clicked (Widget : access GObject_Record'Class);
+   --  Called when the 'Apply' button is clicked. Used to notify the selected
+   --  page that it can applies the changes, if needed.
 
    procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
    --  Used to reset the Preferences_GObjects_Map mapping the preferences names
@@ -421,6 +431,22 @@ package body GPS.Kernel.Preferences_Views is
       Page_View.Create_Menu (Menu);
    end Create_Menu;
 
+   -------------------------
+   -- Create_Buttons_Area --
+   -------------------------
+
+   overriding procedure Create_Buttons_Area
+     (View        : not null access GPS_Preferences_Editor_Record;
+      Buttons_Box : not null access Gtk_Button_Box_Record'Class) is
+   begin
+      Gtk_New (View.Apply_Button, "Apply");
+      View.Apply_Button.Set_No_Show_All (True);
+      Buttons_Box.Add (View.Apply_Button);
+      View.Apply_Button.On_Clicked
+        (On_Apply_Button_Clicked'Access,
+         Slot => View);
+   end Create_Buttons_Area;
+
    ----------------
    -- Get_Widget --
    ----------------
@@ -603,11 +629,17 @@ package body GPS.Kernel.Preferences_Views is
                --  Show the newly created page view
                Page_View.Show_All;
                Pref_View.Pages_Notebook.Append_Page (Page_View, null);
+
             end;
          end if;
 
          Pref_View.Pages_Notebook.Set_Current_Page
            (Page_Index);
+
+         --  Hide or show the 'Apply' button depending on the selected page
+         --  needs.
+         Pref_View.Apply_Button.Set_Visible
+           (Get_Selected_Page_View (Pref_View).Needs_Apply_Button);
       end if;
    end Selection_Changed;
 
@@ -845,7 +877,7 @@ package body GPS.Kernel.Preferences_Views is
       --  Show all pages for more convenient access
       Self.Pages_Tree.Expand_All;
 
-      --  Register a hook function which will update all the prefernces
+      --  Register a hook function which will update all the preferences
       --  widgets when preferences changes.
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Self);
 
@@ -870,6 +902,18 @@ package body GPS.Kernel.Preferences_Views is
    begin
       return Page_Name /= Advanced_Page_Name or else Show_Advanced.Get_Pref;
    end Is_Advanced_Page_Visible;
+
+   -----------------------------
+   -- On_Apply_Button_Clicked --
+   -----------------------------
+
+   procedure On_Apply_Button_Clicked (Widget : access GObject_Record'Class)
+   is
+      Editor  : constant GPS_Preferences_Editor :=
+                  GPS_Preferences_Editor (Widget);
+   begin
+      Get_Selected_Page_View (Editor).On_Apply_Button_Clicked;
+   end On_Apply_Button_Clicked;
 
    ----------------
    -- On_Destroy --

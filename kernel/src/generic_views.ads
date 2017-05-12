@@ -33,6 +33,8 @@ with Gtk.Box;
 private with Gtk.Check_Menu_Item;
 private with Gtk.Radio_Menu_Item;
 private with GNAT.Strings;
+with Gtk.Button;
+with Gtk.Button_Box; use Gtk.Button_Box;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
@@ -85,6 +87,12 @@ package Generic_Views is
    --  This menu should contain entries that configure the current view, for
    --  instance by using GPS.Kernel.Preferences.Append_Menu or
    --  GPS.Kernel.Modules.UI.Append_Menu.
+
+   procedure Create_Buttons_Area
+     (View        : not null access View_Record;
+      Buttons_Box : not null access Gtk_Button_Box_Record'Class) is null;
+   --  Override this procedure if the view needs additional buttons in the
+   --  bottom area.
 
    procedure Append_Toolbar
      (Self        : not null access View_Record;
@@ -447,9 +455,12 @@ private
       Config_Menu : Gtk.Menu.Gtk_Menu;
       --  The button that shows the config menu, and the menu itself
 
-      Button_Box : Gtk.Box.Gtk_Hbox := null;
+      Button_Box : Gtk.Button_Box.Gtk_Button_Box := null;
       --  The button box that contains the "close" button, for dialog-like
       --  views.
+
+      Close_Button : Gtk.Button.Gtk_Button := null;
+      --  The optional 'Close' button that appears when the view is floating
    end record;
 
 end Generic_Views;
