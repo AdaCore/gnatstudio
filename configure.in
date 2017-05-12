@@ -1,4 +1,4 @@
-AC_INIT(gps,[18.0w],[report@adacore.com])
+AC_INIT(gps,[2017],[report@adacore.com])
 GPS_VERSION=AC_PACKAGE_VERSION()
 
 AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
