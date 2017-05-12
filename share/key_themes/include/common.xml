@@ -20,9 +20,8 @@
   <key action="next subprogram">primary-Down</key>
   <key action="previous tag">primary-less</key>
   <key action="next tag">primary-greater</key>
-  <key action="backward locations history">alt-Left</key>
-  <key action="forward locations history">alt-Right</key>
-
+  <key action="backward locations history">shift-primary-braceleft</key>
+  <key action="forward locations history">shift-primary-braceright</key>
 
   <key action="Build Main Number 1">F4</key>
   <key action="Run Main Number 1">shift-F2</key>
@@ -38,10 +37,10 @@
   <key action="Cursor select next occurence of selection" >shift-primary-N</key>
   <key action="Cursor skip next occurence of selection" >primary-alt-n</key>
 
-  <key action="Move to next word">primary-Right</key>
-  <key action="Move to previous word">primary-Left</key>
-  <key action="Move to next word (extend selection)">shift-primary-Right</key>
-  <key action="Move to previous word (extend selection)">shift-primary-Left</key>
+  <key action="Move to next word">alt-Right</key>
+  <key action="Move to previous word">alt-Left</key>
+  <key action="Move to next word (extend selection)">shift-alt-Right</key>
+  <key action="Move to previous word (extend selection)">shift-alt-Left</key>
   <key action="Move to previous char">Left</key>
   <key action="Move to next char">Right</key>
   <key action="Move to previous char (extend selection)">shift-Left</key>
