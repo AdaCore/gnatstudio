@@ -236,7 +236,7 @@ procedure GPS.Main is
    Code_Analysis_Trace    : constant Trace_Handle :=
                      Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
    GNAThub_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.GNAThub", GNATCOLL.Traces.Off);
+                     Create ("MODULE.GNAThub", GNATCOLL.Traces.On);
    CodePeer_Trace         : constant Trace_Handle :=
                      Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
    GNATStack_Trace        : constant Trace_Handle :=
