@@ -6,7 +6,7 @@ import GPS
 import gps_utils
 import os_utils
 
-gnathub_menu = "/Gnathub/"
+gnathub_menu = "/Analyze/GNAThub/"
 tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatmetric',
          'spark2014']
 

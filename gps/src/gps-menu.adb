@@ -315,7 +315,7 @@ package body GPS.Menu is
                Category    => "Internal");
             Register_Menu
               (Kernel,
-               Path   => "/Project/Recent/" & Escape_Underscore
+               Path   => "/File/Open Recent Projects/" & Escape_Underscore
                  (F.Display_Base_Name),
                Action => "open recent project: " & N.all);
             Menu_Module.Recent_Project_Actions.Append

@@ -1317,7 +1317,7 @@ package body Src_Editor_Module is
                 Category    => "Internal");
             Register_Menu
                (Kernel,
-                Path     => "/File/Recent/"
+                Path     => "/File/Recent Files/"
                    & Escape_Underscore (F.Display_Base_Name),
                 Action   => "open recent file: " & N.all);
             M.Recent_File_Actions.Append ("open recent file: " & N.all);
