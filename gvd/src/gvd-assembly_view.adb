@@ -22,6 +22,7 @@ with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
+with Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
 
@@ -62,6 +63,7 @@ with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;
 with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
+with GVD.Assembly_Decorators;   use GVD.Assembly_Decorators;
 with GVD.Generic_View;          use GVD.Generic_View;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
@@ -104,14 +106,13 @@ package body GVD.Assembly_View is
          Current_Range       : Cache_Data_Access;
          --  The range of assembly code being displayed.
 
-         Highlight_Color     : Gdk_RGBA;
-         --  The way the assembly range corresponding to the current source
-         --  line should be displayed.
-
          Source_Line_Start   : GVD.Types.Address_Type :=
-                                 GVD.Types.Invalid_Address;
+           GVD.Types.Invalid_Address;
+
          Source_Line_End     : GVD.Types.Address_Type :=
-                                 GVD.Types.Invalid_Address;
+           GVD.Types.Invalid_Address;
+
+         Decorator           : Assembly_Decorators.Decorator;
       end record;
    type Assembly_View is access all Assembly_View_Record'Class;
 
@@ -334,9 +335,8 @@ package body GVD.Assembly_View is
    Method_Offset_Column : constant := 2;
    Instr_Column         : constant := 3;
    Opcodes_Column       : constant := 4;
-   Location_Column      : constant := 5;
-   FG_Color_Column      : constant := 6;
-   BG_Color_Column      : constant := 7;
+   FG_Color_Column      : constant := 5;
+   BG_Color_Column      : constant := 6;
 
    -----------------
    -- Create_Menu --
@@ -351,6 +351,7 @@ package body GVD.Assembly_View is
       Append_Menu (Menu, K, Asm_Show_Addresses);
       Append_Menu (Menu, K, Asm_Show_Offset);
       Append_Menu (Menu, K, Asm_Show_Opcodes);
+      Append_Menu (Menu, K, Asm_Highlight_Instructions);
    end Create_Menu;
 
    ---------------
@@ -362,12 +363,7 @@ package body GVD.Assembly_View is
       Font : Pango.Font.Pango_Font_Description) is
    begin
       --  Font
-
       Set_Font (View, Font);
-
-      --  Current address range highlighting
-
-      View.Highlight_Color := Asm_Highlight_Color.Get_Pref;
    end Configure;
 
    ---------------------
@@ -412,22 +408,28 @@ package body GVD.Assembly_View is
    is
       use Ada.Strings.Unbounded;
 
-      Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
-      Row      : Gtk_Tree_Iter;
-      Values   : Glib.Values.GValue_Array (1 .. 5);
-      Columns  : Columns_Array (Values'Range);
-      Last     : Gint := 0;
+      Model     : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Row       : Gtk_Tree_Iter;
+      Values    : Glib.Values.GValue_Array (1 .. 5);
+      Columns   : Columns_Array (Values'Range);
+      Last      : Gint := 0;
+      Registers : Registers_Set.Set;
 
-      Detached : Gtk.Tree_Model.Gtk_Tree_Model;
    begin
       if View = null then
          return;
       end if;
 
-      Detached := View.Tree.Get_Model;
-      View.Tree.Set_Model (Null_Gtk_Tree_Model);
-
       Model.Clear;
+
+      if Asm_Highlight_Instructions.Get_Pref then
+         for Item of
+           Visual_Debugger
+             (Get_Process (View)).Debugger.Get_Register_Names
+         loop
+            Registers.Insert (Item);
+         end loop;
+      end if;
 
       for El of Elements loop
          Model.Append (Row, Null_Iter);
@@ -452,30 +454,21 @@ package body GVD.Assembly_View is
          if El.Instr /= Null_Unbounded_String then
             Last           := Last + 1;
             Columns (Last) := Instr_Column;
-            Values  (Last) := As_String (To_String (El.Instr));
+            Values  (Last) := As_String
+              ((if Asm_Highlight_Instructions.Get_Pref
+               then View.Decorator.Decorate (To_String (El.Instr), Registers)
+               else Glib.Convert.Escape_Text (To_String (El.Instr))));
+
          end if;
 
          if El.Opcodes /= Null_Unbounded_String then
-            Last        := Last + 1;
+            Last           := Last + 1;
             Columns (Last) := Opcodes_Column;
             Values  (Last) := As_String (To_String (El.Opcodes));
          end if;
 
-         if El.File /= No_File
-           and then El.Line /= 0
-         then
-            Last           := Last + 1;
-            Columns (Last) := Location_Column;
-            Values  (Last) := As_String
-              (+Base_Name (El.File) & ":" & El.Line'Img);
-         end if;
-
-         Model.Set
-           (Row, Glib.Gint_Array (Columns (1 .. Last)), Values (1 .. Last));
-         Unset (Values (1 .. Last));
+         Set_And_Clear (Model, Row, Columns (1 .. Last), Values (1 .. Last));
       end loop;
-
-      View.Tree.Set_Model (Detached);
    end Fill_Model;
 
    --------------
@@ -545,6 +538,9 @@ package body GVD.Assembly_View is
 
          --  Highlight the new range
 
+         Columns (1) := BG_Color_Column;
+         Gdk.RGBA.Set_Value (Values (1), Editor_Current_Line_Color.Get_Pref);
+
          if Found then
             while Start_Iter /= Null_Iter
               and then String_To_Address
@@ -553,11 +549,12 @@ package body GVD.Assembly_View is
             loop
                Model.Set
                  (Start_Iter,
-                  FG_Color_Column,
-                  To_Proxy (View.Highlight_Color'Address));
+                  Glib.Gint_Array (Columns (1 .. 1)),
+                  Values (1 .. 1));
 
                Model.Next (Start_Iter);
             end loop;
+            Unset (Values (1 .. 1));
          end if;
       end if;
 
@@ -617,6 +614,10 @@ package body GVD.Assembly_View is
       end if;
 
       View.Tree.Set_Model (Detached);
+
+      if Start_Iter /= Null_Iter then
+         View.Tree.Get_Selection.Select_Iter (Start_Iter);
+      end if;
    end Highlight;
 
    -----------------------
@@ -1114,10 +1115,6 @@ package body GVD.Assembly_View is
 
    overriding procedure Update (View : not null access Assembly_View_Record) is
       Process      : constant Visual_Debugger := Get_Process (View);
-
-      Iter         : Gtk_Tree_Iter;
-      Path         : Gtk_Tree_Path;
-      Found        : Boolean;
       Address_Low  : Address_Type;
       Address_High : Address_Type;
       Size         : Integer;
@@ -1197,16 +1194,6 @@ package body GVD.Assembly_View is
       --  Redo the highlighting
 
       Highlight (Assembly_View (View));
-
-      --  Make sure that the Pc line is visible
-
-      Iter_From_Address
-        (Assembly_View (View), Process.Pc, Iter, Found);
-      if Found then
-         Path := Assembly_View (View).Model.Get_Path (Iter);
-         Assembly_View (View).Tree.Scroll_To_Cell (Path, null, True, 0.5, 0.0);
-         Path_Free (Path);
-      end if;
    end Update;
 
    --------------
@@ -1342,7 +1329,6 @@ package body GVD.Assembly_View is
          Method_Offset_Column => GType_String,
          Instr_Column         => GType_String,
          Opcodes_Column       => GType_String,
-         Location_Column      => GType_String,
          FG_Color_Column      => Gdk.RGBA.Get_Type,
          BG_Color_Column      => Gdk.RGBA.Get_Type);
 
@@ -1359,8 +1345,10 @@ package body GVD.Assembly_View is
 
       Gtk_New (Widget.Model, Column_Types);
       Gtk_New (Widget.Tree,  Widget.Model);
-      Widget.Tree.Get_Selection.Set_Mode (Selection_None);
+      Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
       Widget.Tree.Set_Headers_Visible (False);
+      Widget.Tree.Set_Enable_Search (False);
+      Widget.Tree.Set_Show_Expanders (False);
       Add (Scrolled, Widget.Tree);
 
       Gtk_New (Col);
@@ -1407,7 +1395,7 @@ package body GVD.Assembly_View is
       Col.Set_Clickable (False);
       Gtk_New (Render);
       Col.Pack_Start (Render, False);
-      Col.Add_Attribute (Render, "text", Instr_Column);
+      Col.Add_Attribute (Render, "markup", Instr_Column);
       Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
       Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
 
@@ -1432,7 +1420,7 @@ package body GVD.Assembly_View is
 
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
-      Hook := new On_Pref_Changed;
+      Hook      := new On_Pref_Changed;
       Hook.View := Assembly_View (Widget);
       Preferences_Changed_Hook.Add (Hook, Watch => Widget);
 
@@ -1488,12 +1476,6 @@ package body GVD.Assembly_View is
    is
       pragma Unreferenced (Kernel);
    begin
-      if Pref = null
-        or else Pref = Preference (Asm_Highlight_Color)
-      then
-         Self.View.Highlight_Color := Asm_Highlight_Color.Get_Pref;
-      end if;
-
       if Pref = null
         or else Pref = Preference (Default_Style)
       then

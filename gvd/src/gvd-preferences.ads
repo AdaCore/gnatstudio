@@ -46,11 +46,11 @@ package GVD.Preferences is
    Editor_Current_Line_Color     : Color_Preference;
 
    -- Assembly Window --
-   Asm_Highlight_Color           : Color_Preference;
    Assembly_Range_Size           : Integer_Preference;
    Asm_Show_Addresses            : Boolean_Preference;
    Asm_Show_Offset               : Boolean_Preference;
    Asm_Show_Opcodes              : Boolean_Preference;
+   Asm_Highlight_Instructions    : Boolean_Preference;
 
    -- Registers view --
    Registers_Hexadecimal         : Boolean_Preference;

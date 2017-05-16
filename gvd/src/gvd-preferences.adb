@@ -102,14 +102,6 @@ package body GVD.Preferences is
          Maximum  => 100000,
          Default  => 200);
 
-      Asm_Highlight_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Asm-Highlight-Color",
-         Path     => -"Debugger:Assembly",
-         Label    => -"Current assembly line",
-         Doc      => -"Color to highlight current line in assembly view.",
-         Default  => "#0000FF");
-
       Asm_Show_Addresses := Create_Invisible_Pref
         (Manager  => Prefs,
          Name     => "assembly_view-show-addresses",
@@ -127,6 +119,12 @@ package body GVD.Preferences is
          Name     => "assembly_view-show-opcodes",
          Label    => -"Show opcodes",
          Default  => False);
+
+      Asm_Highlight_Instructions := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-highlight-instructions",
+         Label    => -"Highlight instructions",
+         Default  => True);
 
       Change_Color := Create
         (Manager  => Prefs,
