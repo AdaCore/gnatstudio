@@ -68,12 +68,12 @@ class MDL_Language(GPS.Language):
     A class that describes the MDL and Simulink language for GPS.
     """
     const_split = re.compile('#QGEN.*#')
+    # The constant string used to create a construct id
+    const_id = "#QGEN"
 
     # @overriding
-
     def __init__(self):
-        # The constant string used to create a construct id
-        self.const_id = "#QGEN"
+        pass
 
     @staticmethod
     def register():
@@ -107,11 +107,11 @@ class MDL_Language(GPS.Language):
                 idx = idx + 1
                 offset = max(offset, sloc_end[2]) + 1
                 c_id = "{0}{1}{2}#{3}".format(
-                    it_name, self.const_id, sloc_end, it_id)
+                    it_name, MDL_Language.const_id, sloc_end[-1], it_id)
                 c_name = it_name if flat else Diagram_Utils.block_split(
                     it_name, count=1, backward=True)[-1]
                 viewer.constructs.append(
-                    (c_name, c_id, sloc_start, sloc_end, type))
+                    (c_name, c_id, sloc_start, sloc_end, type, it_id))
             viewer.parsing_complete = True
             GPS.Hook('semantic_tree_updated').run(file)
             GPS.Console().write("Outline view generated\n")
@@ -189,7 +189,17 @@ class MDL_Language(GPS.Language):
             # If the construct was a diagram, open it
             # otherwise highlight the item
             if diag.id == construct_id:
-                view.set_diagram(diag)
+                try:
+                    sloc = int(construct.id.split(
+                        MDL_Language.const_id, 1)[-1].split('#', 1)[0])
+                    view.update_nav_status((view.diagram.id, -1))
+                    view.update_nav_status((construct_id, sloc))
+                except ValueError:
+                    logger.log(
+                        "Malformed construct id : %s, not added to history\n" %
+                        construct.id)
+                finally:
+                    view.set_diagram(diag, update_prev=False)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
                     view.diags, construct_id)
@@ -197,7 +207,7 @@ class MDL_Language(GPS.Language):
                     diagram, item = info
                     view.diags.clear_selection()
                     diagram.select(item)
-                    view.set_diagram(diagram)
+                    view.set_diagram(diagram, update_prev=False)
                     view.scroll_into_view(item)
 
         QGEN_Diagram_Viewer.get_or_create(
@@ -230,7 +240,7 @@ class MDL_Language(GPS.Language):
                 sloc_end=sloc_end,
                 sloc_entity=sloc_start)
 
-        for (c_name, c_id, sloc_start, sloc_end, type) in viewer.constructs:
+        for c_name, c_id, sloc_start, sloc_end, type, _ in viewer.constructs:
             add_construct(c_name, c_id, sloc_start, sloc_end, type)
 
 
@@ -480,35 +490,30 @@ class CLI(GPS.Process):
     @staticmethod
     def action_goto_previous_subsystem():
         """
-        Retrieves the focused QGen Diagram viewer and changes the
-        diagram to display based on the `text` field of the
-        `qgen_navigation_info` item of the current diagram.
+        Retrieves the focused QGen Diagram viewer and get the
+        previous diagram from the history list.
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
         if viewer:
-            diag_name = viewer.diagram.get_item('qgen_navigation_info').text
-            if diag_name != "":
+            diag_name = viewer.get_prev_diag()
+            if diag_name is not None:
                 new_diag = viewer.diags.get(diag_name)
                 viewer.set_diagram(new_diag, update_prev=False)
-                # ??? Disable previous button when no previous
 
     @staticmethod
     def action_goto_parent_subsystem():
         """
         Retrieves the focused QGen Diagram viewer and changes the
         diagram to display based on the `parent` field of the
-        `qgen_navigation_info` item of the current diagram.
+        `qgen_navigation_info` item of the current diagram or
+        if non existent retrieves it from the history list.
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
         if viewer:
-            navigation_info = viewer.diagram.get_item('qgen_navigation_info')
-            diag_name = navigation_info.data.get('parent')
-            if diag_name != "":
+            diag_name = viewer.get_parent_diag()
+            if diag_name is not None:
                 new_diag = viewer.diags.get(diag_name)
-                new_diag.get_item(
-                    'qgen_navigation_info').text = viewer.diagram.id
                 viewer.set_diagram(new_diag, update_prev=False)
-                # ??? Disable parent button when no parent
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
@@ -534,6 +539,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         super(QGEN_Diagram_Viewer, self).__init__()
         self.constructs = []
         self.parsing_complete = False
+
+        # A construct or None list, used for parent browsing
+        self.root_diag_id = ""
+        self.nav_status = []
+        self.nav_index = -1
         # The associated .mdl file
         file = None
         # The list of diagrams read from this file a JSON_Diagram_File instance
@@ -615,8 +625,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json(
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
-                    v.set_diagram(v.diags.get(), update_prev=False)
-
+                    root_diag = v.diags.get()
+                    v.set_diagram(root_diag, update_prev=False)
+                    v.root_diag_id = root_diag.id
                 if on_loaded:
                     on_loaded(v)
 
@@ -647,6 +658,55 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             if v.diags:
                 v.diagram = v.diags.get()
         return v
+
+    def update_nav_status(self, construct=""):
+        self.nav_index += 1
+        self.nav_status.insert(self.nav_index, construct)
+
+    def get_prev_diag(self):
+
+        if self.nav_index < 0:
+            return None
+
+        diag_name, sloc = self.nav_status[self.nav_index]
+        self.nav_index -= 1
+        if sloc == -1:
+            return diag_name
+        elif self.nav_index >= 0:
+            diag_name, sloc = self.nav_status[self.nav_index]
+            if sloc == -1:
+                self.nav_index -= 1
+            return diag_name
+        return None
+
+    def get_parent_diag(self, update_history=True):
+        if self.nav_index >= 0:
+            diag_name, sloc = self.nav_status[self.nav_index]
+            parent = diag_name
+            if sloc != -1:
+                # The block was visited by clicking on a construct
+                # and is library block that can be referenced multiple
+                # times, find out the parent by browsing the construct_list
+
+                # Find the construct with sloc_start < sloc
+                # and sloc_end > sloc with sloc_start - sloc smallest
+                # which correspond to the encapsulating construct
+                current_sloc = -1
+                for _, _, sloc_start, sloc_end, _, c_id in self.constructs:
+                    if sloc_start[-1] < sloc and \
+                       sloc_start[-1] - sloc > current_sloc - sloc and \
+                       sloc_end[-1] > sloc:
+                        sstart = sloc_start[-1]
+                        current_sloc = sloc_start[-1]
+                        parent = c_id
+                if update_history:
+                    self.nav_index += 1
+                    self.nav_status.insert(self.nav_index, (parent, sstart))
+            elif self.nav_index >= 0 and update_history:
+                self.nav_index += 1
+                self.nav_status.insert(self.nav_index, (self.diagram.id, -1))
+            return parent
+        return None
 
     def save_desktop(self, child):
         """Save the contents of the viewer in the desktop"""
@@ -697,8 +757,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         QGEN_Module.cancel_workflows()
         if diag and diag != self.diagram:
             if update_prev:
-                navigation_info = diag.get_item('qgen_navigation_info')
-                navigation_info.text = self.diagram.id
+                self.update_nav_status((self.diagram.id, -1))
             self.diagram = diag
             self.scale_to_fit(2)
 
@@ -1307,6 +1366,21 @@ else:
             except:
                 return False
 
+        def __contextual_filter_viewer_active_history_parent(self, context):
+            try:
+                viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+                return viewer.nav_index \
+                    != -1 and viewer.diagram.id != viewer.root_diag_id
+            except:
+                return False
+
+        def __contextual_filter_viewer_active_history(self, context):
+            try:
+                viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+                return viewer.nav_index != -1
+            except:
+                return False
+
         def __contextual_filter_viewer_active(self, context):
             try:
                 return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() \
@@ -1563,14 +1637,14 @@ else:
                 callback=CLI.action_goto_parent_subsystem,
                 name='MDL goto parent subsystem',
                 category='Browsers',
-                filter=self.__contextual_filter_viewer_active,
+                filter=self.__contextual_filter_viewer_active_history_parent,
                 icon='gps-upward-symbolic')
 
             gps_utils.make_interactive(
                 callback=CLI.action_goto_previous_subsystem,
                 name='MDL goto previous subsystem',
                 category='Browsers',
-                filter=self.__contextual_filter_viewer_active,
+                filter=self.__contextual_filter_viewer_active_history,
                 icon='gps-backward-symbolic')
 
             gps_utils.make_interactive(
