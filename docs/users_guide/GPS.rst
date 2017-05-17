@@ -1420,6 +1420,8 @@ Classes
 
    .. automethod:: GPS.MDI.dialog
 
+   .. automethod:: GPS.MDI.directory_selector
+
    .. automethod:: GPS.MDI.file_selector
 
    .. automethod:: GPS.MDI.get

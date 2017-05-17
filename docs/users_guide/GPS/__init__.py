@@ -6807,6 +6807,23 @@ class MDI(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def directory_selector(base_dir=""):
+        """
+        Displays a modal directory selector, allowing the user to create a new
+        directoy if needed.
+        The user selected directory is returned, or a directory with an empty
+        name if :guilabel:`Cancel` is pressed.
+
+        A base directory can be specified in order to start the dialog from it.
+        When not specified, the base directory is set to the current one by
+        default.
+
+        :param base_dir: A string
+        :return: An instance of :class:`GPS.File`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def get(name):
         """
         Returns the window whose name is ``name``. If there is no such

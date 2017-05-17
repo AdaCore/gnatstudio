@@ -3,16 +3,18 @@ import glob
 import os
 import os_utils
 import re
+import distutils.dir_util
 import GPS
 from modules import Module
 
 
 class ExampleAction(GPS.Action):
 
-    def __init__(self, example_name, gpr_file, readme):
+    def __init__(self, example_name, directory, gpr_file, readme):
         """ Create an action to load one example in GPS.
 
             example_name is the name to use for the example,
+            directory is the directory containing the expample project,
             gpr_file is the project file to load, and
             readme (if any) the file to edit after project load.
         """
@@ -20,14 +22,30 @@ class ExampleAction(GPS.Action):
         self.gpr_file = gpr_file
         self.readme = readme
         self.example_name = example_name
+        self.directory = directory
         self.create(self.on_activate, filter='', category='Help',
                     description='Load project for example ' + example_name)
 
     def on_activate(self):
-        """ Activate the action """
-        GPS.Project.load(self.gpr_file)
+        """ Activate the action.
+
+            Ask the user for a destination directory and copy all the files
+            contained in the example project's directory in it.
+            Load the copied project file and display the README, if any.
+        """
+
+        new_proj_dir = str(GPS.MDI.directory_selector())
+
+        distutils.dir_util.copy_tree(self.directory, new_proj_dir)
+
+        new_gpr_file = os.path.join(
+            new_proj_dir, os.path.basename(self.gpr_file))
+        GPS.Project.load(new_gpr_file)
+
         if self.readme:
-            GPS.EditorBuffer.get(GPS.File(self.readme))
+            new_readme_file = os.path.join(
+                    new_proj_dir, os.path.basename(self.readme))
+            GPS.EditorBuffer.get(GPS.File(new_readme_file))
 
 
 class GNATExamples(Module):
@@ -66,7 +84,7 @@ class GNATExamples(Module):
                         if len(matches) == 1:
                             name = matches[0]
                 actions.append(
-                    ExampleAction(name, gprs[0], readme)
+                    ExampleAction(name, subdir, gprs[0], readme)
                 )
         # sort the actions, and create the menus
         actions.sort(key=lambda x: x.example_name)
