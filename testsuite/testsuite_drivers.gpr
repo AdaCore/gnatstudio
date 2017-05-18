@@ -11,7 +11,7 @@ project Testsuite_Drivers is
    for Exec_Dir use "bin";
 
    package Builder is
-      for Switches ("Ada") use ("-gnat12", "-ws", "-g", "-j0", "-m", "-gnaty");
+      for Switches ("Ada") use ("-ws", "-g", "-j0", "-m", "-gnaty");
    end Builder;
 
    package Binder renames Shared.Binder;

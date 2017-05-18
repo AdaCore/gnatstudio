@@ -15,7 +15,7 @@ project Language is
    package Compiler is
       for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
 
-      No_Checks := ("-g", "-O2", "-gnat12", "-gnatpn");
+      No_Checks := ("-g", "-O2", "-gnatpn");
 
       case Shared.Build is
           when "Production" =>

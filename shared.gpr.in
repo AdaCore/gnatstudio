@@ -24,7 +24,7 @@ project Shared is
    end Documentation;
 
    package Compiler is
-      Common := ("-g", "-gnat12");
+      Common := ("-g");
       Optimize := ();
 
       case OS is
