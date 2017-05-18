@@ -145,9 +145,9 @@ def toggle_next_field(editor=None):
                     editor.last_alias_mark.location()
                 )
                 exit_alias_expand(editor)
-                # ??? Doesn't work every time if executed only one
-                execute_action("/Edit/Format Selection")
-                execute_action("/Edit/Format Selection")
+                # ??? Doesn't work every time if executed only once
+                execute_action("autoindent selection")
+                execute_action("autoindent selection")
             else:
                 exit_alias_expand(editor)
             return
@@ -164,7 +164,7 @@ def toggle_next_field(editor=None):
 
         editor.current_view().goto(marks[0][0].location())
         try:
-            execute_action("/Edit/Format Selection")
+            execute_action("autoindent selection")
         except:
             pass
 

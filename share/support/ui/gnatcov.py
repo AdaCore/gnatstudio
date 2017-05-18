@@ -355,14 +355,14 @@ class GNATcovPlugin(object):
         if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
             GPS.Preference("Coverage-Toolchain").set('Gnatcov')
 
-        GPS.execute_action("/Tools/Coverage/Clear coverage from memory")
+        GPS.execute_action("coverage clear from memory")
 
         if GPS.Project.root().is_harness_project():
             a = GPS.CodeAnalysis.get("Coverage Report")
             original = GPS.Project.root().original_project().file()
             a.add_gcov_project_info(original)
         else:
-            GPS.execute_action("/Tools/Coverage/Load data for all projects")
+            GPS.execute_action("coverage load data for all projects")
 
     def on_compilation_finished(self, hook, category,
                                 target_name="", mode_name="", status=""):

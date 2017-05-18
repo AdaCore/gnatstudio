@@ -90,7 +90,7 @@ def export_locations_to_editor():
 
     # Open an editor
 
-    GPS.execute_action("/File/New")
+    GPS.execute_action("new file")
     buf = GPS.EditorBuffer.get()
 
     # Write the contents

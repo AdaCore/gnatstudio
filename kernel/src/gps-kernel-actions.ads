@@ -126,6 +126,9 @@ package GPS.Kernel.Actions is
       Block_Exit  : Boolean := False;
       Error_Msg_In_Console : Boolean := True) return Boolean;
    --  Execute the action if it is valid for the given context.
+   --  Action can be an action name or a menu path - but prefer to use the
+   --  action name, which is more stable than menu names, as menus may be
+   --  reordered by users.
    --  If Context is null, it is computed automatically.
    --  Returns True if the command was executed, False if it did not apply to
    --  the context.

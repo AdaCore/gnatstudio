@@ -17,7 +17,7 @@ def close_editors():
     """
     Save and close all source editors.
     """
-    GPS.execute_action("/File/Save More/All")
+    GPS.execute_action("save files and projects")
     for ed in GPS.EditorBuffer.list():
         ed.close(True)
 
@@ -28,7 +28,7 @@ def close_editors_except_current():
     Save and close all source editors, except the curret one.
     """
     buffer = GPS.EditorBuffer.get(open=False)
-    GPS.execute_action("/File/Save More/All")
+    GPS.execute_action("save files and projects")
     for ed in GPS.EditorBuffer.list():
         if ed != buffer:
             ed.close(True)

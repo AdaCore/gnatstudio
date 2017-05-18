@@ -64,7 +64,9 @@ def with_col(loc, col):
 def forward_vim_word(loc, fwd=True):
 
     loc = loc if fwd else loc.forward_char(-1)
-    isword = lambda c: c == '_' or c.isalpha()
+
+    def isword(c):
+        return c == '_' or c.isalpha()
 
     def cat(c):
         if isword(c):
@@ -560,7 +562,7 @@ class OpenLine(BaseAction):
             insert_loc = cur.end_of_line()
         self.vim_state.view.goto(insert_loc)
         self.vim_state.buffer.insert(insert_loc, "\n")
-        GPS.execute_action("/Edit/Format Selection")
+        GPS.execute_action("autoindent selection")
         switch_state(self.vim_state, InsertState)
 
 
