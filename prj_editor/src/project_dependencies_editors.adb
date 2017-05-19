@@ -238,7 +238,7 @@ package body Project_Dependencies_Editors is
             Is_Limited    => False,
             Can_Change    => True,
             Full_Path     => Project_File,
-            Use_Base_Name => False);
+            Use_Base_Name => True);
 
          Editor.Dependencies_Tree.Scroll_To_Cell
            (Path      => Get_Path (Model, Iter),
