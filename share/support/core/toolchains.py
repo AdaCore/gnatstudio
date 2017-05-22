@@ -26,6 +26,8 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="asm">gcc</compiler>
   </toolchain_default>
 
+  <toolchain name="aarch64-elf"/>
+
   <toolchain name="arm-apple-darwin10"/>
 
   <toolchain name="arm-linux-gnueabi"/>
