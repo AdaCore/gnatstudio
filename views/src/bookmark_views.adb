@@ -672,7 +672,9 @@ package body Bookmark_Views is
       --  it is modified). If GPS crashes, we would lose bookmarks for open
       --  files, but not for files that have been closed in between...
 
-      Save_Bookmarks (Get_Kernel (Module));
+      if Module.Loaded then
+         Save_Bookmarks (Get_Kernel (Module));
+      end if;
    end Destroy;
 
    ---------------------
