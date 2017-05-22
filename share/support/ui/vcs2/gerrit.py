@@ -33,9 +33,15 @@ class Gerrit(core.Extension):
             return False
 
     def async_branches(self, visitor):
+        # We use -q to hide warnings which could for instance occur
+        # when redirecting ports if ~/.ssh/config contains
+        #   Host ...
+        #      RemoteForward 3142 localhost:22
+
         p = ProcessWrapper(
             ['ssh',
              '-x',
+             '-q',  # Hide warnings
              '-p' if self.port else '', self.port,
              self.host,
              'gerrit',
