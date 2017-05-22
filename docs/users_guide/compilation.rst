@@ -30,8 +30,8 @@ The Build Menu
 
 Use the build menu to access capabilities related to checking, parsing,
 and compiling files as well as creating and running executables.  This
-menu is fully configurable via the :guilabel:`Targets` settings
-(:menuselection:`Edit --> Preferences --> Build Targets`).
+menu is fully configurable via the :guilabel:`Build Targets` page in
+(:menuselection:`Edit --> Preferences...`).
 
 .. index:: menu; build --> check syntax
 
@@ -201,21 +201,13 @@ menu is fully configurable via the :guilabel:`Targets` settings
     associated tools (for example, :program:`gnatmetric` and
     :program:`gnatcheck`).  See :ref:`Working_with_two_compilers`.
 
-.. index:: menu; tools --> interrupt
-
-* :menuselection:`Tools --> Interrupt`
-
-    Interrupts the last compilation or execution command. Once you
-    interrupted the last operation, you can interrupt the previous one by
-    selecting the same menu item again.
-
 .. index:: menu; tools --> views --> tasks
 
-* :menuselection:`Tools --> Views --> Tasks`
+* :menuselection:`Views --> Tasks`
 
     The easiest way to interrupt a specific operation, whether it was the
     last one started or not, is to start the :guilabel:`Tasks` view via
-    the :menuselection:`Tools --> Views --> Tasks` menu, which shows one
+    the :menuselection:`Views --> Tasks` menu, which shows one
     line for each running process.  Right-clicking on any of these lines
     allows interrupting that process.
 
@@ -223,7 +215,7 @@ menu is fully configurable via the :guilabel:`Targets` settings
 
 If your application is built through a :file:`Makefile`, you should
 probably load the :file:`makefile.py` startup script (see the
-:menuselection:`Edit --> Preferences --> Plugins` menu).
+:menuselection:`Edit --> Preferences...` menu).
 
 .. index:: build targets
 .. _The_Target_Configuration_Editor:
@@ -236,8 +228,8 @@ projects, compiling individual files, and performing syntax or semantic
 checks.  These operations all involve launching an external command and
 parsing the output for error messages. In GPS, these operations are called
 "Targets", and can be configured either through the Target Configuration
-Editor, accesible from the :menuselection:`Edit --> Preferences --> Build
-Targets`,or through XML configuration.
+Editor, accessible from the :menuselection:`Edit --> Preferences...` menu,
+or through XML configuration.
 See :ref:`Customizing_build_Targets_and_Models`.
 
 .. image:: target-configuration-editor.png
@@ -363,7 +355,7 @@ launches the compiler on the current state of the file in the editor.
 Error messages resulting from background compilations are not listed in the
 :guilabel:`Locations` or :guilabel:`Messages` views. The full list of
 messages are shown in the :guilabel:`Background Build` console, accessible
-from the :menuselection:`Tools --> Consoles --> Background Builds` menu.
+from the :menuselection:`View --> Background Builds` menu.
 Error messages that contain a source location indication are shown as icons
 on the side of lines in editors and the exact location is highlighted
 directly in the editor. In both places, tooltips show the contents of the
@@ -467,8 +459,7 @@ remain untouched.
 Cross-reference files generation does not output anything in the
 :guilabel:`Messages` view so as not to be confused with the output of the
 regular build process. If needed, you can see the output of the cross-ref
-generation command with the :menuselection:`Tools --> Consoles -->
-Auxiliary Builds` menu.
+generation command with the :menuselection:`View --> Auxiliary Builds` menu.
 
 
 Interaction with the remote mode

@@ -242,16 +242,16 @@ files are Ada, all :file:`.txt` files are standard text files, etc.
 
 Only files that have an associated known language are displayed in the
 :guilabel:`Project` view and available for selection through the
-:menuselection:`File --> Open From Project` menu. Similarly, only these
+:menuselection:`Find --> Find File in Project` menu. Similarly, only these
 files are shown in the Version Control System interface.  It is important to
 properly set up your project to make these files conveniently available in
 GPS although you can still open any file through the :menuselection:`File
---> Open` menu.
+--> Open File` menu.
 
 If your project includes :file:`README` files, or other text files, you
 should add "txt" as a language (the name is arbitrary) and ensure these
-files are associated with that language in the :menuselection:`Project -->
-Properties...`.
+files are associated with that language in the :menuselection:`Edit -->
+Project Properties...`.
 
 
 .. index:: project; scenario variable
@@ -269,7 +269,7 @@ imported projects based on the value of external variables, each of which
 comes from either the host computer environment or is specifically set in
 GPS. The interface to manipulate these scenarios is the
 :guilabel:`Scenario` view, which you display by selecting the menu
-:menuselection:`Tools --> Views --> Scenario` (:ref:`The Scenario View
+:menuselection:`View --> Scenario` (:ref:`The Scenario View
 <Scenario_View>`).  You may want to drop this window above the
 :guilabel:`Project` view so you can see both at the same time.
 
@@ -430,8 +430,8 @@ Adding files to project extensions
 .. index:: Add To Extending Project
 
 Once you load a project extension in GPS, most things are transparent to
-the extension. If you open a file through the :menuselection:`File --> Open
-From Project` dialog, the files found in the local directory of the
+the extension. If you open a file through the :menuselection:`Find --> Find
+File in Project` dialog, the files found in the local directory of the
 extension project are picked up first.  Build actions create object files
 in the project extensions' directory, leaving the original project
 untouched.
@@ -446,7 +446,7 @@ To Extending Project` menu.  You will see a dialog asking whether you want
 GPS to copy the file to the project extension's directory.  GPS may also
 create some new project files in that directory, if necessary, and
 automatically reload the project as needed. From that point on, if you use
-the menu :menuselection:`File --> Open From Project`, GPS uses the file
+the menu :menuselection:`Find --> Find File in Project`, GPS uses the file
 from the project extension.  Open editors will still edit the same files
 they previously contained, so you should open the new file in them if
 needed.
@@ -543,7 +543,7 @@ that are exported by GPS and thus could break some plugins. Another
 possible solution is to hide the corresponding project editing menus and
 contextual menus.  You could do this by enabling the
 :file:`prevent_project_edition.py` plugin via the
-:menuselection:`Edit --> Preferences --> Plugins` menu.
+:menuselection:`Edit --> Preferences...` menu.
 
 
 .. _The_Project_Menu:
@@ -635,8 +635,8 @@ The project wizard lets you create a new project file in a few steps.
 It contains a number of project templates, making it easy to create
 projects that rely on a particular technology (e.g: GtkAda).
 
-You normally access this wizard through the :menuselection:`Project -->
-New...` menu.
+You normally access this wizard through the :menuselection:`File -->
+New Project...` menu.
 
 The first page of the wizard lists the various project templates. Selecting one
 of them and clicking on the :guilabel:`Next` button will show a page allowing
@@ -646,15 +646,15 @@ you to modify the project template settings. Once modified, click on
 .. image:: project-wizard.png
 
 .. index:: project; editing
-.. index:: menu; project --> edit project properties
+.. index:: menu; edit --> project properties
 .. _The_Project_Properties_Editor:
 
 The Project Properties Editor
 =============================
 
 Use the :guilabel:`Project Properties` editor at any time to access the
-properties of your project through the :menuselection:`Project -->
-Properties...` menu or the contextual menu :menuselection:`Properties`
+properties of your project through the :menuselection:`Edit -->
+Project Properties...` menu or the contextual menu :menuselection:`Properties`
 on any project item, e.g. from the :guilabel:`Project`
 views or the :guilabel:`Project` browser.
 
@@ -717,9 +717,9 @@ The :guilabel:`Project Properties` editor is divided into three parts:
 The Switches Editor
 ===================
 
-The switches editor, available through the :menuselection:`Project --> Edit
-Switches` menu, displays all source files associated with the selected
-project.
+The switches editor, available through the :menuselection:`Edit -->
+Project Properties...` menu, displays all source files associated with the
+selected project.
 
 For each file, it lists the compiler switches for that file. These switches
 are displayed in gray if they are the default switches defined at the

@@ -39,7 +39,7 @@ Common features of the views
 
 Some views are part of the default desktop and are visible by default.
 Open the other views through one of the submenus of the
-:menuselection:`Tools` menu, most often :menuselection:`Tools --> Views`.
+:menuselection:`View` menu.
 
 .. index:: windows; local toolbar
 
@@ -335,7 +335,7 @@ clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
 
 Disable this dialog by unchecking the :guilabel:`Display Tip of the Day on
 startup` check box.  To reenable this dialog, go to the
-:menuselection:`Edit --> Preferences` menu.
+:menuselection:`Edit --> Preferences...` menu.
 
 
 .. index:: menu bar
@@ -356,19 +356,23 @@ use the special :kbd:`open contextual menu` key on most keyboards.
 
 You can access the following entries from the menu bar:
 
-* :menuselection:`File` (see :ref:`The_File_Menu`)
+ * :menuselection:`File` (see :ref:`The_File_Menu`)
 
 * :menuselection:`Edit` (see :ref:`The_Edit_Menu`)
 
 * :menuselection:`Navigate` (see :ref:`The_Navigate_Menu`)
 
-* :menuselection:`Project` (see :ref:`The_Project_Menu`)
+* :menuselection:`Find` (see :ref:`The_Find_Menu`)
+
+* :menuselection:`View` (see :ref:`The_View_Menu`)
+
+* :menuselection:`Code` (see :ref:`The_Code_Menu`)
 
 * :menuselection:`Build` (see :ref:`The_Build_Menu`)
 
-* :menuselection:`Debug` (see :ref:`The_Debug_Menu`)
+* :menuselection:`Analyze` (see :ref:`The_Analyze_Menu`)
 
-* :menuselection:`Tools` (see :ref:`The_Tools_Menu`)
+* :menuselection:`Debug` (see :ref:`The_Debug_Menu`)
 
 * :menuselection:`SPARK`
 
@@ -456,13 +460,14 @@ There are various ways to use the omni-search:
   contexts.
 
 * If you are searching in a single context, GPS defines a number of actions
-  to which you can bind key shortcuts via the :menuselection:`Edit --> Key
-  Shortcuts` dialog instead of using the above procedure. These actions are
+  to which you can bind key shortcuts via the
+  :menuselection:`Edit --> Preferences...` dialog instead of using the
+  above procedure. These actions are
   found in the :guilabel:`Search` category and are called :guilabel:`Global
-  Search in context:`. GPS includes a :index:`menu <single: menu; file -->
-  open from project>` for two of them by default: :menuselection:`File -->
-  Open From Project...` searches filenames, :index:`while <single: menu;
-  navigate --> goto entity>` :menuselection:`Navigate --> Goto Entity...`
+  Search in context:`. GPS includes a :index:`menu <single: menu; Find -->
+  find file in project>` for two of them by default: :menuselection:`Find -->
+  Find File in Project` searches filenames, :index:`while <single: menu;
+  find --> find entity>` :menuselection:`Find --> Find Entity`
   searches all entities defined in your project.
 
 
@@ -486,7 +491,7 @@ popup. The resulting dialog displays a list of all contexts to be searched;
 clicking on any of the checkboxes next to the names disables searching that
 context.  This list is only displayed when you started the omni-search by
 clicking on it in the toolbar. If you started it via :kbd:`shift-F3` or the
-equivalent :menuselection:`File --> Open From Project...` menu, only a
+equivalent :menuselection:`Find --> Find File in Project...` menu, only a
 subset of the settings are displayed.
 
 You can also reorder the contexts from this settings dialog, which affects
@@ -587,7 +592,7 @@ total elapsed time.
 
 You cannot close the :guilabel:`Messages` view because it might contain
 important messages.  If GPS closed it, you can reopen it with the
-:menuselection:`Tools --> Views --> Messages` menu.
+:menuselection:`View --> Messages` menu.
 
 
 .. index:: views; locations
@@ -692,7 +697,7 @@ keyboard: :menuselection:`Navigate --> Previous Tag` and
 might wrap around after reaching the first or last message.
 
 You can also bind key shortcuts to these menus via the :menuselection:`Edit
---> Key Shortcuts` menu.
+--> Preferences...` menu.
 
 .. index:: codefix
 .. index:: build; auto fix errors
@@ -716,8 +721,7 @@ The :guilabel:`Project` view
 
 The project view displays a representation of the various components of
 your project.  By default, it is displayed on the left side of the
-workspace.  Select it using the :menuselection:`Project --> Project View`
-or :menuselection:`Tools --> Views --> Project` menus.
+workspace.  Select it using the :menuselection:`View --> Project` menu.
 
 .. index:: drag-and-drop
 
@@ -834,8 +838,8 @@ The various components displayed in the project view are:
 .. index:: search; project view
 .. index:: menu; navigate --> find or replace
 
-If you open the search dialog via the :menuselection:`Navigate --> Find or
-Replace...` menu, you can search for anything in the :guilabel:`Project`
+If you open the search dialog via the :menuselection:`Find --> Find...` menu,
+you can search for anything in the :guilabel:`Project`
 view, either a file or an entity.  Searching for an entity can be slow if
 you have many files and/or large files.
 
@@ -858,8 +862,8 @@ changes on the file system that impact the contents of the current project.
 
 It also includes a button to graphically edit the attributes of the
 selected project, such as the tool switches or the naming schemes. It
-behaves similarly to the :menuselection:`Project --> Edit Project
-Properties` menu. See :ref:`The_Project_Properties_Editor` for more
+behaves similarly to the :menuselection:`Edit --> Project
+Properties...` menu. See :ref:`The_Project_Properties_Editor` for more
 information.
 
 If you right click a project node, a contextual menu appears which
@@ -1018,8 +1022,7 @@ The :guilabel:`Files` View
 .. index:: menu; tools --> views --> files
 
 In addition to the :guilabel:`Project` view, GPS also provides a
-:guilabel:`Files` view through the :menuselection:`Tools --> Views -->
-Files` menu.
+:guilabel:`Files` view through the :menuselection:`View --> Files` menu.
 
 In this view, directories are displayed exactly as they are organized on the
 disk (including Windows drives).  You can also explore each source file
@@ -1043,7 +1046,7 @@ The :guilabel:`Windows` view
 .. index:: menu; tools --> views --> windows
 
 The :guilabel:`Windows` view displays the currently opened windows.  Open
-it via the :menuselection:`Tools --> Views --> Windows` menu.
+it via the :menuselection:`View --> Windows` menu.
 
 In the contextual menu, you can configure the display in one of two ways:
 
@@ -1078,7 +1081,7 @@ The :guilabel:`Outline` view
 .. index:: menu; tools --> views --> outline
 
 The :guilabel:`Outline` view, which you activate through the
-:menuselection:`Tools --> Views --> Outline` menu, shows the contents of
+:menuselection:`View --> Outline` menu, shows the contents of
 the current file.
 
 Exactly what is displayed depends on the language of the file. For Ada, C
@@ -1173,8 +1176,7 @@ without having to go back and forth between the two editors.
 .. index:: menu; tools --> views --> clipboard
 
 The :guilabel:`Clipboard` view graphically displays what is currently stored
-in the clipboard. Open it via the :menuselection:`Tools --> Views -->
-Clipboard` menu.
+in the clipboard. Open it via the :menuselection:`View --> Clipboard` menu.
 
 That view displays a list of entries, each of which is associated with one
 level of the clipboard. The text displayed for each entry is its first line
@@ -1350,8 +1352,8 @@ Basic usage: Creating a new bookmark
 
 The basic usage of bookmarks is as follows: you open a source editor and
 navigate to the line of interest. You can then create a new bookmark by either
-using the menu :menuselection:`Edit --> Create Bookmark` or by opening the
-:guilabel:`Bookmarks` view (:menuselection:`Tools --> Views --> Bookmarks`) and
+using the menu :menuselection:`Navigate --> Add Bookmark` or by opening the
+:guilabel:`Bookmarks` view (:menuselection:`View --> Bookmarks`) and
 then clicking on the [+] button in the local toolbar. In both cases, the
 :guilabel:`Bookmarks` view is opened, a new bookmark is created and selected so
 that you can immediately change its name.
@@ -1556,7 +1558,7 @@ compiling without using the menu items or the mouse.
 
 .. index:: menu; tools --> consoles --> Python
 
-The menu :menuselection:`Tools --> Consoles --> Python` opens the python
+The menu :menuselection:`View --> Python` opens the python
 console. Python is the preferred language to customize GPS (many more
 details will be provided in later sections of this documentation).  The
 console is mostly useful for testing interactive commands before you use
@@ -1584,7 +1586,7 @@ GPS also provides an OS shell console, providing an access to the underlying
 OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
 environment variables).
 
-Open this console via the :menuselection:`Tools --> Consoles --> OS Shell`
+Open this console via the :menuselection:`View --> OS Shell`
 menu, which is available only if the plugin :file:`shell.py` was loaded in
 GPS (the default).  Check the documentation of that plugin, which lists a
 few settings that might be useful.
@@ -1630,10 +1632,10 @@ progress.  Suspend the execution of a task by clicking the small
 :guilabel:`pause` button next to the task. Or kill a task by clicking the
 :guilabel:`interrupt` button.
 
-.. index:: menu; tools --> views --> tasks
+.. index:: menu; view --> tasks
 
 Open the :guilabel:`Tasks` view by double clicking on the progress bar in
-the main toolbar or using the :menuselection:`Tools --> Views --> Tasks`
+ the main toolbar or using the :menuselection:`View --> Tasks`
 menu.  You can move it placed anywhere on your desktop.
 
 .. image:: task-manager-exit.png

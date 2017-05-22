@@ -7277,7 +7277,7 @@ class Preference(object):
 
     """
     Interface to the GPS preferences, as set in the :menuselection:`Edit -->
-    Preferences` dialog. New preferences are created through XML
+    Preferences...` dialog. New preferences are created through XML
     customization files (or calls to :func:`GPS.parse_xml`, see the GPS
     documentation).
 
@@ -7410,7 +7410,7 @@ class Preference(object):
 class PreferencesPage:
     """
     Interface to the GPS preferences pages, as set in the
-    :menuselection:`Edit --> Preferences` dialog.
+    :menuselection:`Edit --> Preferences...` dialog.
 
     This interface can be used to create custom preferences pages.
     """
@@ -7871,7 +7871,7 @@ class Project(object):
         """
         Adds some predefined directories to the source path or the objects
         path. These are searched when GPS needs to open a file by its base
-        name, in particular from the :menuselection:`File --> Open From
+        name, in particular from the :menuselection:`Find --> Find File in
         Project` dialog.  The new paths are added in front, so they have
         priorities over previously defined paths.
 
@@ -10438,7 +10438,8 @@ def execute_action(action, *args):
     can use them through $1, $2, etc.
 
     The list of existing actions can be found using the
-    :menuselection:`Edit --> Actions` menu.
+    :menuselection:`Edit --> Preferences...` menu and opening the General->
+    Key Shortcuts section.
 
     The action is not executed if the current context is not appropriate for it
 

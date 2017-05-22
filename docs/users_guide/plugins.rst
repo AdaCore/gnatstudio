@@ -6,7 +6,7 @@ User plugins
 
 GPS comes with a number of plugins, some of which are activated by
 default.  Control which plugins are activated by using the
-:menuselection:`Edit --> Preferences --> Plugins` menu.
+:menuselection:`Edit --> Preferences...` menu.
 
 This section discusses a few of the many plugins built in to GPS. The
 preferences dialog shows their description, so you

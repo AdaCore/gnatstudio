@@ -207,38 +207,38 @@ package body Navigation_Module is
    overriding function Execute
      (Command : access Previous_Tag_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->Previous Result menu
+   --  Callback for the "previous result" action
 
    type Next_Tag_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Next_Tag_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->Next Result menu
+   --  Callback for the "next result" action
 
    type Start_Statement_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Start_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->Start Statement menu
+   --  Callback for the "start statement" action
 
    type End_Statement_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access End_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->End Statement menu
+   --  Callback for the "end statement" action
 
    type Next_Subprogram_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Next_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->Next Subprogram menu
+   --  Callback for the "next subprogram" action
 
    type Previous_Subprogram_Command
       is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Previous_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Navigate->Previous Subprogram menu
+   --  Callback for the "previous subprogram" action
 
    type Has_Forward_Navigation is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive

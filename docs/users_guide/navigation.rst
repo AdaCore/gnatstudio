@@ -580,5 +580,5 @@ where the actual subprogram called is not known until run time and is
 chosen based on the tag of the object.
 
 Disable this highlighting (which may be slow if you have large sources) by
-using the :menuselection:`Edit --> Preferences --> Plugins` menu and disabling
-the :file:`dispatching.py` plugin.
+using the :menuselection:`Edit --> Preferences...` menu, going to the Plugins
+section and disabling the :file:`dispatching.py` plugin.

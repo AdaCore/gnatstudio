@@ -6,7 +6,7 @@ Projects
 Project Wizard
 ==============
 
-Go to the menu `Project->New...`: this opens up the GPS project
+Go to the menu `File->New Project...`: this opens up the GPS project
 creation wizard.
 
 The first page of the wizard allows you to select a pre-defined project
@@ -42,7 +42,7 @@ Variable editor
 ===============
 
 Select the window titled "Scenario".  If not available, you can open it
-using the menu `Tools->Views->Scenario`.
+using the menu `View->Scenario`.
 This window contains a `Build` label.
 
 This is a configuration variable. With GPS and the GNAT
@@ -66,7 +66,7 @@ Now, let's take a look at the switches set in the project.
 Switch editor
 =============
 
-Select the menu item `Project->Edit File Switches`: a global switch editor is
+Select the menu item `View->File Switches`: a global switch editor is
 displayed in the working area, showing the switches associated with each file
 in the `sdc` project.
 

@@ -228,7 +228,7 @@ The source editor provides an extensive set of features, including:
 *Auto save*
 
   GPS will by default periodically save your work in temporary files. This
-  can be configured via the :menuselection:`Edit --> Preferences` dialog).
+  can be configured via the :menuselection:`Edit --> Preferences...` dialog).
 
 *Automatic highlighting of entities*
 
@@ -243,7 +243,7 @@ The source editor provides an extensive set of features, including:
 
   Details such as the presence of indications in the :guilabel:`Speed Column` or
   highlighting color can be customized in the :guilabel:`Plugins` section
-  of :menuselection:`Edit --> Preferences` dialog.
+  of :menuselection:`Edit --> Preferences...` dialog.
 
 .. index:: emacs
 
@@ -1077,31 +1077,27 @@ GPS supports this with several different methods:
 
   If you want to repeat the action of pressing a single key, first use the
   GPS action :guilabel:`Repeat Next` (bound by default to :kbd:`control-u`,
-  but this can be changed as usual through the :menuselection:`Edit --> Key
-  Shortcuts` menu), entering the number of times you wish to repeat, and
-  then pressing the key whose action you want to repeat.
+  but this can be changed as usual through the
+  :menuselection:`Edit --> Preferences...` menu), entering the number of
+  times you wish to repeat, and then pressing the key whose action you want
+  to repeat.
 
   For example, the sequence :kbd:`control-u 79 -` inserts 79 characters of
   '-' in the current editor.  This is often useful to insert separators.
 
-  If you are using the Emacs mode (see :menuselection:`Edit --> Preferences -->
-  Key Shortcuts` menu), you can also use the sequence :kbd:`control-u 30
-  control-k` to delete 30 lines.
+  If you are using the Emacs mode, you can also use the sequence
+  :kbd:`control-u 30 control-k` to delete 30 lines.
 
 * Recording macros
 
-  .. index:: menu; tools --> macros
-
   To repeat a sequence of more than 1 key, record the sequence as a
-  macro. All macro-related menus are found in the :menuselection:`Tools -->
-  Macros` menu, but it is often more convenient to use these through key
-  bindings, which you can of course override.
+  macro. All macro-related actions are found in the Key Shortcuts section of
+  the peferences dialog.
 
   First, tell GPS that it should start recording the keys you are pressing via
-  the :menuselection:`Tools --> Macros --> Start Keyboard Macro` menu.  As
-  its name indicates, this only records keyboard events, not mouse events.
-  GPS keeps recording the events until you select the :menuselection:`Tools
-  --> Macros --> Stop Macro` menu.
+  the :menuselection:`Macro Start Keyboard` action.  This only records
+  keyboard events, not mouse events. GPS keeps recording the events until you
+  select call the :menuselection:`Macro Stop` action.
 
   In Emacs mode, macro actions are bound to :kbd:`control-x (`,
   :kbd:`control-x )` and :kbd:`control-x e` key shortcuts. For example, you
@@ -1165,7 +1161,7 @@ want to benefit from the syntax highlighting, which depends on knowing the
 file's language.
 
 Do not override the language for source files belonging to the current
-project. Instead, use the :menuselection:`Project --> Edit Project
+project. Instead, use the :menuselection:`Edit --> Project
 Properties` menu and change the naming scheme as appropriate. This provides
 better consistency between GPS and the compiler in the way they manipulate
 the file.
@@ -1636,7 +1632,7 @@ project, you should kill any running Emacs, so a new one is spawned by GPS
 with the appropriate project.
 
 Alternatively, explicitly reload the project from Emacs itself by using the
-:menuselection:`Project --> Load` menu in :program:`emacs` (if
+:menuselection:`File --> Load Project` menu in :program:`emacs` (if
 :command:`ada-mode` is correctly installed).
 
 .. index:: preferences; editor --> always use external editor

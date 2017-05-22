@@ -21,4 +21,4 @@ By default, the tutorial sources can be found under
 directory of the GPS installation.
 
 Alternatively, if you have already started GPS in another directory, you can
-load the project `sdc.gpr` by using the menu `Project->Open...`
+load the project `sdc.gpr` by using the menu `File->Open Project...`

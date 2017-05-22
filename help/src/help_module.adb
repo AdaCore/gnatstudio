@@ -212,13 +212,13 @@ package body Help_Module is
    overriding function Execute
      (Self : access About_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Menu Help->About...
+   --  "about gps" action
 
    type Display_Welcome_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self : access Display_Welcome_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Menu Help->Welcome...
+   --  "display GPS welcome view" action
 
    function Create_URL
      (Name   : Glib.UTF8_String;

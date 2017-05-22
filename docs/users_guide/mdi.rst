@@ -53,7 +53,7 @@ a convenient mechanism for slecting multiple windows at once.
 Finally, you can select windows with the omni-search, the search field in
 the global toolbar. One of the contexts for the search is the list of
 opened windows. To make things more convenient, you can bind a key shortcut
-via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
+via the :menuselection:`Edit --> Preferences...` menu (the name of the
 action is :menuselection:`Search --> Global Search in context: Opened`).
 
 Any window whose name contains the specified letter matches the search field.
@@ -154,7 +154,7 @@ Floating`.
 
 The second method assumes you have set the preference
 :guilabel:`Destroy Floats` in the :menuselection:`Edit -->
-Preferences` menu to false.  If so, you can close the floating window
+Preferences...` menu to false.  If so, you can close the floating window
 by clicking the close button in the title bar; the window is put back
 in GPS's main windows. If you want to close the window, you need to
 click the cross button in its title bar a second time.

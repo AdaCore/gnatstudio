@@ -18,4 +18,4 @@ document includes:
 * Extensive customization through Python
 
 For more information, please see the *User's Guide* (`gps.html <gps.html`_) or
-look at the `Tools` menu, which gives access to most of these capabilities.
+look at the menus, which give access to most of these capabilities.

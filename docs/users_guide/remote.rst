@@ -65,7 +65,7 @@ Setup the remote servers
 The remote configuration dialog
 -------------------------------
 
-Open the remote configuration dialog using the `Tools->Views->Remote` menu
+Open the remote configuration dialog using the `View->Remote` menu
 to configure remote servers. You can also set a predefined configuration
 when installing GPS by using XML files. (See :ref:`Defining_a_remote_server`,
 and :ref:`Defining_a_remote_path_translation`, for more information.)
@@ -271,7 +271,7 @@ executed on the local machine.
 The remote view
 ---------------
 
-Use the :guilabel:`Remote` view (`Tools->Views->Remote`) to assign servers
+Use the :guilabel:`Remote` view (`View->Remote`) to assign servers
 to categories of operations for the currently loaded project.  You can
 assign a different server to each operation category if you fully expand
 the :guilabel:`Servers Assignment` tab. Alternatively, assign all
@@ -312,9 +312,9 @@ Loading a remote project
 ------------------------
 
 If the project you want to use is already on a remote server, you can
-directly load it on your local GPS by using the :menuselection:`Project -->
-Open From Host` menu and selecting the server's nickname. This shows you
-its file tree.  Navigate to your project and select it. The project is
+directly load it on your local GPS by using the :menuselection:`File -->
+Open Project From Host` menu and selecting the server's nickname. This shows
+you its file tree. Navigate to your project and select it. The project is
 loaded as described above with all remote operations categories assigned to
 the selected server by default.
 

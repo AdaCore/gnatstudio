@@ -192,7 +192,7 @@ The VCS Perspective
 
 To display all pertinent information on your files, GPS uses multiple
 views, as described below. Although you can open any of them whenever
-you want, via the :menuselection:`Tools --> Views` or
+you want, via the :menuselection:`View` or
 :menuselection:`VCS` menus, the most
 convenient is to select the VCS perspective.
 

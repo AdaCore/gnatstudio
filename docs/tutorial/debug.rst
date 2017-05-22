@@ -2,7 +2,7 @@
 Debug
 *****
 
-Open the preferences dialog (menu `Edit->Preferences`) and click on the
+Open the preferences dialog (menu `Edit->Preferences...`) and click on the
 `Debugger` item on the left; set the button `Break on exceptions` to *Enabled*:
 this will enable by default a special breakpoint every time an exception is
 raised. Click on `Close` to close dialog.

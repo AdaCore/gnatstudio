@@ -15,7 +15,7 @@ GPS window).
 .. index:: menu; navigate --> find or replace
 
 All of these search contexts are merged into a single graphical window that
-you can open either through the :menuselection:`Navigate --> Find` menu or
+you can open either through the :menuselection:`Find --> Find` menu or
 the shortcut :kbd:`Ctrl-F`.
 
 Searching
@@ -42,8 +42,8 @@ options:
   used by regular expressions is similar to the Perl and Python regular
   expressions grammar and is documented in the GNAT run time file
   :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
-  project <Open_From_Project>` menu (:menuselection:`File --> Open From
-  Project...`) and type :file:`g-regpat.ads`.
+  project <Open_From_Project>` menu (:menuselection:`Find --> Find File in
+  Project`) and type :file:`g-regpat.ads`.
 
 * :guilabel:`Whole Word`
 
@@ -172,7 +172,7 @@ right, which displays the list of all possible contexts, including:
   or :guilabel:`Files From Project`.
 
   Finally, you can create key shortcuts (through the :menuselection:`Edit -->
-  Key Shortcuts` menu, in the :guilabel:`Search` category) to open the search
+  Preferences...` menu, in the :guilabel:`Search` category) to open the search
   dialog and set the context to a specific value.
 
 The right part of the dialog is a row of three buttons, used to navigate
@@ -261,7 +261,7 @@ a number of facilities just for this:
   At the top-right corner of the GPS window, the search field is able to
   search in all the sources of your project. But it can also search just
   in the current source. The recommended approach is once again to define
-  a new key shortcut via :menuselection:`Edit --> Key Shortcuts`, for
+  a new key shortcut via :menuselection:`Edit --> Preferences...`, for
   the action `Global Search in context: current file`.
   Whenever you press that shortcut from now on, GPS will move the keyboard
   focus to the global search box, and when you type some text, a popup

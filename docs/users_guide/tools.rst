@@ -197,7 +197,7 @@ standard.  This file is the input to the :program:`gnatcheck` tool.  You
 can also use the contextual menu to check the conformance of a particular
 project or source file against a coding standard.
 
-Access the Coding standard editor using the :menuselection:`Tools -->
+Access the Coding standard editor using the :menuselection:`Analyze -->
 Coding Standard --> Edit Rules File` menu.  Select either an existing
 coding standard file or create a new one. The editor adapts itself to the
 version of :program:`gnatcheck` on your local machine.
@@ -361,7 +361,7 @@ GPS uses the GNATdoc tool to generate documentation from source files.
 See GNATdoc User's Guide for more information about this tool,
 including comment formatting and possibilities for customization.
 
-Invoke the documentation generator from the :menuselection:`Tools ->
+Invoke the documentation generator from the :menuselection:`Analyze ->
 Documentation` menu:
 
 *Generate Project*
@@ -385,7 +385,7 @@ Working With Unit Tests
 GPS uses :program:`gnattest`, a tool that creates unit-test stubs as well
 as a test driver infrastructure (harness).  It can generate harnesses for a
 project hierarchy, a single project or a package.  Launch harness
-generation process from the :menuselection:`Tools --> GNATtest` menu or a
+generation process from the :menuselection:`Analyze --> GNATtest` menu or a
 contextual menu.
 
 After a harness project has been generated, GPS switches to it, allowing
@@ -457,7 +457,7 @@ GPS provides an interface to the GNAT software metrics generation tool
 :program:`gnatmetric`.  Metrics can be computed for one source file, the
 current project, or the current project and all its imported subprojects
 
-Invoke the metrics generator from the :menuselection:`Tools --> Metrics`
+Invoke the metrics generator from the :menuselection:`Analyze --> Metrics`
 menu or the contextual menu.
 
 The Metrics Menu
@@ -513,9 +513,9 @@ graphical report, formatted as a tree-view with percentage bars for each
 item, and uses it to decorate source code through line highlighting and
 coverage annotations.
 
-You will find all coverage related operations in the :menuselection:`Tools
+You will find all coverage related operations in the :menuselection:`Analyze
 --> Coverage` menu.  Before GPS can load coverage information, it must be
-computed, for example by using the :menuselection:`Tools --> Coverage -->
+computed, for example by using the :menuselection:`Analyze --> Coverage -->
 Gcov --> Compute coverage files` menu.  After each coverage computation,
 GPS tries to load the needed information and reports errors for missing or
 corrupted :file:`.gcov` files.
@@ -528,7 +528,7 @@ coverage` entries in :ref:`The_Project_Properties_Editor` and executed.
 Coverage Menu
 -------------
 
-The :menuselection:`Tools --> Coverage` menu has a number of entries,
+The :menuselection:`Analyze --> Coverage` menu has a number of entries,
 depending on the context:
 
 * :menuselection:`Gcov --> Compute coverage files`
@@ -619,8 +619,8 @@ GPS and :program:`gcov` both support many different programming languages,
 so code coverage features are available in GPS for many languages. But
 subprogram coverage details are not available for every supported language.
 If you change the current main project in GPS, using the
-:menuselection:`Project --> Open` menu, for example, GPS deletes all loaded
-coverage information for the loaded project.
+:menuselection:`File --> Open Project` menu, for example, GPS deletes all
+loaded coverage information for the loaded project.
 
 .. _Stack_Analysis:
 
@@ -662,7 +662,7 @@ The Stack Analysis Menu
 -----------------------
 
 Access all the stack analysis operations via the
-:menuselection:`Tools --> Stack Analysis` menu:
+:menuselection:`Analyze --> Stack Analysis` menu:
 
 *Analyze stack usage*
 

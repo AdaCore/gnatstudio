@@ -36,21 +36,21 @@ package Vdiff2_Module.Callback is
    overriding function Execute
      (Self  : access Compare_Three_Files;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Tools->VDiff->Compare Three Files...
+   --  Callback for the action to compare three files
 
    type Compare_Two_Files is new Interactive_Command with null record;
    overriding function Execute
      (Self  : access Compare_Two_Files;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for Tools->VDiff->Compare Two Files...
+   --  Callback for the action to compare two files
 
    procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Merge Three Files...
+   --  Callback for the action to merge three files
 
    procedure On_Merge_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Merge Two Files...
+   --  Callback for the action to merge two files
 
    type On_File_Closed is new File_Hooks_Function with null record;
    overriding procedure Execute

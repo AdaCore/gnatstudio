@@ -186,7 +186,7 @@ Some plugins provided with GPS are:
 
 You can graphically choose which plugins are loaded on startup by
 opening the preferences editor dialog (:menuselection:`Edit -->
-Preferences` menu), under the :guilabel:`Plugins` section. This section
+Preferences...` menu), under the :guilabel:`Plugins` section. This section
 lists all the known plugins on the left. By selecting one particular
 plugin, the corresponding preferences page is opened on the right. Each
 plugin page comes with the same layout:
@@ -471,12 +471,12 @@ following attributes:
 
 * :file:`category` (optional, default :command:`General`)
 
-  The category in the keybindings editor (:menuselection:`Edit --> Key
-  bindings` menu) in which the action is displayed. If you specify an empty
-  string, the action is considered part of the implementation and not
-  displayed in the editor and the user will not be able to assign it a
-  keybinding through the graphical user interface (although this can still
-  be done via XML commands).
+  The category in the keybindings editor
+  (:menuselection:`Edit --> Preferences` menu) in which the action is
+  displayed. If you specify an empty string, the action is considered part of
+  the implementation and not displayed in the editor and the user will not be
+  able to assign it a keybinding through the graphical user interface
+  (although this can still be done via XML commands).
 
 If you define the same action multiple times, the last definition is used.
 However, items such as menus and buttons that reference the action keep
@@ -690,7 +690,7 @@ Some actions are also predefined in GPS itself. This includes, for example,
 aliases expansion and manipulating MDI windows. You can display all known
 actions (both predefined and the ones you defined in your own customization
 files) by opening the key shortcut editor using the :menuselection:`Edit -->
-Key shortcuts` menu.
+Preferences...` menu.
 
 .. _Macro_arguments:
 
@@ -1750,7 +1750,7 @@ Creating new preferences
 
 GPS contains a number of predefined preferences to configure its
 behavior and appearance, which are all customizable through the
-:menuselection:`Edit --> Preferences` menu.
+:menuselection:`Edit --> Preferences...` menu.
 
 You can add preferences for your extension modules through the usual GPS
 customization files.  Preferences are different from project attributes
@@ -2302,7 +2302,7 @@ Defining text aliases
 .. index:: <alias>
 
 GPS provides a mechanism known as "aliases".  The user can define
-these using the :menuselection:`Edit->Aliases` menu.
+these using the :menuselection:`Code->Aliases` menu.
 
 Each alias has a name, generally a short string of characters.  When you
 type that string in any textual entry in GPS (usually a source editor, but
@@ -4770,7 +4770,7 @@ Scripts and GPS actions
 There is a strong relationship between GPS actions, as defined in the
 customization files (:ref:`Defining_Actions`), and scripting languages.
 You can bind actions to menus and keys through the customization files or
-the :menuselection:`Edit --> Key shortcuts` dialog.  These actions can
+the :menuselection:`Edit --> Preferences...` dialog.  These actions can
 execute any script command (see :ref:`Defining_Actions`) using the
 `<shell>` XML tag.
 
@@ -4787,7 +4787,7 @@ in the following example::
 
 
 The list of actions known to GPS can be found through the
-:menuselection:`Edit --> Key shortcuts` dialog. Action names are case
+:menuselection:`Edit --> preferences...` dialog. Action names are case
 sensitive.
 
 Some shell commands take subprograms as parameters. If you are using the GPS
@@ -4825,7 +4825,7 @@ the current version of python.
 
 If Python support has been enabled, the Python shell is accessible through
 the :guilabel:`Python` window at the bottom of the GPS window. You can also
-display it by using the :menuselection:`Tools --> Consoles --> Python` menu.
+display it by using the :menuselection:`View --> Python` menu.
 The full documentation on what GPS makes visible through Python is available
 from the :menuselection:`Help --> GPS --> Python extensions` menu.
 
@@ -5461,8 +5461,8 @@ Python file (:file:`"mymod.py"`) containing the following::
 
 
 This file defines an action :file:`my_action`, that you can, for example,
-associate with a keybinding through the :menuselection:`Edit --> Key
-shortcuts` menu.
+associate with a keybinding through the
+:menuselection:`Edit --> Preferences...` menu.
 
 If you copy this file into one of the :file:`plugins` directories, GPS
 automatically loads it at startup.  The function :func:`myfunc` is in a

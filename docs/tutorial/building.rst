@@ -23,8 +23,9 @@ Now you can fix the next error by moving the cursor to the line 30 (press the
 :kbd:`down` arrow twice), and by using :kbd:`Tab`: this key
 shortcut asks the source editor to automatically re-indent the current line.
 
-Note that you can change this shortcut from the key shortcuts dialog
-(menu `Edit->Key shortcuts`, `Editor` section, `Format Selection` item).
+Note that you can change this shortcut from the key shortcuts section of the
+Preferences dialog (menu `Edit->Preferences`, `General/Key shortcuts` section,
+`Format Selection` item).
 
 You can then fix all the remaining errors by selecting the whole block (from
 line 28 to line 40) and pressing :kbd:`Tab`. To select a block, you can
