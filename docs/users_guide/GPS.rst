@@ -91,49 +91,6 @@ Classes
 
    .. automethod:: GPS.Action.menu
 
-:class:`GPS.Activities`
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Activities()
-
-
-
-   .. automethod:: GPS.Activities.__init__
-
-   .. automethod:: GPS.Activities.add_file
-
-   .. automethod:: GPS.Activities.commit
-
-   .. automethod:: GPS.Activities.files
-
-   .. automethod:: GPS.Activities.from_file
-
-   .. automethod:: GPS.Activities.get
-
-   .. automethod:: GPS.Activities.group_commit
-
-   .. automethod:: GPS.Activities.has_log
-
-   .. automethod:: GPS.Activities.id
-
-   .. automethod:: GPS.Activities.is_closed
-
-   .. automethod:: GPS.Activities.list
-
-   .. automethod:: GPS.Activities.log
-
-   .. automethod:: GPS.Activities.log_file
-
-   .. automethod:: GPS.Activities.name
-
-   .. automethod:: GPS.Activities.remove_file
-
-   .. automethod:: GPS.Activities.set_closed
-
-   .. automethod:: GPS.Activities.toggle_group_commit
-
-   .. automethod:: GPS.Activities.vcs
-
 :class:`GPS.Alias`
 ^^^^^^^^^^^^^^^^^^
 
@@ -1991,51 +1948,6 @@ Classes
 .. autoclass:: Unexpected_Exception()
 
    .. inheritance-diagram:: GPS.Unexpected_Exception
-
-:class:`GPS.VCS`
-^^^^^^^^^^^^^^^^
-
-.. autoclass:: VCS()
-
-
-
-   .. automethod:: GPS.VCS.annotate
-
-   .. automethod:: GPS.VCS.annotations_parse
-
-   .. automethod:: GPS.VCS.commit
-
-   .. automethod:: GPS.VCS.diff_head
-
-   .. automethod:: GPS.VCS.diff_working
-
-   .. automethod:: GPS.VCS.get_current_vcs
-
-   .. automethod:: GPS.VCS.get_log_file
-
-   .. automethod:: GPS.VCS.get_status
-
-   .. automethod:: GPS.VCS.log
-
-   .. automethod:: GPS.VCS.log_parse
-
-   .. automethod:: GPS.VCS.remove_annotations
-
-   .. automethod:: GPS.VCS.repository_dir
-
-   .. automethod:: GPS.VCS.repository_path
-
-   .. automethod:: GPS.VCS.revision_parse
-
-   .. automethod:: GPS.VCS.set_reference
-
-   .. automethod:: GPS.VCS.status_parse
-
-   .. automethod:: GPS.VCS.supported_systems
-
-   .. automethod:: GPS.VCS.update
-
-   .. automethod:: GPS.VCS.update_parse
 
 :class:`GPS.VCS2`
 ^^^^^^^^^^^^^^^^^
