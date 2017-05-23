@@ -426,7 +426,7 @@ For example::
    --  @param Message The text to display
    --  @param Minutes The number of minutes to wait
    --  @exception System.Assertions.Assert_Failure raised 
-   --     if Minutes = 0 or Minutes > 300 if Minutes = 0
+   --     if Minutes = 0 or Minutes > 300
    --  @return True iff the alarm was successfully registered
 
 The parameters can also be documented in line, with the documentation for
@@ -443,7 +443,7 @@ this case, the tag *@param* is not required::
      ) return Boolean;
    --  Display a message after the given time.
    --  @exception System.Assertions.Assert_Failure raised 
-   --     if Minutes = 0 or Minutes > 300 if Minutes = 0
+   --     if Minutes = 0 or Minutes > 300
    --  @return True iff the alarm was successfully registered
 
 Text markup
