@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2016, AdaCore                     --
+--                     Copyright (C) 2005-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1192,13 +1192,19 @@ package body GPS.Kernel.MDI is
          Central      => Central);
 
       Perspectives_Convert := XML_Utils.GtkAda.Convert (Perspectives);
+      Central_Convert := XML_Utils.GtkAda.Convert (Central);
+
+      if Perspectives_Convert = null and then Central_Convert = null then
+         Trace (Me, "not saving desktop (current perspective has save_on_exit "
+                & "= FALSE)");
+         return;
+      end if;
 
       if Project_Name = GNATCOLL.VFS.No_File then
          Trace (Me, "not saving central area (project is not from file)");
          Central_Convert := null;
          Glib.Xml_Int.Free (Central);
       else
-         Central_Convert := XML_Utils.GtkAda.Convert (Central);
          Add_File_Child (Central_Convert, "project", Project_Name);
       end if;
 

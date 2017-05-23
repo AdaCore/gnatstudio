@@ -1,22 +1,7 @@
 <PREDEFINED_ADA>
 
    <ASPECT id="0" name="Abstract_State" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Abstract_State: 1c.
-
-3.2 Annotate
-
-There are three forms of this aspect (where ID is an identifier, and
-ARG is a general expression), corresponding to *note pragma Annotate:
-25.
-
-`Annotate =&gt; ID'
-Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
-
-`Annotate =&gt; (ID)'
-Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
-
-`Annotate =&gt; (ID ,ID {, ARG})'
-Equivalent to `pragma Annotate (ID, ID {, ARG}, Entity =&gt; Name);'</DOC>
+       <DOC>This aspect is equivalent to *note pragma Abstract_State: 1c.</DOC>
    </ASPECT>
    <ASPECT id="2/3" name="Address" origin="Ada RM" category="unknown">
        <DOC>Machine address of an entity. See 13.3.</DOC>
@@ -30,6 +15,20 @@ Equivalent to `pragma Annotate (ID, ID {, ARG}, Entity =&gt; Name);'</DOC>
    <ASPECT id="5/3" name="All_Calls_Remote" origin="Ada RM" category="unknown">
        <DOC>All remote procedure calls should use the Partition
 Communication Subsystem, even if they are local. See E.2.3.</DOC>
+   </ASPECT>
+   <ASPECT id="0" name="Annotate" origin="GNAT RM" category="unknown">
+       <DOC>There are three forms of this aspect (where ID is an identifier, and
+ARG is a general expression), corresponding to *note pragma Annotate:
+25.
+
+`Annotate =&gt; ID'
+Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
+
+`Annotate =&gt; (ID)'
+Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
+
+`Annotate =&gt; (ID ,ID {, ARG})'
+Equivalent to `pragma Annotate (ID, ID {, ARG}, Entity =&gt; Name);'</DOC>
    </ASPECT>
    <ASPECT id="0" name="Async_Readers" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Async_Readers: 2c.</DOC>
@@ -3203,7 +3202,7 @@ and it is recommended that these two options not be used together.</DOC>
    <PRAGMA id="0" name="Async_Readers" origin="GNAT RM">
       <DOC>Syntax:
 
-pragma Asynch_Readers   [ (boolean_EXPRESSION) ];
+pragma Asynch_Readers [ (boolean_EXPRESSION) ];
 
 For the semantics of this pragma, see the entry for aspect
 `Async_Readers' in the SPARK 2014 Reference Manual, section 7.1.2.</DOC>
@@ -3211,7 +3210,7 @@ For the semantics of this pragma, see the entry for aspect
    <PRAGMA id="0" name="Async_Writers" origin="GNAT RM">
       <DOC>Syntax:
 
-pragma Asynch_Writers   [ (boolean_EXPRESSION) ];
+pragma Asynch_Writers [ (boolean_EXPRESSION) ];
 
 For the semantics of this pragma, see the entry for aspect
 `Async_Writers' in the SPARK 2014 Reference Manual, section 7.1.2.</DOC>
@@ -4019,7 +4018,7 @@ Reference Manual for details.</DOC>
    <PRAGMA id="0" name="Effective_Reads" origin="GNAT RM">
       <DOC>Syntax:
 
-pragma Effective_Reads  [ (boolean_EXPRESSION) ];
+pragma Effective_Reads [ (boolean_EXPRESSION) ];
 
 For the semantics of this pragma, see the entry for aspect
 `Effective_Reads' in the SPARK 2014 Reference Manual, section 7.1.2.</DOC>
@@ -4995,9 +4994,10 @@ pragma Inline;</DOC>
 
 pragma Inline_Always (NAME [, NAME]);
 
-Similar to pragma `Inline' except that inlining is not subject to the
-use of option `-gnatn' or `-gnatN' and the inlining happens regardless
-of whether these options are used.</DOC>
+Similar to pragma `Inline' except that inlining is unconditional.
+Inline_Always instructs the compiler to inline every direct call to the
+subprogram or else to emit a compilation error, independently of any
+option, in particular `-gnatn' or `-gnatN' or the optimization level.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Inline_Generic" origin="GNAT RM">
       <DOC>Syntax:
@@ -5634,9 +5634,9 @@ pragma No_Elaboration_Code_All [(program_unit_NAME)];
 
 This is a program unit pragma (there is also an equivalent aspect of the
 same name) that establishes the restriction `No_Elaboration_Code' for
-the current unit and any extended main source units (body and subunits.
-It also has has the effect of enforcing a transitive application of this
-aspect, so that if any unit is implicitly or explicitly WITH'ed by the
+the current unit and any extended main source units (body and subunits).
+It also has the effect of enforcing a transitive application of this
+aspect, so that if any unit is implicitly or explicitly with'ed by the
 current unit, it must also have the No_Elaboration_Code_All aspect set.
 It may be applied to package or subprogram specs or their generic
 versions.</DOC>
