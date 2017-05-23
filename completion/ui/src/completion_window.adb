@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2016, AdaCore                     --
+--                     Copyright (C) 2006-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1980,7 +1980,7 @@ package body Completion_Window is
       X, Y                : Gint;
       Requisition, Ignore : Gtk_Requisition;
 
-      Root_Width, Root_Height : Gint;
+      Max_Monitor_X, Max_Monitor_Y : Gint;
 
       Parent             : Gtk_Widget;
 
@@ -2059,16 +2059,27 @@ package body Completion_Window is
 
       Set_Size_Request (Window, Width, Height);
 
-      --  Compute the coordinates of the window so that it doesn't get past
-      --  the screen border.
-      Root_Width := Get_Width (Gdk.Screen.Get_Default);
-      Root_Height := Get_Height (Gdk.Screen.Get_Default);
-      X := Gint'Min (Gdk_X + Window_X, Root_Width - Width);
+      --  Compute the maximum coordinates of the active monitor to ensure that
+      --  the completion window does not get past the active monitor's border.
+      declare
+         Screen  : constant Gdk_Screen := View.Get_Screen;
+         Monitor : constant Gint := Screen.Get_Monitor_At_Window
+           (View.Get_Window);
+         Rect    : Gdk_Rectangle;
+      begin
+         Screen.Get_Monitor_Geometry
+           (Monitor_Num => Monitor,
+            Dest        => Rect);
+         Max_Monitor_X := Rect.Width + Rect.X;
+         Max_Monitor_Y := Rect.Height + Rect.Y;
+      end;
+
+      X := Gint'Min (Gdk_X + Window_X, Max_Monitor_X - Width);
 
       --  Make sure the completion window doesn't overlap the current line. In
       --  case of risk, place the completion window above the current line.
 
-      if Gdk_Y + Window_Y < Root_Height - Height then
+      if Gdk_Y + Window_Y < Max_Monitor_Y - Height then
          Y := Gdk_Y + Window_Y;
 
       else
@@ -2090,7 +2101,7 @@ package body Completion_Window is
       Set_Default_Size
         (Window.Notes_Window, Notes_Window_Width, Height);
 
-      if Root_Width - (X + Width + 4) > Notes_Window_Width then
+      if Max_Monitor_X - (X + Width + 4) > Notes_Window_Width then
          Move (Window.Notes_Window, X + Width
                + Notes_Window_Left_Padding, Y);
 
