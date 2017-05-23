@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2016, AdaCore                     --
+--                     Copyright (C) 2005-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -680,7 +680,9 @@ package body Bookmark_Views is
       --  it is modified). If GPS crashes, we would lose bookmarks for open
       --  files, but not for files that have been closed in between...
 
-      Save_Bookmarks (Get_Kernel (Module));
+      if Module.Loaded then
+         Save_Bookmarks (Get_Kernel (Module));
+      end if;
    end Destroy;
 
    ---------------------
