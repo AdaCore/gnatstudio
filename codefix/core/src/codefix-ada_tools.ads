@@ -40,6 +40,13 @@ package Codefix.Ada_Tools is
    --  instantiation name. If Exclusive is true, then only use clauses
    --  that are not linked to any other will be returned.
 
+   procedure Get_Use_Duplicates_On_Line
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor;
+      Result       : out Words_Lists.Vector);
+   --  Return use clauses which are placed in the same line and aren't first
+   --  use clauses for this item in the unit
+
    function Get_Next_With_Position
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return File_Cursor'Class;

@@ -90,6 +90,50 @@ package body Codefix.Ada_Tools is
       end loop;
    end Get_Use_Clauses;
 
+   --------------------------------
+   -- Get_Use_Duplicates_On_Line --
+   --------------------------------
+
+   procedure Get_Use_Duplicates_On_Line
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor;
+      Result       : out Words_Lists.Vector)
+   is
+      use type Basic_Types.Visible_Column_Type;
+
+      List_Of_Use : Use_Lists.Vector;
+      First       : Boolean := True;
+
+   begin
+      List_All_Use (Current_Text, Get_File (Word), List_Of_Use);
+
+      for Item of List_Of_Use loop
+         exit when Word.Get_Line < Get_Line (Item.Position);
+
+         if Item.Name = Get_Word (Word) then
+            if Word.Get_Line = Get_Line (Item.Position)
+              and then Word.Get_Column < Get_Column (Item.Position)
+              and then not First
+            then
+               declare
+                  Word_Used : Word_Cursor;
+               begin
+                  Set_File (Word_Used, Get_File (Word));
+                  Set_Location
+                    (Word_Used,
+                     Line   => Get_Line (Item.Position),
+                     Column => Get_Column (Item.Position));
+                  Set_Word (Word_Used, Item.Name);
+                  Append (Result, Word_Used);
+               end;
+
+            else
+               First := False;
+            end if;
+         end if;
+      end loop;
+   end Get_Use_Duplicates_On_Line;
+
    ----------------------
    -- Get_Parts_Number --
    ----------------------

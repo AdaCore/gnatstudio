@@ -668,44 +668,48 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  If the category is not already a use clause, see if there are use
       --  clauses for that unit and remove them as well.
 
-      if This.Look_For_Use and then This.Category /= Cat_Use then
-         Get_Use_Clauses
-           (To_String (Word.String_Match),
-            Get_File (Word),
-            Current_Text,
-            True,
-            Clauses_List);
-
-         for Item of Clauses_List loop
-            declare
-               Use_Pck : Ada_Statement;
-            begin
-               Initialize
-                 (Use_Pck,
-                  Get_Context (Current_Text),
-                  To_Location
-                    (Get_Or_Create
-                       (Get_Context (Current_Text).Db.Constructs, Word.File),
-                     Item.Line,
-                     Item.Col));
-
-               Remove_Element
-                 (Self => Use_Pck,
-                  Mode => Erase,
-                  Name => Find_Normalized
-                    (Symbols => Get_Context (Current_Text).Db.Symbols,
-                     Name    => Item.Get_Word));
-
-               Free (Use_Pck);
-            end;
-
-            if This.Destination /= GNATCOLL.VFS.No_File then
-               Append  (Obj_List, "use " & Item.String_Match & ";");
-            end if;
-         end loop;
-
-         Clauses_List.Clear;
+      if This.Category /= Cat_Use then
+         if This.Look_For_Use then
+            Get_Use_Clauses
+              (To_String (Word.String_Match),
+               Get_File (Word),
+               Current_Text,
+               True,
+               Clauses_List);
+         else
+            Get_Use_Duplicates_On_Line (Current_Text, Word, Clauses_List);
+         end if;
       end if;
+
+      for Item of Clauses_List loop
+         declare
+            Use_Pck : Ada_Statement;
+         begin
+            Initialize
+              (Use_Pck,
+               Get_Context (Current_Text),
+               To_Location
+                 (Get_Or_Create
+                      (Get_Context (Current_Text).Db.Constructs, Word.File),
+                  Item.Line,
+                  Item.Col));
+
+            Remove_Element
+              (Self => Use_Pck,
+               Mode => Erase,
+               Name => Find_Normalized
+                 (Symbols => Get_Context (Current_Text).Db.Symbols,
+                  Name    => Item.Get_Word));
+
+            Free (Use_Pck);
+         end;
+
+         if This.Destination /= GNATCOLL.VFS.No_File then
+            Append  (Obj_List, "use " & Item.String_Match & ";");
+         end if;
+      end loop;
+
+      Clauses_List.Clear;
 
       if This.Destination /= GNATCOLL.VFS.No_File then
          Last_With := File_Cursor
