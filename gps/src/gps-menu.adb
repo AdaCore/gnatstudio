@@ -258,9 +258,7 @@ package body GPS.Menu is
       Path    : constant Virtual_File := Project_Path (Project);
       Command : Command_Access;
    begin
-      if Get_Registry (Kernel).Tree.Status /= From_File
-        or else Path = No_File
-      then
+      if Path = No_File then
          return;
       end if;
 
