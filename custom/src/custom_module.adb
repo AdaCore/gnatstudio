@@ -1524,6 +1524,28 @@ package body Custom_Module is
                   Add_Before  => Before,
                   Action      => Action);
          end;
+
+      elsif Command = "__doc__" then
+         Inst := Data.Nth_Arg (1, Action_Class);
+         declare
+            Action_Name : constant String := Get_Data (Inst, Action_Class);
+            Action      : constant Action_Record_Access :=
+              Lookup_Action (Kernel, Action_Name);
+
+         begin
+            if Action = null then
+               Set_Return_Value (Data, String'(""));
+            else
+               Set_Return_Value (Data,
+                                 Get_Full_Description
+                                   (Action           => Action,
+                                    Kernel           => Kernel,
+                                    Use_Markup       => False,
+                                    Include_Name     => False,
+                                    Include_Category => False,
+                                    Include_Menus    => False));
+            end if;
+         end;
       end if;
    end Action_Handler;
 
@@ -1582,6 +1604,10 @@ package body Custom_Module is
         ("can_execute",
          Class         => Action_Class,
          Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("__doc__",
+         Class         => Action_Class,
+         Getter        => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("execute_if_possible",
          Class         => Action_Class,

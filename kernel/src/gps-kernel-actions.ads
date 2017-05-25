@@ -152,15 +152,20 @@ package GPS.Kernel.Actions is
    --  Return the name of the category for the action
 
    function Get_Full_Description
-     (Action : not null access Action_Record;
-      Kernel : access Kernel_Handle_Record'Class := null;
-      Use_Markup : Boolean := True)
+     (Action           : not null access Action_Record;
+      Kernel           : access Kernel_Handle_Record'Class := null;
+      Use_Markup       : Boolean := True;
+      Include_Name     : Boolean := True;
+      Include_Category : Boolean := True;
+      Include_Menus    : Boolean := True)
      return String;
-   --  Return the full description (+ name + category + shortcut) for this
-   --  action.
+   --  Return the full description for this action.
+   --  If Include_Name, this includes the name of the action.
+   --  If Include_Category, this includes the category of the action.
+   --  If Include_Menus, this includes the menus associated to the action.
    --  If the Kernel is specified, the description includes the known
    --  keyboard shortcuts for this action.
-   --  The result string includes pango markup.
+   --  The result string includes pango markup if Use_Markup is True.
 
    type Action_Iterator is private;
 

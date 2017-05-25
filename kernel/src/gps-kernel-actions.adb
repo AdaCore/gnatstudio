@@ -547,9 +547,12 @@ package body GPS.Kernel.Actions is
    --------------------------
 
    function Get_Full_Description
-     (Action : not null access Action_Record;
-      Kernel : access Kernel_Handle_Record'Class := null;
-      Use_Markup : Boolean := True)
+     (Action           : not null access Action_Record;
+      Kernel           : access Kernel_Handle_Record'Class := null;
+      Use_Markup       : Boolean := True;
+      Include_Name     : Boolean := True;
+      Include_Category : Boolean := True;
+      Include_Menus    : Boolean := True)
      return String
    is
       use Ada.Strings.Unbounded;
@@ -570,7 +573,8 @@ package body GPS.Kernel.Actions is
             Use_Markup      => Use_Markup,
             Return_Multiple => True));
       Menus : Unbounded_String :=
-         Menu_List_For_Action (Action.Name.all);
+        (if Include_Menus then Menu_List_For_Action (Action.Name.all)
+         else Null_Unbounded_String);
 
    begin
       if Menus /= Null_Unbounded_String then
@@ -581,15 +585,17 @@ package body GPS.Kernel.Actions is
       return
         Escape (Action.Description.all)
         & ASCII.LF & ASCII.LF
-        & Tag ("Action: ")
-        & Escape (Action.Name.all) & ASCII.LF
-        & Tag ("Category: ")
-        & Escape
-        ((if Action.Category = null then "" else Action.Category.all))
-        & ASCII.LF
+        & (if Include_Name then Tag ("Action: ")
+           & Escape (Action.Name.all) & ASCII.LF else "")
+        & (if Include_Category then Tag ("Category: ")
+           & Escape
+             ((if Action.Category = null then "" else Action.Category.all))
+           & ASCII.LF
+           else "")
         & (if Shortcut = "" then ""
            else Tag ("Shortcut: ") & Shortcut & ASCII.LF)
-        & To_String (Menus);
+        & (To_String (Menus))
+        & ASCII.LF;
    end Get_Full_Description;
 
    ------------------
