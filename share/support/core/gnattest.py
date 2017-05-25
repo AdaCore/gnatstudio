@@ -299,10 +299,10 @@ XML = r"""<?xml version="1.0" ?>
   </project_attribute>
 
   <project_attribute package="gnattest"
-    name="stubs_default"
+    name="skeletons_default"
     editor_page="GNATtest"
-    label="Stubs Default"
-    description="Default behavior of generated stubs."
+    label="Skeletons Default"
+    description="Default behavior of generated skeletons."
     hide_in="wizard library_wizard"
     >
     <choice default="true">fail</choice>
