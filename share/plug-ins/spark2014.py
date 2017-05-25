@@ -2195,9 +2195,14 @@ class GNATProve_Plugin:
 
             if os.path.exists(candidate_report_file):
                 report_file = candidate_report_file
-        buf = GPS.EditorBuffer.get(GPS.File(report_file))
-        v = buf.current_view()
-        GPS.MDI.get_by_child(v).raise_window()
+        if not os.path.exists(report_file):
+            GPS.Console().write("The file " + report_file +
+                                " does not exist; run gnatprove first.",
+                                mode='error')
+        else:
+            buf = GPS.EditorBuffer.get(GPS.File(report_file))
+            v = buf.current_view()
+            GPS.MDI.get_by_child(v).raise_window()
 
 # Manual proof
 
