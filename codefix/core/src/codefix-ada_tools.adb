@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2002-2016, AdaCore                     --
+--                     Copyright (C) 2002-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -102,6 +102,53 @@ package body Codefix.Ada_Tools is
 
       return Result;
    end Get_Use_Clauses;
+
+   --------------------------------
+   -- Get_Use_Duplicates_On_Line --
+   --------------------------------
+
+   procedure Get_Use_Duplicates_On_Line
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor;
+      Result       : out Words_Lists.List)
+   is
+      use type Basic_Types.Visible_Column_Type;
+
+      List_Of_Use : Use_Lists.List;
+      F           : Boolean := True;
+      Seek_Node   : Use_Lists.List_Node;
+
+   begin
+      List_Of_Use := List_All_Use (Current_Text, Get_File (Word));
+
+      Seek_Node := First (List_Of_Use);
+
+      while Seek_Node /= Use_Lists.Null_Node loop
+         exit when Word.Get_Line < Get_Line (Data (Seek_Node).Position);
+
+         if Data (Seek_Node).Name = Get_Word (Word) then
+            if Word.Get_Line = Get_Line (Data (Seek_Node).Position)
+              and then Word.Get_Column < Get_Column (Data (Seek_Node).Position)
+              and then not F
+            then
+               declare
+                  Word_Used : Word_Cursor;
+               begin
+                  Set_File (Word_Used, Get_File (Word));
+                  Set_Location
+                    (Word_Used,
+                     Line   => Get_Line (Data (Seek_Node).Position),
+                     Column => Get_Column (Data (Seek_Node).Position));
+                  Set_Word (Word_Used, Data (Seek_Node).Name);
+                  Append (Result, Word_Used);
+               end;
+
+            else
+               F := False;
+            end if;
+         end if;
+      end loop;
+   end Get_Use_Duplicates_On_Line;
 
    ----------------------
    -- Get_Parts_Number --

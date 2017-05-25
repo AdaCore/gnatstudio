@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2002-2016, AdaCore                     --
+--                     Copyright (C) 2002-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -680,50 +680,53 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  If the category is not already a use clause, see if there are use
       --  clauses for that unit and remove them as well.
 
-      if This.Look_For_Use and then This.Category /= Cat_Use then
-         Clauses_List := Get_Use_Clauses
-           (To_String (Word.String_Match),
-            Get_File (Word),
-            Current_Text,
-            True);
-
-         Clause_Node := First (Clauses_List);
-
-         while Clause_Node /= Words_Lists.Null_Node loop
-            declare
-               Use_Pck : Ada_Statement;
-            begin
-               Initialize
-                 (Use_Pck,
-                  Get_Context (Current_Text),
-                  To_Location
-                    (Get_Or_Create
-                       (Get_Context (Current_Text).Db.Constructs, Word.File),
-                     Data (Clause_Node).Line,
-                     Data (Clause_Node).Col));
-
-               Remove_Element
-                 (Self => Use_Pck,
-                  Mode => Erase,
-                  Name => Find_Normalized
-                    (Symbols =>
-                       Get_Context (Current_Text).Db.Symbols,
-                     Name    => Data (Clause_Node).Get_Word));
-
-               Free (Use_Pck);
-            end;
-
-            if This.Destination /= GNATCOLL.VFS.No_File then
-               Append
-                 (Obj_List,
-                  "use " & Data (Clause_Node).String_Match & ";");
-            end if;
-
-            Clause_Node := Next (Clause_Node);
-         end loop;
-
-         Free (Clauses_List);
+      if This.Category /= Cat_Use then
+         if This.Look_For_Use then
+            Clauses_List := Get_Use_Clauses
+              (To_String (Word.String_Match),
+               Get_File (Word),
+               Current_Text,
+               True);
+         else
+            Get_Use_Duplicates_On_Line (Current_Text, Word, Clauses_List);
+         end if;
       end if;
+
+      Clause_Node := First (Clauses_List);
+
+      while Clause_Node /= Words_Lists.Null_Node loop
+         declare
+            Use_Pck : Ada_Statement;
+         begin
+            Initialize
+              (Use_Pck,
+               Get_Context (Current_Text),
+               To_Location
+                 (Get_Or_Create
+                      (Get_Context (Current_Text).Db.Constructs, Word.File),
+                  Data (Clause_Node).Line,
+                  Data (Clause_Node).Col));
+
+            Remove_Element
+              (Self => Use_Pck,
+               Mode => Erase,
+               Name => Find_Normalized
+                 (Symbols =>
+                      Get_Context (Current_Text).Db.Symbols,
+                  Name    => Data (Clause_Node).Get_Word));
+
+            Free (Use_Pck);
+         end;
+
+         if This.Destination /= GNATCOLL.VFS.No_File then
+            Append
+              (Obj_List,
+               "use " & Data (Clause_Node).String_Match & ";");
+         end if;
+         Clause_Node := Next (Clause_Node);
+      end loop;
+
+      Free (Clauses_List);
 
       if This.Destination /= GNATCOLL.VFS.No_File then
          Last_With := File_Cursor
