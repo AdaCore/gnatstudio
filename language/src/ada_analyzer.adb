@@ -1975,7 +1975,10 @@ package body Ada_Analyzer is
          Do_Pop := 0;
          Finish := False;
 
-         if Reserved = Tok_Is and then Aspect_Clause then
+         if Reserved = Tok_Is
+           and then Aspect_Clause
+           and then Num_Parens = 0
+         then
             Finish_Aspect_Clause (Prec, Line_Count, Done => Finish);
 
             if Finish then
@@ -4285,7 +4288,9 @@ package body Ada_Analyzer is
                      Prev_Token := Tok_Semicolon;
                      Right_Assignment := False;
 
-                     if Aspect_Clause then
+                     if Aspect_Clause
+                       and then Num_Parens = 0
+                     then
                         Finish_Aspect_Clause (P, L, Done => Terminated);
                         Local_Top_Token := Top (Tokens);
 
@@ -4799,8 +4804,6 @@ package body Ada_Analyzer is
                if Do_Push then
                   Temp.Is_Generic_Param := In_Generic;
                   Push (Tokens, Temp);
-               else
-                  null;
                end if;
 
                --  Computes In_Declaration

@@ -3973,23 +3973,6 @@ package body GNATdoc.Frontend is
                Update_Prev_Known_Token;
 
                case Entity is
-                  when Aspect_Text =>
-                     Token := Tok_Unknown;
-
-                     --  Workaround a problem in the low level parser (that
-                     --  is, in Parse_Entities), which may silently skip
-                     --  several tokens when processing an Aspect_Text. For
-                     --  example, the following text may be associated with
-                     --  an Aspect_Text: " Dynamic_Predicate => ("
-
-                     for J in S'Range loop
-                        if S (J) = '(' then
-                           Par_Count := Par_Count + 1;
-
-                        elsif S (J) = ')' then
-                           Par_Count := Par_Count - 1;
-                        end if;
-                     end loop;
 
                   when Block_Text | Identifier_Text =>
                      Token := Tok_Id;
@@ -4195,6 +4178,7 @@ package body GNATdoc.Frontend is
                     Comment_Text            |
                     Annotated_Keyword_Text  |
                     Annotated_Comment_Text  |
+                    Aspect_Text             |
                     Aspect_Comment_Text     |
                     Aspect_Keyword_Text     =>
                   Token := Tok_Unknown;
