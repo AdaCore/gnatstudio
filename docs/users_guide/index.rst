@@ -7,6 +7,7 @@
 
    intro
    main_window
+   menus
    mdi
    editing
    navigation

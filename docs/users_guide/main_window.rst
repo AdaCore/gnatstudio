@@ -337,61 +337,6 @@ Disable this dialog by unchecking the :guilabel:`Display Tip of the Day on
 startup` check box.  To reenable this dialog, go to the
 :menuselection:`Edit --> Preferences...` menu.
 
-
-.. index:: menu bar
-.. index:: windows; menu bar
-.. _The_Menu_Bar:
-
-The Menu Bar
-============
-
-.. image:: menubar.png
-
-GPS provides a standard menu bar giving access to all operations. However,
-it is usually easier to access a feature using the various contextual menus
-provided throughout GPS: these give direct access to the most relevant
-actions in the current context (for example, a project, directory, file, or
-entity). Contextual menus pop up when you click the right mouse button or
-use the special :kbd:`open contextual menu` key on most keyboards.
-
-You can access the following entries from the menu bar:
-
- * :menuselection:`File` (see :ref:`The_File_Menu`)
-
-* :menuselection:`Edit` (see :ref:`The_Edit_Menu`)
-
-* :menuselection:`Navigate` (see :ref:`The_Navigate_Menu`)
-
-* :menuselection:`Find` (see :ref:`The_Find_Menu`)
-
-* :menuselection:`View` (see :ref:`The_View_Menu`)
-
-* :menuselection:`Code` (see :ref:`The_Code_Menu`)
-
-* :menuselection:`Build` (see :ref:`The_Build_Menu`)
-
-* :menuselection:`Analyze` (see :ref:`The_Analyze_Menu`)
-
-* :menuselection:`Debug` (see :ref:`The_Debug_Menu`)
-
-* :menuselection:`SPARK`
-
-  This menu is available if the SPARK toolset is installed on your system
-  and available on your PATH. See :menuselection:`Help --> SPARK -->
-  Reference --> Using SPARK with GPS` for more details.
-
-* :menuselection:`CodePeer`
-
-  This menu is available if the CodePeer toolset is installed on your
-  system and available on your PATH. See your CodePeer documentation for
-  more details.
-
-* :menuselection:`Window` (see :ref:`Multiple_Document_Interface`)
-
-* :menuselection:`Help`
-
-
-
 .. index:: tool bar
 .. _The_Tool_Bar:
 

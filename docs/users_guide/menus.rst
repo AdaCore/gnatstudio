@@ -109,7 +109,6 @@ The File Menu
 
    Open an existing file
    
-   Shortcut: F3
    
 .. index:: menu; file --> open file from host...
 
@@ -218,7 +217,7 @@ The File Menu
 
    Exit GPS, after confirming whether to save modified files
    
-   Shortcut: Ctrl+Q
+   Shortcut: Shift+Ctrl+Q
    
 .. index:: edit
 
@@ -281,7 +280,6 @@ The Edit Menu
 
    Select the whole contents of the editor
    
-   Shortcut: Ctrl+A
    
 .. index:: menu; edit --> cursors --> add cursor and go down
 
@@ -289,7 +287,7 @@ The Edit Menu
 
    
    
-   Shortcut: Shift+Alt+Down
+   Shortcut: Shift+Ctrl+Down
    
 .. index:: menu; edit --> cursors --> add cursor and go up
 
@@ -305,7 +303,6 @@ The Edit Menu
 
    
    
-   Shortcut: Shift+Ctrl+N
    
 .. index:: menu; edit --> cursors --> cursor skip next occurence of selection
 
@@ -321,7 +318,6 @@ The Edit Menu
 
    
    
-   Shortcut: Shift+Ctrl+E
    
 .. index:: menu; edit --> insert file...
 
@@ -360,7 +356,7 @@ The Edit Menu
    Decrease the size of fonts in the source editors.
    This impacts the corresponding preferences.
    
-   Shortcut: Ctrl+-
+   Shortcut: Shift+Ctrl++
    
 .. index:: menu; edit --> project properties...
 
@@ -375,6 +371,7 @@ The Edit Menu
 
    Open (or reuse if it already exists) the 'Preferences' view
    
+   Shortcut: Shift+Ctrl+P
    
 .. index:: navigate
 
@@ -405,6 +402,7 @@ The Navigate Menu
 
    Jump to the declaration of the current entity
    
+   Shortcut: Arabic switch D
    
 .. index:: menu; navigate --> goto body
 
@@ -488,7 +486,7 @@ The Navigate Menu
 
    Move to the previous message from the Locations window
    
-   Shortcut: Ctrl+<
+   Shortcut: Ctrl+,
    
 .. index:: menu; navigate --> next locations message
 
@@ -496,7 +494,7 @@ The Navigate Menu
 
    Move to the next message from the Locations window
    
-   Shortcut: Ctrl+>
+   Shortcut: Ctrl+.
    
 .. index:: find
 
@@ -591,6 +589,7 @@ The Find Menu
 
    Search amongst opened windows
    
+   Shortcut: Shift+Ctrl+H
    
 .. index:: menu; find --> find plugin
 
@@ -837,7 +836,7 @@ The Code Menu
 
    Comment the selected lines
    
-   Shortcut: Ctrl+/
+   Shortcut: Ctrl+-
    
 .. index:: menu; code --> selection --> uncomment lines
 
@@ -845,7 +844,7 @@ The Code Menu
 
    Uncomment the selected lines
    
-   Shortcut: Ctrl+?
+   Shortcut: Ctrl+_
    
 .. index:: menu; code --> selection --> print
 
@@ -884,7 +883,7 @@ The Code Menu
        negative, moves to the left. If there is no selection, indent the current
        line.
    
-   Shortcut: Ctrl+Alt+>
+   Shortcut: Ctrl+Right
    
 .. index:: menu; code --> selection --> move left
 
@@ -892,7 +891,7 @@ The Code Menu
 
    
    
-   Shortcut: Ctrl+Alt+<
+   Shortcut: Ctrl+Left
    
 .. index:: menu; code --> selection --> untabify
 
@@ -912,6 +911,7 @@ The Code Menu
        the subprogram. This provides helpful separations between subprograms, and
        is similar to the style used in the GNAT compiler or GPS themselves
    
+   Shortcut: Ctrl+H
    
 .. index:: menu; code --> smart completion
 
@@ -919,6 +919,7 @@ The Code Menu
 
    Complete current identifier based on advanced entities database
    
+   Shortcut: Ctrl+Space
    
 .. index:: menu; code --> more completion --> expand alias
 
@@ -926,6 +927,7 @@ The Code Menu
 
    Expand the alias found just before the cursor
    
+   Shortcut: Shift+Ctrl+O
    
 .. index:: menu; code --> more completion --> complete identifier
 
@@ -1060,6 +1062,7 @@ The VCS Menu
 
    Display the local changes for the current file in an editor
    
+   Shortcut: Ctrl+D
    
 .. index:: menu; vcs --> show all local changes
 
@@ -1468,7 +1471,6 @@ The Debug Menu
 
    Display local variables in the data window
    
-   Shortcut: Ctrl+L
    
 .. index:: menu; debug --> data --> display arguments
 
@@ -1522,7 +1524,7 @@ The Debug Menu
 
    Execute the program until the next source line, stepping over subprogram calls
    
-   Shortcut: F6
+   Shortcut: Ctrl+Arabic switch Ctrl+N
    
 .. index:: menu; debug --> next instruction
 
@@ -1555,7 +1557,7 @@ The Debug Menu
 
    Asynchronously interrupt the debuggee program
    
-   Shortcut: Ctrl+Backslash
+   Shortcut: Ctrl+I
    
 .. index:: menu; debug --> terminate current
 
