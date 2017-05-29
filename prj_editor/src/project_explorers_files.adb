@@ -401,7 +401,6 @@ package body Project_Explorers_Files is
       Args   : Glib.Values.GValues;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Kernel);
 
       Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
       Model : Gtk_Tree_Model;
@@ -424,6 +423,17 @@ package body Project_Explorers_Files is
 
          when File_Node | Directory_Node =>
             File := Get_File (M, Iter, File_Column);
+            begin
+               if not File.Is_Readable then
+                  Kernel.Get_Messages_Window.Insert_Error
+                    ("Source " & (+(File.Base_Name)) &
+                       " is not readable" & ASCII.LF);
+               end if;
+
+            exception
+               when others =>
+                  return;
+            end;
 
          when others =>
             return;
@@ -455,6 +465,20 @@ package body Project_Explorers_Files is
       Action  : constant Drag_Action := Get_Actions (Context);
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
+
+      procedure Fail (Msg : String);
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (Msg : String) is
+      begin
+         Kernel.Get_Messages_Window.Insert_Error (Msg & ASCII.LF);
+         Gtk.Dnd.Finish
+           (Context, Success => False, Del => False, Time => Time);
+      end Fail;
+
    begin
       declare
          Path      : Gtk_Tree_Path;
@@ -484,16 +508,20 @@ package body Project_Explorers_Files is
       elsif Iter /= Null_Iter
         and then Get_Length (Data) >= 0
         and then Get_Format (Data) = 8
-        and then (Action = Action_Copy or Action = Action_Move)
+        and then
+          (Action = Action_Copy
+           or else Action = Action_Move
+           or else Action = Action_Any)
       then
          declare
             Source  : Virtual_File;
             Target  : Virtual_File;
-            Node    : constant Virtual_File
-              := Get_File (Model, Iter, File_Column);
+            Node    : constant Virtual_File :=
+              Get_File (Model, Iter, File_Column);
             Dir     : constant Virtual_File := Node.Dir;
-            Sources : constant File_Array_Access
-              := File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
+            Sources : constant File_Array_Access :=
+              File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
+            Src_Dir : Virtual_File;
          begin
             if Sources = null then
                Success := False;
@@ -503,9 +531,35 @@ package body Project_Explorers_Files is
                Source := Sources (Sources'First);
                Target := Dir.Create_From_Dir (Source.Base_Name);
 
+               if not Dir.Is_Writable then
+                  Fail ("Target directory " & (+(Dir.Full_Name)) &
+                          " is not writable");
+                  return;
+               end if;
+
                if Source = Target then
                   Success := False;
-               elsif Action = Action_Move then
+
+               elsif Action = Action_Move
+                 or else Action = Action_Any
+               then
+                  if not Source.Is_Writable then
+                     Fail ("Source " & (+(Source.Base_Name)) &
+                             " is not writable");
+                     return;
+                  end if;
+
+                  Src_Dir := Source.Get_Parent;
+                  if Src_Dir = No_File then
+                     Fail ("Source directory is unavailable");
+                     return;
+
+                  elsif not Src_Dir.Is_Writable then
+                     Fail ("Source directory " & (+(Src_Dir.Full_Name)) &
+                             " is not writable");
+                     return;
+                  end if;
+
                   Source.Rename (Target, Success);
 
                   if Success then
@@ -979,7 +1033,7 @@ package body Project_Explorers_Files is
          On_File_Destroy'Access, Explorer, False);
 
       Gtk.Dnd.Dest_Set
-        (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
+        (Explorer.Tree, Dest_No_Default, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Explorer.Kernel);
