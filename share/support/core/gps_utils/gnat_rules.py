@@ -414,7 +414,7 @@ class gnatMakeProc:
 # did not manage to correctly parse the gnatmake output.
 
 xmlCompilerHead = """
-   <tool name="Builder" package="Builder" index="ada">
+   <tool name="Builder" package="Builder" index="ada" override="True">
       <language>Ada</language>
       <initial-cmd-line></initial-cmd-line>
       <switches>
@@ -764,7 +764,7 @@ xmlCompilerTrailer = """
       </switches>
    </tool>
 
-   <tool name="Binder" package="Binder" index="ada">
+   <tool name="Binder" package="Binder" index="ada" override="True">
       <language>Ada</language>
       <switches>
          <check label="Store call stack in exceptions" switch="-E"
@@ -775,7 +775,7 @@ xmlCompilerTrailer = """
       </switches>
    </tool>
 
-   <tool name="Ada Linker" package="Linker" index="ada">
+   <tool name="Ada Linker" package="Linker" index="ada" override="True">
       <language>Ada</language>
       <initial-cmd-line>-g</initial-cmd-line>
       <switches>
