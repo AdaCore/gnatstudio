@@ -20,6 +20,7 @@ project Testsuite_Drivers is
                  "test_htables.adb",
                  "test_strings.adb",
                  "test_trie.adb",
+                 "test_cmd_line.adb",
 
                  --  gvd
                  "test_parse.adb",

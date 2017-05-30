@@ -841,14 +841,17 @@ package body Switches_Chooser is
                   --  insensitive, the command line would still be
                   --  editable anyway.
 
-                  if Deps.Slave_Status then
-                     Append_Switch
+                  if not Deps.Slave_Status then
+                     Remove_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,
                         Success => Success);
-                  else
-                     Remove_Switch
+                  elsif not Tool.Cmd_Line.Has_Switch
+                    (Section => Deps.Slave_Section.all,
+                     Switch  => Deps.Slave_Switch.all)
+                  then
+                     Append_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,

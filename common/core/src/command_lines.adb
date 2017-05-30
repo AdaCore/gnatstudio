@@ -35,10 +35,31 @@ package body Command_Lines is
    --  Look for prefix matching Switch in Configuration
 
    procedure Append
-     (Cmd         : in out Command_Line;
-      Item        : Switch;
-      Add_Before  : Boolean   := False);
-   --  Append given Switch to command line. Keep Cmd unexpanded
+     (Cmd        : in out Command_Line;
+      Item       : Switch;
+      Section    : Unbounded_String;
+      Add_Before : Boolean := False);
+   --  Append given Switch to command line.
+
+   procedure Update (Self : in out Command_Line_Iterator);
+   --  Initialize iterator based on its current section
+
+   function Current_Switch (Iter : Command_Line_Iterator) return Switch;
+   --  Return current switch of iterator. It expects Iter in Expanded mode
+
+   procedure Remove_Switch
+     (Cmd           : in out Command_Line;
+      Switch        : Unbounded_String;
+      Has_Parameter : Boolean := False;
+      Section       : Unbounded_String;
+      Success       : out Boolean);
+   --  The same as Remove_Switch but with Unbounded_String
+
+   function Has_Switch
+     (Cmd     : Command_Line;
+      Switch  : Unbounded_String;
+      Section : Unbounded_String) return Boolean;
+   --  The same as Has_Switch but with Unbounded_String
 
    ---------
    -- "=" --
@@ -63,15 +84,15 @@ package body Command_Lines is
    ---------
 
    function "=" (Left, Right : Command_Line'Class) return Boolean is
-      use type Switch_Vectors.Vector;
+      use type Section_Maps.Map;
    begin
-      if Left.Switches.Is_Null then
+      if Left.Sections.Is_Null then
          return Right.Is_Empty;
-      elsif Right.Switches.Is_Null then
+      elsif Right.Sections.Is_Null then
          return Left.Is_Empty;
       else
-         return Left.Switches.Unchecked_Get.all =
-           Right.Switches.Unchecked_Get.all;
+         return Left.Sections.Unchecked_Get.all =
+           Right.Sections.Unchecked_Get.all;
       end if;
    end "=";
 
@@ -102,11 +123,19 @@ package body Command_Lines is
       Expanded : String;
       Section  : String := "")
    is
-      Short : constant Unbounded_String := To_Unbounded_String (Switch);
-      Long  : constant Unbounded_String := To_Unbounded_String (Expanded);
       Name  : constant Unbounded_String := To_Unbounded_String (Section);
       Conf  : Configuration_References.Element_Access;
    begin
+      if Expanded'Length < Switch'Length then
+         Define_Alias
+           (Config   => Config,
+            Switch   => Expanded,
+            Expanded => Switch,
+            Section  => Section);
+
+         return;
+      end if;
+
       Make_Default_Section (Config);
       Conf := Config.Unchecked_Get;
 
@@ -115,14 +144,14 @@ package body Command_Lines is
       end if;
 
       declare
-         Value : Section_Configuration renames Conf.Sections (Name);
+         Short  : constant Unbounded_String := To_Unbounded_String (Switch);
+         Long   : constant Unbounded_String := To_Unbounded_String (Expanded);
+         Value  : Section_Configuration renames Conf.Sections (Name);
       begin
-         if not Value.Aliases.Contains (Short)
-           and then not Value.Extended.Contains (Long)
-         then
-            Value.Aliases.Append (Short);
-            Value.Extended.Append (Long);
-         end if;
+         --  TODO: Sort part of alias after prefix
+
+         Value.Aliases.Include (Short, Long);
+         Value.Expanded.Include (Long, Short);
       end;
    end Define_Alias;
 
@@ -277,8 +306,8 @@ package body Command_Lines is
 
    procedure Check_Initialized (Cmd : in out Command_Line'Class) is
    begin
-      if Cmd.Switches.Is_Null then
-         Cmd.Switches.Set (Switch_Vectors.Empty_Vector);
+      if Cmd.Sections.Is_Null then
+         Cmd.Sections.Set (Section_Maps.Empty_Map);
       end if;
    end Check_Initialized;
 
@@ -311,7 +340,7 @@ package body Command_Lines is
 
    procedure Clear (Self : in out Command_Line) is
    begin
-      Self.Switches.Set (Switch_Vectors.Empty_Vector);
+      Self.Sections.Set (Section_Maps.Empty_Map);
    end Clear;
 
    ----------------------
@@ -347,11 +376,13 @@ package body Command_Lines is
       --  Search for section with given Name
 
       procedure Find_Switch
-        (Arg     : String;
+        (Switch  : String;
          Section : Unbounded_String;
          Result  : out Switch_Configuration;
          Found   : out Boolean);
-      --  Search for section with given Name
+      --  Look for given Switch under Section in Conf.
+      --  Special case if switch has an argument appended without separator
+      --  like -gnatyM72. Treat prefixed switch (like -gnatyabcd) as unknown.
 
       Conf : Configuration_References.Element_Access;
 
@@ -370,32 +401,39 @@ package body Command_Lines is
       -----------------
 
       procedure Find_Switch
-        (Arg     : String;
+        (Switch  : String;
          Section : Unbounded_String;
          Result  : out Switch_Configuration;
          Found   : out Boolean)
       is
+         Arg    : constant Unbounded_String := To_Unbounded_String (Switch);
+         Prefix : constant Unbounded_String := Find_Prefix (Conf, Arg);
          Value  : Section_Configuration renames Conf.Sections (Section);
          Pos    : Switch_Configuration_Maps.Cursor := Value.Switches.First;
          Length : Natural;  --  Length of current switch
       begin
+         if Prefix /= "" then
+            --  Treat any prefixed switch as unknown
+            Found := False;
+            return;
+         end if;
+
          while Switch_Configuration_Maps.Has_Element (Pos) loop
             Result := Switch_Configuration_Maps.Element (Pos);
             Length := Ada.Strings.Unbounded.Length (Result.Switch);
 
             --  Check if argument exectly matches switch
-            if Result.Switch = Arg then
+            if Result.Switch = Switch then
                Found := True;
                return;
 
             --  Otherwise check if switch has parameter embeded in argument
             elsif Result.Parameter.Is_Set
-              and then Arg'Length > Length
-              and then Arg (Arg'First .. Arg'First + Length - 1)
-                         = Result.Switch
+              and then Switch'Length > Length
+              and then Starts_With (Arg, Result.Switch)
               and then (not Result.Parameter.Separator.Is_Set
                         or else Result.Parameter.Separator.Value
-                                  = Arg (Arg'First + Length))
+                                  = Switch (Switch'First + Length))
             then
                Found := True;
                return;
@@ -407,27 +445,22 @@ package body Command_Lines is
          Found := False;
       end Find_Switch;
 
-      Last    : Natural := 0;
-
+      Arg          : GNAT.Strings.String_Access;
       Switch_Conf  : Switch_Configuration;
       Section      : Unbounded_String;
       Found        : Boolean;
       Is_Parameter : Boolean := False;
-      --  Next argument in list is a parameter of current switch
 
    begin
       Check_Initialized (Cmd);
       Make_Default_Section (Cmd.Configuration);
       Conf := Cmd.Configuration.Unchecked_Get;
 
-      for Arg of List loop
+      for J in List'Range loop
+         Arg := List (J);
+
          if Is_Parameter then
             Is_Parameter := False;
-
-            Cmd.Switches.Get.Reference (Last).Parameter :=
-              (Is_Set    => True,
-               Separator => (Is_Set => True, Value  => ' '),
-               Value     => To_Unbounded_String (Arg.all));
 
          elsif Is_Section (Arg.all) then
             Section := To_Unbounded_String (Arg.all);
@@ -441,9 +474,18 @@ package body Command_Lines is
                --  Check if next argument is parameter
                Is_Parameter :=
                  (Found
+                  and then J < List'Last
                   and then Switch_Conf.Parameter.Is_Set
                   and then Switch_Conf.Parameter.Separator.Is_Set
                   and then Switch_Conf.Parameter.Separator.Value = ' ');
+
+               if Is_Parameter then
+                  Item.Parameter :=
+                    (Is_Set    => True,
+                     Separator => Switch_Conf.Parameter.Separator,
+                     Value     => To_Unbounded_String
+                       (List (J + 1).all));
+               end if;
 
                if not Found then
                   Item.Switch := To_Unbounded_String (Arg.all);
@@ -470,9 +512,7 @@ package body Command_Lines is
 
                end if;
 
-               Item.Section := Section;
-               Append (Cmd, Item);
-               Last := Last + 1;
+               Append (Cmd, Item, Section);
             end;
          end if;
       end loop;
@@ -484,7 +524,7 @@ package body Command_Lines is
 
    function Starts_With (Value, Prefix : Unbounded_String) return Boolean is
    begin
-      return Length (Prefix) < Length (Value)
+      return Length (Prefix) <= Length (Value)
         and then Prefix = Head (Value, Length (Prefix));
    end Starts_With;
 
@@ -545,8 +585,8 @@ package body Command_Lines is
          Result.Set_Configuration (Cmd.Get_Configuration);
          Check_Initialized (Result);
 
-         if not Cmd.Switches.Is_Null then
-            Result.Switches.Get.Append (Cmd.Switches.Get);
+         if not Cmd.Sections.Is_Null then
+            Result.Sections.Unchecked_Get.all := Cmd.Sections.Get;
          end if;
 
          Result.Append (Value);
@@ -558,131 +598,175 @@ package body Command_Lines is
    ------------
 
    procedure Append
-     (Cmd         : in out Command_Line;
-      Item        : Switch;
-      Add_Before  : Boolean   := False)
+     (Cmd        : in out Command_Line;
+      Item       : Switch;
+      Section    : Unbounded_String;
+      Add_Before : Boolean := False)
    is
+      procedure Append_To_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String;
+         Item    : Switch);
+      --  Append Item to Section taking switch Prefix into account
+
+      procedure Append_Recursive (Item : Switch);
+      --  Call Append for given Item. Set Appended to True
+
+      function Find_Parameter
+        (Switch : Unbounded_String;
+         Prefix : Unbounded_String;
+         Pos    : Positive) return Unbounded_String;
+      --  Lookup for switch argument
+
+      Appended : Boolean := False;
+
+      Sect   : Section_Configuration renames
+        Cmd.Configuration.Unchecked_Get.Sections (Section);
+
+      -----------------------
+      -- Append_To_Section --
+      -----------------------
+
+      procedure Append_To_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String;
+         Item    : Switch) is
+      begin
+         if Prefix /= "" then
+            if not Section.Prefixes.Contains (Prefix) then
+               Section.Prefixes.Insert
+                 (Prefix, Argument_Maps.Empty_Map);
+            end if;
+
+            Section.Prefixes (Prefix).Include
+              (Item.Switch, Item.Parameter);
+
+         elsif Add_Before then
+            Section.Switches.Prepend (Item);
+         else
+            Section.Switches.Append (Item);
+         end if;
+      end Append_To_Section;
+
+      ----------------------
+      -- Append_Recursive --
+      ----------------------
+
+      procedure Append_Recursive (Item : Switch) is
+      begin
+         Append (Cmd, Item, Section, Add_Before);
+         Appended := True;
+      end Append_Recursive;
+
+      --------------------
+      -- Find_Parameter --
+      --------------------
+
+      function Find_Parameter
+        (Switch : Unbounded_String;
+         Prefix : Unbounded_String;
+         Pos    : Positive) return Unbounded_String
+      is
+         Result : Unbounded_String;
+         Param  : Parameter_Configuration;
+      begin
+         if Sect.Switches.Contains (Switch)
+           and Pos <= Length (Item.Switch)
+         then
+            Param := Sect.Switches (Switch).Parameter;
+
+            if Param.Is_Set and then not Param.Separator.Is_Set then
+               Result := Delete (Item.Switch, 1, Pos - 1);
+
+               for J in Pos .. Length (Item.Switch) loop
+                  if Sect.Switches.Contains
+                    (Prefix & Element (Item.Switch, J))
+                  then
+                     Result := Unbounded_Slice (Item.Switch, Pos, J - 1);
+                     exit;
+                  end if;
+               end loop;
+            end if;
+         end if;
+
+         return Result;
+      end Find_Parameter;
+
       Conf : constant Configuration_References.Element_Access :=
         Cmd.Configuration.Unchecked_Get;
 
-      Section    : Section_Configuration renames Conf.Sections (Item.Section);
-      Prefix     : Unbounded_String;
-      Pos        : Switch_Vectors.Cursor;
-      Switches   : constant Switch_Vector_References.Element_Access :=
-        Cmd.Switches.Unchecked_Get;
+      Prefix       : Unbounded_String;
+      Sections     : Section_Maps.Map renames Cmd.Sections.Unchecked_Get.all;
+      Switch       : Unbounded_String;
+      Arg          : Unbounded_String;
    begin
-      if not Item.Parameter.Is_Set then
-         Prefix := Find_Prefix (Conf, Item.Switch);
+      if not Sections.Contains (Section) then
+         --  Create section if don't have it yet
+         Sections.Insert (Section, Empty_Section);
       end if;
 
-      --  Expand prefixed switches if found matched prefix
-      if Prefix /= "" and then Length (Item.Switch) > Length (Prefix) + 1 then
-         for J in Length (Prefix) + 1 .. Length (Item.Switch) loop
-            Append
-              (Cmd,
-               (Switch    => Prefix & Element (Item.Switch, J),
-                Section   => Item.Section,
-                Parameter => Item.Parameter),
-               Add_Before);
-         end loop;
+         --  Expand alias if found
+      if not Item.Parameter.Is_Set
+        and then Sect.Aliases.Contains (Item.Switch)
+      then
+         Append_Recursive
+           ((Switch    => Sect.Aliases (Item.Switch),
+             Parameter => Item.Parameter));
 
          return;
       end if;
 
-      --  Shrink aliases if found
-      declare
-         Index : constant Natural := Section.Extended.Find_Index (Item.Switch);
-      begin
-         if Index > 0 then
-            Append
-              (Cmd,
-               (Switch    => Section.Aliases (Index),
-                Section   => Item.Section,
-                Parameter => Item.Parameter),
-               Add_Before);
-
-            return;
-         end if;
-      end;
-
-      if Prefix /= "" then
-         --  Try to merge switches with common prefix
-         for J of Switches.all loop
-            if J.Section = Item.Section
-              and then Starts_With (J.Switch, Prefix)
-            then
-               Append
-                 (J.Switch,
-                  Slice
-                    (Item.Switch,
-                     Length (Prefix) + 1,
-                     Length (Item.Switch)));
-
-               return;
-            end if;
-         end loop;
+      --  Keep switches with parameters with separators outside of prefix group
+      if not Item.Parameter.Is_Set
+        or else not Item.Parameter.Separator.Is_Set
+      then
+         Prefix := Find_Prefix (Conf, Item.Switch);
       end if;
 
-      if Add_Before then
-         --  Look for first switch in the section
-         Pos := Switches.First;
+      --  Expand prefixed switches if found matched prefix. For example turn
+      --  -gnaty3M72b into (-gnaty(3), -gnatyM(72), -gnatyb)
+      if Prefix /= "" and not Item.Parameter.Is_Set then
+         --  If there is a switch exactly as prefix
+         --  try to find its parameter (as -gnaty3)
+         if Sect.Switches.Contains (Prefix) then
+            Arg := Find_Parameter (Prefix, Prefix, Length (Prefix) + 1);
 
-         while Switch_Vectors.Has_Element (Pos) loop
-            if Switches.all (Pos).Section = Item.Section then
-               Switches.Insert
-                 (Before   => Pos,
-                  New_Item => Item);
-
-               return;
+            if Arg /= "" then
+               Append_Recursive
+                 ((Switch    => Prefix,
+                   Parameter => (Is_Set    => True,
+                                 Separator => (Is_Set => False),
+                                 Value     => Arg)));
             end if;
-
-            Switch_Vectors.Next (Pos);
-         end loop;
-
-         --  No such section in command line yet
-         if Item.Section = "" then
-            Switches.Prepend (Item);
-         else
-            Switches.Append (Item);
-         end if;
-      else  --  Add_Before = False
-         if Item.Section = ""
-           and then not Switches.Is_Empty
-           and then Switches.First_Element.Section /= ""
-         then
-            --  Add at the beggining of the command line
-            Switches.Prepend (Item);
-
-            return;
          end if;
 
-         declare
-            Found : Boolean := False;  --  If we have found the section
-         begin
-            Pos := Switches.First;
+         if Arg /= "" or Length (Item.Switch) > Length (Prefix) + 1 then
+            for J in Length (Prefix) + 1 .. Length (Item.Switch) loop
+               if Arg = "" then
+                  Switch := Prefix & Element (Item.Switch, J);
+                  Arg := Find_Parameter (Switch, Prefix, J + 1);
 
-            while Switch_Vectors.Has_Element (Pos) loop
-               if not Found
-                 and then Switch_Vectors.Element (Pos).Section = Item.Section
-               then
-                  Found := True;
-
-               elsif Found
-                 and then Switch_Vectors.Element (Pos).Section /= Item.Section
-               then
-                  Switches.Insert
-                    (Before   => Pos,
-                     New_Item => Item);
-
-                  return;
+                  if Arg = "" then
+                     Append_Recursive
+                       ((Switch, Parameter => (Is_Set => False)));
+                  else
+                     Append_Recursive
+                       ((Switch,
+                        Parameter => (Is_Set    => True,
+                                      Separator => (Is_Set => False),
+                                      Value     => Arg)));
+                  end if;
+               else
+                  --  Skip already processed switch argument
+                  Delete (Arg, 1, 1);
                end if;
-
-               Switch_Vectors.Next (Pos);
             end loop;
+         end if;
+      end if;
 
-            --  Append to the end
-            Switches.Append (Item);
-         end;
+      if not Appended then
+         --  If we hadn't appended it before, do it now
+         Append_To_Section (Sections (Section), Prefix, Item);
       end if;
    end Append;
 
@@ -721,7 +805,6 @@ package body Command_Lines is
    begin
       Check_Initialized (Cmd);
       Item.Switch := To_Unbounded_String (Switch);
-      Item.Section := To_Unbounded_String (Section);
 
       if Parameter /= "" then
          Item.Parameter :=
@@ -734,7 +817,7 @@ package body Command_Lines is
          end if;
       end if;
 
-      Append (Cmd, Item, Add_Before);
+      Append (Cmd, Item, To_Unbounded_String (Section), Add_Before);
       Success := True;
    end Append_Switch;
 
@@ -762,32 +845,79 @@ package body Command_Lines is
       Switch        : String;
       Has_Parameter : Boolean := False;
       Section       : String  := "";
+      Success       : out Boolean) is
+   begin
+      Remove_Switch
+        (Cmd           => Cmd,
+         Switch        => To_Unbounded_String (Switch),
+         Has_Parameter => Has_Parameter,
+         Section       => To_Unbounded_String (Section),
+         Success       => Success);
+   end Remove_Switch;
+
+   -------------------
+   -- Remove_Switch --
+   -------------------
+
+   procedure Remove_Switch
+     (Cmd           : in out Command_Line;
+      Switch        : Unbounded_String;
+      Has_Parameter : Boolean := False;
+      Section       : Unbounded_String;
       Success       : out Boolean)
    is
-      Pos : Switch_Vectors.Cursor;
+      Pos      : Switch_Vectors.Cursor;
+      Conf     : Configuration_References.Element_Access;
+      Prefix   : Unbounded_String;
+      Sections : Section_Map_References.Element_Access;
    begin
       Check_Initialized (Cmd);
-      Pos := Cmd.Switches.Get.First;
+      Conf := Cmd.Configuration.Unchecked_Get;
+      Prefix := Find_Prefix (Conf, Switch);
+      Sections := Cmd.Sections.Unchecked_Get;
 
-      while Switch_Vectors.Has_Element (Pos) loop
-         declare
-            Item : constant Command_Lines.Switch :=
-              Switch_Vectors.Element (Pos);
-         begin
-            if Item.Switch = Switch
-              and then Item.Section = Section
-              and then Item.Parameter.Is_Set = Has_Parameter
-            then
-               Cmd.Switches.Get.Delete (Pos);
+      if not Sections.Contains (Section) then
+         Success := False;
+         return;
+      end if;
+
+      declare
+         Sect  : Command_Lines.Section renames Sections.all (Section);
+      begin
+         if Prefix = "" then
+            Pos := Sect.Switches.First;
+
+            while Switch_Vectors.Has_Element (Pos) loop
+               declare
+                  Item : constant Command_Lines.Switch :=
+                    Switch_Vectors.Element (Pos);
+               begin
+                  if Item.Switch = Switch
+                    and then Item.Parameter.Is_Set = Has_Parameter
+                  then
+                     Sect.Switches.Delete (Pos);
+                     Success := True;
+                     return;
+                  end if;
+
+                  Switch_Vectors.Next (Pos);
+               end;
+            end loop;
+
+            Success := False;
+
+         elsif Sect.Prefixes.Contains (Prefix) then
+
+            if Sect.Prefixes (Prefix).Contains (Switch) then
+               Sect.Prefixes (Prefix).Delete (Switch);
                Success := True;
-               return;
+            else
+               Success := False;
             end if;
-
-            Switch_Vectors.Next (Pos);
-         end;
-      end loop;
-
-      Success := False;
+         else
+            Success := False;
+         end if;
+      end;
    end Remove_Switch;
 
    --------------
@@ -796,8 +926,23 @@ package body Command_Lines is
 
    function Is_Empty (Self : Command_Line) return Boolean is
    begin
-      return Self.Switches.Is_Null
-        or else Self.Switches.Unchecked_Get.Is_Empty;
+      if Self.Sections.Is_Null then
+         return True;
+      end if;
+
+      for Section of Self.Sections.Unchecked_Get.all loop
+         if not Section.Switches.Is_Empty then
+            return False;
+         else
+            for Prefixed of Section.Prefixes loop
+               if not Prefixed.Is_Empty then
+                  return False;
+               end if;
+            end loop;
+         end if;
+      end loop;
+
+      return True;
    end Is_Empty;
 
    ----------------
@@ -807,32 +952,63 @@ package body Command_Lines is
    function Has_Switch
      (Cmd     : Command_Line;
       Switch  : String;
-      Section : String  := "") return Boolean
+      Section : String  := "") return Boolean is
+   begin
+      return Has_Switch
+        (Cmd, To_Unbounded_String (Switch), To_Unbounded_String (Section));
+   end Has_Switch;
+
+   ----------------
+   -- Has_Switch --
+   ----------------
+
+   function Has_Switch
+     (Cmd     : Command_Line;
+      Switch  : Unbounded_String;
+      Section : Unbounded_String) return Boolean
    is
       Pos : Switch_Vectors.Cursor;
+      Conf     : Configuration_References.Element_Access;
+      Prefix   : Unbounded_String;
+      Sections : Section_Map_References.Element_Access;
    begin
-      if Cmd.Switches.Is_Null then
+      if Cmd.Sections.Is_Null then
          return False;
       end if;
 
-      Pos := Cmd.Switches.Get.First;
+      Conf := Cmd.Configuration.Unchecked_Get;
+      Prefix := Find_Prefix (Conf, Switch);
+      Sections := Cmd.Sections.Unchecked_Get;
 
-      while Switch_Vectors.Has_Element (Pos) loop
-         declare
-            Item : constant Command_Lines.Switch :=
-              Switch_Vectors.Element (Pos);
-         begin
-            if Item.Switch = Switch
-              and then Item.Section = Section
-            then
-               return True;
-            end if;
+      if not Sections.Contains (Section) then
+         return False;
+      end if;
 
-            Switch_Vectors.Next (Pos);
-         end;
-      end loop;
+      declare
+         Sect  : Command_Lines.Section renames Sections.all (Section);
+      begin
+         if Prefix /= "" then
+            return Sect.Prefixes.Contains (Prefix) and then
+              Sect.Prefixes (Prefix).Contains (Switch);
+         end if;
 
-      return False;
+         Pos := Sect.Switches.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            declare
+               Item : constant Command_Lines.Switch :=
+                 Switch_Vectors.Element (Pos);
+            begin
+               if Item.Switch = Switch then
+                  return True;
+               end if;
+
+               Switch_Vectors.Next (Pos);
+            end;
+         end loop;
+
+         return False;
+      end;
    end Has_Switch;
 
    -----------
@@ -852,32 +1028,24 @@ package body Command_Lines is
          Iter :=
            (Expanded       => True,
             Line           => Copy,
-            Switch_Index   => 1,
-            Char_Index     => 1,
-            Prefix         => 0,
+            Section        => Copy.Sections.Unchecked_Get.First,
+            Prefixed       => Prefixed_Switch_Maps.No_Element,
+            Switch         => Switch_Vectors.No_Element,
+            Argument       => Argument_Maps.No_Element,
             Is_New_Section => True);
 
-         if Has_More (Iter) then
-            declare
-               Next   : constant Switch := Copy.Switches.Get.First_Element;
-               Prefix : constant Unbounded_String :=
-                 Find_Prefix (Copy.Configuration.Unchecked_Get, Next.Switch);
-            begin
-               if Prefix = "" then
-                  Iter.Char_Index := Length (Next.Switch);
-               else
-                  Iter.Char_Index := Length (Prefix) + 1;
-               end if;
-
-               Iter.Prefix := Length (Prefix);
-            end;
-         end if;
       else
          Iter :=
            (Expanded       => False,
             Line           => Copy,
-            Switch_Index   => 1,
+            Section        => Copy.Sections.Unchecked_Get.First,
+            Prefixed       => Prefixed_Switch_Maps.No_Element,
+            Switch         => Switch_Vectors.No_Element,
             Is_New_Section => True);
+      end if;
+
+      if Section_Maps.Has_Element (Iter.Section) then
+         Update (Iter);
       end if;
    end Start;
 
@@ -885,32 +1053,66 @@ package body Command_Lines is
    -- Current_Switch --
    --------------------
 
-   function Current_Switch (Iter : Command_Line_Iterator) return String is
-      Switch : constant Command_Lines.Switch :=
-        Iter.Line.Switches.Get.Reference (Iter.Switch_Index);
-      Result : Unbounded_String := Switch.Switch;
+   function Current_Switch (Iter : Command_Line_Iterator) return Switch is
    begin
-      if Iter.Expanded then
+      if Switch_Vectors.Has_Element (Iter.Switch) then
+         return Switch_Vectors.Element (Iter.Switch);
+      elsif Iter.Expanded then
+         return (Argument_Maps.Key (Iter.Argument),
+                 Argument_Maps.Element (Iter.Argument));
+      else
+         raise Constraint_Error;
+      end if;
+   end Current_Switch;
+
+   --------------------
+   -- Current_Switch --
+   --------------------
+
+   function Current_Switch (Iter : Command_Line_Iterator) return String is
+      Result : Unbounded_String;
+   begin
+      if Switch_Vectors.Has_Element (Iter.Switch) then
+         Result := Switch_Vectors.Element (Iter.Switch).Switch;
+      elsif Iter.Expanded then
+         return To_String (Argument_Maps.Key (Iter.Argument));
+      else
+         --  Collect all prefixed switches into one single switch
          declare
-            Conf : constant Configuration_References.Element_Access :=
-              Iter.Line.Configuration.Unchecked_Get;
-
-            Section : Section_Configuration renames
-              Conf.Sections (Switch.Section);
-
-            Index : Natural;
-
+            Map    : constant Argument_Maps.Map :=
+              Prefixed_Switch_Maps.Element (Iter.Prefixed);
+            Cursor : Argument_Maps.Cursor := Map.First;
+            Arg    : Argument;
+            Text   : Unbounded_String;
+            Strip   : Natural;
          begin
-            --  Try to expand prefixed switches
-            if Iter.Prefix > 0 then
-               Result := Head (Result, Iter.Prefix) &
-                 Element (Result, Iter.Char_Index);
-            end if;
+            Result := Prefixed_Switch_Maps.Key (Iter.Prefixed);
+            Strip := Length (Result);
+            while Argument_Maps.Has_Element (Cursor) loop
+               Text := Argument_Maps.Key (Cursor);
+               Delete (Text, 1, Strip);  --  Drop prefix, we have it already
+               Append (Result, Text);
+               Arg := Argument_Maps.Element (Cursor);
 
-            --  Try to expand aliases
-            Index := Section.Extended.Find_Index (Result);
-            if Index > 0 then
-               Result := Section.Aliases (Index);
+               if Arg.Is_Set then
+                  Append (Result, Arg.Value);
+               end if;
+
+               Argument_Maps.Next (Cursor);
+            end loop;
+
+         end;
+      end if;
+
+      if not Iter.Expanded then
+         --  Try to shring aliases
+         declare
+            Section : Section_Configuration renames
+              Iter.Line.Configuration.Unchecked_Get.Sections
+                (Section_Maps.Key (Iter.Section));
+         begin
+            if Section.Expanded.Contains (Result) then
+               Result := Section.Expanded (Result);
             end if;
          end;
       end if;
@@ -933,8 +1135,7 @@ package body Command_Lines is
 
    function Current_Section (Iter : Command_Line_Iterator) return String is
    begin
-      return To_String
-        (Iter.Line.Switches.Get.Reference (Iter.Switch_Index).Section);
+      return To_String (Section_Maps.Key (Iter.Section));
    end Current_Section;
 
    -----------------------
@@ -942,16 +1143,24 @@ package body Command_Lines is
    -----------------------
 
    function Current_Separator (Iter : Command_Line_Iterator) return String is
-      Parameter : constant Argument :=
-        Iter.Line.Switches.Get.Reference (Iter.Switch_Index).Parameter;
+      Result : Separator;
    begin
-      if Parameter.Is_Set
-        and then Parameter.Separator.Is_Set
-      then
-         return (1 => Parameter.Separator.Value);
-      else
-         return "";
+      if Switch_Vectors.Has_Element (Iter.Switch) then
+         declare
+            Parameter : Argument renames
+              Switch_Vectors.Element (Iter.Switch).Parameter;
+         begin
+            if Parameter.Is_Set then
+               Result := Parameter.Separator;
+
+               if Result.Is_Set then
+                  return (1 => Result.Value);
+               end if;
+            end if;
+         end;
       end if;
+
+      return "";
    end Current_Separator;
 
    -----------------------
@@ -959,14 +1168,26 @@ package body Command_Lines is
    -----------------------
 
    function Current_Parameter (Iter : Command_Line_Iterator) return String is
-      Parameter : constant Argument :=
-        Iter.Line.Switches.Get.Reference (Iter.Switch_Index).Parameter;
+      Result : Argument;
    begin
-      if Parameter.Is_Set then
-         return To_String (Parameter.Value);
-      else
-         return "";
+      if Switch_Vectors.Has_Element (Iter.Switch) then
+         declare
+            Parameter : Argument renames
+              Switch_Vectors.Element (Iter.Switch).Parameter;
+         begin
+            if Parameter.Is_Set then
+               return To_String (Parameter.Value);
+            end if;
+         end;
+      elsif Iter.Expanded then
+         Result := Argument_Maps.Element (Iter.Argument);
+
+         if Result.Is_Set then
+            return To_String (Result.Value);
+         end if;
       end if;
+
+      return "";
    end Current_Parameter;
 
    --------------
@@ -975,7 +1196,7 @@ package body Command_Lines is
 
    function Has_More (Iter : Command_Line_Iterator) return Boolean is
    begin
-      return Iter.Switch_Index <= Iter.Line.Switches.Get.Last_Index;
+      return Section_Maps.Has_Element (Iter.Section);
    end Has_More;
 
    ----------
@@ -983,43 +1204,59 @@ package body Command_Lines is
    ----------
 
    procedure Next (Iter : in out Command_Line_Iterator) is
-      Switch : constant Command_Lines.Switch :=
-        Iter.Line.Switches.Get.Reference (Iter.Switch_Index);
    begin
       if Has_More (Iter) then
+         Iter.Is_New_Section := False;
+
          if Iter.Expanded then
-            if Iter.Char_Index < Length (Switch.Switch) then
-               Iter.Char_Index := Iter.Char_Index + 1;
-               return;
+            if Argument_Maps.Has_Element (Iter.Argument) then
+               Argument_Maps.Next (Iter.Argument);
+
+               if Argument_Maps.Has_Element (Iter.Argument) then
+                  return;
+               end if;
             end if;
-
-            Iter.Switch_Index := Iter.Switch_Index + 1;
-
-         else
-            Iter.Switch_Index := Iter.Switch_Index + 1;
          end if;
 
-         if Has_More (Iter) then
-            if Iter.Expanded then
-               declare
-                  Next  : constant Command_Lines.Switch :=
-                    Iter.Line.Switches.Get.Reference (Iter.Switch_Index);
-                  Prefix : constant Unbounded_String :=
-                    Find_Prefix (Iter.Line.Configuration.Unchecked_Get,
-                                 Next.Switch);
-               begin
-                  if Prefix = "" then
-                     Iter.Char_Index := Length (Next.Switch);
-                  else
-                     Iter.Char_Index := Length (Prefix) + 1;
-                  end if;
+         if Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
+            Prefixed_Switch_Maps.Next (Iter.Prefixed);
 
-                  Iter.Prefix := Length (Prefix);
+            if Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
+               if Iter.Expanded then
+                  declare
+                     Section : Command_Lines.Section renames
+                       Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
+                  begin
+                     Iter.Argument := Section.Prefixes (Iter.Prefixed).First;
+                  end;
+               end if;
+
+               return;
+            else
+               declare
+                  Section : Command_Lines.Section renames
+                    Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
+               begin
+                  Iter.Switch := Section.Switches.First;
+
+                  if Switch_Vectors.Has_Element (Iter.Switch) then
+                     return;
+                  end if;
                end;
             end if;
+         elsif Switch_Vectors.Has_Element (Iter.Switch) then
+            Switch_Vectors.Next (Iter.Switch);
 
-            Iter.Is_New_Section := Switch.Section /=
-              Iter.Line.Switches.Get.Reference (Iter.Switch_Index).Section;
+            if Switch_Vectors.Has_Element (Iter.Switch) then
+               return;
+            end if;
+         end if;
+
+         Iter.Is_New_Section := True;
+         Section_Maps.Next (Iter.Section);
+
+         if Section_Maps.Has_Element (Iter.Section) then
+            Update (Iter);
          end if;
       end if;
    end Next;
@@ -1093,6 +1330,42 @@ package body Command_Lines is
       return Result;
    end To_String_List;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Self : in out Command_Line_Iterator) is
+      Section : Command_Lines.Section renames
+        Self.Line.Sections.Unchecked_Get.all (Self.Section);
+   begin
+      Self.Switch := Switch_Vectors.No_Element;
+      Self.Prefixed := Section.Prefixes.First;
+
+      while Prefixed_Switch_Maps.Has_Element (Self.Prefixed) loop
+         if not Section.Prefixes (Self.Prefixed).Is_Empty then
+            if Self.Expanded then
+               Self.Argument := Section.Prefixes (Self.Prefixed).First;
+            end if;
+
+            return;
+         end if;
+
+         Prefixed_Switch_Maps.Next (Self.Prefixed);
+      end loop;
+
+      Self.Switch := Section.Switches.First;
+
+      if Switch_Vectors.Has_Element (Self.Switch) then
+         return;
+      end if;
+
+      Section_Maps.Next (Self.Section);
+
+      if Section_Maps.Has_Element (Self.Section) then
+         Update (Self);
+      end if;
+   end Update;
+
    ---------
    -- Map --
    ---------
@@ -1105,25 +1378,23 @@ package body Command_Lines is
          Parameter : in out Argument)) return Command_Line
    is
       Result : Command_Line;
-      Pos    : Switch_Vectors.Cursor;
+      Iter   : Command_Line_Iterator;
    begin
       Result.Set_Configuration (Cmd.Get_Configuration);
+      Check_Initialized (Result);
+      Cmd.Start (Iter, Expanded => True);
 
-      if not Cmd.Switches.Is_Null then
-         Check_Initialized (Result);
-         Pos := Cmd.Switches.Get.First;
-
-         while Switch_Vectors.Has_Element (Pos) loop
-            declare
-               Item : Command_Lines.Switch :=
-                 Switch_Vectors.Element (Pos);
-            begin
-               Update (Item.Switch, Item.Section, Item.Parameter);
-               Append (Result, Item);
-               Switch_Vectors.Next (Pos);
-            end;
-         end loop;
-      end if;
+      while Has_More (Iter) loop
+         declare
+            Item    : Switch := Current_Switch (Iter);
+            Section : Unbounded_String :=
+              To_Unbounded_String (Current_Section (Iter));
+         begin
+            Update (Item.Switch, Section, Item.Parameter);
+            Append (Result, Item, Section);
+            Next (Iter);
+         end;
+      end loop;
 
       return Result;
    end Map;
@@ -1141,30 +1412,27 @@ package body Command_Lines is
       return Command_Line
    is
       Result : Command_Line;
-      Pos    : Switch_Vectors.Cursor;
+      Iter   : Command_Line_Iterator;
    begin
       Result.Set_Configuration (Cmd.Get_Configuration);
+      Check_Initialized (Result);
+      Cmd.Start (Iter, Expanded => True);
 
-      if not Cmd.Switches.Is_Null then
-         Check_Initialized (Result);
-         Pos := Cmd.Switches.Get.First;
+      while Has_More (Iter) loop
+         declare
+            Item    : constant Switch := Current_Switch (Iter);
+            Section : constant String := Current_Section (Iter);
+         begin
+            if not Delete (To_String (Item.Switch),
+                           Section,
+                           Item.Parameter)
+            then
+               Append (Result, Item, To_Unbounded_String (Section));
+            end if;
 
-         while Switch_Vectors.Has_Element (Pos) loop
-            declare
-               Item : constant Command_Lines.Switch :=
-                 Switch_Vectors.Element (Pos);
-            begin
-               if not Delete (To_String (Item.Switch),
-                              To_String (Item.Section),
-                              Item.Parameter)
-               then
-                  Append (Result, Item);
-               end if;
-
-               Switch_Vectors.Next (Pos);
-            end;
-         end loop;
-      end if;
+            Next (Iter);
+         end;
+      end loop;
 
       return Result;
    end Filter;
