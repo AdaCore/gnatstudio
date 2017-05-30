@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016, AdaCore                          --
+--                     Copyright (C) 2016-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -381,10 +381,16 @@ private
       Element_Type => Switch_Configuration,
       "<"          => "<");
 
+   package Unbounded_String_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,  --  Alias (short switch)
+      Element_Type => Unbounded_String,  --  Extended switch
+      "<"          => "<",
+      "="          => "=");
+
    type Section_Configuration is record
       Name     : Unbounded_String;
-      Aliases  : String_Vectors.Vector;
-      Extended : String_Vectors.Vector;
+      Aliases  : Unbounded_String_Maps.Map;
+      Expanded : Unbounded_String_Maps.Map;  --  Reversed Aliases map
       Switches : Switch_Configuration_Maps.Map;
    end record;
 
@@ -406,7 +412,6 @@ private
 
    type Switch is record
       Switch       : Unbounded_String;
-      Section      : Unbounded_String;
       Parameter    : Argument;
    end record;
 
@@ -414,24 +419,60 @@ private
      (Index_Type   => Positive,
       Element_Type => Switch);
 
-   package Switch_Vector_References is new GNATCOLL.Refcount.Shared_Pointers
-     (Switch_Vectors.Vector);
+   package Argument_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,  -- Switch
+      Element_Type => Argument,
+      "<"          => "<",
+      "="          => "=");
+
+   package Prefixed_Switch_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,  --  Prefix
+      Element_Type => Argument_Maps.Map,
+      "<"          => "<",
+      "="          => Argument_Maps."=");
+   --  Switches with common prefix stored together ordered alphabetically
+   --  together with their arguments.
+
+   type Section is record
+      Prefixes : Prefixed_Switch_Maps.Map;
+      Switches : Switch_Vectors.Vector;
+   end record;
+
+   Empty_Section : constant Section :=
+     (Prefixed_Switch_Maps.Empty_Map, Switch_Vectors.Empty_Vector);
+
+   package Section_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Unbounded_String,  --  Prefix
+      Element_Type => Section,
+      "<"          => "<",
+      "="          => "=");
+
+   package Section_Map_References is new GNATCOLL.Refcount.Shared_Pointers
+     (Section_Maps.Map);
 
    type Command_Line is tagged record
       Configuration : Command_Line_Configuration;
-      Switches      : Switch_Vector_References.Ref;
-      --  Vector of unexpanded switches
+      Sections      : Section_Map_References.Ref;
+      --  We store command line as sequence of sections, such as -cargs,
+      --  -largs, etc. Default section has empty name ("").
+      --  Each section has 'prefixed' switches grouped by prefix, such as
+      --  -gnaty1M79ab, that means (-gnaty1 -gnatyM79 -gnatya -gnatyb)
+      --  Each section also has others switch as a vector of them.
+      --  Any switch by it self can have a parameter.
+      --  Switches stored with any alias is expanded.
    end record;
 
    type Command_Line_Iterator (Expanded : Boolean := False) is record
       Line           : Command_Line;
-      Switch_Index   : Positive;
-      Is_New_Section : Boolean;
+      Section        : Section_Maps.Cursor;  --  Iterate over sections
+      Prefixed       : Prefixed_Switch_Maps.Cursor;  --  then over prefixes
+      Switch         : Switch_Vectors.Cursor;  --  otherwise over switches
+      Is_New_Section : Boolean;  --  We've stepped into a new section
 
       case Expanded is
          when True =>
-            Char_Index : Positive;
-            Prefix     : Natural;  --  Length of prefix if any
+            Argument : Argument_Maps.Cursor;
+            --  if Prefixed is not null then iterate over prefixed switches
          when False =>
             null;
       end case;

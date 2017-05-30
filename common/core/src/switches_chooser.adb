@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2016, AdaCore                     --
+--                     Copyright (C) 2007-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -816,14 +816,17 @@ package body Switches_Chooser is
                   --  insensitive, the command line would still be
                   --  editable anyway.
 
-                  if Deps.Slave_Status then
-                     Append_Switch
+                  if not Deps.Slave_Status then
+                     Remove_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,
                         Success => Success);
-                  else
-                     Remove_Switch
+                  elsif not Tool.Cmd_Line.Has_Switch
+                    (Section => Deps.Slave_Section.all,
+                     Switch  => Deps.Slave_Switch.all)
+                  then
+                     Append_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,
