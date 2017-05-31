@@ -145,8 +145,8 @@ package body Vdiff2_Module.Utils.Text is
       Current_Line      : String_Access;
 
    begin
-      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.all);
-      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark.all);
+      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.Element);
+      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark.Element);
 
       First_Dest := Dest_Range.First;
       First_Source := Source_Range.First;
@@ -218,8 +218,8 @@ package body Vdiff2_Module.Utils.Text is
       First_Dest        : Natural;
 
    begin
-      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.all);
-      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark.all);
+      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.Element);
+      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark.Element);
       First_Dest := Dest_Range.First;
 
       for J in 1 .. Offset_Dest loop

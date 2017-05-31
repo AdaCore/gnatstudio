@@ -671,14 +671,15 @@ package body Diff_Utils2 is
             when Append =>
                if Current_Chunk = null then
                   Current_Chunk := new Diff_Chunk'
-                    (Range1 => (First => Old_Range, Last => Old_Range + 1,
-                                Action           => Action,
-                                Blank_Lines_Mark => null,
-                                Special_Lines_Mark => null),
-                     Range2 => Null_Range,
-                     Range3 => Null_Range,
-                     Location  => 0,
-                     Conflict  => False);
+                    (Range1   => (First              => Old_Range,
+                                  Last               => Old_Range + 1,
+                                  Action             => Action,
+                                  Blank_Lines_Mark   => <>,
+                                  Special_Lines_Mark => <>),
+                     Range2   => Null_Range,
+                     Range3   => Null_Range,
+                     Location => 0,
+                     Conflict => False);
                else
                   Current_Chunk.Range1.Last := Current_Chunk.Range1.Last + 1;
                end if;
@@ -688,14 +689,15 @@ package body Diff_Utils2 is
             when Delete =>
                if Current_Chunk = null then
                   Current_Chunk := new Diff_Chunk'
-                    (Range1 => (First => Old_Range - 1, Last => Old_Range,
-                                Action           => Action,
-                                Blank_Lines_Mark => null,
-                                Special_Lines_Mark => null),
-                     Range2 => Null_Range,
-                     Range3 => Null_Range,
-                     Location  => 0,
-                     Conflict  => False);
+                    (Range1   => (First              => Old_Range - 1,
+                                  Last               => Old_Range,
+                                  Action             => Action,
+                                  Blank_Lines_Mark   => <>,
+                                  Special_Lines_Mark => <>),
+                     Range2   => Null_Range,
+                     Range3   => Null_Range,
+                     Location => 0,
+                     Conflict => False);
                end if;
 
             when Change =>

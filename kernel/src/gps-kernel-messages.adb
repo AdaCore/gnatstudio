@@ -360,10 +360,6 @@ package body GPS.Kernel.Messages is
    --------------
 
    procedure Finalize (Self : not null access Abstract_Message) is
-
-      procedure Free is
-        new Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
-
       Position : Note_Maps.Cursor;
       Aux      : Note_Access;
 
@@ -386,9 +382,14 @@ package body GPS.Kernel.Messages is
 
       --  Delete editor's mark.
 
-      if Self.Mark /= null then
-         Self.Mark.Delete;
-         Free (Self.Mark);
+      if not Self.Mark.Is_Empty then
+         declare
+            Aux : GPS.Editors.Editor_Mark'Class := Self.Mark.Element;
+
+         begin
+            Aux.Delete;
+            Self.Mark.Clear;
+         end;
       end if;
 
       --  Destroy action item.
@@ -636,8 +637,8 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return GPS.Editors.Editor_Mark'Class is
    begin
-      if Self.Mark /= null then
-         return Self.Mark.all;
+      if not Self.Mark.Is_Empty then
+         return Self.Mark.Element;
       else
          return Nil_Editor_Mark;
       end if;
@@ -1022,10 +1023,9 @@ package body GPS.Kernel.Messages is
       Self.Flags              := Flags;
 
       if File /= No_File then
-         Self.Mark :=
-           new Editor_Mark'Class'
-             (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
-                (File, Actual_Line, Actual_Column));
+         Self.Mark.Replace_Element
+           (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
+              (File, Actual_Line, Actual_Column));
       end if;
 
       Self.Parent := Node_Access (Parent);
@@ -1070,10 +1070,9 @@ package body GPS.Kernel.Messages is
       Self.Weight := Weight;
 
       if File /= No_File then
-         Self.Mark :=
-           new Editor_Mark'Class'
-             (Container.Kernel.Get_Buffer_Factory.New_Mark
-                (File, Actual_Line, Actual_Column));
+         Self.Mark.Replace_Element
+           (Container.Kernel.Get_Buffer_Factory.New_Mark
+              (File, Actual_Line, Actual_Column));
       end if;
 
       --  Resolve category node, create new one when there is no existent node
@@ -2435,24 +2434,25 @@ package body GPS.Kernel.Messages is
                   end if;
                end;
 
-               if Current_Node.Mark /= null
-                 and then Current_Node.Mark.Line /= Current_Node.Line
+               if not Current_Node.Mark.Is_Empty
+                 and then Current_Node.Mark.Element.Line /= Current_Node.Line
                then
                   Set_Attribute
                     (XML_Node,
                      "actual_line",
-                     Trim (Integer'Image (Current_Node.Mark.Line), Both));
+                     Trim
+                       (Integer'Image (Current_Node.Mark.Element.Line), Both));
                end if;
 
-               if Current_Node.Mark /= null
-                 and then Current_Node.Mark.Column
-                 /= Current_Node.Column
+               if not Current_Node.Mark.Is_Empty
+                 and then Current_Node.Mark.Element.Column
+                   /= Current_Node.Column
                then
                   Set_Attribute
                     (XML_Node,
                      "actual_column",
                      Trim (Visible_Column_Type'Image
-                       (Current_Node.Mark.Column), Both));
+                       (Current_Node.Mark.Element.Column), Both));
                end if;
 
                if Current_Node.Style /= null then

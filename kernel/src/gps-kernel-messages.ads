@@ -526,8 +526,6 @@ private
       Flags : Message_Flags;
    end record;
 
-   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
-
    type Node_Record is tagged;
    type Node_Access is access all Node_Record'Class;
 
@@ -594,7 +592,7 @@ private
          when Node_Message =>
             Line   : Natural;
             Column : Basic_Types.Visible_Column_Type;
-            Mark   : Editor_Mark_Access;
+            Mark   : GPS.Editors.Editor_Mark_Holders.Holder;
             Action : Action_Item;
             Style  : GPS.Kernel.Style_Manager.Style_Access;
             Length : Highlight_Length := Highlight_Whole_Line;

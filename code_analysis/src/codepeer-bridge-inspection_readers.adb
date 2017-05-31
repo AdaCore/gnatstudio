@@ -592,11 +592,11 @@ package body CodePeer.Bridge.Inspection_Readers is
            Positive'Value (Attrs.Get_Value ("column"));
          Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
            new CodePeer.Subprogram_Data'
-             (Lifeage,
-              Message_Vectors.Empty_Vector,
-              Annotation_Maps.Empty_Map,
-              null,
-              0);
+             (Lifeage       => Lifeage,
+              Messages      => Message_Vectors.Empty_Vector,
+              Annotations   => Annotation_Maps.Empty_Map,
+              Mark          => <>,
+              Special_Lines => 0);
          Self.Subprogram_Data :=
            CodePeer.Subprogram_Data_Access
              (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);

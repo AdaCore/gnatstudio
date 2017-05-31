@@ -18,7 +18,6 @@
 --  This package provides wraper for shell command.
 
 with Basic_Types;   use Basic_Types;
-with Diff_Utils2;   use Diff_Utils2;
 with GPS.Editors;   use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
@@ -29,7 +28,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       Buffer : GPS_Editor_Buffer'Class;
       Pos    : Editable_Line_Type;
       Style  : String := "";
-      Number : Natural := 1) return Editor_Mark_Access;
+      Number : Natural := 1) return Editor_Mark'Class;
    --  Add a blank line at line Pos of a given file editor,
    --  using Style for color.
    --  Return corresponding Mark.

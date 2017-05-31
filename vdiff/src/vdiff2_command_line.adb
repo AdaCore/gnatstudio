@@ -255,21 +255,23 @@ package body Vdiff2_Command_Line is
            (Kernel, VFile (Num_File), VRange (Num_File), "Append_diff");
       end;
 
-      VRange (Num_File).Blank_Lines_Mark := Add_Line
-         (Kernel,
-          GPS_Editor_Buffer'Class
-             (Get_Buffer_Factory (Kernel).Get (VFile (Num_File))),
-          Editable_Line_Type (VRange (Num_File).First),
-          "Default_diff",
-          (VRange (Other).Last - VRange (Other).First));
+      VRange (Num_File).Blank_Lines_Mark.Replace_Element
+        (Add_Line
+           (Kernel,
+            GPS_Editor_Buffer'Class
+              (Get_Buffer_Factory (Kernel).Get (VFile (Num_File))),
+            Editable_Line_Type (VRange (Num_File).First),
+            "Default_diff",
+            (VRange (Other).Last - VRange (Other).First)));
 
-      VRange (Diff.Ref_File).Blank_Lines_Mark := Add_Line
-         (Kernel,
-          GPS_Editor_Buffer'Class
-             (Get_Buffer_Factory (Kernel).Get (VFile (Diff.Ref_File))),
-          Editable_Line_Type (VRange (Diff.Ref_File).First),
-          "Default_diff",
-          (VRange (Other).Last - VRange (Other).First));
+      VRange (Diff.Ref_File).Blank_Lines_Mark.Replace_Element
+        (Add_Line
+           (Kernel,
+            GPS_Editor_Buffer'Class
+              (Get_Buffer_Factory (Kernel).Get (VFile (Diff.Ref_File))),
+            Editable_Line_Type (VRange (Diff.Ref_File).First),
+            "Default_diff",
+            (VRange (Other).Last - VRange (Other).First)));
 
       Diff1.Range1 := VRange (1);
       Diff1.Range2 := VRange (2);

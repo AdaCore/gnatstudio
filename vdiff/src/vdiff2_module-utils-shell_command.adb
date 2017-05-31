@@ -35,17 +35,16 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Buffer : GPS_Editor_Buffer'Class;
       Pos    : Editable_Line_Type;
       Style  : String := "";
-      Number : Natural := 1) return Editor_Mark_Access
-   is
+      Number : Natural := 1) return Editor_Mark'Class is
    begin
-      return new Editor_Mark'Class'(Add_Special_Line
-         (This       => Buffer,
-          Start_Line => Integer (Pos),
-          Text       => (1 .. Number - 1 => ASCII.LF),
-          Style      => Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style),
-          Name       => "",
-          Column_Id  => "",
-          Info       => null));
+      return Add_Special_Line
+        (This       => Buffer,
+         Start_Line => Integer (Pos),
+         Text       => (1 .. Number - 1 => ASCII.LF),
+         Style      => Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style),
+         Name       => "",
+         Column_Id  => "",
+         Info       => null);
    end Add_Line;
 
    ------------------------

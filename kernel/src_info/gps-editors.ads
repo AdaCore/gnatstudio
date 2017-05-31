@@ -18,6 +18,7 @@
 --  An abstract definition of what editors are and what they can do.
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Holders;
 with Ada.Finalization;  use Ada.Finalization;
 with Basic_Types;       use Basic_Types;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
@@ -893,6 +894,10 @@ package GPS.Editors is
    --  Whenever the file is edited, the mark will move to keep pointing to the
    --  same position (hooks are set up even if the file is not currently
    --  edited).
+
+   package Editor_Mark_Holders is
+     new Ada.Containers.Indefinite_Holders (Editor_Mark'Class);
+   --  Holder to store editor mark.
 
 private
 

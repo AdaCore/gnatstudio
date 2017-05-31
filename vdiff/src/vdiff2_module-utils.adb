@@ -172,13 +172,14 @@ package body Vdiff2_Module.Utils is
             VStyle (J).all, VOffset (J));
 
          if VOffset (J) < Offset_Max then
-            VRange (J).Blank_Lines_Mark := Add_Line
-               (Kernel,
-                Buffer => GPS_Editor_Buffer
-                   (Get_Buffer_Factory (Kernel).Get (File => VFile (J))),
-                Pos    => Editable_Line_Type (VRange (J).Last),
-                Style  => VStyle (J).all,
-                Number => Offset_Max - VOffset (J));
+            VRange (J).Blank_Lines_Mark.Replace_Element
+              (Add_Line
+                 (Kernel,
+                  Buffer => GPS_Editor_Buffer
+                    (Get_Buffer_Factory (Kernel).Get (File => VFile (J))),
+                  Pos    => Editable_Line_Type (VRange (J).Last),
+                  Style  => VStyle (J).all,
+                  Number => Offset_Max - VOffset (J)));
          end if;
       end loop;
 
@@ -320,25 +321,25 @@ package body Vdiff2_Module.Utils is
 
       procedure Remove_Blank_And_Special (D : in out Diff_Range) is
       begin
-         if D.Blank_Lines_Mark /= null then
-            Remove_Blank_Lines (Kernel, D.Blank_Lines_Mark.all);
-            Unchecked_Free (D.Blank_Lines_Mark);
+         if not D.Blank_Lines_Mark.Is_Empty then
+            Remove_Blank_Lines (Kernel, D.Blank_Lines_Mark.Element);
+            D.Blank_Lines_Mark.Clear;
          end if;
 
-         if D.Special_Lines_Mark /= null then
+         if not D.Special_Lines_Mark.Is_Empty then
             declare
                Buffer : constant Editor_Buffer'Class :=
-                 D.Special_Lines_Mark.all.Location (False).Buffer;
+                 D.Special_Lines_Mark.Element.Location (False).Buffer;
             begin
                if Buffer in GPS_Editor_Buffer'Class then
                   Remove_Special_Lines
                     (GPS_Editor_Buffer'Class (Buffer),
-                     D.Special_Lines_Mark.all,
+                     D.Special_Lines_Mark.Element,
                      D.Last - D.First);
                end if;
             end;
 
-            Unchecked_Free (D.Special_Lines_Mark);
+            D.Special_Lines_Mark.Clear;
          end if;
       end Remove_Blank_And_Special;
 
@@ -666,13 +667,14 @@ package body Vdiff2_Module.Utils is
                VStyle (Other) := new String'(Append_Style);
                VStyle (Ref)   := new String'(Old_Style);
 
-               Curr_Chunk.Range1.Blank_Lines_Mark := Add_Line
-                  (Kernel,
-                   Buffer => GPS_Editor_Buffer
-                      (Get_Buffer_Factory (Kernel).Get (Item.Files (1))),
-                   Pos    => Editable_Line_Type (Curr_Chunk.Range1.First),
-                   Style  => VStyle (Ref).all,
-                   Number => The_Range);
+               Curr_Chunk.Range1.Blank_Lines_Mark.Replace_Element
+                 (Add_Line
+                    (Kernel,
+                     Buffer => GPS_Editor_Buffer
+                       (Get_Buffer_Factory (Kernel).Get (Item.Files (1))),
+                     Pos    => Editable_Line_Type (Curr_Chunk.Range1.First),
+                     Style  => VStyle (Ref).all,
+                     Number => The_Range));
 
                Highlight_Line
                  (Kernel, Item.Files (2), Curr_Chunk.Range2.First,
@@ -707,21 +709,23 @@ package body Vdiff2_Module.Utils is
                   "!");
 
                if Offset1 < Offset2 then
-                  Curr_Chunk.Range2.Blank_Lines_Mark := Add_Line
-                     (Kernel,
-                      GPS_Editor_Buffer
-                         (Get_Buffer_Factory (Kernel).Get (Item.Files (1))),
-                      Pos    => Editable_Line_Type (Curr_Chunk.Range1.Last),
-                      Style  => VStyle (Ref).all,
-                      Number => Offset2 - Offset1);
+                  Curr_Chunk.Range2.Blank_Lines_Mark.Replace_Element
+                    (Add_Line
+                       (Kernel,
+                        GPS_Editor_Buffer
+                          (Get_Buffer_Factory (Kernel).Get (Item.Files (1))),
+                        Pos    => Editable_Line_Type (Curr_Chunk.Range1.Last),
+                        Style  => VStyle (Ref).all,
+                        Number => Offset2 - Offset1));
                elsif Offset1 > Offset2 then
-                  Curr_Chunk.Range2.Blank_Lines_Mark := Add_Line
-                     (Kernel,
-                      GPS_Editor_Buffer
-                         (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
-                      Pos    => Editable_Line_Type (Curr_Chunk.Range2.Last),
-                      Style  => VStyle (Other).all,
-                      Number => Offset1 - Offset2);
+                  Curr_Chunk.Range2.Blank_Lines_Mark.Replace_Element
+                    (Add_Line
+                       (Kernel,
+                        GPS_Editor_Buffer
+                          (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
+                        Pos    => Editable_Line_Type (Curr_Chunk.Range2.Last),
+                        Style  => VStyle (Other).all,
+                        Number => Offset1 - Offset2));
                end if;
 
                Fine_Diff_Block
@@ -741,14 +745,15 @@ package body Vdiff2_Module.Utils is
                  (Kernel, Item.Files (1),
                   Curr_Chunk.Range1.First, VStyle (Ref).all,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
-               Curr_Chunk.Range2.Blank_Lines_Mark := Add_Line
-                 (Kernel,
-                  GPS_Editor_Buffer
-                    (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
-                  Pos    => Editable_Line_Type (Curr_Chunk.Range2.First),
-                  Style  => VStyle (Other).all,
-                  Number =>
-                     Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
+               Curr_Chunk.Range2.Blank_Lines_Mark.Replace_Element
+                 (Add_Line
+                    (Kernel,
+                     GPS_Editor_Buffer
+                       (Get_Buffer_Factory (Kernel).Get (Item.Files (2))),
+                     Pos    => Editable_Line_Type (Curr_Chunk.Range2.First),
+                     Style  => VStyle (Other).all,
+                     Number =>
+                        Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
 
                Add_Side_Symbol
                  (Item.Files (1),
@@ -863,7 +868,7 @@ package body Vdiff2_Module.Utils is
             --  Strip last ASCII.LF in Original
             O : constant String := To_String (Original);
          begin
-            Curr_Chunk.Range1.Special_Lines_Mark := new Editor_Mark'Class'
+            Curr_Chunk.Range1.Special_Lines_Mark.Replace_Element
               (Buf.Add_Special_Line
                  (Start_Line => Curr_Chunk.Range2.First,
                   Text       => O (O'First .. O'Last - 1),
@@ -1261,7 +1266,7 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Line (Kernel, File, J, Style);
       end loop;
 
-      Remove_Blank_Lines (Kernel, Range1.Blank_Lines_Mark.all);
+      Remove_Blank_Lines (Kernel, Range1.Blank_Lines_Mark.Element);
    end Unhighlight_Block;
 
    -----------------

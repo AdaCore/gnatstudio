@@ -322,8 +322,6 @@ package Refactoring.Services is
 
 private
 
-   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
-
    package Tokens_List is new Ada.Containers.Doubly_Linked_Lists
      (Language.Token_Record, Language."=");
 
@@ -347,7 +345,7 @@ private
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
 
       SFirst, SLast : Language.Source_Location;
-      First, Last   : Editor_Mark_Access;
+      First, Last   : GPS.Editors.Editor_Mark_Holders.Holder;
       --  From the start of the entity name to the ";"
 
       Shared : Boolean;
@@ -361,8 +359,8 @@ private
      (File      => null,
       Db        => null,
       Equal_Loc => -1,
-      First     => null,
-      Last      => null,
+      First     => <>,
+      Last      => <>,
       Shared    => False,
       Decl      => Ada.Strings.Unbounded.Null_Unbounded_String,
       others => <>);

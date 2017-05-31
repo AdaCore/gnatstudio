@@ -617,8 +617,8 @@ package body Refactoring.Services is
          return (File      => Get_File (EA),
                  Db        => Context.Db,
                  Entity    => H,
-                 First     => null,
-                 Last      => null,
+                 First     => <>,
+                 Last      => <>,
                  SFirst    => Get_Construct (EA).Sloc_Entity,
                  SLast     => Get_Construct (EA).Sloc_End,
                  Equal_Loc => Equal,
@@ -638,7 +638,7 @@ package body Refactoring.Services is
       First_Line, Last_Line     : Integer;
       First_Column, Last_Column : Visible_Column_Type;
    begin
-      if Self.First = null
+      if Self.First.Is_Empty
         and then (not Self.Entity.Is_Empty)
         and then Self.Entity.Element /= No_Root_Entity
       then
@@ -655,12 +655,13 @@ package body Refactoring.Services is
             Last_Column);
 
          declare
-            Start  : constant Editor_Location'Class := Buffer.New_Location
+            Start : constant Editor_Location'Class := Buffer.New_Location
               (Line   => First_Line,
                Column => First_Column);
+
          begin
-            Self.First := new Editor_Mark'Class'(Start.Create_Mark);
-            Self.Last  := new Editor_Mark'Class'
+            Self.First.Replace_Element (Start.Create_Mark);
+            Self.Last.Replace_Element
               (Buffer.New_Location
                  (Line   => Last_Line,
                   Column => Last_Column).Create_Mark);
@@ -861,13 +862,13 @@ package body Refactoring.Services is
 
    procedure Remove (Self : Entity_Declaration) is
    begin
-      if Self.First = null then
+      if Self.First.Is_Empty then
          return;
       end if;
 
       declare
-         From : Editor_Location'Class := Self.First.Location;
-         To   : constant Editor_Location'Class := Self.Last.Location;
+         From : Editor_Location'Class := Self.First.Element.Location;
+         To   : constant Editor_Location'Class := Self.Last.Element.Location;
 
       begin
          --  ??? Should take into account the case where there are several
@@ -943,14 +944,23 @@ package body Refactoring.Services is
    ----------
 
    procedure Free (Self : in out Entity_Declaration) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Editor_Mark'Class, Editor_Mark_Access);
    begin
-      if Self.First /= null then
-         Self.First.Delete;
-         Unchecked_Free (Self.First);
-         Self.Last.Delete;
-         Unchecked_Free (Self.Last);
+      if not Self.First.Is_Empty then
+         declare
+            Aux : Editor_Mark'Class := Self.First.Element;
+
+         begin
+            Aux.Delete;
+            Self.First.Clear;
+         end;
+
+         declare
+            Aux : Editor_Mark'Class := Self.Last.Element;
+
+         begin
+            Aux.Delete;
+            Self.Last.Clear;
+         end;
       end if;
    end Free;
 

@@ -274,14 +274,12 @@ package CodePeer is
       --  Introduced in version 5.
    end record;
 
-   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
-
    type Subprogram_Data is
      new Code_Analysis.CodePeer_Data_Root with record
       Lifeage       : Lifeage_Kinds;
       Messages      : Message_Vectors.Vector;
       Annotations   : Annotation_Maps.Map;
-      Mark          : Editor_Mark_Access;
+      Mark          : GPS.Editors.Editor_Mark_Holders.Holder;
       Special_Lines : Natural := 0;
    end record;
 

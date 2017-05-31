@@ -17,7 +17,6 @@
 
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
@@ -65,11 +64,6 @@ package body CodePeer.Module.Editors is
       -------------
 
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
-
-         procedure Free is
-           new Ada.Unchecked_Deallocation
-             (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
-
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
                              Code_Analysis.Subprogram_Maps.Element (Position);
          Data            : CodePeer.Subprogram_Data'Class
@@ -77,14 +71,14 @@ package body CodePeer.Module.Editors is
            (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
-         if Data.Mark /= null
-           and then Data.Mark.Is_Present
+         if not Data.Mark.Is_Empty
+           and then Data.Mark.Element.Is_Present
          then
             GPS_Editor_Buffer'Class (Buffer).Remove_Special_Lines
-              (Data.Mark.all, Data.Special_Lines);
+              (Data.Mark.Element, Data.Special_Lines);
          end if;
 
-         Free (Data.Mark);
+         Data.Mark.Clear;
          Data.Special_Lines := 0;
       end Process;
 
@@ -262,12 +256,11 @@ package body CodePeer.Module.Editors is
 
       begin
          if Data.Lifeage in Added .. Unchanged then
-            Data.Mark :=
-              new GPS.Editors.Editor_Mark'Class'
-                (Buffer.Add_Special_Line
-                     (Start_Line => Subprogram_Node.Line,
-                      Text       => Indent & "--",
-                      Style      => Module.Annotations_Style));
+            Data.Mark.Replace_Element
+              (Buffer.Add_Special_Line
+                 (Start_Line => Subprogram_Node.Line,
+                  Text       => Indent & "--",
+                  Style      => Module.Annotations_Style));
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Buffer.Add_Special_Line

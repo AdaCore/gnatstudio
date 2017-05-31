@@ -36,19 +36,20 @@ package Diff_Utils2 is
 
    Invalid_Mark : constant Natural := Natural'Last;
 
-   type Editor_Mark_Access is access all Editor_Mark'Class;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Editor_Mark'Class, Editor_Mark_Access);
-
    type Diff_Range is record
-      First            : Natural := 0;
-      Last             : Natural := 0;
-      Action           : Diff_Action := Nothing;
-      Blank_Lines_Mark : Editor_Mark_Access;
-      Special_Lines_Mark : Editor_Mark_Access;
+      First              : Natural := 0;
+      Last               : Natural := 0;
+      Action             : Diff_Action := Nothing;
+      Blank_Lines_Mark   : Editor_Mark_Holders.Holder;
+      Special_Lines_Mark : Editor_Mark_Holders.Holder;
    end record;
 
-   Null_Range : constant Diff_Range := (0, 0, Nothing, null, null);
+   Null_Range : constant Diff_Range :=
+     (First              => 0,
+      Last               => 0,
+      Action             => Nothing,
+      Blank_Lines_Mark   => <>,
+      Special_Lines_Mark => <>);
 
    type T_VRange  is array (1 .. 3) of Diff_Range;
    type T_VStr    is array (1 .. 3) of String_Access;

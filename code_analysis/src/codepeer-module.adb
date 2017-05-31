@@ -682,7 +682,7 @@ package body CodePeer.Module is
                    (Subprogram_Node.Analysis_Data.CodePeer_Data);
 
                if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-                  if Subprogram_Data.Mark /= null then
+                  if not Subprogram_Data.Mark.Is_Empty then
                      Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
                      Menu.Append (Item);
                      Context_CB.Connect

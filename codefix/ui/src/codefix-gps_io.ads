@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
 
 with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;             use GPS.Kernel;
@@ -41,14 +40,6 @@ package Codefix.GPS_Io is
      (Current_Text : Console_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
    --  Return the current position of the mark.
-
-   overriding
-   procedure Free (This : in out GPS_Mark);
-   --  Free the memory associated to a GPS_Mark
-
-   overriding
-   procedure Free (This : in out Console_Interface);
-   --  Free the memory associated with the Console_Interface
 
    overriding
    procedure Undo (This : in out Console_Interface);
@@ -140,16 +131,11 @@ package Codefix.GPS_Io is
 private
 
    type Console_Interface is new Text_Interface with record
-      Kernel        : Kernel_Handle;
+      Kernel : Kernel_Handle;
    end record;
 
-   type Editor_Mark_Access is access all Editor_Mark'Class;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Editor_Mark'Class, Editor_Mark_Access);
-
    type GPS_Mark is new Mark_Abstr with record
-      Mark : Editor_Mark_Access;
+      Mark : Editor_Mark_Holders.Holder;
    end record;
 
 end Codefix.GPS_Io;

@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
 package body Codefix.GPS_Io is
@@ -34,7 +34,7 @@ package body Codefix.GPS_Io is
    is
       Result : GPS_Mark;
    begin
-      Result.Mark := new Editor_Mark'Class'
+      Result.Mark.Replace_Element
         (Current_Text.Kernel.Get_Buffer_Factory.New_Mark
            (Cursor.Get_File,
             Get_Line (Cursor),
@@ -58,37 +58,18 @@ package body Codefix.GPS_Io is
       begin
          Set_Location
            (New_Cursor,
-            GPS_Mark'Class (Mark).Mark.Line,
-            GPS_Mark'Class (Mark).Mark.Column);
+            GPS_Mark'Class (Mark).Mark.Element.Line,
+            GPS_Mark'Class (Mark).Mark.Element.Column);
 
       exception
          when Constraint_Error =>
             Trace (Me, "unexpected result from get_column/line: "
-                   & GPS_Mark'Class (Mark).Mark.Line'Img & ":"
-                   & GPS_Mark'Class (Mark).Mark.Column'Img);
+                   & GPS_Mark'Class (Mark).Mark.Element.Line'Img & ":"
+                   & GPS_Mark'Class (Mark).Mark.Element.Column'Img);
       end;
 
       return New_Cursor;
    end Get_Current_Cursor;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out GPS_Mark) is
-   begin
-      Free (This.Mark);
-      Free (Mark_Abstr (This));
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Console_Interface) is
-   begin
-      Free (Text_Interface (This));
-   end Free;
 
    ----------
    -- Undo --
