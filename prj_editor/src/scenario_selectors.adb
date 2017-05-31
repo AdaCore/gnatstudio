@@ -15,6 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Sets;
+with Ada.Strings;
+with Ada.Strings.Hash;
+
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
@@ -315,50 +319,54 @@ package body Scenario_Selectors is
       Iter     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      It       : Gtk_Tree_Iter := Null_Iter;
-      Iterator : GNATCOLL.Projects.Project_Iterator;
-   begin
-      if Get_Active (Selector.Show_As_Hierarchy) then
+      package String_Sets is new Ada.Containers.Indefinite_Hashed_Sets
+        (String, Ada.Strings.Hash, "=", "=");
+
+      Already_Processed : String_Sets.Set;
+      --  Projects that are already processed
+
+      procedure Process (Iter     : Gtk_Tree_Iter;
+                         Project  : Project_Type);
+      --  Auxiliary recursion function for the case where the selector
+      --  is set to show projects as a hierarchy.
+
+      procedure Process  (Iter     : Gtk_Tree_Iter;
+                          Project  : Project_Type)
+      is
+         It       : Gtk_Tree_Iter := Null_Iter;
+         Iterator : GNATCOLL.Projects.Project_Iterator;
+         Name : constant String := Project.Name;
+      begin
          --  We need to properly handle limited-with statements in the
          --  project, which effectively create an infinite project tree.
          --  Thus, we make sure before inserting a node that it isn't already
          --  present in the current tree path.
+         if Already_Processed.Contains (Name) then
+            return;
+         end if;
+         Already_Processed.Insert (Name);
 
-         declare
-            Name : constant String := Project.Name;
-            It2 : Gtk_Tree_Iter;
-            Found : Boolean := False;
-         begin
-            Iterator :=
-              Start (Project, Recursive => True, Direct_Only => True);
+         Iterator := Start (Project, Recursive => True, Direct_Only => True);
 
-            It2 := Iter;
-            while It2 /= Null_Iter loop
-               if Get_String (Selector.Model, It2, Project_Name_Column) =
-                 Name
-               then
-                  Found := True;
-                  exit;
-               end if;
-               It2 := Parent (Selector.Model, It2);
-            end loop;
+         Append (Selector.Model, It, Iter);
+         Project_Set
+           (Selector, It, Project = Selector.Ref_Project, Project);
 
-            if not Found then
-               Append (Selector.Model, It, Iter);
-               Project_Set
-                 (Selector, It, Project = Selector.Ref_Project, Project);
-
-               while Current (Iterator) /= No_Project loop
-                  if Current (Iterator) /= Project then
-                     Add_Project_Recursive (Selector, It, Current (Iterator));
-                  end if;
-                  Next (Iterator);
-               end loop;
+         while Current (Iterator) /= No_Project loop
+            if Current (Iterator) /= Project then
+               Process (It, Current (Iterator));
             end if;
-         end;
+            Next (Iterator);
+         end loop;
+      end Process;
+
+   begin
+      if Get_Active (Selector.Show_As_Hierarchy) then
+         Process (Iter, Project);
 
       else
          declare
+            It       : Gtk_Tree_Iter := Null_Iter;
             Iterator : GNATCOLL.Projects.Project_Iterator := Start
               (Project, Recursive => True);
          begin
