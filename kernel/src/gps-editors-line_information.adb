@@ -47,8 +47,8 @@ package body GPS.Editors.Line_Information is
       Info       : Line_Information_Data := null)
    is
       Mark     : constant Editor_Mark'Class :=
-                   This.Add_Special_Line
-                     (Start_Line, Text, Style, Name, Column_Id, Info);
+        This.Add_Special_Line
+          (Start_Line, Text, Style, Name, Column_Id, Info);
       pragma Unreferenced (Mark);
    begin
       null;

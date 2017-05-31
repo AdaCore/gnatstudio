@@ -856,7 +856,7 @@ package body GPS.Kernel.Preferences is
          Base            => Default_Style,
          Default_Variant => Default,
          Default_Fg      => "black",
-         Default_Bg      => "white",
+         Default_Bg      => "rgba(226,226,226,0.4)",
          Doc             => "",
          Path            => -"Editor/Fonts & Colors:General");
 

@@ -1319,7 +1319,12 @@ package body Src_Editor_Buffer.Line_Information is
            or else (Line_Nums = Some_Lines and then Editable_Line mod 5 = 0)
          then
             Prev_Width := Max_Width;
-            Draw_Number (Integer (Editable_Line), Prev_Width, 0.0);
+            if Visualize_Internal_Buffers.Is_Active
+              or else Editable_Line > 0
+            --  don't draw 0 (codepeer)
+            then
+               Draw_Number (Integer (Editable_Line), Prev_Width, 0.0);
+            end if;
 
             if Visualize_Internal_Buffers.Is_Active then
                --  Draw File_Line

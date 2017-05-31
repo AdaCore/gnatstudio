@@ -337,6 +337,9 @@ class Theme(object):
             lighten(bg, -0.15 * light_val), 0.5, force_alpha=True)
         d["Src-Editor-Current-Block-Color"] = to_rgba(
             lighten(fg, 0.25 * light_val), 0.5, force_alpha=True)
+        d["Src-Editor-Code-Annotations-Variant"] = (
+            "DEFAULT", "transparent",
+            to_rgba(lighten(bg, -0.15 * light_val), 0.5, force_alpha=True))
 
         # Compute values for the auto-highlight-occurrences
 
