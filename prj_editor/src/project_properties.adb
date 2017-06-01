@@ -442,16 +442,16 @@ package body Project_Properties is
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
    procedure Gtk_New
-     (Editor  : out Properties_Editor;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Editor    : out Properties_Editor;
+      Project   : Project_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
       Read_Only : Boolean);
    --  Create a new properties editor
 
    procedure Initialize
-     (Editor  : access Properties_Editor_Record'Class;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Editor    : access Properties_Editor_Record'Class;
+      Project   : Project_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
       Read_Only : Boolean);
    --  Internal initialization function
 
@@ -1668,9 +1668,9 @@ package body Project_Properties is
    -------------
 
    procedure Gtk_New
-     (Editor  : out Properties_Editor;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Editor    : out Properties_Editor;
+      Project   : Project_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
       Read_Only : Boolean) is
    begin
       Editor := new Properties_Editor_Record;
@@ -3913,9 +3913,9 @@ package body Project_Properties is
    ----------------
 
    procedure Initialize
-     (Editor  : access Properties_Editor_Record'Class;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Editor    : access Properties_Editor_Record'Class;
+      Project   : Project_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
       Read_Only : Boolean)
    is
       Label            : Gtk_Label;
