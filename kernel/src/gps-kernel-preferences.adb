@@ -851,7 +851,7 @@ package body GPS.Kernel.Preferences is
          Path            => -"Editor/Fonts & Colors:General");
 
       Code_Annotations_Style := Manager.Create
-        (Name            => "Src-Editor-Code-Annotations-Variant",
+        (Name            => "Src-Editor-Code-Annotations-Variant-18",
          Label           => -"Code annotations",
          Base            => Default_Style,
          Default_Variant => Default,

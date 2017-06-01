@@ -20,7 +20,7 @@ light_common = {
 
     "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
 
-    "Src-Editor-Code-Annotations-Variant": (
+    "Src-Editor-Code-Annotations-Variant-18": (
         "DEFAULT", "transparent", "rgb(224, 224, 224)"),
 
     "Src-Editor-Ephemeral-Smart": (
@@ -62,7 +62,7 @@ dark_common = {
                                    "rgb(117,113,94)",
                                    "transparent"),
 
-    "Src-Editor-Code-Annotations-Variant": (
+    "Src-Editor-Code-Annotations-Variant-18": (
         "DEFAULT", "transparent", "rgb(96, 96, 96)"),
 
     "Src-Editor-Ephemeral-Smart": (
@@ -337,7 +337,7 @@ class Theme(object):
             lighten(bg, -0.15 * light_val), 0.5, force_alpha=True)
         d["Src-Editor-Current-Block-Color"] = to_rgba(
             lighten(fg, 0.25 * light_val), 0.5, force_alpha=True)
-        d["Src-Editor-Code-Annotations-Variant"] = (
+        d["Src-Editor-Code-Annotations-Variant-18"] = (
             "DEFAULT", "transparent",
             to_rgba(lighten(bg, -0.15 * light_val), 0.5, force_alpha=True))
 
