@@ -24,7 +24,6 @@ with Gdk.Event;           use Gdk.Event;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Image;           use Gtk.Image;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.List_Box;        use Gtk.List_Box;
@@ -36,11 +35,11 @@ with Gtk.Size_Group;      use Gtk.Size_Group;
 with Gtk.Style_Context;   use Gtk.Style_Context;
 with Gtk.Widget;          use Gtk.Widget;
 
-with Config;
 with Dialog_Utils;        use Dialog_Utils;
 with Histories;           use Histories;
 with GPS.Dialogs;         use GPS.Dialogs;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GUI_Utils;           use GUI_Utils;
 
 package body Welcome_Dialogs is
 
@@ -180,54 +179,9 @@ package body Welcome_Dialogs is
                              Get_History
                                (Kernel.Get_History.all, "project_files");
 
-      procedure Create_Logo_And_Title_Area;
-
       procedure Fill_Recent_Projects_View;
 
       procedure Create_Welcome_Dialog_Options;
-
-      --------------------------------
-      -- Create_Logo_And_Title_Area --
-      --------------------------------
-
-      procedure Create_Logo_And_Title_Area is
-         Frame : Gtk_Frame;
-         Hbox  : Gtk_Box;
-         Vbox  : Gtk_Box;
-         Logo  : Gtk_Image;
-         Label : Gtk_Label;
-      begin
-         Gtk_New (Frame);
-         Main_View.Append (Frame, Expand => False);
-         Set_Halign (Frame, Align_Center);
-
-         Gtk_New_Hbox (Hbox, Homogeneous => False);
-         Frame.Add (Hbox);
-
-         Gtk.Image.Gtk_New_From_Icon_Name
-           (Image     => Logo,
-            Icon_Name => "gps_welcome_logo",
-            Size      => Icon_Size_Dialog);
-         Hbox.Pack_Start (Logo, Expand => False);
-
-         Gtk_New_Vbox (Vbox, Homogeneous => False);
-         Hbox.Pack_Start (Vbox, Expand => False, Padding => 10);
-
-         Gtk_New (Label, "GPS");
-         Label.Set_Alignment (0.0, 0.5);
-         Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-title");
-         Vbox.Pack_Start (Label, Expand => False);
-
-         Gtk_New (Label, "The GNAT Programming Studio");
-         Label.Set_Alignment (0.0, 0.5);
-         Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-subtitle");
-         Vbox.Pack_Start (Label, Expand => False);
-
-         Gtk_New (Label, "Version " & Config.Version);
-         Label.Set_Alignment (0.0, 0.5);
-         Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
-         Vbox.Pack_Start (Label, Expand => False);
-      end Create_Logo_And_Title_Area;
 
       -------------------------------
       -- Fill_Recent_Projects_View --
@@ -325,7 +279,7 @@ package body Welcome_Dialogs is
       Main_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Main_View);
 
-      Create_Logo_And_Title_Area;
+      Main_View.Append (Create_Logo_And_Title_Area, Expand => False);
       Create_Welcome_Dialog_Options;
 
       --  If there is no recent project in the history, don't create the

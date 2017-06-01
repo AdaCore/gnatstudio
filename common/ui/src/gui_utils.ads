@@ -599,4 +599,12 @@ package GUI_Utils is
    --  Event should be inserted in the container, and the text should be set
    --  in Label.
 
+  ----------
+  -- Misc --
+  ----------
+
+   function Create_Logo_And_Title_Area return Gtk.Widget.Gtk_Widget;
+   --  Create a widget displaying the GPS logo and title (See the Welcome view
+   --  and the Welcome window for examples).
+
 end GUI_Utils;

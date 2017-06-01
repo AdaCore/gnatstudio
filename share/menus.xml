@@ -476,7 +476,7 @@
       </menu>
 
       <menu label='Help'>
-         <menu label='Welcome'      action='display gps welcome view'/>
+         <menu label='Welcome'      action='open welcome'/>
          <menu label='_Contents'    action='display help contents'/>
          <menu label='GPS'/>
          <menu label='GNAT Runtime'>

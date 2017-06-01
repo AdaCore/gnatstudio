@@ -136,7 +136,7 @@
  * GPS Welcome Dialog     *
  **************************/
 
-.gps-welcome-dialog GtkFrame {
+.gps-welcome-dialog-logo-area {
    box-shadow: none;
    border-width: 0;
    padding-top: 20px;
@@ -161,6 +161,28 @@
    font-style: italic;
    font-size: large;
    color: @tooltip-background-color;;
+}
+
+/***********************
+ * GPS Welcome View    *
+ ***********************/
+
+.gps-welcome-view GtkLinkButton {
+   padding: 0px;
+   border: 0px;
+   margin: 0px;
+}
+
+.gps-welcome-view-desc {
+   font-size: x-large;
+   color: @inactive_tab_color;
+   padding-left: 12px;
+   padding-bottom: 40px;
+}
+
+#gps-welcome-view-github-link {
+   padding-top: 20px;
+   margin-top: 20px;
 }
 
 /*********************

@@ -56,6 +56,7 @@ with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
@@ -66,6 +67,7 @@ with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -2485,5 +2487,50 @@ package body GUI_Utils is
       View.On_Focus_Out_Event (On_Focus_Out'Access);
       Dummy := On_Focus_Out (View, Gdk_Event_Focus'(others => <>));
    end Set_Placeholder;
+
+   --------------------------------
+   -- Create_Logo_And_Title_Area --
+   --------------------------------
+
+   function Create_Logo_And_Title_Area return Gtk_Widget is
+      Frame : Gtk_Frame;
+      Hbox  : Gtk_Box;
+      Vbox  : Gtk_Box;
+      Logo  : Gtk_Image;
+      Label : Gtk_Label;
+   begin
+      Gtk_New (Frame);
+      Get_Style_Context (Frame).Add_Class ("gps-welcome-dialog-logo-area");
+      Set_Halign (Frame, Align_Center);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Frame.Add (Hbox);
+
+      Gtk.Image.Gtk_New_From_Icon_Name
+        (Image     => Logo,
+         Icon_Name => "gps_welcome_logo",
+         Size      => Icon_Size_Dialog);
+      Hbox.Pack_Start (Logo, Expand => False);
+
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
+      Hbox.Pack_Start (Vbox, Expand => False, Padding => 10);
+
+      Gtk_New (Label, "GPS");
+      Label.Set_Alignment (0.0, 0.5);
+      Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-title");
+      Vbox.Pack_Start (Label, Expand => False);
+
+      Gtk_New (Label, "The GNAT Programming Studio");
+      Label.Set_Alignment (0.0, 0.5);
+      Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-subtitle");
+      Vbox.Pack_Start (Label, Expand => False);
+
+      Gtk_New (Label, "Version " & Config.Version);
+      Label.Set_Alignment (0.0, 0.5);
+      Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
+      Vbox.Pack_Start (Label, Expand => False);
+
+      return Gtk_Widget (Frame);
+   end Create_Logo_And_Title_Area;
 
 end GUI_Utils;

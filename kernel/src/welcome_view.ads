@@ -15,22 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package describes the Welcome page which is the starting point
+--  This package describes the Welcome view which is the starting point
 --  when beginning with GPS.
 
-with GPS.Kernel; use GPS.Kernel;
-with Gtk.Box;    use Gtk.Box;
-with Gtkada.MDI; use Gtkada.MDI;
+with GPS.Kernel;   use GPS.Kernel;
 
-package Welcome_Page is
+package Welcome_View is
 
-   type Welcome_Page_Record is new Gtk_Vbox_Record with null record;
-   type Welcome_Page_Access is access all Welcome_Page_Record'Class;
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   procedure Display_Welcome_Page (Kernel : Kernel_Handle);
-   --  Display the welcome page in the central GPS dialog
+   procedure Display_Welcome_View
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   function Create_Welcome_Page (Kernel : Kernel_Handle) return MDI_Child;
-   --  Internal function to create the welcome page
-
-end Welcome_Page;
+end Welcome_View;

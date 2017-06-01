@@ -116,7 +116,7 @@ with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
-with Welcome_Page;                     use Welcome_Page;
+with Welcome_View;                     use Welcome_View;
 
 --  Modules registered by GPS
 
@@ -2017,6 +2017,8 @@ procedure GPS.Main is
 
       Vsearch.Register_Module (GPS_Main.Kernel);
 
+      Welcome_View.Register_Module (GPS_Main.Kernel);
+
       if Active (Help_Trace) then
          Help_Module.Register_Module (GPS_Main.Kernel);
       end if;
@@ -2472,7 +2474,7 @@ procedure GPS.Main is
       if not File_Opened
         and then not Has_User_Desktop (GPS_Main.Kernel)
       then
-         Display_Welcome_Page (GPS_Main.Kernel);
+         Display_Welcome_View (GPS_Main.Kernel);
       end if;
 
       if Splash /= null then

@@ -164,7 +164,14 @@
     </perspective>
   </perspectives>
   <desktops>
-    <desktop perspective="Default">
+    <desktop perspective="Default" >
+      <Pane width=" 1.00000E02%" Orientation="ORIENTATION_HORIZONTAL" >
+        <Notebook width=" 1.00493E02%" Tabs="POS_TOP" >
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL" >
+            <Welcome />
+          </Child>
+        </Notebook>
+      </Pane>
     </desktop>
   </desktops>
 </GPS>

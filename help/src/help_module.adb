@@ -52,7 +52,6 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Toolchains;                 use Toolchains;
-with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
 with Config;
 with GPS_Vectors;
@@ -141,15 +140,6 @@ package body Help_Module is
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
 
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Support functions for the MDI
-
    type On_Open_Html is new Html_Hooks_Function with null record;
    overriding function Execute
      (Self              : On_Open_Html;
@@ -213,12 +203,6 @@ package body Help_Module is
      (Self : access About_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  "about gps" action
-
-   type Display_Welcome_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Display_Welcome_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  "display GPS welcome view" action
 
    function Create_URL
      (Name   : Glib.UTF8_String;
@@ -796,46 +780,6 @@ package body Help_Module is
             Descr      => new String'(Descr)));
    end Register_Help;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Welcome_Page" then
-         return Create_Welcome_Page (User);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Welcome_Page_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Welcome_Page");
-
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
-
    --------------------
    -- Open_HTML_File --
    --------------------
@@ -951,20 +895,6 @@ package body Help_Module is
          Parent  => Get_Current_Window (Kernel));
       Free (Contents);
 
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Display_Welcome_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Self);
-   begin
-      Display_Welcome_Page (Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -1234,13 +1164,7 @@ package body Help_Module is
          Kernel       => Kernel,
          Module_Name  => Help_Module_Name,
          Priority     => GPS.Kernel.Modules.Default_Priority - 20);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
       Html_Action_Hook.Add (new On_Open_Html);
-
-      Register_Action
-        (Kernel, "display GPS welcome view", new Display_Welcome_Command,
-         -("Open a new view showing the GPS welcome, which contains quick"
-           & " links to various areas of interests in GPS"));
 
       --  Register commands
 
