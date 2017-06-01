@@ -75,7 +75,7 @@ with XML_Utils;                         use XML_Utils;
 package body Browsers.Canvas is
 
    Zoom_Levels : constant array (Positive range <>) of Gdouble :=
-                   (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
+                   (0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
