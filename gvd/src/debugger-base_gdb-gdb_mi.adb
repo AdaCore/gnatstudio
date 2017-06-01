@@ -377,7 +377,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Breakpoints_Changed := False;
 
       if Debugger.Current_Command_Kind /= Misc_Command then
-         Debugger.Command_No    := Debugger.Command_No + 1;
          Debugger.Current_Frame := Null_Frame_Info;
       end if;
    end Reset_State;
@@ -618,8 +617,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Language_Debugger_Access (Lang));
 
-      C       : constant Vars_Maps.Cursor := Debugger.Find_Var (Entity);
-      V       : Variable;
+      V       : Variable := Debugger.Create_Var (Entity);
       Matched : Match_Array (0 .. 1);
 
       function Fmt return String;
@@ -631,8 +629,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Exp   : String;
          Nodes : in out Nodes_Vectors.Vector;
          Node  : Node_Access);
-
---        procedure Process_Variable (Name : String);
 
       ---------
       -- Fmt --
@@ -894,15 +890,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end Build_Result;
 
    begin
-      if not Has_Element (C) then
+      if V.Name = "" then
          return "";
       end if;
 
-      Debugger.Update_Var (C);
-
       Trace (Me, "Value_Of " & Entity & " " & Format'Img);
 
-      V := Element (C);
       if Is_Empty (V.Nodes) then
          if V.Childs < 2 then
             declare
@@ -955,25 +948,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end if;
 
       Trace (Me, "<- Value_Of:" & To_String (Result) & "'");
+      Free (Debugger, V);
       return To_String (Result);
    end Value_Of;
-
-   ----------------
-   -- Update_Var --
-   ----------------
-
-   procedure Update_Var
-     (Debugger : access Gdb_MI_Debugger;
-      C        : Vars_Maps.Cursor)
-   is
-      Var : Variable := Element (C);
-   begin
-      if Var.Updated /= Debugger.Command_No then
-         Debugger.Send ("-var-update " & To_String (Var.Name));
-         Var.Updated := Debugger.Command_No;
-         Debugger.Variables.Replace_Element (C, Var);
-      end if;
-   end Update_Var;
 
    ---------------------
    -- Print_Value_Cmd --
@@ -1222,11 +1199,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Send
            ("-gdb-exit", Wait_For_Prompt => False, Mode => Internal);
       end if;
-
-      for Item of Debugger.Variables loop
-         Free (Item);
-      end loop;
-      Clear (Debugger.Variables);
 
       Close (Debugger_Root (Debugger.all)'Access);
    end Close;
@@ -3029,7 +3001,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    procedure Free is
      new Standard.Ada.Unchecked_Deallocation (Node, Node_Access);
 
-   procedure Free (Var : in out Variable)
+   procedure Free (Debugger : access Gdb_MI_Debugger; Var : in out Variable)
    is
       use Nodes_Vectors;
 
@@ -3062,6 +3034,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end Process;
 
    begin
+      Debugger.Send ("-var-delete " & To_String (Var.Name), Mode => Internal);
       Free (Var.Nodes);
    end Free;
 
@@ -3471,19 +3444,20 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Entity    : String;
       Default   : String) return String
    is
-      C : constant Cursor := Debugger.Find_Var (Entity);
+      V : Variable := Debugger.Create_Var (Entity);
    begin
-      if not Has_Element (C) then
+      if V.Name = "" then
          return Default;
       end if;
 
       declare
          S    : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-var-info-type " & To_String (Element (C).Name),
+           ("-var-info-type " & To_String (V.Name),
             Mode => Internal);
          Idx  : Natural := Index (S, "type=" & '"');
          Idx1 : Natural;
       begin
+         Free (Debugger, V);
          if Idx >= S'First then
             Idx  := Idx + 6;
             Idx1 := Idx;
@@ -4035,39 +4009,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
       return Debugger.Current_Frame.Addr;
    end Get_Current_Frame_Addr;
 
-   --------------
-   -- Find_Var --
-   --------------
+   ----------------
+   -- Create_Var --
+   ----------------
 
-   function Find_Var
+   function Create_Var
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String)
-      return Cursor
+      return Variable
    is
-      Frame : constant GVD.Types.Address_Type :=
+      Result : Variable;
+      Frame  : constant GVD.Types.Address_Type :=
         Debugger.Get_Current_Frame_Addr;
-      C     : Cursor;
 
    begin
       if Frame = Invalid_Address then
-         return No_Element;
-      end if;
-
-      C := Debugger.Variables.Find (Entity);
-      if Has_Element (C) then
-         if Element (C).Frame = Frame then
-            return C;
-         else
-            Debugger.Send
-              ("-var-delete -c " & To_String (Element (C).Name),
-               Mode => Internal);
-            declare
-               V : Variable := Element (C);
-            begin
-               Debugger.Variables.Delete (C);
-               Free (V);
-            end;
-         end if;
+         return Result;
       end if;
 
       declare
@@ -4075,10 +4032,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
            ("-var-create - * " & '"' & Entity & '"', Mode => Internal);
 
          use Token_Lists;
-         Tokens  : Token_List_Controller;
-         T       : Token_Lists.Cursor;
-         Var     : Variable;
-         Dummy   : Boolean;
+         Tokens : Token_List_Controller;
+         T      : Token_Lists.Cursor;
+         Dummy  : Boolean;
       begin
          --  name="var2",numchild="0",value="5",type="positive",has_more="0"
          Tokens.List := Build_Tokens (S);
@@ -4086,25 +4042,20 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          if T /= Token_Lists.No_Element then
             Next (T, 2);
-            Var.Name := To_Unbounded_String (Element (T).Text.all);
+            Result.Name := To_Unbounded_String (Element (T).Text.all);
 
             T := Find_Identifier (T, "numchild");
             if T /= Token_Lists.No_Element then
                Next (T, 2);
-               Var.Childs := Natural'Value (Element (T).Text.all);
+               Result.Childs := Natural'Value (Element (T).Text.all);
             end if;
 
-            Var.Frame := Frame;
-            Var.Updated := Debugger.Command_No;
-
-            Debugger.Variables.Insert (Entity, Var, C, Dummy);
-
-            return C;
+            return Result;
          end if;
       end;
 
-      return No_Element;
-   end Find_Var;
+      return Result;
+   end Create_Var;
 
       ---------------
       -- Get_Value --

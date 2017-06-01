@@ -25,7 +25,6 @@ with GVD.Types;
 with GNATCOLL.VFS;
 
 private with Ada.Containers.Vectors;
-private with Ada.Containers.Indefinite_Ordered_Maps;
 
 package Debugger.Base_Gdb.Gdb_MI is
 
@@ -469,19 +468,15 @@ private
    --  Type which represent a node in MI tree structure
 
    type Variable is record
-      Frame    : GVD.Types.Address_Type;
-      Name     : Ada.Strings.Unbounded.Unbounded_String;
-      Childs   : Natural := 0;
-      Updated  : Integer := 0;
-      Nodes    : Nodes_Vectors.Vector;
+      Name   : Unbounded_String;
+      Childs : Natural := 0;
+      Nodes  : Nodes_Vectors.Vector;
    end record;
    --  Represent variable
 
-   procedure Free (Var : in out Variable);
-
-   package Vars_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, Variable);
-   use Vars_Maps;
+   procedure Free
+     (Debugger : access Gdb_MI_Debugger;
+      Var      : in out Variable);
 
    type Frame_Info is record
       Frame  : Integer;
@@ -501,24 +496,17 @@ private
       Breakpoints_Changed  : Boolean := False;
       Current_Frame        : Frame_Info       := Null_Frame_Info;
       Current_Command_Kind : Command_Category := Misc_Command;
-      Command_No           : Integer          := 1;
-      Variables            : Vars_Maps.Map;
       Is_Running           : Boolean          := False;
       Registers            : GVD.Types.Strings_Vectors.Vector;
       Register_Names       : GVD.Types.Strings_Vectors.Vector;
    end record;
 
-   function Find_Var
+   function Create_Var
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String)
-      return Vars_Maps.Cursor;
+      return Variable;
    --  Return representation of variable object associated
-   --  with entity and frame. Create new variable object if needed.
-
-   procedure Update_Var
-     (Debugger : access Gdb_MI_Debugger;
-      C        : Vars_Maps.Cursor);
-   --  Update variable and list childs
+   --  with entity and frame
 
    procedure Get_Frame_Info (Debugger : access Gdb_MI_Debugger);
    --  Retrieve info about current frame
