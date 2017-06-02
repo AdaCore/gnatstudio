@@ -10126,6 +10126,25 @@ class LanguageInfo(object):
     """
 
 
+class OutlineView(object):
+    """
+    This class gives access to suprograms used to control the GPS Outline
+    view (e.g: selecting a specific construct in the Ouline view).
+    """
+
+    @staticmethod
+    def select_construct(id):
+        """
+        Select the construct idetified with the given id in the Outline
+        view.
+
+        An exception is raised when the the id does not match a construct
+        in the Outline view.
+        """
+
+        pass  # implemented in Ada
+
+
 ###########################################################
 # Globals
 ###########################################################

@@ -1529,6 +1529,15 @@ Classes
 
    .. inheritance-diagram:: GPS.Missing_Arguments
 
+:class:`GPS.OutlineView`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: OutlineView()
+
+
+
+   .. automethod:: GPS.OutlineView.select_construct
+
 :class:`GPS.OutputParserWrapper`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -44,6 +44,7 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -61,6 +62,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Properties;
 with GPS.Search;                use GPS.Search;
@@ -73,6 +75,8 @@ with Outline_View.Model; use Outline_View.Model;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Outline_View is
+
+   Outline_View_Class_Name : constant String := "OutlineView";
 
    Me : constant Trace_Handle := Create ("OUTLINE.VIEW");
 
@@ -252,6 +256,9 @@ package body Outline_View is
       File    : GNATCOLL.VFS.Virtual_File);
    --  Set the file viewed in Outline
 
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+
    --------------
    -- Tooltips --
    --------------
@@ -348,7 +355,7 @@ package body Outline_View is
 
             if not Success then
                Trace (Me, "no construct with ID " & Debug_Print (ID)
-                      & "has been found when trying to select it in tree");
+                      & " has been found when trying to select it in tree");
             end if;
          end;
       end if;
@@ -1030,9 +1037,22 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Outline_View_Class : constant Class_Type :=
+        Kernel.Scripts.New_Class (Outline_View_Class_Name);
    begin
       Outline_View_Module := new Outline_View_Module_Record;
       Outline_Views.Register_Module (Kernel, Outline_View_Module);
+
+      --  Register the OulineView python class
+
+      Kernel.Scripts.Register_Command
+        ("select_construct",
+         Params         => (1 => Param ("id")),
+         Class          => Outline_View_Class,
+         Static_Method  => True,
+         Handler        => Command_Handler'Access);
+
+      --  Register the Outline view's preferences
 
       Show_Profile := Kernel.Get_Preferences.Create_Invisible_Pref
         ("outline-show-profile", True, Label => -"Show profiles");
@@ -1159,6 +1179,39 @@ package body Outline_View is
          Path_Free (Path);
       end if;
    end Set_File;
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String) is
+   begin
+      if Command = "select_construct" then
+         declare
+            Outline : constant Outline_View_Access :=
+              Outline_Views.Retrieve_View (Get_Kernel (Data.Get_Script));
+            S_ID    : constant String := Data.Nth_Arg (1, "");
+            ID      : GNATCOLL.Symbols.Symbol;
+            Lang    : Language_Access;
+            Success : Boolean;
+         begin
+            if S_ID /= "" then
+               Lang := Outline.Kernel.Lang_Handler.Get_Language_From_File
+                 (Outline.File);
+               ID := Lang.Symbols.Find (S_ID);
+
+               Success := Select_Node_From_ID (Outline, ID);
+
+               if not Success then
+                  Data.Set_Error_Msg
+                    ("No construct with ID " & Debug_Print (ID)
+                     & " has been found in Outline view");
+               end if;
+            end if;
+         end;
+      end if;
+   end Command_Handler;
 
    -----------------------
    -- Get_Outline_Model --
