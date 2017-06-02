@@ -85,6 +85,10 @@ package body GPS.Kernel.MDI is
 
    Me : constant Trace_Handle := Create ("gps_kernel.mdi");
 
+   Me_Perspectives : constant Trace_Handle :=
+     Create ("gps_kernel.mdi.perspectives");
+   --  for testing purposes, do not copy predifined perspectives if inactive
+
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
    package Tabs_Position_Preferences is new
      Default_Preferences.Enums.Generics (Tabs_Position_Preference);
@@ -1312,6 +1316,7 @@ package body GPS.Kernel.MDI is
                                     (Get_System_Dir (Handle),
                                      "share/gps/" & Desktop_Name);
       Node                    : Node_Ptr;
+      Predefined_Node         : Node_Ptr;
       Project_Name            : Virtual_File := For_Project;
       Child                   : Node_Ptr;
       Tmp                     : Node_Ptr;
@@ -1323,6 +1328,101 @@ package body GPS.Kernel.MDI is
       Is_Default_Desktop      : Boolean := False;
       Try_User_Desktop        : Boolean := True;
       Project_From_Node       : Virtual_File;
+
+      procedure Compare_Perspectives;
+      --  compare predefined perspectives vs. users and copy missing
+
+      --------------------------
+      -- Compare_Perspectives --
+      --------------------------
+
+      procedure Compare_Perspectives is
+         function Get_Perspective_Name
+           (Node : Node_Ptr)
+            return XML_Utils.UTF8_String;
+
+         function Not_Exist (Name : XML_Utils.UTF8_String) return Boolean;
+         --  Check whether perspective with givven name
+         --  exists in user's perspectives
+
+         --------------------------
+         -- Get_Perspective_Name --
+         --------------------------
+
+         function Get_Perspective_Name
+           (Node : Node_Ptr)
+            return XML_Utils.UTF8_String is
+         begin
+            if Node.Tag /= null
+              and then Node.Tag.all = "perspective"
+            then
+               return Get_Attribute (Node, "name");
+            else
+               return "";
+            end if;
+         end Get_Perspective_Name;
+
+         ---------------
+         -- Not_Exist --
+         ---------------
+
+         function Not_Exist (Name : XML_Utils.UTF8_String) return Boolean is
+            Current : Node_Ptr := Perspectives.Child;
+         begin
+            while Current /= null loop
+               declare
+                  N : constant XML_Utils.UTF8_String :=
+                    Get_Perspective_Name (Current);
+               begin
+                  if N = Name then
+                     return False;
+                  end if;
+               end;
+
+               Current := Current.Next;
+            end loop;
+
+            return True;
+         end Not_Exist;
+
+      begin
+         if Predefined_Node = null
+           or else Perspectives = null
+           or else not Me_Perspectives.Is_Active
+         then
+            return;
+         end if;
+
+         Tmp := Predefined_Node.Child;
+
+         while Tmp /= null loop
+            exit when Tmp.Tag /= null
+              and then Tmp.Tag.all = "perspectives";
+
+            Tmp := Tmp.Next;
+         end loop;
+
+         if Tmp /= null then
+            --  Predefined perspectives, iterate over them
+            Tmp := Tmp.Child;
+            while Tmp /= null loop
+               declare
+                  Name : constant XML_Utils.UTF8_String :=
+                    Get_Perspective_Name (Tmp);
+               begin
+                  if Name /= ""
+                    and then Not_Exist (Name)
+                  then
+                     Add_Child (Perspectives, Deep_Copy (Tmp), True);
+                  end if;
+               end;
+
+               Tmp := Tmp.Next;
+            end loop;
+         end if;
+
+         Free (Predefined_Node);
+      end Compare_Perspectives;
 
    begin
       Main_Window.Desktop_Loaded := True;
@@ -1344,7 +1444,9 @@ package body GPS.Kernel.MDI is
       while not Success_Loading_Desktop
         and then (Try_User_Desktop or else not Is_Default_Desktop)
       loop
-         if Try_User_Desktop and then Is_Regular_File (File) then
+         if Try_User_Desktop
+           and then Is_Regular_File (File)
+         then
             Trace (Me, "loading desktop file " & File.Display_Full_Name
                    & " Project=" & Project_Name.Display_Full_Name);
             XML_Parsers.Parse (File, Node, Err);
@@ -1359,19 +1461,25 @@ package body GPS.Kernel.MDI is
             end if;
          end if;
 
-         if Node = null and then Is_Regular_File (Predefined_Desktop) then
+         if Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop "
                    & Predefined_Desktop.Display_Full_Name);
-            Is_Default_Desktop := True;
-            XML_Parsers.Parse (Predefined_Desktop, Node, Err);
-            if Node = null then
+            XML_Parsers.Parse (Predefined_Desktop, Predefined_Node, Err);
+
+            if Predefined_Node = null then
                Insert (Handle, Err.all, Mode => Error);
                Free (Err);
             end if;
          end if;
 
-         Perspectives := null;
-         Project_Node := null;
+         if Node = null then
+            Is_Default_Desktop := True;
+            Node               := Predefined_Node;
+            Predefined_Node    := null;
+         end if;
+
+         Perspectives         := null;
+         Project_Node         := null;
          Default_Project_Node := null;
 
          if Node /= null then
@@ -1406,12 +1514,14 @@ package body GPS.Kernel.MDI is
             end loop;
          end if;
 
+         Compare_Perspectives;
+
          if Project_Node = null then
             Trace (Me, "loading desktop for default project");
             Project_Node := Default_Project_Node;
          else
-            Trace (Me, "loading desktop for "
-                   & Project_Name.Display_Full_Name);
+            Trace (Me, "loading desktop for " &
+                     Project_Name.Display_Full_Name);
          end if;
 
          --  Unregister all previous actions
@@ -1436,7 +1546,9 @@ package body GPS.Kernel.MDI is
               From_Tree    => XML_Utils.GtkAda.Convert (Project_Node),
               User         => Kernel_Handle (Handle));
 
-         if Node = null and then not Try_User_Desktop then
+         if Node = null
+           and then not Try_User_Desktop
+         then
             --  This needs to be called after calling Restore_Desktop so that
             --  the MDI could create a minimal environment
             Trace (Me, "No desktop to load");
