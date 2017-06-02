@@ -97,6 +97,9 @@ package body Language.Shell is
      (Lang     : access Shell_Language;
       Buffer   : String;
       Callback : Entity_Callback);
+   overriding function Get_Last_Selected_Construct_ID
+     (Lang : not null access Shell_Language;
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol;
 
    type Construct_List_Properties_Record is new Instance_Property_Record
      with record
@@ -261,6 +264,39 @@ package body Language.Shell is
          end;
       end;
    end Clicked_On_Construct;
+
+   ------------------------------------
+   -- Get_Last_Selected_Construct_ID --
+   ------------------------------------
+
+   overriding function Get_Last_Selected_Construct_ID
+     (Lang : not null access Shell_Language;
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
+   is
+      Sub : constant Subprogram_Type :=
+        Get_Method (Lang.Object, "get_last_selected_construct_id");
+   begin
+      if Sub = null then
+         return GNATCOLL.Symbols.No_Symbol;
+      end if;
+
+      declare
+         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Args   : Callback_Data'Class := Create (Script, 1);
+      begin
+         Args.Set_Nth_Arg (1, GPS.Scripts.Files.Create_File (Script, File));
+
+         declare
+            Result : constant String := Execute (Sub, Args);
+         begin
+            if Result /= "" then
+               return Lang.Symbols.Find (Result);
+            else
+               return GNATCOLL.Symbols.No_Symbol;
+            end if;
+         end;
+      end;
+   end Get_Last_Selected_Construct_ID;
 
    -------------------
    -- Add_Construct --

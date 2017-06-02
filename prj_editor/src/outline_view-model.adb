@@ -1135,6 +1135,28 @@ package body Outline_View.Model is
       end;
    end Get_Path_Enclosing_Location;
 
+   -----------------------------
+   -- Get_Path_From_Unique_ID --
+   -----------------------------
+
+   function Get_Path_From_Unique_ID
+     (Model : access Outline_Model_Record;
+      ID    : GNATCOLL.Symbols.Symbol) return Gtk_Tree_Path
+   is
+      S_ID : constant String := Get (ID).all;
+      Node : constant Sorted_Node_Access :=
+        (if Model.Sem_To_Tree_Nodes.Contains (S_ID) then
+            Model.Sem_To_Tree_Nodes (S_ID)
+         else
+            null);
+   begin
+      if Node /= null then
+         return Get_Path (Model, Node);
+      else
+         return Null_Gtk_Tree_Path;
+      end if;
+   end Get_Path_From_Unique_ID;
+
    --------------------
    -- Root_With_Iter --
    --------------------

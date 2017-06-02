@@ -45,6 +45,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
@@ -72,6 +73,8 @@ with Outline_View.Model; use Outline_View.Model;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Outline_View is
+
+   Me : constant Trace_Handle := Create ("OUTLINE.VIEW");
 
    type Outline_View_Module_Record is new Module_ID_Record with null record;
 
@@ -161,6 +164,14 @@ package body Outline_View is
    --  goto and highlight the entity.
    --  If Fallback is true, and the buffer is already showing node's
    --  location, then we jump to the body.
+
+   function Select_Node_From_ID
+     (View : not null access Outline_View_Record'Class;
+      ID   : GNATCOLL.Symbols.Symbol) return Boolean;
+   --  Select the node identified with ID in the outline.
+   --  This does nothing if the given ID does not match any node in the tree.
+   --
+   --  Return True if a node has been found for ID, False otherwise.
 
    function On_Key_Press
      (Outline : access GObject_Record'Class;
@@ -297,9 +308,13 @@ package body Outline_View is
       return null;
    end Create_Contents;
 
+   ----------------------
+   -- Location_Changed --
+   ----------------------
+
    procedure Location_Changed
      (Kernel : access Kernel_Handle_Record'Class;
-      F : GNATCOLL.VFS.Virtual_File)
+      F      : GNATCOLL.VFS.Virtual_File)
    is
       Ed : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
@@ -314,6 +329,27 @@ package body Outline_View is
               (Kernel,
                Natural (Mark.Line),
                Natural (Mark.Column));
+         end;
+      else
+         --  We are not in an editor: check if the current file has a construct
+         --  that we should explicitly select.
+         declare
+            Outline   : constant Outline_View_Access :=
+              Outline_Views.Retrieve_View (Kernel);
+            Lang      : Language_Access;
+            ID        : GNATCOLL.Symbols.Symbol;
+            Success   : Boolean;
+         begin
+            Lang := Outline.Kernel.Lang_Handler.Get_Language_From_File
+              (Outline.File);
+            ID := Lang.Get_Last_Selected_Construct_ID (Outline.File);
+
+            Success := Select_Node_From_ID (Outline, ID);
+
+            if not Success then
+               Trace (Me, "no construct with ID " & Debug_Print (ID)
+                      & "has been found when trying to select it in tree");
+            end if;
          end;
       end if;
    end Location_Changed;
@@ -595,6 +631,52 @@ package body Outline_View is
          end if;
       end;
    end Goto_Node;
+
+   -------------------------
+   -- Select_Node_From_ID --
+   -------------------------
+
+   function Select_Node_From_ID
+     (View : not null access Outline_View_Record'Class;
+      ID   : GNATCOLL.Symbols.Symbol) return Boolean
+   is
+      Path    : Gtk_Tree_Path;
+      Success : Boolean;
+   begin
+      if ID = GNATCOLL.Symbols.No_Symbol then
+         return False;
+      end if;
+
+      Path := Get_Outline_Model (View).Get_Path_From_Unique_ID (ID);
+
+      if Path /= Null_Gtk_Tree_Path then
+         if Get_Depth (Path) >= 1 then
+            declare
+               Indices     : constant Glib.Gint_Array :=
+                 Get_Indices (Path);
+               Parent_Path : Gtk_Tree_Path;
+            begin
+               Gtk_New (Parent_Path);
+               for J in Indices'First .. Indices'Last - 1 loop
+                  Append_Index (Parent_Path, Indices (J));
+               end loop;
+
+               Expand_To_Path (View.Tree, Parent_Path);
+               Path_Free (Parent_Path);
+            end;
+
+            Set_Cursor (View.Tree, Path, null, False);
+
+            Success := True;
+         end if;
+      else
+         Success := False;
+      end if;
+
+      Path_Free (Path);
+
+      return Success;
+   end Select_Node_From_ID;
 
    -------------------
    -- On_Multipress --

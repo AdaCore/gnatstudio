@@ -681,6 +681,18 @@ package Language is
    --  location. This is mostly intended for languages that display their
    --  sources in special ways, like a browser for instance.
 
+   function Get_Last_Selected_Construct_ID
+     (Lang : not null access Language_Root;
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
+   is
+      (GNATCOLL.Symbols.No_Symbol);
+   --  Called when the Outline view needs to reselect the last selected
+   --  construct for the given File (i.e: when leaving and then coming back
+   --  to the view associated with File).
+   --
+   --  This is specially useful when constructs are not displayed in editors
+   --  (e.g: diagrams),
+
    ----------
    -- Misc --
    ----------

@@ -19,6 +19,7 @@ with Ada.Containers;                  use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
+with GNATCOLL.Symbols;
 
 with Glib;                            use Glib;
 with Glib.Values;                     use Glib.Values;
@@ -174,6 +175,12 @@ private package Outline_View.Model is
      (Model        : access Outline_Model_Record;
       Line, Column : Integer) return Gtk_Tree_Path;
    --  Return the closest path enclosing the {line, column} from the model
+
+   function Get_Path_From_Unique_ID
+     (Model : access Outline_Model_Record;
+      ID    : GNATCOLL.Symbols.Symbol) return Gtk_Tree_Path;
+   --  Return the path corresponding to the given ID if it exits in the model.
+   --  Return a Null_Gtk_Tree_Path othwerwise.
 
    function Get_Sorted_Node (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
    --  Return the node stored in the iter

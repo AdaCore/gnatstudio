@@ -10055,6 +10055,19 @@ class Language(object):
                :func:`GPS.Language.parse_constructs`.
 
             '''
+
+        def get_last_selected_construct_id(self, file):
+            '''
+            Called when the Outline view needs to reselect in its tree view
+            the construct that was selected just before leaving the view
+            associated with the given file.
+
+            This function should return the string ID of the last selected
+            construct for the given file.
+
+            :param GPS.File file: the file that is associated with the Outline
+            :return: a string
+            '''
     """
 
     @staticmethod
