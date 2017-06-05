@@ -457,8 +457,6 @@
          <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
          <menu label='Generate CS_V Report...' action='codepeer generate csv' optional='true'/>
          <menu label='Ad_vanced'>
-            <menu label='Text _Overview' action='codepeer text overview' optional='true'/>
-            <menu label='_Text Listing'  action='codepeer text listing'  optional='true'/>
             <menu label='CodePeer _Log'  action='codepeer log'           optional='true'/>
             <separator/>
             <menu label='R_emove Lock'   action='codepeer remove lock'   optional='true'/>

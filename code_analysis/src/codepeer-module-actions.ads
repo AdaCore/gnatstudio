@@ -121,16 +121,4 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Advanced->Remove XML Code Review" menu item is activated
 
-   type Text_Listing_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Text_Listing_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Edit Text Listing" menu item is activated
-
-   type Text_Overview_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Text_Overview_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Edit Text Overview" menu item is activated
-
 end CodePeer.Module.Actions;

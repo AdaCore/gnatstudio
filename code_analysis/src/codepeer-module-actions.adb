@@ -464,77 +464,6 @@ package body CodePeer.Module.Actions is
       return Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self    : access Text_Listing_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Self);
-
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Text_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Kernel).Create_From_Dir
-          ("list/" &
-           (+File_Information
-                (Context.Context).Display_Base_Name) & ".txt");
-
-   begin
-      if Text_File.Is_Regular_File then
-         Open_File_Action_Hook.Run
-           (Kernel       => Kernel,
-            File         => Text_File,
-            Project      => Project_Information (Context.Context),
-            New_File     => False,
-            Force_Reload => True);
-
-         return Success;
-
-      else
-         Kernel.Insert
-           (-"cannot find text listing: " & Text_File.Display_Full_Name,
-            Mode => GPS.Kernel.Error);
-
-         return Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self    : access Text_Overview_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Self);
-
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Text_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Kernel).Create_From_Dir
-          ("list/overview.txt");
-
-   begin
-      if Text_File.Is_Regular_File then
-         Open_File_Action_Hook.Run
-           (Kernel       => Kernel,
-            File         => Text_File,
-            Project      => Project_Information (Context.Context),
-            New_File     => False,
-            Force_Reload => True);
-
-      else
-         Kernel.Insert
-           (Text =>
-              -"cannot find text overview: " & Text_File.Display_Full_Name,
-            Mode => GPS.Kernel.Error);
-      end if;
-
-      return Success;
-   end Execute;
-
    --------------------------
    -- Inspection_Info_File --
    --------------------------
@@ -600,13 +529,6 @@ package body CodePeer.Module.Actions is
         (Module.Kernel,
          "codepeer remove xml review",
          new Remove_XML_Review_Command (Module));
-      Register_Action
-        (Module.Kernel, "codepeer text listing", new Text_Listing_Command,
-         Filter =>
-           Lookup_Filter (Module.Kernel, "File")
-             and Create (Language => "ada"));
-      Register_Action
-        (Module.Kernel, "codepeer text overview", new Text_Overview_Command);
    end Register_Actions;
 
 end CodePeer.Module.Actions;
