@@ -453,10 +453,11 @@
          <separator/>
          <menu label='_Display Code Review'  action='codepeer display code review'
                optional='true'/>
-         <menu label='_Regenerate Report...' action='codepeer regenerate report' optional='true'/>
          <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
          <menu label='Generate CS_V Report...' action='codepeer generate csv' optional='true'/>
          <menu label='Ad_vanced'>
+            <menu label='_Regenerate Report...' action='codepeer regenerate report' optional='true'/>
+            <menu label='_Generate SCIL...'  action='codepeer generate scil' optional='true'/>
             <menu label='CodePeer _Log'  action='codepeer log'           optional='true'/>
             <separator/>
             <menu label='R_emove Lock'   action='codepeer remove lock'   optional='true'/>
@@ -465,8 +466,6 @@
             <menu label='_Remove SCIL'   action='codepeer remove scil'   optional='true'/>
             <menu label='Remove _SCIL &amp; DB' action='codepeer remove scil and db'
                   optional='true'/>
-            <separator/>
-            <menu label='_Generate SCIL...'  action='codepeer generate scil' optional='true'/>
          </menu>
       </menu>
 
