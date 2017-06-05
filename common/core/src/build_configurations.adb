@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2016, AdaCore                     --
+--                     Copyright (C) 2008-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -449,8 +449,7 @@ package body Build_Configurations is
       Target.Model := The_Model;
 
       if Command_Line'Length > 0 then
-         Target.Command_Line := The_Model.Switches.Empty_Command_Line;
-         Target.Command_Line.Append_Switches (Command_Line);
+         Set_Command_Line (Target, Command_Line);
       elsif not The_Model.Default_Command_Line.Is_Empty then
          Target.Command_Line := The_Model.Default_Command_Line;
          Target.Default_Command_Line := The_Model.Default_Command_Line;
@@ -519,10 +518,7 @@ package body Build_Configurations is
                Cmd_Line (Cmd_Line'First) := new String'(Current_Switch (Iter));
             end if;
 
-            The_Target.Command_Line :=
-              The_Target.Model.Switches.Empty_Command_Line;
-
-            The_Target.Command_Line.Append_Switches (Cmd_Line.all);
+            Set_Command_Line (The_Target, Cmd_Line.all);
 
             GNAT.Strings.Free (Cmd_Line);
          end;

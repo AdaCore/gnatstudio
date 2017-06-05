@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2016, AdaCore                     --
+--                     Copyright (C) 2008-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -906,6 +906,7 @@ package body Builder_Facility_Module is
       Free (N);
 
       Refresh_Graphical_Elements;
+      Execute_Switch_Filters_For_All_Targets (Before_Save => False);
    end Load_Targets;
 
    ------------------------------
