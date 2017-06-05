@@ -908,6 +908,7 @@ package body Builder_Facility_Module is
       Free (N);
 
       Refresh_Graphical_Elements;
+      Execute_Switch_Filters_For_All_Targets (Before_Save => False);
    end Load_Targets;
 
    ------------------------------
