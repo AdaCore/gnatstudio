@@ -306,6 +306,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_gcd" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/gcd/test.gpr"</shell>
+      <shell>Editor.edit "math_euclid.adb"</shell>
+      <shell>Editor.edit "math_euclid.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_gcd">
+        <title>gcd</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_gnatprove_by_example" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/gnatprove_by_example/test.gpr"</shell>
@@ -427,6 +441,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_openETCS">
         <title>openETCS</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_pair_insertion_sort" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/pair_insertion_sort/sort.gpr"</shell>
+      <shell>Editor.edit "pair_insertion_sort.adb"</shell>
+      <shell>Editor.edit "pair_insertion_sort.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_pair_insertion_sort">
+        <title>pair__insertion__sort</title>
       </menu>
     </submenu>
 
@@ -618,6 +646,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_traffic_light">
         <title>traffic__light</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_trajectory_computation" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/trajectory_computation/test.gpr"</shell>
+      <shell>Editor.edit "simple_trajectory.adb"</shell>
+      <shell>Editor.edit "simple_trajectory.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_trajectory_computation">
+        <title>trajectory__computation</title>
       </menu>
     </submenu>
 
