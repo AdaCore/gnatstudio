@@ -632,6 +632,23 @@ package body Debugger.Base_Gdb is
       end if;
    end Remove_Breakpoint_Duplicates;
 
+   ------------------
+   -- Set_Register --
+   ------------------
+
+   overriding procedure Set_Register
+     (Debugger : access Base_Gdb_Debugger;
+      Name     : String;
+      Value    : String) is
+   begin
+      Debugger.Send
+        ("$" & Name &
+         (if To_Lower (Debugger.Get_Language.Get_Name) = "ada"
+            then " := "
+            else " = ") &
+           Value);
+   end Set_Register;
+
    -------------------------
    -- Test_If_Has_Command --
    -------------------------

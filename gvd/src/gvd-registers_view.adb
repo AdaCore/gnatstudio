@@ -18,6 +18,7 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Glib;                      use Glib;
+with Glib.Object;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Box;                   use Gtk.Box;
@@ -140,6 +141,12 @@ package body GVD.Registers_View is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Select/deselect all registers
 
+   procedure On_Edit
+     (Self     : access Glib.Object.GObject_Record'Class;
+      Path     : UTF8_String;
+      New_Text : UTF8_String);
+   --  Edit a register's value callback
+
    Name_Column           : constant := 0;
    Hexadecimal_Column    : constant := 1;
    Octal_Column          : constant := 2;
@@ -150,6 +157,7 @@ package body GVD.Registers_View is
    FG_Color_Column       : constant := 7;
    BG_Name_Color_Column  : constant := 8;
    BG_Value_Color_Column : constant := 9;
+   Editable_Column       : constant := 10;
 
    -----------------
    -- Create_Menu --
@@ -332,7 +340,8 @@ package body GVD.Registers_View is
          Naturals_Column       => GType_String,
          FG_Color_Column       => Gdk.RGBA.Get_Type,
          BG_Name_Color_Column  => Gdk.RGBA.Get_Type,
-         BG_Value_Color_Column => Gdk.RGBA.Get_Type);
+         BG_Value_Color_Column => Gdk.RGBA.Get_Type,
+         Editable_Column       => GType_Boolean);
 
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
@@ -359,7 +368,9 @@ package body GVD.Registers_View is
          Col.Add_Attribute (Render, "text", Column);
          Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
          Col.Add_Attribute (Render, "background-rgba", BG_Value_Color_Column);
+         Col.Add_Attribute (Render, "editable", Editable_Column);
          Col.Set_Visible (Allowed);
+         Render.On_Edited (On_Edit'Access, Widget, True);
       end Create;
 
    begin
@@ -371,7 +382,7 @@ package body GVD.Registers_View is
 
       Gtk_New (Widget.Model, Column_Types);
       Gtk_New (Widget.Tree,  Widget.Model);
-      Widget.Tree.Get_Selection.Set_Mode (Selection_None);
+      Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
       Widget.Tree.Set_Grid_Lines (Grid_Lines_Both);
       Add (Scrolled, Widget.Tree);
 
@@ -419,6 +430,39 @@ package body GVD.Registers_View is
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;
+
+   -------------
+   -- On_Edit --
+   -------------
+
+   procedure On_Edit
+     (Self     : access Glib.Object.GObject_Record'Class;
+      Path     : UTF8_String;
+      New_Text : UTF8_String)
+   is
+      Widget   : constant Registers_View := Registers_View (Self);
+      Process  : Visual_Debugger;
+      Instance : Debugger.Debugger_Access;
+
+   begin
+      Process := Get_Process (Widget);
+
+      if Process = null
+        or else Process.Command_In_Process
+      then
+         return;
+      end if;
+
+      Instance := Process.Debugger;
+      if Instance /= null then
+         Instance.Set_Register
+           (Widget.Model.Get_String
+              (Widget.Model.Get_Iter_From_String (Path),
+               Name_Column), New_Text);
+
+         Widget.Update;
+      end if;
+   end On_Edit;
 
    ---------------------------
    -- On_Process_Terminated --
@@ -505,7 +549,8 @@ package body GVD.Registers_View is
       First_Pass : Boolean := True;
 
       Row        : Gtk_Tree_Iter;
-      Values     : Glib.Values.GValue_Array (1 .. 5);
+      Current    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Values     : Glib.Values.GValue_Array (1 .. 6);
       Columns    : Columns_Array (Values'Range);
       Last       : Gint := 0;
 
@@ -598,6 +643,10 @@ package body GVD.Registers_View is
             Columns (Last) := Column;
             Values  (Last) := As_String (Result.Element (Index));
 
+            Last := Last + 1;
+            Columns (Last) := Editable_Column;
+            Values  (Last) := As_Boolean (True);
+
             Model.Set
               (Row,
                Glib.Gint_Array (Columns (1 .. Last)),
@@ -620,6 +669,16 @@ package body GVD.Registers_View is
       if View.Locked then
          return;
       end if;
+
+      declare
+         M : Gtk_Tree_Model with Unreferenced;
+         C : Gtk_Tree_Iter;
+      begin
+         View.Tree.Get_Selection.Get_Selected (M, C);
+         if C /= Null_Iter then
+            Current := Model.Get_Path (C);
+         end if;
+      end;
 
       Detached := View.Tree.Get_Model;
       View.Tree.Set_Model (Null_Gtk_Tree_Model);
@@ -666,6 +725,13 @@ package body GVD.Registers_View is
          end loop;
 
          View.Resize := False;
+      end if;
+
+      if Current /= Null_Gtk_Tree_Path then
+         View.Tree.Scroll_To_Cell
+           (Current, View.Tree.Get_Column (Name_Column), False, 0.5, 0.0);
+         View.Tree.Get_Selection.Select_Path (Current);
+         Path_Free (Current);
       end if;
    end Update;
 

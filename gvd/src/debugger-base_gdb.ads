@@ -26,6 +26,11 @@ package Debugger.Base_Gdb is
 
    type Base_Gdb_Debugger is abstract new Debugger.Debugger_Root with private;
 
+   overriding procedure Set_Register
+     (Debugger : access Base_Gdb_Debugger;
+      Name     : String;
+      Value    : String);
+
    ----------------------
    -- Version handling --
    ----------------------

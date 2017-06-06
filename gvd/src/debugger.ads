@@ -905,6 +905,11 @@ package Debugger is
       Format   : GVD.Types.Registers_Format)
       return GVD.Types.Strings_Vectors.Vector is abstract;
 
+   procedure Set_Register
+     (Debugger : access Debugger_Root;
+      Name     : String;
+      Value    : String) is abstract;
+
    ----------------
    -- Exceptions --
    ----------------
