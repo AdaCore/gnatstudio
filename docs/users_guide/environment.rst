@@ -178,7 +178,7 @@ Files
 
 .. _log_file:
 
-* :file:`$HOME/.gps/log`
+* :file:`$HOME/.gps/log.txt`
 
   .. index:: log file
 
@@ -241,7 +241,7 @@ Files
   :menuselection:`Navigate --> Forward`) menus.
 
 
-* :file:`$HOME/.gps/properties.xml`
+* :file:`$HOME/.gps/properties.db`
 
   Stores file-specific properties across GPS sessions. In particular, it
   contains the encoding to use for files where the default encoding is not
@@ -274,7 +274,7 @@ Files
 
   Default configuration for system traces. These traces are used to analyze
   problems with GPS.  By default, they are sent to the file
-  :file:`$HOME/.gps/log.<pid>`.
+  :file:`$HOME/.gps/log.<pid>.txt`.
 
   This file is created automatically when the :file:`$HOME/.gps/` directory
   is created. If you remove it manually, it is not recreated the next time
@@ -395,20 +395,21 @@ Reporting Suggestions and Bugs
 .. index:: submitting bugs
 
 If you would like to make suggestions about GPS or if you encounter a bug,
-please send it to `mailto:report@gnat.com <mailto:report@gnat.com>`_ if you
-are a supported user and to `mailto:gps-devel@lists.act-europe.fr
-<mailto:gps-devel@lists.act-europe.fr>`_ otherwise.
+please send it to `mailto:report@adacore.com <mailto:report@adacore.com>`_
+or use GNATtracker if you are a supported user and to
+`mailto:gps-devel@lists.act-europe.fr <mailto:gps-devel@lists.act-europe.fr>`_
+otherwise.
 
 Please try to include a detailed description of the problem, including
 sources to reproduce it if needed, and/or a scenario describing the actions
 performed to reproduce the problem as well as lising all the tools (e.g
 *debugger*, *compiler*, *call graph*) involved.
 
-The files :file:`$HOME/.gps/log` may also bring some useful information
+The files :file:`$HOME/.gps/log.txt` may also bring some useful information
 when reporting a bug.
 
 If GPS generates a bug box, the log file is kept under a separate name
-(:file:`$HOME/.gps/log.<pid>` so it does not get erased by further
+(:file:`$HOME/.gps/log.<pid>.txt` so it does not get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
@@ -423,7 +424,7 @@ installing GPS.
 
 *GPS crashes on some GNU/Linux distributions at start up*
 
-  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
+  Look at the :file:`~/.gps/log.<pid>.txt` file and if there is a message that
   looks like:
 
     [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
@@ -445,9 +446,9 @@ installing GPS.
 *GPS crashes whenever I open a source editor*
 
   This is usually due to font problems. Editing the file
-  :file:`$HOME/.gps/preferences` and changing the name of the fonts, e.g
-  replacing *Courier* by *Courier Medium*, and *Helvetica* by *Sans*
-  should solve the problem.
+  :file:`$HOME/.gps/preferences.xml` and changing the name of the fonts, e.g
+  replacing *Courier* by *Courier Medium*, and *Helvetica* by *Sans* should
+  solve the problem.
 
 *GPS refuses to start the debugger*
 
