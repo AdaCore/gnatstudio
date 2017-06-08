@@ -46,6 +46,7 @@ XML = r"""<?xml version="1.0" ?>
   </toolchain>
 
   <toolchain name="powerpc-wrs-vxworks">
+    <debugger>powerpc-wrs-vxworks6-gdb</debugger>
     <cpp_filt>c++filtppc</cpp_filt>
     <compiler lang="c">ccppc</compiler>
     <compiler lang="c++">c++ppc</compiler>
