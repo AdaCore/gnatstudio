@@ -78,6 +78,12 @@ package body GPS.Kernel.Contexts is
    function Has_File_Information (File : Virtual_File) return Boolean;
    --  Idem for file information
 
+   procedure Fetch_Entity_Locations
+     (Context       : Selection_Context;
+      Spec_Location : out Xref.General_Location;
+      Body_Location : out Xref.General_Location);
+   --  Retrive locations of the Data's Entity
+
    package Message_Conversions is
      new System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
@@ -778,7 +784,7 @@ package body GPS.Kernel.Contexts is
       return Xref.Root_Entity'Class
    is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
-      Db : constant General_Xref_Database := Data.Kernel.Databases;
+      Db   : constant General_Xref_Database := Data.Kernel.Databases;
    begin
       --  If we have never attempted to get the actual location of the entity,
       --  do so now.
@@ -810,6 +816,70 @@ package body GPS.Kernel.Contexts is
          return Data.Xref_Entity.Element;
       end if;
    end Get_Entity;
+
+   ----------------------------
+   -- Fetch_Entity_Locations --
+   ----------------------------
+
+   procedure Fetch_Entity_Locations
+     (Context       : Selection_Context;
+      Spec_Location : out Xref.General_Location;
+      Body_Location : out Xref.General_Location)
+   is
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
+      Data   : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+   begin
+      if Entity /= No_Root_Entity then
+         Spec_Location := Get_Declaration (Entity).Loc;
+         Body_Location := Get_Body (Entity);
+      else
+         Spec_Location := No_Location;
+         Body_Location := No_Location;
+      end if;
+
+      Data.Entity_Locations := (True, Spec_Location, Body_Location);
+   end Fetch_Entity_Locations;
+
+   --------------------------
+   -- Get_Entity_Locations --
+   --------------------------
+
+   procedure Get_Entity_Locations
+     (Context       : Selection_Context;
+      Spec_Location : out Xref.General_Location;
+      Body_Location : out Xref.General_Location)
+   is
+      Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+   begin
+      if Data.Entity_Locations.Is_Fetched then
+         Spec_Location := Data.Entity_Locations.Spec_Location;
+         Body_Location := Data.Entity_Locations.Body_Location;
+
+      else
+         Fetch_Entity_Locations (Context, Spec_Location, Body_Location);
+      end if;
+   end Get_Entity_Locations;
+
+   -------------------------------
+   -- Get_Entity_Spec_Locations --
+   -------------------------------
+
+   procedure Get_Entity_Spec_Locations
+     (Context  : Selection_Context;
+      Location : out Xref.General_Location)
+   is
+      Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+   begin
+      if Data.Entity_Locations.Is_Fetched then
+         Location := Data.Entity_Locations.Spec_Location;
+      else
+         declare
+            Body_Location : Xref.General_Location with Unreferenced;
+         begin
+            Fetch_Entity_Locations (Context, Location, Body_Location);
+         end;
+      end if;
+   end Get_Entity_Spec_Locations;
 
    ------------------------
    -- Get_Entity_Type_Of --
@@ -869,6 +939,29 @@ package body GPS.Kernel.Contexts is
    begin
       return Context.Ref.Get.Xref_Closest_Ref.Element;
    end Get_Closest_Ref;
+
+   -----------------------
+   -- Get_File_Language --
+   -----------------------
+
+   function Get_File_Language (Context : Selection_Context) return String is
+      Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+   begin
+      if Data.File_Lang = Null_Unbounded_String
+        and then Has_File_Information (Context)
+      then
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Get_Kernel (Context)).Tree
+                 .Info_Set (File_Information (Context)).First_Element);
+         begin
+            Data.File_Lang := To_Unbounded_String (F_Info.Language);
+         end;
+      end if;
+
+      return To_String (Data.File_Lang);
+   end Get_File_Language;
 
    ------------------------------
    -- Set_Activity_Information --

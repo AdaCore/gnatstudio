@@ -265,7 +265,7 @@ package body Src_Editor_Box is
                         Column => Entity_Column_Information (Context));
             Location := Get_Body (Entity, After => Current);
          else
-            Location := Get_Declaration (Entity).Loc;
+            Get_Entity_Spec_Locations (Context, Location);
          end if;
 
          if Location /= No_Location then
@@ -992,25 +992,102 @@ package body Src_Editor_Box is
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
 
-   --------------
-   -- Has_Body --
-   --------------
+   -----------------------
+   -- Has_Specification --
+   -----------------------
 
-   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
-      Entity : constant Root_Entity'Class := Get_Entity (Context);
-      Location         : General_Location;
+   function Has_Specification
+     (Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Entity        : constant Root_Entity'Class := Get_Entity (Context);
       Spec_Location : General_Location;
+      Body_Location : General_Location;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Integer := 0;
    begin
       if Entity = No_Root_Entity then
          return False;
       end if;
 
-      Spec_Location := Get_Declaration (Entity).Loc;
+      if Has_File_Information (Context)
+        and then Has_Line_Information (Context)
+      then
+         File := File_Information (Context);
+         Line := GPS.Kernel.Contexts.Line_Information (Context);
+         if Ada.Characters.Handling.To_Lower
+           (Get_File_Language (Context)) /= "ada"
+         then
+            return True;
+         end if;
+      end if;
 
-      Location := Get_Body (Entity);
+      Get_Entity_Locations (Context, Spec_Location, Body_Location);
 
-      return Location /= No_Location
-        and then Location /= Spec_Location;
+      if Spec_Location = No_Location then
+         return False;
+      end if;
+
+      if Spec_Location.File = File
+        and then Spec_Location.Line = Line
+      then
+         --  we are on the same line so don't add "goto to ..."
+         return False;
+      end if;
+
+      if Is_Subprogram (Entity) then
+         return Spec_Location.File /= Body_Location.File
+           or else Spec_Location.Line /= Body_Location.Line
+           or else Spec_Location.Column /= Body_Location.Column;
+      else
+         return True;
+      end if;
+   end Has_Specification;
+
+   --------------
+   -- Has_Body --
+   --------------
+
+   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
+      Entity        : constant Root_Entity'Class := Get_Entity (Context);
+      Spec_Location : General_Location;
+      Body_Location : General_Location;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Integer := 0;
+   begin
+      if Entity = No_Root_Entity then
+         return False;
+      end if;
+
+      if Has_File_Information (Context)
+        and then Has_Line_Information (Context)
+      then
+         File := File_Information (Context);
+         Line := GPS.Kernel.Contexts.Line_Information (Context);
+         if Ada.Characters.Handling.To_Lower
+           (Get_File_Language (Context)) /= "ada"
+         then
+            return True;
+         end if;
+      end if;
+
+      Get_Entity_Locations (Context, Spec_Location, Body_Location);
+
+      if Body_Location = No_Location then
+         return False;
+      end if;
+
+      if Body_Location.File = File
+        and then Body_Location.Line = Line
+      then
+         --  we are on the same line so don't add "goto to ..."
+         return False;
+      end if;
+
+      if Is_Subprogram (Entity) then
+         return True;
+      else
+         return Body_Location /= Spec_Location;
+      end if;
    end Has_Body;
 
    ---------------------

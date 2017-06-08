@@ -2783,9 +2783,11 @@ package body Src_Editor_View is
       Event    : Gdk.Event.Gdk_Event := null)
       return GPS.Kernel.Selection_Context
    is
-      V        : constant Source_View := Source_View (View);
-      B        : constant Source_Buffer := Source_Buffer (View.Get_Buffer);
-      Filename : constant GNATCOLL.VFS.Virtual_File := Get_Filename (B);
+      V                          : constant Source_View := Source_View (View);
+      B                          : constant Source_Buffer :=
+        Source_Buffer (View.Get_Buffer);
+      Filename                   : constant GNATCOLL.VFS.Virtual_File :=
+        Get_Filename (B);
       Loc                        : Location_Type := Location;
       Line                       : Gint := 0;
       EL                         : Editable_Line_Type := 0;

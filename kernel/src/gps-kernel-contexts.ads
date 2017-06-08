@@ -92,7 +92,7 @@ package GPS.Kernel.Contexts is
 
    function Has_File_Line_Information
      (Context : Selection_Context) return Boolean;
-   --  Return True if Context has file line information
+   --  Return True if Context has file's line information
 
    function File_Line_Information
      (Context : Selection_Context) return Natural;
@@ -155,6 +155,9 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return String;
    --  Return the tag/branch name associated with the file returned by
    --  File_Information
+
+   function Get_File_Language (Context : Selection_Context) return String;
+   --  Return first file language.
 
    -----------
    -- Areas --
@@ -292,6 +295,17 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean;
    --  Whether the user clicked on a dispatching call. This information is
    --  cached in the context the first time it is computed.
+
+   procedure Get_Entity_Locations
+     (Context       : Selection_Context;
+      Spec_Location : out Xref.General_Location;
+      Body_Location : out Xref.General_Location);
+   --  Return the Entity's locations
+
+   procedure Get_Entity_Spec_Locations
+     (Context  : Selection_Context;
+      Location : out Xref.General_Location);
+   --  Return the Entity specification location
 
    ----------------------
    -- Activity_Context --

@@ -314,6 +314,11 @@ package Src_Editor_Box is
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity_Name close by.
 
+   function Has_Specification
+     (Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether the Entity referenced in context has a specification other than
+   --  at the location described in Context
+
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether the Entity referenced in context has a body other than at the
    --  location described in Context

@@ -2116,7 +2116,8 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel,
          Action => "goto declaration",
-         Label  => -"Goto declaration of %ef");
+         Label  => -"Goto declaration of %ef",
+         Filter  => new Has_Specification_Filter);
 
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu

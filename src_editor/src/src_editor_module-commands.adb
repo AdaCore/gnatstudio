@@ -84,6 +84,19 @@ package body Src_Editor_Module.Commands is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Specification_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_Specification (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is

@@ -834,6 +834,16 @@ private
    overriding function Class_Name (Self : Context_Proxy) return String
       is (Context_Class_Name) with Inline;
 
+   type Entity_Locations_Type (Is_Fetched : Boolean := False) is record
+      case Is_Fetched is
+         when True =>
+            Spec_Location : Xref.General_Location;
+            Body_Location : Xref.General_Location;
+         when False =>
+            null;
+      end case;
+   end record;
+
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
@@ -841,6 +851,7 @@ private
 
       Files             : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
+      File_Lang         : Unbounded_String;
 
       Project           : GNATCOLL.Projects.Project_Type :=
         GNATCOLL.Projects.No_Project;
@@ -870,8 +881,9 @@ private
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
-      Entity_Name   : Unbounded_String;
-      Entity_Column : Basic_Types.Visible_Column_Type := 0;
+      Entity_Name      : Unbounded_String;
+      Entity_Column    : Basic_Types.Visible_Column_Type := 0;
+      Entity_Locations : Entity_Locations_Type;
 
       Expression    : Unbounded_String;
 

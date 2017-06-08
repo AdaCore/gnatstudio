@@ -32,6 +32,12 @@ package Src_Editor_Module.Commands is
    --  True if the event currently processed was in an editor's line numbers
    --  area
 
+   type Has_Specification_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Specification_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  True if the current entity has a specification
+
    type Has_Body_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
