@@ -21,10 +21,17 @@ with System;                 use System;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Main;              use Glib.Main;
+
+with Gdk.Types;              use Gdk.Types;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+
 with Gtk.Box;                use Gtk.Box;
+with Gtk.Clipboard;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Text_View;
+with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
+with Gtk.Text_Iter;          use Gtk.Text_Iter;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
@@ -190,6 +197,13 @@ package body GVD.Consoles is
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
+
+   function Key_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Modifier  : Gdk.Types.Gdk_Modifier_Type;
+      Key       : Gdk.Types.Gdk_Key_Type := 0;
+      Uni       : Glib.Gunichar := 0;
+      User_Data : System.Address) return Boolean;
 
    --------------------------------------
    -- Get_Debugger_Interactive_Console --
@@ -445,6 +459,7 @@ package body GVD.Consoles is
          Wrap_Mode           => Wrap_Char,
          ANSI_Support        => Active (ANSI_Support),
          Empty_Equals_Repeat => True);
+      Self.Console.Set_Key_Handler (Key_Handler'Access, System.Null_Address);
       Self.Pack_Start (Self.Console, Fill => True, Expand => True);
       Set_Font_And_Colors (Get_View (Self.Console), Fixed_Font => True);
 
@@ -568,6 +583,45 @@ package body GVD.Consoles is
       Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean)
      renames Debuggee_Views.Attach_To_View;
+
+   -----------------
+   -- Key_Handler --
+   -----------------
+
+   function Key_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Modifier  : Gdk.Types.Gdk_Modifier_Type;
+      Key       : Gdk.Types.Gdk_Key_Type := 0;
+      Uni       : Glib.Gunichar := 0;
+      User_Data : System.Address) return Boolean
+   is
+      pragma Unreferenced (Uni, User_Data);
+
+      Buffer      : constant Gtk_Text_Buffer := Console.Get_View.Get_Buffer;
+
+      Last_Iter   : Gtk_Text_Iter;
+      Cursor_Iter : Gtk_Text_Iter;
+      Result      : Boolean with Unreferenced;
+
+   begin
+      if (Modifier and Control_Mask) /= 0
+        and then (Key = GDK_K or else Key = GDK_LC_k)
+      then
+         Begin_User_Action (Buffer);
+         Get_Iter_At_Mark (Buffer, Cursor_Iter, Get_Insert (Buffer));
+         Assign (Last_Iter, Cursor_Iter);
+         Forward_To_Line_End (Last_Iter, Result);
+
+         Select_Range (Buffer, Cursor_Iter, Last_Iter);
+         Cut_Clipboard (Buffer, Gtk.Clipboard.Get, True);
+
+         End_User_Action (Buffer);
+
+         return True;
+      else
+         return False;
+      end if;
+   end Key_Handler;
 
    ---------------
    -- On_Attach --
