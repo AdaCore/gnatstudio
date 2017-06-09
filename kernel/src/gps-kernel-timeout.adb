@@ -786,7 +786,7 @@ package body GPS.Kernel.Timeout is
       Self : constant Monitor_Command_Access := Convert (Data);
       Button  : Message_Dialog_Buttons;
    begin
-      if Self.D.Process_Died then
+      if Self.D = null or else Self.D.Process_Died then
          return False;
       end if;
 

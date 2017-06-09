@@ -145,6 +145,13 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
                if not Found_Highlighter then
                   Skip_Blanks (Line, Index);
+
+                  --  Reset Index to the last Line character when no blanks
+                  --  have been found.
+                  if Index > Line'Last then
+                     Index := Line'Last;
+                  end if;
+
                   Looking_At (Lang      => Buffer.Lang,
                               Buffer    => Line,
                               First     => Index,
