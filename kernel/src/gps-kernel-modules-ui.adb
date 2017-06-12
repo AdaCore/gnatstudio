@@ -1082,14 +1082,16 @@ package body GPS.Kernel.Modules.UI is
          return False;
       end Has_Explicit_Parent;
 
-      Full_Name   : GNAT.Strings.String_Access;
-      C           : Contextual_Menu_Access;
-      Item        : Gtk_Menu_Item;
-      Parent_Item : Gtk_Menu_Item;
-      Parent_Menu : Gtk_Menu;
-      List        : Gtk.Widget.Widget_List.Glist;
+      Full_Name    : GNAT.Strings.String_Access;
+      C            : Contextual_Menu_Access;
+      Item         : Gtk_Menu_Item;
+      Parent_Item  : Gtk_Menu_Item;
+      Parent_Menu  : Gtk_Menu;
+      Child        : Gtk_Widget;
+      List         : Gtk.Widget.Widget_List.Glist;
       Is_Sensitive : Boolean;
-
+      Key          : Gdk_Key_Type;
+      Mods         : Gdk_Modifier_Type;
    begin
       Contextual_Menu_Open_Hook.Run (Kernel);
 
@@ -1155,6 +1157,20 @@ package body GPS.Kernel.Modules.UI is
                   Add_Menu (Parent => Menu, Item => Item);
                end if;
 
+               --  Display the key shortcut binded to the action if any
+               if C.Menu_Type = Type_Action and then C.Action /= null then
+                  Get_Shortcut_Simple
+                    (Kernel,
+                     Action => C.Action.all,
+                     Key    => Key,
+                     Mods   => Mods);
+
+                  Child := Item.Get_Child;
+
+                  if Child.all in Gtk_Accel_Label_Record'Class then
+                     Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                  end if;
+               end if;
             end if;
 
             GNAT.OS_Lib.Free (Full_Name);
