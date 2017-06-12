@@ -42,7 +42,6 @@ project to make the newly generated files available.
 import json
 import GPS
 import GPS.Browsers
-import glob
 import gps_utils
 import gpsbrowsers
 import modules
@@ -52,8 +51,7 @@ import os_utils
 import re
 import workflows
 import constructs
-from workflows.promises import Promise, ProcessWrapper, \
-    TargetWrapper, timeout
+from workflows.promises import Promise, TargetWrapper, timeout
 from project_support import Project_Support
 from . import mapping
 from sig_utils import Signal
@@ -112,7 +110,9 @@ class MDL_Language(GPS.Language):
                     it_name, count=1, backward=True)[-1]
                 viewer.constructs.append(
                     (c_name, c_id, sloc_start, sloc_end, type, it_id))
-            viewer.parsing_complete = True
+                viewer.constructs_map[c_id] = (c_name, sloc_start,
+                                               sloc_end, type, it_id)
+            viewer.parsing_done()
             GPS.Hook('semantic_tree_updated').run(file)
             GPS.Console().write("Outline view generated\n")
 
@@ -126,7 +126,6 @@ class MDL_Language(GPS.Language):
             :return: (item, sloc_start, sloc_end, constructs_CAT)
             """
             offset = 0
-            subsystem_list = []
             item, children = viewer.diags.index[0]
             item_stack = [(item, item, children, 0)]
             item, item_id, children, start_offset = item_stack[-1]
@@ -144,7 +143,7 @@ class MDL_Language(GPS.Language):
                         if child_entry_name == child_id:
                             offset = offset + 1
                             item_stack.append((child_name, child_id,
-                                               child_children, offset))
+                                               list(child_children), offset))
                             break
                     children.remove(child)
                     # If the subsystem has no child, add the construct as a
@@ -158,6 +157,7 @@ class MDL_Language(GPS.Language):
                         break
 
                 item, item_id, children, start_offset = item_stack[-1]
+
                 # If all the children of that subsystem have been processed add
                 # the containing subsystem construct
                 while not children:
@@ -171,7 +171,7 @@ class MDL_Language(GPS.Language):
                     else:
                         break
 
-        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file)
 
         if viewer and not viewer.parsing_complete \
            and viewer.diags and not viewer.constructs:
@@ -181,25 +181,27 @@ class MDL_Language(GPS.Language):
             return False
 
     # @overriding
+    def get_last_selected_construct_id(self, file):
+        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file)
+        return viewer.selected_construct_id()
+
+    # @overriding
     def clicked_on_construct(self, construct):
         def __on_loaded(view):
-            construct_id = re.split(
-                MDL_Language.const_split, construct.id, 1)[1]
+            _, _, sloc, _, construct_id = view.constructs_map[construct.id]
             diag = view.diags.get(construct_id)
             # If the construct was a diagram, open it
             # otherwise highlight the item
             if diag.id == construct_id:
                 try:
-                    sloc = int(construct.id.split(
-                        MDL_Language.const_id, 1)[-1].split('#', 1)[0])
-                    view.update_nav_status((view.diagram.id, -1))
-                    view.update_nav_status((construct_id, sloc))
+                    sloc = sloc[-1]
+                    view.update_nav_status(construct.id)
                 except ValueError:
                     logger.log(
                         "Malformed construct id : %s, not added to history\n" %
                         construct.id)
                 finally:
-                    view.set_diagram(diag, update_prev=False)
+                    view.set_diagram(diag)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
                     view.diags, construct_id)
@@ -207,7 +209,7 @@ class MDL_Language(GPS.Language):
                     diagram, item = info
                     view.diags.clear_selection()
                     diagram.select(item)
-                    view.set_diagram(diagram, update_prev=False)
+                    view.set_diagram(diagram)
                     view.scroll_into_view(item)
 
         QGEN_Diagram_Viewer.get_or_create(
@@ -498,7 +500,7 @@ class CLI(GPS.Process):
             diag_name = viewer.get_prev_diag()
             if diag_name is not None:
                 new_diag = viewer.diags.get(diag_name)
-                viewer.set_diagram(new_diag, update_prev=False)
+                viewer.set_diagram(new_diag)
 
     @staticmethod
     def action_goto_parent_subsystem():
@@ -513,7 +515,7 @@ class CLI(GPS.Process):
             diag_name = viewer.get_parent_diag()
             if diag_name is not None:
                 new_diag = viewer.diags.get(diag_name)
-                viewer.set_diagram(new_diag, update_prev=False)
+                viewer.set_diagram(new_diag)
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
@@ -538,16 +540,17 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # The set of callbacks to call when a new diagram is displayed
         super(QGEN_Diagram_Viewer, self).__init__()
         self.constructs = []
+
+        # construct_id => (c_name, sloc_start, sloc_end, type, it_id)
+        # it_id is a diagram name, c_name is the instance name for the diagram
+        self.constructs_map = {}
         self.parsing_complete = False
 
-        # A construct or None list, used for parent browsing
         self.root_diag_id = ""
+        self.last_dblclicked = ""
+        # A construct or None list, used for parent browsing
         self.nav_status = []
         self.nav_index = -1
-        # The associated .mdl file
-        file = None
-        # The list of diagrams read from this file a JSON_Diagram_File instance
-        diags = None
 
     @staticmethod
     def retrieve_qgen_viewers():
@@ -626,7 +629,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
                     root_diag = v.diags.get()
-                    v.set_diagram(root_diag, update_prev=False)
+                    v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
                 if on_loaded:
                     on_loaded(v)
@@ -659,61 +662,109 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diagram = v.diags.get()
         return v
 
-    def update_nav_status(self, construct=""):
+    def update_nav_status(self, construct_id):
+        """
+        Insert the current construct selected in this viewer history.
+        :param str construct_id: A construct id to add to the history.
+        """
+        if construct_id != "":
+            self.nav_index += 1
+            self.nav_status.insert(self.nav_index, construct_id)
+
+    def parsing_done(self):
+        """
+        Called when constructs have been parsed, stores the root construct
+        in the history.
+        """
+        self.parsing_complete = True
         self.nav_index += 1
-        self.nav_status.insert(self.nav_index, construct)
+        self.nav_status.insert(0, self.constructs[-1][1])
+
+    def selected_construct_id(self):
+        """
+        :return str: The last construct selected.
+        """
+        if self.nav_index >= 0:
+            return self.nav_status[self.nav_index]
+        return ""
 
     def get_prev_diag(self):
-
-        if self.nav_index < 0:
+        """
+        Select the previous diagram in the outline and returns its id.
+        :return str: The previous diagram id.
+        """
+        if self.nav_index <= 0:
             return None
 
-        diag_name, sloc = self.nav_status[self.nav_index]
         self.nav_index -= 1
-        if sloc == -1:
-            return diag_name
-        elif self.nav_index >= 0:
-            diag_name, sloc = self.nav_status[self.nav_index]
-            if sloc == -1:
-                self.nav_index -= 1
-            return diag_name
-        return None
+        construct = self.nav_status[self.nav_index]
+        GPS.OutlineView.select_construct(construct)
+        return self.constructs_map[construct][-1]
+
+    def get_construct_for_dblclick(self):
+        """
+        Returns the construct corresponding to the last dlbcliked diagram.
+        :return string: The construct id for the dblclicked item.
+        """
+        if self.nav_index >= 0:
+            current_construct = self.constructs_map[
+                self.nav_status[self.nav_index]]
+            start_sloc = current_construct[1][-1]
+            last_child_sloc = start_sloc
+            item_len = len(self.last_dblclicked)
+            idx = item_len
+            res = ""
+
+            for d_name, cons_id, sloc_start, sloc_end, _, _ in self.constructs:
+                if sloc_start[-1] == last_child_sloc + 1:
+                    last_child_sloc = sloc_end[-1]
+                    if self.last_dblclicked.endswith(d_name):
+                        n_idx = item_len - len(d_name)
+                        if n_idx < idx and self.last_dblclicked[
+                                n_idx - 1] == '/':
+                            res = cons_id
+                            idx = n_idx
+            return res
 
     def get_parent_diag(self, update_history=True):
+        """
+        Returns the parent diagram of the current diagram and updates
+        the selected constructs and history if necessary.
+        :param boolean update_history: Whether the history should be modified
+        when returning the parent diagram.
+        """
         if self.nav_index >= 0:
-            diag_name, sloc = self.nav_status[self.nav_index]
+            construct_id = self.nav_status[self.nav_index]
+            _, _, sloc, _, diag_name = self.constructs_map[construct_id]
             parent = diag_name
-            if sloc != -1:
-                # The block was visited by clicking on a construct
-                # and is library block that can be referenced multiple
-                # times, find out the parent by browsing the construct_list
+            sloc = sloc[-1]
+            # The block was visited by clicking on a construct
+            # and is library block that can be referenced multiple
+            # times, find out the parent by browsing the construct_list
 
-                # Find the construct with sloc_start < sloc
-                # and sloc_end > sloc with sloc_start - sloc smallest
-                # which correspond to the encapsulating construct
-                current_sloc = -1
-                for _, _, sloc_start, sloc_end, _, c_id in self.constructs:
-                    if sloc_start[-1] < sloc and \
-                       sloc_start[-1] - sloc > current_sloc - sloc and \
-                       sloc_end[-1] > sloc:
-                        sstart = sloc_start[-1]
-                        current_sloc = sloc_start[-1]
-                        parent = c_id
+            # Find the construct with sloc_start < sloc
+            # and sloc_end > sloc with sloc_start - sloc smallest
+            # which correspond to the encapsulating construct
+            current_sloc = -1
+            for _, cons_id, sloc_start, sloc_end, _, it_id in self.constructs:
+                if sloc_start[-1] < sloc and \
+                   sloc_start[-1] - sloc > current_sloc - sloc and \
+                   sloc_end[-1] > sloc:
+                    current_sloc = sloc_start[-1]
+                    parent = it_id
+                    parent_cons = cons_id
+
+            if parent != diag_name:
                 if update_history:
+                    GPS.OutlineView.select_construct(parent_cons)
                     self.nav_index += 1
-                    self.nav_status.insert(self.nav_index, (parent, sstart))
-            elif self.nav_index >= 0 and update_history:
-                self.nav_index += 1
-                self.nav_status.insert(self.nav_index, (self.diagram.id, -1))
-            return parent
-        return None
+                    self.nav_status.insert(self.nav_index, parent_cons)
+                return parent
+            return None
 
     def save_desktop(self, child):
         """Save the contents of the viewer in the desktop"""
-        info = {
-            'file': self.file.path,
-            'scale': self.scale,
-            'topleft': self.topleft}
+        info = {'file': self.file.path}
         return (module.name(), json.dumps(info))
 
     def perform_action(self, action, item):
@@ -743,9 +794,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 return
 
         if name == 'showdiagram':
-            self.set_diagram(self.diags.get(args[0]))
+            self.set_diagram(self.diags.get(args[0]), is_dblclick=True)
 
-    def set_diagram(self, diag, update_prev=True):
+    def set_diagram(self, diag, is_dblclick=False):
         """
         Sets the diagram that has to be displayed and calls
         the callbacks that have to be executed when the diagram changes
@@ -756,8 +807,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         QGEN_Module.cancel_workflows()
         if diag and diag != self.diagram:
-            if update_prev:
-                self.update_nav_status((self.diagram.id, -1))
+            if is_dblclick:
+                c_id = self.get_construct_for_dblclick()
+                GPS.OutlineView.select_construct(c_id)
+                self.update_nav_status(c_id)
             self.diagram = diag
             self.scale_to_fit(2)
 
@@ -769,6 +822,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         Called when the user double clicks on an item.
         """
         action = topitem.data.get('dblclick')
+        self.last_dblclicked = item.id
         if action:
             self.perform_action(action, topitem)
 
@@ -1134,7 +1188,6 @@ else:
             """
             Stop logging all signal values in the given diagrams
             """
-            ctxt = GPS.current_context()
             debug = GPS.Debugger.get()
 
             for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
@@ -1287,7 +1340,7 @@ else:
             """
             if file.language() == 'simulink':
                 logger.log('Open %s' % file)
-                viewer = QGEN_Diagram_Viewer.get_or_create(file)
+                QGEN_Diagram_Viewer.get_or_create(file)
                 return True
             return False
 
@@ -1300,8 +1353,6 @@ else:
             else:
                 viewer = QGEN_Diagram_Viewer.open_json(
                     f, open(f.path).read())
-            viewer.scale = info['scale']
-            viewer.topleft = info['topleft']
             GPS.Hook('file_edited').run(f)
 
             return GPS.MDI.get_by_child(viewer)
@@ -1313,7 +1364,7 @@ else:
             debugger must have been started too.
             """
             try:
-                d = GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()   # or raise exception
                 return self.__contextual_filter_sources(context)
             except:
                 return False
@@ -1324,7 +1375,7 @@ else:
             symbols. The debugger must have been started too.
             """
             try:
-                d = GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
                 return len(self.modeling_map.get_symbols(blockid=it.id)) != 0
             except:
@@ -1332,7 +1383,7 @@ else:
 
         def __contextual_filter_debug_and_watchpoint(self, context):
             try:
-                d = GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
@@ -1347,7 +1398,7 @@ else:
             """
 
             try:
-                d = GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
@@ -1361,7 +1412,7 @@ else:
             """
 
             try:
-                d = GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()   # or raise exception
                 return True
             except:
                 return False
@@ -1534,7 +1585,6 @@ else:
             if ranges:
                 debug = GPS.Debugger.get()
                 for file, rg in ranges:
-                    filename = file
                     line = rg[0]
                     debug.unbreak_at_location(file, line=line)
 
