@@ -701,6 +701,36 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         GPS.OutlineView.select_construct(construct)
         return self.constructs_map[construct][-1]
 
+    def get_construct_from_list(self, l, sloc_range=(0, None)):
+        """
+        Given a list of diagram ids representing a path in the model, found
+        the related construct.
+        :param str list l: A list of diagram ids.
+        :param sloc_range: The range of constructs location to consider.
+        :return str: The construct id or "" if not found.
+        """
+        if not l:
+            return ""
+
+        start_sloc = sloc_range[0]
+        end_sloc = sloc_range[1]
+        last_child_sloc = start_sloc
+        name = l.pop()
+
+        for _, cons_id, sloc_start, sloc_end, _, d_id in self.constructs:
+            if sloc_start[-1] > start_sloc and (
+                    end_sloc is None or sloc_end[-1] < end_sloc):
+                if sloc_start[-1] == last_child_sloc + 1:
+                    last_child_sloc = sloc_end[-1]
+                    if name == d_id:
+                        if not l:
+                            return cons_id
+                        else:
+                            return self.get_construct_from_list(
+                                l, (sloc_start[-1], sloc_end[-1]))
+
+        return ""
+
     def get_construct_for_dblclick(self):
         """
         Returns the construct corresponding to the last dlbcliked diagram.
@@ -1082,8 +1112,6 @@ else:
             the diagram for a new debugger instance
             """
 
-            assert(isinstance(viewer.diags, gpsbrowsers.JSON_Diagram_File))
-
             try:
                 debugger = GPS.Debugger.get()
             except:
@@ -1255,6 +1283,40 @@ else:
                     debugger, force=True)
 
         @staticmethod
+        def __update_current_construct(debugger, diagram, viewer):
+            """
+            Goes through the frame list of the debugger
+            and adds the construct corresponding to the
+            current code line in the history.
+            It will be highlighted automatically by set_diagram.
+            """
+            if debugger is None:
+                return
+            raw_frames = [s.strip() for s in debugger.send(
+                "bt", output=False).splitlines()]
+            frame_infos = []
+
+            for s in raw_frames:
+                fsplit = s.split()
+                # bt format is '#0 ... filepath/basename:line
+                info = os.path.basename(fsplit[-1]).rsplit(':', 1)
+                fname = info[0]
+                line = info[1]
+                f = GPS.File(fname)
+                block = QGEN_Module.modeling_map.get_block(
+                    f, int(line))
+                if block:
+                    diag = QGEN_Module.modeling_map.get_diagram_for_item(
+                        viewer.diags, block)[0]
+                    if diag.id not in frame_infos:
+                        frame_infos.append(diag.id)
+                else:
+                    break
+            cons_id = viewer.get_construct_from_list(frame_infos)
+            if cons_id != "":
+                viewer.update_nav_status(cons_id)
+
+        @staticmethod
         def __show_diagram_and_signal_values(
                 debugger, force=False):
             """
@@ -1300,6 +1362,8 @@ else:
                                     # to reset the processed styles
                                     diagram.reset_priority = True
                                 diagram.current_priority = item_prio
+                        QGEN_Module.__update_current_construct(
+                            debugger, diagram, viewer)
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
 
                 if scroll_to:
@@ -1350,6 +1414,7 @@ else:
             f = GPS.File(info['file'])
             if f.path.endswith('.mdl') or f.path.endswith('.slx'):
                 viewer = QGEN_Diagram_Viewer.get_or_create(f)
+                MDL_Language().should_refresh_constructs(f)
             else:
                 viewer = QGEN_Diagram_Viewer.open_json(
                     f, open(f.path).read())
