@@ -438,11 +438,22 @@ available, apart of course for the spec files and the bodies of generic packages
        name="library_interface"
        editor_page="Library/Standalone"
        editor_section="Standalone library"
-       label="Interface"
+       label="Library Interface"
        hide_in="wizard"
        description="This attribute is optional. If it is defined, it should contain the list of units that are the public interface to the library. All other units will not be accessible by users of the library. If this attribute is defined, the library will be a standalone library."
        list="true">
        <string type="unit" />
+   </project_attribute>
+
+   <project_attribute
+       name="interfaces"
+       editor_page="Library/Standalone"
+       editor_section="Standalone library"
+       label="Interfaces"
+       hide_in="wizard"
+       description="This attribute defines an explicit subset of the source files of a project. Sources from projects importing this project, can only depend on sources from this subset. This attribute can be used on non library projects. It can also be used as a replacement for attribute Library_Interface, in which case, units have to be replaced by source files. For multi-language library projects, it is the only way to make the project a Stand-Alone Library project whose interface is not purely Ada."
+       list="true">
+       <string type="file" filter="all_projects" default=""/>
    </project_attribute>
 
    <project_attribute
