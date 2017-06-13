@@ -2676,10 +2676,6 @@ package body Vsearch is
       Set : File_Info_Set;
       Idx : Integer;
    begin
-      if View = null then
-         return;
-      end if;
-
       Free (Vsearch_Module_Id.Projects);
 
       if Has_Project_Information (Context) then
@@ -2703,6 +2699,10 @@ package body Vsearch is
                Idx := Idx + 1;
             end loop;
          end if;
+      end if;
+
+      if View = null then
+         return;
       end if;
 
       Refresh_Context_Combo (View);
