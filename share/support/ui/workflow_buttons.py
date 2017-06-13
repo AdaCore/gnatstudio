@@ -1,8 +1,6 @@
 import GPS
-from modules import Module
 import workflows.promises as promises
 import workflows
-from gps_utils import hook
 
 
 class WorkflowButtons(object):
@@ -60,6 +58,8 @@ class WorkflowButtons(object):
         the workflows or not.
         """
 
+        GPS.Hook('compilation_finished').add(
+            WorkflowButtons.__on_compilation_finished)
         GPS.Hook('file_changed_on_disk').add(
             WorkflowButtons.__on_file_changed)
         GPS.Hook('buffer_edited').add(
@@ -76,6 +76,18 @@ class WorkflowButtons(object):
             WorkflowButtons.__on_file_changed)
         GPS.Hook('buffer_edited').remove(
             WorkflowButtons.__on_file_changed)
+
+    @staticmethod
+    def __on_compilation_finished(hook, category, target_name,
+                                  mode_name, status):
+        """
+        Called each time a Build Target is computed.
+
+        Skip the building phase of the workflow buttons when the 'Build All'
+        or the 'Build Main' targets have been computed with success.
+        """
+        if target_name == "Build All" and status == 0:
+            WorkflowButtons.__needs_build = False
 
     @staticmethod
     def __on_file_changed(hook, file):
@@ -138,7 +150,7 @@ class WorkflowButtons(object):
 
         # Spawn the debugger on the executable
         exe = GPS.File(main_name).executable_path
-        debugger_promise = promises.DebuggerWrapper(exe)
+        promises.DebuggerWrapper(exe)
 
     @staticmethod
     def __build_and_run_wf(main_name):
