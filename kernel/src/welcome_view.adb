@@ -155,7 +155,7 @@ package body Welcome_View is
                 & " debugging, system integration, and maintenance."));
       Get_Style_Context (Desc_Label).Add_Class ("gps-welcome-view-desc");
       Desc_Label.Set_Line_Wrap (True);
-      Main_View.Append (Desc_Label, Expand => False);
+      Main_View.Append (Desc_Label, Expand => False, Add_Separator => False);
 
       Gtk_New_Vbox (Help_Vbox, Homogeneous => False);
       Help_Vbox.Set_Halign (Align_Center);
