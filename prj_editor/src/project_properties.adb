@@ -3708,6 +3708,7 @@ package body Project_Properties is
       else
          declare
             Group_Widget : Dialog_Group_Widget;
+            Doc_Label    : Gtk_Label;
          begin
             Group_Widget := new Dialog_Group_Widget_Record;
             Initialize
@@ -3716,6 +3717,15 @@ package body Project_Properties is
                Group_Name          => Editable_Attr.Get_Label,
                Allow_Multi_Columns => False);
 
+            Gtk_New (Doc_Label, Editable_Attr.Get_Description);
+            Apply_Doc_Style (Doc_Label);
+            Group_Widget.Append_Child (Doc_Label, Expand => False);
+
+            Group_Widget := new Dialog_Group_Widget_Record;
+            Initialize
+              (Group_Widget,
+               Parent_View         => Page,
+               Allow_Multi_Columns => False);
             Group_Widget.Append_Child
               (Widget    => Editable_Attr.Editor,
                Expand    => True,

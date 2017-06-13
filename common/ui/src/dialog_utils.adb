@@ -523,6 +523,9 @@ package body Dialog_Utils is
    is
    begin
       Get_Style_Context (Label).Add_Class ("dialog-views-doc-labels");
+      Label.Set_Line_Wrap (True);
+      Label.Set_Alignment (0.0, 0.5);
+      Label.Set_Justify (Justify_Fill);
    end Apply_Doc_Style;
 
 end Dialog_Utils;
