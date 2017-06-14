@@ -2,10 +2,9 @@ import GPS
 from . import core
 import os
 import re
+import workflows
 from workflows.promises import ProcessWrapper, join, Promise
 import datetime
-import types
-import gps_utils
 
 
 CAT_BRANCHES = 'BRANCHES'
@@ -19,6 +18,9 @@ CAN_RENAME = True
 
 LOCAL_CHANGES_ID = 'localchanges'
 # A dummy id to represent local changes in the History view
+
+_version = None
+# Git version
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
@@ -34,6 +36,7 @@ class Git(core.VCS):
 
         self._non_default_files = None
         # Files with a non-default status
+        self.__set_git_version()
 
     def _git(self, args, block_exit=False, **kwargs):
         """
@@ -99,8 +102,22 @@ class Git(core.VCS):
                             os.path.join(self.working_dir.path, line[3:])),
                         status)
 
-        p = self._git(['status', '--porcelain', '--ignored'])
+        if _version < [1, 7, 2]:
+            ignored = []
+        else:
+            ignored = ['--ignored']
+
+        p = self._git(['status', '--porcelain'] + ignored)
         yield p.lines.subscribe(on_line)   # wait until p terminates
+
+    @workflows.run_as_workflow
+    def __set_git_version(self):
+        global _version
+        if not _version:
+            p = self._git(['--version'])
+            status, output = yield p.wait_until_terminate()
+            version = output.split(' ')[-1]
+            _version = [int(x) for x in version.split('.')]
 
     def async_fetch_status_for_files(self, files):
         self.async_fetch_status_for_all_files(
