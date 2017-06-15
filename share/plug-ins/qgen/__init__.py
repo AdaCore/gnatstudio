@@ -171,7 +171,8 @@ class MDL_Language(GPS.Language):
                     else:
                         break
 
-        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file)
+        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file,
+                                                           raise_win=False)
 
         if viewer and not viewer.parsing_complete \
            and viewer.diags and not viewer.constructs:
@@ -182,7 +183,8 @@ class MDL_Language(GPS.Language):
 
     # @overriding
     def get_last_selected_construct_id(self, file):
-        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file)
+        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file,
+                                                           raise_win=False)
         return viewer.selected_construct_id()
 
     # @overriding
@@ -576,7 +578,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             return None
 
     @staticmethod
-    def get_or_create_view(file):
+    def get_or_create_view(file, raise_win=True):
         """
         Get an existing viewer for file, or create a new empty view.
         :return: (view, newly_created)
@@ -585,7 +587,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             if hasattr(win, '_gmc_viewer'):
                 v = win._gmc_viewer
                 if v.file == file:
-                    win.raise_window()
+                    if raise_win:
+                        win.raise_window()
                     return (v, False)
 
         v = QGEN_Diagram_Viewer()
