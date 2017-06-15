@@ -1405,9 +1405,12 @@ else:
             Return item or its closest parent with corresponding source
             lines
             """
-            while (item and
-                   (not item.id or not self.block_source_ranges(item.id))):
-                item = item.parent
+            while item is not None:
+                if not hasattr(
+                        item, 'id') or not self.block_source_ranges(item.id):
+                    item = item.parent
+                else:
+                    break
             return item
 
         @staticmethod
