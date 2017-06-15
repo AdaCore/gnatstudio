@@ -18,12 +18,9 @@ See also emacs.xml
 ############################################################################
 
 import GPS
-import string
-import traceback
-import navigation_utils
-import gi
 from gi.repository import Gtk
-from gps_utils import *
+from gps_utils import interactive, filter_text_actions, with_save_excursion, \
+    in_ada_file, get_focused_widget, make_interactive, hook
 
 
 should_extend_selection = False
@@ -175,7 +172,7 @@ def delete_until_char(char, buffer=None):
 
 
 @interactive("Editor", name="zap to char")
-class Zap_To_Char(CommandWindow):
+class Zap_To_Char(GPS.CommandWindow):
 
     """
     Deletes all characters from the cursor position up to and including the
@@ -183,7 +180,7 @@ class Zap_To_Char(CommandWindow):
     """
 
     def __init__(self):
-        CommandWindow.__init__(
+        GPS.CommandWindow.__init__(
             self,
             prompt="Zap to char:",
             on_changed=self.on_changed)
@@ -251,7 +248,7 @@ def select_enclosing_block():
     a row to select parent subprograms.
     """
     b = GPS.EditorBuffer.get()
-    sel_start, sel_end = b.selection_start(), b.selection_end()
+    sel_start = b.selection_start()
 
     # the first line is already selected? There isn't an "enclosing"
     # subprogram, so let's select everything.
@@ -318,7 +315,7 @@ def get_selection_or_line(buffer, location):
     the tuple
     """
 
-    if isinstance(location, FileLocation):
+    if isinstance(location, GPS.FileLocation):
         location = buffer.at(location.line(), location.column())
 
     buffer = location.buffer()
@@ -799,7 +796,6 @@ def python_forward_indent(e, cursor):
     if spaces_len > 0 and spaces_len >= cursor.column()-1:
 
         # remove 4 blanks if possible
-        d = indent if spaces_len > 4 else spaces_len
         e.delete(e.at(cursor.line(), 1), e.at(cursor.line(), indent))
 
         # adjust cursor position
@@ -1250,98 +1246,113 @@ class LineIterator:
 # selection is first cancelled by gtk+ when the cursor is moved, and we
 # then reselect it, there is some flickering
 
-try:
-    from gi.repository import Gtk, GObject, Gdk
-    has_pygtk = 1
+HOME = 65360
+LEFT = 65361
+UP = 65362
+RIGHT = 65363
+DOWN = 65364
+PAGE_UP = 65365
+PAGE_DOWN = 65366
+END = 65367
 
-    HOME = 65360
-    LEFT = 65361
-    UP = 65362
-    RIGHT = 65363
-    DOWN = 65364
-    PAGE_UP = 65365
-    PAGE_DOWN = 65366
-    END = 65367
+KP_HOME = 65429
+KP_LEFT = 65430
+KP_UP = 65431
+KP_RIGHT = 65432
+KP_DOWN = 65433
+KP_PAGE_UP = 65434
+KP_PAGE_DOWN = 65435
+KP_END = 65436
 
-    KP_HOME = 65429
-    KP_LEFT = 65430
-    KP_UP = 65431
-    KP_RIGHT = 65432
-    KP_DOWN = 65433
-    KP_PAGE_UP = 65434
-    KP_PAGE_DOWN = 65435
-    KP_END = 65436
 
-    def override_key_bindings(select):
-        """Override the default TextView keybinding to either always force
-           the extension the selection, or not"""
+def override_key_bindings(select):
+    """Override the default TextView keybinding to either always force
+       the extension the selection, or not"""
 
-        global should_extend_selection
+    global should_extend_selection
 
-        t = Gtk.TextView()   # make sure the BindingSet was created
-        bind = Gtk.binding_set_find("GtkTextView")
+    Gtk.TextView()   # make sure the BindingSet was created
+    bind = Gtk.binding_set_find("GtkTextView")
 
-        def override(key, mvt, step):
-            # pygobject does not have a binding to
-            # gtk_binding_entry_add_signal, which would be more convenient and
-            # efficient than going through a string.
-            # Gtk.binding_entry_remove(bind, key, modifier)
-            subst = (key, mvt, step, 1 if select else 0)
-            Gtk.binding_entry_add_signal_from_string(
-                bind, 'bind "%s" {"move_cursor" (%s,%s,%s)}' % subst)
+    def override(key, mvt, step):
+        # pygobject does not have a binding to
+        # gtk_binding_entry_add_signal, which would be more convenient and
+        # efficient than going through a string.
+        # Gtk.binding_entry_remove(bind, key, modifier)
+        subst = (key, mvt, step, 1 if select else 0)
+        Gtk.binding_entry_add_signal_from_string(
+            bind, 'bind "%s" {"move_cursor" (%s,%s,%s)}' % subst)
 
-        should_extend_selection = select
+    should_extend_selection = select
 
-        override("Right",    "visual-positions", 1)
-        override("KP_Right", "visual-positions", 1)
-        override("Left",     "visual-positions", -1)
-        override("KP_Left",  "visual-positions", -1)
+    override("Right",    "visual-positions", 1)
+    override("KP_Right", "visual-positions", 1)
+    override("Left",     "visual-positions", -1)
+    override("KP_Left",  "visual-positions", -1)
 
-        override("<ctrl>Right", "words", 1)
-        override("<ctrl>KP_Right", "words", 1)
-        override("<ctrl>Left", "words", -1)
-        override("<ctrl>KP_Left", "words", -1)
+    override("<ctrl>Right", "words", 1)
+    override("<ctrl>KP_Right", "words", 1)
+    override("<ctrl>Left", "words", -1)
+    override("<ctrl>KP_Left", "words", -1)
 
-        override("Up", "display-lines", -1)
-        override("KP_Up", "display-lines", -1)
-        override("Down", "display-lines", 1)
-        override("KP_Down", "display-lines", 1)
+    override("Up", "display-lines", -1)
+    override("KP_Up", "display-lines", -1)
+    override("Down", "display-lines", 1)
+    override("KP_Down", "display-lines", 1)
 
-        override("<ctrl>Up", "paragraph", -1)
-        override("<ctrl>KP_Up", "paragraph", -1)
-        override("<ctrl>Down", "paragraph", 1)
-        override("<ctrl>KP_Down", "paragraph", 1)
+    override("<ctrl>Up", "paragraph", -1)
+    override("<ctrl>KP_Up", "paragraph", -1)
+    override("<ctrl>Down", "paragraph", 1)
+    override("<ctrl>KP_Down", "paragraph", 1)
 
-        override("Home", "display-line-ends", -1)
-        override("KP_Home", "display-line-ends", -1)
-        override("End", "display-line-ends", 1)
-        override("KP_End", "display-line-ends", 1)
+    override("Home", "display-line-ends", -1)
+    override("KP_Home", "display-line-ends", -1)
+    override("End", "display-line-ends", 1)
+    override("KP_End", "display-line-ends", 1)
 
-        override("<ctrl>Home", "buffer-ends", -1)
-        override("<ctrl>KP_Home", "buffer-ends", -1)
-        override("<ctrl>End", "buffer-ends", 1)
-        override("<ctrl>KP_End", "buffer-ends", 1)
+    override("<ctrl>Home", "buffer-ends", -1)
+    override("<ctrl>KP_Home", "buffer-ends", -1)
+    override("<ctrl>End", "buffer-ends", 1)
+    override("<ctrl>KP_End", "buffer-ends", 1)
 
-        override("Page_Up", "pages", -1)
-        override("KP_Page_Up", "pages", -1)
-        override("Page_Down", "pages", 1)
-        override("KP_Page_Down", "pages", 1)
+    override("Page_Up", "pages", -1)
+    override("KP_Page_Up", "pages", -1)
+    override("Page_Down", "pages", 1)
+    override("KP_Page_Down", "pages", 1)
 
-        override("<ctrl>Page_Up", "horizontal-pages", -1)
-        override("<ctrl>KP_Page_Up", "horizontal-pages", -1)
-        override("<ctrl>Page_Down", "horizontal-pages", 1)
-        override("<ctrl>KP_Page_Down", "horizontal-pages", 1)
+    override("<ctrl>Page_Up", "horizontal-pages", -1)
+    override("<ctrl>KP_Page_Up", "horizontal-pages", -1)
+    override("<ctrl>Page_Down", "horizontal-pages", 1)
+    override("<ctrl>KP_Page_Down", "horizontal-pages", 1)
 
-except ImportError:
-    has_pygtk = 0
 
-    def on_location_changed(hook, file, line, column):
-        try:
-            buffer = GPS.EditorBuffer.get(file)
-            mark = buffer.get_mark("emacs_selection_bound")
-            buffer.select(mark.location(), buffer.current_view().cursor())
-        except:
-            pass  # no such mark
+prev_char = ''  # To pre-fill the dialog with the last char
+
+
+@interactive("Editor", "Source editor", name="insert extended character")
+def insert_extended_character(location=None):
+    """
+    Present a dialog asking for a character codepeoint (in decimal), and
+    insert the character at the cursor location in the current editor.
+    """
+    global prev_char
+    if location:
+        buffer = location.buffer()
+    else:
+        buffer = GPS.EditorBuffer.get()
+        location = buffer.current_view().cursor()
+
+    r = GPS.MDI.input_dialog("Insert Extended Character",
+                             "Character code={}".format(prev_char))
+
+    try:
+        prev_char = r[0]
+        num = int(r[0].strip())
+    except:
+        GPS.Console().write("Please enter a decimal number")
+        return
+
+    buffer.insert(location, unichr(num))
 
 
 @interactive("Editor", "Source editor", name="set mark command")
@@ -1358,12 +1369,8 @@ def set_mark_command(location=None):
 
     location.buffer().extend_existing_selection = True
 
-    if has_pygtk:
-        location.create_mark("selection_bound")
-        override_key_bindings(select=True)
-    else:
-        location.create_mark("emacs_selection_bound")
-        GPS.Hook("location_changed").add(on_location_changed)
+    location.create_mark("selection_bound")
+    override_key_bindings(select=True)
 
 
 @interactive("Editor", "Source editor", name="Cancel mark command")
@@ -1379,11 +1386,7 @@ def cancel_mark_command(buffer=None):
 
     try:
         buffer.unselect()
-        if has_pygtk:
-            override_key_bindings(select=False)
-        else:
-            buffer.get_mark("emacs_selection_bound").delete()
-            GPS.Hook("location_changed").remove(on_location_changed)
+        override_key_bindings(select=False)
     except:
         pass  # No such mark
 
