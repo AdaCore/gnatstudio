@@ -859,8 +859,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         Called when the user double clicks on an item.
         """
         action = topitem.data.get('dblclick')
-        self.last_dblclicked = item.id
         if action:
+            self.last_dblclicked = item.id
             self.perform_action(action, topitem)
 
     # @overriding
