@@ -687,6 +687,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         :return str: The last construct selected.
         """
+        logger.log("Last construct index is %d from %s\n" % (
+            self.nav_index, str(self.nav_status)))
         if self.nav_index >= 0:
             return self.nav_status[self.nav_index]
         return ""
@@ -704,10 +706,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         GPS.OutlineView.select_construct(construct)
         return self.constructs_map[construct][-1]
 
-    def get_construct_from_list(self, l, sloc_range=(0, None)):
+    def get_construct_from_list(self, l, sloc_range=(0, None), res=""):
         """
-        Given a list of diagram ids representing a path in the model, found
-        the related construct.
+        Given a list of diagram ids representing a path in the model, find
+        the closest related construct.
         :param str list l: A list of diagram ids.
         :param sloc_range: The range of constructs location to consider.
         :return str: The construct id or "" if not found.
@@ -730,15 +732,17 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                             return cons_id
                         else:
                             return self.get_construct_from_list(
-                                l, (sloc_start[-1], sloc_end[-1]))
+                                l, (sloc_start[-1], sloc_end[-1]), cons_id)
 
-        return ""
+        return res
 
     def get_construct_for_dblclick(self):
         """
         Returns the construct corresponding to the last dlbcliked diagram.
         :return string: The construct id for the dblclicked item.
         """
+        logger.log("Looking for construct %d from %s\n" % (
+            self.nav_index, str(self.nav_status)))
         if self.nav_index >= 0:
             current_construct = self.constructs_map[
                 self.nav_status[self.nav_index]]
@@ -1295,13 +1299,21 @@ else:
             """
             if debugger is None:
                 return
+            cur_frame = debugger.current_frame()
             raw_frames = [s.strip() for s in debugger.send(
                 "bt", output=False).splitlines()]
             frame_infos = []
 
             for s in raw_frames:
                 fsplit = s.split()
+
                 # bt format is '#0 ... filepath/basename:line
+                frame_num = int(fsplit[0][1:])
+
+                # Only analyze the construct up to the active frame
+                if frame_num < cur_frame:
+                    continue
+
                 info = os.path.basename(fsplit[-1]).rsplit(':', 1)
                 fname = info[0]
                 line = info[1]
