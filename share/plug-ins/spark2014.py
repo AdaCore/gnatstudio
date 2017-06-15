@@ -857,6 +857,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -929,6 +930,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
@@ -953,6 +955,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
@@ -978,6 +981,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
@@ -1004,6 +1008,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
@@ -1028,6 +1033,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--level=0</arg>
           <arg>--ide-progress-bar</arg>
@@ -1051,6 +1057,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
@@ -1074,6 +1081,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--level=0</arg>
           <arg>--ide-progress-bar</arg>
@@ -1099,6 +1107,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
@@ -1123,6 +1132,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--level=0</arg>
@@ -1148,6 +1158,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
@@ -1173,6 +1184,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--level=0</arg>
@@ -1197,6 +1209,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
@@ -1220,6 +1233,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--level=0</arg>
@@ -1244,6 +1258,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
@@ -1268,6 +1283,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--level=0</arg>
@@ -1292,6 +1308,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
@@ -1311,6 +1328,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -1325,6 +1343,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--clean</arg>
        </command-line>
@@ -1339,6 +1358,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--level=0</arg>
@@ -1362,6 +1382,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>-j0</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
