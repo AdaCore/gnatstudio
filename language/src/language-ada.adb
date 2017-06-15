@@ -1061,7 +1061,7 @@ package body Language.Ada is
                          UTF8_Prev_Char (Buffer, Offset);
          Next_Offset : Integer;
       begin
-         if Prev_Offset > Buffer'First then
+         if Prev_Offset >= Buffer'First then
             --  Once we have the previous offset, check for the beginning of
             --  the next one. There are two cases here, either the previous
             --  offset is the first to analyze, and the next one will be passed
