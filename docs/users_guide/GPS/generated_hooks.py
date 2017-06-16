@@ -20,6 +20,7 @@ class Predefined_Hooks:
       activity closed status is updated.
 
       :param str name:
+
         """
 
     # after_character_added = 'after_character_added'
@@ -34,6 +35,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # after_file_changed_detected = 'after_file_changed_detected'
@@ -44,6 +46,7 @@ class Predefined_Hooks:
       declined to synchronize.
 
       :param str name:
+
         """
 
     # annotation_parsed_hook = 'annotation_parsed_hook'
@@ -52,6 +55,7 @@ class Predefined_Hooks:
       Emitted when the last annotation has been parsed
 
       :param str name:
+
         """
 
     # before_exit_action_hook = 'before_exit_action_hook'
@@ -63,6 +67,7 @@ class Predefined_Hooks:
       :param str name:
       :return: bool
 
+
         """
 
     # before_file_saved = 'before_file_saved'
@@ -72,6 +77,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # bookmark_added = 'bookmark_added'
@@ -82,6 +88,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param str str:
+
         """
 
     # bookmark_removed = 'bookmark_removed'
@@ -92,6 +99,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param str str:
+
         """
 
     # buffer_edited = 'buffer_edited'
@@ -101,6 +109,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # build_mode_changed = 'build_mode_changed'
@@ -108,6 +117,7 @@ class Predefined_Hooks:
         """
       :param str name:
       :param str str:
+
         """
 
     # build_server_connected_hook = 'build_server_connected_hook'
@@ -116,6 +126,7 @@ class Predefined_Hooks:
       Emitted when GPS connects to the build server in remote mode
 
       :param str name:
+
         """
 
     # character_added = 'character_added'
@@ -131,6 +142,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # clipboard_changed = 'clipboard_changed'
@@ -141,6 +153,7 @@ class Predefined_Hooks:
       the index of the last paste operation has changed (Paste Previous)
 
       :param str name:
+
         """
 
     # compilation_finished = 'compilation_finished'
@@ -158,6 +171,7 @@ class Predefined_Hooks:
       :param str target:
       :param str mode:
       :param int status:
+
         """
 
     # compilation_starting = 'compilation_starting'
@@ -220,6 +234,7 @@ class Predefined_Hooks:
       :param bool background:
       :return: bool
 
+
         """
 
     # compute_build_targets = 'compute_build_targets'
@@ -247,6 +262,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param str str:
+
         """
 
     # context_changed = 'context_changed'
@@ -257,6 +273,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Context context:
+
         """
 
     # contextual_menu_close = 'contextual_menu_close'
@@ -272,6 +289,7 @@ class Predefined_Hooks:
        .. seealso:: :func:`GPS.Predefined_Hooks.contextual_menu_open`
 
       :param str name:
+
         """
 
     # contextual_menu_open = 'contextual_menu_open'
@@ -286,6 +304,7 @@ class Predefined_Hooks:
       .. seealso:: :func:`GPS.Predefined_Hooks.contextual_menu_close`
 
       :param str name:
+
         """
 
     # debugger_breakpoints_changed = 'debugger_breakpoints_changed'
@@ -298,6 +317,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_command_action_hook = 'debugger_command_action_hook'
@@ -330,6 +350,7 @@ class Predefined_Hooks:
       :param str str:
       :return: str
 
+
         """
 
     # debugger_context_changed = 'debugger_context_changed'
@@ -340,6 +361,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_executable_changed = 'debugger_executable_changed'
@@ -351,6 +373,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_location_changed = 'debugger_location_changed'
@@ -361,6 +384,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_process_stopped = 'debugger_process_stopped'
@@ -377,6 +401,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_process_terminated = 'debugger_process_terminated'
@@ -387,6 +412,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_question_action_hook = 'debugger_question_action_hook'
@@ -415,6 +441,7 @@ class Predefined_Hooks:
       :param str str:
       :return: str
 
+
         """
 
     # debugger_started = 'debugger_started'
@@ -427,6 +454,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # debugger_state_changed = 'debugger_state_changed'
@@ -456,6 +484,7 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.Debugger debugger:
       :param str new_state:
+
         """
 
     # debugger_terminated = 'debugger_terminated'
@@ -466,12 +495,14 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Debugger debugger:
+
         """
 
     # desktop_loaded = 'desktop_loaded'
     def desktop_loaded(name):
         """
       :param str name:
+
         """
 
     # diff_action_hook = 'diff_action_hook'
@@ -486,6 +517,7 @@ class Predefined_Hooks:
       :param GPS.File diff_file:
       :param str title: (default: "")
       :return: bool
+
 
         """
 
@@ -517,6 +549,7 @@ class Predefined_Hooks:
       :param GPS.File file:
       :return: bool
 
+
         """
 
     # file_changed_on_disk = 'file_changed_on_disk'
@@ -529,6 +562,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_closed = 'file_closed'
@@ -540,6 +574,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_deleted = 'file_deleted'
@@ -551,6 +586,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_deleting = 'file_deleting'
@@ -560,6 +596,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_edited = 'file_edited'
@@ -573,6 +610,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_line_action_hook = 'file_line_action_hook'
@@ -595,6 +633,7 @@ class Predefined_Hooks:
       :param str identifier:
       :param GPS.File file:
       :param bool every_line: (default: True)
+
         """
 
     # file_renamed = 'file_renamed'
@@ -609,6 +648,7 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.File file:
       :param GPS.File file2:
+
         """
 
     # file_saved = 'file_saved'
@@ -618,6 +658,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # file_status_changed = 'file_status_changed'
@@ -629,6 +670,7 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.File file:
       :param str status:
+
         """
 
     # gps_started = 'gps_started'
@@ -640,6 +682,7 @@ class Predefined_Hooks:
       connect to this hook.
 
       :param str name:
+
         """
 
     # html_action_hook = 'html_action_hook'
@@ -655,6 +698,7 @@ class Predefined_Hooks:
       :param str anchor: (default: "")
       :return: bool
 
+
         """
 
     # location_changed = 'location_changed'
@@ -667,6 +711,9 @@ class Predefined_Hooks:
       :param GPS.File file:
       :param int line:
       :param int column:
+
+      :asynchronouse 200 (ms)
+
         """
 
     # log_parsed_hook = 'log_parsed_hook'
@@ -675,6 +722,7 @@ class Predefined_Hooks:
       Emitted when the last log has been parsed
 
       :param str name:
+
         """
 
     # marker_added_to_history = 'marker_added_to_history'
@@ -685,6 +733,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Location location:
+
         """
 
     # message_selected = 'message_selected'
@@ -692,6 +741,7 @@ class Predefined_Hooks:
         """
       :param str name:
       :param GPS.Message message:
+
         """
 
     # open_file_action_hook = 'open_file_action_hook'
@@ -739,6 +789,7 @@ class Predefined_Hooks:
       :param GPS.Project project:
       :return: bool
 
+
         """
 
     # preferences_changed = 'preferences_changed'
@@ -748,6 +799,7 @@ class Predefined_Hooks:
       refresh themselves dynamically.
 
       :param str name:
+
         """
 
     # project_changed = 'project_changed'
@@ -762,6 +814,7 @@ class Predefined_Hooks:
       .. seealso:: :func:`GPS.Predefined_Hooks.project_view_changed`
 
       :param str name:
+
         """
 
     # project_changing = 'project_changing'
@@ -771,6 +824,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # project_editor = 'project_editor'
@@ -781,6 +835,7 @@ class Predefined_Hooks:
       this dialog.
 
       :param str name:
+
         """
 
     # project_saved = 'project_saved'
@@ -791,6 +846,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.Project project:
+
         """
 
     # project_view_changed = 'project_view_changed'
@@ -802,6 +858,7 @@ class Predefined_Hooks:
       for this hook, you can safely query the new attribute values.
 
       :param str name:
+
         """
 
     # revision_parsed_hook = 'revision_parsed_hook'
@@ -810,6 +867,7 @@ class Predefined_Hooks:
       Emitted when the last revision has been parsed
 
       :param str name:
+
         """
 
     # rsync_action_hook = 'rsync_action_hook'
@@ -829,12 +887,14 @@ class Predefined_Hooks:
       :param GPS.File file:
       :return: bool
 
+
         """
 
     # rsync_finished = 'rsync_finished'
     def rsync_finished(name):
         """
       :param str name:
+
         """
 
     # search_functions_changed = 'search_functions_changed'
@@ -843,6 +903,7 @@ class Predefined_Hooks:
       Emitted when the list of registered search functions changes.
 
       :param str name:
+
         """
 
     # search_regexps_changed = 'search_regexps_changed'
@@ -852,6 +913,7 @@ class Predefined_Hooks:
       patterns.
 
       :param str name:
+
         """
 
     # search_reset = 'search_reset'
@@ -862,6 +924,7 @@ class Predefined_Hooks:
       of GPS has changed.
 
       :param str name:
+
         """
 
     # semantic_tree_updated = 'semantic_tree_updated'
@@ -871,6 +934,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # server_config_hook = 'server_config_hook'
@@ -884,6 +948,7 @@ class Predefined_Hooks:
       :param str name:
       :param str server:
       :param str nickname:
+
         """
 
     # server_list_hook = 'server_list_hook'
@@ -892,6 +957,7 @@ class Predefined_Hooks:
       Emitted when the list of configured servers has changed.
 
       :param str name:
+
         """
 
     # source_lines_folded = 'source_lines_folded'
@@ -900,6 +966,7 @@ class Predefined_Hooks:
       :param str name:
       :param int line1:
       :param int line2:
+
         """
 
     # source_lines_unfolded = 'source_lines_unfolded'
@@ -908,6 +975,7 @@ class Predefined_Hooks:
       :param str name:
       :param int line1:
       :param int line2:
+
         """
 
     # status_parsed_hook = 'status_parsed_hook'
@@ -916,6 +984,7 @@ class Predefined_Hooks:
       Emitted when the last status has been parsed
 
       :param str name:
+
         """
 
     # stop_macro_action_hook = 'stop_macro_action_hook'
@@ -926,6 +995,7 @@ class Predefined_Hooks:
       macro.
 
       :param str name:
+
         """
 
     # task_started = 'task_started'
@@ -934,6 +1004,7 @@ class Predefined_Hooks:
       Emitted when a new background task is started
 
       :param str name:
+
         """
 
     # variable_changed = 'variable_changed'
@@ -943,6 +1014,7 @@ class Predefined_Hooks:
       when one of its possible values has changed.
 
       :param str name:
+
         """
 
     # vcs_active_changed = 'vcs_active_changed'
@@ -952,6 +1024,7 @@ class Predefined_Hooks:
       like commit and log happen.
 
       :param str name:
+
         """
 
     # vcs_file_status_changed = 'vcs_file_status_changed'
@@ -967,6 +1040,7 @@ class Predefined_Hooks:
       :param GPS.VCS VCS:
       :param [GPS.File] files:
       :param int props:
+
         """
 
     # vcs_refresh = 'vcs_refresh'
@@ -977,6 +1051,7 @@ class Predefined_Hooks:
       information
 
       :param str name:
+
         """
 
     # word_added = 'word_added'
@@ -988,6 +1063,7 @@ class Predefined_Hooks:
 
       :param str name:
       :param GPS.File file:
+
         """
 
     # xref_updated = 'xref_updated'
@@ -996,5 +1072,6 @@ class Predefined_Hooks:
       Emitted when the cross-reference information has been updated.
 
       :param str name:
+
         """
 GPS.Predefined_Hooks = Predefined_Hooks

@@ -1619,14 +1619,8 @@ private
       Blocks_Request_Timestamp : Ada.Calendar.Time;
       --  The last time the blocks refresh was requested
 
-      Cursor_Timeout_Registered : Boolean := False;
-      --  Whether the cursor timeout is registered
-
       Cursor_Timeout : Glib.Main.G_Source_Id;
       --  A timeout handling the refresh of the timeouts
-
-      Cursor_Timestamp : Ada.Calendar.Time;
-      --  The last time the cursor was moved
 
       Blank_Lines : Natural := 0;
       --  The number of blank lines in the buffer

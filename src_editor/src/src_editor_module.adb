@@ -2387,7 +2387,7 @@ package body Src_Editor_Module is
 
       File_Renamed_Hook.Add (new On_File_Renamed);
       File_Saved_Hook.Add (new On_File_Saved);
-      Location_Changed_Hook.Add (new On_Cursor_Stopped);
+      Location_Changed_Hook.Add_Debounce (new On_Cursor_Stopped);
       Semantic_Tree_Updated_Hook.Add (new On_Semantic_Tree_Updated);
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
       File_Edited_Hook.Add (new On_File_Edited);

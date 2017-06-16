@@ -884,7 +884,8 @@ package body Outline_View is
       end;
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Outline);
-      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Outline);
+      Location_Changed_Hook.Add_Debounce
+        (new On_Location_Changed, Watch => Outline);
       File_Closed_Hook.Add (new On_File_Closed, Watch => Outline);
       File_Edited_Hook.Add (new On_File_Edited, Watch => Outline);
       Project_View_Changed_Hook.Add (new On_Project_Changed, Watch => Outline);

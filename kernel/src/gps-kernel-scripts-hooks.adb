@@ -76,6 +76,17 @@ package body GPS.Kernel.Scripts.Hooks is
                 Last  => Data.Nth_Arg (3, True));
          end;
 
+      elsif Command = "add_debounce" then
+         declare
+            Func : constant Subprogram_Type := Data.Nth_Arg (2);
+         begin
+            Info := Get_Hook (Data, 1);
+            Debounce_Hook_Types (Info.all).Add_Debounce_Hook_Func
+              (Func  => new Python_Hook_Function'
+                 (Hook_Function with Func => Func),
+               Last  => Data.Nth_Arg (3, True));
+         end;
+
       elsif Command = "remove" then
          Info := Get_Hook (Data, 1);
          declare
@@ -124,6 +135,10 @@ package body GPS.Kernel.Scripts.Hooks is
                H := new Hook_Types'Class'(T.all);
                H.Name := new String'(Name);  --  do not free old value
                H.Funcs.Clear;  --  We had a template, ignore the actual funcs
+               if H.all in Debounce_Hook_Types'Class then
+                  Debounce_Hook_Access (H).Asynch_Funcs.Clear;
+                  Debounce_Hook_Access (H).Asynch_Data.Clear;
+               end if;
                H.Register (Get_Kernel (Data));
             else
                Data.Set_Error_Msg ("Hook type not found: " & Typ);
@@ -252,6 +267,12 @@ package body GPS.Kernel.Scripts.Hooks is
          Handler      => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add",
+         Class        => Hook_Class,
+         Params       => (1 => Param ("function_name"),
+                          2 => Param ("last", Optional => True)),
+         Handler      => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("add_debounce",
          Class        => Hook_Class,
          Params       => (1 => Param ("function_name"),
                           2 => Param ("last", Optional => True)),

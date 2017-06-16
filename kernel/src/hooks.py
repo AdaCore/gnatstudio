@@ -22,7 +22,8 @@ class Mapping(object):
                  toada_vars='',
                  toada_init='',
                  setreturn='Data.Set_Return_Value (Tmp);',
-                 withs=[]):
+                 withs=[],
+                 body_withs=[]):
         self.ada = ada
         self.python = python
         self.toada = toada
@@ -30,6 +31,7 @@ class Mapping(object):
         self.toada_init = toada_init
         self.topython = topython
         self.withs = withs
+        self.body_withs = body_withs
         self.setreturn = setreturn if python is not None else 'null;'
 
 
@@ -46,6 +48,8 @@ class Hook_Type(object):
            special name and should not be called directly by the code.
         :param override_run_from_python: if False, Run_From_Python procedure
            will not be overriden
+        :param debounce: set up the timeout for interact asynchronously,
+           can be set if no any values are returned
         """
         self.params = params
         self.descr = descr.strip()
@@ -58,14 +62,26 @@ class Hook_Type(object):
             self.descr = '\n   --  ' + self.descr.replace('\n', '\n   --  ')
 
 
+class Debounce_Hook_Type(Hook_Type):
+    '''Describe a debounce type of hook'''
+    def __init__(self, params=[], descr='', internal_run=False,
+                 override_run_from_python=True, debounce=None):
+        """
+        :param debounce: set up the timeout for interact asynchronously
+        """
+        Hook_Type.__init__(self,params,None,None,-1,descr,internal_run,override_run_from_python)
+        self.debounce = debounce
+
+
 class Param(object):
     '''The description of one parameter for a hook type'''
-    def __init__(self, name, type, default=None, descr='', inpython=True):
+    def __init__(self, name, type, default=None, descr='', inpython=True, asynch_key=None):
         self.name = name
         self.type = type
         self.descr = descr
         self.default = default
         self.inpython = inpython
+        self.asynch_key = asynch_key
 
     def show_in_ada(self):
         'Whether to show on the Ada side'
@@ -74,6 +90,14 @@ class Param(object):
     def show_in_python(self):
         'Whether to show on the Python side'
         return self.inpython and types[self.type].python is not None
+
+    def is_assign(self):
+        'Whether to reassign parameters value for asynch. call'
+        if types[self.type].ada is not None:
+            if self.asynch_key is None:
+                return True
+
+        return False
 
 
 class Hook(object):
@@ -96,7 +120,7 @@ types = {
         topython='Task_Manager.Shell.Get_Or_Create_Instance (Data, %(ada)s)',
         toada='Get_Data (Data.Nth_Arg (%(idx)d), ' +
             'K.Scripts.New_Class ("Task"))',
-        withs=['Task_Manager.Shell']),
+        body_withs=['Task_Manager.Shell']),
 
     'Context': Mapping(
         ada='GPS.Kernel.Selection_Context',
@@ -209,7 +233,7 @@ types = {
         topython='GPS.Kernel.Messages.Shell.Create_Message_Instance'
             ' (Get_Script (Data), %(ada)s)',
         toada='GPS.Kernel.Messages.Shell.Get_Data (Data.Nth_Arg (%(idx)d))',
-        withs=['GPS.Kernel.Messages.Shell']),
+        body_withs=['GPS.Kernel.Messages.Shell']),
 
     'Location': Mapping(
         ada='Location_Marker',
@@ -233,7 +257,8 @@ types = {
         toada='GPS.Debuggers.Base_Visual_Debugger_Access ' +
             '(GNATCOLL.Scripts.Gtkada.Get_Data'
             ' (Data.Nth_Arg (%(idx)d, K.Scripts.New_Class ("Debugger"))))',
-        withs=['Glib.Object', 'GNATCOLL.Scripts.Gtkada', 'GPS.Debuggers']),
+        withs=['Glib.Object', 'GPS.Debuggers'],
+        body_withs=['GNATCOLL.Scripts.Gtkada']),
 
     'Debugger_State': Mapping(
         ada='GPS.Debuggers.Debugger_State',
@@ -274,13 +299,14 @@ hook_types = {
 The hooks that report information about a running
 background task or process'''),
 
-    'file_location_hooks': Hook_Type(
+    'file_location_hooks': Debounce_Hook_Type(
         [Param('name', '__hookname__'),
-         Param('file', 'File'),
+         Param('file', 'File', asynch_key=True),
          Param('line', 'Integer'),
          Param('column', 'Integer'),
          Param('project', 'Project', inpython=False,
-               default='GNATCOLL.Projects.No_Project')]),
+               default='GNATCOLL.Projects.No_Project')],
+        debounce=200),
 
     'string_return_any_hooks': Hook_Type(
         [Param('name', '__hookname__'),
@@ -959,7 +985,6 @@ def generate():
     f = open('../generated/gps-kernel-hooks.ads', 'wb')
     f.write('''--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
-pragma Warnings (Off, "unit * is not referenced in spec");
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 %(withs)s
 package GPS.Kernel.Hooks is
@@ -1034,6 +1059,15 @@ package GPS.Kernel.Hooks is
 
 ''' % {'withs': withs})
 
+    withs = {'with %s;' % n
+             for t in hook_types.values()
+             for p in t.params
+             for n in types[p.type].body_withs}
+    withs.update({'with %s;' % n
+                  for t in hook_types.values()  if t.returns is not None
+                  for n in types[t.returns].body_withs})
+    withs = '\n'.join(sorted(withs))
+
     b = open('../generated/gps-kernel-hooks.adb', 'wb')
     b.write('''--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
@@ -1043,6 +1077,7 @@ with Ada.Tags;                  use Ada.Tags;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Scripts.Hooks;  use GPS.Kernel.Scripts.Hooks;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+%(withs)s
 package body GPS.Kernel.Hooks is
    Me : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
    use type GNATCOLL.Any_Types.Any_Type;
@@ -1193,7 +1228,7 @@ package body GPS.Kernel.Hooks is
       end loop;
       return List;
    end Ada_To_Python_File_Dict;
-''')
+''' % {'withs': withs})
 
     for type_name in sorted(hook_types.keys()):
         t = hook_types[type_name]
@@ -1249,6 +1284,30 @@ package body GPS.Kernel.Hooks is
                 if types[p.type].toada_init),
             'run_name': 'Run' if not t.internal_run else 'Run_Internal',
             'params': ''.join(params)}
+
+        if isinstance(t, Debounce_Hook_Type):
+            asynch_plist = [', Data.%s' % p.name.title()
+                     for p in t.params if p.show_in_ada()]
+
+            compare_keys = ['Data.%s = %s' % (
+                            p.name.title(),
+                            p.name.title())
+                      for p in t.params if p.asynch_key]
+
+            compare = ['%s%s' % (
+                            ' and then ' if idx > 0 else '',
+                            p)
+                      for idx, p in enumerate(compare_keys)]
+
+            assign = ['               Data.%s := %s;\n' % (
+                            p.name.title(),
+                            p.name.title())
+                      for p in t.params if p.is_assign()]
+
+            subst['asynch_plist'] = ''.join(asynch_plist)
+            subst['debounce'] = t.debounce
+            subst['compare'] = ''.join (compare)
+            subst['assign'] = ''.join(assign)
 
         # Settings for the callback function
 
@@ -1345,21 +1404,46 @@ package body GPS.Kernel.Hooks is
 
    type %(name)s_Function is abstract new Hook_Function
       with null record;
+
    %(func_proc_or_func)s Execute
       (Self   : %(name)s_Function;
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(func_returns)s is abstract;
+''' % subst)
 
+        if isinstance(t, Debounce_Hook_Type):
+           f.write('''
+   type %(name)s is new Debounce_Hook_Types with null record;
+''' % subst)
+        else:
+           f.write('''
    type %(name)s is new Hook_Types with null record;
+''' % subst)
+
+        f.write('''
    overriding function Type_Name (Self : %(name)s) return String
       is ("%(basename)s");
+
    procedure Add
       (Self  : in out %(name)s;
        Obj   : not null access %(name)s_Function'Class;
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null);
+''' % subst)
+
+        if isinstance(t, Debounce_Hook_Type):
+           f.write('''
+   procedure Add_Debounce
+      (Self  : in out %(name)s;
+       Obj   : not null access %(name)s_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null);
+''' % subst)
+
+        f.write('''
    %(run_proc_or_func)s %(run_name)s
       (Self   : in out %(name)s;
-       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;''' % subst)
+       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;
+''' % subst)
 
         if t.override_run_from_python:
             f.write('''
@@ -1384,33 +1468,46 @@ package body GPS.Kernel.Hooks is
    begin
       Self.Add_Hook_Func (Obj, Last, Watch);
    end Add;
+''' % subst)
 
-   ---------
-   -- %(run_name)s --
-   ---------
+        if isinstance(t, Debounce_Hook_Type):
+           b.write('''
+   ------------------
+   -- Add_Debounce --
+   ------------------
 
-   %(run_proc_or_func)s %(run_name)s
+   procedure Add_Debounce
+      (Self  : in out %(name)s;
+       Obj   : not null access %(name)s_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null) is
+   begin
+      Self.Add_Debounce_Hook_Func (Obj, Last, Watch);
+   end Add_Debounce;
+
+   ----------
+   -- Call --
+   ----------
+
+   procedure Call
       (Self   : in out %(name)s;
-       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s
+       Funcs  : Hook_Func_Lists.List;
+       Kernel : not null access Kernel_Handle_Record'Class%(params)s)
    is
-      use Hook_Func_Lists;
-      Block_Me : constant Block_Trace_Handle :=
-         Create (Me, (if Active (Me) then Name (Self) else ""));
-
-      List : array (1 .. Natural (Self.Funcs.Length)) of
+      List : array (1 .. Natural (Funcs.Length)) of
         access Hook_Function'Class;
       Last : Natural := 0;
    begin
       --  One of the issues here is that running a hook could add or remove
       --  a function from Self.Funcs. We use an explicit copy to compensate
 
-      for J of Self.Funcs loop
+      for F of Funcs loop
          Last := Last + 1;
-         List (Last) := J.Func;
+         List (Last) := F.Func;
          List (Last).Refcount := List (Last).Refcount + 1;
       end loop;
 
-      for F of List loop
+      for F of List (1 .. Last) loop
          begin
             if F.Refcount = 1 then
                 --  Skip already deleted hooks
@@ -1432,11 +1529,164 @@ package body GPS.Kernel.Hooks is
          end;
       end loop;
 
-      for J of List loop
+      for F of List (1 .. Last) loop
+         if F.Refcount = 1 then
+            Remove_Hook_Func (Self, F);
+         end if;
+      end loop;
+   end Call;
+
+   type %(name)s_Access is access all %(name)s;
+
+   type %(name)s_Params is new Hook_Function_Params with record
+      Id : Glib.Main.G_Source_Id := 0;
+      Hook : File_Location_Hooks_Access;
+      Kernel : not null access Kernel_Handle_Record'Class%(params)s;
+   end record;
+
+   type %(name)s_Params_Access is
+     access all %(name)s_Params;
+
+   %(name)s_Timeout_Value : constant Guint := %(debounce)s;
+
+   package %(name)s_Timeout is
+     new Glib.Main.Generic_Sources (%(name)s_Params_Access);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (%(name)s_Params, %(name)s_Params_Access);
+
+   -------------------------
+   -- On_%(name)s_Timeout --
+   -------------------------
+
+   function On_%(name)s_Timeout
+     (Data : %(name)s_Params_Access) return Boolean
+   is
+      use Hook_Func_Params_Lists;
+      use type Glib.Main.G_Source_Id;
+
+      C : Hook_Func_Params_Lists.Cursor := Data.Hook.Asynch_Data.First;
+      D : %(name)s_Params_Access;
+   begin
+      while Has_Element (C) loop
+         D := %(name)s_Params_Access (Element (C));
+         if D.Id = Data.Id then
+            Delete (Data.Hook.Asynch_Data, C);
+            exit;
+         else
+            D := null;
+         end if;
+
+         Next (C);
+      end loop;
+
+      Call (Data.Hook.all, Data.Hook.Asynch_Funcs, Data.Kernel%(asynch_plist)s);
+      Free (D);
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, E, "On_File_Location_Hooks_Timeout " & Name (Data.Hook.all));
+         Free (D);
+
+         return False;
+   end On_%(name)s_Timeout;
+''' % subst)
+
+        b.write('''
+   ---------
+   -- %(run_name)s --
+   ---------
+
+   %(run_proc_or_func)s %(run_name)s
+      (Self   : in out %(name)s;
+       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s
+   is
+      use Hook_Func_Lists;
+      Block_Me : constant Block_Trace_Handle :=
+         Create (Me, (if Active (Me) then Name (Self) else ""));
+''' % subst)
+
+        if isinstance(t, Debounce_Hook_Type):
+           b.write('''
+   begin
+      Call (Self, Self.Funcs, Kernel%(plist)s);
+
+      if Self.Asynch_Funcs.Is_Empty then
+         return;
+      end if;
+
+      for D of Self.Asynch_Data loop
+         declare
+            Data : constant %(name)s_Params_Access :=
+              %(name)s_Params_Access (D);
+         begin
+            if %(compare)s then
+               Glib.Main.Remove (Data.Id);
+%(assign)s
+               Data.Id := %(name)s_Timeout.Timeout_Add
+                 (%(name)s_Timeout_Value, On_%(name)s_Timeout'Access, Data);
+               return;
+            end if;
+         end;
+      end loop;
+
+      declare
+         Data : constant %(name)s_Params_Access :=
+           new %(name)s_Params'
+             ((Glib.Main.No_Source_Id, Self'Unchecked_Access, Kernel%(plist)s));
+      begin
+         Data.Id := %(name)s_Timeout.Timeout_Add
+           (%(name)s_Timeout_Value, On_%(name)s_Timeout'Access, Data);
+         Self.Asynch_Data.Append (Hook_Function_Params_Access (Data));
+      end;
+''' % subst)
+        else:
+           b.write('''
+      List : array (1 .. Natural (Self.Funcs.Length)) of
+        access Hook_Function'Class;
+      Last : Natural := 0;
+   begin
+      --  One of the issues here is that running a hook could add or remove
+      --  a function from Self.Funcs. We use an explicit copy to compensate
+
+      for J of Self.Funcs loop
+         Last := Last + 1;
+         List (Last) := J.Func;
+         List (Last).Refcount := List (Last).Refcount + 1;
+      end loop;
+
+      for F of List (1 .. Last) loop
+         begin
+            if F.Refcount = 1 then
+                --  Skip already deleted hooks
+                null;
+            elsif F.all in Python_Hook_Function'Class then
+               declare
+                  F2 : constant Subprogram_Type :=
+                     Python_Hook_Function (F.all).Func;
+                  Data : Callback_Data'Class :=
+                     F2.Get_Script.Create (Arguments_Count => %(pcount)s);
+               begin%(pset)s%(run_body)s
+               end;
+            else%(ada_call)s
+            end if;
+         exception
+            when E : others =>
+               Trace (Me, E, "While running "
+                  & Name (Self) & ":" & Name (F) & ASCII.LF);
+         end;
+      end loop;
+
+      for J of List (1 .. Last) loop
          if J.Refcount = 1 then
             Remove_Hook_Func (Self, J);
          end if;
-      end loop;%(run_exit)s%(returns_body)s
+      end loop;
+''' % subst)
+
+        b.write('''%(run_exit)s%(returns_body)s
    end %(run_name)s;
 ''' % subst)
 
@@ -1542,8 +1792,7 @@ class Predefined_Hooks:
                   for p in type.params if p.show_in_python()]
 
         plist = ','.join([p.name for p in type.params])
-
-        descr = h.raw_descr.strip() 
+        descr = h.raw_descr.strip()
         if descr:
             descr = '\n      ' + descr.replace('\n', '\n      ') + '\n'
 
@@ -1560,13 +1809,23 @@ class Predefined_Hooks:
             'params': ''.join(params)
         }
 
+        if isinstance(type, Debounce_Hook_Type):
+            subst['asynch'] =  type.debounce
+
         f.write('''
     # %(base)s = '%(base)s'
     def %(base)s(%(plist)s):
         """%(descr)s%(params)s%(return)s
-        """
 ''' % subst)
 
+        if isinstance(type, Debounce_Hook_Type):
+            f.write('''
+      :asynchronouse %(asynch)s (ms)
+''' % subst)
+
+        f.write('''
+        """
+''')
 
     f.write('GPS.Predefined_Hooks = Predefined_Hooks\n')
     f.close()

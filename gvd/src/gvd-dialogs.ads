@@ -24,7 +24,6 @@ with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
-with GVD.Process;
 with Debugger;            use Debugger;
 with GNAT.Strings;
 with GPS.Dialogs;         use GPS.Dialogs;

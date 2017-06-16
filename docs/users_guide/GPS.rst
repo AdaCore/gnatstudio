@@ -1172,6 +1172,8 @@ Classes
 
    .. automethod:: GPS.Hook.add
 
+   .. automethod:: GPS.Hook.add_debounce
+
    .. automethod:: GPS.Hook.describe_functions
 
    .. automethod:: GPS.Hook.list

@@ -646,7 +646,8 @@ package body GVD.Breakpoints is
       Debugger_Breakpoints_Changed_Hook.Add
          (new On_Breakpoints_Changed, Watch => Self);
 
-      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Self);
+      Location_Changed_Hook.Add_Debounce
+        (new On_Location_Changed, Watch => Self);
 
       Update (Self);
 

@@ -166,6 +166,23 @@ package body GPS.Kernel is
    --  Timeout callback which actually emits the "context_changed" hook
    --  an interval after the context has last been actually changed.
 
+   procedure Internal_Add_Hook_Func
+     (Self  : in out Hook_Types'Class;
+      List  : in out Hook_Func_Lists.List;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null);
+   --  Add a new callback to the specified list
+
+   function Remove
+     (List       : in out Hook_Func_Lists.List;
+      If_Matches : not null access function
+        (F : not null access Hook_Function'Class) return Boolean;
+      Hook_Name : String)
+      return Boolean;
+   --  Remove the first attached function for which the function returns True.
+   --  Return True if function has been removed.
+
    -----------
    -- Hooks --
    -----------
@@ -2036,15 +2053,16 @@ package body GPS.Kernel is
       Self.Remove (If_Matches'Access);
    end Remove_Hook_Func;
 
-   -------------------
-   -- Add_Hook_Func --
-   -------------------
+   ----------------------------
+   -- Internal_Add_Hook_Func --
+   ----------------------------
 
-   procedure Add_Hook_Func
-      (Self  : in out Hook_Types'Class;
-       Func  : not null access Hook_Function'Class;
-       Last  : Boolean := True;
-       Watch : access Glib.Object.GObject_Record'Class := null)
+   procedure Internal_Add_Hook_Func
+     (Self  : in out Hook_Types'Class;
+      List  : in out Hook_Func_Lists.List;
+      Func  : not null access Hook_Function'Class;
+      Last  : Boolean := True;
+      Watch : access Glib.Object.GObject_Record'Class := null)
    is
       D : Hook_User_Data_Access;
    begin
@@ -2060,9 +2078,9 @@ package body GPS.Kernel is
       --  so that users can do a  Hook.Add (new Type)  directly, instead
       --  of using a temporary variable.
       if Last then
-         Self.Funcs.Append ((Func => Func.all'Unrestricted_Access));
+         List.Append ((Func => Func.all'Unrestricted_Access));
       else
-         Self.Funcs.Prepend ((Func => Func.all'Unrestricted_Access));
+         List.Prepend ((Func => Func.all'Unrestricted_Access));
       end if;
 
       if Watch /= null then
@@ -2073,44 +2091,109 @@ package body GPS.Kernel is
              Func => Func.all'Unrestricted_Access);
          Watch.Weak_Ref (Remove_Hook_Cb'Access, D.all'Address);
       end if;
+   end Internal_Add_Hook_Func;
+
+   -------------------
+   -- Add_Hook_Func --
+   -------------------
+
+   procedure Add_Hook_Func
+      (Self  : in out Hook_Types'Class;
+       Func  : not null access Hook_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null) is
+   begin
+      Internal_Add_Hook_Func (Self, Self.Funcs, Func, Last, Watch);
    end Add_Hook_Func;
+
+   ----------------------------
+   -- Add_Debounce_Hook_Func --
+   ----------------------------
+
+   procedure Add_Debounce_Hook_Func
+      (Self  : in out Debounce_Hook_Types'Class;
+       Func  : not null access Hook_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null) is
+   begin
+      Internal_Add_Hook_Func (Self, Self.Asynch_Funcs, Func, Last, Watch);
+   end Add_Debounce_Hook_Func;
 
    ------------
    -- Remove --
    ------------
 
-   procedure Remove
-      (Self       : in out Hook_Types'Class;
-       If_Matches : not null access function
-          (F : not null access Hook_Function'Class) return Boolean)
+   function Remove
+     (List       : in out Hook_Func_Lists.List;
+      If_Matches : not null access function
+        (F : not null access Hook_Function'Class) return Boolean;
+      Hook_Name : String)
+      return Boolean
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
          (Hook_Function'Class, Hook_Function_Access);
 
       use Hook_Func_Lists;
-      C : Hook_Func_Lists.Cursor := Self.Funcs.First;
+
+      C : Hook_Func_Lists.Cursor := List.First;
       F : Hook_Function_Access;
+
    begin
       while Has_Element (C) loop
          F := Hook_Function_Access (Element (C).Func);
          if If_Matches (F) then
             if Active (Me_Hooks) then
                Trace
-                  (Me_Hooks, "Removing " & GPS.Kernel.Hooks.Name (F)
-                   & " from hook " & GPS.Kernel.Hooks.Name (Self));
+                 (Me_Hooks, "Removing " & GPS.Kernel.Hooks.Name (F)
+                  & " from hook " & Hook_Name);
             end if;
-
             F.Refcount := F.Refcount - 1;
             if F.Refcount = 0 then
                F.Destroy;
                Unchecked_Free (F);
             end if;
 
-            Self.Funcs.Delete (C);
-            exit;
+            List.Delete (C);
+            return True;
          end if;
          Next (C);
       end loop;
+
+      return False;
+   end Remove;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+      (Self       : in out Hook_Types;
+       If_Matches : not null access function
+          (F : not null access Hook_Function'Class) return Boolean)
+   is
+      Result : Boolean with Unreferenced;
+
+   begin
+      Result := Remove
+        (Self.Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self));
+   end Remove;
+
+   ------------
+   -- Remove --
+   ------------
+
+   overriding procedure Remove
+      (Self       : in out Debounce_Hook_Types;
+       If_Matches : not null access function
+          (F : not null access Hook_Function'Class) return Boolean)
+   is
+      Result : Boolean with Unreferenced;
+
+   begin
+      if not Remove (Self.Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self)) then
+         Result := Remove
+           (Self.Asynch_Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self));
+      end if;
    end Remove;
 
    --------------------
@@ -2118,23 +2201,71 @@ package body GPS.Kernel is
    --------------------
 
    function List_Functions
-      (Self : not null access Hook_Types'Class)
+      (Self : not null access Hook_Types)
       return GNAT.Strings.String_List
    is
       use GPS.Kernel.Scripts.Hooks;
-      Result : GNAT.Strings.String_List (1 .. Integer (Self.Funcs.Length));
-      Idx : Integer := Result'First;
+      Result : GNAT.Strings.String_List
+        (1 .. Integer (Self.Funcs.Length));
+      Idx : Integer := Result'First - 1;
+
    begin
       for F of Self.Funcs loop
+         Idx := Idx + 1;
+
          if F.Func.all in Python_Hook_Function'Class then
             Result (Idx) := new String'
                (Python_Hook_Function (F.Func.all).Func.Get_Name);
          else
             Result (Idx) := new String'(External_Tag (F.Func'Tag));
          end if;
-         Idx := Idx + 1;
       end loop;
-      return Result;
+
+      return Result (1 .. Idx);
+   end List_Functions;
+
+   --------------------
+   -- List_Functions --
+   --------------------
+
+   overriding function List_Functions
+      (Self : not null access Debounce_Hook_Types)
+      return GNAT.Strings.String_List
+   is
+      use GPS.Kernel.Scripts.Hooks;
+      Result : GNAT.Strings.String_List
+        (1 .. Integer (Self.Funcs.Length) +
+             Integer (Self.Asynch_Funcs.Length));
+      Idx : Integer := Result'First - 1;
+
+      procedure Append (F : Hook_Func_Info);
+
+      ------------
+      -- Append --
+      ------------
+
+      procedure Append (F : Hook_Func_Info) is
+      begin
+         if F.Func.all in Python_Hook_Function'Class then
+            Result (Idx) := new String'
+               (Python_Hook_Function (F.Func.all).Func.Get_Name);
+         else
+            Result (Idx) := new String'(External_Tag (F.Func'Tag));
+         end if;
+      end Append;
+
+   begin
+      for F of Self.Funcs loop
+         Idx := Idx + 1;
+         Append (F);
+      end loop;
+
+      for F of Self.Asynch_Funcs loop
+         Idx := Idx + 1;
+         Append (F);
+      end loop;
+
+      return Result (1 .. Idx);
    end List_Functions;
 
    ---------------------

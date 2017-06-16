@@ -29,7 +29,8 @@ like "TODO", or special comments for instance.
 ############################################################################
 
 import GPS
-from gps_utils import *
+# from gps_utils import *
+from gps_utils import hook
 from gps_utils.highlighter import Location_Highlighter, OverlayStyle
 import re
 
@@ -92,7 +93,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         # ??? This should be based on the language
 
         GPS.Hook("preferences_changed").add(self._on_preferences_changed)
-        GPS.Hook("location_changed").add(self.highlight)
+        GPS.Hook("location_changed").add_debounce(self.highlight)
         GPS.Hook("file_closed").add(self.__on_file_closed)
 
     def __on_file_closed(self, hook, file):

@@ -6073,6 +6073,13 @@ class Hook(object):
               """
         pass  # implemented in Ada
 
+    def add_debounce(self, function_name, last=True):
+        """
+        The same as above but for calling callback asynchronously. Only for
+        hooks which has :asynchronouse parameter.
+              """
+        pass  # implemented in Ada
+
     def describe_functions(self):
         """
         Lists all the functions executed when the hook is executed. The
@@ -11024,5 +11031,4 @@ def visual_diff(file1, file2, file3=''):
     """
     pass  # implemented in Ada
 
-
-import extensions
+# import extensions

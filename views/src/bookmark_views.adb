@@ -1854,7 +1854,7 @@ package body Bookmark_Views is
 
       Bookmark_Added_Hook.Add (new Refresh_Hook, Watch => View);
       Bookmark_Removed_Hook.Add (new Refresh_Hook, Watch => View);
-      Location_Changed_Hook.Add (new On_Loc_Changed, Watch => View);
+      Location_Changed_Hook.Add_Debounce (new On_Loc_Changed, Watch => View);
 
       Tooltip := new Bookmark_View_Tooltips;
       Tooltip.Set_Tooltip (View.Tree);

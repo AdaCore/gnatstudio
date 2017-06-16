@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;
-with Glib.Object;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Regpat;          use GNAT.Regpat;

@@ -547,7 +547,7 @@ package GPS.Kernel is
    --  hook by name.
 
    procedure Remove
-       (Self       : in out Hook_Types'Class;
+       (Self       : in out Hook_Types;
         If_Matches : not null access function
            (F : not null access Hook_Function'Class) return Boolean);
    --  Remove the first attached function for which the function returns True.
@@ -555,10 +555,25 @@ package GPS.Kernel is
    --  multiple hooks.
 
    function List_Functions
-      (Self : not null access Hook_Types'Class)
+      (Self : not null access Hook_Types)
       return GNAT.Strings.String_List;
    --  Return the list of functions (by name) connected to this hook.
    --  Result must be freed by caller.
+
+   type Debounce_Hook_Types is abstract new Hook_Types with private;
+   --  Abstract type for asynchronouse hooks
+
+   type Debounce_Hook_Access is access all Debounce_Hook_Types'Class;
+
+   overriding procedure Remove
+       (Self       : in out Debounce_Hook_Types;
+        If_Matches : not null access function
+           (F : not null access Hook_Function'Class) return Boolean);
+   --  The same as above.
+
+   overriding function List_Functions
+      (Self : not null access Debounce_Hook_Types)
+      return GNAT.Strings.String_List;
 
    type File_Status is (Modified, Unmodified, Unsaved, Saved, Readonly);
 
@@ -1019,6 +1034,7 @@ private
       Name  : access constant String;
       Funcs : Hook_Func_Lists.List;
    end record;
+
    type Hook_Types_Access is access all Hook_Types'Class;
 
    package Hooks_Maps is new Ada.Containers.Indefinite_Hashed_Maps
@@ -1046,6 +1062,26 @@ private
    --  Delete Func from the hook.
    --  This also frees the corresponding function, unless it is attached to
    --  multiple hooks.
+
+   type Hook_Function_Params is abstract tagged null record;
+   --  An abstract object which represents hook's parameters
+   --  for asynchronouse call
+
+   type Hook_Function_Params_Access is access all Hook_Function_Params'Class;
+   package Hook_Func_Params_Lists is new Ada.Containers.Doubly_Linked_Lists
+      (Hook_Function_Params_Access);
+
+   type Debounce_Hook_Types is abstract new Hook_Types with record
+      Asynch_Funcs : Hook_Func_Lists.List;
+      Asynch_Data  : Hook_Func_Params_Lists.List;
+   end record;
+
+   procedure Add_Debounce_Hook_Func
+      (Self  : in out Debounce_Hook_Types'Class;
+       Func  : not null access Hook_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null);
+   --  Add a new asynchronous callback to the hook.
 
    type Custom_Load_State is (None, System_Level, User_Level);
    --  None         : loading not started

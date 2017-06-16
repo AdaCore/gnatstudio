@@ -1191,7 +1191,8 @@ package body GPS.Location_View is
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Self);
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
 
-      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Self);
+      Location_Changed_Hook.Add_Debounce
+        (new On_Location_Changed, Watch => Self);
 
       --  Apply the current "sort by subcategory" setting
       On_Change_Sort (Self);

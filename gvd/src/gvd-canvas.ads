@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
-with GPS.Debuggers;
 with GPS.Kernel;            use GPS.Kernel;
 with Items;                 use Items;
 

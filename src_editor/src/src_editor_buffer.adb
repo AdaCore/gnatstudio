@@ -133,16 +133,9 @@ package body Src_Editor_Buffer is
    --  The interval at which to check whether the buffer should be reparsed,
    --  in milliseconds.
 
-   Cursor_Stop_Interval      : constant Guint := 100;
-   --  The interval after which we consider that the cursor has stopped
-
    Buffer_Recompute_Delay    : constant Duration := 1.0;
    --  The delay between the last edit and the re-parsing of the buffer,
    --  in seconds.
-
-   Cursor_Reactivity_Delay   : constant Duration := 0.2;
-   --  The timeout between the last time the cursor moves and the time it is
-   --  considered as having stopped.
 
    Src_Editor_Message_Flags  : constant Message_Flags :=
      Side_And_Locations;
@@ -327,6 +320,17 @@ package body Src_Editor_Buffer is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has changed
 
+   type On_Loc_Changed is new File_Location_Hooks_Function with record
+      Buffer : Source_Buffer;
+   end record;
+   overriding procedure Execute
+     (Self         : On_Loc_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type);
+   --  Called when the current editor reaches a new location
+
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the cursor moves
 
@@ -375,16 +379,8 @@ package body Src_Editor_Buffer is
    --  ??? This function should be removed in the long term, replaced by
    --  the version of Get_Iter_At_Screen_Position that supports blank lines.
 
-   procedure Register_Cursor_Timeout
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Indicate that the cursor has moved, and that a timeout should be
-   --  registered to call the corresponding "after-timeout" hook.
-
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean;
    --  Timeout called in a timeout after the user has finished editing
-
-   function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean;
-   --  Hook called after the cursor has stopped moving
 
    procedure Free_Column_Info
      (Column_Info : Columns_Config_Access);
@@ -794,6 +790,25 @@ package body Src_Editor_Buffer is
       elsif Edited = File then
          Self.Buffer.Filename := Renamed;
          Self.Buffer.Filename_Changed;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Loc_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type)
+   is
+      pragma Unreferenced (Kernel, File, Line, Column, Project);
+   begin
+      --  Highlight the cursor delimiters
+      if Self.Buffer.Highlight_Delimiters then
+         Highlight_Parenthesis (Self.Buffer);
       end if;
    end Execute;
 
@@ -1409,50 +1424,6 @@ package body Src_Editor_Buffer is
       end if;
    end Highlight_Parenthesis;
 
-   ----------------------
-   -- Cursor_Stop_Hook --
-   ----------------------
-
-   function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean is
-   begin
-      if Clock < Buffer.Cursor_Timestamp + Cursor_Reactivity_Delay then
-         return True;
-      end if;
-
-      --  Emit the hook
-      Location_Changed (Buffer);
-
-      --  Highlight the cursor delimiters
-      if Buffer.Highlight_Delimiters then
-         Highlight_Parenthesis (Buffer);
-      end if;
-
-      Buffer.Cursor_Timeout_Registered := False;
-      return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Cursor_Stop_Hook;
-
-   -----------------------------
-   -- Register_Cursor_Timeout --
-   -----------------------------
-
-   procedure Register_Cursor_Timeout
-     (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Buffer.Cursor_Timestamp := Clock;
-
-      if not Buffer.Cursor_Timeout_Registered then
-         Buffer.Cursor_Timeout_Registered := True;
-         Buffer.Cursor_Timeout := Buffer_Timeout.Timeout_Add
-           (Cursor_Stop_Interval,
-            Cursor_Stop_Hook'Access,
-            Source_Buffer (Buffer));
-      end if;
-   end Register_Cursor_Timeout;
-
    ---------------------------
    -- Register_Edit_Timeout --
    ---------------------------
@@ -1592,7 +1563,7 @@ package body Src_Editor_Buffer is
          Reset_Slave_Cursors_Commands (Source_Buffer (Buffer));
       end if;
 
-      Register_Cursor_Timeout (Buffer);
+      Location_Changed (Source_Buffer (Buffer));
    end Cursor_Move_Hook;
 
    ---------------
@@ -1630,10 +1601,6 @@ package body Src_Editor_Buffer is
 
       if Buffer.Blocks_Timeout_Registered then
          Glib.Main.Remove (Buffer.Blocks_Timeout);
-      end if;
-
-      if Buffer.Cursor_Timeout_Registered then
-         Glib.Main.Remove (Buffer.Cursor_Timeout);
       end if;
 
       GNAT.Strings.Free (Buffer.Forced_Title);
@@ -3280,6 +3247,7 @@ package body Src_Editor_Buffer is
       Deleted_Hook : access On_File_Deleted;
       Renamed_Hook : access On_File_Renamed;
       Tree_Updated_Hook : access On_Semantic_Tree_Updated;
+      Loc_Changed : access On_Loc_Changed;
 
       use Pango.Enums.Underline_Properties;
    begin
@@ -3327,6 +3295,10 @@ package body Src_Editor_Buffer is
       Tree_Updated_Hook := new On_Semantic_Tree_Updated;
       Tree_Updated_Hook.Buffer := Source_Buffer (Buffer);
       Semantic_Tree_Updated_Hook.Add (Tree_Updated_Hook, Watch => Buffer);
+
+      Loc_Changed := new On_Loc_Changed;
+      Loc_Changed.Buffer := Source_Buffer (Buffer);
+      Location_Changed_Hook.Add_Debounce (Loc_Changed, Watch => Buffer);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Buffer.Syntax_Tags (Entity_Kind) := Get_Tag
@@ -3814,11 +3786,6 @@ package body Src_Editor_Buffer is
          end if;
 
          --  Unregister the cursor timeout
-
-         if Buffer.Cursor_Timeout_Registered then
-            Glib.Main.Remove (Buffer.Cursor_Timeout);
-            Buffer.Cursor_Timeout_Registered := False;
-         end if;
 
          Buffer.Blank_Lines := 0;
          Buffer.Hidden_Lines := 0;
