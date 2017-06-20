@@ -269,6 +269,51 @@ class CLI(GPS.Process):
             return False
 
     @staticmethod
+    def get_qgenc_switches(file, extra=[], remove_list=[]):
+        """
+        Creates the necessary arguments to call qgenc on the
+        model file, using those defined in the project file
+        if possible.
+        :param GPS.File file: The model file to generate arguments for.
+        :param str list extra: Extra arguments to add to the switches.
+        :param (str, bool) list remove_list: Arguments to remove if found,
+        associated with a boolean specifying whether they have a positional
+        argument as well.
+        :return str: The string containing the cli arguments for qgenc.
+        """
+        def remove_arg(l, val, positional):
+            res = []
+            skip = False
+            for arg in l:
+                if arg == val:
+                    skip = positional
+                    continue
+                if skip:
+                    skip = False
+                else:
+                    res.append(arg)
+            return res
+
+        switches = ""
+
+        if CLI.is_model_file(file):
+            outdir = Project_Support.get_output_dir(file)
+            switches = Project_Support.get_switches(file)
+
+            # always ignoring -o and --output should be defined
+            # using the Output_Dir attribute instead
+            remove_list.extend([('-o', True), ('--output', True)])
+            for arg, has_param in remove_list:
+                switches = remove_arg(switches, arg, has_param)
+
+            if '--typing' not in switches and '-t' not in switches:
+                typing_file = os.path.splitext(file.path)[0] + '_types.txt'
+                extra.extend(['-t', typing_file])
+            extra.extend(['-o', outdir])
+            switches.extend(extra)
+            return ' '.join(switches)
+
+    @staticmethod
     def get_json(file):
         """
         Compute the JSON to display the given .mdl file
@@ -278,13 +323,12 @@ class CLI(GPS.Process):
         """
 
         promise = Promise()
-
         filepath = file.path
-        typefile = os.path.splitext(filepath)[0]
-        switches = Project_Support.get_switches(
-            file) + " -t %s_types.txt" % typefile
-        outdir = Project_Support.get_output_dir(file)
 
+        switches = CLI.get_qgenc_switches(
+            file, extra=['--with-gui-only', '--incremental'],
+            remove_list=[('-c', False), ('--clean', False)])
+        outdir = Project_Support.get_output_dir(file)
         result_path = os.path.join(
             outdir, '.' + os.path.basename(filepath) + '_mdl2json')
 
@@ -295,11 +339,8 @@ class CLI(GPS.Process):
                 promise.resolve(result_path)
                 return promise
 
-        if outdir:
-            switches += ' -o ' + outdir
-
         cmd = ' '.join(
-            [CLI.qgenc, filepath, switches + ' --with-gui-only --incremental'])
+            [CLI.qgenc, filepath, switches])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
@@ -347,13 +388,8 @@ class CLI(GPS.Process):
         st = 1
         for f in files:
             if CLI.is_model_file(f):
-                typefile = os.path.splitext(f.path)[0]
-                switches = [
-                    "-o", Project_Support.get_output_dir(f),
-                    "-t", "%s_types.txt" % typefile, "--with-gui"]
-                switches = (' '.join(switches) + ' ' +
-                            Project_Support.get_switches(f) +
-                            ' ' + f.path)
+                switches = (f.path + ' ' + CLI.get_qgenc_switches(
+                    f, extra=['--with-gui', '--trace']))
                 w = TargetWrapper(target_name='QGen for file')
                 st = yield w.wait_on_execute(file=f, extra_args=switches)
                 if st != 0:

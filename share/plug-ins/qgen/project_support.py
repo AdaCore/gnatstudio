@@ -72,10 +72,6 @@ class Project_Support(object):
                <read-only>TRUE</read-only>
                <command-line>
                  <arg>qgenc</arg>
-                 <arg>--trace</arg>
-                 <arg>-i</arg>
-                 <arg>-l</arg>
-                 <arg>ada</arg>
                </command-line>
              </target>
 
@@ -144,24 +140,25 @@ class Project_Support(object):
     def get_output_dir(file):
         """
         Return the output directory to use when generating code for file.
-        It default to the project's object directory.
-
+        It defaults to project_root/MODEL_NAME.[mdl|slx]_generated if
+        not found in attribute or switches.
         :param GPS.File file: the .mdl file
         """
+
         if file is None:
             return None
 
         p = file.project()
         dir = p.get_attribute_as_string(
             package='QGen', attribute='Output_Dir')
-        if dir:
-            # Get absolute directory from Output_Dir
-            dir = os.path.join(os.path.dirname(p.file().path), dir)
-        else:
-            try:
-                return p.object_dirs()[0]
-            except:
-                return GPS.Project.root().object_dirs()[0]
+        if not dir:
+            # Defaulting because no output directory specified
+            # in project attributes
+            dir = file.path + '_generated'
+
+        # Get absolute directory for the output directory
+        dir = os.path.join(os.path.dirname(p.file().path), dir)
+
         return dir
 
     @staticmethod
@@ -188,16 +185,16 @@ class Project_Support(object):
     @staticmethod
     def get_switches(file):
         """
-        Return the wswitches to use for a specific file
-        :param GPS.File file: the .mdl file
-        :return str: the list of switches
+        Return the switches to use for a specific file.
+        :param GPS.File file: the model file
+        :return str list: the list of switches
         """
         try:
-            switches = file.project().get_attribute_as_string(
+            switches = file.project().get_attribute_as_list(
                 attribute='Switches', package='QGen',
                 index=os.path.basename(file.path))
             if not switches:
-                switches = file.project().get_attribute_as_string(
+                switches = file.project().get_attribute_as_list(
                     attribute='Switches', package='QGen',
                     index='simulink')
         except:
