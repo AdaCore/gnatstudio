@@ -184,7 +184,7 @@ def wait_for_mdi_child(name, step=500, n=10):
     """
 
     k = 0
-    while GPS.MDI.get(name) is None and k < 10:
+    while GPS.MDI.get(name) is None and k < n:
         yield timeout(step)
         k += 1
 
