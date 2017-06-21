@@ -326,14 +326,15 @@ package body Src_Editor_Box.Tooltips is
 
                      if Message /= null then
                         declare
-                           M : constant GPS.Editors.Editor_Mark'Class :=
-                             Message.Get_Editor_Mark;
+                           Highlighting_Length : constant Highlight_Length :=
+                             Message.Get_Highlighting_Length;
+
+                           Mark_Column : constant Gint :=
+                             Gint (Message.Get_Editor_Mark.Column);
                         begin
-                           if Col + 1 >= Gint (M.Column)
-                             and then Col + 1 <= Gint
-                               (M.Column
-                                + Visible_Column_Type
-                                  (Message.Get_Highlighting_Length))
+                           if Highlighting_Length = Highlight_Whole_Line
+                             or else Col + 1 in Mark_Column .. Mark_Column +
+                               Gint (Highlighting_Length)
                            then
                               if Text /= Null_Unbounded_String then
                                  Text := Text & ASCII.LF;
