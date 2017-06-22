@@ -1408,8 +1408,14 @@ package body Src_Editor_Buffer.Line_Information is
 
       Set_Source_RGBA (Cr, Color);
 
+      if Buffer.Line_Data'Last < Bottom_Line then
+         Trace (Me, "Inconsistent state of Buffer's data, last buffer line:" &
+                  Buffer_Line_Type'Image (Buffer.Line_Data'Last) &
+                  " and bottom:" & Bottom_Line'Img);
+      end if;
+
       Drawing_Loop :
-      while L <= Bottom_Line loop
+      while L <= Buffer_Line_Type'Min (Bottom_Line, Buffer.Line_Data'Last) loop
 
          Get_Line_Yrange (View, Iter, Y_In_Buffer, Height => Line_Height);
 
