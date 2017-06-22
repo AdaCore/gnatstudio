@@ -166,7 +166,9 @@ package body Switches_Editors is
          Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
          Read_Only          => Read_Only,
          History            => null,
-         Key                => No_Key);
+         Key                => No_Key,
+         Cmd_Line_Tooltip   =>
+           "The switches that will be added to the corresponding package.");
       Self.Append (Self.Switches, Fill => True, Expand => True);
 
       Set_Command_Line (Self.Switches, Argument_List_To_String (List));

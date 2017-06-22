@@ -37,17 +37,21 @@ package Switches_Chooser.Gtkada is
       Use_Native_Dialogs : Boolean;
       Read_Only          : Boolean;
       History            : Histories.History;
-      Key                : History_Key);
+      Key                : History_Key;
+      Cmd_Line_Tooltip   : String);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Use_Native_Dialogs : Boolean;
       Read_Only          : Boolean;
       History            : Histories.History;
-      Key                : History_Key);
+      Key                : History_Key;
+      Cmd_Line_Tooltip   : String);
    --  Create a new switches editor based on Config.
    --  Use_Native_Dialogs applies to the file selector and directory selector
    --  dialogs
+   --  Cmd_Line_Tooltip is the string that will be displayed when hovering the
+   --  command line editor.
 
    function Get_Entry
      (Editor : access Switches_Editor_Record'Class)

@@ -783,10 +783,18 @@ package body Switches_Chooser.Gtkada is
       Use_Native_Dialogs : Boolean;
       Read_Only          : Boolean;
       History            : Histories.History;
-      Key                : History_Key) is
+      Key                : History_Key;
+      Cmd_Line_Tooltip   : String) is
    begin
       Editor := new Switches_Editor_Record;
-      Initialize (Editor, Config, Use_Native_Dialogs, Read_Only, History, Key);
+      Initialize
+        (Editor             => Editor,
+         Config             => Config,
+         Use_Native_Dialogs => Use_Native_Dialogs,
+         Read_Only          => Read_Only,
+         History            => History,
+         Key                => Key,
+         Cmd_Line_Tooltip   => Cmd_Line_Tooltip);
    end Gtk_New;
 
    ----------------
@@ -799,7 +807,8 @@ package body Switches_Chooser.Gtkada is
       Use_Native_Dialogs : Boolean;
       Read_Only          : Boolean;
       History            : Histories.History;
-      Key                : History_Key)
+      Key                : History_Key;
+      Cmd_Line_Tooltip   : String)
    is
       Combo                   : Gtk_Combo_Box_Text;
       Widget_For_Command_Line : Gtk_Widget;
@@ -857,8 +866,7 @@ package body Switches_Chooser.Gtkada is
          end;
          Set_Tooltip_Text
            (Editor.Ent,
-            -Command_Line_Editor_Tooltip_Text
-           );
+            -Cmd_Line_Tooltip);
          Widget_Callback.Object_Connect
            (Editor.Ent, Gtk.Editable.Signal_Changed,
             Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),

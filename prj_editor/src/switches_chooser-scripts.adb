@@ -91,7 +91,8 @@ package body Switches_Chooser.Scripts is
             Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
             Read_Only          => False,
             History            => null,
-            Key                => Histories.No_Key);
+            Key                => Histories.No_Key,
+            Cmd_Line_Tooltip   => Command_Line_Editor_Tooltip_Text);
 
          GNATCOLL.Scripts.Gtkada.Set_Data
            (Inst, GObject (Editor));

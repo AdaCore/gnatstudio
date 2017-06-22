@@ -498,7 +498,8 @@ package body Build_Configurations.Gtkada is
          Use_Native_Dialogs => False,
          Read_Only          => False,
          History            => UI.History,
-         Key                => Target_To_Key (UI.Target));
+         Key                => Target_To_Key (UI.Target),
+         Cmd_Line_Tooltip   => Command_Line_Editor_Tooltip_Text);
 
       --  Create the "current command" entry
 
