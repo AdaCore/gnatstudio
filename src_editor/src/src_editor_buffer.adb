@@ -7886,6 +7886,9 @@ package body Src_Editor_Buffer is
       Found   : Boolean;
       Forward : constant Boolean := Length > 0;
    begin
+      End_Line   := Start_Line;
+      End_Column := Start_Column;
+
       if Length < 0 then
          Amount := -Length;
       end if;
@@ -7897,8 +7900,6 @@ package body Src_Editor_Buffer is
                     Column => Gint (Start_Column - 1));
 
       if not Found then
-         End_Line := Start_Line;
-         End_Column := Start_Column;
          return;
       end if;
 
@@ -7909,7 +7910,9 @@ package body Src_Editor_Buffer is
             Backward_Char (Iter, Success);
          end if;
 
-         exit when not Success;
+         exit when not Success
+           or else Buffer_Line_Type (Get_Line (Iter) + 1) not in
+             Buffer.Line_Data'Range;
 
          while Buffer.Line_Data
            (Buffer_Line_Type (Get_Line (Iter) + 1)).Editable_Line = 0
@@ -7921,9 +7924,17 @@ package body Src_Editor_Buffer is
                Backward_Char (Iter, Success);
             end if;
 
-            exit when not Success;
+            exit when not Success
+              or else Buffer_Line_Type (Get_Line (Iter) + 1) not in
+                Buffer.Line_Data'Range;
          end loop;
       end loop;
+
+      if Buffer_Line_Type (Get_Line (Iter) + 1) not in
+        Buffer.Line_Data'Range
+      then
+         return;
+      end if;
 
       End_Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
