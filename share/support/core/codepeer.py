@@ -287,18 +287,6 @@ default patterns file.">
 
     <project_attribute
       package="CodePeer"
-      name="Switches"
-      editor_page="CodePeer"
-      editor_section="CodePeer configuration"
-      label="Switches"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="List of additional switches always used for this project."
-      list="true">
-      <string/>
-    </project_attribute>
-
-    <project_attribute
-      package="CodePeer"
       name="Excluded_Source_Files"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -309,6 +297,31 @@ excluded from CodePeer's analysis."
       list="true">
       <string type="file"/>
     </project_attribute>
+
+    <tool name="CodePeer" package="CodePeer" index="">
+      <language>Ada</language>
+      <switches columns="2" lines="3">
+        <check label="Progress bar" switch="-d" column="1"
+               tip="Display a progress bar with information about how many
+files are left to be compiled" />
+        <spin label="Multiprocessing" switch="-j" min="0" max="1000"
+              default="1" separator="" column="2"
+              tip="Use N processes to carry out the processing (0 means use as
+many cores as available on the machine)." />
+        <check label="Ignore representation clauses" switch="-gnatI"
+               column="1"
+               tip="Ignore all representation clauses, useful for generating
+SCIL for another architecture" />
+        <check label="Unconstrained float overflow" switch="-gnateF"
+               column="2"
+               tip="Check for overflow on unconstrained floating point types"/>
+        <check label="GNAT warnings" switch="-gnatwna" column="1"
+               tip="Enable GNAT warnings during SCIL generation" />
+        <check label="Generate CodePeer messages" switch="-gnateC" column="2"
+               tip="Generate CodePeer messages in compiler format, without
+creating/updating the database" />
+      </switches>
+    </tool>
 
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
@@ -606,7 +619,7 @@ def on_project_changed(hook):
     if not os_utils.locate_exec_on_path(gnatCmd):
         root_project = GPS.Project.root()
         try:
-            mode = root_project.get_property("Build-Mode")
+            root_project.get_property("Build-Mode")
         except GPS.Exception:
             GPS.set_build_mode("codepeer")
 
