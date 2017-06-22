@@ -4122,6 +4122,11 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      --  When the user requested a save, interrupt the current action, so
+      --  that the "check_modified" command, which is called when the undo/redo
+      --  queue changes, has a chance to refresh the modified state.
+      End_Action (Buffer);
+
       if not Internal then
          --  Run the "before_file_saved" hook
          Before_File_Saved_Hook.Run (Buffer.Kernel, Filename);
