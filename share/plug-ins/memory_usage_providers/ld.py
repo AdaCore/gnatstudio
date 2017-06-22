@@ -2,8 +2,8 @@ import GPS
 import os.path
 import re
 from . import core
+from os_utils import locate_exec_on_path
 from workflows import run_as_workflow
-from workflows.promises import ProcessWrapper
 
 MAP_FILE_BASE_NAME = "map.txt"
 
@@ -24,7 +24,6 @@ class LD(core.MemoryUsageProvider):
         """
         The filter used to know if the ld linker supports the '-map' switch.
         """
-
         target = GPS.get_target()
         build_mode = GPS.get_build_mode()
 
@@ -37,12 +36,17 @@ class LD(core.MemoryUsageProvider):
 
         ld_exe = target + '-ld'
 
-        try:
-            process = GPS.Process([ld_exe, '--help'])
-            output = process.get_result()
-            v = '-map' in output
-        except:
+        # Ensure that we don't even try to spawn ld if it's not in the PATH
+        # to avoid displaying error messages in the Messages view.
+        if not locate_exec_on_path(ld_exe):
             v = False
+        else:
+            try:
+                process = GPS.Process([ld_exe, '--help'])
+                output = process.get_result()
+                v = '-map' in output
+            except:
+                v = False
 
         LD._cache[(target, build_mode)] = v
 
@@ -230,8 +234,7 @@ class LD(core.MemoryUsageProvider):
 
         # Keep only the sections that will be allocated in memory
 
-        sections = [section for section in sections
-                    if is_section_allocated(section)]
+        sections = [s for s in sections if is_section_allocated(s)]
 
         visitor.on_memory_usage_data_fetched(regions, sections, modules)
 
