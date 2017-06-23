@@ -10,13 +10,12 @@ import GPS
 import os
 import os.path
 import re
-import string
 import sys
 import traceback
 import os_utils
 import gnat_switches
 import gps_utils
-from gps_utils.switches import *
+from gps_utils.switches import Check, Spin
 from xml.sax.saxutils import escape
 
 gnatmakeproc = None

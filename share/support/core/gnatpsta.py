@@ -13,13 +13,13 @@ must be used.
 # No user customization below this line
 ############################################################################
 
-from GPS import *
-import os
+from GPS import MDI, EditorBuffer
+import GPS
 import tempfile
 import os_utils
 import subprocess
 import shutil
-from gps_utils import *
+from gps_utils import interactive
 
 
 @interactive(name="Display standard.ads")

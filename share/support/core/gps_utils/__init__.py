@@ -1,10 +1,11 @@
 # This package contains various subprograms that wrap functions
 # exported by GPS to make it easier to write plugins
 
-from GPS import *
+from GPS import pwd, cd, Action, EditorBuffer, MDI
 import UserDict
 import types
-from copy import copy
+import GPS
+import GPS.Browsers
 
 # The autodoc may not have visibility on gi.repository
 try:
@@ -19,7 +20,6 @@ def enum(**enums):
         "%s=%s" % (k, v) for k, v in enums.iteritems())
     return type(name, (), enums)
 
-import GPS
 GPS.MDI.GROUP_DEFAULT = 0
 GPS.MDI.GROUP_GRAPHS = 101
 GPS.MDI.GROUP_VCS_EXPLORER = 102
@@ -54,7 +54,6 @@ GPS.Task.EXECUTE_AGAIN = "execute_again"
 GPS.Task.SUCCESS = "success"
 GPS.Task.FAILURE = "failure"
 
-import GPS.Browsers
 GPS.Browsers.Style.Arrow = enum(NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
 GPS.Browsers.Style.Symbol = enum(NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
 GPS.Browsers.Style.Underline = enum(NONE=0, SINGLE=1, DOUBLE=2, LOW=3)

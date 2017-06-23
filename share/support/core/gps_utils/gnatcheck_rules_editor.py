@@ -2,17 +2,12 @@ import GPS
 import os
 import os.path
 import re
-import string
-import traceback
-import os_utils
-import sys
-import sys
 import gps_utils.gnat_rules
-from gps_utils.switches import *
-from gps_utils.gnatcheck_default import *
+from gps_utils.switches import Check, Spin, Field
+from gps_utils.gnatcheck_default import gnatcheck_default
 from xml.dom import minidom
-from xml.dom import *
-from gi.repository import Gtk, GObject
+from xml.dom import Node
+from gi.repository import Gtk
 
 
 def getText(nodelist):
