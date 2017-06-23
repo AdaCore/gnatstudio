@@ -1,6 +1,9 @@
 from keyword import kwlist
 
-from highlighter.common import *
+from highlighter.common import region, words, simple, \
+    tag_number, tag_block, tag_comment_notes, tag_comment, tag_keyword, \
+    hl_inside_strings, tag_type, region_template, tag_string_escapes, \
+    tag_string, register_highlighter, hl_comment_notes
 
 
 hl_format_escapes = simple(r"\{\d+?\}", tag=tag_string_escapes)

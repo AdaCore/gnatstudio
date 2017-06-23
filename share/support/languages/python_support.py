@@ -28,7 +28,8 @@ import sys
 import ast
 import os.path
 import gps_utils
-from constructs import *
+from constructs import CAT_FUNCTION, VISIBILITY_PUBLIC, CAT_PARAMETER, \
+    VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT, CAT_IF_STATEMENT
 import text_utils
 
 try:
@@ -266,7 +267,7 @@ class PythonSupport(object):
         editor.insert(start, "\n")
 
         # do indentation
-        d = self.python_parse_indent(editor, start)
+        self.python_parse_indent(editor, start)
 
     def python_parse_indent(self, e, start):
         """
@@ -393,7 +394,7 @@ class PythonSupport(object):
                     sys.path.index(os.path.dirname(f.path))
                 except:
                     sys.path = [os.path.dirname(f.path)] + sys.path
-                mod = __import__(module)
+                __import__(module)
 
                 # This would import in the current context, not what we want
                 # exec (compile ("import " + module, "<cmdline>", "exec"))

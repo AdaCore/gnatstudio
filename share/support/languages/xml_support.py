@@ -23,9 +23,8 @@ being edited:
 # No user customization below this line
 ############################################################################
 
-from GPS import *
-from gps_utils import *
-from os.path import *
+from GPS import EditorBuffer, Console, Locations, XMLViewer, parse_xml
+from gps_utils import interactive, in_xml_file
 import xml.sax
 import xml.sax.handler
 import xml.sax.saxutils
@@ -67,7 +66,7 @@ def check_wf():
         file = EditorBuffer.get().file()
         handler = xml.sax.handler.ContentHandler()
         errors = GPSErrorHandler()
-        tmp = xml.sax.parse(file.path, handler, errors)
+        xml.sax.parse(file.path, handler, errors)
 
         Locations.remove_category('XML well-formedness')
         if not errors.output:
@@ -77,7 +76,7 @@ def check_wf():
             Locations.parse(errors.output, 'XML well-formedness')
     except StopProcessing:
         Locations.parse(errors.output, 'XML well-formedness')
-    except xml.sax.SAXParseException, inst:
+    except xml.sax.SAXParseException:
         Console().write('Unexpected error while parsing the XML document')
     except:
         Console().write('Unexpected error %s' % (traceback.format_exc(), ))

@@ -1,5 +1,7 @@
-from modules import Module
-from highlighter.common import *
+from highlighter.common import words, tag_keyword, region, tag_comment, \
+        hl_comment_notes, hl_inside_strings, simple, tag_number, \
+        register_highlighter, tag_string
+import GPS
 
 
 # Load language definition before the gps_started hook, and before we load
