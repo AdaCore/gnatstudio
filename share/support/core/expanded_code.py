@@ -5,10 +5,9 @@ GNAT (-gnatGL switch).
 
 
 import os
-import os.path
 import distutils.dep_util
 import GPS
-from gps_utils import *
+from gps_utils import in_ada_file, interactive
 
 
 def create_dg(f, str):

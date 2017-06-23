@@ -62,7 +62,8 @@ call is efficient.
 #
 # o implement additional SourceLocation, SourceRange, and File methods.
 
-from ctypes import *
+from ctypes import POINTER, c_int, c_uint, byref, c_void_p, c_longlong, \
+    cdll, CFUNCTYPE, c_char_p, Structure, cast, c_ulong, c_ulonglong, py_object
 import collections
 
 import clang.enumerations
@@ -2481,9 +2482,8 @@ class TranslationUnit(ClangObject):
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
-        ptr = conf.lib.clang_reparseTranslationUnit(
-            self, len(unsaved_files), unsaved_files_array, options
-        )
+        conf.lib.clang_reparseTranslationUnit(
+            self, len(unsaved_files), unsaved_files_array, options)
 
     def save(self, filename):
         """Saves the TranslationUnit to a file.
