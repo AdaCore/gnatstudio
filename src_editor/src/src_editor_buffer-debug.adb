@@ -298,7 +298,17 @@ package body Src_Editor_Buffer.Debug is
            Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             Set_Return_Value
-              (Data, To_String (Buffer.Line_Data (Line)));
+              (Data, "[" & I (Line) & "] " &
+               (if Buffer.Line_Data (Line).Side_Info_Data = null
+                  then "null"
+                  else "<>") &
+                 ":" & I (Buffer.Line_Data (Line).Editable_Line) &
+                 ":" & (if Buffer.Line_Data (Line).Line_Mark = null
+                        then "null"
+                        else "<>") &
+                 ":" & I (Integer (Buffer.Line_Data (Line).File_Line)) &
+                 ":" & I (Integer
+                          (Buffer.Line_Data (Line).Highlighting'Length)));
          end loop;
 
       elsif Command = "debug_dump_side_info" then

@@ -1486,6 +1486,9 @@ private
    package Listener_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Access);
 
+   type Line_Position_Kind is (At_Begin, At_End, Other);
+   --  In what place of line is text inserted or deleted
+
    --------------------------
    -- Source_Buffer_Record --
    --------------------------
@@ -1527,6 +1530,9 @@ private
       --  If >= 1, this means we are modifying text due to internal operation
       --  Used to avoid recursion, when using commands.
       --  Do not reference directly, see section "Recursion protection" above
+
+      Inserting_Position : Line_Position_Kind := At_Begin;
+      --  Holds place where new text is inserting
 
       No_Cursor_Move_On_Changes : Boolean := False;
       --  When this is true, we'll avoid moving the cursor when performing

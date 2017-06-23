@@ -173,7 +173,7 @@ package Src_Editor_Buffer.Line_Information is
    procedure Remove_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type);
+      Count      : Buffer_Line_Type);
    --  Remove lines from the column info and line highlights
 
    procedure Remove_Blank_Lines

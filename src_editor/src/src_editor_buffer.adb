@@ -344,7 +344,7 @@ package body Src_Editor_Buffer is
    procedure Lines_Remove_Hook_Before
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type);
+      Count      : Buffer_Line_Type);
    --  Actions that must be executed whenever a line is removed.
    --  This is called before the lines are actually removed from the buffer.
 
@@ -2062,8 +2062,8 @@ package body Src_Editor_Buffer is
         To_Unchecked_String (Get_Chars (Nth (Params, 2)));
       Length       : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Pos, Sel_Pos : Gtk_Text_Iter;
-      Command      : Editor_Command := Get_Current_Command (Buffer);
-      pragma Unreferenced (Command);
+      Command      : Editor_Command := Get_Current_Command (Buffer)
+        with Unreferenced;
       Line         : Editable_Line_Type;
       Col          : Integer;
       User_Action  : Action_Type;
@@ -2081,6 +2081,16 @@ package body Src_Editor_Buffer is
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
       Col := Integer (Get_Line_Offset (Pos) + 1);
+
+      if Starts_Line (Pos) then
+         Buffer.Inserting_Position := At_Begin;
+
+      elsif Ends_Line (Pos) then
+         Buffer.Inserting_Position := At_End;
+
+      else
+         Buffer.Inserting_Position := Other;
+      end if;
 
       --  Move mark of start of re-highlight area into insertion position
 
@@ -2147,9 +2157,7 @@ package body Src_Editor_Buffer is
       --  there is no longer a reason that there should be folded data
       --  below this line.
 
-      if not Lines_Are_Real (Buffer)
-        and not Buffer.Inserting
-      then
+      if not Lines_Are_Real (Buffer) then
          declare
             Result, Ignore : Boolean;
             pragma Unreferenced (Ignore);
@@ -2510,54 +2518,67 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Remove the lines in the side information column
+      declare
+         From, To, Count : Buffer_Line_Type;
+      begin
+         From := Buffer_Line_Type (Line_Start + 1);
+         To   := Buffer_Line_Type (Line_End + 1);
 
-      if Line_Start /= Line_End then
-         Lines_Remove_Hook_Before
-           (Buffer,
-            Buffer_Line_Type (Line_Start + 1),
-            Buffer_Line_Type (Line_End + 1));
+         if From /= To then
+            Count := To - From;
 
-      else
-         --  We are editing characters on a line: unfold the block below, so
-         --  that the folding data remains in sync even if we remove the
-         --  information that justified the folding.
-         --
-         --  For instance, if the text is
-         --
-         --    1  procedure hello is
-         --    2  begin
-         --    3     null;
-         --    3  end hello;
-         --
-         --  If the block is folded and the user removes the "is" in line 1,
-         --  there is no longer a reason that there should be folded data
-         --  below this line.
+            if Starts_Line (Start_Iter) then
+               --  The Start_Iter is on the start of line, so we need
+               --  to remove this line.
+               From := From - 1;
+            end if;
 
-         if not Lines_Are_Real (Buffer) then
-            declare
-               Result : Boolean;
-               M1     : Gtk_Text_Mark;
-               M2     : Gtk_Text_Mark;
-            begin
-               M1 := Create_Mark (Buffer, "", Start_Iter);
-               M2 := Create_Mark (Buffer, "", End_Iter);
+            Lines_Remove_Hook_Before (Buffer, From, Count);
 
-               Result := Fold_Unfold_Line (Buffer, Editable_Line_Start, False);
-               if Result then
-                  --  We have changed the buffer: stop propagation and reemit
-                  Emit_Stop_By_Name (Buffer, "delete_range");
+         else
+            --  We are editing characters on a line: unfold the block below, so
+            --  that the folding data remains in sync even if we remove the
+            --  information that justified the folding.
+            --
+            --  For instance, if the text is
+            --
+            --    1  procedure hello is
+            --    2  begin
+            --    3     null;
+            --    3  end hello;
+            --
+            --  If the block is folded and the user removes the "is" in line 1,
+            --  there is no longer a reason that there should be folded data
+            --  below this line.
 
-                  Get_Iter_At_Mark (Buffer, Start_Iter, M1);
-                  Get_Iter_At_Mark (Buffer, End_Iter, M2);
+            if not Lines_Are_Real (Buffer) then
+               declare
+                  Result : Boolean;
+                  M1     : Gtk_Text_Mark;
+                  M2     : Gtk_Text_Mark;
+               begin
+                  M1 := Create_Mark (Buffer, "", Start_Iter);
+                  M2 := Create_Mark (Buffer, "", End_Iter);
 
-                  Delete_Mark (Buffer, M1);
-                  Delete_Mark (Buffer, M2);
-                  Delete (Buffer, Start_Iter, End_Iter);
-                  return;
-               end if;
-            end;
+                  Result := Fold_Unfold_Line
+                    (Buffer, Editable_Line_Start, False);
+                  if Result then
+                     --  We have changed the buffer:
+                     --  stop propagation and reemit
+                     Emit_Stop_By_Name (Buffer, "delete_range");
+
+                     Get_Iter_At_Mark (Buffer, Start_Iter, M1);
+                     Get_Iter_At_Mark (Buffer, End_Iter, M2);
+
+                     Delete_Mark (Buffer, M1);
+                     Delete_Mark (Buffer, M2);
+                     Delete (Buffer, Start_Iter, End_Iter);
+                     return;
+                  end if;
+               end;
+            end if;
          end if;
-      end if;
+      end;
 
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
@@ -3208,6 +3229,7 @@ package body Src_Editor_Buffer is
       Buffer.Line_Data := new Line_Data_Array (1 .. 1);
       Buffer.Line_Data (1) := New_Line_Data;
       Buffer.Line_Data (1).Editable_Line := 1;
+      Buffer.Line_Data (1).File_Line := 1;
       Create_Side_Info (Buffer, 1);
 
       --  Compute the block information
@@ -5547,19 +5569,19 @@ package body Src_Editor_Buffer is
    procedure Lines_Remove_Hook_Before
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type) is
+      Count      : Buffer_Line_Type) is
    begin
       --  Resynchronize the arrays that need to be synchronized with line
       --  numbers.
-      Remove_Lines (Buffer, Start_Line, End_Line);
+      Remove_Lines (Buffer, Start_Line, Count);
 
       --  It is necessary to set the fields Buffer.First_Removed_Line and
       --  Buffer.Last_Removed_Line because the parameters for the
       --  "delete_range" signal are invalid when we connect after the actual
       --  deletion has been done.
 
-      Buffer.First_Removed_Line := Start_Line;
-      Buffer.Last_Removed_Line  := End_Line;
+      Buffer.First_Removed_Line := Start_Line + 1;
+      Buffer.Last_Removed_Line  := Start_Line + Count;
    end Lines_Remove_Hook_Before;
 
    -----------------------------

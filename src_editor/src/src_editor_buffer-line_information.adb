@@ -53,6 +53,9 @@ package body Src_Editor_Buffer.Line_Information is
 
    Me : constant Trace_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
+   Test_Dump : constant Trace_Handle := Create
+     ("Src_Editor_Buffer.Line_Information.Test_Dump", Off);
+
    type Line_Info_Note_Record is new Abstract_Note with record
       Style : Style_Access := null;
       --  The style used to highlight this message
@@ -151,6 +154,93 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer  : access Source_Buffer_Record'Class;
       Message : Message_Access) return Editable_Line_Type;
    --  Return the Line which contains Message, 0 if it wasn't found.
+
+   function Dump (Buffer : access Source_Buffer_Record'Class) return String;
+   function Image (Data : Line_Info_Width_Array_Access) return String;
+   function Image (Data : Line_Info_Width) return String;
+   function Image (Data : Gtk_Text_Mark) return String;
+   function Image (Data : Highlighting_Data_Array) return String;
+   function Image (Data : Message_Reference) return String;
+   function Image (Data : Line_Information_Access) return String;
+   function Image (Data : Boolean_Array_Access) return String;
+   function Image (Data : Commands.Command_Access) return String;
+   function Image (Data : Lines_List.List) return String;
+   function Image (Data : Universal_Line_Access) return String;
+   function Image (Data : Universal_Line) return String;
+
+   ----------
+   -- Dump --
+   ----------
+
+   function Dump (Buffer : access Source_Buffer_Record'Class) return String is
+      Result : Unbounded_String;
+   begin
+      Append
+        (Result,
+         " Buffer.Last_Editable_Line:" &
+           Buffer.Last_Editable_Line'Img & ASCII.LF);
+      Append
+        (Result,
+         " Buffer.Modifying_Editable_Lines:" &
+           Buffer.Modifying_Editable_Lines'Img & ASCII.LF);
+      Append
+        (Result,
+         " Buffer.Line_Data Last:" & Buffer.Line_Data'Last'Img & ASCII.LF);
+
+      for Index in Buffer.Line_Data'Range loop
+         Append (Result, "  #" & Index'Img & ASCII.LF);
+         Append
+           (Result,
+            "   Side_Info_Data:" & ASCII.LF & Image
+              (Buffer.Line_Data (Index).Side_Info_Data) &
+              "   Editable_Line:" & Buffer.Line_Data
+              (Index).Editable_Line'Img & ASCII.LF &
+              "   Line_Mark:" & Image (Buffer.Line_Data (Index).Line_Mark) &
+              "   File_Line:" & Buffer.Line_Data
+              (Index).File_Line'Img & ASCII.LF &
+              "   Highlighting:" & Image
+              (Buffer.Line_Data (Index).Highlighting));
+      end loop;
+
+      Append
+        (Result,
+         " Buffer.Editable_Lines Last:" &
+           Buffer.Editable_Lines'Last'Img & ASCII.LF);
+
+      for Index in Buffer.Editable_Lines'Range loop
+         Append (Result, "  #" & Index'Img & ASCII.LF);
+         Append
+           (Result, "  Where:" & Buffer.Editable_Lines
+              (Index).Where'Img & ASCII.LF &
+              "  Stored_Lines:" & Image
+              (Buffer.Editable_Lines (Index).Stored_Lines) &
+              "  Stored_Editable_Lines:" &
+              Buffer.Editable_Lines
+              (Index).Stored_Editable_Lines'Img & ASCII.LF &
+              "  Stored_Editable_Lines:" &
+              Buffer.Editable_Lines
+              (Index).Stored_Editable_Lines'Img & ASCII.LF);
+
+         case Buffer.Editable_Lines (Index).Where is
+            when In_Buffer =>
+               Append
+                 (Result, "  Buffer_Line:" &
+                    Buffer.Editable_Lines (Index).Buffer_Line'Img & ASCII.LF);
+
+            when In_Mark =>
+               Append (Result, "  Text:" &
+                       (if Buffer.Editable_Lines (Index).Text = null
+                          then " null"
+                          else Buffer.Editable_Lines (Index).Text.all)
+                       & ASCII.LF);
+
+               Append
+                 (Result, "  UL:" & Image (Buffer.Editable_Lines (Index).UL));
+         end case;
+      end loop;
+
+      return To_String (Result);
+   end Dump;
 
    ------------------------
    -- Message_Is_On_Line --
@@ -487,219 +577,16 @@ package body Src_Editor_Buffer.Line_Information is
       EL     : Editable_Line_Data renames
         Buffer.Editable_Lines (Editable_Line_Type (Line));
 
-      Send_To_Messages : Boolean := False;
-
-      function Image (Data : Line_Info_Width_Array_Access) return String;
-      function Image (Data : Line_Info_Width) return String;
-      function Image (Data : Line_Information_Access) return String;
-      function Image (Data : Commands.Command_Access) return String;
-      function Image (Data : Message_Reference) return String;
-      function Image (Data : Highlighting_Data_Array) return String;
-      function Image (Data : Boolean_Array_Access) return String;
-      function Image (Data : Universal_Line_Access) return String;
-      function Image (Data : Universal_Line) return String;
-      function Image (Data : Gtk_Text_Mark) return String;
-      function Image (Data : Lines_List.List) return String;
-
-      function Image (Data : Lines_List.List) return String is
-         Result : Unbounded_String;
-      begin
-         if Data.Is_Empty then
-            return " empty" & ASCII.LF;
-         end if;
-
-         if Natural (Data.Length) > 2 then
-            Send_To_Messages := True;
-         end if;
-
-         for Item of Data loop
-            Append (Result, Image (Item));
-         end loop;
-
-         return To_String (Result);
-      end Image;
-
-      function Image (Data : Gtk_Text_Mark) return String is
-      begin
-         if Data = null then
-            return " null" & ASCII.LF;
-         else
-            return " Name:" & BL.Line_Mark.Get_Name &
-              " Visible:" & BL.Line_Mark.Get_Visible'Img & ASCII.LF;
-         end if;
-      end Image;
-
-      function Image (Data : Universal_Line_Access) return String is
-      begin
-         if Data = null then
-            return " null" & ASCII.LF;
-         else
-            return Image (Data.all);
-         end if;
-
-      end Image;
-
-      function Image (Data : Universal_Line) return String is
-      begin
-         return ASCII.LF & "    Nature:" & Data.Nature'Img & ASCII.LF &
-           "    Data:" & ASCII.LF &
-           "      Editable_Line:" & Data.Data.Editable_Line'Img & ASCII.LF &
-           "      File_Line:" & Data.Data.File_Line'Img & ASCII.LF &
-           "    Text:" &
-                 (if Data.Text = null
-                    then " null"
-                    else Data.Text.all) & ASCII.LF &
-           "    Line_Mark:" & Image (Data.Line_Mark);
-      end Image;
-
-      function Image (Data : Boolean_Array_Access) return String is
-         Result : Unbounded_String;
-         Prev   : Boolean;
-         Cnt    : Natural := 0;
-      begin
-         if Data = null then
-            return " null" & ASCII.LF;
-         end if;
-
-         if Data'Length = 0 then
-            return " empty" & ASCII.LF;
-         end if;
-
-         Append (Result, ASCII.LF);
-         Prev := Data (Data'First);
-
-         for Index in Data'Range loop
-            if Data (Index) = Prev then
-               Cnt := Cnt + 1;
-
-            else
-               Append
-                 (Result, "        " & Prev'Img &
-                  (if Cnt > 1 then '<' & Cnt'Img & '>' else "") &
-                    ASCII.LF);
-
-               Prev := Data (Index);
-               Cnt  := 1;
-            end if;
-         end loop;
-         Append
-           (Result, "        " & Prev'Img &
-            (if Cnt > 1 then '<' & Cnt'Img & '>' else "") & ASCII.LF);
-
-         return To_String (Result);
-      end Image;
-
-      function Image (Data : Highlighting_Data_Array) return String is
-         Result : Unbounded_String;
-      begin
-         if Data'Length = 0 then
-            return " empty";
-         end if;
-
-         for Index in Data'Range loop
-            Append (Result, "   " & Index'Img & ":" & ASCII.LF);
-            Append (Result, "      Enabled:" & Image (Data (Index).Enabled));
-            Append (Result, "      Active:"
-                    & Data (Index).Active'Img & ASCII.LF);
-         end loop;
-
-         return ASCII.LF & To_String (Result);
-      end Image;
-
-      function Image (Data : Message_Reference) return String is
-      begin
-         if Data.Message = null then
-            return "null";
-         else
-            return To_String (Data.Message.Get_Category) &
-              ":" & To_String (Data.Message.Get_Text);
-         end if;
-      end Image;
-
-      function Image (Data : Commands.Command_Access) return String is
-      begin
-         if Data = null then
-            return " null" & ASCII.LF;
-         else
-            return ASCII.LF & "          Tag:" &
-              Ada.Tags.External_Tag (Data'Tag) & ASCII.LF
-              & "          Name:" & Data.Name & ASCII.LF;
-         end if;
-      end Image;
-
-      function Image (Data : Line_Information_Access) return String is
-         Result : Unbounded_String;
-      begin
-         if Data = null then
-            return "null" & ASCII.LF;
-         end if;
-
-         Append (Result, ASCII.LF);
-         Append (Result, "        Text:" & Data.Text & ASCII.LF);
-         Append (Result, "        Tooltip_Text:" &
-                   Data.Tooltip_Text & ASCII.LF);
-         Append (Result, "        Image:" & Data.Image & ASCII.LF);
-         Append (Result, "        Message:" & Image (Data.Message) & ASCII.LF);
-         Append (Result, "        Associated_Command:" &
-                   Image (Data.Associated_Command));
-
-         return To_String (Result);
-      end Image;
-
-      function Image (Data : Line_Info_Width) return String is
-         Result : Unbounded_String;
-         Cnt    : Natural := 0;
-      begin
-         if Data.Messages.Is_Empty then
-            Append (Result, "      Messages: empty" & ASCII.LF);
-         else
-            for M of Data.Messages loop
-               if M.Message = null then
-                  Cnt := Cnt + 1;
-               else
-                  if Cnt > 0 then
-                     Append (Result, "      Message: null");
-
-                     if Cnt = 1 then
-                        Append (Result, ASCII.LF);
-                     else
-                        Append (Result, " <" & Cnt'Img & '>' & ASCII.LF);
-                     end if;
-                  end if;
-                  Cnt := 0;
-
-                  Append (Result, "      Message:" & Image (M) & ASCII.LF);
-               end if;
-            end loop;
-
-            if Cnt /= 0 then
-               Append (Result, "      Message: null <" &
-                         Cnt'Img & '>' & ASCII.LF);
-            end if;
-         end if;
-
-         return To_String (Result) &
-           "      Action:" & Image (Data.Action) &
-           "      Set:" & Data.Set'Img & ASCII.LF;
-      end Image;
-
-      function Image (Data : Line_Info_Width_Array_Access) return String is
-         Result : Unbounded_String;
-      begin
-         if Data = null then
-            return "    null" & ASCII.LF;
-         else
-            for Index in Data'Range loop
-               Append
-                 (Result,
-                  "   " & Index'Img & ": "  & ASCII.LF & Image (Data (Index)));
-            end loop;
-
-            return To_String (Result);
-         end if;
-      end Image;
-
    begin
+      Append
+        (Result, "Buffer.Line_Data:" & Buffer.Line_Data'Last'Img & ASCII.LF);
+      Append
+        (Result, "Buffer.Editable_Lines:" &
+           Buffer.Editable_Lines'Last'Img & ASCII.LF);
+      Append
+        (Result, "Buffer.Last_Editable_Line:" &
+           Buffer.Last_Editable_Line'Img & ASCII.LF);
+
       if Line in Buffer.Line_Data'Range then
          Append
            (Result,
@@ -735,9 +622,7 @@ package body Src_Editor_Buffer.Line_Information is
          end case;
       end if;
 
-      if Send_To_Messages then
-         Buffer.Kernel.Messages_Window.Insert (To_String (Result));
-      end if;
+      Buffer.Kernel.Messages_Window.Insert (To_String (Result));
 
       return To_String (Result);
    end Get_Internal_Tooltip;
@@ -1255,7 +1140,6 @@ package body Src_Editor_Buffer.Line_Information is
            Buffer.Line_Data (Line).Side_Info_Data;
          Editable_Line : constant Editable_Line_Type :=
            Get_Editable_Line (Buffer, Line);
-         El : constant Editable_Line_Type := Editable_Line_Type (Line);
 
          --  Size depends on actual line height, but also on the size
          --  we reserved for the column
@@ -1333,12 +1217,14 @@ package body Src_Editor_Buffer.Line_Information is
                   Prev_Width, 2.0);
 
                --  Draw Editable_Lines
-               if Buffer.Last_Editable_Line >= El then
-                  if Buffer.Editable_Lines (El).Where = In_Buffer then
-                     Draw_Number
-                       (Integer (Buffer.Editable_Lines (El).Buffer_Line),
-                        Prev_Width, 2.0);
-                  end if;
+               if Editable_Line in Buffer.Editable_Lines'Range
+                 and then Buffer.Editable_Lines
+                   (Editable_Line).Where = In_Buffer
+               then
+                  Draw_Number
+                    (Integer
+                       (Buffer.Editable_Lines (Editable_Line).Buffer_Line),
+                     Prev_Width, 2.0);
                end if;
             end if;
          end if;
@@ -1617,6 +1503,13 @@ package body Src_Editor_Buffer.Line_Information is
       Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
       Number     : Positive := 1;
    begin
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace
+           ("Add_Blank_Lines Line:" & Line'Img & " EL:" & EL'Img &
+              " Text:" & Text & " Name:" & Name & " Column_Id:" & Column_Id);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
       if Line = 0 then
          return null;
       end if;
@@ -1661,7 +1554,9 @@ package body Src_Editor_Buffer.Line_Information is
       --  Shift down editable lines
 
       for J in EL .. Buffer.Editable_Lines'Last loop
-         if Buffer.Editable_Lines (J).Where = In_Buffer then
+         if Buffer.Editable_Lines (J).Where = In_Buffer
+           and then Buffer.Editable_Lines (J).Buffer_Line /= 0
+         then
             Buffer.Editable_Lines (J).Buffer_Line :=
               Buffer.Editable_Lines (J).Buffer_Line
               + Buffer_Line_Type (Number);
@@ -1695,6 +1590,11 @@ package body Src_Editor_Buffer.Line_Information is
             Identifier     => Column_Id,
             Data           => Info.all,
             At_Buffer_Line => Line);
+      end if;
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Add_Blank_Lines");
+         Test_Dump.Trace (Dump (Buffer));
       end if;
 
       return Mark;
@@ -2082,11 +1982,13 @@ package body Src_Editor_Buffer.Line_Information is
       Start  : Buffer_Line_Type;
       Number : Buffer_Line_Type)
    is
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
-      Editable_Lines : Editable_Line_Array_Access renames
+      Position          : Buffer_Line_Type := Start;
+      Buffer_Lines      : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines    : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-      EN : constant Editable_Line_Type := Editable_Line_Type (Number);
-      Bottom_Line : Buffer_Line_Type;
+      EN                : constant Editable_Line_Type :=
+        Editable_Line_Type (Number);
+      Bottom_Line       : Buffer_Line_Type;
       Ref_Editable_Line : Editable_Line_Type;
 
       procedure Expand_Lines
@@ -2116,17 +2018,17 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_Lines (J) := New_Line_Data;
          end loop;
 
-         Unchecked_Free (Buffer.Editable_Lines);
-         Buffer.Editable_Lines := new Editable_Line_Array
+         Unchecked_Free (Editable_Lines);
+         Editable_Lines := new Editable_Line_Array
            (1 .. Editable_Line_Type (N * 2));
 
-         Buffer.Editable_Lines (K'Range) := K.all;
+         Editable_Lines (K'Range) := K.all;
 
-         for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
-            Buffer.Editable_Lines (J) :=
-              (Where       => In_Buffer,
-               Buffer_Line => 0,
-               Stored_Lines   => Lines_List.Empty_List,
+         for J in K'Last + 1 .. Editable_Lines'Last loop
+            Editable_Lines (J) :=
+              (Where                 => In_Buffer,
+               Buffer_Line           => 0,
+               Stored_Lines          => Lines_List.Empty_List,
                Stored_Editable_Lines => 0);
          end loop;
 
@@ -2135,6 +2037,15 @@ package body Src_Editor_Buffer.Line_Information is
       end Expand_Lines;
 
    begin
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace
+           ("Add_Lines Start:" & Start'Img &
+              " Number:" & Number'Img &
+              " Position:" & Buffer.Inserting_Position'Img &
+              " Original_Text_Inserted:" & Buffer.Original_Text_Inserted'Img);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
       if Number <= 0 then
          return;
       end if;
@@ -2152,21 +2063,20 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Original_Lines_Number := Number;
 
          if Buffer.Original_Lines_Number >= Buffer_Lines'Last then
-            Expand_Lines (Number);
+            Expand_Lines (Number + 1);
          end if;
 
-         for J in 1 .. Number loop
+         for J in 1 .. Number + 1 loop
             Buffer_Lines (Start + J) := New_Line_Data;
-            Buffer_Lines (Start + J).Editable_Line := Editable_Line_Type
-              (Start + J);
+            Buffer_Lines (Start + J).Editable_Line :=
+              Editable_Line_Type (Start + J);
             Buffer_Lines (Start + J).File_Line := File_Line_Type (Start + J);
 
             if Buffer.Modifying_Editable_Lines then
-               Buffer.Editable_Lines (Ref_Editable_Line
-                                        + Editable_Line_Type (J)) :=
-                 (Where        => In_Buffer,
-                  Buffer_Line  => Start + J,
-                  Stored_Lines   => Lines_List.Empty_List,
+               Editable_Lines (Ref_Editable_Line + Editable_Line_Type (J)) :=
+                 (Where                 => In_Buffer,
+                  Buffer_Line           => Start + J,
+                  Stored_Lines          => Lines_List.Empty_List,
                   Stored_Editable_Lines => 0);
                Create_Side_Info (Buffer, Start + J);
             end if;
@@ -2177,6 +2087,26 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Original_Text_Inserted := True;
 
       else
+         if Buffer.Inserting_Position = At_End then
+            --  We were at end of line before inserting so we have to move
+            --  not start line but next one instead.
+            Position := Position + 1;
+
+            Ref_Editable_Line := Ref_Editable_Line + 1;
+            for Index in Position .. Buffer_Lines'Last loop
+               if Buffer_Lines (Index).Editable_Line /= 0 then
+                  Ref_Editable_Line := Buffer_Lines (Index).Editable_Line;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         if Test_Dump.Is_Active then
+            Test_Dump.Trace
+              ("Position:" & Position'Img &
+                 " Ref_Editable_Line:" & Ref_Editable_Line'Img);
+         end if;
+
          --  Figure out whether we need to expand the line arrays
 
          Bottom_Line := Buffer_Line_Type'Max
@@ -2187,43 +2117,47 @@ package body Src_Editor_Buffer.Line_Information is
             Expand_Lines (Bottom_Line);
          end if;
 
-         for J in reverse Start + Number .. Buffer_Lines'Last loop
-            Buffer_Lines (J) := Buffer_Lines (J - Number);
-
-            if Buffer.Modifying_Editable_Lines
-              and then Buffer_Lines (J - Number).Editable_Line /= 0
-            then
-               Buffer_Lines (J).Editable_Line
-                 := Buffer_Lines (J - Number).Editable_Line + EN;
-            end if;
-         end loop;
+         Buffer_Lines (Position + Number .. Buffer_Lines'Last) :=
+           Buffer_Lines (Position .. Buffer_Lines'Last - Number);
 
          if Buffer.Modifying_Editable_Lines then
-            for Line in reverse
+            for J in Position + Number .. Buffer_Lines'Last loop
+               if Buffer_Lines (J).Editable_Line /= 0 then
+                  Buffer_Lines (J).Editable_Line :=
+                    Buffer_Lines (J).Editable_Line + EN;
+               end if;
+            end loop;
+
+            Editable_Lines
+              (Ref_Editable_Line + EN .. Buffer.Last_Editable_Line + EN) :=
+              Editable_Lines
+                (Ref_Editable_Line .. Buffer.Last_Editable_Line);
+
+            for Line in
               Ref_Editable_Line + EN .. Buffer.Last_Editable_Line + EN
             loop
-               Editable_Lines (Line) := Editable_Lines (Line - EN);
-
                if Editable_Lines (Line).Where = In_Buffer then
-                  Editable_Lines (Line).Buffer_Line
-                    := Editable_Lines (Line - EN).Buffer_Line + Number;
+                  Editable_Lines (Line).Buffer_Line :=
+                    Editable_Lines (Line).Buffer_Line + Number;
                end if;
             end loop;
          end if;
 
          --  Remove highlighting for the topmost of moved lines
 
-         for K in Highlight_Location loop
-            Buffer_Lines (Start + Number).Highlighting (K).Active := 0;
+         Bottom_Line := Position + Number;
 
-            if Buffer_Lines (Start + Number).Highlighting (K).Enabled
-                 /= null
+         for K in Highlight_Location loop
+            Buffer_Lines (Bottom_Line).Highlighting (K).Active := 0;
+
+            if Buffer_Lines
+              (Bottom_Line).Highlighting (K).Enabled /= null
             then
-               for J
-                in Buffer_Lines (Start + Number).Highlighting (K).Enabled'Range
+               for J in Buffer_Lines
+                 (Bottom_Line).Highlighting (K).Enabled'Range
                loop
-                  Buffer_Lines (Start + Number).Highlighting (K).Enabled (J) :=
-                    False;
+                  Buffer_Lines
+                    (Bottom_Line).Highlighting (K).Enabled (J) := False;
                end loop;
             end if;
          end loop;
@@ -2231,19 +2165,19 @@ package body Src_Editor_Buffer.Line_Information is
          --  Reset the newly inserted lines
 
          for J in 0 .. Number - 1 loop
-            Buffer_Lines (Start + J) := New_Line_Data;
-            Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
+            Buffer_Lines (Position + J) := New_Line_Data;
+            Buffer_Lines (Position + J).Editable_Line := Ref_Editable_Line
               + Editable_Line_Type (J);
          end loop;
 
          if Buffer.Modifying_Editable_Lines then
             for J in 0 .. EN - 1 loop
                Editable_Lines (Ref_Editable_Line + J) :=
-                 (Where       => In_Buffer,
-                  Buffer_Line => Start + Buffer_Line_Type (J),
-                  Stored_Lines   => Lines_List.Empty_List,
+                 (Where                 => In_Buffer,
+                  Buffer_Line           => Position + Buffer_Line_Type (J),
+                  Stored_Lines          => Lines_List.Empty_List,
                   Stored_Editable_Lines => 0);
-               Create_Side_Info (Buffer, Start + Buffer_Line_Type (J));
+               Create_Side_Info (Buffer, Position + Buffer_Line_Type (J));
             end loop;
 
             Buffer.Last_Editable_Line := Buffer.Last_Editable_Line + EN;
@@ -2252,6 +2186,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Recalculate_Side_Column_Width (Buffer);
       Side_Column_Configuration_Changed (Buffer);
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Add_Lines");
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
    end Add_Lines;
 
    ------------------
@@ -2261,16 +2200,23 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Remove_Lines
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type)
+      Count      : Buffer_Line_Type)
    is
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-      Number : constant Buffer_Line_Type := End_Line - Start_Line;
-      EN     : Editable_Line_Type := Editable_Line_Type (Number);
 
+      ES : constant Buffer_Line_Type := Start_Line + 1;
+      EN : Editable_Line_Type := Editable_Line_Type (Count);
+      EL : Editable_Line_Type;
    begin
-      if End_Line <= Start_Line then
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace
+           ("Remove_Lines Start:" & Start_Line'Img & " Count:" & Count'Img);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
+      if Count < 1 then
          return;
       end if;
 
@@ -2279,7 +2225,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       if not Lines_Are_Real (Buffer) then
          EN := 0;
-         for J in Start_Line + 1 .. End_Line loop
+         for J in ES .. Start_Line + Count loop
             if Buffer_Lines (J).Editable_Line /= 0 then
                EN := EN + 1;
             end if;
@@ -2287,7 +2233,7 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       if Buffer.Modifying_Editable_Lines then
-         for J in Start_Line .. Start_Line + Number - 1 loop
+         for J in ES .. Start_Line + Count loop
             if Buffer_Lines (J).Side_Info_Data /= null then
                for Col in Buffer_Lines (J).Side_Info_Data'Range loop
                   Free (Buffer, Buffer_Lines (J).Side_Info_Data (Col), True);
@@ -2296,16 +2242,19 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end if;
 
-      for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
-         Buffer_Lines (J) := Buffer_Lines (J + Number);
+      EL := Buffer_Lines (ES).Editable_Line;
 
-         if Buffer.Modifying_Editable_Lines then
-            if Buffer_Lines (J + Number).Editable_Line /= 0 then
+      Buffer_Lines (ES .. Buffer_Lines'Last - Count) :=
+        Buffer_Lines (ES + Count .. Buffer_Lines'Last);
+
+      if Buffer.Modifying_Editable_Lines then
+         for J in ES .. Buffer_Lines'Last - Count loop
+            if Buffer_Lines (J).Editable_Line /= 0 then
                Buffer_Lines (J).Editable_Line :=
-                 Buffer_Lines (J + Number).Editable_Line - EN;
+                 Buffer_Lines (J).Editable_Line - EN;
             end if;
-         end if;
-      end loop;
+         end loop;
+      end if;
 
       Reset_Blocks_Info (Buffer);
 
@@ -2320,18 +2269,33 @@ package body Src_Editor_Buffer.Line_Information is
          begin
             Lines_To_Report := new Editable_Line_Array (1 .. EN);
 
-            Lines_To_Report.all := Editable_Lines
-              (Buffer_Lines (Start_Line).Editable_Line
-               .. Buffer_Lines (Start_Line).Editable_Line + EN - 1);
+            if Test_Dump.Is_Active then
+               Test_Dump.Trace
+                 ("ES:" & ES'Img & " EN:" & EN'Img &
+                    " Buffer_Lines'Last:" & Buffer_Lines'Last'Img &
+                    " Editable_Lines'Last:" & Editable_Lines'Last'Img &
+                    " Buffer_Lines (ES).Editable_Line:" &
+                    Buffer_Lines (ES).Editable_Line'Img &
+                    " Buffer_Lines (ES).Editable_Line + EN - 1:" &
+                    Editable_Line_Type'Image
+                    (Buffer_Lines (ES).Editable_Line + EN - 1));
+            end if;
 
-            for J in Buffer_Lines (Start_Line).Editable_Line
-              .. Buffer.Last_Editable_Line - EN
-            loop
-               Editable_Lines (J) := Editable_Lines (J + EN);
+            Lines_To_Report.all := Editable_Lines (EL .. EL + EN - 1);
 
+            Editable_Lines (EL .. Buffer.Last_Editable_Line - EN) :=
+              Editable_Lines (EL + EN .. Buffer.Last_Editable_Line);
+
+            if Test_Dump.Is_Active then
+               Test_Dump.Trace
+                 ("ES:" & ES'Img & " Buffer_Lines'Last:" &
+                    Buffer_Lines'Last'Img);
+            end if;
+
+            for J in EL .. Buffer.Last_Editable_Line - EN loop
                if Editable_Lines (J).Where = In_Buffer then
                   Editable_Lines (J).Buffer_Line :=
-                    Editable_Lines (J + EN).Buffer_Line - Number;
+                    Editable_Lines (J).Buffer_Line - Count;
                end if;
             end loop;
 
@@ -2346,16 +2310,18 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       --  Reset bottom lines
-      --  ??? Should this be made a simple allocation ?
-
-      for J in Buffer_Line_Type'Max
-        (Start_Line + 1, Buffer_Lines'Last - Number) .. Buffer_Lines'Last
-      loop
-         Buffer_Lines (J) := New_Line_Data;
-      end loop;
+      Buffer_Lines
+        (Buffer_Line_Type'Max
+           (Start_Line + 1, Buffer_Lines'Last - Count) ..
+             Buffer_Lines'Last) := (others => New_Line_Data);
 
       Recalculate_Side_Column_Width (Buffer);
       Side_Column_Configuration_Changed (Buffer);
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Remove_Lines");
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
    end Remove_Lines;
 
    ------------------------
@@ -2383,6 +2349,13 @@ package body Src_Editor_Buffer.Line_Information is
       Success     : Boolean;
 
    begin
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace
+           ("Remove_Blank_Lines Buffer_Line_At_Blanks:" &
+              Buffer_Line_At_Blanks'Img & " Number:" & Number'Img);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
       if Buffer.In_Destruction then
          return;
       end if;
@@ -2445,6 +2418,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Configuration_Changed (Buffer);
       Buffer.Modifying_Real_Lines := False;
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Remove_Blank_Lines");
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
    end Remove_Blank_Lines;
 
    procedure Remove_Blank_Lines
@@ -2489,6 +2467,12 @@ package body Src_Editor_Buffer.Line_Information is
       Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
       L              : Gint;
    begin
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace
+           ("Hide_Lines Line:" & Line'Img & " Number:" & Number'Img);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
       Buffer.Modifying_Real_Lines := True;
 
       Line_Start := Get_Editable_Line (Buffer, Line);
@@ -2639,6 +2623,11 @@ package body Src_Editor_Buffer.Line_Information is
       --  Emit the "source_lines_folded" hook
 
       Buffer.Source_Lines_Folded (Line_Start, Line_End);
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Hide_Lines");
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
    end Hide_Lines;
 
    ------------------
@@ -2671,6 +2660,11 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Iter, End_Iter : Gtk_Text_Iter;
 
    begin
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("Unhide_Lines Start_Line:" & Start_Line'Img);
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
+
       --  Initializations
 
       Buffer.Modifying_Real_Lines := True;
@@ -2825,6 +2819,11 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Source_Lines_Unfolded
         (Start_Line,
          Start_Line + Editable_Line_Type (Number_Of_Lines_Unfolded));
+
+      if Test_Dump.Is_Active then
+         Test_Dump.Trace ("<- Unhide_Lines");
+         Test_Dump.Trace (Dump (Buffer));
+      end if;
    end Unhide_Lines;
 
    --------------
@@ -3353,5 +3352,242 @@ package body Src_Editor_Buffer.Line_Information is
 
       return False;
    end Has_Special_Lines;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Line_Info_Width_Array_Access) return String is
+      Result : Unbounded_String;
+   begin
+      if Data = null then
+         return "    null" & ASCII.LF;
+      else
+         for Index in Data'Range loop
+            Append
+              (Result,
+               "    #" & Index'Img & ": "  & ASCII.LF & Image (Data (Index)));
+         end loop;
+
+         return To_String (Result);
+      end if;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Line_Info_Width) return String is
+      Result : Unbounded_String;
+      Cnt    : Natural := 0;
+   begin
+      if Data.Messages.Is_Empty then
+         Append (Result, "      Messages: empty" & ASCII.LF);
+      else
+         for M of Data.Messages loop
+            if M.Message = null then
+               Cnt := Cnt + 1;
+            else
+               if Cnt > 0 then
+                  Append (Result, "      Message: null");
+
+                  if Cnt = 1 then
+                     Append (Result, ASCII.LF);
+                  else
+                     Append (Result, " <" & Cnt'Img & '>' & ASCII.LF);
+                  end if;
+               end if;
+               Cnt := 0;
+
+               Append (Result, "      Message:" & Image (M) & ASCII.LF);
+            end if;
+         end loop;
+
+         if Cnt /= 0 then
+            Append
+              (Result, "      Message: null <" & Cnt'Img & '>' & ASCII.LF);
+         end if;
+      end if;
+
+      return To_String (Result) &
+        "      Action:" & Image (Data.Action) &
+        "      Set:" & Data.Set'Img & ASCII.LF;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Gtk_Text_Mark) return String is
+   begin
+      if Data = null then
+         return " null" & ASCII.LF;
+      else
+         return " Name:" & Data.Get_Name &
+           " Visible:" & Data.Get_Visible'Img & ASCII.LF;
+      end if;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Highlighting_Data_Array) return String is
+      Result : Unbounded_String;
+   begin
+      if Data'Length = 0 then
+         return "      empty";
+      end if;
+
+      for Index in Data'Range loop
+         Append (Result, "   " & Index'Img & ":" & ASCII.LF);
+         Append (Result, "      Enabled:" & Image (Data (Index).Enabled));
+         Append (Result, "      Active:"
+                 & Data (Index).Active'Img & ASCII.LF);
+      end loop;
+
+      return ASCII.LF & To_String (Result);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Message_Reference) return String is
+   begin
+      if Data.Message = null then
+         return "null";
+      else
+         return To_String (Data.Message.Get_Category) &
+           ":" & To_String (Data.Message.Get_Text);
+      end if;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Line_Information_Access) return String is
+      Result : Unbounded_String;
+   begin
+      if Data = null then
+         return "null" & ASCII.LF;
+      end if;
+
+      Append (Result, ASCII.LF);
+      Append (Result, "        Text:" & Data.Text & ASCII.LF);
+      Append (Result, "        Tooltip_Text:" &
+                Data.Tooltip_Text & ASCII.LF);
+      Append (Result, "        Image:" & Data.Image & ASCII.LF);
+      Append (Result, "        Message:" & Image (Data.Message) & ASCII.LF);
+      Append (Result, "        Associated_Command:" &
+                Image (Data.Associated_Command));
+
+      return To_String (Result);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Boolean_Array_Access) return String is
+      Result : Unbounded_String;
+      Prev   : Boolean;
+      Cnt    : Natural := 0;
+   begin
+      if Data = null then
+         return " null" & ASCII.LF;
+      end if;
+
+      if Data'Length = 0 then
+         return " empty" & ASCII.LF;
+      end if;
+
+      Append (Result, ASCII.LF);
+      Prev := Data (Data'First);
+
+      for Index in Data'Range loop
+         if Data (Index) = Prev then
+            Cnt := Cnt + 1;
+
+         else
+            Append
+              (Result, "        " & Prev'Img &
+               (if Cnt > 1 then '<' & Cnt'Img & '>' else "") &
+                 ASCII.LF);
+
+            Prev := Data (Index);
+            Cnt  := 1;
+         end if;
+      end loop;
+      Append
+        (Result, "        " & Prev'Img &
+         (if Cnt > 1 then '<' & Cnt'Img & '>' else "") & ASCII.LF);
+
+      return To_String (Result);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Commands.Command_Access) return String is
+   begin
+      if Data = null then
+         return " null" & ASCII.LF;
+      else
+         return ASCII.LF & "          Tag:" &
+           Ada.Tags.External_Tag (Data'Tag) & ASCII.LF
+           & "          Name:" & Data.Name & ASCII.LF;
+      end if;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Lines_List.List) return String is
+      Result : Unbounded_String;
+   begin
+      if Data.Is_Empty then
+         return " empty" & ASCII.LF;
+      end if;
+
+      for Item of Data loop
+         Append (Result, Image (Item));
+      end loop;
+
+      return To_String (Result);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Universal_Line_Access) return String is
+   begin
+      if Data = null then
+         return " null" & ASCII.LF;
+      else
+         return Image (Data.all);
+      end if;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Data : Universal_Line) return String is
+   begin
+      return ASCII.LF & "    Nature:" & Data.Nature'Img & ASCII.LF &
+        "    Data:" & ASCII.LF &
+        "      Editable_Line:" & Data.Data.Editable_Line'Img & ASCII.LF &
+        "      File_Line:" & Data.Data.File_Line'Img & ASCII.LF &
+        "    Text:" &
+      (if Data.Text = null
+       then " null"
+       else Data.Text.all) & ASCII.LF &
+        "    Line_Mark:" & Image (Data.Line_Mark);
+   end Image;
 
 end Src_Editor_Buffer.Line_Information;
