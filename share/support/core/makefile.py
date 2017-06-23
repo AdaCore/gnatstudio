@@ -47,14 +47,11 @@ error messages to display them in the locations window as usual.
 """
 
 
-import GPS
-import sys
 import traceback
 import re
 import os
 import os_utils
-from os.path import *
-from GPS import *
+from GPS import Logger, Hook, parse_xml, Project
 from gps_utils import hook
 
 # This is an XML model for make/gnumake
@@ -145,15 +142,15 @@ class Builder:
            itself. If none is specified there, we default on the build file
            found in the same directory as the root project"""
 
-        root_dir = dirname(Project.root().file().path)
+        root_dir = os.path.dirname(Project.root().file().path)
         self.buildfile = Project.root().get_attribute_as_string(
             self.build_file_attr, self.pkg_name)
 
-        self.buildfile = join(root_dir, self.buildfile)
-        if not isfile(self.buildfile):
+        self.buildfile = os.path.join(root_dir, self.buildfile)
+        if not os.path.isfile(self.buildfile):
             for f in self.default_build_files:
-                self.buildfile = join(root_dir, f)
-                if isfile(self.buildfile):
+                self.buildfile = os.path.join(root_dir, f)
+                if os.path.isfile(self.buildfile):
                     break
                 self.buildfile = None
         Logger("MAKE").log(
@@ -278,13 +275,13 @@ class Antfile (Builder):
                 global ant_targets
                 if name == "target":
                     target = None
-                    description = None
+                    description = ''
                     for attrName in attrs.keys():
                         if attrName == "name":
                             target = attrs.get(attrName)
                         if attrName == "description":
                             description = attrs.get(attrName)
-                    ant_targets += [(str(target), str(target), '')]
+                    ant_targets += [(str(target), description, '')]
 
         parser = make_parser()
         parser.setContentHandler(MySaxDocumentHandler())
