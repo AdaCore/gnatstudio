@@ -101,7 +101,8 @@ when editing other languages
 import re
 import sys
 import GPS
-from gps_utils import *
+from gps_utils import interactive, with_save_excursion, in_ada_file, \
+    is_writable
 
 
 def try_indent(buffer, top, bottom):
@@ -258,7 +259,7 @@ def max_min(e1, e2):
 def in_rw_ada_file(context):
     return (context.module_name == "Source_Editor" and
             (in_ada_file(context) or
-             EditorBuffer.get().file().language().lower() in (
+             GPS.EditorBuffer.get().file().language().lower() in (
                      'project file',)) and
             is_writable(context))
 
@@ -285,8 +286,8 @@ def align_commas():
     buffer = GPS.EditorBuffer.get()
     top = buffer.selection_start()
     bottom = buffer.selection_end()
-    tmark = top.create_mark("top")
-    bmark = bottom.create_mark("bottom")
+    top.create_mark("top")
+    bottom.create_mark("bottom")
 
     if top == bottom:
         GPS.MDI.dialog(
@@ -378,8 +379,8 @@ def align_arrows():
     buffer = GPS.EditorBuffer.get()
     top = buffer.selection_start()
     bottom = buffer.selection_end()
-    tmark = top.create_mark("top")
-    bmark = bottom.create_mark("bottom")
+    top.create_mark("top")
+    bottom.create_mark("bottom")
     found = False
     if top == bottom:
         GPS.MDI.dialog("You must first select the intended text")
@@ -411,8 +412,8 @@ def align_arrows():
                         found = True
                 buffer.delete(top, bottom)
                 buffer.insert(top, chars)
-                tmark = top.create_mark("top")
-                bmark = bottom.create_mark("bottom")
+                top.create_mark("top")
+                bottom.create_mark("bottom")
                 top = buffer.get_mark("top").location()
                 bottom = buffer.get_mark("bottom").location()
                 range_align_on(top, bottom, sep="@>", replace_with=" => ")

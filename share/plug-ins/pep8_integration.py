@@ -5,12 +5,8 @@ Its aim is to check identatoin, style when:
  2 before python script is saved
 """
 
-import os
 import sys
-from itertools import chain
 import pep8
-from GPS import *
-import tool_output
 import GPS
 import colorschemes
 from cStringIO import StringIO

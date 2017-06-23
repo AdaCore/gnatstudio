@@ -11,12 +11,12 @@ import GPS
 import os
 import os.path
 import re
-import string
 import traceback
 import os_utils
-from gi.repository import GObject, Gtk, GLib
+from gi.repository import Gtk
+import gps_utils
 from gps_utils import interactive, hook
-from gps_utils.gnatcheck_rules_editor import *
+from gps_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
 gnatcheck = None
 
@@ -215,7 +215,7 @@ class gnatCheckProc:
             GPS.Locations.remove_category(self.locations_string)
 
         self.msg = ""
-        process = GPS.Process(
+        GPS.Process(
             cmd, "^.+$",
             on_match=self.on_match,
             on_exit=self.on_exit,

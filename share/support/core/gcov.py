@@ -21,8 +21,7 @@ import GPS
 import os
 import re
 from gps_utils import interactive
-from GPS import *
-from os import *
+from GPS import MDI, Project, Process, CodeAnalysis
 
 # A class to display the output of gcov in a separate console.
 
@@ -105,7 +104,7 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
     root_project = Project.root()
 
     # Determine where to create the gcov info
-    GCOV_ROOT = getenv("GCOV_ROOT")
+    GCOV_ROOT = os.getenv("GCOV_ROOT")
 
     if not GCOV_ROOT:
         root_object_dirs = root_project.object_dirs(False)
@@ -121,7 +120,7 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
     else:
         gcov_dir = GCOV_ROOT
 
-    if not access(gcov_dir, R_OK and W_OK):
+    if not os.access(gcov_dir, os.R_OK and os.W_OK):
         MDI.dialog(""" Could not access the directory:
 
    """ + gcov_dir + """
@@ -152,7 +151,7 @@ on which you have permission to read and write.
             unit = basename[0:basename.rfind('.')]
 
             for object_dir in object_dirs:
-                gcda = object_dir + sep + unit + ".gcda"
+                gcda = object_dir + os.sep + unit + ".gcda"
 
                 # If we have not yet found at least one .gcno file, attempt to
                 # find one. This is to improve the precision of error messages,
@@ -160,11 +159,11 @@ on which you have permission to read and write.
                 # executable has never been run.
 
                 if not gcno_file_found:
-                    gcno = object_dir + sep + unit + ".gcno"
-                    if access(gcno, F_OK):
+                    gcno = object_dir + os.sep + unit + ".gcno"
+                    if os.access(gcno, os.F_OK):
                         gcno_file_found = True
 
-                if access(gcda, F_OK):
+                if os.access(gcda, os.F_OK):
                     gcda_file_found = True
                     # Write one entry in response file
 
@@ -176,7 +175,7 @@ on which you have permission to read and write.
 
     res.close()
 
-    r = file(input_file).read()
+    file(input_file).read()
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.
@@ -216,7 +215,7 @@ def remove_gcov():
             object_dir = object_dirs[0]
 
             # Browse in the object dirs
-            for f in listdir(object_dir):
+            for f in os.listdir(object_dir):
                 #  if f is a .gcda or a .gcov, remove it
                 if f.find(".gcda") != -1 or f.find(".gcov") != -1:
-                    remove(object_dir + sep + f)
+                    os.remove(object_dir + os.sep + f)

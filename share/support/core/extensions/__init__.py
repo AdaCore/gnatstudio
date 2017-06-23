@@ -1,7 +1,4 @@
-from GPS import *
 import GPS
-import gps_utils
-
 #########################################
 # Decorators and auto submodules import #
 #########################################

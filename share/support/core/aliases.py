@@ -3,8 +3,9 @@ This file provides the core functionnality for interactive aliases expansion
 in GPS
 """
 
-from GPS import *
-from gps_utils import *
+from GPS import Preference, Hook, Alias, EditorBuffer, execute_action
+import GPS
+from gps_utils import interactive
 from itertools import izip_longest
 from collections import defaultdict
 from text_utils import goto_word_start
