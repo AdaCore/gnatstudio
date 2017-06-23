@@ -31,11 +31,16 @@ package Informational_Popups is
      (Parent                : not null access Gtk_Window_Record'Class;
       Icon_Name             : String;
       No_Transparency_Color : Gdk_RGBA := Black_RGBA;
-      Text                  : String := "");
+      Text                  : String := "";
+      Focused_Window        : access Gtk_Window_Record'Class := null);
    --  Display for a brief time an infomational popup in the center of Parent,
    --  using Icon_Name to retrieve the icon that should be displayed.
    --
    --  No_Transparency_Color is used for the informational popup's background
    --  when transparency is not supported.
+   --
+   --  When Focused_Window is specifed, the focus will be given to that window
+   --  once the informational popup disappears. Otherwise the focus will return
+   --  to the Parent.
 
 end Informational_Popups;
