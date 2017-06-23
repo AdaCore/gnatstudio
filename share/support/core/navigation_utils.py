@@ -13,9 +13,8 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
 ############################################################################
 
 import GPS
-import string
 import re
-from gps_utils import *
+from gps_utils import interactive
 
 # ??? At the moment, this is ada-specific, and ad-hoc. We should use
 # the GPS engine to get that sort of functionality with any language.
@@ -66,6 +65,6 @@ def goto_declaration_body():
                             line=decl_line,
                             column=entity.declaration().column())
         GPS.Editor.mark_current_location()
-    except:
-        print "Not found %s:%s:%s" % (name, current_file.path, line)
+    except Exception:
+        print "Not found %s:%s" % (current_file.path, current_line)
         GPS.Editor.edit(current_file.other_file().path)

@@ -25,9 +25,8 @@ commands:
 # No user customization below this line
 ############################################################################
 
-from GPS import *
-import os_utils
-from gps_utils import *
+from GPS import Preference, EditorBuffer, Process, CommandWindow
+from gps_utils import interactive
 
 Preference("External Commands:Pipe/bgcolor").create(
     "Background color", "color",
