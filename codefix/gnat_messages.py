@@ -16,158 +16,164 @@
 # junk.out -> lines that looked like errors messages but couldn't be retreive
 #    as such by advanced analysis - may be interresting things there
 
-import sys, os, re, StringIO
+import sys
+import os
+import re
 
 nonFixableMessages = []
 fixableMessages = []
 
-fixedOut = open ("fixed.out", "w")
-toBeFixedOut = open ("to_be_fixed.out", "w+")
-knownUnfixableOut = open ("known_unfixable.out", "w+")
-unknownOut = open ("unknown.out", "w+")
-junkOut = open ("junk.out", "w+")
+fixedOut = open("fixed.out", "w")
+toBeFixedOut = open("to_be_fixed.out", "w+")
+knownUnfixableOut = open("known_unfixable.out", "w+")
+unknownOut = open("unknown.out", "w+")
+junkOut = open("junk.out", "w+")
 
 ###############
 # analyseCall #
 ###############
 
-def analyzeCall (call, fileName, line):
 
-   global nonFixableMessages
-   global fixedOut
-   global toBeFixedOut
-   global knownUnfixableOut
-   global unknownOut
-   global junkOut
+def analyzeCall(call, fileName, line):
 
-   basename = re.search ("[\w-]+\.adb", fileName).group (0)
+    global nonFixableMessages
+    global fixedOut
+    global toBeFixedOut
+    global knownUnfixableOut
+    global unknownOut
+    global junkOut
 
-   param = re.sub ("(\"[\s]*&[\s]*\")", "", call)
-   param = re.sub ("\n", "", param)
-   param = re.sub ("^[^\(]*\(", "", param)
-   param = re.sub ("\)[^\)]*$", "", param)
-   param = re.sub (",[^\"]*$", "", param)
+    basename = re.search("[\w-]+\.adb", fileName).group(0)
 
-   if re.match ("^\".*\"$", param) == None:
-      junkOut.write (basename + ":" + str (line) + ": " + param + "\n")
-      return
+    param = re.sub("(\"[\s]*&[\s]*\")", "", call)
+    param = re.sub("\n", "", param)
+    param = re.sub("^[^\(]*\(", "", param)
+    param = re.sub("\)[^\)]*$", "", param)
+    param = re.sub(",[^\"]*$", "", param)
 
-   message = re.sub ("^\"", "", param)
-   message = re.sub ("\"$", "", message)
+    if re.match("^\".*\"$", param) is None:
+        junkOut.write(basename + ":" + str(line) + ": " + param + "\n")
+        return
 
-   if param != None:
-      if re.search ("CODEFIX", call) != None:
-         fixedOut.write (basename + ":" + str (line) + ": " + message + "\n")
-      else:
-         found = False
-         mypattern = ""
+    message = re.sub("^\"", "", param)
+    message = re.sub("\"$", "", message)
 
-         for pattern in fixableMessages:
-            if pattern.search (message) != None:
-               found = True
-               mypattern = pattern.pattern
-
-
-         if found:
-            toBeFixedOut.write (basename + ":" + str (line) + ": " + message + " - [" + mypattern + "]\n")
-         else:
+    if param is not None:
+        if re.search("CODEFIX", call) is not None:
+            fixedOut.write(basename + ":" + str(line) + ": " + message + "\n")
+        else:
             found = False
+            mypattern = ""
 
-            for pattern in nonFixableMessages:
-               if pattern.search (message) != None:
-                  found = True
+            for pattern in fixableMessages:
+                if pattern.search(message) is not None:
+                    found = True
+                    mypattern = pattern.pattern
 
             if found:
-               knownUnfixableOut.write (basename + ":" + str (line) + ": " + message + "\n")
+                toBeFixedOut.write(basename + ":" + str(line) +
+                                   ": " + message + " - [" + mypattern + "]\n")
             else:
-               unknownOut.write (basename + ":" + str (line) + ": " + message + "\n")
+                found = False
+
+                for pattern in nonFixableMessages:
+                    if pattern.search(message) is not None:
+                        found = True
+
+                if found:
+                    knownUnfixableOut.write(
+                        basename + ":" + str(line) + ": " + message + "\n")
+                else:
+                    unknownOut.write(basename + ":" +
+                                     str(line) + ": " + message + "\n")
 
 ###############
 # analyseFile #
 ###############
 
-def analyzeFile (fileName):
-   matchingName = "Error_Msg"
-   matchingIndex = 0
-   matchStr = ""
-   currentLine = 1
 
-   inString = False
-   prevQuote = False
+def analyzeFile(fileName):
+    matchingName = "Error_Msg"
+    matchingIndex = 0
+    matchStr = ""
+    currentLine = 1
 
-   MODE_MATCH = 0
-   MODE_RETREIVE = 1
-   mode = MODE_MATCH
+    inString = False
+    prevQuote = False
 
-   file = open (fileName);
+    MODE_MATCH = 0
+    MODE_RETREIVE = 1
+    mode = MODE_MATCH
 
-   contentStr = file.read ()
+    file = open(fileName)
 
-   for c in contentStr:
-      if c == '\n':
-         currentLine = currentLine + 1
+    contentStr = file.read()
 
-      if mode == MODE_MATCH:
-         if matchingName [matchingIndex] == c:
-            matchingIndex = matchingIndex + 1
-         else:
-            matchingIndex = 0
+    for c in contentStr:
+        if c == '\n':
+            currentLine = currentLine + 1
 
-         if matchingIndex == len (matchingName):
-            matchingIndex = 0
-            mode = MODE_RETREIVE
-            prevQuote = False
-            inString = False
-
-      elif mode == MODE_RETREIVE:
-         matchStr = matchStr + c
-         if c == "\"":
-            if inString:
-               inString = False
-            elif prevQuote:
-               inString = True
-               prevQuote = False
+        if mode == MODE_MATCH:
+            if matchingName[matchingIndex] == c:
+                matchingIndex = matchingIndex + 1
             else:
-               inString = not inString
-               prevQuote = True
+                matchingIndex = 0
 
-         if c == ";" and not inString:
-            analyzeCall (matchStr, fileName, currentLine)
-            matchStr = ""
-            mode = MODE_MATCH
+            if matchingIndex == len(matchingName):
+                matchingIndex = 0
+                mode = MODE_RETREIVE
+                prevQuote = False
+                inString = False
 
+        elif mode == MODE_RETREIVE:
+            matchStr = matchStr + c
+            if c == "\"":
+                if inString:
+                    inString = False
+                elif prevQuote:
+                    inString = True
+                    prevQuote = False
+                else:
+                    inString = not inString
+                    prevQuote = True
 
-   file.close ()
+            if c == ";" and not inString:
+                analyzeCall(matchStr, fileName, currentLine)
+                matchStr = ""
+                mode = MODE_MATCH
+
+    file.close()
 
 ########
 # MAIN #
 ########
 
-nonFixbableMessagesFile = open ("known_unfixable.txt")
-fixableMessageFile = open ("to_be_fixed.txt")
 
-for pattern in nonFixbableMessagesFile.readlines ():
-   cleanPattern = re.sub ("\r|\n", "", pattern)
-   try:
-      nonFixableMessages.append (re.compile (cleanPattern))
-   except:
-      print "can't compile \"" + cleanPattern + "\""
+nonFixbableMessagesFile = open("known_unfixable.txt")
+fixableMessageFile = open("to_be_fixed.txt")
 
-for pattern in fixableMessageFile.readlines ():
-   cleanPattern = re.sub ("\r|\n", "", pattern)
-   try:
-      fixableMessages.append (re.compile (cleanPattern))
-   except:
-      print "can't compile \"" + cleanPattern + "\""
+for pattern in nonFixbableMessagesFile.readlines():
+    cleanPattern = re.sub("\r|\n", "", pattern)
+    try:
+        nonFixableMessages.append(re.compile(cleanPattern))
+    except:
+        print "can't compile \"" + cleanPattern + "\""
 
-dirName = sys.argv [1]
+for pattern in fixableMessageFile.readlines():
+    cleanPattern = re.sub("\r|\n", "", pattern)
+    try:
+        fixableMessages.append(re.compile(cleanPattern))
+    except:
+        print "can't compile \"" + cleanPattern + "\""
 
-for fileName in os.listdir (dirName):
-   if re.match ("[\w-]+\.adb$", fileName):
-      analyzeFile (dirName + "/" + fileName)
+dirName = sys.argv[1]
 
-fixedOut.close ()
-toBeFixedOut.close ()
-knownUnfixableOut.close ()
-unknownOut.close ()
-junkOut.close ()
+for fileName in os.listdir(dirName):
+    if re.match("[\w-]+\.adb$", fileName):
+        analyzeFile(dirName + "/" + fileName)
+
+fixedOut.close()
+toBeFixedOut.close()
+knownUnfixableOut.close()
+unknownOut.close()
+junkOut.close()
