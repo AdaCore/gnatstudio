@@ -23,15 +23,14 @@ therefore be reverted.
 # No user customization below this line
 ############################################################################
 
-from GPS import *
-from os.path import *
+from GPS import Console, Contextual, EditorBuffer, File, Hook, Logger, \
+    Preference, Process, Vdiff, XMLViewer, current_context
 import gps_utils
 import os
 import shutil
 import datetime
 import traceback
 import time
-import stat
 import re
 
 Preference("Plugins/local_history/rcsdir").create(
@@ -79,13 +78,14 @@ class LocalHistory:
         if project:
             dir = project.object_dirs(recursive=False)[0]
         elif Preference("Plugins/local_history/when_no_prj").get():
-            dir = dirname(self.file)
+            dir = os.path.dirname(self.file)
         else:
             return
 
-        self.rcs_dir = join(
+        self.rcs_dir = os.path.join(
             dir, Preference("Plugins/local_history/rcsdir").get())
-        self.rcs_file = join(self.rcs_dir, basename(self.file)) + ",v"
+        self.rcs_file = os.path.join(self.rcs_dir,
+                                     os.path.basename(self.file)) + ",v"
 
         # convert all \ to / for Cygwin toolset, note that forward
         # slashes are handled by the native Win32 API. So it is safe to
@@ -105,10 +105,12 @@ class LocalHistory:
             f = file(self.rcs_file)
             result = []
 
+            previous = None
+
             for line in f.readlines():
                 if line.startswith("log"):
                     break
-                if line.startswith("date\t"):
+                if line.startswith("date\t") and previous is not None:
                     date = line.split()[1]
                     result.append((int(previous[2:]), date[:-1]))
                 previous = line
@@ -131,7 +133,7 @@ class LocalHistory:
         proc = Process(
             "ci -d" +
             datetime.datetime.now().strftime("%Y/%m/%d\\ %H:%M:%S") +
-            " " + basename(self.file))
+            " " + os.path.basename(self.file))
         os.chdir(pwd)
         proc.send(".\n")
 
@@ -140,14 +142,13 @@ class LocalHistory:
         if not self.rcs_dir:
             Logger("LocalHist").log("No RCS dir for file " + self.file)
             return
-        if not isdir(self.rcs_dir):
+        if not os.path.isdir(self.rcs_dir):
             os.makedirs(self.rcs_dir)
             Logger("LocalHist").log("creating directory %s" % self.rcs_dir)
 
         shutil.copy2(self.file, self.rcs_dir)
-        if isfile(self.rcs_file):
-            proc = Process(
-                "rcs -l " + self.rcs_file, on_exit=self.on_lock_taken)
+        if os.path.isfile(self.rcs_file):
+            Process("rcs -l " + self.rcs_file, on_exit=self.on_lock_taken)
         else:
             self.on_lock_taken(None, 0, "")
 
@@ -179,9 +180,10 @@ class LocalHistory:
     def local_checkout(self, revision):
         """Do a local checkout of file at given revision in the RCS directory.
            Return the name of the checked out file"""
-        if self.rcs_dir and isdir(self.rcs_dir):
+        if self.rcs_dir and os.path.isdir(self.rcs_dir):
             try:
-                os.unlink(join(self.rcs_dir, basename(self.file)))
+                os.unlink(os.path.join(self.rcs_dir,
+                                       os.path.basename(self.file)))
             except:
                 pass
 
@@ -190,7 +192,7 @@ class LocalHistory:
             proc = Process("co -r" + revision + " " + self.rcs_file)
             os.chdir(pwd)
             if proc.wait() == 0:
-                return join(self.rcs_dir, basename(self.file))
+                return os.path.join(self.rcs_dir, os.path.basename(self.file))
         return None
 
     def revert_file(self, revision):
@@ -211,8 +213,8 @@ class LocalHistory:
             return
         local = self.local_checkout(revision)
         file_ext = file_ext.replace("/", ".").replace(":", "-")
-        local2 = basename(local) + " " + file_ext
-        local2 = join(self.rcs_dir, local2)
+        local2 = os.path.basename(local) + " " + file_ext
+        local2 = os.path.join(self.rcs_dir, local2)
         shutil.move(local, local2)
         Vdiff.create(File(local2), File(self.file))
         try:
@@ -224,9 +226,9 @@ class LocalHistory:
     def show_diff(self, revision, date):
         """Show, in a console, the diff between the current version and
            revision"""
-        if self.rcs_dir and isdir(self.rcs_dir):
+        if self.rcs_dir and os.path.isdir(self.rcs_dir):
             pwd = os.getcwd()
-            os.chdir(dirname(self.file))
+            os.chdir(os.path.dirname(self.file))
             diff_switches = Preference(
                 "Plugins/local_history/diff_switches").get()
             proc = Process("rcsdiff " + diff_switches +
@@ -239,7 +241,7 @@ class LocalHistory:
 
     def has_local_history(self):
         """Whether there is local history information for self"""
-        return isfile(self.rcs_file)
+        return os.path.isfile(self.rcs_file)
 
     def on_select_xml_node(self, node_name, attrs, value):
         if node_name == "revision":
@@ -257,9 +259,9 @@ class LocalHistory:
 
     def view_all(self, revisions, dates):
         """View all revisions of self in a graphical tree"""
-        if self.rcs_dir and isdir(self.rcs_dir):
+        if self.rcs_dir and os.path.isdir(self.rcs_dir):
             pwd = os.getcwd()
-            os.chdir(dirname(self.file))
+            os.chdir(os.path.dirname(self.file))
 
             xml = "<local_history>\n"
             for index, r in enumerate(revisions):
@@ -347,7 +349,7 @@ def on_patch(context, choice, choice_index):
 
 
 def on_view_all():
-    context = GPS.current_context()
+    context = current_context()
     hist = LocalHistory(context.file())
     hist.view_all(context.revisions, context.revisions_menu)
 
