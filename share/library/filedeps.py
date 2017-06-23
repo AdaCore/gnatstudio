@@ -53,7 +53,6 @@ def internal_dependency_path(from_file, to_file, include_implicit):
                 to_analyze.append((f, file))
 
     target = to_file
-    added = False
     result = ""
     targets = []
 

@@ -7,13 +7,14 @@ To activate the Emacs key shortcuts, please go to the
 dialog instead.
 """
 
+import GPS
+
 msg = """The emacs.py plugin is now obsolete, and has been disabled.
 Please use /Edit/Key Shortcuts instead.
 Your setup has been transitioned, but you need to restart GPS.
 
 """
 
-import GPS
 GPS.Console().write(msg)
 
 # Enable the Emacs key shortcuts

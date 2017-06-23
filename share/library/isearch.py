@@ -56,7 +56,8 @@ if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
 
-from GPS import *
+from GPS import CommandWindow, EditorBuffer, Hook, Preference, \
+    execute_action, lookup_actions_from_key
 from gps_utils import interactive
 
 Preference('Plugins/isearch/highlightnext').create(

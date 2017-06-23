@@ -7,7 +7,7 @@ restore it when the editor is reopened later on.
 # No user customization below this line
 ############################################################################
 
-from GPS import *
+from GPS import EditorBuffer
 import gps_utils
 
 

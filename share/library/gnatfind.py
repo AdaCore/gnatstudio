@@ -43,7 +43,6 @@ def __activate():
     location = buf.at(loc.line(), loc.column())
 
     entity_name = entity.name()
-    length = len(entity_name)
 
     # Go to the beginning of the entity, as needed by gnatfind
 

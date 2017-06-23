@@ -38,10 +38,9 @@ It also shows how to get the word under the cursor in GPS.
 # No user customization below this line
 ###########################################################################
 
-import re
 import os_utils
-from text_utils import *
-import traceback
+from text_utils import goto_word_start, goto_word_end, BlockIterator, \
+    with_save_excursion
 import GPS
 import modules   # from GPS
 from gps_utils import make_interactive
@@ -234,7 +233,7 @@ suggested replacements""",
                     self.ispell_command,
                     before_kill=self._before_killing_ispell,
                     task_manager=False)
-                result = self.ispell.expect("^.*\\n", timeout=2000)
+                self.ispell.expect("^.*\\n", timeout=2000)
             except:
                 GPS.Console().write(
                     "Could not start external command: %s\n" % self.cmd)

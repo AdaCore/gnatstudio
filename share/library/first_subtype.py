@@ -27,7 +27,7 @@ def get_first_subtype(entity):
             entity = parents[0]
 
         return None
-    except Exception as e:
+    except Exception:
         return None
 
 
