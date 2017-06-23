@@ -16,7 +16,6 @@ of directories, and the default is to create missing directories.
 
 import GPS
 import os
-from os.path import *
 import string
 
 attempted = []  # List of directories that this plugin has attempted to create
@@ -41,10 +40,11 @@ def on_project_changed(self):
                     i.get_attribute_as_string("Library_Src_Dir")]
             for j in dirs:
                 if i and i not in [".", "", " "]:
-                    dir = join(dirname(i.file().path), j).strip()
+                    dir = os.path.join(
+                        os.path.dirname(i.file().path), j).strip()
                     # Only attempt to create each directory once
                     if dir not in attempted:
-                        if not exists(dir):
+                        if not os.path.exists(dir):
                             os.makedirs(dir)
                             attempted.append(dir)
                             created.append(dir)

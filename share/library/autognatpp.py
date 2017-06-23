@@ -5,7 +5,6 @@ files often, this will generate many calls to gnatpp with no protection/lock,
 so you may end up with multiple gnatpp processes running at the same time.
 """
 
-import GPS
 import gnatpp
 import gps_utils
 

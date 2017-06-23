@@ -9,7 +9,6 @@ has the focus), or the name of the last editor that had the focus otherwise.
 
 import GPS
 import gps_utils
-from gi.repository import Gtk
 
 
 @gps_utils.interactive()

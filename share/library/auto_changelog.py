@@ -5,7 +5,7 @@ for this file, this package will automatically fill the changelog with stubs
 with names of subprograms where differences have been found.
 """
 
-from GPS import *
+from GPS import EditorBuffer, File, Hook, Locations
 
 
 def on_file_edited(hook, file):
@@ -37,7 +37,6 @@ def on_file_edited(hook, file):
     locations = Locations.list_locations("Visual differences", basename)
 
     prev = ""
-    first_insert = True
 
     #  Find out which is the "enclosing" program/package.
     loc = buffer.at(buffer.lines_count() - 1, 1)

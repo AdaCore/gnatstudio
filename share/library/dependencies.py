@@ -23,11 +23,11 @@ graphical tree widget, which you can dynamically manipulate.
 # No user customization below this line
 #
 
-from GPS import *
-from os.path import *
+from GPS import Console, EditorBuffer, File, Preference, Project, XMLViewer
 from gps_utils import interactive
 import traceback
 import re
+import os
 
 Preference("Plugins/dependencies/show_source").create(
     "Show source", "boolean",
@@ -78,7 +78,8 @@ class Output:
         if Preference("Plugins/dependencies/show_source").get():
             Console().write(
                 "   => {} depends on {}\n".format(
-                    basename(file.path), basename(depends_on.path)
+                    os.path.basename(file.path),
+                    os.path.basename(depends_on.path)
                 )
             )
 
@@ -148,7 +149,8 @@ class XMLOutput:
         elif node_name == "dependency":
             return ["<b>" + attr["name"] + "</b>" + attr["extra"], ""]
         elif node_name == "file":
-            return [basename(attr["src"]), basename(value)]
+            return [os.path.basename(attr["src"]),
+                    os.path.basename(value)]
         return []
 
     def close(self):
@@ -225,7 +227,7 @@ def check_project_dependencies_to_console():
 
 @interactive(name='check project dependencies to xml',
              menu='/Project/Dependencies/Check (to XML)')
-def check_project_dependencies_to_console():
+def check_project_dependencies_to_xml():
     """
     Check whether there are dependencies between the project files that are
     in fact not needed. Output is displayed in a tree.

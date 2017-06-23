@@ -33,9 +33,9 @@ def __close_editors_if_needed(keep=set()):
         if toclose <= 0:
             break
 
-        if (ed.file() not in keep
-           and not ed.is_modified()
-           and not getattr(ed, 'pinned', False)):
+        if (ed.file() not in keep and
+                not ed.is_modified() and
+                not getattr(ed, 'pinned', False)):
 
             GPS.Console().write(
                 'Automatically closing %s\n' % ed.file().path)

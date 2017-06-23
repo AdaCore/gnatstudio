@@ -22,7 +22,7 @@ It asks you for the location of the executable
 # No user customization below this line
 #############################################################################
 
-from GPS import *
+from GPS import Console, EditorBuffer, File, MDI, Preference, Process
 from gps_utils import interactive
 import re
 import os.path
@@ -84,4 +84,4 @@ class Addr2line (Console):
              menu='/Navigate/Open Addr2line Console')
 def open_addr2line_console():
     executable = MDI.input_dialog("Location of the executable ?", "Exec")[0]
-    addr = Addr2line(executable)
+    Addr2line(executable)

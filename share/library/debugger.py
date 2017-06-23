@@ -36,8 +36,9 @@ debugger till the current line.
 # No user customization below this line
 ###########################################################################
 
-from GPS import *
-from gps_utils import *
+from GPS import Console, Debugger, EditorBuffer, \
+    Entity, Hook, Preference, Project, current_context
+from gps_utils import interactive, with_save_current_window
 import text_utils
 import re
 import os.path
@@ -107,7 +108,7 @@ def in_debugger_on_entity(context):
          "Debug/Display <b>" + context.entity().full_name() + "</b>",
     filter=in_debugger_on_entity)
 def display_full_name_run():
-    context = GPS.current_context()
+    context = current_context()
     Debugger.get().send("graph display " + context.entity().full_name(),
                         show_in_console=True)
 
@@ -122,7 +123,7 @@ def display_full_name_run():
         "Debug/Print <b>" + context.entity().name() + "</b> as decimal",
     filter=in_debugger_on_entity)
 def print_as_dec_run():
-    context = GPS.current_context()
+    context = current_context()
     Debugger.get().send("print/d " + context.entity().name(),
                         show_in_console=True)
 
@@ -193,7 +194,7 @@ def on_debugger_stopped(h, debug):
     contextual=debug_add_br_exception_label,
     filter=in_debugger_and_file)
 def add_breakpoint_exception():
-    context = GPS.current_context()
+    context = current_context()
     global autocont_br
     # Only consider base names of files, since the debugger does not always
     # show the full name in the "frame" command
