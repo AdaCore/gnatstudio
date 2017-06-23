@@ -20,7 +20,6 @@ def delete_line():
     """
 
     buffer = GPS.EditorBuffer.get()
-    cpos = buffer.current_view().cursor()
 
     append = GPS.last_command() == name
     if append:
