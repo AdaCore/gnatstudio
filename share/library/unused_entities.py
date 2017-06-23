@@ -33,7 +33,8 @@ through the GPS.Locations.dump() method in the python console.
 # No user customization below this line
 #############################################################################
 
-from GPS import *
+from GPS import Preference, Project, Console, Editor, File, Locations, \
+    EditorBuffer, MDI
 from gps_utils import interactive
 
 xmlada_projects = [

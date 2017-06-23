@@ -29,7 +29,7 @@ def on_compilation_finished(category, target_name, mode_name, status):
     if not base:
         Console().write(
             "plugin save_on_compile.py: no file name is specified in the"
-            + " preferences\n")
+            " preferences\n")
     else:
         try:
             full = join(path, base)

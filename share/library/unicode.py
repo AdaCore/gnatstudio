@@ -20,6 +20,9 @@ This action is called "Describe unicode char". It can be bound to a key,
 assigned to a menu, or more easily executed through the startup script
 execute_extended.py
 """
+from GPS import CommandWindow, Console, EditorBuffer
+from gps_utils import interactive
+import unicodedata
 
 
 background_color = "yellow"
@@ -35,16 +38,12 @@ words = ["acute", "grave", "circumflex", "diaresis", "title",
 # command line, whereas words is checked only for the previous word.
 # You can add to these in the initialization strings by using a python
 # command similar to
-##    prefix = prefix + ["vertical", "opening"]
+# #    prefix = prefix + ["vertical", "opening"]
 # Only lower case letters should be used
 
 ############################################################################
 # No user customization below this line
 ############################################################################
-
-from GPS import *
-from gps_utils import *
-import unicodedata
 
 
 def findcommonstart(strlist):
@@ -55,7 +54,8 @@ def findcommonstart(strlist):
 @interactive(name="Insert unicode", category="Editor", filter="Source editor",
              menu="/Edit/Insert Unicode", before="Insert File...")
 def insert():
-    """Insert any unicode character given its decimal or hexadecimal value, or its name"""
+    """Insert any unicode character given its decimal or
+       hexadecimal value, or its name"""
     Unicode()
 
 
@@ -78,9 +78,9 @@ class Unicode (CommandWindow):
                 split = input.split()
                 compl = [p for p in words if p.startswith(split[-1])]
                 if compl:
-                    self.write \
-                        (" ".join(split[:-1]) + " " +
-                         findcommonstart(compl) + " ")
+                    self.write(
+                        " ".join(split[:-1]) + " " +
+                        findcommonstart(compl) + " ")
             return True
 
     def on_activate(self, input):
@@ -105,6 +105,6 @@ def describe_char(char=None):
     uni = char.decode("utf-8")
     Console().write("Character:  " + char + "\n")
     Console().write("      Name: " + unicodedata.name(uni) + "\n")
-    Console().write("   Unicode: " + `ord(uni)`
-                    + " (U+" + hex(ord(uni))[2:] + ")\n")
+    Console().write("   Unicode: " + repr(ord(uni)) +
+                    " (U+" + hex(ord(uni))[2:] + ")\n")
     Console().write("  Category: " + unicodedata.category(uni) + "\n")

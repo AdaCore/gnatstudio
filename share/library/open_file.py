@@ -13,6 +13,12 @@ will skip the automatic detection of file name, and take the whole selection
 has a file name if such a file is found on the disk.
 """
 
+import GPS
+import re
+import gps_utils
+import os
+from text_utils import get_selection_or_line
+
 
 file_pattern = \
     u'((?:[a-zA-Z]:)?(?:[\\\\/]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?'
@@ -32,12 +38,6 @@ std_include_path = ["/usr/include", "/usr/local/include"]
 ############################################################################
 # No user customization below this line
 ############################################################################
-
-import GPS
-import re
-import gps_utils
-from os.path import *
-from text_utils import *
 
 file_pattern_re = re.compile(file_pattern)
 
@@ -91,26 +91,26 @@ def __filter(context):
     if data.file == "":
         return False
 
-    if exists(data.file):
+    if os.path.exists(data.file):
         return True
     else:
         # Let GPS search in all source dirs and predefined paths
         f = GPS.File(data.file)
-        if exists(f.path):
+        if os.path.exists(f.path):
             data.file = f.path
             return True
 
         # Search with just the basename (otherwise "src/file.c" where
         # "src/" is a source_dir would not be found)
-        f = GPS.File(basename(data.file))
-        if exists(f.path):
+        f = GPS.File(os.path.basename(data.file))
+        if os.path.exists(f.path):
             data.file = f.path
             return True
 
         # One more try, include standard include paths for C files
         for p in std_include_path:
-            f = join(p, data.file)
-            if exists(f):
+            f = os.path.join(p, data.file)
+            if os.path.exists(f):
                 data.file = f
                 return True
 
@@ -118,10 +118,11 @@ def __filter(context):
         # not necessarily in the source dirs
 
         # Handle the case where the include statement contains a directory.
-        if splitext(data.file)[1] in [".h", ".hh", ".cfg", ".c", ".gen"]:
+        if os.path.splitext(data.file)[1] in \
+                [".h", ".hh", ".cfg", ".c", ".gen"]:
             for p in GPS.Project.root().source_dirs(True):
-                f = join(p, data.file)
-                if exists(f):
+                f = os.path.join(p, data.file)
+                if os.path.exists(f):
                     data.file = f
                     return True
 
@@ -131,7 +132,7 @@ def __filter(context):
 def __label(context):
     """Returns the label to use for the contextual menu"""
     data = context.open_file
-    return "Open <b>" + basename(data.file) + "</b>"
+    return "Open <b>" + os.path.basename(data.file) + "</b>"
 
 
 @gps_utils.interactive(

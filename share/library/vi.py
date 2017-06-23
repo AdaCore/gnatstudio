@@ -68,7 +68,7 @@ although the scope is less ambitious here.
 # No user customization below this line
 #############################################################################
 
-from GPS import *
+from GPS import Preference, CommandWindow, EditorBuffer, Hook, parse_xml
 import re
 
 Preference("Plugins/vi/bgcolor").create(
