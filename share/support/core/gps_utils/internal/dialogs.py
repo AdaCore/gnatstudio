@@ -7,13 +7,13 @@ import GPS
 from gi.repository import Gtk
 from asserts import gps_assert, gps_not_null
 from tree import Tree
-from workflows.promises import timeout, wait_idle, Promise, modal_dialog, \
+from workflows.promises import timeout, wait_idle, modal_dialog, \
     idle_modal_dialog, wait_tasks
 from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
     get_button_from_label, get_widgets_by_type, select_combo, \
     get_window_by_prefix, get_window_by_title
 import pygps.tree
-from pygps.tree import select_in_tree, click_in_tree
+from pygps.tree import select_in_tree
 import gps_utils
 from gps_utils.internal.tree import dump_tree_model
 import re
@@ -71,6 +71,7 @@ class Dialog(object):
         Press the cancel button. Use as::
             yield self.cancel()
         """
+
         get_stock_button(self.dialogs, Gtk.STOCK_CANCEL).clicked()
         yield wait_idle()
 
@@ -167,10 +168,40 @@ class Project_Properties_Editor(Dialog):
                 found += 1
         gps_assert(found, len(lang), "Some languages not found %s" % lang)
 
+    def save(self, expect_modif=True):
+        """
+        Press the Save button and click on Yes in the Confimation dialog.
+
+        If expect_modif is True, this method will click on Yes when
+        the confimation dialog appears. Otherwise, it will raise an
+        exception if the confimation dialog is present (since the project
+        is not supposed to be modified) or return if not present.
+
+        Use as::
+            yield dialog.save()
+        """
+
+        save_button = get_widget_by_name("project properties edit source")
+        save_button.clicked()
+        yield timeout(300)
+
+        confirmation_dialog = get_window_by_title("Confirmation")
+        yes_button = get_button_from_label("Yes", confirmation_dialog)
+
+        if expect_modif:
+            yes_button.clicked()
+            yield timeout(300)
+        elif yes_button:
+            gps_assert(yes_button is None, True,
+                       "The project has been marked as " +
+                       "modified but it was not expected")
+            no_button = get_button_from_label("No", confirmation_dialog)
+            no_button.clicked()
 
 ###############################
 # Project Templates Assistant #
 ###############################
+
 
 class ProjectTemplatesAssistant(Dialog):
     """
@@ -200,7 +231,6 @@ class ProjectTemplatesAssistant(Dialog):
         """
 
         tree = get_widgets_by_type(Gtk.TreeView, self.__assistant)[0]
-        model = tree.get_model()
         path = pygps.tree.find_in_tree(tree, 0, template)
         pygps.tree.click_in_tree(tree, path)
 
@@ -248,7 +278,7 @@ class Project_View(Dialog, Tree):
         Tree.compare_contents(self, expected, msg=msg, column=column)
 
     def open_and_yield(self):
-        yield self._open_and_yield("/Tools/Views/Project")
+        yield self._open_and_yield("open project")
         self.dialog = get_widget_by_name('Project Explorer Tree')
 
 
@@ -293,8 +323,6 @@ class KeyShortcuts(Dialog):
         yield wait_idle()
 
     def select_action(self, action):
-        from GPS import process_all_events
-
         tree = get_widget_by_name('Key shortcuts tree', [self.editor])
         GPS.Preference("shortcuts-categories").set(False)
         # ??? Used to manipulate config menu, but this seems to fail now
@@ -801,4 +829,4 @@ class Refactoring_Rename(Dialog):
         yield self._open_and_yield("rename entity", timeout_ms=200)
 
     def set_new_name(self, text):
-        e = pygps.get_widget_by_name("new_name").set_text(text)
+        pygps.get_widget_by_name("new_name").set_text(text)

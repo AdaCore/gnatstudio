@@ -4021,12 +4021,11 @@ package body Project_Properties is
            (Label, Expand => False, Fill => False);
       end if;
 
-      Button := Editor.Add_Button (-"Edit Source", Response_Edit);
+      Button := Editor.Add_Button (-"Save", Response_Edit);
       Button.Set_Tooltip_Text
-        ("Close this dialog and edit the source file for this project");
+        ("Close this dialog and save the modifications in the source file of "
+         & "this project");
       Set_Name (Button, "project properties edit source");
-
-      Button := Editor.Add_Button (Stock_Ok, Gtk_Response_OK);
       Button.Set_Sensitive (not Read_Only);
       Button := Editor.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
 
@@ -4658,17 +4657,12 @@ package body Project_Properties is
             when Response_Edit =>
                exit when Check_Pages;
 
-            when Gtk_Response_OK =>
-               exit when Check_Pages;
-
             when others =>
                exit;
          end case;
       end loop;
 
-      if not Read_Only
-        and then (Response = Gtk_Response_OK or else Response = Response_Edit)
-      then
+      if not Read_Only and then  Response = Response_Edit then
          declare
             Prj_Iter    : Scenario_Selectors.Project_Iterator :=
                             Start (Editor.Prj_Selector);
