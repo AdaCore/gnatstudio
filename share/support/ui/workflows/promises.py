@@ -4,7 +4,7 @@ workflows. See the full description of workflows in workflows/__init__.py
 """
 
 import time
-from time_utils import *
+from time_utils import TimeDisplay
 
 import GPS
 import re

@@ -3,7 +3,7 @@ Functionnality and actions related to multi cursors
 """
 
 import GPS
-from gps_utils import *
+from gps_utils import interactive
 from text_utils import goto_word_start, goto_word_end
 import re
 
@@ -108,8 +108,9 @@ def mc_all_entity_references():
     identifier = editor.get_chars(loc_id_start, loc_id_end)
 
     try:
-        entity = Entity(identifier, editor.file(),
-                        loc_id_start.line(), loc_id_start.column())
+        entity = GPS.Entity(
+            identifier, editor.file(),
+            loc_id_start.line(), loc_id_start.column())
     except GPS.Exception:
         return
 
@@ -140,7 +141,7 @@ def mc_all_entity_references():
         Event handler on insert/delete. Mainly ensures that the current field
         in alias expansion is highlighted (via the aliases overlay)
         """
-        if editor == EditorBuffer.get(file_name):
+        if editor == GPS.EditorBuffer.get(file_name):
             editor.remove_overlay(
                 overlay,
                 editor.beginning_of_buffer(),
@@ -168,8 +169,8 @@ def mc_all_entity_references():
             editor.end_of_buffer()
         )
         editor.remove_all_slave_cursors()
-        Hook("character_added").remove(on_edit)
-        Hook("location_changed").remove(on_move)
+        GPS.Hook("character_added").remove(on_edit)
+        GPS.Hook("location_changed").remove(on_move)
 
     marks.append((mark_start, mark_end))
     apply_overlay(editor, mark_start, mark_end, overlay)
@@ -193,5 +194,5 @@ def mc_all_entity_references():
             apply_overlay(editor, ms, me, overlay)
             editor.add_cursor(loc)
 
-    Hook("character_added").add(on_edit)
-    Hook("location_changed").add(on_move)
+    GPS.Hook("character_added").add(on_edit)
+    GPS.Hook("location_changed").add(on_move)

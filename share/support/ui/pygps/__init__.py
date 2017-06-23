@@ -265,8 +265,8 @@ try:
            first window with given title.
         """
 
-        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window)
-                  and x.get_title() == title]
+        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window) and
+                  x.get_title() == title]
         if result:
             return result[0]
         else:
@@ -277,9 +277,9 @@ try:
            first window whose title starts with prefix
         """
 
-        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window)
-                  and x.get_title()
-                  and x.get_title().startswith(prefix)]
+        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window) and
+                  x.get_title() and
+                  x.get_title().startswith(prefix)]
         if result:
             return result[0]
         else:
@@ -291,8 +291,8 @@ try:
            Most dialogs in GPS use such buttons, that mix icons and text.
         """
 
-        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button)
-                and x.get_use_stock() and x.get_label() == stock][0]
+        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button) and
+                x.get_use_stock() and x.get_label() == stock][0]
 
     def get_button_from_label(label, parents=None):
         """Return the first button with the matching label"""
@@ -307,9 +307,9 @@ try:
 
     def get_button_from_icon_name(parents, icon_name):
         """Return the first button with the matching icon"""
-        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button)
-                and x.get_image()
-                and x.get_image().get_icon_name()[0] == icon_name][0]
+        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button) and
+                x.get_image() and
+                x.get_image().get_icon_name()[0] == icon_name][0]
 
     # ##########
     # # Menus ##

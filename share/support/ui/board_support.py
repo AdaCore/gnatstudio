@@ -39,10 +39,9 @@ a specific board:
 import GPS
 from modules import Module
 from target_connector import TargetConnector
-from gps_utils.internal.dialogs import *
+from gps_utils.internal.dialogs import Project_Properties_Editor
 import workflows
 import workflows.promises as promises
-from gps_utils.console_process import Console_Process
 
 
 class BoardLoader(Module):
@@ -558,12 +557,12 @@ class BoardLoader(Module):
         debugger_promise = promises.DebuggerWrapper(exe)
 
         # Load the executable
-        r2 = yield debugger_promise.wait_and_send(
+        yield debugger_promise.wait_and_send(
             cmd='load "%s"' % (exe),
             block=True)
 
         # Reset the board
-        r3 = yield debugger_promise.wait_and_send(
+        yield debugger_promise.wait_and_send(
             cmd="monitor reset halt",
             block=True)
 
