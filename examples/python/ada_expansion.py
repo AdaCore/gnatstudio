@@ -81,6 +81,14 @@ is expanded into
    if | then
    end if;
 """
+import sys
+import GPS
+import string
+import re
+from misc_text_utils import replace_line, insert_line, get_line, attempt_up, \
+    blanks, up, down
+import text_utils
+
 
 ############################################################################
 # Customization variables
@@ -105,426 +113,471 @@ default_action_key = "primary-h"
 # category. Changing the default action_key here has no effect, since
 # the default key is set as soon as GPS is loaded
 
-
-################### No user customization below this point ##########
 
-import sys;
-import GPS;
-import string;
-import re;
-from misc_text_utils import *
-import text_utils;
+# ################## No user customization below this point ##########
 
-GPS.parse_xml ("""
+GPS.parse_xml("""
    <action name='""" + action_name + """' output="none" category="Ada">
-      <description>Ada syntax-based reserved word and construct expansion</description>
+      <description>Ada syntax-based reserved word and """
+              """construct expansion</description>
       <filter module="Source_Editor" language="ada" />
       <shell lang="python">ada_expansion.expand_syntax()</shell>
    </action>
    <key action='""" + action_name + """'>""" + default_action_key + """</key>
 """)
 
-def expand_syntax ():
-   """Expand selected Ada 95 reserved words and syntax."""
-   requires_space_key = do_expansion()
-   if requires_space_key:
-      GPS.Editor.insert_text(' ')
 
-################### No public API below this point ##################
+def expand_syntax():
+    """Expand selected Ada 95 reserved words and syntax."""
+    requires_space_key = do_expansion()
+    if requires_space_key:
+        GPS.Editor.insert_text(' ')
 
-def debug (s):
-   "comment-out this return statement to enable debugging statements..."
-   return
-   name = sys._getframe (1).f_code.co_name
-   GPS.Console("Messages").write (name + ": " + s + "\n")
+# ################## No public API below this point ##################
 
-def do_expansion ():
-   """conditionally expands the word just before the space key is hit,
-      and returns a boolean indicating whether a space is required to
-      be entered afterward"""
-   try:
-      current_file = GPS.current_context().file().name()
-   except:
-      # Indicate that a blank character is required since this routine is not
-      # going to be doing anything
-      return True
 
-   orig_word = ""
-   word = ""
-   found_colon = False
-   new_line = ""
+def debug(s):
+    "comment-out this return statement to enable debugging statements..."
+    return
+    name = sys._getframe(1).f_code.co_name
+    GPS.Console("Messages").write(name + ": " + s + "\n")
 
-   line_num = GPS.Editor.cursor_get_line (current_file)
-   column_num = GPS.Editor.cursor_get_column (current_file)
 
-   line = GPS.Editor.get_chars (current_file, line_num, 0)
-   line = string.rstrip (line)
+def do_expansion():
+    """conditionally expands the word just before the space key is hit,
+       and returns a boolean indicating whether a space is required to
+       be entered afterward"""
+    try:
+        current_file = GPS.current_context().file().name()
+    except:
+        # Indicate that a blank character is required since this routine is not
+        # going to be doing anything
+        return True
 
-   # we only expand if the cursor is at the correct position
-   if column_num != len(line)+1:  #+1 because GPS columns don't start at 0
-      return True
+    orig_word = ""
+    word = ""
+    found_colon = False
+    new_line = ""
 
-   if string.strip (line) == '':
-      return True
+    line_num = GPS.Editor.cursor_get_line(current_file)
+    column_num = GPS.Editor.cursor_get_column(current_file)
 
-   label = potential_label(current_file)
-   debug("potential_label() returned '" + label + "'")
+    line = GPS.Editor.get_chars(current_file, line_num, 0)
+    line = string.rstrip(line)
 
-   # check for situations like this: "foo : declare"
-   first_colon_pos = string.find (line,':')
-   if first_colon_pos == -1: # didn't find a colon
-      orig_word = string.lower (string.strip(line))
-      found_colon = False
-   else: # found a colon, maybe an assignment
-      pattern = re.compile ("^([ \t]*)(.*):(.*)($|--)", re.IGNORECASE)
-      match = re.search (pattern, line)
-      remainder = match.group(3)
-      if string.find(remainder,"=") == 0: # found assignment, not just a colon
-         return True
-      orig_word = string.lower ( string.strip(remainder) )
-      found_colon = True
+    # we only expand if the cursor is at the correct position
+    if column_num != len(line) + 1:  # +1 because GPS columns don't start at 0
+        return True
 
-   if len(orig_word) >= min_abbreviation:
-      debug("orig_word is '" + orig_word + "'")
-      word = expanded_abbreviation (orig_word, expansion_words)
-      debug("expanded word is '" + word + "'")
-      if word == '':  # no expansion found
-         # we leave it as they typed it since it is not a word of interest
-         return True # so that a space key is emitted
-   else: # allowed to expand but abbreviation was not long enough
-      word = orig_word
+    if string.strip(line) == '':
+        return True
 
-   if label != '':
-      #replace occurrence of label with identifier_case(label) within line
-      #note we cannot assign label first since we are searching for it in the call to replace
-      line = string.replace (line,label,identifier_case(label))
-      label = identifier_case (label);
+    label = potential_label(current_file)
+    debug("potential_label() returned '" + label + "'")
 
-   new_line = line[:len(line)-len(orig_word)] + word_case(word)
-   debug("new_line is '" + new_line + "'")
+    # check for situations like this: "foo : declare"
+    first_colon_pos = string.find(line, ':')
+    if first_colon_pos == -1:  # didn't find a colon
+        orig_word = string.lower(string.strip(line))
+        found_colon = False
+    else:  # found a colon, maybe an assignment
+        pattern = re.compile("^([ \t]*)(.*):(.*)($|--)", re.IGNORECASE)
+        match = re.search(pattern, line)
+        remainder = match.group(3)
+        if string.find(remainder, "=") == 0:
+            # found assignment, not just a colon
+            return True
+        orig_word = string.lower(string.strip(remainder))
+        found_colon = True
 
-   # note we cannot prepend the blank to the label before we do the following search
-   if found_colon:
-      width = string.find (new_line,label)
-   else:
-      width = len(new_line) - len(word)
+    if len(orig_word) >= min_abbreviation:
+        debug("orig_word is '" + orig_word + "'")
+        word = expanded_abbreviation(orig_word, expansion_words)
+        debug("expanded word is '" + word + "'")
+        if word == '':  # no expansion found
+            # we leave it as they typed it since it is not a word of interest
+            return True  # so that a space key is emitted
+    else:  # allowed to expand but abbreviation was not long enough
+        word = orig_word
 
-   # and now we can prepend the blank to the label for subsequent use
-   if label != '':
-      label = ' ' + label
+    if label != '':
+        # replace occurrence of label with identifier_case(label) within line
+        # note we cannot assign label first since we are searching for it in
+        # the call to replace
+        line = string.replace(line, label, identifier_case(label))
+        label = identifier_case(label)
 
-   if word == "begin":
-      replace_line (current_file, new_line)
-      # NOTE: do not 'improve' the following sequence of statements by merging the call to
-      # "insert_line(blanks(width + syntax_indent()))" to here, after the call to
-      # replace_line(...) above, The reason is that associated_decl() would be
-      # affected by the insert_line() effect, in that it would start below the 'begin' we just
-      # inserted via the replace_line() call and thus be mislead to give the wrong result.
-      if label != '':
-         insert_line (blanks(width + syntax_indent()))
-         insert_line (blanks(width) + word_case('end') + label + ';')
-      else: # no label, try the decl unit name
-         unit_name = associated_decl (current_file)
-         if unit_name != '':
-            insert_line (blanks(width+syntax_indent()))
-            insert_line (blanks(width) + word_case('end') + ' ' + unit_name + ';')
-         else: # no label and no decl unit name
-            insert_line (blanks(width+syntax_indent()))
-            insert_line (blanks(width) + word_case('end') + ';')
-      up ()
-      text_utils.goto_end_of_line ()
-      return False
+    new_line = line[:len(line) - len(orig_word)] + word_case(word)
+    debug("new_line is '" + new_line + "'")
 
-   elif word == "declare":
-      replace_line (current_file, new_line)
-      insert_line (blanks(width+syntax_indent()))
-      insert_line (blanks(width) + word_case('begin'))
-      insert_line (blanks(width) + word_case('end') + label + ';')
-      up (2)
-      text_utils.goto_end_of_line ()
-      return False
+    # note we cannot prepend the blank to the label before we do the following
+    # search
+    if found_colon:
+        width = string.find(new_line, label)
+    else:
+        width = len(new_line) - len(word)
 
-   elif word == "while":
-      new_line = new_line + word_case('  loop')
-      replace_line (current_file, new_line)
-      insert_line (blanks(width) + word_case('end loop') + label + ';')
-      GPS.Editor.cursor_set_position (current_file, line_num, len(new_line) - 4)
-      return False
+    # and now we can prepend the blank to the label for subsequent use
+    if label != '':
+        label = ' ' + label
 
-   elif word == "loop":
-      replace_line (current_file, new_line)
-      insert_line (blanks(width) + word_case('end loop') + label + ';')
-      up()
-      text_utils.goto_end_of_line ()
-      insert_line (blanks(width+syntax_indent()))
-      return False
+    if word == "begin":
+        replace_line(current_file, new_line)
+        # NOTE: do not 'improve' the following sequence of statements by
+        # merging the call to "insert_line(blanks(width + syntax_indent()))"
+        # to here, after the call to replace_line(...) above, The reason is
+        # that associated_decl() would be affected by the insert_line()
+        # effect, in that it would start below the 'begin' we just inserted
+        # via the replace_line() call and thus be mislead to give the wrong
+        # result.
+        if label != '':
+            insert_line(blanks(width + syntax_indent()))
+            insert_line(blanks(width) + word_case('end') + label + ';')
+        else:  # no label, try the decl unit name
+            unit_name = associated_decl(current_file)
+            if unit_name != '':
+                insert_line(blanks(width + syntax_indent()))
+                insert_line(blanks(width) + word_case('end') +
+                            ' ' + unit_name + ';')
+            else:  # no label and no decl unit name
+                insert_line(blanks(width + syntax_indent()))
+                insert_line(blanks(width) + word_case('end') + ';')
+        up()
+        text_utils.goto_end_of_line()
+        return False
 
-   elif word == "for":
-      if within_Ada_statements (current_file):  # expand word here since it must not be an attr def clause
-         new_line = new_line + ' ' + word_case(' loop')
-         replace_line (current_file, new_line)
-         insert_line (blanks(width) + word_case('end loop') + label + ';')
-         # place the cursor at the loop variable declaration
-         GPS.Editor.cursor_set_position (current_file, line_num, len(new_line) - 4)
-         return False
+    elif word == "declare":
+        replace_line(current_file, new_line)
+        insert_line(blanks(width + syntax_indent()))
+        insert_line(blanks(width) + word_case('begin'))
+        insert_line(blanks(width) + word_case('end') + label + ';')
+        up(2)
+        text_utils.goto_end_of_line()
+        return False
 
-   elif word == "if":
-      new_line = new_line + word_case('  then')
-      replace_line (current_file, new_line)
-      insert_line (blanks(width) + word_case('end if;'))
-      GPS.Editor.cursor_set_position (current_file, line_num, len(new_line) - 4)
-      return False
+    elif word == "while":
+        new_line = new_line + word_case('  loop')
+        replace_line(current_file, new_line)
+        insert_line(blanks(width) + word_case('end loop') + label + ';')
+        GPS.Editor.cursor_set_position(
+            current_file, line_num, len(new_line) - 4)
+        return False
 
-   elif word == 'case':
-      new_line = new_line + word_case('  is')
-      replace_line (current_file, new_line)
-      insert_line (blanks(width) + word_case('end case;'))
-      GPS.Editor.cursor_set_position (current_file, line_num, len(new_line) - 2)
-      return False
+    elif word == "loop":
+        replace_line(current_file, new_line)
+        insert_line(blanks(width) + word_case('end loop') + label + ';')
+        up()
+        text_utils.goto_end_of_line()
+        insert_line(blanks(width + syntax_indent()))
+        return False
 
-   elif word in ('record', 'select'):
-      replace_line (current_file,new_line)
-      insert_line (blanks(width+syntax_indent()))
-      insert_line (blanks(width) + word_case('end ') + word_case(word) + ';')
-      up ()
-      text_utils.goto_end_of_line ()
-      return False
+    elif word == "for":
+        # expand word here since it must not be an attr def clause
+        if within_Ada_statements(current_file):
+            new_line = new_line + ' ' + word_case(' loop')
+            replace_line(current_file, new_line)
+            insert_line(blanks(width) + word_case('end loop') + label + ';')
+            # place the cursor at the loop variable declaration
+            GPS.Editor.cursor_set_position(
+                current_file, line_num, len(new_line) - 4)
+            return False
 
-   else:
-      if word != orig_word:
-         # we've expanded the word but it isn't one of the interesting ones above so we just
-         # make the expansion take effect
-         replace_line (current_file, new_line)
-         return True
+    elif word == "if":
+        new_line = new_line + word_case('  then')
+        replace_line(current_file, new_line)
+        insert_line(blanks(width) + word_case('end if;'))
+        GPS.Editor.cursor_set_position(
+            current_file, line_num, len(new_line) - 4)
+        return False
 
-   return True # ie emit a blank
+    elif word == 'case':
+        new_line = new_line + word_case('  is')
+        replace_line(current_file, new_line)
+        insert_line(blanks(width) + word_case('end case;'))
+        GPS.Editor.cursor_set_position(
+            current_file, line_num, len(new_line) - 2)
+        return False
+
+    elif word in ('record', 'select'):
+        replace_line(current_file, new_line)
+        insert_line(blanks(width + syntax_indent()))
+        insert_line(blanks(width) + word_case('end ') + word_case(word) + ';')
+        up()
+        text_utils.goto_end_of_line()
+        return False
+
+    else:
+        if word != orig_word:
+            # we've expanded the word but it isn't one of the interesting ones
+            # above so we just make the expansion take effect
+            replace_line(current_file, new_line)
+            return True
+
+    return True  # ie emit a blank
 
 
 # words to expand whenever the trigger key is hit immediately after the word
 
 expansion_words = (
-   'abort','abstract','accept','access','aliased','array','begin',
-   'case','constant','declare','delay','delta','digits','else',
-   'elsif','entry','exception','exit','for','function','generic',
-   'if','limited','loop','others','package','pragma','private',
-   'procedure','protected','raise','range','record','renames',
-   'requeue','return','reverse','select','separate','subtype',
-   'tagged','task','terminate','type','until','when','while','with')
+    'abort', 'abstract', 'accept', 'access', 'aliased', 'array', 'begin',
+    'case', 'constant', 'declare', 'delay', 'delta', 'digits', 'else',
+    'elsif', 'entry', 'exception', 'exit', 'for', 'function', 'generic',
+    'if', 'limited', 'loop', 'others', 'package', 'pragma', 'private',
+    'procedure', 'protected', 'raise', 'range', 'record', 'renames',
+    'requeue', 'return', 'reverse', 'select', 'separate', 'subtype',
+    'tagged', 'task', 'terminate', 'type', 'until', 'when', 'while', 'with')
 
-def word_case (word):
-   pref = string.lower (GPS.Preference ("Ada-Reserved-Casing").get())
-   if pref == "upper":
-      return string.upper (word)
-   elif pref == "mixed":
-      return word.title ()
-   elif pref == "lower":
-      return string.lower (word)
-   elif pref == "unchanged":
-      return word
-   else:
-      # we punt on Smart_Mixed
-      return word
 
-def identifier_case (id):
-   pref = string.lower (GPS.Preference ("Ada-Ident-Casing").get())
-   if pref == "upper":
-      return string.upper (id)
-   elif pref == "mixed":
-      return id.title ()
-   elif pref == "lower":
-      return string.lower (id)
-   elif pref == "unchanged":
-      return id
-   else:
-      # we punt on Smart_Mixed
-      return id
+def word_case(word):
+    pref = string.lower(GPS.Preference("Ada-Reserved-Casing").get())
+    if pref == "upper":
+        return string.upper(word)
+    elif pref == "mixed":
+        return word.title()
+    elif pref == "lower":
+        return string.lower(word)
+    elif pref == "unchanged":
+        return word
+    else:
+        # we punt on Smart_Mixed
+        return word
 
-def associated_decl (current_file):
-   original_line_num = GPS.Editor.cursor_get_line (current_file)
-   original_column_num = GPS.Editor.cursor_get_column (current_file)
 
-   block_count = 0
-   expecting_declaration = False
-   result = ""
+def identifier_case(id):
+    pref = string.lower(GPS.Preference("Ada-Ident-Casing").get())
+    if pref == "upper":
+        return string.upper(id)
+    elif pref == "mixed":
+        return id.title()
+    elif pref == "lower":
+        return string.lower(id)
+    elif pref == "unchanged":
+        return id
+    else:
+        # we punt on Smart_Mixed
+        return id
 
-   # we immediately attempt to go up a line to start searching because
-   # we want to skip the line we are manipulating.
-   # Note that if we cannot go up initially we return the null string
-   # as the result, but that makes sense because this function will
-   # never be called in such a case when writing legal Ada code.  For
-   # example, legal Ada never has a "begin" on the very first line.
-   going_up = attempt_up()
-   while going_up:
-      prev_line = get_line()
-      search_begin_line = word_case(prev_line)
-      if string.find(search_begin_line,'begin') != -1:
-         if block_count == 0:
-            break
-         else:
-            block_count = block_count + 1
 
-      elif significant_end(prev_line):
-         block_count = block_count - 1
-         expecting_declaration = True
+def associated_decl(current_file):
+    original_line_num = GPS.Editor.cursor_get_line(current_file)
+    original_column_num = GPS.Editor.cursor_get_column(current_file)
 
-      elif found_separated ("procedure|function", prev_line):
-         if not instantiation (prev_line, current_file):
-            if expecting_declaration: # found decl for previously encountered begin/end
-               expecting_declaration = False
-            else: # use this one
-               pattern = re.compile ('^([ \t]*)(procedure|function)([ \t]*)([a-zA-Z0-9_."=/<>+\-&*]+)(.*)', re.IGNORECASE | re.DOTALL)
-               match = re.search (pattern, prev_line)
-               result = match.group(4)
-               break
+    block_count = 0
+    expecting_declaration = False
+    result = ""
 
-      elif found_separated ("task", prev_line):
-         # we ignore task declarations
-         if found_separated ("body", prev_line):
-            if expecting_declaration: # found decl for previously encountered begin/end
-               expecting_declaration = False
-            else: # use this one
-               pattern = re.compile ('^([ \t]*)task([ \t]*)body([ \t]*)([a-zA-Z0-9_.]+)(.*)', re.IGNORECASE | re.DOTALL)
-               match = re.search (pattern, prev_line)
-               result = match.group(4)
-               break
+    # we immediately attempt to go up a line to start searching because
+    # we want to skip the line we are manipulating.
+    # Note that if we cannot go up initially we return the null string
+    # as the result, but that makes sense because this function will
+    # never be called in such a case when writing legal Ada code.  For
+    # example, legal Ada never has a "begin" on the very first line.
+    going_up = attempt_up()
+    while going_up:
+        prev_line = get_line()
+        search_begin_line = word_case(prev_line)
+        if string.find(search_begin_line, 'begin') != -1:
+            if block_count == 0:
+                break
+            else:
+                block_count = block_count + 1
 
-      elif found_separated ("entry", prev_line):
-         if expecting_declaration: # found decl for previously encountered begin/end
-            expecting_declaration = False
-         else: # use this one
-            pattern = re.compile ('^([ \t]*)entry([ \t]*)([a-zA-Z0-9_.]+)(.*)', re.IGNORECASE | re.DOTALL)
-            match = re.search (pattern, prev_line)
-            result = match.group(3)
-            break
+        elif significant_end(prev_line):
+            block_count = block_count - 1
+            expecting_declaration = True
 
-      elif found_separated ("package", prev_line):
-         if found_separated ("body", prev_line):
-            if expecting_declaration: # found decl for previously encountered begin/end
-               expecting_declaration = False
-            else: # use this one
-               pattern = re.compile ('^([ \t]*)package([ \t]*)body([ \t]*)([a-zA-Z0-9_.]+)(.*)', re.IGNORECASE | re.DOTALL)
-               match = re.search (pattern, prev_line)
-               result = match.group(4)
-               break
+        elif found_separated("procedure|function", prev_line):
+            if not instantiation(prev_line, current_file):
+                if expecting_declaration:
+                    # found decl for previously encountered begin/end
+                    expecting_declaration = False
+                else:  # use this one
+                    pattern = re.compile(
+                        '^([ \t]*)(procedure|function)([ \t]*)'
+                        '([a-zA-Z0-9_."=/<>+\-&*]+)(.*)',
+                        re.IGNORECASE | re.DOTALL)
+                    match = re.search(pattern, prev_line)
+                    result = match.group(4)
+                    break
 
-      going_up = attempt_up()
-   GPS.Editor.cursor_set_position (current_file, original_line_num, original_column_num)
-   return identifier_case (result)
+        elif found_separated("task", prev_line):
+            # we ignore task declarations
+            if found_separated("body", prev_line):
+                if expecting_declaration:
+                    # found decl for previously encountered begin/end
+                    expecting_declaration = False
+                else:  # use this one
+                    pattern = re.compile(
+                        '^([ \t]*)task([ \t]*)body([ \t]*)'
+                        '([a-zA-Z0-9_.]+)(.*)',
+                        re.IGNORECASE | re.DOTALL)
+                    match = re.search(pattern, prev_line)
+                    result = match.group(4)
+                    break
 
-def found_separated (word, this_line):
-   pattern = re.compile ("([ \t]*)(" + word + ")([ \t]*)", re.IGNORECASE)
-   match = re.search (pattern, this_line)
-   return match != None;
+        elif found_separated("entry", prev_line):
+            if expecting_declaration:
+                # found decl for previously encountered begin/end
+                expecting_declaration = False
+            else:
+                # use this one
+                pattern = re.compile(
+                    '^([ \t]*)entry([ \t]*)([a-zA-Z0-9_.]+)(.*)',
+                    re.IGNORECASE | re.DOTALL)
+                match = re.search(pattern, prev_line)
+                result = match.group(3)
+                break
 
-def instantiation (prev_line, current_file):
-   original_line_num = GPS.Editor.cursor_get_line (current_file)
-   original_column_num = GPS.Editor.cursor_get_column (current_file)
-   # check for an instantiation *on the same line* as the subprogram decl
-   pattern = re.compile ("([ \t]*)is([ \t]*)new(.*)", re.DOTALL | re.IGNORECASE)
-   match = re.search (pattern, prev_line)
-   if match != None:
-      return True
-   # check for instantiation on next line down
-   down();
-   next_line = get_line ()
-   if found_separated ("new", next_line):
-      GPS.Editor.cursor_set_position (current_file, original_line_num, original_column_num)
-      return True
-   else:
-      GPS.Editor.cursor_set_position (current_file, original_line_num, original_column_num)
-   return False
+        elif found_separated("package", prev_line):
+            if found_separated("body", prev_line):
+                if expecting_declaration:
+                    # found decl for previously encountered begin/end
+                    expecting_declaration = False
+                else:
+                    # use this one
+                    pattern = re.compile(
+                        '^([ \t]*)package([ \t]*)body([ \t]*)'
+                        '([a-zA-Z0-9_.]+)(.*)',
+                        re.IGNORECASE | re.DOTALL)
+                    match = re.search(pattern, prev_line)
+                    result = match.group(4)
+                    break
 
-def expanded_abbreviation (word, words):
-   if word == "":
-      return ""
-   for W in words:
-      if string.find(W,string.lower(word)) == 0:
-         return W
-   return ""
+        going_up = attempt_up()
+    GPS.Editor.cursor_set_position(
+        current_file, original_line_num, original_column_num)
+    return identifier_case(result)
 
-def significant_end (this_line):
-   """does this_line contain either "end;" or "end <identifier>;"?"""
-   target_line = string.lower(this_line)
-   if string.find(target_line,'end;') != -1:
-      return True
-   pattern = re.compile ("^([ \t]*)end([ \t]*)(.*);(.*)($|--)", re.IGNORECASE | re.DOTALL)
-   match = re.search (pattern, target_line)
-   if match == None:
-      return False
-   if match.group(3) not in ('loop', 'record', 'if', 'case', 'select'):
-      return True
-   return False
 
-def within_Ada_statements (current_file):
-   line_num = GPS.Editor.cursor_get_line (current_file)
-   column_num = GPS.Editor.cursor_get_column (current_file)
-   up_count = 0
-   result = False
-   block_count = 0
+def found_separated(word, this_line):
+    pattern = re.compile("([ \t]*)(" + word + ")([ \t]*)", re.IGNORECASE)
+    match = re.search(pattern, this_line)
+    return match is not None
 
-   going_up = attempt_up()
-   while going_up:
-      up_count = up_count + 1
-      prev_line = get_line()
-      prev_line = string.lower(prev_line)
-      if string.find (prev_line,'begin') != -1:  #found it
-         if block_count == 0:
-            result = True
-            break
-         else:
-            block_count = block_count + 1
-      elif significant_end (prev_line):
-         block_count = block_count - 1
-      going_up = attempt_up()
-   # now return cursor to original position
-   GPS.Editor.cursor_set_position (current_file, line_num, column_num)
-   debug("returning " + str(result))
-   return result
 
-def potential_label (current_file):
-   if not within_Ada_statements(current_file):
-      return ""
-   label = ""
-   label_line = get_line()
-   label_line = string.rstrip (label_line)  #strip trailing whitespace
-   if string.find (label_line,':') == -1: # no colon on this line
-      # look on the previous line for a stand-alone label, ie "foo :" or "foo:"
-      # Rather than go hunting, the label, if any, must be only 1 line up.
-      # This will be ok since a label is never the first line of a program unit.
-      line_num = GPS.Editor.cursor_get_line (current_file)
-      column_num = GPS.Editor.cursor_get_column (current_file)
-      going_up = attempt_up()
-      if going_up:
-         label_line = get_line()
-         if string.find (label_line,':') != -1: # found a colon, which might be for a label
-            pattern = re.compile ("^([ \t]*)(.*):(.*)", re.IGNORECASE | re.DOTALL)
-            match = re.search (pattern, label_line)
-            remainder = string.strip(match.group(3))
-            if remainder == '': # right syntax so far
-               temp_label = match.group(2)
-               if temp_label != '': #found a label
-                  label = string.strip (temp_label)
+def instantiation(prev_line, current_file):
+    original_line_num = GPS.Editor.cursor_get_line(current_file)
+    original_column_num = GPS.Editor.cursor_get_column(current_file)
+    # check for an instantiation *on the same line* as the subprogram decl
+    pattern = re.compile("([ \t]*)is([ \t]*)new(.*)",
+                         re.DOTALL | re.IGNORECASE)
+    match = re.search(pattern, prev_line)
+    if match is not None:
+        return True
+    # check for instantiation on next line down
+    down()
+    next_line = get_line()
+    if found_separated("new", next_line):
+        GPS.Editor.cursor_set_position(
+            current_file, original_line_num, original_column_num)
+        return True
+    else:
+        GPS.Editor.cursor_set_position(
+            current_file, original_line_num, original_column_num)
+    return False
 
-      # now return cursor to original position
-      GPS.Editor.cursor_set_position (current_file, line_num, column_num)
-   else: # found ':'
-      pattern = re.compile ("^([ \t]*)(.*):(.*)", re.IGNORECASE)
-      match = re.search (pattern,label_line)
-      remainder = string.lstrip (match.group(3))
-      label = match.group(2)
-      if remainder and remainder[0] == '=': # found assignment operation ":="
-         debug("returning label '" + label + "'");
-         return label
 
-      # Treat as a label, even if it won't be, such as in variable declarations.
-      # Since we only use it where allowed, this isn't a problem.
-      label = string.strip (label)
+def expanded_abbreviation(word, words):
+    if word == "":
+        return ""
+    for W in words:
+        if string.find(W, string.lower(word)) == 0:
+            return W
+    return ""
 
-   debug("returning label '" + label + "'");
-   return label
 
-def syntax_indent ():
-   # we make this a function so that we will catch any user changes in
-   # the preference without having to reload this module
-   return GPS.Preference ("Ada-Indent-Level").get()
+def significant_end(this_line):
+    """does this_line contain either "end;" or "end <identifier>;"?"""
+    target_line = string.lower(this_line)
+    if string.find(target_line, 'end;') != -1:
+        return True
+    pattern = re.compile(
+        "^([ \t]*)end([ \t]*)(.*);(.*)($|--)", re.IGNORECASE | re.DOTALL)
+    match = re.search(pattern, target_line)
+    if match is None:
+        return False
+    if match.group(3) not in ('loop', 'record', 'if', 'case', 'select'):
+        return True
+    return False
 
+
+def within_Ada_statements(current_file):
+    line_num = GPS.Editor.cursor_get_line(current_file)
+    column_num = GPS.Editor.cursor_get_column(current_file)
+    up_count = 0
+    result = False
+    block_count = 0
+
+    going_up = attempt_up()
+    while going_up:
+        up_count = up_count + 1
+        prev_line = get_line()
+        prev_line = string.lower(prev_line)
+        if string.find(prev_line, 'begin') != -1:  # found it
+            if block_count == 0:
+                result = True
+                break
+            else:
+                block_count = block_count + 1
+        elif significant_end(prev_line):
+            block_count = block_count - 1
+        going_up = attempt_up()
+    # now return cursor to original position
+    GPS.Editor.cursor_set_position(current_file, line_num, column_num)
+    debug("returning " + str(result))
+    return result
+
+
+def potential_label(current_file):
+    if not within_Ada_statements(current_file):
+        return ""
+    label = ""
+    label_line = get_line()
+    label_line = string.rstrip(label_line)  # strip trailing whitespace
+    if string.find(label_line, ':') == -1:  # no colon on this line
+        # look on the previous line for a stand-alone label, ie "foo :" or
+        # "foo:"
+        # Rather than go hunting, the label, if any, must be only 1 line up.
+        # This will be ok since a label is never the first line of a program
+        # unit.
+        line_num = GPS.Editor.cursor_get_line(current_file)
+        column_num = GPS.Editor.cursor_get_column(current_file)
+        going_up = attempt_up()
+        if going_up:
+            label_line = get_line()
+            # found a colon, which might be for a label
+            if string.find(label_line, ':') != -1:
+                pattern = re.compile(
+                    "^([ \t]*)(.*):(.*)", re.IGNORECASE | re.DOTALL)
+                match = re.search(pattern, label_line)
+                remainder = string.strip(match.group(3))
+                if remainder == '':  # right syntax so far
+                    temp_label = match.group(2)
+                    if temp_label != '':  # found a label
+                        label = string.strip(temp_label)
+
+        # now return cursor to original position
+        GPS.Editor.cursor_set_position(current_file, line_num, column_num)
+    else:  # found ':'
+        pattern = re.compile("^([ \t]*)(.*):(.*)", re.IGNORECASE)
+        match = re.search(pattern, label_line)
+        remainder = string.lstrip(match.group(3))
+        label = match.group(2)
+        # found assignment operation ":="
+        if remainder and remainder[0] == '=':
+            debug("returning label '" + label + "'")
+            return label
+
+        # Treat as a label, even if it won't be, such as in variable
+        # declarations.
+        # Since we only use it where allowed, this isn't a problem.
+        label = string.strip(label)
+
+    debug("returning label '" + label + "'")
+    return label
+
+
+def syntax_indent():
+    # we make this a function so that we will catch any user changes in
+    # the preference without having to reload this module
+    return GPS.Preference("Ada-Indent-Level").get()
