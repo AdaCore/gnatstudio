@@ -18,6 +18,7 @@
 with GNAT.Strings;           use GNAT.Strings;
 
 with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Glib_Values_Utils;      use Glib_Values_Utils;
 
@@ -501,10 +502,10 @@ package body GVD.Call_Stack is
          Set_All_And_Clear
            (View.Model, Iter,
             (0 => As_String (Natural'Image (Bt (J).Frame_Id)),
-             1 => As_String (Bt (J).Program_Counter.all),
-             2 => As_String (Subp (Subp'First .. Index - 1)),
-             3 => As_String (Subp (Index .. Subp'Last)),
-             4 => As_String (Bt (J).Source_Location.all)));
+             1 => As_String (Escape_Text (Bt (J).Program_Counter.all)),
+             2 => As_String (Escape_Text (Subp (Subp'First .. Index - 1))),
+             3 => As_String (Escape_Text (Subp (Index .. Subp'Last))),
+             4 => As_String (Escape_Text (Bt (J).Source_Location.all))));
       end loop;
 
       Free (Bt (1 .. Len));
