@@ -928,6 +928,19 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.perform_action(action, topitem)
 
     # @overriding
+    def on_item_clicked(self, topitem, item, x, y, *args):
+        def is_link(i):
+            return hasattr(i, "data") and i.data.get('auto') == "true"
+
+        if is_link(item):
+            QGEN_Module.display_variable_in_view(item)
+        else:
+            for it in item.recurse():
+                if is_link(it):
+                    QGEN_Module.display_variable_in_view(item)
+                    return
+
+    # @overriding
     def on_create_context(self, context, topitem, item, x, y, *args):
         """
         Called when the user right-clicks in an item.
@@ -1102,6 +1115,40 @@ else:
                 task.set_progress(idx, auto_items_len)
 
         @staticmethod
+        def get_var_from_item(item):
+            """
+            Returns the variable name corresponding to the given item
+            if possible.
+            """
+            symbols = QGEN_Module.modeling_map.get_symbols(blockid=item.id)
+            # The list of symbols to compute from the debugger
+
+            if symbols:
+                s = next(iter(symbols))  # Get the first symbol
+                # Function calls do not have a '/'
+                if '/' in s:
+                    ss = s.split('/')[-1].strip()  # Remove the "context/" part
+                    # ??? Should check that the context matches the current
+                    # debugger frame. For now, we assume this is true since the
+                    # diagram corresponds to the current frame.
+                    return ss
+            return None
+
+        @staticmethod
+        def display_variable_in_view(item):
+            """
+            Adds a variable to the Debugger Variables view corresponding
+            to the given item if possible.
+            """
+            try:
+                debugger = GPS.Debugger.get()
+            except:
+                return
+            ss = QGEN_Module.get_var_from_item(item)
+            if ss is not None:
+                debugger.send("tree display '%s'\n" % ss, output=False)
+
+        @staticmethod
         @workflows.run_as_workflow
         def compute_item_values(debugger, promise, toplevel, item):
             """
@@ -1154,20 +1201,11 @@ else:
                     else:
                         item_parent.hide()
 
-            # The list of symbols to compute from the debugger
-            symbols = QGEN_Module.modeling_map.get_symbols(blockid=parent.id)
-
-            if symbols:
-                s = next(iter(symbols))  # Get the first symbol
-                # Function calls do not have a '/'
-                if '/' in s:
-                    ss = s.split('/')[-1].strip()  # Remove the "context/" part
-                    # ??? Should check that the context matches the current
-                    # debugger frame. For now, we assume this is true since the
-                    # diagram corresponds to the current frame.
-                    async_debugger = AsyncDebugger(debugger)
-                    yield async_debugger.async_print_value(ss).then(
-                        update_item_value)
+            ss = QGEN_Module.get_var_from_item(parent)
+            if ss is not None:
+                async_debugger = AsyncDebugger(debugger)
+                yield async_debugger.async_print_value(ss).then(
+                    update_item_value)
             else:
                 item_parent.hide()
 
