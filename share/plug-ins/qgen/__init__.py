@@ -171,8 +171,7 @@ class MDL_Language(GPS.Language):
                     else:
                         break
 
-        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file,
-                                                           raise_win=False)
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
 
         if viewer and not viewer.parsing_complete \
            and viewer.diags and not viewer.constructs:
@@ -183,9 +182,10 @@ class MDL_Language(GPS.Language):
 
     # @overriding
     def get_last_selected_construct_id(self, file):
-        viewer, _ = QGEN_Diagram_Viewer.get_or_create_view(file,
-                                                           raise_win=False)
-        return viewer.selected_construct_id()
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
+        if viewer is not None:
+            return viewer.selected_construct_id()
+        return None
 
     # @overriding
     def clicked_on_construct(self, construct):
@@ -223,7 +223,7 @@ class MDL_Language(GPS.Language):
         Provides support for the Outline view
         """
 
-        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
         if not viewer:
             return
 
@@ -601,6 +601,23 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 yield win._gmc_viewer
 
     @staticmethod
+    def retrieve_active_qgen_viewer_for_file(f):
+        """
+        Returns the qgen viewer for the file f if possible
+        :param f: a GPS.File that should correspond to the active viewer.
+        :return: a QGEN_Diagram_Viewer instance
+        """
+        try:
+            for win in GPS.MDI.children():
+                if hasattr(win, '_gmc_viewer'):
+                    v = win._gmc_viewer
+                    if v.file == f:
+                        return v
+            return None
+        except:
+            return None
+
+    @staticmethod
     def retrieve_active_qgen_viewer():
         """
         Returns the focused qgen viewer if possible
@@ -710,6 +727,17 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.nav_index += 1
             self.nav_status.insert(self.nav_index, construct_id)
 
+    def highlight_gps_construct(self, c):
+        """
+        Highlight the construct in the outline view.
+        :param str c: a construct id to highlight
+        """
+        try:
+            GPS.OutlineView.select_construct(c)
+        except GPS.Exception:
+            # The outline was not focused on the diagram, discard the exception
+            pass
+
     def parsing_done(self):
         """
         Called when constructs have been parsed, stores the root construct
@@ -739,7 +767,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         self.nav_index -= 1
         construct = self.nav_status[self.nav_index]
-        GPS.OutlineView.select_construct(construct)
+        self.highlight_gps_construct(construct)
         return self.constructs_map[construct][-1]
 
     def get_construct_from_list(self, l, sloc_range=(0, None), res=""):
@@ -829,7 +857,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
             if parent != diag_name:
                 if update_history:
-                    GPS.OutlineView.select_construct(parent_cons)
+                    self.highlight_gps_construct(parent_cons)
                     self.nav_index += 1
                     self.nav_status.insert(self.nav_index, parent_cons)
                 return parent
@@ -882,7 +910,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if diag and diag != self.diagram:
             if is_dblclick:
                 c_id = self.get_construct_for_dblclick()
-                GPS.OutlineView.select_construct(c_id)
+                self.highlight_gps_construct(c_id)
                 self.update_nav_status(c_id)
             self.diagram = diag
             self.scale_to_fit(2)
