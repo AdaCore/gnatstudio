@@ -7,7 +7,6 @@ You only need to derive from this class to get staging emulation.
 
 import GPS
 import json
-from . import core
 from workflows.promises import ProcessWrapper
 
 
@@ -26,7 +25,7 @@ class Emulate_Staging(object):
         # Need to copy the list, since '_staged' will be changed below
         files = list(self._staged)
         p = ProcessWrapper(
-            args + [f.path for f in files],
+            args + [self._relpath(f.path) for f in files],
             directory=self.working_dir.path)
         (status, output) = yield p.wait_until_terminate()
         if status:

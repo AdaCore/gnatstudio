@@ -67,6 +67,9 @@ class CVS(core_staging.Emulate_Staging,
             p = self._cvs(['-f', 'status'] + list)
             current_file = None
             dir = None
+            status = None
+            rev = None
+            repo_rev = None
             while True:
                 line = yield p.wait_line()
                 if line is None:
@@ -133,16 +136,12 @@ class CVS(core_staging.Emulate_Staging,
     def _parse_unique_id(self, id):
         return id.split(' ', 1)
 
-    def _relpath(self, path):
-        return os.path.relpath(path, self.working_dir.path)
-
     def _log_stream(self, args=[]):
         """
         Run 'cvs log', and return a stream that emits one event for
         each commit message.
         """
         cvs = self
-        base = self.working_dir.path
 
         class line_to_block:
             def __init__(self):

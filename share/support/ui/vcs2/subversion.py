@@ -45,9 +45,10 @@ class SVN(core_staging.Emulate_Staging,
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(all_files) as s:
+            list = [self._relpath(arg) for arg in args]
             p = self._svn(
                 # -u: Compare with server (slower but more helpful)
-                ['status', '-v', '-u'] + args)
+                ['status', '-v', '-u'] + list)
 
             while True:
                 line = yield p.wait_line()
@@ -110,10 +111,11 @@ class SVN(core_staging.Emulate_Staging,
         for f in self._staged:
             status, version, repo_version = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
-                p = self._svn(['add', f.path], block_exit=True)
+                p = self._svn(['add', self._relpath(f.path)], block_exit=True)
                 yield p.wait_until_terminate()
             elif status & GPS.VCS2.Status.STAGED_DELETED:
-                p = self._svn(['delete', f.path], block_exit=True)
+                p = self._svn(['delete', self._relpath(f.path)],
+                              block_exit=True)
                 yield p.wait_until_terminate()
 
         yield self._internal_commit_staged_files(
@@ -175,11 +177,10 @@ class SVN(core_staging.Emulate_Staging,
                     (not pattern or pattern in log[3])):
                 result.append(log)
 
+        f = [self._relpath(for_file.path)] if for_file else []
         yield self._log_stream([
             '-rHEAD:1',
-            '--stop-on-copy',
-            for_file.path if for_file else ''
-        ]).subscribe(add_log)
+            '--stop-on-copy'] + f).subscribe(add_log)
         visitor.history_lines(result)
 
     @core.run_in_background
@@ -199,13 +200,14 @@ class SVN(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_diff(self, visitor, ref, file):
-        p = self._svn(['diff', '-r%s' % ref, file.path if file else ''])
+        p = self._svn(['diff', '-r%s' % ref,
+                       self._relpath(file.path) if file else ''])
         status, output = yield p.wait_until_terminate()
         visitor.diff_computed(output)
 
     @core.run_in_background
     def async_view_file(self, visitor, ref, file):
-        p = self._svn(['cat', '-r%s' % ref, file.path])
+        p = self._svn(['cat', '-r%s' % ref, self._relpath(file.path)])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
 
@@ -219,7 +221,7 @@ class SVN(core_staging.Emulate_Staging,
             "(?P<date>....-..-..)")
         lines = []
         ids = []
-        p = self._svn(['annotate', '-v', file.path])
+        p = self._svn(['annotate', '-v', self._relpath(file.path)])
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -313,5 +315,5 @@ class SVN(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_discard_local_changes(self, files):
-        n = [f.path for f in files]
+        n = [self._relpath(f.path) for f in files]
         yield self._svn(['revert'] + n).wait_until_terminate()

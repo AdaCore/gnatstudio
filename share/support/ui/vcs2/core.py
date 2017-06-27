@@ -545,6 +545,14 @@ class VCS(GPS.VCS2):
 
         return _CM()
 
+    def _relpath(self, path):
+        """
+        Return a relative filepath to path from the working dir.
+
+        :param str path:
+        """
+        return os.path.relpath(path, self.working_dir.path)
+
     @classmethod
     def register_extension(klass, extension):
         klass._class_extensions.append(extension)
