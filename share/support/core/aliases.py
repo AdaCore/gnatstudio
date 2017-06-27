@@ -30,10 +30,8 @@ def get_paragraph_color():
     color, and turn it into an hex string
     """
     pref_string = GPS.Preference("Src-Editor-Reference-Style").get()
-    c = Color(
-        pref_string.split("@")[2]
-    )
-    return c.to_hex(), c.shade_or_lighten(0.1).to_hex()
+    c = Color(pref_string.split("@")[2])
+    return c.hex, c.shade_or_lighten(0.1).hex
 
 
 def get_comments_colors():
