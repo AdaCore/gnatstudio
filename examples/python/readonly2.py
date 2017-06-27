@@ -5,6 +5,7 @@
 import GPS
 import os.path
 
+
 def on_open_generated_file(name, file):
 
     ebuf = GPS.EditorBuffer.get()
@@ -15,7 +16,7 @@ def on_open_generated_file(name, file):
         ebuf.apply_overlay(overlay, start_loc, end_loc)
 
     f_path = os.path.abspath(file.name())
-    f = open (f_path)
+    f = open(f_path)
     text = f.readlines()
     f.close()
 
@@ -39,5 +40,6 @@ def on_open_generated_file(name, file):
                 start_found = False
 
         apply_overlay(grey, start, len(text), len(text[-1]))
+
 
 GPS.Hook("file_edited").add(on_open_generated_file)

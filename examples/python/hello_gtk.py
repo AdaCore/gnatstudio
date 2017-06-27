@@ -3,10 +3,12 @@
 
 from gi.repository import Gtk
 
-def hello_cb(button):
-	window.destroy()
 
-window = Gtk.Window(Gtk.WindowType.TOPLEVEL) # create a top level window
+def hello_cb(button):
+    window.destroy()
+
+
+window = Gtk.Window(Gtk.WindowType.TOPLEVEL)  # create a top level window
 window.set_border_width(10)              # set padding round child widget
 
 button = Gtk.Button("Hello World")
