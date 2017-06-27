@@ -572,7 +572,7 @@ class VCS(GPS.VCS2):
                 gen = m(*args, **kwargs)
                 if isinstance(gen, types.GeneratorType):
                     result.append(gen)
-            return result
+        return result
 
 
 class File_Based_VCS(VCS):
