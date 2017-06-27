@@ -58,12 +58,17 @@ class Color(object):
         return Color(tuple((min(c + amount, 1) for c in self.col)))
 
     def shade_or_lighten(self, amount):
-        square = lambda x: x * x
-        t = 130.0 * 130.0 / (255.0 * 255.0)
-        m = (square(self.col[0]) * 0.241 +
-             square(self.col[1]) * 0.691 +
-             square(self.col[2]) * 0.068)
-        return (self.lighten if m < t else self.shade)(amount)
+        # The square of the luminance of the "50%" grey
+        t = 130.0 ** 2 / 255.0 ** 2
+        # Compute the square of the perceived luminance
+        m = (self.col[0] ** 2 * 0.241 +
+             self.col[1] ** 2 * 0.691 +
+             self.col[2] ** 2 * 0.068)
+
+        if m < t:
+            return self.lighten(amount)
+        else:
+            return self.shade(amount)
 
     def __repr__(self):
         return "<Color : {0}>".format(self.to_hex())
