@@ -280,21 +280,19 @@ class Git(core.VCS):
             else:
                 filter_switch = '--grep=%s' % pattern
 
-        git_cmd = [
-            'log',
-            # use tformat to get final newline
-            '--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s',
-            '--branches' if not current_branch_only else '',
-            '--tags' if not current_branch_only else '',
-            '--remotes' if not current_branch_only else '']
-        if for_file:
-            git_cmd.append('--follow')
-        git_cmd += [
-            '--topo-order',  # children before parents
-            filter_switch,
-            '--max-count=%d' % max_lines if not branch_commits_only else '',
-            '%s' % for_file.path if for_file else '']
-        p = self._git(git_cmd)
+        p = self._git(
+            ['log',
+             # use tformat to get final newline
+             '--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s',
+             '--branches' if not current_branch_only else '',
+             '--tags' if not current_branch_only else '',
+             '--remotes' if not current_branch_only else '',
+             '--follow' if for_file else '',
+             '--topo-order',  # children before parents
+             filter_switch,
+
+             '--max-count=%d' % max_lines if not branch_commits_only else '',
+             '%s' % for_file.path if for_file else ''])
 
         children = {}   # number of children for each sha1
         result = []
