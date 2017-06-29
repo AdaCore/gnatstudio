@@ -582,6 +582,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_string_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/string_search/strings.gpr"</shell>
+      <shell>Editor.edit "string_search.ads"</shell>
+      <shell>Editor.edit "string_search.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_string_search">
+        <title>string__search</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_tetris" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/tetris/test.gpr"</shell>
