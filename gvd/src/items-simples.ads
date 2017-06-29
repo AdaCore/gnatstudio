@@ -18,7 +18,8 @@
 --  Items used for simple types, ie whose value is a simple string.
 --  See the package Items for more information on all the private subprograms.
 
-with GNAT.Strings;
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package Items.Simples is
 
@@ -34,7 +35,7 @@ package Items.Simples is
    function New_Simple_Type return Generic_Type_Access;
    --  Create a new simple value.
 
-   function Get_Value (Item : Simple_Type) return GNAT.Strings.String_Access;
+   function Get_Value (Item : Simple_Type) return Unbounded_String;
    --  Return the current value of Item (or null if it is not known).
 
    procedure Set_Value (Item : in out Simple_Type; Value : String);
@@ -132,7 +133,7 @@ private
    is (null);
 
    type Simple_Type is new Base_Simple_Type with record
-      Value : GNAT.Strings.String_Access := null;
+      Value : Unbounded_String := Null_Unbounded_String;
       --  The value, as displayed by the debugger
 
       Has_Changed : Boolean := False;
@@ -206,18 +207,15 @@ private
    --  Free is inherited from Simple_Type.
 
    type Line_Value is record
-      Value    : GNAT.Strings.String_Access;
+      Value    : Unbounded_String;
       Modified : Boolean;
    end record;
-   type Line_Array is array (Natural range <>) of Line_Value;
-   type Line_Array_Access is access all Line_Array;
-   procedure Free (Self : in out Line_Array_Access);
-   --  Each line in the debugger output, along with an indication on whether it
-   --  was modified since the last update.
+
+   package Line_Vector is new Ada.Containers.Vectors (Positive, Line_Value);
 
    type Debugger_Output_Type is new Base_Simple_Type with record
-      Value       : Line_Array_Access;
-      Refresh_Cmd : GNAT.Strings.String_Access;
+      Value       : Line_Vector.Vector;
+      Refresh_Cmd : Unbounded_String;
       Split_Lines : Boolean;
 
       As_Record   : Type_Array_Access;

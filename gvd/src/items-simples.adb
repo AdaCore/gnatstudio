@@ -24,7 +24,6 @@ with Language;                use Language;
 with String_Utils;            use String_Utils;
 
 package body Items.Simples is
-   use type GNAT.Strings.String_Access;
 
    Unknown_Value_Str : constant String := "<unknown>";
    --  The string representation of a null value for the user.
@@ -52,7 +51,7 @@ package body Items.Simples is
    -- Get_Value --
    ---------------
 
-   function Get_Value (Item : Simple_Type) return GNAT.Strings.String_Access is
+   function Get_Value (Item : Simple_Type) return Unbounded_String is
    begin
       return Item.Value;
    end Get_Value;
@@ -92,9 +91,9 @@ package body Items.Simples is
    procedure Set_Value (Item : in out Simple_Type; Value : String) is
       Q : constant String := Quote_Non_Printable_Characters (Value);
    begin
-      Item.Has_Changed := Item.Value = null or else Item.Value.all /= Q;
-      GNAT.Strings.Free (Item.Value);
-      Item.Value := new String'(Q);
+      Item.Has_Changed := Item.Value = Null_Unbounded_String
+        or else To_String (Item.Value) /= Q;
+      Item.Value := To_Unbounded_String (Q);
       Item.Valid := True;
    end Set_Value;
 
@@ -105,10 +104,10 @@ package body Items.Simples is
    overriding function Get_Simple_Value
      (Self : not null access Simple_Type) return String is
    begin
-      if Self.Value = null then
+      if Self.Value = Null_Unbounded_String then
          return Unknown_Value_Str;
       else
-         return Self.Value.all;
+         return To_String (Self.Value);
       end if;
    end Get_Simple_Value;
 
@@ -119,7 +118,6 @@ package body Items.Simples is
    overriding procedure Free
      (Item : access Simple_Type; Only_Value : Boolean := False) is
    begin
-      GNAT.Strings.Free (Item.Value);
       Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
@@ -133,8 +131,8 @@ package body Items.Simples is
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
 
-      if Item.Value /= null then
-         Simple_Type_Access (Clone).Value := new String'(Item.Value.all);
+      if Item.Value /= Null_Unbounded_String then
+         Simple_Type_Access (Clone).Value := Item.Value;
       end if;
    end Clone_Dispatching;
 
@@ -167,8 +165,10 @@ package body Items.Simples is
             Rect.Add_Child (T);
          end if;
 
-         if Show_Value (Mode) and then Self.Value /= null then
-            T := Gtk_New_Text (S, Self.Value.all);
+         if Show_Value (Mode)
+           and then Self.Value /= Null_Unbounded_String
+         then
+            T := Gtk_New_Text (S, To_String (Self.Value));
             T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
@@ -221,8 +221,10 @@ package body Items.Simples is
             Rect.Add_Child (T);
          end if;
 
-         if Self.Value /= null and then Show_Value (Mode) then
-            T := Gtk_New_Text (S, Self.Value.all);
+         if Self.Value /= Null_Unbounded_String
+           and then Show_Value (Mode)
+         then
+            T := Gtk_New_Text (S, To_String (Self.Value));
             T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
@@ -288,7 +290,7 @@ package body Items.Simples is
       Item : Debugger_Output_Type_Access;
    begin
       Item := new Debugger_Output_Type;
-      Item.Refresh_Cmd := new String'(Cmd);
+      Item.Refresh_Cmd := To_Unbounded_String (Cmd);
       Item.Split_Lines := Split_Lines;
       return Generic_Type_Access (Item);
    end New_Debugger_Type;
@@ -299,7 +301,7 @@ package body Items.Simples is
 
    function Refresh_Command (Item : Debugger_Output_Type) return String is
    begin
-      return Item.Refresh_Cmd.all;
+      return To_String (Item.Refresh_Cmd);
    end Refresh_Command;
 
    ----------------------
@@ -311,13 +313,13 @@ package body Items.Simples is
    is
       Value : Unbounded_String;
    begin
-      if Self.Value = null then
+      if Self.Value.Is_Empty then
          return Unknown_Value_Str;
       elsif Self.Split_Lines then
          return "";   --  value is split into components
       else
-         for L of Self.Value.all loop
-            Append (Value, L.Value.all & ASCII.LF);
+         for L of Self.Value loop
+            Append (Value, To_String (L.Value) & ASCII.LF);
          end loop;
          return To_String (Value);
       end if;
@@ -332,8 +334,7 @@ package body Items.Simples is
       Clone : in out Generic_Type_Access) is
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
-      Debugger_Output_Type_Access (Clone).Refresh_Cmd :=
-        new String'(Item.Refresh_Cmd.all);
+      Debugger_Output_Type_Access (Clone).Refresh_Cmd := Item.Refresh_Cmd;
    end Clone_Dispatching;
 
    ----------
@@ -344,10 +345,10 @@ package body Items.Simples is
      (Item       : access Debugger_Output_Type;
       Only_Value : Boolean := False) is
    begin
-      Free (Item.Value);
+      Item.Value.Clear;
 
       if not Only_Value then
-         GNAT.Strings.Free (Item.Refresh_Cmd);
+         Item.Refresh_Cmd := Null_Unbounded_String;
       end if;
 
       if Item.As_Record /= null then
@@ -376,32 +377,16 @@ package body Items.Simples is
       if not Self.Visible then
          Rect.Add_Child (View.Item_Hidden);
       else
-         for L of Self.Value.all loop
+         for L of Self.Value loop
             Rect.Add_Child
               (Gtk_New_Text
                  ((if L.Modified then View.Modified else Styles.Text_Font),
-                  L.Value.all));
+                  To_String (L.Value)));
          end loop;
       end if;
 
       return Rect;
    end Build_Display;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Self : in out Line_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Array, Line_Array_Access);
-   begin
-      if Self /= null then
-         for L in Self'Range loop
-            Free (Self (L).Value);
-         end loop;
-         Unchecked_Free (Self);
-      end if;
-   end Free;
 
    ---------------
    -- Set_Value --
@@ -410,45 +395,42 @@ package body Items.Simples is
    procedure Set_Value
      (Item : in out Debugger_Output_Type; Value : String)
    is
-      S         : constant String := Do_Tab_Expansion (Value, 8);
-      Old       : Line_Array_Access := Item.Value;
-      Index_Old : Positive;
-      Lines     : String_List_Access := Split (S, ASCII.LF);
+      S     : constant String := Do_Tab_Expansion (Value, 8);
+      Old   : constant Line_Vector.Vector := Item.Value;
+      Lines : String_List_Access := Split (S, ASCII.LF);
    begin
       --  Compute which lines have changed since the last update.
 
-      Item.Value := new Line_Array (Lines'Range);
-      for L in Item.Value'Range loop
-         if Old = null then
-            Item.Value (L) :=
-              (Modified => True,
-               Value    => new String'(Lines (L).all));
+      Item.Value := Line_Vector.To_Vector (Lines'Length);
+      for L in 1 .. Positive (Item.Value.Length) loop
+         if Old.Is_Empty then
+            Item.Value.Replace_Element
+              (L,
+               (Modified => True,
+                Value    => To_Unbounded_String (Lines (L).all)));
          else
-            Index_Old := L - Item.Value'First + Old'First;
-            Item.Value (L) :=
-              (Modified =>
-                 Index_Old > Old'Last
-                 or else Lines (L).all /= Old (Index_Old).Value.all,
-               Value    => new String'(Lines (L).all));
+            Item.Value.Replace_Element
+              (L,
+               (Modified => L > Natural (Old.Length)
+                or else Lines (L).all /= To_String (Old (L).Value),
+                Value    => To_Unbounded_String (Lines (L).all)));
          end if;
       end loop;
 
       if Item.Split_Lines then
          Free (Item.As_Record);
-         Item.As_Record := new Type_Array (Item.Value'Range);
+         Item.As_Record := new Type_Array (1 .. Integer (Item.Value.Length));
 
-         for L in Item.Value'Range loop
+         for L in 1 .. Integer (Item.Value.Length) loop
             Item.As_Record (L).Name := new String'("");
             Item.As_Record (L).Typ := new Simple_Type'
               (Base_Simple_Type with
-               Value       => new String'(Item.Value (L).Value.all),
+               Value       => Item.Value (L).Value,
                Has_Changed => Item.Value (L).Modified);
          end loop;
       end if;
 
       Free (Lines);
-      Free (Old);
-
       Item.Valid := True;
    end Set_Value;
 
@@ -457,10 +439,19 @@ package body Items.Simples is
    ---------------------
 
    overriding procedure Reset_Recursive (Item : access Debugger_Output_Type) is
+
+      procedure Mark_Unmodified (X : in out Line_Value);
+      --  Mark X as unmodified
+
+      procedure Mark_Unmodified (X : in out Line_Value) is
+      begin
+         X.Modified := False;
+      end Mark_Unmodified;
+
    begin
-      if Item.Value /= null then
-         for L of Item.Value.all loop
-            L.Modified := False;
+      if not Item.Value.Is_Empty then
+         for L in 1 .. Positive (Item.Value.Length) loop
+            Item.Value.Update_Element (L, Mark_Unmodified'Access);
          end loop;
       end if;
    end Reset_Recursive;
