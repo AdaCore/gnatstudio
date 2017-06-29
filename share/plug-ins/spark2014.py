@@ -169,7 +169,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_adacore_u" category=""
             show-command="false" output="none">
-      <shell>Project.load "{example}/adacore_u/Overview/overview.gpr"</shell>
+      <shell>Project.load "{example}/adacore_u/adacore_u.gpr"</shell>
     </action>
 
     <submenu before="About">
