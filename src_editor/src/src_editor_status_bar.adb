@@ -80,6 +80,9 @@ package body Src_Editor_Status_Bar is
    procedure On_Read_Only_Pressed (Ob : access GObject_Record'Class);
    --  Toggle read-only/writable state of a given box
 
+   procedure On_Modified_Status_Pressed (Ob : access GObject_Record'Class);
+   --  Called when the user clicks on Modified box in the status bar.
+
    function On_Subprogram_Link
      (Ob  : access Gtk.Widget.Gtk_Widget_Record'Class;
       Args : Gtk_Args) return Boolean;
@@ -234,8 +237,15 @@ package body Src_Editor_Status_Bar is
          case Get_Status (Bar.Buffer) is
             when Unmodified | Readonly | Saved =>
                Child.Set_Icon_Name (File_Pixbuf);
-            when Unsaved    => Child.Set_Icon_Name (File_Unsaved_Pixbuf);
-            when Modified   => Child.Set_Icon_Name (File_Modified_Pixbuf);
+               Bar.Modified_Status.Set_Label (-"Unmodified");
+
+            when Unsaved =>
+               Child.Set_Icon_Name (File_Unsaved_Pixbuf);
+               Bar.Modified_Status.Set_Label (-"Unsaved");
+
+            when Modified =>
+               Child.Set_Icon_Name (File_Modified_Pixbuf);
+               Bar.Modified_Status.Set_Label (-"Modified");
          end case;
       end if;
 
@@ -289,6 +299,26 @@ package body Src_Editor_Status_Bar is
       Source_Editor_Box (Bar.Box).Set_Writable
         (not Get_Writable (Bar.Buffer), Explicit => True);
    end On_Read_Only_Pressed;
+
+   --------------------------------
+   -- On_Modified_Status_Pressed --
+   --------------------------------
+
+   procedure On_Modified_Status_Pressed (Ob : access GObject_Record'Class) is
+      Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
+      Kernel : constant Kernel_Handle := Get_Kernel (Bar.Buffer);
+      Dummy  : Boolean;
+   begin
+      if Get_Writable (Bar.Buffer) then
+         case Get_Status (Bar.Buffer) is
+            when Unsaved | Modified =>
+               Dummy := Execute_Action (Kernel, "save");
+
+            when others =>
+               null;
+         end case;
+      end if;
+   end On_Modified_Status_Pressed;
 
    -----------
    -- Setup --
@@ -464,6 +494,11 @@ package body Src_Editor_Status_Bar is
       Bar.Cursor_Loc.Set_Homogeneous (False);
       Bar.Toolbar.Insert (Bar.Cursor_Loc);
       Bar.Cursor_Loc.On_Clicked (On_Goto_Line_Func'Access, Bar);
+
+      Gtk_New (Bar.Modified_Status);
+      Bar.Modified_Status.Set_Homogeneous (False);
+      Bar.Modified_Status.On_Clicked (On_Modified_Status_Pressed'Access, Bar);
+      Bar.Toolbar.Insert (Bar.Modified_Status);
 
       Gtk_New (Bar.Read_Only);
       Bar.Read_Only.Set_Homogeneous (False);
