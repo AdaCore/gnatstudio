@@ -555,27 +555,28 @@ package Codefix.Text_Manager.Ada_Commands is
    function Is_Writable (This : Reorder_Subprogram_Cmd) return Boolean;
    --  See inherited documentation
 
-   --------------------------
-   -- Remove_Attribute_Cmd --
-   --------------------------
+   ---------------------------
+   -- Replace_Attribute_Cmd --
+   ---------------------------
 
-   type Remove_Attribute_Cmd is new Text_Command (Simple) with private;
+   type Replace_Attribute_Cmd is new Text_Command (Simple) with private;
 
    procedure Initialize
-     (This         : in out Remove_Attribute_Cmd;
+     (This         : in out Replace_Attribute_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class);
+      Cursor       : File_Cursor'Class;
+      Replace_By   : String);
    --  When placed on a tick character, remove the attribute reference, e.g.
-   --  useless 'Base.
+   --  useless 'Base and insert Replace_By there.
 
    overriding procedure Execute
-     (This         : Remove_Attribute_Cmd;
+     (This         : Replace_Attribute_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class);
 
-   overriding procedure Free (This : in out Remove_Attribute_Cmd);
+   overriding procedure Free (This : in out Replace_Attribute_Cmd);
 
    overriding
-   function Is_Writable (This : Remove_Attribute_Cmd) return Boolean;
+   function Is_Writable (This : Replace_Attribute_Cmd) return Boolean;
    --  See inherited documentation
 
    --------------------------
@@ -740,8 +741,9 @@ private
       Location : Ptr_Mark;
    end record;
 
-   type Remove_Attribute_Cmd is new Text_Command (Simple) with record
-      Location : Ptr_Mark;
+   type Replace_Attribute_Cmd is new Text_Command (Simple) with record
+      Location   : Ptr_Mark;
+      Replace_By : Unbounded_String;
    end record;
 
    type Renames_To_Constant_Cmd is new Text_Command (Simple) with record

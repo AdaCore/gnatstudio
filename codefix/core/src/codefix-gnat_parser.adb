@@ -1251,6 +1251,19 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like Elaborate_All pragma required for "Procs2"
 
+   type Attribute_Expected is new Error_Parser (1) with null record;
+
+   overriding procedure Initialize (This : in out Attribute_Expected);
+
+   overriding procedure Fix
+     (This         : Attribute_Expected;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'expect attribute 'Range'.
+
    ----------------
    -- Initialize --
    ----------------
@@ -4229,6 +4242,35 @@ package body Codefix.GNAT_Parser is
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (This : in out Attribute_Expected) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("expect attribute ('[A-Za-z_]+)")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Attribute_Expected;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Replace_Attribute
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -4311,6 +4353,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Wrong_Sb_Order);
       Add_Parser (Processor, new No_Statement_Following_Then);
       Add_Parser (Processor, new Elaborate_All_Required);
+      Add_Parser (Processor, new Attribute_Expected);
 
       --  GNATCheck parsers
 

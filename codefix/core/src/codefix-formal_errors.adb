@@ -1746,17 +1746,40 @@ package body Codefix.Formal_Errors is
       return Solution_List
    is
       Result      : Solution_List;
-      Command_Ptr : constant Ptr_Command := new Remove_Attribute_Cmd;
-      Command     : Remove_Attribute_Cmd renames
-        Remove_Attribute_Cmd (Command_Ptr.all);
+      Command_Ptr : constant Ptr_Command := new Replace_Attribute_Cmd;
+      Command     : Replace_Attribute_Cmd renames
+        Replace_Attribute_Cmd (Command_Ptr.all);
    begin
-      Command.Initialize (Current_Text, Location);
+      Command.Initialize (Current_Text, Location, Replace_By => "");
       Command.Set_Caption (To_Unbounded_String ("Remove attribute"));
 
       Append (Result, Command_Ptr);
 
       return Result;
    end Remove_Attribute;
+
+   -----------------------
+   -- Replace_Attribute --
+   -----------------------
+
+   function Replace_Attribute
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Location     : File_Cursor'Class;
+      Replace_By   : String)
+      return Solution_List
+   is
+      Result      : Solution_List;
+      Command_Ptr : constant Ptr_Command := new Replace_Attribute_Cmd;
+      Command     : Replace_Attribute_Cmd renames
+        Replace_Attribute_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize (Current_Text, Location, Replace_By);
+      Command.Set_Caption (To_Unbounded_String ("Replace attribute"));
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Replace_Attribute;
 
    -------------------------
    -- Renames_To_Constant --
