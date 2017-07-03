@@ -90,6 +90,7 @@ testsuite/bin/syntax_gnatparse
 testsuite/bin/syntax_gnatpp
 testsuite/bin/syntax_gnatunit
 testsuite/bin/test_arrays
+testsuite/bin/test_cmd_line
 testsuite/bin/test_htables
 testsuite/bin/test_parse
 testsuite/bin/test_parse_c
