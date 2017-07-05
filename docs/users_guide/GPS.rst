@@ -1500,6 +1500,8 @@ Classes
 
    .. automethod:: GPS.Message.__init__
 
+   .. automethod:: GPS.Message.create_nested_message
+
    .. automethod:: GPS.Message.execute_action
 
    .. automethod:: GPS.Message.get_category
