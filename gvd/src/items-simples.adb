@@ -158,7 +158,7 @@ package body Items.Simples is
          Rect.Add_Child (View.Item_Hidden);
       else
          if Show_Type (Mode)
-           and then Self.Type_Name /= null
+           and then Self.Type_Name /= Null_Unbounded_String
          then
             T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
             T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
@@ -214,7 +214,7 @@ package body Items.Simples is
          Rect.Add_Child (View.Item_Hidden);
       else
          if Show_Type (Mode)
-           and then Self.Type_Name /= null
+           and then Self.Type_Name /= Null_Unbounded_String
          then
             T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
             T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
@@ -422,7 +422,7 @@ package body Items.Simples is
          Item.As_Record := new Type_Array (1 .. Integer (Item.Value.Length));
 
          for L in 1 .. Integer (Item.Value.Length) loop
-            Item.As_Record (L).Name := new String'("");
+            Item.As_Record (L).Name := Null_Unbounded_String;
             Item.As_Record (L).Typ := new Simple_Type'
               (Base_Simple_Type with
                Value       => Item.Value (L).Value,
@@ -465,7 +465,7 @@ package body Items.Simples is
       return Boolean is
    begin
       return Item2.all in Simple_Type'Class
-        and then Item1.Type_Name.all = Item2.Type_Name.all;
+        and then Item1.Type_Name = Item2.Type_Name;
    end Structurally_Equivalent;
 
    -----------------------------

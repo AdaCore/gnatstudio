@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Browsers;               use Browsers;
 with Browsers.Canvas;        use Browsers.Canvas;
-with GNAT.Strings;           use GNAT.Strings;
 with Glib;
 with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
 with Gtkada.Style;           use Gtkada.Style;
@@ -289,7 +288,7 @@ private
       --  Whether the value stored is valid, ie there was no error from the
       --  debugger when we got it.
 
-      Type_Name : GNAT.Strings.String_Access := null;
+      Type_Name : Unbounded_String := Null_Unbounded_String;
       --  The type of the item.
       --  As a special case, this starts with Unknown_Type_Prefix if some extra
       --  info needs to be extracted from the debugger. In that case, the
@@ -313,7 +312,7 @@ private
       Base : String := "") return String is ("");
 
    type Field_Descr is record
-      Name : GNAT.Strings.String_Access;
+      Name : Unbounded_String := Null_Unbounded_String;
       Typ  : Generic_Type_Access;
    end record;
    type Type_Array is array (Natural range <>) of Field_Descr;

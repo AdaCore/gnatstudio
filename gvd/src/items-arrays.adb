@@ -18,7 +18,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Tags;              use Ada.Tags;
 with Glib;                  use Glib;
-with GNAT.Strings;          use GNAT.Strings;
 with Items.Repeats;         use Items.Repeats;
 with Language;              use Language;
 
@@ -603,7 +602,7 @@ package body Items.Arrays is
 
       else
          if Show_Type (Mode)
-           and then Self.Type_Name /= null
+           and then Self.Type_Name /= Null_Unbounded_String
          then
             Rect.Add_Child
               (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));

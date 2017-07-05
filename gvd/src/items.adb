@@ -20,6 +20,8 @@ with GVD.Canvas;        use GVD.Canvas;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+
 package body Items is
 
    ------------------------
@@ -142,8 +144,7 @@ package body Items is
      (Item : access Generic_Type;
       Name : String) is
    begin
-      GNAT.Strings.Free (Item.Type_Name);
-      Item.Type_Name := new String'(Name);
+      Item.Type_Name := To_Unbounded_String (Name);
    end Set_Type_Name;
 
    -------------------
@@ -155,26 +156,21 @@ package body Items is
       Lang    : Language.Language_Access)
      return String is
    begin
-      if Item.Type_Name = null then
+      if Item.Type_Name = Null_Unbounded_String then
          return "";
 
       --  Lazy evaluation ?
-      elsif Item.Type_Name'Length > Unknown_Type_Prefix'Length
-        and then Item.Type_Name
-        (Item.Type_Name'First
-         .. Item.Type_Name'First + Unknown_Type_Prefix'Length - 1) =
-        Unknown_Type_Prefix
-      then
+      elsif Starts_With (To_String (Item.Type_Name), Unknown_Type_Prefix) then
          declare
             Entity_Start, Default_Start : Positive;
             Debugger : constant Debugger_Access :=
               Get_Debugger (Language_Debugger_Access (Lang));
          begin
-            Entity_Start := Item.Type_Name'First + Unknown_Type_Prefix'Length;
+            Entity_Start := Unknown_Type_Prefix'Length + 1;
 
             Default_Start := Entity_Start;
-            while Default_Start < Item.Type_Name'Last
-              and then Item.Type_Name (Default_Start) /= ASCII.LF
+            while Default_Start < Length (Item.Type_Name)
+              and then Element (Item.Type_Name, Default_Start) /= ASCII.LF
             loop
                Default_Start := Default_Start + 1;
             end loop;
@@ -182,13 +178,14 @@ package body Items is
             Set_Type_Name
               (Item,
                Get_Type_Info
-               (Debugger,
-                Item.Type_Name (Entity_Start .. Default_Start - 1),
-                Item.Type_Name (Default_Start + 1 .. Item.Type_Name'Last)));
-            return Item.Type_Name.all;
+                 (Debugger,
+                  Slice (Item.Type_Name, Entity_Start, Default_Start - 1),
+                  Slice (Item.Type_Name,
+                    Default_Start + 1, Length (Item.Type_Name))));
+            return To_String (Item.Type_Name);
          end;
       else
-         return Item.Type_Name.all;
+         return To_String (Item.Type_Name);
       end if;
    end Get_Type_Name;
 
@@ -218,8 +215,8 @@ package body Items is
      (Item  : Generic_Type;
       Clone : in out Generic_Type_Access) is
    begin
-      if Item.Type_Name /= null then
-         Clone.Type_Name := new String'(Item.Type_Name.all);
+      if Item.Type_Name /= Null_Unbounded_String then
+         Clone.Type_Name := Item.Type_Name;
       end if;
    end Clone_Dispatching;
 
@@ -245,7 +242,7 @@ package body Items is
       J : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if not Only_Value then
-         GNAT.Strings.Free (Item.Type_Name);
+         Item.Type_Name := Null_Unbounded_String;
          Free_Internal (J);
       end if;
    end Free;
@@ -297,7 +294,7 @@ package body Items is
    begin
       if Self /= null then
          for J in Self'Range loop
-            Free (Self (J).Name);
+            Self (J).Name := Null_Unbounded_String;
             Free (Self (J).Typ);
          end loop;
          Unchecked_Free (Self);
@@ -345,7 +342,7 @@ package body Items is
    is
       pragma Unreferenced (Lang, Base);
    begin
-      return Self.Fields (Self.Idx).Name.all;
+      return To_String (Self.Fields (Self.Idx).Name);
    end Field_Name;
 
    ----------

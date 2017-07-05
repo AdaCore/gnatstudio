@@ -20,8 +20,6 @@ with Language;        use Language;
 
 package body Items.Records is
 
-   use type GNAT.Strings.String_Access;
-
    type Record_Iterator is new Generic_Iterator with record
       Item    : Record_Type_Access;
       Field   : Natural;
@@ -79,19 +77,19 @@ package body Items.Records is
          Free (Item.Fields (Index).Variant_Part);
       end if;
 
-      if Item.Fields (Index).Name /= null then
-         GNAT.Strings.Free (Item.Fields (Index).Name);
+      if Item.Fields (Index).Name /= Null_Unbounded_String then
+         Item.Fields (Index).Name := Null_Unbounded_String;
       end if;
 
       if Variant_Parts = 0 then
          Item.Fields (Index) := Record_Field'
-           (Name          => new String'(Name),
+           (Name         => To_Unbounded_String (Name),
             Value        => null,
             Variant_Part => null);
 
       else
          Item.Fields (Index) := Record_Field'
-           (Name         => new String'(Name),
+           (Name         => To_Unbounded_String (Name),
             Value        => null,
             Variant_Part => new Record_Type_Array (1 .. Variant_Parts));
       end if;
@@ -103,9 +101,9 @@ package body Items.Records is
 
    function Get_Field_Name
      (Item  : Record_Type;
-      Index : Positive) return GNAT.Strings.String_Access is
+      Index : Positive) return String is
    begin
-      return Item.Fields (Index).Name;
+      return To_String (Item.Fields (Index).Name);
    end Get_Field_Name;
 
    -----------------------
@@ -166,7 +164,7 @@ package body Items.Records is
            or else
              (Item.Fields (Field).Variant_Part (J).Fields'Length /= 0
               and then
-                Item.Fields (Field).Variant_Part (J).Fields (1).Name.all =
+                Item.Fields (Field).Variant_Part (J).Fields (1).Name =
                 Contains)
          then
             Item.Fields (Field).Variant_Part (J).Valid := True;
@@ -187,7 +185,7 @@ package body Items.Records is
       Field : String) is
    begin
       for J in Item.Fields'Range loop
-         if Item.Fields (J).Name.all = Field then
+         if Item.Fields (J).Name = Field then
             if Item.Fields (J).Value /= null then
                Free (Item.Fields (J).Value, Only_Value => False);
             end if;
@@ -229,7 +227,7 @@ package body Items.Records is
       Field : String) return Generic_Type_Access is
    begin
       for J in Item.Fields'Range loop
-         if Item.Fields (J).Name.all = Field then
+         if Item.Fields (J).Name = Field then
             return Item.Fields (J).Value;
          end if;
       end loop;
@@ -291,7 +289,7 @@ package body Items.Records is
             end if;
 
             if not Only_Value then
-               GNAT.Strings.Free (Item.Fields (J).Name);
+               Item.Fields (J).Name := Null_Unbounded_String;
                Free (Item.Fields (J).Variant_Part);
             end if;
          end if;
@@ -314,7 +312,7 @@ package body Items.Records is
       R := Record_Type_Access (Clone);
 
       for J in Item.Fields'Range loop
-         R.Fields (J).Name := new String'(Item.Fields (J).Name.all);
+         R.Fields (J).Name := Item.Fields (J).Name;
          --  Duplicate the type structure, but not the value itself.
 
          if Item.Fields (J).Value = null then
@@ -368,7 +366,7 @@ package body Items.Records is
          Rect.Set_Style (Styles.Nested);
 
          if Show_Type (Mode)
-           and then Self.Type_Name /= null
+           and then Self.Type_Name /= Null_Unbounded_String
          then
             Rect.Add_Child
               (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)),
@@ -386,11 +384,13 @@ package body Items.Records is
                Rect.Add_Child (R, Margin => Margin);
                R.Add_Child
                  (Gtk_New_Text
-                    (Styles.Text_Font, Self.Fields (F).Name.all & " => "));
+                    (Styles.Text_Font,
+                     To_String (Self.Fields (F).Name) & " => "));
                R.Add_Child
                  (Self.Fields (F).Value.Build_Display
-                    (Record_Field_Name (Lang, Name, Self.Fields (F).Name.all),
-                     View, Lang, Mode));
+                  (Record_Field_Name (Lang, Name,
+                       To_String (Self.Fields (F).Name)),
+                       View, Lang, Mode));
             end if;
 
             --  a variant part ?
@@ -406,7 +406,7 @@ package body Items.Records is
                      R.Add_Child
                        (Gtk_New_Text
                           (Styles.Text_Font,
-                           Self.Fields (F).Name.all & " => "));
+                           To_String (Self.Fields (F).Name) & " => "));
                      R.Add_Child
                        (Self.Fields (F).Variant_Part (V).Build_Display
                         (Name, View, Lang, Mode));
@@ -543,7 +543,7 @@ package body Items.Records is
          return "<variant part>";
       else
          return Lang.Record_Field_Name
-           (Base, Iter.Item.Fields (Iter.Field).Name.all);
+           (Base, To_String (Iter.Item.Fields (Iter.Field).Name));
       end if;
    end Field_Name;
 

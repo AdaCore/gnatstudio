@@ -870,7 +870,7 @@ package body Debugger.Base_Gdb.Ada is
                     (Lang,
                      Type_Str (Tmp_Index .. Index - 1),
                      Record_Field_Name
-                       (Lang, Entity, Get_Field_Name (R.all, Fields).all),
+                       (Lang, Entity, Get_Field_Name (R.all, Fields)),
                      J, Result);
 
                   Set_Value (R.all, Result, Field => Fields);
@@ -886,7 +886,7 @@ package body Debugger.Base_Gdb.Ada is
                                 Parse_Type (Get_Debugger (Lang),
                                             Entity & "."
                                               & Get_Field_Name
-                                              (R.all, Fields).all),
+                                              (R.all, Fields)),
                                 Field => Fields);
                end;
             end if;

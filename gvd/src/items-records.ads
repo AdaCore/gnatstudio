@@ -54,7 +54,7 @@ package Items.Records is
 
    function Get_Field_Name
      (Item  : Record_Type;
-      Index : Positive) return GNAT.Strings.String_Access;
+      Index : Positive) return String;
    --  Return the name of the Index-th field in Item.
 
    function Find_Variant_Part
@@ -124,7 +124,7 @@ private
    type Record_Type_Array_Access is access Record_Type_Array;
 
    type Record_Field is record
-      Name         : GNAT.Strings.String_Access := null;
+      Name         : Unbounded_String := Null_Unbounded_String;
       Value        : Items.Generic_Type_Access := null;
       Variant_Part : Record_Type_Array_Access := null;
    end record;
