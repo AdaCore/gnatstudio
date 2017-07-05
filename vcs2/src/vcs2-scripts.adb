@@ -864,15 +864,16 @@ package body VCS2.Scripts is
 
       elsif Command = "supported_systems" then
          declare
+            Choices : Unbounded_String := To_Unbounded_String ("Auto");
+
             procedure On_Name (Name : String);
             procedure On_Name (Name : String) is
             begin
-               Data.Set_Return_Value (Name);
+               Choices := Choices & ASCII.LF & Name;
             end On_Name;
          begin
-            Data.Set_Return_Value_As_List;
-            Data.Set_Return_Value (String'("Auto"));
             For_Each_Registered_Factory (Kernel, On_Name'Access);
+            Data.Set_Return_Value (To_String (Choices));
          end;
       end if;
    end Static_VCS_Handler;

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
@@ -270,27 +271,31 @@ package body VCS_Module is
    is
       Unknown_VCS_Name : constant String := Name (Unknown_VCS_Reference);
 
-      procedure Add_VCS (Position : VCS_Map.Cursor);
-      --  Add a VCS into the returned data
-
-      -------------
-      -- Add_VCS --
-      -------------
-
-      procedure Add_VCS (Position : VCS_Map.Cursor) is
-         Name : constant String := VCS_Map.Key (Position);
-      begin
-         --  Filter out the Unknown VCS
-         if Name /= Unknown_VCS_Name then
-            Set_Return_Value (Data, Name);
-         end if;
-      end Add_VCS;
-
    begin
       if Command = "supported_systems" then
-         Set_Return_Value_As_List (Data);
-         Set_Return_Value (Data, String'("Auto"));
-         VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
+         declare
+            Choices : Unbounded_String := To_Unbounded_String ("Auto");
+
+            procedure Add_VCS (Position : VCS_Map.Cursor);
+            --  Add a VCS into the returned data
+
+            -------------
+            -- Add_VCS --
+            -------------
+
+            procedure Add_VCS (Position : VCS_Map.Cursor) is
+               Name : constant String := VCS_Map.Key (Position);
+            begin
+               --  Filter out the Unknown VCS
+               if Name /= Unknown_VCS_Name then
+                  Choices := Choices & ASCII.LF & Name;
+               end if;
+            end Add_VCS;
+
+         begin
+            VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
+            Data.Set_Return_Value (To_String (Choices));
+         end;
 
       elsif Command = "get_current_vcs" then
          declare
