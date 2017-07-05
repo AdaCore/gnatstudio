@@ -7384,6 +7384,18 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
+    def create_with_priority(self, label, type, priority, doc='',
+                             default='', *args):
+        """
+        Same as :func:`GPS.Preferences.create` but with an additional parameter
+        allowing to specify the priority of the preference.
+        By default, preferences have -1 for priority. Higher priority
+        preferences are placed at the top of the page.
+
+        :param priority: An integer
+        """
+        pass  # implemented in Ada
+
     def get(self):
         """
         Gets value of the given preference. The exact returned type depends

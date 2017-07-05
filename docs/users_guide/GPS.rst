@@ -1568,6 +1568,8 @@ Classes
 
    .. automethod:: GPS.Preference.create_style
 
+   .. automethod:: GPS.Preference.create_with_priority
+
    .. automethod:: GPS.Preference.get
 
    .. automethod:: GPS.Preference.set

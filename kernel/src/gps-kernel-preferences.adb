@@ -329,93 +329,106 @@ package body GPS.Kernel.Preferences is
             end if;
 
             Pref := Preference
-              (Create (Manager => Kernel.Preferences,
-                       Path    => Dir_Name (Path),
-                       Name    => Path,
-                       Label => Label,
-                       Doc => Doc,
-                       Default_Bg => Default_Bg,
-                       Default_Fg => Default_Fg,
+              (Create (Manager         => Kernel.Preferences,
+                       Path            => Dir_Name (Path),
+                       Name            => Path,
+                       Label           => Label,
+                       Doc             => Doc,
+                       Default_Bg      => Default_Bg,
+                       Default_Fg      => Default_Fg,
                        Default_Variant => Default_Variant,
-                       Base => Default_Style));
+                       Base            => Default_Style));
          end;
 
-      elsif Command = "create" then
+      elsif Command = "create" or else Command = "create_with_priority" then
          declare
-            Path  : constant String := Get_Data (Inst, Class);
-            Label : constant String := Nth_Arg (Data, 2);
-            Typ   : constant String := Nth_Arg (Data, 3);
-            Doc   : constant String := Nth_Arg (Data, 4, "");
-            Pref  : Preference;
+            Has_Prio      : constant Boolean := Command /= "create";
+            Doc_Param_Idx : constant Positive := (if Has_Prio then 5 else 4);
+            Path          : constant String := Get_Data (Inst, Class);
+            Label         : constant String := Nth_Arg (Data, 2);
+            Typ           : constant String := Nth_Arg (Data, 3);
+            Doc           : constant String :=
+                              Nth_Arg (Data, Doc_Param_Idx, "");
+            Priority      : constant Integer :=
+                              (if Has_Prio then Data.Nth_Arg (4) else -1);
+            Pref          : Preference;
             pragma Unreferenced (Pref);
          begin
             if Typ = "integer" then
                Pref := Preference (Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
-                  Default => Nth_Arg (Data, 5, 0),
-                  Minimum => Nth_Arg (Data, 6, Integer'First),
-                  Maximum => Nth_Arg (Data, 7, Integer'Last)));
+                 (Manager  => Kernel.Preferences,
+                  Path     => Dir_Name (Path),
+                  Name     => Path,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Default  => Nth_Arg (Data, Doc_Param_Idx + 1, 0),
+                  Minimum  => Nth_Arg (Data, Doc_Param_Idx + 2, Integer'First),
+                  Maximum  => Nth_Arg (Data, Doc_Param_Idx + 3, Integer'Last),
+                  Priority => Priority));
 
             elsif Typ = "boolean" then
                Pref := Preference (Boolean_Preference'(Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
-
-                  Default => Nth_Arg (Data, 5, True))));
+                 (Manager  => Kernel.Preferences,
+                  Path     => Dir_Name (Path),
+                  Name     => Path,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Default  => Nth_Arg (Data, Doc_Param_Idx + 1, True),
+                  Priority => Priority)));
 
             elsif Typ = "string" then
                Pref := Preference (String_Preference'(Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
-                  Default => Nth_Arg (Data, 5, ""))));
+                 (Manager  => Kernel.Preferences,
+                  Path     => Dir_Name (Path),
+                  Name     => Path,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Default  => Nth_Arg (Data, Doc_Param_Idx + 1, ""),
+                  Priority => Priority)));
 
             elsif Typ = "multiline" then
                Pref := Preference (String_Preference'(Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
+                 (Manager    => Kernel.Preferences,
+                  Path       => Dir_Name (Path),
+                  Name       => Path,
+                  Label      => Label,
+                  Doc        => Doc,
                   Multi_Line => True,
-                  Default => Nth_Arg (Data, 5, ""))));
+                  Default    => Nth_Arg (Data, Doc_Param_Idx + 1, ""),
+                  Priority   => Priority)));
 
             elsif Typ = "color" then
                Pref := Preference (Color_Preference'(Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
-                  Default => Nth_Arg (Data, 5, "black"))));
+                 (Manager  => Kernel.Preferences,
+                  Path     => Dir_Name (Path),
+                  Name     => Path,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Default  => Nth_Arg (Data, Doc_Param_Idx + 1, "black"),
+                  Priority => Priority)));
 
             elsif Typ = "font" then
                Pref := Preference (Font_Preference'(Create
-                 (Manager => Kernel.Preferences,
-                  Path    => Dir_Name (Path),
-                  Name    => Path,
-                  Label   => Label,
-                  Doc     => Doc,
-                  Default => Nth_Arg (Data, 5, Defaults.Default_Font))));
+                 (Manager  => Kernel.Preferences,
+                  Path     => Dir_Name (Path),
+                  Name     => Path,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Default  =>
+                    Nth_Arg
+                      (Data, Doc_Param_Idx + 1, Defaults.Default_Font),
+                  Priority => Priority)));
 
             elsif Typ = "enum" then
                declare
                   Val : constant String_List_Access :=
                     new GNAT.Strings.String_List
-                      (1 .. Number_Of_Arguments (Data) - 5);
+                      (1 .. Number_Of_Arguments (Data) - (Doc_Param_Idx  + 1));
                   --  Freed when the preference is destroyed
                begin
                   for V in Val'Range loop
-                     Val (V) := new String'(Nth_Arg (Data, 5 + V));
+                     Val (V) :=
+                       new String'(Nth_Arg (Data, Doc_Param_Idx + 1 + V));
                   end loop;
 
                   Pref := Preference (Choice_Preference'(Create
@@ -425,7 +438,7 @@ package body GPS.Kernel.Preferences is
                      Label   => Label,
                      Doc     => Doc,
                      Choices => Val,
-                     Default => Nth_Arg (Data, 5))));
+                     Default => Nth_Arg (Data, Doc_Param_Idx + 1))));
                end;
 
             else
@@ -1674,6 +1687,13 @@ package body GPS.Kernel.Preferences is
       Register_Command
         (Kernel, "create",
          Minimum_Args => 2,
+         Maximum_Args => Integer'Last,
+         Class        => Pref_Class,
+         Handler      => Get_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "create_with_priority",
+         Minimum_Args => 3,
          Maximum_Args => Integer'Last,
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);

@@ -10,9 +10,10 @@ import re
 
 mc_on_entity_color = GPS.Preference(
     "Editor/Fonts & Colors:General/multicursor_selection_color")
-mc_on_entity_color.create(
+mc_on_entity_color.create_with_priority(
     "Multi cursor selection",
     "color",
+    -2,
     "",
     "#96C5D9")
 
