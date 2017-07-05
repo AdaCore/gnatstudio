@@ -24,6 +24,7 @@ with GPS.Editors;                    use GPS.Editors;
 with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
 with GPS.Kernel.Messages.Markup;     use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager.Shell; use GPS.Kernel.Style_Manager.Shell;
 with Gtk.Enums;                      use Gtk.Enums;
@@ -298,6 +299,32 @@ package body GPS.Kernel.Messages.Shell is
             Set_Data (Message_Inst, Message_Access (Message));
          end;
 
+      elsif Command = "create_nested_message" then
+         declare
+            Parent  : constant Message_Access :=
+              Get_Message (Nth_Arg (Data, 1, Message_Class));
+            File    : constant Virtual_File :=
+              Get_Data (Nth_Arg
+                        (Data, 2, Get_File_Class (Kernel),
+                         Default => No_Class_Instance, Allow_Null => False));
+            Line    : constant Natural := Nth_Arg (Data, 3);
+            Column  : constant Natural := Nth_Arg (Data, 4);
+            Text    : constant String := Nth_Arg (Data, 5);
+            Message : constant Simple_Message_Access :=
+              Create_Simple_Message
+                (Parent => Parent,
+                 File   => File,
+                 Line   => Line,
+                 Column => GNATCOLL.Xref.Visible_Column (Column),
+                 Text   => Text,
+                 Flags  => Parent.Get_Flags);
+
+         begin
+            Data.Set_Return_Value
+              (Create_Message_Instance
+                 (Data.Get_Script, Message_Access (Message)));
+         end;
+
       elsif Command = "set_action" then
          Name_Parameters
            (Data,
@@ -493,6 +520,16 @@ package body GPS.Kernel.Messages.Shell is
             Param ("allow_auto_jump_to_first",  Optional => True)),
          Handler => Message_Command_Handler'Access,
          Class => Message_Class);
+
+      Kernel.Scripts.Register_Command
+        (Command => "create_nested_message",
+         Params  =>
+           (Param ("file"),
+            Param ("line"),
+            Param ("column"),
+            Param ("text")),
+         Handler => Message_Command_Handler'Access,
+         Class   => Message_Class);
 
       Register_Command
         (Kernel, Destructor_Method, 0, 0, Accessors'Access,

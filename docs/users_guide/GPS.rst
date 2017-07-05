@@ -1502,6 +1502,8 @@ Classes
 
    .. automethod:: GPS.Message.cancel_subprogram
 
+   .. automethod:: GPS.Message.create_nested_message
+
    .. automethod:: GPS.Message.execute_action
 
    .. automethod:: GPS.Message.get_category

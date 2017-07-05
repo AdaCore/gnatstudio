@@ -7080,6 +7080,18 @@ class Message(object):
         """
         pass  # implemented in Ada
 
+    def create_nested_message(self, file, line, column, text):
+        """
+        Add nested message.
+
+        :param file: A File indicating the file
+        :param line: An integer indicating the line
+        :param column: An integer indicating the column
+        :param text: A string containg the message text
+        """
+
+        pass  # implemented in Ada
+
     def execute_action(self):
         """
         If the message has an associated action, executes it.
