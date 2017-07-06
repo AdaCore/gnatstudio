@@ -81,8 +81,8 @@ class Project_Support(object):
               index="Simulink">
                <language>Simulink</language>
                <switches>
-                 <title line="1">Files</title>
-                 <title line="2">Generation</title>
+                 <title line="1">Input Files</title>
+                 <title line="2">Generation Configuration</title>
                  <title line="3">Output</title>
 
                  <field
@@ -92,6 +92,7 @@ class Project_Support(object):
                   separator=" "
                   as-file="true"
                  tip="Provides variable declarations of the Matlab workspace"/>
+
                  <field
                   line="1"
                   label="Typing file"
@@ -99,6 +100,16 @@ class Project_Support(object):
                   separator=" "
                   as-file="true"
                   tip="Provides Simulink block typing information"/>
+
+                 <field
+                  line="1"
+                  label="Arithmetic operations configuration file"
+                  switch="--arith-conf"
+                  separator=" "
+                  as-file="true"
+                 tip="Specify a file containing the configuration for \
+arithmetic operations"/>
+
                  <field
                   line="1"
                   label="Library directory"
@@ -107,22 +118,100 @@ class Project_Support(object):
                   as-directory="true"
                   tip=""/>
 
-                 <combo
+                 <radio
                   line="2"
                   label="Target language"
                   switch="-l"
                   separator=" "
              tip="The language used by QGENC to produce the generated files">
-                    <combo-entry label="Ada" value="ada"/>
-                    <combo-entry label="C" value="c"/>
-                 </combo>
+                    <radio-entry label="Ada" switch="ada"/>
+                    <radio-entry label="C" switch="c"/>
+                 </radio>
+
                  <check
                   line="2"
-                  label="Flatten model"
-                  switch="--full-flattening"
-                  tip=""/>
+                  label="Generate unoptimized code"
+                  switch="--debug"
+                 tip=""/>
 
-                 <radio line="3">
+                 <check
+                  line="2"
+                  label="Generate traceability infos for model debugging"
+                  switch="--trace"
+                 tip=""/>
+
+                 <radio
+                  line="2"
+                  label="MISRA violations"
+                 tip="The behavior when detecting MISRA Simulink violations">
+                   <radio-entry label="Detect as errors"
+                    switch = ""/>
+                   <radio-entry label="Detect as warnings"
+                    switch="--wmisra"/>
+                   <radio-entry label="Accept"
+                    switch="--no-misra"/>
+                 </radio>
+
+                 <check
+                  line="2"
+                  label="Generate code for all model variants"
+                  switch="--all-variants"
+                 tip=""/>
+
+                 <check
+                  line="2"
+                  label="Use simulink function packaging for subsystem\
+ code generation"
+                  switch="--simulink-subsystem"
+                 tip=""/>
+
+                 <check
+                  line="2"
+                  label="Always generate system variables as variables"
+                  switch="--consts-as-var"
+                 tip=""/>
+
+                 <check
+                  line="2"
+                  label="Remove code for assertions blocks"
+                  switch="--remove-assertions"
+                 tip=""/>
+
+                 <check
+                  line="2"
+                  label="Remove goto statements"
+                  switch="--no-jump"
+                 tip=""/>
+
+                 <check
+                  line="2"
+                  label="Generate main subsystem's IO as global variables"
+                  switch="--global-io"
+                 tip=""/>
+
+                 <radio line = "2" label="Flattening strategy"
+                    tip="Controls the way source files are generated">
+                    <radio-entry label="No flattening"
+                                 switch=""/>
+                    <radio-entry label="Full flattening"
+                                 switch="--full-flattening" />
+                    <radio-entry label="Flattening by reference"
+                                 switch="--ref-flattening"/>
+                 </radio>
+
+                 <field
+                  line="3"
+                  label="Output Directory"
+                  switch="-o"
+                  separator=" "
+                  as-directory="true"
+                 tip="Specify the output directory"/>
+
+                 <radio line="3" label="Output directory cleaning policy">
+                   <radio-entry
+                    label="Ensure non existent"
+                    switch=""
+             tip="Only generates code if the output directory does not exist"/>
                    <radio-entry
                     label="Delete"
                     switch="-c"
@@ -132,6 +221,7 @@ class Project_Support(object):
                     switch="-i"
              tip="Preserve contents of output directory between compilations"/>
                  </radio>
+
                </switches>
              </tool>
            </GPS>""")
