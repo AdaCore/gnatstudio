@@ -616,7 +616,12 @@ package body Command_Lines is
         (Switch : Unbounded_String;
          Prefix : Unbounded_String;
          Pos    : Positive) return Unbounded_String;
-      --  Lookup for switch argument
+      --  Lookup for switch argument in Item.Switch starting from Pos
+
+      function Find_Switch
+        (Prefix : Unbounded_String;
+         Pos    : Positive) return Unbounded_String;
+      --  Lookup for switch in Item.Switch starting from Pos
 
       Appended : Boolean := False;
 
@@ -678,9 +683,10 @@ package body Command_Lines is
             if Param.Is_Set and then not Param.Separator.Is_Set then
                Result := Delete (Item.Switch, 1, Pos - 1);
 
+               --  Look for first switch after Pos
                for J in Pos .. Length (Item.Switch) loop
-                  if Sect.Switches.Contains
-                    (Prefix & Element (Item.Switch, J))
+                  if Find_Switch (Prefix, J)
+                       not in Null_Unbounded_String | Prefix
                   then
                      Result := Unbounded_Slice (Item.Switch, Pos, J - 1);
                      exit;
@@ -692,6 +698,34 @@ package body Command_Lines is
          return Result;
       end Find_Parameter;
 
+      -----------------
+      -- Find_Switch --
+      -----------------
+
+      function Find_Switch
+        (Prefix : Unbounded_String;
+         Pos    : Positive) return Unbounded_String
+      is
+         Switch : constant Unbounded_String :=
+           Prefix & Delete (Item.Switch, 1, Pos - 1);
+         Cursor : Switch_Configuration_Maps.Cursor :=
+           Sect.Switches.Ceiling (Switch);
+      begin
+         if Switch_Configuration_Maps.Has_Element (Cursor) and then
+           Switch_Configuration_Maps.Key (Cursor) /= Switch
+         then
+            Switch_Configuration_Maps.Previous (Cursor);
+         end if;
+
+         if Switch_Configuration_Maps.Has_Element (Cursor) and then
+           Starts_With (Switch, Switch_Configuration_Maps.Key (Cursor))
+         then
+            return Switch_Configuration_Maps.Key (Cursor);
+         else
+            return Null_Unbounded_String;
+         end if;
+      end Find_Switch;
+
       Conf : constant Configuration_References.Element_Access :=
         Cmd.Configuration.Unchecked_Get;
 
@@ -699,6 +733,7 @@ package body Command_Lines is
       Sections     : Section_Maps.Map renames Cmd.Sections.Unchecked_Get.all;
       Switch       : Unbounded_String;
       Arg          : Unbounded_String;
+      From         : Positive;
    begin
       if not Sections.Contains (Section) then
          --  Create section if don't have it yet
@@ -726,10 +761,14 @@ package body Command_Lines is
       --  Expand prefixed switches if found matched prefix. For example turn
       --  -gnaty3M72b into (-gnaty(3), -gnatyM(72), -gnatyb)
       if Prefix /= "" and not Item.Parameter.Is_Set then
+         --  Start parsing switches just after prefix end
+         From := Length (Prefix) + 1;
+
          --  If there is a switch exactly as prefix
          --  try to find its parameter (as -gnaty3)
          if Sect.Switches.Contains (Prefix) then
-            Arg := Find_Parameter (Prefix, Prefix, Length (Prefix) + 1);
+            Arg := Find_Parameter (Prefix, Prefix, From);
+            From := From + Length (Arg);  --  Skip argument
 
             if Arg /= "" then
                Append_Recursive
@@ -740,28 +779,29 @@ package body Command_Lines is
             end if;
          end if;
 
-         if Arg /= "" or Length (Item.Switch) > Length (Prefix) + 1 then
-            for J in Length (Prefix) + 1 .. Length (Item.Switch) loop
-               if Arg = "" then
-                  Switch := Prefix & Element (Item.Switch, J);
-                  Arg := Find_Parameter (Switch, Prefix, J + 1);
+         while From <= Length (Item.Switch) loop
+            Switch := Find_Switch (Prefix, From);
 
-                  if Arg = "" then
-                     Append_Recursive
-                       ((Switch, Parameter => (Is_Set => False)));
-                  else
-                     Append_Recursive
-                       ((Switch,
-                        Parameter => (Is_Set    => True,
-                                      Separator => (Is_Set => False),
-                                      Value     => Arg)));
-                  end if;
-               else
-                  --  Skip already processed switch argument
-                  Delete (Arg, 1, 1);
-               end if;
-            end loop;
-         end if;
+            if Switch = "" then
+               --  Rollback to single character switch if not found
+               Switch := Prefix & Element (Item.Switch, From);
+            end if;
+
+            From := From + Length (Switch) - Length (Prefix);  --  Skip switch
+            Arg := Find_Parameter (Switch, Prefix, From);
+            From := From + Length (Arg);  --  Skip argument
+
+            if Arg /= "" then
+               Append_Recursive
+                 ((Switch,
+                  Parameter => (Is_Set    => True,
+                                Separator => (Is_Set => False),
+                                Value     => Arg)));
+            elsif Switch /= Item.Switch then  --  Avoid infinite recursion
+               Append_Recursive
+                 ((Switch, Parameter => (Is_Set => False)));
+            end if;
+         end loop;
       end if;
 
       if not Appended then

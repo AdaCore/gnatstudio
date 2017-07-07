@@ -19,6 +19,7 @@ with Command_Lines;    use Command_Lines;
 
 procedure Test_Cmd_Line is
    procedure Test_For_GNATY;
+   procedure Test_For_GNATW;
    procedure Check
      (CL       : Command_Line;
       Expanded : Boolean;
@@ -64,10 +65,32 @@ procedure Test_Cmd_Line is
       end if;
    end Check;
 
+   procedure Test_For_GNATW is
+      --  Define
+      --  * -gnatw as prefix
+      --  * -gnate and -gnat.e as switches
+      --  Then check:
+      --  * add '-gnatw.e'
+      Config : Command_Line_Configuration;
+   begin
+      Config.Define_Prefix ("-gnatw");
+      Config.Define_Switch ("-gnatw.e");
+      Config.Define_Switch ("-gnatwe");
+
+      declare
+         CL : Command_Line;
+      begin
+         CL.Set_Configuration (Config);
+         CL.Append_Switch ("-gnatw.e");
+         Check (CL, False, "-gnatw.e");
+         Check (CL, True, "-gnatw.e");
+      end;
+   end Test_For_GNATW;
+
    procedure Test_For_GNATY is
       --  Define
       --  * -gnaty as prefix
-      --  * -gnaty as parameter with an argument without separator (-gnaty2)
+      --  * -gnaty as switch with an argument without separator (-gnaty2)
       --  * -gnatya as switch without parameters
       --  * -gnaty as alias for -gnaty2x
       --  Then check:
@@ -117,4 +140,5 @@ procedure Test_Cmd_Line is
    end Test_For_GNATY;
 begin
    Test_For_GNATY;
+   Test_For_GNATW;
 end Test_Cmd_Line;
