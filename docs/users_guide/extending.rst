@@ -22,7 +22,7 @@ from, presented in the form of a list of screenshots. Clicking on the button
 underneath a screenshot applies the given color theme to GPS.
 
 Applying a color theme modifies the corresponding GPS preferences. It is
-therefore possible to customeize the colors after a theme has been applied,
+therefore possible to customize the colors after a theme has been applied,
 through the preferences dialog.
 
 GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
@@ -91,7 +91,7 @@ editor), you can further restrict what is displayed in the editor:
   :guilabel:`Show all menus` configuration.
 
 When you select an action, GPS will display its documentation in the bottom
-part of the ditor. This documentation also includes a pointer to the python
+part of the editor. This documentation also includes a pointer to the python
 file that defines the action (or whether it is built-in in GPS), as well as the
 list of menus that will execute this action when selected.
 
@@ -109,7 +109,7 @@ grouped into two logical sets:
   loaded from the key theme. This also updates all the menus to reflect the
   new shortcuts.
 
-  The :guilabel:`Reset` button will discard all the keybindings you have
+  The :guilabel:`Reset` button will discard all the key bindings you have
   manually overridden, and revert to the theme's default key bindings.
 
   The :guilabel:`Create` lets you create a new key theme by copying all
@@ -220,7 +220,7 @@ an action having too many possible effects on GPS: then, a dialog is
 displayed asking you whether you would like to exit GPS when closing the
 preferences editor dialog.
 
-All the changes explictly set by the user in the list of plugins to load
+All the changes explicitly set by the user in the list of plugins to load
 at startup are saved in :file:`HOME/.gps/startup.xml`.
 
 .. _Customizing_through_XML_and_Python_files:
@@ -463,7 +463,7 @@ following attributes:
 * :file:`show-task-manager` (optional, default :command:`false`)
 
   Whether an entry is in the tasks view to show this command. The
-  progress bar indicaton is associated with this entry so if you hide the
+  progress bar indication is associated with this entry so if you hide the
   entry, no progress bar is shown. Alternatively, several progress bars may
   displayed for your action if this is enabled, which might be an issue
   depending on the context.  You can override this attribute for each
@@ -471,11 +471,11 @@ following attributes:
 
 * :file:`category` (optional, default :command:`General`)
 
-  The category in the keybindings editor
+  The category in the key bindings editor
   (:menuselection:`Edit --> Preferences` menu) in which the action is
   displayed. If you specify an empty string, the action is considered part of
   the implementation and not displayed in the editor and the user will not be
-  able to assign it a keybinding through the graphical user interface
+  able to assign it a key binding through the graphical user interface
   (although this can still be done via XML commands).
 
 If you define the same action multiple times, the last definition is used.
@@ -763,7 +763,7 @@ arguments.  This code is useful when you are writing a full python script.
 
   Either an empty string or :file:`-eL`, depending on whether the
   :guilabel:`Fast Project Loading` preference if set.  :file:`-eL` is used
-  by GNAT tools to specify whether symbolink links should be followed when
+  by GNAT tools to specify whether symbolic links should be followed when
   parsing projects.  This macro is only available in commands defined in
   the :guilabel:`Build Manager` and the :guilabel:`Build Launcher` dialogs.
 
@@ -1117,7 +1117,7 @@ These macros are the following
 
 * :file:`$repeat`
 
-  Number of times the action has been consequtively executed.  This is
+  Number of times the action has been consecutively executed.  This is
   1 (the first execution of the action) unless the user invoked the
   :guilabel:`Repeat Next` action.
 
@@ -1198,7 +1198,7 @@ The filters tags
 
 You can define filters in one of two places in the customization files:
 
-* At the toplevel.
+* At the top level.
 
   You can define named filters at the same level as other tags such as
   :file:`<action>`, :file:`<menu>` or :file:`<button>` tags. These are
@@ -1397,7 +1397,7 @@ attributes:
   that makes it a separator (see below).
 
   If you associate a filter with the action via the :file:`<filter>`
-  tag, the menu is greyed out when the filter does not match.
+  tag, the menu is grayed out when the filter does not match.
 
 * :file:`before` (optional)
 
@@ -1723,7 +1723,7 @@ binding::
   </key>
 
 If you bind multiple actions to the same key binding, they are executed
-sequentually, followed by any menu for which this key is an accelerator.
+sequentially, followed by any menu for which this key is an accelerator.
 
 When GPS processes a :file:`<key>` tag, it does the following:
 
@@ -1775,7 +1775,7 @@ accepts the following attributes:
   edited. If the page does not already exist, GPS automatically creates
   it. If this is the empty string, the preference is not editable
   interactively. Use this to save a value from one session of GPS to the
-  next without allowing the user to change it.  Subpages are reference by
+  next without allowing the user to change it. Subpages are referenced by
   separating pages name with slashes (:kbd:`/`).
 
 * :file:`default` (optional, default depends on type of the preference)
@@ -1894,7 +1894,7 @@ Creating themes
 .. index:: <theme>
 
 You can create your own themes and share them between users and then
-selectively chose which themes each user want to activate through the
+selectively choose which themes each user want to activate through the
 preferences dialog.
 
 You create new themes in the customization files using the
@@ -2253,7 +2253,7 @@ The following child tags are available:
     The value of the index should be either the empty string or the
     name of the language.
 
-  The value of this attribubte is the string to use in the project
+  The value of this attribute is the string to use in the project
   properties editor when editing this project field.
 
 .. highlight:: xml
@@ -2522,7 +2522,7 @@ advanced XML tags below or the :file:`<tool>` tag (see
 The customization files support the file:`<project_attribute>` tag, used to
 declare attributes GPS should support in a project file.  Attributes that
 are not supported by GPS are not accessible through the GPS scripting
-languagues and generate warnings in the :guilabel:`Messages` window.
+languages and generate warnings in the :guilabel:`Messages` window.
 
 Each project attributes has a type typed and can either have a single value
 or have a set of values (a list). Each value can be a free-form string, a
@@ -2627,23 +2627,23 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   GPS provides three such contexts (:command:`wizard`,
   :command:`library_wizard`, and :command:`properties` corresponding to the
   project creation wizards and the project properties editor). If any of
-  those contexs are specified, GPS will not display the widget to edit this
+  those contexts are specified, GPS will not display the widget to edit this
   attribute.  Use this to keep the graphical interface simple.
 
 * :file:`disable_if_not_set` (boolean, default :command:`false`)
 
-  If :command:`true`, the field to edit this attribute is greyed out if the
+  If :command:`true`, the field to edit this attribute is grayed out if the
   attribute is not explicitly set in the project. In most cases, you will not
   specify this, since the default value of the attribute can populate that
   field.  However, when the value of the attribute is automatically
   computed depending on other attributes, you cannot specify the default
-  value in the XML file, and it might be simpler to grey out the field. A
+  value in the XML file, and it might be simpler to gray out the field. A
   checkbox is displayed next to the attribute so the user can choose to
   enable the field and add the attribute to the project.
 
 * :file:`disable` (space-separated list of attribute names)
 
-  List of attribute whose fields should be greyed out if this attribute is
+  List of attribute whose fields should be grayed out if this attribute is
   specified. This only works if both the current attribute and the
   referenced attributes all have their :file:`disable_if_not_set` attribute
   set :command:`true`.  Use this to create mutually exclusive attributes.
@@ -2663,7 +2663,7 @@ The type of the project attribute is specified by child tags of
 
   * :file:`default` (string)
 
-    Default value of the attribute.  If the attribute's type is a file or
+    Default value of the attribute. If the attribute's type is a file or
     directory, the default value is normalized: an absolute path is
     generated based on the project's location, with :command:`"."`
     representing the project's directory.  As a special case, if
@@ -2735,7 +2735,7 @@ The type of the project attribute is specified by child tags of
 
   * :file:`default` (string)
 
-    Default value of the attribute if the user has not specied one.
+    Default value of the attribute if the user has not specified one.
 
 .. index:: indexed project attributes
 .. index:: project attributes, indexed
@@ -3074,7 +3074,7 @@ for documentation.
 
 .. highlight:: python
 
-Youc an also add such a directory via Python, as in::
+You can also add such a directory via Python, as in::
 
   GPS.HTML.add_doc_directory ('doc/application')
 
@@ -3172,7 +3172,7 @@ machine.  GPS already defines several remote access tools: :program:`ssh`,
 :program:`rsh`, :program:`telnet`, and :program:`plink`. You can add support
 other tools using the tag :file:`<remote_connection_config>`, which
 requires a :file:`name` attribute giving the name of the tool. This name
-need not necessarilly correspond to the command used to launch the tool.
+need not necessarily correspond to the command used to launch the tool.
 
 The following child tags are defined:
 
@@ -3180,7 +3180,7 @@ The following child tags are defined:
 
   The command used to launch the tool.  This tag supports the
   :file:`use_pipes` attribute, which selects on Windows the manner in which
-  GPS launchs the remote tools and accepts the following values:
+  GPS launches the remote tools and accepts the following values:
 
   * :command:`true`
 
@@ -3314,7 +3314,7 @@ paths during remote programming operations.
 
 By default, GPS uses the :command:`--rsh=ssh` option if :program:`ssh` is
 the connection tool used for the server. It also uses the :command:`-L`
-switch when transfering files to a Windows local host.
+switch when transferring files to a Windows local host.
 
 You can define additional arguments to rsync by using the
 :file:`<rsync_configuration>` tag, which accepts :file:`<arguments>` tags
@@ -3355,7 +3355,7 @@ also write this tag manually.  Its attributes are:
 
 * :file:`remote_sync` (required)
 
-  Remote file synchronisation tool used to synchronize files between the
+  Remote file synchronization tool used to synchronize files between the
   local host and the server. Must be :command:`rsync`.
 
 * :file:`debug_console` (optional)
@@ -3497,7 +3497,7 @@ following child tags:
     <?xml version="1.0" ?>
        <my_model>
        <target-model name="gprclean" category="">
-          <description>Clean compilation artefacts with gprclean</description>
+          <description>Clean compilation artifacts with gprclean</description>
           <command-line>
              <arg>gprclean</arg>
              <arg>-P%PP</arg>
@@ -3511,7 +3511,7 @@ following child tags:
        </target-model>
     </my_model>
 
-  Aditionally, switches defined for target models accept a :file:`filter`
+  Additionally, switches defined for target models accept a :file:`filter`
   attribute, allowing you to define when a switch is relevant or
   not (e.g: switch only defined for newer versions of the executable to
   launch).
@@ -3538,7 +3538,7 @@ following child tags:
                 <arg>my_tool</arg>
              </command-line>
              <switches command="%(tool_name)s" columns="1">
-                <check label="vesrion specific switch"
+                <check label="version specific switch"
                        switch="--version-specific-switch"
                        tip="This switch is only supported by newer versions"
                        filter="Is_My_Tool_Version_Supported"/>
@@ -3568,7 +3568,7 @@ Define targets with a :file:`<target>` tag, which has three attributes:
   :guilabel:`Target Configuration Dialog` and :guilabel:`Build` menus.
   Underscores are interpreted as menu mnemonics. If you want an actual
   underscore, use a double underscore.  If the string begins and ends with
-  an underscore, GPS places the menu for the target in the toplevel
+  an underscore, GPS places the menu for the target in the top level
   :guilabel:`Build` menu.
 
 * :file:`messages_category`
@@ -3631,7 +3631,7 @@ This tag accepts the following child tags:
 * :file:`<command-line>`
 
   Contains a number of `<arg>` nodes, each with an argument of the default
-  command line for this target, beginnng with the name of the executable::
+  command line for this target, beginning with the name of the executable::
 
     <?xml version="1.0" ?>
     <my_target>
@@ -3732,7 +3732,7 @@ child tags:
 * :file:`<subdir>`
 
   Optional base name of the subdirectory to create for this mode.  GPS will
-  subsitute the macro arguments :file:`%subdir` in the :file:`<extra-args>`
+  substitute the macro arguments :file:`%subdir` in the :file:`<extra-args>`
   tags with this value.
 
 * :file:`<supported-model>`
@@ -3748,7 +3748,7 @@ child tags:
 
 * :file:`sections`
 
-  Optional attribute :file:`sections` contains spaceseparated list of
+  Optional attribute :file:`sections` contains space-separated list of
   switches delimiting a section of a command line (such as
   :command:`-bargs -cargs -largs`).  See more details in
   :ref:`Defining_tool_switches`.
@@ -3947,7 +3947,7 @@ Defining tool switches
 .. index:: <switches>
 
 The user must be able to specify which switches are passed to the tool.  If
-the tool is only called through custom menus, you can hardcode some or all
+the tool is only called through custom menus, you can hard-code some or all
 of the switches. However, it is usually better to use the project properties
 editor so the user can specify project-specific switches.
 
@@ -3978,7 +3978,7 @@ This tag accepts the following attributes:
 * :file:`use_scrolled_window` (default :command:`False`)
 
   Whether boxes of the project editor are placed into scrolled window. This
-  is particularily useful if the number of displayed switches is large.
+  is particularly useful if the number of displayed switches is large.
 
 * :file:`show_command_line` (default :command:`True`)
 
@@ -3995,7 +3995,7 @@ This tag accepts the following attributes:
 
 * :file:`sections`
 
-  Spaceseparated list of switches delimiting a section (such as
+  Space-separated list of switches delimiting a section (such as
   :command:`-bargs -cargs -largs`). A section of switches is a set of
   switches that are grouped together and preceded by a particular
   switch. Sections are always placed at the end of the command line, after
@@ -4041,7 +4041,7 @@ consistency, most of these child tags accept the following attributes:
 
 * :file:`before` (default :command:`false`
 
-  Whether the switch must always be inserted at the begining of the command
+  Whether the switch must always be inserted at the beginning of the command
   line.
 
 * :file:`min` (default :command:`1`), :file:`max` (default :command:`1`)
@@ -4235,7 +4235,7 @@ Here are the valid children for :file:`<switches>`:
   .. index:: <default-value-dependency>
 
   Describes a relationship between two switches, which is slightly
-  different from the :file:`<dependency>` tag.  This relationsip only
+  different from the :file:`<dependency>` tag.  This relationship only
   affects the default values. For example, when the :command:`-gnatwa`
   switch is selected for the Ada compiler, other switches, such as
   :command:`-gnatwc` and :command:`-gnatwd`, are enabled by default. But
@@ -4288,7 +4288,7 @@ Here are the valid children for :file:`<switches>`:
     :command:`-gnatwa.b`.
 
   * If you specify the :file:`alias`, GPS views the :file:`switch`
-    attribute as a shorter way of writting the switch. For example, if
+    attribute as a shorter way of writing the switch. For example, if
     :file:`switch` is :command:`-gnatyy` and :file:`alias` is
     ":command:`-gnaty3abcefhiklmnprst`, then if the user types
     :command:`-gnatyy`, it means the whole set of options.
@@ -4360,7 +4360,7 @@ Saving open windows
 Before launching the external tool, you may want to force GPS to save all
 open files. Do this using the same command GPS uses before starting a
 compilation, :command:`MDI.save_all`, which takes one optional boolean
-argument specifiying whether GPS displays an interactive dialog for the
+argument specifying whether GPS displays an interactive dialog for the
 user.
 
 This command fails when the user presses cancel, so you can put it in its
@@ -5198,7 +5198,7 @@ Hello World! in python
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Writing a Python script to interact with GPS is very simple. Here we show how
-to create a new menu in GPS that when clicked, diplays a dialog saying the
+to create a new menu in GPS that when clicked, displays a dialog saying the
 famous 'Hello World!'.
 
 Here is the code that you need to put in :file:`hello_world.py`::
@@ -5419,14 +5419,14 @@ GPS for this output. This can be done in one of two ways:
 
   The first line redirects all input and output to a new window, which is
   created if it does not yet exist. Note however that the output of
-  :func:`stderr` is not redirected: you need to explicitely do it for
+  :func:`stderr` is not redirected: you need to explicitly do it for
   :func:`sys.stderr`.
 
   The last line restore the default Python console. You must do this at the
   end of your script or all scripts will continue to use the new console.
 
   You can alternatively create separate objects for the output and use them
-  explictly::
+  explicitly::
 
     my_out  = GPS.Console ("New Window")
     my_out2 = GPS.Console ("New Window2")
@@ -5461,13 +5461,13 @@ Python file (:file:`"mymod.py"`) containing the following::
 
 
 This file defines an action :file:`my_action`, that you can, for example,
-associate with a keybinding through the
+associate with a key binding through the
 :menuselection:`Edit --> Preferences...` menu.
 
 If you copy this file into one of the :file:`plugins` directories, GPS
 automatically loads it at startup.  The function :func:`myfunc` is in a
 separate namespace, with the name :file:`mymod`, like the file.  If you
-decide, during your GPS session, to edit this file, for exampl to have the
+decide, during your GPS session, to edit this file, for example to have the
 function print "In myfunc2" instead, you then to reload the file by typing
 the following command in the Python console::
 
@@ -5503,7 +5503,7 @@ any Python module, including GPS, and print the result::
   import pydoc
   pydoc.writedoc (GPS)
 
-In the last comamnd, "GPS" is the name of the module whose documentation
+In the last command, "GPS" is the name of the module whose documentation
 you want to print.
 
 These commands generate a :file:`.html` file in the current directory.
@@ -5670,7 +5670,7 @@ the :func:`file_edited` hook receives the file name as a parameter.
 * GPS shell
 
   The following code prints the name of the hook ("file_edited") and the
-  name of the file in the shell console each time a file is openen in GPS::
+  name of the file in the shell console each time a file is opened in GPS::
 
     GPS> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
     GPS> Hook "file_edited"

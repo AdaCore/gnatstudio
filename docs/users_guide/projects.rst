@@ -612,7 +612,7 @@ The :guilabel:`Project Properties` editor is divided into three parts:
 
   Clicking on the right title bar (:guilabel:`Project`) of this selector
   sorts the projects in ascending or descending order.  Clicking on the
-  left title bar (untitled) selects or deselect all the projects.
+  left title bar (untitled) selects or unselects all the projects.
 
   This selector has two different possible presentations, chosen by the
   toggle button on top: either a sorted list of all the projects, each
@@ -623,11 +623,11 @@ The :guilabel:`Project Properties` editor is divided into three parts:
 
   This area, the bottom-right corner of the properties editor, displays all
   scenario variables declared in the project hierarchy. By selecting some
-  or all of their values, you can chose to which scenario the modifications
+  or all of their values, you can choose to which scenario the modifications
   in the attributes editor apply.
 
   Clicking on the left title bar (untitled, on the left of the
-  :guilabel:`Scenario` label) selects or deselects all values of all
+  :guilabel:`Scenario` label) selects or unselects all values of all
   variables.
 
   To select all values of a given variable, click on the corresponding

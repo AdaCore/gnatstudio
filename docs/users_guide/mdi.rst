@@ -48,7 +48,7 @@ Only one window is selected in GPS (the **active window**) at a time.
 Select a window by clicking on its tab, which becomes a different
 color, or selecting its name in the :menuselection:`Window` menu.  Or use
 the :guilabel:`Windows` view (see :ref:`The_Windows_View`), which also provides
-a convenient mechanism for slecting multiple windows at once.
+a convenient mechanism for selecting multiple windows at once.
 
 Finally, you can select windows with the omni-search, the search field in
 the global toolbar. One of the contexts for the search is the list of

@@ -92,13 +92,13 @@ The source editor provides an extensive set of features, including:
       characters).
 
     * Next to the box is an icon showing whether the file is writable or
-      readonly.  Change this state by clicking on the icon, which toggles
+      read only.  Change this state by clicking on the icon, which toggles
       between :guilabel:`Writable` and :guilabel:`Read Only`.  This does not
       change the permissions of the file on disk: it only changes the
       writability of the view in the source editor.
 
-      When you try to save a readonly file, GPS asks for confirmation, and
-      if possible, saves the file, keeping its readonly state.
+      When you try to save a read-only file, GPS asks for confirmation, and
+      if possible, saves the file, keeping its read-only state.
 
     * If the file is maintained under version control and version control
       is supported and enabled in GPS, the next icon shows VCS information
@@ -160,7 +160,7 @@ The source editor provides an extensive set of features, including:
 
     --  Not a comment for C, there is a blank line
 
-  When comments appear both before and after the entity, GPS choses the one
+  When comments appear both before and after the entity, GPS chooses the one
   given by the :index:`preference <preferences; documentation --> leading
   documentation>` :menuselection:`Documentation --> Leading documentation`.
   In debugging mode, the editor shows the value of the variable under the
@@ -322,10 +322,10 @@ There are also several ways to define new key bindings, see
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Shift-Alt-up`     | Add a cursor to the current location and go up one line                  |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-Alt-N`       | jump the main cursor to the next occurence of the selection              |
+| :kbd:`Ctrl-Alt-N`       | jump the main cursor to the next occurrence of the selection             |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Shift-Ctrl-N`     | Add a cursor selecting the current selection and jump the main cursor to |
-|                         | the next occurence of the selection                                      |
+|                         | the next occurrence of the selection                                     |
 +-------------------------+--------------------------------------------------------------------------+
 
 .. index:: macros
@@ -360,7 +360,7 @@ GPS supports this with several different methods:
 
   To repeat a sequence of more than 1 key, record the sequence as a
   macro. All macro-related actions are found in the Key Shortcuts section of
-  the peferences dialog.
+  the preferences dialog.
 
   First, tell GPS that it should start recording the keys you are pressing via
   the :menuselection:`Macro Start Keyboard` action.  This only records
@@ -540,7 +540,7 @@ is also renamed, allowing the application to continue to work properly. If
 you are renaming a parameter to a subprogram, GPS also renames parameters
 with the same name in overriding or overridden subprograms.
 
-You can specify the behavior for read-only files: by default, GPS wil not do
+You can specify the behavior for read-only files: by default, GPS will not do
 any refactoring in these files and instead displays a dialog listing them.
 However, you can choose to make them writable just as if you had clicked on
 the :guilabel:`Read-Only` button in the status bar of the editor and have
@@ -906,7 +906,7 @@ Alternatively, explicitly reload the project from Emacs itself by using the
 .. index:: preferences; editor --> always use external editor
 
 The :menuselection:`Editor --> Always use external editor` preference lets
-you chose to use an external editor every time you double-click on a file,
+you choose to use an external editor every time you double-click on a file,
 instead of opening GPS's own editor.
 
 .. index:: clipboard

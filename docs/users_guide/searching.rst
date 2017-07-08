@@ -217,14 +217,14 @@ In this mode, an additional field is displayed:
 
 
 The :guilabel:`Replace` and :guilabel:`Replace & Find` buttons are grayed
-out if no occurence of the pattern is found. To enable them, start a
+out if no occurrence of the pattern is found. To enable them, start a
 search, for example by pressing the :guilabel:`Find` button. Pressing
 :guilabel:`Replace` replaces the current occurrence (grays out the two
 buttons) and :guilabel:`Replace & Find` replaces the occurrence and jumps
 to the next one, if any. If you do not want to replace the current
-occurence, jump to the next one by pressing :guilabel:`Next`.
+occurrence, jump to the next one by pressing :guilabel:`Next`.
 
-The :guilabel:`Repl all` button replaces all occurences found. By default,
+The :guilabel:`Repl all` button replaces all occurrences found. By default,
 a popup is displayed asking for confirmation. You can disable this popup by
 either checking the box :guilabel:`Do not ask this question again` or going
 to the :guilabel:`Search` panel of the preferences pages and unchecking

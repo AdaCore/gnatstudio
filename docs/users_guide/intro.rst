@@ -20,7 +20,7 @@ Here is a summary of the features of the GNAT Programming Studio:
 
   Fully customizable editor with syntax highlighting, smart completion of text,
   multiple views of the same file, automatic indentation, block-level
-  navigation, support for Emacs keybindings, code folding, refactoring, visual
+  navigation, support for Emacs key bindings, code folding, refactoring, visual
   comparison of files, and alias expansion, among other features.
 
 * Support for compile/build/run cycle (:ref:`Compilation/Build`)

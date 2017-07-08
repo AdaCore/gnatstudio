@@ -201,7 +201,7 @@ The File Menu
 
 * :menuselection:`File --> Close All Editors except Current`
 
-   Save and close all source editors, except the curret one.
+   Save and close all source editors, except the current one.
    
    
 .. index:: menu; file --> reset all perspectives
@@ -297,14 +297,14 @@ The Edit Menu
    
    Shortcut: Shift+Alt+Up
    
-.. index:: menu; edit --> cursors --> cursor select next occurence of selection
+.. index:: menu; edit --> cursors --> cursor select next occurrence of selection
 
-* :menuselection:`Edit --> Cursors --> Cursor select next occurence of selection`
+* :menuselection:`Edit --> Cursors --> Cursor select next occurrence of selection`
 
    
    
    
-.. index:: menu; edit --> cursors --> cursor skip next occurence of selection
+.. index:: menu; edit --> cursors --> cursor skip next occurrence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor skip next occurence of selection`
 

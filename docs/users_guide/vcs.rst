@@ -17,7 +17,7 @@ Setting up projects for version control
 =======================================
 
 GPS does not come with any version control system. Instead, it expects
-that you already have such a system installl on your machine. In some
+that you already have such a system install on your machine. In some
 cases, it is able to automatically recognize them. In other cases, you
 will need to edit your project file as described below.
 
@@ -276,7 +276,7 @@ Committing files
 ----------------
 
 Committing is always a three step process in GPS (this is exactly
-what git does natively, but also provides more flexibility foro
+what git does natively, but also provides more flexibility for
 over systems).
 
 * First, you need to select which files will be part of the next
@@ -395,7 +395,7 @@ Next to the list of commits is a graph showing their relationships.
 Most of the times, this history is fairly linear, with each commit
 having one parent commit, and followed by another commit.
 
-But with some VCS like git, people might chose to use a lot more
+But with some VCS like git, people might choose to use a lot more
 branches. They create a new branch to work on a specific feature, then
 merge it into the master branch when the feature is completed. It can
 become harder to follow the history in such a case.
@@ -405,7 +405,7 @@ become harder to follow the history in such a case.
 In this case, the graph becomes more useful, as shown in the screenshot
 above.
 
-But using the local configuration menu, you can also chose to only
+But using the local configuration menu, you can also choose to only
 show commits that are related to branches (either because they are the
 beginning of a branch, or because they are a merge of two branches, or
 because they have a special name (tag or branch name) associated with

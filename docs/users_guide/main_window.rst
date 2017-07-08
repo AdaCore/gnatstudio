@@ -62,7 +62,7 @@ displaying those lines matching the filter.
 If you click on the left icon of the filter, GPS brings up a popup menu to
 allow you to configure the filter:
 
-* Use the first three entries to chose the search algorithm (full text
+* Use the first three entries to choose the search algorithm (full text
   match, regular expression, or fuzzy matching). These modes are similar to
   the ones used in the omni-search (see :ref:`omni_search`).
 
@@ -89,7 +89,7 @@ Browsers provide the following additional capabilities:
 
 * Links
 
-  Boxes can be linked together and remain linked when they are moved.  The
+  Boxes can be linked together and remain linked when they are moved.  There
   are different types of links; see the description of the various browsers
   for more details.
 
@@ -291,7 +291,7 @@ dialog, giving you the following choices:
 
 * :guilabel:`Open project`
 
-  Clicking on this button opens up a file browser, allowing you to select a
+  Clicking on this button opens up a file browser, allowing you to select
   a project file to load.
 
 .. index:: project; default
@@ -444,7 +444,7 @@ the order in which they are searched and displayed. We recommend keeping the
 :guilabel:`Sources` context last, because it is the slowest and while GPS
 is searching it, cannot search the other, faster, contexts.
 
-In the settings dialog, you can chose whether to display a
+In the settings dialog, you can choose whether to display a
 :guilabel:`Preview` for the matches. This preview is displayed when you use
 the :kbd:`down arrow` key to select some of the search results.  It
 displays the corresponding source file or the details for the matching GPS
@@ -463,7 +463,7 @@ it can also sometimes be annoying if the source directories include too
 many irrelevant files. Use the :guilabel:`Include all files from source
 dirs` setting to control this behavior.
 
-GPS allows you to chose among various search algorithms:
+GPS allows you to choose among various search algorithms:
 
 * :guilabel:`Full Text` checks whether the text you typed appears exactly
   as you specified it within the context (for example, a file name, the
@@ -518,7 +518,7 @@ The :guilabel:`Messages` view
 
 .. image:: messages.png
 
-The :guilabel:`Messages` view, which is readonly, displays information and
+The :guilabel:`Messages` view, which is read-only, displays information and
 feedback about operations, including build output, information about
 processes launched, and error messages.
 
@@ -529,7 +529,7 @@ window.
 
 The actual output of the compilation is displayed in the
 :guilabel:`Messages` view but is also parsed and many of its messages are
-displayed more conveniently in the :guilabel:`Locations` view (se
+displayed more conveniently in the :guilabel:`Locations` view (see
 :ref:`The_Locations_View`).  When a compilation finishes, GPS displays the
 total elapsed time.
 
@@ -548,7 +548,7 @@ The :guilabel:`Locations` View
 
 .. image:: locations-view.png
 
-GPS uses the :guilabel:`Location` view, which is also readonly, to display
+GPS uses the :guilabel:`Location` view, which is also read-only, to display
 a list of locations in source files (for example, when performing a global
 search or displaying compilation results).
 
@@ -738,7 +738,7 @@ The various components displayed in the project view are:
 
   .. index:: project view; absolute paths
 
-  You chose whether to see the absolute path names for the directories or
+  You choose whether to see the absolute path names for the directories or
   paths relative to the location of the project by using the local settings
   menu :menuselection:`Show absolute paths` of the :guilabel:`Project`
   view. In all cases, the tooltip displayed when the mouse hovers over a
@@ -855,12 +855,12 @@ understand or modify your project:
 * :menuselection:`Project --> Dependencies`
 
   Opens the dependencies editor for the selected project
-  (se :ref:`The_Project_Dependencies_Editor`).
+  (see :ref:`The_Project_Dependencies_Editor`).
 
 * :menuselection:`Project --> Add scenario variable`
 
   Adds new scenario variables to the project (see
-  :ref:`Scenarios_And_Configuration_Variables`). Howver, you may find it
+  :ref:`Scenarios_And_Configuration_Variables`). However, you may find it
   more convenient to use the :guilabel:`Scenario` view for this purpose.
 
 .. highlight:: python

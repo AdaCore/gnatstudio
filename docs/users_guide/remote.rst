@@ -210,7 +210,7 @@ You can set one of five types of path synchronization for each path:
 * :guilabel:`Manually`: synchronization is needed, but is only performed
   manually using the remote view buttons.
 * :guilabel:`Always`: Relevant to source and object paths of your project.
-  They are kept synchronised by GPS before and after every remote action (such
+  They are kept synchronized by GPS before and after every remote action (such
   as performing a build or run).
 * :guilabel:`Once to local`/`Once to remote`: Relevant to project's
   dependencies. They are synchronized once when a remote project is
@@ -220,7 +220,7 @@ You can set one of five types of path synchronization for each path:
 The way those paths need to be configured depends on your network architecture:
 
 * If your project is on a filesystem shared between your host and the
-  remote host (using NFS or SMB filestems, for example), only the roots of
+  remote host (using NFS or SMB filesystems, for example), only the roots of
   those filesystems need to be specified, using each server's native paths
   (on Windows, the paths are specified using the
   "X:\\my\\mounted\\directory\\" syntax and on Unix, using the "/mnt/path/" 

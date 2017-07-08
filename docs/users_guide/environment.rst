@@ -209,7 +209,7 @@ Files
 * :file:`$HOME/.gps/key_themes/`
 
   Directory containing user defined key themes (XML files). These themes are
-  loaded through the Keyshortcuts editor.
+  loaded through the key shortcuts editor.
 
 * :file:`$HOME/.gps/keys6.xml`
 
@@ -402,7 +402,7 @@ otherwise.
 
 Please try to include a detailed description of the problem, including
 sources to reproduce it if needed, and/or a scenario describing the actions
-performed to reproduce the problem as well as lising all the tools (e.g
+performed to reproduce the problem as well as listing all the tools (e.g
 *debugger*, *compiler*, *call graph*) involved.
 
 The files :file:`$HOME/.gps/log.txt` may also bring some useful information
@@ -565,9 +565,9 @@ installing GPS.
     you are working on a small part of the whole system, you may not want to
     have a complete copy of the code on your local machine).
 
-*GPS is very slow compared to previous versions under unix (GPS < 4.0.0)*
+*GPS is very slow compared to previous versions under Unix (GPS < 4.0.0)*
 
-  GPS versions 4.x need the X RENDER extension when running under unix
+  GPS versions 4.x need the X RENDER extension when running under Unix
   systems to perform at a reasonable speed, so you need to make sure your X
   server properly supports this extension.
 

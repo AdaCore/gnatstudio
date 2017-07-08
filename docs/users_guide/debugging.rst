@@ -34,7 +34,7 @@ properties or via the :guilabel:`Debug` build mode (see
 :ref:`The_Build_Mode` for more details).
 
 Create multiple debuggers by using the :menuselection:`Debug --> Initialize` (or
-the corrsponding toolbar button) menu several times: this creates a new debugger
+the corresponding toolbar button) menu several times: this creates a new debugger
 each time.  All debugger-related actions (e.g. stepping, running) are performed
 in the current debugger, represented by the current debugger console.  To switch
 to a different debugger, select its corresponding console. Setting breakpoints,
@@ -378,7 +378,7 @@ The Breakpoint Editor
 
 .. image:: breakpoints.png
 
-.. index:: menu; debug --> data --> edit breaakpoints
+.. index:: menu; debug --> data --> edit breakpoints
 
 Access the breakpoint editor from the :menuselection:`Debug --> Data -->
 Breakpoints` menu.  It allows you to manipulate the various kinds of
@@ -627,7 +627,7 @@ or using the contextual menu in the assembly window.
 A convenient complement when debugging at the assembly level is the ability
 to display the contents of machine registers.  When the debugger supports
 it (as :program:`gdb` does), select the :menuselection:`Debug --> Data -->
-Display Registers` menu to get an item in the data browswer that shows the
+Display Registers` menu to get an item in the data browser that shows the
 current contents of each machine register and that is updated every time one
 of them changes.
 

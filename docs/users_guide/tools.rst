@@ -12,7 +12,7 @@ Coding Standard
 .. index:: coding standard
 
 Use the :guilabel:`Coding Standard` menu to edit your coding standard file
-and run it against your code to verifiy its compliance with the coding
+and run it against your code to verify its compliance with the coding
 standard.  This file is the input to the :program:`gnatcheck` tool.  You
 can also use the contextual menu to check the conformance of a particular
 project or source file against a coding standard.
@@ -143,7 +143,7 @@ the action that would be performed on a left-click.  Displaying a
 contextual menu anywhere else on the message line provides an option called
 :guilabel:`Auto Fix`, giving you access to the same information. For the
 previous example of a missing semicolon, the menu contains an entry
-labelled :guilabel:`Add expected string ";"`.  You can choose to
+labeled :guilabel:`Add expected string ";"`.  You can choose to
 :guilabel:`Apply to this occurrence` or :guilabel:`Apply to all similar
 errors`.  The latter option applies the same simple fix to all errors that
 are the same, based on parsing the error message.  The wrench icon is
@@ -399,7 +399,7 @@ selected.  For example, if you click on a file, the options are:
 * :guilabel:`Hide coverage information`
 
   Remove the annotation column from the current source editor and clear
-  converage information from the :guilabel:`Locations` view.
+  coverage information from the :guilabel:`Locations` view.
 
 * :guilabel:`Load data for xxxxxxxx.xxx`
 
@@ -507,7 +507,7 @@ The Contextual Menu
 
 The contextual menu for a project, file, or subprogram entity (including the
 entities listed in the coverage report) has a :guilabel:`Stack Analysis`
-submenu containing the following options, dependong on the type of entity
+submenu containing the following options, depending on the type of entity
 selected:
 
 *Show stack usage*
