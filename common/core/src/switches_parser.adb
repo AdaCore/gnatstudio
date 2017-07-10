@@ -342,11 +342,21 @@ package body Switches_Parser is
       procedure Process_Radio_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
          R         : Radio_Switch;
+         Label     : constant String := Get_Attribute (N, "label");
+         Tip       : constant String := Get_Tip_Value (N);
       begin
          Coordinates_From_Node (N, Line, Col);
 
+         if Label = "" then
+            Log_Error
+              (-("Invalid <radio> node in custom file,"
+               & " requires a label attribute"));
+         end if;
+
          R := Add_Radio
            (Config => Current_Tool_Config,
+            Label  => Label,
+            Tip    => Tip,
             Line   => Line,
             Column => Col,
             Popup  => Popup);

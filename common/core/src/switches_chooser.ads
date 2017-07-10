@@ -150,6 +150,8 @@ package Switches_Chooser is
    type Radio_Switch is private;
    function Add_Radio
      (Config    : Switches_Editor_Config;
+      Label     : String;
+      Tip       : String;
       Line      : Positive := 1;
       Column    : Positive := 1;
       Popup     : Popup_Index := Main_Window) return Radio_Switch;
@@ -650,7 +652,8 @@ private
          when Switch_Spin =>
             Min, Max, Default : Integer;
          when Switch_Radio =>
-            Group : Radio_Switch;
+            Is_Entry : Boolean;
+            Group    : Radio_Switch;
          when Switch_Combo =>
             No_Switch : Ada.Strings.Unbounded.Unbounded_String;
             No_Digit  : Ada.Strings.Unbounded.Unbounded_String;

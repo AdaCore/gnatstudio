@@ -584,6 +584,8 @@ package body Switches_Chooser is
 
    function Add_Radio
      (Config  : Switches_Editor_Config;
+      Label   : String;
+      Tip     : String;
       Line    : Positive := 1;
       Column  : Positive := 1;
       Popup   : Popup_Index := Main_Window) return Radio_Switch
@@ -594,9 +596,10 @@ package body Switches_Chooser is
         (Config.Switches,
          Switch_Description'
            (Typ       => Switch_Radio,
+            Is_Entry  => False,
             Switch    => Null_Unbounded_String,
-            Label     => Null_Unbounded_String,
-            Tip       => Null_Unbounded_String,
+            Label     => To_Unbounded_String (Label),
+            Tip       => To_Unbounded_String (Tip),
             Section   => Null_Unbounded_String,
             Separator => ASCII.NUL,
             Group     => Config.Max_Radio,
@@ -627,6 +630,7 @@ package body Switches_Chooser is
         (Config.Switches,
          Switch_Description'
            (Typ       => Switch_Radio,
+            Is_Entry  => True,
             Switch    => To_Unbounded_String (Switch),
             Label     => To_Unbounded_String (Label),
             Tip       => To_Unbounded_String (Tip),

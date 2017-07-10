@@ -461,7 +461,8 @@ package body Switches_Chooser.Gtkada is
       Combo    : Gtk_Combo_Box_Text;
       Combo_Iter : Combo_Switch_Vectors.Cursor;
       Switch2  : Switch_Description_Vectors.Cursor;
-      Pop      : Popup_Button;
+      Pop        : Popup_Button;
+      Frame      : Gtk_Frame;
 
    begin
       if S.Typ /= Switch_Check
@@ -535,8 +536,25 @@ package body Switches_Chooser.Gtkada is
                (Switches_Editor (Editor), Switch));
 
          when Switch_Radio =>
-            if S.Label = Null_Unbounded_String then
-               --  Find all buttons in that group
+            if not S.Is_Entry then
+               --  Create the frame containing all the radio entries for this
+               --  radio group.
+               Gtk_New (Frame);
+               Box.Pack_Start (Frame, Expand => False, Padding => 5);
+
+               Gtk_New_Hbox (Hbox, Homogeneous => False);
+               Hbox.Set_Spacing (12);
+               Frame.Add (Hbox);
+
+               if S.Label /= Null_Unbounded_String then
+                  Frame.Set_Label (To_String (S.Label));
+               end if;
+
+               if S.Tip /= Null_Unbounded_String then
+                  Frame.Set_Tooltip_Text (To_String (S.Tip));
+               end if;
+
+               --  Find all buttons in that group and add them in the same row
                Switch2 := Next (Switch);
                while Has_Element (Switch2) loop
                   declare
@@ -550,7 +568,7 @@ package body Switches_Chooser.Gtkada is
                            Label => To_String (S2.Label));
                         Radio.Set_Sensitive
                           (not Editor.Read_Only and then S.Active);
-                        Pack_Start (Box, Radio, Expand => False, Padding => 0);
+                        Pack_Start (Hbox, Radio, Expand => False);
                         Set_Tooltip (Editor, Radio, Switch2, S2);
                         User_Widget_Callback.Connect
                           (Radio, Gtk.Toggle_Button.Signal_Toggled,
@@ -656,9 +674,7 @@ package body Switches_Chooser.Gtkada is
                   --  Radio buttons are made of radio entries, which should not
                   --  be displayed explicitely (they will be displayed as part
                   --  of the radio button itself)
-                  if (S.Typ /= Switch_Radio
-                    or else S.Label = Null_Unbounded_String)
-                    and then S.Popup = Popup
+                  if S.Popup = Popup
                     and then S.Line = L
                     and then S.Column = C
                   then
