@@ -288,16 +288,14 @@ package body Items is
    -- Free --
    ----------
 
-   procedure Free (Self : in out Type_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Type_Array, Type_Array_Access);
+   procedure Free (Self : in out Type_Vector.Vector) is
    begin
-      if Self /= null then
-         for J in Self'Range loop
+      if not Self.Is_Empty then
+         for J in 1 .. Positive (Self.Length) loop
             Self (J).Name := Null_Unbounded_String;
             Free (Self (J).Typ);
          end loop;
-         Unchecked_Free (Self);
+         Self.Clear;
       end if;
    end Free;
 
@@ -305,12 +303,12 @@ package body Items is
    -- Start --
    -----------
 
-   function Start (Self : Type_Array_Access) return Generic_Iterator'Class is
+   function Start (Self : Type_Vector.Vector) return Generic_Iterator'Class is
    begin
       return Field_Iterator'
         (Generic_Iterator with
          Fields => Self,
-         Idx    => (if Self = null then 0 else Self'First));
+         Idx    => (if Self.Is_Empty then 0 else 1));
    end Start;
 
    ------------
@@ -319,7 +317,8 @@ package body Items is
 
    overriding function At_End (Self : Field_Iterator) return Boolean is
    begin
-      return Self.Fields = null or else Self.Idx > Self.Fields'Last;
+      return Self.Fields.Is_Empty
+        or else Self.Idx > Integer (Self.Fields.Length);
    end At_End;
 
    ----------

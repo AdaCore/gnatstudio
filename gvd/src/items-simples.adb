@@ -351,7 +351,7 @@ package body Items.Simples is
          Item.Refresh_Cmd := Null_Unbounded_String;
       end if;
 
-      if Item.As_Record /= null then
+      if not Item.As_Record.Is_Empty then
          Free (Item.As_Record);
       end if;
 
@@ -419,7 +419,7 @@ package body Items.Simples is
 
       if Item.Split_Lines then
          Free (Item.As_Record);
-         Item.As_Record := new Type_Array (1 .. Integer (Item.Value.Length));
+         Item.As_Record := Type_Vector.To_Vector (Item.Value.Length);
 
          for L in 1 .. Integer (Item.Value.Length) loop
             Item.As_Record (L).Name := Null_Unbounded_String;
@@ -541,7 +541,7 @@ package body Items.Simples is
      (Self   : not null access Debugger_Output_Type)
       return Generic_Iterator'Class is
    begin
-      if Self.As_Record = null then
+      if Self.As_Record.Is_Empty then
          return Create_Empty_Iterator;
       else
          return Start (Self.As_Record);

@@ -218,7 +218,7 @@ private
       Refresh_Cmd : Unbounded_String;
       Split_Lines : Boolean;
 
-      As_Record   : Type_Array_Access;
+      As_Record   : Type_Vector.Vector;
       --  When we split lines, the value is interpreted as a record for which
       --  all fields are strings. This is unused if we do not split lines
    end record;

@@ -17,6 +17,7 @@
 
 --  Generic items used to display things in the canvas.
 
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Browsers;               use Browsers;
@@ -315,11 +316,10 @@ private
       Name : Unbounded_String := Null_Unbounded_String;
       Typ  : Generic_Type_Access;
    end record;
-   type Type_Array is array (Natural range <>) of Field_Descr;
-   type Type_Array_Access is access all Type_Array;
+   package Type_Vector is new Ada.Containers.Vectors (Positive, Field_Descr);
 
    type Field_Iterator is new Generic_Iterator with record
-      Fields : Type_Array_Access;   --  Not owned by the iterator !
+      Fields : Type_Vector.Vector;
       Idx    : Integer;
    end record;
    overriding function At_End (Self : Field_Iterator) return Boolean;
@@ -331,9 +331,9 @@ private
    overriding function Data (Self : Field_Iterator) return Generic_Type_Access;
    --  An iterator on an array of fields
 
-   procedure Free (Self : in out Type_Array_Access);
+   procedure Free (Self : in out Type_Vector.Vector);
    --  Free the memory used by Self
 
-   function Start (Self : Type_Array_Access) return Generic_Iterator'Class;
+   function Start (Self : Type_Vector.Vector) return Generic_Iterator'Class;
    --  Return an iterator on Self
 end Items;
