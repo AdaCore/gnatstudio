@@ -1146,7 +1146,7 @@ else:
                 return
             ss = QGEN_Module.get_var_from_item(item)
             if ss is not None:
-                debugger.send("tree display '%s'\n" % ss, output=False)
+                debugger.send("tree display %s\n" % ss, output=False)
 
         @staticmethod
         @workflows.run_as_workflow
