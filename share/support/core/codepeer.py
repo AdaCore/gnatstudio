@@ -14,7 +14,6 @@ See menu CodePeer.
 import GPS
 import os_utils
 import os.path
-import gps_utils
 
 xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
@@ -615,8 +614,7 @@ codepeer = os_utils.locate_exec_on_path("codepeer")
 def on_project_changed(hook):
     # Change default build mode to "codepeer"
     # when GNAT is absent and build mode not set for the project
-    gnatCmd = gps_utils.get_gnat_driver_cmd()
-    if not os_utils.locate_exec_on_path(gnatCmd):
+    if not os_utils.locate_exec_on_path("gprconfig"):
         root_project = GPS.Project.root()
         try:
             root_project.get_property("Build-Mode")
