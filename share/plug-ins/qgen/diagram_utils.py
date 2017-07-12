@@ -1,5 +1,4 @@
 import re
-import GPS
 
 
 class Diagram_Utils(object):
@@ -68,7 +67,6 @@ class Diagram_Utils(object):
             if item:
                 for it in item.recurse():
                     try:
-                        id = getattr(it, "id", None)
                         if style:
                             bp_blocks.append(it)
                             prio = it.data.get('priority')
