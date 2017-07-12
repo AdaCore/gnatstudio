@@ -2,6 +2,7 @@
 This file provides default build modes and targets (gnatmake and gprbuild) for
 GPS
 """
+import GPS
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
@@ -563,5 +564,4 @@ name="U_pdate file XRef in background">
 </GPS>
 """
 
-import GPS
 GPS.parse_xml(XML)
