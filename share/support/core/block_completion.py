@@ -20,13 +20,13 @@ Example of use:
 # No user customization below this line
 ############################################################################
 
-action_name = "Block Completion"
-# Name of the action and the menu defined by this package.
 
 import re
-import string
 import GPS
 logger = GPS.Logger("block_complete")
+
+action_name = "Block Completion"
+# Name of the action and the menu defined by this package.
 
 # BLOCKS_DEFS is a dictionary describing the action to be done for each block.
 #
