@@ -171,7 +171,10 @@ package body Items.Arrays is
       Elem_Index : Long_Integer;
       Repeat_Num : Positive := 1)
    is
-      Tmp       : Array_Item_Array_Access;
+      use Array_Item_Vectors;
+      use type Ada.Containers.Count_Type;
+
+      Tmp       : Vector;
       To_Insert : Generic_Type_Access;
       Index     : Positive;
    begin
@@ -196,7 +199,7 @@ package body Items.Arrays is
       --  We also need to keep the values sorted in Item.Values
 
       if Repeat_Num > 1
-        and then Item.Values /= null
+        and then not Item.Values.Is_Empty
         and then Elem_Index <= Item.Values (Item.Last_Value).Index
       then
          declare
@@ -204,11 +207,10 @@ package body Items.Arrays is
             Max   : constant Long_Integer :=
               Long_Integer (Repeat_Num) + Min - 1;
             Min2, Max2 : Long_Integer;
-
             --  Since the range can be split into two parts, keep enough space.
-            Tmp      : Array_Item_Array (1 .. Item.Values'Last * 2);
-            Save     : Array_Item_Array_Access := Item.Values;
-            Index    : Positive := Tmp'First;
+            Tmp      : Vector := To_Vector (Item.Values.Length * 2);
+            Save     : Vector := Item.Values;
+            Index    : Positive := 1;
 
          begin
             for J in 1 .. Item.Last_Value loop
@@ -318,20 +320,22 @@ package body Items.Arrays is
 
             if Index = 1 then
                --  Will be reallocated below
-               Item.Values := null;
+               Item.Values := Empty_Vector;
                Item.Last_Value := 0;
             else
-               Item.Values := new Array_Item_Array'(Tmp (1 .. Index - 1));
+               for J in 1 .. Index - 1 loop
+                  Item.Values (J) := Tmp (J);
+               end loop;
                Item.Last_Value := Index - 1;
             end if;
-            Free (Save);
+            Save.Clear;
          end;
       end if;
 
       --  Check whether we already have an element with the same Elem_Index.
       --  If yes, reuse it.
 
-      if Item.Values /= null then
+      if not Item.Values.Is_Empty then
          for J in 1 .. Item.Last_Value loop
 
             --  Do we have a range that contains the index ?
@@ -400,19 +404,21 @@ package body Items.Arrays is
 
       --  Reserve enough space to insert the new array.
 
-      if Item.Values = null then
-         Item.Values := new Array_Item_Array (1 .. 100);
+      if Item.Values.Is_Empty then
+         Item.Values := To_Vector (100);
          Item.Last_Value := 1;
 
       else
          Item.Last_Value := Item.Last_Value + 1;
       end if;
 
-      if Item.Last_Value > Item.Values'Last then
+      if Item.Last_Value > Positive (Item.Values.Length) then
          Tmp := Item.Values;
-         Item.Values := new Array_Item_Array (1 .. 2 * Tmp'Last);
-         Item.Values (1 .. Tmp'Last) := Tmp.all;
-         Free (Tmp);
+         Item.Values := To_Vector (2 * Tmp.Length);
+         for J in 1 .. Positive (Tmp.Length) loop
+            Item.Values (J) := Tmp (J);
+         end loop;
+         Tmp.Clear;
       end if;
 
       --  Insert the item, but make sure that the Values array is still sorted.
@@ -426,8 +432,10 @@ package body Items.Arrays is
       end loop;
 
       if Index < Item.Last_Value then
-         Item.Values (Index + 1 .. Item.Last_Value) :=
-           Item.Values (Index .. Item.Last_Value - 1);
+         for J in reverse Index .. Item.Last_Value - 1 loop
+            Item.Values (J + 1) := Item.Values (J);
+         end loop;
+
          Item.Values (Index) :=
            Array_Item'(Index => Elem_Index, Value => To_Insert);
 
@@ -442,16 +450,16 @@ package body Items.Arrays is
    ---------------
 
    function Get_Value
-     (Item       : Array_Type;
+     (Item       : in out Array_Type;
       Elem_Index : Long_Integer) return Generic_Type_Access
    is
       Return_Type : Generic_Type_Access;
    begin
-      if Item.Values = null then
+      if Item.Values.Is_Empty then
          return null;
       end if;
 
-      for J in Item.Values'First .. Item.Last_Value loop
+      for J in 1 .. Item.Last_Value loop
          if Item.Values (J).Value /= null
            and then Item.Values (J).Value'Tag = Repeat_Type'Tag
            and then Item.Values (J).Index <= Elem_Index
@@ -477,16 +485,18 @@ package body Items.Arrays is
    -------------------
 
    procedure Shrink_Values (Item : in out Array_Type) is
-      Tmp : Array_Item_Array_Access;
+      Tmp : Array_Item_Vectors.Vector;
    begin
       Tmp := Item.Values;
-      Item.Values := new Array_Item_Array (1 .. Item.Last_Value);
+      Item.Values := Array_Item_Vectors.To_Vector
+        (Ada.Containers.Count_Type (Item.Last_Value));
 
       if Item.Last_Value > 0 then
-         Item.Values.all := Tmp (1 .. Item.Last_Value);
+         for J in 1 .. Item.Last_Value loop
+            Item.Values (J) := Tmp (J);
+         end loop;
       end if;
-
-      Free (Tmp);
+      Tmp.Clear;
    end Shrink_Values;
 
    --------------------
@@ -536,13 +546,13 @@ package body Items.Arrays is
    overriding procedure Free
      (Item : access Array_Type; Only_Value : Boolean := False) is
    begin
-      if Item.Values /= null then
+      if not Item.Values.Is_Empty then
          --  Free the whole memory for the items, since the type is in fact
          --  stored in a separate field.
          for J in 1 .. Item.Last_Value loop
             Free (Item.Values (J).Value, Only_Value => False);
          end loop;
-         Free (Item.Values);
+         Item.Values.Clear;
       end if;
 
       if not Only_Value then
@@ -566,7 +576,7 @@ package body Items.Arrays is
       R := Array_Type_Access (Clone);
 
       --  ??? Should duplicate the values as well....
-      R.Values := null;
+      R.Values := Array_Item_Vectors.Empty_Vector;
       R.Item_Type := Items.Clone (Item.Item_Type.all);
    end Clone_Dispatching;
 
@@ -593,7 +603,7 @@ package body Items.Arrays is
       if Self.Dimensions (1).First > Self.Dimensions (1).Last
         and then Self.Dimensions (1).First /= Long_Integer'Last
         and then Self.Dimensions (1).Last /= Long_Integer'First
-        and then Self.Values = null
+        and then Self.Values.Is_Empty
       then
          null;
 
@@ -608,7 +618,7 @@ package body Items.Arrays is
               (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
          end if;
 
-         if Show_Value (Mode) and then Self.Values /= null then
+         if Show_Value (Mode) and then not Self.Values.Is_Empty then
             for V in 1 .. Self.Last_Value loop
                R := new Collapsible_Item_Record;
                R.For_Component := Self.Values (V).Value;
@@ -620,11 +630,14 @@ package body Items.Arrays is
                   Idx : constant String := Index_String
                     (Self.all, Self.Values (V).Index, Self.Num_Dimensions);
                begin
-                  R.Add_Child
-                    (Gtk_New_Text (Styles.Text_Font, Idx & ASCII.HT & " => "));
-                  R.Add_Child
-                    (Self.Values (V).Value.Build_Display
-                     (Array_Item_Name (Lang, Name, Idx), View, Lang, Mode));
+                  if Self.Values (V).Value /= null then
+                     R.Add_Child
+                       (Gtk_New_Text
+                          (Styles.Text_Font, Idx & ASCII.HT & " => "));
+                     R.Add_Child
+                       (Self.Values (V).Value.all.Build_Display
+                        (Array_Item_Name (Lang, Name, Idx), View, Lang, Mode));
+                  end if;
                end;
             end loop;
          end if;
@@ -645,7 +658,7 @@ package body Items.Arrays is
       --  Since all values should be replaced, do nothing if there is any
       --  value defined.
 
-      if Parent.Values /= null then
+      if not Parent.Values.Is_Empty then
          return null;
       end if;
 
@@ -671,8 +684,8 @@ package body Items.Arrays is
    begin
       Iter.Item := Array_Type_Access (Item);
 
-      if Item.Values /= null then
-         Iter.Child := Item.Values'First;
+      if not Item.Values.Is_Empty then
+         Iter.Child := 1;
       end if;
 
       return Iter;
@@ -693,8 +706,8 @@ package body Items.Arrays is
 
    overriding function At_End (Iter : Array_Iterator) return Boolean is
    begin
-      return Iter.Item.Values = null
-        or else Iter.Child > Iter.Item.Values'Last;
+      return Iter.Item.Values.Is_Empty
+        or else Iter.Child > Positive (Iter.Item.Values.Length);
    end At_End;
 
    ----------

@@ -18,7 +18,7 @@
 --  Items used for array types
 --  See the package Items for more information on all the private subprograms.
 
-with Ada.Unchecked_Deallocation;
+with Ada.Containers.Vectors;
 
 package Items.Arrays is
 
@@ -93,7 +93,7 @@ package Items.Arrays is
    --  Elem_Value is not duplicated!
 
    function Get_Value
-     (Item       : Array_Type;
+     (Item       : in out Array_Type;
       Elem_Index : Long_Integer) return Generic_Type_Access;
    --  Read a value in the array at a specific Index.
    --  If that index is covered by a Repeat_Type, a clone of the value is
@@ -121,18 +121,15 @@ private
       Index : Long_Integer;
       Value : Generic_Type_Access := null;
    end record;
-   type Array_Item_Array is array (Positive range <>) of Array_Item;
+   package Array_Item_Vectors is new Ada.Containers.Vectors
+     (Positive, Array_Item);
    --  One of the item of in the array.
    --  We need to store both its value and its index. The index is calculated
    --  as the index in a one-dimensional array that would store the same number
    --  of values as the array, starting from 0 as in C.
 
-   type Array_Item_Array_Access is access Array_Item_Array;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Array_Item_Array, Array_Item_Array_Access);
-
    type Array_Type (Num_Dimensions : Positive) is new Generic_Type with record
-      Values      : Array_Item_Array_Access := null;
+      Values      : Array_Item_Vectors.Vector;
       Item_Type   : Generic_Type_Access := null;
       Last_Value  : Natural := 0;
 
