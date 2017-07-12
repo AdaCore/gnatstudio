@@ -30,11 +30,10 @@ Notable features that are not yet implemented:
 
 from gi.repository import Gtk
 import GPS
-from gps_utils import *
 from pygps import get_widgets_by_type, send_key_event
 from collections import defaultdict
 from functools import partial
-
+import re
 # UTILS #
 
 
@@ -87,7 +86,6 @@ def forward_vim_word(loc, fwd=True):
 
     c = cat(loc.get_char())
     while c == cat(loc.get_char()):
-        in_alpha = isword(loc.get_char())
         loc = loc.forward_char(offset)
 
     return fw_ws(loc) if fwd else loc.forward_char(1)
@@ -453,7 +451,6 @@ class Movement(BaseAction):
         self.vim_state.set_column_memory()
 
 
-import re
 is_keyword_re = re.compile("[\w_0-9]")
 
 
@@ -710,7 +707,6 @@ basic_actions = {
     "F": (UntilCharMovement, True, False),
     "t": (UntilCharMovement, False, True),
     "T": (UntilCharMovement, True, True),
-    "$": (ChainedAction, (UntilCharMovement, False, True), (CharAction, "\n")),
     "D": (ChainedAction, (Deletion,),
           (UntilCharMovement, False, True),
           (CharAction, "\n"),
