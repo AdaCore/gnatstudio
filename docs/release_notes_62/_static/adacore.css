@@ -40,22 +40,6 @@ div.bodywrapper {
    max-width: 1000px;
 }
 
-span.guilabel {
-   font-style: italic;
-   color: rgb(124, 171, 255);
-}
-
-span.menuselection {
-   font-style: italic;
-   color: rgb(255, 79, 74);
-}
-
-code.kbd {
-   padding: 3px;
-   border-radius: 8px;
-   border: 1px solid #BBB;
-}
-
 div.sphinxsidebar {
    width: auto;
    max-width: 210px;

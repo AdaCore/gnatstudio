@@ -42,13 +42,6 @@ master_doc = 'index'
 def get_copyright():
     return u'2001-%s, AdaCore' % time.strftime("%Y")
 
-def get_version():
-    """Extract the version from configure.in"""
-    for line in file("../../configure").readlines():
-        if line.startswith("GPS_VERSION") and "=" in line:
-            return line.strip().split("=")[1]
-    raise Exception("Cannot find version number")
-
 # General information about the project.
 project = u'Release Notes'
 copyright = get_copyright()
@@ -58,7 +51,7 @@ copyright = get_copyright()
 # built documents.
 #
 # The short X.Y version.
-version = '6.2'
+version = '17'
 # The full version, including alpha/beta/rc tags.
 release = version
 

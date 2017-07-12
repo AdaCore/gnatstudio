@@ -8,7 +8,7 @@ INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
 
-all: ug tutorial gps_pg relnotes relnotes_17 gnatdoc
+all: ug tutorial gps_pg relnotes relnotes_62 gnatdoc
 static:
 
 gps_pg:
@@ -17,8 +17,8 @@ gps_pg:
 relnotes:
 	make -C release_notes singlehtml
 
-relnotes_17:
-	make -C release_notes_17 singlehtml
+relnotes_62:
+	make -C release_notes_62 singlehtml
 
 ug:
 	make -C users_guide html latexpdf

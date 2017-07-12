@@ -1,12 +1,8 @@
-.. Release Notes documentation master file, created by
-   sphinx-quickstart on Wed Jun 26 10:06:50 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 GPS |version| Release Notes
 ===========================
 
-Release date: June 2016
+Release Date: October 2017
 
 .. image:: gps6.png
 
@@ -14,413 +10,565 @@ Release date: June 2016
    :numbered:
    :maxdepth: 3
 
-GNATdoc
--------
+Debugger
+--------
 
-GPS comes with a new engine for documentation generation. This comes in the
-form of a command-line tool called GNATdoc.
+A new :guilabel:`Debugger Variables` view displays the same type of information as the :guilabel:`Data
+Window` (i.e. the value of variables) but in a tree, which might help keep
+things organized.
 
-Amongst the features of GNATdoc are:
+.. figure:: debugger_variables.png
 
-* support of Javadoc/Doxygen style of tags in documentation comments
+It is now possible to set breakpoints before a debugger is started. This can be
+done as usual via the :menuselection:`Debug --> Set Breakpoint` contextual menu, or by clicking on
+the side of editor lines. The line number for lines with breakpoints is now 
+highlighted, and no longer displays a red dot on the side of the line. The color
+of this highlight is different for disabled and conditional breakpoints.
 
-* support for comment placement detection
+A number of improvements was done for the :guilabel:`Breakpoints` view. Its layout has been
+modified so that it is now smaller and can more easily be a permanent fixture
+of the desktop. Long-clicking on a breakpoint will display all its properties
+(both basic and advanced), and double-clicking will open the corresponding editor.
+Since it is now possible to set breakpoints even when no debugger is running,
+it is also useful to edit them outside of the Debug perspective.
 
-* support for separating documentation comments from code comments
+.. figure:: breakpoints.png
 
-* a new extensible HTML back-end
+The contextual menu :menuselection:`Debug --> Set watchpoint` on a variable while the debugger is
+running allows to set a watchpoint, so that the debugger stops any time the
+variable is modified.
 
-  * support for users defined image directory
+The :guilabel:`Call Stack` view now has a local configuration menu to choose which information
+should be displayed. When you choose not to show subprogram parameters, gdb is
+configured so that it does not try to compute them, which, on some systems,
+might significantly speed up operations with the debugger.
 
-  * support for package groups
+GPS no longer supports the debugger preference to show lines with code. This
+preference had been disabled by default for a while now, and could cause slow
+downs since it requires a lot of interaction with the debugger (and while the
+debugger is working on getting us the info, we can't send other commands like
+setting breakpoints).
 
-Here is an example of code annotated with GNATdoc tags::
-
-   function Set_Alarm
-     (Message : String;
-      --  The text to display
-
-      Minutes : Natural
-      --  The number of minutes to wait
-     ) return Boolean;
-   --  Display a message after the given time.
-   --  @exception System.Assertions.Assert_Failure raised
-   --     if Minutes = 0 or Minutes > 300 if Minutes = 0
-   --  @return True iff the alarm was successfully registered
-
-GNATdoc is available from the GPS interface, and also as a command-line
-tool, so it can be easily automated.
-
-The full documentation for GNATdoc can be found at
-`http://www.adacore.com/developers/documentation/gnatdoc-users-guide/
-<http://www.adacore.com/developers/documentation/gnatdoc-users-guide/>`_.
+See also `Debugger improvements in GPS 17
+<http://blog.adacore.com/debugger-improvements-in-gps-17>`_ blog post.
 
 
 Editors
 -------
 
-.. NF-61-MB26-054 GPS: New line number display preference (2013-11-27)
+When using the :kbd:`Home` key while in an editor (or any key bound to the action
+:guilabel:`beginning of line`), GPS will first go to the first column (as it has always
+done), but if you do it a second time it will then go to the first non-blank
+character of the line.
 
-We have a new preference for showing only some line numbers.
-c
-.. NF-61-MC02-016 GPS: Automatic indentation of pasted content (2013-12-17)
+A new action :guilabel:`select subprogram` has been added to GPS. This selects the
+current subprogram, extending the selection to the englobing subprogram if a
+subprogram is already selected. This can be useful, for instance, to limit a
+search to the context of the current subprogram.
 
-When you paste content in a source editor that supports automatic
-indentation, it will be indented automatically, provided you have switched
-the feature on via the preferences dialog (Editor -> Auto indent on paste)
+Lines for which a bookmark has been set will now show special highlighting in
+the scrollbar of editors, as well as an icon on the left side of the line, as a
+quick way to identify them.
 
-.. NF-61-LA18-019 GPS: "file changed on disk" dialog review (2014-05-21)
+GPS now checks the permissions on the disk before saving a file (rather than
+just the read-only status of the editor). If the file is read-only on the disk,
+it displays a confirmation dialog to let you choose whether to overwrite (and,
+in the context of Clearcase, hijack the file).
 
-The dialog that pops up when a file has been modified on the disk has been
-modified. It will now list all such files in a single dialog (as opposed to
-having one dialog per file when it gets the focus). There is now also an
-option for automatically reloading files (which can be undone).
+The preference :guilabel:`Always Use External Editor` has been removed. Such editors do not
+conveniently give access to cross-references, outline, and all the other
+facilities provided by GPS.
 
-.. NF-61-LA18-022 GPS: Review handling of auto-saved files (2014-09-17)
 
-The dialog is also smart enough not to pop-up if the file on disk has
-the same contents as the GPS the editor.
+MDI & Dialogs
+-------------
 
-Multicursors
-~~~~~~~~~~~~
+A new action :guilabel:`maximize window` is provided to make the central area of the
+desktop (that contains the editor) occupy the full GPS window, hiding all other
+views. Executing the action again goes back to the previous layout. You can
+bind a key shortcut to this action via the :menuselection:`Edit --> Preferences --> Key Bindings` menu.
 
-.. NF-61-MA07-049 GPS: Multi selection using multi-cursors (2013-11-29)
-.. NF-61-MA07-059 GPS: Copy/Paste operations using multi-cursors (2013-11-29)
+The GPS color theme was modified so that the view that currently has the
+keyboard focus has a special color in its notebook tab. Changing the color
+theme will change the colors, but will still make this tab unique.
 
-We have made a number of improvements in the handling of multicursors.
+New preference (:menuselection:`Edit --> Preferences --> Windows`) was added to configure default tab
+orientation. This allows, for example, to put tabs horizontally at right side
+of a window.
 
-When multiple cursors are active, it is now possible to select simultaneously
-with all cursors as you would with one. It is also possible to cut/copy/paste
-with multicursors. If the copy buffer has been filled with the same cursors,
-then the content of each individual cursor will be pasted. If the buffer
-was filled with only the main cursor, or with other cursors in a precedent
-operation, the content of the main buffer will be replicated
-on every cursor's location. Cut and copy works as you would expect.
+The :kbd:`Escape` key can now be used to close floating dialogs (such as the :guilabel:`Search`
+dialog, or the :guilabel:`Preferences` dialog) even when the input focus is not currently
+on these dialogs.
 
-.. only:: html
+The size of simple text input dialogs (e.g: the :menuselection:`Build --> Run` dialog) is now
+preserved: GPS will now restore it when the dialog is displayed again in the
+future (either in the current session or in a later session).
 
-   This shows multicursors being used with the action to associate a
-   cursor to each entity reference.
 
-   .. image:: multicursors1.gif
+Menus
+-----
 
-   This shows multicursors being used to join multiple lines in very few
-   operations.
+The :menuselection:`Help --> GNAT Runtime` menu is now computed from the runtime that is actually
+being used for the current project, rather than a static image of a native
+runtime.
 
-   .. image:: multicursors2.gif
+New menu :menuselection:`File --> Reset All Perspectives` restores the default window layout. This
+is in particular useful to reset the :guilabel:`Debug` perspective that has changed in this
+release of GPS.
 
-There's more
-~~~~~~~~~~~~
+The menu :menuselection:`Project --> Save All` was moved to :menuselection:`File --> Save More --> Projects` to make its
+semantics easier to understand.
 
-Several other improvements in the editors: the "Delete Line" actions are now
-atomic, there is a new plugin vim.py to emulate a few behaviors from vim.
-There is also a preference to change the background color of expanded code.
+When a project (and its subprojects) have a small number of main units, and the
+root project is not an aggregate, we display the :menuselection:`Build --> Project`, :menuselection:`Build --> Run` and
+:menuselection:`Debug --> Initialize` menus as a flat list of mains, rather than introduce one
+extra level of menu for the name of the project.
 
-C support
----------
+On OSX and Unity, GPS is now able to display the menubar outside of the main
+window. This is disabled by default, since these menus are not able to display
+tooltips or key shortcuts. They can be enabled via an advanced preference.
 
-We have a new syntax highlighting engine for C, which has a number of nice
-capabilities: for instance it can highlight escape sequences in strings.
+When an editor or a browser is made floating, its window now includes a menubar
+similar to the one used in the main GPS window. This makes it more convenient
+to execute actions via menus.  It also includes a copy of the global toolbar.
 
-.. figure:: gps_c_highlighting.png
-   :scale: 100%
-   :class: screenshot
 
-It is also entirely written in Python and is easy to extend.
+Search & Replace
+----------------
 
-Ada support
+The :guilabel:`search and replace all occurrences` action has been sped up by a factor of seven
+in some cases.
+
+Omnisearch
+~~~~~~~~~~
+
+The Omnisearch feature has received a number of enhancements:
+
+ - A default key shortcut (:kbd:`control-u`) brings up the omnisearch
+
+ - When bringing up the omnisearch through the key shortcut completions start
+   appearing even before anything is typed in the entry. This allows, for
+   instance, using the :kbd:`arrow` keys to select one of the currently open windows.
+
+ - The size of the popup window has been increased to take up to 2/3 of width
+   and full height of the main window. This is useful when listing directories
+   with long names, for instance. Also, local configuration setting to
+   automatically resize the popup window was removed.
+
+ - The highlighting of the fuzzy-matched characters now uses a color.
+
+ - If the text in the global entry has been manually deleted, it no longer
+   reappears next time the search is activated.
+
+ - When you search via the omnisearch, GPS will now ensure that matches in
+   runtime files appear only after matches in user code.
+
+ - The Omnisearch can now also display project relative paths instead of
+   absolute ones. This behavior can be controlled via a local configuration
+   settings.
+
+ - It is now possible to type simple mathematical expression in the omnisearch
+   ("2 + 3**2") to get their result in decimal, hexadecimal and binary.
+
+
+Preferences
 -----------
 
-.. - NF-61-N919-015 GPS: alignment preserves the selection (2014-09-19)
-.. - NF-61-MC17-032 GPS: Improved auto-align end of line comments (2013-12-17)
-.. - NF-61-MB13-072 GPS: new block completions available (2013-11-25)
+The :guilabel:`Preferences` dialog was completely reworked. The color theme picker,
+the key shortcuts and plugins editors are now directly accessible from the
+preferences dialog.
 
-Several editor enhancements for Ada in general:
+.. figure:: preferences.png
 
-* the alignment action preserves the selection
+A new look-and-feel has been introduced, gathering the preferences in groups
+and with the documentation being direclty displayed under each preference.
 
-* improved auto-alignment for comments
+It is possible to search among preferences using the omnisearch bar or the
+preferences dialog local search bar.
 
-* new block completions are available
+GPS hidden preferences can now be displayed and edited by activating the :guilabel:`Show
+advanced preferences` setting from the dialog's local menu.
 
-Ada 2012 and SPARK 2014
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. - NF-61-N812-021 Improved indentation of conditional expressions (2014-08-17)
-.. - NF-61-N226-002 Improved indentation of subtype predicates (2014-03-26)
-
-We have improved the auto indentation support for conditional expressions
-and subtype predicates.
-
-Python
-------
-
-.. NF-61-N603-059 GPS: support for auto-completion in Python (2014-06-25)
-.. NF-61-N619-029 GPS: on-the-fly syntax error reporting for Python (2014-09-01)
-.. NF-61-N407-023 GPS: New syntax highlighting engine (2014-05-13)
-
-This release of GPS contains a lot of improvements to the support of Python.
-
-.. figure:: gps_python_support.png
-   :scale: 100%
-   :class: screenshot
-
-GPS now provides smart completion in Python files, providing
-completion for modules found in the standard Python search paths
-and all source directories for projects that list "Python" as their
-language. This is done through an integration of the Jedi library:
-`https://github.com/davidhalter/jedi <https://github.com/davidhalter/jedi>`_.
-
-We also support auto-indentation in Python, and on-the-fly reporting of
-syntax and style errors.
-
-Browsers
---------
-
-.. NF-61-M506-012 GPS: smarter browser layout (2014-07-16)
-.. NF-61-N724-011 GPS: animations in browsers (2014-07-24)
-.. NF-61-N718-017 GPS: review call graph browser (2014-07-21)
-.. NF-61-N916-012 GPS: folding compartments in entity view (2014-09-16)
-.. NF-61-J601-013 GPS: Save callgraph browsers across sessions (2014-08-13)
-.. NF-61-N915-032 GPS: save browser contents in desktop (2014-09-16)
-.. NF-61-N718-015 GPS: add filter in Project browser (2014-07-21)
-
-We have completely rewritten the engine for rendering browsers. This gives a
-brand new look and feel to the Project browser, the Entity browser and the
-call graph browser.
-
-.. figure:: gps_browser_project.png
-   :scale: 100%
-   :class: screenshot
-
-We have smarter layout algorithms, and animations to show the transitions
-when adding nodes or rebalancing the graph.
-
-The Project browser now has a filter which allows searching for a given
-pattern directly in the browser. This allowed us to remove the corresponding
-scope entry in the Search dialog.
-
-The Entity browser now has support for folding compartments.
-
-.. figure:: gps_browser_entity.png
-   :scale: 100%
-   :class: screenshot
-
-And the contents of browsers is now saved accross GPS sessions!
 
 Views
 -----
 
-.. NF-61-LA23-042 GPS: Show "withs" in Outline view (2014-04-08)
-.. NF-61-MB15-006 GPS: move to previous and next entry in call tree (2014-07-15)
-.. NF-61-M108-043 GPS: Highlight custom patterns in Messages View (2013-12-02)
-.. NF-61-L810-013 GPS: Clear locations view for an individual file (2014-05-29)
+Bookmarks
+~~~~~~~~~
 
-Several small enhancements to views:
+.. figure:: bookmarks.png
 
-* The Outline view for Ada can now show the "withs".
+Number of improvements was done for :guilabel:`Bookmarks` view:
 
-* There are buttons to move to the previous/next entry in call trees.
+ - double-click on a bookmark jumps to the corresponding editor, and long-click
+   starts editing (there is a button in the local toolbar for that purpose
+   too).
 
-* The Messages view can now highlight custom patterns.
+ - bookmarks are no longer sorted by default. Instead, you can use
+   drag-and-drop to organize them in the order you want.
 
-* In the Locations view, you can now remove entries for an individual file.
+ - bookmarks can be grouped: when you drag and drop a bookmark on top of
+   another bookmark, a new group is created that contains both. These groups
+   can be used to organize large numbers of bookmarks.
 
-We have also removed completely the GPS shell console, which has been
-rendered obsolete by the Python console.
+ - a filter was added, to match what is done for other
+   views.
+
+ - comments can be added to bookmarks, either that an explicit toolbar button
+   or dragging and dropping text from a source editor.
+
+ - a new local configuration setting :guilabel:`link with editor` is also available,
+   which automatically selects the first bookmark associated with the current
+   editor line, whenever the latter changes.
+
+See also `Bookmarks in the GNAT Programming Studio (GPS)
+<http://blog.adacore.com/bookmarks-in-the-gnat-programming-studio-gps>`_ blog post.
+
+
+Files
+~~~~~
+
+A new local configuration :guilabel:`All files from prj dirs` has been added to the :guilabel:`Files`
+view, to show all files in any of the directories of the project. In
+particular, this shows the object and executable files in the object
+directories.
+
+GPS now exports a new action to find the current file in the Files view. This
+action is not visible by default in the contextual menu (as opposed to :guilabel:`Locate
+in Project view`) in an effort to keep the menu simple. However, it can be added
+with a small python script. The menu :menuselection:`Navigate --> Locate in Files view` has been
+added.
+
+
+Locations View
+~~~~~~~~~~~~~~
+
+It is now possible to select multiple items in the :guilabel:`Locations` view, in
+particular to remove or export them all in a single operation.
+
+When the :guilabel:`Locations` view contains build errors, and one of the files is being
+recompiled, the Locations view will now only update the entries for that file
+(and corresponding specification file if applicable), rather than removing all
+build errors.
+
+For messages which have an associated background color
+(for instance compiler errors), the :guilabel:`Locations` view shows this
+background color on the side of the row for this message.
+
+
+Outline View
+~~~~~~~~~~~~
+
+A few improvements were done on the :guilabel:`Outline` view:
+
+ - the :guilabel:`with Clauses` node is not displayed if no clause was found
+
+ - a new setting allows to hide the name of parameters in the profile of
+   subprograms. This saves some space, and helps differentiate homonym
+   subprograms
+
+ - it is now possible to use :kbd:`enter` to jump to the corresponding entity (same
+   as clicking on the line)
+
 
 Project View
 ~~~~~~~~~~~~
-.. NF-61-JB10-042 GPS: filter in project view (2014-06-24)
-.. NF-61-N624-034 GPS: remove Search in Project view (2014-06-25)
-.. NF-61-MB19-001 GPS: filter empty directories in Project view (2014-06-17)
-.. NF-61-LB28-047 GPS: not grouping by directories in Project view (2014-06-25)
-.. NF-61-N623-035 GPS: show runtime files in Project view (2014-06-25)
-.. NF-61-N916-003 GPS: new File Operations menu in project view (2014-09-16)
-.. NF-61-LC05-020 GPS: Open shell from contextual menu in Project View (2013-11-07)
-.. NF-61-N415-035 GPS: change icon for root project in Project view (2014-05-05)
 
-.. figure:: gps_project_view_filter.png
-   :scale: 100%
-   :class: screenshot
+There are two enhancements of how long names of files and directories are
+displayed, both controlled by local configuration menu: only basenames are
+displayed, and ellipsis are displayed in the middle of file name if the :guilabel:`Project`
+view is not wide enough to fit the entire name.
 
-There are been a lot of enhancements to the Project view.
+The performance of :guilabel:`Project` view was significantly improved on project load,
+which is noticeable on projects that have a large number of files.
 
-* There is now a filter directly in the Project view. This allowed us to
-  remove yet another scope entry from the Search dialog.
-
-* Several new options in the local menu:
-
-  * you can filter out the empty directories
-
-  * you can show files directly under the project, rather than grouped by
-    directories
-
-  * you can list the Ada runtime in the Project view
-
-* Some other enhancements:
-
-  * you can open an OS shell from a directory in the Project view
-
-  * the icon for the root project now has its own color, which is useful to
-    distinguish it when showing the flat view.
-
-Due to popular demand, we have added back a menu for File operations in the
-project view.
-
-.. figure:: gps_project_view_file_operations.png
-   :scale: 100%
-   :class: screenshot
+A new button in the local toolbar of the :guilabel:`Project` view, to collapse all project
+nodes was added. This is a way to quickly cleanup the display after using
+:guilabel:`Locate in Project View` for a while.
 
 
-Projects
---------
+Windows
+~~~~~~~
 
-.. NF-61-N305-035 GPS: support for aggregate projects (2014-03-10)
-.. NF-61-N918-040 Support for Runtime & Target attributes in projects (2014-10-17)
-.. NF-61-N219-023 GPS: improve gnatname integration (2014-03-22)
-.. NF-61-M724-024 GPS: save scenario on exit and restore on startup (2014-09-18)
+Two new settings have been added to the :guilabel:`Windows` view: you can now choose
+whether to show nodes for notebooks that have a single window (the default is
+still to display the window itself, but not its notebook in this case); and you
+can choose whether to sort windows alphabetically, or to preserve the order of
+tabs within the notebooks.  When the notebooks are not displayed, and sorting
+is disabled, the order depends on which window had the keyboard focus last,
+which provides a convenient way of switching quickly between a few editors
+among a lot of them.
 
-GPS now supports aggregate projects.
-
-The new Project attributes Target and Runtime are also supported. This is
-now the recommendation for handling cross projects.
-
-The project wizard has support for gnatname, to create a project from
-a hierarchy of sources that have a non-GNAT naming convention.
-
-The settings of the scenario for a given project are saved accross GPS
-sessions.
+The :guilabel:`Windows` view now also has a local filter, to help search for specific
+windows.
 
 
-Extensibility / Customizability
--------------------------------
+Tools Integration
+-----------------
 
-.. NF-61-KB22-012 GPS: project-specific plugins (2014-08-15)
-.. NF-61-N711-039 GPS: new parameter on_exit to BuildTarget.execute (2014-07-11)
-.. NF-61-MA18-041 GPS: Menus described in menus.xml (2013-11-13)
+QGen
+~~~~
 
-There is support for per-project customization: when loading a project,
-GPS will load project-specific plugin named <project>.ide.py if it exists
-in the same directory as the project.
+A convenient interface to QGen, the code generator for Simulink models, is
+provided now. This includes:
 
-The command GPS.BuildTarget.execute now accepts an extra parameter on_exit:
-a function which is called when the build target terminates.
+ - displaying graphically the diagrams from MDL files (read-only),
 
-The GPS menus are now entirely described in an XML file (menus.xml) which
-allows you to control the layout of menus in a given GPS install.
+ - toolbar buttons to easily generate code then build (and optionally then
+   debug),
 
-We have added support for defining completion resolvers entirely in Python.
+ - tight integration with the debugger so that whenever the debugger stops, GPS
+   highlights the current block in the diagram, adds contextual menus to easily
+   break on specific blocks, and shows the current value of signals.
 
-There is also support for defining workflows: a sequence of asynchronous
-actions described as a single Python coroutine - this eases the programming
-of complex sequences.
+
+CodePeer
+~~~~~~~~
+
+Improvements in :guilabel:`Locations` view to handle selection of multiple messages allows
+to review multiple CodePeer messages at once.
+
+Single message review dialog now contains information about a message in the
+same way as multiple message review dialog does. Proposed value of message
+review status has been changed to current status of the message.
+
+CodePeer's messages with lifeage "removed" are displayed with different font to
+help distinguish them from regular messages. Also, filter of "removed" messages
+is deselected each time CodePeer report is open.
+
 
 Cross-references engine
 -----------------------
 
-.. NF-61-N515-018 gnatinspect recognizes IDE'Xref_Database (2014-05-16)
-.. NF-61-N206-037 GPS: Remove xref database with default project (2014-02-11)
+It is now possible to force GPS to index runtime files so that you can perform
+cross-references from them (it was always possible to cross-ref from your own
+sources to the runtime). This takes longer to index, so is disabled by default.
+See the preference :menuselection:`Project --> Cross References in Runtime Files`.
 
-We have several fixes and enhancements to the engine for cross-references:
-a fix for growing database files, support of Ada separates, better fallbacks
-when the code is not in compiled state.
+The action :guilabel:`find all references` on an entity now includes by default all the
+entities overriding it, all entities it overrides, and all entities overriding
+the entities it overrides.
 
-A new project attribute allows controlling the location of the databases,
-so it can be placed on local drives rather than networked drives, for
-instance.
+The optional `listvars.py` plugin (which adds a contextual menu :guilabel:`Variables used
+in ...`) now also shows the type of reference for those variable (read, write,
+dispatching call,...)
 
-GPS also automatically cleans up the databases that it creates when creating
-a default project - for instance when using GPS to edit a single file.
 
-Key shortcuts
+Build Targets
 -------------
 
-.. NF-61-M917-006 GPS: Review key shortcuts dialog (2014-05-23)
-.. NF-61-MA25-032 GPS: Use the primary modifier for shortcuts (2013-10-29)
-.. NF-61-LB30-034 GPS: Faster Ways to Open and Navigate GPR files (2013-10-21)
+A new macro `%TP` is available in builder targets. It will be replaced with the
+name of the project file to which the main unit belongs. It is for instance
+used when you do not want to pass the root project to gprbuild, but directly
+the unit's own project
 
-The key shortcut dialog can now be embedded in the main GPS window, and kept
-open. Changes are automatically changed (the save button was removed). A
-filter has been added to make it easy to find the proper action or shortcut.
-User-defined shortcuts are displayed in bold. The icons associated with actions
-are displayed, for consistency with the rest of GPS. Menus are no longer
-displayed in the dialog, since it is better to associate the shortcuts with
-the corresponding action instead. Multiple key themes are provided and can
-dynamically be switched (the emacs.py plugin was removed and replaced with
-an Emacs key theme instead)
+The configuration file (.cgpr) set by the `"--config"` command-line switch is now
+passed on to the builder. Also, GPS now also passes the configuration file
+which was automatically generated when the `"--autoconf"` option was given.
 
-.. figure:: gps_key_shortcuts.png
-   :scale: 100%
-   :class: screenshot
+Switches defined for a specific tool using XML can now be filtered by
+specifying a named filter for the `filter` attribute of a switch tag. These
+filters can be either predefined in GPS or created by the user (see the
+`<filter>` tag in the XML files).
 
-GPS uses the primary modifier key instead of the control key in several places:
-this means that, under Mac OS, GPS uses the Command key for many actions, to
-better match the system settings.
+It is now possible to rename targets directly in the :guilabel:`Target Configuration`
+dialog: double-click on a target name in the tree to give it a new name.
 
-The new action "Edit project source file" provides fastest way to open the
-source of the current project in a GPS editor.
+
+Bareboards Support
+------------------
+
+GPS now supports OpenOCD in order to flash and/or debug an external board.  In
+order to use OpenOCD, set the `IDE'Connection_Tool` project attribute to
+'openocd' and specify a board-specific OpenOCD configuration file via the
+`IDE'Connection_Config_File` project attribute (both attributes are editable in
+the 'Embedded' Project Properties editor page).
+
+GPS now supports the arm-sysgo-pikeos toolchain.
+
+
+GNATdoc
+-------
+
+Attribute `Documentation_Dir` is defined in `Documentation` package now.  Attribute
+with same name in package IDE is obsolete. Its support will be removed in
+future version of GNATdoc.
+
 
 Miscellaneous UI improvements
 -----------------------------
-.. NF-61-MA04-035 GPS: remove busy cursor (2013-11-22)
-.. NF-61-N703-030 GPS: allow wider omni-search field (2014-07-04)
-.. NF-61-N116-013 GPS: support for ClearCase "diff against working" (2014-02-20)
-.. NF-61-MC02-033 GPS: Minor enhancements to the tip-of-the-day (2013-12-02)
-.. NF-61-MA21-056 GPS: Autofix to current file only (2013-11-05)
-.. NF-61-M722-010 GPS: Bind goto next/previous location to Alt+Arrows (2013-12-12)
-.. NF-61-KA19-010 GPS: Integrate GNATcoverage detailed messages (2013-11-13)
-.. NF-61-H227-033 GPS: Implement auto-refresh mode for memory view (2014-04-02)
 
-We have removed the "busy" mouse cursor - this is replaced by the background
-activity indicator in the main toolbar.
+The tooltips in notebook tabs, in the :guilabel:`Project` view and in the :guilabel:`Windows` view now
+show both the absolute name for files as well as their location relative to the
+root project. The latter path can often be much shorter, depending on your
+setup.
 
-The width of the omni-search field can be controlled, which can be useful in
-projects with very long file names for instance.
+It is now possible to bind keys to actions without unbinding the key.  This
+means that the same key binding might apply to several actions, and the action
+that gets executed is the first one for which the filter matches. In
+particular, this allows reusing keys like :kbd:`enter` or :kbd:`tab` in contexts other
+than the editor.
 
-The ClearCase integration now supports "diff against working".
+The mouse buttons 4 and 5 (available on some high-end mice) are mapped to the
+locations command, and used to move in the locations history (back to the
+previous position, and back). This is hard-coded, and cannot be changed.
 
-There were minor enhancements to the tip-of-the-day.
+A new preference :menuselection:`Windows --> Window Title` has been added to configure the title
+of the GPS window. Through it, you can chose whether to display any of base
+names, directory names, project name,... in the title bar.
 
-You can now apply all auto-fixes to the current file only.
+The :guilabel:`About` dialog now contains the name of the current project's toolchain if
+this toolchain is not the native one.
 
-There are default key shortcut (alt+arrows) bound to the next/previous location.
+A Gtk_File_Chooser dialog is used for choosing files if the system doesn't have 
+its own dialog, or if this forbidden through preferences and the filesystem is
+local. It is possible to use the GPS dialog by turning off the gtk_file_selector
+trace.
 
-The GNATcoverage detailed messages can be viewed in the editor.
+In the :guilabel:`Call Graph Browser`, file locations are now clickable and open the
+corresponding file/line.
 
-There is an auto-refresh mode for the debugger Memory view.
+A new action and contextual menu allow exporting the contents of the :guilabel:`Call Trees`
+view to an editor.
 
-CodePeer
---------
+A new button was added to the local toolbar of the :guilabel:`Run` view, to save the run
+command output to a file.
 
-.. NF-61-M207-022 GPS: CodePeer messages grouping in Locations view (2014-07-31)
+The :guilabel:`Edit Source` button in project properties rewrites the project file (with user
+confirmation) before opening it in an editor and closing the dialog.
 
-GPS now displays the check kinds for CodePeer precondition messages - this
-means you can filter out messages based on these check kinds.
+The GPS code fixing capability was enhanced to handle compiler messages such as
+:guilabel:`Elaborate_All pragma required for NAME`. To fix this GPS will add pragma
+`Elaborate_All (NAME)` after the corresponding with-clause in the spec or body of
+given compilation unit.
 
-The CodePeer message review dialog now prevents changing the message review
-status when a message was reviewed in the source code with pragma Annotate.
+The plug-in `auto_highlight_occurrences.py` highlights all occurrences of the
+word under the cursor in the whole file (possibly using smart cross reference
+information to only highlight the specific entity and not its homonyms). This
+plug-in has now learned not to highlight the language's keywords ("constant",
+"begin",...) which is useless and might be slow since these keywords generally
+occur often.
 
-All CodePeer messages (SCIL compilation errors, warnings and checks, race
-conditions) are displayed under one category in the Locations view.
+In the main toolbar, the button next to the summary of running tasks now brings
+up an ephemeral window which contains a task manager view, to view
+and interrupt tasks directly from the toolbar, without the need to have the
+:guilabel:`Task Manager` view present in the MDI.
 
-Bareboard support
+The :guilabel:`OS Shell` window sometimes need a "stty echo" command to properly display
+the keys typed on the keyboard. GPS now has a preference to automatically emit
+this command. The new shell also has a `GPSSHELL` environment variable set
+automatically, so that you can test it in your shell's configuration files to
+enable or disable specific behaviors.
+
+
+Xming Compatibility
+-------------------
+
+A new trace :guilabel:`Views.No_Transient_Views` has been added. When activated (in
+`.gps/traces.cfg` or via the `--traceon` switch), this prevents the use of
+"transient" windows for floating views. This is needed mostly for compatibility
+with the Xming X11 server which does not allow resizing transient windows, and
+calculates their size wrongly.
+
+Another trace :guilabel:`Store_Window_Positions` has been added: this is on by default,
+and, when switched off, will prevent GPS from saving the size and positions of
+floating windows.
+
+
+GPS Customization
 -----------------
 
-There is a new Project template to start a demo project for the STM32F4 board.
+GPS searches for icons used in plug-ins in any of the directories specified in
+the environment variable `GPS_CUSTOM_PATH`.
 
-We have also added four workflows to execute complete sequences of actions at
-the press of a single button:
 
-* a workflow to build the program, flash it on the board, and run it
+Python API
+~~~~~~~~~~
 
-* a workflow to build the program, flash it on the board, and launch a debugger
-  connected to it
+A menu no longer is necessarily a graphical object (it could be displayed
+outside of the application on some systems like Ubuntu or OSX), so inheritance
+of :code:`GPS.Menu` from :code:`GPS.GUI` has been removed. Most functions have been
+reimplemented though using the action associated with the menu.
 
-* a workflow to build the program and run it in the emulator
+GPS exports more debugger functions to python, allowing scripts to be more
+independent of which exact debugger is actually used. These are
+:code:`GPS.Debugger.value_of`, :code:`GPS.Debugger.set_variable`,
+:code:`GPS.Debugger.break_at_location` and :code:`GPS.Debugger.unbreak_at_location`.
 
-* a workflow to build the program and debug it in the emulator
+GPS now exports the list of breakpoints that are currently set in the debugger
+by function :code:`GPS.Debugger.breakpoints`. This is both more efficient and more
+reliable than having scripts parse it again, and avoids hard-coding gdb
+commands in scripts.
 
-.. figure:: gps_workflows.png
-   :scale: 100%
-   :class: screenshot
+The Python :code:`GPS.Process` now accepts the command as a list of arguments instead
+of a string, which makes it easier to handle arguments with spaces (no need for
+quoting).
+
+A new :code:`GPS.BuildTarget.get_command_line` method has been added in order to be
+able to retrieve the current command line of a specific Build Target.
+
+A new python function :code:`GPS.Entity.instance_of` is now available to find the
+generic entity that the current one instantiates.
+
+A new browser can now be created with a custom toolbar. It is thus possible to
+add buttons via :code:`GPS.Action.button` that will only apply to this browser.
+
+Incompatible changes
+....................
+
+This section lists changes done in the Python API that are no longer compatible
+with previous versions of GPS.
+
+ - :code:`GPS.*Context` removed
+
+   All classes related to contexts were merged into a single :code:`GPS.Context` class,
+   which provides the same features as all the others combined. The previous
+   names have been left for backward compatibility, but users are encouraged to
+   only use :code:`GPS.Context` from now on. If you script was explicitly testing
+   classes (:code:`"if isinstance(ctx, GPS.FileContext)"`), you should instead test
+   whether specific information is available (:code:`"if ctx.file()"`).
+
+ - :code:`GPS.Toolbar`, :code:`GPS.Combo`, :code:`GPS.ToolButton` and :code:`GPS.Button` removed
+
+   These classes have been removed. Only buttons associated with named actions can
+   now be added (See :code:`GPS.Action.button`). A benefit is that buttons can now be
+   added to either the main toolbar or to the local toolbars of the various
+   views. GPS can also repeat the main toolbar in every floating window. Since
+   actions can also be associated with menus and key shortcuts, this also
+   encouraged code reuse.
+
+ - :code:`GPS.Menu.create` obsolescent
+
+   This function is now obsolescent, and its use is discouraged (use
+   :code:`GPS.Action.menu` instead). A temporary version still exists, but will be
+   removed in future versions.  We encourage you to change your plug-ins to use
+   :code:`gps_utils.interactive` instead, since the latter creates proper actions which
+   can be reused for contextual menus or key shortcuts.
+
+   The benefit is that menus are now always associated with named actions,
+   which can also be bound to keyshortcuts or toolbar buttons. This encourages
+   code reuse, and allows disabling all GUI items related to a given action
+   more easily.
+
+ - :code:`GPS.Menu.pywidget()` is no longer available
+
+ - :code:`GPS.Menu.rename()` is no longer provided
+  
+   Instead, destroy the menu and create a new one associated with the same
+   action.
+
+ - the function :code:`GPS.Menu.create` is now obsolescent. A simple replacement is
+   provided for a few releases, but
+
+ - :code:`debugger_breakpoints_changed` hook can receive a :code:`None` debugger
+
+   Breakpoints can be set before a debugger is started, but the hook is still
+   run. In this case, the debugger parameter is set to None.
+
+ - :code:`source_lines_revealed` hook has been removed
+
+   As part of the simplification of the code.
+
+ - :code:`task_changed` and :code:`task_removed` hooks have been removed
+
+   Use :code:`GPS.Task.list()` periodically to get the list of tasks.
