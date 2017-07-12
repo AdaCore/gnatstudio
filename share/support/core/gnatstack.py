@@ -7,7 +7,6 @@
 
 import GPS
 import os_utils
-import os.path
 
 tool = os_utils.locate_exec_on_path("gnatstack")
 

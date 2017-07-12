@@ -28,10 +28,6 @@ def cu_create_preference(num):
         doc="")
 
 
-def cu_noop(text):
-    None
-
-
 def cu_load_preference(num):
     cu_regexp = GPS.Preference(
         "Messages:Custom Highlighting " + str(num) + "/regexp")
@@ -45,12 +41,12 @@ def cu_load_preference(num):
 
     try:
         GPS.Console().create_link(regexp=cu_regexp.get(),
-                                  on_click=cu_noop,
+                                  on_click=lambda x: None,
                                   foreground=style_value[1],
                                   background=style_value[2],
                                   underline=False,
                                   font=style_value[0])
-    except GPS.Exception, e:
+    except GPS.Exception:
         return
 
 

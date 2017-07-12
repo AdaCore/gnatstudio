@@ -1,6 +1,5 @@
 """Generates the help menus for a number of tools found on the PATH"""
 
-import modules
 import os
 import os_utils
 import GPS

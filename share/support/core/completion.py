@@ -58,7 +58,6 @@ returns a list of completion proposals, and one which is a function
 
 """
 
-import GPS
 import text_utils
 
 CAT_UNKNOWN = 1
