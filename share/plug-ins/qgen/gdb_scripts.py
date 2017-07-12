@@ -1,4 +1,5 @@
 import os
+import gdb
 
 watchdog_dict = {}
 # context => Qgen_Logpoint
@@ -92,7 +93,7 @@ the Matlab browser-->
 
     @staticmethod
     def write_log_footer(filename):
-        with open(filename, 'a'):
+        with open(filename, 'a') as f:
             f.write("""
             </body>
             </html>""")
