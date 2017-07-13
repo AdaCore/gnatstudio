@@ -1968,8 +1968,8 @@ package body GPS.Kernel.Modules.UI is
                Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
                if Parent_Menu = null then
                   Gtk_New (Parent_Menu);
-                  Connect_Submenu (Parent, Parent_Menu);
                end if;
+               Connect_Submenu (Parent, Parent_Menu);
             end if;
 
             --  Find the reference menu item so that we can insert in proper
@@ -3811,7 +3811,27 @@ package body GPS.Kernel.Modules.UI is
          Widget.Hide;
       else
          Widget.Show;
-         Widget.Set_Sensitive (S);
+
+         declare
+            Is_Toplevel_Menu_Item : constant Boolean :=
+                                      (Widget.Get_Parent.all
+                                       in Gtk_Menu_Bar_Record'Class);
+            Is_Menu               : constant Boolean :=
+                                      Widget.all in Gtk_Menu_Record'Class;
+         begin
+
+            --  Don't disable the sensitivity of toplevel menu items: otherwise
+            --  we won't be able to recalculate the state of its children since
+            --  it's done when the assocaited menu is mapped (i.e: after a
+            --  click).
+            --
+            --  Don't disable the sensitivity of Gtk_Menu widgets too: it's a
+            --  non sense and can lead to a display bug.
+
+            if not (Is_Toplevel_Menu_Item or else Is_Menu) or else S then
+               Widget.Set_Sensitive (S);
+            end if;
+         end;
       end if;
    end Propagate_Visibility;
 
