@@ -3814,8 +3814,9 @@ package body GPS.Kernel.Modules.UI is
 
          declare
             Is_Toplevel_Menu_Item : constant Boolean :=
-                                      (Widget.Get_Parent.all
-                                       in Gtk_Menu_Bar_Record'Class);
+                                     (Widget.Get_Parent /= null
+                                        and then Widget.Get_Parent.all
+                                        in Gtk_Menu_Bar_Record'Class);
             Is_Menu               : constant Boolean :=
                                       Widget.all in Gtk_Menu_Record'Class;
          begin
