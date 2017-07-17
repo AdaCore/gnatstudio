@@ -173,6 +173,7 @@ package body Informational_Popups is
       Info_Popup.Set_Position (Win_Pos_Center_On_Parent);
       Info_Popup.Set_Accept_Focus (False);
       Info_Popup.Set_App_Paintable (True);
+      Info_Popup.Set_Focus_On_Map (False);
       Info_Popup.On_Draw (On_Draw'Access);
 
       Screen := Info_Popup.Get_Screen;
