@@ -17,9 +17,25 @@ from GPS import MDI, EditorBuffer
 import GPS
 import tempfile
 import os_utils
-import subprocess
 import shutil
 from gps_utils import interactive
+
+tmp_dir = ""
+
+
+def on_exit(self, status, remaining_output):
+    shutil.rmtree(tmp_dir)
+
+    if status != 0:
+        GPS.Console("Messages").write("error: failed to display standard.ads",
+                                      mode="error")
+
+    buffer = EditorBuffer.get_new()
+    buffer.delete()   # delete any text inserted via templates
+    buffer.insert(buffer.at(1, 1), remaining_output)
+    buffer.set_lang('ada')
+    buffer.current_view().set_read_only(True)
+    MDI.get_by_child(buffer.current_view()).rename('package Standard')
 
 
 @interactive(name="Display standard.ads")
@@ -31,12 +47,18 @@ def display():
     path = None
 
     if os_utils.locate_exec_on_path("gnatpsta") != "":
-        sub = subprocess.Popen(
-            ['gnatpsta'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        sub.wait()
+        GPS.Process(['gnatpsta'], on_exit=on_exit)
     else:
-        dir = tempfile.mkdtemp()
-        path = dir + "/p.ads"
+        # We do not create the file on the disk, because: - we cannot create a
+        # temporary file and delete it immediately, since GPS will then display
+        # the dialog that the file has changed on disk.  - we cannot create the
+        # file in the project's object_dir, since the latter might not exist,
+        # or worse could also be a source_dir which would confuse the compiler.
+
+        global tmp_dir
+
+        tmp_dir = tempfile.mkdtemp()
+        path = tmp_dir + "/p.ads"
         f = open(path, "w")
         f.write("package p is end p;")
         f.close()
@@ -54,22 +76,4 @@ def display():
 
         cmdline.append('p.ads')
 
-        sub = subprocess.Popen(
-            cmdline, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        sub.wait()
-
-        shutil.rmtree(dir)
-
-    # We do not create the file on the disk, because:
-    #    - we cannot create a temporay file and delete it immediately, since
-    #      GPS will then display the dialog that the file has changed on disk.
-    #    - we cannot create the file in the project's object_dir, since the
-    #      latter might not exist, or worse could also be a source_dir which
-    #      would confuse the compiler.
-
-    buffer = EditorBuffer.get_new()
-    buffer.delete()   # delete any text inserted via templates
-    buffer.insert(buffer.at(1, 1), sub.stdout.read())
-    buffer.set_lang('ada')
-    buffer.current_view().set_read_only(True)
-    MDI.get_by_child(buffer.current_view()).rename('package Standard')
+        GPS.Process(cmdline, directory=tmp_dir, on_exit=on_exit)

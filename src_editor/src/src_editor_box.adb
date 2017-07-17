@@ -1735,10 +1735,15 @@ package body Src_Editor_Box is
       Writable : Boolean;
       Explicit : Boolean := False)
    is
+      File : constant GNATCOLL.VFS.Virtual_File :=
+        Editor.Source_Buffer.Get_Filename;
    begin
-      --  Change permissions on the disk as well
-      Editor.Kernel.Make_File_Writable
-        (Editor.Source_Buffer.Get_Filename, Writable);
+      --  Check if the editor is associated to a file on the disk. If yes,
+      --  change permissions on the disk as well.
+      if File /= GNATCOLL.VFS.No_File then
+         Editor.Kernel.Make_File_Writable
+           (File, Writable);
+      end if;
 
       Editor.Source_Buffer.Mark_Buffer_Writable (Writable, Explicit);
       Update_Writable_Status_For_Views (Editor);
