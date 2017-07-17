@@ -51,7 +51,8 @@ XML = u"""<?xml version="1.0" ?>
       <shell lang="python">p = gnatpp.gnatpp(GPS.File("%F"))</shell>
    </action>
 
-   <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >
+   <tool name="Pretty Printer" package="Pretty_Printer" index="Ada"
+         attribute="Default_Switches">
       <language>Ada</language>
       <switches>
          <title line="1" column="1">Spacing</title>
