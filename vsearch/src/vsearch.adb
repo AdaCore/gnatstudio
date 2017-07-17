@@ -176,9 +176,6 @@ package body Vsearch is
       Selection_From          : Gtk_Text_Mark;
       Selection_To            : Gtk_Text_Mark;
 
-      Focused : Gtk_Widget;
-      --  The last widget which has had the focus
-
       Pattern_Changed_Once : Boolean := False;
       --  Set to True if the pattern has changed once. This is used to know
       --  whether incremental mode is valid after this.
@@ -676,11 +673,9 @@ package body Vsearch is
    --  Add a history entry to the combo box.
 
    procedure On_Destroy_Child
-     (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when dialog box is destroing
-
-   procedure On_Destroy_Focused (Widget : access Gtk_Widget_Record'Class);
-   --  Called when widget which had focus is destroing
+     (Self : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the Search view is destroyed. Give the focus to the current
+   --  editor.
 
    -------------------------
    -- Get_Label_From_Mode --
@@ -2458,28 +2453,17 @@ package body Vsearch is
    ----------------------
 
    procedure On_Destroy_Child
-     (Child : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Self : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Vsearch : constant Vsearch_Access :=
-        Vsearch_Access (GPS_MDI_Child (Child).Get_Actual_Widget);
+      Child  : constant GPS_MDI_Child := GPS_MDI_Child (Self);
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                  Child.Kernel.Get_Buffer_Factory.Get
+                    (Open_View => False,
+                     Focus     => True)
+        with Unreferenced;
    begin
-      if Vsearch.Focused /= null then
-         if Vsearch.Focused.Get_Parent /= null then
-            Vsearch.Focused.Get_Parent.Grab_Focus;
-         end if;
-         Vsearch.Focused.Grab_Focus;
-         Vsearch.Focused := null;
-      end if;
+      null;
    end On_Destroy_Child;
-
-   ------------------------
-   -- On_Destroy_Focused --
-   ------------------------
-
-   procedure On_Destroy_Focused (Widget : access Gtk_Widget_Record'Class) is
-   begin
-      Vsearch_Access (Widget).Focused := null;
-   end On_Destroy_Focused;
 
    ---------------------------
    -- Get_Or_Create_Vsearch --
@@ -2557,11 +2541,6 @@ package body Vsearch is
       end;
 
       View := Search_Views.Get_Or_Create_View (Kernel, Focus => Raise_Widget);
-      if W /= null then
-         Widget_Callback.Object_Connect
-           (W, Signal_Destroy, On_Destroy_Focused'Access, View);
-         View.Focused := W;
-      end if;
 
       --  Automatically fill the pattern text entry with the selection, if
       --  there is one which does not contain multiple lines.
