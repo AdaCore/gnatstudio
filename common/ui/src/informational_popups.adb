@@ -22,7 +22,6 @@ with Gdk.Screen;      use Gdk.Screen;
 with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
 with Glib.Main;       use Glib.Main;
-with Glib.Object;
 with Glib.Properties; use Glib.Properties;
 with Gtk.Box;         use Gtk.Box;
 with Gtk.Enums;       use Gtk.Enums;
@@ -52,10 +51,6 @@ package body Informational_Popups is
 
       Timeout               : G_Source_Id := No_Source_Id;
       --  When gtk+ animations are disabled
-
-      Focused_Window        : Gtk_Window;
-      --  The window that had the focus before displaying the informational
-      --  popup.
    end record;
    type Informational_Popup is access all Informational_Popup_Record'Class;
    --  Type representing informational popups
@@ -75,12 +70,6 @@ package body Informational_Popups is
    procedure On_Destroyed (Widget : access Gtk_Widget_Record'Class);
    --  Called when the widget is destroyed
 
-   procedure On_Focused_Window_Destroyed
-     (Self : access Glib.Object.GObject_Record'Class);
-   --  Called when the window focused before displaying the informational
-   --  popup is destroyed.
-   --  Used to avoid dangling pointers.
-
    function On_Timeout (Self : Informational_Popup) return Boolean;
    --  Simulating the revealer
 
@@ -99,28 +88,12 @@ package body Informational_Popups is
       end if;
    end On_Destroyed;
 
-   ---------------------------------
-   -- On_Focused_Window_Destroyed --
-   ---------------------------------
-
-   procedure On_Focused_Window_Destroyed
-     (Self : access Glib.Object.GObject_Record'Class)
-   is
-      Info_Popup : constant Informational_Popup := Informational_Popup (Self);
-   begin
-      Info_Popup.Focused_Window := null;
-   end On_Focused_Window_Destroyed;
-
    ----------------
    -- On_Timeout --
    ----------------
 
    function On_Timeout (Self : Informational_Popup) return Boolean is
    begin
-      if Self.Focused_Window /= null then
-         Self.Focused_Window.Present;
-      end if;
-
       Self.Destroy;
       Self.Timeout := No_Source_Id;
       return False;  --  do not execute again
@@ -132,20 +105,13 @@ package body Informational_Popups is
 
    procedure On_Child_Revealed (Widget : access Gtk_Widget_Record'Class) is
       Revealer       : constant Gtk_Revealer := Gtk_Revealer (Widget);
-      Info_Popup     : constant Informational_Popup :=
-        Informational_Popup (Revealer.Get_Parent);
       Child_Revealed : constant Boolean := Revealer.Get_Child_Revealed;
    begin
       Revealer.Set_Reveal_Child (not Child_Revealed);
 
       --  Destroy the window itself once the child is not revealed anymore
       if not Child_Revealed then
-         --  Give explicitly the focus back to the previously focused window
-         if Info_Popup.Focused_Window /= null then
-            Info_Popup.Focused_Window.Present;
-         end if;
-
-         Info_Popup.Destroy;
+         Revealer.Get_Parent.Destroy;
       end if;
    end On_Child_Revealed;
 
@@ -189,8 +155,7 @@ package body Informational_Popups is
      (Parent                : not null access Gtk_Window_Record'Class;
       Icon_Name             : String;
       No_Transparency_Color : Gdk_RGBA := Black_RGBA;
-      Text                  : String := "";
-      Focused_Window        : access Gtk_Window_Record'Class := null)
+      Text                  : String := "")
    is
       Info_Popup : Informational_Popup;
       Icon       : Gtk_Image;
@@ -202,12 +167,6 @@ package body Informational_Popups is
    begin
       Info_Popup := new Informational_Popup_Record;
       Info_Popup.No_Transparency_Color := No_Transparency_Color;
-      Info_Popup.Focused_Window :=
-        (if Focused_Window /= null then
-            Gtk_Window (Focused_Window)
-         else
-            Gtk_Window (Parent));
-
       Initialize (Info_Popup);
       Info_Popup.Set_Decorated (False);
       Info_Popup.Set_Transient_For (Parent);
@@ -270,10 +229,6 @@ package body Informational_Popups is
 
          Info_Popup.Show_All;
       end if;
-
-      Info_Popup.Focused_Window.On_Destroy
-        (On_Focused_Window_Destroyed'Access,
-         Slot  => Info_Popup);
    end Display_Informational_Popup;
 
 end Informational_Popups;

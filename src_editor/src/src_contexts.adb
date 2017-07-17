@@ -192,7 +192,7 @@ package body Src_Contexts is
    --  Restrict search to given range (if specified):
    --  Start_Line:Start_Column .. End_Line:End_Column
    --
-   --  Failure_Response is used to select which type of response is yyed
+   --  Failure_Response is used to select which type of response is displayed
    --  in case of failure.
 
    procedure First_Match
@@ -886,28 +886,10 @@ package body Src_Contexts is
          if Failure_Response = Informational_Popup
            and then Result /= GPS.Search.No_Match
          then
-            declare
-               Focus_Widget    : constant Gtk_Widget :=
-                 Get_Current_Focus_Widget (Kernel);
-               Toplevel_Widget : constant Gtk_Widget :=
-                 (if Focus_Widget /= null then
-                     Focus_Widget.Get_Toplevel
-                  else
-                     null);
-            begin
-               --  We need to make sure that there the toplevel widget of the
-               --  currently focused widget (if any) is a Gtk_Window, thus the
-               --  call to Is_Toplevel.
-               if Toplevel_Widget /= null
-                 and then Toplevel_Widget.Is_Toplevel
-               then
-                  Display_Informational_Popup
-                    (Parent                => Get_Main_Window (Kernel),
-                     Icon_Name             => "gps-redo-symbolic",
-                     No_Transparency_Color => Default_Style.Get_Pref_Bg,
-                     Focused_Window        => Gtk_Window (Toplevel_Widget));
-               end if;
-            end;
+            Display_Informational_Popup
+              (Get_Main_Window (Kernel),
+               Icon_Name             => "gps-undo-symbolic",
+               No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
 
          return False;
@@ -1025,28 +1007,10 @@ package body Src_Contexts is
                      or else (Result.Start.Line = Integer (Current_Line)
                               and then Result.Start.Column >= Current_Column))
          then
-            declare
-               Focus_Widget    : constant Gtk_Widget :=
-                 Get_Current_Focus_Widget (Kernel);
-               Toplevel_Widget : constant Gtk_Widget :=
-                 (if Focus_Widget /= null then
-                     Focus_Widget.Get_Toplevel
-                  else
-                     null);
-            begin
-               --  We need to make sure that there the toplevel widget of the
-               --  currently focused widget (if any) is a Gtk_Window, thus the
-               --  call to Is_Toplevel.
-               if Toplevel_Widget /= null and then
-                 Toplevel_Widget.Is_Toplevel
-               then
-                  Display_Informational_Popup
-                    (Parent                => Get_Main_Window (Kernel),
-                     Icon_Name             => "gps-redo-symbolic",
-                     No_Transparency_Color => Default_Style.Get_Pref_Bg,
-                     Focused_Window        => Gtk_Window (Toplevel_Widget));
-               end if;
-            end;
+            Display_Informational_Popup
+              (Get_Main_Window (Kernel),
+               Icon_Name             => "gps-redo-symbolic",
+               No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
       else
          if Current_Line > Begin_Line or else
