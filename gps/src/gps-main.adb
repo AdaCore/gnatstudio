@@ -356,8 +356,7 @@ procedure GPS.Main is
    return Glib.Gint;
    --  Handler for the ::command-line signal, emitted by the application
 
-   procedure Initialize_Environment_Variables
-     (Command_Line : access Gapplication_Command_Line_Record'Class);
+   procedure Initialize_Environment_Variables;
    --  Sanitize, sets and take into account various environment variables, and
    --  initialize GPS according to them.
 
@@ -437,36 +436,43 @@ procedure GPS.Main is
    -- Initialize_Environment_Variables --
    --------------------------------------
 
-   procedure Initialize_Environment_Variables
-     (Command_Line : access Gapplication_Command_Line_Record'Class)
-   is
+   procedure Initialize_Environment_Variables is
       function Getenv (Var : String) return String;
       function Get_Cwd return String;
       --  proxies for the services in the command line, usable even when no
       --  command line is passed
+      procedure Each_Environment_Variable (Name, Value : String);
+      --  If Name is a special environment variable, then store its preserved
+      --  and actual values into Env object.
 
       function Getenv (Var : String) return String is
-         Str : String_Access;
+         Str : String_Access := GNAT.OS_Lib.Getenv (Var);
       begin
-         if Command_Line = null then
-            Str := GNAT.OS_Lib.Getenv (Var);
-            return S : constant String := Str.all do
-               Free (Str);
-            end return;
-         else
-            return Command_Line.Getenv (Var);
-         end if;
+         return S : constant String := Str.all do
+            Free (Str);
+         end return;
       end Getenv;
 
       function Get_Cwd return String is
       begin
-         if Command_Line = null then
-            return Get_Current_Dir.Display_Full_Name;
-         else
-            return Command_Line.Get_Cwd;
-         end if;
+         return Get_Current_Dir.Display_Full_Name;
       end Get_Cwd;
 
+      procedure Each_Environment_Variable (Name, Value : String) is
+         Prefix : constant String := "GPS_STARTUP_";
+      begin
+         if Starts_With (Name, Prefix) then
+            declare
+               Unprefixed_Name : constant String :=
+                 Name (Name'First + Prefix'Length .. Name'Last);
+            begin
+               Env.Append
+                 (Name        => Unprefixed_Name,
+                  Users_Value => Value,
+                  GPS_Value   => Getenv (Unprefixed_Name));
+            end;
+         end if;
+      end Each_Environment_Variable;
    begin
       --  Reset the environment that was set before GPS was started (since
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
@@ -565,12 +571,6 @@ procedure GPS.Main is
            "bin";
 
       begin
-         --  Command_Line.Getenv is unfortunately case sensitive, which is
-         --  incompatible with Windows where the PATH environment variable
-         --  might be called "Path", so add an extra safety guard by using
-         --  Ada.Environment_Variables.Value which is case insensitive.
-         --  ??? Consider fixing Command_Line.Getenv
-
          if Tmp /= "" then
             Setenv ("PATH", Tmp & Path_Separator & Bin);
          else
@@ -606,36 +606,9 @@ procedure GPS.Main is
          Free (New_Val);
       end;
 
-      declare
-         Equal  : Natural;  --  Position of '=' in NAME=VALUE env string
-         Prefix : constant String := "GPS_STARTUP_";
-      begin
-         Env := new Environment_Record;
+      Env := new Environment_Record;
 
-         if Command_Line /= null then
-            declare
-               List : GNAT.Strings.String_List := Command_Line.Get_Environ;
-            begin
-               for J in List'Range loop
-                  if Head (List (J).all, Prefix'Length) = Prefix then
-                     Equal := Index (List (J).all, "=");
-
-                     declare
-                        Name : constant String :=
-                        List (J) (Prefix'Length + List (J)'First .. Equal - 1);
-                     begin
-                        Env.Append
-                          (Name        => Name,
-                           Users_Value =>
-                              List (J) (Equal + 1 .. List (J)'Last),
-                           GPS_Value   => Getenv (Name));
-                     end;
-                  end if;
-               end loop;
-               Free (List);
-            end;
-         end if;
-      end;
+      Ada.Environment_Variables.Iterate (Each_Environment_Variable'Access);
    end Initialize_Environment_Variables;
 
    --------------------------
@@ -2685,7 +2658,7 @@ procedure GPS.Main is
 
       --  Sanitize the environment variables, and perform various init from
       --  them
-      Initialize_Environment_Variables (null);
+      Initialize_Environment_Variables;
 
       --  Now perform the low level initializations
       Initialize_Low_Level (Exit_Status.all);
