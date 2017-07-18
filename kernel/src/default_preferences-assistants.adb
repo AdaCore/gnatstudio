@@ -34,22 +34,27 @@ package body Default_Preferences.Assistants is
    type Preferences_Assistant_Record is new Gtk_Assistant_Record with record
       Running_Main_Loop : Boolean := True;
       --  True if the preferences assistant is running a nested main loop
-      Start_GPS_Button  : Gtk_Button;
-      --  The button used to skip the remaining assistant pages and to start
-      --  GPS directly.
+
+      Skip_Button        : Gtk_Button;
+      Back_Button        : Gtk_Button;
+      Next_Button        : Gtk_Button;
+      Apply_Button       : Gtk_Button;
+      --  The buttons used to navigate in the preferences assistant
    end record;
    type Preferences_Assistant is access all Preferences_Assistant_Record;
 
-   procedure On_Cancel (Self : access Gtk_Assistant_Record'Class);
+   procedure On_Finish (Self : access GObject_Record'Class);
+   procedure On_Next (Self : access GObject_Record'Class);
+   procedure On_Back (Self : access GObject_Record'Class);
    procedure On_Prepare
      (Self : access Gtk_Assistant_Record'Class;
       Page : not null access Gtk_Widget_Record'Class);
 
    ---------------
-   -- On_Cancel --
+   -- On_Finish --
    ---------------
 
-   procedure On_Cancel (Self : access Gtk_Assistant_Record'Class)
+   procedure On_Finish (Self : access GObject_Record'Class)
    is
       Assistant : constant Preferences_Assistant :=
                     Preferences_Assistant (Self);
@@ -60,7 +65,29 @@ package body Default_Preferences.Assistants is
       end if;
 
       Assistant.Destroy;
-   end On_Cancel;
+   end On_Finish;
+
+   -------------
+   -- On_Next --
+   -------------
+
+   procedure On_Next (Self : access GObject_Record'Class) is
+      Assistant : constant Preferences_Assistant :=
+        Preferences_Assistant (Self);
+   begin
+      Assistant.Set_Current_Page (Assistant.Get_Current_Page + 1);
+   end On_Next;
+
+   -------------
+   -- On_Back --
+   -------------
+
+   procedure On_Back (Self : access GObject_Record'Class) is
+      Assistant : constant Preferences_Assistant :=
+        Preferences_Assistant (Self);
+   begin
+      Assistant.Set_Current_Page (Assistant.Get_Current_Page - 1);
+   end On_Back;
 
    ----------------
    -- On_Prepare --
@@ -71,20 +98,27 @@ package body Default_Preferences.Assistants is
       Page : not null access Gtk_Widget_Record'Class)
    is
       pragma Unreferenced (Page);
-      Assistant : constant Preferences_Assistant :=
-                    Preferences_Assistant (Self);
-      Hbox      : Gtk_Hbox;
+      Assistant  : constant Preferences_Assistant :=
+                     Preferences_Assistant (Self);
+      First_Page : constant Gint := 0;
+      Last_Page  : constant Gint := Assistant.Get_N_Pages - 1;
+      Page_Index : constant Gint := Assistant.Get_Current_Page;
    begin
-      Hbox := Gtk_Hbox (Assistant.Start_GPS_Button.Get_Parent);
-
-      --  Put the 'Start using GPS' button at the last position when the last
-      --  assitant page is going to be displayed.
-      --  Otherwise, put it at the first position.
-
-      if Assistant.Get_Current_Page = Assistant.Get_N_Pages - 1 then
-         Hbox.Reorder_Child (Assistant.Start_GPS_Button, 0);
+      if Page_Index = First_Page then
+         Assistant.Back_Button.Hide;
+         Assistant.Next_Button.Show_All;
+         Assistant.Skip_Button.Show_All;
+         Assistant.Apply_Button.Hide;
+      elsif Page_Index = Last_Page then
+         Assistant.Back_Button.Show_All;
+         Assistant.Next_Button.Hide;
+         Assistant.Skip_Button.Hide;
+         Assistant.Apply_Button.Show_All;
       else
-         Hbox.Reorder_Child (Assistant.Start_GPS_Button, -1);
+         Assistant.Back_Button.Show_All;
+         Assistant.Next_Button.Show_All;
+         Assistant.Skip_Button.Show_All;
+         Assistant.Apply_Button.Hide;
       end if;
    end On_Prepare;
 
@@ -113,59 +147,33 @@ package body Default_Preferences.Assistants is
       Manager       : constant Preferences_Manager := Kernel.Get_Preferences;
       Assistant     : Preferences_Assistant;
 
-      procedure Rename_Standard_Butttons;
-      --  Rename some standard Gtk.Assistant buttons (e.g: "Cancel" to "Skip &
-      --  Use Defaults").
-
       procedure Create_Assistant_Page_View (Page_Index : Integer);
       --  Create and append a page refered by Page_Index to the assistant
 
-      ------------------------------
-      -- Rename_Standard_Butttons --
-      ------------------------------
+      procedure Add_Navigation_Buttons;
+      --  Add our own custom navigation buttons to have more flexibility
 
-      procedure Rename_Standard_Butttons is
-         Label    : Gtk_Label;
-         Hbox     : Gtk_Box;
-         Children : Widget_List.Glist;
-         Button   : Gtk_Button;
+      ----------------------------
+      -- Add_Navigation_Buttons --
+      ----------------------------
 
-         use Widget_List;
+      procedure Add_Navigation_Buttons is
       begin
-         --  Little hack to use to retrieve the Gtk.Assistant action area
+         Gtk_New (Assistant.Apply_Button, "Apply");
+         Assistant.Add_Action_Widget (Assistant.Apply_Button);
 
-         Gtk_New (Label, " ");
-         Assistant.Add_Action_Widget (Label);
-         Hbox := Gtk_Box (Label.Get_Parent);
-         Hbox.Remove (Label);
+         Gtk_New (Assistant.Skip_Button, "Skip & Use Defaults");
+         Assistant.Skip_Button.On_Clicked (On_Finish'Access, Assistant);
+         Assistant.Add_Action_Widget (Assistant.Skip_Button);
 
-         Children := Hbox.Get_Children;
+         Gtk_New (Assistant.Next_Button, "Next");
+         Assistant.Next_Button.On_Clicked (On_Next'Access, Assistant);
+         Assistant.Add_Action_Widget (Assistant.Next_Button);
 
-         --  Loop over all the action area children and rename/remove some of
-         --  the buttons.
-
-         while Children /= Widget_List.Null_List loop
-            Button := Gtk_Button (Widget_List.Get_Data (Children));
-
-            if Button.Get_Label = "_Cancel" then
-               Button.Set_Label ("Start using GPS");
-               Assistant.Start_GPS_Button := Button;
-            end if;
-
-            --  Remove the 'Finish' and the 'Apply' buttons: we don't need them
-            --  in this assistant.
-
-            if Button.Get_Label = "_Finish"
-              or else Button.Get_Label = "_Apply"
-            then
-               Button.Destroy;
-            end if;
-
-            Children := Next (Children);
-         end loop;
-
-         Widget_List.Free (Children);
-      end Rename_Standard_Butttons;
+         Gtk_New (Assistant.Back_Button, "Back");
+         Assistant.Back_Button.On_Clicked (On_Back'Access, Assistant);
+         Assistant.Add_Action_Widget (Assistant.Back_Button);
+      end Add_Navigation_Buttons;
 
       --------------------------------
       -- Create_Assistant_Page_View --
@@ -183,12 +191,7 @@ package body Default_Preferences.Assistants is
          Message_Label  : Gtk_Label;
          Page_Num       : Gint with Unreferenced;
          Page_Type      : constant Gtk_Assistant_Page_Type :=
-                            (if Page_Index = Pages'First then
-                                Gtk_Assistant_Page_Intro
-                             elsif Page_Index = Pages'Last then
-                                Gtk_Assistant_Page_Confirm
-                             else
-                                Gtk_Assistant_Page_Content);
+           Gtk_Assistant_Page_Custom;
       begin
          Page_View := new Dialog_View_Record;
          Dialog_Utils.Initialize (Page_View);
@@ -271,14 +274,14 @@ package body Default_Preferences.Assistants is
          Width  => 900,
          Height => 600);
 
-      Assistant.On_Cancel (On_Cancel'Access);
+      Assistant.On_Cancel (On_Finish'Access, Slot => Assistant);
       Assistant.On_Prepare (On_Prepare'Access);
 
       for Page_Index in Pages'Range loop
          Create_Assistant_Page_View (Page_Index);
       end loop;
 
-      Rename_Standard_Butttons;
+      Add_Navigation_Buttons;
 
       --  Show the assistant and launch a main loop: we do not want to leave
       --  this procedure while the assistant is running.
