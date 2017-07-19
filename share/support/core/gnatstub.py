@@ -48,14 +48,14 @@ def generate_body():
     body file.
     """
     GPS.MDI.save_all()
-    proj = GPS.current_context().project()
     file = GPS.current_context().file()
-    command = '"%s" stub "%s" %s "%s" "%s"' % (
-        gps_utils.get_gnat_driver_cmd(),
-        "-P%s" % proj.file().path if proj else "",
-        GPS.Project.scenario_variables_cmd_line("-X"),
-        file.path,
-        file.directory())
+    sv = GPS.Project.scenario_variables()
+    x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
+    command = [gps_utils.get_gnat_driver_cmd(), 'stub']
+    proj = GPS.current_context().project()
+    if proj:
+        command.append('-P%s' % proj.file().path)
+    command += x_args + [file.path, file.directory()]
 
     proc = GPS.Process(
         command,

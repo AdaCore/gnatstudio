@@ -13,7 +13,6 @@ import workflows.promises as promises
 import workflows
 from os_utils import locate_exec_on_path
 from gps_utils.console_process import Console_Process
-import os
 
 
 project_attributes = """
@@ -86,15 +85,13 @@ class GNATemulator(Module):
         return gnatemu != ''
 
     def run_gnatemu(self, args):
-        gnatemu = self.get_gnatemu_name()
+        sv = GPS.Project.scenario_variables()
+        var_args = ["-X%s=%s" % (k, v) for k, v in sv.items()] if sv else []
+        command = [self.get_gnatemu_name()]
         proj = GPS.Project.root()
-        project_arg = "-P%s" % proj.file().path if proj else ""
-        var_args = GPS.Project.scenario_variables_cmd_line("-X")
-
-        if var_args:
-            command = [gnatemu, project_arg, var_args] + args
-        else:
-            command = [gnatemu, project_arg] + args
+        if proj:
+            command.append("-P%s" % proj.file().path)
+        command += var_args + args
 
         GPS.Console("Messages").write("Running in emulator: %s" %
                                       (' '.join(command)))

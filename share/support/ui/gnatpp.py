@@ -24,14 +24,15 @@ def gnatpp(file):
         GPS.Logger("GNATPP").log("Not an Ada file: %s" % file.path)
         return
 
-    p = ProcessWrapper(
-        [gps_utils.get_gnat_driver_cmd(),
-         'pretty',
-         '-rf',
-         '-P%s' % GPS.Project.root().file().path,
-         GPS.Project.scenario_variables_cmd_line('-X'),
-         file.path],
-        spawn_console='')
+    sv = GPS.Project.scenario_variables()
+    x_args = ['-X%s=%s' % (k, v) for k, v in sv.items()] if sv else []
+
+    cmd = [gps_utils.get_gnat_driver_cmd(),
+           'pretty',
+           '-rf',
+           '-P%s' % GPS.Project.root().file().path] + x_args + [file.path]
+
+    p = ProcessWrapper(cmd, spawn_console='')
     status, output = yield p.wait_until_terminate()
 
     if status != 0:
