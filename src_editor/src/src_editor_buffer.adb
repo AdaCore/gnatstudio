@@ -111,9 +111,10 @@ package body Src_Editor_Buffer is
    use Src_Editor_Module.Line_Highlighting;
    use Src_Editor_Buffer.Line_Information;
 
-   use type System.Address;
+   use type Glib.Main.G_Source_Id;
    use type GNAT.Strings.String_Access;
    use type GNATCOLL.Xref.Visible_Column;
+   use type System.Address;
 
    Editors_Factory :
    access Src_Editor_Module.Editors.Src_Editor_Buffer_Factory;
@@ -1140,12 +1141,14 @@ package body Src_Editor_Buffer is
       --  Unregister the timeout
 
       Buffer.Blocks_Timeout_Registered := False;
+      Buffer.Blocks_Timeout := Glib.Main.No_Source_Id;
       return False;
 
    exception
       when E : others =>
          Trace (Me, E);
          Buffer.Blocks_Timeout_Registered := False;
+         Buffer.Blocks_Timeout := Glib.Main.No_Source_Id;
          return False;
    end Edition_Timeout;
 
@@ -1433,7 +1436,9 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Blocks_Request_Timestamp := Clock;
 
-      if not Buffer.Blocks_Timeout_Registered then
+      if not Buffer.Blocks_Timeout_Registered
+        and then Buffer.Blocks_Timeout = Glib.Main.No_Source_Id
+      then
          Buffer.Blocks_Timeout_Registered := True;
          Buffer.Blocks_Timeout := Buffer_Timeout.Timeout_Add
            (Buffer_Recompute_Interval,
@@ -1599,8 +1604,10 @@ package body Src_Editor_Buffer is
 
       --  Unregister the blocks timeout
 
-      if Buffer.Blocks_Timeout_Registered then
+      if Buffer.Blocks_Timeout /= Glib.Main.No_Source_Id then
+         Buffer.Blocks_Timeout_Registered := False;
          Glib.Main.Remove (Buffer.Blocks_Timeout);
+         Buffer.Blocks_Timeout := Glib.Main.No_Source_Id;
       end if;
 
       GNAT.Strings.Free (Buffer.Forced_Title);
@@ -3780,9 +3787,10 @@ package body Src_Editor_Buffer is
 
          --  Unregister the blocks timeout
 
-         if Buffer.Blocks_Timeout_Registered then
-            Glib.Main.Remove (Buffer.Blocks_Timeout);
+         if Buffer.Blocks_Timeout /= Glib.Main.No_Source_Id then
             Buffer.Blocks_Timeout_Registered := False;
+            Glib.Main.Remove (Buffer.Blocks_Timeout);
+            Buffer.Blocks_Timeout := Glib.Main.No_Source_Id;
          end if;
 
          --  Unregister the cursor timeout

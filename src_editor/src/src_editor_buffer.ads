@@ -1613,7 +1613,7 @@ private
       Blocks_Timeout_Registered : Boolean := False;
       --  Whether the blocks need to be recomputed
 
-      Blocks_Timeout : Glib.Main.G_Source_Id;
+      Blocks_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  A timeout handling the refresh of the timeouts
 
       Blocks_Request_Timestamp : Ada.Calendar.Time;
