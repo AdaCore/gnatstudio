@@ -1358,6 +1358,7 @@ package body Src_Editor_View is
             end loop;
          end;
       else
+
          --  This is not a list of URIs, so this is probably a text DND:
          --  drop it if the editor is read-only.
          if not Get_Editable (Source_View (Self)) then
@@ -1365,6 +1366,14 @@ package body Src_Editor_View is
               (Object => Self, Name => "drag-data-received");
          end if;
       end if;
+
+      --  Notify the associated buffer that we are performing a text drag n
+      --  drop;
+      declare
+         Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      begin
+         Buffer.Notify_Text_Drag_N_Drop;
+      end;
    end View_On_Drag_Data_Received;
 
    ----------------

@@ -583,6 +583,14 @@ package Src_Editor_Buffer is
    --  User_Action represents the action that the user is doing, and must be
    --  set to No_Action if the command is not caused by user action.
 
+   procedure Notify_Text_Drag_N_Drop
+     (Buffer : not null access Source_Buffer_Record);
+   --  Used to notify the buffer that the user performed a text drag n drop in
+   --  the view.
+   --  In this case, we should group the insertion and deletion commands that
+   --  constitute the drag n drop action so that we revert both when undoing
+   --  a text drag n drop.
+
    function Get_Kernel
      (Buffer : access Source_Buffer_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated to Buffer
@@ -1504,6 +1512,10 @@ private
 
       Extend_Existing_Selection : Boolean := False;
       --  See Set_Extend_Existing_Selection
+
+      In_Text_Drag_N_Drop : Boolean := False;
+      --  Whether we are performing a drag n drop. Used to group the insertion
+      --  and deletion commands that belong to the drag n drop user action.
 
       Insert_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark.

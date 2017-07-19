@@ -5659,7 +5659,10 @@ package body Src_Editor_Buffer is
    procedure Enqueue
      (Buffer      : access Source_Buffer_Record;
       Command     : Command_Access;
-      User_Action : Action_Type) is
+      User_Action : Action_Type)
+   is
+      Drag_N_Drop_Deletion : constant Boolean :=
+        Buffer.In_Text_Drag_N_Drop and then User_Action = Delete_Text;
    begin
       Buffer.Start_Inserting;
 
@@ -5669,8 +5672,12 @@ package body Src_Editor_Buffer is
 
       Buffer.Current_Command := null;
 
-      --  Decide whether we should group this action with the previous actions
-      if User_Action /= Buffer.Last_User_Action then
+      --  Decide whether we should group this action with the previous actions.
+      --  Don't change the group if we are enqueuing a drag n drop deletion: we
+      --  want it to be in the same group as the drag n drop insertion.
+      if User_Action /= Buffer.Last_User_Action
+        and then not Drag_N_Drop_Deletion
+      then
          Change_Group (Buffer.Queue);
       end if;
 
@@ -5680,7 +5687,22 @@ package body Src_Editor_Buffer is
 
       Enqueue (Buffer.Queue, Command);
       Buffer.End_Inserting;
+
+      --  Reset the drag n drop flag when we know that it's finished
+      if Drag_N_Drop_Deletion then
+         Buffer.In_Text_Drag_N_Drop := False;
+      end if;
    end Enqueue;
+
+   -----------------------------
+   -- Notify_Text_Drag_N_Drop --
+   -----------------------------
+
+   procedure Notify_Text_Drag_N_Drop
+     (Buffer : not null access Source_Buffer_Record) is
+   begin
+      Buffer.In_Text_Drag_N_Drop := True;
+   end Notify_Text_Drag_N_Drop;
 
    ----------------
    -- Get_Kernel --
