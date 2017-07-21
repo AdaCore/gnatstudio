@@ -394,11 +394,11 @@ analysis. See CodePeer documentation for more details."/>
          <check label="Baseline run" switch="-baseline" column="2"
           tip="this run is a baseline run and prior run becomes default cutoff"
          />
-         <spin label="Cutoff" switch="-cutoff" min="1" max="100000"
-               default="1" separator=" " column="3"
+         <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
+               default="0" separator=" " column="3"
                tip="This run should use id as the cutoff for the base column"/>
-         <spin label="Baseline review #" switch="-set-baseline-id" min="1"
-               max="100000" default="1" separator=" " column="3"
+         <spin label="Baseline review #" switch="-set-baseline-id" min="0"
+               max="100000" default="0" separator=" " column="3"
                tip="This run should use this id for the base column"/>
          <combo label="Messages" switch="-messages" noswitch="default"
                separator=" " column="1"
