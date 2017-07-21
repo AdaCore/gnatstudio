@@ -54,7 +54,7 @@ def on_goto_separate():
     context = GPS.current_context()
 
     # "Goto body" seems to jump to "body(2)" in the case of a separate entity
-    loc = context.entity().body(1)
+    loc = context.entity().body(2)
     buffer = GPS.EditorBuffer.get(loc.file())
     view = buffer.current_view()
     GPS.MDI.get_by_child(view).raise_window()
