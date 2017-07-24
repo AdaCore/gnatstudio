@@ -587,7 +587,7 @@ class Git(core.VCS):
                 visitor.branches(
                     'stashes', 'vcs-stash-symbolic', not CAN_RENAME, stashes)
                 break
-            name, branch, descr = line.split(':', 3)
+            name, branch, descr = line.split(':', 2)
             stashes.append(GPS.VCS2.Branch(
                 name='%s: %s' % (name, descr), active=False,
                 annotation=branch, id=name))
