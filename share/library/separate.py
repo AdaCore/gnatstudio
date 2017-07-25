@@ -16,11 +16,14 @@ lot
 
 import GPS
 import gps_utils
+import os.path
 
 
 def __filter(context):
     try:
-        return context.entity().body() != context.entity().body(2)
+        body_2 = context.entity().body(2)
+        return (context.entity().body() != body_2 or
+                context.entity().body(1) != body_2)
     except:
         return False
 
@@ -51,10 +54,21 @@ def on_goto_separate():
        null;
     end Foo;
     """
-    context = GPS.current_context()
+    entity = GPS.current_context().entity()
 
-    # "Goto body" seems to jump to "body(2)" in the case of a separate entity
-    loc = context.entity().body(2)
+    # There are two possibilities: the xref engine could place the separate
+    # body either in body(1) or in body(2).
+    loc_1 = entity.body(1)
+    loc_2 = entity.body(2)
+
+    # To figure out which one is the most likely separate, go to the longest
+    # file name. This won't work with unconventional naming schemes.
+    if len(os.path.basename(loc_1.file().name())
+           ) > len(os.path.basename(loc_2.file().name())):
+        loc = loc_1
+    else:
+        loc = loc_2
+
     buffer = GPS.EditorBuffer.get(loc.file())
     view = buffer.current_view()
     GPS.MDI.get_by_child(view).raise_window()
