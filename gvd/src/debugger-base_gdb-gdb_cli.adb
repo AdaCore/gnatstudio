@@ -109,6 +109,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
 
+   Frame_Subprogram_Params_Pattern : constant Pattern_Matcher := Compile
+     ("^(.*) (\(.*\))");
+   --  Regular expression used to separate parameters form the subprogram name
+
    Frame_Pattern_With_File   : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
@@ -197,8 +201,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    procedure Parse_Backtrace_Info
      (S     : String;
-      Value : out Backtrace_Array;
-      Len   : out Natural);
+      Value : out Backtrace_Vector);
    --  Parse all the lines in S.
    --  These lines should contain the info returned either by "where"
    --  or "frame".
@@ -1592,41 +1595,79 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    procedure Parse_Backtrace_Info
      (S     : String;
-      Value : out Backtrace_Array;
-      Len   : out Natural)
+      Value : out Backtrace_Vector)
    is
       Matched : Match_Array (0 .. 6);
       First   : Positive := S'First;
    begin
-      Len := Value'First - 1;
-
-      while Len /= Value'Last loop
+      loop
          Match (Frame_Pattern, S (First .. S'Last), Matched);
 
          exit when Matched (0) = No_Match;
 
-         Len := Len + 1;
-         Value (Len).Frame_Id :=
-           Natural'Value (S (Matched (1).First .. Matched (1).Last));
+         declare
+            Rec : Backtrace_Record;
+         begin
+            Rec.Frame_Id :=
+              Natural'Value (S (Matched (1).First .. Matched (1).Last));
 
-         if Matched (2) = No_Match then
-            Value (Len).Program_Counter := new String'("");
-         else
-            Value (Len).Program_Counter :=
-              new String'(S (Matched (3).First .. Matched (3).Last));
-         end if;
+            if Matched (2) /= No_Match then
+               Rec.Address := String_To_Address
+                 (S (Matched (3).First .. Matched (3).Last));
+            end if;
 
-         Value (Len).Subprogram :=
-           new String'(S (Matched (4).First .. Matched (4).Last));
+            declare
+               N : constant String :=
+                 S (Matched (4).First .. Matched (4).Last);
+               Params_Match : Match_Array (0 .. 2);
+               B, E : Natural;
+            begin
+               Match (Frame_Subprogram_Params_Pattern, N, Params_Match);
 
-         if Matched (5) = No_Match then
-            Value (Len).Source_Location := new String'("");
-         else
-            Value (Len).Source_Location :=
-              new String'(S (Matched (6).First .. Matched (6).Last));
-         end if;
+               if Params_Match (0) /= No_Match then
+                  Rec.Subprogram := new String'
+                    (Trim (N (Params_Match (1).First ..
+                         Params_Match (1).Last), Both));
 
-         First := Matched (0).Last + 2;
+                  B := Params_Match (2).First + 1;
+                  E := B;
+                  while E <= Params_Match (2).Last loop
+                     if N (E) = ',' or else N (E) = ')' then
+                        if B /= E - 1 then
+                           --  parameter's range is B .. E - 1
+                           Rec.Parameters.Append
+                             ((Value => new String'
+                                   (Trim (N (B .. E - 1), Both))));
+                        end if;
+                        B := E + 1;
+                     end if;
+                     E := E + 1;
+                  end loop;
+
+               else
+                  Rec.Subprogram := new String'(N);
+               end if;
+            end;
+
+            if Matched (5) /= No_Match then
+               declare
+                  F : constant String :=
+                    S (Matched (6).First .. Matched (6).Last);
+                  Idx : constant Natural := Index (F, ":");
+               begin
+                  if Idx > F'First then
+                     Rec.File := Create (+(F (F'First .. Idx - 1)));
+                     Rec.Line := Natural'Value (F (Idx + 1 .. F'Last));
+
+                  else
+                     Rec.File := Create (+(F));
+                  end if;
+               end;
+            end if;
+
+            First := Matched (0).Last + 2;
+            Value.Append (Rec);
+         end;
       end loop;
    end Parse_Backtrace_Info;
 
@@ -1658,15 +1699,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_Debugger;
-      Value    : out Backtrace_Array;
-      Len      : out Natural) is
+      Value    : out Backtrace_Vector) is
    begin
       Parse_Backtrace_Info
         (Send_And_Get_Clean_Output
-           (Debugger, "where", Mode => Internal), Value, Len);
+           (Debugger, "where", Mode => Internal), Value);
 
-      if Len >= Value'First then
-         Debugger.Current_Frame_Num := Value (Value'First).Frame_Id;
+      if not Value.Is_Empty then
+         Debugger.Current_Frame_Num := Value.First_Element.Frame_Id;
       end if;
    end Backtrace;
 

@@ -24,7 +24,6 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Basic_Types;             use Basic_Types;
-with Config;
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
@@ -421,15 +420,56 @@ package body GVD.Scripts is
 
       elsif Command = "frames" then
          declare
-            Bt  : Backtrace_Array (1 .. Config.Max_Frame);
-            Len : Natural;
+            Bt : Backtrace_Vector;
          begin
             Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
             Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-            Process.Debugger.Backtrace (Bt, Len);
+            Process.Debugger.Backtrace (Bt);
+
             Data.Set_Return_Value_As_List;
-            for Index in 1 .. Len loop
-               Data.Set_Return_Value (Bt (Index).Subprogram.all);
+            for Frame of Bt loop
+               declare
+                  List   : List_Instance'Class := New_List (Get_Script (Data));
+                  Params : List_Instance'Class := New_List (Get_Script (Data));
+                  Empty  : constant String := "<>";
+                  Idx    : Natural := 1;
+               begin
+                  Set_Nth_Arg (List, 1, Frame.Frame_Id);
+
+                  if Frame.Address /= Invalid_Address then
+                     Set_Nth_Arg
+                       (List, 2, +(Address_To_String (Frame.Address)));
+                  else
+                     Set_Nth_Arg (List, 2, Empty);
+                  end if;
+
+                  if Frame.Subprogram /= null then
+                     Set_Nth_Arg (List, 3, Frame.Subprogram.all);
+                  else
+                     Set_Nth_Arg (List, 3, Empty);
+                  end if;
+
+                  if Frame.File /= No_File then
+                     Set_Nth_Arg (List, 4,
+                       (Create_File_Location
+                          (Script => Get_Script (Data),
+                           File   => Create_File
+                             (Get_Script (Data), Frame.File),
+                           Line   => Frame.Line,
+                           Column => 0)));
+                  else
+                     Set_Nth_Arg (List, 4, Empty);
+                  end if;
+
+                  for Param of Frame.Parameters loop
+                     Set_Nth_Arg (Params, Idx, Param.Value.all);
+                     Idx := Idx + 1;
+                  end loop;
+
+                  Set_Nth_Arg (List, 5, Params);
+
+                  Data.Set_Return_Value (List);
+               end;
             end loop;
          end;
 

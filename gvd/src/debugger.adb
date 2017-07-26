@@ -141,13 +141,17 @@ package body Debugger is
    -- Free --
    ----------
 
-   procedure Free (Bt : in out Backtrace_Array) is
+   procedure Free (Bt : in out Backtrace_Vector) is
    begin
-      for J in Bt'Range loop
-         Free (Bt (J).Program_Counter);
-         Free (Bt (J).Subprogram);
-         Free (Bt (J).Source_Location);
+      for J of Bt loop
+         Free (J.Subprogram);
+         J.File := No_File;
+         for P of J.Parameters loop
+            Free (P.Value);
+         end loop;
+         J.Parameters.Clear;
       end loop;
+      Bt.Clear;
    end Free;
 
    ----------------

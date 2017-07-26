@@ -308,8 +308,8 @@ package Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_MI_Debugger;
-      Value    : out Backtrace_Array;
-      Len      : out Natural);
+      Value    : out Backtrace_Vector);
+
    overriding procedure Configure_Backtrace
      (Self                 : not null access Gdb_MI_Debugger;
       Show_Id              : Boolean := True;

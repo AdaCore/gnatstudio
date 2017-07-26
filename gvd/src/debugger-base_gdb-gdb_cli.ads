@@ -313,8 +313,7 @@ package Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_Debugger;
-      Value    : out Backtrace_Array;
-      Len      : out Natural);
+      Value    : out Backtrace_Vector);
 
    overriding procedure Configure_Backtrace
      (Self                 : not null access Gdb_Debugger;

@@ -559,22 +559,32 @@ package Debugger is
    -- Backtrace --
    ---------------
 
-   type Backtrace_Record is record
-      Frame_Id        : Natural;
-      Program_Counter : GNAT.Strings.String_Access;
-      Subprogram      : GNAT.Strings.String_Access;
-      Source_Location : GNAT.Strings.String_Access;
+   type Backtrace_Subprogram_Parameter is record
+      Value : GNAT.Strings.String_Access;
    end record;
 
-   type Backtrace_Array is array (Positive range <>) of Backtrace_Record;
+   package Backtrace_Subprogram_Parameters_Vectors is
+     new Ada.Containers.Vectors (Positive, Backtrace_Subprogram_Parameter);
 
-   procedure Free (Bt : in out Backtrace_Array);
+   type Backtrace_Record is record
+      Frame_Id        : Natural := 0;
+      Address         : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      Subprogram      : GNAT.Strings.String_Access;
+      Parameters      : Backtrace_Subprogram_Parameters_Vectors.Vector;
+      File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line            : Natural := 0;
+   end record;
+
+   package Backtrace_Vectors is
+     new Ada.Containers.Vectors (Positive, Backtrace_Record);
+   subtype Backtrace_Vector is Backtrace_Vectors.Vector;
+
+   procedure Free (Bt : in out Backtrace_Vector);
    --  Free all the dynamic memory associated with each backtrace record.
 
    procedure Backtrace
      (Debugger : access Debugger_Root;
-      Value    : out Backtrace_Array;
-      Len      : out Natural) is abstract;
+      Value    : out Backtrace_Vector) is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
 

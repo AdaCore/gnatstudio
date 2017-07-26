@@ -2316,9 +2316,15 @@ class Debugger(object):
 
     def frames(self):
         """
-        Returns list of frames.
+        Returns list of dictionaries:
+          "level" - integer
+          "addr" - string
+          "func" - string
+          "file" - GPS.FileLocation
+          "args" - another dictionary with func parameters
+            represented as string
 
-        :return: A list of frames subprograms
+        :return: A list of frames
         """
         pass  # implemented in Ada
 

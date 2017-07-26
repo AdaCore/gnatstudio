@@ -2178,82 +2178,157 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_MI_Debugger;
-      Value    : out Backtrace_Array;
-      Len      : out Natural)
+      Value    : out Backtrace_Vector)
    is
       use Token_Lists;
+      use Backtrace_Vectors;
 
-      S         : constant String := Debugger.Send_And_Get_Clean_Output
-        ("-stack-list-frames", Mode => Internal);
       Tokens    : Token_List_Controller;
       C, C2, C3 : Token_Lists.Cursor;
+      Id        : Natural;
+      Cursor    : Backtrace_Vectors.Cursor;
+      Param     : Unbounded_String;
    begin
-      Tokens.List := Build_Tokens (S);
-      Len := 0;
-      C   := Find_Identifier (First (Tokens.List), "stack");
+      declare
+         S : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-stack-list-frames", Mode => Internal);
+      begin
+         Tokens.List := Build_Tokens (S);
+      end;
 
+      C := Find_Identifier (First (Tokens.List), "stack");
       if C = Token_Lists.No_Element then
          return;
       end if;
 
-      --  Skip stack=[
-      Next (C, 3);
+      Next (C, 3); -- Skip stack=[
 
       loop
          C := Find_Identifier (C, "frame");
-
          exit when C = Token_Lists.No_Element;
 
-         Len := Len + 1;
          Next (C, 3);
 
-         C2 := Find_Identifier (C, "level");
-         Next (C2, 2);
-         Value (Len).Frame_Id := Natural'Value (Element (C2).Text.all);
-
-         C2 := Find_Identifier (C2, "addr");
-         if C2 /= Token_Lists.No_Element then
+         declare
+            Rec : Backtrace_Record;
+         begin
+            C2 := Find_Identifier (C, "level");
             Next (C2, 2);
-            Value (Len).Program_Counter := new String'(Element (C2).Text.all);
-         else
-            Value (Len).Program_Counter := new String'("<>");
-            C2 := C;
-         end if;
+            Rec.Frame_Id := Natural'Value (Element (C2).Text.all);
 
-         C2 := Find_Identifier (C2, "func");
-         if C2 /= Token_Lists.No_Element then
-            Next (C2, 2);
-            Value (Len).Subprogram := new String'(Element (C2).Text.all);
-         else
-            Value (Len).Subprogram := new String'("<>");
-            C2 := C;
-         end if;
-
-         C2 := Find_Identifier (C2, "fullname");
-         if C2 /= Token_Lists.No_Element then
-            Next (C2, 2);
-            C3 := Find_Identifier (C2, "line");
-            if C3 /= Token_Lists.No_Element then
-               Next (C3, 2);
-               declare
-                  Name : constant String := Strip_Escape
-                    (Element (C2).Text.all);
-               begin
-                  Value (Len).Source_Location :=
-                    new String'(Name & ':' & Element (C3).Text.all);
-               end;
-
+            C2 := Find_Identifier (C2, "addr");
+            if C2 /= Token_Lists.No_Element then
+               Next (C2, 2);
+               Rec.Address := String_To_Address (Element (C2).Text.all);
             else
-               declare
-                  Name : constant String := Strip_Escape
-                    (Element (C2).Text.all);
-               begin
-                  Value (Len).Source_Location := new String'(Name & ": <>");
-               end;
+               C2 := C;
             end if;
 
-         else
-            Value (Len).Source_Location := new String'("<>");
+            C2 := Find_Identifier (C2, "func");
+            if C2 /= Token_Lists.No_Element then
+               Next (C2, 2);
+               Rec.Subprogram := new String'(Element (C2).Text.all);
+            else
+               Rec.Subprogram := new String'("<>");
+               C2 := C;
+            end if;
+
+            C2 := Find_Identifier (C2, "fullname");
+            if C2 /= Token_Lists.No_Element then
+               Next (C2, 2);
+               Rec.File := Create (+(Strip_Escape (Element (C2).Text.all)));
+
+               C3 := Find_Identifier (C2, "line");
+               if C3 /= Token_Lists.No_Element then
+                  Next (C3, 2);
+                  Rec.Line := Natural'Value (Element (C3).Text.all);
+               end if;
+            end if;
+            Value.Append (Rec);
+         end;
+      end loop;
+
+      Clear_Token_List (Tokens.List);
+
+      declare
+         S : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-stack-list-arguments --no-frame-filters 1", Mode => Internal);
+      begin
+--     stack-args=
+--       [frame={level="0",
+--               args=[{name="this",
+--                      value=
+--                        "(layout => 0x0, side => 0, display => 0x64d010)"},
+--                     {name="size",value="5"}]},
+--        frame={level="1",args=[]}]
+
+         Tokens.List := Build_Tokens (S);
+      end;
+
+      C := Find_Identifier (First (Tokens.List), "stack-args");
+      if C = Token_Lists.No_Element then
+         return;
+      end if;
+
+      Next (C, 3); -- Skip stack-args=[
+      loop
+         C := Find_Identifier (C, "frame");
+         exit when C = Token_Lists.No_Element;
+
+         Next (C, 3); -- Skip frame={
+         C2 := Find_Identifier (C, "level");
+         Next (C2, 2);
+         Id := Natural'Value (Element (C2).Text.all);
+
+         Cursor := Value.First;
+         while Has_Element (Cursor)
+           and then Element (Cursor).Frame_Id /= Id
+         loop
+            Next (Cursor);
+         end loop;
+
+         if Has_Element (Cursor) then
+            declare
+               Rec : Backtrace_Record := Element (Cursor);
+            begin
+               C2 := Find_Identifier (C2, "args");
+               if C2 /= Token_Lists.No_Element then
+                  Next (C2, 3); -- Skip args=[
+
+                  loop
+                     if Element (C2).Code = R_Bracket then
+                        --  the end of the args scope
+                        exit;
+
+                     elsif Element (C2).Code = L_Brace then
+                        --  the begin of the parameter
+                        Param := Null_Unbounded_String;
+
+                     elsif Element (C2).Code = R_Brace then
+                        --  the end of the parameter
+                        Rec.Parameters.Append
+                          ((Value => new String'(To_String (Param))));
+
+                     elsif Element (C2).Code = Identifier then
+                        --  the parameter's values
+                        if Element (C2).Text.all = "name" then
+                           Next (C2, 2);
+                           Append (Param, Element (C2).Text.all);
+
+                        elsif Element (C2).Text.all = "value" then
+                           Next (C2, 2);
+                           Append (Param, "=" & Element (C2).Text.all);
+                        end if;
+                     end if;
+
+                     Next (C2);
+                  end loop;
+
+                  if not Rec.Parameters.Is_Empty then
+                     Value.Replace_Element (Cursor, Rec);
+                  end if;
+               end if;
+            end;
          end if;
       end loop;
    end Backtrace;
@@ -2838,14 +2913,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -- Found_File_Name --
    ---------------------
 
-   Frame_Pattern         : constant Pattern_Matcher := Compile
+   Frame_Pattern     : constant Pattern_Matcher := Compile
      ("^(\*stopped.*|\^done,)frame={.*addr=""(0x[\da-hA-H]+)"",.*" &
         "fullname=""(.*)"".*line=""(\d+)"".*}", Multiple_Lines);
    Level_Pattern         : constant Pattern_Matcher := Compile
      ("frame={level=""(\d+)""", Multiple_Lines);
 
-   CLI_Frame_Pattern     : constant Pattern_Matcher :=
-     Compile ("^~""#(\d+)[\s]+(0x[0-9a-f]+)|()[\s\S]+at[\s]+(\S+):(\d+)");
+   CLI_Frame_Pattern : constant Pattern_Matcher := Compile
+     ("^~""#(\d+)[\s]+((0x[0-9a-f]+)|([\s]*))[\s\S]+at[\s]+(\S+):(\d+)");
 
    overriding procedure Found_File_Name
      (Debugger    : access Gdb_MI_Debugger;
@@ -2854,7 +2929,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Line        : out Natural;
       Addr        : out GVD.Types.Address_Type)
    is
-      Matched : Match_Array (0 .. 5);
+      Matched : Match_Array (0 .. 6);
       Level   : Natural := 0;
    begin
       --  Default values if nothing better is found
@@ -2893,17 +2968,17 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Current_Frame.Frame :=
            Integer'Value (Str (Matched (1).First .. Matched (1).Last));
 
-         if Matched (2) /= No_Match then
+         if Matched (3) /= No_Match then
             Debugger.Current_Frame.Addr := String_To_Address
-              (Str (Matched (2).First .. Matched (2).Last));
+              (Str (Matched (3).First .. Matched (3).Last));
          else
             Debugger.Current_Frame.Addr := Invalid_Address;
          end if;
 
          Debugger.Current_Frame.File := To_Unbounded_String
-           (Strip_Escape (Str (Matched (4).First .. Matched (4).Last)));
+           (Strip_Escape (Str (Matched (5).First .. Matched (5).Last)));
          Debugger.Current_Frame.Line := Integer'Value
-           (Str (Matched (5).First .. Matched (5).Last));
+           (Str (Matched (6).First .. Matched (6).Last));
 
          Addr := Debugger.Current_Frame.Addr;
          Name := Debugger.Current_Frame.File;

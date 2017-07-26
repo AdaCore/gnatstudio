@@ -37,7 +37,6 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-with Config;                 use Config;
 with Debugger;               use Debugger;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;          use Generic_Views;
@@ -455,12 +454,19 @@ package body GVD.Call_Stack is
    ------------
 
    overriding procedure Update (View : not null access Call_Stack_Record) is
-      Bt       : Backtrace_Array (1 .. Max_Frame);
-      Len      : Natural;
+      Bt       : Backtrace_Vector;
       Process  : Process_Proxy_Access;
-      Index    : Integer;
       Subp     : GNAT.Strings.String_Access;
       Iter     : Gtk_Tree_Iter;
+      Params   : Ada.Strings.Unbounded.Unbounded_String;
+
+      function Image (Value : Natural) return String;
+
+      function Image (Value : Natural) return String is
+         S : constant String := Value'Img;
+      begin
+         return S (S'First + 1 .. S'Last);
+      end Image;
 
    begin
       --  Remove previous stack information.
@@ -482,33 +488,43 @@ package body GVD.Call_Stack is
 
       --  Parse the information from the debugger
 
-      Backtrace (Visual_Debugger (Get_Process (View)).Debugger, Bt, Len);
+      Backtrace (Visual_Debugger (Get_Process (View)).Debugger, Bt);
 
       --  Update the contents of the window
 
-      for J in 1 .. Len loop
+      for J of Bt loop
          --  ??? We currently consider that the list of parameters always
          --  starts at the first '(' character encountered
 
-         Subp := Bt (J).Subprogram;
-         Index := Subp'First;
-
-         while Index <= Subp'Last and then Subp (Index) /= '(' loop
-            Index := Index + 1;
-         end loop;
+         Subp := J.Subprogram;
 
          View.Model.Append (Iter, Null_Iter);
+         Params := Null_Unbounded_String;
+
+         for P of J.Parameters loop
+            if Params /= Null_Unbounded_String then
+               Append (Params, ", ");
+            end if;
+            Append (Params, P.Value.all);
+         end loop;
 
          Set_All_And_Clear
            (View.Model, Iter,
-            (0 => As_String (Natural'Image (Bt (J).Frame_Id)),
-             1 => As_String (Escape_Text (Bt (J).Program_Counter.all)),
-             2 => As_String (Escape_Text (Subp (Subp'First .. Index - 1))),
-             3 => As_String (Escape_Text (Subp (Index .. Subp'Last))),
-             4 => As_String (Escape_Text (Bt (J).Source_Location.all))));
+            (0 => As_String (Natural'Image (J.Frame_Id)),
+             1 => As_String
+               (Escape_Text ((if J.Address = Invalid_Address then "<>"
+                   else Address_To_String (J.Address)))),
+             2 => As_String (Escape_Text (Subp.all)),
+             3 => As_String (Escape_Text (To_String (Params))),
+             4 => As_String
+               (Escape_Text
+                  ((if J.File = No_File then "<>"
+                   else +(Full_Name (J.File))) &
+                   (if J.Line /= 0 then ":" & Image (J.Line)
+                      else "")))));
       end loop;
 
-      Free (Bt (1 .. Len));
+      Free (Bt);
 
       View.Tree.Get_Selection.Set_Mode (Selection_Single);
 
