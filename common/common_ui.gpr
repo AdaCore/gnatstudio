@@ -1,6 +1,6 @@
 with "gtkada";
 with "common";
-with "gnatcoll_gtk";
+with "../gnatcoll_extras/gnatcoll_extras";
 with "../shared";
 
 project Common_UI is

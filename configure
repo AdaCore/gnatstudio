@@ -646,6 +646,10 @@ TARGET
 GPS_VERSION
 CLANG_LIBS_GPR
 CLANG_LIBS
+PYGOBJECT_INCLUDE_GPR
+PYGOBJECT_LIB
+PYGOBJECT_INCLUDE
+WITH_PYGOBJECT
 GTKADA_PREFIX
 GTK_STATIC_LIBS
 GTK_LIBS
@@ -661,6 +665,7 @@ GNATDRV
 GTK_VERSION
 WITH_GTK
 GTK_GCC_LIBS
+GTK_GCC_FLAGS_GPR
 GTK_GCC_FLAGS
 PKG_CONFIG
 TEXI2DVI
@@ -741,6 +746,7 @@ ac_user_opts='
 enable_option_checking
 with_gnatcoll
 with_gtk
+enable_pygobject
 with_clang
 '
       ac_precious_vars='build_alias
@@ -1361,6 +1367,12 @@ if test -n "$ac_init_help"; then
      short | recursive ) echo "Configuration of gps 18.0w:";;
    esac
   cat <<\_ACEOF
+
+Optional Features:
+  --disable-option-checking  ignore unrecognized --enable/--with options
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-pygobject     Disable support for PyGobject [[default=enabled]]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4266,6 +4278,7 @@ $as_echo "$HAVE_GNAT_PROJECT_gtkada" >&6; }
 
 
 
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking GTK GLIB ATK PANGO prefix" >&5
 $as_echo_n "checking GTK GLIB ATK PANGO prefix... " >&6; }
   GTK="gtk+-3.0"
@@ -4431,6 +4444,101 @@ $as_echo "no" >&6; }
 
 
   rm -f conf.gtktest
+
+
+   value=$GTK_GCC_FLAGS
+
+   # Special handling on darwin for gcc 4.5 and 4.7
+   case "$build_os" in
+      *darwin*)
+         value=`echo $value | sed -e "s/-framework \([^ ]*\)/-Wl,-framework -Wl,\1/g"`
+   esac
+
+   output=GTK_GCC_FLAGS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   GTK_GCC_FLAGS_GPR=$result
+
+
+
+
+######### checking for pygobject
+
+    # Check whether --enable-pygobject was given.
+if test "${enable_pygobject+set}" = set; then :
+  enableval=$enable_pygobject; WITH_PYGOBJECT=$enableval
+else
+  WITH_PYGOBJECT=$WITH_PYTHON
+fi
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pygobject" >&5
+$as_echo_n "checking for pygobject... " >&6; }
+
+    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no (pkg-config not found)" >&5
+$as_echo "no (pkg-config not found)" >&6; }
+       WITH_PYGOBJECT=no
+
+    elif test "$GTK_VERSION" = "no" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no (gtk+ not found)" >&5
+$as_echo "no (gtk+ not found)" >&6; }
+       WITH_PYGOBJECT=no
+
+    else
+       for version in 3.0 2.0 ; do
+           module="pygobject-$version"
+           $PKG_CONFIG $module --exists
+           if test $? = 0 ; then
+               break;
+           fi
+           module=""
+       done
+
+       if test "$module" = "" ; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+          WITH_PYGOBJECT=no
+       else
+          PYGOBJECT_INCLUDE=`$PKG_CONFIG $module python --cflags`
+          PYGOBJECT_LIB=`$PKG_CONFIG $module --libs`
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($version)" >&5
+$as_echo "yes ($version)" >&6; }
+          WITH_PYGOBJECT=yes
+          PYGOBJECT_INCLUDE="$PYGOBJECT_INCLUDE -DPYGOBJECT"
+       fi
+    fi
+
+
+
+
+
+
+   value=$PYGOBJECT_INCLUDE
+
+   # Special handling on darwin for gcc 4.5 and 4.7
+   case "$build_os" in
+      *darwin*)
+         value=`echo $value | sed -e "s/-framework \([^ ]*\)/-Wl,-framework -Wl,\1/g"`
+   esac
+
+   output=PYGOBJECT_INCLUDE_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   PYGOBJECT_INCLUDE_GPR=$result
+
+
+
 
 
 ######### detect libclang

@@ -1,19 +1,19 @@
 with "gtkada";
-with "../common/common_ui";
+with "gnatcoll";
+with "gnatcoll_python";
 with "../shared";
-with "../gnatcoll_extras/gnatcoll_extras";
 
-project Widgets is
+project GNATCOLL_Extras is
 
-   for Languages use ("C", "Ada");
-   for Source_Dirs use ("src");
+   for Languages use ("Ada", "C");
    for Object_Dir use Shared'Object_Dir;
+   for Source_Dirs use ("src");
 
    package Compiler is
       for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
       for Switches ("C") use
         ("-g", "-O2")
-        & Shared.Gtk_Cflags;
+        & Shared.Gtk_Cflags & Shared.Pygobject_Include;
    end Compiler;
 
-end Widgets;
+end GNATCOLL_Extras;

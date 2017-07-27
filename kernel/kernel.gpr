@@ -4,7 +4,7 @@ with "kernel_core";
 with "../shared";
 with "../widgets/widgets";
 with "../language/language_ui";
-with "gnatcoll_gtk";
+with "../gnatcoll_extras/gnatcoll_extras";
 with "../refactoring/core/refactoring_core";
 with "../toolchains_editor/core/toolchains_core";
 with "xmlada";

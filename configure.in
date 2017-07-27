@@ -78,6 +78,12 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 ######### checking for gtk
 AM_PATH_GTK
 AM_PATH_GTKADA(17.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_TO_GPR($GTK_GCC_FLAGS,   GTK_GCC_FLAGS_GPR)
+
+######### checking for pygobject
+AM_PATH_PYGOBJECT
+AM_TO_GPR($PYGOBJECT_INCLUDE, PYGOBJECT_INCLUDE_GPR)
+
 
 ######### detect libclang
 AM_PATH_LIBCLANG

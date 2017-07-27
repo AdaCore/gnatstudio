@@ -63,6 +63,8 @@ project Shared is
    end Binder;
 
    Clang_Libs := (@CLANG_LIBS_GPR@);
+   Gtk_Cflags := (@GTK_GCC_FLAGS_GPR@);
+   Pygobject_Include := (@PYGOBJECT_INCLUDE_GPR@);
 
    package Linker is
       --  ??? missing hack to force libiconv first (working around

@@ -111,6 +111,7 @@ AC_HELP_STRING(
 
    AC_SUBST(PKG_CONFIG)
    AC_SUBST(GTK_GCC_FLAGS)
+   AC_SUBST(GTK_GCC_FLAGS_GPR)
    AC_SUBST(GTK_GCC_LIBS)
    AC_SUBST(WITH_GTK)
    AC_SUBST(GTK_VERSION)
@@ -368,4 +369,55 @@ main ()
   AC_SUBST(GTK_STATIC_LIBS)
   AC_SUBST(GTKADA_PREFIX)
   rm -f conf.gtktest
+])
+
+###########################################################################
+## Checking for pygobject
+##
+###########################################################################
+
+AC_DEFUN(AM_PATH_PYGOBJECT,
+[
+    AC_ARG_ENABLE(pygobject,
+      AC_HELP_STRING(
+        [--disable-pygobject],
+        [Disable support for PyGobject [[default=enabled]]]),
+      [WITH_PYGOBJECT=$enableval],
+      [WITH_PYGOBJECT=$WITH_PYTHON])
+
+    AC_MSG_CHECKING(for pygobject)
+
+    if test "$PKG_CONFIG" = "" -o "$PKG_CONFIG" = "no" ; then
+       AC_MSG_RESULT(no (pkg-config not found))
+       WITH_PYGOBJECT=no
+
+    elif test "$GTK_VERSION" = "no" ; then
+       AC_MSG_RESULT(no (gtk+ not found))
+       WITH_PYGOBJECT=no
+
+    else
+       for version in 3.0 2.0 ; do
+           module="pygobject-$version"
+           $PKG_CONFIG $module --exists
+           if test $? = 0 ; then
+               break;
+           fi
+           module=""
+       done
+
+       if test "$module" = "" ; then
+          AC_MSG_RESULT(no)
+          WITH_PYGOBJECT=no
+       else
+          PYGOBJECT_INCLUDE=`$PKG_CONFIG $module python --cflags`
+          PYGOBJECT_LIB=`$PKG_CONFIG $module --libs`
+          AC_MSG_RESULT(yes ($version))
+          WITH_PYGOBJECT=yes
+          PYGOBJECT_INCLUDE="$PYGOBJECT_INCLUDE -DPYGOBJECT"
+       fi
+    fi
+
+    AC_SUBST(WITH_PYGOBJECT)
+    AC_SUBST(PYGOBJECT_INCLUDE)
+    AC_SUBST(PYGOBJECT_LIB)
 ])
