@@ -44,7 +44,7 @@ all: resources do_links
 ifeq ($(OS),Windows_NT)
 	for f in ../kernel/generated/*; do cat $$f | tr -d '\015' > $$f-aux; mv -f $$f-aux $$f; done
 endif
-	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
+	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
 
 resources:
