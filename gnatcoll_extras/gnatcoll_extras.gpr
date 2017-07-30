@@ -13,7 +13,7 @@ project GNATCOLL_Extras is
       for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
       for Switches ("C") use
         ("-g", "-O2")
-        & Shared.Gtk_Cflags & Shared.Pygobject_Include;
+        & Shared.Gtk_Cflags & Shared.Pygobject_Include & Shared.Python_Cflags;
    end Compiler;
 
 end GNATCOLL_Extras;

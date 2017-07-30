@@ -409,7 +409,7 @@ AC_DEFUN(AM_PATH_PYGOBJECT,
           AC_MSG_RESULT(no)
           WITH_PYGOBJECT=no
        else
-          PYGOBJECT_INCLUDE=`$PKG_CONFIG $module python --cflags`
+          PYGOBJECT_INCLUDE=`$PKG_CONFIG $module --cflags`
           PYGOBJECT_LIB=`$PKG_CONFIG $module --libs`
           AC_MSG_RESULT(yes ($version))
           WITH_PYGOBJECT=yes
@@ -421,3 +421,190 @@ AC_DEFUN(AM_PATH_PYGOBJECT,
     AC_SUBST(PYGOBJECT_INCLUDE)
     AC_SUBST(PYGOBJECT_LIB)
 ])
+
+
+#############################################################
+# Checking for python
+# This checks whether python is available on the system, and if yes
+# what the paths are. The result can be forced by using the
+#    --with-python=path
+# command line switch
+# The following variables are exported by configure on exit:
+#    @PYTHON_BASE@:    Either "no" or the directory that contains python
+#    @PYTHON_VERSION@: Version of python detected
+#    @PYTHON_CFLAGS@:  Compiler flags to use for python code
+#    @PYTHON_DIR@:     Directory for libpython.so
+#    @PYTHON_LIBS@:    extra command line switches to pass to the linker.
+#    @WITH_PYTHON@: either "yes" or "no" depending on whether
+#                      python support is available.
+#############################################################
+
+AC_DEFUN(AM_PATH_PYTHON,
+[
+   NEED_PYTHON=no
+
+   AC_ARG_WITH(python,
+     [AC_HELP_STRING(
+       [--with-python=<path>],
+       [Specify the prefix of the Python installation])
+AC_HELP_STRING(
+       [--without-python],
+       [Disable python support])],
+     [PYTHON_PATH_WITH=$withval; NEED_PYTHON=$PYTHON_PATH_WITH],
+     PYTHON_PATH_WITH=yes)
+   AC_ARG_WITH(python-exec,
+     [AC_HELP_STRING(
+        [--with-python-exec=<path>],
+        [forces a specific python executable (python3 for instance)])],
+     [PYTHON_EXEC=$withval])
+   AC_ARG_ENABLE(shared-python,
+     AC_HELP_STRING(
+       [--enable-shared-python],
+       [Link with shared python library instead of static]),
+     PYTHON_SHARED=$enableval,
+     PYTHON_SHARED=no)
+
+   if test "$PYTHON_EXEC" = ""; then
+      PYTHON_EXEC="python"
+   fi
+
+   WITH_PYTHON=yes
+   if test x"$PYTHON_PATH_WITH" = xno ; then
+      AC_MSG_CHECKING(for python)
+      AC_MSG_RESULT(no, use --with-python if needed)
+      PYTHON_BASE=no
+      WITH_PYTHON=no
+   elif test "$PYTHON_PATH_WITH" = "yes"; then
+      AC_PATH_PROG(PYTHON, ${PYTHON_EXEC}, no)
+      if test "$PYTHON" = "no"; then
+         PYTHON_BASE=no
+         WITH_PYTHON=no
+      fi
+   else
+      AC_MSG_CHECKING(for python)
+      if "$PYTHON_PATH_WITH/bin/${PYTHON_EXEC}" --version >/dev/null 2>&1; then
+         PYTHON="$PYTHON_PATH_WITH/bin/${PYTHON_EXEC}"
+         AC_MSG_RESULT(yes)
+      elif "$PYTHON_PATH_WITH/${PYTHON_EXEC}" --version >/dev/null 2>&1; then
+         PYTHON="$PYTHON_PATH_WITH/${PYTHON_EXEC}"
+         AC_MSG_RESULT(yes)
+      else
+         AC_MSG_RESULT(no, invalid python path)
+         PYTHON_BASE=no
+         WITH_PYTHON=no
+      fi
+   fi
+
+   # Check that Python version is >= 2.0
+   if test "$WITH_PYTHON" = "yes"; then
+      AC_MSG_CHECKING(for python >= 2.0)
+      python_major_version=`$PYTHON -c 'import sys; print(sys.version_info[[0]])' 2>/dev/null`
+      python_version=`$PYTHON -c 'import sys; print(".".join([str(k) for k in sys.version_info]))' 2>/dev/null`
+      if test "$python_major_version" -lt 2; then
+         AC_MSG_RESULT(no, need at least version 2.0)
+         PYTHON_BASE=no
+         WITH_PYTHON=no
+      else
+         AC_MSG_RESULT(yes (version $python_version))
+      fi
+   fi
+
+   # Find CFLAGS and LDFLAGS to link with Python
+   if test "$WITH_PYTHON" = "yes"; then
+      AC_MSG_CHECKING(if can link with Python library)
+      result=`cat <<EOF | $PYTHON
+from distutils.sysconfig import get_config_var, get_python_inc, get_config_vars
+import sys
+print 'PYTHON_VERSION=%s' % get_config_var("VERSION")
+python_current_prefix=sys.prefix
+config_args = [[k.replace("'", "") for k in get_config_vars().get('CONFIG_ARGS','').split("' '")]]
+python_build_prefix=[[k.replace('--prefix=', '') for k in config_args if k.startswith('--prefix=')]]
+if python_build_prefix:
+    python_build_prefix = python_build_prefix[[0]]
+else:
+    python_build_prefix = sys.prefix
+print 'PYTHON_BASE="%s"' % python_current_prefix
+libpl = get_config_var('LIBPL')
+if not libpl:
+    libpl = '%s/libs' % python_current_prefix
+else:
+    if libpl.startswith(python_build_prefix) and not libpl.startswith(python_current_prefix):
+        libpl = libpl.replace(python_build_prefix, python_current_prefix, 1)
+
+libdir = get_config_var('LIBDIR')
+if not libdir:
+    libdir = python_current_prefix
+else:
+    if libdir.startswith(python_build_prefix) and not libdir.startswith(python_current_prefix):
+        libdir = libdir.replace(python_build_prefix, python_current_prefix, 1)
+print 'PYTHON_STATIC_DIR="%s"' % libpl
+print 'PYTHON_SHARED_DIR="%s"' % libdir
+cflags = " ".join(("-I" + get_python_inc().replace(python_build_prefix, python_current_prefix, 1),
+                   "-I" + get_python_inc(plat_specific=True).replace(python_build_prefix, python_current_prefix, 1)))
+print 'PYTHON_CFLAGS="%s"' % cflags
+print 'PYTHON_LIBS="%s %s %s"' % (get_config_vars().get("LIBS", ""), get_config_vars().get("SYSLIBS", ""), get_config_vars().get("MODLIBS", ""))
+EOF
+`
+      eval "$result"
+
+      PYTHON_DIR="$PYTHON_SHARED_DIR"
+      PYTHON_SHARED_LIBS="-L$PYTHON_DIR -lpython$PYTHON_VERSION $PYTHON_LIBS"
+
+      PYTHON_DIR="$PYTHON_STATIC_DIR"
+      if test -f "${PYTHON_DIR}/libpython${PYTHON_VERSION}.a"; then
+         PYTHON_STATIC_LIBS="${PYTHON_DIR}/libpython${PYTHON_VERSION}.a $PYTHON_LIBS"
+      else
+         PYTHON_STATIC_LIBS="-L$PYTHON_DIR -lpython$PYTHON_VERSION $PYTHON_LIBS"
+      fi
+
+      # On Linux platform, even when linking with the static libpython, symbols not
+      # used by the application itself should be exported so that shared library
+      # present in Python can use the Python C API.
+      case $build_os in
+         *linux*)
+            PYTHON_SHARED_LIBS="${PYTHON_SHARED_LIBS} -export-dynamic"
+            PYTHON_STATIC_LIBS="${PYTHON_STATIC_LIBS} -export-dynamic"
+            ;;
+      esac
+
+      SAVE_CFLAGS="${CFLAGS}"
+      SAVE_LIBS="${LIBS}"
+      CFLAGS="${SAVE_CFLAGS} ${PYTHON_CFLAGS}"
+      LIBS="${SAVE_LIBS} ${PYTHON_SHARED_LIBS}"
+
+      AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([
+/*    will only work with gcc, but needed to use it with the mingwin python */
+#define PY_LONG_LONG long long
+#include <Python.h>
+],[   Py_Initialize();])],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_RESULT(no)
+         WITH_PYTHON=no
+         PYTHON_BASE=no])
+
+     # Restore an environment python-free, so that further tests are not
+     # impacted in case we did not find python
+     CFLAGS="${SAVE_CFLAGS}"
+     LIBS="${SAVE_LIBS}"
+   fi
+
+   if test x"$WITH_PYTHON" = xno -a x"$NEED_PYTHON" != xno ; then
+     AC_MSG_ERROR([Python not found])
+   fi
+
+   if test "$WITH_PYTHON" = "yes"; then
+     AC_MSG_CHECKING(for python LDFLAGS)
+     AC_MSG_RESULT($PYTHON_SHARED_LIBS)
+     AC_MSG_CHECKING(for python CFLAGS)
+     AC_MSG_RESULT($PYTHON_CFLAGS)
+   fi
+   AC_SUBST(PYTHON_BASE)
+   AC_SUBST(PYTHON_VERSION)
+   AC_SUBST(PYTHON_DIR)
+   AC_SUBST(PYTHON_SHARED_LIBS)
+   AC_SUBST(PYTHON_STATIC_LIBS)
+   AC_SUBST(PYTHON_CFLAGS)
+   AC_SUBST(WITH_PYTHON)
+])
+
