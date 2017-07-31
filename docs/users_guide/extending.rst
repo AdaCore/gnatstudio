@@ -3025,7 +3025,7 @@ The :file:`<documentation_file>` tag accepts the following child tags:
   Description for this help file, which appears as a tool tip for the menu
   item.
 
-* :file:`>category>`
+* :file:`<category>`
 
   Used in the :menuselection:`Help --> Contents` menu to organize all
   documentation files.
@@ -3970,7 +3970,7 @@ This tag accepts the following attributes:
 * :file:`separator`
 
   Default character placed between a switch and its value, for example,
-  :command:`=` produces :command:`-a=1`. Can can override this separately
+  :command:`=` produces :command:`-a=1`. Can override this separately
   for each switch. If you want the separator to be a space, you must use
   the value :command:`&#32;` instead of a blank since XML parser will
   normalize the latter to the empty string when reading the XML file.
@@ -4039,7 +4039,7 @@ consistency, most of these child tags accept the following attributes:
   the text to be displayed. The advantage of the latter is that text
   formatting is retained.
 
-* :file:`before` (default :command:`false`
+* :file:`before` (default :command:`false`)
 
   Whether the switch must always be inserted at the beginning of the command
   line.

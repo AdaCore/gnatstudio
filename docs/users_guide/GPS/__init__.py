@@ -7061,7 +7061,7 @@ class Message(object):
 
     def execute_action(self):
         """
-        If the message has an associated action, executesa it.
+        If the message has an associated action, executes it.
         """
         pass  # implemented in Ada
 
@@ -9749,7 +9749,7 @@ class XMLViewer(object):
                elif node_name == "file":
                   return [value]
 
-            def on_click(node_Name, attrs, value):
+            def on_click(node_name, attrs, value):
                if node_name == "file":
                   GPS.EditorBuffer.get(GPS.File(value))
         """

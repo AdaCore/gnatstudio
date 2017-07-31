@@ -1,7 +1,7 @@
 """
 Processes a text selection through an external shell command, and
 substitutes it with the output of that command.
-If no text is selected, simply insert he output of the external command.
+If no text is selected, simply insert the output of the external command.
 
 This is similar to vi's ! command. For instance, you can use this
 script to run a select chunk of text through the following shell
