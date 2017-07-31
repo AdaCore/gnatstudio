@@ -1774,6 +1774,34 @@ def toggle_trace(msg, lines, ce):
         show_ce(ce)
 
 
+def build_msg_full_text(file, line, col, text):
+    """Given a msg text and location, return the string
+       "file:line:col:msg"
+       Note that the returned text must be identical to the text that is
+       produced by GNATprove - this  text is used to match the message
+       produced by GNATprove and extra information about this message
+       stored in *.spark file. See on_stdout and on_exit.
+    """
+    str_col = str(col)
+
+    # In the message produced by GNATprove, '0' is always prepended
+    # to column number that is less than 10. Do it also here.
+    if col < 10:
+        str_col = '0' + str_col
+    return "%s:%s:%s: %s" % (file, line, str_col, text)
+
+
+def get_comp_text(m):
+    """Returns the computed text of a message"""
+    file = os.path.basename(m.get_file().path)
+    text = build_msg_full_text(
+        file,
+        m.get_line(),
+        m.get_column(),
+        m.get_text())
+    return (text)
+
+
 class GNATprove_Parser(tool_output.OutputParser):
 
     """Class that parses messages of the gnatprove tool, and creates
@@ -1803,22 +1831,6 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.regex = re.compile(r"(.*)\[#([0-9]+)\]$")
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
-
-    def build_msg_full_text(self, file, line, col, text):
-        """Given a msg text and location, return the string
-           "file:line:col:msg"
-           Note that the returned text must be identical to the text that is
-           produced by GNATprove - this  text is used to match the message
-           produced by GNATprove and extra information about this message
-           stored in *.spark file. See on_stdout and on_exit.
-        """
-        str_col = str(col)
-
-        # In the message produced by GNATprove, '0' is always prepended
-        # to column number that is less than 10. Do it also here.
-        if col < 10:
-            str_col = '0' + str_col
-        return "%s:%s:%s: %s" % (file, line, str_col, text)
 
     def pass_output(self, text, command):
         """pass the text on to the next output parser"""
@@ -1884,6 +1896,17 @@ class GNATprove_Parser(tool_output.OutputParser):
            editor.
         """
 
+        # We associate the real check location to the text of the message. The
+        # locations of the message is not always the same as the one of the
+        # check. And we need this information for manual proof.
+        text_msg = get_comp_text(m)
+        if 'check_file' in extra:
+            map_msg[text_msg, 'check_file'] = extra['check_file']
+        if 'check_line' in extra:
+            map_msg[text_msg, 'check_line'] = extra['check_line']
+        if 'check_col' in extra:
+            map_msg[text_msg, 'check_col'] = extra['check_col']
+
         counterexample = {}
         if 'cntexmp' in extra:
             counterexample = extra['cntexmp']
@@ -1934,6 +1957,12 @@ class GNATprove_Parser(tool_output.OutputParser):
            the corresponding unit to get the extra info, and act on the extra
            info"""
 
+        # Global map that associates messages text to the location of the
+        # check. Messages already contain a location but it cannot be trusted
+        # for launching manual prover. Messages locations records precisely
+        # what is failing in a vc not the location of said vc.
+        global map_msg
+
         # Any change to the regular expressions below should follow changes
         # in messages issued by GNATprove in Compute_Message in
         # flow_error_messages.adb
@@ -1965,14 +1994,10 @@ class GNATprove_Parser(tool_output.OutputParser):
             GPS.Project.root().object_dirs()[0],
             obj_subdir_name)
 
+        map_msg = {}
         imported_units = set()
         for m in GPS.Message.list():
-            file = os.path.basename(m.get_file().path)
-            text = self.build_msg_full_text(
-                file,
-                m.get_line(),
-                m.get_column(),
-                m.get_text())
+            text = get_comp_text(m)
             if text in self.msg_id:
                 id = self.msg_id[text]
                 unit = get_compunit_for_message(m)
@@ -2398,17 +2423,20 @@ def get_vc_kind(msg):
     return vc_msg_dict[msg_key]
 
 
-def limit_line_option(msg, vc_kind):
+def limit_line_option(msg, line, col, vc_kind):
     return "--limit-line=" + os.path.basename(msg.get_file().path) \
-                           + ":" + str(msg.get_line()) \
-                           + ":" + str(msg.get_column()) \
+                           + ":" + str(line) \
+                           + ":" + str(col) \
                            + ":" + vc_kind
 
 
 def on_prove_check(context):
     msg = context._loc_msg
+    text_msg = get_comp_text(msg)
+    msg_line = map_msg[text_msg, 'check_line']
+    msg_col = map_msg[text_msg, 'check_col']
     vc_kind = get_vc_kind(msg)
-    llarg = limit_line_option(msg, vc_kind)
+    llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
