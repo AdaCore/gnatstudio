@@ -1152,11 +1152,6 @@ private
       Current_Context : Selection_Context := No_Context;
       --  The current context, as set by the last call to Context_Changed.
 
-      Context_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-      --  The registered context timeout.
-      --  This timeout is used to emit the actual "context_changed" hook
-      --  after a short while, to collapse multiple such calls when possible.
-
       Last_Context_For_Contextual : Selection_Context := No_Context;
       --  The context used in the last contextual menu.
       --  This variable should remain not null and unchanged while a contextual

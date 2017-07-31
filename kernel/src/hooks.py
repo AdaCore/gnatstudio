@@ -335,9 +335,10 @@ background task or process'''),
         returns='Boolean',
         return_default='False'), # stops when one returns True
 
-    'context_hooks': Hook_Type(
+    'context_hooks': Debounce_Hook_Type(
         [Param('name', '__hookname__'),
          Param('context', 'Context')],
+        debounce=400,
         descr='Hooks that take a context as parameter'),
 
     'two_lines_hooks': Hook_Type(
@@ -1053,6 +1054,9 @@ package GPS.Kernel.Hooks is
        Files   : File_Sets.Set) return List_Instance;
    --  Convert Files to a python list
 
+   procedure Unregister_Debounce_Timeouts;
+   -- remove all registered timeouts
+
    -----------
    -- Hooks --
    -----------
@@ -1306,8 +1310,14 @@ package body GPS.Kernel.Hooks is
 
             subst['asynch_plist'] = ''.join(asynch_plist)
             subst['debounce'] = t.debounce
-            subst['compare'] = ''.join (compare)
             subst['assign'] = ''.join(assign)
+
+            if len(compare) > 0:
+               subst['compare'] = 'if ' + ''.join (compare) + ' then'
+               subst['end_compare'] = 'end if;'
+            else:
+               subst['compare'] = ''
+               subst['end_compare'] = ''
 
         # Settings for the callback function
 
@@ -1445,6 +1455,13 @@ package body GPS.Kernel.Hooks is
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;
 ''' % subst)
 
+        if isinstance(t, Debounce_Hook_Type):
+           f.write('''
+   procedure Force_Debounce
+      (Self    : in out %(name)s;
+       Kernel  : not null access Kernel_Handle_Record'Class%(params)s);
+''' % subst)
+
         if t.override_run_from_python:
             f.write('''
    overriding procedure Run_From_Python
@@ -1540,7 +1557,7 @@ package body GPS.Kernel.Hooks is
 
    type %(name)s_Params is new Hook_Function_Params with record
       Id : Glib.Main.G_Source_Id := 0;
-      Hook : File_Location_Hooks_Access;
+      Hook : %(name)s_Access;
       Kernel : not null access Kernel_Handle_Record'Class%(params)s;
    end record;
 
@@ -1587,7 +1604,7 @@ package body GPS.Kernel.Hooks is
 
    exception
       when E : others =>
-         Trace (Me, E, "On_File_Location_Hooks_Timeout " & Name (Data.Hook.all));
+         Trace (Me, E, "On_%(name)s_Timeout " & Name (Data.Hook.all));
          Free (D);
 
          return False;
@@ -1622,13 +1639,13 @@ package body GPS.Kernel.Hooks is
             Data : constant %(name)s_Params_Access :=
               %(name)s_Params_Access (D);
          begin
-            if %(compare)s then
+            %(compare)s
                Glib.Main.Remove (Data.Id);
 %(assign)s
                Data.Id := %(name)s_Timeout.Timeout_Add
                  (%(name)s_Timeout_Value, On_%(name)s_Timeout'Access, Data);
                return;
-            end if;
+            %(end_compare)s
          end;
       end loop;
 
@@ -1690,6 +1707,41 @@ package body GPS.Kernel.Hooks is
    end %(run_name)s;
 ''' % subst)
 
+        if isinstance(t, Debounce_Hook_Type):
+           b.write('''
+   --------------------
+   -- Force_Debounce --
+   --------------------
+
+   procedure Force_Debounce
+      (Self    : in out %(name)s;
+       Kernel  : not null access Kernel_Handle_Record'Class%(params)s)
+   is
+      use Hook_Func_Lists;
+      Block_Me : constant Block_Trace_Handle :=
+         Create (Me, (if Active (Me) then Name (Self) else ""));
+
+   begin
+      if Self.Asynch_Data.Is_Empty then
+         return;
+      end if;
+
+      for D of Self.Asynch_Data loop
+         declare
+            Data : %(name)s_Params_Access :=
+              %(name)s_Params_Access (D);
+         begin
+            Glib.Main.Remove (Data.Id);
+            Free (Data);
+         end;
+      end loop;
+      Self.Asynch_Data.Clear;
+
+      Call (Self, Self.Funcs, Kernel%(plist)s);
+      Call (Self, Self.Asynch_Funcs, Kernel%(plist)s);
+   end Force_Debounce;
+''' % subst)
+
         if t.override_run_from_python:
             b.write('''
    ---------------------
@@ -1732,6 +1784,33 @@ package body GPS.Kernel.Hooks is
     f.close()
 
     b.write('''
+   ----------------------------------
+   -- Unregister_Debounce_Timeouts --
+   ----------------------------------
+
+   procedure Unregister_Debounce_Timeouts is
+   begin
+''')
+    for h in hooks:
+        if isinstance(hook_types[h.type], Debounce_Hook_Type):
+           b.write('''
+      for D of %(name)s.Asynch_Data loop
+         declare
+            Data : constant %(type)s_Params_Access :=
+              %(type)s_Params_Access (D);
+         begin
+            Glib.Main.Remove (Data.Id);
+         end;
+      end loop;
+      %(name)s.Asynch_Data.Clear;
+''' % {'type': h.type.title(),
+       'name': '%s_Hook' % h.name.title()
+           if not h.name.endswith('_hook')
+           else h.name.title()})
+
+    b.write('''
+   end Unregister_Debounce_Timeouts;
+
    --------------------
    -- Register_Hooks --
    --------------------

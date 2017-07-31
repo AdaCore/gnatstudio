@@ -3113,7 +3113,7 @@ package body GPS.Kernel.Modules.UI is
    is
       pragma Unreferenced (Kernel);
    begin
-      Context_Changed_Hook.Add (new On_Context_Changed);
+      Context_Changed_Hook.Add_Debounce (new On_Context_Changed);
    end Start_Monitoring_Menus;
 
    -----------------

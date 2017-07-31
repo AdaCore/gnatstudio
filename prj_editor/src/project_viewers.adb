@@ -478,7 +478,7 @@ package body Project_Viewers is
       Context : Selection_Context)
    is
       pragma Unreferenced (Self);
-      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
+      View  : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,
@@ -557,7 +557,8 @@ package body Project_Viewers is
         (Viewer.Tree, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
 
-      Context_Changed_Hook.Add (new On_Context_Changed, Watch => Viewer);
+      Context_Changed_Hook.Add_Debounce
+        (new On_Context_Changed, Watch => Viewer);
       Project_View_Changed_Hook.Add
          (new On_Project_View_Changed, Watch => Viewer);
       H := new On_Pref_Changed;

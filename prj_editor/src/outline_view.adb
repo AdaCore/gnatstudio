@@ -880,7 +880,7 @@ package body Outline_View is
          P : constant access On_Context_Changed := new On_Context_Changed;
       begin
          On_Changed (Outline, Get_Current_Context (Outline.Kernel));
-         Context_Changed_Hook.Add (P, Watch => Outline);
+         Context_Changed_Hook.Add_Debounce (P, Watch => Outline);
       end;
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Outline);

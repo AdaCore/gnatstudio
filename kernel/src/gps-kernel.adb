@@ -98,10 +98,6 @@ package body GPS.Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
-   Context_Hook_Timeout : constant Guint := 400;
-   --  The time in ms after which to run the "context_changed" hook after
-   --  the context has actually changed.
-
    Build_Mode_Property : constant String := "Build-Mode";
    --  The name of a GPS.Properties to store the current build mode. Use
    --  Get_Build_Mode below instead
@@ -161,10 +157,6 @@ package body GPS.Kernel is
    --  the window is unregistered very early (gtk_window_destroy), before its
    --  children are destroyed. As a result, plugins like filepos.py can no
    --  longer access the MDI if the main window is found via Get_Window_By_Id.
-
-   function Context_Timeout (Kernel : Kernel_Handle) return Boolean;
-   --  Timeout callback which actually emits the "context_changed" hook
-   --  an interval after the context has last been actually changed.
 
    procedure Internal_Add_Hook_Func
      (Self  : in out Hook_Types'Class;
@@ -648,25 +640,6 @@ package body GPS.Kernel is
    end Is_Hidden;
 
    ---------------------
-   -- Context_Timeout --
-   ---------------------
-
-   function Context_Timeout (Kernel : Kernel_Handle) return Boolean is
-   begin
-      Context_Changed_Hook.Run (Kernel, Context => Kernel.Current_Context);
-
-      --  Stop calling this in a timeout.
-      Kernel.Context_Timeout := Glib.Main.No_Source_Id;
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Kernel.Context_Timeout := Glib.Main.No_Source_Id;
-         return False;
-   end Context_Timeout;
-
-   ---------------------
    -- Context_Changed --
    ---------------------
 
@@ -675,18 +648,7 @@ package body GPS.Kernel is
       Context : Selection_Context) is
    begin
       Handle.Current_Context := Context;
-
-      --  The actual context_changed hook is emitted in a timeout after
-      --  the last time the context has changed: if the timeout is already
-      --  running, deregister it and register another one.
-      if Handle.Context_Timeout /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Handle.Context_Timeout);
-      end if;
-
-      Handle.Context_Timeout := Kernel_Sources.Timeout_Add
-        (Context_Hook_Timeout,
-         Context_Timeout'Access,
-         Kernel_Handle (Handle));
+      Context_Changed_Hook.Run (Handle, Context);
    end Context_Changed;
 
    ----------------------------------
@@ -754,18 +716,7 @@ package body GPS.Kernel is
          Kernel.Current_Context := New_Context (Kernel);
       end if;
 
-      --  If someone queries the current context in the interval between
-      --  the time we have actually changed the context and the time
-      --  when we wanted to emit the context_changed hook, immediately emit
-      --  context_changed, so that all clients are acting on the same
-      --  context.
-
-      if Kernel.Context_Timeout /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Kernel.Context_Timeout);
-         Kernel.Context_Timeout := Glib.Main.No_Source_Id;
-
-         Context_Changed_Hook.Run (Kernel, Kernel.Current_Context);
-      end if;
+      Context_Changed_Hook.Force_Debounce (Kernel, Kernel.Current_Context);
 
       return Kernel.Current_Context;
    end Get_Current_Context;
@@ -940,10 +891,7 @@ package body GPS.Kernel is
       --  the "context_changed" hook won't be run here, which wouldn't
       --  be necessary.
 
-      if Handle.Context_Timeout /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Handle.Context_Timeout);
-         Handle.Context_Timeout := Glib.Main.No_Source_Id;
-      end if;
+      Hooks.Unregister_Debounce_Timeouts;
 
       Save_Scenario_Vars_On_Exit (Handle);
 
@@ -2174,8 +2122,7 @@ package body GPS.Kernel is
       Result : Boolean with Unreferenced;
 
    begin
-      Result := Remove
-        (Self.Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self));
+      Result := Remove (Self.Funcs, If_Matches, Hooks.Name (Self));
    end Remove;
 
    ------------
@@ -2190,9 +2137,8 @@ package body GPS.Kernel is
       Result : Boolean with Unreferenced;
 
    begin
-      if not Remove (Self.Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self)) then
-         Result := Remove
-           (Self.Asynch_Funcs, If_Matches, GPS.Kernel.Hooks.Name (Self));
+      if not Remove (Self.Funcs, If_Matches, Hooks.Name (Self)) then
+         Result := Remove (Self.Asynch_Funcs, If_Matches, Hooks.Name (Self));
       end if;
    end Remove;
 

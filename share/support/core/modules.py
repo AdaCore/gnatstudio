@@ -45,7 +45,6 @@ underscore) as a parameter to :func:`GPS.Browsers.View.create`.
 
 
 import GPS
-import gps_utils
 
 try:
     # While building the doc, we might not have access to this module
@@ -258,7 +257,10 @@ class Module(object):
                     return pref(*args, **kwargs)
             setattr(self, "__%s" % hook_name, internal)
             p = getattr(self, "__%s" % hook_name)
-            GPS.Hook(hook_name).add(p)
+            if hook_name == "context_changed":
+                GPS.Hook(hook_name).add_debounce(p)
+            else:
+                GPS.Hook(hook_name).add(p)
 
             # No need to call internal() when the hook is gps_started: this
             # function __connect_hook is called as part of running gps_started
@@ -284,11 +286,6 @@ class Module(object):
         p = getattr(self, "__%s" % hook_name, None)
         if p:
             GPS.Hook(hook_name).remove(p)
-
-    def __disconnect_hook(self, hook_name):
-        """
-        Disconnect a hook connected with __connect_hook.
-        """
         p = getattr(self, hook_name, None)
         if p:
             GPS.Hook(hook_name).remove(p)

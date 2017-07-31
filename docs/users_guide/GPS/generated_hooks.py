@@ -274,6 +274,8 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.Context context:
 
+      :asynchronouse 400 (ms)
+
         """
 
     # contextual_menu_close = 'contextual_menu_close'
