@@ -1521,18 +1521,16 @@ package body Navigation_Module is
       end loop;
 
       declare
-         Runtime : constant String := Kernel.Get_Runtime;
-         Root    : constant String :=
-           (if Runtime = "" then
-               "/Help/GNAT Runtime/"
-            else
-               "/Help/GNAT Runtime (" & Runtime & ")/");
+         Runtime : constant String := (if Kernel.Get_Runtime /= ""
+                                       then Kernel.Get_Runtime & "/"
+                                       else "");
+         Root    : constant String := "/Help/GNAT Runtime/";
       begin
          for AP of Command.Menus_To_Create loop
             if AP.Path /= Null_Unbounded_String then
                Register_Menu
                  (Kernel     => Kernel,
-                  Path       => Root & To_String (AP.Path),
+                  Path       => Root & Runtime & To_String (AP.Path),
                   Action     => Get_Name (AP.Action));
                Module.Actions_With_A_Menu.Append (AP);
             end if;
