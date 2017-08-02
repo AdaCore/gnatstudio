@@ -1556,8 +1556,8 @@ package body GPS.Kernel.Hooks is
    type %(name)s_Access is access all %(name)s;
 
    type %(name)s_Params is new Hook_Function_Params with record
-      Id : Glib.Main.G_Source_Id := 0;
-      Hook : %(name)s_Access;
+      Id     : Glib.Main.G_Source_Id := 0;
+      Hook   : %(name)s_Access;
       Kernel : not null access Kernel_Handle_Record'Class%(params)s;
    end record;
 
@@ -1577,35 +1577,37 @@ package body GPS.Kernel.Hooks is
    -------------------------
 
    function On_%(name)s_Timeout
-     (Data : %(name)s_Params_Access) return Boolean
+     (D : %(name)s_Params_Access) return Boolean
    is
       use Hook_Func_Params_Lists;
       use type Glib.Main.G_Source_Id;
 
-      C : Hook_Func_Params_Lists.Cursor := Data.Hook.Asynch_Data.First;
-      D : %(name)s_Params_Access;
+      C    : Hook_Func_Params_Lists.Cursor := D.Hook.Asynch_Data.First;
+      Data : %(name)s_Params_Access;
    begin
       while Has_Element (C) loop
-         D := %(name)s_Params_Access (Element (C));
+         Data := %(name)s_Params_Access (Element (C));
          if D.Id = Data.Id then
-            Delete (Data.Hook.Asynch_Data, C);
+            Delete (D.Hook.Asynch_Data, C);
             exit;
          else
-            D := null;
+            Data := null;
          end if;
 
          Next (C);
       end loop;
 
-      Call (Data.Hook.all, Data.Hook.Asynch_Funcs, Data.Kernel%(asynch_plist)s);
-      Free (D);
+      if Data /= null then
+         Call (Data.Hook.all, Data.Hook.Asynch_Funcs, Data.Kernel%(asynch_plist)s);
+         Free (Data);
+      end if;
 
       return False;
 
    exception
       when E : others =>
          Trace (Me, E, "On_%(name)s_Timeout " & Name (Data.Hook.all));
-         Free (D);
+         Free (Data);
 
          return False;
    end On_%(name)s_Timeout;

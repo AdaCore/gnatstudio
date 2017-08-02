@@ -9,7 +9,6 @@ except ImportError:
     pass
 
 import re
-from time import time
 
 
 class HighlighterModule(Module):
@@ -37,10 +36,11 @@ class HighlighterModule(Module):
                 propagate_change(pref)
 
     def context_changed(self, ctx):
-        if ctx.file() is not None:
-            ed = GPS.EditorBuffer.get(open=False)
-            if ed:
-                self.init_highlighting(ed.file())
+        if ctx is not None:
+            if ctx.file() is not None:
+                ed = GPS.EditorBuffer.get(open=False)
+                if ed:
+                    self.init_highlighting(ed.file())
 
     def file_edited(self, f):
         """
