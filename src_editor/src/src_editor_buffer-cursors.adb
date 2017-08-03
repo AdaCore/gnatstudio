@@ -27,6 +27,16 @@ package body Src_Editor_Buffer.Cursors is
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
 
+   procedure Remove_Slave_Cursor
+     (Buffer : Source_Buffer;
+      Cursor : Slave_Cursor);
+
+   function Exists
+     (Buffer : Source_Buffer;
+      Id     : Integer)
+      return Boolean;
+   --  Check whether the slave cursor with given id is still exist
+
    ----------------------------
    -- Check_Mc_Selection_Tag --
    ----------------------------
@@ -65,7 +75,25 @@ package body Src_Editor_Buffer.Cursors is
 
    function Is_Alive (C : Cursor) return Boolean is
      (C.Is_Main_Cursor
-      or else C.Cursor_Id > C.Buffer.Slave_Cursors_Last_Alive_Id);
+      or else Exists (C.Buffer, C.Cursor_Id));
+
+   ------------
+   -- Exists --
+   ------------
+
+   function Exists
+     (Buffer : Source_Buffer;
+      Id     : Integer)
+      return Boolean is
+   begin
+      for Cursor of Buffer.Slave_Cursors_List loop
+         if Cursor.Id = Id then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Exists;
 
    -------------------------
    -- Update_MC_Selection --
@@ -143,13 +171,13 @@ package body Src_Editor_Buffer.Cursors is
    ----------------
 
    procedure Add_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) is
-
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
+   is
       Cursor_Name : constant String :=
         "slave_cursor_" & Buffer.Slave_Cursors_Next_Id'Img;
       Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Cursor_Name, False);
-      Sel_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
+      Sel_Mark    : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Get_Sel_Mark_Name (Cursor_Name), False);
    begin
       Check_Mc_Selection_Tag (Buffer);
@@ -186,6 +214,44 @@ package body Src_Editor_Buffer.Cursors is
       end;
    end Add_Cursor;
 
+   -------------------
+   -- Delete_Cursor --
+   -------------------
+
+   procedure Delete_Cursor
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
+   is
+      use Slave_Cursors_Lists;
+      C    : Slave_Cursors_Lists.Cursor := Buffer.Slave_Cursors_List.First;
+      Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+   begin
+      while Has_Element (C) loop
+         Buffer.Get_Iter_At_Mark (Iter, Element (C).Mark);
+         if Equal (Iter, Location) then
+            Remove_Slave_Cursor (Buffer, Element (C));
+            Buffer.Slave_Cursors_List.Delete (C);
+            return;
+         end if;
+         Next (C);
+      end loop;
+   end Delete_Cursor;
+
+   -------------------------
+   -- Remove_Slave_Cursor --
+   -------------------------
+
+   procedure Remove_Slave_Cursor
+     (Buffer : Source_Buffer;
+      Cursor : Slave_Cursor) is
+   begin
+      Buffer.Delete_Mark (Cursor.Mark);
+      Buffer.Delete_Mark (Cursor.Sel_Mark);
+
+      if Buffer.Slave_Cursors_List.Is_Empty then
+         Buffer.Has_MC_Clipboard := False;
+      end if;
+   end Remove_Slave_Cursor;
+
    ------------------------------
    -- Remove_All_Slave_Cursors --
    ------------------------------
@@ -193,15 +259,9 @@ package body Src_Editor_Buffer.Cursors is
    procedure Remove_All_Slave_Cursors (Buffer : Source_Buffer) is
    begin
       for Cursor of Buffer.Slave_Cursors_List loop
-         if Cursor.Id > Buffer.Slave_Cursors_Last_Alive_Id then
-            Buffer.Slave_Cursors_Last_Alive_Id := Cursor.Id;
-         end if;
-
-         Buffer.Delete_Mark (Cursor.Mark);
-         Buffer.Delete_Mark (Cursor.Sel_Mark);
+         Remove_Slave_Cursor (Buffer, Cursor);
       end loop;
 
-      Buffer.Has_MC_Clipboard := False;
       Buffer.Slave_Cursors_List.Clear;
    end Remove_All_Slave_Cursors;
 

@@ -1955,7 +1955,6 @@ package body Src_Editor_Module.Shell is
             Get_Location (Data, 3), Get_Location (Data, 4));
 
       elsif Command = "add_cursor" then
-         null;
          declare
             C : constant GPS.Editors.Editor_Cursor'Class :=
               Get_Buffer (Data, 1).Add_Cursor
@@ -1965,6 +1964,10 @@ package body Src_Editor_Module.Shell is
          begin
             Data.Set_Return_Value (Cursor_Instance);
          end;
+
+      elsif Command = "delete_cursor" then
+         Get_Buffer (Data, 1).Delete_Cursor (Get_Location (Data, 2));
+
       elsif Command = "remove_all_slave_cursors" then
          Get_Buffer (Data, 1).Remove_All_Slave_Cursors;
 
@@ -2788,6 +2791,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "add_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "delete_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
          "update_cursors_selection",  0, 0,

@@ -699,6 +699,11 @@ package GPS.Editors is
       return Editor_Cursor'Class is abstract;
    --  Add a multi cursor at the specified location
 
+   procedure Delete_Cursor
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+   --  Delete a multi cursor at the specified location
+
    procedure Remove_All_Slave_Cursors (This : Editor_Buffer) is abstract;
    --  Remove all multi cursors from current buffer
 
@@ -1215,6 +1220,10 @@ private
       Location : Editor_Location'Class) return Editor_Cursor'Class
    is
       (Nil_Editor_Cursor);
+
+   overriding procedure Delete_Cursor
+     (This     : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) is null;
 
    overriding procedure Remove_All_Slave_Cursors
      (This : Dummy_Editor_Buffer) is null;

@@ -688,6 +688,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.delete
 
+   .. automethod:: GPS.EditorBuffer.delete_cursor
+
    .. automethod:: GPS.EditorBuffer.end_of_buffer
 
    .. automethod:: GPS.EditorBuffer.entity_under_cursor

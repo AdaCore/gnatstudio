@@ -381,6 +381,9 @@ package body Src_Editor_Module.Editors is
    overriding function Add_Cursor
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class;
+   overriding procedure Delete_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class);
    overriding function Get_Insert_Mark
      (This     : Src_Editor_Cursor) return Editor_Mark'Class;
    overriding procedure Set_Manual_Sync
@@ -3033,6 +3036,20 @@ package body Src_Editor_Module.Editors is
       This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
       Add_Cursor (This.Contents.Buffer, Iter);
    end Add_Cursor;
+
+   -------------------
+   -- Delete_Cursor --
+   -------------------
+
+   overriding procedure Delete_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
+      Delete_Cursor (This.Contents.Buffer, Iter);
+   end Delete_Cursor;
 
    ----------------
    -- Add_Cursor --

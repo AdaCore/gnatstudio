@@ -18,16 +18,29 @@ mc_on_entity_color.create_with_priority(
     "#96C5D9")
 
 
+def cursor_absent(ed, location):
+    if ed.has_slave_cursors():
+        cursors = ed.get_cursors()
+        for i in range(1, len(cursors)):
+            if cursors[i].location() == location:
+                return False
+    return True
+
+
 @interactive("Editor", name="Add cursor and go down",
              menu="/Edit/Cursors/Add cursor and go down")
 def mc_down():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
     loc = view.cursor()
-    ed.add_cursor(loc)
-
+    line = min(loc.line() + 1, ed.lines_count())
+    to = GPS.EditorLocation(ed, line, loc.column())
+    if cursor_absent(ed, to):
+        ed.add_cursor(loc)
+    else:
+        ed.delete_cursor(to)
     ed.get_cursors()[0].set_manual_sync()
-    view.goto(ed.at(min(loc.line() + 1, ed.lines_count()), loc.column()))
+    view.goto(ed.at(line, loc.column()))
     ed.set_cursors_auto_sync()
 
 
@@ -37,10 +50,14 @@ def mc_up():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
     loc = view.cursor()
-    ed.add_cursor(loc)
-
+    line = max(loc.line() - 1, 1)
+    to = GPS.EditorLocation(ed, line, loc.column())
+    if cursor_absent(ed, to):
+        ed.add_cursor(loc)
+    else:
+        ed.delete_cursor(to)
     ed.get_cursors()[0].set_manual_sync()
-    view.goto(ed.at(max(loc.line() - 1, 1), loc.column()))
+    view.goto(ed.at(line, loc.column()))
     ed.set_cursors_auto_sync()
 
 id_pattern = re.compile(r"[\w0-9_]")

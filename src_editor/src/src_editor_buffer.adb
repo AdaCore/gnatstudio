@@ -1436,7 +1436,8 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Blocks_Request_Timestamp := Clock;
 
-      if not Buffer.Blocks_Timeout_Registered
+      if not Buffer.In_Destruction
+        and then not Buffer.Blocks_Timeout_Registered
         and then Buffer.Blocks_Timeout = Glib.Main.No_Source_Id
       then
          Buffer.Blocks_Timeout_Registered := True;

@@ -75,6 +75,10 @@ package Src_Editor_Buffer.Cursors is
    --  Add a new multi cursor at the specified location
    --  in the specified buffer
 
+   procedure Delete_Cursor
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
+   --  Delete a multi cursor at the specified location in the specified buffer
+
    procedure Remove_All_Slave_Cursors (Buffer : Source_Buffer);
    --  Remove all multi cursors from the current buffer
 

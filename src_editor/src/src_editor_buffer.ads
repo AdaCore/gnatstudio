@@ -1744,7 +1744,6 @@ private
       Slave_Cursors_List                    : Slave_Cursors_Lists.List;
       --  The list of all active multi cursors
 
-      Slave_Cursors_Last_Alive_Id           : Natural := 0;
       Slave_Cursors_Next_Id                 : Natural := 1;
       --  Unique id for the next multi cursor. Incremented at multi cursor
       --  creation

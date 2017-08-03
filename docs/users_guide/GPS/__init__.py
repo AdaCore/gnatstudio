@@ -3813,6 +3813,12 @@ class EditorBuffer(object):
         :rtype: The resulting :class:`Cursor` instance
         """
 
+    def delete_cursor(self, location):
+        """
+        Deletes a slave cursor at the given location.
+        """
+        pass  # implemented in Ada
+
     def main_cursor(self):
         """
         Returns the main cursor. Generally you should not use this method
