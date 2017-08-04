@@ -385,6 +385,7 @@ package body Debugger.Base_Gdb is
          declare
             R   : constant Record_Type_Access := Record_Type_Access (Result);
             Int : Natural;
+            Close_Parentheses : Boolean := False;
          begin
             --  Skip initial '(' if we are still looking at it (we might not
             --  if we are parsing a variant part)
@@ -393,6 +394,7 @@ package body Debugger.Base_Gdb is
               and then Type_Str (Index) = Context.Record_Start
             then
                Index := Index + 1;
+               Close_Parentheses := True;
             end if;
 
             for J in 1 .. Num_Fields (R.all) loop
@@ -477,16 +479,16 @@ package body Debugger.Base_Gdb is
                   end;
                end if;
             end loop;
+
+            Skip_Blanks (Type_Str, Index);
+
+            --  Skip closing ')', if seen
+            if Close_Parentheses and then Index <= Type_Str'Last
+              and then Type_Str (Index) = Context.Record_End
+            then
+               Index := Index + 1;
+            end if;
          end;
-
-         Skip_Blanks (Type_Str, Index);
-
-         --  Skip closing ')', if seen
-         if Index <= Type_Str'Last
-           and then Type_Str (Index) = Context.Record_End
-         then
-            Index := Index + 1;
-         end if;
 
       ------------------
       -- Class values --
@@ -495,7 +497,18 @@ package body Debugger.Base_Gdb is
       elsif Result'Tag = Class_Type'Tag then
          declare
             R : Generic_Type_Access;
+            Close_Parentheses : Boolean := False;
          begin
+            --  Skip initial '(' if we are still looking at it (we might not
+            --  if we are parsing a variant part)
+
+            if Index <= Type_Str'Last
+              and then Type_Str (Index) = Context.Record_Start
+            then
+               Index := Index + 1;
+               Close_Parentheses := True;
+            end if;
+
             for A in 1 .. Get_Num_Ancestors (Class_Type (Result.all)) loop
                R := Get_Ancestor (Class_Type (Result.all), A);
                Internal_Parse_Value
@@ -506,6 +519,15 @@ package body Debugger.Base_Gdb is
             if Num_Fields (Record_Type (R.all)) /= 0 then
                Internal_Parse_Value
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+            end if;
+
+            Skip_Blanks (Type_Str, Index);
+
+            --  Skip closing ')', if seen
+            if Close_Parentheses and then Index <= Type_Str'Last
+              and then Type_Str (Index) = Context.Record_End
+            then
+               Index := Index + 1;
             end if;
          end;
       end if;

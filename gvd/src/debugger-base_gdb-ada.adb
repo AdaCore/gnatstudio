@@ -927,7 +927,10 @@ package body Debugger.Base_Gdb.Ada is
 
       procedure Parse_Item;
       --  Parse the value of a single item, and add it to the contents of
-      --  Result.
+      --  Result. We have three cases to parse here:
+      --   * 1 => <item> - we parse first bound and item itself
+      --   * <item>      - we parse just item itself, increment last bound
+      --   * 1 => (      - we parse first bound of subarray. '(' isn't parsed
 
       ----------------
       -- Parse_Item --
@@ -938,10 +941,6 @@ package body Debugger.Base_Gdb.Ada is
          Tmp        : Generic_Type_Access;
          Repeat_Num : Integer;
       begin
-         if Dim = 0 then
-            return;
-         end if;
-
          --  Does gdb indicate the number of the item (as in '24 =>')
          --  We search the first character that does not belong to the item
          --  value.
@@ -969,49 +968,15 @@ package body Debugger.Base_Gdb.Ada is
 
             Index := Int + 3;  --  skip "index => "
 
-            --  If we are not parsing the most internal dimension, we in fact
-            --  saw the start of a new dimension, as in:
-            --    (3 => ((6 => 1, 2), (6 => 1, 2)), ((6 => 1, 2), (6 => 1, 2)))
-            --  for array (3 .. 4, 1 .. 2, 6 .. 7) of integer
-            --  In that case, don't try to parse the item.
+         end if;
+         --  If we are not parsing the most internal dimension, we in fact
+         --  saw the start of a new dimension, as in:
+         --    (3 => ((6 => 1, 2), (6 => 1, 2)), ((6 => 1, 2), (6 => 1, 2)))
+         --  for array (3 .. 4, 1 .. 2, 6 .. 7) of integer
+         --  In that case, don't try to parse the item.
 
-            if Dim /= Num_Dimensions (Result.all) then
-               return;
-            end if;
-
-         elsif Type_Str (Int) = '(' then
-            --  If we have an array but the "index => " was not used by GDB,
-            --  now is also a good time to find the index.
-            --  ??? GDB does not use the "index => " notation when the range
-            --  used for the index starts with the first element of the index
-            --  type as in:
-            --     type Index is (A, B, C, D);
-            --     type Index_Range is new Index range A .. C;
-            --     type Matrix is array (Index_Range, Index_Range) of Integer;
-
-            if Bounds.Last < Bounds.First then
-               Parse_Num (Type_Str, Index, Bounds.First);
-               Set_Dimensions (Result.all, Dim, Bounds);
-            end if;
-
-            --  If we are not parsing the most internal dimension, we in fact
-            --  saw the start of a new dimension.
-            --  In that case, don't try to parse the item.
-
-            if Dim /= Num_Dimensions (Result.all) then
-               return;
-            end if;
-
-         elsif Bounds.Last < Bounds.First then
-            if Bounds.First = Long_Integer'Last then
-               Bounds.First := 0;
-               Bounds.Last := Lengths (Dim) - 1;
-            else
-               Bounds.First := 1;
-               Bounds.Last := Lengths (Dim);
-            end if;
-
-            Set_Dimensions (Result.all, Dim, Bounds);
+         if Dim /= Num_Dimensions (Result.all) then
+            return;
          end if;
 
          --  Parse the next item
@@ -1043,6 +1008,8 @@ package body Debugger.Base_Gdb.Ada is
       end Parse_Item;
 
    begin
+      --  This loop parses sequence of items separated by '(', ')' and ','
+      --  tokens. Each item parsed by Parse_Item procedure.
       loop
          Previous_Dim := Dim;
          Previous_Index := Index;
@@ -1055,29 +1022,25 @@ package body Debugger.Base_Gdb.Ada is
 
                Bounds := Get_Dimensions (Result.all, Dim);
 
-               if Bounds.Last < Bounds.First then
-                  if Bounds.First = Long_Integer'Last
-                    and then Bounds.Last = Long_Integer'First
-                  then
-                     --  if we did not find the bound before, it is very
-                     --  likely 0 (e.g. array of enum).
-
-                     Set_Dimensions (Result.all, Dim, (0, Lengths (Dim) - 1));
-
-                  elsif Bounds.First = Long_Integer'Last then
-                     Set_Dimensions
-                       (Result.all, Dim,
-                        (Bounds.Last - Lengths (Dim) + 1, Bounds.Last));
-
-                  elsif Bounds.Last = Long_Integer'First then
-                     Set_Dimensions
-                       (Result.all, Dim,
-                        (Bounds.First, Bounds.First + Lengths (Dim) - 1));
-                  end if;
+               if Bounds.Last = Long_Integer'First then
+                  Bounds.Last := Bounds.First + Lengths (Dim) - 1;
+                  Set_Dimensions (Result.all, Dim, Bounds);
                end if;
 
                Dim := Dim - 1;
                Index := Index + 1;
+
+               if Dim > 0 then
+                  --  If we have parsed an subarray, then adjust length of
+                  --  enclosing array.
+                  Lengths (Dim) := Lengths (Dim) + 1;
+                  Bounds := Get_Dimensions (Result.all, Dim);
+
+                  if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
+                     Bounds.Last := Bounds.First + Lengths (Dim) - 1;
+                     Set_Dimensions (Result.all, Dim, Bounds);
+                  end if;
+               end if;
 
             when '(' =>
                --  A parenthesis is either the start of a sub-array (for
@@ -1085,12 +1048,36 @@ package body Debugger.Base_Gdb.Ada is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               Parse_Item;
-
                if Dim /= Num_Dimensions (Result.all) then
                   Dim := Dim + 1;
                   Index := Index + 1;
                   Lengths (Dim) := 0;
+
+                  --  Now is a good time to find the index just in case, if we
+                  --  have an array but the "index => " was not used by GDB.
+                  --  ??? GDB does not use the "index => " notation when the
+                  --  range used for the index starts with the first element
+                  --  of the index type as in:
+                  --     type Index is (A, B, C, D);
+                  --     type Index_Range is new Index range A .. C;
+                  --     type Matrix is array (Index_Range, Index_Range) of
+                  --       Integer;
+
+                  Bounds := Get_Dimensions (Result.all, Dim);
+
+                  if Bounds.First = Long_Integer'Last then
+                     Bounds.First := 0;
+                     Set_Dimensions (Result.all, Dim, Bounds);
+                  end if;
+
+               end if;
+
+               if Type_Str (Index) = ')' then
+                  --  Set last bound for an empty array
+                  Bounds.Last := Bounds.First - 1;
+                  Set_Dimensions (Result.all, Dim, Bounds);
+               else
+                  Parse_Item;
                end if;
 
             when ',' | ' ' =>
