@@ -439,8 +439,9 @@ package body Command_Lines is
                           Switch (Switch'First + Length))
             then
                if Found then
-                  --  One parameter is already foung,
+                  --  One parameter is already found,
                   --  select one with the biggest length
+
                   if Ada.Strings.Unbounded.Length (Result.Switch) < Length then
                      Result := Current;
                   end if;
