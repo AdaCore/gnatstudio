@@ -20,6 +20,8 @@ with Command_Lines;    use Command_Lines;
 procedure Test_Cmd_Line is
    procedure Test_For_GNATY;
    procedure Test_For_GNATW;
+   procedure Test_For_GNATPP;
+
    procedure Check
      (CL       : Command_Line;
       Expanded : Boolean;
@@ -138,7 +140,33 @@ procedure Test_Cmd_Line is
          Check (CL, True, "-gnaty");
       end;
    end Test_For_GNATY;
+
+   procedure Test_For_GNATPP is
+      --  Define
+      --  * -c as switch with an argument without separator (-c0)
+      --  * -cl as switch with an argument without separator (-cl5)
+      --  * set command line and check if all these swithes are present
+
+      Config : Command_Line_Configuration;
+   begin
+      Config.Define_Switch_With_Parameter ("-c");
+      Config.Define_Switch_With_Parameter ("-cl");
+
+      declare
+         CL : Command_Line;
+      begin
+         CL.Set_Configuration (Config);
+         CL.Set_Command_Line ("-cl5 -c0");
+         if not CL.Has_Switch ("-cl")
+           or else not CL.Has_Switch ("-c")
+         then
+            raise Constraint_Error;
+         end if;
+      end;
+   end Test_For_GNATPP;
+
 begin
    Test_For_GNATY;
    Test_For_GNATW;
+   Test_For_GNATPP;
 end Test_Cmd_Line;
