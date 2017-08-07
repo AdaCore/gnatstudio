@@ -31,7 +31,7 @@ package Switches_Chooser is
 
    type Switches_Editor_Config_Record (<>) is tagged private;
    type Switches_Editor_Config is
-      access all Switches_Editor_Config_Record'class;
+      access all Switches_Editor_Config_Record'Class;
 
    type Popup_Index is private;
    Main_Window : constant Popup_Index;

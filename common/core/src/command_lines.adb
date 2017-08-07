@@ -406,43 +406,53 @@ package body Command_Lines is
          Result  : out Switch_Configuration;
          Found   : out Boolean)
       is
-         Arg    : constant Unbounded_String := To_Unbounded_String (Switch);
-         Prefix : constant Unbounded_String := Find_Prefix (Conf, Arg);
-         Value  : Section_Configuration renames Conf.Sections (Section);
-         Pos    : Switch_Configuration_Maps.Cursor := Value.Switches.First;
-         Length : Natural;  --  Length of current switch
+         Arg     : constant Unbounded_String := To_Unbounded_String (Switch);
+         Prefix  : constant Unbounded_String := Find_Prefix (Conf, Arg);
+         Value   : Section_Configuration renames Conf.Sections (Section);
+         Pos     : Switch_Configuration_Maps.Cursor := Value.Switches.First;
+         Length  : Natural;  --  Length of current switch
+         Current : Switch_Configuration;
       begin
+         Found := False;
+
          if Prefix /= "" then
             --  Treat any prefixed switch as unknown
-            Found := False;
             return;
          end if;
 
          while Switch_Configuration_Maps.Has_Element (Pos) loop
-            Result := Switch_Configuration_Maps.Element (Pos);
-            Length := Ada.Strings.Unbounded.Length (Result.Switch);
+            Current := Switch_Configuration_Maps.Element (Pos);
+            Length  := Ada.Strings.Unbounded.Length (Current.Switch);
 
             --  Check if argument exectly matches switch
-            if Result.Switch = Switch then
-               Found := True;
+            if Current.Switch = Switch then
+               Result := Current;
+               Found  := True;
                return;
 
             --  Otherwise check if switch has parameter embeded in argument
-            elsif Result.Parameter.Is_Set
+            elsif Current.Parameter.Is_Set
               and then Switch'Length > Length
-              and then Starts_With (Arg, Result.Switch)
-              and then (not Result.Parameter.Separator.Is_Set
-                        or else Result.Parameter.Separator.Value
-                                  = Switch (Switch'First + Length))
+              and then Starts_With (Arg, Current.Switch)
+              and then (not Current.Parameter.Separator.Is_Set
+                        or else Current.Parameter.Separator.Value =
+                          Switch (Switch'First + Length))
             then
-               Found := True;
-               return;
+               if Found then
+                  --  One parameter is already foung,
+                  --  select one with the biggest length
+                  if Ada.Strings.Unbounded.Length (Result.Switch) < Length then
+                     Result := Current;
+                  end if;
+
+               else
+                  Result := Current;
+                  Found  := True;
+               end if;
             end if;
 
             Switch_Configuration_Maps.Next (Pos);
          end loop;
-
-         Found := False;
       end Find_Switch;
 
       Arg          : GNAT.Strings.String_Access;

@@ -4,7 +4,7 @@ Adds support for GNAT's gnatpp tool
 The gnatpp tool is a command line pretty printer for Ada code,
 provided with the GNAT compiler.
 This package integrates it into GPS:
-  - menu /Edit/Pretty Print
+  - menu /Code/Pretty Print
   - switches edition through the project editor
 """
 
