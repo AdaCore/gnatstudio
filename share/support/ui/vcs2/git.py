@@ -128,7 +128,8 @@ class Git(core.VCS):
 
     def async_fetch_status_for_files(self, files):
         self.async_fetch_status_for_all_files(
-            from_user=False, extra_files=files)
+            from_user=False,
+            extra_files=files)
 
     @core.run_in_background
     def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
@@ -340,14 +341,16 @@ class Git(core.VCS):
             # we have the HEAD
             if has_head is not None and has_local:
                 result.insert(0, GPS.VCS2.Commit(
-                    LOCAL_CHANGES_ID, '', '', '<uncommitted changes>',
+                    LOCAL_CHANGES_ID,
+                    '',
+                    '',
+                    '<uncommitted changes>',
                     parents=[has_head],
                     flags=GPS.VCS2.Commit.Flags.UNCOMMITTED |
                     GPS.VCS2.Commit.Flags.UNPUSHED))
 
             current = GPS.VCS2.Commit(
-                id, author, date, subject, parents, branch_descr,
-                flags=flags)
+                id, author, date, subject, parents, branch_descr, flags=flags)
 
             if branch_commits_only:
                 for pa in parents:
@@ -588,9 +591,12 @@ class Git(core.VCS):
                     'stashes', 'vcs-stash-symbolic', not CAN_RENAME, stashes)
                 break
             name, branch, descr = line.split(':', 2)
-            stashes.append(GPS.VCS2.Branch(
-                name='%s: %s' % (name, descr), active=False,
-                annotation=branch, id=name))
+            stashes.append(
+                GPS.VCS2.Branch(
+                    name='%s: %s' % (name, descr),
+                    active=False,
+                    annotation=branch,
+                    id=name))
 
     def _worktrees(self, visitor):
         """
@@ -608,8 +614,10 @@ class Git(core.VCS):
                 # Do not report if we only have the current directory
                 if len(trees) > 1:
                     visitor.branches(
-                        CAT_WORKTREES, 'vcs-git-worktrees-symbolic',
-                        not CAN_RENAME, trees)
+                        CAT_WORKTREES,
+                        'vcs-git-worktrees-symbolic',
+                        not CAN_RENAME,
+                        trees)
                 break
             elif not line:
                 trees.append(current)
@@ -637,12 +645,15 @@ class Git(core.VCS):
             if line is None:
                 if len(modules) != 0:
                     visitor.branches(
-                        CAT_SUBMODULES, 'vcs-submodules-symbolic',
-                        not CAN_RENAME, modules)
+                        CAT_SUBMODULES,
+                        'vcs-submodules-symbolic',
+                        not CAN_RENAME,
+                        modules)
                 break
             _, sha1, name, _ = line.split(' ', 3)
-            modules.append(GPS.VCS2.Branch(
-                name=name, active=False, annotation='', id=sha1))
+            modules.append(
+                GPS.VCS2.Branch(
+                    name=name, active=False, annotation='', id=sha1))
 
     @core.run_in_background
     def async_branches(self, visitor):
@@ -713,16 +724,19 @@ class Git(core.VCS):
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 p = self._git(['checkout', id])
                 yield p.wait_until_terminate(show_if_error=True)
+
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     '\nDouble-click to checkout this tag' +
                     ('\nClick [+] to create a new tag on current branch'
                      if not id else '') +
                     ('\nClick [-] to delete tag' if id else ''))
+
             elif action == GPS.VCS2.Actions.ADD and not id:
                 name = GPS.MDI.input_dialog(
                     'Choose a name for the new tag',
-                    'name', 'Commit Message (will annotate if set)')
+                    'name',
+                    'Commit Message (will annotate if set)')
                 if name and name[0]:   # not cancelled
                     p = self._git(['tag',
                                    '-a' if name[1] else '',
@@ -748,14 +762,17 @@ class Git(core.VCS):
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 p = self._git(['stash', 'apply', id])
                 yield p.wait_until_terminate(show_if_error=True)
+
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     ('\nDouble-click to apply this stash on HEAD' +
                      '\nClick [-] to drop this stash' if id else '') +
                     ('' if id else '\nClick [+] to stash all local changes'))
+
             elif action == GPS.VCS2.Actions.ADD and not id:
                 p = self._git(['stash', 'save', 'created from GPS'])
                 yield p.wait_until_terminate(show_if_error=True)
+
             elif action == GPS.VCS2.Actions.REMOVE and id:
                 p = self._git(['stash', 'drop', id])
                 yield p.wait_until_terminate(show_if_error=True)
@@ -763,14 +780,17 @@ class Git(core.VCS):
         elif category == CAT_REMOTES:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK:
                 pass
+
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
                     '\nDouble-click to checkout this remote branch locally' +
                     '\nClick [-] to delete this remote branch'
                     if id else '')
                 pass
+
             elif action == GPS.VCS2.Actions.ADD:
                 pass
+
             elif action == GPS.VCS2.Actions.REMOVE and id:
                 # id is of the form 'remotes/origin/some/name'
                 _, origin, name = id.split('/', 2)

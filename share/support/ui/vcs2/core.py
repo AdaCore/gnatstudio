@@ -503,11 +503,7 @@ class VCS(GPS.VCS2):
                 """
                 return self._seen
 
-            def set_status(
-                    self, file,
-                    status,
-                    version="",
-                    repo_version=""):
+            def set_status(self, file, status, version="", repo_version=""):
                 """
                 Set the status for one file
                 :param GPS.File file:
@@ -571,7 +567,7 @@ class VCS(GPS.VCS2):
         to execute the extensions
 
         :returntype: a list of generators, one for each method that is
-           executing in the background.
+           executing in the background or empty list
         """
         result = []
         for ext in self._extensions:
@@ -580,7 +576,7 @@ class VCS(GPS.VCS2):
                 gen = m(*args, **kwargs)
                 if isinstance(gen, types.GeneratorType):
                     result.append(gen)
-            return result
+        return result
 
 
 class File_Based_VCS(VCS):
@@ -752,15 +748,21 @@ class vcs_action:
 
         p = __Proxy(method)
         gps_utils.make_interactive(
-            p, description=method.__doc__,
-            name=action.name, category='VCS2', menu=action.menu,
-            after=action.after, icon=action.icon, filter=p.filter)
+            p,
+            description=method.__doc__,
+            name=action.name,
+            category='VCS2',
+            menu=action.menu,
+            after=action.after,
+            icon=action.icon,
+            filter=p.filter)
 
         if action.toolbar:
             act = GPS.Action(action.name)
-            act.button(toolbar=action.toolbar,
-                       section=action.toolbar_section,
-                       hide=True)
+            act.button(
+                toolbar=action.toolbar,
+                section=action.toolbar_section,
+                hide=True)
 
     @staticmethod
     def register_all_vcs_actions(vcs):
