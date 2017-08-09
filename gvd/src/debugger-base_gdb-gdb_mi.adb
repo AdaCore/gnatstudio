@@ -111,7 +111,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (" (0x[0-9a-zA-Z]+)");
 
    Question_Filter_Pattern1  : constant Pattern_Matcher :=
-     Compile ("^~""\[0\](.|\n)*^~""> ", Multiple_Lines);
+     Compile ("^~""\[0\][\S\s]*^~"">", Multiple_Lines);
 
    Question_Filter_Pattern2  : constant Pattern_Matcher :=
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
@@ -445,6 +445,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end loop;
 
+      Debugger.Process.Set_Parse_File_Name (False);
       declare
          S    : constant String := Debugger.Send_And_Get_Clean_Output
            ("ptype " & Entity, Mode => Internal);
@@ -452,6 +453,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Last : Integer := S'Last;
 
       begin
+         Debugger.Process.Set_Parse_File_Name (True);
          if Pos = 0 then
             return "";
          end if;
