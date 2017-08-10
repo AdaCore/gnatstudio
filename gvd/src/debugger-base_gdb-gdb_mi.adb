@@ -3326,7 +3326,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          C := Find_Identifier (C, "disp");
          Next (C, 2);
-         B.Disposition := Breakpoint_Disposition'Value (Element (C).Text.all);
+
+         if Element (C).Text.all = "keep" then
+            B.Disposition := Keep;
+
+         elsif Element (C).Text.all = "disable" then
+            B.Disposition := Disable;
+
+         else
+            B.Disposition := Delete;
+         end if;
 
          C := Find_Identifier (C, "enabled");
          Next (C, 2);
