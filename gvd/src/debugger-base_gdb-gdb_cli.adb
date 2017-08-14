@@ -109,6 +109,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
 
+   Frame_File_Line_Pattern : constant Pattern_Matcher := Compile
+     ("(.+):(\d+)$", Multiple_Lines);
+   --  Regular expression to separate line from file name
+
    Frame_Subprogram_Params_Pattern : constant Pattern_Matcher := Compile
      ("^(.*) (\(.*\))");
    --  Regular expression used to separate parameters form the subprogram name
@@ -1651,16 +1655,20 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
             if Matched (5) /= No_Match then
                declare
-                  F : constant String :=
+                  Name : constant String :=
                     S (Matched (6).First .. Matched (6).Last);
-                  Idx : constant Natural := Index (F, ":");
+                  MN   : Match_Array (0 .. 2);
                begin
-                  if Idx > F'First then
-                     Rec.File := Create (+(F (F'First .. Idx - 1)));
-                     Rec.Line := Natural'Value (F (Idx + 1 .. F'Last));
+                  Match (Frame_File_Line_Pattern, Name, MN);
+
+                  if MN (0) /= No_Match then
+                     Rec.File := Create
+                       (+(Name (MN (1).First .. MN (1).Last)));
+                     Rec.Line := Natural'Value
+                       (Name (MN (2).First .. MN (2).Last));
 
                   else
-                     Rec.File := Create (+(F));
+                     Rec.File := Create (+(Name));
                   end if;
                end;
             end if;
