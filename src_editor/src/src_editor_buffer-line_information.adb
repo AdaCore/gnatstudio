@@ -53,9 +53,6 @@ package body Src_Editor_Buffer.Line_Information is
 
    Me : constant Trace_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
-   Test_Dump : constant Trace_Handle := Create
-     ("Src_Editor_Buffer.Line_Information.Test_Dump", Off);
-
    type Line_Info_Note_Record is new Abstract_Note with record
       Style : Style_Access := null;
       --  The style used to highlight this message
@@ -155,7 +152,6 @@ package body Src_Editor_Buffer.Line_Information is
       Message : Message_Access) return Editable_Line_Type;
    --  Return the Line which contains Message, 0 if it wasn't found.
 
-   function Dump (Buffer : access Source_Buffer_Record'Class) return String;
    function Image (Data : Line_Info_Width_Array_Access) return String;
    function Image (Data : Line_Info_Width) return String;
    function Image (Data : Gtk_Text_Mark) return String;
@@ -167,80 +163,6 @@ package body Src_Editor_Buffer.Line_Information is
    function Image (Data : Lines_List.List) return String;
    function Image (Data : Universal_Line_Access) return String;
    function Image (Data : Universal_Line) return String;
-
-   ----------
-   -- Dump --
-   ----------
-
-   function Dump (Buffer : access Source_Buffer_Record'Class) return String is
-      Result : Unbounded_String;
-   begin
-      Append
-        (Result,
-         " Buffer.Last_Editable_Line:" &
-           Buffer.Last_Editable_Line'Img & ASCII.LF);
-      Append
-        (Result,
-         " Buffer.Modifying_Editable_Lines:" &
-           Buffer.Modifying_Editable_Lines'Img & ASCII.LF);
-      Append
-        (Result,
-         " Buffer.Line_Data Last:" & Buffer.Line_Data'Last'Img & ASCII.LF);
-
-      for Index in Buffer.Line_Data'Range loop
-         Append (Result, "  #" & Index'Img & ASCII.LF);
-         Append
-           (Result,
-            "   Side_Info_Data:" & ASCII.LF & Image
-              (Buffer.Line_Data (Index).Side_Info_Data) &
-              "   Editable_Line:" & Buffer.Line_Data
-              (Index).Editable_Line'Img & ASCII.LF &
-              "   Line_Mark:" & Image (Buffer.Line_Data (Index).Line_Mark) &
-              "   File_Line:" & Buffer.Line_Data
-              (Index).File_Line'Img & ASCII.LF &
-              "   Highlighting:" & Image
-              (Buffer.Line_Data (Index).Highlighting));
-      end loop;
-
-      Append
-        (Result,
-         " Buffer.Editable_Lines Last:" &
-           Buffer.Editable_Lines'Last'Img & ASCII.LF);
-
-      for Index in Buffer.Editable_Lines'Range loop
-         Append (Result, "  #" & Index'Img & ASCII.LF);
-         Append
-           (Result, "  Where:" & Buffer.Editable_Lines
-              (Index).Where'Img & ASCII.LF &
-              "  Stored_Lines:" & Image
-              (Buffer.Editable_Lines (Index).Stored_Lines) &
-              "  Stored_Editable_Lines:" &
-              Buffer.Editable_Lines
-              (Index).Stored_Editable_Lines'Img & ASCII.LF &
-              "  Stored_Editable_Lines:" &
-              Buffer.Editable_Lines
-              (Index).Stored_Editable_Lines'Img & ASCII.LF);
-
-         case Buffer.Editable_Lines (Index).Where is
-            when In_Buffer =>
-               Append
-                 (Result, "  Buffer_Line:" &
-                    Buffer.Editable_Lines (Index).Buffer_Line'Img & ASCII.LF);
-
-            when In_Mark =>
-               Append (Result, "  Text:" &
-                       (if Buffer.Editable_Lines (Index).Text = null
-                          then " null"
-                          else Buffer.Editable_Lines (Index).Text.all)
-                       & ASCII.LF);
-
-               Append
-                 (Result, "  UL:" & Image (Buffer.Editable_Lines (Index).UL));
-         end case;
-      end loop;
-
-      return To_String (Result);
-   end Dump;
 
    ------------------------
    -- Message_Is_On_Line --
@@ -453,7 +375,7 @@ package body Src_Editor_Buffer.Line_Information is
                D.Side_Info_Data (K) :=
                  (Message_Reference_List.Empty_List,
                   Action => null,
-                  Set   => not Columns_Config.all (K).Every_Line);
+                  Set    => not Columns_Config.all (K).Every_Line);
             end loop;
 
          else
@@ -1499,17 +1421,11 @@ package body Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter       : Gtk_Text_Iter;
-      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number     : Positive := 1;
-   begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace
-           ("Add_Blank_Lines Line:" & Line'Img & " EL:" & EL'Img &
-              " Text:" & Text & " Name:" & Name & " Column_Id:" & Column_Id);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
+      Iter   : Gtk_Text_Iter;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Positive := 1;
 
+   begin
       if Line = 0 then
          return null;
       end if;
@@ -1590,11 +1506,6 @@ package body Src_Editor_Buffer.Line_Information is
             Identifier     => Column_Id,
             Data           => Info.all,
             At_Buffer_Line => Line);
-      end if;
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Add_Blank_Lines");
-         Test_Dump.Trace (Dump (Buffer));
       end if;
 
       return Mark;
@@ -2037,15 +1948,6 @@ package body Src_Editor_Buffer.Line_Information is
       end Expand_Lines;
 
    begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace
-           ("Add_Lines Start:" & Start'Img &
-              " Number:" & Number'Img &
-              " Position:" & Buffer.Inserting_Position'Img &
-              " Original_Text_Inserted:" & Buffer.Original_Text_Inserted'Img);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
-
       if Number <= 0 then
          return;
       end if;
@@ -2099,12 +2001,6 @@ package body Src_Editor_Buffer.Line_Information is
                   exit;
                end if;
             end loop;
-         end if;
-
-         if Test_Dump.Is_Active then
-            Test_Dump.Trace
-              ("Position:" & Position'Img &
-                 " Ref_Editable_Line:" & Ref_Editable_Line'Img);
          end if;
 
          --  Figure out whether we need to expand the line arrays
@@ -2170,6 +2066,45 @@ package body Src_Editor_Buffer.Line_Information is
               + Editable_Line_Type (J);
          end loop;
 
+         if Buffer.Inserting_Position = Other
+           and then Buffer_Lines (Position).Side_Info_Data /= null
+         then
+            declare
+               use Message_Reference_List;
+
+               EL   : constant Editable_Line_Type :=
+                 Buffer_Lines (Position + 1).Editable_Line;
+               Src  : Line_Info_Width_Array_Access renames
+                 Buffer_Lines (Position).Side_Info_Data;
+               Dst  : Line_Info_Width_Array_Access renames
+                 Buffer_Lines (Position + 1).Side_Info_Data;
+               C, N : Message_Reference_List.Cursor;
+               Msg  : Message_Access;
+            begin
+               for Index in Src'Range loop
+                  C := Src (Index).Messages.First;
+                  while Has_Element (C) loop
+                     Msg := Message (Element (C));
+                     if Msg = null
+                       or else Editable_Line_Type
+                         (Msg.Get_Editor_Mark.Line) = EL
+                     then
+                        if Msg /= null then
+                           Buffer.Create_Side_Info (Position + 1);
+                           Dst (Index).Messages.Append (Element (C));
+                        end if;
+
+                        N := C;
+                        Next (C);
+                        Src (Index).Messages.Delete (N);
+                     else
+                        Next (C);
+                     end if;
+                  end loop;
+               end loop;
+            end;
+         end if;
+
          if Buffer.Modifying_Editable_Lines then
             for J in 0 .. EN - 1 loop
                Editable_Lines (Ref_Editable_Line + J) :=
@@ -2186,11 +2121,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       Recalculate_Side_Column_Width (Buffer);
       Side_Column_Configuration_Changed (Buffer);
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Add_Lines");
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
    end Add_Lines;
 
    ------------------
@@ -2210,12 +2140,6 @@ package body Src_Editor_Buffer.Line_Information is
       EN : Editable_Line_Type := Editable_Line_Type (Count);
       EL : Editable_Line_Type;
    begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace
-           ("Remove_Lines Start:" & Start_Line'Img & " Count:" & Count'Img);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
-
       if Count < 1 then
          return;
       end if;
@@ -2267,30 +2191,11 @@ package body Src_Editor_Buffer.Line_Information is
             --  structures down directly.
             Lines_To_Report : Editable_Line_Array_Access;
          begin
-            Lines_To_Report := new Editable_Line_Array (1 .. EN);
-
-            if Test_Dump.Is_Active then
-               Test_Dump.Trace
-                 ("ES:" & ES'Img & " EN:" & EN'Img &
-                    " Buffer_Lines'Last:" & Buffer_Lines'Last'Img &
-                    " Editable_Lines'Last:" & Editable_Lines'Last'Img &
-                    " Buffer_Lines (ES).Editable_Line:" &
-                    Buffer_Lines (ES).Editable_Line'Img &
-                    " Buffer_Lines (ES).Editable_Line + EN - 1:" &
-                    Editable_Line_Type'Image
-                    (Buffer_Lines (ES).Editable_Line + EN - 1));
-            end if;
-
+            Lines_To_Report     := new Editable_Line_Array (1 .. EN);
             Lines_To_Report.all := Editable_Lines (EL .. EL + EN - 1);
 
             Editable_Lines (EL .. Buffer.Last_Editable_Line - EN) :=
               Editable_Lines (EL + EN .. Buffer.Last_Editable_Line);
-
-            if Test_Dump.Is_Active then
-               Test_Dump.Trace
-                 ("ES:" & ES'Img & " Buffer_Lines'Last:" &
-                    Buffer_Lines'Last'Img);
-            end if;
 
             for J in EL .. Buffer.Last_Editable_Line - EN loop
                if Editable_Lines (J).Where = In_Buffer then
@@ -2317,11 +2222,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       Recalculate_Side_Column_Width (Buffer);
       Side_Column_Configuration_Changed (Buffer);
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Remove_Lines");
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
    end Remove_Lines;
 
    ------------------------
@@ -2349,13 +2249,6 @@ package body Src_Editor_Buffer.Line_Information is
       Success     : Boolean;
 
    begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace
-           ("Remove_Blank_Lines Buffer_Line_At_Blanks:" &
-              Buffer_Line_At_Blanks'Img & " Number:" & Number'Img);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
-
       if Buffer.In_Destruction then
          return;
       end if;
@@ -2418,11 +2311,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Configuration_Changed (Buffer);
       Buffer.Modifying_Real_Lines := False;
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Remove_Blank_Lines");
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
    end Remove_Blank_Lines;
 
    procedure Remove_Blank_Lines
@@ -2467,12 +2355,6 @@ package body Src_Editor_Buffer.Line_Information is
       Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
       L              : Gint;
    begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace
-           ("Hide_Lines Line:" & Line'Img & " Number:" & Number'Img);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
-
       Buffer.Modifying_Real_Lines := True;
 
       Line_Start := Get_Editable_Line (Buffer, Line);
@@ -2623,11 +2505,6 @@ package body Src_Editor_Buffer.Line_Information is
       --  Emit the "source_lines_folded" hook
 
       Buffer.Source_Lines_Folded (Line_Start, Line_End);
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Hide_Lines");
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
    end Hide_Lines;
 
    ------------------
@@ -2660,11 +2537,6 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Iter, End_Iter : Gtk_Text_Iter;
 
    begin
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("Unhide_Lines Start_Line:" & Start_Line'Img);
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
-
       --  Initializations
 
       Buffer.Modifying_Real_Lines := True;
@@ -2819,11 +2691,6 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Source_Lines_Unfolded
         (Start_Line,
          Start_Line + Editable_Line_Type (Number_Of_Lines_Unfolded));
-
-      if Test_Dump.Is_Active then
-         Test_Dump.Trace ("<- Unhide_Lines");
-         Test_Dump.Trace (Dump (Buffer));
-      end if;
    end Unhide_Lines;
 
    --------------

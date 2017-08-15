@@ -2245,10 +2245,12 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
    begin
       Update_Logical_Timestamp (Buffer);
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
+      Get_Text_Iter (Nth (Params, 2), End_Iter);
 
       --  Move mark of start of re-highlight area into insertion position
 
@@ -2311,6 +2313,44 @@ package body Src_Editor_Buffer is
                Visible_Column (Get_Line_Offset (Start_Iter) + 1)),
             not Buffer.Inserting);
       end loop;
+
+      if Buffer_Line_Type (Get_Line (Start_Iter)) in Buffer.Line_Data'Range
+        and then not Starts_Line (Start_Iter)
+        and then not Ends_Line (Start_Iter)
+      then
+         --  Start line was not removed completely, check if all messages
+         --  still have corresponding locations in source code
+
+         declare
+            use Message_Reference_List;
+            Src  : Line_Info_Width_Array_Access renames
+              Buffer.Line_Data (Buffer_Line_Type
+                                (Get_Line (Start_Iter))).Side_Info_Data;
+
+            Msg          : Message_Access;
+            For_Deleting : Message_Reference_List.List;
+
+         begin
+            for Index in Src'Range loop
+               for Ref of Src (Index).Messages loop
+                  Msg := Message (Ref);
+                  if Msg /= null
+                    and then not Msg.Get_Editor_Mark.Is_Present
+                  then
+                     For_Deleting.Append (Ref);
+                  end if;
+               end loop;
+            end loop;
+
+            while not For_Deleting.Is_Empty loop
+               Msg := Message (For_Deleting.First_Element);
+               if Msg /= null then
+                  Remove (Msg);
+               end if;
+               For_Deleting.Delete_First;
+            end loop;
+         end;
+      end if;
 
    exception
       when E : others =>
@@ -6016,7 +6056,7 @@ package body Src_Editor_Buffer is
                Buffer.Line_Data (Line).Side_Info_Data (K) :=
                  (Message_Reference_List.Empty_List,
                   Action => null,
-                  Set   => not Columns_Config (K).Every_Line);
+                  Set    => not Columns_Config (K).Every_Line);
             end loop;
          end if;
       end if;
