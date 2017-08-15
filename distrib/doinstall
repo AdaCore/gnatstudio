@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Go to directory where doinstall script is located
+cd `dirname $0`
+
 clear
 cat <<EOF
 
