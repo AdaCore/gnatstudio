@@ -514,7 +514,7 @@ package body LAL.Semantic_Trees is
                   Node : constant Generic_Subp_Decl :=
                     Generic_Subp_Decl (Self.Ada_Node);
                begin
-                  if Node.F_Subp_Spec.F_Subp_Returns = null then
+                  if Node.F_Subp_Decl.F_Subp_Spec.F_Subp_Returns = null then
                      return Language.Cat_Procedure;
                   else
                      return Language.Cat_Function;
@@ -547,12 +547,10 @@ package body LAL.Semantic_Trees is
                return Language.Cat_Loop_Statement;
             when Ada_Case_Stmt =>
                return Language.Cat_Case_Statement;
-            when Ada_Block_Stmt =>
-               if Block_Stmt (Self.Ada_Node).F_Decls = null then
-                  return Language.Cat_Simple_Block;
-               else
-                  return Language.Cat_Declare_Block;
-               end if;
+            when Ada_Begin_Block =>
+               return Language.Cat_Simple_Block;
+            when Ada_Decl_Block =>
+               return Language.Cat_Declare_Block;
             when Ada_Pragma_Node =>
                return Language.Cat_Pragma;
             when Ada_Extended_Return_Stmt =>
