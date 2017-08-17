@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# Go to directory where doinstall script is located
-cd `dirname $0`
-
 clear
 cat <<EOF
 
@@ -17,7 +14,7 @@ EOF
 
 read x
 
-current_dir=`/bin/pwd`
+current_dir=`cd "$(dirname "$0")"; pwd`
 
 ## Read the base directory (absolute path name)
 ## Sets the variable  $basedir
