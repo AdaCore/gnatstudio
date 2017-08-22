@@ -1,5 +1,10 @@
 """Examine the project dependencies
 
+This plugins adds menus
+
+   /Analyze/Project Dependencies/Check (to console)
+   /Analyze/Project Dependencies/Check (to XML)
+
 This script will examine the dependency tree between all your projects,
 and reports dependencies that are in fact not needed (and since e.g. they will
 impact what's put on the linker command line, you may want to remove them),
@@ -69,9 +74,9 @@ class Output:
         """Indicate a new GPS.Project dependency for the current project"""
         show_diff = Preference("Plugins/dependencies/show_diff").get()
         if removed and show_diff:
-            Console().write(" - " + dependency.path + "\n")
+            Console().write(" - " + dependency.file().path + "\n")
         elif newdep or not show_diff:
-            Console().write(" + " + dependency.path + "\n")
+            Console().write(" + " + dependency.file().path + "\n")
 
     def explain_dependency(self, file, depends_on):
         """Explains the last add_dependency: file depends on depends_on"""
@@ -79,7 +84,7 @@ class Output:
             Console().write(
                 "   => {} depends on {}\n".format(
                     os.path.basename(file.path),
-                    os.path.basename(depends_on.path)
+                    os.path.basename(depends_on.file().path)
                 )
             )
 
@@ -120,12 +125,12 @@ class XMLOutput:
         else:
             extra = "extra=''"
         self.xml = self.xml + "<dependency name='" + \
-            dependency.path + "' " + extra + ">\n"
+            dependency.file().path + "' " + extra + ">\n"
 
     def explain_dependency(self, file, depends_on):
         self.xml = self.xml + \
             "<file src='" + \
-            file.path + "'>" + depends_on.path + "</file>\n"
+            file.path + "'>" + depends_on.file().path + "</file>\n"
 
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
@@ -207,7 +212,7 @@ def compute_project_dependencies(output):
                     pass
 
             for dep in current_deps[p]:
-                if dep.path.lower() not in no_source_projects:
+                if dep.name().lower() not in no_source_projects:
                     output.add_dependency(dep, newdep=False, removed=True)
 
         output.close()
@@ -216,7 +221,7 @@ def compute_project_dependencies(output):
 
 
 @interactive(name='check project dependencies to console',
-             menu='/Project/Dependencies/Check (to console)')
+             menu='/Analyze/Project Dependencies/Check (to console)')
 def check_project_dependencies_to_console():
     """
     Check whether there are dependencies between the project files that are
@@ -226,7 +231,7 @@ def check_project_dependencies_to_console():
 
 
 @interactive(name='check project dependencies to xml',
-             menu='/Project/Dependencies/Check (to XML)')
+             menu='/Analyze/Project Dependencies/Check (to XML)')
 def check_project_dependencies_to_xml():
     """
     Check whether there are dependencies between the project files that are
