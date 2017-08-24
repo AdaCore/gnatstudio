@@ -1613,7 +1613,7 @@ else:
         def __contextual_filter_viewer_active_history(self, context):
             try:
                 viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
-                return viewer.nav_index != -1
+                return viewer.nav_index > 0
             except:
                 return False
 
