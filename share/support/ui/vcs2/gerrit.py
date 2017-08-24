@@ -11,6 +11,10 @@ CAN_RENAME = True
 
 
 class Gerrit(core.Extension):
+    def __init__(self, base_vcs):
+        super(Gerrit, self).__init__(base_vcs)
+        self.gerrit_accessible = True
+
     def applies(self):
         gitreview = os.path.join(self.base.working_dir.path, '.gitreview')
 
@@ -38,6 +42,9 @@ class Gerrit(core.Extension):
         #   Host ...
         #      RemoteForward 3142 localhost:22
 
+        if not self.gerrit_accessible:
+            return
+
         p = ProcessWrapper(
             ['ssh',
              '-x',
@@ -50,6 +57,7 @@ class Gerrit(core.Extension):
              '--current-patch-set',
              'project:%s' % self.project,
              'status:open'], block_exit=False)
+
         reviews = []
         while True:
             line = yield p.wait_line()
@@ -58,6 +66,13 @@ class Gerrit(core.Extension):
                     visitor.branches(
                         CAT_REVIEWS, 'vcs-gerrit-symbolic',
                         not CAN_RENAME, reviews)
+                break
+
+            if line.startswith('Bad port'):
+                # Seems like Gerrit can't be accessed
+                GPS.Console().write('Can\'t access Gerrit %s:%s\n' % (
+                    self.host, self.port))
+                self.gerrit_accessible = False
                 break
 
             patch = json.loads(line)
@@ -83,6 +98,9 @@ class Gerrit(core.Extension):
                      json.dumps(id)))
 
     def async_action_on_branch(self, visitor, action, category, id, text=''):
+        if not self.gerrit_accessible:
+            return
+
         if category == CAT_REVIEWS:
             if id:
                 id = json.loads(id)
@@ -111,6 +129,9 @@ class Gerrit(core.Extension):
         Push all local changes to Gerrit, so that they can be reviewed by
         other team members.
         """
+        if not self.gerrit_accessible:
+            return
+
         p = self.base._git(
             ['review', '--yes', '--no-rebase'],
             spawn_console='')
