@@ -949,6 +949,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         context.modeling_item = item
         context.modeling_topitem = topitem
 
+
 MDL_Language.register()   # available before project is loaded
 
 if not CLI.is_available():
@@ -1100,6 +1101,31 @@ else:
             del QGEN_Module.previous_breakpoints[:]
 
         @staticmethod
+        def get_item_parent_to_display(item):
+            """
+            Returns the parent of an item that is displayed, which
+            means that it contains the label
+            """
+            item_parent = item
+            p = item.parent
+            while p is not None:
+                item_parent = p
+                p = item_parent.parent
+            return item_parent
+
+        @staticmethod
+        def clear_all_item_values(diagram):
+            """
+            Clears the signal values displayed on a diagram
+            """
+
+            for _, _, it in Diagram_Utils.forall_auto_items(
+                    [diagram]):
+                item_parent = QGEN_Module.get_item_parent_to_display(it)
+                item_parent.hide()
+            diagram.changed()
+
+        @staticmethod
         def compute_all_item_values(task, debugger, diagram, viewer):
             # Compute the value for all items with an "auto" property
             auto_items_list = list(Diagram_Utils.forall_auto_items(
@@ -1162,21 +1188,7 @@ else:
                property that indicates its value should be displayed.
             """
 
-            # Find the parent with an id. When item is the label of a link, the
-            # parent will be set to None, so we default to toplevel (the link,
-            # in that case)
-            parent = item.get_parent_with_id() or toplevel
-
-            # Find the parent to hide (the one that contains the label)
-            item_parent = item
-            p = item.parent
-            while p is not None:
-                item_parent = p
-                p = item_parent.parent
-
-            if debugger is None:
-                item_parent.hide()
-                return
+            item_parent = QGEN_Module.get_item_parent_to_display(item)
 
             def update_item_value(value):
                 # Skip case when the variable is unknown
@@ -1200,6 +1212,11 @@ else:
                         item.text = value
                     else:
                         item_parent.hide()
+
+            # Find the parent with an id. When item is the label of a link, the
+            # parent will be set to None, so we default to toplevel (the link,
+            # in that case)
+            parent = item.get_parent_with_id() or toplevel
 
             ss = QGEN_Module.get_var_from_item(parent)
             if ss is not None:
@@ -1225,15 +1242,25 @@ else:
                 debugger = GPS.Debugger.get()
             except:
                 debugger = None
-            # Compute the value for all items with an "auto" property
-            if QGEN_Module.display_tasks:
-                QGEN_Module.cancel_workflows()
-                while QGEN_Module.display_tasks:
-                    yield timeout(100)
 
-            workflows.task_workflow(
-                'Updating signal values', QGEN_Module.compute_all_item_values,
-                debugger=debugger, diagram=diag, viewer=viewer)
+            # If the debugger is not started, is not running, or is
+            # not stopped at an execution point, we do not display any
+            # signal value.
+            if debugger is None or debugger.current_frame() == -1 \
+               or debugger.is_busy():
+                QGEN_Module.clear_all_item_values(diag)
+            else:
+                # Compute the value for all items with an "auto" property
+                if QGEN_Module.display_tasks:
+                    QGEN_Module.cancel_workflows()
+                    while QGEN_Module.display_tasks:
+                        yield timeout(100)
+
+                workflows.task_workflow(
+                    'Updating signal values',
+                    QGEN_Module.compute_all_item_values,
+                    debugger=debugger, diagram=diag, viewer=viewer)
+
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
 
