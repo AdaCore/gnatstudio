@@ -520,7 +520,7 @@ class Search(Dialog):
         CURRENT_SELECTION="Current Selection",
         OPEN_FILES="Open Files",
         FILES="Files...",
-        FROM_FROM_RUNTIME="Files From Runtime",
+        FILES_FROM_RUNTIME="Files From Runtime",
         FILES_FROM_PROJECT="Files From Projects")
 
     def open_and_yield(self):

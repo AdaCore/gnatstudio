@@ -111,7 +111,7 @@ package body Vsearch is
    Replace_Child_Key  : constant String := "replace_child";
    --  Keys used to identify the pattern/replace entry widgets
 
-   Last_Function_In_Module_Key : constant History_Key := "search_function_";
+   Last_Search_Module_Key : constant History_Key := "search_module";
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
 
@@ -240,21 +240,23 @@ package body Vsearch is
       Module : Search_Module);
    --  Set the the current search module used by the Search view
 
-   procedure Set_Last_Of_Module
+   procedure Set_Last_Search_Module
      (Handle : access Kernel_Handle_Record'Class;
       Module : Search_Module);
    --  The Module given in parameter is set as being the last one selected
    --  by the user, and will be the next one shown for the corresponding
    --  module.
 
-   function Get_Search_Module_From_Context
+   function Get_Search_Module_From_Context_Or_History
      (Vsearch      : not null access Vsearch_Record'Class;
       Context      : Selection_Context;
       In_Selection : Boolean := False) return Search_Module;
-   --  Return the first search module that matches the given context.
-   --  If the context does not macth with any of registered search module,
-   --  return the currently used search module, if any, or the default one
-   --  otherwise.
+   --  Return the first search module that matches the given context or, if the
+   --  keep-previous-search-context preference is set, the one registered in
+   --  the history.
+   --  If the context does not macth with any of the registered search modules
+   --  (or if the history is empty), return the currently used search module,
+   --  if any, or the default one otherwise.
 
    procedure Free (Module : Search_Module);
    --  Free the memory associated with Module
@@ -341,7 +343,7 @@ package body Vsearch is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  A command that opens the search view and presets the Look In field to
    --  a specific function. If Context is null, then the previous context is
-   --  preserve if the preference Keep_Previous_Search_Context is set,
+   --  preserve if the preference keep-previous-search-context is set,
    --  otherwise the context is reset depending on the current module.
 
    type Replace_Specific_Context is new Search_Specific_Context with
@@ -1358,7 +1360,7 @@ package body Vsearch is
       Child               : MDI_Child;
    begin
       if Module /= null then
-         Set_Last_Of_Module (Vsearch_Module_Id.Kernel, Module);
+         Set_Last_Search_Module (Vsearch_Module_Id.Kernel, Module);
 
          --  Set the widgets' sensitivity/sate according to the options
          --  supported by the newly selected search module.
@@ -1839,11 +1841,6 @@ package body Vsearch is
             Num := Num + 1;
          end;
       end loop;
-
-      --  If no active search module is selected, select the default one
-      if Vsearch.Context_Combo.Get_Active = -1 then
-         Vsearch.Set_Search_Module (Vsearch_Module_Id.Default_Search_Module);
-      end if;
    end Refresh_Context_Combo;
 
    -------------
@@ -1967,7 +1964,7 @@ package body Vsearch is
          Patterns  : constant String_List_Access :=
                        Get_History (History, Pattern_Hist_Key);
       begin
-         --  Create a new key in the history to save the replace patterms and
+         --  Create a new key in the history to save the replace patterns and
          --  fill the replace combo first, so that the selection remains in the
          --  pattern combo.
 
@@ -2027,6 +2024,16 @@ package body Vsearch is
             Self.Set_Vsearch_Mode
               (Mode => Vsearch_Mode'Value (Last_Mode (Last_Mode'Last).all));
          end if;
+         --  Create a key in the history to save the last used search module
+         --  when the keep-previous-search-context preference is set.
+         Create_New_Key_If_Necessary
+           (History,
+            Key      => Last_Search_Module_Key,
+            Key_Type => Strings);
+         Set_Max_Length
+           (History,
+            Num => 1,
+            Key => Last_Search_Module_Key);
       end Initialize_From_History;
 
       Group_Widget : Dialog_Group_Widget;
@@ -2423,6 +2430,10 @@ package body Vsearch is
         (Menu,
          Kernel => View.Kernel,
          Pref   => Select_On_Match);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Keep_Previous_Search_Context);
    end Create_Menu;
 
    ---------------
@@ -2585,7 +2596,7 @@ package body Vsearch is
 
          if Context = null then
             View.Set_Search_Module
-              (Get_Search_Module_From_Context
+              (Get_Search_Module_From_Context_Or_History
                  (View,
                   Context      => Selected,
                   In_Selection => Has_Multiline_Selection));
@@ -2996,20 +3007,8 @@ package body Vsearch is
       Module        : not null access Search_Module_Type'Class;
       Is_Default    : Boolean := False)
    is
-      Id    : constant Module_ID := Module.Get_Id;
       Label : constant String := Module.Get_Label;
    begin
-      if Id /= null then
-         Create_New_Key_If_Necessary
-           (Get_History (Kernel).all,
-            Last_Function_In_Module_Key & History_Key (Get_Name (Id)),
-            Key_Type => Strings);
-         Set_Max_Length
-           (Get_History (Kernel).all,
-            1,   --  Only the last one is interesting
-            Last_Function_In_Module_Key & History_Key (Get_Name (Id)));
-      end if;
-
       Prepend (Vsearch_Module_Id.Search_Modules, Module);
 
       if Is_Default then
@@ -3097,66 +3096,106 @@ package body Vsearch is
       return null;
    end Find_Module;
 
-   ------------------------------------
-   -- Get_Search_Module_From_Context --
-   ------------------------------------
+   -----------------------------------------------
+   -- Get_Search_Module_From_Context_Or_History --
+   -----------------------------------------------
 
-   function Get_Search_Module_From_Context
+   function Get_Search_Module_From_Context_Or_History
      (Vsearch      : not null access Vsearch_Record'Class;
       Context      : Selection_Context;
       In_Selection : Boolean := False) return Search_Module
    is
-      Id                  : constant Module_ID :=
-                              Module_ID (Get_Creator (Context));
-      List                : Search_Modules_List.Cursor :=
-                              Vsearch_Module_Id.Search_Modules.First;
-      Last_Matching_Node  : Search_Modules_List.Cursor := No_Element;
-      Key                 : constant History_Key :=
-        Last_Function_In_Module_Key & History_Key (Get_Name (Id));
-      Last_Selected       : constant String_List_Access :=
-        Get_History (Get_History (Get_Kernel (Context)).all, Key);
-   begin
-      while Has_Element (List) loop
-         if Element (List).Get_Id = Id
-           and Element (List).Get_In_Selection = In_Selection
-         then
-            Last_Matching_Node := List;
+      Module : Search_Module;
+      Id     : constant Module_ID :=
+                 Module_ID (Get_Creator (Context));
 
-            if not Get_Pref (Keep_Previous_Search_Context)
-              or else Last_Selected = null
-              or else Last_Selected (Last_Selected'First).all =
-                 Element (List).Get_Label
+      function Get_Search_Module_From_Context return Search_Module;
+      function Get_Search_Module_From_History return Search_Module;
+
+      ------------------------------------
+      -- Get_Search_Module_From_Context --
+      ------------------------------------
+
+      function Get_Search_Module_From_Context return Search_Module is
+         List : Search_Modules_List.Cursor :=
+                  Vsearch_Module_Id.Search_Modules.First;
+
+      begin
+         while Has_Element (List) loop
+            if Element (List).Get_Id = Id
+              and then Element (List).Get_In_Selection = In_Selection
             then
-               if Active (Me) then
-                  Trace (Me, "Get last search function for module "
-                         & String (Key) & ": " & Element (List).Get_Label);
-               end if;
-
                return Element (List);
             end if;
+
+            List := Next (List);
+         end loop;
+
+         return null;
+      end Get_Search_Module_From_Context;
+
+      ------------------------------------
+      -- Get_Search_Module_From_History --
+      ------------------------------------
+
+      function Get_Search_Module_From_History return Search_Module is
+         Last_Selected : constant String_List_Access :=
+           Get_History
+             (Get_History (Get_Kernel (Context)).all,
+              Last_Search_Module_Key);
+      begin
+         if Last_Selected /= null then
+            declare
+               Module_Name : constant String :=
+                               Last_Selected (Last_Selected'First).all;
+            begin
+               return Find_Module
+                 (Kernel => Get_Kernel (Context),
+                  Label  => Module_Name);
+            end;
          end if;
 
-         List := Next (List);
-      end loop;
+         return null;
+      end Get_Search_Module_From_History;
 
-      if Has_Element (Last_Matching_Node) then
-         return Element (Last_Matching_Node);
+   begin
+      --  Retrieve the search module from the history if the
+      --  keep-previous-search-context preference is set.
+
+      if Keep_Previous_Search_Context.Get_Pref then
+         Module := Get_Search_Module_From_History;
       end if;
 
-      --  If the context does not match with any registered module, return the
-      --  one currently used, if any, or the default one otherwise.
-      return Module : Search_Module do
-         if Id /= null and then Id.Module_Name = Search_Module_Name then
-            Module := Find_Module
-              (Vsearch_Module_Id.Kernel,
-               Label => Get_Active_Text (Vsearch.Context_Combo));
-         end if;
+      --  If no module has been found in the history or if the
+      --  keep-previous-search-context preference is unset, get the module from
+      --  the current context.
 
-         if Module = null then
-            Module := Vsearch_Module_Id.Default_Search_Module;
-         end if;
-      end return;
-   end Get_Search_Module_From_Context;
+      if Module = null then
+         Module := Get_Search_Module_From_Context;
+      end if;
+
+      --  Return if a module has been found at this stage.
+
+      if Module /= null then
+         return Module;
+      end if;
+
+      --  If no module has been retrieved from either the current context or
+      --  the history, return the one currently used, if any, or the default
+      --  one otherwise.
+
+      if Id /= null and then Id.Module_Name = Search_Module_Name then
+         Module := Find_Module
+           (Vsearch_Module_Id.Kernel,
+            Label => Get_Active_Text (Vsearch.Context_Combo));
+      end if;
+
+      if Module = null then
+         Module := Vsearch_Module_Id.Default_Search_Module;
+      end if;
+
+      return Module;
+   end Get_Search_Module_From_Context_Or_History;
 
    -----------------------
    -- Set_Search_Module --
@@ -3173,11 +3212,11 @@ package body Vsearch is
       end if;
    end Set_Search_Module;
 
-   ------------------------
-   -- Set_Last_Of_Module --
-   ------------------------
+   ----------------------------
+   -- Set_Last_Search_Module --
+   ----------------------------
 
-   procedure Set_Last_Of_Module
+   procedure Set_Last_Search_Module
      (Handle : access Kernel_Handle_Record'Class;
       Module : Search_Module) is
    begin
@@ -3195,9 +3234,9 @@ package body Vsearch is
 
       Add_To_History
         (Get_History (Handle).all,
-         Last_Function_In_Module_Key & History_Key (Get_Name (Module.Get_Id)),
+         Last_Search_Module_Key,
          Module.Get_Label);
-   end Set_Last_Of_Module;
+   end Set_Last_Search_Module;
 
    -----------------------------
    -- Register_Search_Pattern --
@@ -3285,7 +3324,7 @@ package body Vsearch is
               Context     => null,
               Incremental => False),
          Description => -("Open the search dialog. If you have selected the"
-           & " preference Search/Preserve Search Context, the same context"
+           & " preference Search/Preserve search context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
          Icon_Name   => "gps-search-symbolic",
@@ -3431,7 +3470,7 @@ package body Vsearch is
          Name  => "keep-previous-search-context",
          Label => -"Preserve Search Context",
          Path  => -":Search",
-         Doc   => -("Preserve the contents of the ""Look in"" entry"
+         Doc   => -("Preserve the contents of the ""in"" entry"
            & " between searches."),
          Default => False);
 
