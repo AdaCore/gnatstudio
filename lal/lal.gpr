@@ -1,5 +1,6 @@
 with "../kernel/kernel_core";
 with "../shared";
+with "../laltools/src/lal_tools";
 
 with "libadalang";
 with "gnatcoll_python";

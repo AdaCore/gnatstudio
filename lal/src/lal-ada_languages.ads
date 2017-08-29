@@ -14,30 +14,40 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Main entry point for libAdaLang integration module
 
-with GPS.Core_Kernels;
+with Language;               use Language;
+with Language.Ada;
+with Case_Handling;
 with Libadalang.Analysis;
-with LAL.Unit_Providers;
-with LAL.Ada_Languages;
-with Language.Tree.Database;
+private with Utils.Command_Lines;
+private with Pp.Command_Lines;
 
-package LAL.Module is
+package LAL.Ada_Languages is
 
-   type LAL_Module_Id_Record is
-     new GPS.Core_Kernels.Abstract_Module_Record with record
-      Kernel        : GPS.Core_Kernels.Core_Kernel;
-      Context       : Libadalang.Analysis.Analysis_Context;
-      Unit_Provider : aliased LAL.Unit_Providers.Unit_Provider;
-      Lang          : aliased LAL.Ada_Languages.Ada_Language;
+   type Ada_Language is new Language_Root with private;
+
+   procedure Initialize
+     (Self    : in out Ada_Language'Class;
+      Context : Libadalang.Analysis.Analysis_Context);
+
+private
+
+   type Ada_Language is new Language.Ada.Ada_Language with record
+      Context         : Libadalang.Analysis.Analysis_Context;
+      Pp_Command_Line : Utils.Command_Lines.Command_Line
+        (Pp.Command_Lines.Descriptor'Access);
    end record;
 
-   type LAL_Module_Id is access all LAL_Module_Id_Record'Class;
+   overriding procedure Format_Buffer
+     (Lang                : access Ada_Language;
+      Buffer              : String;
+      Replace             : Replace_Text_Callback;
+      From, To            : Natural := 0;
+      Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset       : Natural := 0;
+      Case_Exceptions     : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception;
+      Is_Optional_Keyword : access function (S : String)
+                                             return Boolean := null);
 
-   procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access);
-   --  Register module
-
-end LAL.Module;
+end LAL.Ada_Languages;

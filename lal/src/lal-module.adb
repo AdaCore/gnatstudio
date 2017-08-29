@@ -86,7 +86,8 @@ package body LAL.Module is
 
    procedure Register_Module
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config : Use_LAL_Configuration)
+      Config : Use_LAL_Configuration;
+      Legacy : Language.Tree.Database.Tree_Language_Access)
    is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
@@ -102,6 +103,11 @@ package body LAL.Module is
         (Command => "get_analysis_unit",
          Class   => Editor_Buffer_Class,
          Handler => Get_Analysis_Unit_Shell'Access);
+
+      if Config (Use_LAL_In_Indent) then
+         Module.Lang.Initialize (Module.Context);
+         Kernel.Lang_Handler.Register_Language (Module.Lang'Access, Legacy);
+      end if;
 
       Kernel.Register_Tree_Provider
         (Language.Ada.Ada_Lang,

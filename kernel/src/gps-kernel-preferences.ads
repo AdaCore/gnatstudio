@@ -300,6 +300,7 @@ package GPS.Kernel.Preferences is
    Use_LAL_In_Info    : Boolean_Preference;
    Use_LAL_In_GNATHUB : Boolean_Preference;
    Use_LAL_In_COV     : Boolean_Preference;
+   Use_LAL_In_Indent  : Boolean_Preference;
 
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
