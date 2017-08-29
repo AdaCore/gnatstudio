@@ -24,7 +24,7 @@ class Mapping_File(object):
         #   - `filename`: a string
 
         self._blocks = {}    # block_id => set of (file,linerange)
-        self._files = {}     # filename => {line => blockid}
+        self._files = {}     # filename => {line => list of blockids}
         self._mdl = {}       # sourcefile => mdlfile
         self._symbols = {}   # block_id => set(symbols)
         self._funcinfo = {}  # funcname => (filename, endline)
@@ -85,7 +85,8 @@ class Mapping_File(object):
                     a.add((f, rg))
 
                     for line in range(rg[0], rg[1] + 1):
-                        b[line] = blockid
+                        entry = b.setdefault(line, [])
+                        entry.append(blockid)
 
                 a = self._symbols.setdefault(blockid, set())
                 for symbol in blockinfo.get('symbols', []):

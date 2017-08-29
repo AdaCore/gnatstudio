@@ -62,29 +62,29 @@ class Diagram_Utils(object):
         the style to set
         """
         if bp.type == "breakpoint":
-            blockid = map.get_block(file=bp.file, line=bp.line)
-            item = diag.get_item(blockid)
-            if item:
-                for it in item.recurse():
-                    try:
-                        if style:
-                            bp_blocks.append(it)
-                            prio = it.data.get('priority')
-                            if prio is not None and prio > 0 \
-                               and prio < diag.current_priority:
-                                viewer.diags.set_item_style(
-                                    it, it.data.get(
-                                        style + '_processed')
-                                )
+            for blockid in map.get_block(file=bp.file, line=bp.line):
+                item = diag.get_item(blockid)
+                if item:
+                    for it in item.recurse():
+                        try:
+                            if style:
+                                bp_blocks.append(it)
+                                prio = it.data.get('priority')
+                                if prio is not None and prio > 0 \
+                                   and prio < diag.current_priority:
+                                    viewer.diags.set_item_style(
+                                        it, it.data.get(
+                                            style + '_processed')
+                                    )
+                                else:
+                                    viewer.diags.set_item_style(
+                                        it, it.data.get(style)
+                                    )
                             else:
-                                viewer.diags.set_item_style(
-                                    it, it.data.get(style)
-                                )
-                        else:
-                            viewer.diags.set_item_style(it, None)
-                    except:
-                        # No corresponding style defined
-                        pass
+                                viewer.diags.set_item_style(it, None)
+                        except:
+                            # No corresponding style defined
+                            pass
 
     @staticmethod
     def forall_auto_items(diagrams):

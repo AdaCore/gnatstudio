@@ -1437,23 +1437,30 @@ else:
                 # Only analyze the construct up to the active frame
                 if frame_num < cur_frame:
                     continue
-
                 fileloc = s[3]
                 f = fileloc.file()
                 line = fileloc.line()
-                block = QGEN_Module.modeling_map.get_block(f, line)
-                if block:
+                blocks = QGEN_Module.modeling_map.get_block(f, line)
+
+                if not blocks:
+                    break
+                for block in blocks:
                     diag = QGEN_Module.modeling_map.get_diagram_for_item(
                         viewer.diags, block)[0]
                     if diag.id not in frame_infos:
                         frame_infos.append(diag.id)
-                else:
-                    break
-            if frame_infos:
-                cons_id = viewer.get_construct_from_list(frame_infos)
-                logger.log('Construct id is %s\n' % cons_id)
+
+            # Try to find a construct starting with the longest model path
+            # and narrowing it down until a construct is found or
+            # the path is empty
+            while frame_infos:
+                cons_id = viewer.get_construct_from_list(list(frame_infos))
                 if cons_id != "":
+                    logger.log('Got construct %s from %s' % (
+                        cons_id, str(frame_infos)))
                     viewer.update_nav_status(cons_id)
+                    return
+                frame_infos.pop()
 
         @staticmethod
         def __show_diagram_and_signal_values(
@@ -1479,13 +1486,13 @@ else:
                     viewer.set_diagram(None)
                     return
 
-                # Select the blocks corresponding to the current line
                 block = QGEN_Module.modeling_map.get_block(filename, line)
                 scroll_to = None
                 if block:
-
+                    # We will only select the first block corresponding to the
+                    # current line
                     info = QGEN_Module.modeling_map.get_diagram_for_item(
-                        viewer.diags, block)
+                        viewer.diags, block[0])
                     if info:
                         diagram, item = info
                         if item:
