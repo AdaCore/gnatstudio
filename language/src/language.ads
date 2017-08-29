@@ -93,7 +93,6 @@ package Language is
       Character_Text,
       String_Text,
       Operator_Text);
-   pragma Convention (C, Language_Entity);
    --  The entities found in a language.
    --  Block_Text represents a block (subprogram, task, entry, declare block,
    --  ...), and Type_Text represents a type. Block_Text and Type_Text are
@@ -280,7 +279,6 @@ package Language is
       Index  : Natural := 0;
       --  Index in the buffer for this entity
    end record;
-   pragma Convention (C, Source_Location);
    --  See also Sloc_T for a similar construct that store the real column
    --  in characters.
 
@@ -319,7 +317,6 @@ package Language is
       Indent_Comments     : Boolean;
       Stick_Comments      : Boolean;
    end record;
-   pragma Convention (C, Indent_Parameters);
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
    --  actual language.

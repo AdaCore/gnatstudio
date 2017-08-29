@@ -339,14 +339,6 @@ package body Language.Custom is
       procedure Parse_Shared_Lib (Lib_Name : String) is
          Dyn_Module : G_Module;
 
-         procedure Get_Symbol is new Generic_Module_Symbol (Comment_Line_Proc);
-         procedure Get_Symbol is new Generic_Module_Symbol
-           (Parse_Constructs_Proc);
-         procedure Get_Symbol is new Generic_Module_Symbol
-           (Format_Buffer_Proc);
-         procedure Get_Symbol is new Generic_Module_Symbol
-           (Parse_Entities_Proc);
-
       begin
          Dyn_Module := Module_Open (Module_Build_Path ("", Lib_Name));
 
@@ -359,39 +351,6 @@ package body Language.Custom is
             return;
          end if;
 
-         declare
-            Comment   : constant String_Ptr :=
-                          Get_Field (Top, "Comment_Line");
-            Parse_C   : constant String_Ptr :=
-                          Get_Field (Top, "Parse_Constructs");
-            Format    : constant String_Ptr :=
-                          Get_Field (Top, "Format_Buffer");
-            Parse_E   : constant String_Ptr :=
-                          Get_Field (Top, "Parse_Entities");
-            Success   : Boolean;
-
-         begin
-            if Comment /= null then
-               Get_Symbol
-                 (Dyn_Module, Comment.all, Lang.Comment_Line, Success);
-            end if;
-
-            if Parse_C /= null then
-               Get_Symbol
-                 (Dyn_Module, Parse_C.all,
-                  Lang.Parse_Constructs, Success);
-            end if;
-
-            if Format /= null then
-               Get_Symbol
-                 (Dyn_Module, Format.all, Lang.Format_Buffer, Success);
-            end if;
-
-            if Parse_E /= null then
-               Get_Symbol
-                 (Dyn_Module, Parse_E.all, Lang.Parse_Entities, Success);
-            end if;
-         end;
       end Parse_Shared_Lib;
 
    begin  -- Initialize
@@ -789,61 +748,6 @@ package body Language.Custom is
       end if;
    end Get_Name;
 
-   -------------------
-   -- New_Construct --
-   -------------------
-
-   function New_Construct return Construct_Access is
-      Result : constant Construct_Access := new Construct_Information;
-   begin
-      return Result;
-   end New_Construct;
-
-   -------------------
-   -- Set_Construct --
-   -------------------
-
-   procedure Set_Construct
-     (Construct      : Construct_Access;
-      Symbols        : Symbol_Table_Access;
-      Category       : Language_Category;
-      Name           : chars_ptr;
-      Profile        : chars_ptr;
-      Sloc_Start     : Source_Location;
-      Sloc_Entity    : Source_Location;
-      Sloc_End       : Source_Location;
-      Is_Declaration : Boolean;
-      Prev, Next     : Construct_Access)
-   is
-      N : Symbol := No_Symbol;
-      P : Symbol := No_Symbol;
-   begin
-      if Name /= Null_Ptr then
-         N := Symbols.Find (Value (Name));
-      end if;
-
-      if Profile /= Null_Ptr then
-         P := Symbols.Find (Value (Profile));
-      end if;
-
-      Construct.all :=
-        (Info =>
-           (Category        => Category,
-            Category_Name   => No_Symbol,
-            Is_Declaration  => Is_Declaration,
-            Visibility      => Visibility_Public,
-            Name            => N,
-            Profile         => P,
-            Unique_Id       => No_Symbol,
-            Attributes      => (others => False),
-            Is_Generic_Spec => False,
-            Sloc_Start      => Sloc_Start,
-            Sloc_Entity     => Sloc_Entity,
-            Sloc_End        => Sloc_End),
-         Prev            => Prev,
-         Next            => Next);
-   end Set_Construct;
-
    ------------------
    -- Comment_Line --
    ------------------
@@ -855,38 +759,12 @@ package body Language.Custom is
       Clean   : Boolean := False) return String
    is
       pragma Unreferenced (Clean);
-      procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
-      pragma Import (C, C_Free, "free");
    begin
-      if Lang.Comment_Line = null then
-         if Lang.Parent = null then
-            return Comment_Line
-              (Language_Root (Lang.all)'Access, Line, Comment);
-         else
-            return Comment_Line (Lang.Parent, Line, Comment);
-         end if;
-      end if;
-
-      if Comment then
-         declare
-            S   : constant chars_ptr :=
-                    Lang.Comment_Line (Line, True, Line'Length);
-            Val : constant String := Value (S);
-
-         begin
-            C_Free (S);
-            return Val;
-         end;
+      if Lang.Parent = null then
+         return Comment_Line
+           (Language_Root (Lang.all)'Access, Line, Comment);
       else
-         declare
-            S   : constant chars_ptr :=
-                    Lang.Comment_Line (Line, False, Line'Length);
-            Val : constant String := Value (S);
-
-         begin
-            C_Free (S);
-            return Val;
-         end;
+         return Comment_Line (Lang.Parent, Line, Comment);
       end if;
    end Comment_Line;
 
@@ -900,19 +778,11 @@ package body Language.Custom is
       Buffer : Glib.UTF8_String;
       Result : out Construct_List) is
    begin
-      if Lang.Parse_Constructs = null then
-         if Lang.Parent = null
-           or else Lang.Categories'Length > 0
-         then
-            Parse_Constructs (Language_Root (Lang.all)'Access, File,
-                              Buffer, Result);
-         else
-            Parse_Constructs (Lang.Parent, File, Buffer, Result);
-         end if;
+      if Lang.Parent = null or else Lang.Categories'Length > 0 then
+         Parse_Constructs (Language_Root (Lang.all)'Access, File,
+                           Buffer, Result);
       else
-         Lang.Parse_Constructs
-           (Buffer, Result, Lang.Symbols, Buffer'Length,
-            New_Construct'Address, Set_Construct'Address);
+         Parse_Constructs (Lang.Parent, File, Buffer, Result);
       end if;
    end Parse_Constructs;
 
@@ -934,25 +804,8 @@ package body Language.Custom is
    is
       pragma Unreferenced (Is_Optional_Keyword);
 
-      procedure Replace_Cb
-        (Line, First, Last : Integer;
-         S                 : chars_ptr);
-      pragma Convention (C, Replace_Cb);
-      --  Convention C wrapper for Replace
-
       function Is_Keyword (S : String) return Boolean;
       --  Return True if S is a keyword of Lang
-
-      ----------------
-      -- Replace_Cb --
-      ----------------
-
-      procedure Replace_Cb
-        (Line, First, Last : Integer;
-         S                 : chars_ptr) is
-      begin
-         Replace (Line, First, Last, Value (S));
-      end Replace_Cb;
 
       ----------------
       -- Is_Keyword --
@@ -966,24 +819,16 @@ package body Language.Custom is
       end Is_Keyword;
 
    begin
-      if Lang.Format_Buffer = null then
-         if Lang.Parent = null then
-            Format_Buffer
-              (Language_Root (Lang.all)'Access,
-               Buffer, Replace, From, To,
-               Indent_Params, Indent_Offset, Case_Exceptions);
-         else
-            Format_Buffer
-              (Lang.Parent, Buffer, Replace, From, To,
-               Indent_Params, Indent_Offset, Case_Exceptions,
-               Is_Keyword'Access);
-         end if;
-
+      if Lang.Parent = null then
+         Format_Buffer
+           (Language_Root (Lang.all)'Access,
+            Buffer, Replace, From, To,
+            Indent_Params, Indent_Offset, Case_Exceptions);
       else
-         Lang.Format_Buffer
-           (Buffer,
-            Replace_Cb'Address, From, To,
-            Indent_Params, Buffer'Length);
+         Format_Buffer
+           (Lang.Parent, Buffer, Replace, From, To,
+            Indent_Params, Indent_Offset, Case_Exceptions,
+            Is_Keyword'Access);
       end if;
    end Format_Buffer;
 
@@ -994,44 +839,16 @@ package body Language.Custom is
    overriding procedure Parse_Entities
      (Lang     : access Custom_Language;
       Buffer   : String;
-      Callback : Entity_Callback)
-   is
-      function Entity_Cb
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
-      pragma Convention (C, Entity_Cb);
-      --  Convention C wrapper for Callback
-
-      ---------------
-      -- Entity_Cb --
-      ---------------
-
-      function Entity_Cb
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean is
-      begin
-         return Callback (Entity, Sloc_Start, Sloc_End, Partial_Entity);
-      end Entity_Cb;
-
+      Callback : Entity_Callback) is
    begin
-      if Lang.Parse_Entities = null then
-         if Lang.Parent = null
-           or else Lang.Context /= Null_Context'Access
-           or else Lang.Keywords /= null
-         then
-            Parse_Entities
-              (Language_Root (Lang.all)'Access, Buffer, Callback);
-         else
-            Parse_Entities (Lang.Parent, Buffer, Callback);
-         end if;
-
+      if Lang.Parent = null
+        or else Lang.Context /= Null_Context'Access
+        or else Lang.Keywords /= null
+      then
+         Parse_Entities
+           (Language_Root (Lang.all)'Access, Buffer, Callback);
       else
-         Lang.Parse_Entities
-           (Buffer, Entity_Cb'Address, Buffer'Length);
+         Parse_Entities (Lang.Parent, Buffer, Callback);
       end if;
    end Parse_Entities;
 
