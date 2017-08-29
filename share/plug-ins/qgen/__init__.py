@@ -204,6 +204,7 @@ class MDL_Language(GPS.Language):
                         construct.id)
                 finally:
                     view.set_diagram(diag)
+                    logger.log('Set diagram for construct : %s\n' % diag.id)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
                     view.diags, construct_id)
@@ -1419,7 +1420,7 @@ else:
                     debugger, force=True)
 
         @staticmethod
-        def __update_current_construct(debugger, diagram, viewer):
+        def __update_current_construct(debugger, viewer):
             """
             Goes through the frame list of the debugger
             and adds the construct corresponding to the
@@ -1428,27 +1429,19 @@ else:
             """
             if debugger is None:
                 return
+            frames = debugger.frames()
             cur_frame = debugger.current_frame()
-            raw_frames = [s.strip() for s in debugger.send(
-                "bt", output=False).splitlines()]
             frame_infos = []
-
-            for s in raw_frames:
-                fsplit = s.split()
-
-                # bt format is '#0 ... filepath/basename:line
-                frame_num = int(fsplit[0][1:])
-
+            for s in frames:
+                frame_num = s[0]
                 # Only analyze the construct up to the active frame
                 if frame_num < cur_frame:
                     continue
 
-                info = os.path.basename(fsplit[-1]).rsplit(':', 1)
-                fname = info[0]
-                line = info[1]
-                f = GPS.File(fname)
-                block = QGEN_Module.modeling_map.get_block(
-                    f, int(line))
+                fileloc = s[3]
+                f = fileloc.file()
+                line = fileloc.line()
+                block = QGEN_Module.modeling_map.get_block(f, line)
                 if block:
                     diag = QGEN_Module.modeling_map.get_diagram_for_item(
                         viewer.diags, block)[0]
@@ -1456,9 +1449,11 @@ else:
                         frame_infos.append(diag.id)
                 else:
                     break
-            cons_id = viewer.get_construct_from_list(frame_infos)
-            if cons_id != "":
-                viewer.update_nav_status(cons_id)
+            if frame_infos:
+                cons_id = viewer.get_construct_from_list(frame_infos)
+                logger.log('Construct id is %s\n' % cons_id)
+                if cons_id != "":
+                    viewer.update_nav_status(cons_id)
 
         @staticmethod
         def __show_diagram_and_signal_values(
@@ -1507,7 +1502,7 @@ else:
                                     diagram.reset_priority = True
                                 diagram.current_priority = item_prio
                         QGEN_Module.__update_current_construct(
-                            debugger, diagram, viewer)
+                            debugger, viewer)
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
 
                 if scroll_to:
