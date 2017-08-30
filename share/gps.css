@@ -199,6 +199,14 @@ GtkMenu {
   border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
 }
 
+.menuitem.separator,
+.menubar .menuitem.separator,
+.primary-toolbar .menuitem.separator {
+  /* Change the color of the menu separators to make them more visible in
+     dark themes */
+  color: @notebook_background;
+}
+
 /*********************
  * Panes
  *********************/
