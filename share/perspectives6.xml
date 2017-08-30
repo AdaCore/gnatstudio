@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<GPS>
-  <perspectives state=" 0" mdi_height=" 706" mdi_width=" 1024" height=" 768" width=" 1024"  >
+<GPS >
+  <perspectives state=" 0" mdi_height=" 709" mdi_width=" 1024" height=" 768" width=" 1024"  >
     <perspective name="Default">
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
-        <Notebook width=" 2.00787E+01%" Tabs="POS_LEFT" >
+        <Notebook width=" 2.51968E+01%" Tabs="POS_LEFT" >
           <Child Raised="True" Group=" 106" State="NORMAL" >
             <Project_Explorer_Project />
           </Child>
@@ -14,9 +14,9 @@
             <Scenario_View />
           </Child>
         </Notebook>
-        <Pane width=" 8.03150E+01%" Orientation="ORIENTATION_VERTICAL" >
-          <central height=" 8.05158E+01%"  />
-          <Notebook height=" 2.00573E+01%" Tabs="POS_TOP" >
+        <Pane width=" 7.51969E+01%" Orientation="ORIENTATION_VERTICAL" >
+          <central height=" 8.04565E+01%"  />
+          <Notebook height=" 2.01141E+01%" Tabs="POS_TOP" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
               <Message_Window />
             </Child>
