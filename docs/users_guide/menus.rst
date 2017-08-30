@@ -201,7 +201,7 @@ The File Menu
 
 * :menuselection:`File --> Close All Editors except Current`
 
-   Save and close all source editors, except the current one.
+   Save and close all source editors, except the curret one.
    
    
 .. index:: menu; file --> reset all perspectives
@@ -297,14 +297,14 @@ The Edit Menu
    
    Shortcut: Shift+Alt+Up
    
-.. index:: menu; edit --> cursors --> cursor select next occurrence of selection
+.. index:: menu; edit --> cursors --> cursor select next occurence of selection
 
-* :menuselection:`Edit --> Cursors --> Cursor select next occurrence of selection`
+* :menuselection:`Edit --> Cursors --> Cursor select next occurence of selection`
 
    
    
    
-.. index:: menu; edit --> cursors --> cursor skip next occurrence of selection
+.. index:: menu; edit --> cursors --> cursor skip next occurence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor skip next occurence of selection`
 
@@ -507,7 +507,7 @@ The Find Menu
 
 * :menuselection:`Find --> Find...`
 
-   Open the search dialog. If you have selected the preference Search/Preserve Search Context, the same context will be selected, otherwise the context is reset depending on the active window
+   Open the search dialog. If you have selected the preference Search/Preserve search context, the same context will be selected, otherwise the context is reset depending on the active window
    
    Shortcut: Ctrl+F
    
@@ -626,6 +626,27 @@ The Find Menu
 The View Menu
 =============
 
+.. index:: menu; view --> files
+
+* :menuselection:`View --> Files`
+
+   Open (or reuse if it already exists) the 'Files' view
+   
+   
+.. index:: menu; view --> project
+
+* :menuselection:`View --> Project`
+
+   Open (or reuse if it already exists) the 'Project' view
+   
+   
+.. index:: menu; view --> outline
+
+* :menuselection:`View --> Outline`
+
+   Open (or reuse if it already exists) the 'Outline' view
+   
+   
 .. index:: menu; view --> bookmarks
 
 * :menuselection:`View --> Bookmarks`
@@ -633,10 +654,20 @@ The View Menu
    Open (or reuse if it already exists) the 'Bookmarks' view
    
    
-.. index:: menu; view --> backtraces
+.. index:: menu; view --> locations
 
-* :menuselection:`View --> Backtraces`
+* :menuselection:`View --> Locations`
 
+   Open (or reuse if it already exists) the 'Locations' view
+   
+   
+.. index:: menu; view --> messages
+
+* :menuselection:`View --> Messages`
+
+   Open (or reuse if it already exists) the 'Messages' view
+   
+   
 .. index:: menu; view --> call trees
 
 * :menuselection:`View --> Call Trees`
@@ -665,20 +696,6 @@ The View Menu
    Open (or reuse if it already exists) the 'Files' view
    
    
-.. index:: menu; view --> locations
-
-* :menuselection:`View --> Locations`
-
-   Open (or reuse if it already exists) the 'Locations' view
-   
-   
-.. index:: menu; view --> messages
-
-* :menuselection:`View --> Messages`
-
-   Open (or reuse if it already exists) the 'Messages' view
-   
-   
 .. index:: menu; view --> metrics
 
 * :menuselection:`View --> Metrics`
@@ -691,20 +708,6 @@ The View Menu
 * :menuselection:`View --> Memory Usage`
 
    Open (or reuse if it already exists) the 'Memory Usage' view
-   
-   
-.. index:: menu; view --> outline
-
-* :menuselection:`View --> Outline`
-
-   Open (or reuse if it already exists) the 'Outline' view
-   
-   
-.. index:: menu; view --> project
-
-* :menuselection:`View --> Project`
-
-   Open (or reuse if it already exists) the 'Project' view
    
    
 .. index:: menu; view --> remote
@@ -725,23 +728,23 @@ The View Menu
 
 * :menuselection:`View --> Tasks`
 
-.. index:: menu; view --> vcs commits
+.. index:: menu; view --> vcs --> commits
 
-* :menuselection:`View --> VCS Commits`
+* :menuselection:`View --> VCS --> Commits`
 
    Open (or reuse if it already exists) the 'Commits' view
    
    
-.. index:: menu; view --> vcs history
+.. index:: menu; view --> vcs --> history
 
-* :menuselection:`View --> VCS History`
+* :menuselection:`View --> VCS --> History`
 
    Open (or reuse if it already exists) the 'History' view
    
    
-.. index:: menu; view --> vcs branches
+.. index:: menu; view --> vcs --> branches
 
-* :menuselection:`View --> VCS Branches`
+* :menuselection:`View --> VCS --> Branches`
 
    Open (or reuse if it already exists) the 'Branches' view
    
@@ -753,44 +756,44 @@ The View Menu
    Open (or reuse if it already exists) the 'Windows' view
    
    
-.. index:: menu; view --> call graph
+.. index:: menu; view --> call graph browser
 
-* :menuselection:`View --> Call Graph`
+* :menuselection:`View --> Call Graph Browser`
 
    Open (or reuse if it already exists) the 'Call Graph Browser' view
    
    
-.. index:: menu; view --> dependency
+.. index:: menu; view --> dependency browser
 
-* :menuselection:`View --> Dependency`
+* :menuselection:`View --> Dependency Browser`
 
    Open (or reuse if it already exists) the 'Dependency Browser' view
    
    
-.. index:: menu; view --> elaboration circularities
+.. index:: menu; view --> elaboration circularities browser
 
-* :menuselection:`View --> Elaboration Circularities`
+* :menuselection:`View --> Elaboration Circularities Browser`
 
    Open (or reuse if it already exists) the 'Elaboration Circularities' view
    
    
-.. index:: menu; view --> entity
+.. index:: menu; view --> entity browser
 
-* :menuselection:`View --> Entity`
+* :menuselection:`View --> Entity Browser`
 
    Open (or reuse if it already exists) the 'Entity Browser' view
    
    
-.. index:: menu; view --> project
+.. index:: menu; view --> project browser
 
-* :menuselection:`View --> Project`
+* :menuselection:`View --> Project Browser`
 
-   Open (or reuse if it already exists) the 'Project' view
+   Open (or reuse if it already exists) the 'Project Browser' view
    
    
-.. index:: menu; view --> python
+.. index:: menu; view --> python console
 
-* :menuselection:`View --> Python`
+* :menuselection:`View --> Python Console`
 
    Open (or reuse if it already exists) the 'Python' view
    
@@ -1665,7 +1668,7 @@ The Help Menu
 
 * :menuselection:`Help --> Welcome`
 
-   Open a new view showing the GPS welcome, which contains quick links to various areas of interests in GPS
+   Open (or reuse if it already exists) the 'Welcome' view
    
    
 .. index:: menu; help --> contents

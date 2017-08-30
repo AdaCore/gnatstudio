@@ -164,51 +164,6 @@
          <separator />
          <menu label='Find All References'       action='find all references'/>
          <separator />
-
-
-      </menu>
-
-      <menu label='_View'>
-         <menu label="_Bookmarks"                 action="open bookmarks"/>
-         <menu label="B_acktraces"                action="open backtraces"/>
-         <menu label="Ca_ll Trees"                action="open call trees"/>
-         <menu label="_Clipboard"                 action="open clipboard"/>
-         <menu label="File Sw_itches"             action="open switches editor"
-               optional='true'  hide='true' />
-         <menu label="_Files"                     action="open files"/>
-         <menu label="_Locations"                 action="open locations"/>
-         <menu label="_Messages"                  action="open messages"/>
-         <menu label="Metrics"                    action="open metrics view"/>
-         <menu label="Memory Usage"               action="open memory usage" />
-         <menu label="_Outline"                   action="open outline"/>
-         <menu label="Project"                   action="open project"/>
-         <menu label="_Remote"                    action="open remote"/>
-         <menu label="Scenario"                  action="open scenario"/>
-         <menu label="Tasks"                     action="open Tasks"/>
-         <menu label="VCS Commits"                action="open commits"
-               optional='true' hide='true'/>
-         <menu label="VCS History"                action="open history"
-               optional='true' hide='true'/>
-         <menu label="VCS Branches"               action="open branches"
-               optional='true' hide='true'/>
-         <menu label="VCS _Activities"            action="VCS open activities window"
-               optional='true' hide='true'/>
-         <menu label="_VCS Explorer"              action="VCS open explorer"
-               optional='true' hide='true'/>
-         <menu label="_Windows"                   action="open windows"/>
-
-      <separator />
-         <menu label="_Call Graph"                action="open call graph browser"/>
-         <menu label="_Dependency"                action="open dependency browser"/>
-         <menu label="_Elaboration Circularities" action="open elaboration circularities"/>
-         <menu label="E_ntity"                    action="open entity browser"/>
-         <menu label="Project"                   action="open project browser"/>
-
-      <separator />
-         <menu label="_Python"                    action="open python"/>
-         <menu label="OS Shell"                   action="open os shell"/>
-         <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
-         <menu label="_Background Builds"         action="open background builds"/>
       </menu>
 
       <menu label='_Code'>
@@ -470,6 +425,54 @@
       </menu>
 
       <menu label='SPARK'>
+      </menu>
+
+      <menu label='_View'>
+         <menu label="_Files"                     action="open files"/>
+         <menu label="Project"                   action="open project"/>
+         <menu label="_Outline"                   action="open outline"/>
+         <menu label="_Bookmarks"                 action="open bookmarks"/>
+      <separator />
+         <menu label="_Locations"                 action="open locations"/>
+         <menu label="_Messages"                  action="open messages"/>
+      <separator />
+         <menu label="Ca_ll Trees"                action="open call trees"/>
+         <menu label="_Clipboard"                 action="open clipboard"/>
+         <menu label="File Sw_itches"             action="open switches editor"
+               optional='true'  hide='true' />
+         <menu label="_Files"                     action="open files"/>
+         <menu label="Metrics"                    action="open metrics view"/>
+         <menu label="Memory Usage"               action="open memory usage" />
+         <menu label="_Remote"                    action="open remote"/>
+         <menu label="Scenario"                  action="open scenario"/>
+         <menu label="Tasks"                     action="open Tasks"/>
+
+         <menu label='VCS'>
+             <menu label="Commits"                action="open commits"
+                   optional='true' hide='true'/>
+             <menu label="History"                action="open history"
+                   optional='true' hide='true'/>
+             <menu label="Branches"               action="open branches"
+                   optional='true' hide='true'/>
+             <menu label="_Activities"            action="VCS open activities window"
+                   optional='true' hide='true'/>
+             <menu label="_Explorer"              action="VCS open explorer"
+                   optional='true' hide='true'/>
+         </menu>
+         <menu label="_Windows"                   action="open windows"/>
+
+      <separator />
+         <menu label="_Call Graph Browser"                action="open call graph browser"/>
+         <menu label="_Dependency Browser"                action="open dependency browser"/>
+         <menu label="_Elaboration Circularities Browser" action="open elaboration circularities"/>
+         <menu label="E_ntity Browser"                    action="open entity browser"/>
+         <menu label="Project Browser"                   action="open project browser"/>
+
+      <separator />
+         <menu label="_Python Console"                    action="open python"/>
+         <menu label="OS Shell"                   action="open os shell"/>
+         <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
+         <menu label="_Background Builds"         action="open background builds"/>
       </menu>
 
       <menu label='_Window'> <!-- TODO: add the ability for GPS to add here-->
