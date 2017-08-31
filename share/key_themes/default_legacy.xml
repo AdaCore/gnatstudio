@@ -40,9 +40,8 @@
   <key action="goto line">primary-g</key>
   <key action="jump to matching delimiter">primary-apostrophe</key>
 
-  <key action="Delete word backward" >alt-BackSpace</key>
-  <key action="Delete word forward" >alt-Delete</key>
-  <key action="Delete line" >primary-BackSpace</key>
+  <key action="Delete word backward" >control-BackSpace</key>
+  <key action="Delete word forward" >control-Delete</key>
 
   <key action="Search">primary-f</key>
   <key action="Replace" >shift-primary-F</key>
