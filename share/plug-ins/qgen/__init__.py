@@ -48,14 +48,13 @@ import modules
 import os
 import os.path
 import os_utils
+import sys
 import re
 import workflows
 import constructs
 from workflows.promises import Promise, TargetWrapper, timeout
 from project_support import Project_Support
-from . import mapping
 from sig_utils import Signal
-from diagram_utils import Diagram_Utils
 
 
 logger = GPS.Logger('MODELING')
@@ -959,6 +958,14 @@ if not CLI.is_available():
 else:
     Project_Support.register_tool()
 
+    # Load python modules stored in the qgen directory
+    plugins_dir = os.path.join(
+        os.path.dirname(os.path.dirname(CLI.qgenc)),
+        'libexec', 'qgen', 'share', 'gps', 'plug-ins', 'qgen')
+    sys.path.append(plugins_dir)
+    import mapping
+    from diagram_utils import Diagram_Utils
+
     class AsyncDebugger(object):
         __query_interval = 5
 
@@ -1080,7 +1087,8 @@ else:
             QGEN_Module.modeling_map = mapping.Mapping_File()
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
-                    QGEN_Module.modeling_map.load(f)
+                    QGEN_Module.modeling_map.load(
+                        f, Project_Support.get_output_dir(f))
 
         @staticmethod
         def __clear(debugger):
