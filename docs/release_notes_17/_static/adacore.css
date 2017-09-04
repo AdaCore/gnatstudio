@@ -1,0 +1,68 @@
+@import "sphinxdoc.css";
+
+.feature {
+   font-size: 60%;
+   font-style: italic;
+}
+.toctree-l1 .feature {
+   display: none;
+}
+
+h1, h2, h3, h4 {color: #369}
+h2 { margin-top: 60px; }
+
+img.screenshot {
+   height: auto !important;
+   max-width: 300px;
+   margin: 15px;
+   margin-bottom: 4px;
+   border: 1px solid #bbb;
+
+   -moz-box-shadow:    2px 2px 2px 3px #eee;
+   -webkit-box-shadow: 2px 2px 2px 3px #eee;
+   box-shadow:         2px 2px 2px 3px #eee;
+}
+
+div.figure {
+   display: inline-block;
+   vertical-align: middle;
+}
+
+div.figure p.caption {
+   /* display: inline; */
+   margin: 0 0 0 20px;
+   font-size: 80%;
+   text-align: center;
+}
+
+div.bodywrapper {
+   /* Limit width to make more readable */
+   max-width: 1000px;
+}
+
+span.guilabel {
+   font-style: italic;
+   color: rgb(124, 171, 255);
+}
+
+span.menuselection {
+   font-style: italic;
+   color: rgb(255, 79, 74);
+}
+
+code.kbd {
+   padding: 3px;
+   border-radius: 8px;
+   border: 1px solid #BBB;
+}
+
+div.sphinxsidebar {
+   width: auto;
+   max-width: 210px;
+}
+.toctree-l1 a, .toctree-l2 a, .toctree-l3 a,
+.toctree-l1 a tt, .toctree-l2 a tt, .toctree-l3 a tt
+{
+   color: #369;
+}
+
