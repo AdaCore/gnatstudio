@@ -255,6 +255,7 @@ class CLI(GPS.Process):
     """
 
     qgenc = os_utils.locate_exec_on_path('qgenc')
+    plugins_dir = None
     # path to qgenc
 
     @staticmethod
@@ -264,9 +265,20 @@ class CLI(GPS.Process):
         """
         # Testing None or empty string
         if CLI.qgenc:
-            return True
-        else:
-            return False
+            # Check that the python modules are stored in the qgen directory
+            CLI.plugins_dir = os.path.join(
+                os.path.dirname(os.path.dirname(CLI.qgenc)),
+                'libexec', 'qgen', 'share', 'gps', 'plug-ins', 'qgen')
+            has_qgen_modules = os.path.exists(os.path.join(
+                CLI.plugins_dir, 'mapping.py')) and os.path.exists(
+                    os.path.join(CLI.plugins_dir, 'diagram_utils.py'))
+            if not has_qgen_modules:
+                logger.log(
+                    'mapping.py and/or diagram_utils.py not '
+                    'found in the qgen installation')
+            else:
+                return True
+        return False
 
     @staticmethod
     def get_qgenc_switches(file, extra=[], remove_list=[]):
@@ -953,18 +965,14 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 MDL_Language.register()   # available before project is loaded
 
 if not CLI.is_available():
-    logger.log('qgenc not found')
+    logger.log('QGen Debugger not found')
 
 else:
-    Project_Support.register_tool()
-
-    # Load python modules stored in the qgen directory
-    plugins_dir = os.path.join(
-        os.path.dirname(os.path.dirname(CLI.qgenc)),
-        'libexec', 'qgen', 'share', 'gps', 'plug-ins', 'qgen')
-    sys.path.append(plugins_dir)
+    sys.path.append(CLI.plugins_dir)
     import mapping
     from diagram_utils import Diagram_Utils
+
+    Project_Support.register_tool()
 
     class AsyncDebugger(object):
         __query_interval = 5
