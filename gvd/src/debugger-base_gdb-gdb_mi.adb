@@ -1697,6 +1697,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          return;
       end if;
 
+      Debugger.Get_Process.Set_Parse_File_Name (False);
+
       --  Try to get values first because request -data-list-register-names
       --  always returns names (incorrect) even gdb has "No registers"
       declare
@@ -1704,12 +1706,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
            ("-data-list-register-values x 0", Mode => Internal);
          Matched : Match_Array (0 .. 2);
       begin
+         Debugger.Get_Process.Set_Parse_File_Name (True);
+
          Match (Error_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
             return;
          end if;
       end;
+
+      Debugger.Get_Process.Set_Parse_File_Name (False);
 
       declare
          use Token_Lists;
@@ -1721,6 +1727,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          C       : Token_Lists.Cursor;
 
       begin
+         Debugger.Get_Process.Set_Parse_File_Name (True);
+
          Tokens.List := Build_Tokens (S);
          C := Find_Identifier (First (Tokens.List), "register-names");
 
@@ -1794,10 +1802,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       Result  : GVD.Types.Strings_Vectors.Vector;
 
-      S       : constant String := Debugger.Send_And_Get_Clean_Output
-        ("-data-list-register-values " & Keys (Format) & Get_Indices,
-         Mode => Internal);
-
       Tokens  : Token_List_Controller;
       C       : Token_Lists.Cursor;
       Num     : Natural;
@@ -1805,61 +1809,68 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched : Match_Array (0 .. 2);
 
    begin
-      Match (Error_Pattern, S, Matched);
+      Debugger.Get_Process.Set_Parse_File_Name (False);
+      declare
+         S : constant String := Debugger.Send_And_Get_Clean_Output
+           ("-data-list-register-values " & Keys (Format) & Get_Indices,
+            Mode => Internal);
+      begin
+         Debugger.Get_Process.Set_Parse_File_Name (True);
+         Match (Error_Pattern, S, Matched);
 
-      if Matched (0) /= No_Match then
-         Debugger.Register_Names.Clear;
-         return Result;
-      end if;
+         if Matched (0) /= No_Match then
+            Debugger.Register_Names.Clear;
+            return Result;
+         end if;
 
-      Get_Register_Names (Debugger);
+         Get_Register_Names (Debugger);
 
-      Tokens.List := Build_Tokens (S);
-      C := Find_Identifier (First (Tokens.List), "register-values");
+         Tokens.List := Build_Tokens (S);
+         C := Find_Identifier (First (Tokens.List), "register-values");
 
-      if C = Token_Lists.No_Element then
-         return Result;
-      end if;
+         if C = Token_Lists.No_Element then
+            return Result;
+         end if;
 
-      --  Skip register-values=[
-      Next (C, 3);
-      while Element (C).Code /= R_Bracket loop  -- /= ']'
-         if Element (C).Code = L_Brace then
-            Next (C, 1);
-            while Element (C).Code /= R_Brace loop
-               if Element (C).Code = Identifier then
-                  if Element (C).Text.all = "number" then
-                     Next (C, 2);
-                     Num := Positive'Value (Element (C).Text.all) + 1;
+         --  Skip register-values=[
+         Next (C, 3);
+         while Element (C).Code /= R_Bracket loop  -- /= ']'
+            if Element (C).Code = L_Brace then
+               Next (C, 1);
+               while Element (C).Code /= R_Brace loop
+                  if Element (C).Code = Identifier then
+                     if Element (C).Text.all = "number" then
+                        Next (C, 2);
+                        Num := Positive'Value (Element (C).Text.all) + 1;
 
-                  elsif Element (C).Text.all = "value" then
-                     Next (C, 2);
-                     Value := Element (C).Text;
+                     elsif Element (C).Text.all = "value" then
+                        Next (C, 2);
+                        Value := Element (C).Text;
 
+                     else
+                        Next (C, 1);
+                     end if;
                   else
                      Next (C, 1);
                   end if;
-               else
-                  Next (C, 1);
-               end if;
-            end loop;
+               end loop;
 
-            if Debugger.Registers.Last_Index >= Num
-              and then Debugger.Registers.Element (Num) /= ""
-            then
-               if Value /= null then
-                  Result.Append (Value.all);
-               else
-                  Result.Append ("");
+               if Debugger.Registers.Last_Index >= Num
+                 and then Debugger.Registers.Element (Num) /= ""
+               then
+                  if Value /= null then
+                     Result.Append (Value.all);
+                  else
+                     Result.Append ("");
+                  end if;
                end if;
+               Value := null;
+
+            else
+               Next (C, 1);
             end if;
-            Value := null;
-
-         else
-            Next (C, 1);
-         end if;
-      end loop;
-
+         end loop;
+      end;
       return Result;
    end Get_Registers_Values;
 
@@ -3412,15 +3423,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       List.Clear;
 
-      Debugger.Get_Process.Set_Parse_File_Name (False);
       declare
          S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-break-list", Mode => Internal);
       begin
          Tokens.List := Build_Tokens (S);
       end;
-
-      Debugger.Get_Process.Set_Parse_File_Name (True);
 
       C := Find_Identifier (First (Tokens.List), "body");
       if C = Token_Lists.No_Element then

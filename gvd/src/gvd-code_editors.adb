@@ -76,6 +76,12 @@ package body GVD.Code_Editors is
       if Highlight
         and then P /= null
       then
+         if P.Current_File = File
+           and then P.Current_Line = Line
+         then
+            return;
+         end if;
+
          P.Current_File := File;
          P.Current_Line := Line;
 
@@ -113,7 +119,9 @@ package body GVD.Code_Editors is
                   others       => <>));
          end if;
 
-         Debugger_Location_Changed_Hook.Run (Kernel, P);
+         if P.Debugger.Is_Started then
+            Debugger_Location_Changed_Hook.Run (Kernel, P);
+         end if;
       end if;
    end Set_Current_File_And_Line;
 
