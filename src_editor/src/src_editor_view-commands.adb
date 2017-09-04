@@ -215,24 +215,37 @@ package body Src_Editor_View.Commands is
 
          for Cursor of Get_Cursors (Buffer) loop
             declare
-               Mark : Gtk_Text_Mark := Get_Mark (Cursor);
+               Mark     : Gtk_Text_Mark := Get_Mark (Cursor);
                Horiz_Offset : constant Gint :=
                  Get_Column_Memory (Cursor);
+               Prevent  : Boolean := False;
+               Old_Iter : Gtk_Text_Iter;
             begin
                Buffer.Get_Iter_At_Mark (Iter, Mark);
+               Old_Iter := Iter;
                Move_Iter (Iter, Command.Kind, Command.Step,
                           Get_Column_Memory (Cursor));
-               Buffer.Move_Mark (Mark, Iter);
 
-               if not Extend_Selection then
-                  Mark := Get_Sel_Mark (Cursor);
-                  Buffer.Move_Mark (Mark, Iter);
+               if Command.Kind /= Line
+                 and then Cursor /= Get_Main_Cursor (Buffer)
+                 and then Get_Line (Iter) /= Get_Line (Old_Iter)
+               then
+                  Prevent := True;
                end if;
 
-               if (Command.Kind = Line or Command.Kind = Page)
-                 and then Get_Line (Iter) /= 0
-               then
-                  Set_Column_Memory (Cursor, Horiz_Offset);
+               if not Prevent then
+                  Buffer.Move_Mark (Mark, Iter);
+
+                  if not Extend_Selection then
+                     Mark := Get_Sel_Mark (Cursor);
+                     Buffer.Move_Mark (Mark, Iter);
+                  end if;
+
+                  if (Command.Kind = Line or Command.Kind = Page)
+                    and then Get_Line (Iter) /= 0
+                  then
+                     Set_Column_Memory (Cursor, Horiz_Offset);
+                  end if;
                end if;
 
             end;

@@ -10,6 +10,12 @@ import re
 
 mc_on_entity_color = GPS.Preference(
     "Editor/Fonts & Colors:General/multicursor_selection_color")
+"""
+This constant should be synchronized with
+src_editor_buffer-cursors.adb : Selection_Pref_Name
+textmate.py : light_common & dark_common
+"""
+
 mc_on_entity_color.create_with_priority(
     "Multi cursor selection",
     "color",
@@ -36,7 +42,8 @@ def mc_down():
     line = min(loc.line() + 1, ed.lines_count())
     to = GPS.EditorLocation(ed, line, loc.column())
     if cursor_absent(ed, to):
-        ed.add_cursor(loc)
+        if (loc.end_of_line().column() > 1):
+            ed.add_cursor(loc)
     else:
         ed.delete_cursor(to)
     ed.get_cursors()[0].set_manual_sync()
@@ -53,7 +60,8 @@ def mc_up():
     line = max(loc.line() - 1, 1)
     to = GPS.EditorLocation(ed, line, loc.column())
     if cursor_absent(ed, to):
-        ed.add_cursor(loc)
+        if (loc.end_of_line().column() > 1):
+            ed.add_cursor(loc)
     else:
         ed.delete_cursor(to)
     ed.get_cursors()[0].set_manual_sync()

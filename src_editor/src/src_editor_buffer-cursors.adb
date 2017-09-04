@@ -23,7 +23,10 @@ package body Src_Editor_Buffer.Cursors is
 
    Mc_Selection_Tag : constant String := "mc_selection";
    Selection_Pref_Name : constant String :=
-     "Plugins/multi_cursors/multicursor_selection_color";
+     "Editor/Fonts & Colors:General/multicursor_selection_color";
+   --  This constant should be synchronized with
+   --  milticursors.py : mc_on_entity_color
+   --  textmate.py : light_common & dark_common
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
 
