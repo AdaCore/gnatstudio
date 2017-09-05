@@ -4427,11 +4427,27 @@ package body Src_Editor_Buffer is
          end if;
 
          if Original_Filename /= GNATCOLL.VFS.No_File then
-            if Active (Me) then
-               Trace (Me, "Delete autosave file "
-                      & Autosaved_File (Original_Filename).Display_Full_Name);
-            end if;
-            Delete (Autosaved_File (Original_Filename), Result);
+            declare
+               Autosaved : constant Virtual_File :=
+                 Autosaved_File (Original_Filename);
+            begin
+               if Active (Me) then
+                  Trace (Me, "Delete autosave file " &
+                           Autosaved.Display_Full_Name);
+               end if;
+
+               if Is_Regular_File (Autosaved) then
+                  if not Is_Writable (Autosaved) then
+                     Make_File_Writable (Buffer.Kernel, Autosaved, True);
+                  end if;
+
+                  Delete (Autosaved, Result);
+               end if;
+            exception
+               when E : others =>
+                  Me.Trace (E, "When deleting autosave file " &
+                              Autosaved.Display_Full_Name);
+            end;
          end if;
 
          if Filename /= Original_Filename then
