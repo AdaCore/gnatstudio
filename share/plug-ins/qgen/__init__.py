@@ -1257,6 +1257,7 @@ else:
 
             try:
                 debugger = GPS.Debugger.get()
+                QGEN_Module.update_bp_labels(viewer, diag)
             except:
                 debugger = None
 
@@ -1539,6 +1540,39 @@ else:
                 else:
                     for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
                         __on_viewer_loaded(viewer)
+
+        @staticmethod
+        def update_bp_labels(viewer, d):
+            """
+            Goes through the displayed names in the diagram and highlights them
+            if it is possible to break on the associated block.
+            :param viewer: a QGen Diagram Viewer instance
+            :param d: the diagram to process
+            """
+            textitem = None
+
+            for item in d.items:
+                for it in item.recurse():
+                    # Update the textitem style if it exists and debug infos
+                    # are available for the corresponding block (textitem
+                    # preceeds block rectitem)
+                    if hasattr(it, 'id'):
+                        if not QGEN_Module.modeling_map.get_source_ranges(
+                                it.id):
+                            break
+                        if textitem is not None:
+                            viewer.diags.set_item_style(textitem,
+                                                        '#name-style-bp')
+                            textitem = None
+                    # If an item does not have an id it can contain the textid
+                    # we want, recurse to find the name
+                    # that needs to have its style updated, if existing it will
+                    # be the last.
+                    else:
+                        for i in it.recurse():
+                            if isinstance(i, GPS.Browsers.TextItem):
+                                textitem = i
+                                logger.log('textitem is %s' % textitem.text)
 
         def block_source_ranges(self, blockid):
             """
