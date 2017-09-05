@@ -8,4 +8,7 @@
   <key action="goto end of line">control-e</key>
   <key action="goto end of line">primary-Right</key>
   <key action="kill line">control-k</key>
+  <key action="Delete word backward" >alt-BackSpace</key>
+  <key action="Delete word forward" >alt-Delete</key>
+
 </GPS>
