@@ -168,14 +168,10 @@ class Project_Properties_Editor(Dialog):
                 found += 1
         gps_assert(found, len(lang), "Some languages not found %s" % lang)
 
-    def save(self, expect_modif=True):
+    def save(self):
         """
-        Press the Save button and click on Yes in the Confimation dialog.
-
-        If expect_modif is True, this method will click on Yes when
-        the confimation dialog appears. Otherwise, it will raise an
-        exception if the confimation dialog is present (since the project
-        is not supposed to be modified) or return if not present.
+        Press the Save button, saving the modifications that have been made in
+        the project file and closing the dialog.
 
         Use as::
             yield dialog.save()
@@ -185,18 +181,6 @@ class Project_Properties_Editor(Dialog):
         save_button.clicked()
         yield timeout(300)
 
-        confirmation_dialog = get_window_by_title("Confirmation")
-        yes_button = get_button_from_label("Yes", confirmation_dialog)
-
-        if expect_modif:
-            yes_button.clicked()
-            yield timeout(300)
-        elif yes_button:
-            gps_assert(yes_button is None, True,
-                       "The project has been marked as " +
-                       "modified but it was not expected")
-            no_button = get_button_from_label("No", confirmation_dialog)
-            no_button.clicked()
 
 ###############################
 # Project Templates Assistant #

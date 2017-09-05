@@ -4559,9 +4559,6 @@ package body Project_Properties is
       --  if it has changed.
       --  Should return True if all is valid.
 
-      function Is_Save_Confirmed return Boolean;
-      --  Return True if user confirms save the project
-
       -----------------
       -- Check_Pages --
       -----------------
@@ -4631,21 +4628,6 @@ package body Project_Properties is
             end if;
          end;
       end Check_Pages;
-
-      -----------------------
-      -- Is_Save_Confirmed --
-      -----------------------
-
-      function Is_Save_Confirmed return Boolean is
-      begin
-         return Message_Dialog
-           ("Would you like to apply the current modifications " &
-              "before editing the source?",
-            Buttons     => Button_Yes or Button_No,
-            Dialog_Type => Gtkada.Dialogs.Confirmation,
-            Title       => -"Confirmation",
-            Parent      => Get_Current_Window (Kernel)) = Button_Yes;
-      end Is_Save_Confirmed;
 
    begin
       Project_Editor_Hook.Run (Kernel);
@@ -4762,28 +4744,11 @@ package body Project_Properties is
 
       if Response = Response_Edit then
          if not Read_Only and then Project.Modified (Recursive => True) then
-            if Is_Save_Confirmed then
-               Changed := Save_Project
-                 (Kernel    => Kernel,
-                  Project   => Project,
-                  Recursive => True);
-            else
-               Load_Project (Kernel, Project.Project_Path, No_Save => True);
-               --  discard changes
-            end if;
+            Changed := Save_Project
+              (Kernel    => Kernel,
+               Project   => Project,
+               Recursive => True);
          end if;
-
-         declare
-            For_Open : constant GNATCOLL.Projects.Project_Type :=
-              Get_Project (Kernel);
-            --  retrieve current kernel's project because it
-            --  probably was reloaded to discard changes
-         begin
-            Open_File_Action_Hook.Run
-              (Kernel,
-               File    => For_Open.Project_Path,
-               Project => For_Open);
-         end;
       end if;
    end Edit_Properties;
 
