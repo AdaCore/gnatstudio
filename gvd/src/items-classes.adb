@@ -294,12 +294,16 @@ package body Items.Classes is
       Lang : not null access Language_Root'Class;
       Base : String := "") return String
    is
-      pragma Unreferenced (Lang, Base);
+      pragma Unreferenced (Lang);
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          return "<parent class>";
-      else
+
+      elsif Base = "" then
          return "<record>";
+
+      else
+         return Base;
       end if;
    end Field_Name;
 

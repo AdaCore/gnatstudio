@@ -17,6 +17,8 @@
 
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with GNAT.Decode_UTF8_String;
+
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with Default_Preferences;      use Default_Preferences;
@@ -794,6 +796,9 @@ package body GVD.Variables is
       function Display_Name return String with Inline;
       --  Return the display name or type name
 
+      function Validate_UTF_8 (S : String) return String;
+      --  This function cuts S up to it's last valid UTF8 symbol
+
       function Display_Name return String is
       begin
          if Name = "" then
@@ -815,10 +820,32 @@ package body GVD.Variables is
          end if;
       end Display_Type_Name;
 
+      --------------------
+      -- Validate_UTF_8 --
+      --------------------
+
+      function Validate_UTF_8 (S : String) return String
+      is
+         Ptr : Natural := S'First;
+      begin
+         begin
+            while Ptr <= S'Last loop
+               GNAT.Decode_UTF8_String.Next_Wide_Wide_Character (S, Ptr);
+            end loop;
+
+         exception
+            when Constraint_Error =>
+               null;
+         end;
+
+         return S (S'First .. Ptr - 1);
+      end Validate_UTF_8;
+
       Descr : constant String :=
         Display_Name & Display_Type_Name
         & (if Entity = null
-           then "" else XML_Utils.Protect (Entity.Get_Simple_Value));
+           then ""
+           else XML_Utils.Protect (Validate_UTF_8 (Entity.Get_Simple_Value)));
 
    begin
       Self.Model.Append (Iter => Row, Parent => Parent);
