@@ -19,6 +19,7 @@ with Language;               use Language;
 with Language.Ada;
 with Case_Handling;
 with Libadalang.Analysis;
+with GPS.Core_Kernels;
 private with Utils.Command_Lines;
 private with Pp.Command_Lines;
 
@@ -28,11 +29,13 @@ package LAL.Ada_Languages is
 
    procedure Initialize
      (Self    : in out Ada_Language'Class;
+      Kernel  : GPS.Core_Kernels.Core_Kernel;
       Context : Libadalang.Analysis.Analysis_Context);
 
 private
 
    type Ada_Language is new Language.Ada.Ada_Language with record
+      Kernel          : GPS.Core_Kernels.Core_Kernel;
       Context         : Libadalang.Analysis.Analysis_Context;
       Pp_Command_Line : Utils.Command_Lines.Command_Line
         (Pp.Command_Lines.Descriptor'Access);

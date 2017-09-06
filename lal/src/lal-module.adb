@@ -105,7 +105,7 @@ package body LAL.Module is
          Handler => Get_Analysis_Unit_Shell'Access);
 
       if Config (Use_LAL_In_Indent) then
-         Module.Lang.Initialize (Module.Context);
+         Module.Lang.Initialize (Module.Kernel, Module.Context);
          Kernel.Lang_Handler.Register_Language (Module.Lang'Access, Legacy);
       end if;
 

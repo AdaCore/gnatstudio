@@ -15,11 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;
 with GNAT.Strings;
+
+with Langkit_Support.Diagnostics;
+
 with Pp.Actions;
-with Pp.Scanner;
-with Utils.Char_Vectors;
+with Pp.Scanner;                     use Pp.Scanner;
+
+with GPS.Messages_Windows;
 with String_Utils;
+with Utils.Char_Vectors;             use Utils.Char_Vectors;
 
 package body LAL.Ada_Languages is
 
@@ -41,14 +47,16 @@ package body LAL.Ada_Languages is
    is
       pragma Unreferenced
         (Is_Optional_Keyword, Case_Exceptions, Indent_Offset, Indent_Params);
-      use Utils.Char_Vectors.Char_Vectors;
+      use Char_Vectors;
+      use type Libadalang.Analysis.Ada_Node;
       Unit       : Libadalang.Analysis.Analysis_Unit;
+      Root       : Libadalang.Analysis.Ada_Node;
       Ok         : Boolean;
-      Input      : Utils.Char_Vectors.Char_Vector;
-      Output     : Utils.Char_Vectors.Char_Vector;
+      Input      : Char_Vector;
+      Output     : Char_Vector;
       Errors     : Pp.Scanner.Source_Message_Vector;
-      From_Range : Utils.Char_Vectors.Char_Subrange := (Buffer'First, 0);
-      To_Range   : Utils.Char_Vectors.Char_Subrange := (1, 0);
+      From_Range : Char_Subrange := (Buffer'First, 0);
+      To_Range   : Char_Subrange := (1, 0);
    begin
       for J in 2 .. From loop
          String_Utils.Next_Line
@@ -80,14 +88,46 @@ package body LAL.Ada_Languages is
          Buffer      => Buffer,
          With_Trivia => True);
 
-      Pp.Actions.Format_Vector
-        (Cmd       => Lang.Pp_Command_Line,
-         Input     => Input,
-         Node      => Libadalang.Analysis.Root (Unit),
-         In_Range  => From_Range,
-         Output    => Output,
-         Out_Range => To_Range,
-         Messages  => Errors);
+      Root := Libadalang.Analysis.Root (Unit);
+
+      if Root = null then
+         Lang.Kernel.Messages_Window.Insert_UTF8
+           ("Error during parsing:",
+            Mode => GPS.Messages_Windows.Error);
+
+         for Error of Libadalang.Analysis.Diagnostics (Unit) loop
+            Lang.Kernel.Messages_Window.Insert_UTF8
+              (Langkit_Support.Diagnostics.To_Pretty_String (Error));
+         end loop;
+
+         return;
+      end if;
+
+      begin
+         Pp.Actions.Format_Vector
+           (Cmd       => Lang.Pp_Command_Line,
+            Input     => Input,
+            Node      => Root,
+            In_Range  => From_Range,
+            Output    => Output,
+            Out_Range => To_Range,
+            Messages  => Errors);
+      exception
+         when E : others =>
+            Lang.Kernel.Messages_Window.Insert_UTF8
+              ("PP raised exception:",
+               Mode => GPS.Messages_Windows.Error);
+
+            Lang.Kernel.Messages_Window.Insert_UTF8
+              (Ada.Exceptions.Exception_Information (E));
+
+            return;
+      end;
+
+      for Error of Errors loop
+         Lang.Kernel.Messages_Window.Insert_UTF8
+           (UTF8 => Sloc_Image (Error.Sloc) & " " & To_Array (Error.Text));
+      end loop;
 
       if To_Range.Last = 0 then
          --  Fall back to whole buffer if Out_Range was not set
@@ -109,19 +149,23 @@ package body LAL.Ada_Languages is
                P       => Text_Position,
                Next    => Text_Next,
                Success => Ok);
+
             String_Utils.Next_Line
               (Buffer  => Buffer,
                P       => Buffer_Position,
                Next    => Buffer_Next,
                Success => Ok);
+
             Replace
               (Line => Line,
                First => 1,
                Last  => Buffer_Next - Buffer_Position,
                Replace => Text (Text_Position .. Text_Next - 2));
+
             Line := Line + 1;
             Text_Position := Text_Next;
             Buffer_Position := Buffer_Next;
+
             exit when Text_Position >= To_Range.Last
              or Buffer_Position >= From_Range.Last;
          end loop;
@@ -134,10 +178,12 @@ package body LAL.Ada_Languages is
 
    procedure Initialize
      (Self    : in out Ada_Language'Class;
+      Kernel  : GPS.Core_Kernels.Core_Kernel;
       Context : Libadalang.Analysis.Analysis_Context)
    is
       Empty : aliased GNAT.Strings.String_List := (1 .. 0 => <>);
    begin
+      Self.Kernel := Kernel;
       Self.Context := Context;
       Utils.Command_Lines.Parse
         (Empty'Unchecked_Access,
