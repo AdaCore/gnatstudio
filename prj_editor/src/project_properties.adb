@@ -88,7 +88,6 @@ with Project_Dependencies_Editors; use Project_Dependencies_Editors;
 with Scenario_Selectors;           use Scenario_Selectors;
 with Switches_Editors;             use Switches_Editors;
 with Toolchains_Editor;            use Toolchains_Editor;
-with GPR;
 
 package body Project_Properties is
    use Widget_List;
@@ -1099,12 +1098,11 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean)
    is
-      use type GPR.Name_Id;
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
-      Attr  : constant Attribute_Pkg_String :=
-                Build
-                  (Package_Name   => Editor.Attribute.Get_Pkg,
-                   Attribute_Name => Editor.Attribute.Get_Name);
+      Iter    : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
+      Attr    : constant Attribute_Pkg_String :=
+                  Build
+                    (Package_Name   => Editor.Attribute.Get_Pkg,
+                     Attribute_Name => Editor.Attribute.Get_Name);
       Indexes : GNAT.Strings.String_List := Project.Attribute_Indexes (Attr);
 
    begin
@@ -1701,10 +1699,9 @@ package body Project_Properties is
       Project   : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
+
       Browse_Button : Gtk_Button;
       Group_Widget  : Dialog_Group_Widget;
-
-      use Gtk.Enums.String_List;
 
    begin
       Dialog_Utils.Initialize (Self);
@@ -1869,7 +1866,6 @@ package body Project_Properties is
       Attribute_Index : String;
       Is_List         : Boolean) return List_Attribute_Editor
    is
-      use Gtk.Enums.String_List;
       Editor     : List_Attribute_Editor;
       Scrolled   : Gtk_Scrolled_Window;
       View       : Gtk_Tree_View;
@@ -3346,7 +3342,6 @@ package body Project_Properties is
       Attribute_Col : constant := 1;
       Editable_Col  : constant := 2;
 
-      use Gtk.Enums.String_List;
       Ed            : Indexed_Attribute_Editor;
       Text          : Gtk_Cell_Renderer_Text;
       Col           : Gtk_Tree_View_Column;

@@ -31,7 +31,7 @@ with System.Address_Image;
 
 with GNAT.Expect;                         use GNAT.Expect;
 with GNAT.Regpat;                         use GNAT.Regpat;
-with GNAT.SHA1;                           use GNAT.SHA1;
+with GNAT.SHA1;
 
 with GNATCOLL.Arg_Lists;                  use GNATCOLL.Arg_Lists;
 with GNATCOLL.Paragraph_Filling;          use GNATCOLL.Paragraph_Filling;
@@ -43,7 +43,7 @@ with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with GNATCOLL.Xref;                       use GNATCOLL.Xref;
 
 with Gdk.RGBA;                            use Gdk.RGBA;
-with Glib.Convert;                        use Glib.Convert;
+with Glib.Convert;
 with Glib.Error;                          use Glib.Error;
 with Glib.Object;                         use Glib.Object;
 with Glib.Properties;                     use Glib.Properties;
@@ -98,7 +98,6 @@ with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
-with Gtk.Widget;                          use Gtk.Widget;
 with Gtk.Window;                          use Gtk.Window;
 
 use Ada.Strings.Unbounded;

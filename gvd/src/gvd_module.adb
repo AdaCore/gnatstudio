@@ -26,7 +26,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
+with Glib.Object;
 
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -42,7 +42,6 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Default_Preferences;       use Default_Preferences;
-with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -55,14 +54,14 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with GVD.Canvas;                use GVD.Canvas;
+with GVD.Canvas;
 with GVD.Code_Editors;          use GVD.Code_Editors;
-with GVD.Consoles;              use GVD.Consoles;
+with GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Process_Lists;         use GVD.Process_Lists;
-with GVD.Scripts;               use GVD.Scripts;
+with GVD.Scripts;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
@@ -931,15 +930,14 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process     : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Exec        : Virtual_File;
       Ptr         : GNAT.Strings.String_Access :=
-                      GNAT.OS_Lib.Get_Executable_Suffix;
+        GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
-
-      use GNAT.OS_Lib;
 
    begin
       GNAT.Strings.Free (Ptr);
@@ -1432,7 +1430,6 @@ package body GVD_Module is
        Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      use GNAT.OS_Lib;
 
       procedure Create_Action_And_Menu
         (Prj : Project_Type; Main : Virtual_File);

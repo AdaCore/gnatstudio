@@ -31,7 +31,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
+with Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
 with Gdk.RGBA;                   use Gdk.RGBA;
@@ -63,7 +63,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
-with String_List_Utils;          use String_List_Utils;
+with String_List_Utils;
 with String_Utils;               use String_Utils;
 with Glib_String_Utils;          use Glib_String_Utils;
 

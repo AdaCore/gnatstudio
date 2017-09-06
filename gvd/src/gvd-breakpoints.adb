@@ -387,9 +387,9 @@ package body GVD.Breakpoints is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Breakpoint_Editor_Record'Class := null)
    is
-      use type Generic_Views.Abstract_View_Access;
       V   : constant Visual_Debugger := Visual_Debugger (Process);
       Old : constant Breakpoint_Editor := Get_View (Process);
+
    begin
       V.Breakpoints_Editor := Abstract_View_Access (View);
 

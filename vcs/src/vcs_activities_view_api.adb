@@ -543,7 +543,6 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      use String_List;
       Files          : constant File_Array := Get_Files_In_Activity (Activity);
       All_Logs_Exist : Boolean := True;
 

@@ -635,7 +635,7 @@ package body GPS.Kernel.Style_Manager is
 
       procedure Process (Position : Style_Map.Cursor) is
          V : Style_Access;
-         use Default_Preferences;
+
       begin
          if Position = No_Element then
             return;

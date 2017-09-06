@@ -44,7 +44,7 @@ with Gdk.RGBA;                 use Gdk.RGBA;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Main;                 use Gtk.Main;
+with Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -64,7 +64,6 @@ with Pango.Enums;              use Pango.Enums;
 
 with Config;                   use Config;
 with Histories;                use Histories;
-with String_List_Utils;        use String_List_Utils;
 with GUI_Utils;                use GUI_Utils;
 
 with GPS.Default_Styles;       use GPS.Default_Styles;

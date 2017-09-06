@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
@@ -185,8 +185,6 @@ package body Ada_Naming_Editors is
    procedure On_Standard_Scheme_Changed
      (Object : access Gtk_Widget_Record'Class)
    is
-      use Widget_List;
-
       E     : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
       Value : Gint;
 

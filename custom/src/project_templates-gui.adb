@@ -166,10 +166,9 @@ package body Project_Templates.GUI is
             Expand    => False);
       end Create_Var_Widget;
 
-      use type Ada.Containers.Count_Type;
-
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
+
    begin
       Dialog_Utils.Initialize (Widget);
       Widget.Template := Template;

@@ -253,12 +253,8 @@ package body Build_Configurations.Gtkada is
    package Mode_UI_Callback is new Callback (Mode_UI_Record);
    use Mode_UI_Callback;
 
-   package Target_UI_Callback is new Callback (Target_UI_Record);
-   use Target_UI_Callback;
-
    package Icon_Callback is new User_Callback
      (Gtkada_Combo_Tool_Button_Record, Target_UI_Access);
-   use Icon_Callback;
 
    ---------
    -- "-" --

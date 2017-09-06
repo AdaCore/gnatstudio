@@ -1,6 +1,5 @@
 package body Database is
    pragma Style_Checks (Off);
-   use type Cst_String_Access;
 
    function FK (Self : T_Entities_Messages'Class; Foreign : T_Entities'Class) return SQL_Criteria is
    begin

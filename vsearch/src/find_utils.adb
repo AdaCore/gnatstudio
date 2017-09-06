@@ -18,8 +18,7 @@
 with Ada.Unchecked_Deallocation;
 with GPS.Kernel;                use GPS.Kernel;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with Glib.Convert;              use Glib.Convert;
-with Gtk.Widget;                use Gtk.Widget;
+with Glib.Convert;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
 

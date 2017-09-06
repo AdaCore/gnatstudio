@@ -44,11 +44,11 @@ package body Commands.Builder.Progress_Parsers is
       Item    : String;
       Command : access Root_Command'Class)
    is
-      use type Commands.Command_Access;
       Start    : Integer := Item'First;
       Matched  : Match_Array (0 .. 3);
       Buffer   : Unbounded_String;
       Progress : Commands.Progress_Record;
+
    begin
       while Start <= Item'Last loop
          Match (Self.Matcher.all, Item (Start .. Item'Last), Matched);

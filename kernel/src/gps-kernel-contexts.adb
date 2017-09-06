@@ -601,7 +601,6 @@ package body GPS.Kernel.Contexts is
 
    function Has_Message_Information
      (Context : Selection_Context) return Boolean is
-      use type System.Address;
    begin
       return not Context.Ref.Is_Null
         and Context.Ref.Get.Messages /= null;

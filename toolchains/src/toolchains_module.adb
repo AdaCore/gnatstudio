@@ -21,7 +21,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Glib.Object;               use Glib.Object;
+with Glib.Object;
 with Gtk.Dialog;                use Gtk.Dialog;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
@@ -30,7 +30,7 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with Toolchains_Old;            use Toolchains_Old;
+with Toolchains_Old;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Builder_Facility_Module;
 with JSON_Utils;

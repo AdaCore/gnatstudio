@@ -41,7 +41,6 @@ with Gtk.Window;              use Gtk.Window;
 with Pango.Enums;             use Pango.Enums;
 with Pango.Font;              use Pango.Font;
 
-with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;

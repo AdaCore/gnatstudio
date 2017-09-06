@@ -18,7 +18,6 @@
 with Gdk.RGBA;     use Gdk.RGBA;
 with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
-with Gtk.Widget;   use Gtk.Widget;
 with Pango.Font;   use Pango.Font;
 
 with Language;     use Language;

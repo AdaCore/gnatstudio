@@ -59,7 +59,6 @@ private
 
    package Tree_List is new Doubly_Linked_Lists (Construct_Tree);
 
-   use Tree_List;
    use Completion.History;
 
    type Construct_Completion_Resolver is new Completion_Resolver with record

@@ -18,7 +18,6 @@
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Enums;          use Gtk.Enums;
 with Gtk.GEntry;         use Gtk.GEntry;
 with Gtk.Widget;         use Gtk.Widget;
 

@@ -190,7 +190,6 @@ package body Ada_Semantic_Tree.Entity_Iteration is
    ----------
 
    procedure Next (It : in out Semantic_Tree_Iterator) is
-      use Language.Tree.Database.File_Set;
 
       procedure Next_All_Access;
       procedure Next_Referenced_Entity;

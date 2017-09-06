@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with GNAT.Strings;
 
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
@@ -127,7 +126,7 @@ package body Src_Editor_Box.Tooltips is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-      use type GNAT.Strings.String_Access;
+
       Box              : constant Source_Editor_Box := Tooltip.Box;
       View             : constant Source_View       := Get_View (Tooltip.Box);
       Line, Col        : Gint;
@@ -148,6 +147,7 @@ package body Src_Editor_Box.Tooltips is
       --  The coordinates relative to the view, not the box
 
       In_Side_Area     : Boolean;
+
    begin
       if not Display_Tooltip.Get_Pref then
          return null;

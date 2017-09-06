@@ -2023,7 +2023,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding procedure Interrupt (Debugger : access Gdb_MI_Debugger) is
       Proxy      : constant Process_Proxy_Access := Debugger.Get_Process;
       Descriptor : constant Process_Descriptor_Access := Proxy.Get_Descriptor;
-      use GVD;
 
    begin
       --  Should only do this when running under Windows, in native mode,

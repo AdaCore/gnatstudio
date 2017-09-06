@@ -18,12 +18,11 @@
 with Ada.Unchecked_Deallocation;
 with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
 with Glib.Main;            use Glib.Main;
-with Glib.Object;          use Glib.Object;
+with Glib.Object;
 with Glib.Properties;      use Glib.Properties;
 with GNAT.Strings;         use GNAT.Strings;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;

@@ -27,7 +27,7 @@ with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
 with Basic_Types;                       use Basic_Types;
 with Entities_Tooltips;
 with GNATTest_Module.Tree_Models;       use GNATTest_Module.Tree_Models;
-with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
+with Language.Abstract_Language_Tree;
 with Tooltips;                          use Tooltips;
 
 with GPS.Kernel;                        use GPS.Kernel;
@@ -466,11 +466,11 @@ package body GNATTest_Module is
 
       while Source_Entity_Maps.Has_Element (Cursor) loop
          declare
-            use type GNATCOLL.VFS.Filesystem_String;
             Key  : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
             Item : constant Test_Entity := Source_Entity_Maps.Element (Cursor);
             File : constant GNATCOLL.VFS.Virtual_File := Key.Source_File;
             Test : constant GNATCOLL.VFS.Virtual_File := Item.File_Name;
+
          begin
             if Test.File_Time_Stamp = Item.Stamp then
                GPS.Kernel.Messages.Simple.Create_Simple_Message

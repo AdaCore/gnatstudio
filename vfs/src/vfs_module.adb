@@ -31,7 +31,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with Glib.Convert;              use Glib.Convert;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with GUI_Utils;                 use GUI_Utils;
+with GUI_Utils;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;

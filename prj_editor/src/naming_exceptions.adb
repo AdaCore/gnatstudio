@@ -28,7 +28,6 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Widget;               use Gtk.Widget;
 
 with Basic_Types;
 with GUI_Utils;                use GUI_Utils;

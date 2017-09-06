@@ -40,7 +40,6 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Property;              use Gdk.Property;
 with Gdk.Types;                 use Gdk.Types;
-with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer;
@@ -52,15 +51,15 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
 with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Target_List;           use Gtk.Target_List;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tree_Drag_Source;      use Gtk.Tree_Drag_Source;
+with Gtk.Toolbar;
+with Gtk.Tree_Drag_Source;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -97,7 +96,7 @@ with Gtkada.Tree_View;             use Gtkada.Tree_View;
 with GUI_Utils;                    use GUI_Utils;
 with GPS.Dialogs;                  use GPS.Dialogs;
 with Tooltips;                     use Tooltips;
-with XML_Parsers;                  use XML_Parsers;
+with XML_Parsers;
 with XML_Utils;                    use XML_Utils;
 
 package body Bookmark_Views is

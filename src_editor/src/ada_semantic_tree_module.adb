@@ -22,7 +22,7 @@ with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with Language.Tree.Database;       use Language.Tree.Database;
-with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
+with Ada_Semantic_Tree.Assistants;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;

@@ -22,8 +22,6 @@ with String_Utils;            use String_Utils;
 
 package body VCS is
 
-   use Ada;
-
    ------------------------------
    -- Administrative_Directory --
    ------------------------------
@@ -146,8 +144,6 @@ package body VCS is
    ----------
 
    procedure Free (F : in out File_Status_Record) is
-      use String_List;
-      use File_Status_List;
    begin
       GNAT.Strings.Free (F.Working_Revision);
       GNAT.Strings.Free (F.Repository_Revision);

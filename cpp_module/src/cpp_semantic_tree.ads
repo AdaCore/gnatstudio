@@ -18,7 +18,7 @@
 with Ada.Containers.Vectors;
 
 with Basic_Types;     use Basic_Types;
-with Glib;            use Glib;
+with Glib;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Language;        use Language;
 

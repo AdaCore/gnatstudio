@@ -114,12 +114,10 @@ package body Ada_Semantic_Tree.Parts is
    ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
-      use Construct_Annotations_Pckg;
-      use Tree_Annotations_Pckg;
-
       Ada_Part_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
+
    begin
-      Get_Annotation_Key
+      Construct_Annotations_Pckg.Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry (Db).all,
          Ada_Part_Entity_Key);
 
@@ -154,8 +152,8 @@ package body Ada_Semantic_Tree.Parts is
    is
       pragma Unreferenced (Assistant, Old_Tree);
 
-      use Tree_Annotations_Pckg;
-      It    : Unit_Iterator;
+      It : Unit_Iterator;
+
    begin
       if Kind /= Minor_Change then
          --  If this is not a minor change, then the entities relations may
@@ -764,23 +762,24 @@ package body Ada_Semantic_Tree.Parts is
       Assistant : Ada_Part_Db_Assistant'Class)
       return Ada_Relation_Access
    is
-      use Tree_Annotations_Pckg;
-      use Construct_Annotations_Pckg;
+      use type Language.Tree.Construct_Annotations_Pckg.Annotation;
 
       It                  : Construct_Tree_Iterator;
       Relation_Annotation : Construct_Annotations_Pckg.Annotation;
+
    begin
       --  Then, extract the relation from the annotations.
 
       It := To_Construct_Tree_Iterator (Entity);
 
-      Get_Annotation
+      Construct_Annotations_Pckg.Get_Annotation
         (Get_Annotation_Container (Get_Tree (Get_File (Entity)), It).all,
          Assistant.Parts_Key,
          Relation_Annotation);
 
       if Relation_Annotation = Construct_Annotations_Pckg.Null_Annotation then
          return null;
+
       else
          return Ada_Relation_Annotation
            (Relation_Annotation.Other_Val.all).Relation;

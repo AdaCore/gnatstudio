@@ -53,7 +53,6 @@ package body Ada_Semantic_Tree.Visibility is
    ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
-      use Construct_Annotations_Pckg;
    begin
       Register_Assistant
         (Db, Ada_Visibility_Id, new Ada_Visibibility_Assistant);
@@ -98,8 +97,6 @@ package body Ada_Semantic_Tree.Visibility is
       --  it. If it appears not to be the case in the future, it's perfectly
       --  reasonable to delay it until the first Is_Public_Visible call is
       --  made.
-
-      use Construct_Annotations_Pckg;
 
       Tree : constant Construct_Tree := Get_Tree (File);
 

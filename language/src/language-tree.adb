@@ -20,9 +20,8 @@ with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with String_Utils;            use String_Utils;
 
 package body Language.Tree is
-   Me : constant Trace_Handle := Create ("TREE");
 
-   use GNAT.Strings;
+   Me : constant Trace_Handle := Create ("TREE");
 
    --------------
    -- Contains --

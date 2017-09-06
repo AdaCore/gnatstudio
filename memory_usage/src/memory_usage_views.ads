@@ -32,9 +32,9 @@ with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 
 with Gtkada.Tree_View;                       use Gtkada.Tree_View;
 with Gtk.Label;                              use Gtk.Label;
-with Gtk.Menu;                               use Gtk.Menu;
+with Gtk.Menu;
 with Gtk.Scrolled_Window;                    use Gtk.Scrolled_Window;
-with Gtk.Toolbar;                            use Gtk.Toolbar;
+with Gtk.Toolbar;
 with Gtk.Tree_Model;                         use Gtk.Tree_Model;
 with Gtk.Tree_Store;                         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
@@ -170,7 +170,6 @@ private
       Initialize                => Initialize,
       Areas                     => Gtkada.MDI.Sides_Only,
       Position                  => Gtkada.MDI.Position_Left);
-   use Memory_Usage_MDI_Views;
    --  Instantiation of the Generic_Views.Simple_Views package with
    --  the parameters we want for our memory usage views.
 

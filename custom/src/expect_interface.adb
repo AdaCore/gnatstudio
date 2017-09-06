@@ -31,7 +31,7 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Gtk.Main;                use Gtk.Main;
+with Gtk.Main;
 
 with Basic_Types;             use Basic_Types;
 with Custom_Module;           use Custom_Module;

@@ -268,7 +268,6 @@ package body Ada_Semantic_Tree.Units is
    ----------
 
    procedure Next (It : in out Unit_Iterator) is
-      use File_Set;
    begin
       if It.Unit_Cursor /= Persistent_Entity_List.No_Element then
          It.Unit_Cursor := Next (It.Unit_Cursor);
@@ -291,7 +290,6 @@ package body Ada_Semantic_Tree.Units is
    ---------
 
    function Get (It : Unit_Iterator) return Entity_Access is
-      use File_Set;
    begin
       if It.Unit_Cursor /= Persistent_Entity_List.No_Element then
          return To_Entity_Access (Element (It.Unit_Cursor));
@@ -350,7 +348,6 @@ package body Ada_Semantic_Tree.Units is
    ------------
 
    function At_End (It : Unit_Iterator) return Boolean is
-      use File_Set;
    begin
       return It.Unit_Cursor = Persistent_Entity_List.No_Element
         and then At_End (It.Db_Iterator);

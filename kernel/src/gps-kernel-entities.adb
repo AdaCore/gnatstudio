@@ -605,7 +605,6 @@ package body GPS.Kernel.Entities is
       Sort_In_File : Boolean)
    is
       pragma Unreferenced (Sort_In_File);
-      use Basic_Types;
 
       Loc     : constant General_Location := Get_Location (Ref);
       Col     : Basic_Types.Visible_Column_Type := Loc.Column;

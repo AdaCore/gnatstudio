@@ -97,8 +97,8 @@ with Histories;                use Histories;
 with GPS.Dialogs;              use GPS.Dialogs;
 
 package body KeyManager_Module.GUI is
+
    Me : constant Trace_Handle := Create ("KEYMGR");
-   use Key_Htable;
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;

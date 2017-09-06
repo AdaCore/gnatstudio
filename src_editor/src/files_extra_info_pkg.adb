@@ -15,16 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Gtk;             use Gtk;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Image;       use Gtk.Image;
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Glib;                           use Glib;
+with Gtk;                            use Gtk;
+with Gtk.Enums;                      use Gtk.Enums;
+with Gtk.Image;                      use Gtk.Image;
+with Gtkada.Handlers;                use Gtkada.Handlers;
 
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 
-with GPS.Intl;        use GPS.Intl;
-with GPS.Kernel;      use GPS.Kernel;
+with GPS.Intl;                       use GPS.Intl;
 
 package body Files_Extra_Info_Pkg is
 

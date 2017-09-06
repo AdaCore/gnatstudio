@@ -1,6 +1,8 @@
 with GNATCOLL.SQL; use GNATCOLL.SQL;
 pragma Warnings (Off, "no entities of * are referenced");
+pragma Warnings (Off, "ineffective use clause for package *");
 with GNATCOLL.SQL_Fields; use GNATCOLL.SQL_Fields;
+pragma Warnings (On, "ineffective use clause for package *");
 pragma Warnings (On, "no entities of * are referenced");
 with Database_Names; use Database_Names;
 package Database is

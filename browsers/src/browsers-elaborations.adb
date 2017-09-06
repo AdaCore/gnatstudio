@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
@@ -183,8 +182,6 @@ package body Browsers.Elaborations is
      (Kernel : Kernel_Handle;
       Cycle  : Elaboration_Cycles.Cycle)
    is
-      use type Ada.Containers.Count_Type;
-
       Browser : constant Elaboration_Browser :=
         Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
       Styles : constant access Browser_Styles :=
@@ -363,9 +360,10 @@ package body Browsers.Elaborations is
       Status : Integer)
    is
       pragma Unreferenced (Self, Category, Target, Mode, Shadow, Background);
-      use type Ada.Containers.Count_Type;
+
       Cycle   : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
       Show : constant Boolean := Get_Pref (Auto_Show_Preference);
+
    begin
       if Show
         and then Status /= 0

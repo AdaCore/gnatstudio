@@ -17,9 +17,9 @@
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with Refactoring.Rename;      use Refactoring.Rename;
-with Refactoring.Parameters;  use Refactoring.Parameters;
-with Refactoring.Subprograms; use Refactoring.Subprograms;
+with Refactoring.Rename;
+with Refactoring.Parameters;
+with Refactoring.Subprograms;
 
 package body Refactoring_Module is
 

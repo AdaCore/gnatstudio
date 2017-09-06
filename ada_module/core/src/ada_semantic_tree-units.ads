@@ -206,7 +206,6 @@ private
 
    package Unit_Set_Pckg is new
      Ada.Containers.Ordered_Sets (Unit_Access);
-   use Unit_Set_Pckg;
 
    package Persistent_Entity_List is new
      Ada.Containers.Ordered_Sets (Entity_Persistent_Access);

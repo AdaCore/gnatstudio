@@ -19,7 +19,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GNAT.Expect;                use GNAT.Expect;
+with GNAT.Expect;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Case_Handling;              use Case_Handling;

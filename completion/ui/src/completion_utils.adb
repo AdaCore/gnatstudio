@@ -18,7 +18,6 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
-with Gdk.Window;                use Gdk.Window;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -92,7 +91,6 @@ package body Completion_Utils is
          return Display_Base_Name (Loc.File_Path) & ":" & Image (Loc.Line);
       end Location_To_Text;
 
-      use type Ada.Containers.Count_Type;
    begin
       --  If no element, return
       if not Has_Element (Notes_Info.C) then

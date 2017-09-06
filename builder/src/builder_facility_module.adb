@@ -22,11 +22,10 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
+with Glib.Object;
 
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
@@ -1318,7 +1317,6 @@ package body Builder_Facility_Module is
    is
       Model_Name : Unbounded_String;
       T          : Target_Access;
-      use Target_Map;
 
    begin
       Model_Name := To_Unbounded_String (Get_Attribute (XML, "model", ""));

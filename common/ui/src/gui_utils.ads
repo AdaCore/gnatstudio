@@ -31,7 +31,7 @@ with Gdk.Event;
 with Gdk.Types;
 with Gdk.RGBA;
 
-with Gtk.Accel_Group;          use Gtk.Accel_Group;
+with Gtk.Accel_Group;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;

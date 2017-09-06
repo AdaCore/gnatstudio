@@ -19,7 +19,7 @@ with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with GNAT.Regpat;                       use GNAT.Regpat;
+with GNAT.Regpat;
 
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
@@ -28,9 +28,8 @@ with GNATCOLL.Xref;
 with Gdk.Event;                         use Gdk.Event;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
-with Glib.Values;                       use Glib.Values;
+with Glib.Values;
 
-with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Window;                        use Gtk.Window;
@@ -46,7 +45,7 @@ with Case_Handling;                     use Case_Handling;
 with Commands;
 with Commands.Controls;                 use Commands.Controls;
 with Commands.Interactive;              use Commands, Commands.Interactive;
-with Completion_Module;                 use Completion_Module;
+with Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
 with Find_Utils;                        use Find_Utils;
@@ -78,7 +77,7 @@ with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
 with Src_Editor_Module.Commands;        use Src_Editor_Module.Commands;
-with Src_Editor_Module.Messages;        use Src_Editor_Module.Messages;
+with Src_Editor_Module.Messages;
 
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;

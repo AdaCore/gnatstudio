@@ -17,7 +17,6 @@
 
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Basic_Types;                    use Basic_Types;
-with Commands.Interactive;
 with Commands;                       use Commands;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
@@ -307,14 +306,13 @@ package body GPS.Kernel.Messages.Shell is
              3 => Tooltip_Cst'Access));
 
          declare
-            Action_Str   : constant String := Nth_Arg (Data, 2, "");
-            Image_Str    : constant String := Nth_Arg (Data, 3);
-            Tooltip_Str  : constant String := Nth_Arg (Data, 4, "");
-            Action       : Action_Item;
-            The_Action   : Action_Record_Access;
-            Command      : Command_Access := null;
+            Action_Str  : constant String := Nth_Arg (Data, 2, "");
+            Image_Str   : constant String := Nth_Arg (Data, 3);
+            Tooltip_Str : constant String := Nth_Arg (Data, 4, "");
+            Action      : Action_Item;
+            The_Action  : Action_Record_Access;
+            Command     : Command_Access := null;
 
-            use type Commands.Interactive.Interactive_Command_Access;
          begin
             Message := Get_Message (Nth_Arg (Data, 1, Message_Class));
 

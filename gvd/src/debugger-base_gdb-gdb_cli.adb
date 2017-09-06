@@ -1433,8 +1433,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Descriptor : constant Process_Descriptor_Access :=
                      Get_Descriptor (Proxy);
 
-      use GVD;
-
    begin
       --  Should only do this when running under Windows, in native mode,
       --  with an external execution window, and the debuggee running.

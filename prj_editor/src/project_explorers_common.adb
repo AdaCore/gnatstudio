@@ -26,7 +26,6 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Values;
 with Gtk.Dnd;
-with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Target_List;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -616,9 +615,9 @@ package body Project_Explorers_Common is
                   --  ... he clicked on the file name
 
                   declare
-                     use type Gtk.Target_List.Gtk_Target_List;
                      X : constant Gtk.Target_List.Gtk_Target_List
                        := Gtk.Dnd.Source_Get_Target_List (Tree);
+
                   begin
                      --  If Tree provides drag&drop source, then use it
                      --  instead of MDI drag&drop

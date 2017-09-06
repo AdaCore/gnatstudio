@@ -34,7 +34,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with XML_Utils;                 use XML_Utils;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -91,18 +90,6 @@ package body Commands.Custom is
 
    procedure Free (Component : in out Custom_Component);
    --  Free the memory occupied by Component
-
-   ----------------------------
-   -- Custom commands editor --
-   ----------------------------
-
-   type Component_Type_And_Lang is record
-      The_Type : Component_Type;
-      Script   : Scripting_Language;
-   end record;
-   package Component_Type_And_Lang_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Component_Type_And_Lang);
-   use Component_Type_And_Lang_Callback;
 
    ----------------------
    -- Misc subprograms --

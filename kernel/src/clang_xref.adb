@@ -280,9 +280,6 @@ package body Clang_Xref is
    function Get_Clang_Cursor
      (Kernel : Core_Kernel; Loc : General_Location) return Clang_Cursor
    is
-      use Basic_Types;
-      use type Basic_Types.Visible_Column_Type;
-
       Ret : Clang_Cursor;
       Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
       TU : constant Clang_Translation_Unit :=
@@ -635,8 +632,8 @@ package body Clang_Xref is
          --  Get the clang context containing the entity references cache, as
          --  well as the cursor's USR, so as to be able to query the ref cache
 
-         Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
-         USR_Sym : constant Clang_Symbol :=
+         Cursor      : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+         USR_Sym     : constant Clang_Symbol :=
            Clang_Symbol_Table.Find (USR (Cursor));
 
          --  Try to use Definition from libclang. It will only work as long
@@ -648,13 +645,11 @@ package body Clang_Xref is
          --  V is used to store an vector of entity references. Used while
          --  scanning for the body
 
-         V : Info_Vectors;
-
-         use File_To_Refs_Maps;
+         V           : Info_Vectors;
 
          --  Return value holders
-         Loc  : Offset_T := 0;
-         File : Virtual_File;
+         Loc         : Offset_T := 0;
+         File        : Virtual_File;
 
       begin
          if Cursor = No_Cursor or Get (USR_Sym) = "" then

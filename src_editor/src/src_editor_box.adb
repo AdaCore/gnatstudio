@@ -30,7 +30,6 @@ with GNATCOLL.Xref;
 
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.Window;                 use Gdk.Window;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
@@ -80,7 +79,7 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
-with String_Utils;               use String_Utils;
+with String_Utils;
 with Tooltips;                   use Tooltips;
 
 with Xref; use Xref;

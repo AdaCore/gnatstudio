@@ -19,7 +19,6 @@ with Cairo;           use Cairo;
 with Gdk;             use Gdk;
 with Gdk.Cairo;       use Gdk.Cairo;
 with Gdk.Screen;      use Gdk.Screen;
-with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
 with Glib.Main;       use Glib.Main;
 with Glib.Properties; use Glib.Properties;

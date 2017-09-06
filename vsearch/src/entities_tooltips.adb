@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Window;                use Gdk.Window;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -27,8 +26,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Language;                  use Language;
 with Language.Icons;            use Language.Icons;
-with Language.Tree;             use Language.Tree;
-with Tooltips;                  use Tooltips;
+with Tooltips;
 with Xref;                      use Xref;
 
 with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;

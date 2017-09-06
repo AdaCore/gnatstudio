@@ -26,7 +26,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Glib.Object;               use Glib.Object;
+with Glib.Object;
 
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
@@ -37,8 +37,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
-with Custom_Timeout;            use Custom_Timeout;
-with Expect_Interface;          use Expect_Interface;
+with Custom_Timeout;
+with Expect_Interface;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -54,7 +54,7 @@ with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with XML_Viewer;
 
-with Switches_Parser;           use Switches_Parser;
+with Switches_Parser;
 with XML_Utils;                 use XML_Utils;
 with XML_Utils.GtkAda;          use XML_Utils.GtkAda;
 with Language.Shell;

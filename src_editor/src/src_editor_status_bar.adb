@@ -49,7 +49,7 @@ with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module.Commands;      use Src_Editor_Module.Commands;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
 with Src_Editor_Module;               use Src_Editor_Module;
-with String_Utils;                    use String_Utils;
+with String_Utils;
 
 package body Src_Editor_Status_Bar is
 

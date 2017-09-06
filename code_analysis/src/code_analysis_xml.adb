@@ -17,11 +17,9 @@
 
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
+
 with Code_Coverage;           use Code_Coverage;
-
-with Language.Tree.Database;  use Language.Tree.Database;
 with Projects;                use Projects;
-
 with UTF8_Utils;              use UTF8_Utils;
 
 package body Code_Analysis_XML is
@@ -92,7 +90,8 @@ package body Code_Analysis_XML is
      (Projects : Code_Analysis_Tree;
       Parent   : Node_Ptr)
    is
-      use Project_Maps, File_Maps;
+      use Project_Maps;
+
       Prj_Cur   : Project_Maps.Cursor := Projects.First;
       Sort_Arr  : Project_Array (1 .. Integer (Projects.Length));
 
@@ -359,8 +358,8 @@ package body Code_Analysis_XML is
    procedure Dump_Subprogram
      (Subp_Node : Subprogram_Access; Parent : Node_Ptr)
    is
-      use Subprogram_Maps;
       Loc : constant Node_Ptr := new XML_Utils.Node;
+
    begin
       Loc.Tag := new String'("Subprogram");
       Add_Child (Parent, Loc, True);

@@ -29,8 +29,6 @@ with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 package body Completion.Ada.Constructs_Extractor is
 
    use Completion_List_Pckg;
-   use Completion_List_Extensive_Pckg;
-   use Extensive_List_Pckg;
 
    Resolver_ID : constant String := "CNST_ADA";
 

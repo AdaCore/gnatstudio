@@ -18,9 +18,9 @@
 --  This package provides functions for drawing tooltips representing entity
 --  informations.
 
-with GPS.Kernel;       use GPS.Kernel;
 with Gtk.Widget;
-with Language.Tree.Database; use Language.Tree.Database;
+
+with GPS.Kernel;                      use GPS.Kernel;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Xref;
 

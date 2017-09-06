@@ -75,7 +75,7 @@ with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
-with Src_Editor_Buffer.Cursors;  use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Cursors;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;

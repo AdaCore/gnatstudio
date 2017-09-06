@@ -30,7 +30,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -40,8 +40,8 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Abstract_Tree_Model;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
@@ -49,7 +49,7 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Basic_Types;               use Basic_Types;
+with Basic_Types;
 with Default_Preferences;       use Default_Preferences;
 with Entities_Tooltips;
 with Generic_Views;             use Generic_Views;
@@ -604,7 +604,7 @@ package body Outline_View is
       --  If not, the default is to open a source editor
 
       declare
-         use type Visible_Column_Type;
+         use type Basic_Types.Visible_Column_Type;
          Buffer   : constant Editor_Buffer'Class :=
            Get (Get_Buffer_Factory (View.Kernel).all,
                 View.File, False, False, False);

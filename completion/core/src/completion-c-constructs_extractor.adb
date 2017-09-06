@@ -377,11 +377,10 @@ package body Completion.C.Constructs_Extractor is
               = It.Prefix.all;
          end Has_Prefix;
 
-         Db   : constant General_Xref_Database := It.Resolver.Kernel.Databases;
-         Decl : General_Entity_Declaration;
+         Db      : constant General_Xref_Database :=
+           It.Resolver.Kernel.Databases;
+         Decl    : General_Entity_Declaration;
          Project : Project_Type;
-
-         use type Files_List.Cursor;
 
       begin
          case It.Stage is

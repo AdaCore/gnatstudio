@@ -17,21 +17,20 @@
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-with Glib.Object; use Glib.Object;
+with Glib.Object;          use Glib.Object;
 
-with Gdk;        use Gdk;
-with Gdk.Event;  use Gdk.Event;
-with Gdk.Window; use Gdk.Window;
+with Gdk;                  use Gdk;
+with Gdk.Event;            use Gdk.Event;
 
-with Gtk.Arrow;     use Gtk.Arrow;
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Frame;     use Gtk.Frame;
-with Gtk.Label;     use Gtk.Label;
-with Gtk.Widget;    use Gtk.Widget;
+with Gtk.Arrow;            use Gtk.Arrow;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Event_Box;        use Gtk.Event_Box;
+with Gtk.Frame;            use Gtk.Frame;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Widget;           use Gtk.Widget;
 
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtk.Enums; use Gtk.Enums;
+with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtk.Enums;            use Gtk.Enums;
 
 package body Collapsing_Pane is
 

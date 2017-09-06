@@ -20,7 +20,6 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 with Glib.Object;              use Glib, Glib.Object;
-with Gtk.Enums;                use Gtk.Enums;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
 with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Pango.Enums;              use Pango.Enums;

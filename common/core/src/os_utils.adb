@@ -18,7 +18,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Directories;           use Ada.Directories;
 
-with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;

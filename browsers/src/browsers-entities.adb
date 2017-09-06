@@ -315,13 +315,15 @@ package body Browsers.Entities is
    is
       Decl : constant General_Entity_Declaration :=
         Self.Entity.Element.Get_Declaration;
-      N : constant Node_Ptr := new Node;
+      N    : constant XML_Utils.Node_Ptr := new XML_Utils.Node;
+
    begin
       N.Tag := new String'("entity");
-      Set_Attribute (N, "name", To_String (Decl.Name));
-      Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
-      Set_Attribute (N, "line", Decl.Loc.Line'Img);
-      Set_Attribute (N, "col",  Decl.Loc.Column'Img);
+      XML_Utils.Set_Attribute (N, "name", To_String (Decl.Name));
+      XML_Utils.Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
+      XML_Utils.Set_Attribute (N, "line", Decl.Loc.Line'Img);
+      XML_Utils.Set_Attribute (N, "col",  Decl.Loc.Column'Img);
+
       return N;
    end Save_To_XML;
 
@@ -331,12 +333,12 @@ package body Browsers.Entities is
 
    overriding procedure Save_To_XML
      (Self : not null access Entity_Link_Record;
-      Node : not null XML_Utils.Node_Ptr)
-   is
+      Node : not null XML_Utils.Node_Ptr) is
    begin
-      Set_Attribute (Node, "name", To_String (Self.Name));
+      XML_Utils.Set_Attribute (Node, "name", To_String (Self.Name));
+
       if Self.Parent_Link then
-         Set_Attribute (Node, "parent", "1");
+         XML_Utils.Set_Attribute (Node, "parent", "1");
       end if;
    end Save_To_XML;
 
@@ -350,13 +352,15 @@ package body Browsers.Entities is
    is
       E : constant Root_Entity'Class :=
         Self.Kernel.Databases.Get_Entity
-          (Name => Get_Attribute (Node, "name"),
+          (Name => XML_Utils.Get_Attribute (Node, "name"),
            Loc  =>
-             (File    => Create (+Get_Attribute (Node, "file")),
+             (File    => Create (+XML_Utils.Get_Attribute (Node, "file")),
               Project => <>,
-              Line    => Integer'Value (Get_Attribute (Node, "line")),
+              Line    =>
+                Integer'Value (XML_Utils.Get_Attribute (Node, "line")),
               Column  =>
-                Visible_Column_Type'Value (Get_Attribute (Node, "col"))));
+                Visible_Column_Type'Value
+                  (XML_Utils.Get_Attribute (Node, "col"))));
       It : Type_Item;
       Newly_Added : Boolean;
    begin
@@ -374,10 +378,12 @@ package body Browsers.Entities is
       From, To : not null access GPS_Item_Record'Class)
    is
       pragma Unreferenced (Self);
+
    begin
-      Add_Link (Type_Item (From), Type_Item (To),
-                Link_Name   => Get_Attribute (Node, "name"),
-                Parent_Link => Get_Attribute (Node, "parent") = "1");
+      Add_Link
+        (Type_Item (From), Type_Item (To),
+         Link_Name   => XML_Utils.Get_Attribute (Node, "name"),
+         Parent_Link => XML_Utils.Get_Attribute (Node, "parent") = "1");
    end Load_From_XML;
 
    -----------------
@@ -890,10 +896,10 @@ package body Browsers.Entities is
    ----------------
 
    procedure Add_Fields (Item : not null access Type_Item_Record'Class) is
-      use Entity_Arrays;
-      B     : constant Type_Browser := Type_Browser (Item.Browser);
-      S     : constant access Browser_Styles := B.Get_View.Get_Styles;
+      B        : constant Type_Browser := Type_Browser (Item.Browser);
+      S        : constant access Browser_Styles := B.Get_View.Get_Styles;
       Literals : Xref.Entity_Array := Item.Entity.Element.Literals;
+
    begin
       if Literals'Length /= 0 then
          for F in Literals'Range loop

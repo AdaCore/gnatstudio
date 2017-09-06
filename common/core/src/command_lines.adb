@@ -370,8 +370,6 @@ package body Command_Lines is
      (Cmd  : in out Command_Line;
       List : GNAT.Strings.String_List)
    is
-      use GNAT.OS_Lib;
-
       function Is_Section (Name : String) return Boolean;
       --  Search for section with given Name
 

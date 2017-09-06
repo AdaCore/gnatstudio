@@ -27,7 +27,6 @@ with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Radio_Button;         use Gtk.Radio_Button;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;

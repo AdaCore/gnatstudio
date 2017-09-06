@@ -21,14 +21,14 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Glib.Object;               use Glib.Object;
+with Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 
 with Gtkada.MDI;                use Gtkada.MDI;
-with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu;
 
-with Log_Utils;                 use Log_Utils;
+with Log_Utils;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Core_Kernels;          use GPS.Core_Kernels;
@@ -41,7 +41,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.VCS;                   use GPS.VCS;
 
-with VCS.Generic_VCS;           use VCS.Generic_VCS;
+with VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;

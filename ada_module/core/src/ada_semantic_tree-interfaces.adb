@@ -60,9 +60,8 @@ package body Ada_Semantic_Tree.Interfaces is
    ------------------------
 
    procedure Register_Assistant (Db : Construct_Database_Access) is
-      use Tree_Annotations_Pckg;
-
       Import_Key : Construct_Annotations_Pckg.Annotation_Key;
+
    begin
       Get_Annotation_Key
         (Get_Construct_Annotation_Key_Registry (Db).all,

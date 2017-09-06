@@ -26,8 +26,6 @@ package body Commands.CodePeer is
    overriding function Execute
      (Self : access Review_Message_Command) return Command_Return_Type
    is
-      use type Standard.CodePeer.Message_Access;
-
       Context  : constant GPS.Kernel.Selection_Context :=
         Self.Module.Kernel.Get_Current_Context;
       Messages : Standard.CodePeer.Message_Vectors.Vector;

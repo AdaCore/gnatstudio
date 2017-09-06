@@ -44,7 +44,7 @@ with Gdk.Event;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Main;                 use Gtk.Main;
+with Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Spinner;              use Gtk.Spinner;
 with Gtk.Stock;                use Gtk.Stock;
@@ -63,7 +63,7 @@ with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;        use GPS.Kernel.Remote;
+with GPS.Kernel.Remote;
 with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
 
 with Commands;                 use Commands;
@@ -73,7 +73,7 @@ with Remote;                   use Remote;
 with String_Utils;             use String_Utils;
 with Toolchains.Known;         use Toolchains.Known;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with XML_Utils;                use XML_Utils;
+with XML_Utils;
 
 package body Toolchains_Editor is
 

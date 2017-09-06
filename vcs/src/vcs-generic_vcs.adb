@@ -85,8 +85,6 @@ package body VCS.Generic_VCS is
    VCS_Generic_Module_Name : constant String := "Generic VCS connectivity";
    VCS_Generic_Module_ID   : VCS_Generic_Module_ID_Access;
 
-   use String_List_Utils.String_List;
-
    function Create_File_Context
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Selection_Context;

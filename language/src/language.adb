@@ -751,9 +751,7 @@ package body Language is
    function Category_Name
      (Category : Language.Language_Category;
       Name     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol)
-      return String
-   is
-      use type Strings.String_Access;
+      return String is
    begin
       if Name /= No_Symbol then
          return Get (Name).all;

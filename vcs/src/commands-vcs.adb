@@ -228,9 +228,7 @@ package body Commands.VCS is
    end Execute;
 
    overriding function Execute
-     (Command : access Update_Files_Command_Type) return Command_Return_Type
-   is
-      use String_List;
+     (Command : access Update_Files_Command_Type) return Command_Return_Type is
    begin
       for J in Command.Filenames'Range loop
          File_Changed_On_Disk_Hook.Run (Command.Kernel, Command.Filenames (J));

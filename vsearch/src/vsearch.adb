@@ -30,7 +30,6 @@ with GNATCOLL.VFS;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -46,13 +45,13 @@ with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
-with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Box;                   use Gtk.Box;
@@ -65,7 +64,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Types;              use Gtkada.Types;
+with Gtkada.Types;
 
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Editors;               use GPS.Editors;
@@ -919,7 +918,6 @@ package body Vsearch is
       All_Occurrences : Boolean)
       return Find_Utils.Root_Search_Context_Access
    is
-      use Widget_List;
       Module         : constant Search_Module :=
                          Find_Module
                            (Vsearch_Module_Id.Kernel,
@@ -942,6 +940,7 @@ package body Vsearch is
                           else
                              Full_Text);
       Ctxt           : Root_Search_Context_Access;
+
    begin
       if Module /= null and then Pattern /= "" then
          Ctxt := Module.Create_Context
@@ -1340,8 +1339,6 @@ package body Vsearch is
    procedure On_Context_Combo_Changed
      (Object : access Gtk_Widget_Record'Class)
    is
-      use Widget_List;
-
       Vsearch             : constant Vsearch_Access := Vsearch_Access (Object);
       Module              : constant Search_Module :=
                               Find_Module
@@ -1358,6 +1355,7 @@ package body Vsearch is
       Has_Whole_Word      : Boolean;
       Has_Backward        : Boolean;
       Child               : MDI_Child;
+
    begin
       if Module /= null then
          Set_Last_Search_Module (Vsearch_Module_Id.Kernel, Module);
@@ -1714,8 +1712,7 @@ package body Vsearch is
    procedure Selection_Changed
      (Vsearch : access Gtk_Widget_Record'Class)
    is
-      use Widget_List;
-      Search : constant Vsearch_Access := Vsearch_Access (Vsearch);
+      Search         : constant Vsearch_Access := Vsearch_Access (Vsearch);
       Iter           : Gtk_Tree_Iter;
       Case_Sensitive : Boolean;
       Is_Regexp      : Boolean;

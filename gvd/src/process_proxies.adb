@@ -19,7 +19,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
 
-with Gtk.Main;              use Gtk.Main;
+with Gtk.Main;
 with Glib.Convert;          use Glib.Convert;
 
 with GVD.Types;             use GVD.Types;

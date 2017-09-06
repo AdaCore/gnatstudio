@@ -262,12 +262,14 @@ package body Browsers.Dependency_Items is
      (Self : not null access File_Item_Record)
       return XML_Utils.Node_Ptr
    is
-      N : constant Node_Ptr := new Node;
+      N : constant XML_Utils.Node_Ptr := new XML_Utils.Node;
+
    begin
       N.Tag := new String'("file");
-      Set_Attribute (N, "file", Self.Source.Display_Full_Name);
-      Set_Attribute
+      XML_Utils.Set_Attribute (N, "file", Self.Source.Display_Full_Name);
+      XML_Utils.Set_Attribute
         (N, "project", Self.Project.Project_Path.Display_Full_Name);
+
       return N;
    end Save_To_XML;
 
@@ -281,7 +283,7 @@ package body Browsers.Dependency_Items is
    is
    begin
       if Self.Explicit then
-         Set_Attribute (Node, "explicit", "1");
+         XML_Utils.Set_Attribute (Node, "explicit", "1");
       end if;
    end Save_To_XML;
 
@@ -297,9 +299,9 @@ package body Browsers.Dependency_Items is
       Newly_Added : Boolean;
    begin
       Self.Find_Or_Create_File
-        (Filename => Create (+Get_Attribute (Node, "file")),
+        (Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
          Project  => Get_Project_Tree (Self.Kernel).Project_From_Path
-         (Create (+Get_Attribute (Node, "project"))),
+         (Create (+XML_Utils.Get_Attribute (Node, "project"))),
          Item     => It,
          Newly_Added => Newly_Added);
       return It;
@@ -317,7 +319,7 @@ package body Browsers.Dependency_Items is
    begin
       Self.Add_Link
         (File_Item (From), File_Item (To),
-         Explicit => Get_Attribute (Node, "explicit") = "1");
+         Explicit => XML_Utils.Get_Attribute (Node, "explicit") = "1");
    end Load_From_XML;
 
    ---------------------

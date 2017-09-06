@@ -27,9 +27,9 @@ with Gtkada.Style;              use Gtkada.Style;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Language.Tree;             use Language.Tree;
+with Language.Tree;
 with String_Utils;              use String_Utils;
-with Tooltips;                  use Tooltips;
+with Tooltips;
 
 package body Entities_Tooltips_Utility is
 

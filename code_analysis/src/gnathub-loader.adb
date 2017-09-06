@@ -145,14 +145,13 @@ package body GNAThub.Loader is
      (Self     : in out Loader'Class;
       Database : GNATCOLL.VFS.Virtual_File)
    is
-      use type Commands.Command_Access;
-
       Aux : Commands.Command_Access;
       --  New command is assigned to this variable to create object with
       --  necessary accessibility level, otherwise acccessibility check will
       --  fail inside Launch_Background_Command subprogram.
 
-      Id : Natural := 1;
+      Id  : Natural := 1;
+
    begin
       Self.Cleanup;
 
@@ -241,11 +240,11 @@ package body GNAThub.Loader is
       is
          use Language.Abstract_Language_Tree;
          use GNAT.Strings;
-         use type Basic_Types.Visible_Column_Type;
 
          Tree   : constant Semantic_Tree'Class :=
            Self.Module.Get_Kernel.Get_Abstract_Tree_For_File ("GNATHUB", File);
          Result : GNAThub_Subprogram_Access := null;
+
       begin
          if Tree = No_Semantic_Tree then
             return Result;

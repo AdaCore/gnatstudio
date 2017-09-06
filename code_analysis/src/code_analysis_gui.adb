@@ -27,12 +27,12 @@ with Gtk.Image;                  use Gtk.Image;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
-with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Handlers;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.Projects;
-with Basic_Types;                use Basic_Types;
+with Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 with Coverage_GUI;               use Coverage_GUI;
 
@@ -312,12 +312,12 @@ package body Code_Analysis_GUI is
       Event  : Gdk_Event;
       Kernel : Kernel_Handle) return Boolean
    is
-      use Code_Analysis_Tree_Model.File_Set;
       View  : constant Code_Analysis_View := Code_Analysis_View (Object);
       Tree  : constant Gtk_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       M     : Gtk_Tree_Store;
+
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press

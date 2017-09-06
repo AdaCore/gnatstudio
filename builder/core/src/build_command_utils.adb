@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings;                use Ada.Strings;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations;
 with GNAT.Strings;

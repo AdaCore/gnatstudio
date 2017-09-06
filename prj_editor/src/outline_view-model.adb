@@ -996,7 +996,6 @@ package body Outline_View.Model is
                return 0;
             end if;
          end Find_Child_With_Id;
-         use type Hash_Type;
 
          El : Sorted_Node_Access;
 

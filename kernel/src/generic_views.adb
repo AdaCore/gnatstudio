@@ -57,7 +57,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;

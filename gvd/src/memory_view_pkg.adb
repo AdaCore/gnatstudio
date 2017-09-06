@@ -24,7 +24,6 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
-with Gtk.Widget;                use Gtk.Widget;
 
 with GPS.Intl;                  use GPS.Intl;
 

@@ -22,7 +22,7 @@ with Gtk.GEntry;  use Gtk.GEntry;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.Kernel;      use GPS.Kernel;
-with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;
 with GPS.Dialogs;     use GPS.Dialogs;
 
 package Toolchains_Dialog is

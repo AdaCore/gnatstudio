@@ -37,12 +37,11 @@ with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -230,7 +229,6 @@ package body Project_Explorers is
       Element_Type    => Gtk_Tree_Iter,
       Hash            => GNATCOLL.VFS.Full_Name_Hash,
       Equivalent_Keys => "=");
-   use File_Node_Hash;
 
    type Directory_Info is record
       Directory : Virtual_File;

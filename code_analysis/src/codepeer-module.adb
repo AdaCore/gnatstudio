@@ -72,7 +72,6 @@ with Code_Analysis_GUI;
 package body CodePeer.Module is
 
    use type Code_Analysis.Code_Analysis_Tree;
-   use type GPS.Editors.Editor_Mark'Class;
    use type GPS.Editors.Editor_Buffer'Class;
 
    Me : constant Trace_Handle := Create ("CodePeer");

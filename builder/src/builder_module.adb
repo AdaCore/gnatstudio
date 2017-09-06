@@ -18,8 +18,8 @@
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
+with Glib;
+with Glib.Object;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;
@@ -34,7 +34,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 
-with Builder_Facility_Module;    use Builder_Facility_Module;
+with Builder_Facility_Module;
 with Build_Command_Utils;        use Build_Command_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
 

@@ -1003,7 +1003,6 @@ procedure GPS.Main is
          return Glib.Gchar (Interfaces.C.char'(Interfaces.C.To_C (C)));
       end To_Gchar;
 
-      use type Glib.Gboolean;
       Opt_Project  : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => ICS.New_String ("project"),
                         Short_Name      => To_Gchar ('P'),

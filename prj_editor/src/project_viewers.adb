@@ -35,11 +35,11 @@ with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib_Values_Utils;            use Glib_Values_Utils;
 
-with Gtk.Box;                      use Gtk.Box;
+with Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Label;                    use Gtk.Label;
-with Gtk.Menu;                     use Gtk.Menu;
+with Gtk.Menu;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
@@ -52,7 +52,7 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Default_Preferences;          use Default_Preferences;
-with Extending_Projects_Editors;   use Extending_Projects_Editors;
+with Extending_Projects_Editors;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;

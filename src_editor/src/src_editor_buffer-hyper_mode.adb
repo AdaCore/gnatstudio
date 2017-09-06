@@ -288,19 +288,18 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Project   : Project_Type;
       Alternate : Boolean := False)
    is
-      Entity_Start,
-      Entity_End     : Gtk_Text_Iter;
-      Line           : Editable_Line_Type;
-      Column         : Visible_Column_Type;
+      Entity_Start : Gtk_Text_Iter;
+      Entity_End   : Gtk_Text_Iter;
+      Line         : Editable_Line_Type;
+      Column       : Visible_Column_Type;
 
-      Closest        : Root_Entity_Reference_Ref;
+      Closest      : Root_Entity_Reference_Ref;
 
-      Location       : General_Location;
-      Decl           : General_Entity_Declaration;
-      Current        : General_Location;
+      Location     : General_Location;
+      Decl         : General_Entity_Declaration;
+      Current      : General_Location;
 
       use type GNATCOLL.VFS.Virtual_File;
-      use List_Of_Highlighters;
 
    begin
       if not Buffer.Hyper_Mode_Has_Highlight then

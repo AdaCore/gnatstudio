@@ -26,11 +26,10 @@ with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
 with GNATCOLL.Traces;                        use GNATCOLL.Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Glib;                                   use Glib;
-with Glib.Object;                            use Glib.Object;
+with Glib.Object;
 with XML_Utils;                              use XML_Utils;
 with Gdk.Event;                              use Gdk.Event;
 with Gtk.Button;
-with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
 with Gtk.Menu;                               use Gtk.Menu;
 with Gtk.Menu_Item;                          use Gtk.Menu_Item;
@@ -510,7 +509,7 @@ package body Code_Analysis_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      use Code_Analysis_Instances;
+
       Instance : Class_Instance;
 
    begin
@@ -1708,8 +1707,8 @@ package body Code_Analysis_Module is
       Context : Selection_Context;
       Submenu : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      use Code_Analysis_Instances;
       pragma Unreferenced (Factory);
+
       Analysis : constant String :=
          To_String (Code_Analysis_Module_ID.Registered_Analysis.First_Element);
       Item     : Gtk_Menu_Item;
@@ -1877,9 +1876,10 @@ package body Code_Analysis_Module is
      (Command : access Load_Data_All_Projects_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      use Code_Analysis_Instances;
       pragma Unreferenced (Command);
+
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+
    begin
       Add_All_Gcov_Project_Info_From_Menu
         (Widget => null,
@@ -1901,9 +1901,10 @@ package body Code_Analysis_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      use Code_Analysis_Instances;
+
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Prj : Project_Type := Project_Information (Get_Current_Context (Kernel));
+
    begin
       if Prj = No_Project then
          Prj := Get_Project (Kernel);

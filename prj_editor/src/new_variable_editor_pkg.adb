@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk; use Gtk;
-with Gtk.Widget;      use Gtk.Widget;
+with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl;        use GPS.Intl;

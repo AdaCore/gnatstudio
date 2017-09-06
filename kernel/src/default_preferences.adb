@@ -26,7 +26,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with XML_Utils;                  use XML_Utils;
 with Default_Preferences.GUI;    use Default_Preferences.GUI;
-with Dialog_Utils;               use Dialog_Utils;
+with Dialog_Utils;
 
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
@@ -37,13 +37,10 @@ with Gtk.Combo_Box;              use Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
-with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Font_Selection;         use Gtk.Font_Selection;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Handlers;               use Gtk.Handlers;
-with Gtk.List_Box_Row;           use Gtk.List_Box_Row;
-with Gtk.Rc;                     use Gtk.Rc;
+with Gtk.Rc;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
@@ -51,8 +48,6 @@ with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 
@@ -81,7 +76,6 @@ package body Default_Preferences is
 
    package Str_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, String, Ada.Strings.Hash, "=");
-   use Str_Maps;
 
    -------------------------------
    -- Preferences_GObjects_Maps --

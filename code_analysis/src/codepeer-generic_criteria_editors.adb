@@ -28,8 +28,6 @@ with Gtk.Handlers;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 
-with Histories;
-
 package body CodePeer.Generic_Criteria_Editors is
 
    function Glib_Class_Name (Tag : Ada.Tags.Tag) return String;
@@ -292,9 +290,7 @@ package body CodePeer.Generic_Criteria_Editors is
       Path   : Interfaces.C.Strings.chars_ptr;
       Self   : Criteria_Editor)
    is
-      use type Histories.History_Key;
-
-      Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+      Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
           (Gtk.Tree_Model.To_Interface (Self.Model),
            Interfaces.C.Strings.Value (Path));

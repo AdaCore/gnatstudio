@@ -23,9 +23,8 @@ with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 
-with Glib.Object;                  use Glib.Object;
+with Glib.Object;
 
-with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Widget;                   use Gtk.Widget;
 
@@ -57,7 +56,7 @@ with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
-with Glib;                         use Glib;
+with Glib;
 
 package body Codefix_Module is
 

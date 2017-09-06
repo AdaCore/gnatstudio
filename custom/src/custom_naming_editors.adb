@@ -22,11 +22,10 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Frame;               use Gtk.Frame;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Size_Group;          use Gtk.Size_Group;
-with Gtk.Widget;              use Gtk.Widget;
 
 with Dialog_Utils;            use Dialog_Utils;
 with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
 
 package body Custom_Naming_Editors is
 

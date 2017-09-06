@@ -28,7 +28,7 @@ with Gtk.Image;           use Gtk.Image;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.List_Box;        use Gtk.List_Box;
 with Gtk.List_Box_Row;    use Gtk.List_Box_Row;
-with Gtk.Main;            use Gtk.Main;
+with Gtk.Main;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Size_Group;      use Gtk.Size_Group;

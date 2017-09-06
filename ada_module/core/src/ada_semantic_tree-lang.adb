@@ -1382,10 +1382,9 @@ package body Ada_Semantic_Tree.Lang is
      (Db : Construct_Database_Access)
       return Construct_Annotations_Pckg.Annotation_Key
    is
-      use Construct_Annotations_Pckg;
-
       Assistant : constant Database_Assistant_Access :=
                     Get_Assistant (Db, Ada_Assistant_Id);
+
    begin
       return Ada_Assistant (Assistant.all).Ada_Ref_Key;
    end Get_Ref_Key;

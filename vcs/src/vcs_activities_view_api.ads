@@ -19,7 +19,6 @@ with GNATCOLL.Scripts;    use GNATCOLL.Scripts;
 
 with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Widget;          use Gtk.Widget;
 
 with GPS.Kernel;          use GPS.Kernel;
 with VCS_View.Activities; use VCS_View.Activities;

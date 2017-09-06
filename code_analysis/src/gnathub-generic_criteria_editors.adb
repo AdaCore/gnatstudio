@@ -27,8 +27,6 @@ with Gtk.Handlers;
 with Gtk.Tree_View_Column;
 with Gtkada.Abstract_Tree_Model;
 
-with Histories;
-
 package body GNAThub.Generic_Criteria_Editors is
 
    use Glib;
@@ -369,8 +367,6 @@ package body GNAThub.Generic_Criteria_Editors is
       Path   : Interfaces.C.Strings.chars_ptr;
       Self   : Criteria_Editor)
    is
-      use type Histories.History_Key;
-
       P    : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 

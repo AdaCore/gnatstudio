@@ -29,10 +29,9 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Glib;                       use Glib;
-with Glib.Convert;               use Glib.Convert;
+with Glib.Convert;
 with Glib.Error;                 use Glib.Error;
 
-with Gdk.Window;                 use Gdk.Window;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;

@@ -1005,7 +1005,6 @@ package body Language.Libclang is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      use Parse_Files_Command;
 
       P_Tree         : constant GNATCOLL.Projects.Project_Tree_Access
         := Kernel.Get_Project_Tree;

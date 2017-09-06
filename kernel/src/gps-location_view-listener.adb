@@ -18,7 +18,6 @@
 with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 with System.Address_To_Access_Conversions;
 
 with Glib.Object;
@@ -46,7 +45,6 @@ package body GPS.Location_View.Listener is
    use type Commands.Command_Access;
    use type Glib.Gint;
    use type Glib.Main.G_Source_Id;
-   use type GNAT.Strings.String_Access;
    use type GNATCOLL.Xref.Visible_Column;
 
    Column_Types : Glib.GType_Array

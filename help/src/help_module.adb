@@ -32,20 +32,16 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 
-with Gtk.Widget;                 use Gtk.Widget;
-
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Dialogs;
 
 with Commands, Commands.Interactive; use Commands, Commands.Interactive;
 with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
@@ -829,7 +825,8 @@ package body Help_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       use ASCII;
-      Ignore     : Message_Dialog_Buttons;
+
+      Ignore     : Gtkada.Dialogs.Message_Dialog_Buttons;
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Self, Ignore);
 
@@ -886,13 +883,13 @@ package body Help_Module is
            (About_Text, LF & "Active toolchain: " & Get_Name (Tc) & LF);
       end if;
 
-      Ignore := Message_Dialog
+      Ignore := Gtkada.Dialogs.Message_Dialog
         (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
          "(c) 2001-" & Config.Current_Year & " AdaCore",
-         Buttons => Button_OK,
+         Buttons => Gtkada.Dialogs.Button_OK,
          Title   => -"About...",
-         Parent  => Get_Current_Window (Kernel));
+         Parent  => GPS.Kernel.MDI.Get_Current_Window (Kernel));
       Free (Contents);
 
       return Commands.Success;

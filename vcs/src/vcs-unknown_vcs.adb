@@ -22,8 +22,6 @@ package body VCS.Unknown_VCS is
 
    Unknown_VCS_Name : constant String := "Unknown VCS";
 
-   use String_List;
-
    procedure Error (File : Virtual_File);
    --  Convenience function to display an error message in the console
 

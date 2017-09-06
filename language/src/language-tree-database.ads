@@ -538,8 +538,6 @@ package Language.Tree.Database is
      (Structured_File_Access);
    --  This package is used to index the file by their unit name
 
-   use File_Set;
-
    function Get_Identifier
      (Entity : Entity_Access) return Normalized_Symbol;
    pragma Inline (Get_Identifier);

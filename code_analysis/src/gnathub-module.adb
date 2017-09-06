@@ -62,7 +62,6 @@ package body GNAThub.Module is
    -----------
 
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
-      use type Gtkada.MDI.MDI_Child;
 
       generic
          type Element is limited private;

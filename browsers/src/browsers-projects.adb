@@ -82,7 +82,6 @@ package body Browsers.Projects is
       Position               => Position_Automatic,
       Group                  => Group_Default);
    subtype Project_Browser is Project_Views.View_Access;
-   use type Project_Browser;
 
    procedure Examine_Project_Hierarchy
      (Browser   : not null access Project_Browser_Record'Class;
@@ -200,10 +199,12 @@ package body Browsers.Projects is
      (Self : not null access Project_Item_Record)
       return XML_Utils.Node_Ptr
    is
-      N : constant Node_Ptr := new Node;
+      N : constant XML_Utils.Node_Ptr := new XML_Utils.Node;
+
    begin
       N.Tag := new String'("project");
-      Set_Attribute (N, "path", Self.Path.Display_Full_Name);
+      XML_Utils.Set_Attribute (N, "path", Self.Path.Display_Full_Name);
+
       return N;
    end Save_To_XML;
 
@@ -213,11 +214,10 @@ package body Browsers.Projects is
 
    overriding procedure Save_To_XML
      (Self : not null access Project_Link_Record;
-      Node : not null XML_Utils.Node_Ptr)
-   is
+      Node : not null XML_Utils.Node_Ptr) is
    begin
       if Self.Limited_With then
-         Set_Attribute (Node, "limited_with", "1");
+         XML_Utils.Set_Attribute (Node, "limited_with", "1");
       end if;
    end Save_To_XML;
 
@@ -231,7 +231,8 @@ package body Browsers.Projects is
    is
       P : constant Project_Type :=
         Get_Project_Tree (Self.Kernel).Project_From_Path
-        (Create (+Get_Attribute (Node, "path")));
+        (Create (+XML_Utils.Get_Attribute (Node, "path")));
+
    begin
       return Self.Add_Project_If_Not_Present (P);
    end Load_From_XML;
@@ -247,7 +248,7 @@ package body Browsers.Projects is
    begin
       Self.Add_Link_If_Not_Present
         (Project_Item (From), Project_Item (To),
-         Limited_With => Get_Attribute (Node, "limited_with") = "1");
+         Limited_With => XML_Utils.Get_Attribute (Node, "limited_with") = "1");
    end Load_From_XML;
 
    --------------------

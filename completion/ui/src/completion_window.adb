@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
+
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib.Convert;              use Glib.Convert;
@@ -41,21 +46,15 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Image;                 use Gtk.Image;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Pango.Layout;              use Pango.Layout;
-
-with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Language.Icons;            use Language.Icons;
 with Xref;
 
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Cairo;                     use Cairo;
 with Glib.Object;               use Glib.Object;
@@ -112,10 +111,6 @@ package body Completion_Window is
    package Return_Cb is new Gtk.Handlers.Return_Callback
      (Completion_Window_Record, Boolean);
    use Return_Cb;
-
-   package Cb is new Gtk.Handlers.User_Callback
-     (Completion_Window_Record, File_Location);
-   use Cb;
 
    package Simple_Cb is new Gtk.Handlers.Callback
      (Completion_Window_Record);
@@ -324,7 +319,6 @@ package body Completion_Window is
       Title    : Gtk_Label;
       Img      : Gtk_Image;
 
-      use type Gdk.Pixbuf.Gdk_Pixbuf;
    begin
       --  If the notes window is not empty, empty it here
       Empty_Notes_Container (Explorer);

@@ -54,7 +54,7 @@ with Gtkada.Handlers;                use Gtkada.Handlers;
 with System;                         use System;
 
 package body GPS.Kernel.Xref is
-   use Xref;
+
    use Root_Entity_Refs;
 
    Me : constant Trace_Handle := Create ("Xref");

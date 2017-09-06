@@ -27,7 +27,7 @@ with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Scripts.Utils;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 

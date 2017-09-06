@@ -25,7 +25,6 @@ with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
 package body Src_Editor_Buffer.Blocks is
 
-   use type GNAT.Strings.String_Access;
    use Src_Editor_Buffer.Line_Information;
 
    --------------------

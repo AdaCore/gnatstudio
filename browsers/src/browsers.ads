@@ -17,8 +17,8 @@
 
 with Glib;
 with Gtkada.Canvas_View;
-with Gtkada.Style;        use Gtkada.Style;
-with XML_Utils;           use XML_Utils;
+with Gtkada.Style; use Gtkada.Style;
+with XML_Utils;
 
 package Browsers is
 
