@@ -68,6 +68,7 @@ gnat_src
 gnatdoc/docs/users_guide/_build/
 gps/gmon.out*
 po/Makefile
+laltools
 scripts/sortxml
 share/support/core/protocols.py
 share/icons/light/svg
