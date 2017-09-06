@@ -1909,15 +1909,16 @@ package body Switches_Chooser is
                Switch    => Get_Switch (Switch),
                Section   => Get_Section (Switch),
                Success   => Success);
-
          elsif not Has_Switch
            (Cmd_Line,
             Switch    => Get_Switch (Switch),
             Section   => Get_Section (Switch))
+           and then not (Before_Save and then Matches)
          then
-            --  It it matches or if the target is going to be saved, check if
-            --  the switch is present in the target's default command line and
-            --  put it back on the target's current command line in this case.
+            --  It it matches and if the target is not going to be saved, add
+            --  the switch back if it's present in the default command line.
+            --  Add it back too if the target is goind to be saved, even if
+            --  the filter does not match: we still want it present by default.
 
             declare
                Iter : Command_Line_Iterator;
