@@ -48,37 +48,59 @@ package body LAL.Ada_Languages is
         (Is_Optional_Keyword, Case_Exceptions, Indent_Params);
       use Char_Vectors;
       use type Libadalang.Analysis.Ada_Node;
+
+      function To_Char_Subrange
+        (Buffer   : String;
+         From, To : Natural) return Char_Subrange;
+      --  Convert line range to character range
+
+      ----------------------
+      -- To_Char_Subrange --
+      ----------------------
+
+      function To_Char_Subrange
+        (Buffer   : String;
+         From, To : Natural) return Char_Subrange
+      is
+         Ok     : Boolean;
+         Result : Utils.Char_Vectors.Char_Subrange := (Buffer'First, 0);
+      begin
+         for J in 2 .. From loop
+            String_Utils.Next_Line
+              (Buffer  => Buffer,
+               P       => Result.First,
+               Next    => Result.First,
+               Success => Ok);
+         end loop;
+
+         if To > 0 then
+            Result.Last := Result.First;
+
+            for J in From .. To loop
+               String_Utils.Next_Line
+                 (Buffer  => Buffer,
+                  P       => Result.Last,
+                  Next    => Result.Last,
+                  Success => Ok);
+            end loop;
+         else
+            Result.Last := Buffer'Length;
+         end if;
+
+         return Result;
+      end To_Char_Subrange;
+
       Unit       : Libadalang.Analysis.Analysis_Unit;
       Root       : Libadalang.Analysis.Ada_Node;
       Ok         : Boolean;
       Input      : Char_Vector;
       Output     : Char_Vector;
       Errors     : Pp.Scanner.Source_Message_Vector;
-      From_Range : Char_Subrange := (Buffer'First, 0);
-      To_Range   : Char_Subrange := (1, 0);
+      To_Range   : Utils.Char_Vectors.Char_Subrange := (1, 0);
+      From_Range : constant Utils.Char_Vectors.Char_Subrange :=
+        To_Char_Subrange (Buffer, From, To);
+
    begin
-      for J in 2 .. From loop
-         String_Utils.Next_Line
-           (Buffer  => Buffer,
-            P       => From_Range.First,
-            Next    => From_Range.First,
-            Success => Ok);
-      end loop;
-
-      if To > 0 then
-         From_Range.Last := From_Range.First;
-
-         for J in From .. To loop
-            String_Utils.Next_Line
-              (Buffer  => Buffer,
-               P       => From_Range.Last,
-               Next    => From_Range.Last,
-               Success => Ok);
-         end loop;
-      else
-         From_Range.Last := Buffer'Length;
-      end if;
-
       Append (Input, Buffer);
 
       Unit := Libadalang.Analysis.Get_From_Buffer
@@ -128,46 +150,48 @@ package body LAL.Ada_Languages is
            (UTF8 => Sloc_Image (Error.Sloc) & " " & To_Array (Error.Text));
       end loop;
 
-      if To_Range.Last = 0 then
-         --  Fall back to whole buffer if Out_Range was not set
-         To_Range := (1, Last_Index (Output));
-      end if;
-
-      --  FIXME!!! Free Unit after use
       declare
          Text : String renames Elems (Output) (1 .. Last_Index (Output));
-         Text_Position   : Positive := To_Range.First;
-         Buffer_Position : Positive := From_Range.First;
-         Text_Next       : Positive := To_Range.First;
-         Buffer_Next     : Positive := From_Range.First;
-         Line            : Positive := Positive'Max (From, 1);
       begin
-         loop
-            String_Utils.Next_Line
-              (Buffer  => Text,
-               P       => Text_Position,
-               Next    => Text_Next,
-               Success => Ok);
+         if To_Range.Last = 0 then
+            --  Calculate To_Range if it was not set by Pp
+            To_Range := To_Char_Subrange (Text, From, To);
+         end if;
 
-            String_Utils.Next_Line
-              (Buffer  => Buffer,
-               P       => Buffer_Position,
-               Next    => Buffer_Next,
-               Success => Ok);
+         declare
+            Text_Position   : Positive := To_Range.First;
+            Buffer_Position : Positive := From_Range.First;
+            Text_Next       : Positive := To_Range.First;
+            Buffer_Next     : Positive := From_Range.First;
+            Line            : Positive := Positive'Max (From, 1);
+         begin
+            loop
+               String_Utils.Next_Line
+                 (Buffer  => Text,
+                  P       => Text_Position,
+                  Next    => Text_Next,
+                  Success => Ok);
 
-            Replace
-              (Line => Line,
-               First => 1,
-               Last  => Buffer_Next - Buffer_Position,
-               Replace => Text (Text_Position .. Text_Next - 2));
+               String_Utils.Next_Line
+                 (Buffer  => Buffer,
+                  P       => Buffer_Position,
+                  Next    => Buffer_Next,
+                  Success => Ok);
 
-            Line := Line + 1;
-            Text_Position := Text_Next;
-            Buffer_Position := Buffer_Next;
+               Replace
+                 (Line => Line,
+                  First => 1,
+                  Last  => Buffer_Next - Buffer_Position,
+                  Replace => Text (Text_Position .. Text_Next - 2));
 
-            exit when Text_Position >= To_Range.Last
-             or Buffer_Position >= From_Range.Last;
-         end loop;
+               Line := Line + 1;
+               Text_Position := Text_Next;
+               Buffer_Position := Buffer_Next;
+
+               exit when Text_Position >= To_Range.Last
+                 or Buffer_Position >= From_Range.Last;
+            end loop;
+         end;
       end;
    end Format_Buffer;
 
