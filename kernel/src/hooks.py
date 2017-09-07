@@ -1719,7 +1719,6 @@ package body GPS.Kernel.Hooks is
       (Self    : in out %(name)s;
        Kernel  : not null access Kernel_Handle_Record'Class%(params)s)
    is
-      use Hook_Func_Lists;
       Block_Me : constant Block_Trace_Handle :=
          Create (Me, (if Active (Me) then Name (Self) else ""));
 
