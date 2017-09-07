@@ -19,6 +19,9 @@ class LD(core.MemoryUsageProvider):
 
     _cache = {}
 
+    # The list of supported targets
+    _supported_targets = ["arm-eabi"]
+
     @staticmethod
     def map_file_is_supported(context):
         """
@@ -31,7 +34,7 @@ class LD(core.MemoryUsageProvider):
         if v is not None:
             return v
 
-        if not target or target == 'native' or build_mode != 'default':
+        if target not in LD._supported_targets:
             return False
 
         ld_exe = target + '-ld'
