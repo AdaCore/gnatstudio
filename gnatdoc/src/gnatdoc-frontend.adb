@@ -1434,6 +1434,8 @@ package body GNATdoc.Frontend is
       procedure Parse_Ada_File
         (Buffer   : GNAT.Strings.String_Access)
       is
+         use type Basic_Types.Visible_Column_Type;
+
          No_Line        : constant Natural := 0;
          Doc_Start_Line : Natural := No_Line;
          Doc_End_Line   : Natural := No_Line;
@@ -6592,8 +6594,8 @@ package body GNATdoc.Frontend is
       -----------------
 
       procedure Enter_Scope (Entity : Entity_Id) is
-         use type Ada.Containers.Count_Type;
          New_Scope : constant Context_Id := new Context_Info;
+
       begin
          pragma Assert (Enter_Scope_Enabled);
 

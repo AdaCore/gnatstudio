@@ -98,9 +98,6 @@ package body GPS.CLI_Utils is
      (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Install_Semantic_Parser : Boolean := True)
    is
-
-      use Commands.Builder;
-
       GNAT_Version       : GNAT.Strings.String_Access;
       Std_Entities_Files : constant Virtual_File := Create_From_Dir
         (Kernel.Get_Share_Dir, "predefined_ada.xml");

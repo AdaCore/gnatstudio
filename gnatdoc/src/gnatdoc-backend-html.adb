@@ -23,6 +23,8 @@ with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.JSON;                     use GNATCOLL.JSON;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
+
+with Basic_Types;
 with Language;                          use Language;
 with Templates_Parser;                  use Templates_Parser;
 
@@ -121,6 +123,9 @@ package body GNATdoc.Backend.HTML is
    ---------
 
    function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean is
+
+      use type Basic_Types.Visible_Column_Type;
+
       LN : constant String := To_Lower (Get_Short_Name (Left));
       LL : constant General_Location := Atree.LL.Get_Location (Left);
       RN : constant String := To_Lower (Get_Short_Name (Right));

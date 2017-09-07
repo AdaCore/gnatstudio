@@ -32,7 +32,10 @@ with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNAT.IO; --  For output of debugging routines
 
 package body GNATdoc.Atree is
-   Me : constant Trace_Handle := Create ("DOCGEN.ATREE");
+
+   use type Basic_Types.Visible_Column_Type;
+
+   Me           : constant Trace_Handle := Create ("DOCGEN.ATREE");
    Enhancements : constant Boolean := False;
 
    Truncated_Full_Name_Separator : constant String := "__";

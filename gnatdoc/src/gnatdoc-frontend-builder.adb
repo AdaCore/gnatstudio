@@ -163,6 +163,8 @@ package body GNATdoc.Frontend.Builder is
          function Equivalent_Keys
            (Left, Right : General_Location) return Boolean
          is
+            use type Basic_Types.Visible_Column_Type;
+
          begin
             return Left.File = Right.File
               and then Left.Line = Right.Line
@@ -1706,7 +1708,7 @@ package body GNATdoc.Frontend.Builder is
                   declare
                      Scope_Id : constant Root_Entity'Class :=
                                   LL.Get_Scope (New_E);
-                     use type EInfo_Map.Cursor;
+
                   begin
                      --  Handle fields of structs. Must use the Xref support
                      --  directly since we may have not seen yet the full

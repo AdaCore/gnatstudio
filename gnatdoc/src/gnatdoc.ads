@@ -23,7 +23,6 @@ with GPS.Core_Kernels;       use GPS.Core_Kernels;
 with GNATCOLL.Traces;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with Language_Handlers;      use Language_Handlers;
 with Xref;                   use Xref;
 

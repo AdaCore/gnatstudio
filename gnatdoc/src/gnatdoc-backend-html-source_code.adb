@@ -17,8 +17,10 @@
 
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with GNATdoc.Utils;     use GNATdoc.Utils;
+with Basic_Types;
 with GNATCOLL.JSON;     use GNATCOLL.JSON;
+
+with GNATdoc.Utils;     use GNATdoc.Utils;
 
 package body GNATdoc.Backend.HTML.Source_Code is
 
@@ -305,7 +307,8 @@ package body GNATdoc.Backend.HTML.Source_Code is
           (Location      =>
              (Self.File,
               GNATCOLL.Projects.No_Project,  --  ??? unknown
-              Self.Current_Line, Visible_Column (Simple_Column)),
+              Self.Current_Line,
+              Basic_Types.Visible_Column_Type (Simple_Column)),
            In_References => True);
 
       --  Detect whether current entity can start scope with private part:

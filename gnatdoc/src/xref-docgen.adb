@@ -65,7 +65,7 @@ package body Xref.Docgen is
    -- GNATCOLL Package Extension --
    --------------------------------
 
-   package GNATCOLL is
+   package GNATCOLL_Extensions is
 
       function Comment
         (Self     : Xref_Database;
@@ -105,13 +105,13 @@ package body Xref.Docgen is
       --  Same as above, but the scope of the declaration is given as line and
       --  column. By default, the end is on the same position as the start.
 
-   end GNATCOLL;
+   end GNATCOLL_Extensions;
 
    --------------------------------
    -- GNATCOLL Package Extension --
    --------------------------------
 
-   package body GNATCOLL is
+   package body GNATCOLL_Extensions is
 
       procedure Skip_To_Next_Comment_Start
         (Context : Language_Syntax;
@@ -808,8 +808,7 @@ package body Xref.Docgen is
                                 Start_Line => -1);
       end Comment;
 
-   end GNATCOLL;
-   use GNATCOLL;
+   end GNATCOLL_Extensions;
 
    ----------------------
    -- Local Subprogram --
@@ -848,7 +847,7 @@ package body Xref.Docgen is
       if Location /= No_Location then
          declare
             C_Result : Comment_Result :=
-              GNATCOLL.Comment
+              GNATCOLL_Extensions.Comment
                 (Self     => Xref_Database (Self.Xref.all),
                  Buffer   => Buffer,
                  Location => Location,
