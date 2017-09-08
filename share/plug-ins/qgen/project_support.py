@@ -26,18 +26,6 @@ class Project_Support(object):
 
              <project_attribute
               package="QGen"
-              name="Switches"
-              editor_page="QGen"
-              list="true"
-              label="Switches"
-              hide_in="wizard library_wizard">
-                <index attribute='Languages'>
-                   <string />
-                </index>
-             </project_attribute>
-
-             <project_attribute
-              package="QGen"
               name="Target"
               editor_page="QGen"
               list="true"
@@ -76,9 +64,10 @@ class Project_Support(object):
              </target>
 
              <tool
-              name="QGENC"
+              name="QGen"
               package="QGen"
-              index="Simulink">
+              index="Simulink"
+              attribute="Switches">
                <language>Simulink</language>
                <switches>
                  <title line="1">Input Files</title>
