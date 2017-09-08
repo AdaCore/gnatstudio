@@ -725,17 +725,12 @@ package Language is
       Replace             : Replace_Text_Callback;
       From, To            : Natural := 0;
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset       : Natural := 0;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null);
    --  Given a Buffer, reformat it, based on Indent_Params.
    --  Reformat only lines comprised between From and To.
-   --  If Indent_Offset is > 0, it represents an additional level of
-   --  indentation when e.g. formatting a substring within a bigger
-   --  construct. Format_Buffer will take this value into account when
-   --  calling the Replace callback.
    --  Is_Keyword is an optional parameter, used to customize the behavior
    --  of the parser, by providing a way to specify additional keywords.
    --  This is useful in particular when defining custom languages that are

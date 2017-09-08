@@ -40,7 +40,6 @@ package Ada_Analyzer is
       Replace             : Replace_Text_Callback := null;
       Constructs          : Construct_List_Access := null;
       Callback            : Entity_Callback       := null;
-      Indent_Offset       : Natural               := 0;
       Case_Exceptions     : Casing_Exceptions     := No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null);

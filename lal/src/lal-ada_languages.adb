@@ -39,14 +39,13 @@ package body LAL.Ada_Languages is
       Replace             : Replace_Text_Callback;
       From, To            : Natural := 0;
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset       : Natural := 0;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null)
    is
       pragma Unreferenced
-        (Is_Optional_Keyword, Case_Exceptions, Indent_Offset, Indent_Params);
+        (Is_Optional_Keyword, Case_Exceptions, Indent_Params);
       use Char_Vectors;
       use type Libadalang.Analysis.Ada_Node;
       Unit       : Libadalang.Analysis.Analysis_Unit;

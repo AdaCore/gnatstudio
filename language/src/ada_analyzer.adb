@@ -685,7 +685,6 @@ package body Ada_Analyzer is
       Replace             : Replace_Text_Callback := null;
       Constructs          : Construct_List_Access := null;
       Callback            : Entity_Callback       := null;
-      Indent_Offset       : Natural               := 0;
       Case_Exceptions     : Casing_Exceptions     := No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
       return Boolean := null)
@@ -1002,7 +1001,7 @@ package body Ada_Analyzer is
          end loop;
 
          if Top (Indents).Level = None then
-            Indentation := Num_Spaces + Indent_Offset;
+            Indentation := Num_Spaces;
          else
             Indentation := Top (Indents).Level;
          end if;
@@ -3448,8 +3447,7 @@ package body Ada_Analyzer is
                  and then To /= 0
                  and then L not in From .. To
                then
-                  Ref_Indent :=
-                          Integer'Max (P - Start_Of_Line - Indent_Offset, 0);
+                  Ref_Indent := Integer'Max (P - Start_Of_Line, 0);
                end if;
 
                Next_Line (Buffer, P + 1, P, Success);
@@ -3611,7 +3609,6 @@ package body Ada_Analyzer is
                            Replace       => null,
                            Constructs    => null,
                            Callback      => Local_Callback'Unrestricted_Access,
-                           Indent_Offset => Indent_Offset,
                            Case_Exceptions     => Case_Exceptions,
                            Is_Optional_Keyword => Is_SPARK_Keyword'Access);
 

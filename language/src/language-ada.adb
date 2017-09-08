@@ -595,7 +595,6 @@ package body Language.Ada is
       Replace             : Replace_Text_Callback;
       From, To            : Natural := 0;
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset       : Natural := 0;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
@@ -605,7 +604,6 @@ package body Language.Ada is
       Analyze_Ada_Source
         (Buffer, Lang.Symbols, Indent_Params, True, From, To,
          Replace,
-         Indent_Offset       => Indent_Offset,
          Case_Exceptions     => Case_Exceptions,
          Is_Optional_Keyword => Is_Optional_Keyword);
    end Format_Buffer;

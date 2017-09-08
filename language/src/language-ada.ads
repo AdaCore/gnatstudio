@@ -92,7 +92,6 @@ package Language.Ada is
       Replace             : Replace_Text_Callback;
       From, To            : Natural := 0;
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Offset       : Natural := 0;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)

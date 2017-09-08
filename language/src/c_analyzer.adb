@@ -500,7 +500,6 @@ package body C_Analyzer is
       Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
       Callback         : Entity_Callback       := null;
-      Indent_Offset    : Natural               := 0;
       Enable_Cpp       : Boolean               := False)
    is
       None              : constant := -1;
@@ -666,7 +665,7 @@ package body C_Analyzer is
          end loop;
 
          if Top (Indents).Level = None then
-            Indentation := Num_Spaces + Indent_Offset;
+            Indentation := Num_Spaces;
          else
             Indentation := Top (Indents).Level;
          end if;
