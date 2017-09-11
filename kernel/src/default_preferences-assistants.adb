@@ -161,6 +161,7 @@ package body Default_Preferences.Assistants is
       begin
          Gtk_New (Assistant.Apply_Button, "Apply");
          Assistant.Add_Action_Widget (Assistant.Apply_Button);
+         Assistant.Apply_Button.On_Clicked (On_Finish'Access, Assistant);
 
          Gtk_New (Assistant.Skip_Button, "Skip & Use Defaults");
          Assistant.Skip_Button.On_Clicked (On_Finish'Access, Assistant);
