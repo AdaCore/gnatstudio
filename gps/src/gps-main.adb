@@ -664,7 +664,7 @@ procedure GPS.Main is
 
             File := Create_From_Dir (GPS_Home_Dir, "traces.cfg").Write_File;
             Write (File,
-                   ">log.$$.txt" & ASCII.LF &
+                   ">log.$$.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
                      "DEBUG.COLORS=no" & ASCII.LF &
