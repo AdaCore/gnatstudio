@@ -621,7 +621,7 @@ package body Switches_Editors is
 
       Dialog.Show_All;
 
-      Ignore := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+      Ignore := Dialog.Add_Button ("Save", Gtk_Response_OK);
 
       if Files'Length /= 0 then
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
@@ -670,6 +670,7 @@ package body Switches_Editors is
          declare
             Scenar    : Scenario_Iterator := Start (Selector);
             Languages : GNAT.Strings.String_List := Project.Languages;
+            Success   : Boolean;
          begin
             while not At_End (Scenar) loop
                Modified := Modified or Page.Edit_Project
@@ -682,9 +683,17 @@ package body Switches_Editors is
 
             Free (Languages);
 
-            --  ??? Need this to update the icon in the project explorer
             if Modified then
+               Project.Set_Modified (True);
                Recompute_View (Kernel);
+               Success := Save_Project
+                 (Kernel    => Kernel,
+                  Project   => Project,
+                  Recursive => True);
+
+               if not Success then
+                  Trace (Me, "Failed to save project: " & Project.Name);
+               end if;
             end if;
          end;
       end if;
