@@ -67,6 +67,8 @@ package body GPS.Kernel.Charsets is
        Description => new String'("Cyrillic (KOI8-R)")),
       (Name        => new String'("SHIFT-JIS"),
        Description => new String'("Japanese (SHIFT-JIS)")),
+      (Name        => new String'("EUC-JP"),
+       Description => new String'("Japanese (EUC-JP)")),
       (Name        => new String'("GB2312"),
        Description => new String'("Chinese (GB2312)")),
       (Name        => new String'("UTF-8"),
