@@ -437,7 +437,10 @@ package body Debugger.Base_Gdb.Ada is
    begin
       --  A special case for strings
 
-      if Looking_At (Type_Str, Tmp_Index, "array (<>) of character") then
+      if Looking_At (Type_Str, Tmp_Index, "array (<>) of character")
+        or else Looking_At  --  Bounded & Unbounded strings
+          (Type_Str, Tmp_Index, "array (1 .. max_length) of character")
+      then
          Result := New_Simple_Type;
          Set_Type_Name (Result, "character");
          return;

@@ -596,11 +596,14 @@ package body String_Utils is
                      Parse_Num (Type_Str, Index, Num);
 
                      if Str'Length /= 0 then
-                        Str (S_Index .. S_Index + Integer (Num) - 1) :=
+                        Str (S_Index ..
+                               Natural'Min
+                                 (S_Index + Integer (Num) - 1,
+                                  Last)) :=
                           (others => Char);
                      end if;
 
-                     S_Index := S_Index + Integer (Num);
+                     S_Index := Natural'Min (S_Index + Integer (Num), Last);
                      Index := Index + 7; --  skips " times>"
 
                   else
