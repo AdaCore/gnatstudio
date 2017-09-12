@@ -1,4 +1,4 @@
-AC_INIT(gps,[18.0w],[report@adacore.com])
+AC_INIT(gps,[0.0],[report@adacore.com])
 AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
 
