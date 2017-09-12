@@ -1,8 +1,18 @@
 AC_INIT(gps,[18.0w],[report@adacore.com])
-GPS_VERSION=AC_PACKAGE_VERSION()
-
 AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
+
+if test -f VERSION.txt; then
+    GPS_VERSION=`cat VERSION.txt`
+else
+    GPS_VERSION=AC_PACKAGE_VERSION()
+fi
+
+if test -f DATE.txt; then
+    GPS_DATE=`cat DATE.txt`
+else
+    GPS_DATE="unknown date"
+fi
 
 # Forces gtk+ 3.0
 CONFIGURE_SWITCH_WITH_GTK=3.0
@@ -175,6 +185,7 @@ esac
 
 # Set the version number of GPS
 AC_SUBST(GPS_VERSION)
+AC_SUBST(GPS_DATE)
 
 AC_SUBST(GNATCOLL_INSTALL)
 

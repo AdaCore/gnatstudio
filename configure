@@ -643,6 +643,7 @@ CAN_OUTPUT
 STRIP_CR
 EXEC_PREFIX
 TARGET
+GPS_DATE
 GPS_VERSION
 CLANG_LIBS_GPR
 CLANG_LIBS
@@ -2196,8 +2197,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-GPS_VERSION=18.0w
-
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -2339,6 +2338,18 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
+
+if test -f VERSION.txt; then
+    GPS_VERSION=`cat VERSION.txt`
+else
+    GPS_VERSION=18.0w
+fi
+
+if test -f DATE.txt; then
+    GPS_DATE=`cat DATE.txt`
+else
+    GPS_DATE="unknown date"
+fi
 
 # Forces gtk+ 3.0
 CONFIGURE_SWITCH_WITH_GTK=3.0
@@ -5086,6 +5097,7 @@ case "${host}" in
 esac
 
 # Set the version number of GPS
+
 
 
 

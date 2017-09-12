@@ -55,7 +55,7 @@ package Config is
    --  variable and do different things based on it. Consider using this
    --  variable as a last resort, to address very target specific issues.
 
-   Source_Date : constant String := "unknown date";
+   Source_Date : constant String := "@GPS_DATE@";
 
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window
