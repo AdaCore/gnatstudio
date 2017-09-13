@@ -40,7 +40,9 @@ include ../Makefile.gnat
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all: resources do_links
 	cd ../kernel/src; ${PYTHON} hooks.py
-	cd ../kernel/generated; gnatcoll_db2ada -api=GPS.Kernel.Properties.Database -adacreate -dbmodel=../src/properties_schema.txt
+	cd ../kernel/generated; gnatcoll_db2ada \
+          -api=GPS.Kernel.Properties.Database -adacreate -dbtype sqlite\
+          -dbmodel=../src/properties_schema.txt
 ifeq ($(OS),Windows_NT)
 	for f in ../kernel/generated/*; do cat $$f | tr -d '\015' > $$f-aux; mv -f $$f-aux $$f; done
 endif
