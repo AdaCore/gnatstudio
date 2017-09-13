@@ -18,8 +18,9 @@ class Project_Support(object):
               package="QGen"
               name="Output_Dir"
               editor_page="QGen"
+              editor_section="Default Arguments"
               label="Output directory"
-              description="The location of all generated source code files"
+              description="The default location for QGen generated files"
               hide_in="wizard library_wizard">
                 <string type="directory"/>
              </project_attribute>
@@ -31,17 +32,20 @@ class Project_Support(object):
               list="true"
               label="Target"
               hide_in="wizard library_wizard">
-                <index attribute='Languages'>
-                   <string />
-                </index>
+              <index attribute="main">
+                 <string type="file" filter="project" default="(Simulink model
+ file(s))"/>
+              </index>
              </project_attribute>
 
              <project_attribute
               package="QGen"
               name="Debug_Args"
               editor_page="QGen"
+              editor_section="Default Arguments"
               label="Debug arguments"
-              description="Launch arguments for generated debug session"
+              description="Arguments to supply to gdb `run` when starting the
+ QGen debugger"
               hide_in="wizard library_wizard">
                 <string />
              </project_attribute>
@@ -66,8 +70,7 @@ class Project_Support(object):
              <tool
               name="QGen"
               package="QGen"
-              index="Simulink"
-              attribute="Switches">
+              index="Simulink">
                <language>Simulink</language>
                <switches>
                  <title line="1">Input Files</title>
@@ -107,15 +110,15 @@ arithmetic operations"/>
                   as-directory="true"
                   tip=""/>
 
-                 <radio
+                 <combo
                   line="2"
                   label="Target language"
                   switch="-l"
                   separator=" "
              tip="The language used by QGENC to produce the generated files">
-                    <radio-entry label="Ada" switch="ada"/>
-                    <radio-entry label="C" switch="c"/>
-                 </radio>
+                    <combo-entry label="Ada" value="ada"/>
+                    <combo-entry label="C" value="c"/>
+                 </combo>
 
                  <check
                   line="2"
