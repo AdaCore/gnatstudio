@@ -797,13 +797,19 @@ package body GPS.Kernel.Project is
       Project   : Project_Type;
       Recursive : Boolean := False) return Boolean
    is
-      Iter     : Project_Iterator := Project.Start (Recursive);
-      Modified : Boolean := False;
-      Result   : Boolean := True;
+      Iter                : Project_Iterator := Project.Start (Recursive);
+      Current_Is_Modified : Boolean := False;
+      Modified            : Boolean := False;
+      Result              : Boolean := True;
    begin
       while Current (Iter) /= No_Project loop
-         Modified := Modified or else Current (Iter).Modified;
-         Result := Save_Single_Project (Kernel, Current (Iter)) and Result;
+         Current_Is_Modified := Current (Iter).Modified;
+         Modified := Modified or else Current_Is_Modified;
+
+         --  If the current project has been modified, save it
+         if Current_Is_Modified then
+            Result := Save_Single_Project (Kernel, Current (Iter)) and Result;
+         end if;
 
          Next (Iter);
       end loop;
