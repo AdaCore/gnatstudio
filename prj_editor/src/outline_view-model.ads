@@ -54,13 +54,13 @@ private package Outline_View.Model is
    type Outline_Model is access all Outline_Model_Record'Class;
 
    type Tree_Filter is record
-      Hide_Types        : Boolean := False;
-      Hide_Objects      : Boolean := False;
-      Hide_Declarations : Boolean := False;
-      Hide_Tasks        : Boolean := False;
-      Hide_Withes       : Boolean := False;
-      Show_Profile      : Boolean := False;
-      Sorted            : Boolean;
+      Hide_Types          : Boolean := False;
+      Hide_Objects        : Boolean := False;
+      Hide_Declarations   : Boolean := False;
+      Hide_Tasks          : Boolean := False;
+      Hide_Withes         : Boolean := False;
+      Show_Profile        : Boolean := False;
+      Sorted              : Boolean;
       Group_Spec_And_Body : Boolean := False;
       Flat_View           : Boolean := False;
       Show_Param_Names    : Boolean := False;
@@ -80,11 +80,6 @@ private package Outline_View.Model is
      (Model    : not null access Outline_Model_Record'Class;
       Sem_Tree : Semantic_Tree'Class;
       Filter   : Tree_Filter);
-
-   type Sorted_Node is private;
-   type Sorted_Node_Access is access all Sorted_Node;
-
-   function Get_Info (S : Sorted_Node) return Semantic_Node_Info;
 
    -------------------------------
    --  GtkTreeModel subprograms --
@@ -182,14 +177,14 @@ private package Outline_View.Model is
    --  Return the path corresponding to the given ID if it exits in the model.
    --  Return a Null_Gtk_Tree_Path othwerwise.
 
-   function Get_Sorted_Node (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
-   --  Return the node stored in the iter
-
    function Root_With_Iter
      (Model : access Outline_Model_Record) return Gtk_Tree_Iter;
    --  Return the iter for root node which includes withes or Null_Iter
 
 private
+
+   type Sorted_Node;
+   type Sorted_Node_Access is access all Sorted_Node;
 
    function "<" (L, R : Sorted_Node_Access) return Boolean;
 
@@ -210,9 +205,6 @@ private
 
       Model : Outline_Model;
    end record;
-
-   function Get_Info (S : Sorted_Node) return Semantic_Node_Info is
-      (if S.Spec_Info /= No_Node_Info then S.Spec_Info else S.Body_Info);
 
    function Hash (H : Hash_Type) return Hash_Type is (H);
 

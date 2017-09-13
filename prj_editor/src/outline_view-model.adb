@@ -137,6 +137,11 @@ package body Outline_View.Model is
      (Left, Right : Semantic_Node_Info; Sorted : Boolean) return Boolean;
    --  Less_Than comparison for Semantic_Node_Infos
 
+   function Get_Info (S : Sorted_Node) return Semantic_Node_Info;
+
+   function Get_Sorted_Node (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
+   --  Return the node stored in the iter
+
    -------------
    -- Reindex --
    -------------
@@ -166,8 +171,8 @@ package body Outline_View.Model is
    --------------
 
    function Get_Node
-     (Model  : access Outline_Model_Record'Class;
-      Node     : Semantic_Node'Class) return Sorted_Node_Access
+     (Model : access Outline_Model_Record'Class;
+      Node  : Semantic_Node'Class) return Sorted_Node_Access
    is
      (Element_Or_Null (Model.Sem_To_Tree_Nodes, S_Unique_Id (Node)));
 
@@ -176,8 +181,8 @@ package body Outline_View.Model is
    ------------------------
 
    function Get_Node_Next_Part
-     (Model  : access Outline_Model_Record'Class;
-      Node     : Semantic_Node'Class) return Sorted_Node_Access
+     (Model : access Outline_Model_Record'Class;
+      Node  : Semantic_Node'Class) return Sorted_Node_Access
    is
       C : constant Semantic_Node'Class := Node.Definition;
    begin
@@ -866,6 +871,13 @@ package body Outline_View.Model is
       Free (Model.Filter_Pattern);
       Model.Filter_Pattern := Pattern;
    end Set_Filter;
+
+   --------------
+   -- Get_Info --
+   --------------
+
+   function Get_Info (S : Sorted_Node) return Semantic_Node_Info is
+      (if S.Spec_Info /= No_Node_Info then S.Spec_Info else S.Body_Info);
 
    --------------
    -- Get_Info --
