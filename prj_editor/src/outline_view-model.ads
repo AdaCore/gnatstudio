@@ -16,9 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;                  use Ada.Containers;
-with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Hash;
 with GNATCOLL.Symbols;
 
 with Glib;                            use Glib;
@@ -206,10 +205,15 @@ private
       Model : Outline_Model;
    end record;
 
-   function Hash (H : Hash_Type) return Hash_Type is (H);
+   type Node_Id is record
+      Identifier     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Is_Declaration : Boolean := False;
+   end record;
 
-   package Sem_To_Tree_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Sorted_Node_Access, Hash => Ada.Strings.Hash,
+   function Hash (Node : Node_Id) return Hash_Type;
+
+   package Sem_To_Tree_Maps is new Ada.Containers.Hashed_Maps
+     (Node_Id, Sorted_Node_Access, Hash,
       Equivalent_Keys => "=");
 
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record

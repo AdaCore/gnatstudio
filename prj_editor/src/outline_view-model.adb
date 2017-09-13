@@ -105,13 +105,13 @@ package body Outline_View.Model is
       Sem_Nodes  : Semantic_Node_Array'Class;
       Sem_Parent : Semantic_Node'Class);
 
-   function S_Unique_Id (N : Semantic_Node'Class) return String
-   is (Get (N.Unique_Id).all & (if N.Is_Declaration then "" else "B"));
+   function S_Unique_Id (N : Semantic_Node'Class) return Node_Id
+   is (N.Unique_Id, N.Is_Declaration);
    --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
-   function S_Unique_Id (N : Semantic_Node_Info) return String
-   is (Get (N.Unique_Id).all & (if N.Is_Decl then "" else "B"));
+   function S_Unique_Id (N : Semantic_Node_Info) return Node_Id
+   is (N.Unique_Id, N.Is_Decl);
    --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
@@ -128,7 +128,7 @@ package body Outline_View.Model is
    --  - Free node
 
    function Element_Or_Null
-     (Map : Sem_To_Tree_Maps.Map; Key : String) return Sorted_Node_Access
+     (Map : Sem_To_Tree_Maps.Map; Key : Node_Id) return Sorted_Node_Access
      with Inline_Always;
    --  Helper for the semantic_tree_node to sorted node maps, that will return
    --  the element if it exists, or null
@@ -158,7 +158,7 @@ package body Outline_View.Model is
    ---------------------
 
    function Element_Or_Null
-     (Map : Sem_To_Tree_Maps.Map; Key : String) return Sorted_Node_Access
+     (Map : Sem_To_Tree_Maps.Map; Key : Node_Id) return Sorted_Node_Access
    is
       use Sem_To_Tree_Maps;
       C : constant Sem_To_Tree_Maps.Cursor := Map.Find (Key);
@@ -193,7 +193,7 @@ package body Outline_View.Model is
            (if Node.Is_Declaration
             then Get_Node (Model, C)
             else Element_Or_Null
-              (Model.Sem_To_Tree_Nodes, Get (Node.Unique_Id).all));
+              (Model.Sem_To_Tree_Nodes, (Node.Unique_Id, True)));
       end if;
 
       return null;
@@ -280,9 +280,23 @@ package body Outline_View.Model is
    function Lt
      (Left, Right : Semantic_Node_Info; Sorted : Boolean) return Boolean
    is
+      function Less_Than (L, R : Node_Id) return Boolean;
+
       function Less_Than
         (L, R : String) return Boolean
          renames Ada.Strings.Less_Case_Insensitive;
+
+      ---------------
+      -- Less_Than --
+      ---------------
+
+      function Less_Than (L, R : Node_Id) return Boolean is
+         Left  : constant String := GNATCOLL.Symbols.Get (L.Identifier).all;
+         Right : constant String := GNATCOLL.Symbols.Get (R.Identifier).all;
+      begin
+         return (Left = Right and L.Is_Declaration > R.Is_Declaration)
+           or else Less_Than (Left, Right);
+      end Less_Than;
    begin
       if Sorted then
          --  Alphabetical sort
@@ -291,9 +305,9 @@ package body Outline_View.Model is
              (Sort_Entities (Left.Category) = Sort_Entities (Right.Category)
               and then
                 ((Left.Name = Right.Name and then
-                Less_Than (S_Unique_Id (Left), S_Unique_Id (Right)))
+                  Less_Than (S_Unique_Id (Left), S_Unique_Id (Right)))
                  or else
-                 Less_Than (Get (Left.Name).all, Get (Right.Name).all)));
+                   Less_Than (Get (Left.Name).all, Get (Right.Name).all)));
       else
          --  Positional sort
          return Left.Sloc_Start_No_Tab < Right.Sloc_Start_No_Tab;
@@ -356,7 +370,7 @@ package body Outline_View.Model is
       Path   : Gtk_Tree_Path;
       use Sem_Tree_Holders;
       use Sorted_Node_Vector;
-      Sem_Unique_Id : constant String := S_Unique_Id (Sem_Node);
+      Sem_Unique_Id : constant Node_Id := S_Unique_Id (Sem_Node);
 
       procedure Sorted_Insert (Vec : in out Vector; El : Sorted_Node_Access);
       --  Insert El in Vec
@@ -391,7 +405,7 @@ package body Outline_View.Model is
         --  Verify that a node with this ID doesn't already exist in the tree
         and then Get_Node (Model, Sem_Node) = null
       then
-         if Sem_Unique_Id = "" then
+         if Sem_Unique_Id.Identifier = No_Symbol then
             Trace (Me, "Cannot add a tree node with no Id");
          end if;
 
@@ -783,6 +797,20 @@ package body Outline_View.Model is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is (Children (Self, Iter) /= Null_Iter);
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Node : Node_Id) return Hash_Type is
+      Result : Hash_Type := Hash (Node.Identifier);
+   begin
+      if Node.Is_Declaration then
+         Result := Result + 1_000_000;
+      end if;
+
+      return Result;
+   end Hash;
+
    ----------------
    -- N_Children --
    ----------------
@@ -976,13 +1004,13 @@ package body Outline_View.Model is
 
       procedure Update_Nodes
         (Model_Nodes : Sorted_Node_Vector.Vector;
-         Sem_Nodes : Semantic_Node_Array'Class;
-         Sem_Parent : Semantic_Node'Class);
+         Sem_Nodes   : Semantic_Node_Array'Class;
+         Sem_Parent  : Semantic_Node'Class);
 
       procedure Update_Nodes
         (Model_Nodes : Sorted_Node_Vector.Vector;
-         Sem_Nodes : Semantic_Node_Array'Class;
-         Sem_Parent : Semantic_Node'Class)
+         Sem_Nodes   : Semantic_Node_Array'Class;
+         Sem_Parent  : Semantic_Node'Class)
       is
          New_Nodes : array (1 .. Sem_Nodes.Length) of Boolean
            := (others => True);
@@ -995,12 +1023,11 @@ package body Outline_View.Model is
            (Hash_Type, Natural, Hash, "=", "=");
          Childs_Map : Ids_Hash_Map.Map (Count_Type (Sem_Nodes.Length), 100);
 
-         function Find_Child_With_Id (Id : String) return Natural;
+         function Find_Child_With_Id (Id : Node_Id) return Natural;
 
-         function Find_Child_With_Id (Id : String) return Natural is
+         function Find_Child_With_Id (Id : Node_Id) return Natural is
             use Ids_Hash_Map;
-            El : constant Ids_Hash_Map.Cursor :=
-              Childs_Map.Find (Ada.Strings.Hash (Id));
+            El : constant Ids_Hash_Map.Cursor := Childs_Map.Find (Hash (Id));
          begin
             if El /= Ids_Hash_Map.No_Element then
                return Element (El);
@@ -1049,8 +1076,7 @@ package body Outline_View.Model is
       begin
          for I in 1 .. Sem_Nodes.Length loop
             Childs_Map.Include
-              (Ada.Strings.Hash
-                 (S_Unique_Id (Sem_Nodes.Get (I))), I);
+              (Hash (S_Unique_Id (Sem_Nodes.Get (I))), I);
          end loop;
 
          C := Model_Nodes.First;
@@ -1154,7 +1180,7 @@ package body Outline_View.Model is
      (Model : access Outline_Model_Record;
       ID    : GNATCOLL.Symbols.Symbol) return Gtk_Tree_Path
    is
-      S_ID : constant String := Get (ID).all;
+      S_ID : constant Node_Id := (ID, True);
       Node : constant Sorted_Node_Access :=
         (if Model.Sem_To_Tree_Nodes.Contains (S_ID) then
             Model.Sem_To_Tree_Nodes (S_ID)
