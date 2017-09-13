@@ -140,6 +140,19 @@ package GPS.Dialogs is
    --  which case it returns the value of the combo box) or [Cancel] (in which
    --  case is returns a string with one ASCII.NUL only).
 
+   generic
+      type Enumerated_Type is (<>);
+
+   function Display_Select_Dialog
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Title   : String;
+      Message : String;
+      Value   : in out Enumerated_Type) return Boolean;
+   --  Like as above but with a combobox for a value selection.
+   --  This displays the dialog, and waits for the user to press [OK] (in
+   --  which case it returns True and the Value) or [Cancel] (in which case is
+   --  returns False).
+
 private
 
    type History_Key_Access is access all Histories.History_Key;

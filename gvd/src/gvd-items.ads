@@ -49,7 +49,10 @@ package GVD.Items is
    function Wrap_Debugger_Command
      (Cmd         : String;
       Split_Lines : Boolean := False) return Item_Info;
-   function Wrap_Variable (Varname  : String) return Item_Info;
+   function Wrap_Variable
+     (Varname  : String;
+      Format   : Debugger.Value_Format := Default_Format)
+      return Item_Info;
    --  Two ways to create items: either they wrap a debugger command (for
    --  instance to show local variables), or an actual variable.
    --  If Split_Lines is true, then each of the line output by the debugger is

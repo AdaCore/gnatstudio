@@ -161,11 +161,6 @@ private
       Name     : String;
       Property : Property_Description) is abstract;
 
-   procedure Remove
-     (Self : not null access Writer_Record;
-      Key  : String;
-      Name : String) is abstract;
-
    procedure Dump_Database
      (Self : not null access Writer_Record) is abstract;
    --  Dump database's data to test file

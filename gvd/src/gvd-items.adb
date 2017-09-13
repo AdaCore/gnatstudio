@@ -44,10 +44,15 @@ package body GVD.Items is
    -- Wrap_Variable --
    -------------------
 
-   function Wrap_Variable (Varname  : String) return Item_Info is
+   function Wrap_Variable
+     (Varname  : String;
+      Format   : Debugger.Value_Format := Default_Format)
+      return Item_Info
+   is
       Result : Item_Info;
    begin
       Result.Varname := To_Unbounded_String (Varname);
+      Result.Format  := Format;
       return Result;
    end Wrap_Variable;
 

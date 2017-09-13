@@ -295,8 +295,19 @@ package body GPS.Properties is
          end if;
 
          --  Getting property the first time
-         Current_Writer.Get_Value (Key, Name, Property, Found);
-         Append (Key, Property, Found);
+         begin
+            Current_Writer.Get_Value (Key, Name, Property, Found);
+            Append (Key, Property, Found);
+
+         exception
+            when E : others =>
+               Trace (Me, E);
+               Found := False;
+               --  Parsing of property raises exception which may be related to
+               --  wrong (old) format of record in DB, so remove this property
+               --  from DB
+               Current_Writer.Remove (Key, Name);
+         end;
 
       else
          Descr := Element (C);

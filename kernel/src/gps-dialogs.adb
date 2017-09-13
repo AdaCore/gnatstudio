@@ -189,6 +189,57 @@ package body GPS.Dialogs is
       return (1 => ASCII.NUL);
    end Display_Text_Input_Dialog;
 
+   ----------------------------
+   --  Display_Select_Dialog --
+   ----------------------------
+
+   function Display_Select_Dialog
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Title   : String;
+      Message : String;
+      Value   : in out Enumerated_Type) return Boolean
+   is
+      Dialog  : GPS_Dialog;
+      Combo   : Gtk_Combo_Box_Text;
+      Box     : Gtk_Box;
+      Label   : Gtk_Label;
+
+   begin
+      Gtk_New
+        (Dialog,
+         Title  => Title,
+         Kernel => Kernel,
+         Flags  => Destroy_With_Parent or Modal);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Dialog.Get_Content_Area.Pack_Start (Box, Expand => False);
+
+      Gtk_New (Label, Message);
+      Label.Set_Halign (Align_Start);
+      Box.Pack_Start (Label, Expand => False, Padding => 5);
+
+      Gtk_New (Combo);
+      for Item in Enumerated_Type'Range loop
+         Combo.Append_Text (Item'Image);
+      end loop;
+      Combo.Set_Active (Enumerated_Type'Pos (Value));
+
+      Box.Pack_Start (Combo);
+
+      Dialog.Add_OK_Cancel;
+
+      Dialog.Show_All;
+
+      if Dialog.Run = Gtk_Response_OK then
+         Value := Enumerated_Type'Val (Combo.Get_Active);
+         Dialog.Destroy;
+         return True;
+      end if;
+
+      Dialog.Destroy;
+      return False;
+   end Display_Select_Dialog;
+
    ----------------------
    -- On_Destroy_Combo --
    ----------------------

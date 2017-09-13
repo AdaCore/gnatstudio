@@ -1559,7 +1559,7 @@ package body GVD_Module is
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
 
-      Printable_Filter  := new Printable_Variable_Filter;
+      Printable_Filter := new Printable_Variable_Filter;
       Register_Filter
         (Kernel, Printable_Filter, "Debugger printable variable");
 

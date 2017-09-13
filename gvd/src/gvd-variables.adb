@@ -250,6 +250,11 @@ package body GVD.Variables is
      (Command : access Tree_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Set_Format_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Set_Format_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Pref_Changed;
@@ -295,6 +300,43 @@ package body GVD.Variables is
       Lang              : not null Language_Access);
    --  Adddd a new row in the tree to represent a variable
 
+   function Get_Item_Info
+     (Self : not null access Variable_Tree_View_Record'Class;
+      Name : String)
+      return Item_Info;
+
+   type Is_Variable_Exist_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Variable_Exist_Filter;
+      Context : Selection_Context) return Boolean;
+
+   function Display_Value_Select_Dialog is
+     new Display_Select_Dialog (Debugger.Value_Format);
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Variable_Exist_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+
+      View : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context));
+      Name : constant String :=
+        Get_Variable_Name (Context, Dereference => False);
+
+   begin
+      if View /= null
+        and then Name /= ""
+      then
+         return Get_Item_Info (View.Tree, Name) /= No_Item_Info;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
    ------------
    -- Get_Id --
    ------------
@@ -305,6 +347,24 @@ package body GVD.Variables is
    begin
       return (Typ => Get_Address (+Self.Model, Iter, Column_Generic_Type));
    end Get_Id;
+
+   -------------------
+   -- Get_Item_Info --
+   -------------------
+
+   function Get_Item_Info
+     (Self : not null access Variable_Tree_View_Record'Class;
+      Name : String)
+      return Item_Info is
+   begin
+      for It of Self.Items loop
+         if It.Info.Varname = Name then
+            return It.Info;
+         end if;
+      end loop;
+
+      return No_Item_Info;
+   end Get_Item_Info;
 
    ----------
    -- Hash --
@@ -333,7 +393,9 @@ package body GVD.Variables is
              & Self.Items.Length'Img);
 
       for Item of Self.Items loop
-         if not Item.Nested then
+         if not Item.Nested
+           or else Item.Info.Format /= Default_Format
+         then
             declare
                Value : constant JSON_Value := Create_Object;
             begin
@@ -341,10 +403,13 @@ package body GVD.Variables is
                   Value.Set_Field ("tag", "cmd");
                   Value.Set_Field ("value", To_String (Item.Info.Cmd));
                   Value.Set_Field ("split", Item.Info.Split_Lines);
+                  Value.Set_Field ("nested", Item.Nested'Img);
 
                else
                   Value.Set_Field ("tag", "variable");
                   Value.Set_Field ("value", To_String (Item.Info.Varname));
+                  Value.Set_Field ("format", Item.Info.Format'Img);
+                  Value.Set_Field ("nested", Item.Nested'Img);
                end if;
                Append (Values, Value);
             end;
@@ -378,14 +443,16 @@ package body GVD.Variables is
                  (Info   => Wrap_Debugger_Command
                     (V.Get ("value"),
                      Split_Lines => V.Get ("split")),
-                  Nested => False,
+                  Nested => Boolean'Value (V.Get ("nested")),
                   Id     => Unknown_Id);
                Self.Items.Prepend (It);
 
             elsif String'(V.Get ("tag")) = "variable" then
                It :=
-                 (Info   => Wrap_Variable (V.Get ("value")),
-                  Nested => False,
+                 (Info   => Wrap_Variable
+                    (V.Get ("value"),
+                     Debugger.Value_Format'Value (V.Get ("format"))),
+                  Nested => Boolean'Value (V.Get ("nested")),
                   Id     => Unknown_Id);
                Self.Items.Prepend (It);
             end if;
@@ -510,7 +577,7 @@ package body GVD.Variables is
          Key_Check     => "expression_subprogram_debugger",
          Button_Active => Is_Func'Unchecked_Access);
    begin
-      if Expression /= "" then
+      if Expression /= "" & ASCII.NUL then
          if Is_Func then
             Execute_In_Debugger (Context, "tree display `" & Expression & "`");
          else
@@ -804,7 +871,16 @@ package body GVD.Variables is
          if Name = "" then
             return "";
          else
-            return "<b>" & XML_Utils.Protect (Name) & "</b> = ";
+            declare
+               Info : constant Item_Info := Get_Item_Info (Self, Name);
+            begin
+               return "<b>" & XML_Utils.Protect (Name) & "</b>"
+                 & (if Info = No_Item_Info
+                    then ""
+                    else (if Info.Format = Default_Format
+                      then ""
+                      else " (" & Info.Format'Img & ")")) & " = ";
+            end;
          end if;
       end Display_Name;
 
@@ -1138,6 +1214,45 @@ package body GVD.Variables is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Set_Format_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Name : constant String :=
+        Get_Variable_Name (Context.Context, Dereference => False);
+
+      Format : Debugger.Value_Format;
+   begin
+      if View /= null
+        and then Name /= ""
+      then
+         for Item of View.Tree.Items loop
+            if Item.Info.Varname = Name then
+               Format := Item.Info.Format;
+               if Display_Value_Select_Dialog
+                 (Get_Kernel (Context.Context),
+                  "Set format",
+                  "Format for " & Name,
+                  Format)
+               then
+                  Item.Info.Format := Format;
+                  View.Update;
+               end if;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
    -----------------
    -- Create_Menu --
    -----------------
@@ -1201,6 +1316,8 @@ package body GVD.Variables is
    is
       Printable_Var_Filter    : Action_Filter;
       Debugger_Stopped_Filter : Action_Filter;
+      Is_Item_Exist_Filter    : Action_Filter;
+      Is_Variable_Filter      : Action_Filter;
    begin
       Variable_Views.Register_Module (Kernel);
       Variable_Views.Register_Open_View_Action
@@ -1225,6 +1342,25 @@ package body GVD.Variables is
         (Kernel,
          Label       => -"Debug/Display %S in Variables view",
          Action      => "debug tree display variable",
+         Group       => GVD_Variables_Contextual_Group);
+
+      Is_Variable_Filter := new Is_Variable_Exist_Filter;
+      Register_Filter
+        (Kernel, Is_Variable_Filter, "Debugger is variable exist");
+
+      Is_Item_Exist_Filter := Printable_Var_Filter and Is_Variable_Filter;
+
+      Register_Action
+        (Kernel, "debug set variable format",
+         Command => new Set_Format_Command,
+         Description =>
+           -"Set format for the variable in the Variables view",
+         Filter      => Is_Item_Exist_Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel,
+         Label       => -"Debug/Set format for %S",
+         Action      => "debug set variable format",
          Group       => GVD_Variables_Contextual_Group);
 
       Register_Action

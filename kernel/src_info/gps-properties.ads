@@ -239,6 +239,12 @@ package GPS.Properties is
         (Key : String; Property : in out Property_Record'Class))
    is abstract;
 
+   procedure Remove
+     (Self : not null access Writer_Record;
+      Key  : String;
+      Name : String)
+   is abstract;
+
    procedure Set_Writer (Object : Writer);
    --  Set current writer. Used internally by kernel.
 
