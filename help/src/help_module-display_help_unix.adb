@@ -29,11 +29,9 @@ is
    HTML_Browser : constant String :=
      GPS.Kernel.Preferences.Html_Browser.Get_Pref;
 
-   type Cst_String_Access is access constant String;
-   type Browser_List is array (Natural range <>) of Cst_String_Access;
-
    Browsers : constant Browser_List :=
-     (new String'("firefox %u -new-tab"),
+     (new String'("xdg-open %u"),
+      new String'("firefox %u -new-tab"),
       new String'("mozilla"),
       new String'("galeon"),
       new String'("netscape"),

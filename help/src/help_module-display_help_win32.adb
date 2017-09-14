@@ -24,6 +24,20 @@ procedure Display_Help
 is
    File_Protocol : constant String := "file://";
 
+--     HTML_Browser : constant String :=
+--       GPS.Kernel.Preferences.Html_Browser.Get_Pref;
+--
+--     Browsers : constant Browser_List :=
+--       (new String'("start"),
+--        new String'("firefox %u -new-tab"),
+--        new String'("mozilla"),
+--        new String'("galeon"),
+--        new String'("netscape"),
+--        new String'("opera -newpage %u"),
+--        new String'("nautilus"),
+--        new String'("konqueror"),
+--        new String'("open"));
+
    function Shell_Open (File : String) return Boolean;
    --  Open file with the associated command registered under Windows.
    --  Return True in case of success.
