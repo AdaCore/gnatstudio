@@ -1182,6 +1182,25 @@ package body GPS.Kernel is
                Attr_Kind  => GPR.Attr.Single,
                Var_Kind   => GPR.List);
          else
+            if Tool.Project_Attribute = "default_switches" then
+
+               --  If no specific attribute has been specifed, we should be
+               --  able to support both Default_Switches and Switches
+               --  attribute: in that case, register the Switches attribute too
+               --  so that we can set and retrieve both of them.
+
+               if not Attribute_Registered
+                 (Name       => "switches",
+                  In_Package => Pkg)
+               then
+                  Register_New_Attribute
+                    (Name       => "switches",
+                     In_Package => Pkg,
+                     Attr_Kind  => GPR.Attr.Associative_Array,
+                     Var_Kind   => GPR.List);
+               end if;
+            end if;
+
             Register_New_Attribute
               (Name       => To_Lower (To_String (Tool.Project_Attribute)),
                In_Package => Pkg,

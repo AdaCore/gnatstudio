@@ -239,6 +239,11 @@ package body Switches_Editors is
          Is_Default_Value : Boolean;
          To_Remove        : Boolean := False;
          Attr_Name        : Unbounded_String;
+         Index            : constant String :=
+                              (if File_Name /= GNATCOLL.VFS.No_File then
+                                  File_Name.Display_Base_Name
+                               else
+                                  To_String (Self.Tool.Project_Index));
       begin
          --  Language not supported => Ignore the attribute.
          --  We shouldn't remove it, since it might have been added by another
@@ -313,7 +318,7 @@ package body Switches_Editors is
                        (Scenario  => Scenario_Variables,
                         Attribute => Attribute_Pkg_List'(Build
                           (To_String (Self.Tool.Project_Package), "switches")),
-                        Index     => +Base_Name (File_Name));
+                        Index     => Index);
                      Changed := True;
                   end if;
 
@@ -328,7 +333,7 @@ package body Switches_Editors is
                              (To_String (Self.Tool.Project_Package),
                               "switches")),
                            Values    => Args.all,
-                           Index     => +Base_Name (File_Name),
+                           Index     => Index,
                            Prepend   => False);
                         Changed := True;
                      else
@@ -339,7 +344,7 @@ package body Switches_Editors is
                            Attribute => Attribute_Pkg_List'(Build
                              (To_String (Self.Tool.Project_Package),
                               "switches")),
-                           Index     => +Base_Name (File_Name));
+                           Index     => Index);
                         Changed := True;
                      end if;
 
@@ -353,7 +358,7 @@ package body Switches_Editors is
                           (Build
                             (To_String (Self.Tool.Project_Package),
                              "default_switches")),
-                        Index => To_String (Self.Tool.Project_Index))
+                        Index => Index)
                      then
                         Attr_Name := To_Unbounded_String ("default_switches");
                      end if;
@@ -368,7 +373,7 @@ package body Switches_Editors is
                              (To_String (Self.Tool.Project_Package),
                                   To_String (Attr_Name))),
                            Values    => Args.all,
-                           Index     => To_String (Self.Tool.Project_Index),
+                           Index     => Index,
                            Prepend   => False);
                         Changed := True;
 
@@ -381,7 +386,7 @@ package body Switches_Editors is
                            Attribute => Attribute_Pkg_List'(Build
                              (To_String (Self.Tool.Project_Package),
                               To_String (Attr_Name))),
-                           Index     => To_String (Self.Tool.Project_Index));
+                           Index     => Index);
                         Changed := True;
                      end if;
                   end if;
@@ -389,7 +394,6 @@ package body Switches_Editors is
 
             else
                --  Tool's attribute is defined in tool's descriptor.
-
                if Args'Length /= 0 and then not Is_Default_Value then
                   Trace (Me, "Now has switches for '"
                          & To_String (Self.Tool.Project_Package) & "."
@@ -403,7 +407,7 @@ package body Switches_Editors is
                               (To_String (Self.Tool.Project_Package),
                                To_String (Self.Tool.Project_Attribute))),
                      Values    => Args.all,
-                     Index     => To_String (Self.Tool.Project_Index),
+                     Index     => Index,
                      Prepend   => False);
                   Changed := True;
 
@@ -419,7 +423,7 @@ package body Switches_Editors is
                          (Build
                               (To_String (Self.Tool.Project_Package),
                                To_String (Self.Tool.Project_Attribute))),
-                     Index     => To_String (Self.Tool.Project_Index));
+                     Index     => Index);
                   Changed := True;
                end if;
             end if;
@@ -481,27 +485,35 @@ package body Switches_Editors is
          end if;
 
       else
-         --  Tool's attribute is defined in tool's descriptor, request value
-         --  of the tool specific attribute and index.
+         declare
+            Index : constant String :=
+                      (if Files'Length = 0 then
+                          To_String (Self.Tool.Project_Index)
+                       else
+                          Files (Files'First).Display_Base_Name);
+         begin
+            --  Tool's attribute is defined in tool's descriptor, request value
+            --  of the tool specific attribute and index.
 
-         Value := Project.Attribute_Value
-           (Attribute =>
-              Attribute_Pkg_List'
-              (Build
-                 (To_String (Self.Tool.Project_Package),
-                  To_String (Self.Tool.Project_Attribute))),
-            Index     => To_String (Self.Tool.Project_Index));
+            Value := Project.Attribute_Value
+              (Attribute =>
+                 Attribute_Pkg_List'
+                   (Build
+                        (To_String (Self.Tool.Project_Package),
+                         To_String (Self.Tool.Project_Attribute))),
+               Index     => Index);
 
-         if Value = null then
-            return (1 .. 0 => null);
-         else
-            declare
-               Result : constant GNAT.Strings.String_List := Value.all;
-            begin
-               Free (Value);
-               return Result;
-            end;
-         end if;
+            if Value = null then
+               return (1 .. 0 => null);
+            else
+               declare
+                  Result : constant GNAT.Strings.String_List := Value.all;
+               begin
+                  Free (Value);
+                  return Result;
+               end;
+            end if;
+         end;
       end if;
    end Get_Switches;
 
