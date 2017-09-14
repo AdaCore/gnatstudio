@@ -248,8 +248,8 @@ package body LAL.Semantic_Trees is
 
       package Iterators is
         new Langkit_Support.Tree_Traversal_Iterator
-          (Element_type      => Node_Wrapper,
-           Null_Value        => (null, null),
+          (Node_Type         => Node_Wrapper,
+           No_Node           => (null, null),
            Get_Child         => Get_Child,
            Get_Parent        => Get_Parent,
            First_Child_Index => First,
