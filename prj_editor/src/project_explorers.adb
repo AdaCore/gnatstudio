@@ -1464,7 +1464,7 @@ package body Project_Explorers is
    package Files_Set is new Ada.Containers.Ordered_Sets (Virtual_File);
    package Projects_Vectors is
      new Ada.Containers.Vectors (Positive, Project_Type);
-   --  used in Find_Project_Node and declared at package level
+   --  Used in Find_Project_Node and declared at package level
    --  to avoid side effects
 
    function Find_Project_Node
@@ -1479,43 +1479,49 @@ package body Project_Explorers is
       Way       : Projects_Vectors.Vector;
       Found     : Boolean := False;
 
-      procedure Find_Path
-        (From  : Project_Type;
-         Way   : in out Projects_Vectors.Vector;
-         Found : in out Boolean);
-      --  tests whether project or its children is one which we looking for
-      --  and fill "way" list to create chain of projects to this one
+      procedure Build_Way
+        (Cur_Project  : Project_Type;
+         Goal_Project : Project_Type;
+         Way          : in out Projects_Vectors.Vector;
+         Found        : in out Boolean);
+      --  Build a way from the project Cur_Project and through its children
+      --  until it finds the project Goal_Project
 
-      procedure Add_Children (Node : in out Gtk_Tree_Iter);
+      procedure Search_Project_Node
+        (Way  : in out Projects_Vectors.Vector;
+         Node : in out Gtk_Tree_Iter);
       --  Add children for node and call itself recursively
-      --  to add childern for all projects in "way" list
+      --  to add children for all projects in "way" list
 
-      ------------------
-      -- Add_Children --
-      ------------------
+      -------------------------
+      -- Search_Project_Node --
+      -------------------------
 
-      procedure Add_Children (Node : in out Gtk_Tree_Iter)
+      procedure Search_Project_Node
+        (Way  : in out Projects_Vectors.Vector;
+         Node : in out Gtk_Tree_Iter)
       is
          Path : Gtk_Tree_Path;
       begin
-         --  iterate over childs to find project from way
+         --  Iterate over childs to find project from way
+
          while Node /= Null_Iter loop
             P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
 
             if P = Way.First_Element then
-               --  found, delete it from way
+               --  Found the head of the list Way, suppress it
                Way.Delete_First;
 
-               --  add children for node
+               --  Move to the children of Node of the project P
                Path := Self.Tree.Model.Get_Path (Node);
                Self.Tree.Add_Row_Children (Node);
                Node := Self.Tree.Model.Get_Iter (Path);
                Path_Free (Path);
 
                if not Way.Is_Empty then
-                  --  we have to add deeper
+                  --  Continue to follow Way
                   Node := Self.Tree.Model.Children (Node);
-                  Add_Children (Node);
+                  Search_Project_Node (Way, Node);
                end if;
 
                exit;
@@ -1523,58 +1529,59 @@ package body Project_Explorers is
 
             Self.Tree.Model.Next (Node);
          end loop;
-      end Add_Children;
+      end Search_Project_Node;
 
       ---------------
-      -- Find_Path --
+      -- Build_Way --
       ---------------
 
-      procedure Find_Path
-        (From  : Project_Type;
-         Way   : in out Projects_Vectors.Vector;
-         Found : in out Boolean)
+      procedure Build_Way
+        (Cur_Project  : Project_Type;
+         Goal_Project : Project_Type;
+         Way          : in out Projects_Vectors.Vector;
+         Found        : in out Boolean)
       is
-         Iterator        : Project_Iterator;
-         Current_Project : Project_Type;
+         Iterator       : Project_Iterator;
+         Nested_Project : Project_Type;
       begin
-         if Processed.Contains (From.Project_Path) then
-            --  this project is already tested
+         if Processed.Contains (Cur_Project.Project_Path) then
+            --  This project is already tested
             return;
          end if;
 
-         Processed.Insert (From.Project_Path);
+         Processed.Insert (Cur_Project.Project_Path);
 
-         if From = Project then
+         if Cur_Project = Goal_Project then
             Found := True;
             return;
          end if;
 
-         Iterator := From.Start
+         Iterator := Cur_Project.Start
            (Recursive   => True,
             Direct_Only => True);
 
-         --  iterate over nested projects
+         --  Iterate over nested projects
          loop
-            Current_Project := Current (Iterator);
-            if Current_Project = No_Project then
-               --  no more project, return "not found"
+            Nested_Project := Current (Iterator);
+            if Nested_Project = No_Project then
+               --  No more project, return "not found"
                return;
             end if;
 
-            --  add current project to way and test it (with nested)
-            Way.Append (Current_Project);
-            Find_Path (Current_Project, Way, Found);
+            --  Add current project to way and test it (with nested)
+            Way.Append (Nested_Project);
+            Build_Way (Nested_Project, Goal_Project, Way, Found);
             if Found then
-               --  project is found in this way
                return;
             end if;
 
-            --  last project does not contains needed,
+            --  Last project does not contains needed,
             --  delete from way and try next
             Way.Delete_Last;
             Next (Iterator);
          end loop;
-      end Find_Path;
+
+      end Build_Way;
 
    begin
       if Project = No_Project then
@@ -1595,17 +1602,21 @@ package body Project_Explorers is
          return Null_Iter;
 
       else
-         Find_Path (Self.Kernel.Get_Project_Tree.Root_Project, Way, Found);
+         --  The Way begins with the Root project
+         Way.Append (Self.Kernel.Get_Project_Tree.Root_Project);
+         Build_Way
+           (Self.Kernel.Get_Project_Tree.Root_Project, Project, Way, Found);
 
          if Found then
             --  Way contains projects chain,
             --  we need to add all children nodes for this way
+
             Self.Tree.Add_Row_Children (Self.Tree.Model.Get_Iter_First);
-            Node := Self.Tree.Model.Children (Self.Tree.Model.Get_Iter_First);
+            Node := Self.Tree.Model.Get_Iter_First;
 
             if not Way.Is_Empty then
-               --  we have to add deeper
-               Add_Children (Node);
+               --  We have to follow the way
+               Search_Project_Node (Way, Node);
             end if;
          end if;
 
@@ -1935,8 +1946,7 @@ package body Project_Explorers is
       View     : constant Project_Explorer :=
         Explorer_Views.Get_Or_Create_View (Kernel);
       Node     : Gtk_Tree_Iter;
-      Success  : Boolean;
-      Filter_Path, Path : Gtk_Tree_Path;
+      Success  : Boolean := False;
 
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter);
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter) is
@@ -1969,14 +1979,6 @@ package body Project_Explorers is
         (View, File_Info (S.First_Element).Project);
 
       if Node /= Null_Iter then
-         --  Expand the project node, to compute its files
-         Path := View.Tree.Model.Get_Path (Node);
-         Filter_Path := View.Tree.Filter.Convert_Child_Path_To_Path (Path);
-         Path_Free (Path);
-         Success := View.Tree.Expand_Row (Filter_Path, False);
-         Path_Free (Filter_Path);
-
-         Success := False;
          For_Each_File_Node (View.Tree.Model, Node, Select_If_Searched'Access);
       end if;
 
