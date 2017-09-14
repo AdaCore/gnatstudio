@@ -2379,13 +2379,18 @@ package body Src_Editor_Module.Editors is
    overriding procedure Set_Read_Only
      (This : Src_Editor_Buffer; Read_Only : Boolean)
    is
+      File : Virtual_File;
    begin
       --  ??? duplicates with Src_Editor_Box.Set_Writable
 
       if This.Contents.Buffer /= null then
-         --  Change permissions on the disk as well
-         This.Contents.Kernel.Make_File_Writable
-           (This.Contents.Buffer.Get_Filename, not Read_Only);
+         File := This.Contents.Buffer.Get_Filename;
+
+         if File /= No_File then
+            --  Change permissions on the disk as well
+            This.Contents.Kernel.Make_File_Writable
+              (This.Contents.Buffer.Get_Filename, not Read_Only);
+         end if;
 
          This.Contents.Buffer.Mark_Buffer_Writable
            (not Read_Only, Explicit => True);
