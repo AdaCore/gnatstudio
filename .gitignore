@@ -25,6 +25,7 @@
 .gpsrcs
 .gpssnprj
 Makefile.common
+autom4te.cache
 b~*
 b__*
 *.d
