@@ -3060,6 +3060,20 @@ package body GNATdoc.Frontend is
                         end if;
                      end;
 
+                  when Tok_Use =>
+                     if Present (Doc) then
+                        declare
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (Curr_Entity_In_Scope) then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
                   when others =>
                      null;
                end case;
