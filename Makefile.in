@@ -75,10 +75,7 @@ endif
 # Regenerate predefined_ada.xml before we install it
 	-${PYTHON} design/scripts/update_predefined_ada.py
 
-	(cd share; tar cf - plug-ins/spark/*.py) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - plug-ins/images/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - library/GPS_old/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - support/) | (cd $(sharedir)/gps; tar xf -)
 	-${PYTHON} distrib/gnat_switches.py > $(sharedir)/gps/support/core/gnat_switches.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
