@@ -651,29 +651,87 @@ procedure GPS.Main is
          Gnatinspect_Traces : constant Virtual_File :=
                                 Create_From_Dir (GPS_Home_Dir,
                                                  "gnatinspect_traces.cfg");
+         Traces_File        : constant Virtual_File :=
+                                Create_From_Dir
+                                  (GPS_Home_Dir, "traces.cfg");
          File               : Writable_File;
 
       begin
          if not Is_Directory (GPS_Home_Dir) then
             Show_Preferences_Assistant := True;
             Make_Dir (GPS_Home_Dir);
+         end if;
+
+         if not Is_Regular_File (Traces_File) then
 
             --  Create a default configuration file for the traces.
             --  This should be left while GPS is considered as not fully
             --  stable.
 
-            File := Create_From_Dir (GPS_Home_Dir, "traces.cfg").Write_File;
+            File := Traces_File.Write_File;
             Write (File,
                    ">log.$$.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
-                     "DEBUG.COLORS=no" & ASCII.LF &
+                        "DEBUG.COLORS=no" & ASCII.LF &
                      "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
                      "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
                      "DEBUG.STACK_TRACE=no" & ASCII.LF &
                      "DEBUG.LOCATION=no" & ASCII.LF &
                      "DEBUG.ENCLOSING_ENTITY=no");
             Close (File);
+         else
+            declare
+               File_Contents : String_Access := Traces_File.Read_File;
+            begin
+
+               --  If a traces.cfg file already exists, make sure that the
+               --  traces are not bufferized by adding the 'buffer_size=0'
+               --  argument to the config file, if the buffer size is not
+               --  explicitly set.
+
+               if File_Contents /= null then
+                  declare
+                     Pattern      : constant String :=
+                                      ">log.$$.txt:buffer_size=";
+                     New_Contents : Unbounded_String := To_Unbounded_String
+                       (File_Contents.all);
+                  begin
+
+                     --  Check if the buffer size is already set in the traces
+                     --  file. Do nothing if it's the case.
+                     --  Otherwise, set the buffer size to 0 by default.
+
+                     if Index (File_Contents.all, Pattern) = 0 then
+
+                        --  Search for "log.$$.txt" in the file contents and
+                        --  replace it by the new pattern.
+                        --
+                        --  If not found, it means that we are dealing with an
+                        --  old traces file, that write in a log file without
+                        --  the ".txt" extension. Replace it by the new pattern
+                        --  too in that case.
+
+                        if Index (File_Contents.all, "log.$$.txt") /=  0 then
+                           Replace
+                             (S           => New_Contents,
+                              Pattern     => ">log.$$.txt",
+                              Replacement => Pattern & "0");
+                        else
+                           Replace
+                             (S           => New_Contents,
+                              Pattern     => ">log.$$",
+                              Replacement => Pattern & "0");
+                        end if;
+
+                        File := Traces_File.Write_File;
+                        Write (File, To_String (New_Contents));
+                        Close (File);
+                        Free (File_Contents);
+                     end if;
+                  end;
+               end if;
+            end;
          end if;
 
          if not Gnatinspect_Traces.Is_Regular_File then
