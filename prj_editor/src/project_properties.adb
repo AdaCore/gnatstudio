@@ -162,6 +162,11 @@ package body Project_Properties is
       --  This is the case if a section has been specified for the editor's
       --  attribute. It is also the case for indexed attributes or if the
       --  editor is displayed as a list.
+
+      Doc_Group_Widget : Dialog_Group_Widget;
+      --  The documentation widget that can be associated with the editor but
+      --  that not resides in the same group widget.
+      --  This is the case for list and indexed attributes.
    end record;
 
    function Is_Visible
@@ -3538,14 +3543,34 @@ package body Project_Properties is
                         Gtk_Widget (Editor.Group_Widget)
                      else
                         Gtk_Widget (Editor));
+
+      procedure Set_Visibility_On_Container
+        (Container : access Gtk_Widget_Record'Class);
+
+      ---------------------------------
+      -- Set_Visibility_On_Container --
+      ---------------------------------
+
+      procedure Set_Visibility_On_Container
+        (Container : access Gtk_Widget_Record'Class) is
+      begin
+         --  Show or Hide the editor's container depending on Visible
+         if Visible then
+            Container.Set_No_Show_All (False);
+            Container.Show_All;
+         else
+            Container.Hide;
+            Container.Set_No_Show_All (True);
+         end if;
+      end Set_Visibility_On_Container;
+
    begin
-      --  Show or Hide the editor's container depending on Visible
-      if Visible then
-         Container.Set_No_Show_All (False);
-         Container.Show_All;
-      else
-         Container.Hide;
-         Container.Set_No_Show_All (True);
+      --  Hide the attribute editor's container
+      Set_Visibility_On_Container (Container);
+
+      --  Add the external doc widget too, if any
+      if Editor.Doc_Group_Widget /= null then
+         Set_Visibility_On_Container (Editor.Doc_Group_Widget);
       end if;
 
       --  Set the editor's sensitivity depending on Editable
@@ -3715,6 +3740,7 @@ package body Project_Properties is
             Gtk_New (Doc_Label, Editable_Attr.Get_Description);
             Apply_Doc_Style (Doc_Label);
             Group_Widget.Append_Child (Doc_Label, Expand => False);
+            Editable_Attr.Editor.Doc_Group_Widget := Group_Widget;
 
             Group_Widget := new Dialog_Group_Widget_Record;
             Initialize
