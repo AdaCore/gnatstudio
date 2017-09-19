@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
@@ -35,6 +36,9 @@ package CodePeer is
 
    subtype Supported_Format_Version is Format_Version range 3 .. 5;
    --  Range of suppoted versions of format of interchange file.
+
+   Unknown_Timestamp : constant Ada.Calendar.Time :=
+     Ada.Calendar.Time_Of (Ada.Calendar.Year_Number'First, 1, 1, 0.0);
 
    ----------------
    --  Messages  --
@@ -244,7 +248,9 @@ package CodePeer is
 
    type Project_Data is new Code_Analysis.CodePeer_Data_Root with record
       Current_Inspection    : Natural;
+      Current_Timestamp     : Ada.Calendar.Time;
       Baseline_Inspection   : Natural;
+      Baseline_Timestamp    : Ada.Calendar.Time;
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
       CWE_Categories        : CWE_Category_Sets.Set;

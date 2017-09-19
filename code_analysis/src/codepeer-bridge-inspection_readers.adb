@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
@@ -40,24 +41,26 @@ package body CodePeer.Bridge.Inspection_Readers is
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
 
-   Annotations_Attribute    : constant String := "annotations";
-   Category_Attribute       : constant String := "category";
-   Checks_Attribute         : constant String := "checks";
-   Column_Attribute         : constant String := "column";
-   CWE_Attribute            : constant String := "cwe";
-   Entry_Point_Attribute    : constant String := "entry_point";
-   File_Attribute           : constant String := "file";
-   Format_Attribute         : constant String := "format";
-   Identifier_Attribute     : constant String := "identifier";
-   Is_Check_Attribute       : constant String := "is_check";
-   Kind_Attribute           : constant String := "kind";
-   Line_Attribute           : constant String := "line";
-   Name_Attribute           : constant String := "name";
-   Previous_Attribute       : constant String := "previous";
-   Primary_Checks_Attribute : constant String := "primary_checks";
-   Rank_Attribute           : constant String := "rank";
-   Vn_Id_Attribute          : constant String := "vn-id";
-   Vn_Ids_Attribute         : constant String := "vn-ids";
+   Annotations_Attribute        : constant String := "annotations";
+   Category_Attribute           : constant String := "category";
+   Checks_Attribute             : constant String := "checks";
+   Column_Attribute             : constant String := "column";
+   CWE_Attribute                : constant String := "cwe";
+   Entry_Point_Attribute        : constant String := "entry_point";
+   File_Attribute               : constant String := "file";
+   Format_Attribute             : constant String := "format";
+   Identifier_Attribute         : constant String := "identifier";
+   Is_Check_Attribute           : constant String := "is_check";
+   Kind_Attribute               : constant String := "kind";
+   Line_Attribute               : constant String := "line";
+   Name_Attribute               : constant String := "name";
+   Previous_Attribute           : constant String := "previous";
+   Previous_Timestamp_Attribute : constant String := "previous_timestamp";
+   Primary_Checks_Attribute     : constant String := "primary_checks";
+   Rank_Attribute               : constant String := "rank";
+   Timestamp_Attribute          : constant String := "timestamp";
+   Vn_Id_Attribute              : constant String := "vn-id";
+   Vn_Ids_Attribute         :     constant String := "vn-ids";
 
    procedure Include_CWE_Category
      (Self : in out Reader'Class;
@@ -487,14 +490,52 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
 
       elsif Qname = Inspection_Tag then
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Current_Inspection :=
-           Natural'Value (Attrs.Get_Value (Identifier_Attribute));
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Baseline_Inspection :=
-           Natural'Value (Attrs.Get_Value (Previous_Attribute));
-         Self.Version :=
-           Format_Version'Value (Attrs.Get_Value (Format_Attribute));
+         declare
+
+            function Get_Value
+              (Attrs      : Sax.Attributes.Attributes'Class;
+               Local_Name : String;
+               Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
+               return Ada.Calendar.Time;
+            --  Returns values of given attribute if present or value of
+            --  Default.
+
+            ---------------
+            -- Get_Value --
+            ---------------
+
+            function Get_Value
+              (Attrs      : Sax.Attributes.Attributes'Class;
+               Local_Name : String;
+               Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
+               return Ada.Calendar.Time
+            is
+               Index : constant Integer := Attrs.Get_Index (Local_Name);
+
+            begin
+               if Index /= -1 then
+                  return
+                    Ada.Calendar.Formatting.Value (Attrs.Get_Value (Index));
+
+               else
+                  return Default;
+               end if;
+            end Get_Value;
+
+            Data : CodePeer.Project_Data'Class
+              renames CodePeer.Project_Data'Class (Self.Root_Inspection.all);
+
+         begin
+            Data.Current_Inspection :=
+              Natural'Value (Attrs.Get_Value (Identifier_Attribute));
+            Data.Current_Timestamp := Get_Value (Attrs, Timestamp_Attribute);
+            Data.Baseline_Inspection :=
+              Natural'Value (Attrs.Get_Value (Previous_Attribute));
+            Data.Baseline_Timestamp :=
+              Get_Value (Attrs, Previous_Timestamp_Attribute);
+            Self.Version :=
+              Format_Version'Value (Attrs.Get_Value (Format_Attribute));
+         end;
 
       elsif Qname = CWE_Category_Tag then
          Self.Include_CWE_Category

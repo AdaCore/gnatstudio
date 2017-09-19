@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar.Formatting;
 with Ada.Strings.Fixed;
 
 with Gtk.Label;
@@ -48,6 +49,7 @@ package body CodePeer.Reports is
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree)
    is
+      use type Ada.Calendar.Time;
       use Ada.Strings;
       use Ada.Strings.Fixed;
 
@@ -74,13 +76,19 @@ package body CodePeer.Reports is
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
         ("Base run #"
-         & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both));
+         & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both)
+         & (if Project_Data.Baseline_Timestamp = Unknown_Timestamp then ""
+           else ASCII.LF & Ada.Calendar.Formatting.Image
+             (Project_Data.Baseline_Timestamp)));
       Inspections_Box.Pack_Start (Baseline_Inspection);
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
         ("Current run #"
-         & Trim (Natural'Image (Project_Data.Current_Inspection), Both));
+         & Trim (Natural'Image (Project_Data.Current_Inspection), Both)
+         & (if Project_Data.Current_Timestamp = Unknown_Timestamp then ""
+           else ASCII.LF & Ada.Calendar.Formatting.Image
+             (Project_Data.Current_Timestamp)));
       Inspections_Box.Pack_End (Current_Inspection);
 
       --  Notebook
