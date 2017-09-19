@@ -1,0 +1,655 @@
+<?xml version="1.0"?>
+  <GNATPROVE>
+    <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.inside_subp_context(GPS.current_context())" />
+
+    <action name="Examine All Action" category="GNATprove" output="none">
+       <shell
+         lang="python">spark2014.on_examine_all(GPS.current_context())</shell>
+    </action>
+    <action
+        name="Examine All Sources Action" category="GNATprove" output="none">
+       <shell
+         lang="python">spark2014.on_examine_root_project(GPS.current_context())
+       </shell>
+    </action>
+    <action name="Examine File Action" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell
+         lang="python">spark2014.on_examine_file(GPS.current_context())
+       </shell>
+    </action>
+    <action
+      name="Examine Subprogram Action" category="GNATprove" output="none">
+       <filter id="Inside Subprogram Context" />
+       <shell
+         lang="python">spark2014.on_examine_subp(GPS.current_context())
+       </shell>
+    </action>
+    <action name="Prove All Action" category="GNATprove" output="none">
+       <shell
+         lang="python">spark2014.on_prove_all(GPS.current_context())</shell>
+    </action>
+    <action
+      name="Prove All Sources Action" category="GNATprove" output="none">
+       <shell
+         lang="python">spark2014.on_prove_root_project(GPS.current_context())
+       </shell>
+    </action>
+    <action
+      name="Prove File Action" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell
+         lang="python">spark2014.on_prove_file(GPS.current_context())</shell>
+    </action>
+    <action name="Prove Subprogram Action" category="GNATprove" output="none">
+       <filter id="Inside Subprogram Context" />
+       <shell
+         lang="python">spark2014.on_prove_subp(GPS.current_context())</shell>
+    </action>
+    <action name="Prove Line Action" category="GNATprove" output="none">
+       <filter language="Ada" shell_lang="python"
+         shell_cmd="spark2014.is_file_context(GPS.current_context())" />
+       <shell
+         lang="python">spark2014.on_prove_line(GPS.current_context())
+       </shell>
+    </action>
+    <action name="Prove Check Action" category="GNATprove" output="none">
+       <filter language="Ada" shell_lang="python"
+        shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
+       <shell
+         lang="python">spark2014.on_prove_check(GPS.current_context())
+       </shell>
+    </action>
+    <action name="Show Report Action" category="GNATprove" output="none">
+        <shell
+          lang="python">spark2014.on_show_report(GPS.current_context())
+        </shell>
+    </action>
+    <action name="Clean Proofs Action" category="GNATprove" output="none">
+        <shell
+          lang="python">spark2014.on_clean_up(GPS.current_context())</shell>
+    </action>
+
+    <submenu before="Window">
+      <Title>_%(prefix)s</Title>
+        <menu action="Examine All Action">
+          <Title>Examine All</Title>
+        </menu>
+        <menu action="Examine All Sources Action">
+          <Title>Examine All Sources</Title>
+        </menu>
+        <menu action="Examine File Action">
+          <Title>Examine File</Title>
+        </menu>
+        <menu><title/></menu>
+        <menu action="Prove All Action">
+          <Title>Prove All</Title>
+        </menu>
+        <menu action="Prove All Sources Action">
+          <Title>Prove All Sources</Title>
+        </menu>
+        <menu action="Prove File Action">
+          <Title>Prove File</Title>
+        </menu>
+        <menu><title/></menu>
+        <menu action="Show Report Action">
+          <Title>Show Report</Title>
+        </menu>
+        <menu action="Clean Proofs Action">
+          <Title>Clean Proofs</Title>
+        </menu>
+    </submenu>
+
+    <contextual action="Examine File Action">
+      <Title>%(prefix)s/Examine File</Title>
+    </contextual>
+    <contextual action="Examine Subprogram Action">
+      <Title>%(prefix)s/Examine Subprogram</Title>
+    </contextual>
+    <contextual action="Prove File Action">
+      <Title>%(prefix)s/Prove File</Title>
+    </contextual>
+    <contextual action="Prove Subprogram Action">
+      <Title>%(prefix)s/Prove Subprogram</Title>
+    </contextual>
+    <contextual action="Prove Line Action">
+      <Title>%(prefix)s/Prove Line</Title>
+    </contextual>
+    <contextual action="Prove Check Action">
+      <Title>%(prefix)s/Prove Check</Title>
+    </contextual>
+
+    <doc_path>{root}/share/doc/spark</doc_path>
+
+    <documentation_file>
+      <name>html/ug/index.html</name>
+      <descr>SPARK 2014 Toolset User's Guide</descr>
+      <category>%(prefix)s</category>
+<menu before="About">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide</menu>
+    </documentation_file>
+
+    <documentation_file>
+      <name>html/lrm/index.html</name>
+      <descr>SPARK 2014 Reference Manual</descr>
+      <category>%(prefix)s</category>
+      <menu before="About">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
+    </documentation_file>
+
+    <action name="spark2014_example_adacore_u" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/adacore_u/adacore_u.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_adacore_u">
+        <title>adacore__u</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_autopilot" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/autopilot/test.gpr"</shell>
+      <shell>Editor.edit "ap.ads"</shell>
+      <shell>Editor.edit "instruments.ads"</shell>
+      <shell>Editor.edit "surfaces.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_autopilot">
+        <title>autopilot</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_binary_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/binary_search/test.gpr"</shell>
+      <shell>Editor.edit "binary_search.adb"</shell>
+      <shell>Editor.edit "binary_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_binary_search">
+        <title>binary__search</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_binary_search_unconstrained" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/binary_search_unconstrained/test.gpr"
+      </shell>
+      <shell>Editor.edit "binary_search.adb"</shell>
+      <shell>Editor.edit "binary_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_binary_search_unconstrained">
+        <title>binary__search__unconstrained</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_bitwalker" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/bitwalker/test.gpr"</shell>
+      <shell>Editor.edit "bitwalker.adb"</shell>
+      <shell>Editor.edit "bitwalker.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_bitwalker">
+        <title>bitwalker</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_crazyflie" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_crazyflie()</shell>
+      <shell>Editor.edit "crazyflie/modules/spec/sensfusion6_pack.ads"</shell>
+      <shell>Editor.edit "crazyflie/modules/body/sensfusion6_pack.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_crazyflie">
+        <title>crazyflie</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_database" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/database/test.gpr"</shell>
+      <shell>Editor.edit "database.adb"</shell>
+      <shell>Editor.edit "database.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_database">
+        <title>database</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_euclidian_division" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/euclidian_division/test.gpr"</shell>
+      <shell>Editor.edit "linear_div.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_euclidian_division">
+        <title>euclidian__division</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_evoting" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/evoting/test.gpr"</shell>
+      <shell>Editor.edit "evoting.adb"</shell>
+      <shell>Editor.edit "evoting.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_evoting">
+        <title>evoting</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_formal_queue" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/formal_queue/test.gpr"</shell>
+      <shell>Editor.edit "queue.adb"</shell>
+      <shell>Editor.edit "queue.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_formal_queue">
+        <title>formal__queue</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_gcd" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/gcd/test.gpr"</shell>
+      <shell>Editor.edit "math_euclid.adb"</shell>
+      <shell>Editor.edit "math_euclid.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_gcd">
+        <title>gcd</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_gnatprove_by_example" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/gnatprove_by_example/test.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_gnatprove_by_example">
+        <title>gnatprove__by__example</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_heatingsystem" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/heatingsystem/test.gpr"</shell>
+      <shell>Editor.edit "heatingsystem_dfa.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_heatingsystem">
+        <title>heatingsystem</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_intro" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/intro/test.gpr"</shell>
+      <shell>Editor.edit "pricing.adb"</shell>
+      <shell>Editor.edit "pricing.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_intro">
+        <title>intro</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_ipstack" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_ipstack()</shell>
+      <shell>Editor.edit "aip-udp.ads"</shell>
+      <shell>Editor.edit "aip-tcp.ads"</shell>
+      <shell>Editor.edit "aip-ip.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_ipstack">
+        <title>ipstack</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_linear_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/linear_search/test.gpr"</shell>
+      <shell>Editor.edit "linear_search.adb"</shell>
+      <shell>Editor.edit "linear_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_linear_search">
+        <title>linear__search</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_longest_common_prefix" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/longest_common_prefix/test.gpr"</shell>
+      <shell>Editor.edit "lcp.adb"</shell>
+      <shell>Editor.edit "lcp.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_longest_common_prefix">
+        <title>longest__common__prefix</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_natural" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/natural/test.gpr"</shell>
+      <shell>Editor.edit "natural_set.adb"</shell>
+      <shell>Editor.edit "natural_set.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_natural">
+        <title>natural</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_n_queens" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/n_queens/test.gpr"</shell>
+      <shell>Editor.edit "queen.adb"</shell>
+      <shell>Editor.edit "queen.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_n_queens">
+        <title>n__queens</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_openETCS" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/openETCS/test.gpr"</shell>
+      <shell>Editor.edit "section_4_6.adb"</shell>
+      <shell>Editor.edit "step_function.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_openETCS">
+        <title>openETCS</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_pair_insertion_sort" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/pair_insertion_sort/sort.gpr"</shell>
+      <shell>Editor.edit "pair_insertion_sort.adb"</shell>
+      <shell>Editor.edit "pair_insertion_sort.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_pair_insertion_sort">
+        <title>pair__insertion__sort</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_patience" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/patience/test.gpr"</shell>
+      <shell>Editor.edit "patience.adb"</shell>
+      <shell>Editor.edit "patience.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_patience">
+        <title>patience</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_prime_numbers" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/prime_numbers/test.gpr"</shell>
+      <shell>Editor.edit "prime_and_coprime_numbers.adb"</shell>
+      <shell>Editor.edit "prime_and_coprime_numbers.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_prime_numbers">
+        <title>prime_numbers</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_railway_signaling" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/railway_signaling/test.gpr"</shell>
+      <shell>Editor.edit "trains.adb"</shell>
+      <shell>Editor.edit "trains.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_railway_signaling">
+        <title>railway__signaling</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_ring_buffer" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/ring_buffer/test.gpr"</shell>
+      <shell>Editor.edit "ring_buf.adb"</shell>
+      <shell>Editor.edit "ring_buf.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_ring_buffer">
+        <title>ring__buffer</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_search_linked_list" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/search_linked_list/test.gpr"</shell>
+      <shell>Editor.edit "lists.adb"</shell>
+      <shell>Editor.edit "lists.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_search_linked_list">
+        <title>search__linked__list</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_segway" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/segway/test.gpr"</shell>
+      <shell>Editor.edit "segway.adb"</shell>
+      <shell>Editor.edit "segway.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_segway">
+        <title>segway</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_sparkskein" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/sparkskein/test.gpr"</shell>
+      <shell>Editor.edit "skein.adb"</shell>
+      <shell>Editor.edit "skein.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_sparkskein">
+        <title>sparkskein</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_spark_book" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/spark_book/test.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_spark_book">
+        <title>spark__book</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_spark_io" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/spark_io/test.gpr"</shell>
+      <shell>Editor.edit "spark-text_io.ads"</shell>
+      <shell>Editor.edit "hello_world.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_spark_io">
+        <title>spark__io</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_string_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/string_search/strings.gpr"</shell>
+      <shell>Editor.edit "string_search.ads"</shell>
+      <shell>Editor.edit "string_search.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_string_search">
+        <title>string__search</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_tetris" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/tetris/test.gpr"</shell>
+      <shell>Editor.edit "tetris_functional.adb"</shell>
+      <shell>Editor.edit "tetris_functional.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tetris">
+        <title>tetris</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_text_io_get_line" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/text_io_get_line/test.gpr"</shell>
+      <shell>Editor.edit "textio.ads"</shell>
+      <shell>Editor.edit "textio-get_line.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_text_io_get_line">
+        <title>text__io__get__line</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_thumper" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_thumper()</shell>
+      <shell>Editor.edit "thumper/src/server/thumper_server.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_thumper">
+        <title>thumper</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_tokeneer" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/tokeneer/test.gpr"</shell>
+      <shell>Editor.edit "tis.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tokeneer">
+        <title>tokeneer</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_traffic_light" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/traffic_light/test.gpr"</shell>
+      <shell>Editor.edit "traffic_lights.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_traffic_light">
+        <title>traffic__light</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_trajectory_computation" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/trajectory_computation/test.gpr"</shell>
+      <shell>Editor.edit "simple_trajectory.adb"</shell>
+      <shell>Editor.edit "simple_trajectory.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_trajectory_computation">
+        <title>trajectory__computation</title>
+      </menu>
+    </submenu>
+
+  </GNATPROVE>

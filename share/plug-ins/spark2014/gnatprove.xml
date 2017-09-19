@@ -1,0 +1,731 @@
+<?xml version="1.0"?>
+  <GNATPROVE>
+    <tool name="GNATprove" package="Prove" attribute="switches" index="">
+      <language>Ada</language>
+      <switches switch_char="-">
+        <title line="1">Proof</title>
+         <combo label="Main mode" switch="--mode" noswitch="all"
+               separator="=" column="1"
+               tip="Main mode of formal verification" >
+            <combo-entry
+              label="check"
+              value="check"
+              tip="Check SPARK restrictions for code where SPARK_Mode=On"/>
+            <combo-entry
+              label="flow"
+              value="flow"
+              tip="Prove object initialization, globals and depends contracts"
+            />
+            <combo-entry
+              label="prove"
+              value="prove"
+              tip="Prove subprogram contracts and absence of run-time errors"
+            />
+            <combo-entry label="all" value="all"
+                         tip="Activates all modes"/>
+         </combo>
+        <combo line="1" label="Report mode" switch="--report" separator="="
+               noswitch="fail" tip="Amount of information reported">
+          <combo-entry label="fail" value="fail"
+                       tip="Only failed proof attempts"/>
+          <combo-entry label="all" value="all"
+                       tip="All proof attempts"/>
+          <combo-entry label="statistics" value="statistics"
+                       tip="Detailed proof attempts"/>
+        </combo>
+        <check
+          label="Display previous results" switch="--output-msg-only"
+          column="1" tip="Do not run provers, only use previous results"
+        />
+<combo
+label="Proof level"
+switch="--level"
+separator="="
+tip="Set the proof level from 0 = faster to 4 = more powerful" >
+    <combo-entry label="0 (fast, one prover)" value="0"
+                 tip="Equivalent to --prover=cvc4 --proof=per_check
+ --timeout=1"/>
+    <combo-entry label="1 (fast, all provers)" value="1"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --timeout=1"/>
+    <combo-entry label="2 (all provers)" value="2"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --timeout=5"/>
+    <combo-entry label="3 (slower, all provers)" value="3"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --timeout=5"/>
+    <combo-entry label="4 (slowest, all provers)" value="4"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --timeout=10"/>
+</combo>
+<combo
+label="Proof strategy"
+switch="--proof"
+noswitch="per_check"
+separator="="
+tip="Formulas generated for each check (faster) or each path (more precise)" >
+    <combo-entry label="one proof per check" value="per_check"
+                 tip="Generate one formula per check"/>
+    <combo-entry label="one proof per path" value="per_path"
+                 tip="Generate one formula per path for each check"/>
+    <combo-entry
+    label="progressively split"
+    value="progressive"
+    tip="Start ith one formula per check, then split into paths when needed"/>
+</combo>
+        <spin label="Prover timeout" switch="--timeout="
+              default="0" min="0" max="3600"
+              tip="Set the prover timeout (in sec) for individual proofs
+ (0 for no timeout)" />
+        <spin
+          label="Prover max steps"
+          switch="--steps="
+          default="0"
+          min="0"
+          max="1000000"
+          tip="Set the prover maximum number of steps for individual proofs"/>
+         <check label="CodePeer Static Analysis"
+                switch="--codepeer=on" column="2"
+                tip="Enable CodePeer analysis in addition to provers" />
+        <title line="1" column="2">Process control</title>
+        <spin label="Multiprocessing" column="2" switch="-j"
+              default="1" min="1" max="100"
+              tip="Use N processes to carry out the processing
+ (0 means use as many cores as available on the machine)" />
+      </switches>
+    </tool>
+
+    <target-model name="gnatprove-examine">
+       <description>Target model for GNATprove Examine commands</description>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s">
+         <title column="1" line="1" >General</title>
+         <check
+           label="Multiprocessing" switch="-j0" column="1"
+           tip="Use as many cores as available on the machine"
+         />
+         <check label="Do not report warnings" switch="--warnings=off"
+                column="1" tip="Do not issue warnings at all"
+         />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved"
+         />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
+         />
+         <title column="2" line="1" >Prover</title>
+<combo
+label="Analysis Mode"
+switch="--mode"
+separator="="
+column="2"
+tip="Select analysis mode" >
+    <combo-entry label="check fast" value="check"
+                 tip="partially check conformance with SPARK restrictions
+(fast)"/>
+    <combo-entry label="check all" value="check_all"
+                 tip="fully check conformance with SPARK restrictions
+(slower)"/>
+    <combo-entry label="flow analysis" value="flow"
+                 tip="run flow analysis"/>
+</combo>
+       </switches>
+       <persistent-history>False</persistent-history>
+    </target-model>
+
+    <target-model name="gnatprove-basic-prove">
+       <description>Target model for GNATprove Basic Prove commands
+       </description>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s">
+         <title column="1" line="1" >General</title>
+         <check
+           label="Multiprocessing" switch="-j0" column="1"
+           tip="Use as many cores as available on the machine"
+         />
+         <check label="Do not report warnings" switch="--warnings=off"
+                column="1" tip="Do not issue warnings at all"
+         />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved"
+         />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
+         />
+         <title column="2" line="1" >Prover</title>
+<combo
+label="Proof level"
+switch="--level"
+separator="="
+column="2"
+tip="Set the proof level from 0 = faster to 4 = more powerful" >
+    <combo-entry label="0 (fast, one prover)" value="0"
+                 tip="Equivalent to --prover=cvc4 --proof=per_check
+ --timeout=1"/>
+    <combo-entry label="1 (fast, all provers)" value="1"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --timeout=1"/>
+    <combo-entry label="2 (all provers)" value="2"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --timeout=5"/>
+    <combo-entry label="3 (slower, all provers)" value="3"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --timeout=5"/>
+    <combo-entry label="4 (slowest, all provers)" value="4"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --timeout=10"/>
+</combo>
+         <check label="CodePeer Static Analysis"
+                switch="--codepeer=on" column="2"
+                tip="Enable CodePeer analysis in addition to provers" />
+       </switches>
+       <persistent-history>False</persistent-history>
+    </target-model>
+
+    <target-model name="gnatprove-prove">
+       <description>Target model for GNATprove Prove commands</description>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s">
+         <title column="1" line="1" >General</title>
+         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
+          default="1" separator="" column="1"
+          tip="Use N processes to carry out the processing
+ (0 means use as many cores as available on the machine)" />
+         <combo
+           label="Warnings"
+           switch="--warnings" noswitch="continue"
+           separator="=" column="1"
+           tip="Stop analysis after warnings or continue,
+ or do not issue warnings">
+             <combo-entry label="stop after warnings" value="error"
+              tip="Warnings are considered as errors and stop the analysis"/>
+             <combo-entry label="continue when warnings" value="continue"
+              tip="issue warnings, but continue analysis"/>
+             <combo-entry label="do not issue warnings" value="off"
+             tip="Do not issue warnings at all"/>
+         </combo>
+         <check
+           label="Force re-analysis" switch="-f" column="1"
+           tip="Re-start analysis from scratch, ignoring previous results" />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved"
+         />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
+         />
+         <title column="2" line="1" >Prover</title>
+         <combo
+           label="Proof strategy"
+           switch="--proof" noswitch="per_check"
+           separator="=" column="2"
+           tip="Formulas generated for each check (faster)
+ or each path (more precise)">
+             <combo-entry label="one proof per check" value="per_check"
+                          tip="Generate one formula per check"/>
+             <combo-entry label="one proof per path" value="per_path"
+                          tip="Generate one formula per path for each check"/>
+             <combo-entry
+             label="progressively split"
+             value="progressive"
+             tip="Start with one formula per check,
+ then split into paths when needed"/>
+         </combo>
+         <spin label="Prover timeout" switch="--timeout=" column="2"
+                default="0" min="0" max="3600"
+                tip="Set the prover timeout (in sec) for individual proofs
+ (0 for no timeout)" />
+         <spin label="Prover step limit" switch="--steps=" column="2"
+                default="100" min="0" max="1000000"
+                tip="Set the number of internal step for individual proofs
+ (0 for no step limit)" />
+         <field label="Alternate provers" switch="--prover=" column="2"
+                tip="Alternate provers to use, instead of CVC4
+ followed by Alt-Ergo" />
+       </switches>
+       <persistent-history>False</persistent-history>
+    </target-model>
+
+    <target model="gnatprove-examine" name="Examine All" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--mode=flow</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-examine" name="Examine All Sources"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--mode=flow</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-examine"
+            name="Examine Single File" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--mode=flow</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-examine" name="Examine Subprogram"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--mode=flow</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove All"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--level=0</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove All" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove All Sources"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--level=0</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove All Sources"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove File"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove File" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Subprogram"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Subprogram"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Line"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+          <arg>--limit-line=%f:%l</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Line" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--limit-line=%f:%l</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Line Location"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Line Location"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target-model name="gnatprove_clean">
+       <description>Target model for GNATprove for cleaning</description>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <persistent-history>False</persistent-history>
+    </target-model>
+
+    <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--clean</arg>
+       </command-line>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Check"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Check" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+  </GNATPROVE>
