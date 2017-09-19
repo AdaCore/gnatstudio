@@ -1947,6 +1947,10 @@ package body Project_Explorers is
         Explorer_Views.Get_Or_Create_View (Kernel);
       Node     : Gtk_Tree_Iter;
       Success  : Boolean := False;
+      --  Needed to store the result of Expand_Row
+      Useless  : Boolean;
+      pragma Unreferenced (Useless);
+      Filter_Path, Path : Gtk_Tree_Path;
 
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter);
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter) is
@@ -1977,6 +1981,13 @@ package body Project_Explorers is
       S := Get_Registry (Kernel).Tree.Info_Set (File);
       Node := Find_Project_Node
         (View, File_Info (S.First_Element).Project);
+
+      --  Flat View need to expand the project node to compute its files
+      Path := View.Tree.Model.Get_Path (Node);
+      Filter_Path := View.Tree.Filter.Convert_Child_Path_To_Path (Path);
+      Path_Free (Path);
+      Useless := View.Tree.Expand_Row (Filter_Path, False);
+      Path_Free (Filter_Path);
 
       if Node /= Null_Iter then
          For_Each_File_Node (View.Tree.Model, Node, Select_If_Searched'Access);
