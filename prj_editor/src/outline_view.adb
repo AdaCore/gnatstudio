@@ -24,7 +24,7 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
-with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.GEntry;
 with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -96,6 +96,7 @@ package body Outline_View is
    Group_Spec_And_Body    : Boolean_Preference;
    Flat_View              : Boolean_Preference;
    No_Param_Names         : Boolean_Preference;
+   Group_By_Category      : Boolean_Preference;
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -433,7 +434,19 @@ package body Outline_View is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
-      if Outline /= null then
+      if Pref = Preference (Group_By_Category)
+        and then Group_By_Category.Get_Pref
+        and then not Flat_View.Get_Pref
+      then  --  Force Flat_View if Group_By_Category is activated
+         Set_Pref (Flat_View, Kernel.Get_Preferences, "true");
+
+      elsif Pref = Preference (Flat_View)
+        and then not Flat_View.Get_Pref
+        and then Group_By_Category.Get_Pref
+      then  --  Disable Group_By_Category if Flat_View is deactivated
+         Set_Pref (Group_By_Category, Kernel.Get_Preferences, "false");
+
+      elsif Outline /= null then
          Set_Font_And_Colors (Outline.Tree, Fixed_Font => True, Pref => Pref);
 
          if Pref = null
@@ -448,6 +461,7 @@ package body Outline_View is
            or else Pref = Preference (Group_Spec_And_Body)
            or else Pref = Preference (Flat_View)
            or else Pref = Preference (No_Param_Names)
+           or else Pref = Preference (Group_By_Category)
          then
             Force_Refresh (Outline);
          end if;
@@ -547,6 +561,7 @@ package body Outline_View is
       Append_Menu (Menu, K, Sort_Alphabetical);
       Append_Menu (Menu, K, Flat_View);
       Append_Menu (Menu, K, Group_Spec_And_Body);
+      Append_Menu (Menu, K, Group_By_Category);
 
       Gtk_New (Sep);
       Menu.Append (Sep);
@@ -573,7 +588,8 @@ package body Outline_View is
          Sorted              => Sort_Alphabetical.Get_Pref,
          Group_Spec_And_Body => Group_Spec_And_Body.Get_Pref,
          Show_Param_Names    => not No_Param_Names.Get_Pref,
-         Flat_View           => Flat_View.Get_Pref);
+         Flat_View           => Flat_View.Get_Pref,
+         Group_By_Category   => Group_By_Category.Get_Pref);
    end Get_Filter_Record;
 
    ---------------
@@ -1084,6 +1100,9 @@ package body Outline_View is
          Doc     =>
            -("Hide the name of parameters in subprogram profiles. This"
            & " only applies to some programming languages, notably Ada"));
+      Group_By_Category := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-group-by-category", False,
+         Label => -"Group names by category");
    end Register_Module;
 
    --------------
@@ -1141,7 +1160,8 @@ package body Outline_View is
       --  This function is called directly after the settings have changed,
       --  and should take their new value into account.
 
-      Outline.Tree.Set_Show_Expanders (Enabled => not Filter.Flat_View);
+      Outline.Tree.Set_Show_Expanders
+        (Enabled => not Filter.Flat_View or Filter.Group_By_Category);
 
       Model.Set_Tree (Tree, Filter);
 

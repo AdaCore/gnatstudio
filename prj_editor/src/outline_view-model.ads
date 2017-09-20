@@ -63,6 +63,7 @@ private package Outline_View.Model is
       Group_Spec_And_Body : Boolean := False;
       Flat_View           : Boolean := False;
       Show_Param_Names    : Boolean := False;
+      Group_By_Category   : Boolean := False;
    end record;
    --  Group_Spec_And_Body indicates whether to group the spec and body for
    --  a given entity on the same line. This doesn't force a refresh of the
@@ -190,20 +191,29 @@ private
    package Sorted_Node_Vector is new
      Ada.Containers.Vectors (Natural, Sorted_Node_Access);
 
-   type Sorted_Node is record
-      Spec_Info, Body_Info : Semantic_Node_Info := No_Node_Info;
-      --  A node might be associated to up to two entities (the spec and the
-      --  body of an entity). Here we keep the persistent info about those
-      --  entities
+   type Sorted_Node_Kind is (Leaf_Node_Kind, Category_Node_Kind);
 
-      Parent               : Sorted_Node_Access;
-      Children             : Sorted_Node_Vector.Vector;
+   type Sorted_Node (Kind : Sorted_Node_Kind := Leaf_Node_Kind) is record
 
+      Model             : Outline_Model;
+      Children          : Sorted_Node_Vector.Vector;
+      Parent            : Sorted_Node_Access;
       Index_In_Siblings : Integer := -1;
       --  This is used to build a Gtk_Tree_Path from a node
 
-      Model : Outline_Model;
+      case Kind is
+         when Leaf_Node_Kind =>
+            Spec_Info, Body_Info : Semantic_Node_Info := No_Node_Info;
+            --  A node might be associated to up to two entities (the spec and
+            --  the body of an entity). Here we keep the persistent info about
+            --  those entities
+
+         when Category_Node_Kind =>
+            Category : Language_Category;
+      end case;
    end record;
+
+   subtype Leaf_Node is Sorted_Node (Leaf_Node_Kind);
 
    type Node_Id is record
       Identifier     : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
@@ -216,6 +226,8 @@ private
      (Node_Id, Sorted_Node_Access, Hash,
       Equivalent_Keys => "=");
 
+   type Sorted_Node_Array is array (Language_Category) of Sorted_Node_Access;
+
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record
       Semantic_Tree     : Sem_Tree_Holders.Holder :=
         Sem_Tree_Holders.Empty_Holder;
@@ -227,8 +239,8 @@ private
       --  This is a 'dummy' root, not in the model. Actual roots are children
       --  of that node.
 
-      Root_With         : Sorted_Node_Access;
-      --  Container for with clauses.
+      Categories        : Sorted_Node_Array;
+      --  Category nodes if enabled.
 
       Sem_To_Tree_Nodes : Sem_To_Tree_Maps.Map;
    end record;
