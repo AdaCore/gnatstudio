@@ -28,14 +28,15 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 
 with Gtk.Assistant;            use Gtk.Assistant;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.File_Chooser;         use Gtk.File_Chooser;
-with Gtk.File_Chooser_Button;  use Gtk.File_Chooser_Button;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Widget;               use Gtk.Widget;
+
+with Gtkada.File_Selector;     use Gtkada.File_Selector;
 
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -76,9 +77,10 @@ package body Project_Templates.GUI is
    -------------------
 
    type Template_Page_Record is new Dialog_View_Record with record
-      Template    : Project_Template;
-      Var_Widgets : Variable_Widgets.List;
-      Chooser     : Gtk_File_Chooser_Button;
+      Template      : Project_Template;
+      Var_Widgets   : Variable_Widgets.List;
+      Browse_Button : Gtk_Button;
+      Location_Ent  : Gtk_Entry;
    end record;
    type Template_Page is access all Template_Page_Record'Class;
 
@@ -98,6 +100,10 @@ package body Project_Templates.GUI is
      (Page : access Template_Page_Record'Class)
       return Variable_Assignments.Map;
    --  Return the assignments entered by the user in Page
+
+   procedure On_Browse_Clicked
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when the 'Browse' button is clicked
 
    -------------
    -- Gtk_New --
@@ -182,14 +188,21 @@ package body Project_Templates.GUI is
          Group_Name          => "Location",
          Allow_Multi_Columns => False);
 
-      --  Create the chooser for the target directory
-      Gtk_New (Widget.Chooser, "Select a directory", Action_Select_Folder);
-      Dummy := Set_Filename (+Widget.Chooser, +Get_Current_Dir.Full_Name.all);
+      --  Create the location entry and its associated 'Browse' button
+
+      Gtk_New (Widget.Location_Ent);
+      Widget.Location_Ent.Set_Text (+Get_Current_Dir.Full_Name.all);
+
+      Gtk_New (Widget.Browse_Button, "Browse");
+      Widget.Browse_Button.On_Clicked
+        (On_Browse_Clicked'Access,
+         Slot => Widget);
 
       Group_Widget.Create_Child
-        (Widget    => Widget.Chooser,
+        (Widget    => Widget.Location_Ent,
          Label     => "Deploy project in",
          Doc       => "The location of the project to create.",
+         Button    => Widget.Browse_Button,
          Expand    => True,
          Fill      => True);
 
@@ -255,6 +268,24 @@ package body Project_Templates.GUI is
 
       return R;
    end Get_Assignments;
+
+   -----------------------
+   -- On_Browse_Clicked --
+   -----------------------
+
+   procedure On_Browse_Clicked
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      Page_Widget : constant Template_Page := Template_Page (Self);
+      Dir         : constant Virtual_File := Select_Directory
+        (Base_Directory    =>
+           Create_From_UTF8 (Page_Widget.Location_Ent.Get_Text),
+         Parent            => Gtk_Window (Get_Toplevel (Page_Widget)));
+   begin
+      if Dir /= GNATCOLL.VFS.No_File then
+         Page_Widget.Location_Ent.Set_Text (Dir.Display_Full_Name);
+      end if;
+   end On_Browse_Clicked;
 
    ----------------------
    -- Install_Template --
@@ -592,7 +623,7 @@ package body Project_Templates.GUI is
       begin
          --  We are pressing "Apply" here: install the template
          Page := Template_Page (Assistant.Get_Nth_Page (Next_Page_Number));
-         Dir  := Create (+Get_Filename (+Page.Chooser));
+         Dir  := Create (+Page.Location_Ent.Get_Text);
          Instantiate_Template
            (Template    => Page.Template,
             Target_Dir  => Dir,
