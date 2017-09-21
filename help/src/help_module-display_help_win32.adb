@@ -24,26 +24,9 @@ procedure Display_Help
 is
    File_Protocol : constant String := "file://";
 
---     HTML_Browser : constant String :=
---       GPS.Kernel.Preferences.Html_Browser.Get_Pref;
---
---     Browsers : constant Browser_List :=
---       (new String'("start"),
---        new String'("firefox %u -new-tab"),
---        new String'("mozilla"),
---        new String'("galeon"),
---        new String'("netscape"),
---        new String'("opera -newpage %u"),
---        new String'("nautilus"),
---        new String'("konqueror"),
---        new String'("open"));
-
    function Shell_Open (File : String) return Boolean;
    --  Open file with the associated command registered under Windows.
    --  Return True in case of success.
-
-   procedure Display_Help_Internal (URL : String);
-   --  Display help file, and insert message in kernel console.
 
    ----------------
    -- Shell_Open --
@@ -75,31 +58,20 @@ is
       end if;
    end Shell_Open;
 
-   ---------------------------
-   -- Display_Help_Internal --
-   ---------------------------
-
-   procedure Display_Help_Internal (URL : String) is
-   begin
-      if Shell_Open (URL) then
-         Insert
-           (Kernel, -"Using default browser to view " & URL, Mode => Info);
-      else
-         Insert
-           (Kernel, -"Could not display help file " & URL, Mode => Error);
-      end if;
-   end Display_Help_Internal;
+   Stripped : constant String :=
+     (if URL'Length > File_Protocol'Length
+      and then URL
+        (URL'First .. URL'First + File_Protocol'Length - 1) = File_Protocol
+      then URL (URL'First + File_Protocol'Length .. URL'Last)
+      else URL);
+   --  Strip file:// part, since it causes troubles on some configurations
 
 begin
-   if URL'Length > File_Protocol'Length
-     and then URL (URL'First .. URL'First + File_Protocol'Length - 1)
-       = File_Protocol
-   then
-      --  Strip file:// part, since it causes troubles on some configurations
-
-      Display_Help_Internal
-        (URL (URL'First + File_Protocol'Length .. URL'Last));
+   if Shell_Open (Stripped) then
+      Insert
+        (Kernel, -"Using default browser to view " & URL, Mode => Info);
    else
-      Display_Help_Internal (URL);
+      Insert
+        (Kernel, -"Could not display help file " & URL, Mode => Error);
    end if;
 end Display_Help;

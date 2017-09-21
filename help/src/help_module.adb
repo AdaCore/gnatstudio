@@ -76,9 +76,6 @@ package body Help_Module is
    Getdoc_Parameters      : constant Cst_Argument_List :=
                               (1 => Name_Cst'Access);
 
-   type Cst_String_Access is access constant String;
-   type Browser_List is array (Natural range <>) of Cst_String_Access;
-
    type Help_File_Record is record
       URL        : GNAT.Strings.String_Access;
       Shell_Cmd  : GNAT.Strings.String_Access;

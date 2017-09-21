@@ -26,6 +26,9 @@ procedure Display_Help
    URL       : String)
 is
 
+   type Cst_String_Access is access constant String;
+   type Browser_List is array (Natural range <>) of Cst_String_Access;
+
    HTML_Browser : constant String :=
      GPS.Kernel.Preferences.Html_Browser.Get_Pref;
 
