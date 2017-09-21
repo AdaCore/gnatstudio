@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers;
 with Ada.Strings.Maps.Constants;            use Ada.Strings.Maps.Constants;
 
 with Gdk.RGBA;
@@ -141,6 +142,8 @@ package body Memory_Usage_Views is
      (Self           : access Memory_Usage_View_Record'Class;
       Memory_Regions : Memory_Region_Description_Maps.Map)
    is
+      use Ada.Containers;
+
       Dummy        : constant Expansions.Detached_Model :=
                        Expansions.Detach_Model_From_View
                          (Self.Memory_Tree, Save_Expansion => True);
@@ -296,9 +299,14 @@ package body Memory_Usage_Views is
          end;
       end loop;
 
-      Self.Scrolled.Set_No_Show_All (False);
-      Self.Scrolled.Show_All;
-      Self.No_Data_Label.Hide;
+      if Memory_Regions.Length > 0 then
+         Self.Scrolled.Set_No_Show_All (False);
+         Self.Scrolled.Show_All;
+         Self.No_Data_Label.Hide;
+      else
+         Self.Scrolled.Hide;
+         Self.No_Data_Label.Show_All;
+      end if;
    end Refresh;
 
    ----------------
@@ -410,6 +418,8 @@ package body Memory_Usage_Views is
       --  Create the label used to notify the user that no data is avalaible
       Gtk_New (Self.No_Data_Label, "No memory usage data avalaible");
       Self.No_Data_Label.Set_Sensitive (False);
+      Self.No_Data_Label.Set_No_Show_All (True);
+      Self.No_Data_Label.Show_All;
       Main_View.Append (Self.No_Data_Label, Expand => True, Fill => True);
 
       --  No widget to focus
