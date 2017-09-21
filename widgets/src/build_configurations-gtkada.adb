@@ -118,8 +118,9 @@ package body Build_Configurations.Gtkada is
    -----------------------
 
    procedure Gtk_New
-     (Target_UI : out Target_UI_Access;
-      Registry  : Build_Config_Registry_Access);
+     (Target_UI  : out Target_UI_Access;
+      Registry   : Build_Config_Registry_Access;
+      Fixed_Font : Pango_Font_Description);
    --  Create a new target_UI
 
    procedure On_Icon_Selected
@@ -131,10 +132,11 @@ package body Build_Configurations.Gtkada is
    --  Convenient shortcut to the Gettext function
 
    function Switches_For_Target
-     (UI       : access Build_UI_Record'Class;
-      Target   : Target_Access;
-      Single   : Boolean;
-      History  : Histories.History) return Target_UI_Access;
+     (UI         : access Build_UI_Record'Class;
+      Target     : Target_Access;
+      Single     : Boolean;
+      History    : Histories.History;
+      Fixed_Font : Pango_Font_Description) return Target_UI_Access;
    --  Return the widget controlling the switches for Target
    --  If Single is True, do not display the options, the models combo, etc.
 
@@ -271,11 +273,13 @@ package body Build_Configurations.Gtkada is
    -------------
 
    procedure Gtk_New
-     (Target_UI : out Target_UI_Access;
-      Registry  : Build_Config_Registry_Access) is
+     (Target_UI  : out Target_UI_Access;
+      Registry   : Build_Config_Registry_Access;
+      Fixed_Font : Pango_Font_Description) is
    begin
       Target_UI := new Target_UI_Record;
       Target_UI.Registry := Registry;
+      Target_UI.Fixed_Font := Fixed_Font;
       Gtk.Scrolled_Window.Initialize (Target_UI);
       Target_UI.Set_Policy (Policy_Never, Policy_Never);
    end Gtk_New;
@@ -485,9 +489,16 @@ package body Build_Configurations.Gtkada is
    ------------------
 
    procedure Set_Switches (UI : Target_UI_Access) is
+      Help_Msg      : Unbounded_String := Null_Unbounded_String;
    begin
-      --  Create the switches editor
+      --  Get the appropriate help if available
+      if UI.Target.Properties.Help /= Null_Unbounded_String then
+         Help_Msg := UI.Target.Properties.Help;
+      elsif UI.Target.Model.Help /= Null_Unbounded_String then
+         Help_Msg := UI.Target.Model.Help;
+      end if;
 
+      --  Create the switches editor
       Gtk_New
         (UI.Editor,
          UI.Target.Model.Switches,
@@ -495,7 +506,9 @@ package body Build_Configurations.Gtkada is
          Read_Only          => False,
          History            => UI.History,
          Key                => Target_To_Key (UI.Target),
-         Cmd_Line_Tooltip   => Command_Line_Editor_Tooltip_Text);
+         Cmd_Line_Tooltip   => Command_Line_Editor_Tooltip_Text,
+         Help_Msg           => To_String (Help_Msg),
+         Fixed_Font         => UI.Fixed_Font);
 
       --  Create the "current command" entry
 
@@ -541,10 +554,11 @@ package body Build_Configurations.Gtkada is
    -------------------------
 
    function Switches_For_Target
-     (UI       : access Build_UI_Record'Class;
-      Target   : Target_Access;
-      Single   : Boolean;
-      History  : Histories.History) return Target_UI_Access
+     (UI         : access Build_UI_Record'Class;
+      Target     : Target_Access;
+      Single     : Boolean;
+      History    : Histories.History;
+      Fixed_Font : Pango_Font_Description) return Target_UI_Access
    is
       Table         : Gtk_Table;
       Hbox          : Gtk_Hbox;
@@ -558,9 +572,8 @@ package body Build_Configurations.Gtkada is
       Button        : Gtk_Button;
       Buttons_Vbox  : Gtk_Vbox;
       Scrolled      : Target_UI_Access;
-
    begin
-      Gtk_New (Scrolled, UI.Registry);
+      Gtk_New (Scrolled, UI.Registry, Fixed_Font);
 
       --  Global box
 
@@ -948,7 +961,8 @@ package body Build_Configurations.Gtkada is
 
    procedure Gtk_New
      (Config_UI : out Configuration_UI_Access;
-      Registry  : Build_Config_Registry_Access)
+      Registry  : Build_Config_Registry_Access;
+      Fixed_Font : Pango_Font_Description)
    is
       Vbox          : Gtk_Vbox;
 
@@ -1093,6 +1107,7 @@ package body Build_Configurations.Gtkada is
          Expand => True,
          Fill   => True);
 
+      Config_UI.Build_UI.Fixed_Font := Fixed_Font;
       Refresh (Config_UI.Build_UI, "");
 
       --  Select the first target of the first category, initially
@@ -1438,7 +1453,8 @@ package body Build_Configurations.Gtkada is
       Expand_Cmd_Line : Cmd_Line_Expander;
       Set_Default_Size_From_History : not null access procedure
          (Win : not null access Gtk_Window_Record'Class);
-      Result          : out GNAT.OS_Lib.Argument_List_Access)
+      Result          : out GNAT.OS_Lib.Argument_List_Access;
+      Fixed_Font      : Pango_Font_Description)
    is
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
@@ -1500,10 +1516,11 @@ package body Build_Configurations.Gtkada is
       --  Create the target UI itself
 
       UI.Target_UI := Switches_For_Target
-        (UI      => UI,
-         History => UI.History,
-         Target  => Get_Target_From_Name (Registry, Target),
-         Single  => True);
+        (UI         => UI,
+         History    => UI.History,
+         Target     => Get_Target_From_Name (Registry, Target),
+         Single     => True,
+         Fixed_Font => Fixed_Font);
 
       Pack_Start (UI, UI.Target_UI, True, True, 3);
 
@@ -1745,7 +1762,8 @@ package body Build_Configurations.Gtkada is
          --  Add the page in the notebook
          Append_Page
            (UI.Notebook,
-            Switches_For_Target (UI, Element (C), False, UI.History));
+            Switches_For_Target
+              (UI, Element (C), False, UI.History, UI.Fixed_Font));
 
          Count := Count + 1;
          Next (C);

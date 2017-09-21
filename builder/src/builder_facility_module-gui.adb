@@ -20,6 +20,8 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Default_Preferences;         use Default_Preferences;
 with Default_Preferences.GUI;     use Default_Preferences.GUI;
@@ -68,7 +70,9 @@ package body Builder_Facility_Module.GUI is
    begin
       Dialog_Utils.Initialize (Page_View);
 
-      Gtk_New (Page_View.Config_UI, Builder_Facility_Module.Registry);
+      Gtk_New (Page_View.Config_UI,
+               Builder_Facility_Module.Registry,
+               View_Fixed_Font.Get_Pref);
       Page_View.Append (Page_View.Config_UI);
 
       return Gtk_Widget (Page_View);

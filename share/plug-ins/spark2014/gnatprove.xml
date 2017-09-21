@@ -98,6 +98,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target-model name="gnatprove-examine">
        <description>Target model for GNATprove Examine commands</description>
        <iconname>gps-build-all-symbolic</iconname>
+       <command-help>{help}</command-help>
        <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
          <check
@@ -138,6 +139,7 @@ tip="Select analysis mode" >
        <description>Target model for GNATprove Basic Prove commands
        </description>
        <iconname>gps-build-all-symbolic</iconname>
+       <command-help>{help}</command-help>
        <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
          <check
@@ -193,6 +195,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
+       <command-help>{help}</command-help>
        <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"

@@ -305,6 +305,7 @@ package body Build_Configurations is
          Child := N.Child;
 
          while Child /= null loop
+
             if Child.Tag.all = "switches" then
                Parse_Switches_Node (Child);
 
@@ -321,6 +322,11 @@ package body Build_Configurations is
             elsif Child.Tag.all = "iconname" then
                if Child.Value /= null then
                   Model.Icon := To_Unbounded_String (Child.Value.all);
+               end if;
+
+            elsif Child.Tag.all = "command-help" then
+               if Child.Value /= null then
+                  Model.Help := To_Unbounded_String (Child.Value.all);
                end if;
 
             elsif Child.Tag.all = "is-run" then
@@ -1302,6 +1308,9 @@ package body Build_Configurations is
          elsif Child.Tag.all = "always-clear-locations" then
             Target.Properties.Always_Clear_Locations :=
               Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "command-help" then
+            Target.Properties.Help := To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "launch-mode" then
             Target.Properties.Launch_Mode := Launch_Mode_Type'Value

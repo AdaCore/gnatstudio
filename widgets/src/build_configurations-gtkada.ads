@@ -35,6 +35,7 @@ with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
 with Histories;                use Histories;
 with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
+with Pango.Font;               use Pango.Font;
 
 package Build_Configurations.Gtkada is
 
@@ -47,8 +48,9 @@ package Build_Configurations.Gtkada is
    --  user to configure/add/remove Build Targets.
 
    procedure Gtk_New
-     (Config_UI : out Configuration_UI_Access;
-      Registry  : Build_Config_Registry_Access);
+     (Config_UI  : out Configuration_UI_Access;
+      Registry   : Build_Config_Registry_Access;
+      Fixed_Font : Pango_Font_Description);
    --  Create a new Build Targets configuration UI
 
    procedure Apply_Changes
@@ -75,7 +77,8 @@ package Build_Configurations.Gtkada is
       Expand_Cmd_Line : Cmd_Line_Expander;
       Set_Default_Size_From_History : not null access procedure
          (Win : not null access Gtk_Window_Record'Class);
-      Result          : out GNAT.OS_Lib.Argument_List_Access);
+      Result          : out GNAT.OS_Lib.Argument_List_Access;
+      Fixed_Font      : Pango_Font_Description);
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
    --  expanded.
@@ -102,6 +105,9 @@ private
 
       History        : Histories.History;
 
+      Fixed_Font     : Pango_Font_Description := null;
+      --  Font used to print the target help, must be monospace
+
       Icon_Entry       : Gtk_Entry;
       Icon_Button      : Gtkada_Combo_Tool_Button;
       Icon_Check       : Gtk_Check_Button;
@@ -119,21 +125,24 @@ private
    type Target_UI_Access is access all Target_UI_Record'Class;
 
    type Build_UI_Record is new Gtk_Hbox_Record with record
-      Registry  : Build_Config_Registry_Access;
-      Target_UI : Target_UI_Access;
+      Registry        : Build_Config_Registry_Access;
+      Target_UI       : Target_UI_Access;
       --  Single target UI when using the Single mode
 
       Expand_Cmd_Line : Cmd_Line_Expander;
       --  Command line expander callback
 
-      Notebook  : Gtk_Notebook;
+      Notebook        : Gtk_Notebook;
       --  The main notebook
 
-      View      : Tree_View;
+      View            : Tree_View;
       --  The tree
 
-      History   : Histories.History;
+      History         : Histories.History;
       --  Reference to the History
+
+      Fixed_Font      : Pango_Font_Description := null;
+      --  Font used to print the target help, must be monospace
    end record;
 
    type Configuration_UI_Record is new Gtk_Vbox_Record with record

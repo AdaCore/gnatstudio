@@ -83,7 +83,7 @@ package Build_Configurations is
    --  The XML format is the following:
    --
    --  <target-model name="NAME" category="CATEGORY">
-   --          <icon>ICON</icon>
+   --          <iconname>ICONNAME</iconname>
    --          <description>DESCRIPTION</description>
    --          <server>SERVER</server>
    --          <uses-shell>USES_SHELL</uses_shell>
@@ -108,7 +108,7 @@ package Build_Configurations is
    --                     to be launched through $SHELL -c "command line"
    --     COMMAND_N are the various commands supported by the target_model
    --     DEFAULT_COMMAND_LINE is the initial command line
-   --     ICON         (optional) represents a icon name to serve as default
+   --     ICONNAME     (optional) represents a icon name to serve as default
    --                     for targets of this model
    --     COMMAND      (optional) is a string containing the default executable
    --     ARG1..ARGN   (optional) default arguments
@@ -303,6 +303,9 @@ package Build_Configurations is
 
       Parent_Menu_Name : Unbounded_String;
       --  The name of the parent menu.
+
+      Help : Unbounded_String := Null_Unbounded_String;
+      --  The target help
 
       Menu_Name : Unbounded_String;
       --  The name of the menu to display target
@@ -652,6 +655,9 @@ private
 
       Is_Run               : Boolean := False;
       --  Whether the model describes "run" actions.
+
+      Help                 : Unbounded_String := Null_Unbounded_String;
+      --  The target model help
 
       Icon                 : Unbounded_String;
       --  The string contains a stock identifier

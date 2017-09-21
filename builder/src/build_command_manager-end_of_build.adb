@@ -19,6 +19,7 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Location_View;
 with GPS.Main_Window;                  use GPS.Main_Window;
 with Build_Configurations;             use Build_Configurations;
@@ -33,6 +34,7 @@ with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;           use GNATCOLL.Scripts.Utils;
 with Gtk.Window;                       use Gtk.Window;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with Pango.Font;                       use Pango.Font;
 
 package body Build_Command_Manager.End_Of_Build is
 
@@ -50,13 +52,13 @@ package body Build_Command_Manager.End_Of_Build is
      (Builder : Builder_Context;
       Build   : in out Build_Information)
    is
-      Mode   : constant String := To_String (Build.Mode);
-      Server : constant Server_Type := Get_Server
+      Mode       : constant String := To_String (Build.Mode);
+      Server     : constant Server_Type := Get_Server
         (Builder.Registry, Mode, Build.Target);
-      Subdir : constant Filesystem_String :=
+      Subdir     : constant Filesystem_String :=
         Get_Mode_Subdir (Builder.Registry, Mode);
 
-      Directory : constant Virtual_File := Build.Full.Dir;
+      Directory  : constant Virtual_File := Build.Full.Dir;
 
       function Expand_Cmd_Line (CL : String) return String;
       --  Callback for Single_Target_Dialog
@@ -149,6 +151,7 @@ package body Build_Command_Manager.End_Of_Build is
 
    begin
       if Should_Display_Dialog then
+
          --  Use the single target dialog to get the unexpanded command line
          Single_Target_Dialog
            (Registry        => Builder.Registry,
@@ -158,7 +161,8 @@ package body Build_Command_Manager.End_Of_Build is
             Target          => Get_Name (Build.Target),
             History         => Get_History (Kernel_Handle (Builder.Kernel)),
             Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
-            Result          => Command_Line);
+            Result          => Command_Line,
+            Fixed_Font      => View_Fixed_Font.Get_Pref);
 
          if Command_Line = null then
             --  The dialog was cancelled: return

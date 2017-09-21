@@ -45,6 +45,8 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Intl;            use Gtkada.Intl;
+with Gtk.Text_View;          use Gtk.Text_View;
+with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
 
 with GUI_Utils;              use GUI_Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
@@ -800,7 +802,9 @@ package body Switches_Chooser.Gtkada is
       Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key;
-      Cmd_Line_Tooltip   : String) is
+      Cmd_Line_Tooltip   : String;
+      Help_Msg           : String := "";
+      Fixed_Font         : Pango_Font_Description := null) is
    begin
       Editor := new Switches_Editor_Record;
       Initialize
@@ -810,7 +814,9 @@ package body Switches_Chooser.Gtkada is
          Read_Only          => Read_Only,
          History            => History,
          Key                => Key,
-         Cmd_Line_Tooltip   => Cmd_Line_Tooltip);
+         Cmd_Line_Tooltip   => Cmd_Line_Tooltip,
+         Help_Msg           => Help_Msg,
+         Fixed_Font         => Fixed_Font);
    end Gtk_New;
 
    ----------------
@@ -824,12 +830,16 @@ package body Switches_Chooser.Gtkada is
       Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key;
-      Cmd_Line_Tooltip   : String)
+      Cmd_Line_Tooltip   : String;
+      Help_Msg           : String := "";
+      Fixed_Font         : Pango_Font_Description := null)
    is
       Combo                   : Gtk_Combo_Box_Text;
       Widget_For_Command_Line : Gtk_Widget;
       Scroll                  : Gtk_Scrolled_Window;
       Table                   : Gtk_Table;
+      Help_Scroll             : Gtk_Scrolled_Window;
+      Help_View               : Gtk_Text_View;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
       Editor.Read_Only      := Read_Only;
@@ -858,6 +868,18 @@ package body Switches_Chooser.Gtkada is
             Table     => Table,
             Lines     => Config.Lines,
             Columns   => Config.Columns);
+      end if;
+
+      --  Show the help if available
+      if Help_Msg /= "" then
+         Gtk_New (Help_Scroll);
+         Gtk_New (Help_View);
+         Help_View.Get_Buffer.Set_Text (Help_Msg);
+         if Fixed_Font /= null then
+            Modify_Font (Help_View, Fixed_Font);
+         end if;
+         Help_Scroll.Add (Help_View);
+         Pack_Start (Editor, Help_Scroll, True, True, 3);
       end if;
 
       if History = null then

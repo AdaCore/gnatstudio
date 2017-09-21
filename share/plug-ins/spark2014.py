@@ -23,7 +23,6 @@ import re
 # because GPS.contextual_context does not work when clicking on the right of a
 # line of code (see OB05-033).
 
-
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,6 +36,7 @@ with open(gnatprove_menus_file, "r") as input_file:
 
 with open(gnatprove_file, "r") as input_file2:
     xml_gnatprove = input_file2.read()
+
 
 # constants that are required by the plugin
 
@@ -894,7 +894,9 @@ class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
     def __init__(self):
-        GPS.parse_xml(xml_gnatprove)
+        process = GPS.Process("gnatprove -h")
+        help_msg = process.get_result()
+        GPS.parse_xml(xml_gnatprove.format(help=help_msg))
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
 
     def show_report(self):

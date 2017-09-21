@@ -19,7 +19,8 @@ with Gtk.GEntry;
 with Gtk.Box;
 with Gtk.Widget;
 
-with Histories; use Histories;
+with Histories;  use Histories;
+with Pango.Font; use Pango.Font;
 
 package Switches_Chooser.Gtkada is
 
@@ -38,7 +39,9 @@ package Switches_Chooser.Gtkada is
       Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key;
-      Cmd_Line_Tooltip   : String);
+      Cmd_Line_Tooltip   : String;
+      Help_Msg           : String := "";
+      Fixed_Font         : Pango_Font_Description := null);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
@@ -46,7 +49,9 @@ package Switches_Chooser.Gtkada is
       Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key;
-      Cmd_Line_Tooltip   : String);
+      Cmd_Line_Tooltip   : String;
+      Help_Msg           : String := "";
+      Fixed_Font         : Pango_Font_Description := null);
    --  Create a new switches editor based on Config.
    --  Use_Native_Dialogs applies to the file selector and directory selector
    --  dialogs
