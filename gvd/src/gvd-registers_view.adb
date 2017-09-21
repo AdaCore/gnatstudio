@@ -602,6 +602,7 @@ package body GVD.Registers_View is
 
          if Selected.Length /= Result.Length then
             View.Old_Values.Clear;
+            return;
          end if;
 
          if not First_Pass then

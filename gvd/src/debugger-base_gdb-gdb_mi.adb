@@ -1792,13 +1792,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
             for Item of Names loop
                C := Debugger.Registers.Find (Item);
                if Has_Element (C) then
-                  Append (Result, To_Index (C)'Img);
+                  Append (Result, Natural'Image (To_Index (C) - 1));
                end if;
             end loop;
 
             return To_String (Result);
          end if;
       end Get_Indices;
+
+      Values : array (1 .. Debugger.Registers.Last_Index) of
+        Standard.Ada.Strings.Unbounded.Unbounded_String;
 
       Result  : GVD.Types.Strings_Vectors.Vector;
 
@@ -1855,13 +1858,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   end if;
                end loop;
 
-               if Debugger.Registers.Last_Index >= Num
-                 and then Debugger.Registers.Element (Num) /= ""
-               then
+               if Debugger.Registers.Last_Index >= Num then
                   if Value /= null then
-                     Result.Append (Value.all);
-                  else
-                     Result.Append ("");
+                     Values (Num) := To_Unbounded_String (Value.all);
                   end if;
                end if;
                Value := null;
@@ -1870,6 +1869,33 @@ package body Debugger.Base_Gdb.Gdb_MI is
                Next (C, 1);
             end if;
          end loop;
+
+         declare
+            use GVD.Types.Strings_Vectors;
+            C : GVD.Types.Strings_Vectors.Cursor;
+         begin
+            if Names.Is_Empty then
+               C := Debugger.Registers.First;
+               while Has_Element (C) loop
+                  if Element (C) /= "" then
+                     Result.Append (To_String (Values (To_Index (C))));
+                  end if;
+
+                  Next (C);
+               end loop;
+
+            else
+               for Name of Names loop
+                  C := Debugger.Registers.Find (Name);
+                  if Has_Element (C) then
+                     Result.Append (To_String (Values (To_Index (C))));
+                  else
+                     Result.Append ("");
+                  end if;
+               end loop;
+            end if;
+         end;
+
       end;
       return Result;
    end Get_Registers_Values;
