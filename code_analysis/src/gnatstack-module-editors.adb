@@ -23,7 +23,6 @@ with Default_Preferences;          use Default_Preferences;
 with GPS.Editors.Line_Information;
 use GPS.Editors, GPS.Editors.Line_Information;
 with GPS.Default_Styles;           use GPS.Default_Styles;
-with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 
@@ -221,23 +220,6 @@ package body GNATStack.Module.Editors is
    procedure Register_Module
      (Module : not null access GNATStack_Module_Id_Record'Class) is
    begin
-      Module.Annotations_Foreground :=
-        Default_Preferences.Create
-          (Module.Kernel.Get_Preferences,
-           "GNATStack-Annotations-Foreground",
-           -"Color for annotations foregorund",
-           -"Plugins/GNATStack",
-           -"Color to be used for the foregorund of annotations",
-           "#000000");
-      Module.Annotations_Background :=
-        Default_Preferences.Create
-          (Module.Kernel.Get_Preferences,
-           "GNATStack-Annotations-Background",
-           -"Color for annotations backgorund",
-           -"Plugins/GNATStack",
-           -"Color to be used for the backgorund of annotations",
-           "#E9E9E9");
-
       Module.Annotations_Style := Editor_Code_Annotations_Style;
 
       File_Closed_Hook.Add (new On_File_Closed);

@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-private with Default_Preferences;
 private with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Style_Manager;
@@ -38,8 +37,6 @@ private
       Data                   :
         aliased GNATStack.Data_Model.Analysis_Information;
       Loaded                 : Boolean := False;
-      Annotations_Foreground : Default_Preferences.Color_Preference;
-      Annotations_Background : Default_Preferences.Color_Preference;
       Annotations_Style      : GPS.Kernel.Style_Manager.Style_Access;
 
       File                   : GNATCOLL.VFS.Virtual_File;
