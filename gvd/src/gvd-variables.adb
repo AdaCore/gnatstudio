@@ -394,7 +394,12 @@ package body GVD.Variables is
 
       for Item of Self.Items loop
          if not Item.Nested
-           or else Item.Info.Format /= Default_Format
+         --  or else Item.Info.Format /= Default_Format
+         --  Restore old functionality before
+         --  Change-Id: Ice1f6b4459aae94bf381b626e5e8d462cc3652a5
+         --  Keep commented until we have situation when several items have
+         --  access to one 'type' item and one of them can deallocate
+         --  'type' item, this causes the attempt of double deallocation
          then
             declare
                Value : constant JSON_Value := Create_Object;
