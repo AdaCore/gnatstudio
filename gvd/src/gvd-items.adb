@@ -76,7 +76,7 @@ package body GVD.Items is
          if Self.Entity.all in Debugger_Output_Type'Class then
             Set_Value
               (Debugger_Output_Type (Self.Entity.all),
-               Process.Debugger.Send_And_Get_Output
+               Process.Debugger.Send_And_Get_Clean_Output
                  (Refresh_Command (Debugger_Output_Type (Self.Entity.all)),
                   Mode => GVD.Types.Internal));
 
