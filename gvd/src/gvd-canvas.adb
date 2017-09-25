@@ -65,6 +65,7 @@ with GVD.Memory_View;
 with GVD.Menu;                 use GVD.Menu;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
+with Process_Proxies;
 with GVD.Trace;
 with GVD.Types;                use GVD.Types;
 with GVD_Module;               use GVD_Module;
@@ -482,8 +483,9 @@ package body GVD.Canvas is
       Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Block : Process_Proxies.Parse_File_Switch
+        (Process.Debugger.Get_Process) with Unreferenced;
    begin
-      --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Locals (Process.Debugger) & '`',
@@ -500,8 +502,9 @@ package body GVD.Canvas is
       Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Block : Process_Proxies.Parse_File_Switch
+        (Process.Debugger.Get_Process) with Unreferenced;
    begin
-      --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Args (Process.Debugger) & '`',

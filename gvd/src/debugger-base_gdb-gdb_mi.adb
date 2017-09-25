@@ -234,9 +234,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
    function Parse_Frame_Info (Info : String) return Frame_Info;
 
    procedure Parse_Disassembled
-     (Debugger : access Gdb_MI_Debugger;
-      S        : String;
-      Code     : out Disassemble_Elements);
+     (S    : String;
+      Code : out Disassemble_Elements);
    --  Parse result of disassemble request
 
    ---------------------
@@ -445,15 +444,15 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end loop;
 
-      Debugger.Process.Set_Parse_File_Name (False);
       declare
+         Block : Process_Proxies.Parse_File_Switch
+           (Debugger.Process) with Unreferenced;
          S    : constant String := Debugger.Send_And_Get_Clean_Output
            ("ptype " & Entity, Mode => Internal);
          Pos  : Integer := Index (S, "type = ");
          Last : Integer := S'Last;
 
       begin
-         Debugger.Process.Set_Parse_File_Name (True);
          if Pos = 0 then
             return "";
          end if;
@@ -533,6 +532,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding function Info_Registers
      (Debugger : access Gdb_MI_Debugger) return String
    is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
       Result : Unbounded_String;
    begin
       Get_Register_Names (Debugger);
@@ -614,6 +616,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Format   : Value_Format := Default_Format) return String
    is
       use Nodes_Vectors;
+
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
 
       Lang    : constant Language_Access := Debugger.Get_Language;
       Context : constant Language_Debugger_Context :=
@@ -1575,9 +1580,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  friendly as possible, and also check whether attach was successful
 
       loop
-         Debugger.Get_Process.Set_Parse_File_Name (False);
-
          declare
+            Block : Process_Proxies.Parse_File_Switch
+              (Debugger.Process) with Unreferenced;
             Str  : constant String := Debugger.Send_And_Get_Clean_Output
               ("up", Mode => Internal);
             File : Unbounded_String;
@@ -1585,8 +1590,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Addr : Address_Type;
             pragma Unreferenced (Line, Addr);
          begin
-            Debugger.Get_Process.Set_Parse_File_Name (True);
-
             --  If attach failed, "up" will return an error message
 
             if Str = "No stack." then
@@ -1691,13 +1694,15 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ------------------------
 
    procedure Get_Register_Names
-     (Debugger : access Gdb_MI_Debugger) is
+     (Debugger : access Gdb_MI_Debugger)
+   is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
    begin
       if not Debugger.Register_Names.Is_Empty then
          return;
       end if;
-
-      Debugger.Get_Process.Set_Parse_File_Name (False);
 
       --  Try to get values first because request -data-list-register-names
       --  always returns names (incorrect) even gdb has "No registers"
@@ -1706,16 +1711,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
            ("-data-list-register-values x 0", Mode => Internal);
          Matched : Match_Array (0 .. 2);
       begin
-         Debugger.Get_Process.Set_Parse_File_Name (True);
-
          Match (Error_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
             return;
          end if;
       end;
-
-      Debugger.Get_Process.Set_Parse_File_Name (False);
 
       declare
          use Token_Lists;
@@ -1727,8 +1728,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          C       : Token_Lists.Cursor;
 
       begin
-         Debugger.Get_Process.Set_Parse_File_Name (True);
-
          Tokens.List := Build_Tokens (S);
          C := Find_Identifier (First (Tokens.List), "register-names");
 
@@ -1812,13 +1811,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched : Match_Array (0 .. 2);
 
    begin
-      Debugger.Get_Process.Set_Parse_File_Name (False);
       declare
+         Block : Process_Proxies.Parse_File_Switch
+           (Debugger.Process) with Unreferenced;
          S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-data-list-register-values " & Keys (Format) & Get_Indices,
             Mode => Internal);
       begin
-         Debugger.Get_Process.Set_Parse_File_Name (True);
          Match (Error_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
@@ -3180,12 +3179,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Count    : Natural := 0;
 
    begin
-      Debugger.Get_Process.Set_Parse_File_Name (False);
       declare
+         Block : Process_Proxies.Parse_File_Switch
+           (Debugger.Process) with Unreferenced;
          S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-file-list-exec-source-files", Mode => Internal);
       begin
-         Debugger.Get_Process.Set_Parse_File_Name (True);
          Tokens.List := Build_Tokens (S);
       end;
 
@@ -3634,10 +3633,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
          return File_Name;
       end if;
 
-      Debugger.Get_Process.Set_Parse_File_Name (False);
       Debugger.Switch_Language ("c");
 
       declare
+         Block : Process_Proxies.Parse_File_Switch
+           (Debugger.Process) with Unreferenced;
          Str  : constant String := Debugger.Send_And_Get_Clean_Output
            ("info line " & File_Name & ":1", Mode => Internal);
          File : Unbounded_String;
@@ -3646,7 +3646,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       begin
          Debugger.Restore_Language;
-         Debugger.Get_Process.Set_Parse_File_Name (True);
          Debugger.Found_File_Name (Str, File, Line, Addr);
 
          if Length (File) = 0 then
@@ -3662,9 +3661,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ------------------------
 
    procedure Parse_Disassembled
-     (Debugger : access Gdb_MI_Debugger;
-      S        : String;
-      Code     : out Disassemble_Elements)
+     (S    : String;
+      Code : out Disassemble_Elements)
    is
       use Token_Lists;
 
@@ -3675,7 +3673,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched      : Match_Array (0 .. 2);
 
    begin
-      Debugger.Process.Set_Parse_File_Name (True);
       Match (Error_Pattern, S, Matched);
 
       if Matched (0) /= No_Match then
@@ -3761,21 +3758,21 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       S : constant String := Address_To_String (Start_Address);
       E : constant String := Address_To_String (End_Address);
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
 
    begin
       Range_Start := Invalid_Address;
       Range_End   := Invalid_Address;
 
-      Debugger.Process.Set_Parse_File_Name (False);
-
       if S = "" or else E = "" then
          Parse_Disassembled
-           (Debugger, Debugger.Send_And_Get_Clean_Output
+           (Debugger.Send_And_Get_Clean_Output
               ("-data-disassemble -s $pc -e $pc+1 -- 3", Mode => Internal),
             Code);
       else
          Parse_Disassembled
-           (Debugger, Debugger.Send_And_Get_Clean_Output
+           (Debugger.Send_And_Get_Clean_Output
               ("-data-disassemble -s " & S & " -e " & E & " -- 2",
                Mode => Internal),
             Code);
@@ -3796,12 +3793,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       File     : String;
       From     : Natural;
       To       : Natural;
-      Code     : out Disassemble_Elements) is
-   begin
-      Debugger.Process.Set_Parse_File_Name (False);
+      Code     : out Disassemble_Elements)
+   is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
 
+   begin
       Parse_Disassembled
-        (Debugger, Debugger.Send_And_Get_Clean_Output
+        (Debugger.Send_And_Get_Clean_Output
            ("-data-disassemble -f " & File & " -l" &
               From'Img & " -n" &
             (if To > 0
@@ -3819,9 +3818,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger    : access Gdb_MI_Debugger;
       Line        : Natural;
       Range_Start : out Address_Type;
-      Range_End   : out Address_Type) is
+      Range_End   : out Address_Type)
+   is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
    begin
-      Debugger.Get_Process.Set_Parse_File_Name (False);
       Debugger.Switch_Language ("c");
 
       declare
@@ -3846,7 +3848,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end;
 
       Debugger.Restore_Language;
-      Debugger.Get_Process.Set_Parse_File_Name (True);
    end Get_Line_Address;
 
    ----------------
@@ -4065,14 +4066,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --------------------
 
    procedure Get_Frame_Info (Debugger : access Gdb_MI_Debugger) is
-   begin
-      Debugger.Get_Process.Set_Parse_File_Name (False);
-      Debugger.Detect_Language;
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
 
+   begin
+      Debugger.Detect_Language;
       Debugger.Current_Frame := Parse_Frame_Info
         (Debugger.Send_And_Get_Clean_Output
            ("-stack-info-frame", Mode => Internal));
-      Debugger.Get_Process.Set_Parse_File_Name (True);
    end Get_Frame_Info;
 
    ----------------------

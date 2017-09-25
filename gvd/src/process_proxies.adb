@@ -91,6 +91,34 @@ package body Process_Proxies is
       Proxy.Command_In_Process.all := In_Process;
    end Set_Command_In_Process;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (Self : in out Parse_File_Switch) is
+   begin
+      if Self.Proxy = null then
+         return;
+      end if;
+
+      Self.Work := Self.Proxy.Get_Parse_File_Name;
+      if Self.Work then
+         Self.Proxy.Set_Parse_File_Name (False);
+      end if;
+   end Initialize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Parse_File_Switch) is
+   begin
+      if Self.Work then
+         Self.Proxy.Set_Parse_File_Name (True);
+         Self.Work := False;
+      end if;
+   end Finalize;
+
    -----------------
    -- Interrupted --
    -----------------

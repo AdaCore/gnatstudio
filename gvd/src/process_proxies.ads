@@ -19,6 +19,8 @@ with GNAT.Expect;
 with GNAT.Regpat;
 with GVD.Types;
 
+private with Ada.Finalization;
+
 package Process_Proxies is
 
    type Process_Proxy is tagged private;
@@ -156,6 +158,18 @@ package Process_Proxies is
    --  In GUI mode, this processes the graphic events between each iteration.
    --  See comments above.
 
+   type Parse_File_Switch
+     (Proxy : Process_Proxy_Access) is tagged limited private;
+   --  This type disables file parsing while its instance exists
+   --  Usage:
+   --     declare
+   --        Block : Parse_File_Switch (Proxy) with Unreferenced;
+   --     begin
+   --        --  file parsing is disabled here
+   --        ...
+   --     end;
+   --     --  file parsing is enabled here if it was enabled before
+
 private
 
    type Boolean_Access is access Boolean;
@@ -185,5 +199,18 @@ private
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
+
+   type Parse_File_Switch
+     (Proxy : Process_Proxy_Access) is
+     new Ada.Finalization.Limited_Controlled
+   with record
+      Work : Boolean := False;
+      --  Holds the value of Proxy.Parse_File_Name and if it is True sets it
+      --  to False in Initialize and restore in Finalize and does nothing when
+      --  it is False.
+   end record;
+
+   overriding procedure Initialize (Self : in out Parse_File_Switch);
+   overriding procedure Finalize   (Self : in out Parse_File_Switch);
 
 end Process_Proxies;
