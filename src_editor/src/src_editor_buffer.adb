@@ -1576,7 +1576,9 @@ package body Src_Editor_Buffer is
    begin
       --  Request re-parsing of the blocks
 
-      Buffer.Blocks_Exact := False;
+      if Buffer.Modifying_Editable_Lines then
+         Buffer.Reset_Blocks_Info;
+      end if;
 
       Register_Edit_Timeout (Buffer);
    end Edit_Hook;

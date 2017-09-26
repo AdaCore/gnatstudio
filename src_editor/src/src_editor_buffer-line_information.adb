@@ -2180,7 +2180,11 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end if;
 
-      Reset_Blocks_Info (Buffer);
+      if Buffer.Modifying_Editable_Lines then
+         --  If we are modifying editable lines, mark the block info as
+         --  obsolete.
+         Reset_Blocks_Info (Buffer);
+      end if;
 
       if Buffer.Modifying_Editable_Lines then
          declare
