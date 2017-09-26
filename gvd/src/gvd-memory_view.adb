@@ -183,8 +183,8 @@ package body GVD.Memory_View is
       Reuse_If_Exist     => False,
       Commands_Category  => "",
       Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Default,
-      Position           => Position_Automatic,
+      Group              => Group_Debugger_Stack,
+      Position           => Position_Bottom,
       Initialize         => Initialize);
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Formal_View_Record => GVD_Memory_View_Record,

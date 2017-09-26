@@ -111,7 +111,7 @@ package body GVD.Registers_View is
       Commands_Category  => "",
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
-      Areas              => Gtkada.MDI.Both,
+      Areas              => Gtkada.MDI.Sides_Only,
       Initialize         => Initialize,
       Local_Config       => True,
       Local_Toolbar      => True);
