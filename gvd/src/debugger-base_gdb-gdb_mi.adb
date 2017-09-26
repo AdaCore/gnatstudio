@@ -75,11 +75,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --  Matches everything that should be highlighted in the debugger window
 
    Breakpoint_Pattern        : constant Pattern_Matcher := Compile
-     ("^(=breakpoint-|\^done,bkpt=)", Multiple_Lines);
+     ("^(=breakpoint-|\^done,bkpt=|\^done,bkptno=)", Multiple_Lines);
    --  Pattern used to detect when breakpoints are created/deleted
 
    Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
-     ("^(=breakpoint-created|\^done),bkpt={number=""(\d+)");
+     ("^(=breakpoint-created|\^done),(bkptno=""\d+"",)?bkpt={number=""(\d+)");
    --  Pattern to match the breakpoint number after we just created one.
 
    Stopped_Regexp            : constant Pattern_Matcher := Compile
@@ -2383,12 +2383,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       C : constant String := Debugger.Send_And_Get_Clean_Output
         (Cmd => Command, Mode => Mode);
-      M : Match_Array (0 .. 2);
+      M : Match_Array (0 .. 3);
    begin
       Match (Breakpoint_Num_Pattern, C, Matches => M);
-      if M (2) /= No_Match then
+      if M (3) /= No_Match then
          return Breakpoint_Identifier'Value
-           (C (M (2).First .. M (2).Last));
+           (C (M (3).First .. M (3).Last));
       else
          return No_Breakpoint;
       end if;
@@ -2470,6 +2470,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
             then " -e " & Name else ""),
          Mode => Mode);
    end Break_Exception;
+
+   ----------------------
+   -- Catch_Assertions --
+   ----------------------
+
+   overriding function Catch_Assertions
+     (Debugger  : access Gdb_MI_Debugger;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is
+   begin
+      return Internal_Set_Breakpoint
+        (Debugger,
+         "-catch-assert" & (if Temporary then " -t" else ""),
+         Mode => Mode);
+   end Catch_Assertions;
 
    -------------------
    -- Break_Address --
@@ -3263,6 +3279,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         (Matched (4).First .. Matched (4).Last));
                   end if;
                end if;
+
+            elsif Starts_With
+              (Element (C).Text.all, "failed Ada assertions")
+            then
+               B.Except := To_Unbounded_String ("assertions");
+
             else
                B.Expression := To_Unbounded_String
                  (Element (C).Text.all);

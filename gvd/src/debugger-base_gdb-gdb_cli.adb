@@ -148,7 +148,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    Exception_In_Breakpoint   : constant Pattern_Matcher := Compile
      ("\b(on (exception ([-\w_:]+)|all|unhandled))" &
-      "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
+        "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
    --  How to detect exception names in the info given by "info breakpoint"
 
    Subprogram_In_Breakpoint  : constant Pattern_Matcher := Compile
@@ -251,30 +251,24 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger) return Version_Number;
    --  Return the GDB version number.
 
-   function Break_Exception_Cmd
+   function Break_Or_Catch
      (Debugger  : access Gdb_Debugger;
-      Name      : String := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String;
-   --  Return the GDB command corresponding to a break on exception, given
-   --  Name/Temporary/Unhandled.
+      Temporary : Boolean := False)
+      return String;
+   --  Return the GDB catch command if it's supported
+   --  and (t)break in other case.
 
    procedure Update_Frame_Info (Debugger : access Gdb_Debugger);
 
-   -------------------------
-   -- Break_Exception_Cmd --
-   -------------------------
+   --------------------
+   -- Break_Or_Catch --
+   --------------------
 
-   function Break_Exception_Cmd
+   function Break_Or_Catch
      (Debugger  : access Gdb_Debugger;
-      Name      : String := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String
+      Temporary : Boolean := False)
+      return String
    is
-      Break   : aliased constant String := "break";
-      Catch   : aliased constant String := "catch";
-      Command : access constant String := Break'Access;
-
       use GNATCOLL.Tribooleans;
 
    begin
@@ -293,20 +287,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       if Debugger.Use_Catch_For_Exceptions = GNATCOLL.Tribooleans.True then
-         Command := Catch'Access;
+         return (if Temporary then "t" else "") & "catch";
+      else
+         return (if Temporary then "t" else "") & "break";
       end if;
 
-      if Unhandled then
-         return (if Temporary then "t" else "") &
-           Command.all & " exception unhandled";
-      elsif Name /= "" and then Name /= "all" then
-         return (if Temporary then "t" else "") &
-           Command.all & " exception " & Name;
-      else
-         return (if Temporary then "t" else "") &
-           Command.all & " exception";
-      end if;
-   end Break_Exception_Cmd;
+   end Break_Or_Catch;
 
    ---------------------
    -- Get_GDB_Version --
@@ -1036,7 +1022,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String := Break_Exception_Cmd (Debugger);
+            Cmd : constant String := Break_Or_Catch (Debugger) & " exception";
             S   : constant String := Send_And_Get_Clean_Output
               (Debugger, Cmd);
 
@@ -1824,13 +1810,51 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
       Mode      : Command_Type := Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      return GVD.Types.Breakpoint_Identifier
+   is
+      function Build_Cmd return String;
+
+      ---------------
+      -- Build_Cmd --
+      ---------------
+
+      function Build_Cmd return String is
+         Command : constant String := Break_Or_Catch (Debugger, Temporary);
+      begin
+         if Unhandled then
+            return Command & " exception unhandled";
+
+         elsif Name /= ""
+           and then Name /= "all"
+         then
+            return Command & " exception " & Name;
+
+         else
+            return Command & " exception";
+         end if;
+      end Build_Cmd;
+
+   begin
+      return Internal_Set_Breakpoint (Debugger, Build_Cmd, Mode => Mode);
+   end Break_Exception;
+
+   ----------------------
+   -- Catch_Assertions --
+   ----------------------
+
+   overriding function Catch_Assertions
+     (Debugger  : access Gdb_Debugger;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+   is
+      pragma Unreferenced (Temporary);
    begin
       return Internal_Set_Breakpoint
         (Debugger,
-         Break_Exception_Cmd (Debugger, Name, Temporary, Unhandled),
+         Break_Or_Catch (Debugger) & " assert",
          Mode => Mode);
-   end Break_Exception;
+   end Catch_Assertions;
 
    -------------------
    -- Break_Address --
@@ -2732,6 +2756,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                     (S (Matched (4).First .. Matched (4).Last));
                end if;
             end if;
+            Has_Matched := True;
+
+         elsif Starts_With
+           (S (First .. Last - 2), "failed Ada assertions")
+         then
+            Current.Except := To_Unbounded_String ("assertions");
             Has_Matched := True;
          end if;
 

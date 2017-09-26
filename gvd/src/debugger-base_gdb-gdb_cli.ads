@@ -245,6 +245,12 @@ package Debugger.Base_Gdb.Gdb_CLI is
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
      return GVD.Types.Breakpoint_Identifier;
 
+   overriding function Catch_Assertions
+     (Debugger  : access Gdb_Debugger;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
+
    overriding function Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : GVD.Types.Address_Type;

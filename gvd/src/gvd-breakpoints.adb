@@ -1393,10 +1393,10 @@ package body GVD.Breakpoints is
                      Mode      => GVD.Types.Visible);
 
                elsif Name = -"Ada assertions" then
-                  Break_Subprogram
-                    (Self.Process.Kernel,
-                     Subprogram => "assert",
-                     Temporary  => Temporary);
+                  Num := Catch_Assertions
+                    (Self.Process.Debugger,
+                     Temporary => Temporary,
+                     Mode      => GVD.Types.Visible);
 
                else
                   Num := Break_Exception

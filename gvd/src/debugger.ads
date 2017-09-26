@@ -654,7 +654,16 @@ package Debugger is
    --  is True, or for all exceptions if False.
    --  Not all combinations are possible (for instance, Gdb in Ada mode can
    --  not break on a specific exception only when it is unhandled).
-   --  GDB_COMMAND: "break exception"
+   --  GDB_COMMAND: "catch exception" "-catch-exception"
+
+   function Catch_Assertions
+     (Debugger  : access Debugger_Root;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
+   --  Add a catchpoint for failed Ada assertions.
+   --  GDB_COMMAND: "catch assert" "-catch-assert"
 
    function Break_Address
      (Debugger   : access Debugger_Root;
