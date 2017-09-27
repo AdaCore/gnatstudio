@@ -612,4 +612,70 @@ package body MI.Lexer is
          return Token_Lists.Empty_List;
    end Build_Tokens;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Item : Token_Type) return String is
+   begin
+      case Item.Code is
+         when Token_No =>
+            return Item.Value'Img;
+
+         when Identifier =>
+            return Item.Text.all;
+
+         when Newline =>
+            return "\n";
+
+         when Ampersand =>
+            return "&";
+
+         when At_Sign =>
+            return "@";
+
+         when Tilde =>
+            return "~";
+
+         when Comma =>
+            return ",";
+
+         when Asterisk =>
+            return "*";
+
+         when Plus_Sign =>
+            return "+";
+
+         when Equal_Sign =>
+            return "=";
+
+         when Caret =>
+            return "^";
+
+         when L_Bracket =>
+            return "[";
+
+         when R_Bracket =>
+            return "]";
+
+         when L_Brace =>
+            return "{";
+
+         when R_Brace =>
+            return "}";
+
+         when C_String =>
+            return Item.Text.all;
+
+         when Gdb_Prompt =>
+            return "(gdb)";
+
+         when End_Of_File =>
+            return "EOF";
+
+         when Unknown =>
+            return "Unknown";
+      end case;
+   end Image;
+
 end MI.Lexer;

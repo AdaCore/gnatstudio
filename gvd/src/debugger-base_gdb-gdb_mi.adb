@@ -238,6 +238,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Code : out Disassemble_Elements);
    --  Parse result of disassemble request
 
+   function Collect
+     (C        : in out Token_Lists.Cursor;
+      To       : Token_Code;
+      Opposite : Token_Code) return String;
+   --  Makes string from all elements till To considering nested elements
+   --  started by opposite to To element.
+
    ---------------------
    -- Find_Identifier --
    ---------------------
@@ -2734,13 +2741,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          --  Skip body=[
          Next (C, 3);
-         if Element (C).Code = R_Bracket then -- /= ']'
+         if Element (C).Code = R_Bracket then -- ']'
             return;
          end if;
 
          Len := Info'First;
          Info (Len) :=
-           (Num_Fields => 7,
+           (Num_Fields  => 7,
             Information =>
               (New_String ("id"),
                New_String ("task-id"),
@@ -2758,6 +2765,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Next (C, 1); -- skip "{"
             Current := False;
 
+            Len := Len + 1;
+            Info (Len) :=
+              (Num_Fields => 7,
+               Information => (others => <>));
+
             while Element (C).Code /= R_Brace loop -- over elemet tags till '}'
                if Element (C).Code = Comma then
                   Next (C, 1); -- skip ',' between tags
@@ -2769,11 +2781,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   exit;
                end if;
 
-               Len := Len + 1;
-               Info (Len) :=
-                 (Num_Fields => 7,
-                  Information => (others => <>));
-
                if Element (C).Text.all = "current" then
                   Current := True;
                   Next (C, 3); -- skip '="*"'
@@ -2781,8 +2788,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                elsif Element (C).Text.all = "id" then
                   Next (C, 2); -- skip '='
                   Info (Len).Information (1) := New_String
-                    ((if Current then "* " & Element (C).Text.all
-                     else Element (C).Text.all));
+                    ((if Current then "* " else "") & Element (C).Text.all);
                else
                   if Element (C).Text.all = "task-id" then
                      P := 2;
@@ -2826,6 +2832,40 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end;
    end Info_Tasks;
 
+   -------------
+   -- Collect --
+   -------------
+
+   function Collect
+     (C        : in out Token_Lists.Cursor;
+      To       : Token_Code;
+      Opposite : Token_Code) return String
+   is
+      use Token_Lists;
+
+      Count  : Natural := 0;
+      Result : Standard.Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      loop
+         if Element (C).Code = Opposite then
+            Count := Count + 1;
+
+         elsif Element (C).Code = To then
+            if Count = 0 then
+               exit;
+            else
+               Count := Count - 1;
+            end if;
+         end if;
+
+         Append (Result, Image (Element (C)));
+
+         Next (C, 1);
+      end loop;
+
+      return To_String (Result);
+   end Collect;
+
    ------------------
    -- Info_Threads --
    ------------------
@@ -2835,92 +2875,138 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
+      use Standard.Ada.Strings.Unbounded;
+      use Token_Lists;
+
       S : constant String := Debugger.Send_And_Get_Clean_Output
         ("-thread-info", Mode => Internal);
 
+      Tokens      : Token_List_Controller;
+      C, Tmp      : Token_Lists.Cursor;
+      Brace_Count : Natural := 0;
+      Current     : Standard.Ada.Strings.Unbounded.Unbounded_String;
    begin
       Len := 0;
 
-      declare
-         use Standard.Ada.Strings.Unbounded;
-         use Token_Lists;
-         Tokens      : Token_List_Controller;
-         C           : Token_Lists.Cursor;
-         Brace_Count : Natural;
-         Item        : Unbounded_String;
+      Tokens.List := Build_Tokens (S);
+      C := Find_Identifier (First (Tokens.List), "threads");
 
-      begin
-         Tokens.List := Build_Tokens (S);
-         C := Find_Identifier (First (Tokens.List), "threads");
+      if C = Token_Lists.No_Element then
+         return;
+      end if;
 
-         if C = Token_Lists.No_Element then
-            return;
-         end if;
+      --  Skip 'threads=['
+      Next (C, 3);
 
-         --  Skip threads=[
-         Next (C, 3);
-         if Element (C).Code = R_Bracket then -- /= ']'
-            return;
-         end if;
+      if Element (C).Code = R_Bracket then
+         return;
+      end if;
 
-         Len := Info'First;
+      Len := Info'First;
+      Info (Len) :=
+        (Num_Fields  => 6,
+         Information =>
+           (New_String ("id"),
+            New_String ("target-id"),
+            New_String ("name"),
+            New_String ("frame"),
+            New_String ("state"),
+            New_String ("core")));
+
+      Tmp := Find_Identifier (C, "current-thread-id");
+      if Tmp /= Token_Lists.No_Element then
+         Next (Tmp, 2);
+         Current := To_Unbounded_String (Element (Tmp).Text.all);
+      end if;
+
+      while Element (C).Code /= R_Bracket loop -- last ']'
+         --  over elements
+
+         Next (C, 1); -- skip starting "{"
+
+         Tmp := Find_Identifier (C, "id");
+         exit when Tmp = Token_Lists.No_Element;
+         Next (Tmp, 2);
+
+         Len := Len + 1;
          Info (Len) :=
-           (Num_Fields => 1,
-            Information => (1 => New_String ("Thread")));
+           (Num_Fields => 6,
+            Information => (others => <>));
 
-         loop -- over elements
-            Brace_Count := 0;
+         Info (Len).Information (1) := New_String
+           ((if Current = Element (Tmp).Text.all
+            then "* "
+            else "") & Element (Tmp).Text.all);
 
-            if Element (C).Code = Comma then
-               Next (C, 1); -- skip ',' between elements
+         Tmp := Find_Identifier (C, "target-id");
+         if Tmp /= Token_Lists.No_Element then
+            Next (Tmp, 2);
+            Info (Len).Information (2) :=
+              New_String (Element (Tmp).Text.all);
+         end if;
+
+         Tmp := Find_Identifier (C, "name");
+         if Tmp /= Token_Lists.No_Element then
+            Next (Tmp, 2);
+            Info (Len).Information (3) :=
+              New_String (Element (Tmp).Text.all);
+         end if;
+
+         Tmp := Find_Identifier (C, "frame");
+         if Tmp /= Token_Lists.No_Element then
+            Next (Tmp, 3);
+            Info (Len).Information (4) :=
+              New_String (Collect (Tmp, R_Brace, L_Brace));
+         end if;
+
+         Tmp := Find_Identifier (C, "state");
+         if Tmp /= Token_Lists.No_Element then
+            Next (Tmp, 2);
+            Info (Len).Information (5) :=
+              New_String (Element (Tmp).Text.all);
+         end if;
+
+         Tmp := Find_Identifier (C, "core");
+         if Tmp /= Token_Lists.No_Element then
+            Next (Tmp, 2);
+            Info (Len).Information (6) :=
+              New_String (Element (Tmp).Text.all);
+         end if;
+
+         for P in Interfaces.C.size_t'(1) .. 6 loop
+            if Info (Len).Information (P) = Null_Ptr then
+               Info (Len).Information (P) := New_String ("");
             end if;
-
-            Next (C, 1); -- skip "{"
-            while Element (C).Code /= R_Brace
-              or else Brace_Count /= 0
-            loop
-               if Element (C).Code /= L_Brace then
-                  Brace_Count := Brace_Count + 1;
-                  Append (Item, "{");
-
-               elsif Element (C).Code /= R_Brace then
-                  Brace_Count := Brace_Count - 1;
-                  Append (Item, "}");
-
-               elsif Element (C).Code = L_Bracket then
-                  Append (Item, "[");
-
-               elsif Element (C).Code = R_Bracket then
-                  Append (Item, "]");
-
-               elsif Element (C).Code = Comma then
-                  Append (Item, ",");
-
-               elsif Element (C).Code = Identifier then
-                  Append (Item, Element (C).Text.all);
-
-               elsif Element (C).Code = C_String then
-                  Append (Item, Element (C).Text.all);
-               end if;
-
-               Next (C, 1);
-            end loop;
-            Len := Len + 1;
-            Info (Len) :=
-              (Num_Fields => 1,
-               Information => (1 => New_String (To_String (Item))));
-
-            Next (C, 1); -- skip '}' from previouse element
-
-            exit when Element (C).Code = R_Bracket; -- last ']'
          end loop;
 
-      exception
-         when others =>
-            if Len > 0 then
-               Len := Len - 1;
+         Brace_Count := 0;
+         loop
+            if Element (C).Code = L_Brace then --  '{'
+               Brace_Count := Brace_Count + 1;
+
+            elsif Element (C).Code = R_Brace then  --  '}'
+               if Brace_Count = 0 then
+                  exit;
+               else
+                  Brace_Count := Brace_Count - 1;
+               end if;
             end if;
-      end;
+
+            Next (C, 1);
+         end loop;
+         Next (C, 1); --  skip ending '}' from prev. element
+
+         if Element (C).Code = Comma then
+            Next (C, 1); -- skip ',' between elements
+         end if;
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         if Len > 0 then
+            Len := Len - 1;
+         end if;
    end Info_Threads;
 
    --------------------------

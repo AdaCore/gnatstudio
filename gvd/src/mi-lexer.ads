@@ -89,4 +89,6 @@ package MI.Lexer is
    --  The main function of the lexer, which is fed with a stream or string,
    --  and return a list of tokens.
 
+   function Image (Item : Token_Type) return String;
+
 end MI.Lexer;
