@@ -70,10 +70,13 @@ package body Coverage_GUI is
 
          if Is_Regular_File (Cov_File) then
             Add_Gcov_File_Info (Kernel, Src_File, Cov_File, Prj_Node);
+
          else
-            Kernel.Insert
-              (-"Could not find coverage file " &
-               Display_Full_Name (Cov_File));
+            if Current_Coverage_Tool /= GNATcov then
+               Kernel.Insert
+                 (-"Could not find coverage file " &
+                    Display_Full_Name (Cov_File));
+            end if;
 
             declare
                File_Node : constant Code_Analysis.File_Access :=

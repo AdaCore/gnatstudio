@@ -705,8 +705,11 @@ package body Code_Analysis_Module is
       Cov_File := Find_Gcov_File (Kernel, File);
 
       if not Is_Regular_File (Cov_File) then
-         Kernel.Insert
-           (-"Could not find coverage file " & Display_Full_Name (Cov_File));
+         if Current_Coverage_Tool /= GNATcov then
+            Kernel.Insert
+              (-"Could not find coverage file "
+               & Display_Full_Name (Cov_File));
+         end if;
 
          Set_Error (File_Node, File_Not_Found);
 
