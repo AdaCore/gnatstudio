@@ -514,11 +514,4 @@ private
    --  Return representation of variable object associated
    --  with entity and frame
 
-   procedure Get_Frame_Info (Debugger : access Gdb_MI_Debugger);
-   --  Retrieve info about current frame
-
-   function Get_Current_Frame_Addr
-     (Debugger : access Gdb_MI_Debugger) return GVD.Types.Address_Type;
-   --  Return address of current frame
-
 end Debugger.Base_Gdb.Gdb_MI;
