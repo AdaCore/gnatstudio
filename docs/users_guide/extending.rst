@@ -15,7 +15,7 @@ chapters describes each of these capabilities.
 Color Themes
 ============
 
-.. index: themes
+.. index:: themes
 
 The :guilabel:`Color Theme window` shows a list of color themes to choose
 from, presented in the form of a list of screenshots. Clicking on the button
@@ -33,14 +33,16 @@ file:`INSTALL/share/gps/color_themes/themes/` and will include all the
 Custom Fonts
 ============
 
-.. index: fonts
+.. index:: fonts
 
 In addition to the system fonts, GPS will load the fonts located under
 :file:`share/gps/fonts`) in the GPS installation directory. The supported
 formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
 
 This mechanism works only on UNIX/Linux systems; under Windows, fonts
-need to be added at the system level.
+need to be added at the system level. Fonts that are added directly in this
+directory may not show up in the list of fonts in the preferences dialog,
+but it is still possible to use them by entering the font name manually.
 
 
 .. index:: key shortcuts; editing
