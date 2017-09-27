@@ -363,7 +363,10 @@ class Outline_View(Dialog):
 
     def set_options(self,
                     show_profiles=None,
-                    show_param_names=None):
+                    show_param_names=None,
+                    show_with=None,
+                    group_by_category=None,
+                    alphabetical=None):
         """
         Overrides some of the configuration parameters
         """
@@ -371,6 +374,12 @@ class Outline_View(Dialog):
             GPS.Preference('outline-no-param-names').set(not show_param_names)
         if show_profiles is not None:
             GPS.Preference('outline-show-profile').set(show_profiles)
+        if show_with is not None:
+            GPS.Preference('outline-show-with').set(show_with)
+        if group_by_category is not None:
+            GPS.Preference('outline-group-by-category').set(group_by_category)
+        if alphabetical is not None:
+            GPS.Preference('outline-alphabetical').set(alphabetical)
 
 
 ########################
