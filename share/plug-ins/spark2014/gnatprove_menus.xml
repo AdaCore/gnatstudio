@@ -475,6 +475,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_red_black_trees" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/red_black_trees/test.gpr"</shell>
+      <shell>Editor.edit "red_black_trees.adb"</shell>
+      <shell>Editor.edit "red_black_trees.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_red_black_trees">
+        <title>red__black__trees</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_ring_buffer" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/ring_buffer/test.gpr"</shell>
