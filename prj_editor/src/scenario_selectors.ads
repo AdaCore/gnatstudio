@@ -85,25 +85,11 @@ package Scenario_Selectors is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal version of Gtk_New
 
-   type Scenario_Iterator (<>) is private;
-
-   function Start (Selector : access Scenario_Selector_Record'Class)
-      return Scenario_Iterator;
-   --  Return a new iterator that will iterate over all the selected scenarios
-   --  in Selector.
-
-   function Has_Multiple_Scenario (Iter : Scenario_Iterator) return Boolean;
-   --  Return True if multiple scenariis are selected.
-
-   procedure Next (Iter : in out Scenario_Iterator);
-   --  Move to the next project
-
-   function At_End (Iter : Scenario_Iterator) return Boolean;
-   --  Return True if there are no more scenario to return
-
-   function Current (Iter : Scenario_Iterator) return Scenario_Variable_Array;
-   --  Return the current scenario. The order of the variables is the same as
-   --  in GPS.Kernel.Scenario_Variables.
+   function Get_Scenarios
+     (Selector : not null access Scenario_Selector_Record'Class)
+      return Scenario_Variable_Array;
+   --  Return the scenario values that have been explcitly selected in the
+   --  scenario selector tree.
 
 private
 
@@ -129,12 +115,5 @@ private
    end record;
 
    type Iter_Array is array (Natural range <>) of Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   type Scenario_Iterator (Num_Vars : Natural) is record
-      Selector   : Scenario_Selector;
-      At_End     : Boolean;
-      Current    : Iter_Array (1 .. Num_Vars);
-      Variables  : Iter_Array (1 .. Num_Vars);
-   end record;
 
 end Scenario_Selectors;

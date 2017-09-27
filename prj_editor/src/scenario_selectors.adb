@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Sets;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings;
 with Ada.Strings.Hash;
+with Ada.Unchecked_Deallocation;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -43,10 +45,14 @@ with GPS.Intl;                 use GPS.Intl;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with Projects;                 use Projects;
-with Ada.Unchecked_Deallocation;
+
 with Histories;                use Histories;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Scenario_Selectors is
+
+   Me : constant Trace_Handle := Create ("SCENARIO_SELECTORS");
+
    Selected_Column      : constant := 0;
    Project_Name_Column  : constant := 1;
    Project_Column_Types : constant GType_Array :=
@@ -110,14 +116,12 @@ package body Scenario_Selectors is
    --  Called when directly selecting a child node, to select or unselect
    --  all the values.
 
-   function Find_First_Selected
-     (Selector : access Scenario_Selector_Record'Class;
-      Iter     : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-   --  Return the first selected sibling of Iter, including Iter if it is
-   --  selected.
-
    procedure Toggle_Hierarchy (Selector : access Gtk_Widget_Record'Class);
    --  Show a different view of the project selector
+
+   package Scenario_Variable_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Scenario_Variable,
+      "="          => "=");
 
    -------------
    -- Gtk_New --
@@ -470,6 +474,7 @@ package body Scenario_Selectors is
       Add_Attribute (Col, Text_Render, "text", Var_Name_Column);
 
       Show_Variables (Selector);
+      View.Expand_All;
    end Initialize;
 
    --------------------
@@ -537,19 +542,31 @@ package body Scenario_Selectors is
       Iter     : Gtk_Tree_Iter;
       Selected : Boolean)
    is
-      Child : Gtk_Tree_Iter;
+
+      Child     : Gtk_Tree_Iter;
+      Ext_Name  : constant String := Selector.Model.Get_String
+        (Iter, Var_Name_Column);
+      Variable  : constant Scenario_Variable :=
+                    Get_Registry (Selector.Kernel).Tree.Scenario_Variables
+                    (External_Name => Ext_Name);
+      Cur_Value : constant String := Value (Variable);
    begin
       Selector.Model.Set (Iter, Selected_Column, Selected);
 
       Child := Children (Selector.Model, Iter);
 
-      --  If unselected everything, leave at least one selected
-      if not Selected then
-         Next (Selector.Model, Child);
-      end if;
-
       while Child /= Null_Iter loop
-         Selector.Model.Set (Child, Selected_Column, Selected);
+
+         --  Don't unselect the current scenario variable's value when
+         --  unselecting the whole variable.
+
+         if Selected
+           or else Selector.Model.Get_String
+             (Child, Var_Name_Column) /= Cur_Value
+         then
+            Selector.Model.Set (Child, Selected_Column, Selected);
+         end if;
+
          Next (Selector.Model, Child);
       end loop;
    end Variable_Selection;
@@ -570,7 +587,7 @@ package body Scenario_Selectors is
         Get_Iter_From_String (S.Model, Path_String);
       Selected           : constant Boolean :=
         Get_Boolean (S.Model, Iter, Selected_Column);
-      Num_Selected_Child : Natural := 0;
+      Num_Selected_Child : Gint := 0;
 
    begin
       --  Are we selecting a variable ?
@@ -581,27 +598,44 @@ package body Scenario_Selectors is
       --  Are we selecting a variable value ? Unselect the variable
 
       else
-         if Selected then
-            It := Children (S.Model, Parent (S.Model, Iter));
-            while It /= Null_Iter loop
-               if Get_Boolean (S.Model, It, Selected_Column) then
-                  Num_Selected_Child := Num_Selected_Child + 1;
-               end if;
+         It := Children (S.Model, Parent (S.Model, Iter));
+         while It /= Null_Iter loop
+            if Get_Boolean (S.Model, It, Selected_Column) then
+               Num_Selected_Child := Num_Selected_Child + 1;
+            end if;
                Next (S.Model, It);
-            end loop;
-         end if;
+         end loop;
 
          if Selected and then Num_Selected_Child = 1 then
             S.Model.Set (Iter, Selected_Column, True);
          else
-            S.Model.Set
-              (Iter,
-               Column => Selected_Column,
-               Value  => not Selected);
-            S.Model.Set
-              (Parent (S.Model, Iter),
-               Column => Selected_Column,
-               Value  => False);
+            declare
+               Var_Iter : constant Gtk_Tree_Iter := S.Model.Parent (Iter);
+
+            begin
+               S.Model.Set
+                 (Iter,
+                  Column => Selected_Column,
+                  Value  => not Selected);
+
+               --  If all the values are now selected, select the scenario
+               --  variable too.
+
+               if S.Model.Get_Boolean (Iter, Selected_Column)
+                 and then
+                   Num_Selected_Child = S.Model.N_Children (Var_Iter) - 1
+               then
+                  S.Model.Set
+                    (Var_Iter,
+                     Column => Selected_Column,
+                     Value  => True);
+               else
+                  S.Model.Set
+                    (Var_Iter,
+                     Column => Selected_Column,
+                     Value  => False);
+               end if;
+            end;
          end if;
       end if;
    end Var_Selected;
@@ -700,164 +734,75 @@ package body Scenario_Selectors is
       end if;
    end Current;
 
-   -----------
-   -- Start --
-   -----------
+   -------------------
+   -- Get_Scenarios --
+   -------------------
 
-   function Start
-     (Selector : access Scenario_Selector_Record'Class)
-      return Scenario_Iterator
+   function Get_Scenarios
+     (Selector : not null access Scenario_Selector_Record'Class)
+      return Scenario_Variable_Array
    is
-      It    : Gtk_Tree_Iter := Get_Iter_First (Selector.Model);
-      Child : Gtk_Tree_Iter;
-      Count : Natural := 0;
-
+      Variable_Iter : Gtk_Tree_Iter := Get_Iter_First (Selector.Model);
+      Value_Iter    : Gtk_Tree_Iter;
+      Scenarios     : Scenario_Variable_Lists.List;
    begin
-      --  Count the number of variables
+      --  Iterate over all the scenario variables displayed in the tree
 
-      while It /= Null_Iter loop
-         Count := Count + 1;
-         Next (Selector.Model, It);
+      while Variable_Iter /= Null_Iter loop
+         declare
+            Ext_Name   : constant String :=
+                           Get_String
+                             (Selector.Model, Variable_Iter, Var_Name_Column);
+            Variable   : Scenario_Variable := Get_Registry
+              (Selector.Kernel).Tree.Scenario_Variables (Ext_Name);
+         begin
+            --  If the scenario variable is not selected itself, iterate over
+            --  all its possible values and create a scenario variable for
+            --  each value that is selected.
+
+            if not Selector.Model.Get_Boolean
+              (Variable_Iter, Selected_Column)
+            then
+               Value_Iter := Selector.Model.Children (Variable_Iter);
+
+               while Value_Iter /= Null_Iter loop
+
+                  if Selector.Model.Get_Boolean
+                    (Value_Iter, Selected_Column)
+                  then
+                     Set_Value
+                       (Variable,
+                        Selector.Model.Get_String
+                          (Value_Iter, Var_Name_Column));
+                     Scenarios.Append (Variable);
+                  end if;
+
+                  Next (Selector.Model, Value_Iter);
+               end loop;
+            end if;
+
+            Next (Selector.Model, Variable_Iter);
+         end;
       end loop;
 
       declare
-         Iter : Scenario_Iterator (Count);
+         Scenarios_Arr : Scenario_Variable_Array
+           (1 .. Integer (Scenarios.Length));
+         J             : Positive := Scenarios_Arr'First;
       begin
-         Iter.Selector := Scenario_Selector (Selector);
-         Iter.At_End := False;
-         Count := Iter.Current'First;
-         It := Get_Iter_First (Selector.Model);
-
-         while It /= Null_Iter loop
-            Iter.Variables (Count) := It;
-
-            --  Find the first value of the variable
-            Child := Children (Selector.Model, It);
-            while Child /= Null_Iter loop
-               if Get_Boolean (Selector.Model, Child, Selected_Column) then
-                  exit;
-               end if;
-
-               Next (Selector.Model, Child);
-            end loop;
-
-            Iter.Current (Count) := Child;
-
-            Count := Count + 1;
-            Next (Selector.Model, It);
+         for Scenario of Scenarios loop
+            declare
+               Var_Name : constant String := External_Name (Scenario);
+               Val      : constant String := Value (Scenario);
+            begin
+               Trace (Me, Val & " is selected for variable " & Var_Name);
+               Scenarios_Arr (J) := Scenario;
+               J := J + 1;
+            end;
          end loop;
 
-         return Iter;
+         return Scenarios_Arr;
       end;
-   end Start;
-
-   ---------------------------
-   -- Has_Multiple_Scenario --
-   ---------------------------
-
-   function Has_Multiple_Scenario (Iter : Scenario_Iterator) return Boolean is
-      It    : Gtk_Tree_Iter := Get_Iter_First (Iter.Selector.Model);
-      Child : Gtk_Tree_Iter;
-      Count : Natural;
-   begin
-      while It /= Null_Iter loop
-         Child := Children (Iter.Selector.Model, It);
-         Count := 0;
-
-         while Child /= Null_Iter loop
-            if Get_Boolean
-              (Iter.Selector.Model, Child, Selected_Column)
-            then
-               Count := Count + 1;
-            end if;
-            Next (Iter.Selector.Model, Child);
-         end loop;
-
-         if Count > 1 then
-            return True;
-         end if;
-
-         Next (Iter.Selector.Model, It);
-      end loop;
-      return False;
-   end Has_Multiple_Scenario;
-
-   -------------------------
-   -- Find_First_Selected --
-   -------------------------
-
-   function Find_First_Selected
-     (Selector : access Scenario_Selector_Record'Class;
-      Iter     : Gtk_Tree_Iter) return Gtk_Tree_Iter
-   is
-      It : Gtk_Tree_Iter := Iter;
-   begin
-      while It /= Null_Iter loop
-         exit when Get_Boolean (Selector.Model, It, Selected_Column);
-         Next (Selector.Model, It);
-      end loop;
-      return It;
-   end Find_First_Selected;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (Iter : in out Scenario_Iterator) is
-      Var : Natural := Iter.Current'Last;
-   begin
-      while Var >= Iter.Current'First loop
-         Next (Iter.Selector.Model, Iter.Current (Var));
-         Iter.Current (Var) := Find_First_Selected
-           (Iter.Selector, Iter.Current (Var));
-
-         if Iter.Current (Var) /= Null_Iter then
-            return;
-         end if;
-
-         --  Find the first selected child of the variable
-         Iter.Current (Var) := Find_First_Selected
-           (Iter.Selector,
-            Children (Iter.Selector.Model, Iter.Variables (Var)));
-
-         --  And move the parent to the next variable
-         Var := Var - 1;
-      end loop;
-
-      --  No more scenario
-      Iter.At_End := True;
-   end Next;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (Iter : Scenario_Iterator) return Boolean is
-   begin
-      return Iter.At_End;
-   end At_End;
-
-   -------------
-   -- Current --
-   -------------
-
-   function Current
-     (Iter : Scenario_Iterator) return Scenario_Variable_Array
-   is
-      Vars : Scenario_Variable_Array := Get_Registry
-        (Iter.Selector.Kernel).Tree.Scenario_Variables;
-   begin
-      for R in Vars'Range loop
-         if Iter.Current (R) /= Null_Iter then
-            Set_Value
-              (Vars (R),
-               Get_String
-                 (Iter.Selector.Model, Iter.Current (R), Var_Name_Column));
-         else
-            Set_Value (Vars (R), "");
-         end if;
-      end loop;
-      return Vars;
-   end Current;
+   end Get_Scenarios;
 
 end Scenario_Selectors;

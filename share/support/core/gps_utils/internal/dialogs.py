@@ -121,6 +121,11 @@ class Project_Properties_Editor(Dialog):
         self.treeview = get_widget_by_name(
             'Project Properties Tree', self.dialogs)
 
+        scenario_selector = get_widget_by_name(
+            'Project Properties Scenario Selector', self.dialogs)
+        self.scenario_selector_tree = get_widgets_by_type(
+            Gtk.TreeView, scenario_selector)[0]
+
     def select(self, path):
         """
         Show the page corresponding to a specific path
@@ -167,6 +172,65 @@ class Project_Properties_Editor(Dialog):
                 pygps.tree.click_in_tree(tree, m.path)
                 found += 1
         gps_assert(found, len(lang), "Some languages not found %s" % lang)
+
+    def select_scenario(self, var, value=None):
+        """
+        Select a scenario for which the changes made in the Project Properties
+        should be applied.
+
+        ``var`` is used to identify the scenario variable and ``value`` the
+        possible value for which we want to apply the changes.
+
+        When no ``value`` is specified, all the possible values for the
+        scenario variable are selected.
+        """
+        for m in self.scenario_selector_tree.get_model():
+            if m[1] == var:
+                if value:
+                    children = m.iterchildren()
+                    for child in children:
+                        if child[1] == value:
+                            pygps.tree.click_in_tree(
+                                self.scenario_selector_tree,
+                                child.path)
+                            return
+                else:
+                    pygps.tree.click_in_tree(
+                        self.scenario_selector_tree,
+                        m.path)
+                    return
+
+    def get_switch(self, label, gtk_type):
+        """
+        Return the switch widget identified by ``label`` and
+        belonging to the given ``gtk_type``.
+
+        Here is a simple example showing how to get the widget
+        associated to a given switch:
+            # open the editor first
+            editor = GPS.Project_Properties()
+            yield editor.open_and_yield()
+
+            # select the page containing the switch
+            editor.select_page("Build/Switches/Builder")
+
+            # get the widget associated to the 'Compile only'
+            # switch
+            switch_widget = editor.get_switch("Compile only", Gtk.ToggleButton)
+        """
+        model, iter = self.treeview.get_selection().get_selected()
+        page_widget = model[iter][Project_Properties_Editor.COLUMN_WIDGET]
+        switches = get_widgets_by_type(gtk_type, page_widget)
+
+        result = [switch for switch in switches
+                  if BuildTargetsEditor.get_switch_label(
+                      switch, gtk_type) == label and
+                  switch.get_mapped()]
+
+        if result:
+            return result[0]
+        else:
+            return None
 
     def save(self):
         """

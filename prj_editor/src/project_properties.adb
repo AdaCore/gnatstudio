@@ -4024,6 +4024,7 @@ package body Project_Properties is
          Pack_Start (Box, Editor.Prj_Selector, Expand => True, Fill => True);
 
          Gtk_New (Editor.Selector, Kernel);
+         Editor.Selector.Set_Name ("Project Properties Scenario Selector");
          Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
       end if;
 
@@ -4673,35 +4674,27 @@ package body Project_Properties is
          begin
             while Current (Prj_Iter) /= GNATCOLL.Projects.No_Project loop
                declare
-                  Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
+                  Scenarios : constant Scenario_Variable_Array :=
+                                Editor.Selector.Get_Scenarios;
 
                   procedure Edit_Page
                     (Page : not null access Project_Editor_Page_Record'Class);
+
                   procedure Edit_Page
                     (Page : not null access Project_Editor_Page_Record'Class)
                   is
-                     Scenario_Variables : constant Scenario_Variable_Array :=
-                                  (if (Page.Flags
-                                   and Multiple_Scenarios) /= 0
-                                   then
-                                      Current (Scenar_Iter)
-                                   else
-                                      All_Scenarios);
                   begin
                      Changed := Changed
                        or Page.Edit_Project
                          (Current (Prj_Iter),
                           Kernel             => Kernel,
                           Languages          => Languages.all,
-                          Scenario_Variables => Scenario_Variables);
+                          Scenario_Variables => Scenarios);
                   end Edit_Page;
 
                begin
-                  while not At_End (Scenar_Iter) loop
-                     Editor.For_Each_Page
-                       (Edit_Page'Unrestricted_Access, Visible_Only => True);
-                     Next (Scenar_Iter);
-                  end loop;
+                  Editor.For_Each_Page
+                    (Edit_Page'Unrestricted_Access, Visible_Only => True);
                end;
 
                Next (Prj_Iter);

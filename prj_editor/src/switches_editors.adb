@@ -680,18 +680,16 @@ package body Switches_Editors is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Scenar    : Scenario_Iterator := Start (Selector);
+            Scenarios : constant Scenario_Variable_Array :=
+                          Selector.Get_Scenarios;
             Languages : GNAT.Strings.String_List := Project.Languages;
             Success   : Boolean;
          begin
-            while not At_End (Scenar) loop
-               Modified := Modified or Page.Edit_Project
-                 (Kernel             => Kernel,
-                  Languages          => Languages,
-                  Scenario_Variables => Current (Scenar),
-                  Project            => Project);
-               Next (Scenar);
-            end loop;
+            Modified := Modified or Page.Edit_Project
+              (Kernel             => Kernel,
+               Languages          => Languages,
+               Scenario_Variables => Scenarios,
+               Project            => Project);
 
             Free (Languages);
 
