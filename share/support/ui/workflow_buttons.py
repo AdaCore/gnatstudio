@@ -88,6 +88,7 @@ class WorkflowButtons(object):
         """
         if target_name == "Build All" and status == 0:
             WorkflowButtons.__needs_build = False
+            WorkflowButtons.__connect_hooks()
 
     @staticmethod
     def __on_file_changed(hook, file):
