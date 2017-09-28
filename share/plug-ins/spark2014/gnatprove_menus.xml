@@ -67,6 +67,18 @@
          lang="python">spark2014.on_prove_check(GPS.current_context())
        </shell>
     </action>
+    <action name="Launch ITP" category="GNATprove" output="none">
+      <filter language="Ada" shell_lang="python"
+       shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
+      <shell
+          lang="python">spark2014.on_prove_itp(GPS.current_context())
+      </shell>
+    </action>
+    <action name="Exit ITP" category="GNATprove" output="none">
+      <shell
+          lang="python">spark2014.exit_ITP("")
+      </shell>
+    </action>
     <action name="Show Report Action" category="GNATprove" output="none">
         <shell
           lang="python">spark2014.on_show_report(GPS.current_context())
@@ -98,6 +110,9 @@
         <menu action="Prove File Action">
           <Title>Prove File</Title>
         </menu>
+        <menu action="Exit ITP">
+          <Title>Exit ITP</Title>
+        </menu>
         <menu><title/></menu>
         <menu action="Show Report Action">
           <Title>Show Report</Title>
@@ -124,6 +139,12 @@
     </contextual>
     <contextual action="Prove Check Action">
       <Title>%(prefix)s/Prove Check</Title>
+    </contextual>
+    <contextual action="Launch ITP">
+      <Title>%(prefix)s/Launch ITP</Title>
+    </contextual>
+    <contextual action="Exit ITP">
+      <Title>%(prefix)s/Exit ITP</Title>
     </contextual>
 
     <doc_path>{root}/share/doc/spark</doc_path>

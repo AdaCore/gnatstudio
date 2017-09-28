@@ -15,6 +15,10 @@ import os.path
 import tool_output
 import json
 import re
+import sys
+import fnmatch
+
+debug_session = False
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -23,11 +27,18 @@ import re
 # because GPS.contextual_context does not work when clicking on the right of a
 # line of code (see OB05-033).
 
+# This plugin now depends on gnatprove_menus.xml and gnatprove_file.xml which
+# are located in spark2014/. itp_lib which implements interactive theorem
+# proving is also in this directory.
+
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 
 # The xml information are under spark2014
 spark2014_dir = os.path.join(cur_exec_path, "spark2014")
+sys.path.append(spark2014_dir)
+import itp_lib  # noqa
+
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
@@ -37,7 +48,6 @@ with open(gnatprove_menus_file, "r") as input_file:
 with open(gnatprove_file, "r") as input_file2:
     xml_gnatprove = input_file2.read()
 
-
 # constants that are required by the plugin
 
 toolname = 'gnatprove'
@@ -45,6 +55,8 @@ obj_subdir_name = toolname
 report_file_name = toolname + '.out'
 prefix = 'SPARK'
 menu_prefix = '/' + prefix
+# hook on exit when ITP has been launched
+hook_itp = False
 
 examine_all = 'Examine All'
 examine_root_project = 'Examine All Sources'
@@ -70,7 +82,6 @@ advanced_prove_subp = 'Prove Subprogram'
 advanced_prove_line = 'Prove Line'
 advanced_prove_line_loc = 'Prove Line Location'
 advanced_prove_check = 'Prove Check'
-
 
 # getters for proof target depending on user profile
 
@@ -1071,6 +1082,7 @@ def on_prove_check(context):
     GPS.BuildTarget(prove_check()).execute(extra_args=args,
                                            synchronous=False)
 
+
 # Check for GNAT toolchain: gnatprove
 
 gnatprove = os_utils.locate_exec_on_path(toolname)
@@ -1080,3 +1092,112 @@ if gnatprove:
         xml_gnatprove_menus.format(root=get_root(), example=get_example_root())
 
     gnatprove_plug = GNATProve_Plugin()
+
+
+def has_proof_dir():
+    """ This does a (too) simple analysis of the .gpr to find the attribute
+        Proof_Dir which gives the location of the session file.
+    """
+    # ??? This function is only used to return the proof_dir if any. It
+    # should use GPS's get_attribute but it does not work.
+
+    root_project_file = str(GPS.Project.root().file())
+    proof_dir = ""
+    with open(root_project_file, 'r') as project_file:
+        data = project_file.read()
+        # We matched the string for: "for Proof_Dir use "match";". This has to
+        # be used to be able to use manual proof. So this allows us to retrieve
+        # the directory where proofs are located.
+        match = re.search('for\s+Proof_Dir\s+use\s+\"(.*?)\";',
+                          data,
+                          flags=re.UNICODE)
+        if match is not None:
+            proof_dir = match.group(1)
+            root_project_dir = os.path.dirname(root_project_file)
+            proof_dir = os.path.join(root_project_dir, proof_dir)
+    return(proof_dir)
+
+
+def start_ITP(tree, file_name, abs_fn_path, args=[]):
+    """ Function used to start interactive theorem proving. It actually build
+        the command line, find appropriate files and then use the start method
+        of tree.
+    """
+
+    itp_lib.print_debug("[ITP] Launched")
+
+    # TODO ??? start_ITP and prove_check to be merged.
+    gnat_server = os_utils.locate_exec_on_path("gnat_server")
+    objdirs = GPS.Project.root().object_dirs()
+    default_objdir = objdirs[0]
+    obj_subdir_name = "gnatprove"
+    dir_name = os.path.join(default_objdir, obj_subdir_name)
+    # gnat_server must be launched from gnatprove dir to find why3.conf
+    os.chdir(dir_name)
+    mlw_file = ""
+    file_name_no_ext = os.path.splitext(file_name)[0]
+    for dir_name, sub_dir_name, files in os.walk(dir_name):
+        for file in files:
+            file_name_string = file_name_no_ext + '.mlw'
+            if fnmatch.fnmatch(file, file_name_string) and mlw_file == "":
+                mlw_file = os.path.join(dir_name, file)
+                itp_lib.print_debug(mlw_file)
+    if mlw_file == "":
+        itp_lib.print_debug("TODO")
+
+    # The arguments passed are of the following form (remove '='):
+    # --limit-line=a.adb:42:42:VC_POSTCONDITION
+    arg_limit_line = args[0].replace('=', ' ')
+    proof_dir = has_proof_dir()
+    if proof_dir == "":
+        command = gnat_server + " "
+    else:
+        command = gnat_server + " " + "--proof-dir " + proof_dir + " "
+    if debug_session:
+        command = command + mlw_file
+    else:
+        command = command + arg_limit_line + " " + mlw_file
+    itp_lib.print_debug(command)
+    tree.start(command, abs_fn_path)
+
+
+def on_prove_itp(context):
+    """ Parses the context location provided by GPS and use it to call start_ITP
+        which is used to start interactive theorem proving
+    """
+
+    global tree
+    global hook_itp
+    # ITP part
+    tree = itp_lib.Tree_with_process()
+    msg = context._loc_msg
+    vc_kind = get_vc_kind(msg)
+    text_msg = get_comp_text(msg)
+    msg_line = map_msg[text_msg, 'check_line']
+    msg_col = map_msg[text_msg, 'check_col']
+    llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
+    abs_fn_path = msg.get_file().path
+    file_name = os.path.basename(abs_fn_path)
+    args = [llarg]
+    if inside_generic_unit_context(context):
+        args.append("-U")
+    GPS.Locations.remove_category("Builder results")
+    start_ITP(tree, file_name, abs_fn_path, args)
+    # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
+    # launched last = False so that it is the first hook to be run
+    if hook_itp is False:
+        GPS.Hook("before_exit_action_hook").add(exit_ITP, last=False)
+        hook_itp = True
+
+
+def exit_ITP(dummy_arg):
+    """ This function is used to exit ITP when exiting GPS (it is added as a
+        hook. We don't use tree.exit directly because we want to make sure that
+        this function always succeeds otherwise we cannot exit GPS.
+    """
+    global tree
+    try:
+        tree.exit()
+        return True
+    except:
+        return True
