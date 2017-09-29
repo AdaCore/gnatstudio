@@ -549,6 +549,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
+      Debugger_Num    : Natural;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
@@ -579,13 +580,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end Contains;
 
    begin
-      if Debugger_Name = "" then
-         General_Spawn
-           (Debugger, Kernel, Local_Arguments, Gdb_Command, Proxy);
-      else
-         General_Spawn
-           (Debugger, Kernel, Local_Arguments, Debugger_Name, Proxy);
-      end if;
+      Debugger.General_Spawn
+        (Kernel        => Kernel,
+         Arguments     => Local_Arguments,
+         Debugger_Name =>
+           (if Debugger_Name = ""
+            then Gdb_Command
+            else Debugger_Name),
+         Debugger_Num  => Debugger_Num,
+         Proxy         => Proxy);
 
       Free (Debugger.Executable_Args);
       Free (Debugger.Remote_Target);

@@ -340,7 +340,7 @@ def wait_idle():
     return p
 
 
-known_tasks = ["debugger output monitor", "refreshing Runtime menu"]
+known_tasks = ["debugger output monitor 1", "refreshing Runtime menu"]
 # List of background tasks that are known to be running in the background
 
 

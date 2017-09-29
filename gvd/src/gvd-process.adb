@@ -645,7 +645,8 @@ package body GVD.Process is
 
       --  Interrupt the monitoring of debugger output
 
-      Get_Task_Manager (Kernel).Interrupt_Queue (Debug_Queue_Name);
+      Get_Task_Manager (Kernel).Interrupt_Queue
+        (Debug_Queue_Name & Process.Debugger_Num'Img);
 
       --  Let all views know that they should close
 
@@ -1098,7 +1099,8 @@ package body GVD.Process is
          Proxy           => Proxy,
          Remote_Target   => Actual_Remote_Target,
          Remote_Protocol => Actual_Remote_Protocol,
-         Debugger_Name   => Process.Descriptor.Debugger_Name.all);
+         Debugger_Name   => Process.Descriptor.Debugger_Name.all,
+         Debugger_Num    => Process.Debugger_Num);
       GNAT.OS_Lib.Free (Args2);
 
       --  Switch to the "Debug" perspective if available

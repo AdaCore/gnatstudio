@@ -80,7 +80,7 @@ begin
    Set_Language (Gdb, Language.all'Unchecked_Access);
    Set_Debugger (Language, Gdb);
 
-   Spawn (Gdb, null, No_File, List, "", new Process_Proxy);
+   Spawn (Gdb, null, No_File, List, "", new Process_Proxy, 1);
 
    Initialize (Gdb);
    Set_Executable (Gdb, Create (Full_Filename => "parse_cpp"));

@@ -267,6 +267,7 @@ package body Debugger is
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
+      Debugger_Num   : Natural;
       Proxy          : Process_Proxies.Process_Proxy_Access)
    is
       Process    : Visual_Debugger;
@@ -318,7 +319,7 @@ package body Debugger is
                Command           => C,
                Active            => False,
                Show_Bar          => False,
-               Queue_Id          => Debug_Queue_Name,
+               Queue_Id          => Debug_Queue_Name & Debugger_Num'Img,
                Block_Exit        => False,
                Start_Immediately => False);
 

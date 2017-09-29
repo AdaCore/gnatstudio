@@ -131,7 +131,7 @@ begin
    Gdb.Set_Language (Lang.all'Unchecked_Access);
    Lang.Set_Debugger (Gdb);
 
-   Gdb.Spawn (null, No_File, List, "", new Process_Proxy);
+   Gdb.Spawn (null, No_File, List, "", new Process_Proxy, 1);
 
    Gdb.Initialize;
    Gdb.Set_Executable (Create (Full_Filename => "../parse"));

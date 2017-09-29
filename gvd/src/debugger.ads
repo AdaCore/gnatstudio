@@ -48,6 +48,7 @@ package Debugger is
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
+      Debugger_Num    : Natural;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") is abstract;
@@ -73,6 +74,9 @@ package Debugger is
    --  If Debugger_Name is not empty, use this name rather than a default as
    --  the executable name of the debugger.
    --
+   --  Debugger_Num is the number of debugging session to separate background
+   --  commands in different queues based on this number.
+   --
    --  The Debugger should set up filters to handle the change of current
    --  language, ...
    --
@@ -83,6 +87,7 @@ package Debugger is
       Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
       Arguments      : GNAT.Strings.String_List;
       Debugger_Name  : String;
+      Debugger_Num   : Natural;
       Proxy          : Process_Proxies.Process_Proxy_Access);
    --  Convenience function to start a debugger.
    --  This command modifies the argument list so that the debugger can also

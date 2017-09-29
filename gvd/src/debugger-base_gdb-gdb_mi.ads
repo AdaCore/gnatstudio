@@ -38,6 +38,7 @@ package Debugger.Base_Gdb.Gdb_MI is
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
+      Debugger_Num    : Natural;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "");
