@@ -327,7 +327,6 @@ package body MI.Lexer is
       is
          Current_Char  : Character := ASCII.NUL;
          Str           : Unbounded_String;
-
       begin
          pragma Assert (Sh.Look_Ahead = '"');
          Sh.Eat;  -- Eats the starting quotation char.
@@ -337,13 +336,17 @@ package body MI.Lexer is
             if Current_Char = '\' then
                Handle_Escape_Char (Sh, Str);
             else
-               exit when Current_Char = '"';
+               --  Exit when we find the closing quote char or if the input is
+               --  terminated.
+
+               exit when Current_Char = '"' or else Current_Char = ASCII.NUL;
                Sh.Eat;
                Append (Str, Current_Char);
             end if;
          end loop;
 
-         pragma Assert (Sh.Look_Ahead = '"');
+         pragma Assert (Current_Char = '"' or else Current_Char = ASCII.NUL);
+
          Sh.Eat;  -- Eats the terminating quotation char.
 
          C_String := new String'(To_String (Str));
