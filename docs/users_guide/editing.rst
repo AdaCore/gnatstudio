@@ -283,7 +283,7 @@ There are also several ways to define new key bindings, see
 | :kbd:`Shift-delete`     |                                                                          |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-c`           | Copy to clipboard.                                                       |
-| :kbd:`Shift-insert`     |                                                                          |
+| :kbd:`Ctrl-insert`      |                                                                          |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-v`           | Paste from clipboard.                                                    |
 | :kbd:`Shift-insert`     |                                                                          |
