@@ -493,19 +493,18 @@ package body GVD.Call_Stack is
       --  Update the contents of the window
 
       for J of Bt loop
-         --  ??? We currently consider that the list of parameters always
-         --  starts at the first '(' character encountered
-
          Subp := J.Subprogram;
 
          View.Model.Append (Iter, Null_Iter);
          Params := Null_Unbounded_String;
 
          for P of J.Parameters loop
-            if Params /= Null_Unbounded_String then
-               Append (Params, ", ");
+            if P.Value /= null then
+               if Params /= Null_Unbounded_String then
+                  Append (Params, ", ");
+               end if;
+               Append (Params, P.Value.all);
             end if;
-            Append (Params, P.Value.all);
          end loop;
 
          Set_All_And_Clear
@@ -514,7 +513,10 @@ package body GVD.Call_Stack is
              1 => As_String
                (Escape_Text ((if J.Address = Invalid_Address then "<>"
                    else Address_To_String (J.Address)))),
-             2 => As_String (Escape_Text (Subp.all)),
+             2 => As_String
+               ((if Subp /= null
+                then Escape_Text (Subp.all)
+                else "")),
              3 => As_String (Escape_Text (To_String (Params))),
              4 => As_String
                (Escape_Text

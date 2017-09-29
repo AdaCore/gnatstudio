@@ -403,10 +403,13 @@ package body GVD.Process is
          case Category is
             when Load_Command =>
                Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
+
             when Context_Command =>
                Debugger_Context_Changed_Hook.Run (Process.Kernel, Process);
+
             when Execution_Command =>
                Debugger_Process_Stopped_Hook.Run (Process.Kernel, Process);
+
             when Misc_Command =>
                null;
          end case;

@@ -39,8 +39,11 @@ with Process_Proxies;           use Process_Proxies;
 with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb.Gdb_CLI is
+
+   Me : constant Trace_Handle := Create ("Gdb_CLI", On);
 
    ---------------
    -- Constants --
@@ -2504,6 +2507,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       Line := Natural'Value
         (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+
+   exception
+      when E : others =>
+         Me.Trace (E);
+
+         Name := Null_Unbounded_String;
+         Line := 0;
+         Addr := Invalid_Address;
    end Found_File_Name;
 
    ----------------------

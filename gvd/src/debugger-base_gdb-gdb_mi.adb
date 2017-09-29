@@ -1571,9 +1571,17 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding procedure Attach_Process
      (Debugger : access Gdb_MI_Debugger;
       Process  : String;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      Matched : Match_Array (0 .. 2);
+
    begin
       Debugger.Send ("-target-attach " & Process, Mode => Mode);
+      --  Calling Send_And_Get_Clean_Output in this place emmits
+      --  Context_Changed immediately, before Process_Terminated,
+      --  and makes the Call stack view empty after
+      --  processing Process_Terminated
+
       Debugger.Set_Is_Started (True);
 
       if Mode in Visible_Command then
@@ -1596,12 +1604,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
          begin
             --  If attach failed, "up" will return an error message
 
-            if Str = "No stack." then
-               Debugger.Set_Is_Started (False);
-               return;
+            Match (Error_Pattern, Str, Matched);
+            if Matched (0) /= No_Match then
+               if Str (13 .. Str'Last - 1) =
+                 "Initial frame selected; you cannot go up."
+               then
+                  exit;
+               else
+                  Debugger.Set_Is_Started (False);
+                  Debugger.Kernel.Messages_Window.Insert
+                    (Str (13 .. Str'Last - 1), Mode => Error);
+                  return;
+               end if;
             end if;
-
-            exit when Str = "Initial frame selected; you cannot go up.";
 
             Debugger.Found_File_Name (Str, File, Line, Addr);
 
@@ -2093,7 +2108,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       then
          Debugger.Current_Command_Kind := Load_Command;
 
-      elsif Starts_With (Command, "thread")
+      elsif Starts_With (Command, "-target-attach")
+        or else Starts_With (Command, "-thread-select")
+        or else Starts_With (Command, "thread")
         or else Starts_With (Command, "task")
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
@@ -3136,6 +3153,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Name := Debugger.Current_Frame.File;
          Line := Debugger.Current_Frame.Line;
       end if;
+
+   exception
+      when E : others =>
+         Me.Trace (E);
+
+         Name := Null_Unbounded_String;
+         Line := 0;
+         Addr := Invalid_Address;
    end Found_File_Name;
 
    ----------------------
@@ -4540,7 +4565,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
                First := J;
 
                while J <= Str'Last and then Str (J) /= '"' loop
-                  if Str (J) /= '\' then
+                  if Str (J) /= '\'
+                    or else J = Str'Last
+                  then
                      Append (Result, Str (J));
                   else
                      J := J + 1;
