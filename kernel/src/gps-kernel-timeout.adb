@@ -416,8 +416,14 @@ package body GPS.Kernel.Timeout is
                Stop_At_First_Match => False);
 
             if Status = Died then
-               Trace (Me, "Process died: "  & To_Display_String (Command.CL));
+               Trace
+                 (Me,
+                  "Process died: "  & To_Display_String (Command.CL)
+                  & " (exit status:" & Integer'Image (Command.D.Exit_Status)
+                  & ")");
+
                return Commands.Success;
+
             else
                return Execute_Again;
             end if;
