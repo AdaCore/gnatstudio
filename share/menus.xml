@@ -270,9 +270,6 @@
             <menu label='Display GNAThub Analysis' action='gnathub display analysis' optional='true'/>
          </menu>
 
-         <menu label="GNATcov" optional="true"> <!-- TODO: needs sync w GNATcov plugin and doc -->
-         </menu>
-
          <menu label="Cov_erage">
             <menu label="_Show Report"               action="open coverage report"/>
             <separator/>
@@ -286,6 +283,8 @@
             <menu label="_Gcov">
                <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
                <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
+            </menu>
+            <menu label="GNATcov" optional="true">
             </menu>
          </menu>
 

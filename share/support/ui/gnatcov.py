@@ -92,7 +92,7 @@ gnatcov_install_dir = (
 
 class GNATcovPlugin(object):
 
-    PLUGIN_MENU = '/Tools/GNATcov/'
+    PLUGIN_MENU = '/Analyze/Coverage/GNATcov/'
 
     # Keep this style name synchronized with Code_Coverage.GNATcov.
 
