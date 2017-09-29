@@ -1048,7 +1048,7 @@ how the outline view is displayed:
   of entities.
 
 * :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks,
-  entries, and protected types`
+  entries, and protected types`, :guilabel:`Show with clauses`
 
   Controls the display of the specified categories of entities.
 
@@ -1076,6 +1076,13 @@ how the outline view is displayed:
   taken to its declaration unless it is already the current location in the
   editor, in which case you are taken to its body.
 
+* :guilabel:`Group names by category`
+
+  With this option enabled it is possible to collapse each entity type
+  (package, type, pragma, sub-program, etc.) to a single line in the
+  Outline View. This works only in Flat View mode, so turning this option
+  on makes the Flat View automatically enabled.
+  
 * :guilabel:`Dynamic link with editor`
 
   Causes the current subprogram to be selected in the outline view each
@@ -1083,7 +1090,7 @@ how the outline view is displayed:
   will slow down GPS.
 
 
-.. index: windows; clipboard
+.. index:: windows; clipboard
 .. _The_Clipboard_View:
 
 The :guilabel:`Clipboard` view
