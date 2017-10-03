@@ -40,7 +40,10 @@ class WorkflowButtons(object):
                     parent_menu='/Build/Project/%s/' % target[0])
 
             WorkflowButtons.__build_targets_created = True
-            WorkflowButtons.__connect_hooks()
+            WorkflowButtons.__connect_editor_hooks()
+
+            GPS.Hook('build_mode_changed').add(
+                WorkflowButtons.__on_build_mode_changed)
 
     @staticmethod
     def force_rebuild_main():
@@ -51,7 +54,7 @@ class WorkflowButtons(object):
         WorkflowButtons.__needs_build = True
 
     @staticmethod
-    def __connect_hooks():
+    def __connect_editor_hooks():
         """
         Connect to the 'file_changed_on_disk' and 'buffer_edited' hooks to
         know if we can skip the 'Build Main' BuildTarget when executing
@@ -88,7 +91,14 @@ class WorkflowButtons(object):
         """
         if target_name == "Build All" and status == 0:
             WorkflowButtons.__needs_build = False
-            WorkflowButtons.__connect_hooks()
+            WorkflowButtons.__connect_editor_hooks()
+
+    @staticmethod
+    def __on_build_mode_changed(hook, build_mode):
+        """
+        Called when the build mode changes. Force the build phase in that case.
+        """
+        WorkflowButtons.force_rebuild_main()
 
     @staticmethod
     def __on_file_changed(hook, file):
@@ -135,7 +145,7 @@ class WorkflowButtons(object):
 
         # Reconnect to the hooks to know if we can skip the 'Build Main'
         # BuildTarget next time.
-        WorkflowButtons.__connect_hooks()
+        WorkflowButtons.__connect_editor_hooks()
 
     @staticmethod
     def __build_and_debug_wf(main_name):
