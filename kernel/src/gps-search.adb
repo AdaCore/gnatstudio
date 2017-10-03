@@ -817,9 +817,13 @@ package body GPS.Search is
       Index : Integer;
    begin
       loop
+         --  Perform a search from the character next to the last match's
+         --  ending until the end of the buffer.
          Index := GNATCOLL.Boyer_Moore.Search
            (Self.Pattern.all,
-            Buffer (Context.Start.Index + 1 .. Context.Buffer_End));
+            Buffer (Context.Finish.Index + 1 .. Context.Buffer_End));
+
+         --  Check if we match a whole word. Exit in that case.
          exit when not Self.Whole_Word
            or else Index = -1
            or else Index > Buffer'Last
@@ -829,7 +833,10 @@ package body GPS.Search is
               and then
                 (Index = Buffer'Last - Self.Length + 1
                  or else Is_Word_Delimiter (Buffer (Index + Self.Length))));
-         Context.Start.Index := Index + 1;
+
+         --  If we did not match a whole word, continue the search, starting
+         --  from the character next to the match's ending.
+         Context.Finish.Index := Index + Self.Length - 1;
       end loop;
 
       if Index = -1 then

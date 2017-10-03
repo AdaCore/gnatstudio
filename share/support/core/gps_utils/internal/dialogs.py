@@ -617,6 +617,9 @@ class Search(Dialog):
             self.case = toggle_buttons[1]
             self.whole_word = toggle_buttons[2]
 
+            # Disable confirmation dialog for 'Replace all' button
+            GPS.Preference("Ask-Confirmation-For-Replace-All").set(False)
+
     def current_scope(self):
         """
         Return the name of the current context
