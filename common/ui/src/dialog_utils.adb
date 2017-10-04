@@ -282,8 +282,10 @@ package body Dialog_Utils is
    procedure Initialize
      (Self                : not null access Dialog_Group_Widget_Record'Class;
       Parent_View         : not null access Dialog_View_Record'Class;
-      Group_Name          : String := "";
-      Allow_Multi_Columns : Boolean := True)
+      Group_Name          : String                 := "";
+      Allow_Multi_Columns : Boolean                := True;
+      Selection           : Gtk_Selection_Mode     := Selection_None;
+      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null)
    is
       Max_Children_Per_Line : constant Guint := (if Allow_Multi_Columns then
                                                     2
@@ -297,8 +299,12 @@ package body Dialog_Utils is
       Self.Flow_Box.Set_Orientation (Orientation_Horizontal);
       Self.Flow_Box.Set_Row_Spacing (0);
       Self.Flow_Box.Set_Max_Children_Per_Line (Max_Children_Per_Line);
-      Self.Flow_Box.Set_Selection_Mode (Selection_None);
+      Self.Flow_Box.Set_Selection_Mode (Selection);
       Self.Flow_Box.Set_Homogeneous (False);
+
+      if Sorting_Function /= null then
+         Self.Flow_Box.Set_Sort_Func (Sorting_Function);
+      end if;
 
       Self.Add (Self.Flow_Box);
 
@@ -514,6 +520,29 @@ package body Dialog_Utils is
       --  Update the number of children
       Self.Number_Of_Children := Self.Number_Of_Children + 1;
    end Append_Child;
+
+   ---------------------------
+   -- Get_Selected_Children --
+   ---------------------------
+
+   function Get_Selected_Children
+     (Self : not null access Dialog_Group_Widget_Record'Class)
+      return Gtk.Widget.Widget_List.Glist
+   is
+   begin
+      return Self.Flow_Box.Get_Selected_Children;
+   end Get_Selected_Children;
+
+   ------------
+   -- Force_Sort --
+   ------------
+
+   procedure Force_Sort
+     (Self : not null access Dialog_Group_Widget_Record'Class)
+   is
+   begin
+      Self.Flow_Box.Invalidate_Sort;
+   end Force_Sort;
 
    ---------------------
    -- Apply_Doc_Style --

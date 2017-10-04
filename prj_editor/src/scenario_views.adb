@@ -15,68 +15,70 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with System.Assertions;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
 with Glib;                     use Glib;
-with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Values;              use Glib.Values;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib.Convert;             use Glib.Convert;
 
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Cell_Renderer_Combo;  use Gtk.Cell_Renderer_Combo;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Menu;
-with Gtk.Check_Menu_Item;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
-with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
 
-with Commands.Interactive;      use Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
-with Projects;                  use Projects;
+with Commands.Interactive;     use Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
+with Projects;                 use Projects;
 with Generic_Views;
-with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Variable_Editors;          use Variable_Editors;
-with GPS.Intl;                  use GPS.Intl;
-with XML_Utils;                 use XML_Utils;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.VFS;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with Variable_Editors;         use Variable_Editors;
+with GPS.Intl;                 use GPS.Intl;
+with XML_Utils;                use XML_Utils;
+with Dialog_Utils;             use Dialog_Utils;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 package body Scenario_Views is
 
    Me : constant Trace_Handle := Create ("Scenario_Views");
 
+   package Build_Mode_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+   use Build_Mode_Lists;
+
+   package Scenario_Combo_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Gtk_Combo_Box_Text,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=",
+      "="             => "=");
+   use Scenario_Combo_Maps;
+
    type Scenario_View_Module_Record is new Module_ID_Record with record
-      Modes : Gtk_List_Store;
+      Modes : Build_Mode_Lists.List;
       --  The list of registered build modes
 
       Modes_Help : Ada.Strings.Unbounded.Unbounded_String;
    end record;
+
    type Scenario_View_Module is access all Scenario_View_Module_Record'Class;
    overriding procedure Destroy (Self : in out Scenario_View_Module_Record);
    overriding procedure Customize
@@ -87,9 +89,19 @@ package body Scenario_Views is
    --  See inherited documentation
 
    type Scenario_View_Record is new Generic_Views.View_Record with record
-      View          : Gtk.Tree_View.Gtk_Tree_View;
-      Scenario_Node : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Build_Node    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      View          : Dialog_View;
+      --  A dialog view containing a hashmap of dialog_group of scenario var
+      Combo_Var_Map : Scenario_Combo_Maps.Map;
+      --  Map containing the name of the scenario variable
+      Combo_Build   : Gtk_Combo_Box_Text;
+      --  The combo box with the Build Mode choices
+      Build_Group   : Dialog_Group_Widget;
+      --  The group with the build mode, needed to hide/show it
+      Scenar_Group  : Dialog_Group_Widget;
+      --  The group with the scenario variable combo box
+      Scenar_View   : Dialog_View_With_Button_Box;
+      --  The view to modify and visualize scenario variables,
+      --  needed to refresh the variables
    end record;
 
    overriding procedure Create_Menu
@@ -103,9 +115,6 @@ package body Scenario_Views is
    --  The view is automatically refreshed every time the project view in
    --  the manager changes.
    --  Returns the focus widget in the view.
-
-   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
-   --  Free memory used by Scenario_View_Record
 
    package Scenario_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Scenario_View",
@@ -121,24 +130,10 @@ package body Scenario_Views is
    use Scenario_Views;
    subtype Scenario_View is Scenario_Views.View_Access;
 
-   function Add_Possible_Values
-     (Kernel : access Kernel_Handle_Record'Class;
-      Var    : Scenario_Variable)
-     return Gtk_List_Store;
-   --  Returns a model with the list of possible values for Var
-
    function Selected_Variable
      (View : access Scenario_View_Record'Class)
       return Scenario_Variable;
    --  Returns the currently selected variable
-
-   procedure Variable_Value_Changed
-     (View     : access GObject_Record'Class;
-      Path     : Glib.UTF8_String;
-      New_Iter : Gtk_Tree_Iter);
-   --  Called when the value of one of the variables has changed.
-   --  This recomputes the scenario view, so that changes are reflected in
-   --  other parts of GPS.
 
    type On_Refresh is new Simple_Hooks_Function with record
       View : access Scenario_View_Record'Class;
@@ -159,28 +154,41 @@ package body Scenario_Views is
       Pref   : Preference);
    --  Called when the preferences have changed
 
-   type On_Build_Mode_Changed is new String_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Build_Mode_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Mode   : String);
-   --  Called when a new build mode is selected
-
    Show_Build_Modes : Boolean_Preference;
 
-   type Command_Edit_Variable is new Interactive_Command with null record;
+   procedure Add_New_Value
+     (Kernel   : Kernel_Handle;
+      New_Val  : String;
+      Variable : in out Scenario_Variable);
+   --  If New_Val is not already defined in Variable,
+   --  add it in the list of possible values.
+   --  Change current value of Variable to New_Val.
+
+   type Command_Validate_Variable is new Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Command_Edit_Variable;
+     (Self    : access Command_Validate_Variable;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
+   --  Apply the variable modifications
+
+   procedure Command_Add_Variable
+     (View : access Glib.Object.GObject_Record'Class);
+   --  Add a new variable
+
+   procedure Command_Delete_Variable
+     (View : access Glib.Object.GObject_Record'Class);
+   --  Delete selected variable
+
+   procedure Command_Edit_Variable
+     (View : access Glib.Object.GObject_Record'Class);
    --  Edit the selected variable
 
-   type Command_Delete_Variable is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Command_Delete_Variable;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Deleted selected variable
+   function Sort_Scenario_By_Name
+     (C1 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class;
+      C2 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class)
+      return Glib.Gint;
+   --  Function used to sort the scenario variables. Each flow box child must
+   --  have the name set to the the scenario variable name it's representing
 
    -------------
    -- Destroy --
@@ -188,7 +196,7 @@ package body Scenario_Views is
 
    overriding procedure Destroy (Self : in out Scenario_View_Module_Record) is
    begin
-      Unref (Self.Modes);
+      Self.Modes.Clear;
    end Destroy;
 
    -------------
@@ -214,26 +222,6 @@ package body Scenario_Views is
       end if;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Build_Mode_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Mode   : String)
-   is
-      pragma Unreferenced (Self);
-      View  : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
-      Build : Gtk_Tree_Iter;
-   begin
-      if View.Build_Node /= Null_Gtk_Tree_Path then
-         Build := Model.Get_Iter (View.Build_Node);
-         Model.Set (Build, 1, Mode);
-      end if;
-   end Execute;
-
    ----------------
    -- Initialize --
    ----------------
@@ -242,90 +230,100 @@ package body Scenario_Views is
      (View    : access Scenario_View_Record'Class)
       return Gtk_Widget
    is
-      Scrolled : Gtk_Scrolled_Window;
-      Model    : Gtk_Tree_Store;
-      Col      : Gtk_Tree_View_Column;
-      Text     : Gtk_Cell_Renderer_Text;
-      Combo    : Gtk_Cell_Renderer_Combo;
-      Col_Number : Gint;
-      Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
-      pragma Unreferenced (Col_Number);
+      Button   : Gtk_Button;
+      Group    : Dialog_Group_Widget;
+      Combo    : Gtk_Combo_Box_Text;
+      Module   : constant Scenario_View_Module :=
+        Scenario_View_Module (Scenario_Views.Get_Module);
+      Cur_Mode : constant String := View.Kernel.Get_Build_Mode;
+      Iter     : Build_Mode_Lists.Cursor := Module.Modes.First;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Scrolled.Set_Shadow_Type (Shadow_None);
-      View.Pack_Start (Scrolled, Expand => True, Fill => True);
+      --  Initialize and create the dialog view
+      View.View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (View.View);
+      View.Pack_Start (View.View);
 
-      Gtk_New
-        (Model,
-         (0 => GType_String,   --  Name of the category or variable
-          1 => GType_String,   --  Current value
-          2 => Gtk.Tree_Model.Get_Type, --  The valid choices for the value
-          3 => GType_Boolean,  --  Whether the value is editable
-          4 => GType_String)); --  The tooltip
-      Gtk_New (View.View, Model);
-      View.View.Set_Headers_Visible (False);
-      Scrolled.Add (View.View);
-      Unref (Model);
+      --  Initialize and create the view containing the scenario variables
+      View.Scenar_View := new Dialog_View_With_Button_Box_Record;
+      Dialog_Utils.Initialize (View.Scenar_View, Position => Pos_Left);
 
-      View.View.Set_Tooltip_Column (4);
+      --  Create 3 buttons add/suppress/edit new scenario variable
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Add_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
 
-      Gtk_New (Col);
-      Col.Set_Reorderable (True);
-      Col.Set_Resizable (True);
-      Col.Set_Clickable (True);
-      Col.Set_Sort_Column_Id (0);
-      Col_Number := View.View.Append_Column (Col);
-      Gtk_New (Text);
-      Col.Pack_Start (Text, False);
-      Col.Add_Attribute (Text, "text", 0);
-      Col.Clicked;   --  Ensure sorting
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Delete_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
 
-      Gtk_New (Col);
-      Col.Set_Reorderable (True);
-      Col.Set_Resizable (True);
-      Col.Set_Sort_Column_Id (1);
-      Col_Number := View.View.Append_Column (Col);
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-edit-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
+      View.Scenar_View.Append_Button (Button);
 
-      Gtk_New (Pixbuf);
-      Col.Pack_Start (Pixbuf, False);
-      Set_Property (Pixbuf, Icon_Name_Property, "gps-double-arrow-symbolic");
-      Col.Add_Attribute (Pixbuf, "visible", 3);
-
+      --  Create the build group
+      Group := new Dialog_Group_Widget_Record;
+      Dialog_Utils.Initialize (Self => Group,
+                               Parent_View => View.View,
+                               Group_Name => "Build",
+                               Allow_Multi_Columns => False);
       Gtk_New (Combo);
-      Col.Pack_Start (Combo, True);
-      Set_Property (Combo, Text_Column_Property, 0);  --  in combo's model
-      Col.Add_Attribute (Combo, "text", 1);
-      Col.Add_Attribute (Combo, "model", 2);
-      Col.Add_Attribute (Combo, "editable", 3);
-      Set_Property (Combo, Has_Entry_Property, False);
+      Create_Child
+        (Group, Combo, Label => "Build Mode",
+         Doc => To_String (Module.Modes_Help));
+      View.Combo_Build := Combo;
 
-      Combo.On_Changed (Variable_Value_Changed'Access, View);
+      --  Fill the possible values of build mode
+      while Iter /= Build_Mode_Lists.No_Element loop
+         if Cur_Mode = Element (Iter) then
+            --  Put the selected value in the first column
+            Combo.Prepend_Text (Element (Iter));
+         else
+            Combo.Append_Text (Element (Iter));
+         end if;
+         Next (Iter);
+      end loop;
+      Combo.Set_Active (0);
+      View.Build_Group := Group;
+
+      --  Create the group containing the variable view with buttons
+      Group := new Dialog_Group_Widget_Record;
+      Dialog_Utils.Initialize (Self => Group,
+                               Parent_View => View.View,
+                               Group_Name => "Scenario Variables",
+                               Allow_Multi_Columns => False);
+      --  Add the Scenario Variable View in the previous Widget Group
+      Append_Child
+        (Group, View.Scenar_View, Child_Key => "Scenario Variables");
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
       Project_View_Changed_Hook.Add
-         (new On_Refresh'(Simple_Hooks_Function with View => View),
-          Watch => View);
+        (new On_Refresh'(Simple_Hooks_Function with View => View),
+         Watch => View);
       Variable_Changed_Hook.Add
-         (new On_Refresh'(Simple_Hooks_Function with View => View),
-          Watch => View);
+        (new On_Refresh'(Simple_Hooks_Function with View => View),
+         Watch => View);
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
-      Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed, Watch => View);
 
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
-      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
-
       --  Update the viewer with the current project
       On_Force_Refresh (View);
-
-      Setup_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View.View);
 
       return Gtk_Widget (View.View);
    end Initialize;
@@ -338,157 +336,141 @@ package body Scenario_Views is
      (View : access Scenario_View_Record'Class)
       return Scenario_Variable
    is
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
-      Selection : constant Gtk_Tree_Selection := View.View.Get_Selection;
-      M    : Gtk_Tree_Model;
-      Iter : Gtk_Tree_Iter;
-
+      List : constant Gtk.Widget.Widget_List.Glist
+        := View.Scenar_Group.Get_Selected_Children;
    begin
-      Selection.Get_Selected (M, Iter);
-      if Iter /= Null_Iter
-        and then Model.Parent (Iter) = Model.Get_Iter (View.Scenario_Node)
+      if not Gtk.Widget.Widget_List."="
+        (List, Gtk.Widget.Widget_List.Null_List)
       then
          declare
-            Variable : constant String := Model.Get_String (Iter, 0);
+            --  Selection_Single was used to create the flow box,
+            --  the list is not empty so get the only elem and retrieve its
+            --  name.
+            Child_Flow_Box : constant Gtk_Flow_Box_Child
+              := Gtk_Flow_Box_Child (Gtk.Widget.Widget_List.Get_Data (List));
+            Variable_Name  : constant String
+              := Child_Flow_Box.Get_Name;
+            Scenar         : constant Scenario_Variable_Array
+              := Scenario_Variables (View.Kernel);
          begin
-            return Get_Project_Tree
-              (View.Kernel).Scenario_Variables (Variable);
+            for J in Scenar'Range loop
+               if External_Name (Scenar (J)) = Variable_Name then
+                  return Scenar (J);
+               end if;
+            end loop;
          end;
-      elsif Iter /= Null_Iter then
-         return No_Variable;
-      else
-         return No_Variable;
       end if;
+      return No_Variable;
    end Selected_Variable;
 
-   ----------------------------
-   -- Variable_Value_Changed --
-   ----------------------------
+   -------------------
+   -- Add_New_Value --
+   -------------------
 
-   procedure Variable_Value_Changed
-     (View     : access GObject_Record'Class;
-      Path     : Glib.UTF8_String;
-      New_Iter : Gtk_Tree_Iter)
+   procedure Add_New_Value
+     (Kernel   : Kernel_Handle;
+      New_Val  : String;
+      Variable : in out Scenario_Variable)
    is
-      V : constant Scenario_View := Scenario_View (View);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
-      Iter  : constant Gtk_Tree_Iter := Model.Get_Iter_From_String (Path);
-
-      Val  : GValue;
-      List : Gtk_List_Store;
+      Already_Here : Boolean := False;
+      List_Values  : constant GNAT.Strings.String_List
+        := Get_Registry (Kernel).Tree.Possible_Values_Of (Variable);
+      List_New_Val : GNAT.Strings.String_List (1 .. 1);
+      Ptr_New_Val  : constant GNAT.Strings.String_Access
+        := new String'(New_Val);
    begin
-      Model.Get_Value (Iter, 2, Val);
-      List := Gtk_List_Store (Get_Object (Val));
-      Unset (Val);
-
-      --  Have we changed a scenario variable ?
-
-      if V.Scenario_Node = Null_Gtk_Tree_Path
-      --  If the Scenario_Node is null, we have necessarily changed a
-      --  scenario variable because that means the build mode is not shown
-
-        or else (Model.Parent (Iter) = Model.Get_Iter (V.Scenario_Node))
-      then
-         declare
-            Value : constant String := List.Get_String (New_Iter, 0);
-            Variable : constant String := Model.Get_String (Iter, 0);
-            Var   : Scenario_Variable :=
-              Get_Project_Tree (V.Kernel).Scenario_Variables (Variable);
-         begin
-            Trace (Me, "Set value of '" & Variable & "' to '"
-                   & Value & "'");
-            Set_Value (Var, Value);
-            Get_Registry (V.Kernel).Tree.Change_Environment ((1 => Var));
-            Recompute_View (V.Kernel);
-         end;
-
-      else
-         --  The build mode
-         V.Kernel.Set_Build_Mode (New_Mode => List.Get_String (New_Iter, 0));
+      for Val in List_Values'Range loop
+         if List_Values (Val).all = New_Val then
+            Already_Here := True;
+            exit;
+         end if;
+      end loop;
+      --  If not already here, add the value
+      if not Already_Here then
+         List_New_Val (1) := Ptr_New_Val;
+         Add_Values (Get_Registry (Kernel).Tree.all, Variable, List_New_Val);
+         GNAT.Strings.Free (List_New_Val (1));
       end if;
-   end Variable_Value_Changed;
-
-   -------------------------
-   -- Add_Possible_Values --
-   -------------------------
-
-   function Add_Possible_Values
-     (Kernel : access Kernel_Handle_Record'Class;
-      Var    : Scenario_Variable)
-      return Gtk_List_Store
-   is
-      List : Gtk_List_Store;
-      Iter : Gtk_Tree_Iter;
-   begin
-      Gtk_New (List, (0 => GType_String));
-
-      declare
-         Values : GNAT.Strings.String_List :=
-           Get_Registry (Kernel).Tree.Possible_Values_Of (Var);
-      begin
-         for Val in Values'Range loop
-            List.Append (Iter);
-            List.Set (Iter, 0, Locale_To_UTF8 (Values (Val).all));
-         end loop;
-
-         Free (Values);
-      end;
-
-      return List;
-
-   exception
-      when System.Assertions.Assert_Failure =>
-         Trace
-           (Me,
-            "Scenario variable not found: " & External_Name (Var));
-         return null;
-   end Add_Possible_Values;
+      Set_Value (Variable, New_Val);
+   end Add_New_Value;
 
    -------------
    -- Execute --
    -------------
 
    overriding function Execute
-     (Self    : access Command_Edit_Variable;
+     (Self    : access Command_Validate_Variable;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      K : constant Kernel_Handle := Get_Kernel (Context.Context);
-      V : constant Scenario_View := Scenario_Views.Retrieve_View (K);
-      Variable : constant Scenario_Variable := Selected_Variable (V);
-      Edit : New_Var_Edit;
+      K      : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      V      : constant Scenario_View     := Scenario_Views.Retrieve_View (K);
+      Index  : Scenario_Combo_Maps.Cursor := V.Combo_Var_Map.First;
+      Scenar : Scenario_Variable_Array    := Scenario_Variables (K);
+      Elem   : Gtk_Combo_Box_Text;
+      Val    : Unbounded_String;
+      Name   : Unbounded_String;
    begin
-      if Variable /= No_Variable then
-         Gtk_New (Edit, V.Kernel, Variable, -"Editing a variable");
-         Show_All (Edit);
-         while Run (Edit) = Gtk_Response_OK
-           and then not Update_Variable (Edit)
-         loop
-            null;
+      --  Set the Build Mode
+      V.Kernel.Set_Build_Mode (New_Mode => V.Combo_Build.Get_Active_Text);
+
+      --  Set val of the scenario variables
+      while Index /= Scenario_Combo_Maps.No_Element loop
+         Elem := Scenario_Combo_Maps.Element (Index);
+         Val := To_Unbounded_String (Elem.Get_Active_Text);
+         Name := To_Unbounded_String (Scenario_Combo_Maps.Key (Index));
+
+         --  Find the Variable with the same name as Combo
+         for J in Scenar'Range loop
+            if External_Name (Scenar (J)) = To_String (Name) then
+               Trace (Me, "Set value of '" & To_String (Name) & "' to '"
+                      & To_String (Val) & "'");
+               Add_New_Value (K, To_String (Val), Scenar (J));
+               Get_Registry (K).Tree.Change_Environment ((1 => Scenar (J)));
+            end if;
          end loop;
-         Destroy (Edit);
-      else
-         Trace (Me, "No selected variable");
-      end if;
+
+         --  Next Element
+         Index := Scenario_Combo_Maps.Next (Index);
+      end loop;
+      Recompute_View (K);
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   --------------------------
+   -- Command_Add_Variable --
+   --------------------------
 
-   overriding function Execute
-     (Self    : access Command_Delete_Variable;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type
+   procedure Command_Add_Variable
+     (View : access Glib.Object.GObject_Record'Class)
    is
-      pragma Unreferenced (Self);
-      K   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      V   : constant Scenario_View := Scenario_Views.Retrieve_View (K);
-      Var : constant Scenario_Variable := Selected_Variable (V);
+      V        : constant Scenario_View := Scenario_View (View);
+      Edit     : New_Var_Edit;
+   begin
+      Gtk_New (Edit, V.Kernel,
+               Title => -"Creating a new variable");
+      Show_All (Edit);
 
-      Message : constant String :=
+      while Run (Edit) = Gtk_Response_OK
+        and then not Update_Variable (Edit)
+      loop
+         null;
+      end loop;
+
+      Destroy (Edit);
+   end Command_Add_Variable;
+
+   -----------------------------
+   -- Command_Delete_Variable --
+   -----------------------------
+
+   procedure Command_Delete_Variable
+     (View : access Glib.Object.GObject_Record'Class)
+   is
+      V        : constant Scenario_View := Scenario_View (View);
+      Var      : constant Scenario_Variable := Selected_Variable (V);
+      Message  : constant String :=
         "Doing so will remove all the configurations associated with"
         & ASCII.LF
         & "that variable, except for the currently selected value";
@@ -519,8 +501,49 @@ package body Scenario_Views is
             Trace (Me, "Delete_Variable: " & External_Name (Var));
          end if;
       end if;
-      return Commands.Success;
-   end Execute;
+   end Command_Delete_Variable;
+
+   ---------------------------
+   -- Command_Edit_Variable --
+   ---------------------------
+
+   procedure Command_Edit_Variable
+     (View : access Glib.Object.GObject_Record'Class)
+   is
+      V        : constant Scenario_View := Scenario_View (View);
+      Variable : constant Scenario_Variable := Selected_Variable (V);
+      Edit     : New_Var_Edit;
+   begin
+      if Variable /= No_Variable then
+         Gtk_New (Edit, V.Kernel, Variable, -"Editing a variable");
+         Show_All (Edit);
+         while Run (Edit) = Gtk_Response_OK
+           and then not Update_Variable (Edit)
+         loop
+            null;
+         end loop;
+         Destroy (Edit);
+      else
+         Trace (Me, "No selected variable");
+      end if;
+   end Command_Edit_Variable;
+
+   ---------------------------
+   -- Sort_Scenario_By_Name --
+   ---------------------------
+
+   function Sort_Scenario_By_Name
+     (C1 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class;
+      C2 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class)
+      return Glib.Gint
+   is
+   begin
+      if C1.Get_Name <= C2.Get_Name then
+         return -1;
+      else
+         return 1;
+      end if;
+   end Sort_Scenario_By_Name;
 
    ----------------------
    -- On_Force_Refresh --
@@ -533,19 +556,6 @@ package body Scenario_Views is
       H.View := V;
       H.Execute (V.Kernel);
    end On_Force_Refresh;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class) is
-      V     : constant Scenario_View := Scenario_View (Widget);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
-   begin
-      Path_Free (V.Scenario_Node);
-      Path_Free (V.Build_Node);
-      Model.Clear;
-   end On_Destroy;
 
    -----------------
    -- Create_Menu --
@@ -567,92 +577,78 @@ package body Scenario_Views is
      (Self   : On_Refresh;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Module : constant Scenario_View_Module :=
-        Scenario_View_Module (Scenario_Views.Get_Module);
-      V      : constant Scenario_View := Scenario_View (Self.View);
-      Row    : Guint;
-      pragma Unreferenced (Row);
-      Iter   : Gtk_Tree_Iter;
-      Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
-
-      Scenario   : Gtk_Tree_Iter;
+      Combo      : Gtk_Combo_Box_Text;
+      Group      : Dialog_Group_Widget;
+      View       : constant Scenario_View := Scenario_View (Self.View);
       Show_Build : constant Boolean := Show_Build_Modes.Get_Pref;
-
    begin
       Trace (Me, "Recomputing list of scenario variables");
 
-      --  There is a small problem here: Refresh might be called while one of
-      --  the combo boxes is still displayed. Thus, if we destroy it now, any
-      --  pending signal on the combo box (like hiding the popup window) will
-      --  generate a segmentation fault.
-      --  This also saves some refreshing when the values would be reflected
-      --  automatically anyway.
-
-      Path_Free (V.Scenario_Node);
-      Path_Free (V.Build_Node);
-      Model.Clear;
-
-      if Show_Build then
-         Model.Append (Iter, Null_Iter);
-         V.Build_Node := Model.Get_Path (Iter);
-
-         Set_And_Clear
-           (Model, Iter,
-            (0 => As_String     ("Build mode"),
-             1 => As_String     (V.Kernel.Get_Build_Mode),
-             2 => As_List_Store (Module.Modes),
-             3 => As_Boolean    (True),  --  editable,
-             4 => As_String     (To_String (Module.Modes_Help))));
-
-         Model.Append (Iter, Null_Iter);
-         V.Scenario_Node := Model.Get_Path (Iter);
-
-         Set_And_Clear
-           (Model, Iter,
-            (0, 3),
-            (0 => As_String  ("Scenario Variables"),
-             1 => As_Boolean  (False)));
-
-         Scenario := Iter;
-         --  Remove_Child_Nodes (Model, Scenario);
-
-      else
-         V.Build_Node    := Null_Gtk_Tree_Path;
-         V.Scenario_Node := Null_Gtk_Tree_Path;
-         Scenario        := Null_Iter;
-      end if;
+      --  Clean the View
+      View.Scenar_View.Remove_All_Children;
+      View.Combo_Var_Map.Clear;
 
       declare
-         Scenar_Var : constant Scenario_Variable_Array :=
-           Scenario_Variables (Kernel);
-         Dummy : Boolean;
-         pragma Unreferenced (Dummy);
+         Scenar_Var  : constant Scenario_Variable_Array
+           := Scenario_Variables (Kernel);
       begin
+         --  Create the group containing a combobox for each of the variable
+         Group := new Dialog_Group_Widget_Record;
+         Dialog_Utils.Initialize (Self => Group,
+                                  Parent_View => View.Scenar_View,
+                                  Group_Name => "",
+                                  Allow_Multi_Columns => False,
+                                  Selection => Selection_Single,
+                                  Sorting_Function =>
+                                    Sort_Scenario_By_Name'Access);
+         View.Scenar_Group := Group;
+
+         --  Fill the combobox group
          if Scenar_Var'Length /= 0 then
             for J in Scenar_Var'Range loop
-               Model.Append (Iter, Scenario);
-
-               Row := Guint (J - Scenar_Var'First) + 1;
-
                declare
-                  Name : constant String := External_Name (Scenar_Var (J));
+                  Name         : constant String
+                    := External_Name (Scenar_Var (J));
+                  Values       : constant GNAT.Strings.String_List
+                    := Get_Registry (Kernel).Tree.Possible_Values_Of
+                    (Scenar_Var (J));
+                  Flow_Child   : Gtk_Widget;
                begin
-                  Set_And_Clear
-                    (Model, Iter,
-                     (0 => As_String  (Name),
-                      1 => As_String (Value (Scenar_Var (J))),
-                      2 => As_List_Store
-                        (Add_Possible_Values (Kernel, Scenar_Var (J))),
-                      3 => As_Boolean (True)));
+                  Gtk_New_With_Entry (Combo);
+                  Flow_Child := Create_Child
+                    (Group, Combo, Label => Name, Child_Key => Name);
+                  --  Set the name to variable name needed by Selected_Variable
+                  Flow_Child.Set_Name (Name);
+
+                  --  Store in hash map needed to validate the changes
+                  View.Combo_Var_Map.Insert (Name, Combo);
+                  for Val in Values'Range loop
+                     if Values (Val).all = Value (Scenar_Var (J)) then
+                        --  Put the selected value in the first column
+                        Combo.Prepend_Text (Locale_To_UTF8 (Values (Val).all));
+                     else
+                        Combo.Append_Text (Locale_To_UTF8 (Values (Val).all));
+                     end if;
+                  end loop;
+
+                  --  Show the selected value
+                  Combo.Set_Active (0);
+                  --  The combo needs to have the name of the variable
+                  Combo.Set_Name (Name);
                end;
             end loop;
-
-            if Show_Build then
-               Dummy := V.View.Expand_Row
-                 (Path => V.Scenario_Node, Open_All => False);
-            end if;
          end if;
+
+         --  Force a resort
+         Group.Force_Sort;
       end;
+
+      --  The View is built after the initialise, Show_All must be called to
+      --  show the added widgets.
+      Show_All (View);
+      if not Show_Build then
+         Hide (View.Build_Group);
+      end if;
    end Execute;
 
    ---------------
@@ -666,7 +662,6 @@ package body Scenario_Views is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-      Iter       : Gtk_Tree_Iter;
 
    begin
       if Node.Tag.all = "builder-mode" then
@@ -686,13 +681,12 @@ package body Scenario_Views is
             --  Add the mode to the combo if it is not a shadow mode
 
             if Shadow = null or else not Boolean'Value (Shadow.all) then
-               Module.Modes.Append (Iter);
-               Module.Modes.Set (Iter, 0, Name);
+               Module.Modes.Append (Name);
             end if;
 
             if Description /= null then
                Append (Module.Modes_Help,
-                       "<b>" & Name & "</b>: " & Description.all & ASCII.LF);
+                       Name & ": " & Description.all & ASCII.LF);
             end if;
 
          exception
@@ -709,10 +703,6 @@ package body Scenario_Views is
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       M : constant Scenario_View_Module := new Scenario_View_Module_Record;
    begin
-      Gtk_New (M.Modes, (0 => GType_String));
-
-      --  Make sure it will never be destroyed even if we close the view
-      Ref (M.Modes);
 
       Scenario_Views.Register_Module
         (Kernel,
@@ -723,18 +713,14 @@ package body Scenario_Views is
          Label => -"Show build modes");
 
       Register_Action
-        (Kernel, "Scenario edit variable",
-         new Command_Edit_Variable,
-         -"Edit properties of the selected variable",
-         Icon_Name => "gps-edit-symbolic",
+        (Kernel, "Scenario Validate Variable",
+         new Command_Validate_Variable,
+         Description =>
+           -("Apply all the scenario modifications. The project"
+           & " must be built for the changes to be applied"),
+         Icon_Name => "gps-refresh-symbolic",
          Category => -"Scenario");
 
-      Register_Action
-        (Kernel, "Scenario delete variable",
-         new Command_Delete_Variable,
-         -"Delete the selected variable",
-         Icon_Name => "gps-remove-symbolic",
-         Category => -"Scenario");
    end Register_Module;
 
 end Scenario_Views;

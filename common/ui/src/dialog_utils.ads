@@ -151,14 +151,20 @@ package Dialog_Utils is
    procedure Initialize
      (Self                : not null access Dialog_Group_Widget_Record'Class;
       Parent_View         : not null access Dialog_View_Record'Class;
-      Group_Name          : String := "";
-      Allow_Multi_Columns : Boolean := True);
+      Group_Name          : String                 := "";
+      Allow_Multi_Columns : Boolean                := True;
+      Selection           : Gtk_Selection_Mode     := Selection_None;
+      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null);
    --  Initialize a group widget, associating it with it's parent dialog view.
    --  Group_Name is used to set the group's title label.
    --
    --  If Allow_Multi_Columns is True, widgets within this group can be
    --  distributed into multiple columns when resizing. If False,  widgets are
    --  always distributed into one column.
+   --  Selection defines the selection mode for the children, by default
+   --  the children are not selectable.
+   --  Sorting_Function is used to sort the children when adding a new one,
+   --  it is also used with Force_Sort to force a new sort.
 
    function Get_Number_Of_Children
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural;
@@ -245,6 +251,15 @@ package Dialog_Utils is
    --
    --  The Expand and Fill properties have the same role as in the
    --  Gtk.Box.Pack_Start procedure.
+
+   function Get_Selected_Children
+     (Self : not null access Dialog_Group_Widget_Record'Class)
+      return Gtk.Widget.Widget_List.Glist;
+   --  Returns the list of selected flow_box_child
+
+   procedure Force_Sort
+     (Self : not null access Dialog_Group_Widget_Record'Class);
+   --  Resort the Dialog_Group_Widget children
 
    ------------------
    -- CSS Stlizers --

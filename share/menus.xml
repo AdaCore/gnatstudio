@@ -555,10 +555,7 @@
    </toolbar>
 
    <toolbar id='Scenario'>
-      <button action='add scenario variable'/>
-      <button action='scenario delete variable'/>
-      <separator/>
-      <button action='scenario edit variable'/>
+      <button action='scenario validate variable'/>
    </toolbar>
 
    <toolbar id='Switches editor'>
