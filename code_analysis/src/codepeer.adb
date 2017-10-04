@@ -276,7 +276,7 @@ package body CodePeer is
 
                begin
                   if Length (Aux) = 0 then
-                     Append (Aux, " [");
+                     Append (Aux, " [CWE ");
                      Append
                        (Aux, Image (Image'First + 1 .. Image'Last));
                      Delimiter := 0;
