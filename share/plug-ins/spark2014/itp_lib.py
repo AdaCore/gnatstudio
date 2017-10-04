@@ -23,6 +23,7 @@ FAILING_ARG = "failing_arg"
 FILE_CONTENTS = "File_contents"
 FILE_SAVED = "File_Saved"
 HELP = "Help"
+HIGHFAILURE = "HighFailure"
 LINFORMATION = "information"
 UINFORMATION = "Information"
 INITIALIZED = "Initialized"
@@ -65,14 +66,17 @@ QUERY_ERROR = "Query_Error"
 REMOVE = "Remove"
 LREPLAY_INFO = "replay_info"
 UREPLAY_INFO = "Replay_Info"
+RUNNING = "Running"
 SAVE = "Save"
 SAVED = "Saved"
 STRAT_ERROR = "Strat_error"
 LTASK = "task"
 UTASK = "Task"
 TASK_MONITOR = "Task_Monitor"
+TIMEOUT = "Timeout"
 TR_NAME = "tr_name"
 TRANSF_ERROR = "Transf_error"
+UNKNOWN = "Unknown"
 UNINSTALLED = "Uninstalled"
 UPDATE = "update"
 UPDATE_INFO = "update_info"
@@ -80,7 +84,7 @@ VALID = "Valid"
 
 # Constants related to the interface: name of console, prooftree etc
 ITP_CONSOLE = "ITP_interactive"
-PROOF_TASK = "Proof Task"
+PROOF_TASK = "Verification Condition"
 PROOF_TREE_TITLE = "Proof Tree"
 PROOF_TREE_SHORT = "Proof Tree"
 
@@ -188,15 +192,21 @@ def parse_notif(j, abs_tree, proof_task):
                     pr_answer = prover_result[PR_ANSWER]
                     if pr_answer == VALID:
                         tree.update_iter(node_id, 4, VALID)
+                    elif pr_answer == TIMEOUT:
+                        tree.update_iter(node_id, 4, TIMEOUT)
+                    elif pr_answer == UNKNOWN:
+                        tree.update_iter(node_id, 4, UNKNOWN)
+                    elif pr_answer == HIGHFAILURE:
+                        tree.update_iter(node_id, 4, HIGHFAILURE)
                     else:
-                        tree.update_iter(node_id, 4, NOTVALID)
+                        tree.update_iter(node_id, 4, UNKNOWN)
                 elif proof_attempt_result == UNINSTALLED:
                     tree.update_iter(node_id, 4, NOTINSTALLED)
                 # TODO not implemented in Why3. Also, should match all cases.
                 # elif proof_attempt_result == "Detached":
                 #    tree.update_iter(node_id, 4, "Detached")
                 else:  # In this case it is necessary just a string
-                    tree.update_iter(node_id, 4, PROOF_ATTEMPT)
+                    tree.update_iter(node_id, 4, RUNNING)
         else:
             print_debug("TODO")
         abs_tree.get_next_id(str(node_id))
