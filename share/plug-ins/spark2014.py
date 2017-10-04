@@ -83,6 +83,16 @@ advanced_prove_line = 'Prove Line'
 advanced_prove_line_loc = 'Prove Line Location'
 advanced_prove_check = 'Prove Check'
 
+# Name of the messages console
+MESSAGES = "Messages"
+
+
+def print_error(message):
+    """print errors on the messages console"""
+    console = GPS.Console(MESSAGES)
+    console.write(message, mode="error")
+
+
 # getters for proof target depending on user profile
 
 
@@ -1094,6 +1104,25 @@ if gnatprove:
     gnatprove_plug = GNATProve_Plugin()
 
 
+def compute_gnatserver_path():
+    """ Compute the position of the gnat_server tool from the one of gnatprove.
+        We do this because gnat_server is not in the PATH (and should not be).
+    """
+
+    bin_dir = os.path.dirname(gnatprove)
+    gs_rel = os.path.join("..", "libexec", "spark", "bin", "gnat_server")
+    return (os.path.abspath(os.path.join(bin_dir, gs_rel)))
+
+gnat_server = compute_gnatserver_path()
+itp_lib.print_debug("[gnat_server path]:" + gnat_server)
+
+
+# Checking for existence of gnat_server (compatibility with spark version < 18)
+is_itp = False
+if os.path.exists(gnat_server):
+    is_itp = True
+
+
 def has_proof_dir():
     """ This does a (too) simple analysis of the .gpr to find the attribute
         Proof_Dir which gives the location of the session file.
@@ -1127,7 +1156,6 @@ def start_ITP(tree, file_name, abs_fn_path, args=[]):
     itp_lib.print_debug("[ITP] Launched")
 
     # TODO ??? start_ITP and prove_check to be merged.
-    gnat_server = os_utils.locate_exec_on_path("gnat_server")
     objdirs = GPS.Project.root().object_dirs()
     default_objdir = objdirs[0]
     obj_subdir_name = "gnatprove"
@@ -1168,6 +1196,11 @@ def on_prove_itp(context):
 
     global tree
     global hook_itp
+
+    if not is_itp:
+        # If itp is not detected do not run the tool
+        print_error("Interactive theorem proving requires version 18 of SPARK")
+        return
     # ITP part
     tree = itp_lib.Tree_with_process()
     msg = context._loc_msg
@@ -1196,8 +1229,11 @@ def exit_ITP(dummy_arg):
         this function always succeeds otherwise we cannot exit GPS.
     """
     global tree
-    try:
-        tree.exit()
-        return True
-    except:
-        return True
+    if is_itp:
+        try:
+            tree.exit()
+            return True
+        except:
+            return True
+    else:
+        print_error("Interactive theorem proving requires version 18 of SPARK")
