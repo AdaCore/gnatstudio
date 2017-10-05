@@ -370,7 +370,9 @@ package body GVD.Process is
       --  Do we have a file name or line number indication?
       --  This runs the Debugger_Location_Changed_Hook hook
 
-      if Length (File) /= 0 and then Line /= 0 then
+      if Length (File) /= 0
+        and then Line /= 0
+      then
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
             Process => Process,

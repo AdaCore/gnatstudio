@@ -552,6 +552,11 @@ package body Debugger is
          if Mode /= Internal
            and then Kind = Execution_Command
          then
+            if Process /= null then
+               Process.Current_File := No_File;
+               Process.Current_Line := 0;
+            end if;
+
             Unhighlight_Current_Line (Debugger.Kernel);
          end if;
 

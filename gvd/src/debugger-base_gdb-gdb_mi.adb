@@ -401,7 +401,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       begin
          if Ends_With (S, Prompt_String) then
             Pos := S'Last - Prompt_String'Length;
-            if S (Pos) = ASCII.LF then
+            if Pos >= S'First
+              and then S (Pos) = ASCII.LF
+            then
                Pos := Pos - 1;
             end if;
             return S (S'First .. Pos);
