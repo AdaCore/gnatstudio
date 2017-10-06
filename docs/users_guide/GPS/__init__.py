@@ -7162,9 +7162,8 @@ class Message(object):
         Clicking on the icon executes ``action``.
 
         :param action: A String corresponding to a registered GPS action
-        :param image: A String corresponding to the id of a registered GPS
-           image. See :file:`icons.xml` for an example of how to register
-           icons in GPS
+        :param image: A String name of the icon to display.
+           See :ref:`Adding_stock_icons` for more information on icons
         :param tooltip: A string containing the tooltip to
            display when the mouse is on the icon
         """
@@ -7201,9 +7200,8 @@ class Message(object):
 
         :param subprogram: A subprogram in the scripting language.
             This subprogram takes on parameter, which is a message
-        :param image: A String corresponding to the id of a registered GPS
-           image. See :file:`icons.xml` for an example of how to register
-           icons in GPS
+        :param image: A String name of the icon to display.
+           See :ref:`Adding_stock_icons` for more information on icons
         :param tooltip: A string which contains the tooltip to
            display when the mouse is on the icon
 
