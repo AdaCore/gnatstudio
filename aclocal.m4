@@ -289,7 +289,7 @@ dnl
     no_gtk=yes
   else
     # Full version number
-    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/w//'`
+    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/[[^0-9.]]*$//'`
 
     gtk_major_version=`echo $version | cut -d. -f1`
     gtk_minor_version=`echo $version.0 | cut -d. -f2`
