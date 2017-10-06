@@ -81,7 +81,7 @@ EOF
      read x
      if [ "$x" = "n" -o "$x" = "N" ]; then
         echo "Aborting the installation process"
-	exit
+        exit
      fi
      mkdir -p "$basedir"
    fi
