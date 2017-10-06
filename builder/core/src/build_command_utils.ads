@@ -62,11 +62,14 @@ package Build_Command_Utils is
       Target     : Target_Access) return Server_Type;
 
    type Project_And_Main is record
-      Project : Project_Type;
-      Main    : GNATCOLL.VFS.Virtual_File;
+      Project_Path : GNATCOLL.VFS.Virtual_File;
+      Main         : GNATCOLL.VFS.Virtual_File;
    end record;
    type Project_And_Main_Array is array (Positive range <>)
      of Project_And_Main;
+
+   function Get_Project (P : Project_And_Main) return Project_Type;
+   --  Return the project from P
 
    function Get_Mains
      (Registry : Project_Registry_Access) return Project_And_Main_Array;

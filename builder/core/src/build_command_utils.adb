@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations;
 with GNAT.Strings;
 
+with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Templates;         use GNATCOLL.Templates;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -192,7 +193,8 @@ package body Build_Command_Utils is
                         end if;
 
                         This_Project (This_Index) :=
-                          (Project => The_Project, Main => File);
+                          (Project_Path => The_Project.Project_Path,
+                           Main => File);
                         This_Index := This_Index + 1;
                      end if;
 
@@ -1651,5 +1653,15 @@ package body Build_Command_Utils is
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project (P : Project_And_Main) return Project_Type is
+   begin
+      return GNATCOLL.Scripts.Projects.Project_Tree.Project_From_Path
+        (P.Project_Path);
+   end Get_Project;
 
 end Build_Command_Utils;

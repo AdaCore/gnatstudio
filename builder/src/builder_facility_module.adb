@@ -1079,7 +1079,7 @@ package body Builder_Facility_Module is
                   Base : constant String := Mains (J).Main.Display_Base_Name;
                   Full : constant String := +Mains (J).Main.Full_Name;
                   P_Name : constant String :=
-                    +Mains (J).Project.Project_Path.Full_Name;
+                    +Mains (J).Project_Path.Full_Name;
                   Display_Name : constant Any_Type :=
                     (String_Type, Base'Length, Base);
                   Full_Name    : constant Any_Type :=
@@ -1105,7 +1105,7 @@ package body Builder_Facility_Module is
             Result : Any_Type (List_Type, Mains'Length);
          begin
             for J in Mains'Range loop
-               if Mains (J).Project = No_Project then
+               if Mains (J).Project_Path = No_File then
                   --  This can happen when the project can not find the source
                   --  corresponding to the main file, for instance
                   --  badly-written user projects, or projects that are created
@@ -1116,23 +1116,23 @@ package body Builder_Facility_Module is
                       & Mains (J).Main.Display_Full_Name & """"));
 
                   return Empty_Any_Type;
-               elsif Executables_Directory (Mains (J).Project)
+               elsif Executables_Directory (Get_Project (Mains (J)))
                  = GNATCOLL.VFS.No_File
                then
-                  Log (-"Project """ & Mains (J).Project.Name
+                  Log (-"Project """ & Get_Project (Mains (J)).Name
                        & """ has no exec_dir", Error);
                   return Empty_Any_Type;
                else
                   declare
+                     P    : constant Project_Type := Get_Project (Mains (J));
                      Exec : constant Virtual_File :=
                        Create_From_Dir
-                         (Executables_Directory (Mains (J).Project),
-                          Mains (J).Project.Executable_Name
+                         (Executables_Directory (P),
+                          P.Executable_Name
                           (Mains (J).Main.Full_Name));
                      Base : constant String := String (Exec.Base_Name);
                      Full : constant String := String (Exec.Full_Name.all);
-                     P_Name : constant String :=
-                       +Mains (J).Project.Project_Path.Full_Name;
+                     P_Name : constant String := +P.Project_Path.Full_Name;
                      Display_Name : constant Any_Type :=
                        (String_Type, Base'Length, Base);
                      Full_Name    : constant Any_Type :=

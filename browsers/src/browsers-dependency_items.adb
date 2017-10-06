@@ -34,6 +34,7 @@ with Default_Preferences;     use Default_Preferences;
 with Generic_Views;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Projects; use GNATCOLL.Scripts.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
@@ -151,8 +152,8 @@ package body Browsers.Dependency_Items is
    --  These items represent source files from the application
 
    type File_Item_Record is new GPS_Item_Record with record
-      Source  : Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type;
+      Source       : Virtual_File;
+      Project_Path : Virtual_File;
    end record;
    type File_Item is access all File_Item_Record'Class;
 
@@ -268,7 +269,7 @@ package body Browsers.Dependency_Items is
       N.Tag := new String'("file");
       XML_Utils.Set_Attribute (N, "file", Self.Source.Display_Full_Name);
       XML_Utils.Set_Attribute
-        (N, "project", Self.Project.Project_Path.Display_Full_Name);
+        (N, "project", Project_Of (Self).Project_Path.Display_Full_Name);
 
       return N;
    end Save_To_XML;
@@ -336,7 +337,8 @@ package body Browsers.Dependency_Items is
       procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
          L        : constant GPS_Link := GPS_Link (Link);
          Importer : constant Virtual_File := File_Item (Get_From (L)).Source;
-         Project  : constant Project_Type := File_Item (Get_From (L)).Project;
+         Project  : constant Project_Type := Project_Of
+           (File_Item (Get_From (L)));
          Imported : constant Virtual_File := File_Item (Get_To (L)).Source;
          Iter     : File_Iterator :=
            Kernel.Databases.Find_Dependencies (Importer, Project);
@@ -469,7 +471,7 @@ package body Browsers.Dependency_Items is
       It : constant File_Item := File_Item (Details.Toplevel_Item);
    begin
       Examine_From_Dependencies
-        (Get_Kernel (It.Browser), It.Source, It.Project);
+        (Get_Kernel (It.Browser), It.Source, Project_Of (It));
    end On_Click;
 
    --------------
@@ -484,7 +486,8 @@ package body Browsers.Dependency_Items is
       pragma Unreferenced (Self, View);
       It : constant File_Item := File_Item (Details.Toplevel_Item);
    begin
-      Examine_Dependencies (Get_Kernel (It.Browser), It.Source, It.Project);
+      Examine_Dependencies (Get_Kernel (It.Browser), It.Source,
+                            Project_Of (It));
    end On_Click;
 
    -------------
@@ -709,7 +712,7 @@ package body Browsers.Dependency_Items is
       begin
          if Item = null   --  not found yet
            and then File_Item (It).Source = Filename
-           and then File_Item (It).Project = Project
+           and then Project_Of (File_Item (It)) = Project
          then
             Item := File_Item (It);
          end if;
@@ -725,7 +728,7 @@ package body Browsers.Dependency_Items is
          Item         := new File_Item_Record;
          Item.Browser := General_Browser (Self);
          Item.Source  := Filename;
-         Item.Project := Project;
+         Item.Project_Path := Project.Project_Path;
 
          Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
 
@@ -1007,7 +1010,8 @@ package body Browsers.Dependency_Items is
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type is
    begin
-      return Item.Project;
+      return GNATCOLL.Scripts.Projects
+        .Project_Tree.Project_From_Path (Item.Project_Path);
    end Project_Of;
 
    -------------
