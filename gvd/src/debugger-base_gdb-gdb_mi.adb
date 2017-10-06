@@ -245,6 +245,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --  Makes string from all elements till To considering nested elements
    --  started by opposite to To element.
 
+   function Collect
+     (Str      : String;
+      To       : Character;
+      Opposite : Character) return String;
+   --  Makes string from all elements till To considering nested elements
+   --  started by opposite to To element.
+
    ---------------------
    -- Find_Identifier --
    ---------------------
@@ -2882,6 +2889,40 @@ package body Debugger.Base_Gdb.Gdb_MI is
       return To_String (Result);
    end Collect;
 
+   -------------
+   -- Collect --
+   -------------
+
+   function Collect
+     (Str      : String;
+      To       : Character;
+      Opposite : Character) return String
+   is
+      Count : Natural := 0;
+      Idx   : Integer := Str'First;
+
+   begin
+      loop
+         if Idx > Str'Last then
+            return "";
+         end if;
+
+         if Str (Idx) = To then
+            if Count > 0 then
+               Count := Count - 1;
+            else
+               return Str (Str'First .. Idx - 1);
+            end if;
+         end if;
+
+         if Str (Idx) = Opposite then
+            Count := Count + 1;
+         end if;
+
+         Idx := Idx + 1;
+      end loop;
+   end Collect;
+
    ------------------
    -- Info_Threads --
    ------------------
@@ -3241,23 +3282,33 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       Tokens   : Token_List_Controller;
       C        : Token_Lists.Cursor;
+      Idx      : Integer;
    begin
       Debugger.Is_Running    := False;
       Debugger.Current_Frame := Null_Frame_Info;
 
-      Tokens.List := Build_Tokens (Str);
-      C := Find_Identifier (First (Tokens.List), "frame");
+      Idx := Index (Str, "frame={");
+      if Idx < Str'First then
+         return;
+      end if;
+
+      declare
+         Frame : constant String := Collect
+           (Str (Idx + 7 .. Str'Last), '}', '{');
+      begin
+         Tokens.List := Build_Tokens (Frame);
+      end;
+
+      C := Find_Identifier (First (Tokens.List), "addr");
       if C = Token_Lists.No_Element then
          return;
       end if;
-
-      Next (C, 3);
-      if not Is_Identifier (C, "addr") then
-         return;
-      end if;
-
       Next (C, 2);
       Debugger.Current_Frame.Addr := String_To_Address (Element (C).Text.all);
+
+   exception
+      when E : others =>
+         Me.Trace (E);
    end Stopped_Filter;
 
    ----------
@@ -3610,8 +3661,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
       declare
          S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-break-list", Mode => Internal);
+         Idx : Integer;
       begin
-         Tokens.List := Build_Tokens (S);
+         Idx := Index (S, "body=[");
+         if Idx < S'First then
+            return;
+         end if;
+
+         declare
+            Bdy : constant String := Collect (S (Idx + 6 .. S'Last), ']', '[');
+         begin
+            Tokens.List := Build_Tokens ("body=[" & Bdy & "]");
+         end;
+
+      exception
+         when E : others =>
+            Me.Trace (E);
       end;
 
       C := Find_Identifier (First (Tokens.List), "body");
