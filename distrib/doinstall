@@ -83,7 +83,12 @@ EOF
         echo "Aborting the installation process"
         exit
      fi
-     mkdir -p "$basedir"
+     if ! mkdir -p "$basedir" 2>/dev/null ; then
+        echo "You do not have permission to write in $basedir"
+        echo "Please check whether you should be root to install in that directory."
+        echo "Aborting the installation process"
+        exit
+     fi
    fi
 
    echo ""
