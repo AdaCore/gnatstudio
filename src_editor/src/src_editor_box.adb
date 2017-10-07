@@ -260,7 +260,8 @@ package body Src_Editor_Box is
          if To_Body then
             Current := (File => File_Information (Context),
                         Line => GPS.Kernel.Contexts.Line_Information (Context),
-                        Project => Project_Information (Context),
+                        Project_Path => Project_Information
+                          (Context).Project_Path,
                         Column => Entity_Column_Information (Context));
             Location := Get_Body (Entity, After => Current);
          else
@@ -271,7 +272,7 @@ package body Src_Editor_Box is
             Go_To_Closest_Match
               (Kernel      => Kernel,
                Filename    => Location.File,
-               Project     => Location.Project,
+               Project     => Get_Project (Location),
                Line        => Convert (Location.Line),
                Column      => Location.Column,
                Entity_Name => Get_Name (Entity));
@@ -780,7 +781,7 @@ package body Src_Editor_Box is
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Location.File,
-         Project  => Location.Project,
+         Project  => Get_Project (Location),
          Line     => Convert (Location.Line),
          Column   => Location.Column,
          Entity   => Data.Entity.Element);
@@ -803,7 +804,7 @@ package body Src_Editor_Box is
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Loc.File,
-         Project  => Loc.Project,
+         Project  => Get_Project (Loc),
          Line     => Convert (Loc.Line),
          Column   => Loc.Column,
          Entity   => Data.Entity.Element);

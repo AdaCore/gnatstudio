@@ -104,7 +104,8 @@ package body Src_Editor_Box.Tooltips is
       return
         Editor.Kernel.Databases.Get_Entity
           (Loc => (File   => Get_Filename (Editor),
-                   Project => Contexts.Project_Information (Context),
+                   Project_Path => Contexts.Project_Information
+                     (Context).Project_Path,
                    Line   => Contexts.Line_Information (Context),
                    Column => Entity_Column_Information (Context)),
            Name => Entity_Name_Information (Context),

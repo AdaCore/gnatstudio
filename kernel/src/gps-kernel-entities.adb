@@ -1133,7 +1133,7 @@ package body GPS.Kernel.Entities is
                F_Info : constant File_Info'Class := File_Info'Class (S);
             begin
                F_Info.Project.Project_Imports
-                 (Decl.Project,
+                 (Get_Project (Decl),
                   Include_Extended => True,
                   Imports          => Imports,
                   Is_Limited_With  => Is_Limited_With);

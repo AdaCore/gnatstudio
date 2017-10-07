@@ -137,19 +137,22 @@ package Xref is
       File   : aliased Virtual_File := No_File;
       --  aliased is added to let AJIS make this field accessible to GNATbench
 
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      Project_Path : Virtual_File := No_File;
       --  Used to disambiguate which project is handling the file, for instance
-      --  in the case of aggregate projects. This might be left to No_Project
-      --  when unknown, in which case the caller is invitated to pickup one
-      --  possible project at random.
+      --  in the case of aggregate projects. This might be left to No_File
+      --  when unknown.
 
       Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
    end record;
    No_Location : aliased constant General_Location :=
-     (No_File, GNATCOLL.Projects.No_Project, 0, 0);
+     (No_File, No_File, 0, 0);
    --  ??? Should we also cache the Old_Entities.Source_File ?
    --  aliased is added to let AJIS make it accessible to GNATbench
+
+   function Get_Project
+     (G : General_Location) return GNATCOLL.Projects.Project_Type;
+   --  Convenience function to return the project from a General_Location
 
    type General_Xref_Database_Record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;

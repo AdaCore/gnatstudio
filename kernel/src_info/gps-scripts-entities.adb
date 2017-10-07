@@ -17,6 +17,7 @@
 
 with Basic_Types;                      use Basic_Types;
 with GNATCOLL.Projects;
+with GNATCOLL.VFS;
 with GNATCOLL.Xref;                    use GNATCOLL.Xref;
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Intl;                         use GPS.Intl;
@@ -85,7 +86,7 @@ package body GPS.Scripts.Entities is
             else
                Loc :=
                  (File    => GPS.Scripts.Files.Get_Data (File),
-                  Project => GNATCOLL.Projects.No_Project,  --  ??? unknown
+                  Project_Path => GNATCOLL.VFS.No_File,  --  ??? unknown
                   Line    => Nth_Arg (Data, 4, Default => -1),
                   Column  => Visible_Column_Type
                     (Nth_Arg (Data, 5, Default => -1)));

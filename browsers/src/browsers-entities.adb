@@ -355,7 +355,7 @@ package body Browsers.Entities is
           (Name => XML_Utils.Get_Attribute (Node, "name"),
            Loc  =>
              (File    => Create (+XML_Utils.Get_Attribute (Node, "file")),
-              Project => <>,
+              Project_Path => <>,
               Line    =>
                 Integer'Value (XML_Utils.Get_Attribute (Node, "line")),
               Column  =>

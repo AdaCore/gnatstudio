@@ -369,7 +369,7 @@ package body Src_Editor_Module.Commands is
                Go_To_Closest_Match
                  (Kernel,
                   Filename => Location.File,
-                  Project  => Location.Project,
+                  Project  => Get_Project (Location),
                   Line     => Editable_Line_Type (Location.Line),
                   Column   => Location.Column,
                   Entity   => Entity_Type);

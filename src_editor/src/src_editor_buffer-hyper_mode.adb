@@ -362,7 +362,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Entity : constant Root_Entity'Class :=
            Buffer.Kernel.Databases.Get_Entity
              (Loc         => (File   => Buffer.Filename,
-                              Project => Project,
+                              Project_Path => Project.Project_Path,
                               Line   => Integer (Line),
                               Column => Column),
               Name => Get_Slice (Buffer, Entity_Start, Entity_End),
@@ -390,7 +390,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
             --  the spec: in this case, go to the body
             Current :=
               (File   => Buffer.Filename,
-               Project => Project,
+               Project_Path => Project.Project_Path,
                Line   => Integer (Line),
                Column => Column);
             Location := Get_Body (Entity, After => Current);
@@ -402,7 +402,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Go_To_Closest_Match
            (Buffer.Kernel,
             Location.File,
-            Location.Project,
+            Get_Project (Location),
             Editable_Line_Type (Location.Line),
             Location.Column, Entity);
       end;

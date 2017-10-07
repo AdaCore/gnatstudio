@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Xref;                    use Xref;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
@@ -396,7 +395,7 @@ package body Engine_Wrappers is
            (Kernel.Databases,
             Name  => Proposal.Get_Label (Kernel.Databases),
             Loc   => (File   => Loc.File_Path,
-                      Project => No_Project,  --  ??? unknown
+                      Project_Path => No_File,  --  ??? unknown
                       Line   => Loc.Line,
                       Column  => Loc.Column)));
    end Get_Documentation;
@@ -435,7 +434,7 @@ package body Engine_Wrappers is
            (Kernel.Databases,
             Name  => Get (Proposal.Construct.Name).all,
             Loc   => (File    => Proposal.File,
-                      Project => No_Project,  --  ??? unknown
+                      Project_Path => No_File,  --  ??? unknown
                       Line    => Proposal.Construct.Sloc_Start.Line,
                       Column  => Visible_Column_Type
                         (Proposal.Construct.Sloc_Start.Column))));

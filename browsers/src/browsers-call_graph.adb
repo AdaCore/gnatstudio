@@ -255,8 +255,8 @@ package body Browsers.Call_Graph is
         Self.Kernel.Databases.Get_Entity
           (Name => Get_Attribute (Node, "name"),
            Loc  =>
-             (File    => Create (+Get_Attribute (Node, "file")),
-              Project => <>,
+             (File         => Create (+Get_Attribute (Node, "file")),
+              Project_Path => <>,
               Line    => Integer'Value (Get_Attribute (Node, "line")),
               Column  =>
                 Visible_Column_Type'Value (Get_Attribute (Node, "col"))));

@@ -231,7 +231,7 @@ package body Refactoring.Parameters is
                  := Kernel.Databases.Get_Entity
                    (Name => Get_Name (Expression, Entity_Token),
                     Loc  => (File   => File,
-                             Project => Project,
+                             Project_Path => Project.Project_Path,
                              Line   => Tok_Line,
                              Column => Tok_Column));
             begin

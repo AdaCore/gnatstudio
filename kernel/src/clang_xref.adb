@@ -458,7 +458,7 @@ package body Clang_Xref is
 
             --  ??? Project is not used apparently, so no need to resolve it
 
-            GNATCOLL.Projects.No_Project,
+            No_File,
             Loc.Line, Loc.Column);
       end;
    end To_General_Location;
@@ -539,7 +539,7 @@ package body Clang_Xref is
               General_Location'
                 (Libclang.File.File
                      (clang_getIncludedFile (Cursor)),
-                 GNATCOLL.Projects.No_Project,
+                 No_File,
                  1, 1),
             Name                     => +"",
             Body_Is_Full_Declaration => False);
@@ -606,7 +606,7 @@ package body Clang_Xref is
       Offset_To_Line_Column (K, F, Integer (Offset), Line, Column);
       return General_Location'
         (F,
-         GNATCOLL.Projects.No_Project,
+         No_File,
          Line, Column);
    end To_General_Location;
 

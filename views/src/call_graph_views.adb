@@ -398,9 +398,7 @@ package body Call_Graph_Views is
         (Name => Get_String (Model, Iter, Entity_Name_Column),
          Loc  =>
            (File => Get_File (Model, Iter, File_Column),
-            Project =>
-              Get_Registry (View.Kernel).Tree.Project_From_Path
-                (Get_File (Model, Iter, Project_Column)),
+            Project_Path => Get_File (Model, Iter, Project_Column),
             Line => Integer (Get_Int (Model, Iter, Line_Column)),
             Column  => Visible_Column_Type
               (Get_Int (Model, Iter, Column_Column))));
@@ -693,7 +691,7 @@ package body Call_Graph_Views is
          Open_File_Action_Hook.Run
            (Kernel     => View.Kernel,
             File       => Decl.Loc.File,
-            Project    => Decl.Loc.Project,
+            Project    => Get_Project (Decl.Loc),
             Line       => Decl.Loc.Line,
             Column     => Decl.Loc.Column,
             Column_End => Decl.Loc.Column
@@ -798,7 +796,7 @@ package body Call_Graph_Views is
            (V.Locations_Model, T, Location_File_Column, Decl.Loc.File);
          Set_File
            (V.Locations_Model, T, Location_Project_Column,
-            Decl.Loc.Project.Project_Path);
+            Decl.Loc.Project_Path);
          Set (V.Locations_Model, T, Location_String_Column,
               Decl.Loc.File.Display_Base_Name & " (declaration)");
 
@@ -822,7 +820,7 @@ package body Call_Graph_Views is
                Set_File (V.Locations_Model, T, Location_File_Column, R.File);
                Set_File
                  (V.Locations_Model, T, Location_Project_Column,
-                  Decl.Loc.Project.Project_Path);
+                  Decl.Loc.Project_Path);
 
                if R.Through_Dispatching then
                   Set (V.Locations_Model, T, Location_String_Column,
@@ -1556,7 +1554,7 @@ package body Call_Graph_Views is
                 4 => As_File   (Decl.Loc.File),
                 5 => As_Int    (Gint (Decl.Loc.Line)),
                 6 => As_Int    (Gint (Decl.Loc.Column)),
-                7 => As_File   (Decl.Loc.Project.Project_Path),
+                7 => As_File   (Decl.Loc.Project_Path),
                 8 => As_Int    (View_Type'Pos (Kind)),
                 9 => As_String (Name & " " & Dcl)));
          end;

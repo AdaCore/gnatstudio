@@ -800,7 +800,7 @@ package body GPS.Kernel.Contexts is
               (Db.Get_Entity
                  (Loc  =>
                       (File    => Data.Files (Data.Files'First),
-                       Project => Data.Project,
+                       Project_Path => Data.Project.Project_Path,
                        Line    => Data.Line,
                        Column  => Data.Entity_Column),
                   Name => To_String (Data.Entity_Name),

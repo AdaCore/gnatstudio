@@ -98,7 +98,7 @@ package body Completion.Search is
                     (Self.Kernel.Databases,
                      Name  => Get (Construct.Name).all,
                      Loc   => (File => Get_File_Path (File),
-                               Project => No_Project,  --  ??? unknown
+                               Project_Path => No_File,  --  ??? unknown
                                Line => Construct.Sloc_Entity.Line,
                                Column => Visible_Column_Type
                                  (Construct.Sloc_Entity.Column)))));

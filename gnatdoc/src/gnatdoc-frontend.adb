@@ -1954,7 +1954,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => Context.Project,
+                              Project_Path => Context.Project.Project_Path,
                               Line    => Sloc_Start.Line,
                               Column  => To_Visible_Column
                                 (Buffer.all,
@@ -2155,7 +2155,8 @@ package body GNATdoc.Frontend is
                               Tok_Loc :=
                                 General_Location'
                                   (File    => File,
-                                   Project => Context.Project,
+                                   Project_Path =>
+                                     Context.Project.Project_Path,
                                    Line    => Sloc_Start.Line,
                                    Column  => To_Visible_Column
                                      (Buffer.all,
@@ -2250,7 +2251,7 @@ package body GNATdoc.Frontend is
                              Name => S,
                              Loc  => General_Location'
                                (File    => File,
-                                Project => Context.Project,
+                                Project_Path => Context.Project.Project_Path,
                                 Line    => Sloc_Start.Line,
                                 Column  =>
                                   To_Visible_Column
@@ -2398,7 +2399,7 @@ package body GNATdoc.Frontend is
                      Set_End_Of_Profile_Location (E,
                        General_Location'
                          (File    => File,
-                          Project => Context.Project,
+                          Project_Path => Context.Project.Project_Path,
                           Line    => Sloc_Start.Line,
                           Column  => To_Visible_Column
                                        (Buffer.all,
@@ -2451,7 +2452,7 @@ package body GNATdoc.Frontend is
                      Set_End_Of_Syntax_Scope_Loc (E,
                        General_Location'
                          (File    => File,
-                          Project => Context.Project,
+                          Project_Path => Context.Project.Project_Path,
                           Line    => Sloc_Start.Line,
                           Column  => To_Visible_Column
                                        (Buffer.all,
@@ -2477,7 +2478,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => Context.Project,
+                              Project_Path => Context.Project.Project_Path,
                               Line    => Sloc_Start.Line,
                               Column  => To_Visible_Column
                                 (Buffer.all,
@@ -2496,7 +2497,7 @@ package body GNATdoc.Frontend is
                      Generic_Formals_Loc :=
                        General_Location'
                          (File    => File,
-                          Project => Context.Project,
+                          Project_Path => Context.Project.Project_Path,
                           Line    => Sloc_Start.Line,
                           Column  => To_Visible_Column
                             (Buffer.all,
@@ -2523,7 +2524,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => Context.Project,
+                              Project_Path => Context.Project.Project_Path,
                               Line    => Sloc_Start.Line,
                               Column  => To_Visible_Column
                                 (Buffer.all,
@@ -4038,7 +4039,8 @@ package body GNATdoc.Frontend is
                                  Set_End_Of_Scope_Loc (Scope,
                                    General_Location'
                                      (File    => File,
-                                      Project => Context.Project,
+                                      Project_Path =>
+                                        Context.Project.Project_Path,
                                       Line    => Sloc_Start.Line,
                                       Column  => To_Visible_Column
                                         (Buffer.all,
@@ -4059,7 +4061,8 @@ package body GNATdoc.Frontend is
                                  Set_End_Of_Scope_Loc (Scope,
                                    General_Location'
                                      (File    => File,
-                                      Project => Context.Project,
+                                      Project_Path =>
+                                        Context.Project.Project_Path,
                                       Line    => Sloc_Start.Line,
                                       Column  => To_Visible_Column
                                         (Buffer.all,
@@ -4166,7 +4169,8 @@ package body GNATdoc.Frontend is
                                 (Get_Scope (Current_Context),
                                  General_Location'
                                    (File    => File,
-                                    Project => Context.Project,
+                                    Project_Path =>
+                                      Context.Project.Project_Path,
                                     Line    => Sloc_Start.Line,
                                     Column  => To_Visible_Column
                                       (Buffer.all,
@@ -4435,7 +4439,7 @@ package body GNATdoc.Frontend is
             procedure Build_Missing_Entity is
                Loc   : constant General_Location :=
                  (File,
-                  Context.Project,
+                  Context.Project.Project_Path,
                   Sloc_Start.Line,
                   To_Visible_Column
                     (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
@@ -4471,7 +4475,7 @@ package body GNATdoc.Frontend is
             procedure Fix_Wrong_Location (E : Entity_Id) is
                Loc : constant General_Location :=
                  (File,
-                  Context.Project,
+                  Context.Project.Project_Path,
                   Sloc_Start.Line,
                   To_Visible_Column
                     (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
@@ -4831,7 +4835,8 @@ package body GNATdoc.Frontend is
                                  Loc : constant General_Location :=
                                    General_Location'
                                      (File    => Current_Body_File,
-                                      Project => Context.Project,
+                                      Project_Path =>
+                                        Context.Project.Project_Path,
                                       Line    => Sloc_Start.Line,
                                       Column  =>
                                         To_Visible_Column
