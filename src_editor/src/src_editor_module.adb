@@ -100,6 +100,7 @@ package body Src_Editor_Module is
    Backspace  : constant Gunichar := 8;
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
+
    overriding function Get_Tooltip
      (Self  : not null access Editor_Child_Record) return String;
    overriding function Get_Tooltip_Is_Markup
@@ -328,6 +329,11 @@ package body Src_Editor_Module is
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Redo_Filter;
       Context : Selection_Context) return Boolean;
+
+   procedure Regenerate_Recent_Files_Menu
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Regenerate the "Open Recent Files" menu, based on the contents of the
+   --  history key.
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1258,15 +1264,54 @@ package body Src_Editor_Module is
       return Editor;
    end Create_File_Editor;
 
+   ----------------------------------
+   -- Regenerate_Recent_Files_Menu --
+   ----------------------------------
+
+   procedure Regenerate_Recent_Files_Menu
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      M : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      V : constant String_List_Access :=  --  Do not free
+        Get_History (Kernel.Get_History.all, Hist_Key);
+      F : Virtual_File;
+   begin
+      --  Remove old menus and actions
+
+      for Action of M.Recent_File_Actions loop
+         Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
+      end loop;
+      M.Recent_File_Actions.Clear;
+
+      --  Regenerate the menus and actions
+
+      if V /= null then
+         for N of V.all loop
+            F := Create (+N.all);
+            Register_Action
+              (Kernel,
+               Name        => "open recent file: " & N.all,
+               Command     => new On_Open_Recent'
+                 (Interactive_Command with File => F),
+               Description => "Reopen the file " & N.all,
+               Category    => "Internal");
+            Register_Menu
+              (Kernel,
+               Path     => "/File/Open Recent Files/"
+               & Escape_Underscore (F.Display_Base_Name),
+               Action   => "open recent file: " & N.all);
+            M.Recent_File_Actions.Append ("open recent file: " & N.all);
+         end loop;
+      end if;
+   end Regenerate_Recent_Files_Menu;
+
    ------------------------
    -- Add_To_Recent_Menu --
    ------------------------
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
-   is
-      M : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
       --  Make sure we won't add duplicate entries in the history.
       --  This loop is not very optimal, but we have to do this since
@@ -1292,36 +1337,8 @@ package body Src_Editor_Module is
 
       Add_To_History (Kernel, Hist_Key, UTF8_Full_Name (File));
 
-      --  Remove old menus and actions
-
-      for Action of M.Recent_File_Actions loop
-         Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
-      end loop;
-      M.Recent_File_Actions.Clear;
-
       --  Add new menus
-      declare
-         V : constant String_List_Access :=  --  Do not free
-            Get_History (Kernel.Get_History.all, Hist_Key);
-         F : Virtual_File;
-      begin
-         for N of V.all loop
-            F := Create (+N.all);
-            Register_Action
-               (Kernel,
-                Name        => "open recent file: " & N.all,
-                Command     => new On_Open_Recent'
-                   (Interactive_Command with File => F),
-                Description => "Reopen the file " & N.all,
-                Category    => "Internal");
-            Register_Menu
-               (Kernel,
-                Path     => "/File/Recent Files/"
-                   & Escape_Underscore (F.Display_Base_Name),
-                Action   => "open recent file: " & N.all);
-            M.Recent_File_Actions.Append ("open recent file: " & N.all);
-         end loop;
-      end;
+      Regenerate_Recent_Files_Menu (Kernel);
    end Add_To_Recent_Menu;
 
    -------------
@@ -2524,6 +2541,7 @@ package body Src_Editor_Module is
       Line_Highlighting.Add_Category (Builder_Styles (Style));
       Line_Highlighting.Add_Category (Builder_Styles (Info));
 
+      Regenerate_Recent_Files_Menu (Kernel);
    end Register_Module;
 
    -------------
