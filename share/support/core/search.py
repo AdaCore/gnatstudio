@@ -18,6 +18,8 @@ GPS.Search.OPENED = "Opened"
 GPS.Search.ENTITIES = "Entities"
 GPS.Search.SOURCES = "Sources"
 GPS.Search.BOOKMARKS = "Bookmarks"
+GPS.Search.PREFERENCES = "Preferences"
+GPS.Search.PLUGINS = "Plugins"
 
 
 def __iter__(self):

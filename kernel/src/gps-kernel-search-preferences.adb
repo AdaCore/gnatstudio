@@ -192,15 +192,20 @@ package body GPS.Kernel.Search.Preferences is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Manager : constant Preferences_Manager := Self.Kernel.Get_Preferences;
-      Pref    : Preference;
+      Manager                : constant Preferences_Manager :=
+                                 Self.Kernel.Get_Preferences;
+      Pref                   : constant Preference :=
+                                 Get_Pref (Self.Iter, Manager => Manager);
+      Page_Name              : constant String := Pref.Get_Page_Name;
+      Page                   : constant Preferences_Page :=
+                                 Manager.Get_Registered_Page (Page_Name);
+      Displayed_In_Assistant : constant Boolean := (Page /= null
+        and then Page.Get_Page_Type = Assistant_Page);
    begin
       Result := null;
 
-      Pref := Get_Pref (Self.Iter, Manager => Manager);
-
-      if Self.Search_Among_Hidden
-        or else Pref.Get_Page_Name /= ""
+      if not Displayed_In_Assistant and then
+        (Self.Search_Among_Hidden or else Page_Name /= "")
       then
          --  Try to match the preference's label first
          Search_Match_In_Label (Self   => Self,

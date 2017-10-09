@@ -531,24 +531,36 @@ package body GPS.Kernel.Custom.GUI is
       Root_Page : Root_Plugins_Preferences_Page :=
                     new Root_Plugins_Preferences_Page_Record;
 
+      procedure Register_Plugin_Page
+        (Name      : String;
+         File      : GNATCOLL.VFS.Virtual_File;
+         Loaded    : Boolean;
+         Explicit  : Boolean;
+         Page_Type : Preferences_Page_Type := Integrated_Page);
+      --  Used to register a plugin page in the Preferences Editor or the
+      --  Preferences Assistant.
+
       procedure Register_Plugin_Preferences_Page
-        (Name     : String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Loaded   : Boolean;
-         Explicit : Boolean);
+        (Name      : String;
+         File      : GNATCOLL.VFS.Virtual_File;
+         Loaded    : Boolean;
+         Explicit  : Boolean);
+      --  Register a plugin page in the Preferences editor
 
       procedure Register_Plugin_Preferences_Assistant_Page
         (Base_Name : String);
+      --  Register a plugin page in the Preferences Assistant
 
-      --------------------------------------
-      -- Register_Plugin_Preferences_Page --
-      --------------------------------------
+      --------------------------
+      -- Register_Plugin_Page --
+      --------------------------
 
-      procedure Register_Plugin_Preferences_Page
-        (Name     : String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Loaded   : Boolean;
-         Explicit : Boolean)
+      procedure Register_Plugin_Page
+        (Name      : String;
+         File      : GNATCOLL.VFS.Virtual_File;
+         Loaded    : Boolean;
+         Explicit  : Boolean;
+         Page_Type : Preferences_Page_Type := Integrated_Page)
       is
          pragma Unreferenced (Loaded);
          Plugin_Page      : constant Plugin_Preferences_Page :=
@@ -576,8 +588,27 @@ package body GPS.Kernel.Custom.GUI is
            (Name             => Page_Name,
             Page             => Preferences_Page (Plugin_Page),
             Priority         => -2,
-            Page_Type        => Integrated_Page,
+            Page_Type        => Page_Type,
             Replace_If_Exist => True);
+      end Register_Plugin_Page;
+
+      --------------------------------------
+      -- Register_Plugin_Preferences_Page --
+      --------------------------------------
+
+      procedure Register_Plugin_Preferences_Page
+        (Name      : String;
+         File      : GNATCOLL.VFS.Virtual_File;
+         Loaded    : Boolean;
+         Explicit  : Boolean)
+      is
+      begin
+         Register_Plugin_Page
+           (Name      => Name,
+            File      => File,
+            Loaded    => Loaded,
+            Explicit  => Explicit,
+            Page_Type => Integrated_Page);
       end Register_Plugin_Preferences_Page;
 
       ------------------------------------------------
@@ -596,11 +627,12 @@ package body GPS.Kernel.Custom.GUI is
             return;
          end if;
 
-         Register_Plugin_Preferences_Page
-           (Name     => Base_Name,
-            File     => Script.File,
-            Loaded   => Script.Loaded,
-            Explicit => Script.Mode /= Automatic);
+         Register_Plugin_Page
+           (Name      => Base_Name,
+            File      => Script.File,
+            Loaded    => Script.Loaded,
+            Explicit  => Script.Mode /= Automatic,
+            Page_Type => Assistant_Page);
       end Register_Plugin_Preferences_Assistant_Page;
 
    begin
@@ -622,7 +654,7 @@ package body GPS.Kernel.Custom.GUI is
       Manager.Register_Page
         (Name             => "Preferences Assistant Plugins/",
          Page             => Preferences_Page (Root_Page),
-         Page_Type        => Integrated_Page);
+         Page_Type        => Assistant_Page);
 
       Register_Plugin_Preferences_Assistant_Page ("copy_paste.py");
       Register_Plugin_Preferences_Assistant_Page ("copy_paste_toolbar.py");

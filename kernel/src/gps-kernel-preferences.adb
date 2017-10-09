@@ -468,7 +468,7 @@ package body GPS.Kernel.Preferences is
       Manager.Register_Page
         (Name             => "Preferences Assistant General",
          Page             => new Default_Preferences_Page_Record,
-         Page_Type        => Integrated_Page);
+         Page_Type        => Assistant_Page);
 
       --  Advanced  --
       System_Menus := Manager.Create_Invisible_Pref

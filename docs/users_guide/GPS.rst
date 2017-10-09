@@ -1778,6 +1778,14 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Search.PLUGINS
+
+
+
+   .. autoattribute:: GPS.Search.PREFERENCES
+
+
+
    .. autoattribute:: GPS.Search.REGEXP
 
 
