@@ -493,14 +493,17 @@ package body GPS.Kernel.Preferences_Views is
             Root_Page_View : Preferences_Page_View;
          begin
             Page_Found := Find_Page_Iter (Self, Page_Iter, Root_Page_Name);
-            Page_Path := Self.Model.Get_Path (Page_Iter);
-            Page_Path := Self.Filter.Convert_Child_Path_To_Path (Page_Path);
-            Root_Page_View := Preferences_Page_View
-              (Self.Pages_Notebook.Get_Nth_Page
-                 (Get_Int (Self.Model, Page_Iter, Page_Index_Column)));
 
-            Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
-            Root_Page_View.Display_Subpage (Page_Name_In_Model);
+            if Page_Found then
+               Page_Path := Self.Model.Get_Path (Page_Iter);
+               Page_Path := Self.Filter.Convert_Child_Path_To_Path (Page_Path);
+               Root_Page_View := Preferences_Page_View
+                 (Self.Pages_Notebook.Get_Nth_Page
+                    (Get_Int (Self.Model, Page_Iter, Page_Index_Column)));
+
+               Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+               Root_Page_View.Display_Subpage (Page_Name_In_Model);
+            end if;
          end;
       end if;
    end Display_Page;

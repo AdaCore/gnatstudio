@@ -92,24 +92,31 @@ package body GPS.Kernel.Search.Plugins is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Page : Preferences_Page;
-
+      Page                   : constant Preferences_Page :=
+                                 Get_Page (Self.Iter);
+      Is_Plugins_Page        : Boolean := False;
+      Displayed_In_Assistant : Boolean := False;
    begin
-      Page := Get_Page (Self.Iter);
+      if Page /= null then
+         Is_Plugins_Page := Page.all in Plugin_Preferences_Page_Record'Class;
+         Displayed_In_Assistant := Page.Get_Page_Type = Assistant_Page;
+      end if;
 
-      if Page.all in Plugin_Preferences_Page_Record'Class then
+      if Is_Plugins_Page and then not Displayed_In_Assistant then
          declare
-            Plugin_Page    : constant Plugin_Preferences_Page :=
-                               Plugin_Preferences_Page (Page);
-            Doc            : constant String := Plugin_Page.Get_Documentation;
-            Doc_First_Line : constant String :=
-                               Get_Surrounding_Line
-                                 (Doc, Doc'First, Doc'First);
-            Plugin_Label   : constant String := Plugin_Page.Get_Plugin_Label;
-            Name_Context   : Search_Context;
-            Doc_Context    : Search_Context;
-            Short          : GNAT.Strings.String_Access;
-            Long           : GNAT.Strings.String_Access;
+            Plugin_Page            : constant Plugin_Preferences_Page :=
+                                       Plugin_Preferences_Page (Page);
+            Doc                    : constant String :=
+                                       Plugin_Page.Get_Documentation;
+            Doc_First_Line         : constant String :=
+                                       Get_Surrounding_Line
+                                         (Doc, Doc'First, Doc'First);
+            Plugin_Label           : constant String :=
+                                       Plugin_Page.Get_Plugin_Label;
+            Name_Context           : Search_Context;
+            Doc_Context            : Search_Context;
+            Short                  : GNAT.Strings.String_Access;
+            Long                   : GNAT.Strings.String_Access;
          begin
             Result := null;
             Name_Context := Self.Pattern.Search_Best_Match (Plugin_Label);

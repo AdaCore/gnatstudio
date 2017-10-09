@@ -112,7 +112,7 @@ package Default_Preferences is
    --      (e.g : "Editor:General" or "Editor/:General")
 
    type Preferences_Page_Type is
-     (Visible_Page, Integrated_Page, Hidden_Page);
+     (Visible_Page, Integrated_Page, Assistant_Page, Hidden_Page);
    --  Used by the preferences editor dialog to know if a page should be
    --  visible from the editor or not.
    --
@@ -120,9 +120,13 @@ package Default_Preferences is
    --
    --  Integrated_Page: denotes pages that should be displayed within other
    --  pages (e.g: a specific plugin page can be displayed in a root 'Plugins'
-   --  page, or a page that is displayed in the preferences assistant instead
-   --  of the preferences editor). Then, the preferences editor should not
+   --  page. Then, the preferences editor should not
    --  create a specific entry for it.
+   --
+   --  Assistant_Page: a page that is displayed in the Preferences Assistant.
+   --  The preferences editor should not create a specific entry for it and the
+   --  preferences search module shopuld not match preferences listed in the
+   --  assistant.
    --
    --  Hidden_Page: denotes the page containing all the hidden preferences.
 
