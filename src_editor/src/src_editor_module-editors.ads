@@ -124,7 +124,6 @@ package Src_Editor_Module.Editors is
       Instance : Class_Instance) return Editor_Mark'Class;
    --  See comment above
 
-   type Editor_Mark_Access     is access all Editor_Mark'Class;
    type Editor_Location_Access is access all Editor_Location'Class;
    --  For efficiency reasons, the subprograms below return access to the
    --  actual values. This also makes it more flexible since we can have
