@@ -448,6 +448,41 @@ def get_comp_text(m):
     return (text)
 
 
+# Any change to the regular expressions below should follow changes
+# in messages issued by GNATprove in Compute_Message in
+# flow_error_messages.adb
+
+# This regexp parses the message to get the filename and line number
+# given after the "in instantiation at". The filename can be any
+# alphanumeric string with '_', '.', and '-' allowed. It does not look
+# at the rest of the message because it would be difficult to parse (in
+# particular because of counterexamples).
+reg1 = re.compile(r"in instantiation at ([\w\.-]+):[0-9]+")
+reg2 = re.compile(r"in call inlined at ([\w\.-]+):[0-9]+")
+reg3 = re.compile(r"in inherited contract at ([\w\.-]+):[0-9]+")
+
+
+def get_compunit_for_message(msg):
+    """ Return the compilation unit for a given message, so that extra
+    information for the message will be found in the file
+    unit.spark. For generic instantiations, inlined calls and
+    inherited contracts, this corresponds to the last unit in the
+    chain of locations. Otherwise, this is simply the compilation
+    unit where the message is reported."""
+
+    text = msg.get_text()
+    m = re.search(reg1, text)
+    if not m:
+        m = re.search(reg2, text)
+    if not m:
+        m = re.search(reg3, text)
+    if m:
+        fname = m.group(1)
+    else:
+        fname = os.path.basename(msg.get_file().path)
+    return os.path.splitext(fname)[0]
+
+
 class GNATprove_Parser(tool_output.OutputParser):
 
     """Class that parses messages of the gnatprove tool, and creates
@@ -612,33 +647,6 @@ class GNATprove_Parser(tool_output.OutputParser):
         # for launching manual prover. Messages locations records precisely
         # what is failing in a vc not the location of said vc.
         global map_msg
-
-        # Any change to the regular expressions below should follow changes
-        # in messages issued by GNATprove in Compute_Message in
-        # flow_error_messages.adb
-        reg1 = re.compile(r".* in instantiation at ([\w\.-]+):[0-9]+$")
-        reg2 = re.compile(r".* in call inlined at ([\w\.-]+):[0-9]+$")
-        reg3 = re.compile(r".* in inherited contract at ([\w\.-]+):[0-9]+$")
-
-        def get_compunit_for_message(msg):
-            """Return the compilation unit for a given message, so that extra
-               information for the message will be found in the file
-               unit.spark. For generic instantiations, inlined calls and
-               inherited contracts, this corresponds to the last unit in the
-               chain of locations. Otherwise, this is simply the compilation
-               unit where the message is reported."""
-
-            text = msg.get_text()
-            m = re.match(reg1, text)
-            if not m:
-                m = re.match(reg2, text)
-            if not m:
-                m = re.match(reg3, text)
-            if m:
-                fname = m.group(1)
-            else:
-                fname = os.path.basename(msg.get_file().path)
-            return os.path.splitext(fname)[0]
 
         objdir = os.path.join(
             GPS.Project.root().object_dirs()[0],
@@ -1213,7 +1221,9 @@ def on_prove_itp(context):
     msg_line = map_msg[text_msg, 'check_line']
     msg_col = map_msg[text_msg, 'check_col']
     llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
-    abs_fn_path = msg.get_file().path
+    # This is not required in on_prove_check because the .mlw file is computed
+    # in gnatprove.
+    abs_fn_path = get_compunit_for_message(msg)
     file_name = os.path.basename(abs_fn_path)
     args = [llarg]
     if inside_generic_unit_context(context):
