@@ -384,7 +384,7 @@ package body VCS2.Engines is
    -------------
 
    overriding function Get_VCS
-     (self     : not null access VCS_Repository;
+     (Self     : not null access VCS_Repository;
       Project  : Project_Type)
       return not null Abstract_VCS_Engine_Access
      is (Abstract_VCS_Engine_Access
