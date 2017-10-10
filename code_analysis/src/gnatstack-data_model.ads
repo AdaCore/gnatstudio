@@ -25,8 +25,6 @@ with GPS.Editors;
 
 package GNATStack.Data_Model is
 
-   type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;
-
    type Stack_Usage_Information is record
       Size      : Integer;
       Qualifier : Ada.Strings.Unbounded.Unbounded_String;
@@ -37,7 +35,7 @@ package GNATStack.Data_Model is
       File   : Ada.Strings.Unbounded.Unbounded_String;
       Line   : Positive;
       Column : Positive;
-      Mark   : Editor_Mark_Access := null;
+      Mark   : GPS.Editors.Editor_Mark_Holders.Holder;
       Lines  : Natural := 0;
    end record;
 

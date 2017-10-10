@@ -17,6 +17,7 @@
 
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with GPS.Editors; use GPS.Editors;
 
 package body GNATStack.Data_Model is
 
@@ -148,27 +149,6 @@ package body GNATStack.Data_Model is
         (Position : Subprogram_Information_Sets.Cursor);
       --  Deallocates subprogram information object.
 
-      procedure Deallocate_Location
-        (Position : Subprogram_Location_Sets.Cursor);
-      --  Deallocates subprogram location object.
-
-      -------------------------
-      -- Deallocate_Location --
-      -------------------------
-
-      procedure Deallocate_Location
-        (Position : Subprogram_Location_Sets.Cursor)
-      is
-         procedure Free is
-           new Ada.Unchecked_Deallocation
-             (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
-
-         Mark : Editor_Mark_Access := Element (Position).Mark;
-
-      begin
-         Free (Mark);
-      end Deallocate_Location;
-
       ---------------------------
       -- Deallocate_Subprogram --
       ---------------------------
@@ -185,7 +165,6 @@ package body GNATStack.Data_Model is
          Subprogram : Subprogram_Information_Access := Element (Position);
 
       begin
-         Subprogram.Identifier.Locations.Iterate (Deallocate_Location'Access);
          Free (Subprogram);
       end Deallocate_Subprogram;
 

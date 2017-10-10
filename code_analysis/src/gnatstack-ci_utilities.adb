@@ -21,6 +21,7 @@ with Ada.Text_IO;
 with Interfaces.C;
 with System;
 with GNAT.Regpat;
+with GPS.Editors;
 
 package body GNATStack.CI_Utilities is
 
@@ -136,7 +137,7 @@ package body GNATStack.CI_Utilities is
                       Column =>
                         Integer'Value
                           (Line (Matches (12).First .. Matches (12).Last)),
-                      Mark => null,
+                      Mark => GPS.Editors.Editor_Mark_Holders.Empty_Holder,
                       Lines => 0));
                end if;
 

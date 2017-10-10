@@ -17,7 +17,6 @@
 
 with Ada.Strings.Fixed;            use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
 
 with Default_Preferences;          use Default_Preferences;
 with GPS.Editors.Line_Information;
@@ -33,10 +32,6 @@ package body GNATStack.Module.Editors is
    use GNATStack.Data_Model.Object_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Information_Sets;
    use GNATStack.Data_Model.Subprogram_Location_Sets;
-
-   procedure Free is
-     new Ada.Unchecked_Deallocation
-       (GPS.Editors.Editor_Mark'Class, Editor_Mark_Access);
 
    procedure Show_Subprogram_Stack_Usage
      (Buffer                       : GPS.Editors.Editor_Buffer'Class;
@@ -109,7 +104,7 @@ package body GNATStack.Module.Editors is
             end loop;
 
             if Has_Element (Location_Position)
-              and then Element (Location_Position).Mark /= null
+              and then not Element (Location_Position).Mark.Is_Empty
             then
                Hide_Subprogram_Stack_Usage
                  (Buffer,
@@ -160,15 +155,22 @@ package body GNATStack.Module.Editors is
       Subprogram_Location          : Data_Model.Subprogram_Location;
       Subprogram_Location_Position : Subprogram_Location_Sets.Cursor)
    is
-      Mark : Editor_Mark_Access := Subprogram_Location.Mark;
+      Mark : GPS.Editors.Editor_Mark_Holders.Holder
+        := Subprogram_Location.Mark;
 
    begin
       Remove_Special_Lines
         (GPS_Editor_Buffer'Class (Buffer),
-         Subprogram_Location.Mark.all,
+         Subprogram_Location.Mark.Element,
          Subprogram_Location.Lines);
-      Mark.Delete;
-      Free (Mark);
+
+      declare
+         Aux : GPS.Editors.Editor_Mark'Class := Mark.Element;
+
+      begin
+         Aux.Delete;
+         Mark.Clear;
+      end;
 
       Replace_Element
         (Subprogram.Identifier.Locations,
@@ -177,7 +179,7 @@ package body GNATStack.Module.Editors is
           File   => Subprogram_Location.File,
           Line   => Subprogram_Location.Line,
           Column => Subprogram_Location.Column,
-          Mark   => null,
+          Mark   => <>,
           Lines  => 0));
    end Hide_Subprogram_Stack_Usage;
 
@@ -237,17 +239,15 @@ package body GNATStack.Module.Editors is
       Subprogram_Location_Position : Subprogram_Location_Sets.Cursor)
    is
       Indent : constant String := (Subprogram_Location.Column - 1) * ' ';
-      Mark   : Editor_Mark_Access;
+      Mark   : GPS.Editors.Editor_Mark_Holders.Holder;
       Lines  : Natural := 0;
 
    begin
-      Mark :=
-        new GPS.Editors.Editor_Mark'Class'
-          (Add_Special_Line
-               (GPS_Editor_Buffer'Class (Buffer),
-                Subprogram_Location.Line,
-                Indent & "--",
-                Module.Annotations_Style));
+      Mark := GPS.Editors.Editor_Mark_Holders.To_Holder
+        (Add_Special_Line (GPS_Editor_Buffer'Class (Buffer),
+         Subprogram_Location.Line,
+         Indent & "--",
+         Module.Annotations_Style));
       Lines := Lines + 1;
       Add_Special_Line
         (GPS_Editor_Buffer'Class (Buffer),
@@ -353,7 +353,7 @@ package body GNATStack.Module.Editors is
          end loop;
 
          if Has_Element (Location_Position)
-           and then Element (Location_Position).Mark = null
+           and then Element (Location_Position).Mark.Is_Empty
          then
             Show_Subprogram_Stack_Usage
               (Buffer,
