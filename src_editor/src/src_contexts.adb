@@ -307,6 +307,12 @@ package body Src_Contexts is
    procedure Focus_To_Editor (Editor : MDI_Child);
    --  Make the given Editor visible
 
+   function Get_Window_For_Informational_Popup
+     (Kernel : not null access Kernel_Handle_Record'Class) return Gtk_Window;
+   --  Return the window on which the loop back popup should be displayed.
+   --  This should be the current editor's window (if any) or the GPS current
+   --  window.
+
    -----------------
    -- Scan_Buffer --
    -----------------
@@ -886,7 +892,7 @@ package body Src_Contexts is
            and then Result /= GPS.Search.No_Match
          then
             Display_Informational_Popup
-              (Get_Main_Window (Kernel),
+              (Get_Window_For_Informational_Popup (Kernel),
                Icon_Name             => "gps-undo-symbolic",
                No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
@@ -1007,7 +1013,7 @@ package body Src_Contexts is
                               and then Result.Start.Column >= Current_Column))
          then
             Display_Informational_Popup
-              (Get_Main_Window (Kernel),
+              (Get_Window_For_Informational_Popup (Kernel),
                Icon_Name             => "gps-redo-symbolic",
                No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
@@ -1477,6 +1483,27 @@ package body Src_Contexts is
       Raise_Child (Editor, True);
       Present (Gtk_Window (Get_Toplevel (Get_Widget (Editor))));
    end Focus_To_Editor;
+
+   ----------------------------------------
+   -- Get_Window_For_Informational_Popup --
+   ----------------------------------------
+
+   function Get_Window_For_Informational_Popup
+     (Kernel : not null access Kernel_Handle_Record'Class) return Gtk_Window
+   is
+      Child    : constant MDI_Child := Find_Current_Editor (Kernel);
+      Toplevel : constant Gtk_Widget :=
+                   (if Child /= null then
+                       Child.Get_Widget.Get_Toplevel
+                    else
+                       null);
+   begin
+      if Toplevel /= null and then Toplevel.Is_Toplevel then
+         return Gtk_Window (Toplevel);
+      else
+         return Get_Current_Window (Kernel);
+      end if;
+   end Get_Window_For_Informational_Popup;
 
    ------------
    -- Search --
