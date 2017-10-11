@@ -55,7 +55,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel;                use GPS.Kernel;
 with Glib.Main;
-with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Glib;                      use Glib;
 with Glib_String_Utils;         use Glib_String_Utils;
