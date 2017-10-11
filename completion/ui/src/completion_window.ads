@@ -217,10 +217,9 @@ private
       --  access to the parent completion window
    end record;
 
-   use type GPS.Editors.Editor_Buffer;
-
    package Editors_Holders is
-     new Ada.Containers.Indefinite_Holders (GPS.Editors.Editor_Buffer'Class);
+     new Ada.Containers.Indefinite_Holders
+       (GPS.Editors.Editor_Buffer'Class, GPS.Editors."=");
 
    type Completion_Window_Record is new Gtk_Window_Record with record
       Explorer : Completion_Explorer_Access;
