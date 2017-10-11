@@ -61,17 +61,19 @@ package body Find_Utils is
    --------------------------
 
    procedure Scan_Buffer_No_Scope
-     (Context     : access Root_Search_Context;
-      Buffer      : String;
-      Start_Index : Natural;
-      End_Index   : Natural;
-      Callback    : Scan_Callback;
-      Ref         : in out Buffer_Position;
-      Was_Partial : out Boolean)
+     (Context              : access Root_Search_Context;
+      Buffer               : String;
+      Start_Index          : Natural;
+      End_Index            : Natural;
+      Callback             : Scan_Callback;
+      Ref                  : in out Buffer_Position;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Result : GPS.Search.Search_Context;
       BOL, EOL : Integer;
       After : Positive;
+      Matched_Text : Unbounded_String;
    begin
       Was_Partial := False;
 
@@ -102,15 +104,18 @@ package body Find_Utils is
          --  the part of the buffer that was tested, whereas we want the full
          --  line (including comments if we were only searching in code for
          --  instance)
-         if not Callback
-           (Result,
-            Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
-            & "<b>"
-            & Glib.Convert.Escape_Text
-              (Buffer (Result.Start.Index .. After - 1))
-            & "</b>"
-            & Glib.Convert.Escape_Text (Buffer (After .. EOL)))
-         then
+         Matched_Text :=
+           To_Unbounded_String ("<b>"
+                                & Glib.Convert.Escape_Text
+                                  (Buffer (Result.Start.Index .. After - 1))
+                                & "</b>");
+         if not Display_Matched_Only then
+            Matched_Text :=
+              Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
+              & Matched_Text
+              & Glib.Convert.Escape_Text (Buffer (After .. EOL));
+         end if;
+         if not Callback (Result, To_String (Matched_Text)) then
             Was_Partial := True;
             exit;
          end if;
@@ -238,7 +243,8 @@ package body Find_Utils is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean)
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Occurrence : Search_Occurrence;
    begin
@@ -248,7 +254,8 @@ package body Find_Utils is
          From_Selection_Start => From_Selection_Start,
          Give_Focus           => Give_Focus,
          Found                => Found,
-         Continue             => Continue);
+         Continue             => Continue,
+         Display_Matched_Only => Display_Matched_Only);
       Free (Occurrence);
    end Search;
 

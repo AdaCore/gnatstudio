@@ -166,13 +166,14 @@ package Src_Contexts is
    type Current_Selection_Context is new Current_File_Context with private;
 
    overriding function Search
-     (Context              : access Current_Selection_Context;
-      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward      : Boolean;
-      From_Selection_Start : Boolean;
-      Give_Focus           : Boolean;
-      Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence;
+     (Context               : access Current_Selection_Context;
+      Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward       : Boolean;
+      From_Selection_Start  : Boolean;
+      Give_Focus            : Boolean;
+      Found                 : out Boolean;
+      Continue              : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence;
    --  Search function for "Current Selection"
 
    overriding function Replace
@@ -197,10 +198,12 @@ package Src_Contexts is
      File_Search_Context with private;
 
    function Search
-     (Context : access Abstract_Files_Context;
-      Handler : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Callback : Scan_Callback)
+     (Context              : access Abstract_Files_Context;
+      Handler              : access
+        Language_Handlers.Language_Handler_Record'Class;
+      Kernel               : GPS.Kernel.Kernel_Handle;
+      Callback             : Scan_Callback;
+      Display_Matched_Only : Boolean := False)
       return Boolean;
    --  Search either the next match or all the occurrences, depending on the
    --  parameter All_Occurrences. For each one of them, Callback is called.
@@ -424,7 +427,8 @@ private
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence;
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence;
    --  Search function for "Current File"
 
    overriding function Replace
@@ -518,7 +522,8 @@ private
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence;
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence;
    --  Search function for "Files From Project" and "Open_Files"
 
    overriding function Replace

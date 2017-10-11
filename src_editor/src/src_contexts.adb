@@ -85,15 +85,16 @@ package body Src_Contexts is
      (GError, GError_Access);
 
    procedure Scan_Buffer
-     (Buffer        : String;
-      From          : Character_Offset_Type;
-      Context       : access Root_Search_Context'Class;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Lang          : Language_Access := null;
-      Ref           : in out Buffer_Position;
-      Was_Partial   : out Boolean);
+     (Buffer               : String;
+      From                 : Character_Offset_Type;
+      Context              : access Root_Search_Context'Class;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Lang                 : Language_Access := null;
+      Ref                  : in out Buffer_Position;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Search Context in buffer starting from From character, searching only
    --  in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
@@ -104,17 +105,18 @@ package body Src_Contexts is
    --  Buffer should be in UTF-8.
 
    procedure Scan_File
-     (Context       : access Root_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Kernel        : Kernel_Handle := null;
-      Name          : GNATCOLL.VFS.Virtual_File;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Editable_Line_Type := 1;
-      Start_Column  : Character_Offset_Type := 1;
-      Force_Read    : Boolean := False;
-      Was_Partial   : out Boolean);
+     (Context              : access Root_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Kernel               : Kernel_Handle := null;
+      Name                 : GNATCOLL.VFS.Virtual_File;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      Force_Read           : Boolean := False;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
    --  If there is already an opened editor for this file, its contents will be
@@ -128,15 +130,16 @@ package body Src_Contexts is
    --  some point.
 
    procedure Scan_Editor
-     (Context       : access Root_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Editor        : MDI_Child;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Editable_Line_Type := 1;
-      Start_Column  : Character_Offset_Type := 1;
-      Was_Partial   : out Boolean);
+     (Context              : access Root_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Editor               : MDI_Child;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Same as above, but works directly on the editor. This is useful for
    --  example when the editor has no file yet.
 
@@ -265,12 +268,13 @@ package body Src_Contexts is
    --  Return the name of the category to use in the Locations window
 
    procedure Search_From_Editor
-     (Context       : access File_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Callback      : Scan_Callback;
-      Editor        : MDI_Child;
-      More_Matches  : out Boolean;
-      Matches_Found : out Boolean);
+     (Context              : access File_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Callback             : Scan_Callback;
+      Editor               : MDI_Child;
+      More_Matches         : out Boolean;
+      Matches_Found        : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Call Callback on matches found in the file given in parmeter.
 
    function Replace_From_Editor
@@ -318,15 +322,16 @@ package body Src_Contexts is
    -----------------
 
    procedure Scan_Buffer
-     (Buffer        : String;
-      From          : Character_Offset_Type;
-      Context       : access Root_Search_Context'Class;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Lang          : Language_Access := null;
-      Ref           : in out Buffer_Position;
-      Was_Partial   : out Boolean)
+     (Buffer               : String;
+      From                 : Character_Offset_Type;
+      Context              : access Root_Search_Context'Class;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Lang                 : Language_Access := null;
+      Ref                  : in out Buffer_Position;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
         := (Statements     => Scope = Whole or else Scope = All_But_Comments,
@@ -528,12 +533,13 @@ package body Src_Contexts is
 
       if Scope = Whole or else Lang = null then
          Context.Scan_Buffer_No_Scope
-           (Buffer      => Buffer,
-            Start_Index => Buffer_First,
-            End_Index   => Buffer'Last,
-            Callback    => Callback,
-            Ref         => Ref,
-            Was_Partial => Was_Partial);
+           (Buffer               => Buffer,
+            Start_Index          => Buffer_First,
+            End_Index            => Buffer'Last,
+            Callback             => Callback,
+            Ref                  => Ref,
+            Was_Partial          => Was_Partial,
+            Display_Matched_Only => Display_Matched_Only);
          return;
       end if;
 
@@ -555,7 +561,8 @@ package body Src_Contexts is
             Context.Scan_Buffer_No_Scope
               (Buffer, Integer (Line_Start), Section_End,
                Callback,
-               Ref => Ref, Was_Partial => Was_Partial);
+               Ref => Ref, Was_Partial => Was_Partial,
+               Display_Matched_Only => Display_Matched_Only);
 
             if Was_Partial then
                Lexical_State := Old_State;
@@ -575,17 +582,18 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_File
-     (Context       : access Root_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Kernel        : GPS.Kernel.Kernel_Handle := null;
-      Name          : GNATCOLL.VFS.Virtual_File;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Editable_Line_Type := 1;
-      Start_Column  : Character_Offset_Type := 1;
-      Force_Read    : Boolean := False;
-      Was_Partial   : out Boolean)
+     (Context              : access Root_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Kernel               : Kernel_Handle := null;
+      Name                 : GNATCOLL.VFS.Virtual_File;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      Force_Read           : Boolean := False;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Lang   : Language_Access;
       Buffer : GNAT.Strings.String_Access;
@@ -613,9 +621,10 @@ package body Src_Contexts is
                Callback,
                Scope,
                Lexical_State,
-               Start_Line   => Start_Line,
-               Start_Column => Start_Column,
-               Was_Partial  => Was_Partial);
+               Start_Line           => Start_Line,
+               Start_Column         => Start_Column,
+               Was_Partial          => Was_Partial,
+               Display_Matched_Only => Display_Matched_Only);
             return;
          end if;
       end if;
@@ -655,7 +664,8 @@ package body Src_Contexts is
             Scan_Buffer
               (Tmp (Start .. Tmp'Last), 1, Context, Callback, Scope,
                Lexical_State, Lang,
-               Ref => Ref, Was_Partial => Was_Partial);
+               Ref => Ref, Was_Partial => Was_Partial,
+               Display_Matched_Only => Display_Matched_Only);
 
             Free (UTF8);
          end if;
@@ -673,15 +683,16 @@ package body Src_Contexts is
    -----------------
 
    procedure Scan_Editor
-     (Context       : access Root_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Editor        : MDI_Child;
-      Callback      : Scan_Callback;
-      Scope         : Search_Scope;
-      Lexical_State : in out Recognized_Lexical_States;
-      Start_Line    : Editable_Line_Type := 1;
-      Start_Column  : Character_Offset_Type := 1;
-      Was_Partial   : out Boolean)
+     (Context              : access Root_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Editor               : MDI_Child;
+      Callback             : Scan_Callback;
+      Scope                : Search_Scope;
+      Lexical_State        : in out Recognized_Lexical_States;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Lang   : Language_Access;
       Box    : Source_Editor_Box;
@@ -707,8 +718,16 @@ package body Src_Contexts is
       begin
          Ref := (Buffer'First, Integer (Start_Line), 1, 1);
          Scan_Buffer
-           (Buffer, Start_Column, Context, Callback, Scope,
-            Lexical_State, Lang, Ref => Ref, Was_Partial => Was_Partial);
+           (Buffer,
+            Start_Column,
+            Context,
+            Callback,
+            Scope,
+            Lexical_State,
+            Lang,
+            Ref => Ref,
+            Was_Partial => Was_Partial,
+            Display_Matched_Only => Display_Matched_Only);
       end;
    end Scan_Editor;
 
@@ -1516,8 +1535,10 @@ package body Src_Contexts is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence
    is
+      pragma Unreferenced (Display_Matched_Only);
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
          Text  : String) return Boolean;
@@ -2180,7 +2201,8 @@ package body Src_Contexts is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence
    is
       Child      : constant MDI_Child := Find_Current_Editor (Kernel);
       Occurrence : Source_Search_Occurrence;
@@ -2273,7 +2295,8 @@ package body Src_Contexts is
             Interactive_Callback'Unrestricted_Access,
             Child,
             Continue,
-            Dummy_Boolean);
+            Dummy_Boolean,
+            Display_Matched_Only => Display_Matched_Only);
       end if;
 
       return Search_Occurrence (Occurrence);
@@ -2724,12 +2747,13 @@ package body Src_Contexts is
    ------------------------
 
    procedure Search_From_Editor
-     (Context       : access File_Search_Context'Class;
-      Handler       : access Language_Handler_Record'Class;
-      Callback      : Scan_Callback;
-      Editor        : MDI_Child;
-      More_Matches  : out Boolean;
-      Matches_Found : out Boolean)
+     (Context              : access File_Search_Context'Class;
+      Handler              : access Language_Handler_Record'Class;
+      Callback             : Scan_Callback;
+      Editor               : MDI_Child;
+      More_Matches         : out Boolean;
+      Matches_Found        : out Boolean;
+      Display_Matched_Only : Boolean := False)
    is
       Match  : GPS.Search.Search_Context;
       Text   : GNAT.Strings.String_Access;
@@ -2753,7 +2777,8 @@ package body Src_Contexts is
                Editor        => Editor,
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
-               Start_Line   => Editable_Line_Type (Context.Current.Start.Line),
+               Start_Line    =>
+                 Editable_Line_Type (Context.Current.Start.Line),
                Start_Column  => Context.Current.Start.Column + 1,
                Result        => Match,
                Text          => Text);
@@ -2779,8 +2804,9 @@ package body Src_Contexts is
               (Context,
                Handler,
                Editor, Callback, Context.Scope,
-               Lexical_State => State,
-               Was_Partial   => Was_Partial);
+               Lexical_State        => State,
+               Was_Partial          => Was_Partial,
+               Display_Matched_Only => Display_Matched_Only);
 
             Matches_Found := True;
             More_Matches := Was_Partial;
@@ -2793,10 +2819,12 @@ package body Src_Contexts is
    ------------
 
    function Search
-     (Context  : access Abstract_Files_Context;
-      Handler  : access Language_Handler_Record'Class;
-      Kernel   : Kernel_Handle;
-      Callback : Scan_Callback)
+     (Context              : access Abstract_Files_Context;
+      Handler              : access
+        Language_Handlers.Language_Handler_Record'Class;
+      Kernel               : GPS.Kernel.Kernel_Handle;
+      Callback             : Scan_Callback;
+      Display_Matched_Only : Boolean := False)
       return Boolean
    is
       C      : constant Abstract_Files_Context_Access :=
@@ -2906,7 +2934,8 @@ package body Src_Contexts is
                Scope         => Context.Scope,
                Lexical_State => State,
                Force_Read    => Kernel = null,
-               Was_Partial   => Was_Partial);
+               Was_Partial   => Was_Partial,
+               Display_Matched_Only => Display_Matched_Only);
             Matches_Found := True;
             exit when not Was_Partial;
          end loop;
@@ -2953,7 +2982,8 @@ package body Src_Contexts is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False) return Search_Occurrence
    is
       pragma Unreferenced (From_Selection_Start);
       C : constant Abstract_Files_Context_Access :=
@@ -3008,7 +3038,8 @@ package body Src_Contexts is
            (Context,
             Get_Language_Handler (Kernel),
             Kernel_Handle (Kernel),
-            Interactive_Callback'Unrestricted_Access);
+            Interactive_Callback'Unrestricted_Access,
+            Display_Matched_Only => Display_Matched_Only);
       end if;
 
       return Search_Occurrence (Occurrence);

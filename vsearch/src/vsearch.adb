@@ -122,6 +122,7 @@ package body Vsearch is
    Close_On_Match                   : Boolean_Preference;
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
    Keep_Previous_Search_Context     : Boolean_Preference;
+   Display_Matched_Only             : Boolean_Preference;
    --  The preferences
 
    H_Padding : constant Guint := 5;
@@ -772,7 +773,8 @@ package body Vsearch is
          From_Selection_Start => False,
          Give_Focus           => Self.Select_Editor_On_Match,
          Found                => Found,
-         Continue             => Continue);
+         Continue             => Continue,
+         Display_Matched_Only => Display_Matched_Only.Get_Pref);
 
       Self.Found := Self.Found or else Found;
 
@@ -1202,7 +1204,7 @@ package body Vsearch is
 
    procedure On_Search_All (Object : access Gtk_Widget_Record'Class) is
    begin
-      Internal_Search (Vsearch_Access (Object), True);
+      Internal_Search (Vsearch_Access (Object), All_Occurrences => True);
    end On_Search_All;
 
    ----------------
@@ -2431,6 +2433,10 @@ package body Vsearch is
         (Menu,
          Kernel => View.Kernel,
          Pref   => Keep_Previous_Search_Context);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Display_Matched_Only);
    end Create_Menu;
 
    ---------------
@@ -3469,6 +3475,16 @@ package body Vsearch is
          Path  => -":Search",
          Doc   => -("Preserve the contents of the ""in"" entry"
            & " between searches."),
+         Default => False);
+
+      Display_Matched_Only := Create
+        (Get_Preferences (Kernel),
+         Name  => "display-only-matched-strings",
+         Label => -"Display only matched strings",
+         Path  => -":Search",
+         Doc   =>
+           -"After a find all, display only the matched strings in the "
+           & "Location view.",
          Default => False);
 
       Page := Manager.Get_Registered_Page

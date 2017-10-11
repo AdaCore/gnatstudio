@@ -136,13 +136,14 @@ package Find_Utils is
    --  If it returns False, no more match will be checked.
 
    procedure Scan_Buffer_No_Scope
-     (Context     : access Root_Search_Context;
-      Buffer      : String;
-      Start_Index : Natural;
-      End_Index   : Natural;
-      Callback    : Scan_Callback;
-      Ref         : in out Buffer_Position;
-      Was_Partial : out Boolean);
+     (Context              : access Root_Search_Context;
+      Buffer               : String;
+      Start_Index          : Natural;
+      End_Index            : Natural;
+      Callback             : Scan_Callback;
+      Ref                  : in out Buffer_Position;
+      Was_Partial          : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Find matches of Context in Buffer (Start_Index .. End_Index), and until
    --  either End_Index or Callback returns False.
    --  Note: it is important to pass the full file contents in Buffer, since
@@ -155,6 +156,9 @@ package Find_Utils is
    --
    --  On exit, Was_Partial is set to True if the search was interrupted
    --  because the callback returned False.
+   --
+   --  If Display_Matched_Only is True, only the matched string will be
+   --  printed in the Location view.
 
    procedure Find_Closest_Match
      (Buffer         : String;
@@ -215,7 +219,9 @@ package Find_Utils is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean) return Search_Occurrence is abstract;
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False)
+      return Search_Occurrence is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --
    --  Found tells whether an occurrence of the context was found.
@@ -238,7 +244,8 @@ package Find_Utils is
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean);
+      Continue             : out Boolean;
+      Display_Matched_Only : Boolean := False);
    --  Same as above, but does not return a search occurrence instead.
 
    function Replace
