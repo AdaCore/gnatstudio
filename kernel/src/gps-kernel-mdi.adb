@@ -2357,7 +2357,11 @@ package body GPS.Kernel.MDI is
             VCS := Kernel.VCS.Get_VCS (Project);
          end if;
 
-         return VCS.Get_Tooltip_For_File (File);
+         if VCS = null then
+            return "";
+         else
+            return VCS.Get_Tooltip_For_File (File);
+         end if;
       end Get_VCS;
 
    begin
