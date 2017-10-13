@@ -1633,6 +1633,8 @@ Classes
 
    .. automethod:: GPS.Project.ancestor_deps
 
+   .. automethod:: GPS.Project.artifacts_dir
+
    .. automethod:: GPS.Project.clear_attribute_values
 
    .. automethod:: GPS.Project.dependencies
