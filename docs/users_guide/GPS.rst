@@ -5,7 +5,7 @@ Scripting API reference for `GPS`
 
 .. automodule:: GPS
 
-.. inheritance-diagram: GPS    # DISABLED, add "::" to enable
+.. inheritance-diagram GPS    # DISABLED, add "::" to enable
 
 
 Functions
