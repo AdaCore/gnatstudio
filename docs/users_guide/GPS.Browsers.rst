@@ -5,7 +5,7 @@ Scripting API reference for `GPS.Browsers`
 
 .. automodule:: GPS.Browsers
 
-.. inheritance-diagram: GPS    # DISABLED, add "::" to enable
+.. inheritance-diagram GPS    # DISABLED, add "::" to enable
 
 
 Classes

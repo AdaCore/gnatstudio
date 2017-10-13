@@ -1,6 +1,5 @@
 
 import inspect
-import os
 import GPS
 from gps_utils.internal.utils import dump_menu
 
@@ -13,7 +12,7 @@ class Inspect(object):
 
 .. automodule:: %(module)s
 
-.. inheritance-diagram: GPS    # DISABLED, add "::" to enable
+.. inheritance-diagram GPS    # DISABLED, add "::" to enable
 
 """
 
