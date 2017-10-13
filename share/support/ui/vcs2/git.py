@@ -253,7 +253,7 @@ class Git(core.VCS):
         """
         Check whether there is any uncomitted change.
         """
-        p = self._git(['diff-index', '--quiet', 'HEAD', '--'])
+        p = self._git(['diff', '--quiet', 'HEAD', '--'])
         status, _ = yield p.wait_until_terminate()
         yield status != 0
 
