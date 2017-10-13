@@ -406,7 +406,6 @@ package body Scenario_Views is
       pragma Unreferenced (Self);
       K      : constant Kernel_Handle     := Get_Kernel (Context.Context);
       V      : constant Scenario_View     := Scenario_Views.Retrieve_View (K);
-      Index  : Scenario_Combo_Maps.Cursor := V.Combo_Var_Map.First;
       Scenar : Scenario_Variable_Array    := Scenario_Variables (K);
       Elem   : Gtk_Combo_Box_Text;
       Val    : Unbounded_String;
@@ -415,25 +414,33 @@ package body Scenario_Views is
       --  Set the Build Mode
       V.Kernel.Set_Build_Mode (New_Mode => V.Combo_Build.Get_Active_Text);
 
-      --  Set val of the scenario variables
-      while Index /= Scenario_Combo_Maps.No_Element loop
-         Elem := Scenario_Combo_Maps.Element (Index);
-         Val := To_Unbounded_String (Elem.Get_Active_Text);
-         Name := To_Unbounded_String (Scenario_Combo_Maps.Key (Index));
+      if not V.Combo_Var_Map.Is_Empty then
+         declare
+            Index  : Scenario_Combo_Maps.Cursor := V.Combo_Var_Map.First;
+         begin
+            --  Set val of the scenario variables
 
-         --  Find the Variable with the same name as Combo
-         for J in Scenar'Range loop
-            if External_Name (Scenar (J)) = To_String (Name) then
-               Trace (Me, "Set value of '" & To_String (Name) & "' to '"
-                      & To_String (Val) & "'");
-               Add_New_Value (K, To_String (Val), Scenar (J));
-               Get_Registry (K).Tree.Change_Environment ((1 => Scenar (J)));
-            end if;
-         end loop;
+            while Index /= Scenario_Combo_Maps.No_Element loop
+               Elem := Scenario_Combo_Maps.Element (Index);
+               Val := To_Unbounded_String (Elem.Get_Active_Text);
+               Name := To_Unbounded_String (Scenario_Combo_Maps.Key (Index));
 
-         --  Next Element
-         Index := Scenario_Combo_Maps.Next (Index);
-      end loop;
+               --  Find the Variable with the same name as Combo
+               for J in Scenar'Range loop
+                  if External_Name (Scenar (J)) = To_String (Name) then
+                     Trace (Me, "Set value of '" & To_String (Name) & "' to '"
+                            & To_String (Val) & "'");
+                     Add_New_Value (K, To_String (Val), Scenar (J));
+                     Get_Registry (K).Tree.Change_Environment
+                       ((1 => Scenar (J)));
+                  end if;
+               end loop;
+
+               --  Next Element
+               Index := Scenario_Combo_Maps.Next (Index);
+            end loop;
+         end;
+      end if;
       Recompute_View (K);
       return Commands.Success;
    end Execute;
