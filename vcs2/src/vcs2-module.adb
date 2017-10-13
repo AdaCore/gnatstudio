@@ -253,15 +253,8 @@ package body VCS2.Module is
       V       : constant VCS_Engine_Access :=
          VCS_Engine_Access (Kernel.VCS.Get_VCS (Project));
    begin
-      --  If the file is already marked as modified, we don't need to refresh
-      --  the status.
-
-      if (V.File_Properties_From_Cache (File).Status
-         and Mask_Modified_Unstaged) = 0
-      then
-         V.Invalidate_File_Status_Cache (File);
-         Vcs_Refresh_Hook.Run (Kernel);
-      end if;
+      V.Invalidate_File_Status_Cache (File);
+      Vcs_Refresh_Hook.Run (Kernel);
    end Execute;
 
    -------------
