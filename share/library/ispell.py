@@ -81,13 +81,7 @@ one. Recommended values are "aspell" or "ispell". Input to this command
 is sent to its stdin.""",
             "aspell -a --lang=en")
 
-        self.pref_bgcolor = GPS.Preference("Plugins/ispell/bgcolor")
-        self.pref_bgcolor.create(
-            "Background color",
-            "color",
-            """Background color for the command window that contains the
-suggested replacements""",
-            "yellow")
+        self.pref_bgcolor = GPS.Preference("Command-Windows-Background-Color")
 
         self.pref_type = GPS.Preference("Plugins/ispell/menutype")
         self.pref_type.create(
