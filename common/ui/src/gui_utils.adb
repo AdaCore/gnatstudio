@@ -2264,7 +2264,8 @@ package body GUI_Utils is
       C  : MDI_Child;
       pragma Unreferenced (Id);
       GPS_Has_Focus : constant Boolean :=
-        (for some W of Get_MDI_Windows (MDI) => W.Has_Toplevel_Focus);
+         (for some W of Get_MDI_Windows (MDI) => W.Has_Toplevel_Focus);
+
    begin
 
       --  Don't do anything if GPS doesn't have the focus at a Window Manager
@@ -2284,10 +2285,17 @@ package body GUI_Utils is
             Gtkada.MDI.Raise_Child (C);
          end if;
       else
-         MDI.Child_Selected (null);  --  force update of the context
+         MDI.Set_Focus_Child (null);  --  force update of the context
       end if;
 
-      Win := Get_Toplevel (Widget);
+      --  If the given widget is the MDI child itself, get the toplevel widget
+      --  of the widget contained in it.
+
+      if C = Widget then
+         Win := C.Get_Widget.Get_Toplevel;
+      else
+         Win := Widget.Get_Toplevel;
+      end if;
 
       --  Do not Present a window if it hasn't been realized yet:
       --  this would give the window its default size as defined in
