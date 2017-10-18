@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Installer>
+    <Name>GNAT Programming Studio</Name>
+    <Version>19.0w</Version>
+    <Title>GNAT Programming Studio Installer</Title>
+    <Publisher>AdaCore</Publisher>
+    <StartMenuDir>GNAT Pro</StartMenuDir>
+    <TargetDir>@HomeDir@/InstallationDirectory</TargetDir>
+</Installer>
