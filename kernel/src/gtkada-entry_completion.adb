@@ -144,6 +144,11 @@ package body Gtkada.Entry_Completion is
    --  Called in an idle callback to check whether S has the focus, and
    --  popdown the window otherwise.
 
+   procedure Capture_Focus_Widget
+     (Self : not null access Gtkada_Entry_Record'Class);
+   --  Used to capture the currently focused widget so that we can give the
+   --  focus back to it when leaving the entry.
+
    package Completion_Sources is new Glib.Main.Generic_Sources (Gtkada_Entry);
 
    procedure Clear (Self : access Gtkada_Entry_Record'Class);
@@ -837,7 +842,7 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.On_Focus_In_Event (On_Focus_In'Access, Self);
 
       --  Let the entry grab the focus
-      Grab_Toplevel_Focus (Get_MDI (Kernel), Self.GEntry);
+      Grab_Toplevel_Focus (Get_MDI (Kernel), Self.GEntry, Present => False);
 
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
@@ -867,11 +872,7 @@ package body Gtkada.Entry_Completion is
    begin
       --  Get the currently focused widget so that we can give it the focus
       --  back when the user presses the ESCAPE key.
-      S.Previous_Focus := Gtk_Widget (Get_MDI (S.Kernel).Get_Focus_Child);
-
-      if S.Previous_Focus /= null then
-         S.Previous_Focus.Ref;
-      end if;
+      S.Capture_Focus_Widget;
 
       --  Update the current context, so that key shortcuts like
       --  Backspace are sent to the omni-search, and not the editor that
@@ -909,6 +910,25 @@ package body Gtkada.Entry_Completion is
          Self.Focus_Check_Idle := No_Source_Id;
          return False;
    end Check_Focus_Idle;
+
+   --------------------------
+   -- Capture_Focus_Widget --
+   --------------------------
+
+   procedure Capture_Focus_Widget
+     (Self : not null access Gtkada_Entry_Record'Class) is
+   begin
+      --  Get the currently focused widget if it has not been set already
+
+      if Self.Previous_Focus = null then
+         Self.Previous_Focus :=
+           Gtk_Widget (Get_MDI (Self.Kernel).Get_Focus_Child);
+      end if;
+
+      if Self.Previous_Focus /= null then
+         Self.Previous_Focus.Ref;
+      end if;
+   end Capture_Focus_Widget;
 
    ------------------
    -- On_Focus_Out --
@@ -1168,7 +1188,8 @@ package body Gtkada.Entry_Completion is
          --  Give the focus to the previously focused widget when pressing on
          --  the ESCAPE key.
          if Self.Previous_Focus /= null then
-            Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.Previous_Focus);
+            Grab_Toplevel_Focus
+              (Get_MDI (Self.Kernel), Self.Previous_Focus, Present => True);
          end if;
 
          Widget_Callback.Emit_By_Name (Self, Signal_Escape);
@@ -1547,11 +1568,17 @@ package body Gtkada.Entry_Completion is
 
       Self.Notes_Popup.Hide;
 
+      --  Get the currently focused widget so that we can give it the focus
+      --  back when the user presses the ESCAPE key.
+      Self.Capture_Focus_Widget;
+
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard
       if not Self.GEntry.Has_Focus then
-         Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.GEntry,
-                              Present => False);
+         Grab_Toplevel_Focus
+           (Get_MDI (Self.Kernel),
+            Self.GEntry,
+            Present => True);
       end if;
    end Popup;
 
