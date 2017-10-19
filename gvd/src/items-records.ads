@@ -169,9 +169,9 @@ private
    overriding function Build_Display
      (Self   : not null access Record_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
    overriding function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;

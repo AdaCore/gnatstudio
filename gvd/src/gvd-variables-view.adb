@@ -75,8 +75,8 @@ with System;
 with System.Storage_Elements;  use System.Storage_Elements;
 with XML_Utils;                use XML_Utils;
 
-package body GVD.Variables is
-   Me : constant Trace_Handle := Create ("Variables");
+package body GVD.Variables.View is
+   Me : constant Trace_Handle := Create ("Variables_View");
 
    Show_Types : Boolean_Preference;
 
@@ -1428,4 +1428,4 @@ package body GVD.Variables is
         ("debugger-variables-show-types", True, Label => -"Show types");
    end Register_Module;
 
-end GVD.Variables;
+end GVD.Variables.View;

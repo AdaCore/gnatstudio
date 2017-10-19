@@ -19,7 +19,6 @@
 --  See the package Items for more information on all the private subprograms.
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package Items.Simples is
 
@@ -115,9 +114,9 @@ package Items.Simples is
    overriding function Build_Display
      (Self   : not null access Debugger_Output_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
    overriding function Start
      (Self   : not null access Debugger_Output_Type)
       return Generic_Iterator'Class;
@@ -157,9 +156,9 @@ private
    overriding function Build_Display
      (Self   : not null access Simple_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
    overriding function Is_Changed
      (Self : not null access Simple_Type) return Boolean;
 
@@ -194,9 +193,9 @@ private
    overriding function Build_Display
      (Self   : not null access Access_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
 
    type Enum_Type is new Simple_Type with null record;
    overriding function Get_Type_Descr

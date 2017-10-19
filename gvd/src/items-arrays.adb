@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Tags;              use Ada.Tags;
 with Glib;                  use Glib;
+with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
+with Browsers;              use Browsers;
 with Items.Repeats;         use Items.Repeats;
-with Language;              use Language;
+with GVD.Canvas;
 
 package body Items.Arrays is
 
@@ -587,14 +588,14 @@ package body Items.Arrays is
    overriding function Build_Display
      (Self : not null access Array_Type;
       Name : String;
-      View : not null access Debugger_Data_View_Record'Class;
+      View : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang : Language.Language_Access;
-      Mode : Display_Mode) return Component_Item
+      Mode : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
    is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      R    : Collapsible_Item;
-      Rect : constant Component_Item :=
-        New_Component_Item (Styles, Self, Name);
+      R    : GVD.Canvas.Collapsible_Item;
+      Rect : constant GVD.Canvas.Component_Item :=
+        GVD.Canvas.New_Component_Item (Styles, Self, Name);
    begin
       --  If we have a real empty array (ie the dimensions were not considered
       --  as dynamic
@@ -611,16 +612,18 @@ package body Items.Arrays is
          Rect.Add_Child (View.Item_Hidden);
 
       else
-         if Show_Type (Mode)
+         if GVD.Canvas.Show_Type (Mode)
            and then Self.Type_Name /= Null_Unbounded_String
          then
             Rect.Add_Child
               (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
          end if;
 
-         if Show_Value (Mode) and then not Self.Values.Is_Empty then
+         if GVD.Canvas.Show_Value (Mode)
+           and then not Self.Values.Is_Empty
+         then
             for V in 1 .. Self.Last_Value loop
-               R := new Collapsible_Item_Record;
+               R := new GVD.Canvas.Collapsible_Item_Record;
                R.For_Component := Self.Values (V).Value;
                R.Initialize_Rect (Styles.Invisible);
                R.Set_Child_Layout (Horizontal_Stack);

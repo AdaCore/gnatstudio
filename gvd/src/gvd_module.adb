@@ -54,7 +54,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with GVD.Canvas;
+with GVD.Canvas.View;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
@@ -1667,7 +1667,7 @@ package body GVD_Module is
          Filter   => Debugger_Filter,
          Category    => -"Debug");
 
-      GVD.Canvas.Register_Module (Kernel);
+      GVD.Canvas.View.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
 
       Register_Action

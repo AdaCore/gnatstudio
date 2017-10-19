@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2017, AdaCore                          --
+--                     Copyright (C) 2016-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,8 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package GVD.Variables is
+with GPS.Kernel;
 
-   --  GVD.Items will be moved into this package
+package GVD.Variables.View is
 
-end GVD.Variables;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the data windows
+
+end GVD.Variables.View;

@@ -151,9 +151,9 @@ private
    overriding function Build_Display
      (Self : not null access Array_Type;
       Name : String;
-      View : not null access Debugger_Data_View_Record'Class;
+      View : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang : Language.Language_Access;
-      Mode : Display_Mode) return Component_Item;
+      Mode : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
    overriding function Get_Type_Descr
      (Self    : not null access Array_Type) return String;
    overriding procedure Free

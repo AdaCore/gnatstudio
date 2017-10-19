@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Language;        use Language;
+with Glib;                   use Glib;
+with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
+with Browsers;               use Browsers;
+with GVD.Canvas;
 
 package body Items.Records is
 
@@ -339,14 +341,14 @@ package body Items.Records is
    overriding function Build_Display
      (Self   : not null access Record_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
    is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant Component_Item :=
-        New_Component_Item (Styles, Self, Name);
-      R : Collapsible_Item;
+      Rect   : constant GVD.Canvas.Component_Item :=
+        GVD.Canvas.New_Component_Item (Styles, Self, Name);
+      R : GVD.Canvas.Collapsible_Item;
    begin
       if not Self.Valid then
          Rect.Add_Child
@@ -365,7 +367,7 @@ package body Items.Records is
       else
          Rect.Set_Style (Styles.Nested);
 
-         if Show_Type (Mode)
+         if GVD.Canvas.Show_Type (Mode)
            and then Self.Type_Name /= Null_Unbounded_String
          then
             Rect.Add_Child
@@ -377,7 +379,7 @@ package body Items.Records is
             --  not a variant part ?
 
             if Self.Fields (F).Value /= null then
-               R := new Collapsible_Item_Record;
+               R := new GVD.Canvas.Collapsible_Item_Record;
                R.For_Component := Self.Fields (F).Value;
                R.Initialize_Rect (Styles.Invisible);
                R.Set_Child_Layout (Horizontal_Stack);
@@ -398,7 +400,7 @@ package body Items.Records is
             if Self.Fields (F).Variant_Part /= null then
                for V in Self.Fields (F).Variant_Part'Range loop
                   if Self.Fields (F).Variant_Part (V).Valid then
-                     R := new Collapsible_Item_Record;
+                     R := new GVD.Canvas.Collapsible_Item_Record;
                      R.For_Component := Self.Fields (F).Variant_Part (V);
                      R.Initialize_Rect (Styles.Invisible);
                      R.Set_Child_Layout (Horizontal_Stack);

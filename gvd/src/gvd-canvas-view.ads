@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2017, AdaCore                          --
+--                     Copyright (C) 2000-2017, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,8 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package GVD.Variables is
+with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
+with GPS.Kernel;            use GPS.Kernel;
+with Items;                 use Items;
 
-   --  GVD.Items will be moved into this package
+package GVD.Canvas.View is
 
-end GVD.Variables;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the data windows
+
+   procedure Dereference_Item
+     (Component : not null access Component_Item_Record'Class);
+   --  Dereference a component of Item ("graph display" on it with a link from
+   --  the item).
+
+   procedure Change_Visibility
+     (Item      : not null access Gtkada.Canvas_View.Canvas_Item_Record'Class;
+      Component : not null access Generic_Type'Class);
+   --  Change the visibility status of a specific component in the item
+
+end GVD.Canvas.View;

@@ -18,14 +18,12 @@
 --  Generic items used to display things in the canvas.
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Browsers;               use Browsers;
-with Browsers.Canvas;        use Browsers.Canvas;
 with Glib;
-with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
-with Gtkada.Style;           use Gtkada.Style;
-with Language;               use Language;
+with Language;                    use Language;
+
+limited with GVD.Canvas;
 
 package Items is
 
@@ -42,26 +40,6 @@ package Items is
    --  the description of the type and its current value. Whereas the type
    --  itself is never freed, the values are deleted every time we need to
    --  parse a new value.
-
-   --------------------
-   --  The Data view --
-   --------------------
-
-   type Debugger_Data_View_Record is new Browsers.Canvas.General_Browser_Record
-   with record
-      Modified : Drawing_Style;  --  when value has changed
-      Freeze   : Drawing_Style;  --  item's value is not refreshed
-
-      --  Settings to draw items
-      --  Modified_Color: used to highlight the items whose value has changed
-      --    since the last update.
-   end record;
-   type Debugger_Data_View is access all Debugger_Data_View_Record'Class;
-
-   function Item_Hidden
-     (View : not null access Debugger_Data_View_Record'Class)
-      return Container_Item;
-   --  Return the item that shows when an item is hidden
 
    ------------------
    -- Generic_Type --
@@ -113,61 +91,6 @@ package Items is
 
    function Create_Empty_Iterator return Generic_Iterator'Class;
    --  Return an iterator that will return no element
-
-   ---------------------
-   -- Drawing Context --
-   ---------------------
-
-   type Display_Mode is (Value, Type_Only, Type_Value);
-   --  What information should be displayed in the item.
-
-   function Show_Value (Mode : Display_Mode) return Boolean;
-   --  Whether we should display the value of the item
-
-   function Show_Type (Mode : Display_Mode) return Boolean;
-   --  Whether we should display the type of the item
-
-   -----------------------------
-   -- Printing and Displaying --
-   -----------------------------
-
-   type Component_Item_Record is new Rect_Item_Record with record
-      Name      : Ada.Strings.Unbounded.Unbounded_String;
-      Component : Generic_Type_Access;
-   end record;
-   type Component_Item is access all Component_Item_Record'Class;
-   --  The GUI representation of a Generic_Type
-
-   function New_Component_Item
-     (Styles    : not null access Browser_Styles;
-      Component : not null access Generic_Type'Class;
-      Name      : String) return Component_Item;
-   procedure Initialize_Component_Item
-     (Self      : not null access Component_Item_Record'Class;
-      Styles    : not null access Browser_Styles;
-      Component : not null access Generic_Type'Class;
-      Name      : String);
-   --  Build a new component item
-
-   function Build_Display
-     (Self   : not null access Generic_Type;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item is abstract;
-   --  Build the contents of the item, to show Self.
-
-   type Collapsible_Item_Record is new Rect_Item_Record
-     and Clickable_Item with record
-         For_Component : access Generic_Type'Class;
-     end record;
-   type Collapsible_Item is access all Collapsible_Item_Record'Class;
-   overriding procedure On_Click
-     (Self    : not null access Collapsible_Item_Record;
-      View    : not null access GPS_Canvas_View_Record'Class;
-      Details : Gtkada.Canvas_View.Event_Details_Access);
-   --  An box that can be double-clicked to be hidden, and thus save screen
-   --  estate
 
    --------------------------------
    -- Manipulating the structure --
@@ -253,6 +176,15 @@ package Items is
    --  Any access type is structurally equivalent to any other access type,
    --  whereas two records are structurally equivalent only if their fields are
    --  structurally equivalent.
+
+   function Build_Display
+     (Self   : not null access Items.Generic_Type;
+      Name   : String;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : GVD.Canvas.Display_Mode)
+      return GVD.Canvas.Component_Item is abstract;
+   --  Build the contents of the item, to show Self.
 
    ---------------
    -- Constants --

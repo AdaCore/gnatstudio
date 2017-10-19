@@ -155,7 +155,7 @@ with GVD.Breakpoints_List;
 with GVD.Call_Stack;
 with GVD.Dialogs;
 with GVD.Memory_View;
-with GVD.Variables;
+with GVD.Variables.View;
 with GVD.Registers_View;
 with Help_Module;
 with KeyManager_Module;
@@ -2159,7 +2159,7 @@ procedure GPS.Main is
       if Active (GVD_Trace) then
          GVD_Module.Register_Module (GPS_Main.Kernel);
          GVD.Breakpoints_List.Register_Module (GPS_Main.Kernel);
-         GVD.Variables.Register_Module (GPS_Main.Kernel);
+         GVD.Variables.View.Register_Module (GPS_Main.Kernel);
          GVD.Dialogs.Register_Module (GPS_Main.Kernel);
          GVD.Assembly_View.Register_Module (GPS_Main.Kernel);
          GVD.Breakpoints.Register_Module (GPS_Main.Kernel);

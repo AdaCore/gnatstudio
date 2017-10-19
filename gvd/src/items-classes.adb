@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Items.Records;   use Items.Records;
-with Language;        use Language;
+with Glib;                   use Glib;
+with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
+with Browsers;               use Browsers;
+with Items.Records;          use Items.Records;
+with GVD.Canvas;
 
 package body Items.Classes is
 
@@ -156,13 +158,13 @@ package body Items.Classes is
    overriding function Build_Display
      (Self   : not null access Class_Type;
       Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
    is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant Component_Item :=
-        New_Component_Item (Styles, Self, Name);
+      Rect   : constant GVD.Canvas.Component_Item :=
+        GVD.Canvas.New_Component_Item (Styles, Self, Name);
       R      : Rect_Item;
    begin
       if not Self.Valid

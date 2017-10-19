@@ -15,61 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;              use Glib;
-with GVD.Canvas;        use GVD.Canvas;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 package body Items is
-
-   ------------------------
-   -- New_Component_Item --
-   ------------------------
-
-   function New_Component_Item
-     (Styles    : not null access Browser_Styles;
-      Component : not null access Generic_Type'Class;
-      Name      : String) return Component_Item
-   is
-      R : constant Component_Item := new Component_Item_Record;
-   begin
-      R.Initialize_Component_Item (Styles, Component, Name);
-      return R;
-   end New_Component_Item;
-
-   -------------------------------
-   -- Initialize_Component_Item --
-   -------------------------------
-
-   procedure Initialize_Component_Item
-     (Self      : not null access Component_Item_Record'Class;
-      Styles    : not null access Browser_Styles;
-      Component : not null access Generic_Type'Class;
-      Name      : String) is
-   begin
-      Self.Initialize_Rect (Styles.Invisible);
-      Self.Component := Generic_Type_Access (Component);
-      Self.Name      := To_Unbounded_String (Name);
-   end Initialize_Component_Item;
-
-   -----------------
-   -- Item_Hidden --
-   -----------------
-
-   function Item_Hidden
-     (View : not null access Debugger_Data_View_Record'Class)
-      return Container_Item
-   is
-   begin
-      return Container_Item
-        (Gtk_New_Image
-           (View.Get_View.Get_Styles.Invisible,
-            "gps-hidden-item-symbolic",
-            Width => 16.0, Height => 16.0,
-            Allow_Rescale => False));
-   end Item_Hidden;
 
    ---------------
    -- Set_Valid --
@@ -89,22 +40,6 @@ package body Items is
    begin
       return Item.Valid;
    end Is_Valid;
-
-   --------------
-   -- On_Click --
-   --------------
-
-   overriding procedure On_Click
-     (Self    : not null access Collapsible_Item_Record;
-      View    : not null access GPS_Canvas_View_Record'Class;
-      Details : Gtkada.Canvas_View.Event_Details_Access)
-   is
-      pragma Unreferenced (View);
-   begin
-      if Details.Event_Type = Double_Click then
-         Change_Visibility (Self, Self.For_Component);
-      end if;
-   end On_Click;
 
    --------------------
    -- Set_Visibility --
@@ -188,24 +123,6 @@ package body Items is
          return To_String (Item.Type_Name);
       end if;
    end Get_Type_Name;
-
-   ----------------
-   -- Show_Value --
-   ----------------
-
-   function Show_Value (Mode : Display_Mode) return Boolean is
-   begin
-      return Mode = Value or else Mode = Type_Value;
-   end Show_Value;
-
-   ---------------
-   -- Show_Type --
-   ---------------
-
-   function Show_Type (Mode : Display_Mode) return Boolean is
-   begin
-      return Mode = Type_Only or else Mode = Type_Value;
-   end Show_Type;
 
    -----------------------
    -- Clone_Dispatching --

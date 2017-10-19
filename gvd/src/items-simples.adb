@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
+with Gtkada.Style;            use Gtkada.Style;
+
 with Browsers;                use Browsers;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
@@ -30,13 +33,6 @@ package body Items.Simples is
 
    function Quote_Non_Printable_Characters (Str : String) return String;
    --  Protect non-printable characters in the string
-
-   type Xref_Item_Record is
-     new Component_Item_Record and Clickable_Item with null record;
-   overriding procedure On_Click
-     (Self    : not null access Xref_Item_Record;
-      View    : not null access GPS_Canvas_View_Record'Class;
-      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    ---------------------
    -- New_Simple_Type --
@@ -176,20 +172,6 @@ package body Items.Simples is
 
       return Rect;
    end Build_Display;
-
-   --------------
-   -- On_Click --
-   --------------
-
-   overriding procedure On_Click
-     (Self    : not null access Xref_Item_Record;
-      View    : not null access GPS_Canvas_View_Record'Class;
-      Details : Gtkada.Canvas_View.Event_Details_Access)
-   is
-      pragma Unreferenced (View, Details);
-   begin
-      Dereference_Item (Self);
-   end On_Click;
 
    -------------------
    -- Build_Display --

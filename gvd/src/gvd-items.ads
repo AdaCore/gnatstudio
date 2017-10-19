@@ -17,11 +17,12 @@
 
 --  This type encapsulates information about an entity (from the source),
 --  its type and current value (from the debugger), and display properties
---  (from views).
+--  (in views).
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Debugger;               use Debugger;
 with Items;                  use Items;
+with GVD.Canvas;             use GVD.Canvas;
 with GVD.Process;            use GVD.Process;
 
 package GVD.Items is

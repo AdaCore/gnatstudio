@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Language;        use Language;
-with GNATCOLL.Utils;  use GNATCOLL.Utils;
+with Glib;                   use Glib;
+with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with Browsers;               use Browsers;
+with GVD.Canvas;             use GVD.Canvas;
 
 package body Items.Repeats is
 
@@ -126,9 +128,9 @@ package body Items.Repeats is
    overriding function Build_Display
      (Self : not null access Repeat_Type;
       Name : String;
-      View : not null access Debugger_Data_View_Record'Class;
+      View : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang : Language.Language_Access;
-      Mode : Display_Mode) return Component_Item
+      Mode : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
    is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
       Str : constant String :=
