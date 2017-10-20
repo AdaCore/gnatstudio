@@ -122,7 +122,7 @@ package body GVD.Breakpoints is
          Longpress            : Gtk_Gesture_Long_Press;
          Activatable          : Boolean := True;
          Prevent_Bp_Selection : Boolean := False;
-         --  Do not select bp when location is chenged
+         --  Do not select bp when location is changed
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
@@ -260,6 +260,18 @@ package body GVD.Breakpoints is
       Event  : Gdk_Event_Button) return Boolean;
    --  Called when receiving a click on the breakpoint tree.
 
+   procedure Recompute_Filters
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when the selection changed, refresh the context to recompute the
+   --  filters.
+
+   type Breakpoint_Single_Selection is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakpoint_Single_Selection;
+      Context : Selection_Context) return Boolean;
+   --  True if only one row is selected.
+
    type Remove_Breakpoint_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Remove_Breakpoint_Command;
@@ -289,6 +301,25 @@ package body GVD.Breakpoints is
      (Command : access Add_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create a new breakpoint
+
+   type Set_Breakpoints_State_Command (Is_Enabled : Boolean) is
+     new Interactive_Command with
+      record
+         State : Boolean := Is_Enabled;
+      end record;
+   overriding function Execute
+     (Command : access Set_Breakpoints_State_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Set the state of the selected breakpoints to Is_Enabled
+
+   procedure Get_Selected_Breakpoints_Or_Set_State
+     (View    : not null access Breakpoint_Editor_Record'Class;
+      Is_Set  : Boolean;
+      State   : Boolean;
+      Id_List : in out List_Breakpoint_Identifiers.List);
+   --  Procedure used to factorize the code: It will loop through the list
+   --  of selected rows and retrieve the identifier in a list if not Is_Set
+   --  else set the State in the model.
 
    procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
    procedure On_Type_Changed                (W : access GObject_Record'Class);
@@ -617,8 +648,11 @@ package body GVD.Breakpoints is
 
       Self.Breakpoint_List := Create_Tree_View
         (Column_Types, Column_Names, Sortable_Columns => False);
+      Self.Breakpoint_List.Get_Selection.Set_Mode (Selection_Multiple);
       Self.Breakpoint_List.On_Button_Press_Event
         (Breakpoint_Clicked'Access, Self);
+      Self.Breakpoint_List.Get_Selection.On_Changed
+        (Recompute_Filters'Access, Self);
       Main_Vbox.Pack_Start (Self.Breakpoint_List);
 
       Self.Breakpoint_List.Get_Column (Col_Activatable).Set_Visible (False);
@@ -688,7 +722,7 @@ package body GVD.Breakpoints is
       Self.Kernel := Kernel;
 
       ------------
-      --  Chosing the type of the breakpoint
+      --  Choosing the type of the breakpoint
       ------------
 
       Gtk_New (Self.Breakpoint_Type);
@@ -1052,7 +1086,9 @@ package body GVD.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filter : Action_Filter;
+      Debugger_Filter  : Action_Filter;
+      Selection_Filter : constant Action_Filter :=
+        new Breakpoint_Single_Selection;
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
@@ -1060,16 +1096,19 @@ package body GVD.Breakpoints is
          Action_Name => "open breakpoints editor",
          Description => -"Open the Breakpoints Editor for the debugger");
 
-      Filter := Kernel.Lookup_Filter ("Debugger inactive or stopped");
+      Debugger_Filter := Kernel.Lookup_Filter ("Debugger inactive or stopped");
+
+      Register_Filter
+        (Kernel, Selection_Filter, "Breakpoint Single Selection");
 
       Register_Action
         (Kernel,
          "debug delete breakpoint", new Remove_Breakpoint_Command,
-         -("Delete the currently selected breakpoint"
+         -("Delete the selected breakpoints"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-remove-symbolic",
          Category  => -"Debug",
-         Filter    => Filter);
+         Filter    => Debugger_Filter);
 
       Register_Action
         (Kernel,
@@ -1077,7 +1116,7 @@ package body GVD.Breakpoints is
          -"Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
          Category  => -"Debug",
-         Filter    => Filter);
+         Filter    => Debugger_Filter);
 
       Register_Action
         (Kernel,
@@ -1085,17 +1124,18 @@ package body GVD.Breakpoints is
          -("View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-goto-symbolic",
-         Category  => -"Debug");
+         Category  => -"Debug",
+         Filter    => Selection_Filter);
 
       Register_Action
         (Kernel,
          "debug edit breakpoint", new Advanced_Command,
-         -("Edit the advanced properties of the selected breakpoints"
+         -("Edit the advanced properties of the selected breakpoint"
            & " like its condition, repeat count,..."
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-settings-symbolic",
          Category  => -"Debug",
-         Filter    => Filter);
+         Filter    => Debugger_Filter and Selection_Filter);
 
       Register_Action
         (Kernel,
@@ -1103,7 +1143,25 @@ package body GVD.Breakpoints is
          -"Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
          Category  => -"Debug",
-         Filter    => Filter);
+         Filter    => Debugger_Filter);
+
+      Register_Action
+        (Kernel,
+         "debug enable breakpoints",
+         new Set_Breakpoints_State_Command (True),
+         -"Enable the selected breakpoints",
+         Icon_Name => "gps-syntax-check-symbolic",
+         Category  => -"Debug",
+         Filter    => Debugger_Filter);
+
+      Register_Action
+        (Kernel,
+         "debug disable breakpoints",
+         new Set_Breakpoints_State_Command (False),
+         -"Disable the selected breakpoints",
+         Icon_Name => "gps-stop-symbolic",
+         Category  => -"Debug",
+         Filter    => Debugger_Filter);
    end Register_Module;
 
    ----------
@@ -1229,6 +1287,8 @@ package body GVD.Breakpoints is
       Iter  : Gtk_Tree_Iter;
       Col   : Gtk_Tree_View_Column;
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
+      List  : List_Breakpoint_Identifiers.List;
+      Cond  : Boolean;
    begin
       if View.Activatable
         and then Event.Button = 1
@@ -1245,14 +1305,16 @@ package body GVD.Breakpoints is
             --  For efficiency, no need to reparse the list of breakpoints,
             --  since only the state of one of them as changed and we know all
             --  about it.
-
-            Model.Set
-              (Iter, Col_Enb,
-               Toggle_Breakpoint
-                 (View.Kernel,
-                  Breakpoint_Num => Breakpoint_Identifier'Value
-                    (Get_String (Model, Iter, Col_Num))));
-
+            List.Append
+              (Breakpoint_Identifier'Value
+                 (Get_String (Model, Iter, Col_Num)));
+            Set_Breakpoints_State
+              (View.Kernel,
+               List   => List,
+               State  => not Model.Get_Boolean (Iter, Col_Enb));
+            --  Retrieve the value and set the contrary
+            Cond := not Model.Get_Boolean (Iter, Col_Enb);
+            Model.Set (Iter, Col_Enb, Cond);
             --  Stop propagating of the current signal, to avoid extra calls
             --  to Select/Unselect row.
 
@@ -1263,6 +1325,44 @@ package body GVD.Breakpoints is
       return False;
    end Breakpoint_Clicked;
 
+   -----------------------
+   -- Recompute_Filters --
+   -----------------------
+
+   procedure Recompute_Filters (Self : access Glib.Object.GObject_Record'Class)
+   is
+      View   : constant Breakpoint_Editor := Breakpoint_Editor (Self);
+      Kernel : constant Kernel_Handle     := View.Kernel;
+   begin
+      --  Must refresh the context to update the value of the Selection Filter
+      Kernel.Refresh_Context;
+   end Recompute_Filters;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakpoint_Single_Selection;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant Breakpoint_Editor :=
+        Breakpoint_Editor
+          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context)));
+      Res  : Boolean                    := False;
+   begin
+      if View /= null then
+         declare
+            Selection : constant Gtk_Tree_Selection
+              := Get_Selection (View.Breakpoint_List);
+         begin
+            Res := Selection.Count_Selected_Rows = 1;
+         end;
+      end if;
+      return Res;
+   end Filter_Matches_Primitive;
+
    -------------------
    -- Get_Selection --
    -------------------
@@ -1272,14 +1372,25 @@ package body GVD.Breakpoints is
    is
       Iter      : Gtk_Tree_Iter;
       The_Model : Gtk_Tree_Model;
+      List      : Gtk_Tree_Path_List.Glist;
+      Path      : Gtk_Tree_Path;
+      Selection : constant Gtk_Tree_Selection :=
+        Get_Selection (View.Breakpoint_List);
    begin
-      Get_Selected (Get_Selection (View.Breakpoint_List), The_Model, Iter);
 
-      if Iter /= Null_Iter then
-         return Get_Breakpoint_From_Id
-           (View.Kernel,
-            Breakpoint_Identifier'Value
-              (Get_String (The_Model, Iter, Col_Num)));
+      if Selection.Count_Selected_Rows = 1 then
+         Get_Selected_Rows (Selection, The_Model, List);
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Get_Iter (The_Model, Path);
+         Gtk_Tree_Path_List.Free (List);
+
+         if Iter /= Null_Iter then
+            return Get_Breakpoint_From_Id
+              (View.Kernel,
+               Breakpoint_Identifier'Value
+                 (Get_String (The_Model, Iter, Col_Num)));
+         end if;
       end if;
 
       return Null_Breakpoint;
@@ -1524,6 +1635,91 @@ package body GVD.Breakpoints is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Set_Breakpoints_State_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      View    : constant Breakpoint_Editor :=
+        Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
+      Id_List : List_Breakpoint_Identifiers.List;
+   begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+            --  Get the list of selected breakpoints
+      Get_Selected_Breakpoints_Or_Set_State (View    => View,
+                                             Is_Set  => False,
+                                             State   => Command.State,
+                                             Id_List => Id_List);
+      --  Put them in numerical order
+      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Set_Breakpoints_State (View.Kernel, Id_List, Command.State);
+      List_Breakpoint_Identifiers.Clear (Id_List);
+      --  Need to modify the toggle buttons in the model
+      Get_Selected_Breakpoints_Or_Set_State (View    => View,
+                                             Is_Set  => True,
+                                             State   => Command.State,
+                                             Id_List => Id_List);
+      return Commands.Success;
+   end Execute;
+
+   -------------------------------------------
+   -- Get_Selected_Breakpoints_Or_Set_State --
+   -------------------------------------------
+
+   procedure Get_Selected_Breakpoints_Or_Set_State
+     (View    : not null access Breakpoint_Editor_Record'Class;
+      Is_Set  : Boolean;
+      State   : Boolean;
+      Id_List : in out List_Breakpoint_Identifiers.List)
+   is
+      Selection   : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Path        : Gtk_Tree_Path;
+      Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Store_Model : Gtk_Tree_Store;
+      Path_List   : Gtk_Tree_Path_List.Glist;
+      G_Iter      : Gtk_Tree_Path_List.Glist;
+
+      use type Gtk_Tree_Path_List.Glist;
+   begin
+      Selection := View.Breakpoint_List.Get_Selection;
+      Selection.Get_Selected_Rows (Model, Path_List);
+
+      if not (Model = Null_Gtk_Tree_Model
+              or else Path_List = Gtk_Tree_Path_List.Null_List)
+      then
+         --  Store_Model is needed to modify the Breakpoint Model
+         Store_Model := -Get_Model (View.Breakpoint_List);
+         G_Iter := Gtk_Tree_Path_List.Last (Path_List);
+
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+            if Path /= Null_Gtk_Tree_Path then
+               Iter := Get_Iter (Model, Path);
+            end if;
+
+            if Iter /= Null_Iter then
+               if Is_Set then
+                  Store_Model.Set (Iter, Col_Enb, State);
+               else
+                  Id_List.Append (Breakpoint_Identifier'Value
+                                  (Get_String (Model, Iter, Col_Num)));
+               end if;
+            end if;
+
+            Path_Free (Path);
+            G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+         end loop;
+      end if;
+      Gtk_Tree_Path_List.Free (Path_List);
+   end Get_Selected_Breakpoints_Or_Set_State;
+
    --------------------------------------
    -- Show_Selected_Breakpoint_Details --
    --------------------------------------
@@ -1603,33 +1799,21 @@ package body GVD.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View  : constant Breakpoint_Editor :=
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      View    : constant Breakpoint_Editor :=
         Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
-      Model     : Gtk_Tree_Model;
-      Selection : Breakpoint_Data;
-      Path      : Gtk_Tree_Path;
-      Iter      : Gtk_Tree_Iter;
+      Id_List : List_Breakpoint_Identifiers.List;
    begin
-      if View /= null then
-         Selection := Get_Selection (View);
-
-         if Selection /= Null_Breakpoint then
-            View.Breakpoint_List.Get_Selection.Get_Selected (Model, Iter);
-            Path := Get_Path (Model, Iter);
-
-            Delete_Breakpoint (Kernel, Selection.Num);
-
-            --  Reselect the next line for convenience, so that the user can
-            --  press "Remove" several times in a row
-            Iter := Get_Iter (Model, Path);
-            Path_Free (Path);
-            if Iter /= Null_Iter then
-               View.Breakpoint_List.Get_Selection.Select_Iter (Iter);
-            end if;
-         end if;
-      end if;
-      return Success;
+      --  Get the list of selected breakpoints
+      Get_Selected_Breakpoints_Or_Set_State (View    => View,
+                                             Is_Set  => False,
+                                             State   => False,
+                                             Id_List => Id_List);
+      --  Put them in numerical order
+      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Delete_Multiple_Breakpoints (Kernel, Id_List);
+      List_Breakpoint_Identifiers.Clear (Id_List);
+      return Commands.Success;
    end Execute;
 
    -------------

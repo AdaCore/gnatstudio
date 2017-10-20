@@ -406,36 +406,47 @@ package body GVD.Breakpoints_List is
       end if;
    end Unbreak_Source;
 
-   -----------------------
-   -- Delete_Breakpoint --
-   -----------------------
+   ---------------------------------
+   -- Delete_Multiple_Breakpoints --
+   ---------------------------------
 
-   procedure Delete_Breakpoint
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Num           : Breakpoint_Identifier)
+   procedure Delete_Multiple_Breakpoints
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      List   : List_Breakpoint_Identifiers.List)
    is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
-      if Process = null then
-         for Idx in Module.Breakpoints.List.First_Index
-           .. Module.Breakpoints.List.Last_Index
-         loop
-            if Module.Breakpoints.List (Idx).Num = Num then
-               Module.Breakpoints.List.Delete (Idx);
-               exit;
-            end if;
-         end loop;
-         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
-         Show_Breakpoints_In_All_Editors (Kernel);
+      if not List.Is_Empty then
 
-      else
-         if Is_Interactive (Kernel, Process) then
-            Process.Debugger.Remove_Breakpoint
-              (Num, Mode => GVD.Types.Visible);
+         if Process = null then
+            for Num of List loop
+               for Idx in Module.Breakpoints.List.First_Index
+                 .. Module.Breakpoints.List.Last_Index
+               loop
+                  if Module.Breakpoints.List (Idx).Num = Num then
+                     Module.Breakpoints.List.Delete (Idx);
+                     exit;
+                  end if;
+               end loop;
+
+               Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+            end loop;
+
+            Show_Breakpoints_In_All_Editors (Kernel);
+
+         else
+            --  Check the interactivity only once:
+            --  the action "delete a breakpoint" doesn't run the debugger.
+            if Is_Interactive (Kernel, Process) then
+               for Num of List loop
+                  Process.Debugger.Remove_Breakpoint
+                    (Num, Mode => GVD.Types.Visible);
+               end loop;
+            end if;
          end if;
       end if;
-   end Delete_Breakpoint;
+   end Delete_Multiple_Breakpoints;
 
    ---------------------------
    -- Clear_All_Breakpoints --
@@ -613,8 +624,7 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Loc     : Location_Marker;
-      Res     : Boolean with Unreferenced;
-
+      List    : List_Breakpoint_Identifiers.List;
    begin
       if not Has_File_Information (Context.Context)
         or else not Has_Line_Information (Context.Context)
@@ -630,7 +640,9 @@ package body GVD.Breakpoints_List is
 
       for B of Get_Stored_List_Of_Breakpoints (Process).List loop
          if Similar (B.Location, Loc) then
-            Res := Toggle_Breakpoint (Kernel, B.Num);
+            List.Append (B.Num);
+            Set_Breakpoints_State
+              (Kernel, List, not B.Enabled);
             return Commands.Success;
          end if;
       end loop;
@@ -964,35 +976,38 @@ package body GVD.Breakpoints_List is
       Refresh_Breakpoints_List (Kernel, Process);
    end Execute;
 
-   -----------------------
-   -- Toggle_Breakpoint --
-   -----------------------
+   ----------------------------
+   -- Set_Breakpoints_State --
+   ----------------------------
 
-   function Toggle_Breakpoint
-     (Kernel         : not null access Kernel_Handle_Record'Class;
-      Breakpoint_Num : Breakpoint_Identifier) return Boolean
+   procedure Set_Breakpoints_State
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      List   : List_Breakpoint_Identifiers.List;
+      State  : Boolean)
    is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
+      Cond    : constant Boolean := Process /= null
+        and then Is_Interactive (Kernel, Process)
+        and then not List.Is_Empty;
    begin
-      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
-         if B.Num = Breakpoint_Num then
-            B.Enabled := not B.Enabled;
-            if Process /= null
-              and then Is_Interactive (Kernel, Process)
-            then
-               Process.Debugger.Enable_Breakpoint
-                 (B.Num, B.Enabled, Mode => GVD.Types.Visible);
-            else
-               Show_Breakpoints_In_All_Editors (Kernel);
+      for Num of List loop
+         for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+            if B.Num = Num then
+               B.Enabled := State;
+
+               if Cond then
+                  Process.Debugger.Enable_Breakpoint
+                    (B.Num, B.Enabled, Mode => GVD.Types.Visible);
+               end if;
+
+               exit;
             end if;
-            return B.Enabled;
-         end if;
+         end loop;
       end loop;
 
       Show_Breakpoints_In_All_Editors (Kernel);
-      return False;
-   end Toggle_Breakpoint;
+   end Set_Breakpoints_State;
 
    ----------------------------
    -- Get_Breakpoint_From_Id --

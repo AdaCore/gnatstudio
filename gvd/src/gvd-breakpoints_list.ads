@@ -23,6 +23,7 @@ with GVD.Types;              use GVD.Types;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Markers;            use GPS.Markers;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package GVD.Breakpoints_List is
 
@@ -31,6 +32,12 @@ package GVD.Breakpoints_List is
 
    type Breakpoint_Disposition is (Delete, Disable, Keep);
    --  What to do with a breakpoint when it is reached.
+
+   package List_Breakpoint_Identifiers is
+     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
+   use List_Breakpoint_Identifiers;
+   --  This type is used when doing the same debugger action on a list of
+   --  breakpoints (delete/enable/disable).
 
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -47,14 +54,11 @@ package GVD.Breakpoints_List is
    --  Reload the list of breakpoints from the running debugger.
    --  This runs the Debugger_Breakpoints_Changed_Hook.
 
-   function Toggle_Breakpoint
-     (Kernel         : not null access Kernel_Handle_Record'Class;
-      Breakpoint_Num : Breakpoint_Identifier) return Boolean;
-   --  Toggle the enabled/disabled state of a specific breakpoint in either
-   --  the current debugger or the list of persistent breakpoints.
-   --  Returns the new "enabled" state.
-   --  False is returned when there is no such breakpoint in the list (or the
-   --  list of breakpoints has never been parsed before).
+   procedure Set_Breakpoints_State
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      List   : List_Breakpoint_Identifiers.List;
+      State  : Boolean);
+   --  Use State to set the state of each breakpoint of the list.
 
    procedure Break_Source
      (Kernel        : not null access Kernel_Handle_Record'Class;
@@ -79,10 +83,11 @@ package GVD.Breakpoints_List is
    --  one is started. If one or more debuggers are running, they all break
    --  on that subprogram.
 
-   procedure Delete_Breakpoint
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Num           : Breakpoint_Identifier);
-   --  Remove the specified breakpoint
+   procedure Delete_Multiple_Breakpoints
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      List   : List_Breakpoint_Identifiers.List);
+   --  Go through the list and delete the breakpoints. The list is not freed
+   --  by this procedure.
 
    procedure Clear_All_Breakpoints
      (Kernel        : not null access Kernel_Handle_Record'Class);

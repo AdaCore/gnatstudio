@@ -597,6 +597,9 @@
    <toolbar id='Breakpoints'>
       <button action='debug clear breakpoints'/>
       <button action='debug delete breakpoint'/>
+      <button action='debug enable breakpoints'/>
+      <button action='debug disable breakpoints'/>
+      <separator/>
       <button action='debug view breakpoint'/>
       <button action='debug edit breakpoint'/>
       <separator/>
