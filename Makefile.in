@@ -35,10 +35,6 @@ clean:
 test-clean:
 	(cd scripts; ./testsuites clean)
 
-colorthemes-snapshots:
-	$(RMDIR) share/color_themes/snapshots
-	gps --load=python:distrib/generate_colorscheme_snapshots.py
-
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)

@@ -267,7 +267,7 @@ def region_ref(name):
 
 
 def new_style(lang, name, label, doc, foreground_colors,
-              background_colors=("white",  "white"),
+              background_colors=("#ffffff",  "#ffffff"),
               font_style="default", prio=-1):
     """
     Creates a new style to apply when a matcher successfully matches a
@@ -308,7 +308,8 @@ def new_style(lang, name, label, doc, foreground_colors,
     """
     try:
         from highlighter.engine import Style, HighlighterModule
-        import colorschemes
+        import theme_handling
+        from theme_handling import Color
 
         style_id = "{0}_{1}".format(lang, name)
         pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
@@ -317,18 +318,19 @@ def new_style(lang, name, label, doc, foreground_colors,
                           foreground_colors[0], background_colors[0],
                           font_style)
 
-        colorschemes.dark_common[pref_name] = (font_style.upper(),
-                                               foreground_colors[1],
-                                               background_colors[1])
+        theme_handling.variant_prefs[style_id] = pref_name
+        theme_handling.common_dark[style_id] = (font_style.upper(),
+                                                Color(foreground_colors[1]),
+                                                Color(background_colors[1]))
 
-        colorschemes.light_common[pref_name] = (font_style.upper(),
-                                                foreground_colors[0],
-                                                background_colors[0])
+        theme_handling.common_light[style_id] = (font_style.upper(),
+                                                 Color(foreground_colors[0]),
+                                                 Color(background_colors[0]))
         pref.tag = None
         HighlighterModule.preferences[style_id] = pref
         return Style(style_id, prio, pref)
     except Exception:
-        pass
+        raise  # TODO: remove this exception handler, used for doc framework
 
 
 def existing_style(pref_name, name="", prio=-1):
@@ -354,7 +356,7 @@ def existing_style(pref_name, name="", prio=-1):
 
         return Style(style_id, prio, pref)
     except Exception:
-        pass
+        pass  # TODO: remove this exception handler, used for doc framework
 
 
 def register_highlighter(language, spec, igncase=False):
