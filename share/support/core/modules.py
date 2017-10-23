@@ -302,7 +302,16 @@ class Module(object):
         self.__connect_hooks()
         if not self.view_title:
             self.view_title = self.__class__.__name__.replace("_", " ")
-        self.setup()
+
+        try:
+            self.setup()
+
+        except Exception as e:
+            GPS.Logger('MODULES').log('While loading module: %s' % (e, ))
+            GPS.Console("Messages").write(
+                "warning: could not load module %s\n" % self.name())
+            GPS.Console("Messages").write(
+                "%s\n" % e)
 
         # Catch "gps_started" implementation in legacy or user-defined plugins
         if hasattr(self, "gps_started"):
