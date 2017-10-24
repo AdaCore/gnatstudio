@@ -26,7 +26,6 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
-with Glib.Object;
 
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Dialog;                use Gtk.Dialog;

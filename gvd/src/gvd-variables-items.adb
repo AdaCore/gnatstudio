@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
-with GVD.Types;          use GVD.Types;
-with Language;           use Language;
-with Items.Simples;      use Items.Simples;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GVD.Types;                   use GVD.Types;
+with Language;                    use Language;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
 
-package body GVD.Items is
+package body GVD.Variables.Items is
 
    Me : constant Trace_Handle := Create ("ITEMS");
 
@@ -66,18 +66,20 @@ package body GVD.Items is
    is
       Value_Found : Boolean;
    begin
-      if Self.Varname /= "" and then Self.Entity = null then
+      if Self.Varname /= ""
+        and then Self.Entity = Empty_GVD_Type_Holder
+      then
          Self.Entity := Process.Debugger.Parse_Type (To_String (Self.Varname));
       end if;
 
-      if Self.Entity /= null then
+      if Self.Entity /= Empty_GVD_Type_Holder then
          --  Parse the value
 
-         if Self.Entity.all in Debugger_Output_Type'Class then
-            Set_Value
-              (Debugger_Output_Type (Self.Entity.all),
-               Process.Debugger.Send_And_Get_Clean_Output
-                 (Refresh_Command (Debugger_Output_Type (Self.Entity.all)),
+         if Self.Entity.Get_Type.all in GVD_Debugger_Output_Type'Class then
+            GVD_Debugger_Output_Type_Access (Self.Entity.Get_Type).Set_Value
+              (Process.Debugger.Send_And_Get_Clean_Output
+                 (GVD_Debugger_Output_Type_Access
+                      (Self.Entity.Get_Type).Refresh_Command,
                   Mode => GVD.Types.Internal));
 
          elsif Self.Varname /= "" then
@@ -87,14 +89,14 @@ package body GVD.Items is
                   Self.Entity,
                   Format      => Self.Format,
                   Value_Found => Value_Found);
-               Self.Entity.Set_Valid (Value_Found);
+               Self.Entity.Get_Type.Set_Valid (Value_Found);
             exception
                when Language.Unexpected_Type | Constraint_Error =>
-                  Self.Entity.Set_Valid (False);
+                  Self.Entity.Get_Type.Set_Valid (False);
             end;
 
          else
-            Self.Entity.Set_Valid (True);
+            Self.Entity.Get_Type.Set_Valid (True);
          end if;
       end if;
 
@@ -110,8 +112,8 @@ package body GVD.Items is
 
    procedure Mark_As_Up_To_Date (Self : in out Item_Info) is
    begin
-      if Self.Entity /= null then
-         Reset_Recursive (Self.Entity);
+      if Self.Entity /= Empty_GVD_Type_Holder then
+         Self.Entity.Get_Type.Reset_Recursive;
       end if;
    end Mark_As_Up_To_Date;
 
@@ -121,8 +123,8 @@ package body GVD.Items is
 
    procedure Free (Self : in out Item_Info) is
    begin
-      if Self.Entity /= null then
-         Free (Self.Entity);
+      if Self.Entity /= Empty_GVD_Type_Holder then
+         Self.Entity := Empty_GVD_Type_Holder;
       end if;
    end Free;
 
@@ -135,4 +137,4 @@ package body GVD.Items is
       return Info1.Cmd = Info2.Cmd and then Info1.Varname = Info2.Varname;
    end Is_Same;
 
-end GVD.Items;
+end GVD.Variables.Items;

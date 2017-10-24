@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,27 +18,25 @@
 --  Items used for record types.
 --  See the package Items for more information on all the private subprograms.
 
-with Ada.Unchecked_Deallocation;
-
-package Items.Records is
+package GVD.Variables.Types.Records is
 
    -------------
    -- Records --
    -------------
 
-   type Record_Type (<>) is new Generic_Type with private;
-   type Record_Type_Access is access all Record_Type'Class;
+   type GVD_Record_Type (<>) is new GVD_Generic_Type with private;
+   type GVD_Record_Type_Access is access all GVD_Record_Type'Class;
    --  A record type (or struct in C).
 
-   function New_Record_Type (Num_Fields : Natural) return Generic_Type_Access;
+   function New_Record_Type (Num_Fields : Natural) return GVD_Type_Holder;
    --  Create a new record type with a specific number of fields.
    --  Num_Fields can be null for a 'null record'.
 
-   function Num_Fields (Item : Record_Type) return Natural;
+   function Num_Fields (Self : not null access GVD_Record_Type) return Natural;
    --  Return the number of fields in the record, or 0 for a null record.
 
    procedure Set_Field_Name
-     (Item          : in out Record_Type;
+     (Self          : not null access GVD_Record_Type;
       Index         : Positive;
       Name          : String;
       Variant_Parts : Natural := 0);
@@ -48,19 +46,22 @@ package Items.Records is
    --  in the record (Name)).
 
    function Get_Variant_Parts
-     (Item  : Record_Type;
-      Field : Positive) return Natural;
+     (Self  : not null access GVD_Record_Type;
+      Field : Positive)
+      return Natural;
    --  Get the number of variant parts for a specific field in the record.
 
    function Get_Field_Name
-     (Item  : Record_Type;
-      Index : Positive) return String;
+     (Self  : not null access GVD_Record_Type;
+      Index : Positive)
+      return String;
    --  Return the name of the Index-th field in Item.
 
    function Find_Variant_Part
-     (Item     : Record_Type;
+     (Self     : not null access GVD_Record_Type;
       Field    : Positive;
-      Contains : String) return Items.Generic_Type_Access;
+      Contains : String)
+      return GVD_Type_Holder;
    --  Return the variant part of the field-th of Item, whose first field is
    --  Contains.
    --  null is returned if no such part is found.
@@ -69,39 +70,41 @@ package Items.Records is
    --  that has a "null" component
 
    procedure Set_Variant_Field
-     (Item          : in out Record_Type;
+     (Self          : not null access GVD_Record_Type;
       Index         : Positive;
       Variant_Index : Positive;
-      Value         : access Record_Type'Class);
+      Value         : GVD_Type_Holder);
    --  Set the Variant_Index-nth part of the Index-nth element in the array.
    --  Nothing is done if the Index-nth field in Item does not have any
    --  variant part.
 
    procedure Set_Value
-     (Item  : in out Record_Type;
-      Value : access Generic_Type'Class;
+     (Self  : not null access GVD_Record_Type;
+      Value : GVD_Type_Holder;
       Field : String);
    --  Set the value of a specific field in the record.
    --  Value is not duplicated, we simply keep a pointer to it.
 
    procedure Set_Value
-     (Item  : in out Record_Type;
-      Value : access Generic_Type'Class;
+     (Self  : not null access GVD_Record_Type;
+      Value : GVD_Type_Holder;
       Field : Positive);
    --  Same as above, for a specific field index.
 
    function Get_Value
-     (Item  : Record_Type;
-      Field : String) return Generic_Type_Access;
+     (Self  : not null access GVD_Record_Type;
+      Field : String)
+      return GVD_Type_Holder;
    --  Get the value of a specific field.
 
    function Get_Value
-     (Item  : Record_Type;
-      Field : Positive) return Generic_Type_Access;
+     (Self  : not null access GVD_Record_Type;
+      Field : Positive)
+      return GVD_Type_Holder;
    --  Same as above, but for a specific field index.
 
    procedure Draw_Border
-     (Item : access Record_Type;
+     (Self : not null access GVD_Record_Type;
       Draw : Boolean := True);
    --  If Draw is True (the default for new items), a border is drawn around
    --  the item when it is displayed on the screen.
@@ -110,12 +113,12 @@ package Items.Records is
    -- Unions --
    ------------
 
-   type Union_Type (<>) is new Record_Type with private;
-   type Union_Type_Access is access all Union_Type'Class;
+   type GVD_Union_Type (<>) is new GVD_Record_Type with private;
+   type GVD_Union_Type_Access is access all GVD_Union_Type'Class;
    --  A union type, ie a set of fields that are stored at the same address in
    --  memory.
 
-   function New_Union_Type (Num_Fields : Positive) return Generic_Type_Access;
+   function New_Union_Type (Num_Fields : Positive) return GVD_Type_Holder;
    --  Create a new union type with a specific number of fields.
 
 private
@@ -125,7 +128,7 @@ private
 
    type Record_Field is record
       Name         : Unbounded_String := Null_Unbounded_String;
-      Value        : Items.Generic_Type_Access := null;
+      Value        : GVD_Type_Holder  := Empty_GVD_Type_Holder;
       Variant_Part : Record_Type_Array_Access := null;
    end record;
    type Record_Field_Array is array (Natural range <>) of Record_Field;
@@ -137,7 +140,8 @@ private
    --  This is the only case where Variant_Part is not null and contains the
    --  list of all alternatives.
 
-   type Record_Type (Num_Fields : Natural) is new Generic_Type with record
+   type GVD_Record_Type (Num_Fields : Natural) is
+     new GVD_Generic_Type with record
       Gui_Fields_Width : Glib.Gint := 0;
       --  Width allocated for the field names column when drawing the item
       --  on a pixmap. This is calculated once when Size_Request is called.
@@ -145,7 +149,7 @@ private
       Type_Height      : Glib.Gint := 0;
       --  Height of the first line used to display the type of the item.
 
-      Border_Spacing   : Glib.Gint := Items.Border_Spacing;
+      Border_Spacing   : Glib.Gint := Types.Border_Spacing;
       --  Size to leave on each size between the border and the actual
       --  display of the item. If this is set to 0, then no border is drawn.
 
@@ -154,40 +158,52 @@ private
    --  Num_Fields can be 0 in case of a 'null record'. Thus, it has to be
    --  a Natural.
 
-   type Record_Type_Array is array (Positive range <>) of Record_Type_Access;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Record_Type_Array, Record_Type_Array_Access);
+   type Record_Type_Array is array (Positive range <>) of GVD_Type_Holder;
+
+   overriding procedure Clear (Self : not null access GVD_Record_Type);
+
+   procedure Free (Value : in out Record_Type_Array_Access);
 
    overriding function Get_Type_Descr
-     (Self    : not null access Record_Type) return String is ("Record");
+     (Self : not null access GVD_Record_Type) return String is ("Record");
+
    overriding procedure Free
-     (Item : access Record_Type;
-      Only_Value : Boolean := False);
-   overriding procedure Clone_Dispatching
-     (Item  : Record_Type;
-      Clone : in out Generic_Type_Access);
+     (Self : not null access GVD_Record_Type);
+
+   overriding procedure Clone
+     (Self : not null access GVD_Record_Type;
+      Item : not null GVD_Generic_Type_Access);
+
    overriding function Build_Display
-     (Self   : not null access Record_Type;
+     (Self   : not null access GVD_Record_Type;
+      Holder : GVD_Type_Holder'Class;
       Name   : String;
       View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
       Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-   overriding function Replace
-     (Parent       : access Record_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   overriding function Structurally_Equivalent
-     (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
-      return Boolean;
-   overriding function Get_Simple_Value
-     (Self    : not null access Record_Type) return String;
-   overriding function Start
-     (Item : access Record_Type) return Generic_Iterator'Class;
 
-   type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
-   with null record;
+   overriding function Replace
+     (Self         : not null access GVD_Record_Type;
+      Current      : GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class;
+
+   overriding function Structurally_Equivalent
+     (Self : not null access GVD_Record_Type;
+      Item : GVD_Type_Holder'Class)
+      return Boolean;
+
+   overriding function Get_Simple_Value
+     (Self : not null access GVD_Record_Type) return String;
+
+   overriding function Start
+     (Self : not null access GVD_Record_Type)
+      return Generic_Iterator'Class;
+
+   type GVD_Union_Type (Num_Fields : Natural) is
+     new GVD_Record_Type (Num_Fields) with null record;
+
    overriding function Get_Type_Descr
-     (Self    : not null access Union_Type) return String is ("Union");
+     (Self : not null access GVD_Union_Type) return String is ("Union");
    --  Free is inherited from Record_Type.
 
-end Items.Records;
+end GVD.Variables.Types.Records;

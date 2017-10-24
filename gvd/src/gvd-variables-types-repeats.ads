@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,31 +18,35 @@
 --  Items used for repeated types.
 --  See the package Items for more information on all the private subprograms.
 
-package Items.Repeats is
+package GVD.Variables.Types.Repeats is
 
    ------------
    -- Repeat --
    ------------
 
-   type Repeat_Type is new Generic_Type with private;
-   type Repeat_Type_Access is access all Repeat_Type'Class;
+   type GVD_Repeat_Type is new GVD_Generic_Type with private;
+   type GVD_Repeat_Type_Access is access all GVD_Repeat_Type'Class;
 
-   function New_Repeat_Type return Generic_Type_Access;
+   function New_Repeat_Type return GVD_Type_Holder;
 
-   function Get_Repeat_Num (Item : access Repeat_Type) return Integer;
+   function Get_Repeat_Num
+     (Self : not null access GVD_Repeat_Type)
+      return Integer;
    --  Return the number of times the item is repeated.
 
    procedure Set_Repeat_Num
-     (Item : in out Repeat_Type;
+     (Self : not null access GVD_Repeat_Type;
       Num  : Integer);
    --  Set the repeat number of the item.
 
-   function Get_Value (Item : Repeat_Type) return Generic_Type_Access;
+   function Get_Value
+     (Self : not null access GVD_Repeat_Type)
+      return GVD_Type_Holder;
    --  Return the repeated value.
 
    procedure Set_Value
-     (Item  : in out Repeat_Type;
-      Value : Generic_Type_Access);
+     (Self  : not null access GVD_Repeat_Type;
+      Value : GVD_Type_Holder);
    --  Set the repeated value.
    --  It does not copy Value itself.
 
@@ -50,39 +54,50 @@ private
 
    --  To handle the '0 <repeats .. times>' case.
 
-   type Repeat_Type is new Generic_Type with record
-      Repeat_Num       : Integer;
-      Repeat_Str_Width : Glib.Gint := 0;
-      Value            : Generic_Type_Access := null;
+   type GVD_Repeat_Type is new GVD_Generic_Type with record
+      Repeat_Num       : Integer         := 0;
+      Repeat_Str_Width : Glib.Gint       := 0;
+      Value            : GVD_Type_Holder := Empty_GVD_Type_Holder;
    end record;
 
    overriding function Get_Type_Descr
-     (Self : not null access Repeat_Type) return String is ("Repeat");
-   overriding function Get_Simple_Value
-     (Self : not null access Repeat_Type) return String;
-   overriding function Get_Type_Name
-     (Self    : access Repeat_Type;
-      Lang    : Language.Language_Access) return String;
-   overriding procedure Free
-     (Item : access Repeat_Type;
-      Only_Value : Boolean := False);
-   overriding procedure Clone_Dispatching
-     (Item  : Repeat_Type;
-      Clone : in out Generic_Type_Access);
-   overriding function Build_Display
-     (Self : not null access Repeat_Type;
-      Name : String;
-      View : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang : Language.Language_Access;
-      Mode : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-   overriding function Replace
-     (Parent       : access Repeat_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   overriding function Structurally_Equivalent
-     (Item1 : access Repeat_Type; Item2 : access Generic_Type'Class)
-     return Boolean;
-   overriding function Start
-     (Item : access Repeat_Type) return Generic_Iterator'Class;
+     (Self : not null access GVD_Repeat_Type) return String is ("Repeat");
 
-end Items.Repeats;
+   overriding function Get_Simple_Value
+     (Self : not null access GVD_Repeat_Type) return String;
+
+   overriding function Get_Type_Name
+     (Self    : not null access GVD_Repeat_Type;
+      Lang    : Language.Language_Access) return String;
+
+   overriding procedure Clone
+     (Self : not null access GVD_Repeat_Type;
+      Item : not null GVD_Generic_Type_Access);
+
+   overriding procedure Free
+     (Self : not null access GVD_Repeat_Type);
+
+   overriding function Build_Display
+     (Self   : not null access GVD_Repeat_Type;
+      Holder : GVD_Type_Holder'Class;
+      Name   : String;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
+
+   overriding function Replace
+     (Self         : not null access GVD_Repeat_Type;
+      Current      : GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class)
+      return GVD_Type_Holder'Class;
+
+   overriding function Structurally_Equivalent
+     (Self : not null access GVD_Repeat_Type;
+      Item : GVD_Type_Holder'Class)
+      return Boolean;
+
+   overriding function Start
+     (Self : not null access GVD_Repeat_Type)
+      return Generic_Iterator'Class;
+
+end GVD.Variables.Types.Repeats;

@@ -26,11 +26,11 @@ package body GVD.Canvas is
    procedure Initialize_Component_Item
      (Self      : not null access Component_Item_Record'Class;
       Styles    : not null access Browser_Styles;
-      Component : not null access Items.Generic_Type'Class;
+      Component : GVD.Variables.Types.GVD_Type_Holder;
       Name      : String) is
    begin
       Self.Initialize_Rect (Styles.Invisible);
-      Self.Component := Items.Generic_Type_Access (Component);
+      Self.Component := Component;
       Self.Name      := To_Unbounded_String (Name);
    end Initialize_Component_Item;
 
@@ -57,7 +57,7 @@ package body GVD.Canvas is
 
    function New_Component_Item
      (Styles    : not null access Browser_Styles;
-      Component : not null access Items.Generic_Type'Class;
+      Component : GVD.Variables.Types.GVD_Type_Holder;
       Name      : String) return Component_Item
    is
       R : constant Component_Item := new Component_Item_Record;

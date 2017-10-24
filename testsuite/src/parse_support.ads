@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Items;     use Items;
-with Language;  use Language;
+with GVD.Variables.Types;     use GVD.Variables.Types;
+with Language;                use Language;
 
 package Parse_Support is
 
    procedure Print
-      (Self : access Generic_Type'Class;
+      (Self : GVD_Type_Holder;
        Lang : not null access Language_Root'Class;
        Name : String);
    --  Print the contents of Self on stdout

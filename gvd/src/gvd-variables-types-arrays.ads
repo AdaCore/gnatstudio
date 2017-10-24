@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,14 +20,14 @@
 
 with Ada.Containers.Vectors;
 
-package Items.Arrays is
+package GVD.Variables.Types.Arrays is
 
    ----------------
    -- Array_Type --
    ----------------
 
-   type Array_Type (<>) is new Generic_Type with private;
-   type Array_Type_Access is access all Array_Type'Class;
+   type GVD_Array_Type (<>) is new GVD_Generic_Type with private;
+   type GVD_Array_Type_Access is access all GVD_Array_Type'Class;
    --  An array type.
    --  Arrays can have multiple dimensions.
    --  Currently, all indexes must be integers, altough we should also handle
@@ -46,40 +46,42 @@ package Items.Arrays is
    --  ie the real bounds are not known until we parse the value itself.
 
    function New_Array_Type
-     (Num_Dimensions : Positive) return Generic_Type_Access;
+     (Num_Dimensions : Positive) return GVD_Type_Holder;
    --  Create a new array type with a given number of dimensions.
 
    procedure Set_Dimensions
-     (Item : in out Array_Type;
+     (Self : not null access GVD_Array_Type;
       Dim  : Positive;
       Size : Dimension);
    --  Set the bounds of the Dim-nth dimensions of the array.
 
    function Num_Dimensions
-     (Item : Array_Type)
+     (Self : not null access GVD_Array_Type)
      return Positive;
    --  Return the number of dimensions in the array Item.
 
    function Get_Dimensions
-     (Item : Array_Type;
+     (Self : not null access GVD_Array_Type;
       Dim  : Positive)
-     return Dimension;
+      return Dimension;
    --  Return the bounds of the Dim-nth dimension in Item.
 
    procedure Set_Item_Type
-     (Item     : in out Array_Type;
-      The_Type : access Generic_Type'Class);
+     (Self     : not null access GVD_Array_Type;
+      The_Type : GVD_Type_Holder);
    --  Set the type of items contained in Item.
    --  The_Type is not duplicated, we just keep an access to it.
 
-   function Get_Item_Type (Item : Array_Type) return Generic_Type_Access;
+   function Get_Item_Type
+     (Self : not null access GVD_Array_Type)
+      return GVD_Type_Holder;
    --  Return the Item_Type for the array.
    --  The returned structure should not be modified!
    --  ??? Could we use an access to constant ???
 
    procedure Set_Value
-     (Item       : in out Array_Type;
-      Elem_Value : access Generic_Type'Class;
+     (Self       : not null access GVD_Array_Type;
+      Elem_Value : GVD_Type_Holder;
       Elem_Index : Long_Integer;
       Repeat_Num : Positive := 1);
    --  Set a value in the array.
@@ -93,8 +95,9 @@ package Items.Arrays is
    --  Elem_Value is not duplicated!
 
    function Get_Value
-     (Item       : in out Array_Type;
-      Elem_Index : Long_Integer) return Generic_Type_Access;
+     (Self       : not null access GVD_Array_Type;
+      Elem_Index : Long_Integer)
+      return GVD_Type_Holder;
    --  Read a value in the array at a specific Index.
    --  If that index is covered by a Repeat_Type, a clone of the value is
    --  returned.
@@ -103,7 +106,7 @@ package Items.Arrays is
    --  the array.
    --  null is returned if there is no such item in the array.
 
-   procedure Shrink_Values (Item : in out Array_Type);
+   procedure Shrink_Values (Self : not null access GVD_Array_Type);
    --  Shrink the sparse table used to store the values of the array to its
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
@@ -119,7 +122,7 @@ private
 
    type Array_Item is record
       Index : Long_Integer;
-      Value : Generic_Type_Access := null;
+      Value : GVD_Type_Holder := Empty_GVD_Type_Holder;
    end record;
    package Array_Item_Vectors is new Ada.Containers.Vectors
      (Positive, Array_Item);
@@ -128,9 +131,10 @@ private
    --  as the index in a one-dimensional array that would store the same number
    --  of values as the array, starting from 0 as in C.
 
-   type Array_Type (Num_Dimensions : Positive) is new Generic_Type with record
+   type GVD_Array_Type (Num_Dimensions : Positive) is
+     new GVD_Generic_Type with record
       Values      : Array_Item_Vectors.Vector;
-      Item_Type   : Generic_Type_Access := null;
+      Item_Type   : GVD_Type_Holder := Empty_GVD_Type_Holder;
       Last_Value  : Natural := 0;
 
       Index_Width : Glib.Gint := 0;
@@ -149,27 +153,36 @@ private
    --      access
 
    overriding function Build_Display
-     (Self : not null access Array_Type;
-      Name : String;
-      View : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang : Language.Language_Access;
-      Mode : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-   overriding function Get_Type_Descr
-     (Self    : not null access Array_Type) return String;
-   overriding procedure Free
-     (Item : access Array_Type;
-      Only_Value : Boolean := False);
-   overriding procedure Clone_Dispatching
-     (Item  : Array_Type;
-      Clone : in out Generic_Type_Access);
-   overriding function Replace
-     (Parent       : access Array_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   overriding function Structurally_Equivalent
-     (Item1 : access Array_Type; Item2 : access Generic_Type'Class)
-     return Boolean;
-   overriding function Start
-     (Item : access Array_Type) return Generic_Iterator'Class;
+     (Self   : not null access GVD_Array_Type;
+      Holder : GVD_Type_Holder'Class;
+      Name   : String;
+      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
 
-end Items.Arrays;
+   overriding function Get_Type_Descr
+     (Self : not null access GVD_Array_Type) return String;
+
+   overriding procedure Clear (Self : not null access GVD_Array_Type);
+
+   overriding procedure Clone
+     (Self : not null access GVD_Array_Type;
+      Item : not null GVD_Generic_Type_Access);
+
+   overriding procedure Free (Self : not null access GVD_Array_Type);
+
+   overriding function Replace
+     (Self         : not null access GVD_Array_Type;
+      Current      : GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class)
+      return GVD_Type_Holder'Class;
+
+   overriding function Structurally_Equivalent
+     (Self : not null access GVD_Array_Type;
+      Item : GVD_Type_Holder'Class)
+      return Boolean;
+
+   overriding function Start
+     (Self : not null access GVD_Array_Type) return Generic_Iterator'Class;
+
+end GVD.Variables.Types.Arrays;

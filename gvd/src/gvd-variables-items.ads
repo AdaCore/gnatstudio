@@ -21,16 +21,16 @@
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Debugger;               use Debugger;
-with Items;                  use Items;
+with GVD.Variables.Types;    use GVD.Variables.Types;
 with GVD.Canvas;             use GVD.Canvas;
 with GVD.Process;            use GVD.Process;
 
-package GVD.Items is
+package GVD.Variables.Items is
 
    type Item_Info is tagged record
       Varname      : Unbounded_String;       --  tree display varname
       Cmd          : Unbounded_String;       --  tree display `cmd`
-      Entity       : Generic_Type_Access;    --  parsed type info
+      Entity       : GVD_Type_Holder;        --  parsed type info
       Split_Lines  : Boolean;                --  for commands
       Auto_Refresh : Boolean := True;
       Mode         : Display_Mode := Value;  --  what to display
@@ -79,4 +79,4 @@ package GVD.Items is
 
    No_Item_Info : constant Item_Info := (others => <>);
 
-end GVD.Items;
+end GVD.Variables.Items;

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Default_Preferences;       use Default_Preferences;
-with Items;                     use Items;
 with Debugger.Base_Gdb.Gdb_CLI; use Debugger.Base_Gdb.Gdb_CLI;
 with Debugger.Base_Gdb.Gdb_MI;  use Debugger.Base_Gdb.Gdb_MI;
 with Debugger.Base_Gdb.Cpp;     use Debugger.Base_Gdb.Cpp;
@@ -29,6 +28,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Debugger;                  use Debugger;
 with GVD_Module;                use GVD_Module;
 with GVD.Types;                 use GVD.Types;
+with GVD.Variables.Types;       use GVD.Variables.Types;
 with Gtk.Main;                  use Gtk.Main;
 with GVD.Preferences;           use GVD.Preferences;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -45,12 +45,12 @@ procedure Test_Parse_Cpp is
 
    procedure Print_Var (Var : String);
    procedure Print_Var (Var : String) is
-      V : Generic_Type_Access;
+      V : GVD_Type_Holder;
       Found : Boolean;
    begin
       Put_Line ("------------------------------");
       V := Parse_Type (Gdb, Var);
-      if V /= null then
+      if V /= Empty_GVD_Type_Holder then
          Parse_Value (Gdb, Var, V, Default_Format, Found);
          Print (V, Language, Var);
       else

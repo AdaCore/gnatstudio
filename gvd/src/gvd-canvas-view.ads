@@ -17,7 +17,7 @@
 
 with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
 with GPS.Kernel;            use GPS.Kernel;
-with Items;                 use Items;
+with GVD.Variables.Types;   use GVD.Variables.Types;
 
 package GVD.Canvas.View is
 
@@ -32,7 +32,7 @@ package GVD.Canvas.View is
 
    procedure Change_Visibility
      (Item      : not null access Gtkada.Canvas_View.Canvas_Item_Record'Class;
-      Component : not null access Generic_Type'Class);
+      Component : GVD_Type_Holder);
    --  Change the visibility status of a specific component in the item
 
 end GVD.Canvas.View;

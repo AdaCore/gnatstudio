@@ -31,7 +31,7 @@ with Default_Preferences;       use Default_Preferences;
 with GVD_Module;                use GVD_Module;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Types;                 use GVD.Types;
-with Items;                     use Items;
+with GVD.Variables.Types;       use GVD.Variables.Types;
 with Language.Debugger;         use Language.Debugger;
 with Process_Proxies;           use Process_Proxies;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -48,7 +48,7 @@ procedure Test_Parse is
 
    procedure Print_Special_Var (Var : String);
    procedure Print_Special_Var (Var : String) is
-      V          : Generic_Type_Access;
+      V          : GVD_Type_Holder;
       File       : File_Type;
       Type_Str   : String (1 .. 10000);
       Index      : Natural;
@@ -58,7 +58,7 @@ procedure Test_Parse is
    begin
       Put_Line ("------------------------------");
       V := Parse_Type (Gdb, Var);
-      if V /= null then
+      if V /= Empty_GVD_Type_Holder then
          Open (File, In_File, "tcb.out");
          Get_Line (File, Type_Str, Last);
          Close (File);
@@ -76,12 +76,12 @@ procedure Test_Parse is
 
    procedure Print_Var (Var : String);
    procedure Print_Var (Var : String) is
-      V     : Generic_Type_Access;
+      V     : GVD_Type_Holder;
       Found : Boolean;
    begin
       Put_Line ("------------------------------");
       V := Gdb.Parse_Type (Var);
-      if V /= null then
+      if V /= Empty_GVD_Type_Holder then
          Gdb.Parse_Value (Var, V, Value_Found => Found);
          Print (V, Lang, Var);
       else

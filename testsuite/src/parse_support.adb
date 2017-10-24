@@ -24,12 +24,12 @@ package body Parse_Support is
    -----------
 
    procedure Print
-      (Self : access Generic_Type'Class;
+      (Self : GVD_Type_Holder;
        Lang : not null access Language_Root'Class;
        Name : String)
    is
       procedure Display
-        (Entity : not null access Generic_Type'Class;
+        (Entity : GVD_Type_Holder;
          Name   : String;
          Indent : Natural);
       --  Display recursively Entity and its children
@@ -39,22 +39,22 @@ package body Parse_Support is
       -------------
 
       procedure Display
-        (Entity : not null access Generic_Type'Class;
+        (Entity : GVD_Type_Holder;
          Name   : String;
          Indent : Natural)
       is
-         Iter : Generic_Iterator'Class := Entity.Start;
-         Ent  : Generic_Type_Access;
+         Iter : Generic_Iterator'Class := Entity.Get_Type.Start;
+         Ent  : GVD_Type_Holder;
       begin
          Put_Line
            ((1 .. Indent => ' ') & Name & ": "
-            & Entity.Get_Type_Name (Language_Access (Lang))
-            & " := " & Entity.Get_Simple_Value
-            & " [" & Entity.Get_Type_Descr & "]");
+            & Entity.Get_Type.Get_Type_Name (Language_Access (Lang))
+            & " := " & Entity.Get_Type.Get_Simple_Value
+            & " [" & Entity.Get_Type.Get_Type_Descr & "]");
 
          while not Iter.At_End loop
-            Ent := Iter.Data;
-            if Ent /= null then
+            Ent := GVD_Type_Holder (Iter.Data);
+            if Ent /= Empty_GVD_Type_Holder then
                Display (Ent, Iter.Field_Name (Lang, ""), Indent + 3);
             end if;
             Iter.Next;
@@ -62,7 +62,7 @@ package body Parse_Support is
       end Display;
 
    begin
-      if Self = null then
+      if Self = Empty_GVD_Type_Holder then
          Put_Line (Name & ": no type info");
       else
          Display (Self, Name, 0);

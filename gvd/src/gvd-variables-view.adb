@@ -16,64 +16,64 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Decode_UTF8_String;
 
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Debugger;                 use Debugger;
-with Default_Preferences;      use Default_Preferences;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with Generic_Views;            use Generic_Views;
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
-with Glib_Values_Utils;        use Glib_Values_Utils;
-with GNAT.Regpat;              use GNAT.Regpat;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Debugger;                    use Debugger;
+with Default_Preferences;         use Default_Preferences;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.RGBA;                    use Gdk.RGBA;
+with Generic_Views;               use Generic_Views;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
+with Glib.Values;                 use Glib.Values;
+with Glib_Values_Utils;           use Glib_Values_Utils;
+with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Debuggers;            use GPS.Debuggers;
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
-with GPS.Properties;           use GPS.Properties;
-with GPS.Search;               use GPS.Search;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Toolbar;              use Gtk.Toolbar;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Gtkada.Style;             use Gtkada.Style;
-with Gtkada.Tree_View;         use Gtkada.Tree_View;
-with GUI_Utils;                use GUI_Utils;
-with GVD.Contexts;             use GVD.Contexts;
-with GVD.Generic_View;         use GVD.Generic_View;
-with GVD.Items;                use GVD.Items;
-with GVD_Module;               use GVD_Module;
-with GVD.Preferences;          use GVD.Preferences;
-with GVD.Process;              use GVD.Process;
-with Items;                    use Items;
-with Items.Simples;            use Items.Simples;
-with Language;                 use Language;
-with Language.Icons;           use Language.Icons;
-with GPS.Dialogs;              use GPS.Dialogs;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Debuggers;               use GPS.Debuggers;
+with GPS.Dialogs;                 use GPS.Dialogs;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Properties;              use GPS.Properties;
+with GPS.Search;                  use GPS.Search;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Toolbar;                 use Gtk.Toolbar;
+with Gtk.Tree_Model;              use Gtk.Tree_Model;
+with Gtk.Tree_Store;              use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtkada.Style;                use Gtkada.Style;
+with Gtkada.Tree_View;            use Gtkada.Tree_View;
+with GUI_Utils;                   use GUI_Utils;
+with GVD.Contexts;                use GVD.Contexts;
+with GVD.Generic_View;            use GVD.Generic_View;
+with GVD_Module;                  use GVD_Module;
+with GVD.Preferences;             use GVD.Preferences;
+with GVD.Process;                 use GVD.Process;
+with GVD.Variables.Items;         use GVD.Variables.Items;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with Language;                    use Language;
+with Language.Icons;              use Language.Icons;
 with System;
-with System.Storage_Elements;  use System.Storage_Elements;
-with XML_Utils;                use XML_Utils;
+with System.Storage_Elements;     use System.Storage_Elements;
+with XML_Utils;                   use XML_Utils;
 
 package body GVD.Variables.View is
    Me : constant Trace_Handle := Create ("Variables_View");
@@ -114,17 +114,12 @@ package body GVD.Variables.View is
      (Self       : not null access Variable_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter);
 
-   type Tree_Row_Id is record
-      Typ : System.Address;
-      --  The corresponding access Generic_Type'Class.
-      --  Do not attempt to dereference, the type might have been freed since.
-   end record;
    function Get_Id
      (Self : not null access Variable_Tree_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Tree_Row_Id;
-   function Hash (Element : Tree_Row_Id) return Ada.Containers.Hash_Type;
+      Iter : Gtk_Tree_Iter) return GVD_Type_Holder;
+   function Hash (Element : GVD_Type_Holder) return Ada.Containers.Hash_Type;
    package Expansions is new Expansion_Support
-     (Variable_Tree_View_Record, Tree_Row_Id, Get_Id, Hash);
+     (Variable_Tree_View_Record, GVD_Type_Holder, Get_Id, Hash);
    --  An Id that uniquely identifies each row of the tree view
 
    type GVD_Variable_View_Record is new Process_View_Record with record
@@ -293,7 +288,7 @@ package body GVD.Variables.View is
 
    procedure Add_Row
      (Self              : not null access Variable_Tree_View_Record'Class;
-      Entity            : access Generic_Type'Class;
+      Entity            : GVD_Type_Holder;
       Name, Full_Name   : String;
       Parent            : Gtk_Tree_Iter;
       Id                : Item_ID;
@@ -343,9 +338,15 @@ package body GVD.Variables.View is
 
    function Get_Id
      (Self : not null access Variable_Tree_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Tree_Row_Id is
+      Iter : Gtk_Tree_Iter) return GVD_Type_Holder
+   is
+      Val      : GValue;
+      Variable : GVD_Type_Holder;
    begin
-      return (Typ => Get_Address (+Self.Model, Iter, Column_Generic_Type));
+      Get_Value (+Self.Model, Iter, Column_Generic_Type, Val);
+      Variable := Get_Value (Val);
+      Unset (Val);
+      return Variable;
    end Get_Id;
 
    -------------------
@@ -370,11 +371,10 @@ package body GVD.Variables.View is
    -- Hash --
    ----------
 
-   function Hash (Element : Tree_Row_Id) return Ada.Containers.Hash_Type is
+   function Hash (Element : GVD_Type_Holder) return Ada.Containers.Hash_Type is
    begin
       return Ada.Containers.Hash_Type
-        (To_Integer (Element.Typ)
-         mod Integer_Address (Ada.Containers.Hash_Type'Last));
+        (Element.Id mod Integer_Address (Ada.Containers.Hash_Type'Last));
    end Hash;
 
    ----------
@@ -741,8 +741,8 @@ package body GVD.Variables.View is
    begin
       for E of X loop
          It := E;
-         if E.Info.Entity /= null then
-            It.Info.Entity := Clone (E.Info.Entity.all);
+         if E.Info.Entity /= Empty_GVD_Type_Holder then
+            It.Info.Entity := E.Info.Entity.Clone;
          end if;
          Result.Append (It);
       end loop;
@@ -850,14 +850,14 @@ package body GVD.Variables.View is
 
    procedure Add_Row
      (Self              : not null access Variable_Tree_View_Record'Class;
-      Entity            : access Generic_Type'Class;
+      Entity            : GVD_Type_Holder;
       Name, Full_Name   : String;
       Parent            : Gtk_Tree_Iter;
       Id                : Item_ID;
       Lang              : not null Language_Access)
    is
       Row   : Gtk_Tree_Iter;
-      Ent   : Generic_Type_Access;
+      Ent   : GVD_Type_Holder;
       Dummy : Boolean;
 
       Fg    : constant String := To_String (Default_Style.Get_Pref_Fg);
@@ -891,7 +891,9 @@ package body GVD.Variables.View is
 
       function Display_Type_Name return String is
          T : constant String :=
-           (if Entity = null then "" else Entity.Get_Type_Name (Lang));
+           (if Entity = Empty_GVD_Type_Holder
+            then ""
+            else Entity.Get_Type.Get_Type_Name (Lang));
       begin
          if T'Length = 0 or else not Show_Types.Get_Pref then
             return "";
@@ -924,9 +926,10 @@ package body GVD.Variables.View is
 
       Descr : constant String :=
         Display_Name & Display_Type_Name
-        & (if Entity = null
+        & (if Entity = Empty_GVD_Type_Holder
            then ""
-           else XML_Utils.Protect (Validate_UTF_8 (Entity.Get_Simple_Value)));
+           else XML_Utils.Protect
+             (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
 
    begin
       Self.Model.Append (Iter => Row, Parent => Parent);
@@ -943,22 +946,21 @@ package body GVD.Variables.View is
                   Category       => Language.Cat_Function)
                else ""),
             Column_Id           => As_Int (Gint (Id)),
-            Column_Generic_Type => As_Pointer
-              ((if Entity = null
-               then System.Null_Address else Entity.all'Address)),
+            Column_Generic_Type => As_GVD_Type_Holder (Entity),
             Column_Fg           => As_String
-              (if Entity /= null and then Entity.Is_Changed
+              (if Entity /= Empty_GVD_Type_Holder
+               and then Entity.Get_Type.Is_Changed
                then Change_Color.Get_Pref else Fg),
             Column_Full_Name    => As_String (Full_Name)
            ));
 
-      if Entity /= null then
+      if Entity /= Empty_GVD_Type_Holder then
          declare
-            Iter : Generic_Iterator'Class := Entity.Start;
+            Iter : Generic_Iterator'Class := Entity.Get_Type.Start;
          begin
             while not Iter.At_End loop
-               Ent := Iter.Data;
-               if Ent /= null then
+               Ent := GVD_Type_Holder (Iter.Data);
+               if Ent /= Empty_GVD_Type_Holder then
                   Add_Row
                     (Self,
                      Entity    => Ent,
@@ -973,7 +975,7 @@ package body GVD.Variables.View is
          end;
 
          --  Make sure access types are expandable.
-         if Entity.all in Access_Type'Class then
+         if Entity.Get_Type.all in GVD_Access_Type'Class then
             Self.Set_Might_Have_Children (Row);
          end if;
       end if;
@@ -1054,7 +1056,7 @@ package body GVD.Variables.View is
                               Column_Icon         => GType_String,
                               Column_Id           => GType_Int,
                               Column_Fg           => GType_String,
-                              Column_Generic_Type => GType_Pointer,
+                              Column_Generic_Type => Get_GVD_Type_Holder_GType,
                               Column_Full_Name    => GType_String),
          Capability_Type  => Filtered,
          Set_Visible_Func => True);

@@ -15,18 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings;           use Ada.Strings;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with Items.Arrays;          use Items.Arrays;
-with Items.Classes;         use Items.Classes;
-with Items.Records;         use Items.Records;
-with Items.Simples;         use Items.Simples;
-with Items;                 use Items;
-with Language.Ada;          use Language.Ada;
-with Language.Debugger;     use Language.Debugger;
-with String_Utils;          use String_Utils;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings;                 use Ada.Strings;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with Language.Ada;                use Language.Ada;
+with Language.Debugger;           use Language.Debugger;
+with String_Utils;                use String_Utils;
 
 package body Debugger.Base_Gdb.Ada is
 
@@ -166,7 +166,7 @@ package body Debugger.Base_Gdb.Ada is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Start : constant Natural := Index;
    begin
@@ -201,7 +201,7 @@ package body Debugger.Base_Gdb.Ada is
             else
                Skip_To_Char (Type_Str, Index, '>');
                Result := New_Simple_Type;
-               Set_Type_Name (Result, Type_Str (Start .. Index));
+               Result.Get_Type.Set_Type_Name (Type_Str (Start .. Index));
                Index := Index + 1;
             end if;
 
@@ -220,9 +220,8 @@ package body Debugger.Base_Gdb.Ada is
 
                --  Use the result of "whatis" so as to get a more interesting
                --  information
-               Set_Type_Name
-                 (Result,
-                  Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+               Result.Get_Type.Set_Type_Name
+                 (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
             else
                raise Unexpected_Type;
             end if;
@@ -232,7 +231,7 @@ package body Debugger.Base_Gdb.Ada is
 
             if Looking_At (Type_Str, Index, "delta ") then
                Result := New_Simple_Type;
-               Set_Type_Name (Result, Type_Str);
+               Result.Get_Type.Set_Type_Name (Type_Str);
 
             else
                raise Unexpected_Type;
@@ -241,7 +240,7 @@ package body Debugger.Base_Gdb.Ada is
          when 'f' =>
             --  A function that comes from the dereferencing of an access type
             if Looking_At (Type_Str, Index, "function ") then
-               Result := null;
+               Result := Empty_GVD_Type_Holder;
             else
                raise Unexpected_Type;
             end if;
@@ -256,8 +255,8 @@ package body Debugger.Base_Gdb.Ada is
                   Index := Index + 4;
                   Parse_Num (Type_Str, Index, Modulo);
                   Result := New_Mod_Type (Modulo);
-                  Set_Type_Name
-                    (Result, Type_Str (Start .. Index - 1));
+                  Result.Get_Type.Set_Type_Name
+                    (Type_Str (Start .. Index - 1));
                end;
             else
                raise Unexpected_Type;
@@ -269,8 +268,8 @@ package body Debugger.Base_Gdb.Ada is
 
             if Looking_At (Type_Str, Index, "new ") then
                declare
-                  Child  : Generic_Type_Access;
-                  Parent : Generic_Type_Access;
+                  Child  : GVD.Variables.Types.GVD_Type_Holder;
+                  Parent : GVD.Variables.Types.GVD_Type_Holder;
                   Last   : Natural;
                begin
                   Index := Index + 4;
@@ -296,9 +295,9 @@ package body Debugger.Base_Gdb.Ada is
                                  Tmp, Parent);
                   end;
 
-                  Add_Ancestor (Class_Type (Result.all), 1,
-                                Class_Type_Access (Parent));
-                  Set_Type_Name (Parent, Type_Str (Index .. Last - 1));
+                  GVD_Class_Type_Access
+                    (Result.Get_Type).Add_Ancestor (1, Parent);
+                  Parent.Get_Type.Set_Type_Name (Type_Str (Index .. Last - 1));
 
                   --  Get the child (skip "with record")
 
@@ -306,8 +305,7 @@ package body Debugger.Base_Gdb.Ada is
                   Parse_Record_Type (Lang, Type_Str, Entity, Index,
                                      Is_Union => False, Result => Child,
                                      End_On => "end record");
-                  Set_Child (Class_Type (Result.all),
-                             Record_Type_Access (Child));
+                  GVD_Class_Type_Access (Result.Get_Type).Set_Child (Child);
                end;
             else
                raise Unexpected_Type;
@@ -319,7 +317,7 @@ package body Debugger.Base_Gdb.Ada is
               and then (Type_Str'Last = Index + 8
                         or else Type_Str (Index + 9) = ' ')
             then
-               Result := null;
+               Result := Empty_GVD_Type_Holder;
             else
                raise Unexpected_Type;
             end if;
@@ -346,7 +344,8 @@ package body Debugger.Base_Gdb.Ada is
                   Index := Index + 4; --  skips ' .. '
                   Parse_Num (Type_Str, Index, Max);
                   Result := New_Range_Type (Min, Max);
-                  Set_Type_Name (Result, Type_Str (Start .. Index - 1));
+                  Result.Get_Type.Set_Type_Name
+                    (Type_Str (Start .. Index - 1));
                end;
 
             else
@@ -363,15 +362,14 @@ package body Debugger.Base_Gdb.Ada is
                Index := Index + 14;
 
                declare
-                  Child : Generic_Type_Access;
+                  Child : GVD.Variables.Types.GVD_Type_Holder;
                begin
                   Parse_Record_Type
                     (Lang, Type_Str, Entity, Index,
                      Is_Union => False, Result => Child,
                      End_On => "end record");
                   Result := New_Class_Type (Num_Ancestors => 0);
-                  Set_Child (Class_Type (Result.all),
-                             Record_Type_Access (Child));
+                  GVD_Class_Type_Access (Result.Get_Type).Set_Child (Child);
                end;
             else
                raise Unexpected_Type;
@@ -385,8 +383,8 @@ package body Debugger.Base_Gdb.Ada is
 
             --  Get the result of "whatis" so as to get a more concise
             --  information.
-            Set_Type_Name
-              (Result, Unknown_Type_Prefix & Entity
+            Result.Get_Type.Set_Type_Name
+              (Unknown_Type_Prefix & Entity
                & ASCII.LF & Type_Str (Start .. Index));
             Index := Index + 1;
 
@@ -406,11 +404,12 @@ package body Debugger.Base_Gdb.Ada is
      (Lang       : access Gdb_Ada_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
+        (Lang, Type_Str, Index, Result, Repeat_Num,
+         Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
    ----------------------
@@ -423,16 +422,16 @@ package body Debugger.Base_Gdb.Ada is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Generic_Type_Access)
+      Result       : out GVD.Variables.Types.GVD_Type_Holder)
    is
       pragma Unreferenced (Start_Of_Dim);
       Item_Separator : constant Character := ',';
       Dimension_End  : constant Character := ')';
       Num_Dim        : Integer := 1;
       Tmp_Index      : Natural := Index;
-      R              : Array_Type_Access;
+      R              : GVD_Type_Holder;
       Index_Str      : Unbounded_String;
-      G              : Generic_Type_Access;
+      G              : GVD_Type_Holder;
 
    begin
       --  A special case for strings
@@ -442,7 +441,7 @@ package body Debugger.Base_Gdb.Ada is
           (Type_Str, Tmp_Index, "array (1 .. max_length) of character")
       then
          Result := New_Simple_Type;
-         Set_Type_Name (Result, "character");
+         Result.Get_Type.Set_Type_Name ("character");
          return;
       end if;
 
@@ -452,7 +451,7 @@ package body Debugger.Base_Gdb.Ada is
 
       if Looking_At (Type_Str, Tmp_Index, "array (<>)") then
          Result := New_Access_Type;
-         Set_Type_Name (Result, Type_Str);
+         Result.Get_Type.Set_Type_Name (Type_Str);
          return;
       end if;
 
@@ -471,15 +470,16 @@ package body Debugger.Base_Gdb.Ada is
       --  Create the type
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
-      R := Array_Type_Access (Result);
-      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+      R := Result;
+      R.Get_Type.Set_Type_Name
+        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Then parse the dimensions
 
       Num_Dim := 1;
       Index   := Index + 7;
 
-      while Num_Dim <= Num_Dimensions (R.all) loop
+      while Num_Dim <= GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
          declare
             First, Last : Long_Integer;
          begin
@@ -538,7 +538,8 @@ package body Debugger.Base_Gdb.Ada is
             end if;
 
             Index := Index + 2;  --  skips ', ' or ') '
-            Set_Dimensions (R.all, Num_Dim, (First, Last));
+            GVD_Array_Type_Access
+              (R.Get_Type).Set_Dimensions (Num_Dim, (First, Last));
             Num_Dim := Num_Dim + 1;
          end;
       end loop;
@@ -574,7 +575,8 @@ package body Debugger.Base_Gdb.Ada is
                   Tmp_Index := Tmp_Index + 1;
                end loop;
                Parse_Num (Entity, Tmp_Index, Last);
-               Set_Dimensions (R.all, 1, (First, Last));
+               GVD_Array_Type_Access
+                 (R.Get_Type).Set_Dimensions (1, (First, Last));
             end;
          end if;
       end if;
@@ -589,18 +591,18 @@ package body Debugger.Base_Gdb.Ada is
 
       if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
          G := New_Simple_Type;
-         Set_Type_Name (G, Type_Str (Tmp_Index .. Index - 1));
-         Set_Item_Type (R.all, G);
+         G.Get_Type.Set_Type_Name (Type_Str (Tmp_Index .. Index - 1));
+         GVD_Array_Type_Access (R.Get_Type).Set_Item_Type (G);
 
       elsif Tmp_Index + 6 <= Type_Str'Last
         and then Type_Str (Tmp_Index .. Tmp_Index + 5) = "access"
       then
          G := New_Access_Type;
-         Set_Type_Name
-           (G, Unknown_Type_Prefix
-            & Array_Item_Name (Lang, Entity, "0")
-            & ASCII.LF & "array");
-         Set_Item_Type (R.all, New_Access_Type);
+         G.Get_Type.Set_Type_Name
+           (Unknown_Type_Prefix &
+              Array_Item_Name (Lang, Entity, "0") &
+              ASCII.LF & "array");
+         GVD_Array_Type_Access (R.Get_Type).Set_Item_Type (New_Access_Type);
 
       else
          --  Get the type of the items.
@@ -610,18 +612,21 @@ package body Debugger.Base_Gdb.Ada is
          --  Thus, we have to do a "ptype" directly on the first item of the
          --  array.
 
-         for J in 1 .. Num_Dimensions (R.all) loop
-            Append (Index_Str,
-                    Long_Integer'Image (Get_Dimensions (R.all, J).First));
+         for J in 1 .. GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
+            Append
+              (Index_Str,
+               Long_Integer'Image
+                 (GVD_Array_Type_Access
+                      (R.Get_Type).Get_Dimensions (J).First));
 
-            if J /= Num_Dimensions (R.all) then
+            if J /= GVD_Array_Type_Access (R.Get_Type).Num_Dimensions then
                Append (Index_Str, ",");
             end if;
          end loop;
 
-         Set_Item_Type (R.all,
-           Parse_Type (Get_Debugger (Lang),
-                       Array_Item_Name (Lang, Entity, To_String (Index_Str))));
+         GVD_Array_Type_Access (R.Get_Type).Set_Item_Type
+           (Parse_Type (Get_Debugger (Lang),
+            Array_Item_Name (Lang, Entity, To_String (Index_Str))));
       end if;
    end Parse_Array_Type;
 
@@ -635,15 +640,15 @@ package body Debugger.Base_Gdb.Ada is
       Entity   : String;
       Index    : in out Natural;
       Is_Union : Boolean;
-      Result   : out Generic_Type_Access;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
       End_On   : String)
    is
       Tmp_Index : Natural;
       Fields    : Natural := 0;
-      R         : Record_Type_Access;
+      R         : GVD_Type_Holder;
       Num_Parts : Natural := 0;
-      G         : Generic_Type_Access;
-      Part      : Generic_Type_Access;
+      G         : GVD_Type_Holder;
+      Part      : GVD_Type_Holder;
 
       Unchecked_Union : Boolean := False;
 
@@ -733,15 +738,16 @@ package body Debugger.Base_Gdb.Ada is
          Result := New_Record_Type (Fields);
       end if;
 
-      R := Record_Type_Access (Result);
+      R := Result;
 
-      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+      GVD_Record_Type_Access (R.Get_Type).Set_Type_Name
+        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Now parse all the fields
 
       Fields := 1;
 
-      while Fields <= Num_Fields (R.all) loop
+      while Fields <= GVD_Record_Type_Access (R.Get_Type).Num_Fields loop
          if Looking_At (Type_Str, Index, "null;") then
             Index := Index + 5;
 
@@ -767,17 +773,19 @@ package body Debugger.Base_Gdb.Ada is
             end loop;
 
             if Num_Parts > 0 then
-               Set_Field_Name (R.all, Fields, Variant_Name, Num_Parts);
+               GVD_Record_Type_Access (R.Get_Type).Set_Field_Name
+                 (Fields, Variant_Name, Num_Parts);
             else
-               Set_Field_Name
-                 (R.all, Fields, Type_Str (Tmp_Index .. Index - 1), 0);
+               GVD_Record_Type_Access (R.Get_Type).Set_Field_Name
+                 (Fields, Type_Str (Tmp_Index .. Index - 1), 0);
             end if;
 
             --  Parses the parts, and create a record for each
 
             Num_Parts := 0;
 
-            while Num_Parts < Get_Variant_Parts (R.all, Fields)
+            while Num_Parts < GVD_Record_Type_Access
+              (R.Get_Type).Get_Variant_Parts (Fields)
               and then not Looking_At (Type_Str, Index, "end ")
             loop
                Skip_To_String (Type_Str, Index, "=>");
@@ -785,7 +793,9 @@ package body Debugger.Base_Gdb.Ada is
                Index := Index + 2;
                Num_Parts := Num_Parts + 1;
 
-               if Num_Parts = Get_Variant_Parts (R.all, Fields) then
+               if Num_Parts = GVD_Record_Type_Access
+                 (R.Get_Type).Get_Variant_Parts (Fields)
+               then
                   Parse_Record_Type (Lang, Type_Str, Entity,
                                      Index, Is_Union => False,
                                      Result => Part, End_On => "end case");
@@ -795,8 +805,8 @@ package body Debugger.Base_Gdb.Ada is
                                      Result => Part, End_On => "when ");
                end if;
 
-               Set_Variant_Field (R.all, Fields, Num_Parts,
-                                  Record_Type_Access (Part));
+               GVD_Record_Type_Access (R.Get_Type).Set_Variant_Field
+                 (Fields, Num_Parts, Part);
 
                Skip_Blanks (Type_Str, Index);
             end loop;
@@ -821,8 +831,8 @@ package body Debugger.Base_Gdb.Ada is
 
             Tmp_Index := Index;
             Skip_To_Char (Type_Str, Index, ':');
-            Set_Field_Name (R.all, Fields, Type_Str (Tmp_Index .. Index - 1),
-                            Variant_Parts => 0);
+            GVD_Record_Type_Access (R.Get_Type).Set_Field_Name
+              (Fields, Type_Str (Tmp_Index .. Index - 1), Variant_Parts => 0);
 
             --  Get the type of the field
 
@@ -852,17 +862,18 @@ package body Debugger.Base_Gdb.Ada is
 
             if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
                G := New_Simple_Type;
-               Set_Value (Item  => R.all, Value => G, Field => Fields);
+               GVD_Record_Type_Access (R.Get_Type).Set_Value
+                 (Value => G, Field => Fields);
 
                --  Do not get the result of "whatis", since it is more
                --  interesting for debugging purposes to display the type as
                --  seen by the debugger.
 
-               Set_Type_Name (G, Type_Str (Tmp_Index .. Index - 1));
+               G.Get_Type.Set_Type_Name (Type_Str (Tmp_Index .. Index - 1));
 
             else
                declare
-                  Result : Generic_Type_Access;
+                  Result : GVD_Type_Holder;
                   J      : Natural := Tmp_Index;
                begin
                   --  First try to parse the type as if it was already the
@@ -873,10 +884,12 @@ package body Debugger.Base_Gdb.Ada is
                     (Lang,
                      Type_Str (Tmp_Index .. Index - 1),
                      Record_Field_Name
-                       (Lang, Entity, Get_Field_Name (R.all, Fields)),
+                       (Lang, Entity, GVD_Record_Type_Access
+                            (R.Get_Type).Get_Field_Name (Fields)),
                      J, Result);
 
-                  Set_Value (R.all, Result, Field => Fields);
+                  GVD_Record_Type_Access (R.Get_Type).Set_Value
+                    (Result, Field => Fields);
 
                exception
                   when Unexpected_Type =>
@@ -885,12 +898,11 @@ package body Debugger.Base_Gdb.Ada is
                      --  of the field (so as to avoid a costly request to gdb
                      --  with A.B.C...).
 
-                     Set_Value (R.all,
-                                Parse_Type (Get_Debugger (Lang),
-                                            Entity & "."
-                                              & Get_Field_Name
-                                              (R.all, Fields)),
-                                Field => Fields);
+                     GVD_Record_Type_Access (R.Get_Type).Set_Value
+                       (Parse_Type (Get_Debugger (Lang),
+                        Entity & "." & GVD_Record_Type_Access
+                          (R.Get_Type).Get_Field_Name (Fields)),
+                        Field => Fields);
                end;
             end if;
 
@@ -917,12 +929,13 @@ package body Debugger.Base_Gdb.Ada is
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access)
+      Result   : in out GVD_Type_Holder)
    is
       Dim     : Natural := 0;            --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
       Bounds  : Dimension;
-      Lengths : array (1 ..  Num_Dimensions (Result.all)) of Long_Integer;
+      Lengths : array (1 ..  GVD_Array_Type_Access
+                       (Result.Get_Type).Num_Dimensions) of Long_Integer;
       --  The number of items in each dimension
 
       Previous_Index : Integer;
@@ -941,7 +954,7 @@ package body Debugger.Base_Gdb.Ada is
 
       procedure Parse_Item is
          Int        : Natural := Index;
-         Tmp        : Generic_Type_Access;
+         Tmp        : GVD_Type_Holder;
          Repeat_Num : Integer;
       begin
          --  Does gdb indicate the number of the item (as in '24 =>')
@@ -957,7 +970,8 @@ package body Debugger.Base_Gdb.Ada is
             Int := Int + 1;
          end loop;
 
-         Bounds := Get_Dimensions (Result.all, Dim);
+         Bounds := GVD_Array_Type_Access
+           (Result.Get_Type).Get_Dimensions (Dim);
 
          if Type_Str (Int) = '=' then
             --  Looking at "index => ".
@@ -966,7 +980,8 @@ package body Debugger.Base_Gdb.Ada is
 
             if Bounds.Last < Bounds.First then
                Parse_Num (Type_Str, Index, Bounds.First);
-               Set_Dimensions (Result.all, Dim, Bounds);
+               GVD_Array_Type_Access
+                 (Result.Get_Type).Set_Dimensions (Dim, Bounds);
             end if;
 
             Index := Int + 3;  --  skip "index => "
@@ -978,24 +993,23 @@ package body Debugger.Base_Gdb.Ada is
          --  for array (3 .. 4, 1 .. 2, 6 .. 7) of integer
          --  In that case, don't try to parse the item.
 
-         if Dim /= Num_Dimensions (Result.all) then
+         if Dim /= GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions then
             return;
          end if;
 
          --  Parse the next item
 
-         Tmp := Get_Value (Result.all, Current_Index);
+         Tmp := GVD_Array_Type_Access
+           (Result.Get_Type).Get_Value (Current_Index);
 
-         if Tmp = null then
-            Tmp := Clone (Get_Item_Type (Result.all).all);
+         if Tmp = Empty_GVD_Type_Holder then
+            Tmp := GVD_Array_Type_Access (Result.Get_Type).Get_Item_Type.Clone;
          end if;
 
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Tmp, Repeat_Num,
-            Parent => Generic_Type_Access (Result));
-         Set_Value
-           (Item       => Result.all,
-            Elem_Value => Tmp,
+           (Lang, Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
+         GVD_Array_Type_Access (Result.Get_Type).Set_Value
+           (Elem_Value => Tmp,
             Elem_Index => Current_Index,
             Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
@@ -1006,7 +1020,8 @@ package body Debugger.Base_Gdb.Ada is
 
          if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
             Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-            Set_Dimensions (Result.all, Dim, Bounds);
+            GVD_Array_Type_Access
+              (Result.Get_Type).Set_Dimensions (Dim, Bounds);
          end if;
       end Parse_Item;
 
@@ -1023,11 +1038,13 @@ package body Debugger.Base_Gdb.Ada is
                --  until we parse the value), now is a good time to
                --  get the range.
 
-               Bounds := Get_Dimensions (Result.all, Dim);
+               Bounds := GVD_Array_Type_Access
+                 (Result.Get_Type).Get_Dimensions (Dim);
 
                if Bounds.Last = Long_Integer'First then
                   Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-                  Set_Dimensions (Result.all, Dim, Bounds);
+                  GVD_Array_Type_Access
+                    (Result.Get_Type).Set_Dimensions (Dim, Bounds);
                end if;
 
                Dim := Dim - 1;
@@ -1037,11 +1054,13 @@ package body Debugger.Base_Gdb.Ada is
                   --  If we have parsed an subarray, then adjust length of
                   --  enclosing array.
                   Lengths (Dim) := Lengths (Dim) + 1;
-                  Bounds := Get_Dimensions (Result.all, Dim);
+                  Bounds := GVD_Array_Type_Access
+                    (Result.Get_Type).Get_Dimensions (Dim);
 
                   if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
                      Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-                     Set_Dimensions (Result.all, Dim, Bounds);
+                     GVD_Array_Type_Access
+                       (Result.Get_Type).Set_Dimensions (Dim, Bounds);
                   end if;
                end if;
 
@@ -1051,7 +1070,9 @@ package body Debugger.Base_Gdb.Ada is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim /= Num_Dimensions (Result.all) then
+               if Dim /= GVD_Array_Type_Access
+                 (Result.Get_Type).Num_Dimensions
+               then
                   Dim := Dim + 1;
                   Index := Index + 1;
                   Lengths (Dim) := 0;
@@ -1066,11 +1087,13 @@ package body Debugger.Base_Gdb.Ada is
                   --     type Matrix is array (Index_Range, Index_Range) of
                   --       Integer;
 
-                  Bounds := Get_Dimensions (Result.all, Dim);
+                  Bounds := GVD_Array_Type_Access
+                    (Result.Get_Type).Get_Dimensions (Dim);
 
                   if Bounds.First = Long_Integer'Last then
                      Bounds.First := 0;
-                     Set_Dimensions (Result.all, Dim, Bounds);
+                     GVD_Array_Type_Access
+                       (Result.Get_Type).Set_Dimensions (Dim, Bounds);
                   end if;
 
                end if;
@@ -1078,7 +1101,8 @@ package body Debugger.Base_Gdb.Ada is
                if Type_Str (Index) = ')' then
                   --  Set last bound for an empty array
                   Bounds.Last := Bounds.First - 1;
-                  Set_Dimensions (Result.all, Dim, Bounds);
+                  GVD_Array_Type_Access
+                    (Result.Get_Type).Set_Dimensions (Dim, Bounds);
                else
                   Parse_Item;
                end if;
@@ -1098,14 +1122,14 @@ package body Debugger.Base_Gdb.Ada is
          if Dim = Previous_Dim
            and then Index = Previous_Index
          then
-            Set_Valid (Result, False);
+            Result.Get_Type.Set_Valid (False);
             return;
          end if;
       end loop;
 
       --  Shrink the table of values
 
-      Shrink_Values (Result.all);
+      GVD_Array_Type_Access (Result.Get_Type).Shrink_Values;
    end Parse_Array_Value;
 
    -----------------------------------

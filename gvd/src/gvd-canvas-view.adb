@@ -17,65 +17,66 @@
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-with Browsers.Canvas;          use Browsers, Browsers.Canvas;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Debugger;                 use Debugger;
-with Default_Preferences;      use Default_Preferences;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with Gdk.Window;               use Gdk.Window;
-with Gdk;                      use Gdk;
-with Generic_Views;            use Generic_Views;
-with Glib.Object;              use Glib.Object;
-with Glib;                     use Glib;
-with GNAT.Regpat;              use GNAT.Regpat;
-with GNAT.Strings;             use GNAT.Strings;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Browsers.Canvas;             use Browsers, Browsers.Canvas;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Debugger;                    use Debugger;
+with Default_Preferences;         use Default_Preferences;
+with Gdk.RGBA;                    use Gdk.RGBA;
+with Gdk.Window;                  use Gdk.Window;
+with Gdk;                         use Gdk;
+with Generic_Views;               use Generic_Views;
+with Glib.Object;                 use Glib.Object;
+with Glib;                        use Glib;
+with GNAT.Regpat;                 use GNAT.Regpat;
+with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.JSON;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Debuggers;            use GPS.Debuggers;
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
-with GPS.Properties;           use GPS.Properties;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Radio_Menu_Item;      use Gtk.Radio_Menu_Item;
-with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
-with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Gtkada.Style;             use Gtkada.Style;
-with GVD.Contexts;             use GVD.Contexts;
-with GVD.Generic_View;         use GVD.Generic_View;
-with GVD.Items;                use GVD.Items;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Debuggers;               use GPS.Debuggers;
+with GPS.Dialogs;                 use GPS.Dialogs;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Properties;              use GPS.Properties;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Check_Menu_Item;         use Gtk.Check_Menu_Item;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Handlers;                use Gtk.Handlers;
+with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Radio_Menu_Item;         use Gtk.Radio_Menu_Item;
+with Gtk.Separator_Menu_Item;     use Gtk.Separator_Menu_Item;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.Canvas_View.Views;    use Gtkada.Canvas_View.Views;
+with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtkada.Style;                use Gtkada.Style;
+with GVD.Contexts;                use GVD.Contexts;
+with GVD.Generic_View;            use GVD.Generic_View;
 with GVD.Memory_View;
-with GVD.Menu;                 use GVD.Menu;
-with GVD.Preferences;          use GVD.Preferences;
-with GVD.Process;              use GVD.Process;
-with Process_Proxies;
+with GVD.Menu;                    use GVD.Menu;
+with GVD.Preferences;             use GVD.Preferences;
+with GVD.Process;                 use GVD.Process;
 with GVD.Trace;
-with GVD.Types;                use GVD.Types;
-with GVD_Module;               use GVD_Module;
-with Histories;                use Histories;
-with Items.Simples;            use Items.Simples;
-with Language;                 use Language;
-with Pango.Font;               use Pango.Font;
-with GPS.Dialogs;              use GPS.Dialogs;
-with String_Utils;             use String_Utils;
-with Xref;                     use Xref;
+with GVD.Types;                   use GVD.Types;
+with GVD.Variables.Items;         use GVD.Variables.Items;
+with GVD_Module;                  use GVD_Module;
+with Histories;                   use Histories;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with Language;                    use Language;
+with Pango.Font;                  use Pango.Font;
+with Process_Proxies;
+with String_Utils;                use String_Utils;
+with Xref;                        use Xref;
 
 package body GVD.Canvas.View is
 
@@ -1356,11 +1357,12 @@ package body GVD.Canvas.View is
 
    procedure Change_Visibility
      (Item      : not null access Gtkada.Canvas_View.Canvas_Item_Record'Class;
-      Component : not null access Generic_Type'Class)
+      Component : GVD.Variables.Types.GVD_Type_Holder)
    is
       It : constant Display_Item := Display_Item (Item.Get_Toplevel_Item);
    begin
-      Component.Set_Visibility (not Component.Get_Visibility);
+      Component.Get_Type.Set_Visibility
+        (not Component.Get_Type.Get_Visibility);
       It.Update_Display;
       Get_Canvas (It.Debugger).Get_View.Model.Refresh_Layout;  --  links
    end Change_Visibility;
@@ -1658,15 +1660,16 @@ package body GVD.Canvas.View is
       procedure On_Child (C : not null access Container_Item_Record'Class) is
       begin
          if C.all in Component_Item_Record'Class then
-            Set_Visibility
-              (Component_Item (C).Component, False, Recursive => True);
+            Component_Item (C).Component.Get_Type.Set_Visibility
+              (False, Recursive => True);
          end if;
       end On_Child;
    begin
       if Item.Component = null then
          Item.Item.For_Each_Child (On_Child'Access);
       else
-         Set_Visibility (Item.Component.Component, False, Recursive => True);
+         Item.Component.Component.Get_Type.Set_Visibility
+           (False, Recursive => True);
       end if;
       Update_Display (Item.Item);
       Item.Canvas.Get_View.Model.Refresh_Layout;
@@ -1709,15 +1712,16 @@ package body GVD.Canvas.View is
       procedure On_Child (C : not null access Container_Item_Record'Class) is
       begin
          if C.all in Component_Item_Record'Class then
-            Set_Visibility
-              (Component_Item (C).Component, True, Recursive => True);
+            Component_Item (C).Component.Get_Type.Set_Visibility
+              (True, Recursive => True);
          end if;
       end On_Child;
    begin
       if Item.Component = null then
          Item.Item.For_Each_Child (On_Child'Access);
       else
-         Set_Visibility (Item.Component.Component, True, Recursive => True);
+         Item.Component.Component.Get_Type.Set_Visibility
+           (True, Recursive => True);
       end if;
       Item.Item.Update_Display;
 
@@ -1741,7 +1745,8 @@ package body GVD.Canvas.View is
       is
       begin
          if Child.all in Component_Item_Record'Class
-           and then Component_Item (Child).Component.all in Access_Type'Class
+           and then Component_Item (Child).Component.Get_Type.all in
+           GVD_Access_Type'Class
          then
             Dereference_Item (Component => Component_Item (Child));
          end if;
@@ -1977,7 +1982,7 @@ package body GVD.Canvas.View is
       --  If an auto-updated similar item is on the canvas, we simply show
       --  and select it.
 
-      if Item.Info.Entity /= null
+      if Item.Info.Entity /= Empty_GVD_Type_Holder
         and then Item.Info.Is_A_Variable
       then
          Item.Id := new String'
@@ -1998,8 +2003,8 @@ package body GVD.Canvas.View is
             if Alias_Item /= null
               and then
                 (not Typed_Aliases
-                 or else Structurally_Equivalent
-                   (Alias_Item.Info.Entity, Item.Info.Entity))
+                 or else Alias_Item.Info.Entity.
+                   Get_Type.Structurally_Equivalent (Item.Info.Entity))
             then
                Browser.Get_View.Model.Add_To_Selection (Alias_Item);
                Browser.Get_View.Scroll_Into_View
@@ -2050,12 +2055,13 @@ package body GVD.Canvas.View is
          Name    => Integer'Image (Item.Num) & ": " & Item.Info.Name,
          Buttons => (1  => Close));
 
-      if Item.Info.Entity /= null
-         and then Item.Info.Entity.Is_Valid
+      if Item.Info.Entity /= Empty_GVD_Type_Holder
+         and then Item.Info.Entity.Get_Type.Is_Valid
       then
          Item.Add_Child
-           (Item.Info.Entity.Build_Display
-              (Item.Info.Name,
+           (Item.Info.Entity.Get_Type.Build_Display
+              (Item.Info.Entity,
+               Item.Info.Name,
                Debugger_Data_View (Item.Browser),
                Get_Language (Item.Debugger.Debugger), Item.Info.Mode));
       end if;

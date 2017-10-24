@@ -17,19 +17,19 @@
 
 --  ??? Must add support for "show print vtbl"
 
-with Language.Debugger;   use Language.Debugger;
-with Language.Cpp;        use Language.Cpp;
-with GNATCOLL.Utils;      use GNATCOLL.Utils;
+with Ada.Tags;                          use Ada.Tags;
 
-with String_Utils;        use String_Utils;
-with Items;               use Items;
-with Items.Arrays;        use Items.Arrays;
-with Items.Records;       use Items.Records;
-with Items.Classes;       use Items.Classes;
-with Items.Simples;       use Items.Simples;
+with Language.Debugger;                 use Language.Debugger;
+with Language.Cpp;                      use Language.Cpp;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 
-with Ada.Tags;            use Ada.Tags;
-with Debugger.Base_Gdb.C; use Debugger.Base_Gdb.C;
+with String_Utils;                      use String_Utils;
+with GVD.Variables.Types;               use GVD.Variables.Types;
+with GVD.Variables.Types.Records;       use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Classes;       use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Simples;       use GVD.Variables.Types.Simples;
+
+with Debugger.Base_Gdb.C;               use Debugger.Base_Gdb.C;
 
 package body Debugger.Base_Gdb.Cpp is
 
@@ -38,7 +38,7 @@ package body Debugger.Base_Gdb.Cpp is
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
-      Result    : out Generic_Type_Access);
+      Result    : out GVD.Variables.Types.GVD_Type_Holder);
    --  Parse the description of a class type. Index should point after the
    --  keyword "class ".
    --  The output of gdb looks like
@@ -63,7 +63,7 @@ package body Debugger.Base_Gdb.Cpp is
       Entity   : String;
       Index    : in out Natural;
       Is_Union : Boolean;
-      Result   : out Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
      with Pre => Type_Str (Index - 1) = '{';
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
@@ -187,14 +187,14 @@ package body Debugger.Base_Gdb.Cpp is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Tmp : constant Natural := Index;
    begin
       --  First check whether we have an access or array type.
 
       C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
-      if Result /= null then
+      if Result /= Empty_GVD_Type_Holder then
          return;
       end if;
 
@@ -239,15 +239,15 @@ package body Debugger.Base_Gdb.Cpp is
      (Lang       : access Gdb_Cpp_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive)
    is
       Ancestor   : Natural := 1;
-      V          : Generic_Type_Access;
+      V          : GVD_Type_Holder;
       Num_Ancestors : Natural;
 
    begin
-      pragma Assert (Result /= null);
+      pragma Assert (Result /= Empty_GVD_Type_Holder);
       pragma Assert (Index <= Type_Str'Last);
 
       --  Special handling for class types.
@@ -257,7 +257,7 @@ package body Debugger.Base_Gdb.Cpp is
       --   <Class3> = {var3 = 10},
       --   var4 = 7}"
 
-      if Result'Tag = Class_Type'Tag then
+      if Result.Get_Type.all'Tag = GVD_Class_Type'Tag then
          if Type_Str (Index) = '{' then
             Index := Index + 1;
          end if;
@@ -267,13 +267,15 @@ package body Debugger.Base_Gdb.Cpp is
          --  example returned by gdb:
          --     <CL2> = {_vptr.CL2 = 0x8049e68, x = 10}, <No data fields>}
 
-         Num_Ancestors := Get_Num_Ancestors (Class_Type (Result.all));
+         Num_Ancestors := GVD_Class_Type_Access
+           (Result.Get_Type).Get_Num_Ancestors;
          while Ancestor <= Num_Ancestors
            and then Type_Str (Index) = '<'
          loop
             Skip_To_Char (Type_Str, Index, '>');
             Index := Index + 5;  --  skips "> = "
-            V := Get_Ancestor (Class_Type (Result.all), Ancestor);
+            V := GVD_Class_Type_Access
+              (Result.Get_Type).Get_Ancestor (Ancestor);
             Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
             pragma Assert (Looking_At (Type_Str, Index, ", "));
             Index := Index + 2; --  skips ", "
@@ -281,7 +283,7 @@ package body Debugger.Base_Gdb.Cpp is
          end loop;
 
          --  Parse the child
-         V := Get_Child (Class_Type (Result.all));
+         V := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
 
          --  Recent versions of gdb display the virtual table as
          --     {_vptr.CLASS = 0xffff, a = 1}
@@ -325,7 +327,8 @@ package body Debugger.Base_Gdb.Cpp is
 
       else
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
+           (Lang, Type_Str, Index, Result, Repeat_Num,
+            Parent => Empty_GVD_Type_Holder);
       end if;
    end Parse_Value;
 
@@ -339,7 +342,7 @@ package body Debugger.Base_Gdb.Cpp is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Generic_Type_Access) is
+      Result       : out GVD.Variables.Types.GVD_Type_Holder) is
    begin
       C_Parse_Array_Type
         (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
@@ -355,7 +358,7 @@ package body Debugger.Base_Gdb.Cpp is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String) is
    begin
       C_Parse_Record_Type
@@ -372,13 +375,13 @@ package body Debugger.Base_Gdb.Cpp is
       Entity   : String;
       Index    : in out Natural;
       Is_Union : Boolean;
-      Result   : out Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Num_Fields  : Natural := 0;
       Tmp         : Natural := Index;
       Tmp2        : Natural;
       Field       : Natural := 1;
-      Field_Value : Generic_Type_Access := null;
+      Field_Value : GVD_Type_Holder;
       Name_Start, Name_End, Field_End : Natural;
 
    begin
@@ -432,15 +435,15 @@ package body Debugger.Base_Gdb.Cpp is
          C_Field_Name
            (Lang, Entity, Type_Str, Index, Name_Start, Name_End,
             Field_End, Field_Value);
-         Set_Field_Name
-           (Record_Type (Result.all), Field,
-            Type_Str (Name_Start .. Name_End), Variant_Parts => 0);
+         GVD_Record_Type_Access (Result.Get_Type).Set_Field_Name
+           (Field, Type_Str (Name_Start .. Name_End), Variant_Parts => 0);
 
-         if Field_Value = null then
+         if Field_Value = Empty_GVD_Type_Holder then
             Field_Value := New_Simple_Type;
          end if;
 
-         Set_Value (Record_Type (Result.all), Field_Value, Field);
+         GVD_Record_Type_Access (Result.Get_Type).Set_Value
+           (Field_Value, Field);
 
          Index := Field_End + 1;
          Field := Field + 1;
@@ -456,15 +459,15 @@ package body Debugger.Base_Gdb.Cpp is
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
-      Result    : out Generic_Type_Access)
+      Result    : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Initial        : constant Natural := Index;
       Visibility     : Natural;
       Num_Ancestors  : Natural := 0;
       Tmp            : Natural := Index;
       Ancestor       : Natural := 1;
-      Ancestor_Start :  Natural;
-      Child          : Generic_Type_Access;
+      Ancestor_Start : Natural;
+      Child          : GVD_Type_Holder;
 
    begin
       pragma Assert (Index <= Type_Str'Last);
@@ -505,15 +508,15 @@ package body Debugger.Base_Gdb.Cpp is
                Ancestor_Type : constant String :=
                  Type_Of (Get_Debugger (Lang), Ancestor_Name);
                Tmp2          : Natural := Ancestor_Type'First;
-               Parent        : Generic_Type_Access;
+               Parent        : GVD_Type_Holder;
 
             begin
                Parse_Type
                  (Lang, Ancestor_Type, Ancestor_Name, Tmp2, Parent);
-               Add_Ancestor
-                 (Class_Type (Result.all), Ancestor,
-                  Class_Type_Access (Parent));
-               Set_Type_Name (Parent, Type_Str (Visibility .. Tmp - 1));
+               GVD_Class_Type_Access (Result.Get_Type).Add_Ancestor
+                 (Ancestor, Parent);
+               Parent.Get_Type.Set_Type_Name
+                 (Type_Str (Visibility .. Tmp - 1));
                Ancestor := Ancestor + 1;
             end;
          end if;
@@ -545,12 +548,12 @@ package body Debugger.Base_Gdb.Cpp is
       Skip_To_Char (Type_Str, Index, '{');
       Index := Index + 1;
       Parse_Class_Contents (Lang, Type_Str, Entity, Index, False, Child);
-      Set_Child (Class_Type (Result.all), Record_Type_Access (Child));
+      GVD_Class_Type_Access (Result.Get_Type).Set_Child (Child);
 
       --  Get the type name
       Tmp := Initial;
       Skip_Word (Type_Str, Tmp);
-      Set_Type_Name (Child, Type_Str (Initial .. Tmp - 1));
+      Child.Get_Type.Set_Type_Name (Type_Str (Initial .. Tmp - 1));
    end Parse_Class_Type;
 
    -----------------------
@@ -561,7 +564,7 @@ package body Debugger.Base_Gdb.Cpp is
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access)
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder)
    is
       Lang_C : aliased Gdb_C_Language;
    begin

@@ -23,7 +23,7 @@ with Gtkada.Style;           use Gtkada.Style;
 with Browsers;               use Browsers;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Language;               use Language;
-with Items;
+with GVD.Variables.Types;
 
 package GVD.Canvas is
 
@@ -66,26 +66,26 @@ package GVD.Canvas is
 
    type Component_Item_Record is new Rect_Item_Record with record
       Name      : Ada.Strings.Unbounded.Unbounded_String;
-      Component : Items.Generic_Type_Access;
+      Component : GVD.Variables.Types.GVD_Type_Holder;
    end record;
    type Component_Item is access all Component_Item_Record'Class;
    --  The GUI representation of a Generic_Type
 
    function New_Component_Item
      (Styles    : not null access Browser_Styles;
-      Component : not null access Items.Generic_Type'Class;
+      Component : GVD.Variables.Types.GVD_Type_Holder;
       Name      : String) return Component_Item;
 
    procedure Initialize_Component_Item
      (Self      : not null access Component_Item_Record'Class;
       Styles    : not null access Browser_Styles;
-      Component : not null access Items.Generic_Type'Class;
+      Component : GVD.Variables.Types.GVD_Type_Holder;
       Name      : String);
    --  Build a new component item
 
    type Collapsible_Item_Record is new Rect_Item_Record
      and Clickable_Item with record
-         For_Component : access Items.Generic_Type'Class;
+         For_Component : GVD.Variables.Types.GVD_Type_Holder;
      end record;
    type Collapsible_Item is access all Collapsible_Item_Record'Class;
 

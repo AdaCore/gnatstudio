@@ -25,12 +25,12 @@ with GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Language;
-with Items;
 with Process_Proxies;
 with Basic_Types;              use Basic_Types;
 with GVD.Breakpoints_List;     use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Proc_Utils;
+with GVD.Variables.Types;
 with GPS.Kernel;               use GPS.Kernel;
 
 package Debugger is
@@ -205,7 +205,7 @@ package Debugger is
 
    function Parse_Type
      (Debugger : access Debugger_Root'Class;
-      Entity   : String) return Items.Generic_Type_Access;
+      Entity   : String) return GVD.Variables.Types.GVD_Type_Holder;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
@@ -214,7 +214,7 @@ package Debugger is
    procedure Parse_Value
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
-      Value       : in out Items.Generic_Type_Access;
+      Value       : in out GVD.Variables.Types.GVD_Type_Holder;
       Format      : Value_Format := Default_Format;
       Value_Found : out Boolean);
    --  Parse the value of Entity.

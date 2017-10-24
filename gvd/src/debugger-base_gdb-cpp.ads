@@ -20,9 +20,8 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
-with Items.Arrays;
 with GNAT.Expect;
-with Language; use Language;
+with Language;           use Language;
 with Language.Debugger;
 
 package Debugger.Base_Gdb.Cpp is
@@ -84,13 +83,13 @@ package Debugger.Base_Gdb.Cpp is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_Cpp_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive);
 
    overriding procedure Parse_Array_Type
@@ -99,7 +98,7 @@ package Debugger.Base_Gdb.Cpp is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Items.Generic_Type_Access);
+      Result       : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Record_Type
      (Lang      : access Gdb_Cpp_Language;
@@ -107,7 +106,7 @@ package Debugger.Base_Gdb.Cpp is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Items.Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String);
    --  End_On is ignored in the C implementation.
 
@@ -115,7 +114,7 @@ package Debugger.Base_Gdb.Cpp is
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Items.Arrays.Array_Type_Access);
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding function Set_Variable
      (Lang     : access Gdb_Cpp_Language;

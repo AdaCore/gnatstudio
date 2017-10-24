@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Tags;                 use Ada.Tags;
-with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Tags;                    use Ada.Tags;
+with GNAT.Strings;                use GNAT.Strings;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
-with Items.Arrays;             use Items.Arrays;
-with Items.Classes;            use Items.Classes;
-with Items.Records;            use Items.Records;
-with Items.Simples;            use Items.Simples;
-with Items;                    use Items;
-with Language.Debugger;        use Language.Debugger;
-with Language;                 use Language;
-with String_Utils;             use String_Utils;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Intl;                 use GPS.Intl;
+with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with Language.Debugger;           use Language.Debugger;
+with Language;                    use Language;
+with String_Utils;                use String_Utils;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Intl;                    use GPS.Intl;
 with GPS.Editors;
 with GPS.Markers;
 
-with GVD.Dialogs;              use GVD.Dialogs;
-with GVD.Trace;                use GVD.Trace;
+with GVD.Dialogs;                 use GVD.Dialogs;
+with GVD.Trace;                   use GVD.Trace;
 
-with Debugger.Base_Gdb.Ada;    use Debugger.Base_Gdb.Ada;
-with Debugger.Base_Gdb.C;      use Debugger.Base_Gdb.C;
-with Debugger.Base_Gdb.Cpp;    use Debugger.Base_Gdb.Cpp;
+with Debugger.Base_Gdb.Ada;       use Debugger.Base_Gdb.Ada;
+with Debugger.Base_Gdb.C;         use Debugger.Base_Gdb.C;
+with Debugger.Base_Gdb.Cpp;       use Debugger.Base_Gdb.Cpp;
 
 package body Debugger.Base_Gdb is
 
@@ -80,9 +80,9 @@ package body Debugger.Base_Gdb is
      (Lang       : access Language.Debugger.Language_Debugger'Class;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive;
-      Parent     : Items.Generic_Type_Access)
+      Parent     : GVD.Variables.Types.GVD_Type_Holder)
    is
       procedure Skip_Parenthesis (Index : in out Natural);
       --  Skip the parenthesis pair starting at Index, taking into account
@@ -127,15 +127,15 @@ package body Debugger.Base_Gdb is
             Index := Index + 1;
          end loop;
 
-         if Result'Tag = Simple_Type'Tag
-           or else Result'Tag = Range_Type'Tag
-           or else Result'Tag = Mod_Type'Tag
-           or else Result'Tag = Enum_Type'Tag
+         if Result.Get_Type'Tag = GVD_Simple_Type'Tag
+           or else Result.Get_Type'Tag = GVD_Range_Type'Tag
+           or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
+           or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
          then
-            Set_Value (Simple_Type (Result.all), "<???>");
+            GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
 
-         elsif Result'Tag = Access_Type'Tag then
-            Set_Value (Simple_Type (Result.all), "0x0");
+         elsif Result.Get_Type'Tag = GVD_Access_Type'Tag then
+            GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("0x0");
          end if;
 
          return;
@@ -145,10 +145,10 @@ package body Debugger.Base_Gdb is
       -- Simple values --
       -------------------
 
-      if Result'Tag = Simple_Type'Tag
-        or else Result'Tag = Range_Type'Tag
-        or else Result'Tag = Mod_Type'Tag
-        or else Result'Tag = Enum_Type'Tag
+      if Result.Get_Type'Tag = GVD_Simple_Type'Tag
+        or else Result.Get_Type'Tag = GVD_Range_Type'Tag
+        or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
+        or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
       then
          if Type_Str /= "" then
             Skip_Parenthesis (Index);
@@ -159,11 +159,11 @@ package body Debugger.Base_Gdb is
                                   Array_Item_Separator => ',',
                                   End_Of_Array         => Context.Array_End,
                                   Repeat_Item_Start    => '<');
-               Set_Value (Simple_Type (Result.all),
-                          Type_Str (Int .. Index - 1));
+               GVD_Simple_Type_Access (Result.Get_Type).Set_Value
+                 (Type_Str (Int .. Index - 1));
             end;
          else
-            Set_Value (Simple_Type (Result.all), "<???>");
+            GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
          end if;
 
       -------------------
@@ -174,10 +174,10 @@ package body Debugger.Base_Gdb is
       --  or                  :   (<ref> TstringS29b) @0xbfffdba0
       --  or                  :   (void (*)()) 0x804845c <foo>
 
-      elsif Result'Tag = Access_Type'Tag then
+      elsif Result.Get_Type'Tag = GVD_Access_Type'Tag then
 
          if Looking_At (Type_Str, Index, "(null)") then
-            Set_Value (Simple_Type (Result.all), "0x0");
+            GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("0x0");
             Index := Index + 6;
 
          else
@@ -228,8 +228,8 @@ package body Debugger.Base_Gdb is
                   end;
                end if;
 
-               Set_Value
-                 (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
+               GVD_Simple_Type_Access (Result.Get_Type).Set_Value
+                 (Type_Str (Int .. Index - 1));
             end;
          end if;
 
@@ -237,14 +237,14 @@ package body Debugger.Base_Gdb is
       -- String values --
       -------------------
 
-      elsif Result'Tag = Array_Type'Tag
-        and then Num_Dimensions (Array_Type (Result.all)) = 1
+      elsif Result.Get_Type'Tag = GVD_Array_Type'Tag
+        and then GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions = 1
         and then Type_Str'Length /= 0
         and then
           (Type_Str (Index) = '"'
            or else Type_Str (Index) = ''')
       then
-         Dim := Get_Dimensions (Array_Type (Result.all), 1);
+         Dim := GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions (1);
 
          --  If the dimension was not known when parsing the type, we compute
          --  it directly from the value of the string
@@ -261,38 +261,39 @@ package body Debugger.Base_Gdb is
          end if;
 
          declare
-            S : String (1 .. Integer (Dim.Last - Dim.First + 1));
+            S      : String (1 .. Integer (Dim.Last - Dim.First + 1));
             S_Last : Natural;
-            Simple : Simple_Type_Access;
+            Simple : GVD_Type_Holder;
 
          begin
             Parse_Cst_String
               (Type_Str, Index, S, S_Last,
                Backslash_Special => Get_Language_Context
                (Lang).Quote_Character = '\');
-            Simple := Simple_Type_Access
-              (Get_Value (Array_Type (Result.all), Dim.First));
+            Simple := GVD_Array_Type_Access
+              (Result.Get_Type).Get_Value (Dim.First);
 
-            if Simple = null then
-               Simple := Simple_Type_Access (New_Simple_Type);
+            if Simple = Empty_GVD_Type_Holder then
+               Simple := New_Simple_Type;
             end if;
 
-            Set_Value (Simple.all, S (S'First .. S_Last));
+            GVD_Simple_Type_Access (Simple.Get_Type).Set_Value
+              (S (S'First .. S_Last));
 
             --  The index should always be 0, since we add Dim.First before
             --  displaying it.
 
-            Set_Value (Item       => Array_Type (Result.all),
-                       Elem_Value => Simple,
-                       Elem_Index => 0);
-            Shrink_Values (Array_Type (Result.all));
+            GVD_Array_Type_Access (Result.Get_Type).Set_Value
+              (Elem_Value => Simple,
+               Elem_Index => 0);
+            GVD_Array_Type_Access (Result.Get_Type).Shrink_Values;
          end;
 
       ------------------
       -- Array values --
       ------------------
 
-      elsif Result'Tag = Array_Type'Tag
+      elsif Result.Get_Type'Tag = GVD_Array_Type'Tag
         and then Type_Str'Length /= 0   --  for empty Arrays
         and then Type_Str /= "[0]"
       then
@@ -352,18 +353,17 @@ package body Debugger.Base_Gdb is
                  and then Type_Str (Tmp .. Tmp + 1) = " ("
                then
                   Index := Tmp;
-                  Parse_Array_Value
-                    (Lang, Type_Str, Index, Array_Type_Access (Result));
+                  Parse_Array_Value (Lang, Type_Str, Index, Result);
                   return;
                end if;
             end;
 
             --  Otherwise, we convert to an access type
 
-            if Parent /= null then
-               Result := Replace (Parent, Result, New_Access_Type);
+            if Parent /= Empty_GVD_Type_Holder then
+               Result := GVD_Type_Holder
+                 (Parent.Get_Type.Replace (Result, New_Access_Type));
             else
-               Free (Result, Only_Value => False);
                Result := New_Access_Type;
             end if;
 
@@ -371,19 +371,17 @@ package body Debugger.Base_Gdb is
               (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
 
          else
-            Parse_Array_Value
-              (Lang, Type_Str, Index, Array_Type_Access (Result));
+            Parse_Array_Value (Lang, Type_Str, Index, Result);
          end if;
 
       -------------------
       -- Record values --
       -------------------
 
-      elsif Result'Tag = Record_Type'Tag
-        or else Result'Tag = Union_Type'Tag
+      elsif Result.Get_Type'Tag = GVD_Record_Type'Tag
+        or else Result.Get_Type'Tag = GVD_Union_Type'Tag
       then
          declare
-            R   : constant Record_Type_Access := Record_Type_Access (Result);
             Int : Natural;
             Close_Parentheses : Boolean := False;
          begin
@@ -397,15 +395,20 @@ package body Debugger.Base_Gdb is
                Close_Parentheses := True;
             end if;
 
-            for J in 1 .. Num_Fields (R.all) loop
+            for J in 1 .. GVD_Record_Type_Access
+              (Result.Get_Type).Num_Fields
+            loop
 
                exit when Index >= Type_Str'Last;
 
                --  If we are expecting a field
 
-               if Get_Variant_Parts (R.all, J) = 0 then
+               if GVD_Record_Type_Access
+                 (Result.Get_Type).Get_Variant_Parts (J) = 0
+               then
                   declare
-                     V          : Generic_Type_Access := Get_Value (R.all, J);
+                     V          : GVD_Type_Holder := GVD_Record_Type_Access
+                       (Result.Get_Type).Get_Value (J);
                      Repeat_Num : Positive;
                   begin
                      --  Skips '=>'
@@ -447,11 +450,11 @@ package body Debugger.Base_Gdb is
 
                   declare
                      Repeat_Num : Positive;
-                     V : Generic_Type_Access;
+                     V          : GVD_Type_Holder;
                   begin
-                     V := Find_Variant_Part
-                       (Item     => R.all,
-                        Field    => J,
+                     V := GVD_Record_Type_Access
+                       (Result.Get_Type).Find_Variant_Part
+                       (Field    => J,
                         Contains => Type_Str (Index .. Int - 1));
 
                      --  Variant part not found. This happens for instance when
@@ -471,7 +474,7 @@ package body Debugger.Base_Gdb is
                      --       end case;
                      --    end record;
 
-                     if V /= null then
+                     if V /= Empty_GVD_Type_Holder then
                         Internal_Parse_Value
                           (Lang, Type_Str, Index, V, Repeat_Num,
                            Parent => Result);
@@ -494,9 +497,9 @@ package body Debugger.Base_Gdb is
       -- Class values --
       ------------------
 
-      elsif Result'Tag = Class_Type'Tag then
+      elsif Result.Get_Type'Tag = GVD_Class_Type'Tag then
          declare
-            R : Generic_Type_Access;
+            R : GVD_Type_Holder;
             Close_Parentheses : Boolean := False;
          begin
             --  Skip initial '(' if we are still looking at it (we might not
@@ -509,14 +512,16 @@ package body Debugger.Base_Gdb is
                Close_Parentheses := True;
             end if;
 
-            for A in 1 .. Get_Num_Ancestors (Class_Type (Result.all)) loop
-               R := Get_Ancestor (Class_Type (Result.all), A);
+            for A in 1 .. GVD_Class_Type_Access
+              (Result.Get_Type).Get_Num_Ancestors
+            loop
+               R := GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (A);
                Internal_Parse_Value
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
             end loop;
-            R := Get_Child (Class_Type (Result.all));
+            R := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
 
-            if Num_Fields (Record_Type (R.all)) /= 0 then
+            if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
                Internal_Parse_Value
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
             end if;

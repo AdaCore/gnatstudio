@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2017, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,30 +18,28 @@
 --  Items used for simple types, ie whose value is a simple string.
 --  See the package Items for more information on all the private subprograms.
 
-with Items.Records;
-
-package Items.Classes is
+package GVD.Variables.Types.Classes is
 
    -------------
    -- Classes --
    -------------
 
-   type Class_Type (<>) is new Generic_Type with private;
-   type Class_Type_Access is access all Class_Type'Class;
+   type GVD_Class_Type (<>) is new GVD_Generic_Type with private;
+   type GVD_Class_Type_Access is access all GVD_Class_Type'Class;
    --  This type represents an object, such as a C++ class, an Ada tagged type
    --  or a Java object.
    --  It can have one or more ancestors, whose contents is also displayed when
    --  the value of the variable is shown.
 
    function New_Class_Type
-     (Num_Ancestors : Natural) return Generic_Type_Access;
+     (Num_Ancestors : Natural) return GVD_Type_Holder;
    --  Create a new class type, with a specific number of ancestors (parent
    --  classes).
 
    procedure Add_Ancestor
-     (Item     : in out Class_Type;
+     (Self     : not null access GVD_Class_Type;
       Num      : Positive;
-      Ancestor : Class_Type_Access);
+      Ancestor : GVD_Type_Holder);
    --  Define one of the ancestors of item.
    --  When the value of item, its components are parsed in the following
    --  order: first, all the fields of the first ancestor, then all the fields
@@ -49,62 +47,80 @@ package Items.Classes is
    --  No copy of Ancestor is made, we just keep the pointer.
 
    procedure Set_Child
-     (Item  : in out Class_Type;
-      Child : Items.Records.Record_Type_Access);
+     (Self  : not null access GVD_Class_Type;
+      Child : GVD_Type_Holder);
    --  Record the child component of Item (where the fields of Item are
    --  defined).
 
-   function Get_Child (Item : Class_Type) return Generic_Type_Access;
+   function Get_Child
+     (Self : not null access GVD_Class_Type)
+      return GVD_Type_Holder;
    --  Return a pointer to the child.
 
    function Get_Ancestor
-     (Item : Class_Type;
-      Num  : Positive) return Generic_Type_Access;
+     (Self : not null access GVD_Class_Type;
+      Num  : Positive)
+      return GVD_Type_Holder;
    --  Return a pointer to the Num-th ancestor.
 
-   function Get_Num_Ancestors (Item : Class_Type) return Natural;
+   function Get_Num_Ancestors
+     (Self : not null access GVD_Class_Type)
+      return Natural;
    --  Return the number of ancestors.
 
    procedure Draw_Border
-     (Item : access Class_Type;
+     (Self : not null access GVD_Class_Type;
       Draw : Boolean := True);
    --  If Draw is True (the default for new items), a border is drawn around
    --  the item when it is displayed on the screen.
 
 private
 
-   type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
+   type Class_Type_Array is array (Positive range <>) of GVD_Type_Holder;
 
-   type Class_Type (Num_Ancestors : Natural) is new Generic_Type with record
-     Child     : Items.Records.Record_Type_Access;
-     Border_Spacing : Glib.Gint := Items.Border_Spacing;
-     Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
+   type GVD_Class_Type (Num_Ancestors : Natural) is
+     new GVD_Generic_Type with record
+      Child          : GVD_Type_Holder;
+      Border_Spacing : Glib.Gint := Types.Border_Spacing;
+      Ancestors      : Class_Type_Array (1 .. Num_Ancestors) :=
+        (others => Empty_GVD_Type_Holder);
    end record;
+
    overriding function Get_Type_Descr
-     (Self    : not null access Class_Type) return String is ("Class");
-   overriding procedure Free
-     (Item : access Class_Type;
-      Only_Value : Boolean := False);
-   overriding procedure Clone_Dispatching
-     (Item  : Class_Type;
-      Clone : in out Generic_Type_Access);
+     (Self : not null access GVD_Class_Type) return String is ("Class");
+
+   overriding procedure Clear (Self : not null access GVD_Class_Type);
+
+   overriding procedure Free (Self : not null access GVD_Class_Type);
+
+   overriding procedure Clone
+     (Self : not null access GVD_Class_Type;
+      Item : not null GVD_Generic_Type_Access);
+
    overriding function Build_Display
-     (Self   : not null access Class_Type;
+     (Self   : not null access GVD_Class_Type;
+      Holder : GVD_Type_Holder'Class;
       Name   : String;
       View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
       Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-   overriding function Replace
-     (Parent       : access Class_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   overriding procedure Set_Type_Name
-     (Item : access Class_Type;
-      Name : String);
-   overriding function Structurally_Equivalent
-     (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
-     return Boolean;
-   overriding function Start
-     (Item : access Class_Type) return Generic_Iterator'Class;
 
-end Items.Classes;
+   overriding function Replace
+     (Self         : not null access GVD_Class_Type;
+      Current      : GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class)
+      return GVD_Type_Holder'Class;
+
+   overriding procedure Set_Type_Name
+     (Self : not null access GVD_Class_Type;
+      Name : String);
+
+   overriding function Structurally_Equivalent
+     (Self : not null access GVD_Class_Type;
+      Item : GVD_Type_Holder'Class)
+      return Boolean;
+
+   overriding function Start
+     (Self : not null access GVD_Class_Type) return Generic_Iterator'Class;
+
+end GVD.Variables.Types.Classes;

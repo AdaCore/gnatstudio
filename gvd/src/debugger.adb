@@ -44,7 +44,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Intl;                   use GPS.Intl;
-with Items;                      use Items;
+with GVD.Variables.Types;        use GVD.Variables.Types;
 with Language;                   use Language;
 with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
@@ -158,9 +158,9 @@ package body Debugger is
 
    function Parse_Type
      (Debugger : access Debugger_Root'Class;
-      Entity   : String) return Items.Generic_Type_Access
+      Entity   : String) return GVD_Type_Holder
    is
-      Result   : Generic_Type_Access;
+      Result   : GVD_Type_Holder;
       Type_Str : constant String  := Debugger.Type_Of (Entity);
       Index    : Natural := Type_Str'First;
 
@@ -180,7 +180,7 @@ package body Debugger is
    procedure Parse_Value
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
-      Value       : in out Items.Generic_Type_Access;
+      Value       : in out GVD_Type_Holder;
       Format      : Value_Format := Default_Format;
       Value_Found : out Boolean)
    is
@@ -189,7 +189,7 @@ package body Debugger is
       Repeat_Num : Positive;
 
    begin
-      Reset_Recursive (Value);
+      Value.Get_Type.Reset_Recursive;
       Value_Found := Type_Str'Length /= 0;
 
       if Value_Found then

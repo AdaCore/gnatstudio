@@ -20,7 +20,7 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
-with Items.Arrays;
+with GVD.Variables.Types;
 with Language; use Language;
 with Language.Debugger;
 with GNAT.Expect;
@@ -84,13 +84,13 @@ package Debugger.Base_Gdb.Ada is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_Ada_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive);
 
    overriding procedure Parse_Array_Type
@@ -99,7 +99,7 @@ package Debugger.Base_Gdb.Ada is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Items.Generic_Type_Access);
+      Result       : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Record_Type
      (Lang     : access Gdb_Ada_Language;
@@ -107,14 +107,14 @@ package Debugger.Base_Gdb.Ada is
       Entity   : String;
       Index    : in out Natural;
       Is_Union : Boolean;
-      Result   : out Items.Generic_Type_Access;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
       End_On   : String);
 
    overriding procedure Parse_Array_Value
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Items.Arrays.Array_Type_Access);
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding function Set_Variable
      (Lang     : access Gdb_Ada_Language;

@@ -102,9 +102,9 @@ private
      (Lang       : access Language.Debugger.Language_Debugger'Class;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive;
-      Parent     : Items.Generic_Type_Access);
+      Parent     : GVD.Variables.Types.GVD_Type_Holder);
    --  Internal function used to parse the value.
    --  The parameters are the same as for Parse_Value, plus Parent that is
    --  the item that contains Result.

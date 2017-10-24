@@ -20,8 +20,7 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
-with Items.Arrays;
-with Language; use Language;
+with Language;          use Language;
 with Language.Debugger;
 with GNAT.Expect;
 
@@ -84,13 +83,13 @@ package Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_C_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Items.Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive);
 
    overriding procedure Parse_Array_Type
@@ -99,7 +98,7 @@ package Debugger.Base_Gdb.C is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Items.Generic_Type_Access);
+      Result       : out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding procedure Parse_Record_Type
      (Lang      : access Gdb_C_Language;
@@ -107,7 +106,7 @@ package Debugger.Base_Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Items.Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String);
    --  End_On is ignored in the C implementation.
 
@@ -115,7 +114,7 @@ package Debugger.Base_Gdb.C is
      (Lang     : access Gdb_C_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Items.Arrays.Array_Type_Access);
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder);
 
    overriding function Set_Variable
      (Lang     : access Gdb_C_Language;
@@ -134,7 +133,7 @@ package Debugger.Base_Gdb.C is
       Name_Start : out Natural;
       Name_End   : out Natural;
       Field_End  : out Natural;
-      Result     : out Items.Generic_Type_Access);
+      Result     : out GVD.Variables.Types.GVD_Type_Holder);
    --  Parse the field of a struct or union in C.
    --  Index should point at the first word of the field.
    --  The name of the field is at indexes Name_Start .. Name_End.
@@ -146,7 +145,7 @@ package Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
    --  Generic function to parse the type information for C-related
    --  languages.
 
@@ -155,7 +154,7 @@ package Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out GVD.Variables.Types.GVD_Type_Holder);
    --  Return a non null value in Result if the type definition pointed to
    --  by Index is in fact an array or access type (this is tricky in C since
    --  we have to skip the whole struct definition to check this, or even to
@@ -170,7 +169,7 @@ package Debugger.Base_Gdb.C is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Items.Generic_Type_Access);
+      Result       : out GVD.Variables.Types.GVD_Type_Holder);
    --  Generic function to parse arrays for C-related languages.
 
    procedure C_Parse_Record_Type
@@ -179,7 +178,7 @@ package Debugger.Base_Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Items.Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String);
    --  Generic function to parse records for C-related languages.
 

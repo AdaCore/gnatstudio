@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
-with String_Utils;      use String_Utils;
-with Language.Debugger; use Language.Debugger;
-with Language.C;        use Language.C;
+with GNATCOLL.Utils;                  use GNATCOLL.Utils;
+with String_Utils;                    use String_Utils;
+with Language.Debugger;               use Language.Debugger;
+with Language.C;                      use Language.C;
 
-with Items;             use Items;
-with Items.Simples;     use Items.Simples;
-with Items.Arrays;      use Items.Arrays;
-with Items.Records;     use Items.Records;
+with GVD.Variables.Types;             use GVD.Variables.Types;
+with GVD.Variables.Types.Simples;     use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Arrays;      use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Records;     use GVD.Variables.Types.Records;
 
 package body Debugger.Base_Gdb.C is
 
@@ -146,7 +146,7 @@ package body Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Tmp  : Natural := Index;
       Save : Natural := Index;
@@ -249,10 +249,9 @@ package body Debugger.Base_Gdb.C is
          --  it, since otherwise it is hard to get the real type name directly
          --  from the general Type_Str (see  void (*field[2])(int a))
 
-         Set_Type_Name
-           (Result,
-            Unknown_Type_Prefix & Entity & ASCII.LF
-            & Type_Str (Type_Str'First .. Index - 1));
+         Result.Get_Type.Set_Type_Name
+           (Unknown_Type_Prefix & Entity & ASCII.LF &
+              Type_Str (Type_Str'First .. Index - 1));
 
       --  An array type ?
 
@@ -261,8 +260,8 @@ package body Debugger.Base_Gdb.C is
          Index := Tmp;
 
       else
-         Result := null;
-         Index := Tmp;
+         Result := Empty_GVD_Type_Holder;
+         Index  := Tmp;
       end if;
    end C_Detect_Composite_Type;
 
@@ -275,7 +274,7 @@ package body Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access)
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Lang);
@@ -292,7 +291,7 @@ package body Debugger.Base_Gdb.C is
       C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
 
       --  Do we have an access or array type ?
-      if Result /= null then
+      if Result /= Empty_GVD_Type_Holder then
          return;
       end if;
 
@@ -303,7 +302,7 @@ package body Debugger.Base_Gdb.C is
                --  Simple types, like <4-byte integer> and <4-byte float>
                Skip_To_Char (Type_Str, Index, '>');
                Result := New_Simple_Type;
-               Set_Type_Name (Result, Type_Str (Tmp .. Index));
+               Result.Get_Type.Set_Type_Name (Type_Str (Tmp .. Index));
                Index := Index + 1;
                return;
 
@@ -316,7 +315,7 @@ package body Debugger.Base_Gdb.C is
                   if Type_Str (Index + 5) = '{' then
                      --  We are in the "enum {....}" case
                      Result := New_Enum_Type;
-                     Set_Type_Name (Result, "enum");
+                     Result.Get_Type.Set_Type_Name ("enum");
                      return;
                   end if;
 
@@ -332,8 +331,8 @@ package body Debugger.Base_Gdb.C is
                   end if;
 
                   Result := New_Enum_Type;
-                  Set_Type_Name
-                    (Result, Type_Str (Type_Str'First .. Index - 1));
+                  Result.Get_Type.Set_Type_Name
+                    (Type_Str (Type_Str'First .. Index - 1));
                   return;
                end if;
 
@@ -351,7 +350,8 @@ package body Debugger.Base_Gdb.C is
                      Index := Index + 4; --  skips ' .. '
                      Parse_Num (Type_Str, Index, Max);
                      Result := New_Range_Type (Min, Max);
-                     Set_Type_Name (Result, Type_Str (Start .. Index - 1));
+                     Result.Get_Type.Set_Type_Name
+                       (Type_Str (Start .. Index - 1));
                      return;
                   end;
                end if;
@@ -435,7 +435,7 @@ package body Debugger.Base_Gdb.C is
 
       if Is_Simple_Type (Lang, Type_Str (Tmp .. Type_Str'Last)) then
          Result := New_Simple_Type;
-         Set_Type_Name (Result, Type_Str (Tmp .. Type_Str'Last));
+         Result.Get_Type.Set_Type_Name (Type_Str (Tmp .. Type_Str'Last));
          return;
       end if;
 
@@ -453,7 +453,7 @@ package body Debugger.Base_Gdb.C is
             --  Also a simple (unknown) type
 
             Result := New_Simple_Type;
-            Set_Type_Name (Result, Ent);
+            Result.Get_Type.Set_Type_Name (Ent);
             return;
          end if;
 
@@ -462,7 +462,7 @@ package body Debugger.Base_Gdb.C is
          if T'Length /= 0 then
             Parse_Type (Lang, T, Ent, J, Result);
          else
-            Result := null;
+            Result := Empty_GVD_Type_Holder;
          end if;
 
          Index := Type_Str'Last;
@@ -478,7 +478,7 @@ package body Debugger.Base_Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access) is
+      Result   : out GVD.Variables.Types.GVD_Type_Holder) is
    begin
       C_Parse_Type (Lang, Type_Str, Entity, Index, Result);
    end Parse_Type;
@@ -491,11 +491,12 @@ package body Debugger.Base_Gdb.C is
      (Lang       : access Gdb_C_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Type_Access;
+      Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
+        (Lang, Type_Str, Index, Result, Repeat_Num,
+         Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
    ------------------------
@@ -508,14 +509,14 @@ package body Debugger.Base_Gdb.C is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Items.Generic_Type_Access)
+      Result       : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Num_Dim   : Integer := 0;
       Initial   : Natural := Index;
       Tmp_Index : Natural;
-      R         : Array_Type_Access;
+      R         : GVD.Variables.Types.GVD_Type_Holder;
       Last      : Long_Integer;
-      Item_Type : Generic_Type_Access;
+      Item_Type : GVD.Variables.Types.GVD_Type_Holder;
 
    begin
       --  Find the number of dimensions
@@ -534,8 +535,9 @@ package body Debugger.Base_Gdb.C is
       --  Create the type
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
-      R := Array_Type_Access (Result);
-      Set_Type_Name (R, Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+      R := Result;
+      R.Get_Type.Set_Type_Name
+        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
 
       --  Then parse the dimensions.
       Num_Dim := 0;
@@ -546,7 +548,8 @@ package body Debugger.Base_Gdb.C is
          Num_Dim := Num_Dim + 1;
          Index := Index + 1;
          Parse_Num (Type_Str, Index, Last);
-         Set_Dimensions (R.all, Num_Dim, (0, Last - 1));
+         GVD_Array_Type_Access (R.Get_Type).Set_Dimensions
+           (Num_Dim, (0, Last - 1));
          Index := Index + 1;
       end loop;
 
@@ -567,7 +570,7 @@ package body Debugger.Base_Gdb.C is
          Array_Item_Name (Lang, Entity, "0"),
          Initial,
          Item_Type);
-      Set_Item_Type (R.all, Item_Type);
+      GVD_Array_Type_Access (R.Get_Type).Set_Item_Type (Item_Type);
    end C_Parse_Array_Type;
 
    ----------------------
@@ -580,7 +583,7 @@ package body Debugger.Base_Gdb.C is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out Generic_Type_Access)
+      Result       : out GVD.Variables.Types.GVD_Type_Holder)
    is
    begin
       C_Parse_Array_Type (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
@@ -598,7 +601,7 @@ package body Debugger.Base_Gdb.C is
       Name_Start : out Natural;
       Name_End   : out Natural;
       Field_End  : out Natural;
-      Result     : out Items.Generic_Type_Access)
+      Result     : out GVD.Variables.Types.GVD_Type_Holder)
    is
       Tmp            : Natural := Index;
       Semi_Colon_Pos : Natural;
@@ -716,10 +719,10 @@ package body Debugger.Base_Gdb.C is
       end if;
 
       --  if not an access or array:
-      if Result = null then
+      if Result = Empty_GVD_Type_Holder then
          if Is_Simple_Type (Lang, Type_Str (Index .. Name_Start - 2)) then
             Result := New_Simple_Type;
-            Set_Type_Name (Result, Type_Str (Index .. Field_End - 1));
+            Result.Get_Type.Set_Type_Name (Type_Str (Index .. Field_End - 1));
          else
             declare
                --  We query the type of the field by the field name, instead of
@@ -763,7 +766,7 @@ package body Debugger.Base_Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Items.Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String)
    is
       pragma Unreferenced (End_On);
@@ -771,8 +774,8 @@ package body Debugger.Base_Gdb.C is
       Num_Fields        : Natural := 0;
       Field             : Natural := 1;
       Initial           : constant Natural := Index;
-      R                 : Record_Type_Access;
-      Field_Value       : Generic_Type_Access;
+      R                 : GVD_Type_Holder;
+      Field_Value       : GVD_Type_Holder;
       Tmp               : Natural;
       End_Of_Name, Save : Natural;
 
@@ -812,8 +815,9 @@ package body Debugger.Base_Gdb.C is
          Result := New_Record_Type (Num_Fields);
       end if;
 
-      R := Record_Type_Access (Result);
-      Set_Type_Name (R, Type_Str (Type_Str'First .. Initial - 2));
+      R := Result;
+      GVD_Record_Type_Access (R.Get_Type).Set_Type_Name
+        (Type_Str (Type_Str'First .. Initial - 2));
 
       --  Parse the type
 
@@ -825,15 +829,14 @@ package body Debugger.Base_Gdb.C is
          C_Field_Name
            (Lang, Entity,
             Type_Str, Index, Tmp, End_Of_Name, Save, Field_Value);
-         if Field_Value = null then
-            Free (Result);
-            Result := null;
+         if Field_Value = Empty_GVD_Type_Holder then
+            Result := Empty_GVD_Type_Holder;
             return;
          end if;
 
-         Set_Field_Name
-           (R.all, Field, Type_Str (Tmp .. End_Of_Name), Variant_Parts => 0);
-         Set_Value (R.all, Field_Value, Field);
+         GVD_Record_Type_Access (R.Get_Type).Set_Field_Name
+           (Field, Type_Str (Tmp .. End_Of_Name), Variant_Parts => 0);
+         GVD_Record_Type_Access (R.Get_Type).Set_Value (Field_Value, Field);
          Index := Save + 1;
          Field := Field + 1;
       end loop;
@@ -849,7 +852,7 @@ package body Debugger.Base_Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
+      Result    : out GVD.Variables.Types.GVD_Type_Holder;
       End_On    : String)
    is
    begin
@@ -865,7 +868,7 @@ package body Debugger.Base_Gdb.C is
      (Lang     : access Gdb_C_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access)
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder)
    is
       Dim           : Natural      := 0; --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
@@ -880,24 +883,23 @@ package body Debugger.Base_Gdb.C is
       ----------------
 
       procedure Parse_Item is
-         Tmp         : Generic_Type_Access;
+         Tmp         : GVD_Type_Holder;
          Repeat_Num  : Integer;
          Start_Index : constant Natural := Index;
 
       begin
          --  Parse the next item
-         Tmp := Get_Value (Result.all, Current_Index);
+         Tmp := GVD_Array_Type_Access
+           (Result.Get_Type).Get_Value (Current_Index);
 
-         if Tmp = null then
-            Tmp := Clone (Get_Item_Type (Result.all).all);
+         if Tmp = Empty_GVD_Type_Holder then
+            Tmp := GVD_Array_Type_Access (Result.Get_Type).Get_Item_Type.Clone;
          end if;
 
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Tmp, Repeat_Num,
-            Parent => Generic_Type_Access (Result));
-         Set_Value
-           (Item       => Result.all,
-            Elem_Value => Tmp,
+           (Lang, Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
+         GVD_Array_Type_Access (Result.Get_Type).Set_Value
+           (Elem_Value => Tmp,
             Elem_Index => Current_Index,
             Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
@@ -921,7 +923,9 @@ package body Debugger.Base_Gdb.C is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim = Num_Dimensions (Result.all) then
+               if Dim = GVD_Array_Type_Access
+                 (Result.Get_Type).Num_Dimensions
+               then
                   Parse_Item;
                else
                   Dim   := Dim + 1;
@@ -965,7 +969,7 @@ package body Debugger.Base_Gdb.C is
       end loop;
 
       --  Shrink the table of values.
-      Shrink_Values (Result.all);
+      GVD_Array_Type_Access (Result.Get_Type).Shrink_Values;
    end Parse_Array_Value;
 
    -----------------------------------
