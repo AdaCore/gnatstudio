@@ -2066,9 +2066,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger)
       return Integer is
    begin
-      if Debugger.Current_Frame = Null_Frame_Info then
+      if Debugger.Current_Frame.Frame = -1 then
          Debugger.Detect_Language;
-         Debugger.Send ("-stack-info-frame", Mode => Internal);
+         Debugger.Current_Frame := Parse_Frame_Info
+           (Debugger.Send_And_Get_Clean_Output
+              ("-stack-info-frame", Mode => Internal));
       end if;
 
       return Debugger.Current_Frame.Frame;
