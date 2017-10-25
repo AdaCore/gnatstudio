@@ -413,6 +413,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
             then
                Pos := Pos - 1;
             end if;
+
             return S (S'First .. Pos);
          else
             return S;
@@ -1677,6 +1678,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Dummy : Expect_Match;
    begin
       Debugger.Get_Process.Wait (Dummy, Prompt_Regexp, Timeout => -1);
+
+      if Debugger.Is_Running
+        and then Debugger.Current_Command_Kind = Execution_Command
+      then
+         --  We are running, wait for the second 'stopped' prompt
+         Debugger.Get_Process.Wait (Dummy, Prompt_Regexp, Timeout => -1);
+      end if;
    end Wait_Prompt;
 
    -----------------
@@ -1690,6 +1698,18 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Num : Expect_Match;
    begin
       Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+
+      if Num = Expect_Timeout then
+         return False;
+      end if;
+
+      if Debugger.Is_Running
+        and then Debugger.Current_Command_Kind = Execution_Command
+      then
+         --  We are running, wait for the second 'stopped' prompt
+         Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+      end if;
+
       if Num = Expect_Timeout then
          return False;
       end if;
@@ -3661,22 +3681,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
       declare
          S : constant String := Debugger.Send_And_Get_Clean_Output
            ("-break-list", Mode => Internal);
-         Idx : Integer;
       begin
-         Idx := Index (S, "body=[");
-         if Idx < S'First then
-            return;
-         end if;
-
-         declare
-            Bdy : constant String := Collect (S (Idx + 6 .. S'Last), ']', '[');
-         begin
-            Tokens.List := Build_Tokens ("body=[" & Bdy & "]");
-         end;
+            Tokens.List := Build_Tokens (S);
 
       exception
          when E : others =>
             Me.Trace (E);
+            return;
       end;
 
       C := Find_Identifier (First (Tokens.List), "body");
