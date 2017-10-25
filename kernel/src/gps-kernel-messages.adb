@@ -2628,7 +2628,6 @@ package body GPS.Kernel.Messages is
       Action : Action_Item)
    is
       Container : constant Messages_Container_Access := Self.Get_Container;
-
    begin
       Free (Self.Action);
 
@@ -2637,6 +2636,17 @@ package body GPS.Kernel.Messages is
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Container, Self, "action");
    end Set_Action;
+
+   -------------------
+   -- Cancel_Action --
+   -------------------
+
+   procedure Cancel_Action
+     (Self : not null access Abstract_Message'Class)
+   is
+   begin
+      Self.Set_Action (null);
+   end Cancel_Action;
 
    ---------------
    -- Set_Flags --

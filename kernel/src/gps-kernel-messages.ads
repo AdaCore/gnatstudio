@@ -172,6 +172,10 @@ package GPS.Kernel.Messages is
    --  This also sets the icon to use for the message on the side of the
    --  editor.
 
+   procedure Cancel_Action
+     (Self : not null access Abstract_Message'Class);
+   --  Cancel the action associated to the given message.
+
    function Get_Action
      (Self : not null access constant Abstract_Message'Class)
       return Action_Item;

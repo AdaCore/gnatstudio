@@ -7213,6 +7213,12 @@ class Message(object):
         """
         pass  # implemented in Ada
 
+    def cancel_subprogram(self):
+        """
+        Remove the action item associated to this message.
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # Missing_Arguments

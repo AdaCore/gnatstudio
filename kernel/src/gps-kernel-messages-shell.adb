@@ -372,6 +372,9 @@ package body GPS.Kernel.Messages.Shell is
 
             Message.Set_Action (Action);
          end;
+      elsif Command = "cancel_subprogram" then
+         Message := Get_Message (Nth_Arg (Data, 1, Message_Class));
+         Message.Cancel_Action;
 
       elsif Command = "set_sort_order_hint" then
          Name_Parameters
@@ -534,6 +537,11 @@ package body GPS.Kernel.Messages.Shell is
       Register_Command
         (Kernel, "set_subprogram", 1, 3, Message_Command_Handler'Access,
          Message_Class);
+
+      Kernel.Scripts.Register_Command
+        (Command       => "cancel_subprogram",
+         Handler       => Message_Command_Handler'Access,
+         Class         => Message_Class);
 
       Register_Command
         (Kernel, "set_style", 1, 2, Accessors'Access, Message_Class);
