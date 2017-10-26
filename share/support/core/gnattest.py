@@ -307,7 +307,7 @@ XML = r"""<?xml version="1.0" ?>
     editor_section="Directories"
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
-    label="Stub Subdir"
+    label="Tests Subdir"
     description="Place the Test Packages in subdirectories."
     hide_in="wizard library_wizard"
     >
@@ -431,7 +431,7 @@ XML = r"""<?xml version="1.0" ?>
              tip="The directory hierarchy of tested sources is """ \
     """recreated in this directory, and test packages are placed in """ \
     """corresponding directories." />
-      <field label="stub subdir"
+      <field label="tests subdir"
              line="1"  column="1"
              switch="--subdir"
              separator="="
