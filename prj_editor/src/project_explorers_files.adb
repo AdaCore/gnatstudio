@@ -35,7 +35,6 @@ with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Box;                    use Gtk.Box;
-with Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
@@ -97,6 +96,8 @@ package body Project_Explorers_Files is
    type Files_Tree_View_Record is new Base_Explorer_Tree_Record with record
       Config      : Files_View_Config;
       Timeout_Ids : Source_Id_Lists.List;
+      Is_Locate   : Boolean := False;
+      --  Need to be synchrone when trying to locate a file in the view
    end record;
    type Files_Tree_View is access all Files_Tree_View_Record'Class;
    overriding procedure Add_Children
@@ -142,8 +143,10 @@ package body Project_Explorers_Files is
       Step_Filter_Files,
       Step_Insert_Dirs,
       Step_Insert_Files,
-      Step_Setup_View);
+      Step_Setup_View,
+      Step_Wait_Alone);  --  To find a file this timeout must be alone
    --  What is the current step for the background loop
+   --  There are 2 distincts loop: Step_Read_File and Step_Wait_Alone
 
    type Append_Directory_Idle_Data is record
       Tree          : Files_Tree_View;
@@ -249,6 +252,11 @@ package body Project_Explorers_Files is
    overriding function Execute
      (Command : access Locate_File_In_Files_View;
       Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Launch a timeout waiting for the other timeout to finish, then
+   --  will go to synchronous mode and will finish the search
+
+   procedure Locate_File (V : Files_Tree_View; F : Virtual_File);
+   --  This function must be called in synchronous mode
 
    type Refresh_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -881,6 +889,21 @@ package body Project_Explorers_Files is
             end;
 
             return False;
+
+         ---------------------
+         -- Step_Wait_Alone --
+         ---------------------
+
+         when Step_Wait_Alone =>
+            if Integer (D.Tree.Timeout_Ids.Length) = 1 then
+               Locate_File (D.Tree, D.Norm_Dest);
+               --  The search is ended
+               D.Tree.Is_Locate := False;
+               return False;
+            else
+               return True;  -- Will continue to wait
+            end if;
+
       end case;
 
    exception
@@ -916,10 +939,9 @@ package body Project_Explorers_Files is
       D.Base          := Base;
       D.Tree          := Files_Tree_View (Self);
 
-      if Idle then
+      if Idle and not D.Tree.Is_Locate then
          --  Do not append the first item in an idle loop.
          --  Necessary for preserving order in drive names.
-
          if Read_Directory (D) then
             D.Id := File_Append_Directory_Timeout.Timeout_Add
                (1, Read_Directory'Access, D,
@@ -1140,10 +1162,12 @@ package body Project_Explorers_Files is
       File    : Virtual_File;
       N_Type  : constant Node_Types := Self.Get_Node_Type (Store_Iter);
    begin
+
       case N_Type is
          when Directory_Node =>
             File := Self.Get_File_From_Node (Store_Iter);
-            File_Append_Directory (Self, File, Store_Iter, Idle => True);
+            File_Append_Directory
+              (Self, File, Store_Iter, Idle => True);
 
          when others =>
             null;
@@ -1223,8 +1247,40 @@ package body Project_Explorers_Files is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      V : constant Project_Explorer_Files :=
+      V      : constant Project_Explorer_Files            :=
         Explorer_Files_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
+      D      : constant Append_Directory_Idle_Data_Access :=
+        new Append_Directory_Idle_Data;
+      --  D is freed when Read_Directory ends (i.e. returns False)
+      Dummy  : Boolean;
+   begin
+      if not V.Tree.Is_Locate then
+         --  Need to be synchrone
+         V.Tree.Is_Locate := True;
+         --  Setup D to do the search
+         D.Tree := V.Tree;
+         D.Step := Step_Wait_Alone;
+         D.Norm_Dest := File_Information (Context.Context);
+         D.Id := File_Append_Directory_Timeout.Timeout_Add
+           (1, Read_Directory'Access, D, Notify => Free'Access);
+         V.Tree.Timeout_Ids.Append (D.Id);
+         Dummy := Read_Directory (D);
+
+      else
+         Trace (Me, "A search is already active in the view");
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -----------------
+   -- Locate_File --
+   -----------------
+
+   procedure Locate_File (V : Files_Tree_View; F : Virtual_File)
+   is
+      Parent : Gtk_Tree_Iter;
+      Iter   : Gtk_Tree_Iter;
+      Path   : Gtk_Tree_Path;
 
       function Find_Node
         (File   : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter;
@@ -1243,43 +1299,69 @@ package body Project_Explorers_Files is
          Dummy : Boolean;
       begin
          if File.Full_Name.all = "/" then
-            Iter := V.Tree.Model.Get_Iter_First;
+            Iter := V.Model.Get_Iter_First;
          else
+            --  Non tail terminal recursion: goes to the root node and
+            --  recursevely expands the path to the wanted file
             Iter := Find_Node (File.Get_Parent, Expand => True);
-            Iter := V.Tree.Model.Children (Iter);
+            Iter := V.Model.Children (Iter);
          end if;
 
+         --  Search in the cache for children
          while Iter /= Null_Iter loop
-            F := Get_File (V.Tree.Model, Iter, File_Column);
+            F := Get_File (V.Model, Iter, File_Column);
             if File = F then
                if Expand then
-                  Path := V.Tree.Model.Get_Path (Iter);
-                  Dummy := V.Tree.Expand_Row (Path, Open_All => False);
-                  Iter := V.Tree.Model.Get_Iter (Path);
+                  Path := V.Model.Get_Path (Iter);
+                  Dummy := V.Expand_Row (Path, Open_All => False);
+                  Iter := V.Model.Get_Iter (Path);
                   Path_Free (Path);
                end if;
-               return Iter;
+               Parent := Iter;
+               exit;
             end if;
-            V.Tree.Model.Next (Iter);
+            V.Model.Next (Iter);
          end loop;
 
-         return Null_Iter;
+         if Iter = Null_Iter then
+
+            Path := V.Model.Get_Path (Parent);
+            --  Can't get the children, so try to expand the parent node
+            --  to load the children in cache.
+            Tree_Expand_Row_Cb (V, Parent, Path);
+            Iter := V.Model.Children (V.Model.Get_Iter (Path));
+
+            --  Search in the added children
+            while Iter /= Null_Iter loop
+               F := Get_File (V.Model, Iter, File_Column);
+               if File = F then
+                  if Expand then
+                     Path := V.Model.Get_Path (Iter);
+                     Dummy := V.Expand_Row (Path, Open_All => False);
+                     Iter := V.Model.Get_Iter (Path);
+                     Path_Free (Path);
+                  end if;
+                  Parent := Iter;
+                  exit;
+               end if;
+               V.Model.Next (Iter);
+            end loop;
+         end if;
+         return Iter;
       end Find_Node;
 
-      Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
    begin
-      Iter := Find_Node (File_Information (Context.Context), Expand => False);
+      Iter := Find_Node (F, Expand => False);
       if Iter /= Null_Iter then
-         V.Tree.Get_Selection.Select_Iter (Iter);
-         Path := V.Tree.Model.Get_Path (Iter);
-         V.Tree.Scroll_To_Cell
-           (Path, V.Tree.Get_Column (0),
+         V.Get_Selection.Select_Iter (Iter);
+         Path := V.Model.Get_Path (Iter);
+         V.Scroll_To_Cell
+           (Path, V.Get_Column (0),
             Use_Align => False, Row_Align => 0.0, Col_Align => 0.0);
+         V.Set_Cursor (Path, V.Get_Column (0), False);
          Path_Free (Path);
       end if;
-      return Commands.Success;
-   end Execute;
+   end Locate_File;
 
    -------------
    -- Execute --
