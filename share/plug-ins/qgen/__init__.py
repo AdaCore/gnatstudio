@@ -1257,27 +1257,44 @@ else:
 
             try:
                 debugger = GPS.Debugger.get()
-                QGEN_Module.update_bp_labels(viewer, diag)
             except:
                 debugger = None
+
+            QGEN_Module.update_bp_labels(viewer, diag)
 
             # If the debugger is not started, is not running, or is
             # not stopped at an execution point, we do not display any
             # signal value.
-            if debugger is None or debugger.current_frame() == -1 \
-               or debugger.is_busy():
+            if debugger is None or debugger.current_frame() == -1:
+                logger.log("Clearing no debugger running %s" %
+                           (debugger.current_frame() if debugger
+                            is not None else "No debugger"))
                 QGEN_Module.clear_all_item_values(diag)
             else:
-                # Compute the value for all items with an "auto" property
-                if QGEN_Module.display_tasks:
-                    QGEN_Module.cancel_workflows()
-                    while QGEN_Module.display_tasks:
-                        yield timeout(100)
+                count = 0
+                while debugger.is_busy():
+                    if count > 20:
+                        break
+                    logger.log("Busy debugger")
+                    count = count + 1
+                    yield timeout(100)
 
-                workflows.task_workflow(
-                    'Updating signal values',
-                    QGEN_Module.compute_all_item_values,
-                    debugger=debugger, diagram=diag, viewer=viewer)
+                if debugger.is_busy():
+                    logger.log("Clearing diagram because debugger busy")
+                    QGEN_Module.clear_all_item_values(diag)
+                else:
+                    logger.log("Computing item values")
+
+                    # Compute the value for all items with an "auto" property
+                    if QGEN_Module.display_tasks:
+                        QGEN_Module.cancel_workflows()
+                        while QGEN_Module.display_tasks:
+                            yield timeout(100)
+
+                    workflows.task_workflow(
+                        'Updating signal values',
+                        QGEN_Module.compute_all_item_values,
+                        debugger=debugger, diagram=diag, viewer=viewer)
 
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
@@ -1572,7 +1589,6 @@ else:
                         for i in it.recurse():
                             if isinstance(i, GPS.Browsers.TextItem):
                                 textitem = i
-                                logger.log('textitem is %s' % textitem.text)
 
         def block_source_ranges(self, blockid):
             """
