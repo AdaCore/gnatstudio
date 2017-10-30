@@ -990,9 +990,11 @@ package body GNATTest_Module is
         (Kernel   => Kernel,
          Name     => "GNATtest",
          Label    => "GNATtest",
-         Filter   => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
          Submenu  => new Submenu_Factory_Record,
          Ref_Item => "Coverage");
+      --  Filter cannot be applied since we have additional items
+      --  for this submenu in gnattest.py plugin which have its own filters
+      --  with different conditions
 
       Register_Action
         (Kernel      => Kernel,
@@ -1004,6 +1006,8 @@ package body GNATTest_Module is
          Name        => "Goto tested subprogram",
          Action      => "go to tested procedure",
          Label       => "GNATtest/Go to %C",
+         Filter      => GPS.Kernel.Lookup_Filter
+           (Kernel, "Entity is subprogram"),
          Custom      => Tested_Subprogram_Name'Access,
          Ref_Item    => "GNATtest",
          Add_Before  => False);

@@ -155,13 +155,17 @@ package body Custom_Module is
 
    type Subprogram_Label_Record is new Contextual_Menu_Label_Creator_Record
    with record
-      Label      : Subprogram_Type;
+      Label : Subprogram_Type;
+      Path  : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    type Subprogram_Label is access all Subprogram_Label_Record'Class;
    overriding function Get_Label
      (Creator : access Subprogram_Label_Record;
       Context : Selection_Context) return String;
    --  Type used to define contextual menus from a scripting language
+   overriding function Get_Path
+     (Creator : access Subprogram_Label_Record)
+      return String;
 
    type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
       On_Activate : Subprogram_Type;
@@ -425,6 +429,17 @@ package body Custom_Module is
          return Str;
       end;
    end Get_Label;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   overriding function Get_Path
+     (Creator : access Subprogram_Label_Record)
+      return String is
+   begin
+      return Ada.Strings.Unbounded.To_String (Creator.Path);
+   end Get_Path;
 
    ---------------
    -- Customize --
@@ -1515,7 +1530,10 @@ package body Custom_Module is
             when others =>
                --  Assume path is a function
                Subp := Nth_Arg (Data, 2, null);
-               Label := new Subprogram_Label_Record'(Label => Subp);
+               Label := new Subprogram_Label_Record'
+                 (Label => Subp,
+                  Path  => Ada.Strings.Unbounded.To_Unbounded_String
+                    (Nth_Arg (Data, 6, "")));
                Register_Contextual_Menu
                  (Kernel,
                   Name        => Action,
@@ -1628,9 +1646,10 @@ package body Custom_Module is
         ("contextual",
          Class         => Action_Class,
          Params        => (2 => Param ("path"),
-                           3 => Param ("ref",        Optional => True),
-                           4 => Param ("add_before", Optional => True),
-                           5 => Param ("group",      Optional => True)),
+                           3 => Param ("ref",         Optional => True),
+                           4 => Param ("add_before",  Optional => True),
+                           5 => Param ("group",       Optional => True),
+                           6 => Param ("static_path", Optional => True)),
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("button",

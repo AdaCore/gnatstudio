@@ -23,6 +23,7 @@ with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Hashed_Sets;
+with Ada.Containers.Vectors;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;
@@ -116,13 +117,16 @@ package body GPS.Kernel.Modules.UI is
 
    type Contextual_Menu_Record;
    type Contextual_Menu_Access is access all Contextual_Menu_Record;
+
+   package Contextual_Menu_Vectors is
+     new Ada.Containers.Vectors (Positive, Contextual_Menu_Access);
+
    type Contextual_Menu_Record
      (Menu_Type : Contextual_Menu_Type := Type_Separator)
       is record
          Kernel                : Kernel_Handle;
          Name                  : GNAT.Strings.String_Access;
          Label                 : Contextual_Menu_Label_Creator;
-         Next                  : Contextual_Menu_Access;
          Group                 : Integer;
          Visible               : Boolean := True;
          Sensitive             : Boolean := True;
@@ -141,6 +145,7 @@ package body GPS.Kernel.Modules.UI is
                Submenu          : Submenu_Factory;
                Submenu_Filter   : access Action_Filter_Record'Class := null;
                Submenu_Enable   : access Action_Filter_Record'Class := null;
+               Nested           : Contextual_Menu_Vectors.Vector;
 
             when Type_Separator =>
                Separator_Action : GNAT.Strings.String_Access;
@@ -160,11 +165,11 @@ package body GPS.Kernel.Modules.UI is
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
    function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Contextual_Menu_Access);
-   function Convert is new Ada.Unchecked_Conversion
      (Contextual_Menu_Access, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Contextual_Menu_Access);
 
-   package Action_Callback is new Gtk.Handlers.User_Callback
+   package Action_Callback1 is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Contextual_Menu_Access);
 
    procedure Contextual_Menu_Destroyed
@@ -221,22 +226,23 @@ package body GPS.Kernel.Modules.UI is
    --  Create a contextual menu as a result of a mouse event
    --  Return null if no menu was created.
 
-   procedure Add_Contextual_Menu
+   procedure Register
      (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
       Menu       : Contextual_Menu_Access;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True);
+      Parent     : Contextual_Menu_Access;
+      Ref_Item   : String;
+      Add_Before : Boolean);
    --  Add a new contextual menu in the list
-
-   type Contextual_Menu_Reference is record
-      Previous, Menu : Contextual_Menu_Access;
-   end record;
-
-   Null_Reference : constant Contextual_Menu_Reference := (null, null);
 
    function Find_Contextual_Menu_By_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Contextual_Menu_Reference;
+      Name   : String) return Contextual_Menu_Access;
+
+   function Find_Contextual_Menu_By_Name
+     (Name : String;
+      Node : Contextual_Menu_Access)
+      return Contextual_Menu_Vectors.Cursor;
    --  Find a contextual menu by name
 
    type Toolbar_Button (Is_Separator : Boolean := False) is record
@@ -848,73 +854,41 @@ package body GPS.Kernel.Modules.UI is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
 
       use type Gtk.Widget.Widget_List.Glist;
+      use Contextual_Menu_Vectors;
 
-      function Menu_Is_Visible
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean;
-      --  Whether the menu C should be made visible
+      procedure Set_Is_Visible
+        (Item        : Contextual_Menu_Access;
+         For_Actions : Boolean);
+      --  Whether the menu should be made visible
 
-      function Menu_Is_Sensitive
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean;
-      --  Whether the menu C should be sensetive
+      procedure Create_Items
+        (C    : Contextual_Menu_Access;
+         Menu : Gtk.Menu.Gtk_Menu;
+         Sub  : Boolean);
+      --  Create the menu item to use when displaying.
 
-      procedure Create_Item
-        (C         : Contextual_Menu_Access;
-         Context   : Selection_Context;
-         Item      : out Gtk_Menu_Item;
-         Full_Name : out GNAT.Strings.String_Access);
-      --  Create the menu item to use when displaying C.
-      --  Full_Name is the label of the menu.
+      --------------------
+      -- Set_Is_Visible --
+      --------------------
 
-      function Label_Name
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return String;
-      --  Return the name of the label for C, including parent path
-
-      function Has_Explicit_Parent
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean;
-      --  Return True if the parent menu of C was explicitly registered by the
-      --  user. In this case, C will be created only when that parent menu is
-      --  created, not before.
-
-      -----------------------
-      -- Menu_Is_Sensitive --
-      -----------------------
-
-      function Menu_Is_Sensitive
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean is
-      begin
-         case C.Menu_Type is
-            when Type_Separator =>
-               return False;
-
-            when Type_Action =>
-               return True;
-
-            when Type_Submenu =>
-               return Filter_Matches (C.Submenu_Enable, Context);
-         end case;
-      end Menu_Is_Sensitive;
-
-      ---------------------
-      -- Menu_Is_Visible --
-      ---------------------
-
-      function Menu_Is_Visible
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean
+      procedure Set_Is_Visible
+        (Item        : Contextual_Menu_Access;
+         For_Actions : Boolean)
       is
          Act : access Action_Record;
+         C   : Contextual_Menu_Vectors.Cursor;
       begin
-         if not C.Visible then
-            return False;
+         if For_Actions
+           and then
+             (Item.Menu_Type = Type_Separator
+              or else Item.Menu_Type /= Type_Submenu)
+         then
+            return;
          end if;
 
-         case C.Menu_Type is
-            when Type_Separator =>
+         if Item.Visible then
+            case Item.Menu_Type is
+               when Type_Separator =>
                --  A separator is visible only:
                --     - If its own filter matches.
                --     - Or if it has no own filter, then only if the reference
@@ -923,242 +897,272 @@ package body GPS.Kernel.Modules.UI is
                --     - Always visible if there is no reference item
                --       and then only if it isn't the last entry the contextual
                --       menu.
-               if C.Separator_Action /= null then
-                  Act := Lookup_Action (C.Kernel, C.Separator_Action.all);
-                  return Filter_Matches (Act, Context);
-               end if;
-               return True;
-
-            when Type_Action =>
-               Act := Lookup_Action (C);
-               return Act /= null
-                 and then Filter_Matches (Act, Context);
-
-            when Type_Submenu =>
-               return Filter_Matches (C.Submenu_Filter, Context);
-         end case;
-      end Menu_Is_Visible;
-
-      -----------------
-      -- Create_Item --
-      -----------------
-
-      procedure Create_Item
-        (C         : Contextual_Menu_Access;
-         Context   : Selection_Context;
-         Item      : out Gtk_Menu_Item;
-         Full_Name : out GNAT.Strings.String_Access)
-      is
-         use type GNAT.Strings.String_Access;
-         Menu  : Gtk_Menu;
-         Children : Widget_List.Glist;
-      begin
-         Full_Name := new String'(Label_Name (C, Context));
-
-         case C.Menu_Type is
-            when Type_Submenu =>
-               declare
-                  C2    : Contextual_Menu_Access;
-                  Full2 : GNAT.Strings.String_Access;
-                  Item  : Gtk_Menu_Item;
-               begin
-                  Gtk_New (Menu);
-
-                  if C.Submenu /= null then
-                     Append_To_Menu
-                       (Factory => C.Submenu,
-                        Context => Context,
-                        Menu    => Menu);
+                  if Item.Separator_Action /= null then
+                     Act := Lookup_Action
+                       (Item.Kernel, Item.Separator_Action.all);
+                     Item.Filter_Matched := Filter_Matches (Act, Context);
+                  else
+                     Item.Filter_Matched := True;
                   end if;
 
-                  --  Add all contextual menus that are children of C
-                  C2 := Convert (Kernel.Contextual);
-                  while C2 /= null loop
-                     if C2.Filter_Matched then
-                        if Parent_Menu_Name ('/' & Label_Name (C2, Context)) =
-                          '/' & Full_Name.all & '/'
-                        then
-                           Create_Item (C2, Context, Item, Full2);
-                           Add_Menu (Parent => Menu, Item => Item);
-                           GNAT.OS_Lib.Free (Full2);
-                        end if;
-                     end if;
-                     C2 := C2.Next;
-                  end loop;
-               end;
+               when Type_Action =>
+                  Act := Lookup_Action (Item);
+                  Item.Filter_Matched := Act /= null
+                    and then Filter_Matches (Act, Context);
 
-               Children := Get_Children (Menu);
-               if Children = Gtk.Widget.Widget_List.Null_List then
-                  Destroy (Menu);
-                  Item := null;
-               else
-                  Gtk_New (Item, Base_Menu_Name (Full_Name.all));
-                  Connect_Submenu (Item, Menu);
-               end if;
+               when Type_Submenu =>
+                  if For_Actions then
+                     Item.Filter_Matched := Filter_Matches
+                       (Item.Submenu_Filter, Context);
+                  end if;
 
-               Widget_List.Free (Children);
-
-            when Type_Separator =>
-               declare
-                  Sep : Gtk_Separator_Menu_Item;
-               begin
-                  Gtk_New (Sep);
-                  Item := Gtk_Menu_Item (Sep);
-               end;
-
-            when Type_Action =>
-               if Full_Name.all /= "" then
-                  Gtk_New (Item, Base_Menu_Name (Full_Name.all));
-                  Action_Callback.Connect
-                    (Item, Gtk.Menu_Item.Signal_Activate,
-                     Contextual_Action'Access,
-                     User_Data   => C);
-               else
-                  Item := null;
-               end if;
-         end case;
-
-         if Item /= null then
-            Set_Sensitive (Item, C.Sensitive);
-
-            declare
-               Label : constant Gtk_Label :=
-                         Gtk_Label (Get_Child (Item));
-            begin
-               if Label /= null then
-                  Set_Use_Markup (Label, True);
-               end if;
-            end;
-         end if;
-      end Create_Item;
-
-      ----------------
-      -- Label_Name --
-      ----------------
-
-      function Label_Name
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return String
-      is
-         use type GNAT.Strings.String_Access;
-      begin
-         if C.Label = null then
-            return C.Name.all;
-         else
-            --  Cache the expensive call to Get_Label in C.Label_For_Context.
-            --  This name is used while building the menu to find parent
-            --  items.
-            if C.Label_For_Context = Null_Unbounded_String then
-               C.Label_For_Context := To_Unbounded_String
-                 (Get_Label (C.Label, Context));
-            end if;
-            return To_String (C.Label_For_Context);
-         end if;
-      end Label_Name;
-
-      -------------------------
-      -- Has_Explicit_Parent --
-      -------------------------
-
-      function Has_Explicit_Parent
-        (C       : Contextual_Menu_Access;
-         Context : Selection_Context) return Boolean
-      is
-         Label  : constant String := Label_Name (C, Context);
-         Parent : constant String := Parent_Menu_Name ('/' & Label);
-         C2     : Contextual_Menu_Access;
-      begin
-         if Parent /= "/" then
-            C2 := Convert (Kernel.Contextual);
-            while C2 /= null loop
-               if C2.Filter_Matched
-                 and then '/' & Label_Name (C2, Context) & '/' = Parent
-               then
-                  return True;
-               end if;
-               C2 := C2.Next;
-            end loop;
-         end if;
-         return False;
-      end Has_Explicit_Parent;
-
-      Full_Name    : GNAT.Strings.String_Access;
-      C            : Contextual_Menu_Access;
-      Item         : Gtk_Menu_Item;
-      Parent_Item  : Gtk_Menu_Item;
-      Parent_Menu  : Gtk_Menu;
-      Child        : Gtk_Widget;
-      List         : Gtk.Widget.Widget_List.Glist;
-      Is_Sensitive : Boolean;
-      Key          : Gdk_Key_Type;
-      Mods         : Gdk_Modifier_Type;
-   begin
-      Contextual_Menu_Open_Hook.Run (Kernel);
-
-      --  Compute what items should be made visible, except for separators
-      --  and submenus at the moment
-
-      C := Convert (Kernel.Contextual);
-      while C /= null loop
-         if C.Menu_Type = Type_Action then
-            C.Filter_Matched := Menu_Is_Visible (C, Context);
+                  if Item.Filter_Matched then
+                     C := Item.Nested.First;
+                     while Has_Element (C) loop
+                        Set_Is_Visible
+                          (Contextual_Menu_Vectors.Element (C), For_Actions);
+                        Next (C);
+                     end loop;
+                  end if;
+            end case;
          end if;
 
          --  Reset the cache set in the previous contextual menu
-         C.Label_For_Context := Null_Unbounded_String;
-         C := C.Next;
-      end loop;
+         Item.Label_For_Context := Null_Unbounded_String;
+      end Set_Is_Visible;
 
-      --  Same, but only for separators now, since their visibility might
-      --  depend on the visibility of other items
+      ------------------
+      -- Create_Items --
+      ------------------
 
-      C := Convert (Kernel.Contextual);
-      while C /= null loop
-         if C.Menu_Type /= Type_Action then
-            C.Filter_Matched := Menu_Is_Visible (C, Context);
-         end if;
-         C := C.Next;
-      end loop;
+      procedure Create_Items
+        (C    : Contextual_Menu_Access;
+         Menu : Gtk.Menu.Gtk_Menu;
+         Sub  : Boolean)
+      is
 
-      C := Convert (Kernel.Contextual);
-      while C /= null loop
-         Is_Sensitive := C.Filter_Matched
-           and then not Has_Explicit_Parent (C, Context);
+         function Menu_Is_Sensitive
+           (C       : Contextual_Menu_Access;
+            Context : Selection_Context) return Boolean;
+         --  Whether the menu C should be sensetive
 
-         if Is_Sensitive then
+         function Label_Name
+           (C       : Contextual_Menu_Access;
+            Context : Selection_Context) return String;
+
+         function Is_Visible
+           (C : Contextual_Menu_Access)
+            return Boolean;
+
+         ----------------
+         -- Is_Visible --
+         ----------------
+
+         function Is_Visible
+           (C : Contextual_Menu_Access)
+            return Boolean
+         is
+            Cursor : Contextual_Menu_Vectors.Cursor;
+         begin
+            case C.Menu_Type is
+               when Type_Separator =>
+                  return False;
+
+               when Type_Action =>
+                  return C.Filter_Matched;
+
+               when Type_Submenu =>
+                  if not C.Filter_Matched then
+                     return False;
+                  end if;
+
+                  if C.Submenu /= null then
+                     return True;
+                  end if;
+
+                  Cursor := C.Nested.First;
+                  while Has_Element (Cursor) loop
+                     if Is_Visible
+                       (Contextual_Menu_Vectors.Element (Cursor))
+                     then
+                        return True;
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+
+                  return False;
+            end case;
+         end Is_Visible;
+
+         -----------------------
+         -- Menu_Is_Sensitive --
+         -----------------------
+
+         function Menu_Is_Sensitive
+           (C       : Contextual_Menu_Access;
+            Context : Selection_Context)
+            return Boolean
+         is
+         begin
+            case C.Menu_Type is
+               when Type_Separator =>
+                  return False;
+
+               when Type_Action =>
+                  return True;
+
+               when Type_Submenu =>
+                  return Filter_Matches (C.Submenu_Enable, Context);
+            end case;
+         end Menu_Is_Sensitive;
+
+         ----------------
+         -- Label_Name --
+         ----------------
+
+         function Label_Name
+           (C       : Contextual_Menu_Access;
+            Context : Selection_Context) return String is
+         begin
+            if C.Label = null then
+               return C.Name.all;
+            else
+               --  Cache the expensive call to Get_Label in
+               --  Item.Label_For_Context.
+               --  This name is used while building the menu to find parent
+               --  items.
+               if C.Label_For_Context = Null_Unbounded_String then
+                  C.Label_For_Context := To_Unbounded_String
+                    (C.Label.Get_Label (Context));
+               end if;
+
+               return To_String (C.Label_For_Context);
+            end if;
+         end Label_Name;
+
+         Item  : Gtk_Menu_Item;
+         Child : Gtk_Widget;
+         Key   : Gdk_Key_Type;
+         Mods  : Gdk_Modifier_Type;
+
+      begin
+         if C.Filter_Matched then
             C.Sensitive := Menu_Is_Sensitive (C, Context);
 
-            Create_Item (C, Context, Item, Full_Name);
+            declare
+               Full_Name : GNAT.Strings.String_Access;
+               Submenu   : Gtk_Menu;
+               Children  : Widget_List.Glist;
+               Count     : Natural := 0;
+            begin
+               Full_Name := new String'(Label_Name (C, Context));
+
+               case C.Menu_Type is
+                  when Type_Submenu =>
+                     declare
+                        Cursor : Contextual_Menu_Vectors.Cursor;
+                     begin
+                        if Sub then
+                           --  submenu is single, do not create it and put
+                           --  nested items into main Menu
+                           Gtk_New (Submenu);
+                        end if;
+
+                        if C.Submenu /= null then
+                           Append_To_Menu
+                             (Factory => C.Submenu,
+                              Context => Context,
+                              Menu    => (if Sub then Submenu else Menu));
+
+                           Count := 2;
+                        else
+                           Cursor := C.Nested.First;
+                           while Has_Element (Cursor) loop
+                              if Is_Visible
+                                (Contextual_Menu_Vectors.Element
+                                   (Cursor))
+                              then
+                                 Count := Count + 1;
+                              end if;
+                              Next (Cursor);
+                           end loop;
+                        end if;
+
+                        --  Add all contextual menus that are children of C
+                        Cursor := C.Nested.First;
+                        while Has_Element (Cursor) loop
+                           if Count > 1
+                             or else Contextual_Menu_Vectors.Element
+                               (Cursor).Menu_Type /= Type_Separator
+                           then
+                              Create_Items
+                                (Contextual_Menu_Vectors.Element (Cursor),
+                                 (if Sub then Submenu else Menu), Count > 1);
+                           end if;
+                           Next (Cursor);
+                        end loop;
+                     end;
+
+                     if Sub then
+                        Children := Get_Children (Submenu);
+                        if Children = Gtk.Widget.Widget_List.Null_List then
+                           Destroy (Submenu);
+                           Item := null;
+                        else
+                           Gtk_New (Item, Base_Menu_Name (Full_Name.all));
+                           Connect_Submenu (Item, Submenu);
+                        end if;
+                        Widget_List.Free (Children);
+                     else
+                        Item := null;
+                     end if;
+
+                  when Type_Separator =>
+                     declare
+                        Sep : Gtk_Separator_Menu_Item;
+                     begin
+                        Gtk_New (Sep);
+                        Item := Gtk_Menu_Item (Sep);
+                     end;
+
+                  when Type_Action =>
+                     if Full_Name.all /= "" then
+                        Gtk_New (Item, Base_Menu_Name (Full_Name.all));
+                        Action_Callback1.Connect
+                          (Item, Gtk.Menu_Item.Signal_Activate,
+                           Contextual_Action'Access,
+                           User_Data   => C);
+                     else
+                        Item := null;
+                     end if;
+               end case;
+
+               if Item /= null then
+                  Item.Set_Sensitive (C.Sensitive);
+
+                  declare
+                     Label : constant Gtk_Label :=
+                       Gtk_Label (Item.Get_Child);
+                  begin
+                     if Label /= null then
+                        Label.Set_Use_Markup (True);
+                     end if;
+                  end;
+               end if;
+
+               GNAT.OS_Lib.Free (Full_Name);
+            end;
 
             if Item /= null then
                Item.Show_All;
 
-               --  Do not force the creation of the parent menu for a
-               --  separator: if it is a contextual submenu, it will have been
-               --  created already if that menu should be visible (its
-               --  Filtered_Matched is True).
-               Parent_Item := Find_Or_Create_Menu_Tree
-                 (Menu_Bar      => null,
-                  Menu          => Menu,
-                  Path          =>
-                    Escape_Underscore (Parent_Menu_Name ('/' & Full_Name.all)),
-                  Accelerators  => Get_Default_Accelerators (Kernel),
-                  Allow_Create  => C.Menu_Type /= Type_Separator);
-
-               if Parent_Item /= null then
-                  Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
-                  if Parent_Menu = null then
-                     Gtk_New (Parent_Menu);
-                     Set_Submenu (Parent_Item, Parent_Menu);
-                  end if;
-
-                  Add_Menu (Parent => Parent_Menu, Item => Item);
-               elsif C.Menu_Type /= Type_Separator then
-                  Add_Menu (Parent => Menu, Item => Item);
-               end if;
+               Add_Menu (Parent => Menu, Item => Item);
 
                --  Display the key shortcut binded to the action if any
-               if C.Menu_Type = Type_Action and then C.Action /= null then
+               if C.Menu_Type = Type_Action
+                 and then C.Action /= null
+               then
                   Get_Shortcut_Simple
                     (Kernel,
                      Action => C.Action.all,
@@ -1172,12 +1176,36 @@ package body GPS.Kernel.Modules.UI is
                   end if;
                end if;
             end if;
-
-            GNAT.OS_Lib.Free (Full_Name);
          end if;
+      end Create_Items;
 
-         C := C.Next;
+      Root : Contextual_Menu_Access;
+      List : Gtk.Widget.Widget_List.Glist;
+      C    : Contextual_Menu_Vectors.Cursor;
+
+   begin
+      Contextual_Menu_Open_Hook.Run (Kernel);
+
+      --  Compute what items should be made visible, except for separators
+      --  and submenus at the moment
+      Root := Convert (Kernel.Contextual);
+      C    := Root.Nested.First;
+      while Has_Element (C) loop
+         Set_Is_Visible
+           (Contextual_Menu_Vectors.Element (C), True);
+         Next (C);
       end loop;
+
+      --  Same, but only for separators now, since their visibility might
+      --  depend on the visibility of other items
+      C := Root.Nested.First;
+      while Has_Element (C) loop
+         Set_Is_Visible
+           (Contextual_Menu_Vectors.Element (C), False);
+         Next (C);
+      end loop;
+
+      Create_Items (Root, Menu, False);
 
       --  Do not Unref context, it will be automatically freed the next
       --  time a contextual menu is displayed.
@@ -1189,7 +1217,6 @@ package body GPS.Kernel.Modules.UI is
          Destroy (Menu);
          Menu := null;
       end if;
-
       Widget_List.Free (List);
 
       if Menu /= null then
@@ -1218,8 +1245,9 @@ package body GPS.Kernel.Modules.UI is
          Create (Me, "Creating contextual menu");
       Context : Selection_Context;
       Menu    : Gtk_Menu := null;
-      Win    : constant GPS_Window := GPS_Window (User.Kernel.Get_Main_Window);
-      Child  : MDI_Child;
+      Win     : constant GPS_Window := GPS_Window
+        (User.Kernel.Get_Main_Window);
+      Child   : MDI_Child;
    begin
       --  Create the menu and add all the modules information
       Menu := new GPS_Contextual_Menu_Record;
@@ -1238,7 +1266,7 @@ package body GPS.Kernel.Modules.UI is
          Context := New_Context (User.Kernel);
       end if;
 
-      User.Kernel.Last_Context_For_Contextual := Context;
+      User.Kernel.Last_Context_For_Contextual  := Context;
       User.Kernel.Last_Context_From_Contextual := True;
 
       --  Do we need to add hand-coded items to the menu ?
@@ -2336,71 +2364,159 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Drag_Data_Received;
 
-   -------------------------
-   -- Add_Contextual_Menu --
-   -------------------------
+    ----------------------------------
+    -- Find_Contextual_Menu_By_Name --
+    ----------------------------------
 
-   procedure Add_Contextual_Menu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Menu       : Contextual_Menu_Access;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True)
+   function Find_Contextual_Menu_By_Name
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) return Contextual_Menu_Access
    is
-      C, Previous : Contextual_Menu_Access;
-      Menu_Ref    : Contextual_Menu_Reference;
-      Ref_Found   : Boolean := False;
-   begin
-      Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
+      function Process
+        (Item : Contextual_Menu_Access)
+         return Contextual_Menu_Access;
 
-      if Menu.Name.all /= "" and then Menu_Ref /= Null_Reference then
-         --  Menu already exists for this name we want to replace the existing
-         --  one by the new one.
-         Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
+      -------------
+      -- Process --
+      -------------
 
-         Menu.Next := Menu_Ref.Menu.Next;
+      function Process
+        (Item : Contextual_Menu_Access)
+         return Contextual_Menu_Access
+      is
+         use Contextual_Menu_Vectors;
+         Cursor : Contextual_Menu_Vectors.Cursor;
+         Result : Contextual_Menu_Access;
+      begin
+         if Item.Menu_Type = Type_Submenu then
+            Cursor := Item.Nested.First;
+            while Has_Element (Cursor) loop
+               Result := Process (Contextual_Menu_Vectors.Element (Cursor));
+               if Result /= null then
+                  return Result;
+               end if;
+               Next (Cursor);
+            end loop;
+            return null;
 
-         if Menu_Ref.Previous = null then
-            Kernel.Contextual := Convert (Menu);
+         elsif Item.Name.all = Name then
+            return Item;
          else
-            Menu_Ref.Previous.Next := Menu;
+            return null;
          end if;
+      end Process;
 
-         --  Now Menu_Ref.Menu is not pointed anymore, free associated memory
-
-         GNAT.OS_Lib.Free (Menu_Ref.Menu.Name);
-         Unchecked_Free (Menu_Ref.Menu);
-
+   begin
+      if Kernel.Contextual /= System.Null_Address then
+         return Process (Convert (Kernel.Contextual));
       else
-         if Kernel.Contextual /= System.Null_Address then
-            C := Convert (Kernel.Contextual);
+         return null;
+      end if;
+   end Find_Contextual_Menu_By_Name;
 
-            --  Look for element C after which we should insert new menu item.
-            --  If C = null insert at head of the list
-            loop
-               if C.Group > Menu.Group then
-                  --  Insert before greater group
-                  C := Previous;
+   ----------------------------------
+   -- Find_Contextual_Menu_By_Name --
+   ----------------------------------
 
+   function Find_Contextual_Menu_By_Name
+     (Name : String;
+      Node : Contextual_Menu_Access)
+      return Contextual_Menu_Vectors.Cursor
+   is
+      Result : Contextual_Menu_Vectors.Cursor;
+   begin
+      if Node.Menu_Type = Type_Submenu then
+         Result := Node.Nested.First;
+
+         while Contextual_Menu_Vectors.Has_Element (Result) loop
+            exit when Contextual_Menu_Vectors.Element
+              (Result).Name.all = Name;
+            Contextual_Menu_Vectors.Next (Result);
+         end loop;
+      end if;
+
+      return Result;
+   end Find_Contextual_Menu_By_Name;
+
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
+      Menu       : Contextual_Menu_Access;
+      Parent     : Contextual_Menu_Access;
+      Ref_Item   : String;
+      Add_Before : Boolean)
+   is
+      use Contextual_Menu_Vectors;
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add
+        (Menu   : Contextual_Menu_Access;
+         Parent : Contextual_Menu_Access);
+      procedure Add
+        (Menu   : Contextual_Menu_Access;
+         Parent : Contextual_Menu_Access)
+      is
+         Menu_Ref     : Contextual_Menu_Vectors.Cursor;
+         Old, Current : Contextual_Menu_Access;
+         Ref_Found    : Boolean := False;
+      begin
+         Menu_Ref := Find_Contextual_Menu_By_Name (Menu.Name.all, Parent);
+
+         if Menu.Name.all /= ""
+           and then Menu_Ref /= Contextual_Menu_Vectors.No_Element
+         then
+            Old := Contextual_Menu_Vectors.Element (Menu_Ref);
+
+            --  Menu already exists for this name we want to replace
+            --  the existing one by the new one.
+            Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
+
+            Parent.Nested.Replace_Element (Menu_Ref, Menu);
+
+            --  Now Menu_Ref.Menu is not pointed anymore,
+            --  free associated memory
+            GNAT.OS_Lib.Free (Old.Name);
+            Unchecked_Free (Old);
+
+         else
+            if Parent.Nested.Is_Empty then
+               Parent.Nested.Append (Menu);
+               return;
+            end if;
+
+            Menu_Ref := Parent.Nested.First;
+            while Has_Element (Menu_Ref) loop
+               Current := Contextual_Menu_Vectors.Element (Menu_Ref);
+
+               if Current.Group > Menu.Group then
                   exit;
-               elsif C.Group = Menu.Group
-                 and then Ref_Item /= ""
-                 and then C.Name.all = Ref_Item
-               then
-                  --  We've found Ref_Item in given group
-                  if Add_Before then
-                     C := Previous;
-                  end if;
 
+               elsif Ref_Item /= ""
+                 and then Current.Group = Menu.Group
+                 and then
+                   (Current.Name.all = Ref_Item
+                    or else
+                      (Current.Menu_Type = Type_Action
+                       and then Current.Action /= null
+                       and then Current.Action.all = Ref_Item))
+               then
                   Ref_Found := True;
 
+                  if not Add_Before then
+                     Next (Menu_Ref);
+                  end if;
                   exit;
-               elsif C.Next = null then
-                  --  End of list
-                  exit;
-               end if;
 
-               Previous := C;
-               C := C.Next;
+               else
+                  Next (Menu_Ref);
+               end if;
             end loop;
 
             if Ref_Item /= "" and then not Ref_Found then
@@ -2408,43 +2524,68 @@ package body GPS.Kernel.Modules.UI is
                       & Menu.Name.all);
             end if;
 
-            if C = null then
-               Menu.Next         := Convert (Kernel.Contextual);
-               Kernel.Contextual := Convert (Menu);
+            if Has_Element (Menu_Ref) then
+               Parent.Nested.Insert (Menu_Ref, Menu);
+
+            elsif Parent.Nested.First_Element.Group > Menu.Group then
+               Parent.Nested.Prepend (Menu);
+
             else
-               Menu.Next := C.Next;
-               C.Next := Menu;
+               Parent.Nested.Append (Menu);
             end if;
+         end if;
+      end Add;
+
+      Path : constant String := First_Parent_Menu_Name
+        ((if Name (Name'First) = '/'
+         then Name (Name'First + 1 .. Name'Last)
+         else Name));
+      C    : Contextual_Menu_Vectors.Cursor;
+      P    : Contextual_Menu_Access;
+   begin
+      if Path /= "" then
+         C := Find_Contextual_Menu_By_Name
+           (Path (Path'First .. Path'Last - 1), Parent);
+
+         if Contextual_Menu_Vectors.Has_Element (C) then
+            P := Contextual_Menu_Vectors.Element (C);
 
          else
-            Kernel.Contextual := Convert (Menu);
+            P := new Contextual_Menu_Record'
+              (Kernel            => Kernel_Handle (Kernel),
+               Menu_Type         => Type_Submenu,
+               Name              => new String'
+                 (Path (Path'First .. Path'Last - 1)),
+               Submenu_Filter    => null,
+               Submenu_Enable    => null,
+               Visible           => True,
+               Filter_Matched    => True,
+               Sensitive         => True,
+               Group             => Menu.Group,
+               Submenu           => null,
+               Label_For_Context => Null_Unbounded_String,
+               Label             => null,
+               Nested            => <>);
+
+            Add (P, Parent);
          end if;
-      end if;
-   end Add_Contextual_Menu;
 
-   ----------------------------------
-   -- Find_Contextual_Menu_By_Name --
-   ----------------------------------
+         Register
+           (Kernel,
+            Name (Name'First + Path'Length .. Name'Last),
+            Menu, P, Ref_Item, Add_Before);
 
-   function Find_Contextual_Menu_By_Name
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Contextual_Menu_Reference
-   is
-      P, C : Contextual_Menu_Access;
-   begin
-      if Kernel.Contextual /= System.Null_Address then
-         P := null;
-         C := Convert (Kernel.Contextual);
-         while C /= null loop
-            if C.Name.all = Name then
-               return (P, C);
-            end if;
-            P := C;
-            C := C.Next;
-         end loop;
+      else
+         if Menu.Name = null then
+            Menu.Name := new String'
+              ((if Name (Name'First) = '/'
+               then Name (Name'First + 1 .. Name'Last)
+               else Name));
+         end if;
+
+         Add (Menu, Parent);
       end if;
-      return Null_Reference;
-   end Find_Contextual_Menu_By_Name;
+   end Register;
 
    ------------------------------
    -- Register_Contextual_Menu --
@@ -2480,21 +2621,29 @@ package body GPS.Kernel.Modules.UI is
          T.Filter := Filter;
       end if;
 
-      Add_Contextual_Menu
-         (Kernel,
-          new Contextual_Menu_Record'
-            (Kernel                => Kernel_Handle (Kernel),
-             Menu_Type             => Type_Action,
-             Name                  => new String'(N),
-             Action                => new String'(Action),
-             Next                  => null,
-             Group                 => Group,
-             Visible               => True,
-             Sensitive             => True,
-             Filter_Matched        => False,
-             Label_For_Context     => Null_Unbounded_String,
-             Label                 => Contextual_Menu_Label_Creator (T)),
-         Ref_Item, Add_Before);
+      Register
+        (Kernel,
+         (if Label /= ""
+          then Label
+          else N),
+         new Contextual_Menu_Record'
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Action,
+            Name                  => null,
+            Action                => new String'(Action),
+            Group                 => Group,
+            Visible               => True,
+            Sensitive             => True,
+            Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
+            Label                 => Contextual_Menu_Label_Creator (T)),
+         Convert (Kernel.Contextual),
+         Ref_Item,
+         Add_Before);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -2511,22 +2660,42 @@ package body GPS.Kernel.Modules.UI is
       Group       : Integer := Default_Contextual_Group)
    is
       N : constant String := (if Name = "" then Action else Name);
+      L : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      Add_Contextual_Menu
-         (Kernel,
-          new Contextual_Menu_Record'
-             (Kernel                => Kernel_Handle (Kernel),
-              Menu_Type             => Type_Action,
-              Name                  => new String'(N),
-              Action                => new String'(Action),
-              Next                  => null,
-              Group                 => Group,
-              Visible               => True,
-              Sensitive             => True,
-              Filter_Matched        => False,
-              Label_For_Context     => Null_Unbounded_String,
-              Label                 => Contextual_Menu_Label_Creator (Label)),
-          Ref_Item, Add_Before);
+      begin
+         L := To_Unbounded_String (Label.Get_Path);
+      exception
+         when E : others =>
+            --  For plugins which don't support No_Context as the parameter.
+            --  They will be registered in maun section of contextual menu.
+
+            Trace (Me, E);
+      end;
+
+      Register
+        (Kernel,
+         (if L /= ""
+          then To_String (L)
+          else N),
+         new Contextual_Menu_Record'
+           (Kernel                => Kernel_Handle (Kernel),
+            Menu_Type             => Type_Action,
+            Name                  => null,
+            Action                => new String'(Action),
+            Group                 => Group,
+            Visible               => True,
+            Sensitive             => True,
+            Filter_Matched        => False,
+            Label_For_Context     => Null_Unbounded_String,
+            Label                 =>
+              Contextual_Menu_Label_Creator (Label)),
+         Convert (Kernel.Contextual),
+         Ref_Item,
+         Add_Before);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Register_Contextual_Menu;
 
    -----------------------------------
@@ -2548,101 +2717,29 @@ package body GPS.Kernel.Modules.UI is
          T.Label  := new String'(In_Submenu & "/-");
       end if;
 
-      Add_Contextual_Menu
-         (Kernel,
-          new Contextual_Menu_Record'
-             (Kernel                => Kernel_Handle (Kernel),
-              Menu_Type             => Type_Separator,
-              Name                  => new String'(""),
-              Separator_Action      =>
+      Register
+        (Kernel,
+         In_Submenu & "/-",
+         new Contextual_Menu_Record'
+           (Kernel              => Kernel_Handle (Kernel),
+            Menu_Type           => Type_Separator,
+              Name              => new String'(""),
+              Separator_Action  =>
                  (if Action = "" then null else new String'(Action)),
-              Next                  => null,
-              Group                 => Group,
-              Visible               => True,
-              Sensitive             => True,
-              Filter_Matched        => False,
-              Label_For_Context     => Null_Unbounded_String,
-              Label                 => Contextual_Menu_Label_Creator (T)),
-          Ref_Item, Add_Before);
+              Group             => Group,
+              Visible           => True,
+              Sensitive         => True,
+              Filter_Matched    => False,
+              Label_For_Context => Null_Unbounded_String,
+              Label             => Contextual_Menu_Label_Creator (T)),
+         Convert (Kernel.Contextual),
+         Ref_Item,
+         Add_Before);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Register_Contextual_Separator;
-
-   ---------------------------------
-   -- Set_Contextual_Menu_Visible --
-   ---------------------------------
-
-   procedure Set_Contextual_Menu_Visible
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Name    : String;
-      Visible : Boolean)
-   is
-      Menu_Ref : Contextual_Menu_Reference :=
-                   Find_Contextual_Menu_By_Name (Kernel, Name);
-   begin
-      if Menu_Ref /= Null_Reference then
-         Register_Contextual_Menu
-           (Kernel => Kernel,
-            Name   => Name,
-            Action => "");
-         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
-      end if;
-      if Menu_Ref /= Null_Reference then
-         Menu_Ref.Menu.Visible := Visible;
-      end if;
-   end Set_Contextual_Menu_Visible;
-
-   -------------------------------------
-   -- Set_Contextual_Menu_Sensitivity --
-   -------------------------------------
-
-   procedure Set_Contextual_Menu_Sensitivity
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Name      : String;
-      Sensitive : Boolean)
-   is
-      Menu_Ref : Contextual_Menu_Reference :=
-                   Find_Contextual_Menu_By_Name (Kernel, Name);
-   begin
-      if Menu_Ref = Null_Reference then
-         Register_Contextual_Menu
-           (Kernel => Kernel,
-            Name   => Name,
-            Action => "");
-         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
-      end if;
-      Menu_Ref.Menu.Sensitive := Sensitive;
-   end Set_Contextual_Menu_Sensitivity;
-
-   -------------------------------------
-   -- Get_Registered_Contextual_Menus --
-   -------------------------------------
-
-   function Get_Registered_Contextual_Menus
-     (Kernel : access Kernel_Handle_Record'Class)
-      return GNAT.Strings.String_List_Access
-   is
-      Count  : Natural := 0;
-      C      : Contextual_Menu_Access;
-      Result : GNAT.Strings.String_List_Access;
-   begin
-      if Kernel.Contextual /= System.Null_Address then
-         C := Convert (Kernel.Contextual);
-         while C /= null loop
-            Count := Count + 1;
-            C := C.Next;
-         end loop;
-
-         Result := new GNAT.Strings.String_List (1 .. Count);
-         Count := Result'First;
-         C := Convert (Kernel.Contextual);
-         while C /= null loop
-            Result (Count) := new String'(C.Name.all);
-            Count := Count + 1;
-            C := C.Next;
-         end loop;
-      end if;
-
-      return Result;
-   end Get_Registered_Contextual_Menus;
 
    ---------------------------------
    -- Register_Contextual_Submenu --
@@ -2660,6 +2757,7 @@ package body GPS.Kernel.Modules.UI is
       Group             : Integer := Default_Contextual_Group)
    is
       T : Contextual_Label_Param;
+
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
@@ -2668,25 +2766,146 @@ package body GPS.Kernel.Modules.UI is
          T.Filter := Action_Filter (Create_Filter (Kernel, Label));
       end if;
 
-      Add_Contextual_Menu
+      Register
         (Kernel,
+         (if Name (Name'First) = '/'
+          then Name (Name'First + 1 .. Name'Last)
+          else Name),
          new Contextual_Menu_Record'
-           (Kernel                => Kernel_Handle (Kernel),
-            Menu_Type             => Type_Submenu,
-            Name                  => new String'(Name),
-            Submenu_Filter        => Filter,
-            Submenu_Enable        => Enable_Filter,
-            Next                  => null,
-            Visible               => True,
-            Filter_Matched        => False,
-            Sensitive             => True,
-            Group                 => Group,
-            Submenu               => Submenu,
-            Label_For_Context     => Null_Unbounded_String,
-            Label                 => Contextual_Menu_Label_Creator (T)),
+           (Kernel            => Kernel_Handle (Kernel),
+            Menu_Type         => Type_Submenu,
+            Name              => null,
+            Submenu_Filter    => Filter,
+            Submenu_Enable    => Enable_Filter,
+            Visible           => True,
+            Filter_Matched    => False,
+            Sensitive         => True,
+            Group             => Group,
+            Submenu           => Submenu,
+            Label_For_Context => Null_Unbounded_String,
+            Label             => Contextual_Menu_Label_Creator (T),
+            Nested            => <>),
+         Convert (Kernel.Contextual),
          Ref_Item,
          Add_Before);
    end Register_Contextual_Submenu;
+
+   ---------------------------------
+   -- Set_Contextual_Menu_Visible --
+   ---------------------------------
+
+   procedure Set_Contextual_Menu_Visible
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Name    : String;
+      Visible : Boolean)
+   is
+      Menu_Ref : Contextual_Menu_Access :=
+        Find_Contextual_Menu_By_Name (Kernel, Name);
+   begin
+      if Menu_Ref = null then
+         Register_Contextual_Menu
+           (Kernel => Kernel,
+            Name   => Name,
+            Action => "");
+         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
+      end if;
+
+      if Menu_Ref /= null then
+         Menu_Ref.Visible := Visible;
+      end if;
+   end Set_Contextual_Menu_Visible;
+
+   -------------------------------------
+   -- Set_Contextual_Menu_Sensitivity --
+   -------------------------------------
+
+   procedure Set_Contextual_Menu_Sensitivity
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Name      : String;
+      Sensitive : Boolean)
+   is
+      Menu_Ref : Contextual_Menu_Access :=
+        Find_Contextual_Menu_By_Name (Kernel, Name);
+   begin
+      if Menu_Ref = null then
+         Register_Contextual_Menu
+           (Kernel => Kernel,
+            Name   => Name,
+            Action => "");
+         Menu_Ref := Find_Contextual_Menu_By_Name (Kernel, Name);
+      end if;
+
+      Menu_Ref.Sensitive := Sensitive;
+   end Set_Contextual_Menu_Sensitivity;
+
+   -------------------------------------
+   -- Get_Registered_Contextual_Menus --
+   -------------------------------------
+
+   function Get_Registered_Contextual_Menus
+     (Kernel : access Kernel_Handle_Record'Class)
+      return GNAT.Strings.String_List_Access
+   is
+      use Contextual_Menu_Vectors;
+
+      Count  : Natural := 0;
+      C      : Contextual_Menu_Access;
+      Result : GNAT.Strings.String_List_Access;
+
+      ---------------
+      -- Calculate --
+      ---------------
+
+      procedure Calculate (Item : Contextual_Menu_Access);
+      procedure Calculate (Item : Contextual_Menu_Access) is
+         Cursor : Contextual_Menu_Vectors.Cursor;
+      begin
+         if Item.Menu_Type = Type_Submenu then
+            Cursor := Item.Nested.First;
+            while Has_Element (Cursor) loop
+               Count := Count + 1;
+               Calculate (Contextual_Menu_Vectors.Element (Cursor));
+               Next (Cursor);
+            end loop;
+         end if;
+      end Calculate;
+
+      ----------
+      -- Fill --
+      ----------
+
+      procedure Fill (Item : Contextual_Menu_Access);
+      procedure Fill (Item : Contextual_Menu_Access) is
+         Cursor : Contextual_Menu_Vectors.Cursor;
+      begin
+         Result (Count) := new String'(Item.Name.all);
+         Count := Count + 1;
+         if Item.Menu_Type = Type_Submenu then
+            Cursor := Item.Nested.First;
+            while Has_Element (Cursor) loop
+               Fill (Contextual_Menu_Vectors.Element (Cursor));
+               Next (Cursor);
+            end loop;
+         end if;
+      end Fill;
+
+      Cursor : Contextual_Menu_Vectors.Cursor;
+   begin
+      if Kernel.Contextual /= System.Null_Address then
+         C := Convert (Kernel.Contextual);
+         Calculate (C);
+
+         Result := new GNAT.Strings.String_List (1 .. Count);
+         Count  := Result'First;
+         Cursor := C.Nested.First;
+         while Has_Element (Cursor) loop
+            Fill (Contextual_Menu_Vectors.Element (Cursor));
+            Next (Cursor);
+         end loop;
+      end if;
+
+      return Result;
+   end Get_Registered_Contextual_Menus;
 
    ------------------------------
    -- On_Action_Button_Clicked --
@@ -3622,6 +3841,30 @@ package body GPS.Kernel.Modules.UI is
       Set_Get_State_Hint (Iface, On_GPS_Action_Get_State_Hint'Access);
       Set_Get_State_Type (Iface, On_GPS_Action_Get_State_Type'Access);
    end Init_GAction_Iface;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Contextual := Convert
+         (new Contextual_Menu_Record'
+           (Kernel            => Kernel_Handle (Kernel),
+            Menu_Type         => Type_Submenu,
+            Name              => new String'("/"),
+            Submenu_Filter    => null,
+            Submenu_Enable    => null,
+            Visible           => True,
+            Filter_Matched    => True,
+            Sensitive         => True,
+            Group             => 0,
+            Submenu           => null,
+            Label_For_Context => Null_Unbounded_String,
+            Label             => null,
+            Nested            => <>));
+
+   end Initialize;
 
    -----------------------------
    -- GPS_Action_Set_Property --

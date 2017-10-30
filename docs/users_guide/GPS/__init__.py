@@ -282,7 +282,8 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def contextual(self, path, ref='', add_before=True, group=0):
+    def contextual(self, path, ref='', add_before=True, group=0,
+                   static_path=''):
         """
         Create a new contextual menu associated with the action.
 
@@ -295,6 +296,8 @@ class Action(object):
            groups are ordered numerically, so that all items in group 0
            appear before items in group 1, and so on.
         :param boolean add_before: A boolean
+        :param static_path A string which describes the path for the contextual
+           menu when path is a function.
         """
         pass  # implemented in Ada
 

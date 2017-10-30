@@ -1454,6 +1454,23 @@ package body GUI_Utils is
       return "/";
    end Parent_Menu_Name;
 
+   ----------------------------
+   -- First_Parent_Menu_Name --
+   ----------------------------
+
+   function First_Parent_Menu_Name (Name : String) return String is
+   begin
+      for N in Name'Range loop
+         if Name (N) = '/' and then
+           (N = Name'First
+            or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
+         then
+            return Name (Name'First .. N);
+         end if;
+      end loop;
+      return "";
+   end First_Parent_Menu_Name;
+
    --------------------
    -- Base_Menu_Name --
    --------------------

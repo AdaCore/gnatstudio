@@ -252,6 +252,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
                      # Adding buttons to a toolbar
                      toolbar='', toolbar_section='', button_label='',
+                     static_path='',
 
                      # Keys
                      key_exclusive=True):
@@ -293,6 +294,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       '/Menu/Submenu %f', which supports a number of parameter substitution;
       or a function that receives a GPS.Context as parameter and returns a
       string.
+
+    :param static_path: This is a string that contains the path and name for
+      the contextual menu when 'contextual' parameter is function.
 
     :param str name: The name for the action. The default is to use the
       callback's name.
@@ -351,7 +355,14 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
         m = None
 
     if contextual:
-        a.contextual(contextual, ref=contextual_ref)
+        the_static_path = static_path
+        if not the_static_path:
+            if type(contextual) == str:
+                the_static_path = contextual
+            else:
+                the_static_path = callback.__name__
+        a.contextual(contextual, ref=contextual_ref,
+                     static_path=the_static_path)
 
     if key:
         a.key(key, exclusive=key_exclusive)

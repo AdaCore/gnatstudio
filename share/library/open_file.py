@@ -138,7 +138,8 @@ def __label(context):
 @gps_utils.interactive(
     name='open file at cursor location',
     contextual=__label,
-    filter=__filter)
+    filter=__filter,
+    static_path="Open file")
 def __activate():
     """
     Open the file specified at the cursor's location, for instance in a C

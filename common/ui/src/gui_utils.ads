@@ -521,6 +521,10 @@ package GUI_Utils is
    --  Return the path to the parent menu. The return value always ends with
    --  a trailing '/'
 
+   function First_Parent_Menu_Name (Name : String) return String;
+   --  Return the name of the first parent menu from the path. The return
+   --  value ends with a trailing '/' or empty string if no parents.
+
    function Base_Menu_Name (Path : String) return String;
    --  Return the name of the menu item, from its path.
    --  This removes the escaping that might been added thought Escape_Menu_Name

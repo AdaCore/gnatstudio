@@ -65,6 +65,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
@@ -377,6 +378,7 @@ package body GPS.Kernel is
       Handle.Application := Application;
 
       GPS.Core_Kernels.Initialize (Handle);
+      GPS.Kernel.Modules.UI.Initialize (Handle);
 
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes

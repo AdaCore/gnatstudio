@@ -38,7 +38,6 @@ def export_locations_to_editor():
     """
 
     categories = {}
-    files = {}
 
     # Get all messages
 
@@ -109,11 +108,16 @@ def on_filter(context):
         return False
 
 
+def on_label(context):
+    return "Clear locations for <b>%s</b>" % (
+         os.path.basename(context.file().path))
+
+
 @gps_utils.interactive(
     category='Locations', filter=on_filter,
     name='Clear locations for file',
-    contextual=lambda ctx: 'Clear locations for <b>%s</b>' % (
-         os.path.basename(ctx.file().path)), )
+    contextual=on_label,
+    static_path="Clear locations")
 def on_contextual():
     context = GPS.current_context()
     list = GPS.Message.list(file=context.file())

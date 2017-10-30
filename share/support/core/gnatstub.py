@@ -41,7 +41,8 @@ def __contextual_label_for_gnatstub(context):
     filter="Spec_Has_No_Body",
     name="generate body",
     description="Run gnatstub on the selected Ada specification to " +
-                "generate a matching body file.")
+                "generate a matching body file.",
+    static_path="Generate Body")
 def generate_body():
     """
     Run gnatstub on the current Ada spec to generate a matching

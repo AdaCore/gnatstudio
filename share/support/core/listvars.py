@@ -107,7 +107,8 @@ def on_global_label(context):
 @gps_utils.interactive(
     name='Variables referenced',
     contextual=on_label,
-    filter=on_filter)
+    filter=on_filter,
+    static_path="References/Variables used in")
 def __list_local_vars():
     """List all variables referenced by the subprogram."""
     list_vars(GPS.current_context().entity(), True)
@@ -116,7 +117,8 @@ def __list_local_vars():
 @gps_utils.interactive(
     name='Non local Variables referenced',
     contextual=on_global_label,
-    filter=on_filter)
+    filter=on_filter,
+    static_path="References/Non local variables used in")
 def __list_global_vars():
     """List all non local variables referenced by the subprogram."""
     list_vars(GPS.current_context().entity(), False)

@@ -62,6 +62,9 @@ package body Casing_Exceptions is
      (Creator : access Contextual_Label_Record;
       Context : Selection_Context) return String;
 
+   overriding function Get_Path
+     (Creator : access Contextual_Label_Record) return String;
+
    type Change_Case_Command (Casing : Casing_Type) is
      new Interactive_Command with null record;
    overriding function Execute
@@ -288,9 +291,29 @@ package body Casing_Exceptions is
          return Get_Label (Entity_Name_Information (Context));
       elsif Has_Area_Information (Context) then
          return Get_Label (Text_Information (Context));
+      else
+         return "";
       end if;
-      return "";
    end Get_Label;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   overriding function Get_Path
+     (Creator : access Contextual_Label_Record) return String is
+   begin
+      case Creator.Casing is
+         when Lower =>
+            return "Casing/Lower";
+         when Upper =>
+            return "Casing/Upper";
+         when Mixed =>
+            return "Casing/Mixed";
+         when Smart_Mixed =>
+            return "Casing/Smart Mixed";
+      end case;
+   end Get_Path;
 
    -------------
    -- Execute --

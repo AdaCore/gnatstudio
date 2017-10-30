@@ -125,6 +125,11 @@ package GPS.Kernel.Modules.UI is
    --  Create the name to use for a contextual menu.
    --  If this function returns the empty string, the menu will be filtered out
 
+   function Get_Path
+     (Creator : access Contextual_Menu_Label_Creator_Record)
+      return String is ("");
+   --  Returns the full path and name of the item.
+
    type Custom_Expansion is access function
      (Context : Selection_Context) return String;
    --  Provide the custom expansion for %C when expanding a label. If the
@@ -457,6 +462,9 @@ package GPS.Kernel.Modules.UI is
    --  (for a Location_Marker and is used to restore a marker from a previous
    --  session.
    --  null is returned if no Location_Marker could be created.
+
+   procedure Initialize (Kernel : access Kernel_Handle_Record'Class);
+   --  Initialize the contextual menu by creating root menu item.
 
 private
 

@@ -782,38 +782,46 @@ package body GPS.Kernel.Contexts is
       Approximate_Search_Fallback : Boolean := True)
       return Xref.Root_Entity'Class
    is
-      Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
-      Db   : constant General_Xref_Database := Data.Kernel.Databases;
    begin
-      --  If we have never attempted to get the actual location of the entity,
-      --  do so now.
-
-      if not Data.Xref_Entity_Resolution_Attempted then
-         --  We are attempting resolution now
-         Data.Xref_Entity_Resolution_Attempted := True;
-
-         if Has_File_Information (Context)
-           and then Has_Line_Information (Context)
-           and then Data.Entity_Name /= Null_Unbounded_String
-         then
-            Data.Xref_Entity.Replace_Element
-              (Db.Get_Entity
-                 (Loc  =>
-                      (File    => Data.Files (Data.Files'First),
-                       Project_Path => Data.Project.Project_Path,
-                       Line    => Data.Line,
-                       Column  => Data.Entity_Column),
-                  Name => To_String (Data.Entity_Name),
-                  Closest_Ref => Data.Xref_Closest_Ref,
-                  Approximate_Search_Fallback => Approximate_Search_Fallback));
-         end if;
-      end if;
-
-      if Data.Xref_Entity.Is_Empty then
+      if Context = No_Context then
          return No_Root_Entity;
-      else
-         return Data.Xref_Entity.Element;
       end if;
+
+      declare
+         Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+         Db   : constant General_Xref_Database := Data.Kernel.Databases;
+      begin
+         --  If we have never attempted to get the actual location of
+         --  the entity, do so now.
+
+         if not Data.Xref_Entity_Resolution_Attempted then
+            --  We are attempting resolution now
+            Data.Xref_Entity_Resolution_Attempted := True;
+
+            if Has_File_Information (Context)
+              and then Has_Line_Information (Context)
+              and then Data.Entity_Name /= Null_Unbounded_String
+            then
+               Data.Xref_Entity.Replace_Element
+                 (Db.Get_Entity
+                    (Loc  =>
+                         (File         => Data.Files (Data.Files'First),
+                          Project_Path => Data.Project.Project_Path,
+                          Line         => Data.Line,
+                          Column       => Data.Entity_Column),
+                     Name => To_String (Data.Entity_Name),
+                     Closest_Ref => Data.Xref_Closest_Ref,
+                     Approximate_Search_Fallback =>
+                       Approximate_Search_Fallback));
+            end if;
+         end if;
+
+         if Data.Xref_Entity.Is_Empty then
+            return No_Root_Entity;
+         else
+            return Data.Xref_Entity.Element;
+         end if;
+      end;
    end Get_Entity;
 
    ----------------------------

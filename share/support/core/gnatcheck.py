@@ -385,7 +385,8 @@ def __contextualMenuLabel(context):
 @interactive(
     name='Check Coding Standard',
     contextual=__contextualMenuLabel,
-    filter=__contextualMenuFilter)
+    filter=__contextualMenuFilter,
+    static_path="Check Coding standard")
 def on_activate():
     context = GPS.contextual_context()
     data = context.gnatcheck
