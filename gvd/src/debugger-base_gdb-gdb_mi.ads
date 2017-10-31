@@ -506,6 +506,7 @@ private
       Is_Running           : Boolean          := False;
       Registers            : GVD.Types.Strings_Vectors.Vector;
       Register_Names       : GVD.Types.Strings_Vectors.Vector;
+      Second_Wait          : Boolean := False;
    end record;
 
    function Create_Var

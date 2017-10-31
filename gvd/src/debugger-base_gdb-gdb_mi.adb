@@ -1697,28 +1697,27 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Num : Expect_Match;
    begin
-      Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+      if not Debugger.Second_Wait then
+         Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
 
-      if Num = Expect_Timeout then
-         return False;
+         if Num = Expect_Timeout then
+            return False;
+         end if;
       end if;
 
       if Debugger.Is_Running
         and then Debugger.Current_Command_Kind = Execution_Command
       then
          --  We are running, wait for the second 'stopped' prompt
+         Debugger.Second_Wait := True;
          Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+
+         if Num = Expect_Timeout then
+            return False;
+         end if;
       end if;
 
-      if Num = Expect_Timeout then
-         return False;
-      end if;
-
-      if Debugger.Is_Running then
-         Debugger.Is_Running := False;
-         return False;
-      end if;
-
+      Debugger.Second_Wait := False;
       return True;
    end Wait_Prompt;
 
