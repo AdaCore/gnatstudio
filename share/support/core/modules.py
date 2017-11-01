@@ -45,6 +45,8 @@ underscore) as a parameter to :func:`GPS.Browsers.View.create`.
 
 
 import GPS
+import traceback
+import sys
 
 try:
     # While building the doc, we might not have access to this module
@@ -307,11 +309,14 @@ class Module(object):
             self.setup()
 
         except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
             GPS.Logger('MODULES').log('While loading module: %s' % (e, ))
             GPS.Console("Messages").write(
                 "warning: could not load module %s\n" % self.name())
             GPS.Console("Messages").write(
-                "%s\n" % e)
+                "%s\n" % '\n'.join(
+                    traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)))
 
         # Catch "gps_started" implementation in legacy or user-defined plugins
         if hasattr(self, "gps_started"):
