@@ -213,12 +213,6 @@ package body GVD.Canvas.View is
       Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Data->Display Arguments
 
-   type Registers_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Display Registers
-
    type Expression_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Expression_Command;
@@ -512,39 +506,6 @@ package body GVD.Canvas.View is
          Output_Command => True);
       return Commands.Success;
    end Execute_Dbg;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-      Result : Boolean with Unreferenced;
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
-      if GVD.Preferences.Debugger_Kind.Get_Pref = Gdb_MI then
-         Result := Execute_Action
-           (Kernel, "open registers view", Context.Context);
-
-      else
-         Process_User_Command
-           (Process,
-            "graph display `" & Info_Registers (Process.Debugger) & '`',
-            Output_Command => True);
-      end if;
-
-      return Commands.Success;
-   end Execute;
 
    -------------
    -- Execute --
@@ -1933,12 +1894,6 @@ package body GVD.Canvas.View is
         (Kernel, "debug display arguments", new Arguments_Command,
          Filter      => Filter,
          Description => -"Display arguments to the current subprogram",
-         Category    => -"Debug");
-
-      Register_Action
-        (Kernel, "debug display registers", new Registers_Command,
-         Description => -"Display the contents of registers in data window",
-         Filter      => Filter,
          Category    => -"Debug");
 
       Register_Action

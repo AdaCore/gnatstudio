@@ -77,6 +77,7 @@ private
       Remote_Mode             : Remote_GDB_Mode := Native;
       Has_Wtx_Add_Symbol_File : GNATCOLL.Tribooleans.Triboolean :=
         GNATCOLL.Tribooleans.Indeterminate;
+      Registers               : GVD.Types.Strings_Vectors.Vector;
    end record;
 
    procedure Prepare_Target_For_Send

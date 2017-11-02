@@ -277,10 +277,6 @@ package Debugger is
    --  Return the command to be used to display the parameters of the current
    --  subprogram
 
-   function Info_Registers
-     (Debugger : access Debugger_Root) return String is abstract;
-   --  Return the command to be used to display the value of registers
-
    function Value_Of
      (Debugger : access Debugger_Root;
       Entity   : String;

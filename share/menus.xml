@@ -357,12 +357,12 @@
             <menu label="Tas_ks"              action="open tasks debugger window"/>
             <menu label="A_ssembly"           action="open assembly view"/>
             <menu label="_Breakpoints"        action="open breakpoints editor"/>
+            <menu label="_Registers"          action="open registers view"/>
             <separator/>
             <menu label="_Examine Memory"     action="examine memory"/>
             <separator/>
             <menu label="Display _Local Variables" action="debug display local variables"/>
             <menu label="Display _Arguments"       action="debug display arguments"/>
-            <menu label="Display _Registers"       action="debug display registers"/>
             <menu label="Display Any _Expression..." action="debug display any expression"/>
             <menu label="Graph Display Local Variables" action="debug graph display local variables"
                   optional="true"/>
@@ -613,7 +613,6 @@
       <separator/>
       <button action="debug tree display local variables"/>
       <button action="debug tree display arguments"/>
-      <button action="debug tree display registers"/>
    </toolbar>
 
    <toolbar id='Assembly'>

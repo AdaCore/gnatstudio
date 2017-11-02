@@ -118,9 +118,6 @@ package Debugger.Base_Gdb.Gdb_MI is
    overriding function Info_Args
      (Debugger : access Gdb_MI_Debugger) return String;
 
-   overriding function Info_Registers
-     (Debugger : access Gdb_MI_Debugger) return String;
-
    overriding function Get_Uniq_Id
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String) return String;
@@ -504,7 +501,6 @@ private
       Current_Frame        : Frame_Info       := Null_Frame_Info;
       Current_Command_Kind : Command_Category := Misc_Command;
       Is_Running           : Boolean          := False;
-      Registers            : GVD.Types.Strings_Vectors.Vector;
       Register_Names       : GVD.Types.Strings_Vectors.Vector;
       Second_Wait          : Boolean := False;
    end record;

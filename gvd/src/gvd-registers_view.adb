@@ -149,15 +149,15 @@ package body GVD.Registers_View is
 
    Name_Column           : constant := 0;
    Hexadecimal_Column    : constant := 1;
-   Octal_Column          : constant := 2;
-   Binary_Column         : constant := 3;
-   Decimal_Column        : constant := 4;
-   Raw_Column            : constant := 5;
-   Naturals_Column       : constant := 6;
-   FG_Color_Column       : constant := 7;
-   BG_Name_Color_Column  : constant := 8;
-   BG_Value_Color_Column : constant := 9;
-   Editable_Column       : constant := 10;
+   Naturals_Column       : constant := 2;
+   FG_Color_Column       : constant := 3;
+   BG_Name_Color_Column  : constant := 4;
+   BG_Value_Color_Column : constant := 5;
+   Editable_Column       : constant := 6;
+   Octal_Column          : constant := 7;
+   Binary_Column         : constant := 8;
+   Decimal_Column        : constant := 9;
+   Raw_Column            : constant := 10;
 
    -----------------
    -- Create_Menu --
@@ -167,6 +167,8 @@ package body GVD.Registers_View is
      (View : not null access Registers_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      use type GVD.Types.Debugger_Type;
+
       K       : constant Kernel_Handle := View.Kernel;
       Process : Visual_Debugger;
       Names   : GVD.Types.Strings_Vectors.Vector;
@@ -177,11 +179,13 @@ package body GVD.Registers_View is
       Create_Register_Preferences (View, Names);
 
       Append_Menu (Menu, K, Registers_Hexadecimal);
-      Append_Menu (Menu, K, Registers_Octal);
-      Append_Menu (Menu, K, Registers_Binary);
-      Append_Menu (Menu, K, Registers_Decimal);
-      Append_Menu (Menu, K, Registers_Raw);
       Append_Menu (Menu, K, Registers_Natural);
+      if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+         Append_Menu (Menu, K, Registers_Octal);
+         Append_Menu (Menu, K, Registers_Binary);
+         Append_Menu (Menu, K, Registers_Decimal);
+         Append_Menu (Menu, K, Registers_Raw);
+      end if;
       Menu.Append (Gtk.Menu_Item.Gtk_Menu_Item_New);
 
       for Item of Names loop
@@ -327,21 +331,23 @@ package body GVD.Registers_View is
    function Initialize
      (Widget : access Registers_View_Record'Class) return Gtk_Widget
    is
+      use type GVD.Types.Debugger_Type;
+
       Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
 
       Column_Types : constant GType_Array :=
         (Name_Column           => GType_String,
          Hexadecimal_Column    => GType_String,
-         Octal_Column          => GType_String,
-         Binary_Column         => GType_String,
-         Decimal_Column        => GType_String,
-         Raw_Column            => GType_String,
          Naturals_Column       => GType_String,
          FG_Color_Column       => Gdk.RGBA.Get_Type,
          BG_Name_Color_Column  => Gdk.RGBA.Get_Type,
          BG_Value_Color_Column => Gdk.RGBA.Get_Type,
-         Editable_Column       => GType_Boolean);
+         Editable_Column       => GType_Boolean,
+         Octal_Column          => GType_String,
+         Binary_Column         => GType_String,
+         Decimal_Column        => GType_String,
+         Raw_Column            => GType_String);
 
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
@@ -382,6 +388,8 @@ package body GVD.Registers_View is
 
       Gtk_New (Widget.Model, Column_Types);
       Gtk_New (Widget.Tree,  Widget.Model);
+      Set_Name (Widget.Tree, "Registers Tree");  --  For testsuite
+
       Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
       Widget.Tree.Set_Grid_Lines (Grid_Lines_Both);
       Add (Scrolled, Widget.Tree);
@@ -400,27 +408,30 @@ package body GVD.Registers_View is
       Create
         (Hexadecimal_Column,
          GVD.Preferences.Registers_Hexadecimal.Get_Pref,
-        "Hexadecimal");
-      Create
-        (Octal_Column,
-         GVD.Preferences.Registers_Octal.Get_Pref,
-         "Octal");
-      Create
-        (Binary_Column,
-         GVD.Preferences.Registers_Binary.Get_Pref,
-         "Binary");
-      Create
-        (Decimal_Column,
-         GVD.Preferences.Registers_Decimal.Get_Pref,
-         "Decimal");
-      Create
-        (Raw_Column,
-         GVD.Preferences.Registers_Raw.Get_Pref,
-        "Raw");
+         "Hexadecimal");
       Create
         (Naturals_Column,
          GVD.Preferences.Registers_Natural.Get_Pref,
          "Natural");
+
+      if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+         Create
+           (Octal_Column,
+            GVD.Preferences.Registers_Octal.Get_Pref,
+            "Octal");
+         Create
+           (Binary_Column,
+            GVD.Preferences.Registers_Binary.Get_Pref,
+            "Binary");
+         Create
+           (Decimal_Column,
+            GVD.Preferences.Registers_Decimal.Get_Pref,
+            "Decimal");
+         Create
+           (Raw_Column,
+            GVD.Preferences.Registers_Raw.Get_Pref,
+            "Raw");
+      end if;
 
       Widget.Modify_Font (Default_Style.Get_Pref_Font);
 
@@ -483,14 +494,14 @@ package body GVD.Registers_View is
    is
       Debugger_Stopped : Action_Filter;
    begin
+      Debugger_Stopped := Kernel.Lookup_Filter ("Debugger stopped");
+
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
         (Kernel,
          Action_Name => "open registers view",
-         Description => "Open the Registers view for the debugger");
-
-      Debugger_Stopped := Kernel.Lookup_Filter
-        ("Debugger stopped");
+         Description => "Open the Registers view for the debugger",
+         Filter      => Debugger_Stopped);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "register_view select all",
@@ -564,30 +575,47 @@ package body GVD.Registers_View is
       --  Retrive values in selected format
 
       procedure Get_Values (Fmt : GVD.Types.Registers_Format) is
+         use type GVD.Types.Debugger_Type;
+         use type GVD.Types.Registers_Format;
+
          Allowed : Boolean;
          Result  : GVD.Types.Strings_Vectors.Vector;
          Column  : Glib.Gint;
       begin
-         case Fmt is
-            when GVD.Types.Hexadecimal =>
-               Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;
-               Column  := Hexadecimal_Column;
-            when GVD.Types.Octal =>
-               Allowed := GVD.Preferences.Registers_Octal.Get_Pref;
-               Column  := Octal_Column;
-            when GVD.Types.Binary =>
-               Allowed := GVD.Preferences.Registers_Binary.Get_Pref;
-               Column  := Binary_Column;
-            when GVD.Types.Decimal =>
-               Allowed := GVD.Preferences.Registers_Decimal.Get_Pref;
-               Column  := Decimal_Column;
-            when GVD.Types.Raw =>
-               Allowed := GVD.Preferences.Registers_Raw.Get_Pref;
-               Column  := Raw_Column;
-            when GVD.Types.Naturals =>
-               Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
-               Column  := Naturals_Column;
-         end case;
+         if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+            case Fmt is
+               when GVD.Types.Hexadecimal =>
+                  Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;
+                  Column  := Hexadecimal_Column;
+               when GVD.Types.Octal =>
+                  Allowed := GVD.Preferences.Registers_Octal.Get_Pref;
+                  Column  := Octal_Column;
+               when GVD.Types.Binary =>
+                  Allowed := GVD.Preferences.Registers_Binary.Get_Pref;
+                  Column  := Binary_Column;
+               when GVD.Types.Decimal =>
+                  Allowed := GVD.Preferences.Registers_Decimal.Get_Pref;
+                  Column  := Decimal_Column;
+               when GVD.Types.Raw =>
+                  Allowed := GVD.Preferences.Registers_Raw.Get_Pref;
+                  Column  := Raw_Column;
+               when GVD.Types.Naturals =>
+                  Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
+                  Column  := Naturals_Column;
+            end case;
+
+         else
+            case Fmt is
+               when GVD.Types.Hexadecimal =>
+                  Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;
+                  Column  := Hexadecimal_Column;
+               when GVD.Types.Naturals =>
+                  Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
+                  Column  := Naturals_Column;
+               when others =>
+                  Allowed := False;
+            end case;
+         end if;
 
          if not Allowed then
             return;

@@ -301,12 +301,6 @@ package body GVD_Module is
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Is_GDB_CLI_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_GDB_CLI_Filter;
-      Context : Selection_Context) return Boolean;
-   --  Return True when CLI mode is set in debugger kind preference
-
    type Set_Value_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Value_Command;
@@ -1198,19 +1192,6 @@ package body GVD_Module is
       return False;
    end Filter_Matches_Primitive;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_GDB_CLI_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter, Context);
-   begin
-      return GVD.Preferences.Debugger_Kind.Get_Pref = Gdb;
-   end Filter_Matches_Primitive;
-
    ---------------------
    -- Tooltip_Handler --
    ---------------------
@@ -1542,7 +1523,6 @@ package body GVD_Module is
       Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
       Subprogram_Filter : Action_Filter;
-      CLI_Filter        : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -1565,9 +1545,6 @@ package body GVD_Module is
       Subprogram_Filter := new Subprogram_Variable_Filter;
       Register_Filter
         (Kernel, Subprogram_Filter, "Debugger subprogram");
-
-      CLI_Filter := new Is_GDB_CLI_Filter;
-      Register_Filter (Kernel, CLI_Filter, "Debugger in CLI mode");
 
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 

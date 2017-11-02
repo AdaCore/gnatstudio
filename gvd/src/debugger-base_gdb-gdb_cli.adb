@@ -448,18 +448,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       return "info args";
    end Info_Args;
 
-   --------------------
-   -- Info_Registers --
-   --------------------
-
-   overriding function Info_Registers
-     (Debugger : access Gdb_Debugger) return String
-   is
-      pragma Unreferenced (Debugger);
-   begin
-      return "info registers";
-   end Info_Registers;
-
    --------------
    -- Value_Of --
    --------------
@@ -3094,15 +3082,44 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger)
       return GVD.Types.Strings_Vectors.Vector
    is
-      pragma Unreferenced (Debugger);
-      Empty : GVD.Types.Strings_Vectors.Vector;
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
    begin
-      return Empty;
+      if not Debugger.Registers.Is_Empty then
+         return Debugger.Registers;
+      end if;
+
+      declare
+         S     : constant String := Send_And_Get_Clean_Output
+           (Debugger, "info all-registers", Mode => Internal);
+         Idx   : Natural := S'First;
+         Start : Natural;
+      begin
+         if Index (S, "The program has no registers now.") in S'Range then
+            return Debugger.Registers;
+         end if;
+
+         while Idx < S'Last loop
+            Start := Idx;
+            Skip_To_Blank (S, Idx);
+            exit when Idx > S'Last;
+            Debugger.Registers.Append (S (Start .. Idx - 1));
+            Idx := Line_End (S, Idx) + 1;
+            exit when Idx > S'Last;
+            Skip_Blanks (S, Idx);
+         end loop;
+      end;
+
+      return Debugger.Registers;
    end Get_Register_Names;
 
    --------------------------
    -- Get_Registers_Values --
    --------------------------
+
+   Regular_Register_Value : constant Pattern_Matcher := Compile
+     ("^(0x[0-9a-f]+)\s+((0x)?[0-9a-f]+)$");
 
    overriding function Get_Registers_Values
      (Debugger : access Gdb_Debugger;
@@ -3110,10 +3127,75 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Format   : GVD.Types.Registers_Format)
       return GVD.Types.Strings_Vectors.Vector
    is
-      pragma Unreferenced (Debugger, Names, Format);
-      Empty : GVD.Types.Strings_Vectors.Vector;
+      Result : GVD.Types.Strings_Vectors.Vector;
+
+      ---------
+      -- Get --
+      ---------
+
+      function Get (Name : String) return String;
+      function Get (Name : String) return String is
+         S        : constant String := Send_And_Get_Clean_Output
+           (Debugger, "info registers " & Name, Mode => Internal);
+         Idx      : Natural := S'First;
+         Matched  : Match_Array (0 .. 3);
+      begin
+         Skip_Word (S, Idx);
+         if Idx not in S'Range then
+            return "";
+         end if;
+
+         Skip_Blanks (S, Idx);
+         if Idx not in S'Range then
+            return "";
+         end if;
+
+         Match (Regular_Register_Value, S (Idx .. S'Last), Matched);
+
+         if Matched (0) = No_Match then
+            if Format = GVD.Types.Hexadecimal then
+               return S (Idx .. S'Last);
+            else
+               return "";
+            end if;
+
+         else
+            case Format is
+               when GVD.Types.Hexadecimal =>
+                  return S (Matched (1).First .. Matched (1).Last);
+
+               when GVD.Types.Naturals =>
+                  if Matched (3) = No_Match then
+                     return S (Matched (2).First .. Matched (2).Last);
+
+                  else
+                     return "";
+                  end if;
+
+               when others =>
+                  return "";
+            end case;
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Me, E);
+            return "";
+      end Get;
+
    begin
-      return Empty;
+      if Names.Is_Empty then
+         for N of Debugger.Registers loop
+            Result.Append (Get (N));
+         end loop;
+
+      else
+         for N of Names loop
+            Result.Append (Get (N));
+         end loop;
+      end if;
+
+      return Result;
    end Get_Registers_Values;
 
    -------------------

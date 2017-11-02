@@ -240,11 +240,6 @@ package body GVD.Variables.View is
      (Command : access Tree_Expression_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Tree_Registers_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Tree_Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
    type Set_Format_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Format_Command;
@@ -606,24 +601,6 @@ package body GVD.Variables.View is
    begin
       Execute_In_Debugger
         (Context, "tree display `" & Process.Debugger.Info_Args & "` split");
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Tree_Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Process  : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
-   begin
-      Execute_In_Debugger
-        (Context,
-         "tree display `" & Process.Debugger.Info_Registers & "` split");
       return Commands.Success;
    end Execute;
 
@@ -1387,16 +1364,6 @@ package body GVD.Variables.View is
              & "  Variables view"),
          Filter      => Debugger_Stopped_Filter,
          Icon_Name   => "gps-debugger-arguments-symbolic",
-         Category    => -"Debug");
-
-      Register_Action
-        (Kernel, "debug tree display registers",
-         Command     => new Tree_Registers_Command,
-         Description =>
-           -"Display the contents of registers in the Variables view",
-         Filter      => Kernel.Lookup_Filter ("Debugger in CLI mode") and
-             Debugger_Stopped_Filter,
-         Icon_Name   => "gps-debugger-registers-symbolic",
          Category    => -"Debug");
 
       Register_Action

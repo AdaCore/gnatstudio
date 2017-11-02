@@ -116,9 +116,6 @@ package Debugger.Base_Gdb.Gdb_CLI is
    overriding function Info_Args
      (Debugger : access Gdb_Debugger) return String;
 
-   overriding function Info_Registers
-     (Debugger : access Gdb_Debugger) return String;
-
    overriding function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
