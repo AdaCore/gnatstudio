@@ -2275,6 +2275,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             EOL := EOL - 1;
          end if;
 
+         exit when EOL < Output'First and then Len > Info'First + 1;
+
          Info (Len) :=
            (Num_Fields => 1,
             Information => (1 => New_String (Output (EOL + 1 .. Index))));
