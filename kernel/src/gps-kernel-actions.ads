@@ -20,7 +20,6 @@
 --  Actions are named commands (or list of commands) in GPS. These can
 --  be associated with menus, keys and toolbar buttons among other things.
 
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Commands.Interactive;  use Commands.Interactive;
 with Gdk.Event;
 with GNAT.Strings;
@@ -31,17 +30,15 @@ package GPS.Kernel.Actions is
    type Action_Record is private;
    type Action_Record_Access is access Action_Record;
 
-   package Action_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-      (String);
-
    procedure Register_Action
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null;
-      Category    : String := "General";
-      Icon_Name   : String := "");
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Description  : String := "";
+      Filter       : Action_Filter := null;
+      Category     : String := "General";
+      Icon_Name    : String := "";
+      For_Learning : Boolean := False);
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
@@ -52,6 +49,8 @@ package GPS.Kernel.Actions is
    --  will not be shown in the keybinding editor.
    --  Command is then owned by the kernel, and will be freed when GPS exits.
    --  You must not call Unref withouth first calling Ref on that command.
+   --  When For_Learning is True, this action will be displayed in the GPS
+   --  Learn view when it's valid in the current context.
 
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;
@@ -183,6 +182,10 @@ package GPS.Kernel.Actions is
    function Get (Iter : Action_Iterator) return Action_Record_Access;
    --  Return the current action. The empty string or No_Action is returned if
    --  there are no more actions.
+
+   procedure Register_Actions_Learn_Provider
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Register all the actions that we want to display in the Learn view
 
 private
 

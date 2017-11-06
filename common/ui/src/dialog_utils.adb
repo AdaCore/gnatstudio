@@ -285,7 +285,8 @@ package body Dialog_Utils is
       Group_Name          : String                 := "";
       Allow_Multi_Columns : Boolean                := True;
       Selection           : Gtk_Selection_Mode     := Selection_None;
-      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null)
+      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null;
+      Filtering_Function  : Gtk_Flow_Box_Filter_Func := null)
    is
       Max_Children_Per_Line : constant Guint := (if Allow_Multi_Columns then
                                                     2
@@ -304,6 +305,10 @@ package body Dialog_Utils is
 
       if Sorting_Function /= null then
          Self.Flow_Box.Set_Sort_Func (Sorting_Function);
+      end if;
+
+      if Filtering_Function /= null then
+         Self.Flow_Box.Set_Filter_Func (Filtering_Function);
       end if;
 
       Self.Add (Self.Flow_Box);
@@ -543,6 +548,17 @@ package body Dialog_Utils is
    begin
       Self.Flow_Box.Invalidate_Sort;
    end Force_Sort;
+
+   --------------------
+   -- Force_Refilter --
+   --------------------
+
+   procedure Force_Refilter
+     (Self : not null access Dialog_Group_Widget_Record'Class)
+   is
+   begin
+      Self.Flow_Box.Invalidate_Filter;
+   end Force_Refilter;
 
    ---------------------
    -- Apply_Doc_Style --

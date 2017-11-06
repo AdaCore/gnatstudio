@@ -20,6 +20,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Commands;                  use Commands;
 with Gdk.Event;                 use Gdk.Event;
+with Gtk.Label;                 use Gtk.Label;
 with Glib.Convert;              use Glib.Convert;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -29,8 +30,10 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
 with Gtkada.MDI;                use Gtkada.MDI;
 with String_Utils;              use String_Utils;
+with Learn;                     use Learn;
 
 package body GPS.Kernel.Actions is
    Me : constant Trace_Handle := Create ("ACTIONS");
@@ -49,6 +52,73 @@ package body GPS.Kernel.Actions is
    --  Executes a command, blocking the whole GPS interface while doing so.
    --  It is recommended instead to use Launch_Background_Command, but this one
    --  is sometimes used in user's python scripts.
+
+   type Actions_Learn_Provider_Type is new Learn_Provider_Type with record
+      Kernel : Kernel_Handle;
+   end record;
+
+   overriding function Get_Name
+     (Self : not null access Actions_Learn_Provider_Type) return String
+   is
+      ("Actions");
+
+   overriding function Get_Learn_Items
+     (Self : not null access Actions_Learn_Provider_Type) return
+     Learn_Item_Type_Lists.List;
+
+   type Action_Learn_Item_Type is new Learn_Item_Type with record
+      Action : Action_Record_Access;
+   end record;
+   type Action_Learn_Item is access all Action_Learn_Item_Type;
+
+   overriding function Is_Visible
+     (Self        : not null access Action_Learn_Item_Type;
+      Context     : Selection_Context;
+      Filter_Text : String) return Boolean;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self        : not null access Action_Learn_Item_Type;
+      Context     : Selection_Context;
+      Filter_Text : String) return Boolean
+   is
+      pragma Unreferenced (Filter_Text);
+   begin
+      return Filter_Matches (Self.Action, Context => Context);
+   end Is_Visible;
+
+   ---------------------
+   -- Get_Learn_Items --
+   ---------------------
+
+   overriding function Get_Learn_Items
+     (Self : not null access Actions_Learn_Provider_Type) return
+     Learn_Item_Type_Lists.List
+   is
+      Items        : Learn_Item_Type_Lists.List;
+      Action_Child : Action_Learn_Item;
+      Action_Label : Gtk_Label;
+   begin
+      for Action_Name of Self.Kernel.Actions_For_Learning loop
+         Action_Child := new Action_Learn_Item_Type;
+         Action_Child.Action := Lookup_Action (Self.Kernel, Action_Name);
+         Gtk.Flow_Box_Child.Initialize (Action_Child);
+
+         Gtk_New
+           (Action_Label,
+            Get_Full_Description (Action_Child.Action, Kernel => Self.Kernel));
+         Action_Label.Set_Alignment (0.0, 0.5);
+         Action_Label.Set_Use_Markup (True);
+         Action_Child.Add (Action_Label);
+
+         Items.Append (Learn_Item (Action_Child));
+      end loop;
+
+      return Items;
+   end Get_Learn_Items;
 
    ----------
    -- Free --
@@ -80,13 +150,14 @@ package body GPS.Kernel.Actions is
    ---------------------
 
    procedure Register_Action
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null;
-      Category    : String := "General";
-      Icon_Name   : String := "")
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Command      : access Commands.Interactive.Interactive_Command'Class;
+      Description  : String := "";
+      Filter       : Action_Filter := null;
+      Category     : String := "General";
+      Icon_Name    : String := "";
+      For_Learning : Boolean := False)
    is
       Old            : constant Action_Record_Access :=
         Lookup_Action (Kernel, Name);
@@ -160,6 +231,10 @@ package body GPS.Kernel.Actions is
 
       if Status_Changed then
          Action_Status_Changed (Kernel, Name);
+      end if;
+
+      if For_Learning then
+         Kernel.Actions_For_Learning.Append (Name);
       end if;
    end Register_Action;
 
@@ -594,8 +669,7 @@ package body GPS.Kernel.Actions is
            else "")
         & (if Shortcut = "" then ""
            else Tag ("Shortcut: ") & Shortcut & ASCII.LF)
-        & (To_String (Menus))
-        & ASCII.LF;
+        & (To_String (Menus));
    end Get_Full_Description;
 
    ------------------
@@ -631,5 +705,19 @@ package body GPS.Kernel.Actions is
    begin
       return Self.Name.all;
    end Get_Name;
+
+   -------------------------------------
+   -- Register_Actions_Learn_Provider --
+   -------------------------------------
+
+   procedure Register_Actions_Learn_Provider
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Provider : access Actions_Learn_Provider_Type;
+   begin
+      Provider := new Actions_Learn_Provider_Type'
+        (Kernel => Kernel_Handle (Kernel));
+      Learn.Register_Provider (Provider);
+   end Register_Actions_Learn_Provider;
 
 end GPS.Kernel.Actions;

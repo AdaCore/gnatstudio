@@ -84,6 +84,7 @@ with GPS.Callbacks;                    use GPS.Callbacks;
 with GPS.Environments;                 use GPS.Environments;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
@@ -164,6 +165,7 @@ with Toolchains_Module;
 with Ada_Semantic_Tree_Module;
 with LAL.Module;
 with Language_Handlers.Assistants;
+with Learn.Views;
 with Memory_Usage_Views.Module;
 with Navigation_Module;
 with Outline_View;
@@ -2323,9 +2325,15 @@ procedure GPS.Main is
       --  so far.
       KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
 
+      --  Register the Learn module and the associated view
+      Learn.Register_Module (GPS_Main.Kernel);
+      Learn.Views.Register_Module (GPS_Main.Kernel);
+
+      --  Register the actions learn provider
+      GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
+
       --  Show the preferences assistant dialog if the user don't have any GPS
       --  home directory yet.
-
       if Show_Preferences_Assistant then
 
          --  Remove the splash screen, since it conflicts with the preferences

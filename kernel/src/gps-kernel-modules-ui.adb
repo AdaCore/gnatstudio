@@ -1525,11 +1525,17 @@ package body GPS.Kernel.Modules.UI is
       C : constant Action_Elements.Cursor :=
          Globals.Actions_To_UI.Find (Action);
       Result : Unbounded_String;
+      First_Iter : Boolean := True;
    begin
       if Has_Element (C) then
          for M of Globals.Actions_To_UI.Reference (C) loop
             if M.Place = In_Menu then
-               Append (Result, ASCII.LF);
+               if First_Iter then
+                  First_Iter := False;
+               else
+                  Append (Result, ASCII.LF);
+               end if;
+
                Append (Result, M.Path);
             end if;
          end loop;

@@ -41,6 +41,8 @@
 
 @define-color error-color mix(@theme_base_color, red, 0.5);
 
+@define-color learn-items-color shade(@theme_base_color, 1.10);
+
 /* The colors used to highlight the notebook tabs that are raised. Only one
  * of them (at most) has the keyboard focus and is highlighted with
  * gps_active_tab. The others are highlighting with gps_inactive_tab.
@@ -115,6 +117,19 @@
    -GtkButtonBox-child-min-height: 0;
    -GtkButtonBox-child-internal-pad-y: 0;
    -GtkButtonBox-child-internal-pad-x: 0;
+}
+
+/*********************
+ * GPS Learn View    *
+ *********************/
+
+.learn-groups {
+   padding: 10px;
+}
+
+.learn-items {
+   background-color: @learn-items-color;
+   padding-left: 12px;
 }
 
 /**************************

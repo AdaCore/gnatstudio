@@ -154,7 +154,8 @@ package Dialog_Utils is
       Group_Name          : String                 := "";
       Allow_Multi_Columns : Boolean                := True;
       Selection           : Gtk_Selection_Mode     := Selection_None;
-      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null);
+      Sorting_Function    : Gtk_Flow_Box_Sort_Func := null;
+      Filtering_Function  : Gtk_Flow_Box_Filter_Func := null);
    --  Initialize a group widget, associating it with it's parent dialog view.
    --  Group_Name is used to set the group's title label.
    --
@@ -165,6 +166,8 @@ package Dialog_Utils is
    --  the children are not selectable.
    --  Sorting_Function is used to sort the children when adding a new one,
    --  it is also used with Force_Sort to force a new sort.
+   --  Filtering_Function is used to filter the children. You can force the
+   --  refiltering of the whole group with Force_Refilter.
 
    function Get_Number_Of_Children
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural;
@@ -260,6 +263,10 @@ package Dialog_Utils is
    procedure Force_Sort
      (Self : not null access Dialog_Group_Widget_Record'Class);
    --  Resort the Dialog_Group_Widget children
+
+   procedure Force_Refilter
+     (Self : not null access Dialog_Group_Widget_Record'Class);
+   --  Refilter the Dialog_Group_Widget children
 
    ------------------
    -- CSS Stlizers --

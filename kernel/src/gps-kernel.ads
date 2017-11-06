@@ -20,6 +20,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
@@ -401,6 +402,9 @@ package GPS.Kernel is
    --------------------
    -- Action filters --
    --------------------
+
+   package Action_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (String);
 
    type Action_Filter_Record is abstract tagged private;
    type Action_Filter is access all Action_Filter_Record'Class;
@@ -1107,6 +1111,9 @@ private
 
       Actions : Root_Table_Access;
       --  The actions registered in the kernel
+
+      Actions_For_Learning : Action_Lists.List;
+      --  The list of actions that can be displayed in the Learn view
 
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
