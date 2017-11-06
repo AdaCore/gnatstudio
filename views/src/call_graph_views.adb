@@ -227,10 +227,10 @@ package body Call_Graph_Views is
      (Command : access Calltree_Next_Or_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Calltree_Collapse_All_Command
-      is new Interactive_Command with null record;
+   type Calltree_Collapse_Or_Expand_Command (Is_Collapse : Boolean) is
+     new Interactive_Command with null record;
    overriding function Execute
-     (Command : access Calltree_Collapse_All_Command;
+     (Command : access Calltree_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Ancestors_User_Data is new Commands_User_Data_Record with record
@@ -324,6 +324,36 @@ package body Call_Graph_Views is
    --  next valid row at that level, or invalidated if it previously pointed to
    --  the last one.
 
+   procedure Get_Selected
+     (View   : access Callgraph_View_Record'Class;
+      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Returns the first selected element with Selection_Multiple.
+
+   ------------------
+   -- Get_Selected --
+   ------------------
+
+   procedure Get_Selected
+     (View   : access Callgraph_View_Record'Class;
+      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      List : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+      use Gtk_Tree_Path_List;
+   begin
+      View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+      if List /= Null_List then
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+      else
+         Iter := Null_Iter;
+      end if;
+      Free (List);
+   end Get_Selected;
+
    ---------------------
    -- Free_And_Remove --
    ---------------------
@@ -416,7 +446,7 @@ package body Call_Graph_Views is
       File   : GNATCOLL.VFS.Virtual_File;
       Project  : Project_Type;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected (View, Model, Iter);
 
       if Iter /= Null_Iter then
          if Parent (Model, Iter) = Null_Iter then
@@ -499,7 +529,7 @@ package body Call_Graph_Views is
          Path     : Gtk_Tree_Path;
          Result   : Boolean;
       begin
-         Get_Selected (Get_Selection (V.Tree), Model, Selected);
+         Get_Selected (V, Model, Selected);
 
          if Selected /= Null_Iter then
             New_Iter := Selected;
@@ -617,7 +647,7 @@ package body Call_Graph_Views is
             return True;
 
          when GDK_Right | GDK_KP_Right =>
-            Get_Selected (Get_Selection (V.Tree), Model, Iter);
+            Get_Selected (V, Model, Iter);
 
             if Iter /= Null_Iter then
                Path := Get_Path (Model, Iter);
@@ -636,7 +666,7 @@ package body Call_Graph_Views is
             return True;
 
          when GDK_Left | GDK_KP_Left =>
-            Get_Selected (Get_Selection (V.Tree), Model, Iter);
+            Get_Selected (V, Model, Iter);
 
             if Iter /= Null_Iter then
                Path := Get_Path (Model, Iter);
@@ -682,7 +712,7 @@ package body Call_Graph_Views is
       Model : Gtk_Tree_Model;
       Decl  : General_Entity_Declaration;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected (View, Model, Iter);
 
       if Iter /= Null_Iter then
          Decl := Get_Declaration
@@ -763,7 +793,7 @@ package body Call_Graph_Views is
       Appended      : Boolean := False;
       use type System.Address;
    begin
-      Get_Selected (Get_Selection (V.Tree), Model, Iter);
+      Get_Selected (V, Model, Iter);
 
       --  Remove old locations. If there is nothing selected anymore, we should
       --  not show any location
@@ -870,8 +900,6 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path)
    is
-      pragma Unreferenced (Path);
-
       V              : constant Callgraph_View_Access :=
                         Callgraph_View_Access (View);
       M              : constant Gtk_Tree_Store := -Get_Model (V.Tree);
@@ -956,6 +984,7 @@ package body Call_Graph_Views is
          end;
       end;
 
+      Set_Cursor (V.Tree, Path, null, False);
    exception
       when E : others =>
          Trace (Me, E);
@@ -990,15 +1019,42 @@ package body Call_Graph_Views is
    -------------
 
    overriding function Execute
-     (Command : access Calltree_Collapse_All_Command;
+     (Command : access Calltree_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
-      View : constant Callgraph_View_Access :=
+      View   : constant Callgraph_View_Access :=
         Generic_View.Retrieve_View (Get_Kernel (Context.Context));
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
+
+      use Gtk_Tree_Path_List;
    begin
       if View /= null then
-         Gtk.Tree_View.Collapse_All (View.Tree);
+         Get_Selected_Rows (View.Tree.Get_Selection, Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before there fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  if Command.Is_Collapse then
+                     Dummy := Collapse_Row (View.Tree, Path);
+                  else
+                     Dummy := Expand_Row (View.Tree, Path, False);
+                  end if;
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
+         end if;
+         Gtk_Tree_Path_List.Free (List);
       end if;
       return Commands.Success;
    end Execute;
@@ -1012,16 +1068,37 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Callgraph_View_Access :=
+      View   : constant Callgraph_View_Access :=
         Generic_View.Retrieve_View (Get_Kernel (Context.Context));
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
+      List   : Gtk_Tree_Path_List.Glist;
+      Iter   : Gtk_Tree_Iter;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+
+      use Gtk_Tree_Path_List;
    begin
       if View /= null then
-         Get_Selected (Get_Selection (View.Tree), Model, Iter);
-         if Iter /= Null_Iter then
-            Free_And_Remove (Gtk_Tree_Store'(-Model), Iter);
+         Get_Selected_Rows (View.Tree.Get_Selection, Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+               if Path /= Null_Gtk_Tree_Path then
+                  Iter := Get_Iter (Model, Path);
+               end if;
+
+               if Iter /= Null_Iter then
+                  Free_And_Remove (Gtk_Tree_Store'(-Model), Iter);
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
          end if;
+         Gtk_Tree_Path_List.Free (List);
       end if;
       return Commands.Success;
    end Execute;
@@ -1371,6 +1448,7 @@ package body Call_Graph_Views is
          Show_Column_Titles => False,
          Sortable_Columns   => True);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
+      View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
       Scroll.Add (View.Tree);
 
       --  Set custom order by column: Name & Decl
@@ -1718,7 +1796,7 @@ package body Call_Graph_Views is
       Iter   : Gtk_Tree_Iter;
       Model  : Gtk_Tree_Model;
    begin
-      View.Locations_Tree.Get_Selection.Get_Selected (Model, Iter);
+      Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
       if Iter /= Null_Iter then
          if Command.Next then
             Next (Model, Iter);
@@ -1735,7 +1813,7 @@ package body Call_Graph_Views is
          end if;
       end if;
 
-      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      Get_Selected (View, Model, Iter);
       if Iter /= Null_Iter then
          Move_Row (View.Tree, Iter, Forward => Command.Next);
       end if;
@@ -1902,15 +1980,22 @@ package body Call_Graph_Views is
       Register_Action
         (Kernel, "calltree remove selection",
          new Calltree_Remove_Command,
-         -"Remove the selected line from the calltree",
+         -"Remove the selected lines from the calltree",
          Icon_Name => "gps-remove-symbolic",
          Category => -"Call trees");
 
       Register_Action
-        (Kernel, "calltree collapse all",
-         new Calltree_Collapse_All_Command,
-         -"Close all nodes in the call tree",
+        (Kernel, "calltree collapse selected",
+         new Calltree_Collapse_Or_Expand_Command (True),
+         -"Close the selected nodes in the call tree",
          Icon_Name => "gps-collapse-all-symbolic",
+         Category => -"Call trees");
+
+      Register_Action
+        (Kernel, "calltree expand selected",
+         new Calltree_Collapse_Or_Expand_Command (False),
+         -"Expand the selected nodes in the call tree",
+         Icon_Name => "gps-expand-all-symbolic",
          Category => -"Call trees");
 
       Register_Action

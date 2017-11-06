@@ -534,7 +534,8 @@
       <button action='calltree clear'/>
       <button action='calltree remove selection'/>
       <separator/>
-      <button action='calltree collapse all'/>
+      <button action='calltree expand selected'/>
+      <button action='calltree collapse selected'/>
       <separator/>
       <button action='calltree previous'/>
       <button action='calltree next'/>
