@@ -16,8 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;            use Glib.Object;
+with Glib.Types;             use Glib.Types;
 with Glib;                   use Glib;
 
+with Gtk.Editable;           use Gtk.Editable;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
@@ -79,6 +82,15 @@ package body GPS.Menu is
       return Command_Return_Type;
    --  Perform the various actions associated with the clipboard
 
+   type Clipboard_Action_Context is new GPS.Kernel.Action_Filter_Record
+     with record
+      Kind : Clipboard_Kind;
+   end record;
+   overriding function Filter_Matches_Primitive
+     (Self    : access Clipboard_Action_Context;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Used to filter the clipboard actions
+
    type Save_Desktop_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Save_Desktop_Command;
@@ -127,6 +139,75 @@ package body GPS.Menu is
    overriding function Execute
      (Command : access Recompute_Recent_Menus_Command)
       return Command_Return_Type;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Self    : access Clipboard_Action_Context;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context);
+      Widget        : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+
+      package Implements_Editable is new Glib.Types.Implements
+        (Gtk.Editable.Gtk_Editable, Gtk_Widget_Record, Gtk_Widget);
+      function "+"
+        (Widget : access Gtk_Widget_Record'Class)
+         return Gtk.Editable.Gtk_Editable
+         renames Implements_Editable.To_Interface;
+
+   begin
+      --  Return False is there is no focus widget
+
+      if Widget = null then
+         return False;
+      end if;
+
+      --  Verify that the currently focused widget is relevant for clipboard
+      --  operations.
+
+      if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+         declare
+            Edit_Obj      : constant Gtk_Editable := +Widget;
+            First, Last   : Gint;
+            Has_Selection : Boolean;
+         begin
+            Get_Selection_Bounds
+              (Editable      => Edit_Obj,
+               Start_Pos     => First,
+               End_Pos       => Last,
+               Has_Selection => Has_Selection);
+
+            case Self.Kind is
+               when Copy =>
+                  return Has_Selection;
+               when Cut =>
+                  return Has_Selection and then Get_Editable (Edit_Obj);
+               when others =>
+                  return Get_Editable (Edit_Obj);
+            end case;
+         end;
+
+      elsif Widget.all in Gtk_Text_View_Record'Class then
+         declare
+            Text_View : constant Gtk_Text_View := Gtk_Text_View (Widget);
+         begin
+            case Self.Kind is
+               when Copy =>
+                  return Text_View.Get_Buffer.Get_Has_Selection;
+               when Cut =>
+                  return Text_View.Get_Buffer.Get_Has_Selection
+                    and then Text_View.Get_Editable;
+               when others =>
+                  return Text_View.Get_Editable;
+            end case;
+         end;
+      else
+         return False;
+      end if;
+   end Filter_Matches_Primitive;
 
    -------------
    -- Execute --
@@ -434,14 +515,18 @@ package body GPS.Menu is
       Register_Action
         (Kernel, "Cut to Clipboard", Command,
          Description => -"Cut the current selection to the clipboard",
-         Icon_Name   => "gps-cut-symbolic");
+         Icon_Name   => "gps-cut-symbolic",
+         Filter      => new Clipboard_Action_Context'
+           (Action_Filter_Record with Kind => Cut));
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Copy;
       Register_Action
         (Kernel, "Copy to Clipboard", Command,
          Description => -"Copy the current selection to the clipboard",
-         Icon_Name   => "gps-copy-symbolic");
+         Icon_Name   => "gps-copy-symbolic",
+         Filter      => new Clipboard_Action_Context'
+           (Action_Filter_Record with Kind => Copy));
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste;
@@ -449,7 +534,9 @@ package body GPS.Menu is
         (Kernel, "Paste From Clipboard", Command,
          Description =>
            -"Paste the contents of the clipboard into the current text area",
-         Icon_Name  => "gps-paste-symbolic");
+         Icon_Name   => "gps-paste-symbolic",
+         Filter      => new Clipboard_Action_Context'
+           (Action_Filter_Record with Kind => Paste));
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste_Previous;
@@ -457,7 +544,9 @@ package body GPS.Menu is
         (Kernel, -"Paste Previous From Clipboard", Command,
          -("Cancel the previous Paste operation, and instead insert the text"
            & " copied before through Copy To Clipboard"),
-         Icon_Name  => "gps-paste-symbolic");
+         Icon_Name  => "gps-paste-symbolic",
+         Filter     => new Clipboard_Action_Context'
+           (Action_Filter_Record with Kind => Paste_Previous));
    end Register_Common_Menus;
 
 end GPS.Menu;
