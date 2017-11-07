@@ -35,6 +35,12 @@ package Learn is
    --  This represents the GUI elements that will be displayed in the Learn
    --  view.
 
+   function Get_Help
+     (Item : not null access Learn_Item_Type) return String
+   is
+     ("");
+   --  Return an help string associated with the given item.
+
    function Is_Visible
      (Item        : not null access Learn_Item_Type;
       Context     : Selection_Context;

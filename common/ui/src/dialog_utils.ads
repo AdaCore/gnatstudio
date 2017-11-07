@@ -25,6 +25,8 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
+with Glib.Object;                           use Glib.Object;
+
 with Gtk.Box;                               use Gtk.Box;
 with Gtk.Button;                            use Gtk.Button;
 with Gtk.Button_Box;                        use Gtk.Button_Box;
@@ -168,6 +170,14 @@ package Dialog_Utils is
    --  it is also used with Force_Sort to force a new sort.
    --  Filtering_Function is used to filter the children. You can force the
    --  refiltering of the whole group with Force_Refilter.
+
+   procedure On_Child_Selected
+     (Self : not null access Dialog_Group_Widget_Record'Class;
+      Call : Cb_GObject_Gtk_Flow_Box_Child_Void;
+      Slot : not null access GObject_Record'Class);
+   --  Used to set a callback that will be called each time the user clicks
+   --  on a child of the given group widget.
+   --  This will take effect only if the group widget allows selection.
 
    function Get_Number_Of_Children
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural;

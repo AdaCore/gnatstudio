@@ -29,8 +29,10 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
+with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtkada.MDI;                use Gtkada.MDI;
 with String_Utils;              use String_Utils;
 with Learn;                     use Learn;
@@ -60,7 +62,7 @@ package body GPS.Kernel.Actions is
    overriding function Get_Name
      (Self : not null access Actions_Learn_Provider_Type) return String
    is
-      ("Actions");
+     ("Actions");
 
    overriding function Get_Learn_Items
      (Self : not null access Actions_Learn_Provider_Type) return
@@ -70,6 +72,11 @@ package body GPS.Kernel.Actions is
       Action : Action_Record_Access;
    end record;
    type Action_Learn_Item is access all Action_Learn_Item_Type;
+
+   overriding function Get_Help
+     (Self : not null access Action_Learn_Item_Type) return String
+   is
+     (Get_Full_Description (Self.Action));
 
    overriding function Is_Visible
      (Self        : not null access Action_Learn_Item_Type;
@@ -98,21 +105,40 @@ package body GPS.Kernel.Actions is
      (Self : not null access Actions_Learn_Provider_Type) return
      Learn_Item_Type_Lists.List
    is
-      Items        : Learn_Item_Type_Lists.List;
-      Action_Child : Action_Learn_Item;
-      Action_Label : Gtk_Label;
+      Items             : Learn_Item_Type_Lists.List;
+      Action_Child      : Action_Learn_Item;
+      Action_Hbox       : Gtk_Hbox;
+      Name_Label        : Gtk_Label;
+      Shortcut_Label    : Gtk_Label;
+      Action_Size_Group : Gtk_Size_Group;
    begin
+      Gtk_New (Action_Size_Group);
+
       for Action_Name of Self.Kernel.Actions_For_Learning loop
          Action_Child := new Action_Learn_Item_Type;
          Action_Child.Action := Lookup_Action (Self.Kernel, Action_Name);
          Gtk.Flow_Box_Child.Initialize (Action_Child);
 
+         Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
+
+         Gtk_New (Name_Label, Action_Name);
+         Action_Hbox.Pack_Start (Name_Label, Expand => False);
+         Action_Size_Group.Add_Widget (Name_Label);
+         Name_Label.Set_Alignment (0.0, 0.5);
+
          Gtk_New
-           (Action_Label,
-            Get_Full_Description (Action_Child.Action, Kernel => Self.Kernel));
-         Action_Label.Set_Alignment (0.0, 0.5);
-         Action_Label.Set_Use_Markup (True);
-         Action_Child.Add (Action_Label);
+           (Shortcut_Label,
+            Self.Kernel.Get_Shortcut
+              (Action          => Action_Name,
+               Use_Markup      => True,
+               Return_Multiple => True));
+         Shortcut_Label.Set_Use_Markup (True);
+         Action_Hbox.Pack_Start
+           (Shortcut_Label,
+            Expand => True,
+            Fill   => False);
+
+         Action_Child.Add (Action_Hbox);
 
          Items.Append (Learn_Item (Action_Child));
       end loop;

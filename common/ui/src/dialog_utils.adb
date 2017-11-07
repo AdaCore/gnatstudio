@@ -320,6 +320,20 @@ package body Dialog_Utils is
          Add_Separator => False);
    end Initialize;
 
+   -----------------------
+   -- On_Child_Selected --
+   -----------------------
+
+   procedure On_Child_Selected
+     (Self : not null access Dialog_Group_Widget_Record'Class;
+      Call : Cb_GObject_Gtk_Flow_Box_Child_Void;
+      Slot : not null access GObject_Record'Class) is
+   begin
+      Self.Flow_Box.On_Child_Activated
+        (Call  => Call,
+         Slot  => Slot);
+   end On_Child_Selected;
+
    ----------------------------
    -- Get_Number_Of_Children --
    ----------------------------

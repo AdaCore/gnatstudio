@@ -54,6 +54,7 @@ with GPS.Default_Styles;                use GPS.Default_Styles;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -2116,7 +2117,8 @@ package body Src_Editor_Module is
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
          Category => "Editor",
-         Filter   => Src_Action_Context);
+         Filter       => Src_Action_Context,
+         For_Learning => True);
 
       Command := new Delete_Command;
       Delete_Command (Command.all).Kind := Word;
@@ -2125,7 +2127,8 @@ package body Src_Editor_Module is
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
          Category => "Editor",
-         Filter   => Src_Action_Context);
+         Filter       => Src_Action_Context,
+         For_Learning => True);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
@@ -2332,19 +2335,22 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "comment lines", new Comment_Lines_Command,
          Description   => -"Comment the selected lines",
-         Filter        => Src_Action_Context);
+         Filter        => Src_Action_Context,
+         For_Learning  => True);
 
       Register_Action
         (Kernel, "uncomment lines", new Uncomment_Lines_Command,
          Description   => -"Uncomment the selected lines",
-         Filter        => Src_Action_Context);
+         Filter        => Src_Action_Context,
+         For_Learning  => True);
 
       Register_Action
         (Kernel, "refill", new Refill_Command,
          Description   =>
            -("Reformat selected lines or current paragraph so that the list"
            & " are shorter than the grey line on the right"),
-         Filter        => Src_Action_Context);
+         Filter        => Src_Action_Context,
+         For_Learning  => True);
 
       Register_Action
         (Kernel, "print selection", new Print_Selection_Command,
@@ -2369,13 +2375,14 @@ package body Src_Editor_Module is
 
       Register_Action
         (Kernel, "goto line",
-         Command     => new Goto_Line_Command,
-         Description => -"Open a dialog to select a line to go to");
+         Command      => new Goto_Line_Command,
+         Description  => -"Open a dialog to select a line to go to",
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
-         Label  => -"Goto line...",
-         Action => "goto line",
-         Filter      => Line_Numbers_Area_Filter);
+         Label   => -"Goto line...",
+         Action  => "goto line",
+         Filter  => Line_Numbers_Area_Filter);
 
       Register_Action
         (Kernel, "goto declaration",
