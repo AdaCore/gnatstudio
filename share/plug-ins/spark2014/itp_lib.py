@@ -83,7 +83,7 @@ UPDATE_INFO = "update_info"
 VALID = "Valid"
 
 # Constants related to the interface: name of console, prooftree etc
-ITP_CONSOLE = "ITP_interactive"
+ITP_CONSOLE = "Manual Proof"
 PROOF_TASK = "Verification Condition"
 PROOF_TREE_TITLE = "Proof Tree"
 PROOF_TREE_SHORT = "Proof Tree"
