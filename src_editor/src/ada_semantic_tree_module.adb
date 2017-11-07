@@ -16,11 +16,14 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;                 use Ada.Calendar;
+with Interfaces.C.Strings;         use Interfaces.C.Strings;
 
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Basic_Types;                  use Basic_Types;
+with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants;
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -29,7 +32,6 @@ with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
 with Time_Utils;                   use Time_Utils;
-with UTF8_Utils;                   use UTF8_Utils;
 
 package body Ada_Semantic_Tree_Module is
    Me : constant Trace_Handle := Create ("TREE");
@@ -96,10 +98,6 @@ package body Ada_Semantic_Tree_Module is
       File     : Virtual_File) return String_Access
    is
       Editor  : Gtkada.MDI.MDI_Child;
-      Tmp     : String_Access;
-      Tmp2    : String_Access;
-      Success : Boolean;
-      pragma Unreferenced (Success);
 
    begin
       if Is_Open (Provider.Kernel, File) then
@@ -115,15 +113,21 @@ package body Ada_Semantic_Tree_Module is
 
       --  Ensure result is UTF8 encoded
 
-      Tmp := Read_File (File);
-      Unknown_To_UTF8 (Tmp.all, Tmp2, Success);
+      declare
+         UTF8     : chars_ptr;
+         UTF8_Len : Natural;
+         Props    : File_Props;
+         Result   : String_Access;
+      begin
+         Read_File_With_Charset (File, UTF8, UTF8_Len, Props);
+         --  We don't use Interfaces.C.Strings.Value function here to
+         --  avoid stack overflow.
+         Result := new String (1 .. UTF8_Len);
+         Result.all := To_Unchecked_String (UTF8) (1 .. UTF8_Len);
+         Interfaces.C.Strings.Free (UTF8);
 
-      if Tmp2 /= null then
-         Free (Tmp);
-         Tmp := Tmp2;
-      end if;
-
-      return Tmp;
+         return Result;
+      end;
    end Get_Buffer;
 
    ---------------------
