@@ -711,7 +711,7 @@ package body Debugger is
             Trace (Me, "Cannot send command " & Cmd & " since debugger is"
                    & " already processing"
                    & (if Process = null or else  Process.Current_Command = null
-                     then "" else Process.Current_Command.all));
+                     then "" else " " & Process.Current_Command.all));
             return;
 
          elsif not Force_Send then

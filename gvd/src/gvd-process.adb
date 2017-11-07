@@ -378,6 +378,19 @@ package body GVD.Process is
             Process => Process,
             File    => To_File (Process.Kernel, To_String (File)),
             Line    => Line);
+
+      elsif Addr /= Invalid_Address
+        and then Process.Current_File /= No_File
+      then
+         --  the address without debugging information
+         Set_Current_File_And_Line
+           (Kernel  => Process.Kernel,
+            Process => Process,
+            File    => GNATCOLL.VFS.No_File,
+            Line    => 0);
+
+         Process.Kernel.Messages_Window.Insert
+           (-"There is no debug information for this frame.");
       end if;
 
       Process.Post_Processing := False;

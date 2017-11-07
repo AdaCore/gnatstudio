@@ -48,7 +48,6 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
-with GVD.Code_Editors;       use GVD.Code_Editors;
 with GVD.Generic_View;       use GVD.Generic_View;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
@@ -213,7 +212,7 @@ package body GVD.Call_Stack is
               (Visual_Debugger (Get_Process (Stack)).Debugger,
                Natural'Value
                  (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
-               GVD.Types.Visible);
+               GVD.Types.Hidden);
          end if;
       end if;
    end On_Selection_Changed;
@@ -312,6 +311,7 @@ package body GVD.Call_Stack is
             1 + Params_Column          => Name_Params'Unchecked_Access,
             1 + File_Location_Column   => Name_Loc'Unchecked_Access),
          Sortable_Columns => False);
+      Set_Name (Widget.Tree, "Callstack tree");
       Widget.Model := -Get_Model (Widget.Tree);
 
       Scrolled.Add (Widget.Tree);
@@ -338,7 +338,7 @@ package body GVD.Call_Stack is
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Self, Kernel);
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       S           : constant Call_Stack := Get_View (Process);
       Frame       : Unbounded_String;
@@ -360,11 +360,6 @@ package body GVD.Call_Stack is
             Select_Path (Get_Selection (S.Tree), Path);
             Path_Free (Path);
             S.Block := False;
-
-         elsif Frame_Info = No_Debug_Info then
-            Kernel.Insert (-"There is no debug information for this frame.");
-            Set_Current_File_And_Line
-              (Kernel, Process, GNATCOLL.VFS.No_File, 0);
          end if;
       end if;
    end Execute;

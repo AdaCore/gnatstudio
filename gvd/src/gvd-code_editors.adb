@@ -53,23 +53,26 @@ package body GVD.Code_Editors is
       P   : constant Visual_Debugger := Visual_Debugger (Process);
       Msg : Simple_Message_Access;
    begin
-      if File = GNATCOLL.VFS.No_File then
-         if P /= null then
-            P.Current_File := File;
-         end if;
+      if File = GNATCOLL.VFS.No_File
+        and then P = null
+      then
          return;
       end if;
 
       --  Jump to current location
 
-      declare
-         Buffer : constant Editor_Buffer'Class :=
-           Kernel.Get_Buffer_Factory.Get (File, Open_Buffer => True);
-      begin
-         Buffer.Current_View.Cursor_Goto
-           (Location   => Buffer.New_Location_At_Line (Line),
-            Raise_View => True);
-      end;
+      if File /= GNATCOLL.VFS.No_File
+        and then Line /= 0
+      then
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get (File, Open_Buffer => True);
+         begin
+            Buffer.Current_View.Cursor_Goto
+              (Location   => Buffer.New_Location_At_Line (Line),
+               Raise_View => True);
+         end;
+      end if;
 
       --  Highlight the current line if the debugger is active
 
@@ -87,7 +90,9 @@ package body GVD.Code_Editors is
 
          Unhighlight_Current_Line (Kernel);
 
-         if File /= GNATCOLL.VFS.No_File and then Line /= 0 then
+         if File /= GNATCOLL.VFS.No_File
+           and then Line /= 0
+         then
             Msg := Create_Simple_Message
               (Get_Messages_Container (Kernel),
                Category                 => Messages_Category_For_Current_Line,

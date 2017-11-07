@@ -437,9 +437,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Prepare_Target_For_Send (Cmd);
 
       --  Call the Parent procedure
-      Send
-        (Debugger_Root (Debugger.all)'Access, Cmd,
-         Empty_Buffer, Wait_For_Prompt, Force_Send, Mode);
+      Debugger_Root (Debugger.all).Send
+        (Cmd, Empty_Buffer, Wait_For_Prompt, Force_Send, Mode);
    end Send;
 
    -------------
@@ -3050,11 +3049,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ---------------------
 
    Frame_Pattern     : constant Pattern_Matcher := Compile
-     ("^(\*stopped.*|\^done,)frame={.*addr=""(0x[\da-hA-H]+)"",.*" &
-        "fullname=""(.*)"".*line=""(\d+)"".*}", Multiple_Lines);
+     ("^(\*stopped.*|\^done,)frame={(.*)}", Multiple_Lines);
 
-   Level_Pattern         : constant Pattern_Matcher := Compile
-     ("frame={level=""(\d+)""", Multiple_Lines);
+   Line_Pattern     : constant Pattern_Matcher := Compile
+     ("^~""Line (\d+) of \\""(.*)\\"" is at address (0x[0-9a-f]+)",
+      Multiple_Lines);
 
    CLI_Frame_Pattern : constant Pattern_Matcher := Compile
      ("^~""#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?""$",
@@ -3072,34 +3071,69 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Addr        : out GVD.Types.Address_Type)
    is
       Matched : Match_Array (0 .. 6);
-      Level   : Natural := 0;
    begin
       --  Default values if nothing better is found
+      Addr := Invalid_Address;
       Name := Null_Unbounded_String;
       Line := 0;
-      Addr := Invalid_Address;
 
       Match (Frame_Pattern, Str, Matched);
       if Matched (0) /= No_Match then
          Debugger.Current_Frame := Null_Frame_Info;
 
          declare
-            Lvl : Match_Array (0 .. 1);
+            use Token_Lists;
+
+            Tokens : Token_List_Controller;
+            C      : Token_Lists.Cursor;
          begin
-            Match (Level_Pattern, Str, Lvl);
-            if Lvl (0) /= No_Match then
-               Level := Integer'Value (Str (Lvl (1).First .. Lvl (1).Last));
+            Tokens.List := Build_Tokens
+              (Str (Matched (2).First .. Matched (2).Last));
+
+            C := Find_Identifier (First (Tokens.List), "level");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               Debugger.Current_Frame.Frame :=
+                 Integer'Value (Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (First (Tokens.List), "addr");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               Debugger.Current_Frame.Addr := String_To_Address
+                 (Element (C).Text.all);
+            end if;
+
+            C := Find_Identifier (First (Tokens.List), "fullname");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               Debugger.Current_Frame.File := To_Unbounded_String
+                 (Strip_Escape (Element (C).Text.all));
+            end if;
+
+            C := Find_Identifier (First (Tokens.List), "line");
+            if C /= Token_Lists.No_Element then
+               Next (C, 2);
+               Debugger.Current_Frame.Line := Integer'Value
+                 (Element (C).Text.all);
             end if;
          end;
 
-         Debugger.Current_Frame :=
-           (Frame => Level,
-            Addr  => String_To_Address
-              (Str (Matched (2).First .. Matched (2).Last)),
-            File  => To_Unbounded_String
-              (Strip_Escape (Str (Matched (3).First .. Matched (3).Last))),
-            Line  => Integer'Value
-              (Str (Matched (4).First .. Matched (4).Last)));
+         Addr := Debugger.Current_Frame.Addr;
+         Name := Debugger.Current_Frame.File;
+         Line := Debugger.Current_Frame.Line;
+         return;
+      end if;
+
+      Match (Line_Pattern, Str, Matched);
+      if Matched (0) /= No_Match then
+         Debugger.Current_Frame.Frame := 0;
+         Debugger.Current_Frame.Addr := String_To_Address
+           (Str (Matched (3).First .. Matched (3).Last));
+         Debugger.Current_Frame.File := To_Unbounded_String
+           (Strip_Escape (Str (Matched (2).First .. Matched (2).Last)));
+         Debugger.Current_Frame.Line := Integer'Value
+           (Str (Matched (1).First .. Matched (1).Last));
 
          Addr := Debugger.Current_Frame.Addr;
          Name := Debugger.Current_Frame.File;
@@ -3145,9 +3179,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       when E : others =>
          Me.Trace (E);
 
+         Addr := Invalid_Address;
          Name := Null_Unbounded_String;
          Line := 0;
-         Addr := Invalid_Address;
    end Found_File_Name;
 
    ----------------------
@@ -3181,7 +3215,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Match (CLI_Frame_Pattern, Str, Matched);
 
          if Matched (0) /= No_Match then
-            Debugger.Current_Frame := Null_Frame_Info;
+            Debugger.Current_Frame.Frame := Natural'Value
+              (Str (Matched (1).First .. Matched (1).Last));
+
             Frame := To_Unbounded_String
               (Str (Matched (1).First .. Matched (1).Last));
             Message := Location_Found;

@@ -262,6 +262,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  and (t)break in other case.
 
    procedure Update_Frame_Info (Debugger : access Gdb_Debugger);
+   procedure Update_Frame_Info (Debugger : access Gdb_Debugger; Info : String);
 
    --------------------
    -- Break_Or_Catch --
@@ -389,9 +390,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       --  Call the Parent procedure
 
-      Send
-        (Debugger_Root (Debugger.all)'Access, Cmd,
-         Empty_Buffer, Wait_For_Prompt, Force_Send, Mode);
+      Debugger_Root (Debugger.all).Send
+        (Cmd, Empty_Buffer, Wait_For_Prompt, Force_Send, Mode);
    end Send;
 
    -------------
@@ -1540,8 +1540,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "down", Mode => Mode);
-      Update_Frame_Info (Debugger);
+      Update_Frame_Info
+        (Debugger,
+         Debugger.Send_And_Get_Clean_Output ("down", Mode => Mode));
    end Stack_Down;
 
    --------------
@@ -1552,8 +1553,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "up", Mode => Mode);
-      Update_Frame_Info (Debugger);
+      Update_Frame_Info
+        (Debugger,
+         Debugger.Send_And_Get_Clean_Output ("up", Mode => Mode));
    end Stack_Up;
 
    -----------------
@@ -1567,8 +1569,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       Str : constant String := "frame" & Natural'Image (Frame - 1);
    begin
-      Send (Debugger, Str, Mode => Mode);
-      Update_Frame_Info (Debugger);
+      Update_Frame_Info
+        (Debugger,
+         Debugger.Send_And_Get_Clean_Output (Str, Mode => Mode));
    end Stack_Frame;
 
    --------------------------
@@ -2442,8 +2445,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       pragma Unreferenced (Debugger);
 
       Start      : Natural := Str'First;
-      Matched    : Match_Array (0 .. 4);
-      Matched2   : Match_Array (0 .. 4);
+      Matched    : Match_Array (0 .. 5);
+      Matched2   : Match_Array (0 .. 5);
       Name_Index : Natural := 1;
       Line_Index : Natural := 2;
       Addr_Index : Natural := 3;
@@ -2475,18 +2478,29 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          Match (File_Name_Pattern2, Str, Matched);
 
-         if Matched (0) = No_Match then
+         if Matched (0) /= No_Match then
+            if Matched (3) = No_Match then
+               Name_Index := 4;
+            else
+               Name_Index := 3;
+            end if;
+
+            Line_Index := 1;
+            Addr_Index := 0;
+
+         else
+            --  Catch a frame without debug info
+            --  #6  0x0000000000402e78 in sub ()
+
+            Match (Frame_Pattern, Str, Matched);
+            if Matched (3) = No_Match then
+               return;
+            end if;
+
+            Addr := String_To_Address
+              (Str (Matched (3).First .. Matched (3).Last));
             return;
          end if;
-
-         if Matched (3) = No_Match then
-            Name_Index := 4;
-         else
-            Name_Index := 3;
-         end if;
-
-         Line_Index := 1;
-         Addr_Index := 0;
       end if;
 
       Set_Unbounded_String
@@ -4056,16 +4070,27 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -----------------------
 
    procedure Update_Frame_Info (Debugger : access Gdb_Debugger) is
-      R : constant String := Debugger.Send_And_Get_Clean_Output
-        ("frame", Mode => Internal);
+   begin
+      Update_Frame_Info
+        (Debugger, Debugger.Send_And_Get_Clean_Output
+           ("frame", Mode => Internal));
+   end Update_Frame_Info;
 
+   -----------------------
+   -- Update_Frame_Info --
+   -----------------------
+
+   procedure Update_Frame_Info
+     (Debugger : access Gdb_Debugger;
+      Info     : String)
+   is
       Matched : Match_Array (0 .. 1);
    begin
-      Match (Frame_Pattern, R, Matched);
+      Match (Frame_Pattern, Info, Matched);
 
       if Matched (1) /= No_Match then
          Debugger.Current_Frame_Num := Integer'Value
-           (R (Matched (1).First .. Matched (1).Last));
+           (Info (Matched (1).First .. Matched (1).Last));
       end if;
    end Update_Frame_Info;
 
