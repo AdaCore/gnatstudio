@@ -1237,11 +1237,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
-      Mode     : Invisible_Command := Hidden)
+      Mode     : Command_Type := Hidden)
    is
       Process : constant Visual_Debugger := Convert (Debugger);
       Cmd     : constant String := "-target-select " & Protocol & " " & Target;
-      Timeout : constant := 2_000;
+      Timeout : constant Integer := Connection_Timeout.Get_Pref;
       Success : Boolean;
    begin
       if Debugger.Target_Connected then
@@ -1328,7 +1328,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       then
          Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
                                      Protocol => Debugger.Get_Remote_Protocol,
-                                     Mode     => Internal);
+                                     Mode     => Visible);
       end if;
    end Connect_To_Target_If_Needed;
 

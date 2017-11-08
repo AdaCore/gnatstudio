@@ -110,7 +110,7 @@ package Debugger is
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden) is null;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is null;
    --  If supported by the debugger, connect to the given target, using
    --  the given communication protocol.
    --  If Force is True, the debugger should kill any existing connection

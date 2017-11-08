@@ -25,12 +25,25 @@ package body GVD.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class) is
+     (Prefs : access Preferences_Manager_Record'Class)
+   is
+      Debugger_Page : constant Preferences_Page := Prefs.Get_Registered_Page
+        (Name             => "Debugger",
+         Create_If_Needed => True);
+      General_Group : constant Preferences_Group :=
+                        new Preferences_Group_Record;
    begin
+      --  Make sure that the "General" preferences group is displayed at the
+      --  top of the page.
+      Debugger_Page.Register_Group
+        (Name             => "General",
+         Group            => General_Group,
+         Priority         => 1);
+
       Break_On_Exception := Create
         (Manager   => Prefs,
          Name      => "Debugger-Break-On-Exception",
-         Path      => -"Debugger:Startup & Exit",
+         Path      => -"Debugger:General",
          Label     => -"Break on exceptions",
          Doc       =>
            -("Stop when an exception is raised. Changes to this setting are"
@@ -41,7 +54,7 @@ package body GVD.Preferences is
         (Manager    => Prefs,
          Name       => "Debugger-Open-Main-Unit",
          Label      => -"Always open main unit",
-         Path      => -"Debugger:Startup & Exit",
+         Path      => -"Debugger:General",
          Doc        => -("Open the main unit when initializing a debugger."),
          Default    => True);
 
@@ -50,7 +63,7 @@ package body GVD.Preferences is
          Name      => "Debugger-Execution-Window",
          Label     => -"Execution window",
          Path      => (if Support_Execution_Window
-                       then -"Debugger:Startup & Exit" else ":Debugger"),
+                       then -"Debugger:General" else ":Debugger"),
          Doc       =>
            -("Open a separate window to show output of debuggee."),
          Default   => Support_Execution_Window);
@@ -59,7 +72,7 @@ package body GVD.Preferences is
         (Manager    => Prefs,
          Name       => "Debugger-Preserve_State-On-Exit",
          Label      => -"Preserve state on exit",
-         Path       => -"Debugger:Startup & Exit",
+         Path       => -"Debugger:General",
          Doc        =>
             -("Save breakpoints and data window on exit, and restore them"
               & " when debugging the same executable."),
@@ -68,18 +81,29 @@ package body GVD.Preferences is
       Load_Executable_On_Init := Create
         (Manager   => Prefs,
          Name      => "Debugger-Load-On-Init",
-         Path      => -"Debugger:Startup & Exit",
+         Path      => -"Debugger:General",
          Label     => -"Load executable on init",
          Doc       =>
             -("Load the currently debugged executable to the target when " &
                "initializing a remote debugging session."),
          Default   => False);
 
+      Connection_Timeout := Create
+        (Manager  => Prefs,
+         Name     => "Debugger-Connection-Timeout",
+         Path     => "Debugger:General",
+         Label    => "Connection timeout",
+         Doc      =>
+           "The timeout used when trying to connect a remote target.",
+         Minimum  => 1_000,
+         Maximum  => 60_000,
+         Default  => 3_000);
+
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
          Name    => "GPS6-Debugger-Debugger-Kind",
          Label   => -"Debugger kind",
-         Path    => "Debugger:Startup & Exit",
+         Path    => "Debugger:General",
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 

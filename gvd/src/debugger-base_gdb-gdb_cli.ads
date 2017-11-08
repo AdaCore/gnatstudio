@@ -50,7 +50,7 @@ package Debugger.Base_Gdb.Gdb_CLI is
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Is_Connected_To_Target
      (Debugger : access Gdb_Debugger) return Boolean;
