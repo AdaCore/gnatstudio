@@ -17,6 +17,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 
+with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
 
 with Gtk.Box;             use Gtk.Box;
@@ -30,6 +31,7 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with Dialog_Utils;        use Dialog_Utils;
+with GUI_Utils;           use GUI_Utils;
 with Generic_Views;       use Generic_Views;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
@@ -43,6 +45,7 @@ package body Learn.Views is
    type Learn_View_Record is new Generic_Views.View_Record with record
       Main_View     : Dialog_View;
       Group_Widgets : Group_Widget_Lists.List;
+      Paned_View    : Gtk_Paned;
       Help_Label    : Gtk_Label;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
@@ -67,6 +70,12 @@ package body Learn.Views is
 
    procedure MDI_Child_Selected (Self : access Gtk_Widget_Record'Class);
    --  Called each time the selected MDI child changes
+
+   procedure Change_Pane_Orientation (Self : access Gtk_Widget_Record'Class);
+   --  Called each time the Learn view's MDI child has been reorganized
+   --  (e.g: after a Drag'n'Drop).
+   --  Switches the orientation of the paned view depeinding on the new
+   --  position.
 
    procedure On_Learn_Item_Selected
      (Self  : access Glib.Object.GObject_Record'Class;
@@ -106,6 +115,37 @@ package body Learn.Views is
       end if;
    end MDI_Child_Selected;
 
+   -----------------------------
+   -- Change_Pane_Orientation --
+   -----------------------------
+
+   procedure Change_Pane_Orientation (Self : access Gtk_Widget_Record'Class) is
+      View         : constant Learn_View := Learn_View (Self);
+      Child        : constant MDI_Child :=
+                       Generic_Learn_Views.Child_From_View (View);
+      Tab_Orient   : constant Tab_Orientation_Type :=
+                       Child.Get_Tab_Orientation;
+      Current_Type : constant GType := View.Paned_View.Get_Type;
+
+   begin
+      --  Do nothing if the paned view is already well oriented
+      if ((Tab_Orient = Bottom_To_Top or else Tab_Orient = Top_To_Bottom)
+          and then Current_Type = Get_Type_Vpaned)
+        or else
+          ((Tab_Orient = Horizontal or else Tab_Orient = Automatic)
+           and then Current_Type = Get_Type_Hpaned)
+      then
+         return;
+      end if;
+
+      --  Switch the paned orientation
+      Switch_Paned_Orientation (View.Paned_View);
+
+      View.Pack_Start (View.Paned_View);
+
+      View.Show_All;
+   end Change_Pane_Orientation;
+
    ----------------------------
    -- On_Learn_Item_Selected --
    ----------------------------
@@ -131,13 +171,11 @@ package body Learn.Views is
                        Get_Registered_Providers;
       Help_View    : Dialog_View;
       Group_Widget : Dialog_Group_Widget;
-      Pane         : Gtk_Paned;
    begin
       Initialize_Vbox (View);
 
-      Gtk_New_Vpaned (Pane);
-      Pane.Set_Position (500);
-      View.Pack_Start (Pane);
+      Gtk_New_Vpaned (View.Paned_View);
+      View.Pack_Start (View.Paned_View);
 
       --  Connect to the Signal_Child_Selected signal to refilter all the
       --  learn intems contained in the view.
@@ -146,11 +184,18 @@ package body Learn.Views is
         (Get_MDI (View.Kernel), Signal_Child_Selected,
          Widget_Callback.To_Marshaller (MDI_Child_Selected'Access), View);
 
+      --  Connect to the Signal_Child_Reorganized to change the paned view's
+      --  orientation depending on the Learn view's orientation.
+
+      Widget_Callback.Object_Connect
+        (Get_MDI (View.Kernel), Signal_Children_Reorganized,
+         Change_Pane_Orientation'Access, View);
+
       --  Create the main view
 
       View.Main_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (View.Main_View);
-      Pane.Pack1 (View.Main_View, Resize => True, Shrink => True);
+      View.Paned_View.Pack1 (View.Main_View, Resize => True, Shrink => True);
 
       --  Create a group widget for all the registered providers
 
@@ -186,7 +231,7 @@ package body Learn.Views is
 
       Help_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Help_View);
-      Pane.Pack2 (Help_View, Resize => True, Shrink => True);
+      View.Paned_View.Pack2 (Help_View, Resize => True, Shrink => True);
 
       Group_Widget := new Dialog_Group_Widget_Record;
       Initialize

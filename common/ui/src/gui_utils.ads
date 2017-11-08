@@ -45,6 +45,7 @@ with Gtk.List_Store;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
+with Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
@@ -438,7 +439,37 @@ package GUI_Utils is
       Mods : out Gdk.Types.Gdk_Modifier_Type);
    --  Revert of Image
 
-   Special_Key_Binding : constant String := "<special>";
+   Special_Key_Binding    : constant String := "<special>";
+
+   -----------
+   -- Paned --
+   -----------
+
+   procedure Switch_Paned_Orientation
+     (Paned : in out Gtk.Paned.Gtk_Paned);
+   --  Switch the orientation of the given paned view.
+   --
+   --  The original paned view is destroyed by this procedure: make sure to
+   --  update any holding references and to add it back again to it's original
+   --  container. The two paned children are not destroyed though.
+   --
+   --  Code example:
+   --
+   --       --  Create an horizontal paned view
+   --       Gtk_New_Hpaned (Paned);
+   --
+   --       --  Add some children to it
+   --       Paned.Pack1 (Child_1);
+   --       Paned.Pack2 (Child_2);
+   --
+   --       --  Add it to a container
+   --       Parent.Add (Paned);
+   --
+   --       --  Switch the paned orientation
+   --       Switch_Paned_Orientation (Paned);
+   --
+   --       --  Add it back again to its original parent container
+   --       Parent.Add (Paned)
 
    -----------
    -- Menus --

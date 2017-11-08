@@ -1092,6 +1092,42 @@ package body GUI_Utils is
       Key := From_Name (From (Start .. From'Last));
    end Value;
 
+   ------------------------------
+   -- Switch_Paned_Orientation --
+   ------------------------------
+
+   procedure Switch_Paned_Orientation
+     (Paned : in out Gtk.Paned.Gtk_Paned)
+   is
+      Pane1_Child  : Gtk_Widget;
+      Pane2_Child  : Gtk_Widget;
+      Current_Type : constant GType := Paned.Get_Type;
+      Hpaned_Type  : constant GType := Gtk.Paned.Get_Type_Hpaned;
+   begin
+      Pane1_Child := Paned.Get_Child1;
+      Pane2_Child := Paned.Get_Child2;
+
+      Pane1_Child.Ref;
+      Pane2_Child.Ref;
+
+      Paned.Remove (Pane1_Child);
+      Paned.Remove (Pane2_Child);
+
+      Paned.Destroy;
+
+      if Current_Type = Hpaned_Type then
+         Gtk.Paned.Gtk_New_Vpaned (Paned);
+      else
+         Gtk.Paned.Gtk_New_Hpaned (Paned);
+      end if;
+
+      Paned.Pack1 (Pane1_Child);
+      Paned.Pack2 (Pane2_Child);
+
+      Pane1_Child.Unref;
+      Pane2_Child.Unref;
+   end Switch_Paned_Orientation;
+
    -------------------
    -- Do_Completion --
    -------------------
