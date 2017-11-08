@@ -906,7 +906,7 @@ package body GVD_Module is
                   Target   => Remote_Target,
                   Protocol => Remote_Protocol,
                   Force    => True,
-                  Mode     => GVD.Types.Internal);
+                  Mode     => GVD.Types.Visible);
             end if;
          end;
       end if;
