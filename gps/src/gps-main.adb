@@ -2314,6 +2314,16 @@ procedure GPS.Main is
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
       end if;
 
+      --  Register the Learn module and the associated view
+      Learn.Register_Module (GPS_Main.Kernel);
+
+      --  Register the actions learn provider
+      GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
+
+      --  Register the Learn view once we know that all the learn providers
+      --  have been registered.
+      Learn.Views.Register_Module (GPS_Main.Kernel);
+
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overridden by the user's
       --  local choices. Note that the preferences have already been loaded
@@ -2324,13 +2334,6 @@ procedure GPS.Main is
       --  Load the custom keys last, so that they override everything else set
       --  so far.
       KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
-
-      --  Register the Learn module and the associated view
-      Learn.Register_Module (GPS_Main.Kernel);
-      Learn.Views.Register_Module (GPS_Main.Kernel);
-
-      --  Register the actions learn provider
-      GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
 
       --  Show the preferences assistant dialog if the user don't have any GPS
       --  home directory yet.
