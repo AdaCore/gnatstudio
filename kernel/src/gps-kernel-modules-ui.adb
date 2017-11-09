@@ -2784,6 +2784,7 @@ package body GPS.Kernel.Modules.UI is
 
          Button.On_Clicked (On_Action_Button_Clicked'Access);
 
+         Button.Set_Homogeneous (False);
          Item := Gtk_Tool_Item (Button);
       end if;
 
