@@ -255,7 +255,10 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
                      static_path='',
 
                      # Keys
-                     key_exclusive=True):
+                     key_exclusive=True,
+
+                     # Learn
+                     for_learning=False):
 
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
@@ -318,6 +321,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     :param str button_label: The label to use for the button (defaults to
       the name of the action).
 
+    :param bool for_learning: whether or not this action should be displayed
+    in the Learn view.
+
     :return: a tuple (GPS.Action, GPS.Menu)
       The menu might be None if you did not request its creation.
     """
@@ -344,7 +350,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     a = Action(name or callback.__name__)
     a.create(do, filter=filter, category=category, description=doc,
-             icon=icon)
+             icon=icon, for_learning=for_learning)
 
     if menu:
         if before:

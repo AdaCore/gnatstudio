@@ -302,7 +302,7 @@ class Action(object):
         pass  # implemented in Ada
 
     def create(self, on_activate, filter='', category='General',
-               description='', icon=''):
+               description='', icon='', for_learning=False):
         """
         Export the function :func:`on_activate` and make it interactive so
         that users can bind keys and menus to it. The function should not
@@ -335,6 +335,9 @@ class Action(object):
         :param str icon: Name of the icon to use for this action (in toolbars,
            dialogs, ...). This is the name of an icon file in the GPS icons
            directory.
+
+        :param bool for_learning: Set it to True if you want to display this
+        action in the Learn view.
 
         """
 

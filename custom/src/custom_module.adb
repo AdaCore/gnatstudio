@@ -1394,12 +1394,13 @@ package body Custom_Module is
          Cmd.On_Activate  := Data.Nth_Arg (2);
          Register_Action
            (Kernel,
-            Name        => String'(Get_Data (Inst, Action_Class)),
-            Command     => Cmd,
-            Filter      => Filter_From_Argument (Data, 3),
-            Category    => Data.Nth_Arg (4, "General"),
-            Description => Data.Nth_Arg (5, ""),
-            Icon_Name   => Data.Nth_Arg (6, ""));
+            Name         => String'(Get_Data (Inst, Action_Class)),
+            Command      => Cmd,
+            Filter       => Filter_From_Argument (Data, 3),
+            Category     => Data.Nth_Arg (4, "General"),
+            Description  => Data.Nth_Arg (5, ""),
+            Icon_Name    => Data.Nth_Arg (6, ""),
+            For_Learning => Data.Nth_Arg (7, False));
 
       elsif Command = "disable" then
          Inst := Nth_Arg (Data, 1, Action_Class);
@@ -1607,7 +1608,8 @@ package body Custom_Module is
                            2 => Param ("filter", Optional => True),
                            3 => Param ("category", Optional => True),
                            4 => Param ("description", Optional => True),
-                           5 => Param ("icon",        Optional => True)),
+                           5 => Param ("icon",        Optional => True),
+                           6 => Param ("for_learning", Optional => True)),
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("disable",
