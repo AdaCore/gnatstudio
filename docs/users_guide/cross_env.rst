@@ -102,6 +102,12 @@ For example, if you are using the *Tornado* environment, with a target
 server called :samp:`target_ppc`, set the :guilabel:`Protocol` to
 :command:`wtx` and the :guilabel:`Program host` to :command:`target_ppc`.
 
+GPS waits for a certain amount of time when trying to connect to a
+target: if GDB does not asnwer during this time period, GPS interupts the
+current debugger command and assumes that we failed to connect to the target.
+You can set this time period with the
+:menuselection:`Debugger --> Connection timeout` preference.
+
 To load a new module on the target, select the
 :menuselection:`Debug --> Debug --> Load File...` menu.
 

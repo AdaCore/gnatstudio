@@ -93,8 +93,8 @@ package body GVD.Preferences is
          Name     => "Debugger-Connection-Timeout",
          Path     => "Debugger:General",
          Label    => "Connection timeout",
-         Doc      =>
-           "The timeout used when trying to connect a remote target.",
+         Doc      => "The timeout used when trying to connect a remote target"
+         & ", in milliseconds.",
          Minimum  => 1_000,
          Maximum  => 60_000,
          Default  => 3_000);
