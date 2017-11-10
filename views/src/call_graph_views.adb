@@ -133,7 +133,7 @@ package body Call_Graph_Views is
       Locations_Tree    : Gtk_Tree_View;
       Locations_Model   : Gtk_List_Store;
 
-      Stored_Pos        : Gint := 0;
+      Stored_Pos        : Float := 0.0;
       --  The position to set when Realizing this view; 0 means 'do not modify'
 
       Pane              : Gtk_Hpaned;
@@ -882,12 +882,13 @@ package body Call_Graph_Views is
    procedure On_Realize
      (View : access Gtk_Widget_Record'Class)
    is
-      V : constant Callgraph_View_Access :=
-        Callgraph_View_Access (View);
+      V          : constant Callgraph_View_Access :=
+                     Callgraph_View_Access (View);
+
    begin
-      if V.Stored_Pos /= 0 then
-         V.Pane.Set_Position (V.Stored_Pos);
-         V.Stored_Pos := 0;
+      if V.Stored_Pos /= 0.0 then
+         Set_Position_Percent (V.Pane, V.Stored_Pos);
+         V.Stored_Pos := 0.0;
       end if;
    end On_Realize;
 
@@ -1304,7 +1305,9 @@ package body Call_Graph_Views is
       Root := new Node;
       XML.Child := Root;
       Root.Tag := new String'("callgraph");
-      Set_Attribute (Root, "position", Get_Position (View.Pane)'Img);
+      Set_Attribute
+        (Root, "position",
+         Float'Image (Get_Position_Percent (View.Pane)) & "%");
 
       Recursive_Save (Null_Iter, Root);
    end Save_To_XML;
@@ -1413,7 +1416,16 @@ package body Call_Graph_Views is
          V_Type  : constant String := Get_Attribute (XML, "type");
       begin
          if Pos_Str /= "" then
-            View.Stored_Pos := Gint'Value (Pos_Str);
+            if Pos_Str (Pos_Str'Last) = '%' then
+               View.Stored_Pos := Float'Value
+                 (Pos_Str (Pos_Str'First .. Pos_Str'Last - 1));
+            else
+               --  If the position is set in the old format (absolute position)
+               --  don't take it into account: we don't know the size of the
+               --  view at this stage.
+
+               View.Stored_Pos := 0.0;
+            end if;
          end if;
 
          Is_Calls := V_Type = "calls";

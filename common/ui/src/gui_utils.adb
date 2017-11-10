@@ -1128,6 +1128,42 @@ package body GUI_Utils is
       Pane2_Child.Unref;
    end Switch_Paned_Orientation;
 
+   --------------------------
+   -- Get_Position_Percent --
+   --------------------------
+
+   function Get_Position_Percent
+     (Paned    : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float
+   is
+      Pane_Size : constant Float :=
+                    (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned then
+                                    Float (Paned.Get_Allocated_Width)
+                     else
+                        Float (Paned.Get_Allocated_Height));
+      Sep_Pos   : constant Float := Float (Paned.Get_Position);
+   begin
+      return Sep_Pos / Pane_Size * 100.00;
+   end Get_Position_Percent;
+
+   --------------------------
+   -- Set_Position_Percent --
+   --------------------------
+
+   procedure Set_Position_Percent
+     (Paned   : not null access Gtk.Paned.Gtk_Paned_Record'Class;
+      Percent : Float)
+   is
+      Paned_Size : constant Float :=
+                     (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned then
+                         Float (Paned.Get_Allocated_Width)
+                      else
+                         Float (Paned.Get_Allocated_Height));
+      Abs_Pos         : constant Float :=
+                          Percent / 100.0  * Paned_Size;
+   begin
+      Paned.Set_Position (Gint (Abs_Pos));
+   end Set_Position_Percent;
+
    -------------------
    -- Do_Completion --
    -------------------

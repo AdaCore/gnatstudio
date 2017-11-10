@@ -471,6 +471,17 @@ package GUI_Utils is
    --       --  Add it back again to its original parent container
    --       Parent.Add (Paned)
 
+   function Get_Position_Percent
+     (Paned   : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float;
+   --  Return a percentage for the paned view's separator according to its
+   --  width or height depending on its orientation.
+
+   procedure Set_Position_Percent
+     (Paned   : not null access Gtk.Paned.Gtk_Paned_Record'Class;
+      Percent : Float);
+   --  Set the position of the paned view's separator according to the given
+   --  size percentage.
+
    -----------
    -- Menus --
    -----------
