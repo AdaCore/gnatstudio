@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
@@ -53,7 +54,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with GVD.Canvas.View;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
@@ -299,6 +299,12 @@ package body GVD_Module is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Not_Command_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Not_Command_Filter;
       Context : Selection_Context) return Boolean;
 
    type Set_Value_Command is new Interactive_Command with null record;
@@ -1165,10 +1171,10 @@ package body GVD_Module is
               or else Is_Printable_In_Debugger (Entity);
          end;
 
-      elsif Has_Area_Information (Context) then
-         --  We assume the user knows best
+      elsif Has_Debugging_Variable (Context) then
          return True;
       end if;
+
       return False;
    end Filter_Matches_Primitive;
 
@@ -1190,6 +1196,27 @@ package body GVD_Module is
          end;
       end if;
       return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Not_Command_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      use Ada.Strings.Unbounded;
+
+   begin
+      if GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
+        and then Get_Variable (Context).Cmd /= ""
+      then
+         return False;
+      else
+         return True;
+      end if;
    end Filter_Matches_Primitive;
 
    ---------------------
@@ -1519,10 +1546,11 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Filter   : Action_Filter;
-      Debugger_Active   : Action_Filter;
-      Printable_Filter  : Action_Filter;
-      Subprogram_Filter : Action_Filter;
+      Debugger_Filter       : Action_Filter;
+      Debugger_Active       : Action_Filter;
+      Printable_Filter      : Action_Filter;
+      Subprogram_Filter     : Action_Filter;
+      Is_Not_Command_Filter : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -1546,13 +1574,18 @@ package body GVD_Module is
       Register_Filter
         (Kernel, Subprogram_Filter, "Debugger subprogram");
 
+      Is_Not_Command_Filter := new Not_Command_Filter;
+      Register_Filter
+        (Kernel, Is_Not_Command_Filter, "Debugger not command variable");
+
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 
       Register_Action
         (Kernel, "debug set value",
          Command     => new Set_Value_Command,
          Description => "Modify the value of the variable",
-         Filter      => Debugger_Filter and Printable_Filter,
+         Filter      => Debugger_Filter and Is_Not_Command_Filter and
+           Printable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1565,7 +1598,8 @@ package body GVD_Module is
          Description =>
             -("Set a watchpoint on the variable. The debugger will stop every"
               & " time the variable's value is changed"),
-         Filter      => Debugger_Filter and Printable_Filter,
+         Filter      => Debugger_Filter and Is_Not_Command_Filter and
+           Printable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1643,7 +1677,6 @@ package body GVD_Module is
          Filter   => Debugger_Filter,
          Category    => -"Debug");
 
-      GVD.Canvas.View.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
 
       Register_Action

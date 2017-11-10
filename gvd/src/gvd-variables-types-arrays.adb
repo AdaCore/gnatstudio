@@ -17,9 +17,6 @@
 
 with Ada.Tags;                    use Ada.Tags;
 with Glib;                        use Glib;
-with Gtkada.Canvas_View;          use Gtkada.Canvas_View;
-with Browsers;                    use Browsers;
-with GVD.Canvas;
 with GVD.Variables.Types.Repeats; use GVD.Variables.Types.Repeats;
 
 package body GVD.Variables.Types.Arrays is
@@ -55,77 +52,6 @@ package body GVD.Variables.Types.Arrays is
         or else Iter.Child > Positive (Iter.Item.Values.Length);
    end At_End;
 
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Array_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      R    : GVD.Canvas.Collapsible_Item;
-      Rect : constant GVD.Canvas.Component_Item :=
-        GVD.Canvas.New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-   begin
-      --  If we have a real empty array (ie the dimensions were not considered
-      --  as dynamic
-      --  In case we were able to parse the value despite the range information
-
-      if Self.Dimensions (1).First > Self.Dimensions (1).Last
-        and then Self.Dimensions (1).First /= Long_Integer'Last
-        and then Self.Dimensions (1).Last /= Long_Integer'First
-        and then Self.Values.Is_Empty
-      then
-         null;
-
-      elsif not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-
-      else
-         if GVD.Canvas.Show_Type (Mode)
-           and then Self.Type_Name /= Null_Unbounded_String
-         then
-            Rect.Add_Child
-              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
-         end if;
-
-         if GVD.Canvas.Show_Value (Mode)
-           and then not Self.Values.Is_Empty
-         then
-            for V in 1 .. Self.Last_Value loop
-               R := new GVD.Canvas.Collapsible_Item_Record;
-               R.For_Component := Self.Values (V).Value;
-               R.Initialize_Rect (Styles.Invisible);
-               R.Set_Child_Layout (Horizontal_Stack);
-               Rect.Add_Child (R);
-
-               declare
-                  Idx : constant String := Index_String
-                    (Self.all, Self.Values (V).Index, Self.Num_Dimensions);
-               begin
-                  if Self.Values (V).Value /= Empty_GVD_Type_Holder then
-                     R.Add_Child
-                       (Gtk_New_Text
-                          (Styles.Text_Font, Idx & ASCII.HT & " => "));
-                     R.Add_Child
-                       (Self.Values (V).Value.Get_Type.Build_Display
-                        (Self.Values (V).Value,
-                             Array_Item_Name (Lang, Name, Idx),
-                             View, Lang, Mode));
-                  end if;
-               end;
-            end loop;
-         end if;
-      end if;
-
-      return Rect;
-   end Build_Display;
-
    -----------
    -- Clear --
    -----------
@@ -136,9 +62,6 @@ package body GVD.Variables.Types.Arrays is
       if not Self.Values.Is_Empty then
          --  Free the whole memory for the items, since the type is in fact
          --  stored in a separate field.
-         for J in 1 .. Self.Last_Value loop
-            Self.Values (J).Value := Empty_GVD_Type_Holder;
-         end loop;
          Self.Values.Clear;
       end if;
 
@@ -199,9 +122,6 @@ package body GVD.Variables.Types.Arrays is
       if not Self.Values.Is_Empty then
          --  Free the whole memory for the items, since the type is in fact
          --  stored in a separate field.
-         for J in 1 .. Self.Last_Value loop
-            Self.Values (J).Value := Empty_GVD_Type_Holder;
-         end loop;
          Self.Values.Clear;
       end if;
 
@@ -281,9 +201,14 @@ package body GVD.Variables.Types.Arrays is
               (Self.Values (J).Value.Get_Type).Get_Value.Clone;
 
          elsif Self.Values (J).Index = Elem_Index then
-            Return_Type := Self.Values (J).Value;
-            Self.Values (J).Value := Empty_GVD_Type_Holder;
-            return Return_Type;
+            declare
+               I : Array_Item := Self.Values (J);
+            begin
+               Return_Type := I.Value;
+               I.Value := Empty_GVD_Type_Holder;
+               Self.Values (J) := I;
+               return Return_Type;
+            end;
          end if;
       end loop;
 
@@ -447,6 +372,7 @@ package body GVD.Variables.Types.Arrays is
       Tmp       : Vector;
       To_Insert : GVD_Type_Holder;
       Index     : Positive;
+      I         : Array_Item;
    begin
       --  Create the real new value (ie including the Repeat_Num)
 
@@ -509,29 +435,43 @@ package body GVD.Variables.Types.Arrays is
                   elsif Min2 < Min and then Max2 > Max then
                      Tmp (Index).Index := Self.Values (J).Index;
                      if Min - Min2 > 1 then
-                        Tmp (Index).Value := Self.Values (J).Value.Clone;
+                        I := Tmp (Index);
+                        I.Value := Self.Values (J).Value.Clone;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Tmp (Index).Value.Get_Type).Set_Repeat_Num
                             (Integer (Min - Min2));
                      else
-                        Tmp (Index).Value := GVD_Repeat_Type_Access
+                        I := Tmp (Index);
+                        I.Value := GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Get_Value.Clone;
+                        Tmp (Index) := I;
                      end if;
                      Index := Index + 1;
 
                      Tmp (Index).Index := Max + 1;
                      if Max2 - Max - 1 > 1 then
-                        Tmp (Index).Value := Self.Values (J).Value;
+                        I := Tmp (Index);
+                        I.Value := Self.Values (J).Value;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Tmp (Index).Value.Get_Type).Set_Repeat_Num
                             (Integer (Max2 - Max - 1));
                      else
-                        Tmp (Index).Value := GVD_Repeat_Type_Access
+                        I := Tmp (Index);
+                        I.Value := GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Get_Value;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Set_Value
                             (Empty_GVD_Type_Holder);
-                        Self.Values (J).Value := Empty_GVD_Type_Holder;
+
+                        I := Self.Values (J);
+                        I.Value := Empty_GVD_Type_Holder;
+                        Self.Values (J) := I;
                      end if;
                      Index := Index + 1;
 
@@ -542,17 +482,26 @@ package body GVD.Variables.Types.Arrays is
                   elsif Min2 < Min and then Max2 >= Min then
                      Tmp (Index).Index := Self.Values (J).Index;
                      if Min - Min2 > 1 then
-                        Tmp (Index).Value := Self.Values (J).Value;
+                        I := Tmp (Index);
+                        I.Value := Self.Values (J).Value;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Tmp (Index).Value.Get_Type).Set_Repeat_Num
                             (Integer (Min - Min2));
                      else
-                        Tmp (Index).Value := GVD_Repeat_Type_Access
+                        I := Tmp (Index);
+                        I.Value := GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Get_Value;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Set_Value
-                           (Empty_GVD_Type_Holder);
-                        Self.Values (J).Value := Empty_GVD_Type_Holder;
+                            (Empty_GVD_Type_Holder);
+
+                        I := Self.Values (J);
+                        I.Value := Empty_GVD_Type_Holder;
+                        Self.Values (J) := I;
                      end if;
                      Index := Index + 1;
 
@@ -563,17 +512,25 @@ package body GVD.Variables.Types.Arrays is
                   elsif Min2 <= Max and then Max2 > Max then
                      Tmp (Index).Index := Max + 1;
                      if Max2 - Max - 1 > 1 then
-                        Tmp (Index).Value := Self.Values (J).Value;
+                        I := Tmp (Index);
+                        I.Value := Self.Values (J).Value;
+                        Tmp (Index) := I;
                         GVD_Repeat_Type_Access
                           (Tmp (Index).Value.Get_Type).Set_Repeat_Num
                             (Integer (Max2 - Max - 1));
                      else
-                        Tmp (Index).Value := GVD_Repeat_Type_Access
+                        I := Tmp (Index);
+                        I.Value := GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Get_Value;
+                        Tmp (Index) := I;
+
                         GVD_Repeat_Type_Access
                           (Self.Values (J).Value.Get_Type).Set_Value
                             (Empty_GVD_Type_Holder);
-                        Self.Values (J).Value := Empty_GVD_Type_Holder;
+
+                        I := Self.Values (J);
+                        I.Value := Empty_GVD_Type_Holder;
+                        Self.Values (J) := I;
                      end if;
                      Index := Index + 1;
 
@@ -652,7 +609,9 @@ package body GVD.Variables.Types.Arrays is
                      GVD_Repeat_Type_Access
                        (Self.Values (J).Value.Get_Type).Set_Value
                          (Empty_GVD_Type_Holder);
-                     Self.Values (J).Value := Elem_Value;
+                     I := Self.Values (J);
+                     I.Value := Elem_Value;
+                     Self.Values (J) := I;
                   end if;
 
                   if Integer (Range_Index - Elem_Index) +
@@ -671,10 +630,14 @@ package body GVD.Variables.Types.Arrays is
 
             elsif Self.Values (J).Index = Elem_Index then
                if Self.Values (J).Value.Data /= null then
-                  Self.Values (J).Value := Empty_GVD_Type_Holder;
+                  I := Self.Values (J);
+                  I.Value := Empty_GVD_Type_Holder;
+                  Self.Values (J) := I;
                end if;
 
-               Self.Values (J).Value := To_Insert;
+               I := Self.Values (J);
+               I.Value := To_Insert;
+               Self.Values (J) := I;
                return;
             end if;
          end loop;

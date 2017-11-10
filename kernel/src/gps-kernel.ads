@@ -382,6 +382,13 @@ package GPS.Kernel is
    --  This function should be used rarely, since in theory the views are
    --  supposed to update the context when their selection changes.
 
+   type Context_Item is tagged record
+      Text : Unbounded_String;
+   end record;
+
+   type Context_Item_Access is access all Context_Item'Class;
+   --  Base type for item which can be stored in a Context
+
    -------------
    -- Markers --
    -------------
@@ -951,6 +958,8 @@ private
 
       Computed_Filters : Filter_Result_Map.Map;
       --  Cache the result of each filter object applied to this context.
+
+      GVD_Variable : Context_Item_Access := null;
    end record;
 
    procedure Free (Self : in out Selection_Context_Data_Record);

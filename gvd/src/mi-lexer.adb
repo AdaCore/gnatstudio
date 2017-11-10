@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Finalization;           use Ada.Finalization;
 with Ada.Streams;                use Ada.Streams;
 
 with Ada.Unchecked_Conversion;
@@ -410,6 +409,15 @@ package body MI.Lexer is
          Cursor := Token_Lists.Next (Cursor);
       end loop;
    end Clear_Token_List;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Token_List_Controller) is
+   begin
+      Clear_Token_List (This.List);
+   end Finalize;
 
    ------------------
    -- Build_Tokens --

@@ -1677,9 +1677,10 @@ package body GVD.Memory_View is
            -("Examine the contents of the memory at the location of the"
              & " selected variable"),
          Category => -"Debug",
-         Filter      => Lookup_Filter (Kernel, "Debugger stopped"));
+         Filter      => Lookup_Filter (Kernel, "Debugger stopped") and
+             Kernel.Lookup_Filter ("Debugger not command variable"));
 
-      --  the '%s' and 'debug printable variable' prevent this menu from
+      --  the '%S' and 'debug printable variable' prevent this menu from
       --  showing up in the GVD canvas. Instead, the canvas hard-codes it.
       Register_Contextual_Menu
         (Kernel, Name => "Debug view memory",

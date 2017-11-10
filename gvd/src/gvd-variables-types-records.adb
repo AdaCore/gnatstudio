@@ -17,10 +17,7 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Glib;                   use Glib;
-with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
-with Browsers;               use Browsers;
-with GVD.Canvas;
+with Glib; use Glib;
 
 package body GVD.Variables.Types.Records is
 
@@ -49,96 +46,6 @@ package body GVD.Variables.Types.Records is
    begin
       return Iter.Field > Iter.Item.Fields'Last;
    end At_End;
-
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Record_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant GVD.Canvas.Component_Item :=
-        GVD.Canvas.New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-      R : GVD.Canvas.Collapsible_Item;
-   begin
-      if not Self.Valid then
-         Rect.Add_Child
-           (Gtk_New_Image
-              (Styles.Invisible,
-               "gps-unknown-item-symbolic",
-               Allow_Rescale => False, Width => 16.0, Height => 16.0));
-
-      --  A null record ?
-      elsif Self.Num_Fields = 0 then
-         null;
-
-      elsif not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-
-      else
-         Rect.Set_Style (Styles.Nested);
-
-         if GVD.Canvas.Show_Type (Mode)
-           and then Self.Type_Name /= Null_Unbounded_String
-         then
-            Rect.Add_Child
-              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)),
-               Margin => Margin);
-         end if;
-
-         for F in Self.Fields'Range loop
-            --  not a variant part ?
-
-            if Self.Fields (F).Value.Data /= null then
-               R := new GVD.Canvas.Collapsible_Item_Record;
-               R.For_Component := Self.Fields (F).Value;
-               R.Initialize_Rect (Styles.Invisible);
-               R.Set_Child_Layout (Horizontal_Stack);
-               Rect.Add_Child (R, Margin => Margin);
-               R.Add_Child
-                 (Gtk_New_Text
-                    (Styles.Text_Font,
-                     To_String (Self.Fields (F).Name) & " => "));
-               R.Add_Child
-                 (Self.Fields (F).Value.Get_Type.Build_Display
-                  (Self.Fields (F).Value,
-                       Record_Field_Name (Lang, Name,
-                         To_String (Self.Fields (F).Name)),
-                       View, Lang, Mode));
-            end if;
-
-            --  a variant part ?
-
-            if Self.Fields (F).Variant_Part /= null then
-               for V in Self.Fields (F).Variant_Part'Range loop
-                  if Self.Fields (F).Variant_Part (V).Get_Type.Valid then
-                     R := new GVD.Canvas.Collapsible_Item_Record;
-                     R.For_Component := Self.Fields (F).Variant_Part (V);
-                     R.Initialize_Rect (Styles.Invisible);
-                     R.Set_Child_Layout (Horizontal_Stack);
-                     Rect.Add_Child (R, Margin => Margin);
-                     R.Add_Child
-                       (Gtk_New_Text
-                          (Styles.Text_Font,
-                           To_String (Self.Fields (F).Name) & " => "));
-                     R.Add_Child
-                       (Self.Fields (F).Variant_Part (V).Get_Type.Build_Display
-                        (Self.Fields (F).Variant_Part (V),
-                             Name, View, Lang, Mode));
-                  end if;
-               end loop;
-            end if;
-         end loop;
-      end if;
-
-      return Rect;
-   end Build_Display;
 
    -----------
    -- Clear --

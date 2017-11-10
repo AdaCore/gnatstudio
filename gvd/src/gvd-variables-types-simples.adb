@@ -16,15 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
-with Gtkada.Style;            use Gtkada.Style;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
-with Browsers;                use Browsers;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GVD.Canvas;              use GVD.Canvas;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
+with MI.Lexer;                use MI.Lexer;
 
 package body GVD.Variables.Types.Simples is
 
@@ -44,122 +42,6 @@ package body GVD.Variables.Types.Simples is
         or else Self.Idx > Integer (Self.Fields.Length);
    end At_End;
 
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Access_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant Component_Item := new Xref_Item_Record;
-      T      : Text_Item;
-      S      : constant Drawing_Style :=
-        (if Self.Has_Changed then View.Modified else Styles.Hyper_Link);
-   begin
-      Rect.Initialize_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-
-      if not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-      else
-         if Show_Type (Mode)
-           and then Self.Type_Name /= Null_Unbounded_String
-         then
-            T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
-            Rect.Add_Child (T);
-         end if;
-
-         if Self.Value /= Null_Unbounded_String
-           and then Show_Value (Mode)
-         then
-            T := Gtk_New_Text (S, To_String (Self.Value));
-            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
-            Rect.Add_Child (T);
-         end if;
-      end if;
-
-      return Rect;
-   end Build_Display;
-
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Debugger_Output_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item
-   is
-      pragma Unreferenced (Lang, Mode);
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant Component_Item :=
-        New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-   begin
-      if not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-      else
-         for L of Self.Value loop
-            Rect.Add_Child
-              (Gtk_New_Text
-                 ((if L.Modified then View.Modified else Styles.Text_Font),
-                  To_String (L.Value)));
-         end loop;
-      end if;
-
-      return Rect;
-   end Build_Display;
-
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Simple_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant Component_Item :=
-        New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-      T      : Text_Item;
-      S      : constant Drawing_Style :=
-        (if Self.Has_Changed then View.Modified else Styles.Text_Font);
-   begin
-      if not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-      else
-         if Show_Type (Mode)
-           and then Self.Type_Name /= Null_Unbounded_String
-         then
-            T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
-            Rect.Add_Child (T);
-         end if;
-
-         if Show_Value (Mode)
-           and then Self.Value /= Null_Unbounded_String
-         then
-            T := Gtk_New_Text (S, To_String (Self.Value));
-            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
-            Rect.Add_Child (T);
-         end if;
-      end if;
-
-      return Rect;
-   end Build_Display;
-
    -----------
    -- Clear --
    -----------
@@ -169,7 +51,7 @@ package body GVD.Variables.Types.Simples is
    begin
       Self.Value.Clear;
       if not Self.As_Record.Is_Empty then
-         Free (Self.As_Record);
+         Self.As_Record.Clear;
       end if;
    end Clear;
 
@@ -238,26 +120,11 @@ package body GVD.Variables.Types.Simples is
    -- Free --
    ----------
 
-   procedure Free (Self : in out Type_Vector.Vector) is
-   begin
-      if not Self.Is_Empty then
-         for J in 1 .. Positive (Self.Length) loop
-            Self (J).Name := Null_Unbounded_String;
-            Self (J).Typ := Empty_GVD_Type_Holder;
-         end loop;
-         Self.Clear;
-      end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    overriding procedure Free
      (Self : not null access GVD_Debugger_Output_Type) is
    begin
       if not Self.As_Record.Is_Empty then
-         Free (Self.As_Record);
+         Self.As_Record.Clear;
       end if;
 
       GVD_Generic_Type (Self.all).Free;
@@ -274,8 +141,10 @@ package body GVD.Variables.Types.Simples is
    begin
       if Self.Value.Is_Empty then
          return Unknown_Value_Str;
+
       elsif Self.Split_Lines then
          return "";   --  value is split into components
+
       else
          for L of Self.Value loop
             Append (Value, To_String (L.Value) & ASCII.LF);
@@ -504,34 +373,154 @@ package body GVD.Variables.Types.Simples is
      (Self  : not null access GVD_Debugger_Output_Type;
       Value : String)
    is
-      S     : constant String := Do_Tab_Expansion (Value, 8);
-      Old   : constant Line_Vector.Vector := Self.Value;
-      Lines : String_List_Access := Split (S, ASCII.LF);
+      Old : constant Line_Vector.Vector := Self.Value;
    begin
-      --  Compute which lines have changed since the last update.
+      if Starts_With (Value, "^done,") then
+         Self.Value.Clear;
 
-      Self.Value := Line_Vector.To_Vector (Lines'Length);
-      for L in 1 .. Positive (Self.Value.Length) loop
-         if Old.Is_Empty then
-            Self.Value.Replace_Element
-              (L,
-               (Modified => True,
-                Value    => To_Unbounded_String (Lines (L).all)));
+         if Value (Value'Last) = ']' then
+            declare
+               use Token_Lists;
+
+               Tokens   : Token_List_Controller;
+               T        : Token_Lists.Cursor;
+               V        : Ada.Strings.Unbounded.Unbounded_String;
+               Count    : Natural := 0;
+               Add_Last : Boolean := False;
+            begin
+               Tokens.List := Build_Tokens
+                 (Value
+                    (Integer'Min (Index (Value, "[") + 1, Value'Last) ..
+                         Value'Last - 1));
+
+               T := Tokens.List.First;
+
+               while T /= Token_Lists.No_Element
+                 and then Element (T).Code /= End_Of_File
+               loop
+
+                  if Element (T).Code = L_Brace then
+                     if Count = 0 then
+                        Add_Last := False;
+                     end if;
+
+                     Count := Count + 1;
+
+                     if Count = 1
+                       and then V /= ""
+                         and then Element (V, Length (V)) /= '='
+                     then
+                        Self.Value.Append ((V, False));
+                        V := Null_Unbounded_String;
+
+                     elsif V /= "" then
+                        Add_Last := True;
+                        Append (V, "{");
+                     end if;
+
+                  elsif Element (T).Code = R_Brace then
+                     Count := Count - 1;
+
+                     if Count = 0
+                       and then V /= ""
+                     then
+                        Self.Value.Append ((V, False));
+                        V := Null_Unbounded_String;
+
+                     elsif Count > 0
+                       or else Add_Last
+                     then
+                        Append (V, "}");
+                     end if;
+
+                  elsif Element (T).Code = Comma then
+                     if Count > 0 then
+                        V := V & To_Unbounded_String (Image (Element (T)));
+                     else
+                        if V /= "" then
+                           Self.Value.Append ((V, False));
+                           V := Null_Unbounded_String;
+                        end if;
+                     end if;
+
+                  else
+                     V := V & To_Unbounded_String (Image (Element (T)));
+                  end if;
+
+                  Next (T);
+               end loop;
+
+               if V /= "" then
+                  Self.Value.Append ((V, False));
+               end if;
+            end;
+
          else
-            Self.Value.Replace_Element
-              (L,
-               (Modified => L > Natural (Old.Length)
-                or else Lines (L).all /= To_String (Old (L).Value),
-                Value    => To_Unbounded_String (Lines (L).all)));
+            Self.Value.Append
+              ((Value    => To_Unbounded_String
+                (Value (Integer'Min (7, Value'Last) .. Value'Last)),
+                Modified => False));
          end if;
-      end loop;
+
+         for L in 1 .. Positive (Self.Value.Length) loop
+            if Old.Is_Empty then
+               Self.Value.Replace_Element
+                 (L,
+                  (Modified => True,
+                   Value    => Self.Value.Element (L).Value));
+            else
+               Self.Value.Replace_Element
+                 (L,
+                  (Modified => L > Natural (Old.Length)
+                   or else Self.Value.Element (L).Value /=
+                     To_String (Old (L).Value),
+                   Value    => Self.Value.Element (L).Value));
+            end if;
+         end loop;
+
+      elsif Starts_With (Value, "^error,") then
+         Self.Value.Clear;
+         Self.Value.Append
+           ((Value    => To_Unbounded_String
+             ("Error:" &
+                    Value (Integer'Min (Index (Value, """") + 1, Value'Last) ..
+                      Value'Last - 1)),
+             Modified => False));
+
+      else
+         declare
+            S     : constant String    := Do_Tab_Expansion (Value, 8);
+            Lines : String_List_Access := Split (S, ASCII.LF);
+         begin
+            --  Compute which lines have changed since the last update.
+
+            Self.Value := Line_Vector.To_Vector (Lines'Length);
+            for L in 1 .. Positive (Self.Value.Length) loop
+               if Old.Is_Empty then
+                  Self.Value.Replace_Element
+                    (L,
+                     (Modified => True,
+                      Value    => To_Unbounded_String (Lines (L).all)));
+               else
+                  Self.Value.Replace_Element
+                    (L,
+                     (Modified => L > Natural (Old.Length)
+                      or else Lines (L).all /= To_String (Old (L).Value),
+                      Value    => To_Unbounded_String (Lines (L).all)));
+               end if;
+            end loop;
+
+            Free (Lines);
+         end;
+      end if;
 
       if Self.Split_Lines then
-         Free (Self.As_Record);
+         Self.As_Record.Clear;
          Self.As_Record := Type_Vector.To_Vector (Self.Value.Length);
 
          for L in 1 .. Integer (Self.Value.Length) loop
-            Self.As_Record (L).Name := Null_Unbounded_String;
+            Self.As_Record.Replace_Element
+              (L, (Null_Unbounded_String, Self.As_Record (L).Typ));
             declare
                Data : constant GVD_Type_Holder_Data_Access :=
                  new GVD_Type_Holder_Data'
@@ -547,7 +536,6 @@ package body GVD.Variables.Types.Simples is
          end loop;
       end if;
 
-      Free (Lines);
       Self.Valid := True;
    end Set_Value;
 

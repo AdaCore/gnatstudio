@@ -16,37 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Glib;                   use Glib;
-with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with Browsers;               use Browsers;
-with GVD.Canvas;             use GVD.Canvas;
 
 package body GVD.Variables.Types.Repeats is
-
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Repeat_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Str : constant String :=
-        "<repeat" & Integer'Image (Self.Repeat_Num) & "> ";
-      Rect : constant Component_Item :=
-        New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-   begin
-      Rect.Add_Child (Gtk_New_Text (Styles.Text_Font, Str));
-      Rect.Add_Child
-        (Self.Value.Get_Type.Build_Display
-           (Self.Value, Name, View, Lang, Mode));
-      return Rect;
-   end Build_Display;
 
    -----------
    -- Clone --

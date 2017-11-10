@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Finalization;
 with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
@@ -221,13 +220,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    function Strip_Escape (S : String) return String;
    --  Strip escape characters, e.g. replace \\ by \, \" by "
-
-   type Token_List_Controller is
-     new Standard.Ada.Finalization.Limited_Controlled with record
-      List : Token_List;
-   end record;
-
-   overriding procedure Finalize (This : in out Token_List_Controller);
 
    function Get_Value (S : String) return String;
 
@@ -3779,15 +3771,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       return Default;
    end Get_Type_Info;
 
-   --------------
-   -- Finalize --
-   --------------
-
-   overriding procedure Finalize (This : in out Token_List_Controller) is
-   begin
-      Clear_Token_List (This.List);
-   end Finalize;
-
    ---------------
    -- Find_File --
    ---------------
@@ -4632,7 +4615,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   J := J + 1;
                end loop;
 
-            elsif Mode = User
+            elsif Mode in User | Visible
               and then J + 4 <= Str'Last
               and then Str (J .. J + 4) = "^done"
             then

@@ -24,6 +24,25 @@ package body GVD.Variables.Items is
 
    Me : constant Trace_Handle := Create ("ITEMS");
 
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Self : Item_Info) return String is
+   begin
+      if Self.Varname /= "" then
+         return To_String (Self.Varname);
+
+      elsif Self.Cmd_Name /= ""
+        and then Self.Cmd_Name /= "<>"
+      then
+         return To_String (Self.Cmd_Name);
+
+      else
+         return To_String (Self.Cmd);
+      end if;
+   end Name;
+
    ---------------------------
    -- Wrap_Debugger_Command --
    ---------------------------
@@ -34,9 +53,11 @@ package body GVD.Variables.Items is
    is
       Result : Item_Info;
    begin
-      Result.Cmd := To_Unbounded_String (Cmd);
-      Result.Entity := New_Debugger_Type (Cmd, Split_Lines => Split_Lines);
+      Result.Cmd_Name    := To_Unbounded_String ("<>");
+      Result.Cmd         := To_Unbounded_String (Cmd);
+      Result.Entity      := New_Debugger_Type (Cmd, Split_Lines);
       Result.Split_Lines := Split_Lines;
+
       return Result;
    end Wrap_Debugger_Command;
 

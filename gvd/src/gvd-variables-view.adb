@@ -37,11 +37,11 @@ with GPS.Intl;                    use GPS.Intl;
 with GPS.Debuggers;               use GPS.Debuggers;
 with GPS.Dialogs;                 use GPS.Dialogs;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
 with GPS.Properties;              use GPS.Properties;
@@ -66,6 +66,7 @@ with GVD.Generic_View;            use GVD.Generic_View;
 with GVD_Module;                  use GVD_Module;
 with GVD.Preferences;             use GVD.Preferences;
 with GVD.Process;                 use GVD.Process;
+with GVD.Types;                   use GVD.Types;
 with GVD.Variables.Items;         use GVD.Variables.Items;
 with GVD.Variables.Types;         use GVD.Variables.Types;
 with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
@@ -74,6 +75,7 @@ with Language.Icons;              use Language.Icons;
 with System;
 with System.Storage_Elements;     use System.Storage_Elements;
 with XML_Utils;                   use XML_Utils;
+with Xref;                        use Xref;
 
 package body GVD.Variables.View is
    Me : constant Trace_Handle := Create ("Variables_View");
@@ -252,19 +254,21 @@ package body GVD.Variables.View is
       Pref   : Preference);
 
    Tree_Cmd_Format : constant Pattern_Matcher := Compile
-     ("tree\s+((?:un)?display)\s+"    --  paren 1: type of command
+     ("(tree|graph)\s+"
+      & "((?:un)?display)\s+"    --  paren 1: type of command
       & "(?:"
-      &   "`([^`]+)`"          --  paren 2: `command`
-      &   "\s*(split)?"        --  paren 3: whether to split
+      &   "`([^`]+)`"            --  paren 2: `command`
+      &   "\s*(split)?"          --  paren 3: whether to split
       &   "|"
-      &   "(\S+)"              --  paren 4: varname
+      &   "(\S+)"                --  paren 4: varname
       & ")",
       Case_Insensitive);
-   Tree_Cmd_Display      : constant := 1;
-   Tree_Cmd_Command      : constant := 2;
-   Tree_Cmd_Split        : constant := 3;
-   Tree_Cmd_Varname      : constant := 4;
-   Tree_Cmd_Max_Paren    : constant := 4;   --  number of parenthesis
+--   Tree_Cmd_Prefix       : constant := 1;
+   Tree_Cmd_Display      : constant := 2;
+   Tree_Cmd_Command      : constant := 3;
+   Tree_Cmd_Split        : constant := 4;
+   Tree_Cmd_Varname      : constant := 5;
+   Tree_Cmd_Max_Paren    : constant := 5;   --  number of parenthesis
 
    Column_Descr          : constant := 0;
    Column_Icon           : constant := 1;
@@ -295,35 +299,99 @@ package body GVD.Variables.View is
       Name : String)
       return Item_Info;
 
-   type Is_Variable_Exist_Filter is new Action_Filter_Record with null record;
+   type Is_Variable_Editable_Filter is
+     new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Variable_Exist_Filter;
+     (Filter  : access Is_Variable_Editable_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Access_Variable_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
    function Display_Value_Select_Dialog is
      new Display_Select_Dialog (Debugger.Value_Format);
+
+   function Cmd_Name
+     (Debugger : Debugger_Access;
+      Cmd      : String)
+      return String;
+   --  Returns name for command which will be used as a header in the view
+
+   type Print_Variable_Command is new Interactive_Command with record
+      Dereference : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   function Print_Access_Label_Expansion
+     (Context : Selection_Context) return String;
+   --  Expand "%C" to the dereferenced name for the variable.
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Variable_Exist_Filter;
+     (Filter  : access Is_Variable_Editable_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
 
       View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context));
-      Name : constant String :=
-        Get_Variable_Name (Context, Dereference => False);
 
    begin
       if View /= null
-        and then Name /= ""
+        and then GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
+        and then Get_Variable (Context).Cmd = ""
       then
-         return Get_Item_Info (View.Tree, Name) /= No_Item_Info;
+         declare
+            Name : constant String :=
+              Get_Variable_Name (Context, Dereference => False);
+         begin
+            if Name /= "" then
+               return Get_Item_Info (View.Tree, Name) /= No_Item_Info;
+            end if;
+         end;
       end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if GPS.Kernel.Contexts.Has_Entity_Name_Information (Context) then
+         declare
+            Entity : constant Root_Entity'Class :=
+              GPS.Kernel.Contexts.Get_Entity (Context);
+         begin
+            return Is_Fuzzy (Entity)
+
+              --  ??? Should also include array variables
+              or else (not Is_Type (Entity)
+                       and then Is_Access (Entity));
+         end;
+
+      elsif GPS.Kernel.Contexts.Has_Debugging_Variable (Context) then
+         declare
+            Info : constant Item_Info := Get_Variable (Context);
+         begin
+            return Info.Cmd = "" and then
+              Info.Entity.Get_Type.all in GVD_Access_Type'Class;
+         end;
+      end if;
+
       return False;
    end Filter_Matches_Primitive;
 
@@ -472,7 +540,7 @@ package body GVD.Variables.View is
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
    begin
       if Process /= null then
-         Process_User_Command (Process, Cmd, Output_Command => True);
+         Process_User_Command (Process, Cmd);
       end if;
    end Execute_In_Debugger;
 
@@ -537,6 +605,7 @@ package body GVD.Variables.View is
               (Context, "tree undisplay " & To_String (It.Info.Varname));
          end if;
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -624,7 +693,10 @@ package body GVD.Variables.View is
       --  Extract one of the named grouped from the regexp
 
    begin
-      if Process = null or else not Starts_With (Command, "tree ") then
+      if Process = null or else
+        (not Starts_With (Command, "tree ")
+         and then not Starts_With (Command, "graph "))
+      then
          return "";
       end if;
 
@@ -641,6 +713,7 @@ package body GVD.Variables.View is
          It.Info := Wrap_Debugger_Command
            (Extract (Tree_Cmd_Command),
             Split_Lines => M (Tree_Cmd_Split) /= GNAT.Regpat.No_Match);
+
       elsif M (Tree_Cmd_Varname) /= GNAT.Regpat.No_Match then
          It.Info := Wrap_Variable (Extract (Tree_Cmd_Varname));
       else
@@ -674,6 +747,30 @@ package body GVD.Variables.View is
 
       return Command_Intercepted;  --  command was processed
    end Execute;
+
+   --------------
+   -- Cmd_Name --
+   --------------
+
+   function Cmd_Name
+     (Debugger : Debugger_Access;
+      Cmd      : String)
+      return String is
+   begin
+      if Debugger = null then
+         return "";
+      end if;
+
+      if Cmd = Debugger.Info_Locals then
+         return "local variables";
+
+      elsif Cmd = Debugger.Info_Args then
+         return "arguments";
+
+      else
+         return "";
+      end if;
+   end Cmd_Name;
 
    ---------------
    -- On_Attach --
@@ -977,8 +1074,15 @@ package body GVD.Variables.View is
       if Process.Debugger /= null then
          --  Compute the new value for all the items
          for Item of Self.Tree.Items loop
-            if not Item.Nested and then Item.Info.Auto_Refresh then
-               Update (Item.Info, Process);
+            if not Item.Nested then
+               if Item.Info.Cmd_Name = "<>" then
+                  Item.Info.Cmd_Name := To_Unbounded_String
+                    (Cmd_Name (Process.Debugger, To_String (Item.Info.Cmd)));
+               end if;
+
+               if Item.Info.Auto_Refresh then
+                  Update (Item.Info, Process);
+               end if;
             end if;
          end loop;
 
@@ -1161,15 +1265,16 @@ package body GVD.Variables.View is
          Item_From_Iter (View, Filter_Iter => Filter_Iter, It => It);
       end if;
 
-      if It.Info.Cmd /= Null_Unbounded_String then
-         Set_Area_Information
-           (Context     => Context,
-            Text        => "`" & To_String (It.Info.Cmd) & "`");
-      elsif It.Info.Varname /= Null_Unbounded_String then
-         Set_Area_Information
-           (Context     => Context,
-            Text        =>
-              View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name));
+      if It /= No_Item then
+         if It.Info.Cmd /= Null_Unbounded_String then
+            Set_Variable (Context, Name (It.Info), It.Info);
+
+         elsif It.Info.Varname /= Null_Unbounded_String then
+            Set_Variable
+              (Context,
+               View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name),
+               It.Info);
+         end if;
       end if;
 
       return Context;
@@ -1203,18 +1308,55 @@ package body GVD.Variables.View is
    -------------
 
    overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Name     : constant String :=
+        Get_Variable_Name (Context.Context, Command.Dereference);
+   begin
+      if GPS.Kernel.Contexts.Has_Debugging_Variable (Context.Context) then
+         declare
+            Info : constant Item_Info := Get_Variable (Context.Context);
+         begin
+            if Info.Cmd /= "" then
+               Debugger.Send
+                 (To_String (Info.Cmd), Mode => GVD.Types.Visible);
+
+               return Commands.Success;
+            end if;
+         end;
+      end if;
+
+      if Name /= "" then
+         Debugger.Send
+           (Debugger.Print_Value_Cmd (Name), Mode => GVD.Types.Visible);
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Set_Format_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Info : constant Item_Info := Get_Variable (Context.Context);
       Name : constant String :=
         Get_Variable_Name (Context.Context, Dereference => False);
 
       Format : Debugger.Value_Format;
    begin
       if View /= null
+        and then Info.Cmd = ""
         and then Name /= ""
       then
          for Item of View.Tree.Items loop
@@ -1291,6 +1433,16 @@ package body GVD.Variables.View is
       Self.Tree.Refilter;  --  Recompute visibility of rows
    end Filter_Changed;
 
+   ----------------------------------
+   -- Print_Access_Label_Expansion --
+   ----------------------------------
+
+   function Print_Access_Label_Expansion
+     (Context : Selection_Context) return String is
+   begin
+      return Emphasize (Get_Variable_Name (Context, True));
+   end Print_Access_Label_Expansion;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1300,8 +1452,11 @@ package body GVD.Variables.View is
    is
       Printable_Var_Filter    : Action_Filter;
       Debugger_Stopped_Filter : Action_Filter;
-      Is_Item_Exist_Filter    : Action_Filter;
-      Is_Variable_Filter      : Action_Filter;
+      Is_Editable_Filter      : Action_Filter;
+      Not_Connamd_Filter      : Action_Filter;
+      Access_Filter           : Action_Filter;
+
+      Command                 : Interactive_Command_Access;
    begin
       Variable_Views.Register_Module (Kernel);
       Variable_Views.Register_Open_View_Action
@@ -1312,15 +1467,22 @@ package body GVD.Variables.View is
       Debugger_Command_Action_Hook.Add (new On_Command);
 
       Debugger_Stopped_Filter := Kernel.Lookup_Filter ("Debugger stopped");
-      Printable_Var_Filter := Debugger_Stopped_Filter
-        and Kernel.Lookup_Filter ("Debugger printable variable");
+      Printable_Var_Filter    := Kernel.Lookup_Filter
+        ("Debugger printable variable");
+      Not_Connamd_Filter := Kernel.Lookup_Filter
+        ("Debugger not command variable");
+
+      Access_Filter := new Access_Variable_Filter;
+      Register_Filter
+        (Kernel, Access_Filter, "Debugger variable is access");
 
       Register_Action
         (Kernel, "debug tree display variable",
          Command => new Tree_Display_Command,
          Description =>
            -"Display the value of the variable in the Variables view",
-         Filter      => Printable_Var_Filter,
+         Filter      => Debugger_Stopped_Filter and Not_Connamd_Filter and
+           Printable_Var_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
@@ -1328,18 +1490,16 @@ package body GVD.Variables.View is
          Action      => "debug tree display variable",
          Group       => GVD_Variables_Contextual_Group);
 
-      Is_Variable_Filter := new Is_Variable_Exist_Filter;
+      Is_Editable_Filter := new Is_Variable_Editable_Filter;
       Register_Filter
-        (Kernel, Is_Variable_Filter, "Debugger is variable exist");
-
-      Is_Item_Exist_Filter := Printable_Var_Filter and Is_Variable_Filter;
+        (Kernel, Is_Editable_Filter, "Debugger is variable editable");
 
       Register_Action
         (Kernel, "debug set variable format",
          Command => new Set_Format_Command,
          Description =>
            -"Set format for the variable in the Variables view",
-         Filter      => Is_Item_Exist_Filter,
+         Filter      => Is_Editable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
@@ -1392,6 +1552,38 @@ package body GVD.Variables.View is
          Filter      => Debugger_Stopped_Filter,
          Icon_Name   => "gps-clear-symbolic",
          Category    => -"Debug");
+
+      Command := new Print_Variable_Command;
+      Register_Action
+        (Kernel, "debug print variable",
+         Command     => Command,
+         Description =>
+           "Print the value of the variable in the debugger console",
+         Filter      => Debugger_Stopped_Filter and Printable_Var_Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Print %S",
+         Action => "debug print variable",
+         Group  => GVD_Variables_Contextual_Group);
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug print dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Print the value pointed to by the variable in the debugger"
+           & " console",
+         Filter    => Debugger_Stopped_Filter and Access_Filter and
+           Printable_Var_Filter,
+         Category  => "Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => "Debug/Print %C",
+         Custom => Print_Access_Label_Expansion'Access,
+         Action => "debug print dereferenced variable",
+         Group  => GVD_Variables_Contextual_Group);
 
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => -"Show types");

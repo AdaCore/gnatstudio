@@ -236,6 +236,7 @@ package body GPS.Kernel.Macros is
       elsif Param = "s" then
          if Has_Entity_Name_Information (Context) then
             return Entity_Name_Information (Context);
+
          elsif Has_Area_Information (Context) then
             return Text_Information (Context);
          end if;
@@ -243,10 +244,15 @@ package body GPS.Kernel.Macros is
       elsif Param = "S" then
          if Has_Area_Information (Context) then
             return Text_Information (Context);
+
          elsif Has_Expression_Information (Context) then
             return Expression_Information (Context);
+
          elsif Has_Entity_Name_Information (Context) then
             return Entity_Name_Information (Context);
+
+         elsif Has_Debugging_Variable (Context) then
+            return To_String (Context.Ref.Get.GVD_Variable.Text);
          end if;
 
       elsif Param = "i" then

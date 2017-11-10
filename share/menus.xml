@@ -349,7 +349,6 @@
             <menu label="_Kill"                action="debug kill"/>
          </menu>
          <menu label="D_ata">
-            <menu label="_Data Window"        action="open debugger data window"/>
             <menu label="_Variables"          action="open debugger variables window"/>
             <menu label="_Call Stack"         action="open debugger call stack"/>
             <menu label="_Protection Domains" action="open protection domains debugger window"/>
@@ -361,11 +360,9 @@
             <separator/>
             <menu label="_Examine Memory"     action="examine memory"/>
             <separator/>
-            <menu label="Display _Local Variables" action="debug display local variables"/>
-            <menu label="Display _Arguments"       action="debug display arguments"/>
-            <menu label="Display Any _Expression..." action="debug display any expression"/>
-            <menu label="Graph Display Local Variables" action="debug graph display local variables"
-                  optional="true"/>
+            <menu label="Display _Local Variables" action="debug tree display local variables"/>
+            <menu label="Display _Arguments"       action="debug tree display arguments"/>
+            <menu label="Display Any _Expression..." action="debug tree display expression"/>
          </menu>
          <separator/>
          <menu label="_Run..."                      action="debug run dialog"/>

@@ -77,14 +77,6 @@ private
    overriding procedure Free
      (Self : not null access GVD_Repeat_Type);
 
-   overriding function Build_Display
-     (Self   : not null access GVD_Repeat_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-
    overriding function Replace
      (Self         : not null access GVD_Repeat_Type;
       Current      : GVD_Type_Holder'Class;

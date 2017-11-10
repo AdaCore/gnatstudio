@@ -16,9 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;                        use Glib;
-with Gtkada.Canvas_View;          use Gtkada.Canvas_View;
-with Browsers;                    use Browsers;
-with GVD.Canvas;
 with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
 
 package body GVD.Variables.Types.Classes is
@@ -64,72 +61,6 @@ package body GVD.Variables.Types.Classes is
         or else (Iter.Ancestor = Iter.Item.Ancestors'Last + 1
                  and then Iter.Item.Child.Data = null);
    end At_End;
-
-   -------------------
-   -- Build_Display --
-   -------------------
-
-   overriding function Build_Display
-     (Self   : not null access GVD_Class_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item
-   is
-      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      Rect   : constant GVD.Canvas.Component_Item :=
-        GVD.Canvas.New_Component_Item (Styles, GVD_Type_Holder (Holder), Name);
-      R      : Rect_Item;
-   begin
-      if not Self.Valid
-        or else (Self.Ancestors'Length = 0
-                 and then not Self.Child.Get_Type.Is_Valid)
-      then
-         Rect.Add_Child
-           (Gtk_New_Image
-              (Styles.Invisible,
-               Icon_Name => "gps-unknown-item-symbolic",
-               Allow_Rescale => False, Width => 16.0, Height => 16.0));
-
-      elsif not Self.Visible then
-         Rect.Add_Child (View.Item_Hidden);
-
-      else
-         for A in Self.Ancestors'Range loop
-
-            --  Draw the ancestor if it isn't a null record.
-
-            if Self.Ancestors (A) /= Empty_GVD_Type_Holder then
-               R := Gtk_New_Rect (Styles.Invisible);
-               R.Set_Child_Layout (Horizontal_Stack);
-               Rect.Add_Child (R);
-
-               R.Add_Child
-                 (Self.Ancestors (A).Get_Type.Build_Display
-                  (Self.Ancestors (A), Name, View, Lang, Mode));
-
-               if GVD_Class_Type_Access
-                 (Self.Ancestors (A).Get_Type).Child /= Empty_GVD_Type_Holder
-                 and then GVD_Record_Type_Access
-                   (GVD_Class_Type_Access
-                      (Self.Ancestors (A).Get_Type).
-                        Child.Get_Type).Num_Fields > 0
-               then
-                  Rect.Add_Child (Gtk_New_Hr (Styles.Item));
-               end if;
-            end if;
-         end loop;
-
-         if Self.Child /= Empty_GVD_Type_Holder then
-            Rect.Add_Child
-              (Self.Child.Get_Type.Build_Display
-                 (Self.Child, Name, View, Lang, Mode));
-         end if;
-      end if;
-
-      return Rect;
-   end Build_Display;
 
    -----------
    -- Clear --

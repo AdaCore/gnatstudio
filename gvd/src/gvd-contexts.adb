@@ -15,11 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with Language;            use Language;
-with Language_Handlers;   use Language_Handlers;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
 
 package body GVD.Contexts is
+
+   ------------------
+   -- Get_Variable --
+   ------------------
+
+   function Get_Variable
+     (Context : GPS.Kernel.Selection_Context)
+      return Item_Info is
+   begin
+      return Context_Item_Info_Access (Debugging_Variable (Context)).Info;
+   end Get_Variable;
 
    -----------------------
    -- Get_Variable_Name --
@@ -39,6 +51,18 @@ package body GVD.Contexts is
          Lang := Get_Language_From_File
            (Get_Language_Handler (Get_Kernel (Context)),
             File_Information (Context));
+      end if;
+
+      if Has_Debugging_Variable (Context) then
+         if Dereference and then Lang /= null then
+            return Dereference_Name
+              (Lang, To_String
+                 (Context_Item_Info_Access
+                      (Debugging_Variable (Context)).Text));
+         end if;
+
+         return To_String
+           (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
       end if;
 
       if Has_Area_Information (Context) then
@@ -68,5 +92,20 @@ package body GVD.Contexts is
 
       return "";
    end Get_Variable_Name;
+
+   ------------------
+   -- Set_Variable --
+   ------------------
+
+   procedure Set_Variable
+     (Context   : in out GPS.Kernel.Selection_Context;
+      Full_Name : String;
+      Info      : Item_Info)
+   is
+      Item : constant Context_Item_Info_Access := new Context_Item_Info'
+        (To_Unbounded_String (Full_Name), Info);
+   begin
+      Set_Debugging_Variable (Context, Context_Item_Access (Item));
+   end Set_Variable;
 
 end GVD.Contexts;

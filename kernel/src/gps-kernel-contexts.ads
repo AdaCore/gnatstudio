@@ -342,6 +342,20 @@ package GPS.Kernel.Contexts is
       return Gtkada.Canvas_View.Canvas_Event_Details;
    --  Store information as to where the user clicked in a browser.
 
+   ------------------------
+   -- Debugger variables --
+   ------------------------
+
+   procedure Set_Debugging_Variable
+     (Context  : in out Selection_Context;
+      Variable : Context_Item_Access);
+   function Has_Debugging_Variable
+     (Context : Selection_Context) return Boolean;
+   function Debugging_Variable
+     (Context : Selection_Context)
+      return Context_Item_Access;
+   --  Store information about debugger variable.
+
 private
 
    pragma Inline (Has_Project_Information);

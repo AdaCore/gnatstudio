@@ -124,14 +124,6 @@ package GVD.Variables.Types.Simples is
       Value : String);
    --  Set the value to be displayed
 
-   overriding function Build_Display
-     (Self   : not null access GVD_Debugger_Output_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode) return GVD.Canvas.Component_Item;
-
    overriding function Start
      (Self   : not null access GVD_Debugger_Output_Type)
       return Generic_Iterator'Class;
@@ -175,15 +167,6 @@ private
       Item : GVD_Type_Holder'Class)
       return Boolean;
 
-   overriding function Build_Display
-     (Self   : not null access GVD_Simple_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode)
-      return GVD.Canvas.Component_Item;
-
    overriding function Is_Changed
      (Self : not null access GVD_Simple_Type) return Boolean;
 
@@ -223,15 +206,6 @@ private
       Item : GVD_Type_Holder'Class)
       return Boolean;
 
-   overriding function Build_Display
-     (Self   : not null access GVD_Access_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode)
-      return GVD.Canvas.Component_Item;
-
    type GVD_Enum_Type is new GVD_Simple_Type with null record;
 
    overriding function Get_Type_Descr
@@ -257,9 +231,6 @@ private
 
    function Start (Self : Type_Vector.Vector) return Generic_Iterator'Class;
    --  Return an iterator on Self
-
-   procedure Free (Self : in out Type_Vector.Vector);
-   --  Free the memory used by Self
 
    type GVD_Debugger_Output_Type is new GVD_Base_Simple_Type with record
       Value       : Line_Vector.Vector;

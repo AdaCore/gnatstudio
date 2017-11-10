@@ -1083,6 +1083,43 @@ package body GPS.Kernel.Contexts is
       end if;
    end Browser_Information;
 
+   ----------------------------
+   -- Set_Debugging_Variable --
+   ----------------------------
+
+   procedure Set_Debugging_Variable
+     (Context  : in out Selection_Context;
+      Variable : Context_Item_Access) is
+   begin
+      Context.Ref.Get.GVD_Variable := Variable;
+   end Set_Debugging_Variable;
+
+   ----------------------------
+   -- Has_Debugging_Variable --
+   ----------------------------
+
+   function Has_Debugging_Variable
+     (Context : Selection_Context) return Boolean is
+   begin
+      return not Context.Ref.Is_Null
+        and then Context.Ref.Get.GVD_Variable /= null;
+   end Has_Debugging_Variable;
+
+   ------------------------
+   -- Debugging_Variable --
+   ------------------------
+
+   function Debugging_Variable
+     (Context : Selection_Context)
+      return Context_Item_Access is
+   begin
+      if not Context.Ref.Is_Null then
+         return Context.Ref.Get.GVD_Variable;
+      else
+         return null;
+      end if;
+   end Debugging_Variable;
+
    ------------------------------
    -- Register_Default_Filters --
    ------------------------------

@@ -24,8 +24,6 @@ with System.Storage_Elements;
 with Glib.Values;
 with Language;                    use Language;
 
-limited with GVD.Canvas;
-
 package GVD.Variables.Types is
 
    --  Description of the types and values that are parsed by GVD.
@@ -168,16 +166,6 @@ package GVD.Variables.Types is
    --  Any access type is structurally equivalent to any other access type,
    --  whereas two records are structurally equivalent only if their fields are
    --  structurally equivalent.
-
-   function Build_Display
-     (Self   : not null access GVD_Generic_Type;
-      Holder : GVD_Type_Holder'Class;
-      Name   : String;
-      View   : not null access GVD.Canvas.Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : GVD.Canvas.Display_Mode)
-      return GVD.Canvas.Component_Item is abstract;
-   --  Build the contents of the item, to show Self.
 
    type Generic_Iterator;
 

@@ -22,18 +22,18 @@
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Debugger;               use Debugger;
 with GVD.Variables.Types;    use GVD.Variables.Types;
-with GVD.Canvas;             use GVD.Canvas;
+with GPS.Kernel;
 with GVD.Process;            use GVD.Process;
 
 package GVD.Variables.Items is
 
    type Item_Info is tagged record
       Varname      : Unbounded_String;       --  tree display varname
+      Cmd_Name     : Unbounded_String;       --  tree display command name
       Cmd          : Unbounded_String;       --  tree display `cmd`
       Entity       : GVD_Type_Holder;        --  parsed type info
       Split_Lines  : Boolean;                --  for commands
       Auto_Refresh : Boolean := True;
-      Mode         : Display_Mode := Value;  --  what to display
       Format       : Debugger.Value_Format := Debugger.Default_Format;
    end record;
 
@@ -59,9 +59,7 @@ package GVD.Variables.Items is
    --  If Split_Lines is true, then each of the line output by the debugger is
    --  displayed as a separate component.
 
-   function Name (Self : Item_Info) return String
-      is (if Self.Varname /= ""
-          then To_String (Self.Varname) else To_String (Self.Cmd));
+   function Name (Self : Item_Info) return String;
    --  Return the display name for this item
 
    procedure Update
@@ -78,5 +76,10 @@ package GVD.Variables.Items is
    --  Whether we should check the address of Self when computing aliases.
 
    No_Item_Info : constant Item_Info := (others => <>);
+
+   type Context_Item_Info is new GPS.Kernel.Context_Item with record
+      Info : Item_Info;
+   end record;
+   type Context_Item_Info_Access is access all Context_Item_Info'Class;
 
 end GVD.Variables.Items;

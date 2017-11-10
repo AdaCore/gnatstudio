@@ -25,6 +25,7 @@
 --  tokens to be directly forwarded to the parser.
 
 with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
+with Ada.Finalization;                   use Ada.Finalization;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
 with Ada.Text_IO.Text_Streams;           use Ada.Text_IO.Text_Streams;
 
@@ -90,5 +91,12 @@ package MI.Lexer is
    --  and return a list of tokens.
 
    function Image (Item : Token_Type) return String;
+
+   type Token_List_Controller is
+     new Ada.Finalization.Limited_Controlled with record
+      List : Token_List;
+   end record;
+
+   overriding procedure Finalize (This : in out Token_List_Controller);
 
 end MI.Lexer;

@@ -686,7 +686,10 @@ package body GPS.Kernel is
 
    procedure Free (Self : in out Selection_Context_Data_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-         (Addresses_Array, Addresses_Array_Access);
+        (Addresses_Array, Addresses_Array_Access);
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Context_Item'Class, Context_Item_Access);
    begin
       if Active (Create_Me) then
          Trace (Create_Me, "Freeing context: 0x"
@@ -703,6 +706,8 @@ package body GPS.Kernel is
          GNATCOLL.VFS.Unchecked_Free (Self.Files);
          Unchecked_Free (Self.Messages);
       end if;
+
+      Unchecked_Free (Self.GVD_Variable);
 
       Self.Instances.Free;
    end Free;
