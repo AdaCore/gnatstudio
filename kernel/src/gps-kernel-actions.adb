@@ -15,27 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Commands;                  use Commands;
-with Gdk.Event;                 use Gdk.Event;
-with Gtk.Label;                 use Gtk.Label;
-with Glib.Convert;              use Glib.Convert;
-with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
-with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtkada.MDI;                use Gtkada.MDI;
-with String_Utils;              use String_Utils;
-with Learn;                     use Learn;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+with Commands;                use Commands;
+with Gdk.Event;               use Gdk.Event;
+with Gtk.Label;               use Gtk.Label;
+with Glib.Convert;            use Glib.Convert;
+with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Flow_Box_Child;      use Gtk.Flow_Box_Child;
+with Gtk.Size_Group;          use Gtk.Size_Group;
+with Gtkada.MDI;              use Gtkada.MDI;
+with String_Utils;            use String_Utils;
+with Learn;                   use Learn;
 
 package body GPS.Kernel.Actions is
    Me : constant Trace_Handle := Create ("ACTIONS");
@@ -55,6 +58,10 @@ package body GPS.Kernel.Actions is
    --  It is recommended instead to use Launch_Background_Command, but this one
    --  is sometimes used in user's python scripts.
 
+   ----------------------------
+   -- Actions Learn Provider --
+   ----------------------------
+
    type Actions_Learn_Provider_Type is new Learn_Provider_Type with record
       Kernel : Kernel_Handle;
    end record;
@@ -68,6 +75,10 @@ package body GPS.Kernel.Actions is
      (Self : not null access Actions_Learn_Provider_Type) return
      Learn_Item_Type_Lists.List;
 
+   ------------------------
+   -- Actions Learn Item --
+   ------------------------
+
    type Action_Learn_Item_Type is new Learn_Item_Type with record
       Action : Action_Record_Access;
    end record;
@@ -76,26 +87,42 @@ package body GPS.Kernel.Actions is
    overriding function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String
    is
-     (Get_Full_Description (Self.Action));
+     (if Self.Action = null then
+         ""
+      else
+         Get_Full_Description (Self.Action));
 
-   overriding function Is_Visible
-     (Self        : not null access Action_Learn_Item_Type;
-      Context     : Selection_Context;
-      Filter_Text : String) return Boolean;
-
-   ----------------
-   -- Is_Visible --
-   ----------------
+   -------------------------
+   -- Category Learn Item --
+   -------------------------
 
    overriding function Is_Visible
      (Self        : not null access Action_Learn_Item_Type;
       Context     : Selection_Context;
       Filter_Text : String) return Boolean
    is
-      pragma Unreferenced (Filter_Text);
-   begin
-      return Filter_Matches (Self.Action, Context => Context);
-   end Is_Visible;
+     (Filter_Matches (Self.Action, Context));
+
+   type Category_Learn_Item_Type is new Learn_Item_Type with record
+      Action_Items : Learn_Item_Type_Lists.List;
+   end record;
+   type Category_Learn_Item is access all Category_Learn_Item_Type;
+
+   overriding function Is_Visible
+     (Self        : not null access Category_Learn_Item_Type;
+      Context     : Selection_Context;
+      Filter_Text : String) return Boolean
+   is
+     (for some Item of Self.Action_Items =>
+         Item.Is_Visible (Context, Filter_Text));
+
+   package Category_Learn_Item_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Category_Learn_Item,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    ---------------------
    -- Get_Learn_Items --
@@ -106,18 +133,64 @@ package body GPS.Kernel.Actions is
      Learn_Item_Type_Lists.List
    is
       Items             : Learn_Item_Type_Lists.List;
-      Action_Child      : Action_Learn_Item;
-      Action_Hbox       : Gtk_Hbox;
-      Name_Label        : Gtk_Label;
-      Shortcut_Label    : Gtk_Label;
+      Added_Categories  : Category_Learn_Item_Maps.Map;
       Action_Size_Group : Gtk_Size_Group;
-   begin
-      Gtk_New (Action_Size_Group);
 
-      for Action_Name of Self.Kernel.Actions_For_Learning loop
-         Action_Child := new Action_Learn_Item_Type;
-         Action_Child.Action := Lookup_Action (Self.Kernel, Action_Name);
-         Gtk.Flow_Box_Child.Initialize (Action_Child);
+      procedure Create_Category_Learn_Item_If_Needed
+        (Action_Item : not null Action_Learn_Item);
+      --  Create a learn item for the given action item's category if not
+      --  created yet. This is used to group the actions that belong to a
+      --  same category.
+
+      function Create_Action_Learn_Item
+        (Action : not null Action_Record_Access) return Action_Learn_Item;
+      --  Create a learn item for the given action
+
+      ---------------------------------------
+      -- Add_Category_Learn_Item_If_Needed --
+      ---------------------------------------
+
+      procedure Create_Category_Learn_Item_If_Needed
+        (Action_Item : not null Action_Learn_Item)
+      is
+         Category       : constant String := Get_Category (Action_Item.Action);
+         Cat_Learn_Item : Category_Learn_Item;
+         Category_Label : Gtk_Label;
+      begin
+         if Added_Categories.Contains (Category) then
+            Cat_Learn_Item := Added_Categories (Category);
+         else
+            Cat_Learn_Item := new Category_Learn_Item_Type;
+            Gtk.Flow_Box_Child.Initialize (Cat_Learn_Item);
+
+            Gtk_New (Category_Label, Category);
+
+            Cat_Learn_Item.Add (Category_Label);
+            Cat_Learn_Item.Set_Sensitive (False);
+
+            Added_Categories.Insert (Category, Cat_Learn_Item);
+         end if;
+
+         Cat_Learn_Item.Action_Items.Append (Learn_Item (Action_Item));
+      end Create_Category_Learn_Item_If_Needed;
+
+      ------------------------------
+      -- Create_Action_Learn_Item --
+      ------------------------------
+
+      function Create_Action_Learn_Item
+        (Action : not null Action_Record_Access) return Action_Learn_Item
+      is
+         Action_Name    : constant String := Get_Name (Action);
+         Action_Item   : Action_Learn_Item;
+         Action_Hbox    : Gtk_Hbox;
+         Name_Label     : Gtk_Label;
+         Shortcut_Label : Gtk_Label;
+      begin
+         Action_Item := new Action_Learn_Item_Type;
+         Action_Item.Action := Action;
+
+         Gtk.Flow_Box_Child.Initialize (Action_Item);
 
          Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
 
@@ -138,9 +211,31 @@ package body GPS.Kernel.Actions is
             Expand => True,
             Fill   => False);
 
-         Action_Child.Add (Action_Hbox);
+         Action_Item.Add (Action_Hbox);
 
-         Items.Append (Learn_Item (Action_Child));
+         return Action_Item;
+      end Create_Action_Learn_Item;
+
+   begin
+      Gtk_New (Action_Size_Group);
+
+      for Action_Name of Self.Kernel.Actions_For_Learning loop
+         declare
+            Action     : constant Action_Record_Access :=
+                           Lookup_Action (Self.Kernel, Action_Name);
+            Action_Item : constant Action_Learn_Item :=
+                            Create_Action_Learn_Item (Action);
+         begin
+            Create_Category_Learn_Item_If_Needed (Action_Item);
+         end;
+      end loop;
+
+      for Cat_Item of Added_Categories loop
+         Items.Append (Learn_Item (Cat_Item));
+
+         for Action_Item of Cat_Item.Action_Items loop
+            Items.Append (Learn_Item (Action_Item));
+         end loop;
       end loop;
 
       return Items;
