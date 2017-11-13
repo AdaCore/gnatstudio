@@ -441,10 +441,8 @@ package body GVD.Breakpoints is
      (View   : not null access Breakpoint_Editor_Record)
    is
       Process   : Visual_Debugger := Get_Process (View);
-      Selection : constant Breakpoint_Data := Get_Selection (View);
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
       Iter      : Gtk_Tree_Iter;
-      Selected_Iter : Gtk_Tree_Iter := Null_Iter;
       Values    : Glib.Values.GValue_Array (1 .. 9);
       Columns   : Columns_Array (Values'Range);
       Last      : Gint;
@@ -518,17 +516,7 @@ package body GVD.Breakpoints is
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
-
-         if Br = Selection then
-            Selected_Iter := Iter;
-         end if;
       end loop;
-
-      --  Reselect the same item as before
-
-      if Selected_Iter /= Null_Iter then
-         View.Breakpoint_List.Get_Selection.Select_Iter (Selected_Iter);
-      end if;
    end Update;
 
    -------------
