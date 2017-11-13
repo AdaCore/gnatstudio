@@ -35,10 +35,13 @@ with Generic_Views;          use Generic_Views;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with XML_Utils;              use XML_Utils;
 
 package body Learn.Views is
 
    Learn_View_Module : Learn_View_Module_Access;
+
+   Default_Sep_Pos   : constant Float := 75.0;
 
    package Group_Widget_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
@@ -52,11 +55,16 @@ package body Learn.Views is
       Group_Widgets : Group_Widget_Maps.Map;
       Paned_View    : Gtk_Paned;
       Help_Label    : Gtk_Label;
+      Stored_Pos    : Float := Default_Sep_Pos;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
 
    function Initialize
      (View : access Learn_View_Record'Class) return Gtk.Widget.Gtk_Widget;
+   overriding procedure Save_To_XML
+     (View : access Learn_View_Record; XML : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access Learn_View_Record; XML : XML_Utils.Node_Ptr);
 
    overriding procedure Create_Menu
      (View    : not null access Learn_View_Record;
@@ -106,6 +114,11 @@ package body Learn.Views is
      (Self  : access Glib.Object.GObject_Record'Class;
       Child : not null access Gtk_Flow_Box_Child_Record'Class);
    --  Called when the user clicks on a learn item
+
+   procedure On_Realize
+     (Self : access Gtk_Widget_Record'Class);
+   --  Used to restore the paned view's separator position when modified by the
+   --  user.
 
    -------------
    -- Execute --
@@ -243,6 +256,18 @@ package body Learn.Views is
    end On_Learn_Item_Selected;
 
    ----------------
+   -- On_Realize --
+   ----------------
+
+   procedure On_Realize
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      View : constant Learn_View := Learn_View (Self);
+   begin
+      Set_Position_Percent (View.Paned_View, View.Stored_Pos);
+   end On_Realize;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -272,6 +297,10 @@ package body Learn.Views is
       Widget_Callback.Object_Connect
         (Get_MDI (View.Kernel), Signal_Children_Reorganized,
          Change_Pane_Orientation'Access, View);
+
+      --  Restore the paned view's separator position when realizing the view
+
+      View.On_Realize (On_Realize'Access);
 
       --  Create the main view
 
@@ -345,6 +374,46 @@ package body Learn.Views is
 
       return Gtk_Widget (View);
    end Initialize;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (View : access Learn_View_Record; XML : in out XML_Utils.Node_Ptr)
+   is
+      Root : Node_Ptr;
+   begin
+      Root := new Node;
+      XML.Child := Root;
+      Root.Tag := new String'("learn");
+      Set_Attribute
+        (Root, "position",
+         Float'Image (Get_Position_Percent (View.Paned_View)) & "%");
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (View : access Learn_View_Record; XML : XML_Utils.Node_Ptr)
+   is
+      Learn_Node : constant Node_Ptr := XML.Child;
+   begin
+      if Learn_Node = null then
+         return;
+      end if;
+
+      declare
+         Pos_Str : constant String := Get_Attribute (Learn_Node, "position");
+      begin
+         if Pos_Str /= "" then
+            View.Stored_Pos := Float'Value
+              (Pos_Str (Pos_Str'First .. Pos_Str'Last - 1));
+         end if;
+      end;
+   end Load_From_XML;
 
    -----------------
    -- Create_Menu --
