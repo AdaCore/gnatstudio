@@ -699,7 +699,6 @@ LDFLAGS
 CFLAGS
 CC
 HAVE_GNAT_PROJECT_gtkada
-GNATCOLL_INSTALL
 HAVE_GNAT_PROJECT_xmlada
 target_os
 target_vendor
@@ -754,7 +753,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_gnatcoll
 with_gtk
 with_python
 with_python_exec
@@ -1391,9 +1389,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-gnatcoll_build=<path>
-                          Specify the directory that contains the gnatcoll
-                          install
   --with-gtk=version      Specify the version of GTK to support (3.0 or 2.0)
   --without-gtk           Disable support for GTK
   --with-python=<path>    Specify the prefix of the Python installation
@@ -2428,23 +2423,6 @@ if test x"${HAVE_GNAT_PROJECT_xmlada}" = x"yes" ; then
 else
    XMLADA_GPR=no_xmlada
 fi
-
-######## Location of GNATcoll
-
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gnatcoll_build" >&5
-$as_echo_n "checking for gnatcoll_build... " >&6; }
-
-
-# Check whether --with-gnatcoll was given.
-if test "${with_gnatcoll+set}" = set; then :
-  withval=$with_gnatcoll; GNATCOLL_INSTALL=$withval
-fi
-
-
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GNATCOLL_INSTALL:-not specified}" >&5
-$as_echo "${GNATCOLL_INSTALL:-not specified}" >&6; }
-
-
 
 ######## Check GtkAda
 
@@ -5124,12 +5102,8 @@ esac
 
 
 
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: ------------- Summary for GPS --------------------" >&5
 $as_echo "$as_me: ------------- Summary for GPS --------------------" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}:  GNATcoll: $GNATCOLL_INSTALL" >&5
-$as_echo "$as_me:  GNATcoll: $GNATCOLL_INSTALL" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:  Xml/Ada: $XMLADA_GPR" >&5
 $as_echo "$as_me:  Xml/Ada: $XMLADA_GPR" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}:     use ADA_PROJECT_PATH to find xmlada.gpr" >&5

@@ -61,9 +61,6 @@ else
    XMLADA_GPR=no_xmlada
 fi
 
-######## Location of GNATcoll
-AM_PATH_GNATCOLL
-
 ######## Check GtkAda
 
 AC_MSG_CHECKING(for gtkada.gpr)
@@ -187,8 +184,6 @@ esac
 AC_SUBST(GPS_VERSION)
 AC_SUBST(GPS_DATE)
 
-AC_SUBST(GNATCOLL_INSTALL)
-
 AC_SUBST(TARGET)
 AC_SUBST(EXEC_PREFIX)
 
@@ -214,7 +209,6 @@ AC_SUBST(AWK)
 
 
 AC_MSG_NOTICE([------------- Summary for GPS --------------------])
-AC_MSG_NOTICE([ GNATcoll: $GNATCOLL_INSTALL])
 AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
