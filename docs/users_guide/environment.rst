@@ -610,3 +610,14 @@ installing GPS.
   the user to resize these windows. To circumvent this, we have added a command line switch
   to tell GPS not to store the window sizes and positions: activate this
   by launching GPS with :command:`--traceoff=STORE_WINDOW_POSITIONS`.
+
+*Buttons placed in dialogs' header bars or missing with GNOME 3.12+*
+
+  GNOME 3.12+ override the Gtk settings set by GPS, including the
+  ‘DialogsUseHeaders’ setting, which has for effect to display the buttons at
+  the top of dialogs. This leads to some problems with GPS and sometimes some
+  buttons are missing on some dialogs (e.g: Add button in the Aliases editor).
+  You can run this command from the terminal to force GNOME to disable this
+  setting:
+  :command:`gsettings set org.gnome.settings-daemon.plugins.xsettings overrides
+  "{'Gtk/DialogsUseHeader':<0>}"`
