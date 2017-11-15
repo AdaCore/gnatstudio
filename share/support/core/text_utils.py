@@ -610,7 +610,8 @@ def kill_line(location=None, count=1):
 ################################################
 
 
-@interactive("Editor", "Source editor", name="goto beginning of buffer")
+@interactive("Editor", "Source editor",
+             name="goto beginning of buffer")
 def beginning_of_buffer():
     """Move the cursor to the beginning of the buffer"""
     buffer = GPS.EditorBuffer.get()
@@ -718,7 +719,8 @@ def goto_beginning_of_line_ext_sel():
     _goto_line_bound(beginning=True, extend_selection=True)
 
 
-@interactive("Editor", filter_text_actions, name="goto beginning of line")
+@interactive("Editor", filter_text_actions,
+             name="goto beginning of line", for_learning=True)
 def goto_beginning_of_line():
     """
     Move the cursor to the beginning of the line:

@@ -2432,7 +2432,8 @@ package body KeyManager_Module is
            & " takes a numeric argument (read from the keyboard). For"
            & " instance, if this is associated with ctrl-u, you can type"
            & " ""ctrl-u 30 t"" to  the character t 30 times"),
-         Category => -"General");
+         Category     => -"General",
+         For_Learning => True);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 

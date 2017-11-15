@@ -1258,8 +1258,9 @@ package body Navigation_Module is
       Register_Action
         (Kernel, "previous subprogram", new Previous_Subprogram_Command,
          -"Move to the previous subprogram",
-         Category   => -"Editor",
-         Filter     => Src_Action_Context);
+         Category     => -"Editor",
+         Filter       => Src_Action_Context,
+         For_Learning => True);
 
       Register_Action
         (Kernel, "next subprogram", new Next_Subprogram_Command,

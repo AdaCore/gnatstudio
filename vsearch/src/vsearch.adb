@@ -3326,12 +3326,13 @@ package body Vsearch is
             with
               Context     => null,
               Incremental => False),
-         Description => -("Open the search dialog. If you have selected the"
+         Description  => -("Open the search dialog. If you have selected the"
            & " preference Search/Preserve search context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
-         Icon_Name   => "gps-search-symbolic",
-         Category    => -"Search");
+         Icon_Name    => "gps-search-symbolic",
+         Category     => -"Search",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "incremental search",
@@ -3351,13 +3352,14 @@ package body Vsearch is
             with
               Context     => null,
               Incremental => False),
-         Description => -("Open the search dialog in the replace mode."
+         Description  => -("Open the search dialog in the replace mode."
            & " If you have selected the"
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
-         Icon_Name   => "gps-search-symbolic",
-         Category    => -"Search");
+         Icon_Name    => "gps-search-symbolic",
+         Category     => -"Search",
+         For_Learning => True);
 
       Filter := new Can_Fill_With_Current_Word_Filter;
       Register_Action

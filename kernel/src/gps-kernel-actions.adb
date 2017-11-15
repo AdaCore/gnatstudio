@@ -37,6 +37,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Flow_Box_Child;      use Gtk.Flow_Box_Child;
 with Gtk.Size_Group;          use Gtk.Size_Group;
 with Gtkada.MDI;              use Gtkada.MDI;
+with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
 
@@ -198,6 +199,7 @@ package body GPS.Kernel.Actions is
          Action_Hbox.Pack_Start (Name_Label, Expand => False);
          Action_Size_Group.Add_Widget (Name_Label);
          Name_Label.Set_Alignment (0.0, 0.5);
+         Name_Label.Set_Ellipsize (Ellipsize_Middle);
 
          Gtk_New
            (Shortcut_Label,

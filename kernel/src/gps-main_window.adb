@@ -959,41 +959,45 @@ package body GPS.Main_Window is
       Command2.Mode   := Reorder_Tab_Left;
       Register_Action
         (Kernel,
-         Name        => "Move tab to left",
-         Command     => Command2,
-         Category    => "MDI",
-         Description =>
-         -("Move the current notebook tab one position to the left, within"
-           & " the notebook (cyclic)"));
+         Name         => "Move tab to left",
+         Command      => Command2,
+         Category     => "MDI",
+         Description  =>
+           -("Move the current notebook tab one position to the left, within"
+           & " the notebook (cyclic)"),
+         For_Learning => True);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Reorder_Tab_Right;
       Register_Action
         (Kernel,
-         Name        => "Move tab to right",
-         Command     => Command2,
-         Category    => "MDI",
-         Description =>
+         Name         => "Move tab to right",
+         Command      => Command2,
+         Category     => "MDI",
+         Description  =>
          -("Move the current notebook tab one position to the right, within"
-           & " the notebook (cyclic)"));
+           & " the notebook (cyclic)"),
+         For_Learning => True);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Next_Tab;
       Register_Action
         (Kernel,
-         Name        => "Move to next tab",
-         Command     => Command2,
-         Category    => "MDI",
-         Description => -("Move to the next tab in the current notebook"));
+         Name         => "Move to next tab",
+         Command      => Command2,
+         Category     => "MDI",
+         Description  => -("Move to the next tab in the current notebook"),
+         For_Learning => True);
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Previous_Tab;
       Register_Action
         (Kernel,
-         Name        => "Move to previous tab",
-         Command     => Command2,
-         Category    => "MDI",
-         Description => -("Move to the previous tab in the current notebook"));
+         Name         => "Move to previous tab",
+         Command      => Command2,
+         Category     => "MDI",
+         Description  => -("Move to the previous tab in the current notebook"),
+         For_Learning => True);
 
       Kernel.Scripts.Register_Command
         ("dialog",

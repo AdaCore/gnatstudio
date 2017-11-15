@@ -2286,9 +2286,10 @@ package body Src_Editor_Module is
       Close_Command (Command.all).Mode := Close_One;
       Register_Action
         (Kernel, "Close current window", Command,
-         Description => -"Close the currently selected window",
-         Category    => -"MDI",
-         Icon_Name   => "gps-close-symbolic");
+         Description  => -"Close the currently selected window",
+         Category     => -"MDI",
+         Icon_Name    => "gps-close-symbolic",
+         For_Learning => True);
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All;
@@ -2312,12 +2313,14 @@ package body Src_Editor_Module is
         (Kernel, "undo", new Undo_Command,
          Description => -"Undo the last command",
          Icon_Name   => "gps-undo-symbolic",
+         Category    => -"Editor",
          Filter      => new Has_Undo_Filter);
 
       Register_Action
         (Kernel, "redo", new Redo_Command,
          Description => -"Redo the last command that was undone",
          Icon_Name   => "gps-redo-symbolic",
+         Category    => -"Editor",
          Filter      => new Has_Redo_Filter);
 
       Register_Action
@@ -2335,12 +2338,14 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "comment lines", new Comment_Lines_Command,
          Description   => -"Comment the selected lines",
+         Category      => -"Editor",
          Filter        => Src_Action_Context,
          For_Learning  => True);
 
       Register_Action
         (Kernel, "uncomment lines", new Uncomment_Lines_Command,
          Description   => -"Uncomment the selected lines",
+         Category      => -"Editor",
          Filter        => Src_Action_Context,
          For_Learning  => True);
 
@@ -2349,12 +2354,14 @@ package body Src_Editor_Module is
          Description   =>
            -("Reformat selected lines or current paragraph so that the list"
            & " are shorter than the grey line on the right"),
+         Category      => -"Editor",
          Filter        => Src_Action_Context,
          For_Learning  => True);
 
       Register_Action
         (Kernel, "print selection", new Print_Selection_Command,
          Description   => -"Print the current selection",
+         Category      => -"Editor",
          Filter        => Src_Action_Context);
 
       Register_Action
@@ -2366,17 +2373,20 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "fold all blocks", new Fold_All_Blocks_Command,
          -"Fold all blocks (if, loops,...)",
-         Filter  => Src_Action_Context);
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
         (Kernel, "unfold all blocks", new Unfold_All_Blocks_Command,
          -"Unfold all blocks (if, loops,...)",
-         Filter => Src_Action_Context);
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
         (Kernel, "goto line",
          Command      => new Goto_Line_Command,
          Description  => -"Open a dialog to select a line to go to",
+         Category     => -"Editor",
          For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
@@ -2388,6 +2398,7 @@ package body Src_Editor_Module is
         (Kernel, "goto declaration",
          Command     => new Goto_Declaration_Command,
          Description => -"Jump to the declaration of the current entity",
+         Category    => -"Editor",
          Filter => (not Is_Dispatching)
             and ((not Line_Numbers_Area_Filter
                   and Create (Module => Src_Editor_Module_Name))
@@ -2400,6 +2411,7 @@ package body Src_Editor_Module is
          Command     => new Goto_Body_Command,
          Description =>
            -"Jump to the implementation/body of the current entity",
+         Category    => -"Editor",
          Filter      => (not Is_Dispatching) and F);
 
       Register_Action

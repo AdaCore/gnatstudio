@@ -1655,11 +1655,12 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug step", new Step_Command,
-         Icon_Name   => "gps-debugger-step",
-         Filter      => Debugger_Active,
-         Description =>
+         Icon_Name    => "gps-debugger-step",
+         Filter       => Debugger_Active,
+         Description  =>
            -"Execute until program reaches a new line of source code",
-         Category    => -"Debug");
+         Category     => -"Debug",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "debug stepi", new Stepi_Command,
@@ -1670,12 +1671,13 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug next", new Next_Command,
-         Icon_Name   => "gps-debugger-next",
-         Filter      => Debugger_Active,
-         Description =>
+         Icon_Name    => "gps-debugger-next",
+         Filter       => Debugger_Active,
+         Description  =>
            -("Execute the program until the next source line, stepping over"
              & " subprogram calls"),
-         Category    => -"Debug");
+         Category     => -"Debug",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "debug nexti", new Nexti_Command,
@@ -1687,20 +1689,22 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug finish", new Finish_Command,
-         Icon_Name   => "gps-debugger-finish",
-         Filter      => Debugger_Active,
-         Description =>
+         Icon_Name    => "gps-debugger-finish",
+         Filter       => Debugger_Active,
+         Description  =>
            -("Continue execution until selected stack frame returns"),
-         Category    => -"Debug");
+         Category     => -"Debug",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "debug continue", new Continue_Command,
-         Icon_Name   => "gps-debugger-run",
-         Filter      => Debugger_Active,
-         Description =>
+         Icon_Name    => "gps-debugger-run",
+         Filter       => Debugger_Active,
+         Description  =>
            -("Continue execution until next breakpoint." & ASCII.LF
            & "Start the debugger if not started yet"),
-         Category    => -"Debug");
+         Category     => -"Debug",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "debug up", new Up_Command,
@@ -1718,10 +1722,11 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug interrupt", new Interrupt_Command,
-         Icon_Name   => "gps-debugger-stop",
-         Filter      => Debugger_Active,
-         Description => -"Asynchronously interrupt the debuggee program",
-         Category    => -"Debug");
+         Icon_Name    => "gps-debugger-stop",
+         Filter       => Debugger_Active,
+         Description  => -"Asynchronously interrupt the debuggee program",
+         Category     => -"Debug",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "terminate debugger", new Terminate_Command,

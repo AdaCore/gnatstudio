@@ -172,9 +172,10 @@ package body Builder_Module is
    begin
       Register_Action
         (Kernel, "Interrupt", new Interrupt_Tool_Command,
-         Description =>
+         Description  =>
            -"Interrupt the tasks performed in the background by GPS",
-         Icon_Name  => "gps-stop-symbolic");
+         Icon_Name    => "gps-stop-symbolic",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "export console to file", new Run_Export_Command,
