@@ -303,10 +303,7 @@ package body GVD.Breakpoints is
    --  Create a new breakpoint
 
    type Set_Breakpoints_State_Command (Is_Enabled : Boolean) is
-     new Interactive_Command with
-      record
-         State : Boolean := Is_Enabled;
-      end record;
+     new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Breakpoints_State_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -1642,16 +1639,16 @@ package body GVD.Breakpoints is
             --  Get the list of selected breakpoints
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => False,
-                                             State   => Command.State,
+                                             State   => Command.Is_Enabled,
                                              Id_List => Id_List);
       --  Put them in numerical order
       List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
-      Set_Breakpoints_State (View.Kernel, Id_List, Command.State);
+      Set_Breakpoints_State (View.Kernel, Id_List, Command.Is_Enabled);
       List_Breakpoint_Identifiers.Clear (Id_List);
       --  Need to modify the toggle buttons in the model
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => True,
-                                             State   => Command.State,
+                                             State   => Command.Is_Enabled,
                                              Id_List => Id_List);
       return Commands.Success;
    end Execute;
