@@ -6771,6 +6771,15 @@ class MDI(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def present_main_window():
+        """
+        Present the GPS main window. This is useful when you want to
+        programatically give the focus to the GPS main window.
+        """
+
+        pass  # implemented in Ada
+
 
 ###########################################################
 # MDIWindow
