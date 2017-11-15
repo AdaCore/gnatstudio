@@ -12,7 +12,6 @@ import GPS
 from gps_utils import interactive
 import aliases
 import align
-from gi.repository import Gtk
 
 
 if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
@@ -61,9 +60,9 @@ def smart_tab():
 
     # if it's a python code, do it in python way
     if editor.file().language() == "python":
-        d = python_tab_indent(editor,
-                              editor.selection_start(),
-                              editor.selection_end())
+        python_tab_indent(editor,
+                          editor.selection_start(),
+                          editor.selection_end())
 
     # Otherwise, reformat the current selection
 
@@ -116,8 +115,9 @@ def should_escape(context):
         if GPS.Action("Cancel completion").can_execute():
             return True
 
-    if [c for c in GPS.MDI.children()
-       if (c.is_floating() and c.get_child().__class__ == GPS.GUI)]:
+    current_view = GPS.MDI.current()
+
+    if current_view and current_view.is_floating():
         return True
 
     return False
@@ -132,7 +132,11 @@ def smart_escape():
       - interrupt the current alias expansion (if any).
       - remove multiple cursors
       - remove the completion if it exists
-      - close the most recent floating view, if any
+      - close the Search view if:
+         . if opened and if it was the most recent recent floating view.
+         . the "Select on Match" preference is enabled
+      - give the focus to the GPS main window if the focus in on a
+        floating view
     """
 
     def do_something():
@@ -152,12 +156,13 @@ def smart_escape():
             if GPS.Action("Cancel completion").execute_if_possible():
                 return True
 
-        c = [c for c in GPS.MDI.children()
-             if (c.is_floating() and c.get_child().__class__ == GPS.GUI)]
+        current_view = GPS.MDI.current()
 
-        if c:
-            c[0].close()
+        if current_view and current_view.is_floating():
+            GPS.MDI.present_main_window()
             return True
+
+        return False
 
     if do_something():
         # We did something in reaction to the ESC key being pressed:

@@ -996,6 +996,12 @@ package body GPS.Main_Window is
          Description => -("Move to the previous tab in the current notebook"));
 
       Kernel.Scripts.Register_Command
+        ("present_main_window",
+         Params        => No_Params,
+         Handler       => Default_Command_Handler'Access,
+         Class         => MDI_Class,
+         Static_Method => True);
+      Kernel.Scripts.Register_Command
         ("dialog",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
@@ -1318,7 +1324,10 @@ package body GPS.Main_Window is
       Child  : MDI_Child;
       Inst   : Class_Instance;
    begin
-      if Command = "exit" then
+      if Command = "present_main_window" then
+         Get_Main_Window (Kernel).Present;
+
+      elsif Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
          Quit (GPS_Window (Get_Main_Window (Kernel)),
                Force => Nth_Arg (Data, 1, False),
