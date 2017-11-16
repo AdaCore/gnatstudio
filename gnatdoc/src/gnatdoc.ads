@@ -172,9 +172,11 @@ private
       --  Remove element located at Cursor and place the cursor just after its
       --  current position
 
+      type Vector_Access is access all Files_List.Vector;
+
       type Project_Files is record
          Project   : Project_Type;
-         Src_Files : access Files_List.Vector;
+         Src_Files : Vector_Access;
       end record;
 
       package Project_Files_List is new Ada.Containers.Vectors

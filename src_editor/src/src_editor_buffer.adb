@@ -115,8 +115,10 @@ package body Src_Editor_Buffer is
    use type GNATCOLL.Xref.Visible_Column;
    use type System.Address;
 
-   Editors_Factory :
-   access Src_Editor_Module.Editors.Src_Editor_Buffer_Factory;
+   type Src_Editor_Factory_Access is
+     access all Src_Editor_Module.Editors.Src_Editor_Buffer_Factory;
+
+   Editors_Factory : Src_Editor_Factory_Access;
 
    Me                   : constant Trace_Handle :=
                             Create ("Source_Editor_Buffer");
