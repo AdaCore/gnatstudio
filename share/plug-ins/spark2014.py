@@ -580,11 +580,15 @@ class GNATprove_Parser(tool_output.OutputParser):
            and GPS.MDI.yes_no_dialog(editor_dialog):
             if 'editor_cmd' in extra:
                 cmd = extra['editor_cmd']
-
+                manual_prover_file_path = extra['vc_file']
+                process_cwd = os.path.dirname(manual_prover_file_path)
                 try:
+                    # We have to change the directory for an unknown reason
+                    # related to issue 6153 of Coq.
                     proc = GPS.Process(cmd,
                                        on_exit=check_proof_after_close,
-                                       before_kill=editor_before_kill)
+                                       before_kill=editor_before_kill,
+                                       directory=process_cwd)
                     proc._proc_msg = m
                     proc._is_killed = False
                 except OSError:
