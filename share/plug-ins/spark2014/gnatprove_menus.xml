@@ -647,6 +647,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_tictactoe" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/tictactoe/tictactoe.gpr"</shell>
+      <shell>Editor.edit "tictactoe.adb"</shell>
+      <shell>Editor.edit "tictactoe.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tictactoe">
+        <title>tictactoe</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_tokeneer" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/tokeneer/test.gpr"</shell>
