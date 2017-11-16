@@ -507,7 +507,7 @@ class Tree_with_process:
         self.checking_notification = False
         print_debug("ITP launched")
 
-    def start(self, command, mlw_file_name):
+    def start(self, command, mlw_file_name, dir_gnat_server):
         """ start interactive theorem proving """
 
         self.file_name = mlw_file_name
@@ -518,7 +518,8 @@ class Tree_with_process:
         self.tree = Tree()
         self.process = GPS.Process(command,
                                    regexp=">>>>",
-                                   on_match=self.check_notifications)
+                                   on_match=self.check_notifications,
+                                   directory=dir_gnat_server)
         self.console = GPS.Console(ITP_CONSOLE,
                                    on_input=self.interactive_console_input)
         self.console.write("> ")

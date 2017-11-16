@@ -1171,12 +1171,11 @@ def start_ITP(tree, file_name, abs_fn_path, args=[]):
     objdirs = GPS.Project.root().object_dirs()
     default_objdir = objdirs[0]
     obj_subdir_name = "gnatprove"
-    dir_name = os.path.join(default_objdir, obj_subdir_name)
     # gnat_server must be launched from gnatprove dir to find why3.conf
-    os.chdir(dir_name)
+    dir_gnat_server = os.path.join(default_objdir, obj_subdir_name)
     mlw_file = ""
     file_name_no_ext = os.path.splitext(file_name)[0]
-    for dir_name, sub_dir_name, files in os.walk(dir_name):
+    for dir_name, sub_dir_name, files in os.walk(dir_gnat_server):
         for file in files:
             file_name_string = file_name_no_ext + '.mlw'
             if fnmatch.fnmatch(file, file_name_string) and mlw_file == "":
@@ -1198,7 +1197,7 @@ def start_ITP(tree, file_name, abs_fn_path, args=[]):
     else:
         command = command + arg_limit_line + " " + mlw_file
     itp_lib.print_debug(command)
-    tree.start(command, abs_fn_path)
+    tree.start(command, abs_fn_path, dir_gnat_server)
 
 
 def on_prove_itp(context):
