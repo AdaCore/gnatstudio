@@ -15,13 +15,50 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;               use Glib;
 with Gtk.Separator;      use Gtk.Separator;
 with Gtk.Style_Context;  use Gtk.Style_Context;
 
 with GUI_Utils;          use GUI_Utils;
 
 package body Dialog_Utils is
+
+   function Filter_Func_Wrapper
+     (Child : not null access Gtk_Flow_Box_Child_Record'Class) return Boolean;
+   --  Called each time a group widget's child is going to be filtered.
+   --  Used to hide the group widget if all the children are not visible
+   --  anymore.
+
+   -------------------------
+   -- Filter_Func_Wrapper --
+   -------------------------
+
+   function Filter_Func_Wrapper
+     (Child : not null access Gtk_Flow_Box_Child_Record'Class) return Boolean
+   is
+      Group_Widget : constant Dialog_Group_Widget :=
+                       Dialog_Group_Widget (Child.Get_Parent.Get_Parent);
+      Result       : constant Boolean := Group_Widget.Filter_Func (Child);
+      Index        : constant Gint := Child.Get_Index;
+   begin
+      Group_Widget.Has_Children_Visible :=
+        Group_Widget.Has_Children_Visible or else Result;
+
+      --  Check if we need to hide the group widget only when the last child
+      --  is being filtered: if there are no visible children, hide it.
+      --  Otherwise, show it.
+
+      if Index = Gint (Group_Widget.Number_Of_Children) - 1 then
+         if not Group_Widget.Has_Children_Visible then
+            Group_Widget.Hide;
+         else
+            Group_Widget.Show_All;
+         end if;
+
+         Group_Widget.Has_Children_Visible := False;
+      end if;
+
+      return Result;
+   end Filter_Func_Wrapper;
 
    ----------------
    -- Initialize --
@@ -171,7 +208,7 @@ package body Dialog_Utils is
       Child_Key : String;
       Visible   : Boolean)
    is
-      Child : Gtk_Widget;
+      Child : Gtk_Flow_Box_Child;
    begin
       --  Do nothing if the map does not contain any association for Row_Key
       if not Self.Children_Map.Contains (Child_Key) then
@@ -198,7 +235,7 @@ package body Dialog_Utils is
       Child_Key : String;
       Highlight : Boolean)
    is
-      Child : Gtk_Widget;
+      Child : Gtk_Flow_Box_Child;
    begin
       --  Do nothing if the map does not contain any association for Row_Key
       if not Self.Children_Map.Contains (Child_Key) then
@@ -207,12 +244,25 @@ package body Dialog_Utils is
 
       Child := Self.Children_Map (Child_Key);
 
-      if Highlight then
-         Scroll_To_Child (Self, Child);
-         Child.Set_State_Flags (Gtk_State_Flag_Selected, False);
-      else
-         Child.Set_State_Flags (Gtk_State_Flag_Normal, True);
-      end if;
+      declare
+         Flow_Box : constant Gtk_Flow_Box := Gtk_Flow_Box (Child.Get_Parent);
+      begin
+         if Highlight then
+            Scroll_To_Child (Self, Child);
+
+            --  Set the flags of the Gtk_Flow_Box_Child itself if the parent
+            --  flow box does not support selection.
+
+            if Flow_Box.Get_Selection_Mode = Selection_None then
+               Child.Set_State_Flags (Gtk_State_Flag_Selected, False);
+            else
+               Flow_Box.Select_Child (Child);
+            end if;
+         else
+            Child.Set_State_Flags (Gtk_State_Flag_Normal, True);
+            Flow_Box.Unselect_Child (Child);
+         end if;
+      end;
    end Set_Child_Highlighted;
 
    ----------------------------------
@@ -225,7 +275,7 @@ package body Dialog_Utils is
       Message   : String;
       Is_Error  : Boolean := False)
    is
-      Child : Gtk_Widget;
+      Child : Gtk_Flow_Box_Child;
    begin
       --  Do nothing if the map does not contain any association for Row_Key
       if not Self.Children_Map.Contains (Child_Key) then
@@ -251,7 +301,7 @@ package body Dialog_Utils is
      (Self      : not null access Dialog_View_Record'Class;
       Child_Key : String)
    is
-      Child : Gtk_Widget;
+      Child : Gtk_Flow_Box_Child;
    begin
       --  Do nothing if the map does not contain any association for Row_Key
       if not Self.Children_Map.Contains (Child_Key) then
@@ -308,7 +358,8 @@ package body Dialog_Utils is
       end if;
 
       if Filtering_Function /= null then
-         Self.Flow_Box.Set_Filter_Func (Filtering_Function);
+         Self.Filter_Func := Filtering_Function;
+         Self.Flow_Box.Set_Filter_Func (Filter_Func_Wrapper'Access);
       end if;
 
       Self.Add (Self.Flow_Box);
@@ -341,7 +392,18 @@ package body Dialog_Utils is
    function Get_Number_Of_Children
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural
    is
-      (Self.Number_Of_Children);
+     (Self.Number_Of_Children);
+
+   ------------------------
+   -- Set_Column_Spacing --
+   ------------------------
+
+   procedure Set_Column_Spacing
+     (Self    : not null access Dialog_Group_Widget_Record'Class;
+      Spacing : Guint) is
+   begin
+      Self.Flow_Box.Set_Column_Spacing (Spacing);
+   end Set_Column_Spacing;
 
    ------------------
    -- Create_Child --
@@ -441,7 +503,7 @@ package body Dialog_Utils is
       --  Insert it in the dialog view children map if a key has been specified
       if Child_Key /= "" then
          Self.Parent_View.Children_Map.Insert
-           (Child_Key, Child_Box.Get_Parent);
+           (Child_Key, Gtk_Flow_Box_Child (Child_Box.Get_Parent));
       end if;
 
       return Child_Box.Get_Parent;
@@ -510,11 +572,12 @@ package body Dialog_Utils is
    ------------------
 
    procedure Append_Child
-     (Self      : not null access Dialog_Group_Widget_Record'Class;
-      Widget    : not null access Gtk_Widget_Record'Class;
-      Expand    : Boolean := True;
-      Fill      : Boolean := True;
-      Child_Key : String := "")
+     (Self        : not null access Dialog_Group_Widget_Record'Class;
+      Widget      : not null access Gtk_Widget_Record'Class;
+      Expand      : Boolean := True;
+      Fill        : Boolean := True;
+      Homogeneous : Boolean := False;
+      Child_Key   : String := "")
    is
       Valign : constant Gtk_Align := (if Expand and then Fill then
                                          Align_Fill
@@ -526,14 +589,27 @@ package body Dialog_Utils is
       Widget.Set_Vexpand (Expand);
       Widget.Set_Valign (Valign);
 
+      if Homogeneous then
+         Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
+      end if;
+
       Self.Flow_Box.Add (Widget);
       Get_Style_Context (Widget.Get_Parent).Add_Class
         ("dialog-views-groups-rows");
 
-      --  Insert it in the dialog view children map if a key has been specified
+      --  Insert it in the dialog view children map if a key has been
+      --  specified.
+      --  Always insert the surrounding Gtk_Flow_Box_Child (or the child itself
+      --  if it's already a Gtk_Flow_Box_Child) to ease the selection and
+      --  unselection of the children in the map;
+
       if Child_Key /= "" then
          Self.Parent_View.Children_Map.Insert
-           (Child_Key, Widget.Get_Parent);
+           (Child_Key,
+            (if Widget.all not in Gtk_Flow_Box_Child_Record'Class then
+               Gtk_Flow_Box_Child (Widget.Get_Parent)
+            else
+               Widget));
       end if;
 
       --  Update the number of children

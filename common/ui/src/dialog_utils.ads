@@ -25,6 +25,7 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
+with Glib;                                  use Glib;
 with Glib.Object;                           use Glib.Object;
 
 with Gtk.Box;                               use Gtk.Box;
@@ -33,6 +34,7 @@ with Gtk.Button_Box;                        use Gtk.Button_Box;
 with Gtk.Enums;                             use Gtk.Enums;
 with Gtk.Frame;                             use Gtk.Frame;
 with Gtk.Flow_Box;                          use Gtk.Flow_Box;
+with Gtk.Flow_Box_Child;                    use Gtk.Flow_Box_Child;
 with Gtk.Label;                             use Gtk.Label;
 with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
 with Gtk.Size_Group;                        use Gtk.Size_Group;
@@ -183,6 +185,11 @@ package Dialog_Utils is
      (Self : not null access Dialog_Group_Widget_Record'Class) return Natural;
    --  Return the number of children the given group widget
 
+   procedure Set_Column_Spacing
+     (Self    : not null access Dialog_Group_Widget_Record'Class;
+      Spacing : Guint);
+   --  Set the spacing between the dialog group's columns
+
    function Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
       Widget    : not null access Gtk_Widget_Record'Class;
@@ -251,18 +258,19 @@ package Dialog_Utils is
    --  Same as above, but without returning the newly created child
 
    procedure Append_Child
-     (Self      : not null access Dialog_Group_Widget_Record'Class;
-      Widget    : not null access Gtk_Widget_Record'Class;
-      Expand    : Boolean := True;
-      Fill      : Boolean := True;
-      Child_Key : String := "");
+     (Self        : not null access Dialog_Group_Widget_Record'Class;
+      Widget      : not null access Gtk_Widget_Record'Class;
+      Expand      : Boolean := True;
+      Fill        : Boolean := True;
+      Homogeneous : Boolean := False;
+      Child_Key   : String := "");
    --  Append an already built widget to the group, associating it with an
    --  optional Child_Key.
    --
    --  Children created via this procedure will not be aligned with the
    --  children created with the 'Create_Child' subprograms.
    --
-   --  The Expand and Fill properties have the same role as in the
+   --  The Expand, Fill and Homogenous properties have the same role as in the
    --  Gtk.Box.Pack_Start procedure.
 
    function Get_Selected_Children
@@ -288,9 +296,9 @@ package Dialog_Utils is
 
 private
 
-   package Widget_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+   package Gtk_Flow_Box_Child_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
-      Element_Type    => Gtk_Widget,
+      Element_Type    => Gtk_Flow_Box_Child,
       Hash            => Ada.Strings.Hash,
       Equivalent_Keys => "=",
       "="             => "=");
@@ -308,8 +316,9 @@ private
       Number_Of_Children : Natural := 0;
       --  The current number of children of the dialog view
 
-      Children_Map       : Widget_Maps.Map;
-      --  Contains all the widgets that have been associated with a key
+      Children_Map       : Gtk_Flow_Box_Child_Maps.Map;
+      --  Contains all the flow box children that have been associated with a
+      --  key.
    end record;
 
    type Dialog_View_With_Button_Box_Record is new Dialog_View_Record
@@ -319,14 +328,21 @@ private
    end record;
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with record
-      Parent_View        : Dialog_View;
+      Parent_View          : Dialog_View;
       --  The parent dialog view of the group
 
-      Flow_Box           : Gtk_Flow_Box;
+      Flow_Box             : Gtk_Flow_Box;
       --  The main container of the group widget
 
-      Number_Of_Children : Natural := 0;
+      Number_Of_Children   : Natural := 0;
       --  The current number of children of the group widget
+
+      Filter_Func          : Gtk_Flow_Box_Filter_Func;
+      --  The filtering function
+
+      Has_Children_Visible : Boolean := False;
+      --  Used to hide the group widget itself if all its children are not
+      --  visible anymore after some filtering.
    end record;
 
 end Dialog_Utils;
