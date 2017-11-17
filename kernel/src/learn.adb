@@ -19,6 +19,38 @@ package body Learn is
 
    Learn_Module : Learn_Module_Access;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self : not null access Learn_Item_Group_Type;
+      Name : String) is
+   begin
+      Self.Name := To_Unbounded_String (Name);
+   end Initialize;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Self : not null access Learn_Item_Group_Type) return String is
+   begin
+      return To_String (Self.Name);
+   end Get_Name;
+
+   --------------------
+   -- Add_Learn_Item --
+   --------------------
+
+   procedure Add_Learn_Item
+     (Self : not null access Learn_Item_Group_Type;
+      Item : not null access Learn_Item_Type'Class) is
+   begin
+      Self.Items.Append (Item);
+   end Add_Learn_Item;
+
    -----------------------
    -- Register_Provider --
    -----------------------

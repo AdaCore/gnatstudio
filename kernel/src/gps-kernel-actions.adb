@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -74,7 +72,7 @@ package body GPS.Kernel.Actions is
 
    overriding function Get_Learn_Items
      (Self : not null access Actions_Learn_Provider_Type) return
-     Learn_Item_Type_Lists.List;
+     Learn_Item_Group_Lists.List;
 
    ------------------------
    -- Actions Learn Item --
@@ -93,10 +91,6 @@ package body GPS.Kernel.Actions is
       else
          Get_Full_Description (Self.Action));
 
-   -------------------------
-   -- Category Learn Item --
-   -------------------------
-
    overriding function Is_Visible
      (Self        : not null access Action_Learn_Item_Type;
       Context     : Selection_Context;
@@ -104,42 +98,20 @@ package body GPS.Kernel.Actions is
    is
      (Filter_Matches (Self.Action, Context));
 
-   type Category_Learn_Item_Type is new Learn_Item_Type with record
-      Action_Items : Learn_Item_Type_Lists.List;
-   end record;
-   type Category_Learn_Item is access all Category_Learn_Item_Type;
-
-   overriding function Is_Visible
-     (Self        : not null access Category_Learn_Item_Type;
-      Context     : Selection_Context;
-      Filter_Text : String) return Boolean
-   is
-     (for some Item of Self.Action_Items =>
-         Item.Is_Visible (Context, Filter_Text));
-
-   package Category_Learn_Item_Maps is new
-     Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => String,
-        Element_Type    => Category_Learn_Item,
-        Hash            => Ada.Strings.Hash_Case_Insensitive,
-        Equivalent_Keys => "=",
-        "="             => "=");
-
    ---------------------
    -- Get_Learn_Items --
    ---------------------
 
    overriding function Get_Learn_Items
      (Self : not null access Actions_Learn_Provider_Type) return
-     Learn_Item_Type_Lists.List
+     Learn_Item_Group_Lists.List
    is
-      Items             : Learn_Item_Type_Lists.List;
-      Added_Categories  : Category_Learn_Item_Maps.Map;
+      Added_Categories  : Learn_Item_Group_Lists.List;
       Action_Size_Group : Gtk_Size_Group;
 
-      procedure Create_Category_Learn_Item_If_Needed
+      procedure Create_Category_Learn_Group_If_Needed
         (Action_Item : not null Action_Learn_Item);
-      --  Create a learn item for the given action item's category if not
+      --  Create a learn group for the given action item's category if not
       --  created yet. This is used to group the actions that belong to a
       --  same category.
 
@@ -147,33 +119,47 @@ package body GPS.Kernel.Actions is
         (Action : not null Action_Record_Access) return Action_Learn_Item;
       --  Create a learn item for the given action
 
-      ---------------------------------------
-      -- Add_Category_Learn_Item_If_Needed --
-      ---------------------------------------
+      -------------------------------------------
+      -- Create_Category_Learn_Group_If_Needed --
+      -------------------------------------------
 
-      procedure Create_Category_Learn_Item_If_Needed
+      procedure Create_Category_Learn_Group_If_Needed
         (Action_Item : not null Action_Learn_Item)
       is
+         use Learn_Item_Group_Lists;
+
          Category       : constant String := Get_Category (Action_Item.Action);
-         Cat_Learn_Item : Category_Learn_Item;
-         Category_Label : Gtk_Label;
+         Category_Group : Learn_Item_Group;
+         Cursor         : Learn_Item_Group_Lists.Cursor := No_Element;
       begin
-         if Added_Categories.Contains (Category) then
-            Cat_Learn_Item := Added_Categories (Category);
-         else
-            Cat_Learn_Item := new Category_Learn_Item_Type;
-            Gtk.Flow_Box_Child.Initialize (Cat_Learn_Item);
+         --  If we already created a group for this category, retrieve it.
+         --  Otherwise, create a new one.
 
-            Gtk_New (Category_Label, Category);
-
-            Cat_Learn_Item.Add (Category_Label);
-            Cat_Learn_Item.Set_Sensitive (False);
-
-            Added_Categories.Insert (Category, Cat_Learn_Item);
+         if not Added_Categories.Is_Empty then
+            Cursor := Added_Categories.First;
          end if;
 
-         Cat_Learn_Item.Action_Items.Append (Learn_Item (Action_Item));
-      end Create_Category_Learn_Item_If_Needed;
+         while Cursor /= No_Element loop
+            if Element (Cursor).Get_Name = Category then
+               exit;
+            end if;
+
+            Next (Cursor);
+         end loop;
+
+         if Cursor /= No_Element then
+            Category_Group := Element (Cursor);
+         else
+            Category_Group := new Learn_Item_Group_Type;
+            Initialize (Category_Group, Name => Category);
+
+            Added_Categories.Append (Category_Group);
+         end if;
+
+         --  Add the action learn item to the category group
+
+         Category_Group.Add_Learn_Item (Learn_Item (Action_Item));
+      end Create_Category_Learn_Group_If_Needed;
 
       ------------------------------
       -- Create_Action_Learn_Item --
@@ -183,7 +169,7 @@ package body GPS.Kernel.Actions is
         (Action : not null Action_Record_Access) return Action_Learn_Item
       is
          Action_Name    : constant String := Get_Name (Action);
-         Action_Item   : Action_Learn_Item;
+         Action_Item    : Action_Learn_Item;
          Action_Hbox    : Gtk_Hbox;
          Name_Label     : Gtk_Label;
          Shortcut_Label : Gtk_Label;
@@ -228,19 +214,11 @@ package body GPS.Kernel.Actions is
             Action_Item : constant Action_Learn_Item :=
                             Create_Action_Learn_Item (Action);
          begin
-            Create_Category_Learn_Item_If_Needed (Action_Item);
+            Create_Category_Learn_Group_If_Needed (Action_Item);
          end;
       end loop;
 
-      for Cat_Item of Added_Categories loop
-         Items.Append (Learn_Item (Cat_Item));
-
-         for Action_Item of Cat_Item.Action_Items loop
-            Items.Append (Learn_Item (Action_Item));
-         end loop;
-      end loop;
-
-      return Items;
+      return Added_Categories;
    end Get_Learn_Items;
 
    ----------

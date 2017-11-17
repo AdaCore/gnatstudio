@@ -137,9 +137,18 @@
    padding: 10px;
 }
 
+.learn-groups > GtkLabel {
+   font-weight: normal;
+   color: @inactive_tab_color;
+}
+
+.learn-provider-labels {
+   font-weight: bold;
+}
+
 .learn-items {
    background-color: @learn-items-color;
-   padding-left: 12px;
+   padding-left: 10px;
 }
 
 /**************************

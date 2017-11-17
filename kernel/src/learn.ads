@@ -18,16 +18,21 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Gtk.Flow_Box_Child; use Gtk.Flow_Box_Child;
+with Gtk.Flow_Box_Child;    use Gtk.Flow_Box_Child;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 
 package Learn is
 
    type Learn_Module_Type is new Module_ID_Record with private;
    type Learn_Module_Access is access all Learn_Module_Type;
+
+   -----------------
+   -- Learn Items --
+   -----------------
 
    type Learn_Item_Type is abstract new Gtk_Flow_Box_Child_Record
    with private;
@@ -48,9 +53,35 @@ package Learn is
    --  Return True if the given learn item should be displayed in the given
    --  context, False otherwise.
 
-   package Learn_Item_Type_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Learn_Item,
+   -----------------------
+   -- Learn Item Groups --
+   -----------------------
+
+   type Learn_Item_Group_Type is tagged private;
+   type Learn_Item_Group is access all Learn_Item_Group_Type;
+   --  Used to group learn items in the Learn view.
+
+   procedure Initialize
+     (Self : not null access Learn_Item_Group_Type;
+      Name : String);
+   --  Initialize the learn item group
+
+   function Get_Name
+     (Self : not null access Learn_Item_Group_Type) return String;
+   --  Return the name of the learn item group.
+
+   procedure Add_Learn_Item
+     (Self : not null access Learn_Item_Group_Type;
+      Item : not null access Learn_Item_Type'Class);
+   --  Add a learn item to the group
+
+   package Learn_Item_Group_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Learn_Item_Group,
       "="          => "=");
+
+   ---------------------
+   -- Learn Providers --
+   ---------------------
 
    type Learn_Provider_Type is interface;
    type Learn_Provider is access all Learn_Provider_Type'Class;
@@ -64,7 +95,7 @@ package Learn is
 
    function Get_Learn_Items
      (Provider : not null access Learn_Provider_Type)
-      return Learn_Item_Type_Lists.List is abstract;
+      return Learn_Item_Group_Lists.List is abstract;
    --  Return a list of all the learn items that should be displayed for this
    --  provider.
 
@@ -80,6 +111,15 @@ private
 
    type Learn_Item_Type is abstract new Gtk_Flow_Box_Child_Record with
      null record;
+
+   package Learn_Item_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Learn_Item,
+      "="          => "=");
+
+   type Learn_Item_Group_Type is tagged record
+      Name  : Unbounded_String;
+      Items : Learn_Item_Lists.List;
+   end record;
 
    package Learn_Provider_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps

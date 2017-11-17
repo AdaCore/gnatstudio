@@ -17,10 +17,12 @@
 
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
+with Glib.Values;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Flow_Box_Child;     use Gtk.Flow_Box_Child;
+with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Paned;              use Gtk.Paned;
@@ -43,19 +45,31 @@ package body Learn.Views is
 
    Default_Sep_Pos   : constant Float := 75.0;
 
-   package Group_Widget_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Dialog_Group_Widget,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Group_Widget_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Dialog_Group_Widget,
+      "="          => "=");
+
+   type Learn_Provider_Widgets_Type is record
+      Provider_Label : Gtk_Label;
+      Group_Widgets  : Group_Widget_Lists.List;
+   end record;
+
+   package Learn_Provider_Widgets_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Learn_Provider_Widgets_Type,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Learn_View_Record is new Generic_Views.View_Record with record
-      Main_View     : Dialog_View;
-      Group_Widgets : Group_Widget_Maps.Map;
-      Paned_View    : Gtk_Paned;
-      Help_Label    : Gtk_Label;
-      Stored_Pos    : Float := Default_Sep_Pos;
+      Main_View            : Dialog_View;
+      Provider_Widgets_Map : Learn_Provider_Widgets_Maps.Map;
+      Paned_View           : Gtk_Paned;
+      Help_Label           : Gtk_Label;
+      Stored_Pos           : Float := Default_Sep_Pos;
+      Selected_Item        : Learn_Item;
+      On_Realize_Handler_ID : Handler_Id;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
 
@@ -116,7 +130,8 @@ package body Learn.Views is
    --  Called when the user clicks on a learn item
 
    procedure On_Realize
-     (Self : access Gtk_Widget_Record'Class);
+     (Self   : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
    --  Used to restore the paned view's separator position when modified by the
    --  user.
 
@@ -155,21 +170,32 @@ package body Learn.Views is
                Next (Cursor);
             end loop;
 
-            --  If found, set the visibility of the group widget associated
-            --  with the provider refered by the preference.
+            --  If found, set the visibility of the widgets associated with the
+            --  provider refered by the preference.
 
             if Cursor /= No_Element then
                declare
-                  Provider_Name : constant String :=
-                                    Boolean_Preference_Maps.Key (Cursor);
-                  Group_Widget  : constant Dialog_Group_Widget :=
-                                    View.Group_Widgets (Provider_Name);
+                  Provider_Name    : constant String :=
+                                       Boolean_Preference_Maps.Key (Cursor);
+                  Provider_Widgets : constant Learn_Provider_Widgets_Type :=
+                                       View.Provider_Widgets_Map
+                                         (Provider_Name);
                begin
                   if Boolean_Preference (Pref).Get_Pref then
-                     Group_Widget.Set_No_Show_All (False);
-                     Group_Widget.Show_All;
+                     Provider_Widgets.Provider_Label.Set_No_Show_All (False);
+                     Provider_Widgets.Provider_Label.Show_All;
+
+                     for Group_Widget of Provider_Widgets.Group_Widgets loop
+                        Group_Widget.Set_No_Show_All (False);
+                        Group_Widget.Show_All;
+                        Group_Widget.Force_Refilter;
+                     end loop;
                   else
-                     Group_Widget.Hide;
+                     Provider_Widgets.Provider_Label.Hide;
+
+                     for Group_Widget of Provider_Widgets.Group_Widgets loop
+                        Group_Widget.Hide;
+                     end loop;
                   end if;
                end;
             end if;
@@ -204,8 +230,10 @@ package body Learn.Views is
       --  to display its help.
 
       if Child /= null and then Child.Get_Title /= "Learn" then
-         for Group_Widget of View.Group_Widgets loop
-            Group_Widget.Force_Refilter;
+         for Provider_Widgets of View.Provider_Widgets_Map loop
+            for Group_Widget of Provider_Widgets.Group_Widgets loop
+               Group_Widget.Force_Refilter;
+            end loop;
          end loop;
       end if;
    end MDI_Child_Selected;
@@ -221,7 +249,6 @@ package body Learn.Views is
       Tab_Orient   : constant Tab_Orientation_Type :=
                        Child.Get_Tab_Orientation;
       Current_Type : constant GType := View.Paned_View.Get_Type;
-
    begin
       --  Do nothing if the paned view is already well oriented
       if ((Tab_Orient = Bottom_To_Top or else Tab_Orient = Top_To_Bottom)
@@ -239,6 +266,8 @@ package body Learn.Views is
       View.Pack_Start (View.Paned_View);
 
       View.Show_All;
+
+      MDI_Child_Selected (View);
    end Change_Pane_Orientation;
 
    ----------------------------
@@ -252,7 +281,14 @@ package body Learn.Views is
       View : constant Learn_View := Learn_View (Self);
       Item : constant Learn_Item := Learn_Item (Child);
    begin
+      if View.Selected_Item /= null then
+         View.Main_View.Set_Child_Highlighted
+           (Child_Key => View.Selected_Item.Get_Name,
+            Highlight => False);
+      end if;
+
       View.Help_Label.Set_Markup (Item.Get_Help);
+      View.Selected_Item := Item;
    end On_Learn_Item_Selected;
 
    ----------------
@@ -260,11 +296,14 @@ package body Learn.Views is
    ----------------
 
    procedure On_Realize
-     (Self : access Gtk_Widget_Record'Class)
+     (Self   : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
    is
+      pragma Unreferenced (Params);
       View : constant Learn_View := Learn_View (Self);
    begin
       Set_Position_Percent (View.Paned_View, View.Stored_Pos);
+      Disconnect (View, View.On_Realize_Handler_ID);
    end On_Realize;
 
    ----------------
@@ -299,8 +338,10 @@ package body Learn.Views is
          Change_Pane_Orientation'Access, View);
 
       --  Restore the paned view's separator position when realizing the view
+      --  for the first time.
 
-      View.On_Realize (On_Realize'Access);
+      View.On_Realize_Handler_ID := Widget_Callback.Connect
+        (View, Signal_Realize, On_Realize'Access);
 
       --  Create the main view
 
@@ -308,47 +349,69 @@ package body Learn.Views is
       Dialog_Utils.Initialize (View.Main_View);
       View.Paned_View.Pack1 (View.Main_View, Resize => True, Shrink => True);
 
-      --  Create a group widget for all the registered providers
+      --  Create group widgets for all the registered providers
 
       for Provider of Providers loop
          declare
-            Provider_Name : constant String := Provider.Get_Name;
-            Show_Pref     : constant Boolean_Preference :=
-                              Learn_View_Module.Show_Providers_Preferences
-                                (Provider_Name);
+            Provider_Name    : constant String := Provider.Get_Name;
+            Provider_Widgets : Learn_Provider_Widgets_Type;
+            Show_Pref        : constant Boolean_Preference :=
+                                 Learn_View_Module.Show_Providers_Preferences
+                                   (Provider_Name);
+            Item_ID          : Positive := 1;
          begin
-            Group_Widget := new Dialog_Group_Widget_Record;
-            View.Group_Widgets.Insert
-              (Key      => Provider.Get_Name,
-               New_Item => Group_Widget);
+            Gtk_New (Provider_Widgets.Provider_Label, Provider_Name);
+            Get_Style_Context (Provider_Widgets.Provider_Label).Add_Class
+              ("learn-provider-labels");
+            Provider_Widgets.Provider_Label.Set_No_Show_All
+              (not Show_Pref.Get_Pref);
+            View.Main_View.Append
+              (Provider_Widgets.Provider_Label,
+               Expand => False);
 
-            Initialize
-              (Self                => Group_Widget,
-               Parent_View         => View.Main_View,
-               Group_Name          => Provider_Name,
-               Allow_Multi_Columns => False,
-               Selection           => Selection_Single,
-               Filtering_Function  => Filter_Learn_Item'Access);
+            for Item_Group of Provider.Get_Learn_Items loop
+               Group_Widget := new Dialog_Group_Widget_Record;
+               Provider_Widgets.Group_Widgets.Append (Group_Widget);
 
-            Group_Widget.On_Child_Selected
-              (Call => On_Learn_Item_Selected'Access,
-               Slot => View);
+               Initialize
+                 (Self                => Group_Widget,
+                  Parent_View         => View.Main_View,
+                  Group_Name          => Item_Group.Get_Name,
+                  Allow_Multi_Columns => True,
+                  Selection           => Selection_Single,
+                  Filtering_Function  => Filter_Learn_Item'Access);
 
-            Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
+               Group_Widget.On_Child_Selected
+                 (Call => On_Learn_Item_Selected'Access,
+                  Slot => View);
 
-            --  Add the provider's learn items in the group widget
+               Group_Widget.Set_Column_Spacing (10);
 
-            for Item of Provider.Get_Learn_Items loop
-               Get_Style_Context (Item).Add_Class ("learn-items");
-               Group_Widget.Append_Child
-                 (Widget    => Item,
-                  Expand    => False);
+               Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
+
+               --  Add the group's learn items in the group widget
+
+               for Item of Item_Group.Items loop
+                  Get_Style_Context (Item).Add_Class ("learn-items");
+                  Item.Set_Name ("learn-item-" & Item_ID'Img);
+                  Group_Widget.Append_Child
+                    (Widget      => Item,
+                     Expand      => False,
+                     Homogeneous => True,
+                     Child_Key   => Item.Get_Name);
+
+                  Item_ID := Item_ID + 1;
+               end loop;
+
+               --  Set the group widget's visibility depending on the
+               --  associated  preference.
+
+               Group_Widget.Set_No_Show_All (not Show_Pref.Get_Pref);
             end loop;
 
-            --  Set the group widget's visibility depending on the associated
-            --  preference.
-
-            Group_Widget.Set_No_Show_All (not Show_Pref.Get_Pref);
+            View.Provider_Widgets_Map.Insert
+              (Key      => Provider_Name,
+               New_Item => Provider_Widgets);
          end;
       end loop;
 
