@@ -324,7 +324,7 @@ class GNATcovPlugin(object):
         # the rebuild of the selected main in that case.
         if GPS.get_build_mode() != "gnatcov":
             GPS.set_build_mode("gnatcov")
-            WorkflowButtons.force_rebuild_main()
+            WorkflowButtons.force_rebuild_main(main_name)
 
         # Build the selected main
         yield WorkflowButtons.build_main(main_name)
