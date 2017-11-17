@@ -5,16 +5,16 @@ import workflows
 
 class WorkflowButtons(object):
 
+    __needs_build = {}
+    # Used to know if we can skip the 'Build Main' BuildTarget when calling
+    # the workflows for a particular main.
+
     __build_targets_created = False
     # Used to know if the build targets for the build-and-run and
     # build-and-debug buttons have been created.
 
     __build_succeed = False
     # Used to know if the 'Build Main' BuildTarget has succeed.
-
-    __needs_build = True
-    # Used to know if we can skip the 'Build Main' BuildTarget when calling
-    # the workflows.
 
     @staticmethod
     def setup():
@@ -46,12 +46,12 @@ class WorkflowButtons(object):
                 WorkflowButtons.__on_build_mode_changed)
 
     @staticmethod
-    def force_rebuild_main():
+    def force_rebuild_main(main_name):
         """
         Force the rebuild next time 'build_main' is called.
         """
 
-        WorkflowButtons.__needs_build = True
+        WorkflowButtons.__needs_build[main_name] = True
 
     @staticmethod
     def __connect_editor_hooks():
@@ -69,36 +69,29 @@ class WorkflowButtons(object):
             WorkflowButtons.__on_file_changed)
 
     @staticmethod
-    def __disconnect_hooks():
-        """
-        Disconnect our hook function from the 'file_changed_on_disk' and
-        'buffer_edited' hooks.
-        """
-
-        GPS.Hook('file_changed_on_disk').remove(
-            WorkflowButtons.__on_file_changed)
-        GPS.Hook('buffer_edited').remove(
-            WorkflowButtons.__on_file_changed)
-
-    @staticmethod
     def __on_compilation_finished(hook, category, target_name,
                                   mode_name, status):
         """
         Called each time a Build Target is computed.
 
         Skip the building phase of the workflow buttons when the 'Build All'
-        or the 'Build Main' targets have been computed with success.
+        target is computed and force the rebuild on "Clean All".
         """
         if target_name == "Build All" and status == 0:
-            WorkflowButtons.__needs_build = False
-            WorkflowButtons.__connect_editor_hooks()
+            for main_name in WorkflowButtons.__needs_build:
+                WorkflowButtons.__needs_build[main_name] = False
+
+        if target_name == "Clean All":
+            for main_name in WorkflowButtons.__needs_build:
+                WorkflowButtons.__needs_build[main_name] = True
 
     @staticmethod
     def __on_build_mode_changed(hook, build_mode):
         """
         Called when the build mode changes. Force the build phase in that case.
         """
-        WorkflowButtons.force_rebuild_main()
+        for main_name in WorkflowButtons.__needs_build:
+            WorkflowButtons.force_rebuild_main(main_name)
 
     @staticmethod
     def __on_file_changed(hook, file):
@@ -106,13 +99,11 @@ class WorkflowButtons(object):
         Called each time a file has changed, either directly from GPS or from
         outside.
         """
-        WorkflowButtons.__needs_build = True
+        for main_name in WorkflowButtons.__needs_build:
+            main_file = GPS.File(main_name)
 
-        # Disconnect our hook function from the 'buffer_edited' hook functions
-        # to avoid calling it each time a buffer is modified: we now assume
-        # that the 'Build Main' BuildTarget should not be skipped when calling
-        # the workflows.
-        WorkflowButtons.__disconnect_hooks()
+            if file.project() == main_file.project():
+                WorkflowButtons.__needs_build[main_name] = True
 
     @staticmethod
     @workflows.run_as_workflow
@@ -124,7 +115,11 @@ class WorkflowButtons(object):
         Set __build_succeed to True when the build succeed and to False
         otherwise.
         """
-        if not WorkflowButtons.__needs_build:
+
+        if WorkflowButtons.__needs_build.get(main_name) is None:
+            WorkflowButtons.__needs_build[main_name] = True
+
+        if not WorkflowButtons.__needs_build[main_name]:
             WorkflowButtons.__build_succeed = True
             return
 
@@ -140,12 +135,8 @@ class WorkflowButtons(object):
             WorkflowButtons.__build_succeed = False
             return
 
-        WorkflowButtons.__needs_build = False
+        WorkflowButtons.__needs_build[main_name] = False
         WorkflowButtons.__build_succeed = True
-
-        # Reconnect to the hooks to know if we can skip the 'Build Main'
-        # BuildTarget next time.
-        WorkflowButtons.__connect_editor_hooks()
 
     @staticmethod
     def __build_and_debug_wf(main_name):
