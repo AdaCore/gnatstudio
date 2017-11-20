@@ -493,9 +493,17 @@ package body Src_Editor_Module.Markers is
 
       begin
          if M /= null then
-            return L : Location_Marker do
-               L.From_Element (M);
-            end return;
+            D := File_Marker (M);
+
+            if D.File = File then
+               return L : Location_Marker do
+                  L.From_Element (M);
+               end return;
+            else
+               --  When Buffer renamed/saved as another file corresponding
+               --  File_Marker becomes invalid. Recreate it in this case.
+               D.Unlink_Mark (False);
+            end if;
          end if;
       end;
 
