@@ -493,6 +493,7 @@
          <menu label='Python'>
             <menu label='Python library help' action='display python library help' optional='true'/>
          </menu>
+         <menu label='AWS'/>
          <menu label='SPARK'/>
          <menu label='A_bout'       action='about gps'/>
       </menu>
