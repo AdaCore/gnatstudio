@@ -189,6 +189,8 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="c++"/>
     <compiler lang="asm"/>
   </toolchain>
+
+  <toolchain name="riscv64-elf"/>
 </GPS>
 """
 
