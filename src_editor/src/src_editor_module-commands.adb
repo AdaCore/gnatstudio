@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with GNAT.Calendar.Time_IO;
+
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
@@ -943,6 +945,8 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      use type GNAT.Calendar.Time_IO.Picture_String;
+
       File : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
       Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -971,7 +975,7 @@ package body Src_Editor_Module.Commands is
          Title  => -"Properties for " & Display_Full_Name (File),
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
-      Set_Default_Size_From_History (Dialog, "editor-props", Kernel, 400, 200);
+      Set_Default_Size_From_History (Dialog, "editor-props", Kernel, 400, 300);
 
       Gtk_New (Size);
 
@@ -997,6 +1001,38 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
       Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File)));
+      Label.Set_Selectable (True);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
+      Gtk_New (Label, -"Modified:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New
+        (Label,
+         Unknown_To_UTF8
+           (GNAT.Calendar.Time_IO.Image
+                (File.File_Time_Stamp,
+                GNAT.Calendar.Time_IO.ISO_Date
+                & " %H:%M:%S")));
+      Label.Set_Selectable (True);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
+      Gtk_New (Label, -"Version Control: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Label);
+      Label.Set_Markup
+        (Unknown_To_UTF8
+           (Kernel.VCS.Guess_VCS_For_Directory
+                (File.Dir).Get_Tooltip_For_File (File)));
       Label.Set_Selectable (True);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
