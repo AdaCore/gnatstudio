@@ -890,3 +890,19 @@ class Refactoring_Rename(Dialog):
 
     def set_new_name(self, text):
         pygps.get_widget_by_name("new_name").set_text(text)
+
+
+###########
+# Save As #
+###########
+
+class Save_As(Dialog):
+
+    def open_and_yield(self):
+        yield self._open_and_yield('save as')
+        labels = get_widgets_by_type(Gtk.Label, self.dialogs[0])
+        label = [x for x in labels if x.get_label() == '_Name:'][0]
+        self.entry = label.get_parent().get_children()[0]
+
+    def set_new_name(self, text):
+        self.entry.set_text(text)
