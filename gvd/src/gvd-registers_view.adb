@@ -150,14 +150,14 @@ package body GVD.Registers_View is
    Name_Column           : constant := 0;
    Hexadecimal_Column    : constant := 1;
    Naturals_Column       : constant := 2;
-   FG_Color_Column       : constant := 3;
-   BG_Name_Color_Column  : constant := 4;
-   BG_Value_Color_Column : constant := 5;
-   Editable_Column       : constant := 6;
-   Octal_Column          : constant := 7;
-   Binary_Column         : constant := 8;
-   Decimal_Column        : constant := 9;
-   Raw_Column            : constant := 10;
+   Octal_Column          : constant := 3;
+   Binary_Column         : constant := 4;
+   Decimal_Column        : constant := 5;
+   Raw_Column            : constant := 6;
+   FG_Color_Column       : constant := 7;
+   BG_Name_Color_Column  : constant := 8;
+   BG_Value_Color_Column : constant := 9;
+   Editable_Column       : constant := 10;
 
    -----------------
    -- Create_Menu --
@@ -248,6 +248,8 @@ package body GVD.Registers_View is
       Pref   : Preference)
    is
       use Default_Preferences;
+      use type GVD.Types.Debugger_Type;
+
       pragma Unreferenced (Kernel);
 
       function Is_Register_Pref return Boolean;
@@ -278,30 +280,32 @@ package body GVD.Registers_View is
            (GVD.Preferences.Registers_Hexadecimal.Get_Pref);
          Changed := True;
 
-      elsif Pref = Preference (GVD.Preferences.Registers_Octal) then
-         Self.View.Tree.Get_Column (Octal_Column).Set_Visible
-           (GVD.Preferences.Registers_Octal.Get_Pref);
-         Changed := True;
-
-      elsif Pref = Preference (GVD.Preferences.Registers_Binary) then
-         Self.View.Tree.Get_Column (Binary_Column).Set_Visible
-           (GVD.Preferences.Registers_Binary.Get_Pref);
-         Changed := True;
-
-      elsif Pref = Preference (GVD.Preferences.Registers_Decimal) then
-         Self.View.Tree.Get_Column (Decimal_Column).Set_Visible
-           (GVD.Preferences.Registers_Decimal.Get_Pref);
-         Changed := True;
-
-      elsif Pref = Preference (GVD.Preferences.Registers_Raw) then
-         Self.View.Tree.Get_Column (Raw_Column).Set_Visible
-           (GVD.Preferences.Registers_Raw.Get_Pref);
-         Changed := True;
-
       elsif Pref = Preference (GVD.Preferences.Registers_Natural) then
          Self.View.Tree.Get_Column (Naturals_Column).Set_Visible
            (GVD.Preferences.Registers_Natural.Get_Pref);
          Changed := True;
+
+      elsif Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+         if Pref = Preference (GVD.Preferences.Registers_Octal) then
+            Self.View.Tree.Get_Column (Octal_Column).Set_Visible
+              (GVD.Preferences.Registers_Octal.Get_Pref);
+            Changed := True;
+
+         elsif Pref = Preference (GVD.Preferences.Registers_Binary) then
+            Self.View.Tree.Get_Column (Binary_Column).Set_Visible
+              (GVD.Preferences.Registers_Binary.Get_Pref);
+            Changed := True;
+
+         elsif Pref = Preference (GVD.Preferences.Registers_Decimal) then
+            Self.View.Tree.Get_Column (Decimal_Column).Set_Visible
+              (GVD.Preferences.Registers_Decimal.Get_Pref);
+            Changed := True;
+
+         elsif Pref = Preference (GVD.Preferences.Registers_Raw) then
+            Self.View.Tree.Get_Column (Raw_Column).Set_Visible
+              (GVD.Preferences.Registers_Raw.Get_Pref);
+            Changed := True;
+         end if;
       end if;
 
       if Changed
@@ -340,14 +344,14 @@ package body GVD.Registers_View is
         (Name_Column           => GType_String,
          Hexadecimal_Column    => GType_String,
          Naturals_Column       => GType_String,
-         FG_Color_Column       => Gdk.RGBA.Get_Type,
-         BG_Name_Color_Column  => Gdk.RGBA.Get_Type,
-         BG_Value_Color_Column => Gdk.RGBA.Get_Type,
-         Editable_Column       => GType_Boolean,
          Octal_Column          => GType_String,
          Binary_Column         => GType_String,
          Decimal_Column        => GType_String,
-         Raw_Column            => GType_String);
+         Raw_Column            => GType_String,
+         FG_Color_Column       => Gdk.RGBA.Get_Type,
+         BG_Name_Color_Column  => Gdk.RGBA.Get_Type,
+         BG_Value_Color_Column => Gdk.RGBA.Get_Type,
+         Editable_Column       => GType_Boolean);
 
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
@@ -414,24 +418,29 @@ package body GVD.Registers_View is
          GVD.Preferences.Registers_Natural.Get_Pref,
          "Natural");
 
-      if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
-         Create
-           (Octal_Column,
-            GVD.Preferences.Registers_Octal.Get_Pref,
-            "Octal");
-         Create
-           (Binary_Column,
-            GVD.Preferences.Registers_Binary.Get_Pref,
-            "Binary");
-         Create
-           (Decimal_Column,
-            GVD.Preferences.Registers_Decimal.Get_Pref,
-            "Decimal");
-         Create
-           (Raw_Column,
-            GVD.Preferences.Registers_Raw.Get_Pref,
-            "Raw");
-      end if;
+      Create
+        (Octal_Column,
+         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         GVD.Preferences.Registers_Octal.Get_Pref,
+         "Octal");
+
+      Create
+        (Binary_Column,
+         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         GVD.Preferences.Registers_Binary.Get_Pref,
+         "Binary");
+
+      Create
+        (Decimal_Column,
+         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         GVD.Preferences.Registers_Decimal.Get_Pref,
+         "Decimal");
+
+      Create
+        (Raw_Column,
+         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         GVD.Preferences.Registers_Raw.Get_Pref,
+         "Raw");
 
       Widget.Modify_Font (Default_Style.Get_Pref_Font);
 
@@ -587,21 +596,26 @@ package body GVD.Registers_View is
                when GVD.Types.Hexadecimal =>
                   Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;
                   Column  := Hexadecimal_Column;
-               when GVD.Types.Octal =>
-                  Allowed := GVD.Preferences.Registers_Octal.Get_Pref;
-                  Column  := Octal_Column;
-               when GVD.Types.Binary =>
-                  Allowed := GVD.Preferences.Registers_Binary.Get_Pref;
-                  Column  := Binary_Column;
-               when GVD.Types.Decimal =>
-                  Allowed := GVD.Preferences.Registers_Decimal.Get_Pref;
-                  Column  := Decimal_Column;
-               when GVD.Types.Raw =>
-                  Allowed := GVD.Preferences.Registers_Raw.Get_Pref;
-                  Column  := Raw_Column;
+
                when GVD.Types.Naturals =>
                   Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
                   Column  := Naturals_Column;
+
+               when GVD.Types.Octal =>
+                  Allowed := GVD.Preferences.Registers_Octal.Get_Pref;
+                  Column  := Octal_Column;
+
+               when GVD.Types.Binary =>
+                  Allowed := GVD.Preferences.Registers_Binary.Get_Pref;
+                  Column  := Binary_Column;
+
+               when GVD.Types.Decimal =>
+                  Allowed := GVD.Preferences.Registers_Decimal.Get_Pref;
+                  Column  := Decimal_Column;
+
+               when GVD.Types.Raw =>
+                  Allowed := GVD.Preferences.Registers_Raw.Get_Pref;
+                  Column  := Raw_Column;
             end case;
 
          else
@@ -609,6 +623,7 @@ package body GVD.Registers_View is
                when GVD.Types.Hexadecimal =>
                   Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;
                   Column  := Hexadecimal_Column;
+
                when GVD.Types.Naturals =>
                   Allowed := GVD.Preferences.Registers_Natural.Get_Pref;
                   Column  := Naturals_Column;
