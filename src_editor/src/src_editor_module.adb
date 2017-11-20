@@ -2117,7 +2117,7 @@ package body Src_Editor_Module is
         (Kernel, "Delete word forward", Command,
            -"Delete the word following the current cursor position",
          Category => "Editor",
-         Filter       => Src_Action_Context,
+         Filter       => Writable_Src_Action_Context,
          For_Learning => True);
 
       Command := new Delete_Command;
@@ -2127,7 +2127,7 @@ package body Src_Editor_Module is
         (Kernel, "Delete word backward", Command,
            -"Delete the word preceding the current cursor position",
          Category => "Editor",
-         Filter       => Src_Action_Context,
+         Filter       => Writable_Src_Action_Context,
          For_Learning => True);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
@@ -2233,7 +2233,7 @@ package body Src_Editor_Module is
          -("Insert spaces until a column multiple of the indentation level"
            & " as set in the Preferences for the corresponding language"),
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter => Writable_Src_Action_Context);
 
       Register_Module
         (Module      => Src_Editor_Module_Id,
@@ -2339,14 +2339,14 @@ package body Src_Editor_Module is
         (Kernel, "comment lines", new Comment_Lines_Command,
          Description   => -"Comment the selected lines",
          Category      => -"Editor",
-         Filter        => Src_Action_Context,
+         Filter        => Writable_Src_Action_Context,
          For_Learning  => True);
 
       Register_Action
         (Kernel, "uncomment lines", new Uncomment_Lines_Command,
          Description   => -"Uncomment the selected lines",
          Category      => -"Editor",
-         Filter        => Src_Action_Context,
+         Filter        => Writable_Src_Action_Context,
          For_Learning  => True);
 
       Register_Action
@@ -2355,20 +2355,20 @@ package body Src_Editor_Module is
            -("Reformat selected lines or current paragraph so that the list"
            & " are shorter than the grey line on the right"),
          Category      => -"Editor",
-         Filter        => Src_Action_Context,
+         Filter        => Writable_Src_Action_Context,
          For_Learning  => True);
 
       Register_Action
         (Kernel, "print selection", new Print_Selection_Command,
          Description   => -"Print the current selection",
          Category      => -"Editor",
-         Filter        => Src_Action_Context);
+         Filter        => Writable_Src_Action_Context);
 
       Register_Action
         (Kernel, "Autoindent selection", new Indentation_Command,
          -"Automatically indent the current line or selection",
          Category => "Editor",
-         Filter   => Src_Action_Context and Is_Not_Makefile);
+         Filter   => Writable_Src_Action_Context and Is_Not_Makefile);
 
       Register_Action
         (Kernel, "fold all blocks", new Fold_All_Blocks_Command,
