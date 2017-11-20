@@ -711,7 +711,7 @@ package body GPS.Kernel.Actions is
          declare
             M : constant Unbounded_String := Get_Filter_Error (Act);
             Msg : constant String :=
-               "Could not execute """ & Action & "'"
+               "Could not execute """ & Action & """"
                & (if M = "" then "" else ": " & To_String (M));
          begin
             Trace (Me, Msg);
