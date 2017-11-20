@@ -557,6 +557,7 @@
 
    <toolbar id='Scenario'>
       <button action='scenario validate variable'/>
+      <button action='scenario revert modification'/>
    </toolbar>
 
    <toolbar id='Switches editor'>

@@ -31,6 +31,8 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Event_Box;            use Gtk.Event_Box;
 
 with Commands.Interactive;     use Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
@@ -52,6 +54,7 @@ with Variable_Editors;         use Variable_Editors;
 with GPS.Intl;                 use GPS.Intl;
 with XML_Utils;                use XML_Utils;
 with Dialog_Utils;             use Dialog_Utils;
+with GUI_Utils;                use GUI_Utils;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
@@ -102,6 +105,12 @@ package body Scenario_Views is
       Scenar_View   : Dialog_View_With_Button_Box;
       --  The view to modify and visualize scenario variables,
       --  needed to refresh the variables
+      Warning_Lbl   : Gtk_Label;
+      --  Warning displaid when the scenario is modified
+      Warning_Event : Gtk_Event_Box;
+      --  Container of the warning label
+      Warning_Group : Dialog_Group_Widget;
+      --  The group with the warning label
    end record;
 
    overriding procedure Create_Menu
@@ -171,6 +180,14 @@ package body Scenario_Views is
       return Commands.Command_Return_Type;
    --  Apply the variable modifications
 
+   type Command_Revert_Modification is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Command_Revert_Modification;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Revert the variable modifications
+
    procedure Command_Add_Variable
      (View : access Glib.Object.GObject_Record'Class);
    --  Add a new variable
@@ -189,6 +206,13 @@ package body Scenario_Views is
       return Glib.Gint;
    --  Function used to sort the scenario variables. Each flow box child must
    --  have the name set to the the scenario variable name it's representing
+
+   procedure Show_Msg_If_Modified
+     (View : access Glib.Object.GObject_Record'Class);
+   --  Compare the value set in memory and the value set in the view
+
+   procedure Fill_Build_Mode (View : Scenario_View);
+   --  Fill View.Combo_Build with the build mode value
 
    -------------
    -- Destroy --
@@ -230,13 +254,11 @@ package body Scenario_Views is
      (View    : access Scenario_View_Record'Class)
       return Gtk_Widget
    is
-      Button   : Gtk_Button;
-      Group    : Dialog_Group_Widget;
-      Combo    : Gtk_Combo_Box_Text;
-      Module   : constant Scenario_View_Module :=
+      Button : Gtk_Button;
+      Group  : Dialog_Group_Widget;
+      Combo  : Gtk_Combo_Box_Text;
+      Module : constant Scenario_View_Module :=
         Scenario_View_Module (Scenario_Views.Get_Module);
-      Cur_Mode : constant String := View.Kernel.Get_Build_Mode;
-      Iter     : Build_Mode_Lists.Cursor := Module.Modes.First;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -274,6 +296,18 @@ package body Scenario_Views is
       Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
       View.Scenar_View.Append_Button (Button);
 
+      --  Create the warning label, put it in a group to make it pretty
+      Create_Warning_Label ("The scenario is modified, please refresh "
+                            & "the view to apply the modifications",
+                            View.Warning_Lbl,
+                            View.Warning_Event);
+      Group := new Dialog_Group_Widget_Record;
+      Dialog_Utils.Initialize (Self => Group,
+                               Parent_View => View.View,
+                               Allow_Multi_Columns => False);
+      Create_Child (Group, View.Warning_Event);
+      View.Warning_Group := Group;
+
       --  Create the build group
       Group := new Dialog_Group_Widget_Record;
       Dialog_Utils.Initialize (Self => Group,
@@ -285,18 +319,8 @@ package body Scenario_Views is
         (Group, Combo, Label => "Build Mode",
          Doc => To_String (Module.Modes_Help));
       View.Combo_Build := Combo;
-
-      --  Fill the possible values of build mode
-      while Iter /= Build_Mode_Lists.No_Element loop
-         if Cur_Mode = Element (Iter) then
-            --  Put the selected value in the first column
-            Combo.Prepend_Text (Element (Iter));
-         else
-            Combo.Append_Text (Element (Iter));
-         end if;
-         Next (Iter);
-      end loop;
-      Combo.Set_Active (0);
+      --  Can be called because Combo_Build was created before
+      Fill_Build_Mode (View);
       View.Build_Group := Group;
 
       --  Create the group containing the variable view with buttons
@@ -445,6 +469,27 @@ package body Scenario_Views is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Command_Revert_Modification;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Scenario_View := Scenario_Views.Retrieve_View (K);
+      H : aliased On_Refresh;
+   begin
+      Fill_Build_Mode (V);
+      --  Refresh the variable will put back their current values
+      H.View := V;
+      H.Execute (V.Kernel);
+      return Commands.Success;
+   end Execute;
+
    --------------------------
    -- Command_Add_Variable --
    --------------------------
@@ -552,6 +597,72 @@ package body Scenario_Views is
       end if;
    end Sort_Scenario_By_Name;
 
+   --------------------------
+   -- Show_Msg_If_Modified --
+   --------------------------
+
+   procedure Show_Msg_If_Modified
+     (View : access Glib.Object.GObject_Record'Class)
+   is
+      V           : constant Scenario_View           := Scenario_View (View);
+      Kernel      : constant Kernel_Handle           := V.Kernel;
+      Scenar_Var  : constant Scenario_Variable_Array :=
+        Scenario_Variables (Kernel);
+      Is_Modified : Boolean                          := False;
+   begin
+      --  Go through the list of scenario variables
+      if Scenar_Var'Length /= 0 then
+         for J in Scenar_Var'Range loop
+            declare
+               Name : constant String := External_Name (Scenar_Var (J));
+               Val  : constant String :=
+                 V.Combo_Var_Map.Element (Name).Get_Active_Text;
+            begin
+               if Val /= Value (Scenar_Var (J)) then
+                  Is_Modified := True;
+                  exit;
+               end if;
+            end;
+         end loop;
+      end if;
+      --  Check if at least a scenario variable is modified
+      --  or if the build mode has changed
+      if Is_Modified
+        or (V.Kernel.Get_Build_Mode /= V.Combo_Build.Get_Active_Text)
+      then
+         Show (V.Warning_Group);
+      else
+         Hide (V.Warning_Group);
+      end if;
+   end Show_Msg_If_Modified;
+
+   ---------------------
+   -- Fill_Build_Mode --
+   ---------------------
+
+   procedure Fill_Build_Mode (View : Scenario_View)
+   is
+      Module   : constant Scenario_View_Module :=
+        Scenario_View_Module (Scenario_Views.Get_Module);
+      Cur_Mode : constant String               := View.Kernel.Get_Build_Mode;
+      Iter     : Build_Mode_Lists.Cursor       := Module.Modes.First;
+   begin
+      --  Clear the combo box, needed by the revert action
+      View.Combo_Build.Remove_All;
+      --  Fill the possible values of build mode
+      while Iter /= Build_Mode_Lists.No_Element loop
+         if Cur_Mode = Element (Iter) then
+            --  Put the selected value in the first column
+            View.Combo_Build.Prepend_Text (Element (Iter));
+         else
+            View.Combo_Build.Append_Text (Element (Iter));
+         end if;
+         Next (Iter);
+      end loop;
+      View.Combo_Build.Set_Active (0);
+      View.Combo_Build.On_Changed (Show_Msg_If_Modified'Access, View);
+   end Fill_Build_Mode;
+
    ----------------------
    -- On_Force_Refresh --
    ----------------------
@@ -640,6 +751,7 @@ package body Scenario_Views is
 
                   --  Show the selected value
                   Combo.Set_Active (0);
+                  Combo.On_Changed (Show_Msg_If_Modified'Access, View);
                   --  The combo needs to have the name of the variable
                   Combo.Set_Name (Name);
                end;
@@ -653,6 +765,8 @@ package body Scenario_Views is
       --  The View is built after the initialise, Show_All must be called to
       --  show the added widgets.
       Show_All (View);
+      --  After a refresh the view is up to date so hide the warning label
+      Hide (View.Warning_Group);
       if not Show_Build then
          Hide (View.Build_Group);
       end if;
@@ -723,9 +837,17 @@ package body Scenario_Views is
         (Kernel, "Scenario Validate Variable",
          new Command_Validate_Variable,
          Description =>
-           -("Apply all the scenario modifications. The project"
+           -("Save all the scenario modifications. The project"
            & " must be built for the changes to be applied"),
-         Icon_Name => "gps-refresh-symbolic",
+         Icon_Name => "gps-syntax-check-symbolic",
+         Category => -"Scenario");
+
+      Register_Action
+        (Kernel, "Scenario Revert Modification",
+         new Command_Revert_Modification,
+         Description =>
+           -("Revert the modifications in the view"),
+         Icon_Name => "gps-stop-symbolic",
          Category => -"Scenario");
 
    end Register_Module;

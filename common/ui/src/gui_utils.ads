@@ -645,6 +645,13 @@ package GUI_Utils is
    --  Event should be inserted in the container, and the text should be set
    --  in Label.
 
+   procedure Create_Warning_Label
+     (Msg   : String;
+      Label : out Gtk.Label.Gtk_Label;
+      Event : out Gtk.Event_Box.Gtk_Event_Box);
+     --  Create a new label written in orange, the text is set to Msg.
+     --  Event should be inserted in the container.
+
   ----------
   -- Misc --
   ----------

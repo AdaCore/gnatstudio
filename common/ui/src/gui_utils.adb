@@ -1869,6 +1869,27 @@ package body GUI_Utils is
       return Null_Iter;
    end Find_Node;
 
+   --------------------------
+   -- Create_Warning_Label --
+   --------------------------
+
+   procedure Create_Warning_Label
+     (Msg   : String;
+      Label : out Gtk.Label.Gtk_Label;
+      Event : out Gtk.Event_Box.Gtk_Event_Box)
+   is
+      Color   : Gdk_RGBA;
+      Success : Boolean;
+   begin
+      Gtk_New (Event);
+      Parse (Color, "#ff7400", Success);
+      Event.Override_Color (Gtk_State_Flag_Normal, Color);
+
+      Gtk_New (Label, Msg);
+      Set_Alignment (Label, 0.1, 0.5);
+      Add (Event, Label);
+   end Create_Warning_Label;
+
    -----------------------
    -- Create_Blue_Label --
    -----------------------
