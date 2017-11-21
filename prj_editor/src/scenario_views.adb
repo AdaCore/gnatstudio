@@ -307,6 +307,7 @@ package body Scenario_Views is
                                Allow_Multi_Columns => False);
       Create_Child (Group, View.Warning_Event);
       View.Warning_Group := Group;
+      Set_No_Show_All (View.Warning_Event, True);
 
       --  Create the build group
       Group := new Dialog_Group_Widget_Record;
@@ -630,9 +631,10 @@ package body Scenario_Views is
       if Is_Modified
         or (V.Kernel.Get_Build_Mode /= V.Combo_Build.Get_Active_Text)
       then
-         Show (V.Warning_Group);
+         Show (V.Warning_Event);
+         Show (V.Warning_Lbl);
       else
-         Hide (V.Warning_Group);
+         Hide (V.Warning_Event);
       end if;
    end Show_Msg_If_Modified;
 
@@ -766,7 +768,7 @@ package body Scenario_Views is
       --  show the added widgets.
       Show_All (View);
       --  After a refresh the view is up to date so hide the warning label
-      Hide (View.Warning_Group);
+      Hide (View.Warning_Event);
       if not Show_Build then
          Hide (View.Build_Group);
       end if;
