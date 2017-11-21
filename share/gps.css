@@ -40,6 +40,7 @@
 @define-color tooltip-text-color mix(@theme_fg_color, @middle-gray, 0.2);
 
 @define-color error-color mix(@theme_base_color, red, 0.5);
+@define-color warning-color #ff7400;
 
 @define-color learn-items-color shade(@theme_base_color, 1.10);
 
@@ -68,6 +69,15 @@
 *:selected:focused {
     background-color: #B4D5FF;
     color: @theme_fg_color;
+}
+
+/*************
+ * Gui Utils *
+ *************/
+
+.warning-label {
+   color: @warning-color;
+   font-style: italic;
 }
 
 /********************

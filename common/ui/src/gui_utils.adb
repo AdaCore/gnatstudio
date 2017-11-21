@@ -1875,19 +1875,12 @@ package body GUI_Utils is
 
    procedure Create_Warning_Label
      (Msg   : String;
-      Label : out Gtk.Label.Gtk_Label;
-      Event : out Gtk.Event_Box.Gtk_Event_Box)
+      Label : out Gtk.Label.Gtk_Label)
    is
-      Color   : Gdk_RGBA;
-      Success : Boolean;
    begin
-      Gtk_New (Event);
-      Parse (Color, "#ff7400", Success);
-      Event.Override_Color (Gtk_State_Flag_Normal, Color);
-
       Gtk_New (Label, Msg);
-      Set_Alignment (Label, 0.1, 0.5);
-      Add (Event, Label);
+      Get_Style_Context (Label).Add_Class ("warning-label");
+      Label.Set_Line_Wrap (True);
    end Create_Warning_Label;
 
    -----------------------

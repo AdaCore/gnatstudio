@@ -32,7 +32,6 @@ with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Event_Box;            use Gtk.Event_Box;
 
 with Commands.Interactive;     use Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
@@ -107,8 +106,6 @@ package body Scenario_Views is
       --  needed to refresh the variables
       Warning_Lbl   : Gtk_Label;
       --  Warning displaid when the scenario is modified
-      Warning_Event : Gtk_Event_Box;
-      --  Container of the warning label
       Warning_Group : Dialog_Group_Widget;
       --  The group with the warning label
    end record;
@@ -297,17 +294,18 @@ package body Scenario_Views is
       View.Scenar_View.Append_Button (Button);
 
       --  Create the warning label, put it in a group to make it pretty
-      Create_Warning_Label ("The scenario is modified, please refresh "
-                            & "the view to apply the modifications",
-                            View.Warning_Lbl,
-                            View.Warning_Event);
+      Create_Warning_Label ("The scenario is modified. To apply your changes"
+                            & " click on the validate button in the toolbar."
+                            & " You can also discard them by clicking on the"
+                            & " discard button.",
+                            View.Warning_Lbl);
       Group := new Dialog_Group_Widget_Record;
       Dialog_Utils.Initialize (Self => Group,
                                Parent_View => View.View,
                                Allow_Multi_Columns => False);
-      Create_Child (Group, View.Warning_Event);
+      Create_Child (Group, View.Warning_Lbl);
       View.Warning_Group := Group;
-      Set_No_Show_All (View.Warning_Event, True);
+      Set_No_Show_All (View.Warning_Lbl, True);
 
       --  Create the build group
       Group := new Dialog_Group_Widget_Record;
@@ -317,8 +315,9 @@ package body Scenario_Views is
                                Allow_Multi_Columns => False);
       Gtk_New (Combo);
       Create_Child
-        (Group, Combo, Label => "Build Mode",
-         Doc => To_String (Module.Modes_Help));
+        (Group, Combo, Label => "Build Mode", Child_Key => "Build Mode");
+      Display_Information_On_Child
+        (View.View, "Build Mode", To_String (Module.Modes_Help));
       View.Combo_Build := Combo;
       --  Can be called because Combo_Build was created before
       Fill_Build_Mode (View);
@@ -631,10 +630,9 @@ package body Scenario_Views is
       if Is_Modified
         or (V.Kernel.Get_Build_Mode /= V.Combo_Build.Get_Active_Text)
       then
-         Show (V.Warning_Event);
          Show (V.Warning_Lbl);
       else
-         Hide (V.Warning_Event);
+         Hide (V.Warning_Lbl);
       end if;
    end Show_Msg_If_Modified;
 
@@ -768,7 +766,7 @@ package body Scenario_Views is
       --  show the added widgets.
       Show_All (View);
       --  After a refresh the view is up to date so hide the warning label
-      Hide (View.Warning_Event);
+      Hide (View.Warning_Lbl);
       if not Show_Build then
          Hide (View.Build_Group);
       end if;
