@@ -135,6 +135,14 @@ package body GPS.Kernel is
        File   : Virtual_File);
    --  Called when a file is opened
 
+   type On_File_Renamed is new File2_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_File_Renamed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File;
+       File2  : Virtual_File);
+   --  Called when a file is renamed
+
    type GPS_Refactoring_Factory_Context
      is new Refactoring.Factory_Context_Record with record
       Kernel : Kernel_Handle;
@@ -424,6 +432,7 @@ package body GPS.Kernel is
 
       File_Closed_Hook.Add (new On_File_Closed);
       File_Edited_Hook.Add (new On_File_Edited);
+      File_Renamed_Hook.Add (new On_File_Renamed);
    end Gtk_New;
 
    ------------------------------
@@ -604,6 +613,28 @@ package body GPS.Kernel is
          Trace (Me, "file_closed on a file not registered as open: "
              & File.Display_Full_Name);
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self   : On_File_Renamed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File;
+       File2  : Virtual_File)
+   is
+      pragma Unreferenced (Self);
+   begin
+      if Kernel.Open_Files.Contains (File) then
+         Kernel.Open_Files.Delete (File);
+      else
+         Trace (Me, "file_renamed on a file not registered as open: "
+             & File.Display_Full_Name);
+      end if;
+
+      Kernel.Open_Files.Include (File2);
    end Execute;
 
    -------------
