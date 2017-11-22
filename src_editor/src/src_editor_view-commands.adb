@@ -18,12 +18,14 @@
 with Gtk.Adjustment;                  use Gtk.Adjustment;
 with Gtk.Scrolled_Window;             use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;                   use Gtk.Text_Iter;
+with Gtkada.MDI;                      use Gtkada.MDI;
 
 with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
+with GUI_Utils;                       use GUI_Utils;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
@@ -175,13 +177,15 @@ package body Src_Editor_View.Commands is
      (Command : access Move_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-      View         : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Kernel));
-      Buffer       : constant Source_Buffer :=
-        Source_Buffer (Get_Buffer (View));
+      Kernel       : constant Kernel_Handle :=
+                       Get_Kernel (Src_Editor_Module_Id.all);
+      Editor       : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box   : constant Source_Editor_Box :=
+                       Get_Source_Box_From_MDI (Editor);
+      View         : constant Source_View := Source_Box.Get_View;
+      Buffer       : constant Source_Buffer := Get_Buffer (Source_Box);
       Iter         : Gtk_Text_Iter;
-      Mark         : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Saved_Mark         : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
       Scrolled     : Gtk_Scrolled_Window;
       Adj          : Gtk_Adjustment;
       Moved        : Boolean;
@@ -194,7 +198,6 @@ package body Src_Editor_View.Commands is
         Buffer.Should_Extend_Selection (Command.Extend_Selection);
 
       pragma Unreferenced (Context, Moved);
-
    begin
       Set_Manual_Sync (C);
 
@@ -208,18 +211,17 @@ package body Src_Editor_View.Commands is
             Moved := Move_Mark_Onscreen (View, Buffer.Get_Insert);
          else
             Moved := Place_Cursor_Onscreen (View)
-              or Move_Mark_Onscreen (View, Mark);
+              or Move_Mark_Onscreen (View, Saved_Mark);
          end if;
 
       else
-
          for Cursor of Get_Cursors (Buffer) loop
             declare
                Mark     : Gtk_Text_Mark := Get_Mark (Cursor);
                Horiz_Offset : constant Gint :=
                  Get_Column_Memory (Cursor);
                Prevent  : Boolean := False;
-               Old_Iter : Gtk_Text_Iter;
+               Old_Iter     : Gtk_Text_Iter;
             begin
                Buffer.Get_Iter_At_Mark (Iter, Mark);
                Old_Iter := Iter;
@@ -246,23 +248,36 @@ package body Src_Editor_View.Commands is
                   then
                      Set_Column_Memory (Cursor, Horiz_Offset);
                   end if;
-               end if;
 
+                  --  Move also the saved cursor's mark: this is automatically
+                  --  done by Gtk when the cursor is visible (i.e: when the
+                  --  editor has the focus) but not when the cursor is not
+                  --  visible (e.g: when the omnisearch has the focus).
+
+                  if Cursor = Get_Main_Cursor (Buffer) then
+                     Buffer.Move_Mark (Saved_Mark, Iter);
+                  end if;
+               end if;
             end;
          end loop;
 
          Update_MC_Selection (Buffer);
          View.Scroll_To_Cursor_Location;
-
       end if;
 
-      Buffer.Get_Iter_At_Mark (Iter, Mark);
+      Buffer.Get_Iter_At_Mark (Iter, Saved_Mark);
       Set_Cursors_Auto_Sync (Buffer);
+
       if (Command.Kind = Line or Command.Kind = Page)
         and then Get_Line (Iter) /= 0
       then
          Set_Column_Memory (C, Column);
       end if;
+
+      Grab_Toplevel_Focus
+        (MDI     => Get_MDI (Kernel),
+         Widget  => Editor,
+         Present => True);
 
       return Success;
    end Execute;
@@ -277,12 +292,14 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Command, Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-      View : constant Source_View :=
-               Source_View (Get_Current_Focus_Widget (Kernel));
-
-      Adj : constant Gtk_Adjustment := View.Get_Hadjustment;
-      Val : constant Gdouble := Adj.Get_Value;
+      Kernel       : constant Kernel_Handle :=
+                       Get_Kernel (Src_Editor_Module_Id.all);
+      Editor       : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box   : constant Source_Editor_Box :=
+                       Get_Source_Box_From_MDI (Editor);
+      View         : constant Source_View := Source_Box.Get_View;
+      Adj          : constant Gtk_Adjustment := View.Get_Hadjustment;
+      Val          : constant Gdouble := Adj.Get_Value;
    begin
       --  First center the mark onscreen
       Scroll_To_Mark
@@ -295,6 +312,12 @@ package body Src_Editor_View.Commands is
 
       --  Then restore the previous adjustment
       Adj.Set_Value (Val);
+
+      Grab_Toplevel_Focus
+        (MDI     => Get_MDI (Kernel),
+         Widget  => Editor,
+         Present => True);
+
       return Success;
    end Execute;
 
@@ -306,9 +329,12 @@ package body Src_Editor_View.Commands is
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-      View        : constant Source_View   :=
-                      Source_View (Get_Current_Focus_Widget (Kernel));
+      Kernel      : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor      : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box  : constant Source_Editor_Box :=
+                       Get_Source_Box_From_MDI (Editor);
+      View        : constant Source_View := Source_Box.Get_View;
       Buffer      : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
       Iter, Start : Gtk_Text_Iter;
@@ -329,6 +355,11 @@ package body Src_Editor_View.Commands is
 
       Set_Cursors_Auto_Sync (Buffer);
 
+      Grab_Toplevel_Focus
+        (MDI     => Get_MDI (Kernel),
+         Widget  => Editor,
+         Present => True);
+
       return Success;
    end Execute;
 
@@ -342,14 +373,8 @@ package body Src_Editor_View.Commands is
    is
       pragma Unreferenced (Context, Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-
-      --  Get the current MDI child. We know it is an editor, since the filter
-      --  has matched, and this is faster than looking for the current focus
-      --  widget, and from there the source editor. In addition, it is possible
-      --  that no widget has the focus, for instance because a dialog has
-      --  temporarily been opened.
-      Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Editor : constant MDI_Child := Find_Current_Editor (Kernel);
+      Box    : constant Source_Editor_Box := Get_Source_Box_From_MDI (Editor);
       View   : constant Source_View   := Get_View (Box);
       Buffer : constant Source_Buffer := Get_Buffer (Box);
       Result : Boolean;
@@ -362,6 +387,11 @@ package body Src_Editor_View.Commands is
       Result := Do_Indentation (Buffer, Force => True);
 
       if Result then
+         Grab_Toplevel_Focus
+           (MDI     => Get_MDI (Kernel),
+            Widget  => Editor,
+            Present => True);
+
          return Success;
       else
          return Failure;
@@ -407,12 +437,13 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-      View          : constant Source_View :=
-                        Source_View
-                          (Get_Current_Focus_Widget (Kernel));
-      Buffer        : constant Source_Buffer :=
-                        Source_Buffer (Get_Buffer (View));
+      Kernel        : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box    : constant Source_Editor_Box :=
+                        Get_Source_Box_From_MDI (Editor);
+      View          : constant Source_View := Source_Box.Get_View;
+      Buffer        : constant Source_Buffer := Source_Box.Get_Buffer;
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
       Tab_Width     : Natural renames Indent_Params.Indent_Level;
@@ -441,6 +472,11 @@ package body Src_Editor_View.Commands is
       begin
          Replace_Slice (Buffer, Text, Line, Column, Before => 0, After => 0);
       end;
+
+      Grab_Toplevel_Focus
+        (MDI     => Get_MDI (Kernel),
+         Widget  => Editor,
+         Present => True);
 
       return Success;
    end Execute;

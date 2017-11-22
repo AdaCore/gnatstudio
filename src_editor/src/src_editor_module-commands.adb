@@ -49,6 +49,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtk;                        use Gtk;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
+with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Language_Handlers.GUI;      use Language_Handlers.GUI;
@@ -262,11 +263,16 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Editor : constant MDI_Child := Find_Current_Editor (Kernel);
       Box    : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       On_Goto_Line (Box, Kernel);
+      Grab_Toplevel_Focus
+        (Get_MDI (Kernel),
+         Editor,
+         Present => True);
       return Standard.Commands.Success;
    end Execute;
 
@@ -843,11 +849,16 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Editor  : constant MDI_Child := Find_Current_Editor (Kernel);
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Editor);
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
+         Grab_Toplevel_Focus
+           (Get_MDI (Kernel),
+            Editor,
+            Present => True);
       end if;
       return Standard.Commands.Success;
    end Execute;
@@ -862,11 +873,16 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Editor  : constant MDI_Child := Find_Current_Editor (Kernel);
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Editor);
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
+         Grab_Toplevel_Focus
+           (Get_MDI (Kernel),
+            Editor,
+            Present => True);
       end if;
       return Standard.Commands.Success;
    end Execute;
@@ -895,13 +911,18 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Editor  : constant MDI_Child := Find_Current_Editor (Kernel);
       Current : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                  Get_Source_Box_From_MDI (Editor);
       Ignore : Boolean;
       pragma Unreferenced (Command, Ignore);
    begin
       if Current /= null then
          Ignore := Do_Refill (Get_Buffer (Current));
+         Grab_Toplevel_Focus
+           (Get_MDI (Kernel),
+            Editor,
+            Present => True);
       end if;
       return Standard.Commands.Success;
    end Execute;
@@ -1234,6 +1255,11 @@ package body Src_Editor_Module.Commands is
                Column => 1,
                Before => 0,
                After  => UTF8_Utils.UTF8_Length (To_String (Block)));
+
+            Grab_Toplevel_Focus
+              (Get_MDI (Kernel),
+               Editor,
+               Present => True);
          end;
       end if;
    end Comment_Uncomment;
