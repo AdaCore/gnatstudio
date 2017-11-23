@@ -1397,6 +1397,8 @@ Classes
 
    .. automethod:: GPS.MDI.load_perspective
 
+   .. automethod:: GPS.MDI.present_main_window
+
    .. automethod:: GPS.MDI.save_all
 
    .. automethod:: GPS.MDI.show
