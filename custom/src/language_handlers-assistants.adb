@@ -247,8 +247,13 @@ package body Language_Handlers.Assistants is
          Params_Substitutions => Params_Substitutions,
          Dialog_Title         =>
            "Create " & To_String (Command.File_Template.Label));
-      Unit_Name            : constant String := Params_Substitutions
-        (To_String (Command.File_Template.Unit_Param));
+      Unit_Name            : constant String :=
+                               (if Expanded_Text /= "" then
+                                   Params_Substitutions
+                                  (To_String
+                                     (Command.File_Template.Unit_Param))
+                                else
+                                   "");
       Line                 : Integer;
       Column               : Integer;
 
