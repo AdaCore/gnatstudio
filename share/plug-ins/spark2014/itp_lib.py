@@ -22,6 +22,7 @@ UERROR = "Error"
 FAILING_ARG = "failing_arg"
 FILE_CONTENTS = "File_contents"
 FILE_SAVED = "File_Saved"
+FULL_CONTEXT = "full_context"
 HELP = "Help"
 HIGHFAILURE = "HighFailure"
 LINFORMATION = "information"
@@ -33,6 +34,8 @@ UMESSAGE = "Message"
 LMESSAGE = "message"
 MESS_NOTIF = "mess_notif"
 NAME = "name"
+NAME_NC = "name"
+NAME_CHANGE = "Name_change"
 NEW_NODE = "New_node"
 NEXT_UNPROVEN = "Next_Unproven_Node_Id"
 NODE_CHANGE = "Node_change"
@@ -64,6 +67,7 @@ QINFO = "qinfo"
 QUERY_INFO = "Query_Info"
 QUERY_ERROR = "Query_Error"
 REMOVE = "Remove"
+RESET_WHOLE_TREE = "Reset_whole_tree"
 LREPLAY_INFO = "replay_info"
 UREPLAY_INFO = "Replay_Info"
 RUNNING = "Running"
@@ -167,6 +171,9 @@ def parse_notif(j, abs_tree, proof_task):
             # If the parent cannot be found then it is a root.
             tree.roots.append(node_id)
         print_debug(NEW_NODE)
+    elif notif_type == RESET_WHOLE_TREE:
+        # Initializes the tree again
+        tree.clear()
     elif notif_type == NODE_CHANGE:
         node_id = j[NODE_ID]
         update = j[UPDATE]
@@ -207,6 +214,9 @@ def parse_notif(j, abs_tree, proof_task):
                 #    tree.update_iter(node_id, 4, "Detached")
                 else:  # In this case it is necessary just a string
                     tree.update_iter(node_id, 4, RUNNING)
+        elif update[UPDATE_INFO] == NAME_CHANGE:
+            new_prover_name = update[NAME_NC]
+            tree.update_iter(node_id, 2, new_prover_name)
         else:
             print_debug("TODO")
         abs_tree.get_next_id(str(node_id))
@@ -381,6 +391,12 @@ class Tree:
 
     def exit(self):
         self.box.destroy()
+
+    def clear(self):
+        """ clear the content of the tree """
+        self.node_id_to_row_ref = {}
+        self.roots = []
+        self.model.clear()
 
     def get_iter(self, node):
         """ get the iter node corresponding to the server node  """
@@ -700,7 +716,8 @@ class Tree_with_process:
     def get_task(self, node_id):
         """ Specific request for a new task from the itp server """
         request = ('{"ide_request": "Get_task", "' + NODE_ID + '":' +
-                   str(node_id) + ', "do_intros": true, "loc": false}')
+                   str(node_id) + ', "do_intros": true, "loc": false, ' +
+                   '"full_context": false }')
         self.send(request)
 
     def get_next_id(self, modified_id):
