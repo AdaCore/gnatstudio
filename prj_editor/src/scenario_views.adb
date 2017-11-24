@@ -299,11 +299,7 @@ package body Scenario_Views is
                             & " You can also discard them by clicking on the"
                             & " discard button.",
                             View.Warning_Lbl);
-      Group := new Dialog_Group_Widget_Record;
-      Dialog_Utils.Initialize (Self => Group,
-                               Parent_View => View.View,
-                               Allow_Multi_Columns => False);
-      Create_Child (Group, View.Warning_Lbl);
+      View.View.Append (View.Warning_Lbl, Expand => False, Fill => False);
       View.Warning_Group := Group;
       Set_No_Show_All (View.Warning_Lbl, True);
 
@@ -807,7 +803,8 @@ package body Scenario_Views is
 
             if Description /= null then
                Append (Module.Modes_Help,
-                       Name & ": " & Description.all & ASCII.LF);
+                       Name & ":" & ASCII.LF & ASCII.HT &
+                       Description.all & ASCII.LF);
             end if;
 
          exception
