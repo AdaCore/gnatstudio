@@ -1472,9 +1472,13 @@ else:
                 if frame_num < cur_frame:
                     continue
                 fileloc = s[3]
-                f = fileloc.file()
-                line = fileloc.line()
-                blocks = QGEN_Module.modeling_map.get_block(f, line)
+                try:
+                    f = fileloc.file()
+                    line = fileloc.line()
+                    blocks = QGEN_Module.modeling_map.get_block(f, line)
+                # If the backtrace was not available no file is found
+                except AttributeError:
+                    blocks = None
 
                 if not blocks:
                     break
