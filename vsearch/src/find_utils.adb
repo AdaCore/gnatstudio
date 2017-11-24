@@ -353,7 +353,9 @@ package body Find_Utils is
    is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (-"Search for: " & Context.Context_Look_For, Side_And_Locations);
+        (-"Search for: " & Glib.Convert.Escape_Text
+           (Context.Context_Look_For),
+         Side_And_Locations);
    end Reset;
 
    ---------------------
