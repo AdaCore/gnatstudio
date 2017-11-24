@@ -104,6 +104,15 @@ arithmetic operations"/>
 
                  <field
                   line="1"
+                  label="Custom block implementations configuration file"
+                  switch="--block-conf"
+                  separator=" "
+                  as-file="true"
+                 tip="Specify a file containing the configuration for \
+custom block implementations"/>
+
+                 <field
+                  line="1"
                   label="Library directory"
                   switch="-b"
                   separator=" "
