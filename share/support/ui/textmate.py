@@ -188,7 +188,7 @@ class TextmateTheme(object):
         # Compute values for the auto-highlight-occurrences
         # For the simple case, mix the normal fg and bg, then lighten
         # and make it transparent
-        es_color = fg_color.mix(bg_color, 0.3).lighten(0.05 * light_val)
+        es_color = fg_color.mix(bg_color, 0.2).lighten(0.25 * light_val)
         d["ephemeral_simple"] = ("DEFAULT", transparent, es_color)
 
         kw_color = fg_color

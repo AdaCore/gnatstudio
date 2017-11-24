@@ -178,7 +178,7 @@ class Color:
 
         r, g, b = colorsys.hls_to_rgb(h, l, s)
         return Color(from_rgba=(c(r), c(g), c(b),
-                                 (1 - coef) * self.a + coef * other.a))
+                                c((1 - coef) * self.a + coef * other.a)))
 
 
 def Rgba(r, g, b, a=255):
@@ -211,7 +211,7 @@ common_light = {
     'types': ("DEFAULT", Rgba(0, 153, 0), transparent),
     'blocks': ("DEFAULT", Rgba(96, 97, 95), transparent),
     "ephemeral_smart": ("DEFAULT", transparent, Rgba(252, 172, 79, 102)),
-    "ephemeral_simple": ("DEFAULT", transparent, Rgba(134, 134, 134, 0.35)),
+    "ephemeral_simple": ("DEFAULT", transparent, Rgba(134, 134, 134, 90)),
 
     "isearch": Color("#5555ff"),
     'command_window': white,
@@ -253,8 +253,8 @@ common_dark = {
     "browser_decoration_bg": Color("#343434"),
     "theme_bg": Color("#2280d2"),
     "theme_fg": Color("#2280d2"),
-    "theme_selected_fg": black,
-    "theme_selected_bg": Rgba(0, 67, 152),
+    "theme_selected_fg": white,
+    "theme_selected_bg": Rgba(52, 101, 164),
 
     "caret": white,
     "aspects": ("DEFAULT", Rgba(114, 159, 207), transparent),

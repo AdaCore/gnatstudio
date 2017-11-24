@@ -33,7 +33,6 @@ default = Theme("Default", True, {
 darkside = Theme("Darkside", False, {})
 
 monokai = Theme("Monokai", False, {
-    "theme_selected_bg":  Rgba(0, 67, 152),
     "debugger_current":   Rgba(58, 71, 54, 153),
     "current_line":       Rgba(73, 72, 62),
     "editor_fg":          Rgba(248, 248, 242),
