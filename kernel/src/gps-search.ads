@@ -82,7 +82,6 @@ package GPS.Search is
    function Image (Pos : Buffer_Position) return String;
    --  ??? MANU temporary
    --  NICO likes this
-   --  ANTHONY too
 
    subtype RGB_String is String (1 .. 7);
    Blue : constant RGB_String := "#0000ff";

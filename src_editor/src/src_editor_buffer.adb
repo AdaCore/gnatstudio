@@ -7831,7 +7831,8 @@ package body Src_Editor_Buffer is
          declare
             Creator : constant Module_ID := Module_ID (Get_Creator (Ctxt));
          begin
-            return Creator = Src_Editor_Module_Id;
+            return Creator = Src_Editor_Module_Id
+              or else Get_Name (Creator) = "Actions_Search";
          end;
       end if;
    end Is_Editor;
