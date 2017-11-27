@@ -132,11 +132,10 @@ def smart_escape():
       - interrupt the current alias expansion (if any).
       - remove multiple cursors
       - remove the completion if it exists
-      - close the Search view if:
-         . if opened and if it was the most recent recent floating view.
-         . the "Select on Match" preference is enabled
       - give the focus to the GPS main window if the focus in on a
-        floating view
+        floating view that has no transient window
+      - close the current view if it's floating and if it has a transient
+        window
     """
 
     def do_something():
@@ -159,7 +158,16 @@ def smart_escape():
         current_view = GPS.MDI.current()
 
         if current_view and current_view.is_floating():
-            GPS.MDI.present_main_window()
+            try:
+                window = current_view.get_child().pywidget().get_toplevel()
+
+                if window.get_transient_for():
+                    current_view.close()
+                else:
+                    GPS.MDI.present_main_window()
+            except:
+                return False
+
             return True
 
         return False
