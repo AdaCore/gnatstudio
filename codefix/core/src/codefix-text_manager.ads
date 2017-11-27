@@ -298,6 +298,8 @@ package Codefix.Text_Manager is
      (Kind => Keyword_Text, Name => To_Unbounded_String ("renames"));
    Is_Tok : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("is"));
+   Overriding_Tok : constant Token_Record :=
+     (Kind => Keyword_Text, Name => To_Unbounded_String ("overriding"));
    True_Tok : constant Token_Record :=
      (Kind => Identifier_Text, Name => To_Unbounded_String ("true"));
 

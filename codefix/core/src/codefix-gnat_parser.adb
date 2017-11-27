@@ -590,6 +590,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'unexpected sth ignored'.
 
+   type Not_Overriding is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Not_Overriding);
+
+   overriding
+   procedure Fix
+     (This         : Not_Overriding;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'subprogram "X" is not overriding'.
+
    type Kw_Not_Allowed is new Error_Parser (3) with null record;
 
    overriding
@@ -2513,6 +2528,41 @@ package body Codefix.GNAT_Parser is
    -- Initialize --
    ----------------
 
+   overriding
+   procedure Initialize (This : in out Not_Overriding) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("subprogram ""[\w]+"" is not overriding")));
+   end Initialize;
+
+   overriding
+   procedure Fix
+     (This         : Not_Overriding;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+
+      Message   : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Unexpected
+        (Current_Text      => Current_Text,
+         Message           => Current_Text.Search_Token
+                                (Cursor   => Message,
+                                 Searched => Overriding_Tok,
+                                 Step     => Reverse_Step),
+         String_Unexpected => To_Unbounded_String ("(overriding[\s]*)"),
+         Mode              => Regular_Expression,
+         Search_Forward    => False);
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
    overriding procedure Initialize (This : in out Kw_Not_Allowed) is
    begin
       This.Matcher :=
@@ -4311,6 +4361,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Redundant_Comparison);
       Add_Parser (Processor, new Unexpected_Sep);
       Add_Parser (Processor, new Unexpected_Word);
+      Add_Parser (Processor, new Not_Overriding);
       Add_Parser (Processor, new Kw_Not_Allowed);
       Add_Parser (Processor, new Sep_Not_Allowed);
       Add_Parser (Processor, new In_Should_Be_Omitted);
