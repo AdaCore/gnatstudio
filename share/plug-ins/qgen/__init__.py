@@ -1158,23 +1158,36 @@ else:
                 task.set_progress(idx, auto_items_len)
 
         @staticmethod
-        def get_var_from_item(item):
+        def get_var_from_item(debugger, item):
             """
             Returns the variable name corresponding to the given item
             if possible.
             """
             symbols = QGEN_Module.modeling_map.get_symbols(blockid=item.id)
             # The list of symbols to compute from the debugger
-
             if symbols:
-                s = next(iter(symbols))  # Get the first symbol
-                # Function calls do not have a '/'
-                if '/' in s:
-                    ss = s.split('/')[-1].strip()  # Remove the "context/" part
-                    # ??? Should check that the context matches the current
-                    # debugger frame. For now, we assume this is true since the
-                    # diagram corresponds to the current frame.
-                    return ss
+                frames = debugger.frames()
+                cur_frame = None
+                ret = None
+                if frames:
+                    cur_frame = frames[0][2]
+
+                for s in symbols:
+                    # Signals can have a symbol that is a function call
+                    # Those won't have a '/' in the name, discard them as
+                    # we are looking for variables here.
+                    if '/' in s:
+                        inf = s.rsplit('/', 1)
+                        # Sometimes gdb adds info in the func name, remove it
+                        context = inf[0].split(' ', 1)[0]
+                        ret = inf[-1].strip()
+                        if context == cur_frame:
+                            return ret
+                        # Check that the context matches the current
+                        # debugger frame. If no matching frame is found we
+                        # return the last symbol (should empirically be the
+                        # correct one).
+                return ret
             return None
 
         @staticmethod
@@ -1187,7 +1200,7 @@ else:
                 debugger = GPS.Debugger.get()
             except:
                 return
-            ss = QGEN_Module.get_var_from_item(item)
+            ss = QGEN_Module.get_var_from_item(debugger, item)
             if ss is not None:
                 debugger.send("tree display %s\n" % ss, output=False)
 
@@ -1235,7 +1248,7 @@ else:
             # in that case)
             parent = item.get_parent_with_id() or toplevel
 
-            ss = QGEN_Module.get_var_from_item(parent)
+            ss = QGEN_Module.get_var_from_item(debugger, parent)
             if ss is not None:
                 async_debugger = AsyncDebugger(debugger)
                 yield async_debugger.async_print_value(ss).then(
