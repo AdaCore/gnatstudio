@@ -148,6 +148,10 @@ private
       --  The widget that had the focus before we gave it to the search field
       --  for the last time
 
+      Previous_Context : GPS.Kernel.Selection_Context := GPS.Kernel.No_Context;
+      --  The context that was set just before entering the search field.
+      --  Used to perform the search with this context.
+
       Grab_Device      : Gdk.Device.Gdk_Device;
 
       Column_Provider  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;

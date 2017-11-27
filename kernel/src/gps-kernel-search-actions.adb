@@ -84,18 +84,22 @@ package body GPS.Kernel.Search.Actions is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Action : constant Action_Record_Access := Get (Self.Iter);
-      C      : Search_Context;
-      S      : GNAT.Strings.String_Access;
+      Action  : constant Action_Record_Access := Get (Self.Iter);
+      C       : Search_Context;
+      S       : GNAT.Strings.String_Access;
    begin
       Result := null;
 
       if Action /= null then
          declare
-            Name : constant String := Get_Name (Action);
+            Name    : constant String := Get_Name (Action);
+            Context : constant Selection_Context :=
+                        Self.Kernel.Get_Current_Context;
          begin
             --  Do not complete on menu names
-            if Name (Name'First) /= '/' then
+            if Name (Name'First) /= '/'
+              and then Filter_Matches (Action, Context)
+            then
                C := Self.Pattern.Start (Name);
                if C /= GPS.Search.No_Match then
                   S := new String'
@@ -179,16 +183,11 @@ package body GPS.Kernel.Search.Actions is
       Give_Focus : Boolean)
    is
       Dummy : Boolean;
-      Ctxt  : constant Selection_Context :=
-                New_Context
-                  (Kernel  => Self.Kernel,
-                   Creator => Module);
       pragma Unreferenced (Dummy, Give_Focus);
    begin
       Dummy := Execute_Action
         (Self.Kernel,
          Action               => Self.Name.all,
-         Context              => Ctxt,
          Error_Msg_In_Console => True);
    end Execute;
 
