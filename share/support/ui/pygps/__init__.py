@@ -370,10 +370,8 @@ try:
 
     if os.name == 'nt':
         GDK_BACKSPACE_HARDWARE_KEYCODE = 8
-    elif sys.platform == 'darwin':
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 51
     else:
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 59
+        GDK_BACKSPACE_HARDWARE_KEYCODE = 22
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,

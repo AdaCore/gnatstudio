@@ -2244,8 +2244,8 @@ package body KeyManager_Module is
                if GNAT.OS_Lib.Directory_Separator = '\' then
                   Event.Key.Hardware_Keycode := 8;
                else
-                  --  On MAC, should be 51, on Unix 59
-                  Event.Key.Hardware_Keycode := 59;
+                  --  on Unix use 22
+                  Event.Key.Hardware_Keycode := 22;
                end if;
             end if;
 
