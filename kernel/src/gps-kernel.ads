@@ -382,6 +382,18 @@ package GPS.Kernel is
    --  This function should be used rarely, since in theory the views are
    --  supposed to update the context when their selection changes.
 
+   procedure Set_Search_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
+   --  Set the context used by the GPS.Search providers. Can be used to match
+   --  or unmatch search items depending on this context (e.g: match only
+   --  valid actions).
+
+   function Get_Search_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Selection_Context;
+   --  Return the currently set search context.
+
    type Context_Item is tagged record
       Text : Unbounded_String;
    end record;
@@ -1173,6 +1185,11 @@ private
       --  This variable should remain not null and unchanged while a contextual
       --  menu or standard menu is displayed and executed, so that user scripts
       --  have access to it.
+
+      Search_Context : Selection_Context := No_Context;
+      --  The context used by some of the GPS.Search providers. It can be used
+      --  to match/unmatch items depending in the context (e.g: only match
+      --  valid actions).
 
       Last_Context_From_Contextual : Boolean := False;
       --  Whether Last_Context_For_Contextual has been obtain from a contextual

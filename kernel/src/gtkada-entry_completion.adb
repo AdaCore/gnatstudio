@@ -881,12 +881,12 @@ package body Gtkada.Entry_Completion is
       --  had the focus previously.
       Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry, Present => False);
 
-      --  Restore the context that was set before entering the search entry:
-      --  this is useful for search providers that rely on the context set
-      --  before the search (e.g: to display actions that are valid).
+      --  Set the search context that was set before entering the search entry:
+      --  this is useful for search providers that rely on contexts to match
+      --  or unmatch items (e.g: actions).
 
       if S.Previous_Context /= No_Context then
-         S.Kernel.Context_Changed (S.Previous_Context);
+         S.Kernel.Set_Search_Context (S.Previous_Context);
       end if;
 
       return False;

@@ -94,7 +94,7 @@ package body GPS.Kernel.Search.Actions is
          declare
             Name    : constant String := Get_Name (Action);
             Context : constant Selection_Context :=
-                        Self.Kernel.Get_Current_Context;
+                        Self.Kernel.Get_Search_Context;
          begin
             --  Do not complete on menu names
             if Name (Name'First) /= '/'
@@ -182,13 +182,15 @@ package body GPS.Kernel.Search.Actions is
      (Self       : not null access Actions_Search_Result;
       Give_Focus : Boolean)
    is
-      Dummy : Boolean;
+      Dummy   : Boolean;
+      Context : constant Selection_Context := Self.Kernel.Get_Search_Context;
       pragma Unreferenced (Dummy, Give_Focus);
    begin
       Dummy := Execute_Action
         (Self.Kernel,
          Action               => Self.Name.all,
-         Error_Msg_In_Console => True);
+         Error_Msg_In_Console => True,
+         Context              => Context);
    end Execute;
 
    ----------

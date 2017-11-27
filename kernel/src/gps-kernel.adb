@@ -789,6 +789,28 @@ package body GPS.Kernel is
       end if;
    end Refresh_Context;
 
+   ------------------------
+   -- Set_Search_Context --
+   ------------------------
+
+   procedure Set_Search_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context) is
+   begin
+      Kernel.Search_Context := Context;
+   end Set_Search_Context;
+
+   ------------------------
+   -- Get_Search_Context --
+   ------------------------
+
+   function Get_Search_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Selection_Context is
+   begin
+      return Kernel.Search_Context;
+   end Get_Search_Context;
+
    ----------------
    -- Get_Kernel --
    ----------------
