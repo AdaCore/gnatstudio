@@ -100,10 +100,7 @@ class WorkflowButtons(object):
         outside.
         """
         for main_name in WorkflowButtons.__needs_build:
-            main_file = GPS.File(main_name)
-
-            if file.project() == main_file.project():
-                WorkflowButtons.__needs_build[main_name] = True
+            WorkflowButtons.__needs_build[main_name] = True
 
     @staticmethod
     @workflows.run_as_workflow
