@@ -10,21 +10,11 @@ import os.path
 import GPS
 from gps_utils import hook, interactive
 
-read_only_pref = GPS.Preference(
-    "Editor/Fonts & Colors:General/read_only_color").create_with_priority(
-        "Read-only code",
-        "color",
-        -2,
-        "",
-        "#e0e0e0")
-
 last_gnattest = {
     'project': None,  # project which gnattest run for
     'root':    None,  # root project opened before switching to harness
     'harness': None   # harness project name before switching to it
 }
-
-read_only_locations = []
 
 
 def run(project, target, extra_args=""):
@@ -163,79 +153,6 @@ def on_gps_start():
 def on_project_view_changed():
     """ Replace run target in harness project. """
     __update_build_targets_visibility()
-
-    # Update read-only areas in already opened files
-    buffer_list = GPS.EditorBuffer.list()
-    for buffer in buffer_list:
-        mark_read_only_areas(buffer)
-
-
-@hook('file_edited')
-def __on_file_edited(file):
-    """ Find read-only areas and apply an overlay on them. """
-    if not GPS.Project.root().is_harness_project():
-        return
-
-    buffer = GPS.EditorBuffer.get(file)
-    mark_read_only_areas(buffer)
-
-
-@hook('preferences_changed')
-def __on_pref_changed():
-    """  Update the color of read-only code areas. """
-    for file, overlay_name, from_line, to_line in read_only_locations:
-        buffer = GPS.EditorBuffer.get(file, force=False, open=False)
-
-        if buffer:
-            read_only_overlay = buffer.create_overlay(overlay_name)
-            color = read_only_pref.get()
-            read_only_overlay.set_property("paragraph-background", color)
-            read_only_overlay.set_property("editable", False)
-            buffer.apply_overlay(read_only_overlay, from_line, to_line)
-
-
-def mark_read_only_areas(buffer):
-    global read_only_locations
-
-    read_only_overlay = None
-    loc = buffer.beginning_of_buffer()
-
-    # Iterate over read-only areas
-    while loc:
-        found = loc.search("--  begin read only", dialog_on_failure=False)
-
-        if found:
-            from_line, last = found
-            found = last.search("--  end read only", dialog_on_failure=False)
-
-            if found:
-                to_line, loc = found
-            else:
-                loc = None
-
-        else:
-            loc = None
-
-        # if area found
-        if loc:
-            from_line = from_line.beginning_of_line()
-            to_line = to_line.end_of_line()
-
-            # if overlay hasn't exist yet, create one
-            if not read_only_overlay:
-                overlay_name = "%s#%s#%s" % (
-                    buffer.file(), str(from_line), str(to_line))
-                read_only_overlay = buffer.create_overlay(overlay_name)
-                color = read_only_pref.get()
-                read_only_overlay.set_property("paragraph-background", color)
-                read_only_overlay.set_property("editable", False)
-
-                # Append it to the global list of read-only code locations
-                read_only_locations.append((buffer.file(), overlay_name,
-                                            from_line, to_line))
-
-            buffer.apply_overlay(read_only_overlay, from_line, to_line)
-    # No more read-only areas
 
 
 def open_harness_filter(context):
