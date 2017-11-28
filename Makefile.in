@@ -9,6 +9,7 @@ PYTHON          = python
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
+GNATCOLL_INSTALL  = @GNATCOLL_INSTALL@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
@@ -88,17 +89,32 @@ endif
 		| (cd $(sharedir)/gps/gnatdoc; tar xf -)
 	$(MAKE) -C docs install
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
+# Install the gnatcoll plugin(s)
+ifneq ($(GNATCOLL_INSTALL),)
+	(cd $(GNATCOLL_INSTALL)/share/gps/plug-ins; tar cf -  --exclude .svn gnatcoll/) \
+		| (cd $(sharedir)/gps/support/core/; tar xf -)
+endif
 
 install: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli.exe $(bindir)
+ifneq ($(GNATCOLL_INSTALL),)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
+	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
+endif
+endif
 	$(MAKE) -C common/expect install
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
+ifneq ($(GNATCOLL_INSTALL),)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
+	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
+endif
 endif
 
 install-strip: install-common
@@ -106,6 +122,11 @@ ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) -s gps/obj/gps.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli.exe $(bindir)
+ifneq ($(GNATCOLL_INSTALL),)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
+	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
+endif
+endif
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 	$(MAKE) -C common/expect install-strip
 else
@@ -113,11 +134,21 @@ ifneq (, $(findstring darwin, $(SYS)))
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
+ifneq ($(GNATCOLL_INSTALL),)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
+	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
+endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
+ifneq ($(GNATCOLL_INSTALL),)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
+	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
+endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 endif
 endif
