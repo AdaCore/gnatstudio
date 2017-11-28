@@ -1352,6 +1352,7 @@ else:
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
+            logger.log("Debugger location changed")
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
@@ -1448,6 +1449,7 @@ else:
         def __on_debugger_breakpoints_changed(debugger):
             # ??? Could highlight blocks even though the debugger is not
             # started
+            logger.log("Debugger breakpoints changed")
             if debugger is None:
                 return
 
@@ -1489,6 +1491,8 @@ else:
                     f = fileloc.file()
                     line = fileloc.line()
                     blocks = QGEN_Module.modeling_map.get_block(f, line)
+                    logger.log("Block {0} for {1}:{2}".format(
+                        str(blocks), str(f), str(line)))
                 # If the backtrace was not available no file is found
                 except AttributeError:
                     blocks = None
@@ -1501,6 +1505,7 @@ else:
                     if diag.id not in frame_infos:
                         frame_infos.append(diag.id)
 
+            logger.log("Frames info is %s" % str(frame_infos))
             # Try to find a construct starting with the longest model path
             # and narrowing it down until a construct is found or
             # the path is empty
@@ -1532,6 +1537,10 @@ else:
                 """
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
 
+                if not viewer.parsing_complete:
+                    MDL_Language().should_refresh_constructs(
+                        viewer.file)
+
                 # User interaction happened, update the current diagram
                 if force:
                     viewer.set_diagram(None)
@@ -1544,7 +1553,10 @@ else:
                     # current line
                     info = QGEN_Module.modeling_map.get_diagram_for_item(
                         viewer.diags, block[0])
+                    logger.log("Block for {0}:{1} is {2}".format
+                               (str(filename), str(line), str(block[0])))
                     if info:
+                        logger.log("Got info : %s" % repr(info))
                         diagram, item = info
                         if item:
                             scroll_to = item
@@ -1564,6 +1576,7 @@ else:
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
 
                 if scroll_to:
+                    logger.log("Scroll to " + str(scroll_to.id))
                     viewer.scroll_into_view(scroll_to)
 
             if filename:
