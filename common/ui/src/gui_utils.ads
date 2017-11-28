@@ -481,6 +481,8 @@ package GUI_Utils is
       Percent : Float);
    --  Set the position of the paned view's separator according to the given
    --  size percentage.
+   --  If the paned view's size has not been allocated yet, this procedure
+   --  does nothing.
 
    -----------
    -- Menus --

@@ -303,7 +303,6 @@ package body Learn.Views is
       View : constant Learn_View := Learn_View (Self);
    begin
       Set_Position_Percent (View.Paned_View, View.Stored_Pos);
-      Disconnect (View, View.On_Realize_Handler_ID);
    end On_Realize;
 
    ----------------

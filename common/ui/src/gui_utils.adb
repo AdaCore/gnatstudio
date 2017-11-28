@@ -1161,7 +1161,12 @@ package body GUI_Utils is
       Abs_Pos         : constant Float :=
                           Percent / 100.0  * Paned_Size;
    begin
-      Paned.Set_Position (Gint (Abs_Pos));
+      --  Avoid setting the position of the paned view when it's size is
+      --  not allocated yet.
+
+      if Paned_Size > 1.0 then
+         Paned.Set_Position (Gint (Abs_Pos));
+      end if;
    end Set_Position_Percent;
 
    -------------------
