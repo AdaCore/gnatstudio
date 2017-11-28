@@ -129,6 +129,7 @@ XML = r"""<?xml version="1.0" ?>
        <choice>wtx</choice>
        <choice>dfw</choice>
        <choice>dfw-rtp</choice>
+       <choice>qnx</choice>
        <string />
    </project_attribute>
 
