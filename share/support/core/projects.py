@@ -124,10 +124,11 @@ XML = r"""<?xml version="1.0" ?>
        description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application."
        hide_in="wizard library_wizard"
        label="Protocol">
+       <choice>remote</choice>
+       <choice>extended-remote</choice>
        <choice>wtx</choice>
        <choice>dfw</choice>
        <choice>dfw-rtp</choice>
-       <choice>remote</choice>
        <string />
    </project_attribute>
 
