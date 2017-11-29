@@ -86,6 +86,11 @@
             <menu label='Word'              action='spell check word' optional='True'/>
          </menu>
          <menu label='Cursors' optional='True'>
+            <menu label='Add cursor and go down' action='add cursor and go down' optional='true'/>
+            <menu label='Add cursor and go up' action='add cursor and go up' optional='true'/>
+            <menu label='Cursor select next occurence of selection' action='cursor select next occurence of selection' optional='true'/>
+            <menu label='Cursor skip next occurence of selection' action='cursor skip next occurence of selection' optional='true'/>
+            <menu label='Add cursors to all references of entity' action='add cursors to all references of entity' optional='true'/>
          </menu>
          <menu label='Rectangle' optional='True'>
             <menu label='Cut'               action='rectangle_cut'   optional='true'/>
