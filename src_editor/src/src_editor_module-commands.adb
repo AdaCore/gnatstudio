@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;               use Ada.Calendar;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Calendar.Time_IO;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
+with GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -1032,13 +1034,23 @@ package body Src_Editor_Module.Commands is
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
-      Gtk_New
-        (Label,
-         Unknown_To_UTF8
-           (GNAT.Calendar.Time_IO.Image
-                (File.File_Time_Stamp,
-                GNAT.Calendar.Time_IO.ISO_Date
-                & " %H:%M:%S")));
+
+      declare
+         Date : constant Ada.Calendar.Time := File.File_Time_Stamp;
+      begin
+         if Date = GNATCOLL.Utils.No_Time then
+            Gtk_New (Label, "No time information found");
+         else
+            Gtk_New
+              (Label,
+               Unknown_To_UTF8
+                 (GNAT.Calendar.Time_IO.Image
+                      (Date,
+                       GNAT.Calendar.Time_IO.ISO_Date
+                       & " %H:%M:%S")));
+         end if;
+      end;
+
       Label.Set_Selectable (True);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
