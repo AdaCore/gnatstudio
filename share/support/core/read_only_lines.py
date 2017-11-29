@@ -25,8 +25,12 @@ read_only_locations = []
 
 @hook('file_edited')
 def __on_file_edited(file):
-    buffer = GPS.EditorBuffer.get(file)
-    mark_read_only_areas(buffer)
+    editor = GPS.EditorBuffer.get(file, open=False)
+
+    # Mark the read-only regions only if the file being edited has
+    # an editor opened for it.
+    if editor:
+        mark_read_only_areas(editor)
 
 
 @hook('preferences_changed')
