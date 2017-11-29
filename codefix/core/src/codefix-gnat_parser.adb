@@ -374,6 +374,19 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix 'implicit dereference'.
 
+   type Inefficient_Use is new Error_Parser (1) with null record;
+
+   overriding procedure Initialize (This : in out Inefficient_Use);
+
+   overriding procedure Fix
+     (This         : Inefficient_Use;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'inefficient use clause'.
+
    type Statement_Missing is new Error_Parser (1) with null record;
 
    overriding
@@ -2085,6 +2098,33 @@ package body Codefix.GNAT_Parser is
            Get_Message (Message_It),
            To_Unbounded_String (".all"),
            Add_Spaces => False);
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (This : in out Inefficient_Use) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("use clause for package ""[\w]+"" has no effect")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Inefficient_Use;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Matches, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Remove_Dependency_Clause
+        (Current_Text, Message, Cat_Use, Before, Look_For_Use => False);
    end Fix;
 
    ----------------
@@ -4405,6 +4445,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new No_Statement_Following_Then);
       Add_Parser (Processor, new Elaborate_All_Required);
       Add_Parser (Processor, new Attribute_Expected);
+      Add_Parser (Processor, new Inefficient_Use);
 
       --  GNATCheck parsers
 
