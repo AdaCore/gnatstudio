@@ -2109,7 +2109,32 @@ package body Debugger.Base_Gdb.Gdb_MI is
                  and then not Starts_With (Command, "-break-info")
                  and then not Starts_With (Command, "-break-list"))
         or else Starts_With (Command, "-dprintf-insert")
-        or else Starts_With (Command, "-catch-");
+        or else Starts_With (Command, "-catch-")
+        or else Starts_With (Command, "-exec-run")
+      --  CLI part
+        or else Looking_At (Command, Command'First + 1, "break")
+        or else Starts_With (Command, "break")
+        or else Starts_With (Command, "b ")
+        or else Starts_With (Command, "watch")
+        or else Starts_With (Command, "catch")
+        or else Starts_With (Command, "awatch")
+        or else Starts_With (Command, "rwatch")
+        or else Starts_With (Command, "delete")
+        or else Starts_With (Command, "clear")
+        or else Starts_With (Command, "del ")
+        or else Starts_With (Command, "d ")
+        or else Starts_With (Command, "disable")
+        or else Starts_With (Command, "enable")
+        or else Starts_With (Command, "begin")
+        or else Starts_With (Command, "start")
+        or else Starts_With (Command, "ignore")
+        or else Starts_With (Command, "command")
+        or else Starts_With (Command, "run")
+        or else Starts_With (Command, "r ")
+        or else Command = "r"
+        or else Starts_With (Command, "condition")
+        or else Starts_With (Command, "set break-command")
+        or else Starts_With (Command, "change-break");
    end Breakpoints_Changed;
 
    ----------------
