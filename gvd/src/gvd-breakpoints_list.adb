@@ -20,6 +20,7 @@ with Commands.Interactive;           use Commands.Interactive;
 with Debugger;                       use Debugger;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
+
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Editors;                    use GPS.Editors;
 with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
@@ -829,6 +830,7 @@ package body GVD.Breakpoints_List is
       Kernel   : not null access Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
    is
+      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       pragma Unreferenced (Self);
    begin
       --  We always save the debugger-specific breakpoints to the global list,
@@ -851,21 +853,25 @@ package body GVD.Breakpoints_List is
       end if;
 
       --  In case the user has set breakpoints manually via the console,
-      --  synchronize the global list of breakpoints
+      --  synchronize the global list of breakpoints, unless if the
+      --  breakpoints' copy should be avoided because some of them were not
+      --  recongnized by the debugger.
 
-      Module.Breakpoints.List.Clear;
+      if not Process.Avoid_Breakpoints_Copy then
+         Module.Breakpoints.List.Clear;
 
-      if Break_On_Exception.Get_Pref then
-         for B of Visual_Debugger (Debugger).Breakpoints.List loop
-            if B.Except = "" or else B.Except /= "all" then
-               Module.Breakpoints.List.Append (B);
-            end if;
-         end loop;
-      else
-         Module.Breakpoints := Visual_Debugger (Debugger).Breakpoints;
+         if Break_On_Exception.Get_Pref then
+            for B of Process.Breakpoints.List loop
+               if B.Except = "" or else B.Except /= "all" then
+                  Module.Breakpoints.List.Append (B);
+               end if;
+            end loop;
+         else
+            Module.Breakpoints := Process.Breakpoints;
+         end if;
+
+         Save_Persistent_Breakpoints (Kernel);
       end if;
-
-      Save_Persistent_Breakpoints (Kernel);
    end Execute;
 
    ---------------------------------
@@ -911,8 +917,10 @@ package body GVD.Breakpoints_List is
       Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self);
-      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
-      Id      : Breakpoint_Identifier;
+      Process          : constant Visual_Debugger :=
+                            Visual_Debugger (Debugger);
+      Id               : Breakpoint_Identifier;
+      Warning_Displayed : Boolean := False;
    begin
       if Process.Debugger.Get_Executable = No_File then
          --  Do not try to restore breakpoints, since the debugger has no
@@ -969,8 +977,36 @@ package body GVD.Breakpoints_List is
                Process.Debugger.Set_Scope_Action
                  (B.Scope, B.Action, Id, Internal);
             end if;
+         else
+            --  Display a warning message when a breakpoint that was set
+            --  before starting the debugger is not recognized by it.
+            --  This can mean that the executable has not been compiled with
+            --  the debug flags for instance.
+
+            Process.Output_Text
+                 (Str          => -"Some breakpoints set graphically are not "
+                  & "recognized by the debugger and, thus, will be lost "
+                  & "when running it. "
+                  & ASCII.LF
+                  & "This can happen when the executable "
+                  & "being debugged has not been compiled with the debug "
+                  & "flags or when the breakpoint's source file is not found "
+                  & "in the symbols table."
+                  & ASCII.LF);
+            Process.Debugger.Display_Prompt;
+            Warning_Displayed := True;
+
+            exit;
          end if;
       end loop;
+
+      --  If the breakpoints' warning message has been displayed, avoid the
+      --  copy of the debugger's breakpoints list to the persistent's one.
+
+      if Warning_Displayed then
+         Process.Avoid_Breakpoints_Copy := True;
+         return;
+      end if;
 
       --  Reparse the list to make sure of what the debugger is actually using
       Refresh_Breakpoints_List (Kernel, Process);
@@ -1159,7 +1195,9 @@ package body GVD.Breakpoints_List is
      (Debugger : access Base_Visual_Debugger'Class := null)
       return access Breakpoint_List is
    begin
-      if Debugger = null then
+      if Debugger = null
+        or else Visual_Debugger (Debugger).Debugger = null
+      then
          return Module.Breakpoints'Access;
       else
          return Visual_Debugger (Debugger).Breakpoints'Access;

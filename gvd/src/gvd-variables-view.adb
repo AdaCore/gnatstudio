@@ -786,7 +786,7 @@ package body GVD.Variables.View is
    begin
       Self.Tree.Process := V;
 
-      if Preserve_State_On_Exit.Get_Pref then
+      if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
          Get_Property
            (Property,
             Get_Executable (V.Debugger),
@@ -832,9 +832,10 @@ package body GVD.Variables.View is
      (Self    : not null access GVD_Variable_View_Record;
       Process : not null access Base_Visual_Debugger'Class)
    is
+      V        : constant Visual_Debugger := Visual_Debugger (Process);
       Property : access Variables_Property_Record;
    begin
-      if Preserve_State_On_Exit.Get_Pref then
+      if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
          Property := new Variables_Property_Record;
          Property.Items := Deep_Copy (Self.Tree.Items);
          Set_Property

@@ -284,7 +284,14 @@ package body GVD.Generic_View is
         (Kernel : not null access Kernel_Handle_Record'Class) is
       begin
          Views.Register_Module (Kernel);
-         Debugger_Started_Hook.Add (new On_Debugger_Started);
+
+         --  We need to attach the view to the starting debugger before all
+         --  the other hook functions: this avoids attaching the view to
+         --  a debugger that is already exiting because of an hook function
+         --  that was run before this one.
+
+         Debugger_Started_Hook.Add (new On_Debugger_Started, Last => False);
+
          Debugger_Process_Stopped_Hook.Add (new On_Update);
          Debugger_Context_Changed_Hook.Add (new On_Update);
          Debugger_State_Changed_Hook.Add (new On_Debugger_State_Changed);
