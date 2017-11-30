@@ -1396,9 +1396,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Debugger.Send ("continue", Mode => Mode);
    end Continue;
 
+   -------------------
+   -- Current_Frame --
+   -------------------
+
    overriding function Current_Frame
      (Debugger : access Gdb_Debugger)
-      return Integer is
+      return Integer
+   is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
    begin
       Update_Frame_Info (Debugger);
       return Debugger.Current_Frame_Num;

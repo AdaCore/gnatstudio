@@ -1993,7 +1993,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding function Current_Frame
      (Debugger : access Gdb_MI_Debugger)
-      return Integer is
+      return Integer
+   is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
    begin
       if Debugger.Current_Frame.Frame = -1 then
          Debugger.Detect_Language;
