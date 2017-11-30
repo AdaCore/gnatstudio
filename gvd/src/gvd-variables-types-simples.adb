@@ -464,17 +464,12 @@ package body GVD.Variables.Types.Simples is
 
          for L in 1 .. Positive (Self.Value.Length) loop
             if Old.Is_Empty then
-               Self.Value.Replace_Element
-                 (L,
-                  (Modified => True,
-                   Value    => Self.Value.Element (L).Value));
+               Self.Value (L).Modified := True;
             else
-               Self.Value.Replace_Element
-                 (L,
-                  (Modified => L > Natural (Old.Length)
-                   or else Self.Value.Element (L).Value /=
-                     To_String (Old (L).Value),
-                   Value    => Self.Value.Element (L).Value));
+               Self.Value (L).Modified :=
+                 L > Natural (Old.Length)
+                 or else Self.Value.Element (L).Value /=
+                 To_String (Old (L).Value);
             end if;
          end loop;
 
@@ -497,16 +492,10 @@ package body GVD.Variables.Types.Simples is
             Self.Value := Line_Vector.To_Vector (Lines'Length);
             for L in 1 .. Positive (Self.Value.Length) loop
                if Old.Is_Empty then
-                  Self.Value.Replace_Element
-                    (L,
-                     (Modified => True,
-                      Value    => To_Unbounded_String (Lines (L).all)));
+                  Self.Value (L).Modified := True;
                else
-                  Self.Value.Replace_Element
-                    (L,
-                     (Modified => L > Natural (Old.Length)
-                      or else Lines (L).all /= To_String (Old (L).Value),
-                      Value    => To_Unbounded_String (Lines (L).all)));
+                  Self.Value (L).Modified := L > Natural (Old.Length)
+                    or else Lines (L).all /= To_String (Old (L).Value);
                end if;
             end loop;
 
@@ -519,8 +508,7 @@ package body GVD.Variables.Types.Simples is
          Self.As_Record := Type_Vector.To_Vector (Self.Value.Length);
 
          for L in 1 .. Integer (Self.Value.Length) loop
-            Self.As_Record.Replace_Element
-              (L, (Null_Unbounded_String, Self.As_Record (L).Typ));
+            Self.As_Record (L).Name := Null_Unbounded_String;
             declare
                Data : constant GVD_Type_Holder_Data_Access :=
                  new GVD_Type_Holder_Data'
