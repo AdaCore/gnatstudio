@@ -1586,7 +1586,8 @@ package body Completion_Module is
       then
          Completion_Module.Trigger_Timeout :=
            Glib.Main.Timeout_Add
-             (Interval => Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
+             (Interval =>
+                Guint (Integer'(Smart_Completion_Trigger_Timeout.Get_Pref)),
               Func     => Trigger_Timeout_Callback'Access);
 
          Completion_Module.Has_Trigger_Timeout := True;

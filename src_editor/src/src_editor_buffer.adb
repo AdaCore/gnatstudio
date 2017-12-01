@@ -3625,7 +3625,7 @@ package body Src_Editor_Buffer is
          B.Timeout_Registered := False;
       end if;
 
-      Timeout := Gint (Periodic_Save.Get_Pref);
+      Timeout := Gint (Integer'(Periodic_Save.Get_Pref));
 
       if Timeout > 0 then
          B.Timeout_Id := Buffer_Timeout.Timeout_Add
