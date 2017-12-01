@@ -133,8 +133,9 @@ package body GVD.Assembly_View is
    --  Internal initialization function
 
    procedure Set_Source_Line
-     (View        : Assembly_View;
-      Source_Line : Natural);
+     (View : Assembly_View;
+      Line : Natural;
+      File : GNATCOLL.VFS.Virtual_File);
    --  Store in the assembly view the range of address that corresponds to the
    --  current source line.
 
@@ -371,13 +372,15 @@ package body GVD.Assembly_View is
    ---------------------
 
    procedure Set_Source_Line
-     (View        : Assembly_View;
-      Source_Line : Natural) is
+     (View : Assembly_View;
+      Line : Natural;
+      File : GNATCOLL.VFS.Virtual_File)
+   is
    begin
       if View /= null then
          Get_Line_Address
            (Visual_Debugger (Get_Process (View)).Debugger,
-            Source_Line,
+            Line, File,
             View.Source_Line_Start,
             View.Source_Line_End);
       end if;
@@ -395,7 +398,8 @@ package body GVD.Assembly_View is
       pragma Unreferenced (Self, Kernel);
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
-      Set_Source_Line (Get_View (Process), Process.Current_Line);
+      Set_Source_Line
+        (Get_View (Process), Process.Current_Line, Process.Current_File);
    end Execute;
 
    --------------
@@ -1127,7 +1131,8 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Set_Source_Line (Assembly_View (View), Process.Current_Line);
+      Set_Source_Line
+        (Assembly_View (View), Process.Current_Line, Process.Current_File);
 
       Address_Low  := View.Source_Line_Start;
       Address_High := View.Source_Line_End;

@@ -574,6 +574,7 @@ package Debugger is
       Parameters      : Backtrace_Subprogram_Parameters_Vectors.Vector;
       File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line            : Natural := 0;
+      Selected        : Boolean := False;
    end record;
 
    package Backtrace_Vectors is
@@ -905,6 +906,7 @@ package Debugger is
    procedure Get_Line_Address
      (Debugger        : access Debugger_Root;
       Line            : Natural;
+      File            : GNATCOLL.VFS.Virtual_File;
       Range_Start     : out GVD.Types.Address_Type;
       Range_End       : out GVD.Types.Address_Type) is abstract;
    --  Return the range of addresses for a given source line.

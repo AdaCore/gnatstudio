@@ -3487,8 +3487,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    overriding procedure Get_Line_Address
      (Debugger    : access Gdb_Debugger;
       Line        : Natural;
+      File        : GNATCOLL.VFS.Virtual_File;
       Range_Start : out Address_Type;
-      Range_End   : out Address_Type) is
+      Range_End   : out Address_Type)
+   is
+      pragma Unreferenced (File);
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
       Switch_Language (Debugger, "c");

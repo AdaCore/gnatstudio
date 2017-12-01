@@ -180,7 +180,7 @@ package body GVD.Registers_View is
 
       Append_Menu (Menu, K, Registers_Hexadecimal);
       Append_Menu (Menu, K, Registers_Natural);
-      if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+      if Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
          Append_Menu (Menu, K, Registers_Octal);
          Append_Menu (Menu, K, Registers_Binary);
          Append_Menu (Menu, K, Registers_Decimal);
@@ -285,7 +285,7 @@ package body GVD.Registers_View is
            (GVD.Preferences.Registers_Natural.Get_Pref);
          Changed := True;
 
-      elsif Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+      elsif Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
          if Pref = Preference (GVD.Preferences.Registers_Octal) then
             Self.View.Tree.Get_Column (Octal_Column).Set_Visible
               (GVD.Preferences.Registers_Octal.Get_Pref);
@@ -420,25 +420,25 @@ package body GVD.Registers_View is
 
       Create
         (Octal_Column,
-         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         Debugger_Kind.Get_Pref /= GVD.Types.Gdb and then
          GVD.Preferences.Registers_Octal.Get_Pref,
          "Octal");
 
       Create
         (Binary_Column,
-         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         Debugger_Kind.Get_Pref /= GVD.Types.Gdb and then
          GVD.Preferences.Registers_Binary.Get_Pref,
          "Binary");
 
       Create
         (Decimal_Column,
-         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         Debugger_Kind.Get_Pref /= GVD.Types.Gdb and then
          GVD.Preferences.Registers_Decimal.Get_Pref,
          "Decimal");
 
       Create
         (Raw_Column,
-         Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI and then
+         Debugger_Kind.Get_Pref /= GVD.Types.Gdb and then
          GVD.Preferences.Registers_Raw.Get_Pref,
          "Raw");
 
@@ -591,7 +591,7 @@ package body GVD.Registers_View is
          Result  : GVD.Types.Strings_Vectors.Vector;
          Column  : Glib.Gint;
       begin
-         if Debugger_Kind.Get_Pref = GVD.Types.Gdb_MI then
+         if Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
             case Fmt is
                when GVD.Types.Hexadecimal =>
                   Allowed := GVD.Preferences.Registers_Hexadecimal.Get_Pref;

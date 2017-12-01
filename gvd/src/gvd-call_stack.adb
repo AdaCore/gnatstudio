@@ -112,13 +112,11 @@ package body GVD.Call_Stack is
       View    : access Call_Stack_Record'Class := null);
    --  Store or retrieve the view from the process
 
-   type CS_Child_Record is new GPS_MDI_Child_Record with null record;
-
    package CS_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Call_Stack",
       View_Name          => -"Call Stack",
       Formal_View_Record => Call_Stack_Record,
-      Formal_MDI_Child   => CS_Child_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => False,
       Commands_Category  => "",
       Local_Config       => True,
@@ -132,7 +130,7 @@ package body GVD.Call_Stack is
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Views              => CS_MDI_Views,
       Formal_View_Record => Call_Stack_Record,
-      Formal_MDI_Child   => CS_Child_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_View,
       Set_View           => Set_View);
 
@@ -299,8 +297,8 @@ package body GVD.Call_Stack is
       Initialize_Vbox (Widget, Homogeneous => False);
 
       Gtk_New (Scrolled);
-      Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Widget.Tree := Create_Tree_View
         (Column_Types => Column_Types,
@@ -463,6 +461,8 @@ package body GVD.Call_Stack is
          return S (S'First + 1 .. S'Last);
       end Image;
 
+      Selected : Ada.Strings.Unbounded.Unbounded_String;
+      Path     : Gtk_Tree_Path;
    begin
       --  Remove previous stack information.
 
@@ -488,6 +488,10 @@ package body GVD.Call_Stack is
       --  Update the contents of the window
 
       for J of Bt loop
+         if J.Selected then
+            Selected := To_Unbounded_String (Natural'Image (J.Frame_Id));
+         end if;
+
          Subp := J.Subprogram;
 
          View.Model.Append (Iter, Null_Iter);
@@ -526,8 +530,14 @@ package body GVD.Call_Stack is
       View.Tree.Get_Selection.Set_Mode (Selection_Single);
 
       View.Block := True;
-      if Get_Iter_First (View.Model) /= Null_Iter then
-         View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
+      if Selected /= Null_Unbounded_String then
+         Gtk_New (Path, To_String (Selected));
+         Select_Path (Get_Selection (View.Tree), Path);
+         Path_Free (Path);
+      else
+         if Get_Iter_First (View.Model) /= Null_Iter then
+            View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
+         end if;
       end if;
       View.Block := False;
    end Update;

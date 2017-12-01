@@ -18,6 +18,7 @@
 with Default_Preferences;       use Default_Preferences;
 with Debugger.Base_Gdb.Gdb_CLI; use Debugger.Base_Gdb.Gdb_CLI;
 with Debugger.Base_Gdb.Gdb_MI;  use Debugger.Base_Gdb.Gdb_MI;
+with Debugger.LLDB;             use Debugger.LLDB;
 with Debugger.Base_Gdb.C;       use Debugger.Base_Gdb.C;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.IO;                   use GNAT.IO;
@@ -75,6 +76,8 @@ begin
          Gdb := new Gdb_Debugger;
       when GVD.Types.Gdb_MI =>
          Gdb := new Gdb_MI_Debugger;
+      when GVD.Types.LLDB =>
+         Gdb := new LLDB_Debugger;
    end case;
 
    Set_Language (Gdb, Language.all'Unchecked_Access);

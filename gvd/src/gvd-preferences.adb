@@ -107,6 +107,10 @@ package body GVD.Preferences is
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 
+      if Config.Host /= Config.Unknown then
+         Debugger_Kind.Hide (GVD.Types.LLDB);
+      end if;
+
       Editor_Current_Line_Color := Create
         (Manager   => Prefs,
          Name      => "Debugger-Editor-Current-Line",

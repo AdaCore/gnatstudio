@@ -4003,9 +4003,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding procedure Get_Line_Address
      (Debugger    : access Gdb_MI_Debugger;
       Line        : Natural;
+      File        : GNATCOLL.VFS.Virtual_File;
       Range_Start : out Address_Type;
       Range_End   : out Address_Type)
    is
+      pragma Unreferenced (File);
+
       Block : Process_Proxies.Parse_File_Switch
         (Debugger.Process) with Unreferenced;
 

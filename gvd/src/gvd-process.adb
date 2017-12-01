@@ -49,6 +49,7 @@ with Commands;                   use Commands;
 with Config;                     use Config;
 with Debugger.Base_Gdb.Gdb_CLI;  use Debugger.Base_Gdb.Gdb_CLI;
 with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
+with Debugger.LLDB;              use Debugger.LLDB;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -1037,11 +1038,15 @@ package body GVD.Process is
       Target      : constant String := Kernel.Get_Target;
       Default_Gdb : constant String :=
         (if Target = "" then "gdb" else Target & "-gdb");
+      Default_LLDB : constant String := "lldb";
       Args2       : GNAT.OS_Lib.Argument_List_Access :=
         GNAT.OS_Lib.Argument_String_To_List
           (Project.Attribute_Value
              (Debugger_Command_Attribute,
-              Default => Default_Gdb));
+              Default =>
+                (if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.LLDB
+                 then Default_LLDB
+                 else Default_Gdb)));
       Actual_Remote_Target   : constant String :=
         (if Remote_Target /= ""
          then Remote_Target
@@ -1129,6 +1134,9 @@ package body GVD.Process is
                   True, Error);
                Process.Debugger := new Gdb_Debugger;
             end if;
+
+         when GVD.Types.LLDB =>
+            Process.Debugger := new LLDB_Debugger;
       end case;
 
       --  Spawn the debugger

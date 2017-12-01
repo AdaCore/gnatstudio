@@ -27,7 +27,7 @@ package body GVD.Assembly_Decorators is
    Me : constant Trace_Handle := Create ("Assembly_Decorators", On);
 
    Location_Pattern : constant Pattern_Matcher := Compile
-     ("^(0x[0-9a-zA-Z]+)\s+<.+>");
+     ("^(0x[0-9a-zA-Z]+)");
 
    --------------
    -- Decorate --
@@ -43,6 +43,7 @@ package body GVD.Assembly_Decorators is
 
       Index   : Natural := Instruction'First;
       Start   : Natural;
+      Part    : Natural;
       Result  : Ada.Strings.Unbounded.Unbounded_String;
 
       procedure Parse_Argument (Arg : String);
@@ -68,51 +69,59 @@ package body GVD.Assembly_Decorators is
          else
             Append (Result, Escape_Text (Arg));
          end if;
-
       end Parse_Argument;
 
    begin
       Skip_To_Blank (Instruction, Index);
 
-      if Index > Instruction'First then
-         Append (Result, "<b>" & Escape_Text
-                 (Instruction (Instruction'First .. Index - 1)) & "</b>");
+      if Index not in Instruction'Range then
+         return "<b>" & Escape_Text (Instruction) & "</b>";
+      end if;
 
+      Append (Result, "<b>" & Escape_Text
+              (Instruction (Instruction'First .. Index - 1)) & "</b>");
+
+      while Index <= Instruction'Last loop
          while Index <= Instruction'Last
-           and then
-             (Instruction (Index) = ' '
-              or else Instruction (Index) = ASCII.HT)
+           and then Is_Blank (Instruction (Index))
          loop
             Append (Result, " ");
             Index := Index + 1;
          end loop;
 
-         if Index > Instruction'Last then
-            return To_String (Result);
-         end if;
+         exit when Index > Instruction'Last;
 
          Start := Index;
-         Skip_To_Char (Instruction, Index, ',');
+         Skip_To_Blank (Instruction, Index);
 
-         if Index < Instruction'Last then
-            Parse_Argument (Instruction (Start .. Index - 1));
-            Append (Result, Escape_Text (","));
-            Parse_Argument (Instruction (Index + 1 .. Instruction'Last));
-
-         else
-            Parse_Argument (Instruction (Start .. Instruction'Last));
+         if Index not in Instruction'Range then
+            Index := Instruction'Last + 1;
          end if;
 
-         return To_String (Result);
+         declare
+            Param : constant String := Instruction (Start .. Index - 1);
+         begin
+            Part := Param'First;
+            Skip_To_Char (Param, Part, ',');
 
-      else
-         return "<b>" & Escape_Text (Instruction) & "</b>";
-      end if;
+            if Part in Param'Range then
+               Parse_Argument (Param (Param'First .. Part - 1));
+               Append (Result, ",");
+               if Part < Param'Last then
+                  Parse_Argument (Param (Part + 1 .. Param'Last));
+               end if;
+            else
+               Parse_Argument (Param);
+            end if;
+         end;
+      end loop;
+
+      return To_String (Result);
 
    exception
       when E : others =>
-         Trace (Me, E);
-         return "<parsing error>";
+         Trace (Me, E, Instruction);
+         return Escape_Text ("<parsing error>");
    end Decorate;
 
 end GVD.Assembly_Decorators;

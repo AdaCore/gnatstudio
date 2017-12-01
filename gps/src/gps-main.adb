@@ -156,6 +156,7 @@ with GVD.Breakpoints_List;
 with GVD.Call_Stack;
 with GVD.Dialogs;
 with GVD.Memory_View;
+with GVD.Preferences;
 with GVD.Variables.View;
 with GVD.Registers_View;
 with Help_Module;
@@ -278,6 +279,13 @@ procedure GPS.Main is
                      Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
    Elaboration_Browser_Trace : constant Trace_Handle :=
                      Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
+
+   Debugger_GDB_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_GDB", GNATCOLL.Traces.Off);
+   Debugger_GDB_MI_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_GDB_MI", GNATCOLL.Traces.Off);
+   Debugger_LLDB_Trace : constant Trace_Handle :=
+     Create ("MODULE.Debugger_LLDB", GNATCOLL.Traces.Off);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -2335,6 +2343,19 @@ procedure GPS.Main is
 
       if Server_Mode then
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
+      end if;
+
+      if Active (Debugger_GDB_Trace) then
+         GVD.Preferences.Debugger_Kind.Set_Pref
+           (GPS_Main.Kernel.Get_Preferences, "Gdb");
+
+      elsif Active (Debugger_GDB_MI_Trace) then
+         GVD.Preferences.Debugger_Kind.Set_Pref
+           (GPS_Main.Kernel.Get_Preferences, "Gdb_MI");
+
+      elsif Active (Debugger_LLDB_Trace) then
+         GVD.Preferences.Debugger_Kind.Set_Pref
+           (GPS_Main.Kernel.Get_Preferences, "LLDB");
       end if;
 
       --  Register the Learn module and the associated view

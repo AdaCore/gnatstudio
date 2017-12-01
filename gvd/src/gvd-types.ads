@@ -163,7 +163,7 @@ package GVD.Types is
 
    type Launch_Method is (None, Current_Debugger, New_Debugger);
 
-   type Debugger_Type is (Gdb, Gdb_MI);
+   type Debugger_Type is (Gdb, Gdb_MI, LLDB);
    --  Type of debugger handled.
 
    type Program_Descriptor is record

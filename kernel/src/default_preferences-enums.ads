@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;
+with Ada.Containers.Ordered_Sets;
 
 package Default_Preferences.Enums is
 
@@ -37,7 +38,7 @@ package Default_Preferences.Enums is
    generic
       type Enumeration is (<>);
    package Generics is
-      type Preference_Record is new Enum_Preference_Record with null record;
+      type Preference_Record is new Enum_Preference_Record with private;
       type Preference is access all Preference_Record'Class;
 
       function Create
@@ -54,7 +55,18 @@ package Default_Preferences.Enums is
         (Pref : access Preference_Record) return Enumeration;
       --  Return the value of the enumeration
 
+      procedure Hide
+        (Pref  : access Preference_Record;
+         Value : Enumeration);
+      --  The Value will be invisible in GUI for users
+
    private
+      package Hidden_Set is new Ada.Containers.Ordered_Sets (Enumeration);
+
+      type Preference_Record is new Enum_Preference_Record with record
+         Hidden : Hidden_Set.Set;
+      end record;
+
       overriding function Edit
         (Pref               : access Preference_Record;
          Manager            : access Preferences_Manager_Record'Class)

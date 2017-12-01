@@ -422,6 +422,19 @@ package body Default_Preferences.Enums is
       end Create;
 
       ----------
+      -- Hide --
+      ----------
+
+      procedure Hide
+        (Pref  : access Preference_Record;
+         Value : Enumeration) is
+      begin
+         if not Pref.Hidden.Contains (Value) then
+            Pref.Hidden.Insert (Value);
+         end if;
+      end Hide;
+
+      ----------
       -- Edit --
       ----------
 
@@ -431,7 +444,8 @@ package body Default_Preferences.Enums is
          return Gtk.Widget.Gtk_Widget
       is
          subtype Enumeration_Choices is
-              GNAT.Strings.String_List (1 .. Enumeration'Range_Length);
+           GNAT.Strings.String_List
+             (1 .. Enumeration'Range_Length - Natural (Pref.Hidden.Length));
          Widget  : Gtk_Widget;
          Choices : GNAT.Strings.String_List_Access := new Enumeration_Choices;
 
@@ -447,16 +461,18 @@ package body Default_Preferences.Enums is
             I : Integer := Choices'First;
          begin
             for K in Enumeration'Range loop
-               Choices (I) :=
-                 new String'(Enumeration'Image (K));
-               I := I + 1;
+               if not Pref.Hidden.Contains (K) then
+                  Choices (I) :=
+                    new String'(Enumeration'Image (K));
+                  I := I + 1;
+               end if;
             end loop;
          end Build_Choices;
 
       begin
          Build_Choices;
 
-         if Enumeration'Range_Length > Needs_Combo_Threshold then
+         if Enumeration_Choices'Last > Needs_Combo_Threshold then
             Widget := Gtk_Widget
               (Create_Combo_Box (Pref    => Pref,
                                  Manager => Manager,

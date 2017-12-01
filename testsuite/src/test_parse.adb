@@ -126,6 +126,10 @@ begin
          Gdb := new Gdb_Debugger;
       when GVD.Types.Gdb_MI =>
          Gdb := new Gdb_MI_Debugger;
+      when GVD.Types.LLDB =>
+--  LLDB does not support the Ada language
+--           Gdb := new LLDB_Debugger;
+         Gdb := new Gdb_Debugger;
    end case;
 
    Gdb.Set_Language (Lang.all'Unchecked_Access);

@@ -36,11 +36,12 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General --
+   Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
+
    Break_On_Exception            : Boolean_Preference;
    Open_Main_Unit                : Boolean_Preference;
    Execution_Window              : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
-   Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
 
    -- Source Window --
    Editor_Current_Line_Color     : Color_Preference;
