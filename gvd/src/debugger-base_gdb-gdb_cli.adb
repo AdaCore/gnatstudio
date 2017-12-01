@@ -473,6 +473,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Octal          => "/o");
    --  Array used by Value_Of to print values in various formats
 
+   Variable_Pattern : constant Pattern_Matcher :=
+     Compile ("^\$\d+ = (.+)$", Multiple_Lines);
+   --  Matches a variable output
+
    overriding function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
@@ -481,22 +485,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       S : constant String := Send_And_Get_Clean_Output
         (Debugger, "print" & Fmt_Array (Format) & ' ' & Entity,
          Mode => Internal);
-      Index : Natural := S'First;
-
+      Matched : Match_Array (0 .. 1);
    begin
-      --  The value is valid only if it starts with '$'
+      Match (Variable_Pattern, S, Matched);
 
-      if S = ""
-        or else S (S'First) /= '$'
-      then
+      if Matched (0) = No_Match then
          return "";
+      else
+         return S (Matched (1).First .. Matched (1).Last);
       end if;
-
-      --  Skip the '$nn =' part
-      Skip_To_Char (S, Index, '=');
-      Index := Index + 1;
-
-      return S (Index + 1 .. S'Last);
    end Value_Of;
 
    ---------------------
@@ -3945,6 +3942,26 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Set_Unbounded_String (Result, Str (Str'First .. First - 1));
          Append (Result, Str (Last + 1 .. Str'Last));
       end if;
+
+      declare
+         List : String_List_Access := Split
+           (To_String (Result), ASCII.LF, Omit_Empty_Lines => False);
+      begin
+         Result := Null_Unbounded_String;
+
+         for Line of List.all loop
+            if Starts_With (Line.all, "Sending packet:")
+              or else Starts_With (Line.all, "Packet received:")
+            then
+               --  do not pass additional remoute information which has broken
+               --  Value_Of function
+               null;
+            else
+               Append (Result, Line.all & ASCII.LF);
+            end if;
+         end loop;
+         Free (List);
+      end;
    end Filter_Output;
 
    ---------------------
