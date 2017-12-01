@@ -24,8 +24,12 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Gtk.Widget;            use Gtk.Widget;
 with Default_Preferences;   use Default_Preferences;
 with GPS.Kernel;            use GPS.Kernel;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package Default_Preferences.Assistants is
+
+   Auto_Run_Assistant : constant Trace_Handle :=
+     Create ("auto_run_assistant", GNATCOLL.Traces.Off);
 
    type Preferences_Assistant_Page is tagged private;
    type Preferences_Assistant_Page_Array is

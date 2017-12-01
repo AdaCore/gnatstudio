@@ -29,6 +29,8 @@ with Gtk.Style_Context; use Gtk.Style_Context;
 with Dialog_Utils;      use Dialog_Utils;
 with GPS.Main_Window;   use GPS.Main_Window;
 
+with Glib.Main;
+
 package body Default_Preferences.Assistants is
 
    type Preferences_Assistant_Record is new Gtk_Assistant_Record with record
@@ -153,6 +155,9 @@ package body Default_Preferences.Assistants is
       procedure Add_Navigation_Buttons;
       --  Add our own custom navigation buttons to have more flexibility
 
+      function Auto_Next return Boolean;
+      --  Auto-click next. For testing purposes.
+
       ----------------------------
       -- Add_Navigation_Buttons --
       ----------------------------
@@ -263,6 +268,19 @@ package body Default_Preferences.Assistants is
          Assistant.Set_Page_Complete (Page_View, True);
       end Create_Assistant_Page_View;
 
+      ---------------
+      -- Auto_Next --
+      ---------------
+
+      function Auto_Next return Boolean is
+      begin
+         while not Assistant.Apply_Button.Is_Visible loop
+            Assistant.Next_Button.Clicked;
+         end loop;
+         Assistant.Apply_Button.Clicked;
+         return False;
+      end Auto_Next;
+
    begin
       Assistant := new Preferences_Assistant_Record;
       Gtk.Assistant.Initialize (Assistant);
@@ -287,6 +305,19 @@ package body Default_Preferences.Assistants is
       --  Show the assistant and launch a main loop: we do not want to leave
       --  this procedure while the assistant is running.
       Assistant.Show_All;
+
+      --  A trace allows automatically pressing Next on the assistant. This
+      --  is used for testing purposes.
+
+      if Auto_Run_Assistant.Active then
+         declare
+            Ignored : Glib.Main.G_Source_Id;
+         begin
+            Ignored := Glib.Main.Timeout_Add
+              (500, Auto_Next'Unrestricted_Access);
+         end;
+      end if;
+
       Gtk.Main.Main;
    end Display_Preferences_Assistant;
 

@@ -2337,8 +2337,9 @@ procedure GPS.Main is
 
       --  Show the preferences assistant dialog if the user don't have any GPS
       --  home directory yet.
-      if Show_Preferences_Assistant then
-
+      if Show_Preferences_Assistant
+        or else Auto_Run_Assistant.Active
+      then
          --  Remove the splash screen, since it conflicts with the preferences
          --  assistant dialog.
          if Splash /= null then
