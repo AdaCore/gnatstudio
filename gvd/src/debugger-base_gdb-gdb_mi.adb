@@ -498,9 +498,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
                Pos := Pos + 1;
             end loop;
 
-            Trace
-              (Me, "<- Type_Of " & Entity & ":" & Result (1 .. Len) & "'");
-
             return Result (1 .. Len);
          end;
       end;
@@ -825,8 +822,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          return "";
       end if;
 
-      Trace (Me, "Value_Of " & Entity & " " & Format'Img);
-
       if Is_Empty (V.Nodes) then
          if V.Childs < 2 then
             declare
@@ -878,9 +873,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Build_Result (First_Element (V.Nodes), False);
       end if;
 
-      Trace (Me, "<- Value_Of:" & To_String (Result) & "'");
       Free (Debugger, V);
       return To_String (Result);
+
+   exception
+      when E : others =>
+         Me.Trace (E);
+         return "";
    end Value_Of;
 
    ---------------------
@@ -4357,14 +4356,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       if T /= Token_Lists.No_Element then
          Next (T, 2);
-         Trace (Me, "<- Get_Value:" & Element (T).Text.all & "'");
          return Element (T).Text.all;
       end if;
 
       T := Find_Identifier (First (Tokens.List), "msg");
       if T /= Token_Lists.No_Element then
          Next (T, 2);
-         Trace (Me, "<- Get_Value:" & Element (T).Text.all & "'");
          return Element (T).Text.all;
       end if;
 
@@ -4720,6 +4717,21 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      J := J + 1;
                   end loop;
                end if;
+
+            elsif J + 14 <= Str'Last
+              and then Str (J .. J + 14) = "Sending packet:"
+            then
+               while J <= Str'Last and then Str (J) /= ASCII.LF loop
+                  J := J + 1;
+               end loop;
+
+            elsif J + 15 <= Str'Last
+              and then Str (J .. J + 15) = "Packet received:"
+            then
+               while J <= Str'Last and then Str (J) /= ASCII.LF loop
+                  J := J + 1;
+               end loop;
+
             else
                Append (Result, Str (J));
             end if;
