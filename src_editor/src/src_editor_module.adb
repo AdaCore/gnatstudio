@@ -2387,7 +2387,8 @@ package body Src_Editor_Module is
          Command      => new Goto_Line_Command,
          Description  => -"Open a dialog to select a line to go to",
          Category     => -"Editor",
-         For_Learning => True);
+         For_Learning => True,
+         Filter       => Src_Action_Context);
       Register_Contextual_Menu
         (Kernel,
          Label   => -"Goto line...",
