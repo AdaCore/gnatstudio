@@ -1762,12 +1762,11 @@ else:
 
         def __contextual_name_for_break_on_block(self, context):
             it = self.get_item_with_sources(context.modeling_item)
-            return 'Debug/Break on %s' % (it.id.replace("/", "\\/"), )
+            return 'Break on %s' % it.id.replace("/", "\\/")
 
         def __contextual_name_for_unbreak_on_block(self, context):
             it = self.get_item_with_sources(context.modeling_item)
-            id = it.id.replace("/", "\\/")
-            return 'Debug/Delete breakpoints on %s' % (id, )
+            return 'Delete breakpoints on %s' % it.id.replace("/", "\\/")
 
         def __contextual_set_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
@@ -1943,7 +1942,8 @@ else:
                 name='MDL generate code for file',
                 category='QGen',
                 filter=CLI.is_model_file,
-                contextual='Generate code for %f')
+                contextual='%f',
+                static_path='Generate code for')
 
             gps_utils.make_interactive(
                 callback=CLI.workflow_compile_project_to_source_code,
@@ -1955,13 +1955,15 @@ else:
                 name='MDL break debugger on block',
                 contextual=self.__contextual_name_for_break_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
-                callback=self.__contextual_set_breakpoint)
+                callback=self.__contextual_set_breakpoint,
+                static_path='Debug/Break')
 
             gps_utils.make_interactive(
                 name='MDL delete breakpoints on block',
                 contextual=self.__contextual_name_for_unbreak_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
-                callback=self.__contextual_delete_breakpoint)
+                callback=self.__contextual_delete_breakpoint,
+                static_path='Debug/DelBreak')
 
             gps_utils.make_interactive(
                 name='MDL set signal value',
