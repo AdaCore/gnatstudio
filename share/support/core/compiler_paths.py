@@ -15,6 +15,12 @@ paths_cache = {}
 
 def get_compiler_search_paths(project_name, language,
                               logger=None, use_cache=True):
+
+    def is_known_compiler(compiler):
+        """Return True is we can assume that this is a compiler of the gcc/g++
+           family, from which we can extract predefined paths"""
+        return any(name in compiler for name in ['gcc', 'c++'])
+
     logger = logger or GPS.Logger("LIBCLANG.SEARCH_PATHS")
 
     # First find the driver.
@@ -68,26 +74,32 @@ def get_compiler_search_paths(project_name, language,
             return ret
 
     # Spawn the compiler, get the include paths
-    try:
-        logger.log('Spawning {} to find the search paths'.format(compiler))
-        cmd = "echo | {} -x {} -E -v -".format(compiler, language)
-        logger.log("Compiler command : {}".format(cmd))
+    if is_known_compiler(compiler):
+        try:
+            logger.log('Spawning {} to find the search paths'.format(compiler))
+            cmd = "echo | {} -x {} -E -v -".format(compiler, language)
+            logger.log("Compiler command : {}".format(cmd))
 
-        out = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT,
-            # This is needed for consoleless processes under windows - OB11-026
-            stdin=subprocess.PIPE
-        )
+            out = subprocess.check_output(
+                cmd, shell=True, stderr=subprocess.STDOUT,
+                # This is needed for consoleless processes under windows
+                # - OB11-026
+                stdin=subprocess.PIPE
+            )
 
-        logger.log("Compiler's output: {}".format(out))
+            logger.log("Compiler's output: {}".format(out))
 
-        m = re.findall(r'\> search starts here:(.*) ?End', out, re.DOTALL)[0]
-        ret = map(str.strip, m.strip().splitlines())
+            m = re.findall(r'\> search starts here:(.*) ?End',
+                           out, re.DOTALL)[0]
+            ret = map(str.strip, m.strip().splitlines())
 
-    except Exception as e:
-        import traceback
-        logger.log('Spawning failed !')
-        logger.log(traceback.format_exc(e))
+        except Exception as e:
+            import traceback
+            logger.log('Spawning failed !')
+            logger.log(traceback.format_exc(e))
+            ret = []
+    else:
+        logger.log('Compiler {} not known, not spawning it'.format(compiler))
         ret = []
 
     logger.log('Returning {}'.format(ret))
