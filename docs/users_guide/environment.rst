@@ -621,3 +621,12 @@ installing GPS.
   setting:
   :command:`gsettings set org.gnome.settings-daemon.plugins.xsettings overrides
   "{'Gtk/DialogsUseHeader':<0>}"`
+
+*Floating windows are openened in fullscreen on MacOS Sierra*
+
+  On MacOS Sierra, when GPS is in fullscreen, all the floating windows opened
+  from GPS (e.g: :menuselection:`Edit --> Preferences...`) are opened in
+  fullscreen too by default.
+  This behavior can be disabled by setting the
+  :guilabel:`Prefer tabs when opening documents` to :guilabel:`Manually` in the
+  :guilabel:`Dock` section of the MacOS Sierra's System Preferences.
