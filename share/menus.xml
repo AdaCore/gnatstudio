@@ -442,6 +442,7 @@
          <menu label="File Sw_itches"             action="open switches editor"
                optional='true'  hide='true' />
          <menu label="_Files"                     action="open files"/>
+         <menu label="Learn"                      action="open Learn"/>
          <menu label="Metrics"                    action="open metrics view"/>
          <menu label="Memory Usage"               action="open memory usage" />
          <menu label="_Remote"                    action="open remote"/>

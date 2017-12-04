@@ -80,7 +80,12 @@ def get_focused_widget():
     current = GPS.MDI.current()
 
     if current:
-        return current.get_child().pywidget().get_toplevel().get_focus()
+        toplevel = current.get_child().pywidget().get_toplevel()
+
+        if toplevel and toplevel.is_toplevel():
+            return toplevel.get_focus()
+        else:
+            return None
     else:
         return None
 

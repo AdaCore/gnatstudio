@@ -3,7 +3,7 @@
   <perspectives state=" 0" mdi_height=" 709" mdi_width=" 1024" height=" 768" width=" 1024"  >
     <perspective name="Default">
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
-        <Notebook width=" 2.51968E+01%" Tabs="POS_LEFT" >
+        <Notebook width=" 2.02569E+01%" Tabs="POS_LEFT" >
           <Child Raised="True" Group=" 106" State="NORMAL" >
             <Project_Explorer_Project />
           </Child>
@@ -14,7 +14,7 @@
             <Scenario_View />
           </Child>
         </Notebook>
-        <Pane width=" 7.51969E+01%" Orientation="ORIENTATION_VERTICAL" >
+        <Pane width=" 6.03755E+01%" Orientation="ORIENTATION_VERTICAL" >
           <central height=" 8.04565E+01%"  />
           <Notebook height=" 2.01141E+01%" Tabs="POS_TOP" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
@@ -22,6 +22,11 @@
             </Child>
           </Notebook>
         </Pane>
+        <Notebook width=" 1.976288E+01%" Tabs="POS_RIGHT" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Learn_View />
+          </Child>
+        </Notebook>
       </Pane>
     </perspective>
     <perspective name="Maximized Editors" save_on_exit="False">
@@ -165,8 +170,11 @@
   </perspectives>
   <desktops>
     <desktop perspective="Default" >
+      <Learn_View>
+        <learn position=" 7.49634E+01%"  />
+      </Learn_View>
       <Pane width=" 1.00000E02%" Orientation="ORIENTATION_HORIZONTAL" >
-        <Notebook width=" 1.00493E02%" Tabs="POS_TOP" >
+        <Notebook width=" 1.00659E02%" Tabs="POS_TOP" >
           <Child Raised="True" Focus="True" Group=" 1" State="NORMAL" >
             <Welcome />
           </Child>
