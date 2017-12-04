@@ -485,15 +485,6 @@ package body VCS2.Engines is
                Engine.Set_Working_Directory (Working_Dir);
                Global_Data.All_Engines.Append (Engine);
                Set_VCS (Kernel, Working_Dir, Engine);
-
-               --  if Repo is of the form 'root/.git' or 'root/CVS',... we also
-               --  want to register 'root' itself for this VCS even if it does
-               --  not contain project sources. This is needed for
-               --  Guess_VCS_For_Directory
-
-               if Working_Dir.Is_Directory then
-                  Set_VCS (Kernel, Working_Dir.Get_Parent, Engine);
-               end if;
             elsif Active (Me) then
                Trace (Me, "  Shared engine " & Working_Dir.Display_Full_Name);
             end if;
