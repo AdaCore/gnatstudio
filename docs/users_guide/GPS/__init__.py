@@ -10964,7 +10964,7 @@ def save_persistent_properties():
 
 def send_key_event(
         keyval, window=None, primary=False, alt=False,
-        shift=False, control=False):
+        shift=False, control=False, hardware_keycode=0):
     """
     synthesize and queue an event to simulate a key press. This event
     will be processed later by gtk+ (unless you call
@@ -10974,6 +10974,7 @@ def send_key_event(
 
     :param GUI window: the window to which the event should be sent. This
        defaults to the window that currently has the focus.
+    :param hardware_keycode: the hardware keycode associated to keyval
     """
 
 

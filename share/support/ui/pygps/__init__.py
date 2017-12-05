@@ -23,7 +23,6 @@ depends on it should use the statement:
 """
 
 import GPS
-import os
 import sys
 
 global last_sent_event
@@ -368,15 +367,9 @@ try:
     GDK_CONTROL_L = 65507
     GDK_PAGE_DOWN = 0xFF56
 
-    if os.name == 'nt':
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 8
-    else:
-        GDK_BACKSPACE_HARDWARE_KEYCODE = 22
-
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,
-                       process_events=True, bypass_keymanager=False,
-                       hardware_keycode=None):
+                       process_events=True, bypass_keymanager=False):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
@@ -388,11 +381,24 @@ try:
            passes the event to the key manager, but synthesize the event
            in Python directly.
         """
+
+        keycode = 0
+
+        # Try to retrieve the hardware keycode with the appropriate
+        # Gtk.Keymap function.
+
+        keymap = Gdk.Keymap.get_default()
+        success, keys = keymap.get_entries_for_keyval(keyval)
+
+        if success:
+            keycode = keys[0].keycode
+
         if not bypass_keymanager:
             if hasattr(GPS, "send_key_event"):
                 GPS.send_key_event(keyval, window=window,
                                    primary=primary, control=control,
-                                   alt=alt, shift=shift)
+                                   alt=alt, shift=shift,
+                                   hardware_keycode=int(keycode))
                 return
 
         def _synthesize(type, keyval):
@@ -406,11 +412,7 @@ try:
             event.is_modifier = 0
             event.group = 0
             event.state = Gdk.ModifierType(0)
-
-            if hardware_keycode:
-                event.hardware_keycode = hardware_keycode
-            elif keyval == GDK_BACKSPACE:
-                event.hardware_keycode = GDK_BACKSPACE_HARDWARE_KEYCODE
+            event.hardware_keycode = keycode
 
             # Can't set string in some versions of pygobject
             # hardware_keycode is OS and keyboard specific.

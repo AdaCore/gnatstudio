@@ -42,7 +42,6 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Convert;             use Glib.Convert;
-with Glib.Object;
 with Glib;                     use Glib;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Main;                 use Gtk.Main;
@@ -2181,6 +2180,7 @@ package body KeyManager_Module is
             Alt     : constant Boolean := Nth_Arg (Data, 4, False);
             Shift   : constant Boolean := Nth_Arg (Data, 5, False);
             Control : constant Boolean := Nth_Arg (Data, 6, False);
+            Keycode : constant Guint16 := Guint16 (Nth_Arg (Data, 7, 0));
             Event   : Gdk_Event;
             List, List2    : Widget_List.Glist;
             Win     : Gtk_Widget;
@@ -2211,17 +2211,17 @@ package body KeyManager_Module is
 
             Gdk_New (Event, Gdk.Event.Key_Press);
             Event.Key :=
-               (The_Type    => Gdk.Event.Key_Press,
-                Window      => Window,
-                Keyval      => Keyval,
-                Send_Event  => 1,
-                Time        => 0, --  CURRENT_TIME
-                Is_Modifier => 0,
-                Group       => 0,
-                State       => 0,
-                Length      => 0,
-                String      => Interfaces.C.Strings.Null_Ptr,
-                Hardware_Keycode => 0);
+               (The_Type         => Gdk.Event.Key_Press,
+                Window           => Window,
+                Keyval           => Keyval,
+                Send_Event       => 1,
+                Time             => 0, --  CURRENT_TIME
+                Is_Modifier      => 0,
+                Group            => 0,
+                State            => 0,
+                Length           => 1,
+                String           => Interfaces.C.Strings.Null_Ptr,
+                Hardware_Keycode => Keycode);
             Ref (Event.Key.Window);
 
             if Primary then
@@ -2238,15 +2238,6 @@ package body KeyManager_Module is
 
             if Alt then
                Event.Key.State := Event.Key.State or Mod1_Mask;
-            end if;
-
-            if Keyval = GDK_BackSpace then
-               if GNAT.OS_Lib.Directory_Separator = '\' then
-                  Event.Key.Hardware_Keycode := 8;
-               else
-                  --  on Unix use 22
-                  Event.Key.Hardware_Keycode := 22;
-               end if;
             end if;
 
             Device := Gtkada.Style.Get_First_Device
@@ -2401,7 +2392,8 @@ package body KeyManager_Module is
           Param ("primary", Optional => True),
           Param ("alt", Optional => True),
           Param ("shift", Optional => True),
-          Param ("control", Optional => True)),
+          Param ("control", Optional => True),
+          Param ("hardware_keycode", Optional => True)),
          Keymanager_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("send_button_event",
