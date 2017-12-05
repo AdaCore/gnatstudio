@@ -246,11 +246,16 @@ package CodePeer is
    package Object_Race_Vectors is
      new Ada.Containers.Vectors (Positive, Object_Race_Information);
 
+   type Inspection_Information is record
+      Inspection : Natural;
+      Timestamp  : Ada.Calendar.Time;
+      Main       : Ada.Strings.Unbounded.Unbounded_String;
+      Switches   : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
    type Project_Data is new Code_Analysis.CodePeer_Data_Root with record
-      Current_Inspection    : Natural;
-      Current_Timestamp     : Ada.Calendar.Time;
-      Baseline_Inspection   : Natural;
-      Baseline_Timestamp    : Ada.Calendar.Time;
+      Current               : Inspection_Information;
+      Baseline              : Inspection_Information;
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
       CWE_Categories        : CWE_Category_Sets.Set;

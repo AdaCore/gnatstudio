@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar.Formatting;
+with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 
 with Gtk.Label;
@@ -55,6 +56,7 @@ package body CodePeer.Reports is
 
       Inspections_Box     : Gtk.Box.Gtk_Hbox;
       Baseline_Inspection : Gtk.Label.Gtk_Label;
+      Inspection_Switches : Gtk.Label.Gtk_Label;
       Current_Inspection  : Gtk.Label.Gtk_Label;
       Notebook            : Gtk.Notebook.Gtk_Notebook;
       Project_Data        : CodePeer.Project_Data'Class renames
@@ -76,19 +78,34 @@ package body CodePeer.Reports is
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
         ("Base run #"
-         & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both)
-         & (if Project_Data.Baseline_Timestamp = Unknown_Timestamp then ""
+         & Trim (Natural'Image (Project_Data.Baseline.Inspection), Both)
+         & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
-             (Project_Data.Baseline_Timestamp)));
+             (Project_Data.Baseline.Timestamp)));
+      Baseline_Inspection.Set_Tooltip_Text
+        (Ada.Strings.Unbounded.To_String (Project_Data.Baseline.Main)
+         & Ada.Characters.Latin_1.LF
+         & Ada.Strings.Unbounded.To_String (Project_Data.Baseline.Switches));
       Inspections_Box.Pack_Start (Baseline_Inspection);
+
+      Gtk.Label.Gtk_New (Inspection_Switches, "switches");
+      Inspection_Switches.Set_Alignment (0.5, 1.0);
+      Inspection_Switches.Set_Label
+        (Ada.Strings.Unbounded.To_String (Project_Data.Current.Switches));
+      Inspections_Box.Pack_Start (Inspection_Switches, True);
+
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
         ("Current run #"
-         & Trim (Natural'Image (Project_Data.Current_Inspection), Both)
-         & (if Project_Data.Current_Timestamp = Unknown_Timestamp then ""
+         & Trim (Natural'Image (Project_Data.Current.Inspection), Both)
+         & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
-             (Project_Data.Current_Timestamp)));
+             (Project_Data.Current.Timestamp)));
+      Current_Inspection.Set_Tooltip_Text
+        (Ada.Strings.Unbounded.To_String (Project_Data.Current.Main)
+         & Ada.Characters.Latin_1.LF
+         & Ada.Strings.Unbounded.To_String (Project_Data.Current.Switches));
       Inspections_Box.Pack_End (Current_Inspection);
 
       --  Notebook
