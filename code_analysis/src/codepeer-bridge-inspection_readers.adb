@@ -45,6 +45,9 @@ package body CodePeer.Bridge.Inspection_Readers is
    Category_Attribute           : constant String := "category";
    Checks_Attribute             : constant String := "checks";
    Column_Attribute             : constant String := "column";
+   Command_Line_Main_Attribute  : constant String := "command_line_main";
+   Command_Line_Switches_Attribute :
+     constant String := "command_line_switches";
    CWE_Attribute                : constant String := "cwe";
    Entry_Point_Attribute        : constant String := "entry_point";
    File_Attribute               : constant String := "file";
@@ -55,12 +58,16 @@ package body CodePeer.Bridge.Inspection_Readers is
    Line_Attribute               : constant String := "line";
    Name_Attribute               : constant String := "name";
    Previous_Attribute           : constant String := "previous";
+   Previous_Command_Line_Main_Attribute :
+     constant String := "previous_command_line_main";
+   Previous_Command_Line_Switches_Attribute :
+     constant String := "previous_command_line_switches";
    Previous_Timestamp_Attribute : constant String := "previous_timestamp";
    Primary_Checks_Attribute     : constant String := "primary_checks";
    Rank_Attribute               : constant String := "rank";
    Timestamp_Attribute          : constant String := "timestamp";
    Vn_Id_Attribute              : constant String := "vn-id";
-   Vn_Ids_Attribute         :     constant String := "vn-ids";
+   Vn_Ids_Attribute             : constant String := "vn-ids";
 
    procedure Include_CWE_Category
      (Self : in out Reader'Class;
@@ -500,6 +507,12 @@ package body CodePeer.Bridge.Inspection_Readers is
             --  Returns values of given attribute if present or value of
             --  Default.
 
+            function Get_Value
+              (Attrs      : Sax.Attributes.Attributes'Class;
+               Local_Name : String)
+               return Ada.Strings.Unbounded.Unbounded_String;
+            --  Returns values of given attribute if present or empty string.
+
             ---------------
             -- Get_Value --
             ---------------
@@ -522,17 +535,49 @@ package body CodePeer.Bridge.Inspection_Readers is
                end if;
             end Get_Value;
 
+            ---------------
+            -- Get_Value --
+            ---------------
+
+            function Get_Value
+              (Attrs      : Sax.Attributes.Attributes'Class;
+               Local_Name : String)
+               return Ada.Strings.Unbounded.Unbounded_String
+            is
+               Index : constant Integer := Attrs.Get_Index (Local_Name);
+
+            begin
+               if Index /= -1 then
+                  return
+                    Ada.Strings.Unbounded.To_Unbounded_String
+                      (Attrs.Get_Value (Index));
+
+               else
+                  return Ada.Strings.Unbounded.Null_Unbounded_String;
+               end if;
+            end Get_Value;
+
             Data : CodePeer.Project_Data'Class
               renames CodePeer.Project_Data'Class (Self.Root_Inspection.all);
 
          begin
-            Data.Current_Inspection :=
+            Data.Current.Inspection :=
               Natural'Value (Attrs.Get_Value (Identifier_Attribute));
-            Data.Current_Timestamp := Get_Value (Attrs, Timestamp_Attribute);
-            Data.Baseline_Inspection :=
+            Data.Current.Timestamp := Get_Value (Attrs, Timestamp_Attribute);
+            Data.Current.Main :=
+              Get_Value (Attrs, Command_Line_Main_Attribute);
+            Data.Current.Switches :=
+              Get_Value (Attrs, Command_Line_Switches_Attribute);
+
+            Data.Baseline.Inspection :=
               Natural'Value (Attrs.Get_Value (Previous_Attribute));
-            Data.Baseline_Timestamp :=
+            Data.Baseline.Timestamp :=
               Get_Value (Attrs, Previous_Timestamp_Attribute);
+            Data.Baseline.Main :=
+              Get_Value (Attrs, Previous_Command_Line_Main_Attribute);
+            Data.Baseline.Switches :=
+              Get_Value (Attrs, Previous_Command_Line_Switches_Attribute);
+
             Self.Version :=
               Format_Version'Value (Attrs.Get_Value (Format_Attribute));
          end;
