@@ -3957,7 +3957,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                --  Value_Of function
                null;
             else
-               Append (Result, Line.all & ASCII.LF);
+               Append (Result, Line.all);
             end if;
          end loop;
          Free (List);
