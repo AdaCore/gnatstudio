@@ -44,31 +44,27 @@ with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
-with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Css_Provider;          use Gtk.Css_Provider;
-with Gtk.Text_View;
-with Gtk.Text_Buffer;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
 with Gtkada.Style;
 
-with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 
 with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
+with Dialog_Utils;              use Dialog_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -1445,24 +1441,19 @@ package body GPS.Main_Window is
 
       elsif Command = "input_dialog" then
          declare
-            use Gtk.Text_View;
-            use Gtk.Text_Buffer;
-
-            Dialog   : Gtk_Dialog;
-            Vbox     : Gtk_Vbox;
-            Hbox     : Gtk_Hbox;
-            Label    : Gtk_Label;
-            Group    : Gtk_Size_Group;
-            Button   : Gtk_Widget;
-            Message  : constant String := Data.Nth_Arg (1);
-            Padding  : constant := 5;
+            Dialog       : Gtk_Dialog;
+            Main_View    : Dialog_View;
+            Group_Widget : Dialog_Group_Widget;
+            Button       : Gtk_Widget;
+            Message      : constant String := Data.Nth_Arg (1);
 
             type Ent_Array
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
             Ent : Ent_Array;
 
             type Text_View_Array
-               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Text_View;
+            is array (2 .. Number_Of_Arguments (Data))
+              of Gtkada_Multiline_Entry;
 
             Text : Text_View_Array;
 
@@ -1480,11 +1471,7 @@ package body GPS.Main_Window is
                Arg   : constant String := Nth_Arg (Data, N);
                Index : Natural := Arg'First;
                First : Natural := Arg'First;
-               Hbox  : Gtk_Hbox;
             begin
-               Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Vbox.Pack_Start (Hbox, Padding => Padding);
-
                while Index <= Arg'Last loop
                   exit when Arg (Index) = '=';
 
@@ -1501,42 +1488,31 @@ package body GPS.Main_Window is
                   end if;
                end if;
 
-               if First <= Index - 1 then
-                  Gtk_New (Label, Arg (First .. Index - 1) & ':');
-
-                  Set_Alignment (Label, 0.0, 0.5);
-                  Add_Widget (Group, Label);
-                  Hbox.Pack_Start
-                    (Label,
-                     Expand  => False,
-                     Padding => Padding);
-               end if;
+               --  If the parameter is multiline, create a multiline entry
 
                if Is_Multiline then
-                  declare
-                     Buffer   : Gtk_Text_Buffer;
-                     Scrolled : Gtk_Scrolled_Window;
-                  begin
-                     Gtk_New (Buffer);
-                     Gtk_New (Text (N), Buffer);
-                     Buffer.Set_Text (Arg (Index + 1 .. Arg'Last));
-                     Gtk.Scrolled_Window.Gtk_New (Scrolled);
-                     Scrolled.Add (Text (N));
-                     Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-                     Scrolled.Set_Shadow_Type (Shadow_In);
-                     Hbox.Pack_Start (Scrolled, Expand => True);
-                  end;
+                  Gtk_New (Text (N));
+                  Text (N).Set_Text (Arg (Index + 1 .. Arg'Last));
+
+                  Group_Widget.Create_Child
+                    (Text (N),
+                     Label       => Arg (First .. Index - 1),
+                     Same_Height => False);
                else
                   Gtk_New (Ent (N));
                   Ent (N).Set_Text (Arg (Index + 1 .. Arg'Last));
                   Ent (N).Set_Activates_Default (True);
 
-                  Hbox.Pack_Start (Ent (N), Expand => True);
+                  Group_Widget.Create_Child
+                    (Ent (N),
+                     Label => Arg (First .. Index - 1));
                end if;
             end Create_Entry;
 
          begin
             Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
+
+            --  Create the dialog
 
             Gtk_New
               (Dialog,
@@ -1547,35 +1523,43 @@ package body GPS.Main_Window is
               (Dialog,
                Name   => Message,
                Kernel => Kernel,
-               Width  => 300,
-               Height => 150);
+               Width  => 350,
+               Height => 250);
 
-            Gtk_New_Vbox (Vbox, Homogeneous => False);
-            Dialog.Get_Content_Area.Pack_Start (Vbox);
+            --  Create the main view with the message
 
-            Gtk_New_Hbox (Hbox, Homogeneous => False);
-            Vbox.Pack_Start (Hbox, Expand => False, Padding => Padding);
+            Main_View := Create_Dialog_View_With_Message (Message);
+            Dialog.Get_Content_Area.Pack_Start (Main_View);
 
-            Gtk_New (Label);
-            Label.Set_Alignment (0.0, 0.5);
-            Label.Set_Line_Wrap (True);
-            Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
-            Label.Set_Markup (Message);
-            Hbox.Pack_Start (Label, Expand => False, Padding => Padding);
+            --  Create an initial group widget to group all the entries
 
-            Gtk_New (Group);
+            Group_Widget := new Dialog_Group_Widget_Record;
+            Initialize
+              (Group_Widget,
+               Parent_View         => Main_View,
+               Allow_Multi_Columns => False);
+
+            --  Create the entries for each parameter
 
             for Num in Ent'Range loop
                Create_Entry (Num);
             end loop;
 
+            --  Add the buttons
+
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
             Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
-            Show_All (Dialog);
+            --  Show the dialog and set its focus widget to null to avoid
+            --  the selection of the group widget's row.
+
+            Dialog.Show_All;
+            Dialog.Set_Focus (null);
 
             Set_Return_Value_As_List (Data);
+
+            --   Run the dialog andn return the values set in the entries
 
             if Run (Dialog) = Gtk_Response_OK then
                for Num in Ent'Range loop
@@ -1583,10 +1567,7 @@ package body GPS.Main_Window is
                      Set_Return_Value (Data, Get_Text (Ent (Num)));
                   else
                      Set_Return_Value
-                       (Data,
-                        Glib.Properties.Get_Property
-                          (Text (Num).Get_Buffer,
-                           Gtk.Text_Buffer.Text_Property));
+                       (Data, Text (Num).Get_Text);
                   end if;
                end loop;
             end if;
