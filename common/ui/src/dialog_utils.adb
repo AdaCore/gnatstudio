@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk.Event;          use Gdk.Event;
 with Gtk.Separator;      use Gtk.Separator;
 with Gtk.Style_Context;  use Gtk.Style_Context;
+with Pango.Enums;        use Pango.Enums;
 
 with GUI_Utils;          use GUI_Utils;
 
@@ -27,6 +29,16 @@ package body Dialog_Utils is
    --  Called each time a group widget's child is going to be filtered.
    --  Used to hide the group widget if all the children are not visible
    --  anymore.
+
+   function On_Non_Selectable_Row_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+   --  Called each time the user clicks on a non-selectable group widget's row
+   --  (i.e: when the surrounding Gtk_Flow_Box has Selection_None).
+   --  Return True to avoid the Gtk_Flow_Box default's behavior in that case,
+   --  which is to draw a dotted selection rectangle around the row.
+   --  This also avoid potential focus conflicts with the row's child (e.g:
+   --  when the row contains a Gtk_Text_View).
 
    -------------------------
    -- Filter_Func_Wrapper --
@@ -59,6 +71,18 @@ package body Dialog_Utils is
 
       return Result;
    end Filter_Func_Wrapper;
+
+   ---------------------------------
+   -- On_Non_Selectable_Row_Click --
+   ---------------------------------
+
+   function On_Non_Selectable_Row_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean is
+      pragma Unreferenced (Self, Event);
+   begin
+      return True;
+   end On_Non_Selectable_Row_Click;
 
    ----------------
    -- Initialize --
@@ -314,6 +338,38 @@ package body Dialog_Utils is
       Get_Style_Context (Child).Remove_Class ("display_error");
    end Remove_Information_On_Child;
 
+   -------------------------------------
+   -- Create_Dialog_View_With_Message --
+   -------------------------------------
+
+   function Create_Dialog_View_With_Message
+     (Message : String) return Dialog_View
+   is
+      View         : Dialog_View;
+      Group_Widget : Dialog_Group_Widget;
+      Label        : Gtk_Label;
+   begin
+      View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (View);
+      Get_Style_Context (View).Add_Class ("with-message");
+
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize (Group_Widget,
+                  Parent_View         => View,
+                  Allow_Multi_Columns => False);
+      Get_Style_Context (Group_Widget).Add_Class
+        ("with-message");
+
+      Gtk_New (Label);
+      Label.Set_Alignment (0.0, 0.5);
+      Label.Set_Line_Wrap (True);
+      Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
+      Label.Set_Markup (Message);
+      Group_Widget.Append_Child (Label, Expand => False);
+
+      return View;
+   end Create_Dialog_View_With_Message;
+
    -------------------
    -- Append_Button --
    -------------------
@@ -352,6 +408,13 @@ package body Dialog_Utils is
       Self.Flow_Box.Set_Max_Children_Per_Line (Max_Children_Per_Line);
       Self.Flow_Box.Set_Selection_Mode (Selection);
       Self.Flow_Box.Set_Homogeneous (False);
+
+      if Selection = Selection_None then
+         Self.Flow_Box.On_Button_Press_Event
+           (On_Non_Selectable_Row_Click'Access);
+         Self.Flow_Box.On_Button_Release_Event
+           (On_Non_Selectable_Row_Click'Access);
+      end if;
 
       if Sorting_Function /= null then
          Self.Flow_Box.Set_Sort_Func (Sorting_Function);
@@ -410,14 +473,15 @@ package body Dialog_Utils is
    ------------------
 
    function Create_Child
-     (Self      : not null access Dialog_Group_Widget_Record'Class;
-      Widget    : not null access Gtk_Widget_Record'Class;
-      Button    : access Gtk_Button_Record'Class := null;
-      Label     : String := "";
-      Doc       : String := "";
-      Child_Key : String := "";
-      Expand    : Boolean := True;
-      Fill      : Boolean := True) return Gtk_Widget
+     (Self        : not null access Dialog_Group_Widget_Record'Class;
+      Widget      : not null access Gtk_Widget_Record'Class;
+      Button      : access Gtk_Button_Record'Class := null;
+      Label       : String := "";
+      Doc         : String := "";
+      Child_Key   : String := "";
+      Expand      : Boolean := True;
+      Fill        : Boolean := True;
+      Same_Height : Boolean := True) return Gtk_Widget
    is
       Label_Widget : Gtk_Label;
    begin
@@ -435,7 +499,8 @@ package body Dialog_Utils is
          Doc          => Doc,
          Child_Key    => Child_Key,
          Expand       => Expand,
-         Fill         => Fill);
+         Fill         => Fill,
+         Same_Height  => Same_Height);
    end Create_Child;
 
    ------------------
@@ -450,7 +515,8 @@ package body Dialog_Utils is
       Doc          : String := "";
       Child_Key    : String := "";
       Expand       : Boolean := True;
-      Fill         : Boolean := True) return Gtk_Widget
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True) return Gtk_Widget
    is
       Child_Box : Gtk_Box;
       Spacing   : constant Gint := 5;
@@ -463,7 +529,10 @@ package body Dialog_Utils is
          Child_Box.Pack_Start (Label_Widget, Expand => False);
       end if;
 
-      Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
+      if Same_Height then
+         Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
+      end if;
+
       Child_Box.Pack_Start
         (Widget,
          Expand  => Expand,
@@ -514,25 +583,27 @@ package body Dialog_Utils is
    ------------------
 
    procedure Create_Child
-     (Self      : not null access Dialog_Group_Widget_Record'Class;
-      Widget    : not null access Gtk_Widget_Record'Class;
-      Button    : access Gtk_Button_Record'Class := null;
-      Label     : String := "";
-      Doc       : String := "";
-      Child_Key : String := "";
-      Expand    : Boolean := True;
-      Fill      : Boolean := True)
+     (Self        : not null access Dialog_Group_Widget_Record'Class;
+      Widget      : not null access Gtk_Widget_Record'Class;
+      Button      : access Gtk_Button_Record'Class := null;
+      Label       : String := "";
+      Doc         : String := "";
+      Child_Key   : String := "";
+      Expand      : Boolean := True;
+      Fill        : Boolean := True;
+      Same_Height : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
-                (Self      => Self,
-                 Widget    => Widget,
-                 Button    => Button,
-                 Label     => Label,
-                 Doc       => Doc,
-                 Child_Key => Child_Key,
-                 Expand    => Expand,
-                 Fill      => Fill);
+                (Self        => Self,
+                 Widget      => Widget,
+                 Button      => Button,
+                 Label       => Label,
+                 Doc         => Doc,
+                 Child_Key   => Child_Key,
+                 Expand      => Expand,
+                 Fill        => Fill,
+                 Same_Height => Same_Height);
       pragma Unreferenced (Row);
    begin
       null;
@@ -550,7 +621,8 @@ package body Dialog_Utils is
       Doc          : String := "";
       Child_Key    : String := "";
       Expand       : Boolean := True;
-      Fill         : Boolean := True)
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -561,7 +633,8 @@ package body Dialog_Utils is
                  Doc          => Doc,
                  Child_Key    => Child_Key,
                  Expand       => Expand,
-                 Fill         => Fill);
+                 Fill         => Fill,
+                 Same_Height  => Same_Height);
       pragma Unreferenced (Row);
    begin
       null;
