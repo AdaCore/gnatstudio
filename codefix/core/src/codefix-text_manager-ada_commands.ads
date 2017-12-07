@@ -623,6 +623,25 @@ package Codefix.Text_Manager.Ada_Commands is
    function Is_Writable (This : Remove_Comparison_Cmd) return Boolean;
    --  See inherited documentation
 
+   type Named_Association_Cmd is new Text_Command (Simple) with private;
+
+   procedure Initialize
+     (This         : in out Named_Association_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String);
+   --  Force named association (Name => ...) at given position
+
+   overriding procedure Execute
+     (This         : Named_Association_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding procedure Free (This : in out Named_Association_Cmd);
+
+   overriding
+   function Is_Writable (This : Named_Association_Cmd) return Boolean;
+   --  See inherited documentation
+
 private
 
    package Mark_List is new GPS_Vectors (Word_Mark);
@@ -752,6 +771,11 @@ private
 
    type Remove_Comparison_Cmd is new Text_Command (Simple) with record
       Location : Ptr_Mark;
+   end record;
+
+   type Named_Association_Cmd is new Text_Command (Simple) with record
+      Location : Ptr_Mark;
+      Name     : Unbounded_String;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

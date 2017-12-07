@@ -3097,4 +3097,108 @@ package body Codefix.Text_Manager.Ada_Commands is
       return This.Location.Get_File.Is_Writable;
    end Is_Writable;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This         : in out Named_Association_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+      This.Name := To_Unbounded_String (Name);
+   end Initialize;
+
+   overriding procedure Execute
+     (This         : Named_Association_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      function Scan_Forward_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean;
+
+      Name_Found  : Boolean := False;
+      Name_Cursor : File_Cursor;
+      Name_Length : Natural;
+
+      function Scan_Forward_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+      begin
+         case Entity is
+            when Identifier_Text =>
+               Name_Cursor.Set_Location
+                 (Sloc_Start.Line,
+                  To_Column_Index
+                    (String_Index_Type (Sloc_Start.Column), Line));
+
+               Name_Length := Sloc_End.Column - Sloc_Start.Column + 1;
+
+               return False;  --  Continue scanning
+            when Operator_Text =>
+               --  We found name in named_association when '=>' appear
+               declare
+                  Name : constant String :=
+                    Line (Sloc_Start.Column .. Sloc_End.Column);
+               begin
+                  Name_Found := Name = "=>";
+                  return True;  --  Stop scanning
+               end;
+            when others =>
+               return True;  --  Stop scanning
+         end case;
+      end Scan_Forward_Callback;
+
+      Cursor : constant File_Cursor'Class :=
+                 Current_Text.Get_Current_Cursor (This.Location.all);
+   begin
+      --  Scan forward searching for 'name' and '=>' tokens. As a side effect
+      --  we save the name location and length.
+
+      Parse_Entities
+        (Lang     => Ada_Lang,
+         This     => Current_Text,
+         Callback => Scan_Forward_Callback'Unrestricted_Access,
+         Start    => Cursor);
+
+      if Name_Found then
+         Name_Cursor.Set_File (Cursor.Get_File);
+
+         Current_Text.Replace
+           (Name_Cursor,
+            Name_Length,
+            To_String (This.Name));
+      else
+         Current_Text.Replace
+           (Position      => Cursor,
+            Len           => 0,
+            New_Text      => To_String (This.Name) & " =>",
+            Blanks_Before => None,
+            Blanks_After  => One);
+      end if;
+   end Execute;
+
+   overriding procedure Free (This : in out Named_Association_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   overriding
+   function Is_Writable (This : Named_Association_Cmd) return Boolean is
+   begin
+      return This.Location.Get_File.Is_Writable;
+   end Is_Writable;
+
 end Codefix.Text_Manager.Ada_Commands;

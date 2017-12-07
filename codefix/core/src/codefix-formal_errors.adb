@@ -590,6 +590,29 @@ package body Codefix.Formal_Errors is
       return Result;
    end Wrong_Order;
 
+   ---------------------------
+   -- Use_Named_Association --
+   ---------------------------
+
+   function Use_Named_Association
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Solution_List
+   is
+      New_Command_Ptr : constant Ptr_Command := new Named_Association_Cmd;
+      New_Command     : Named_Association_Cmd renames
+        Named_Association_Cmd (New_Command_Ptr.all);
+      Result          : Solution_List;
+   begin
+      New_Command.Initialize (Current_Text, Cursor, Name);
+      New_Command.Set_Caption
+        (To_Unbounded_String ("Use """ & Name & """ as selector"));
+
+      Append (Result, New_Command_Ptr);
+
+      return Result;
+   end Use_Named_Association;
+
    ----------
    -- Data --
    ----------

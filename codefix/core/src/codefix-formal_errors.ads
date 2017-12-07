@@ -387,6 +387,12 @@ package Codefix.Formal_Errors is
       Package_Name   : String) return Solution_List;
    --  Add pragma Elaborate_All for given package
 
+   function Use_Named_Association
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Solution_List;
+   --  Force named association (Name => ...) at given position
+
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
    ----------------------------------------------------------------------------

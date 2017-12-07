@@ -1166,6 +1166,19 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'suggested replacement:'.
 
+   type Expect_Name is new Error_Parser (2) with null record;
+
+   overriding procedure Initialize (This : in out Expect_Name);
+
+   overriding procedure Fix
+     (This         : Expect_Name;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'expect name'.
+
    type Pragma_Pack is new Error_Parser (1) with record
       Use_Pragma : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("use explicit pragma Pack"));
@@ -4010,6 +4023,46 @@ package body Codefix.GNAT_Parser is
    -- Initialize --
    ----------------
 
+   overriding procedure Initialize (This : in out Expect_Name) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("expect name ""([^""]*)""$")),
+         new Pattern_Matcher'
+           (Compile ("expect name ""([^""]*)"" or ""([^""]*)""")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Expect_Name;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+      Message : constant Error_Message := Get_Message (Message_It);
+      Text    : constant String := Get_Message (Message);
+   begin
+      Solutions := Use_Named_Association
+        (Current_Text,
+         Message,
+         Text (Matches (1).First .. Matches (1).Last));
+
+      if Matches'Last > 1 then
+         Concat
+           (Solutions,
+            Use_Named_Association
+              (Current_Text,
+               Message,
+               Text (Matches (2).First .. Matches (2).Last)));
+      end if;
+   end Fix;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
    overriding
    procedure Initialize (This : in out Pragma_Pack) is
    begin
@@ -4437,6 +4490,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Multiple_Blank_Lines);
       Add_Parser (Processor, new EOF_Blank_Lines);
       Add_Parser (Processor, new Suggested_Replacement);
+      Add_Parser (Processor, new Expect_Name);
       Add_Parser (Processor, new Pragma_Pack);
       Add_Parser (Processor, new Undefined_Entity);
       Add_Parser (Processor, new Unwanted_Pragma_Unreferenced);
