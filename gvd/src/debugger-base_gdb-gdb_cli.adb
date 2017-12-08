@@ -3909,6 +3909,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
    end Set_TTY;
 
+   -------------------
+   -- Filter_Output --
+   -------------------
+
    overriding procedure Filter_Output
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type;
@@ -3916,57 +3920,51 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Result   : out Unbounded_String)
    is
       pragma Unreferenced (Debugger, Mode);
-      First, Last : Integer := 0;
-   begin
-      --  Strip lines starting with ^Z^Z.
-      Outer_Loop :
-      for J in Str'First + 1 .. Str'Last loop
-         if Str (J) = ASCII.SUB and then Str (J - 1) = ASCII.SUB then
-            First := J - 1;
+      J        : Integer := Str'First;
+      New_Line : Boolean := True;
 
-            for K in J + 1 .. Str'Last loop
-               if Str (K) = ASCII.LF then
-                  Last := K;
-                  exit Outer_Loop;
-               end if;
+   begin
+      while J <= Str'Last loop
+         if Str (J) = ASCII.SUB
+           and then J < Str'Last
+           and then Str (J + 1) = ASCII.SUB
+         then
+            --  Strip lines starting with ^Z^Z.
+            while J <= Str'Last and then Str (J) /= ASCII.LF loop
+               J := J + 1;
             end loop;
 
-            Last := Str'Last;
-            exit Outer_Loop;
+         elsif New_Line
+           and then J + 14 < Str'Last
+           and then Str (J .. J + 14) = "Sending packet:"
+         then
+            while J <= Str'Last and then Str (J) /= ASCII.LF loop
+               J := J + 1;
+            end loop;
+
+         elsif New_Line
+           and then J + 15 < Str'Last
+           and then Str (J .. J + 15) = "Packet received:"
+         then
+            while J <= Str'Last and then Str (J) /= ASCII.LF loop
+               J := J + 1;
+            end loop;
+
+         elsif J = Str'Last
+           and then Str (J) = ASCII.LF
+           and then J - 6 >= Str'First
+           and then Str (J - 6 .. J - 1) = "(gdb) "
+         then
+            --  Strip last LF after prompt
+            null;
+
+         else
+            Append (Result, Str (J));
          end if;
-      end loop Outer_Loop;
 
-      if First = 0 then
-         Set_Unbounded_String (Result, Str);
-      else
-         Set_Unbounded_String (Result, Str (Str'First .. First - 1));
-         Append (Result, Str (Last + 1 .. Str'Last));
-      end if;
-
-      declare
-         List : String_List_Access := Split
-           (To_String (Result), ASCII.LF, Omit_Empty_Lines => False);
-      begin
-         Result := Null_Unbounded_String;
-
-         for Line of List.all loop
-            if Starts_With (Line.all, "Sending packet:")
-              or else Starts_With (Line.all, "Packet received:")
-            then
-               --  do not pass additional remoute information which has broken
-               --  Value_Of function
-               null;
-            else
-               Append
-                 (Result,
-                  (if Result = Null_Unbounded_String
-                   then ""
-                   else "" & ASCII.LF) &
-                    Line.all);
-            end if;
-         end loop;
-         Free (List);
-      end;
+         New_Line := J <= Str'Last and then Str (J) = ASCII.LF;
+         J := J + 1;
+      end loop;
    end Filter_Output;
 
    ---------------------
