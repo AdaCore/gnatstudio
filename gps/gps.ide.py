@@ -1,4 +1,3 @@
-
 import GPS
 import lal
 from gps_utils import interactive
@@ -34,14 +33,16 @@ def initialize_project_plugin():
     """Called automatically when gps.gpr is loaded"""
     # Create a specific menu under Analyze/GPS to flag
 
-    @interactive(category="General", name="find project types stored",
-                 menu="/Analyze/GPS/Flag stored Project Types")
-    def find_project_types_stored():
-        all_ada_sources = filter(lambda x: x.language().lower() == 'ada',
-                                 GPS.Project.root().sources(recursive=True))
+    if not GPS.Action("find project types stored").exists():
+        @interactive(category="General", name="find project types stored",
+                     menu="/Analyze/GPS/Flag stored Project Types")
+        def find_project_types_stored():
+            all_ada_sources = filter(lambda x: x.language().lower() == 'ada',
+                                     GPS.Project.root().sources(
+                                         recursive=True))
 
-        for source_file in all_ada_sources:
-            flag_storage_of_project_type(source_file)
+            for source_file in all_ada_sources:
+                flag_storage_of_project_type(source_file)
 
 
 def finalize_project_plugin():
