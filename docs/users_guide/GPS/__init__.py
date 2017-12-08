@@ -6711,6 +6711,28 @@ class MDI(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def combo_selection_dialog(title, message, choices, combo_label=None):
+        """
+        Displays a modal dialog with the given ``title``, the given
+        ``message`` displayed at the top, and a combobox displaying the
+        possible ``choices``.
+
+        Dy default, the first value in ``choices`` is selected in the combobox.
+
+        The optional ``combo_label`` parameter can be used to display a label
+        on the left-side of the combobox.
+
+        This function returns the choice that is selected when the user presses
+        the :guilabel:`Ok` button.
+
+        :param title: a string
+        :param message: a string
+        :param choiches: a string list
+        :param combo_label: a string
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def save_all(force=False):
         """
         Saves all currently unsaved windows. This includes open editors, the

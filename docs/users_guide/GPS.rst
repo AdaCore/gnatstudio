@@ -1375,6 +1375,8 @@ Classes
 
    .. automethod:: GPS.MDI.children
 
+   .. automethod:: GPS.MDI.combo_selection_dialog
+
    .. automethod:: GPS.MDI.current
 
    .. automethod:: GPS.MDI.current_perspective

@@ -1043,6 +1043,15 @@ package body GPS.Main_Window is
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
+        ("combo_selection_dialog",
+         Class        => MDI_Class,
+         Params       => (1 => Param ("title"),
+                          2 => Param ("message"),
+                          3 => Param ("choices"),
+                          4 => Param ("combo_label", Optional => True)),
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
         ("save_all",
          Maximum_Args  => 1,
          Class         => MDI_Class,
@@ -1573,6 +1582,85 @@ package body GPS.Main_Window is
             end if;
 
             Destroy (Dialog);
+         end;
+
+      elsif Command = "combo_selection_dialog" then
+         declare
+            Dialog       : Gtk_Dialog;
+            Button       : Gtk_Widget;
+            Main_View    : Dialog_View;
+            Group_Widget : Dialog_Group_Widget;
+            Combo        : Gtk_Combo_Box_Text;
+            Title        : constant String := Data.Nth_Arg (1);
+            Message      : constant String := Data.Nth_Arg (2);
+            List         : constant List_Instance := Data.Nth_Arg (3);
+            Combo_Label  : constant String := Data.Nth_Arg (4, "");
+            Choices      : Unbounded_String_Array
+              (1 .. List.Number_Of_Arguments);
+
+         begin
+            for J in Choices'Range loop
+               Choices (J) := Nth_Arg (List, J);
+            end loop;
+
+            --  Create the dialog
+
+            Gtk_New
+              (Dialog,
+               Title  => Title,
+               Parent => Get_Current_Window (Kernel),
+               Flags  => Modal);
+            Set_Default_Size_From_History
+              (Dialog,
+               Name   => Title,
+               Kernel => Kernel,
+               Width  => 200,
+               Height => 100);
+
+            --  Add the Ok and Cancel buttons
+
+            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Grab_Default (Button);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+            --  Create the dialog's main view with the associated message
+
+            Main_View := Create_Dialog_View_With_Message (Message);
+            Dialog.Get_Content_Area.Pack_Start (Main_View);
+
+            --  Create the combo box and its associated group widget
+
+            Group_Widget := new Dialog_Group_Widget_Record;
+            Initialize (Group_Widget,
+                        Parent_View         => Main_View,
+                        Allow_Multi_Columns => False);
+
+            Gtk_New (Combo);
+            Group_Widget.Create_Child (Combo, Label => Combo_Label);
+
+            --  Append all the given choices to the combo box
+
+            for Choice of Choices loop
+               Combo.Append_Text (To_String (Choice));
+            end loop;
+
+            --  Select the first choice by default
+
+            Combo.Set_Active (0);
+
+            --  Show the dialog and set its focus widget to null to avoid
+            --  the selection of the group widget's row
+
+            Dialog.Show_All;
+            Dialog.Set_Focus (null);
+
+            --  Return the selected choice if the user clicks on OK
+
+            if Run (Dialog) = Gtk_Response_OK then
+               Data.Set_Return_Value (Combo.Get_Active_Text);
+            end if;
+
+            Dialog.Destroy;
          end;
 
       elsif Command = "hide" then
