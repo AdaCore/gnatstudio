@@ -131,6 +131,7 @@ package body Dialog_Utils is
                           Orientation_Horizontal);
       At_Start    : constant Boolean :=
                       Position = Pos_Left or else Position = Pos_Top;
+      Scrolled    : Gtk_Scrolled_Window;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -172,13 +173,17 @@ package body Dialog_Utils is
          Box.Pack_End (Sep, Expand => False);
       end if;
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+
       --  Create the main box
       Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
+      Scrolled.Add (Self.Main_Box);
 
       if At_Start then
-         Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
+         Box.Pack_Start (Scrolled, Expand => True, Fill => True);
       else
-         Box.Pack_End (Self.Main_Box, Expand => True, Fill => True);
+         Box.Pack_End (Scrolled, Expand => True, Fill => True);
       end if;
    end Initialize;
 
