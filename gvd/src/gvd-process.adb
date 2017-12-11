@@ -910,13 +910,14 @@ package body GVD.Process is
       Remote_Protocol : String := "";
       Load_Executable : Boolean := False) return Visual_Debugger
    is
-      Top          : constant GPS_Window :=
-                       GPS_Window (Get_Main_Window (Kernel));
-      Process      : Visual_Debugger;
-      Program_Args : GNAT.Strings.String_Access;
-      Blank_Pos    : Natural;
-      Proxy        : Process_Proxy_Access;
-      Exit_H       : access On_Before_Exit;
+      Top           : constant GPS_Window :=
+                        GPS_Window (Get_Main_Window (Kernel));
+      Process       : Visual_Debugger;
+      Program_Args  : GNAT.Strings.String_Access;
+      Blank_Pos     : Natural;
+      Proxy         : Process_Proxy_Access;
+      Exit_H        : access On_Before_Exit;
+      Console_Child : MDI_Child;
 
       function Get_Main return Virtual_File;
       --  Return the file to debug
@@ -1037,7 +1038,6 @@ package body GVD.Process is
          Fd      : GNAT.Expect.Process_Descriptor_Access := null;
          Version : Version_Number := Unknown_Version;
          Success : Boolean := False;
-
       begin
          Append_Argument (CL, "--version", One_Arg);
          GPS.Kernel.Remote.Spawn
@@ -1158,8 +1158,6 @@ package body GVD.Process is
          and then Support_TTY (Process.Debugger)
          and then GNAT.TTY.TTY_Supported);
 
-      Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Process.Debugger_Text));
-
       --  When True, Load the executable on the target, if any
 
       if Load_Executable then
@@ -1178,6 +1176,14 @@ package body GVD.Process is
       Debugger_State_Changed_Hook.Run
          (Process.Kernel, Process, Debug_Available);
       Debugger_Started_Hook.Run (Process.Kernel, Process);
+
+      --  Give the focus to the Debugger Console
+      Console_Child := Find_MDI_Child
+        (Get_MDI (Kernel), Process.Debugger_Text);
+
+      if Console_Child /= null then
+         Raise_Child (Console_Child);
+      end if;
 
       return Process;
 
