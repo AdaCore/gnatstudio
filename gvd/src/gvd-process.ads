@@ -36,6 +36,7 @@ pragma Elaborate_All (GVD.Histories);
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GPS.Dialogs;          use GPS.Dialogs;
+with GNAT.TTY;
 
 package GVD.Process is
 
@@ -77,6 +78,8 @@ package GVD.Process is
 
       Debugger_Text           : Generic_Views.Abstract_View_Access;
       Debuggee_Console        : Generic_Views.Abstract_View_Access;
+      Debuggee_TTY            : GNAT.TTY.TTY_Handle;
+      --  tty for Debugger Execution console
       Stack                   : Generic_Views.Abstract_View_Access;
       Threads                 : Generic_Views.Abstract_View_Access;
       Tasks                   : Generic_Views.Abstract_View_Access;
@@ -310,6 +313,10 @@ package GVD.Process is
      (Process : access Visual_Debugger_Record'Class) return Boolean;
    --  Return whether current command is likely to change the callstack when it
    --  finishes its execution
+
+   procedure Create_Execution_Console
+     (Process : access Visual_Debugger_Record'Class);
+   --  Creates Debugger Execution console
 
    --------------
    -- Commands --

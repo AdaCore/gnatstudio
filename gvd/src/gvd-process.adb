@@ -93,6 +93,8 @@ package body GVD.Process is
      (GNAT.Expect.Process_Descriptor'Class,
       GNAT.Expect.Process_Descriptor_Access);
 
+   Null_TTY : GNAT.TTY.TTY_Handle;
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -138,6 +140,23 @@ package body GVD.Process is
       Mode           : Command_Type;
       Output         : String_Access_Access);
    --  Wrapper implementing common code for Process_User_Command routines
+
+   ------------------------------
+   -- Create_Execution_Console --
+   ------------------------------
+
+   procedure Create_Execution_Console
+     (Process : access Visual_Debugger_Record'Class) is
+   begin
+      Attach_To_Debuggee_Console
+        (Process,
+         Process.Kernel,
+         Create_If_Necessary =>
+           Execution_Window.Get_Pref
+         and then Is_Local (Debug_Server)
+         and then Support_TTY (Process.Debugger)
+         and then GNAT.TTY.TTY_Supported);
+   end Create_Execution_Console;
 
    ----------------
    -- Get_Kernel --
@@ -683,6 +702,9 @@ package body GVD.Process is
 
       Process.Debugger := null;
       Remove_Debugger (Kernel, Process);
+      if Process.Debuggee_TTY /= Null_TTY then
+         Close_TTY (Process.Debuggee_TTY);
+      end if;
       Unref (Process);
 
       if Count = 1 then
@@ -1149,14 +1171,7 @@ package body GVD.Process is
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it.
 
-      Attach_To_Debuggee_Console
-        (Process,
-         Process.Kernel,
-         Create_If_Necessary =>
-           Execution_Window.Get_Pref
-         and then Is_Local (Debug_Server)
-         and then Support_TTY (Process.Debugger)
-         and then GNAT.TTY.TTY_Supported);
+      Process.Create_Execution_Console;
 
       --  When True, Load the executable on the target, if any
 

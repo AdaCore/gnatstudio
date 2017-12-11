@@ -362,6 +362,7 @@
             <menu label="A_ssembly"           action="open assembly view"/>
             <menu label="_Breakpoints"        action="open breakpoints editor"/>
             <menu label="_Registers"          action="open registers view"/>
+            <menu label="_Execution"          action="open debugger execution"/>
             <separator/>
             <menu label="_Examine Memory"     action="examine memory"/>
             <separator/>

@@ -46,9 +46,13 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
+with Commands;               use Commands;
+with Commands.Interactive;   use Commands.Interactive;
+
 with Debugger;               use Debugger;
 with Generic_Views;          use Generic_Views;
 with GPS.Debuggers;          use GPS.Debuggers;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
@@ -77,6 +81,8 @@ package body GVD.Consoles is
    Timeout : constant Guint := 50;
    --  Timeout between updates of the debuggee console
 
+   Null_TTY : GNAT.TTY.TTY_Handle;
+
    type Console_Process_View_Record is abstract new Process_View_Record with
       record
          Console : Interactive_Console;
@@ -90,7 +96,6 @@ package body GVD.Consoles is
 
    type Debuggee_Console_Record is new Console_Process_View_Record with
       record
-         Debuggee_TTY        : GNAT.TTY.TTY_Handle;
          Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
          Debuggee_Id         : Glib.Main.G_Source_Id := 0;
          TTY_Initialized     : Boolean := False;
@@ -205,6 +210,19 @@ package body GVD.Consoles is
       Uni       : Glib.Gunichar := 0;
       User_Data : System.Address) return Boolean;
 
+   type Open_Execution_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Execution_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Open execution console
+
+   type No_Execution_Console_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_Execution_Console_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if Execution console doesn't exist
+
    --------------------------------------
    -- Get_Debugger_Interactive_Console --
    --------------------------------------
@@ -312,6 +330,11 @@ package body GVD.Consoles is
 
          --  Reset the TTY linking with the debugger and the console
          Close_TTY (Console);
+         if Visual_Debugger
+           (Get_Process (Console)).Debuggee_TTY /= Null_TTY
+         then
+            Close_TTY (Visual_Debugger (Get_Process (Console)).Debuggee_TTY);
+         end if;
          Allocate_TTY (Console);
 
          return True;
@@ -431,10 +454,15 @@ package body GVD.Consoles is
       pragma Unreferenced (N);
 
    begin
-      if Get_Process (C) /= null then
+      if Get_Process (C) /= null
+        and then Visual_Debugger (Get_Process (C)).Debuggee_TTY /= Null_TTY
+      then
          N := Write
-           (TTY_Descriptor (C.Debuggee_TTY), Input'Address, Input'Length);
-         N := Write (TTY_Descriptor (C.Debuggee_TTY), NL'Address, 1);
+           (TTY_Descriptor (Visual_Debugger (Get_Process (C)).Debuggee_TTY),
+            Input'Address, Input'Length);
+         N := Write
+           (TTY_Descriptor (Visual_Debugger (Get_Process (C)).Debuggee_TTY),
+            NL'Address, 1);
       end if;
 
       return "";
@@ -486,11 +514,21 @@ package body GVD.Consoles is
    ------------------
 
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class) is
+      Created : Boolean := False;
    begin
       if not Console.TTY_Initialized then
-         Allocate_TTY (Console.Debuggee_TTY);
+         if Visual_Debugger
+           (Get_Process (Console)).Debuggee_TTY = Null_TTY
+         then
+            Allocate_TTY
+              (Visual_Debugger (Get_Process (Console)).Debuggee_TTY);
+            Created := True;
+         end if;
+
          Pseudo_Descriptor
-           (Console.Debuggee_Descriptor, Console.Debuggee_TTY, 0);
+           (Console.Debuggee_Descriptor,
+            Visual_Debugger (Get_Process (Console)).Debuggee_TTY,
+            0);
          Flush (Console.Debuggee_Descriptor);
 
          Console.TTY_Initialized := True;
@@ -498,12 +536,14 @@ package body GVD.Consoles is
            TTY_Timeout.Timeout_Add
              (Timeout, TTY_Cb'Access, Console.all'Access);
 
-         if Get_Process (Console) /= null
+         if Created
+           and then Get_Process (Console) /= null
            and then Visual_Debugger (Get_Process (Console)).Debugger /= null
          then
             Set_TTY
               (Visual_Debugger (Get_Process (Console)).Debugger,
-               TTY_Name (Console.Debuggee_TTY));
+               TTY_Name
+                 (Visual_Debugger (Get_Process (Console)).Debuggee_TTY));
          end if;
       end if;
 
@@ -517,7 +557,7 @@ package body GVD.Consoles is
    ---------------
 
    procedure Close_TTY (Console : access Debuggee_Console_Record'Class) is
-      Debugger : Debugger_Access;
+--        Debugger : Debugger_Access;
    begin
       if Console.TTY_Initialized then
          if Console.Debuggee_Id /= 0 then
@@ -525,17 +565,6 @@ package body GVD.Consoles is
             Console.Debuggee_Id := 0;
          end if;
 
-         if Get_Process (Console) /= null then
-            Debugger := Visual_Debugger (Get_Process (Console)).Debugger;
-
-            if Debugger /= null
-              and then not Command_In_Process (Get_Process (Debugger))
-            then
-               Set_TTY (Visual_Debugger (Get_Process (Console)).Debugger,  "");
-            end if;
-         end if;
-
-         Close_TTY (Console.Debuggee_TTY);
          Close_Pseudo_Descriptor (Console.Debuggee_Descriptor);
          Console.TTY_Initialized := False;
       end if;
@@ -664,15 +693,68 @@ package body GVD.Consoles is
               Add_To_History => Add_To_History);
    end Display_In_Debugger_Console;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Open_Execution_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+   begin
+      if Process /= null
+        and then Process.Debuggee_Console = null
+      then
+         Process.Create_Execution_Console;
+      end if;
+
+      return Success;
+   end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_Execution_Console_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+   begin
+      return Process /= null and then Process.Debuggee_Console = null;
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Filter : Action_Filter;
    begin
       --  Register the debugger console last so that it gets the initial focus
       Debuggee_Views.Register_Module (Kernel);
       Debugger_Views.Register_Module (Kernel);
+
+      Filter := new No_Execution_Console_Filter;
+      Register_Filter
+        (Kernel, Filter, "No Execution console");
+
+      Register_Action
+        (Kernel, "open debugger execution",
+         Command     => new Open_Execution_Command,
+         Description => "Open the Debugger Execution console",
+         Filter      => Filter,
+         Category    => -"Debug");
+
    end Register_Module;
 end GVD.Consoles;
