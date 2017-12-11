@@ -74,6 +74,8 @@ package body GPS.Kernel.Actions is
      (Self : not null access Actions_Learn_Provider_Type) return
      Learn_Item_Group_Lists.List;
 
+   Provider : access Actions_Learn_Provider_Type;
+
    ------------------------
    -- Actions Learn Item --
    ------------------------
@@ -97,6 +99,28 @@ package body GPS.Kernel.Actions is
       Filter_Text : String) return Boolean
    is
      (Filter_Matches (Self.Action, Context));
+
+   overriding procedure On_Double_Click
+     (Self    : not null access Action_Learn_Item_Type;
+      Context : Selection_Context);
+   --  Execute the action associated with the given learn item when the user
+   --  double-clicks on it.
+
+   ---------------------
+   -- On_Double_Click --
+   ---------------------
+
+   overriding procedure On_Double_Click
+     (Self    : not null access Action_Learn_Item_Type;
+      Context : Selection_Context)
+   is
+      Success : Boolean with Unreferenced;
+   begin
+      Success := Execute_Action
+        (Provider.Kernel,
+         Action  => Get_Name (Self.Action),
+         Context => Context);
+   end On_Double_Click;
 
    ---------------------
    -- Get_Learn_Items --
@@ -812,9 +836,7 @@ package body GPS.Kernel.Actions is
    -------------------------------------
 
    procedure Register_Actions_Learn_Provider
-     (Kernel : not null access Kernel_Handle_Record'Class)
-   is
-      Provider : access Actions_Learn_Provider_Type;
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Provider := new Actions_Learn_Provider_Type'
         (Kernel => Kernel_Handle (Kernel));

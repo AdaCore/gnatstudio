@@ -53,6 +53,12 @@ package Learn is
    --  Return True if the given learn item should be displayed in the given
    --  context, False otherwise.
 
+   procedure On_Double_Click
+     (Item    : not null access Learn_Item_Type;
+      Context : Selection_Context) is null;
+   --  Called each time the user double-clicks on the given learn item.
+   --  Override this function if you want to react to this event.
+
    -----------------------
    -- Learn Item Groups --
    -----------------------

@@ -19,6 +19,7 @@ with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Values;
 
+with Gdk.Event;              use Gdk.Event;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Flow_Box_Child;     use Gtk.Flow_Box_Child;
@@ -63,13 +64,14 @@ package body Learn.Views is
         "="             => "=");
 
    type Learn_View_Record is new Generic_Views.View_Record with record
-      Main_View            : Dialog_View;
-      Provider_Widgets_Map : Learn_Provider_Widgets_Maps.Map;
-      Paned_View           : Gtk_Paned;
-      Help_Label           : Gtk_Label;
-      Stored_Pos           : Float := Default_Sep_Pos;
-      Selected_Item        : Learn_Item;
+      Main_View             : Dialog_View;
+      Provider_Widgets_Map  : Learn_Provider_Widgets_Maps.Map;
+      Paned_View            : Gtk_Paned;
+      Help_Label            : Gtk_Label;
+      Stored_Pos            : Float := Default_Sep_Pos;
+      Selected_Item         : Learn_Item;
       On_Realize_Handler_ID : Handler_Id;
+      Previous_Context      : Selection_Context := No_Context;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
 
@@ -134,6 +136,12 @@ package body Learn.Views is
       Params : Glib.Values.GValues);
    --  Used to restore the paned view's separator position when modified by the
    --  user.
+
+   function On_Learn_Item_Button_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+   --  Called each time the user clicks on a learn item.
+   --  Execute the learn item's On_Double_Click callback, if any.
 
    -------------
    -- Execute --
@@ -235,6 +243,8 @@ package body Learn.Views is
                Group_Widget.Force_Refilter;
             end loop;
          end loop;
+
+         View.Previous_Context := View.Kernel.Get_Current_Context;
       end if;
    end MDI_Child_Selected;
 
@@ -281,7 +291,11 @@ package body Learn.Views is
       View : constant Learn_View := Learn_View (Self);
       Item : constant Learn_Item := Learn_Item (Child);
    begin
-      if View.Selected_Item /= null then
+      --  Don't unselect the previously selected item if the user selects it
+      --  again.
+      if View.Selected_Item /= null
+        and then View.Selected_Item.Get_Name /= Item.Get_Name
+      then
          View.Main_View.Set_Child_Highlighted
            (Child_Key => View.Selected_Item.Get_Name,
             Highlight => False);
@@ -290,6 +304,38 @@ package body Learn.Views is
       View.Help_Label.Set_Markup (Item.Get_Help);
       View.Selected_Item := Item;
    end On_Learn_Item_Selected;
+
+   --------------------------------
+   -- On_Learn_Item_Button_Press --
+   --------------------------------
+
+   function On_Learn_Item_Button_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+   is
+      Group_Widget : constant Dialog_Group_Widget :=
+                       Dialog_Group_Widget (Self);
+   begin
+      if Event.The_Type = Gdk_2button_Press then
+         declare
+            use Gtk.Widget.Widget_List;
+            List : constant Glist := Group_Widget.Get_Selected_Children;
+            Item : Learn_Item;
+            View : constant Generic_Learn_Views.View_Access :=
+              Generic_Learn_Views.Retrieve_View (Learn_View_Module.Get_Kernel);
+         begin
+            if List /= Null_List then
+               Item := Learn_Item (Get_Data (List));
+            end if;
+
+            if Item /= null then
+               Item.On_Double_Click (Context => View.Previous_Context);
+            end if;
+         end;
+      end if;
+
+      return False;
+   end On_Learn_Item_Button_Press;
 
    ----------------
    -- On_Realize --
@@ -387,6 +433,12 @@ package body Learn.Views is
                Group_Widget.Set_Column_Spacing (10);
 
                Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
+
+               --  Connect to the Button_Press_Event signal to detect
+               --  double-clicks on learn items.
+
+               Group_Widget.On_Button_Press_Event
+                 (On_Learn_Item_Button_Press'Access);
 
                --  Add the group's learn items in the group widget
 
