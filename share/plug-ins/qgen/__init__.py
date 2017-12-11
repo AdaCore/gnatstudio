@@ -1145,6 +1145,7 @@ else:
         @staticmethod
         def compute_all_item_values(task, debugger, diagram, viewer):
             # Compute the value for all items with an "auto" property
+            QGEN_Module.display_tasks.append(task)
             auto_items_list = list(Diagram_Utils.forall_auto_items(
                 [diagram]))
             auto_items_len = len(auto_items_list)
@@ -1156,6 +1157,7 @@ else:
                 diagram.changed()
                 idx = idx + 1
                 task.set_progress(idx, auto_items_len)
+            QGEN_Module.display_tasks.remove(task)
 
         @staticmethod
         def get_var_from_item(debugger, item):
