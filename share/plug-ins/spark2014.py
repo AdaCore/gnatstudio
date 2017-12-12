@@ -18,8 +18,6 @@ import re
 import sys
 import fnmatch
 
-debug_session = False
-
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
 
@@ -1049,7 +1047,7 @@ def get_line_warn(context):
         return None
 
 
-def prove_check_context(context):
+def prove_check_context(context, edit_session):
     if context.file() is not None:
         try:
             context._loc_msg = context.message()
@@ -1059,7 +1057,10 @@ def prove_check_context(context):
             if len(tmp) == 1:
                 context._loc_msg = tmp[0]
                 return True
-            return False
+            if edit_session:
+                return True
+            else:
+                return False
     return False
 
 
@@ -1159,7 +1160,7 @@ def has_proof_dir():
     return(proof_dir)
 
 
-def start_ITP(tree, file_name, abs_fn_path, args=[]):
+def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     """ Function used to start interactive theorem proving. It actually build
         the command line, find appropriate files and then use the start method
         of tree.
@@ -1192,7 +1193,7 @@ def start_ITP(tree, file_name, abs_fn_path, args=[]):
         command = gnat_server + " "
     else:
         command = gnat_server + " " + "--proof-dir " + proof_dir + " "
-    if debug_session:
+    if edit_session:
         command = command + mlw_file
     else:
         command = command + arg_limit_line + " " + mlw_file
@@ -1200,7 +1201,7 @@ def start_ITP(tree, file_name, abs_fn_path, args=[]):
     tree.start(command, abs_fn_path, dir_gnat_server)
 
 
-def on_prove_itp(context):
+def on_prove_itp(context, edit_session=False):
     """ Parses the context location provided by GPS and use it to call start_ITP
         which is used to start interactive theorem proving
     """
@@ -1214,21 +1215,25 @@ def on_prove_itp(context):
         return
     # ITP part
     tree = itp_lib.Tree_with_process()
-    msg = context._loc_msg
-    vc_kind = get_vc_kind(msg)
-    text_msg = get_comp_text(msg)
-    msg_line = map_msg[text_msg, 'check_line']
-    msg_col = map_msg[text_msg, 'check_col']
-    llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
-    # This is not required in on_prove_check because the .mlw file is computed
-    # in gnatprove.
-    abs_fn_path = get_compunit_for_message(msg)
+    if edit_session:
+        abs_fn_path = context.file().name()
+        args = []
+    else:
+        msg = context._loc_msg
+        vc_kind = get_vc_kind(msg)
+        text_msg = get_comp_text(msg)
+        msg_line = map_msg[text_msg, 'check_line']
+        msg_col = map_msg[text_msg, 'check_col']
+        llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
+        # This is not required in on_prove_check because the .mlw file is
+        # computed in gnatprove.
+        abs_fn_path = get_compunit_for_message(msg)
+        args = [llarg]
     file_name = os.path.basename(abs_fn_path)
-    args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
     GPS.Locations.remove_category("Builder results")
-    start_ITP(tree, file_name, abs_fn_path, args)
+    start_ITP(tree, file_name, abs_fn_path, args, edit_session)
     # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
     # launched last = False so that it is the first hook to be run
     if hook_itp is False:

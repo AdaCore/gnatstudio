@@ -62,16 +62,23 @@
     </action>
     <action name="Prove Check Action" category="GNATprove" output="none">
        <filter language="Ada" shell_lang="python"
-        shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
+        shell_cmd="spark2014.prove_check_context(GPS.current_context(), False)" />
        <shell
          lang="python">spark2014.on_prove_check(GPS.current_context())
        </shell>
     </action>
     <action name="Start Manual Proof" category="GNATprove" output="none">
       <filter language="Ada" shell_lang="python"
-       shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
+       shell_cmd="spark2014.prove_check_context(GPS.current_context(), False)" />
       <shell
-          lang="python">spark2014.on_prove_itp(GPS.current_context())
+          lang="python">spark2014.on_prove_itp(GPS.current_context(), False)
+      </shell>
+    </action>
+    <action name="Edit Manual Proof" category="GNATprove" output="none">
+      <filter language="Ada" shell_lang="python"
+       shell_cmd="spark2014.prove_check_context(GPS.current_context(), True)" />
+      <shell
+          lang="python">spark2014.on_prove_itp(GPS.current_context(), True)
       </shell>
     </action>
     <action name="Exit Manual Proof" category="GNATprove" output="none">
@@ -109,6 +116,9 @@
         </menu>
         <menu action="Prove File Action">
           <Title>Prove File</Title>
+        </menu>
+        <menu action="Edit Manual Proof">
+          <Title>Edit Manual Proof</Title>
         </menu>
         <menu action="Exit Manual Proof">
           <Title>Exit Manual Proof</Title>
