@@ -189,6 +189,16 @@ def wait_for_mdi_child(name, step=500, n=10):
         k += 1
 
 
+@workflows.run_as_workflow
+def wait_until_not_busy(debugger, t=100):
+    """
+    Wait until the given GPS.Debugger is not busy
+    """
+
+    while debugger.is_busy():
+        yield timeout(t)
+
+
 def wait_for_entities(cb, *args, **kwargs):
     """Execute cb when all entities have finished loading.
        This function is not blocking"""
