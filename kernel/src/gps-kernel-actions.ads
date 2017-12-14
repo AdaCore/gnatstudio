@@ -100,6 +100,10 @@ package GPS.Kernel.Actions is
    function Get_Name (Self : not null access Action_Record) return String;
    --  Return the name for the action
 
+   function Get_Label (Self : not null access Action_Record) return String;
+   --  Return a suitable label for the given action, starting with a capital
+   --  letter and with the rest of the name being lowercase.
+
    function Get_Command
      (Self    : not null access Action_Record)
       return not null access Interactive_Command'Class;

@@ -706,15 +706,16 @@ package body KeyManager_Module.GUI is
          exit when Action = null;
 
          declare
-            Name : constant String := Get_Name (Get (Action_Iter));
-            Key  : constant String :=
-                     Lookup_Key_From_Action
-                       (Get_Shortcuts (Editor.Kernel),
-                        Name,
-                        Use_Markup => False,
-                        Is_User_Changed => User_Changed'Unchecked_Access,
-                        Default         => -Disabled_String);
-            Show : Boolean;
+            Name  : constant String := Get_Name (Action);
+            Label : constant String := Get_Label (Action);
+            Key   : constant String :=
+                      Lookup_Key_From_Action
+                        (Get_Shortcuts (Editor.Kernel),
+                         Name,
+                         Use_Markup      => False,
+                         Is_User_Changed => User_Changed'Unchecked_Access,
+                         Default         => -Disabled_String);
+            Show  : Boolean;
          begin
             --  Do not show actions with no category, by default
             Show := Empty_Cat
@@ -737,7 +738,7 @@ package body KeyManager_Module.GUI is
                Parent := Set
                  (Model   => Editor.Model,
                   Parent  => Parent,
-                  Descr   => Name,
+                  Descr   => Label,
                   Icon    => Get_Icon_Name (Action),
                   Key     => Key
                     & (if User_Changed then " (modified)" else ""),

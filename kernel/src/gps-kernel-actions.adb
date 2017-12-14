@@ -205,7 +205,7 @@ package body GPS.Kernel.Actions is
 
          Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
 
-         Gtk_New (Name_Label, Action_Name);
+         Gtk_New (Name_Label, Get_Label (Action));
          Action_Hbox.Pack_Start (Name_Label, Expand => False);
          Action_Size_Group.Add_Widget (Name_Label);
          Name_Label.Set_Alignment (0.0, 0.5);
@@ -830,6 +830,21 @@ package body GPS.Kernel.Actions is
    begin
       return Self.Name.all;
    end Get_Name;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Self : not null access Action_Record) return String is
+      Name : constant String := Get_Name (Self);
+   begin
+      if Name'Length > 1 then
+         return To_Upper (Name (Name'First))
+           & To_Lower (Name (Name'First + 1 .. Name'Last));
+      else
+         return To_Upper (Name);
+      end if;
+   end Get_Label;
 
    -------------------------------------
    -- Register_Actions_Learn_Provider --
