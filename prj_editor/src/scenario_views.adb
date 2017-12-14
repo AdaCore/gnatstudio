@@ -150,6 +150,13 @@ package body Scenario_Views is
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
+   type On_Build_Mode_Changed is new String_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String);
+   --  Called when the build mode is being changed by the user
+
    procedure On_Force_Refresh (View : access GObject_Record'Class);
    --  Force a refresh of the view when some settings have changed.
 
@@ -339,7 +346,8 @@ package body Scenario_Views is
         (new On_Refresh'(Simple_Hooks_Function with View => View),
          Watch => View);
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
-
+      Build_Mode_Changed_Hook.Add
+        (new On_Build_Mode_Changed, Watch => View);
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
       --  Update the viewer with the current project
@@ -766,6 +774,21 @@ package body Scenario_Views is
       if not Show_Build then
          Hide (View.Build_Group);
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String)
+   is
+      pragma Unreferenced (Self, Mode);
+      View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
+   begin
+      Fill_Build_Mode (View);
    end Execute;
 
    ---------------
