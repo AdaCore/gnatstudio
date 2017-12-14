@@ -11,6 +11,7 @@ from workflows.promises import Promise
 import types
 import difflib
 import io
+import platform
 
 
 GPS.VCS2.Status = gps_utils.enum(
@@ -551,7 +552,13 @@ class VCS(GPS.VCS2):
 
         :param str path:
         """
-        return os.path.relpath(path, self.working_dir.path)
+        relpath = os.path.relpath(path, self.working_dir.path)
+
+        if platform.system() == 'Windows':
+            #  Use posix path for cygwin tools arguments
+            return relpath.replace('\\', '/')
+        else:
+            return relpath
 
     @classmethod
     def register_extension(klass, extension):
