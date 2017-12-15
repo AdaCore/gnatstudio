@@ -85,6 +85,7 @@ XML = r"""<?xml version="1.0" ?>
      <arg section="-cargs">-g</arg>
      <arg section="-cargs">-fprofile-arcs</arg>
      <arg section="-cargs">-ftest-coverage</arg>
+     <arg section="-cargs">-fpreserve-control-flow</arg>
      <arg section="-largs">--coverage</arg>
   </extra-args>
  </builder-mode>
