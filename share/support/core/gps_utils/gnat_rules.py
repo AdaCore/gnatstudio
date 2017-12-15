@@ -479,18 +479,6 @@ xmlCompilerHead = """
                 tip="If supported for the target machine, emit\
  position-independent code, suitable for dynamic linking and avoiding any\
  limit of the size of the global offset table" />
-         <check label="Code coverage" switch="-ftest-coverage"
-                tip="Create data files for the gcov code-coverage utility" />
-         <check label="Instrument arcs" switch="-fprofile-arcs"
-                tip="Instrument arcs during compilation. For each function of\
- your program, gcc creates a program flow graph, then finds a spanning tree\
- for the graph. Only arcs that are not on the spanning tree have to be\
- instrumented: the compiler adds code to count the number of times that these\
- arcs are executed" />
-         <dependency master-page="Ada" slave-page="Ada"
-                     master-switch="-ftest-coverage"
-                     slave-switch="-fprofile-arcs"
-                     master-status="on" slave-status="on" />
 
          <check label="Always generate ALI file" switch="-gnatQ"
                 tip="Don't quit, write ali/tree file even if compile errors" />
@@ -784,12 +772,6 @@ xmlCompilerTrailer = """
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
 
-         <check label="Code coverage" switch="--coverage"
-                tip="Create data files for the gcov code-coverage utility" />
-         <dependency master-page="Ada" slave-page="Ada Linker"
-                     master-switch="-ftest-coverage"
-                     slave-switch="-fprofile-generate"
-                     master-status="on" slave-status="on" />
          <check label="Remove unused sections (GNU ld only)"
                 switch="-Wl,--gc-sections"
                 tip="Remove all unused sections from the link output. This is\
