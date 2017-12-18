@@ -39,10 +39,6 @@ with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
 
-------------------------
--- GPS.Kernel.Actions --
-------------------------
-
 package body GPS.Kernel.Actions is
    Me : constant Trace_Handle := Create ("ACTIONS");
 
