@@ -40,6 +40,11 @@ package body Dialog_Utils is
    --  This also avoid potential focus conflicts with the row's child (e.g:
    --  when the row contains a Gtk_Text_View).
 
+   procedure Refilter_On_Show (Self : access Gtk_Widget_Record'Class);
+   --  Called each time a dialog group widget has been shown.
+   --  Used to refilter the items and hide the group if there is no visible
+   --  child.
+
    -------------------------
    -- Filter_Func_Wrapper --
    -------------------------
@@ -386,6 +391,17 @@ package body Dialog_Utils is
       Self.Button_Box.Pack_Start (Button, Expand => False);
    end Append_Button;
 
+   ----------------------
+   -- Refilter_On_Show --
+   ----------------------
+
+   procedure Refilter_On_Show (Self : access Gtk_Widget_Record'Class) is
+      Group_Widget : constant Dialog_Group_Widget :=
+                       Dialog_Group_Widget (Self);
+   begin
+      Group_Widget.Force_Refilter;
+   end Refilter_On_Show;
+
    ----------------
    -- Initialize --
    ----------------
@@ -428,6 +444,7 @@ package body Dialog_Utils is
       if Filtering_Function /= null then
          Self.Filter_Func := Filtering_Function;
          Self.Flow_Box.Set_Filter_Func (Filter_Func_Wrapper'Access);
+         Self.On_Show (Refilter_On_Show'Access, After => True);
       end if;
 
       Self.Add (Self.Flow_Box);
