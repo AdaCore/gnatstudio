@@ -1908,15 +1908,16 @@ package body GPS.Kernel.MDI is
         (Kernel, "unfloat view",
          Command     => new Unfloat_View_Command,
          Description => "Put back the current window in the main window",
-         Category    => -"Windows");
+         Category    => -"MDI");
 
       Register_Action
         (Kernel, "reset perspectives",
-         Command     => new Reset_Perspectives,
-         Description =>
+         Command      => new Reset_Perspectives,
+         Description  =>
             "Reset all perspectives for all projects to their default. This"
             & " also closes all editors.",
-         Category    => -"Windows");
+         Category     => -"MDI",
+         For_Learning => True);
    end Register_Module;
 
    ------------

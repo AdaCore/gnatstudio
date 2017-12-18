@@ -518,10 +518,11 @@ package body Refactoring.Rename is
    begin
       Register_Action
         (Kernel, "rename entity",
-         Command     => new Rename_Entity_Command,
-         Description => -"Rename an entity, including its references",
-         Category    => -"Refactoring",
-         Filter => Lookup_Filter (Kernel, "Entity"));
+         Command      => new Rename_Entity_Command,
+         Description  => -"Rename an entity, including its references",
+         Category     => -"Refactoring",
+         Filter       => Lookup_Filter (Kernel, "Entity"),
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
          Label  => "Refactoring/Rename %e",

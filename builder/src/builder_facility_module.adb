@@ -556,13 +556,14 @@ package body Builder_Facility_Module is
    procedure Add_Action_And_Menu_For_Target
      (Target : not null Target_Access)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel;
-      C        : Build_Command_Access;
-      M        : Build_Main_Command_Access;
-      N        : constant String := Get_Name (Target);
-      Category : constant String := Get_Category (Target);
-      Targets  : constant Unbounded_String :=
-        Get_Properties (Target).Target_Type;
+      Kernel       : constant Kernel_Handle := Get_Kernel;
+      C            : Build_Command_Access;
+      M            : Build_Main_Command_Access;
+      N            : constant String := Get_Name (Target);
+      Category     : constant String := Get_Category (Target);
+      For_Learning : constant Boolean := Is_For_Learning (Target);
+      Targets      : constant Unbounded_String :=
+                       Get_Properties (Target).Target_Type;
 
       Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
         and then Category (Category'Last) = '_';
@@ -573,28 +574,30 @@ package body Builder_Facility_Module is
       --  For instance:  /Build/Project/
 
       procedure Replace_Action
-        (Main         : Virtual_File;
-         Project      : Project_Type;
-         Command      : access Interactive_Command'Class;
-         Description  : String;
-         Action_Name  : String;
-         Menu_Name    : String;
-         Button_Label : String;
-         Multiple_Mains : Boolean;
-         Show_Project_In_Menu : Boolean);
+        (Main                 : Virtual_File;
+         Project              : Project_Type;
+         Command              : access Interactive_Command'Class;
+         Description          : String;
+         Action_Name          : String;
+         Menu_Name            : String;
+         Button_Label         : String;
+         Multiple_Mains       : Boolean;
+         Show_Project_In_Menu : Boolean;
+         For_Learning         : Boolean);
       --  Replace the current definition for the action: remove the old menus
       --  and the old action, then register a new action and menu.
 
       procedure Replace_Action
-        (Main         : Virtual_File;
-         Project      : Project_Type;
-         Command      : access Interactive_Command'Class;
-         Description  : String;
-         Action_Name  : String;
-         Menu_Name    : String;
-         Button_Label : String;
-         Multiple_Mains : Boolean;
-         Show_Project_In_Menu : Boolean)
+        (Main                 : Virtual_File;
+         Project              : Project_Type;
+         Command              : access Interactive_Command'Class;
+         Description          : String;
+         Action_Name          : String;
+         Menu_Name            : String;
+         Button_Label         : String;
+         Multiple_Mains       : Boolean;
+         Show_Project_In_Menu : Boolean;
+         For_Learning         : Boolean)
       is
          Mnemonics : constant Boolean := Main = No_File;
          --  Always protect underscores in menu name when dealing with file
@@ -608,7 +611,8 @@ package body Builder_Facility_Module is
                           Command     => Command,
                           Description => Description,
                           Icon_Name   => Get_Icon_Name (Target),
-                          Category    => -"Build");
+                          Category     => -"Build",
+                          For_Learning => For_Learning);
          Builder_Module_ID.Actions.Append (Action_Name);
 
          --  Do nothing is the target is not supposed to be shown in the menu
@@ -700,16 +704,19 @@ package body Builder_Facility_Module is
                              Quiet       => False,
                              Dialog      => D);
                      Replace_Action
-                       (Main         => Main,
-                        Project      => Kernel.Registry.Tree.Project_From_Path
-                          (Create (+Mains.List (J).Tuple (3).Str)),
-                        Command      => M,
-                        Description  => N & ' ' & Main.Display_Base_Name,
-                        Action_Name  => N & (-" Number") & J'Img,
-                        Multiple_Mains => True,
-                        Button_Label => Mains.List (J).Tuple (2).Str,
-                        Menu_Name      => Mains.List (J).Tuple (1).Str,
-                        Show_Project_In_Menu => Show_Project_In_Menu);
+                       (Main                 => Main,
+                        Project              =>
+                          Kernel.Registry.Tree.Project_From_Path
+                            (Create (+Mains.List (J).Tuple (3).Str)),
+                        Command              => M,
+                        Description          =>
+                          N & ' ' & Main.Display_Base_Name,
+                        Action_Name          => N & (-" Number") & J'Img,
+                        Multiple_Mains       => True,
+                        Button_Label         => Mains.List (J).Tuple (2).Str,
+                        Menu_Name            => Mains.List (J).Tuple (1).Str,
+                        Show_Project_In_Menu => Show_Project_In_Menu,
+                        For_Learning         => For_Learning);
                   end if;
                end loop;
 
@@ -718,15 +725,16 @@ package body Builder_Facility_Module is
 
                for J in Mains.Length + 1 .. 4 loop
                   Replace_Action
-                    (Main         => No_File,
-                     Project      => No_Project,
-                     Command      => null,
-                     Description  => "",
-                     Action_Name  => N & (-" Number") & J'Img,
-                     Multiple_Mains => True,
-                     Button_Label   => "",
-                     Menu_Name      => "",
-                     Show_Project_In_Menu => Show_Project_In_Menu);
+                    (Main                 => No_File,
+                     Project              => No_Project,
+                     Command              => null,
+                     Description          => "",
+                     Action_Name          => N & (-" Number") & J'Img,
+                     Multiple_Mains       => True,
+                     Button_Label         => "",
+                     Menu_Name            => "",
+                     Show_Project_In_Menu => Show_Project_In_Menu,
+                     For_Learning         => For_Learning);
                end loop;
             end if;
 
@@ -739,15 +747,16 @@ package body Builder_Facility_Module is
             Main => No_File, Main_Project => No_Project,
             Quiet => False, Dialog => Default);
          Replace_Action
-           (Main         => No_File,
-            Project      => No_Project,
-            Command      => C,
-            Description  => (-"Build target ") & N,
-            Action_Name  => N,
-            Button_Label => N,
-            Multiple_Mains => False,
-            Menu_Name      => Get_Menu_Name (Target),
-            Show_Project_In_Menu => False);
+           (Main                 => No_File,
+            Project              => No_Project,
+            Command              => C,
+            Description          => (-"Build target ") & N,
+            Action_Name          => N,
+            Button_Label         => N,
+            Multiple_Mains       => False,
+            Menu_Name            => Get_Menu_Name (Target),
+            Show_Project_In_Menu => False,
+            For_Learning         => For_Learning);
       end if;
    end Add_Action_And_Menu_For_Target;
 

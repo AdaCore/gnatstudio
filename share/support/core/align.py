@@ -265,7 +265,7 @@ def in_rw_ada_file(context):
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
-             name="Align colons")
+             name="Align colons", for_learning=True)
 def align_colons():
     """
     Aligns colons (eg in object and record type declarations) and trailing
@@ -360,14 +360,14 @@ def align_renaming():
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Use clauses",
-             name="Align use clauses")
+             name="Align use clauses", for_learning=True)
 def align_use_clauses():
     """Aligns Ada use-clauses in current selection"""
     buffer_align_on(sep=" use ")
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
-             name="Align arrows")
+             name="Align arrows", for_learning=True)
 @with_save_excursion
 def align_arrows():
     """Aligns Ada arrow symbol '=>' in current selection"""
@@ -432,7 +432,7 @@ def align_assignments():
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Formal parameters",
-             name="Align formal parameters")
+             name="Align formal parameters", for_learning=True)
 def align_formal_params():
     """
     Aligns the colons, modes, and formal types in parameter specifications

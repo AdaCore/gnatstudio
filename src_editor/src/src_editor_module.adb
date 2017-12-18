@@ -2397,11 +2397,12 @@ package body Src_Editor_Module is
 
       Register_Action
         (Kernel, "goto declaration",
-         Command     => new Goto_Declaration_Command,
-         Description => -"Jump to the declaration of the current entity",
-         Category    => -"Editor",
-         Filter => (not Is_Dispatching)
-            and ((not Line_Numbers_Area_Filter
+         Command      => new Goto_Declaration_Command,
+         Description  => -"Jump to the declaration of the current entity",
+         Category     => -"Editor",
+         For_Learning => True,
+         Filter       => (not Is_Dispatching)
+         and ((not Line_Numbers_Area_Filter
                   and Create (Module => Src_Editor_Module_Name))
                 or Create (Module => Entity_Browser_Module_Name)
                 or Has_Type));
@@ -2409,11 +2410,12 @@ package body Src_Editor_Module is
       F := new Has_Body_Filter;
       Register_Action
         (Kernel, "goto body",
-         Command     => new Goto_Body_Command,
-         Description =>
+         Command      => new Goto_Body_Command,
+         Description  =>
            -"Jump to the implementation/body of the current entity",
-         Category    => -"Editor",
-         Filter      => (not Is_Dispatching) and F);
+         Category     => -"Editor",
+         For_Learning => True,
+         Filter       => (not Is_Dispatching) and F);
 
       Register_Action
         (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,

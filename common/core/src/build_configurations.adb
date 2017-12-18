@@ -1352,6 +1352,9 @@ package body Build_Configurations is
          elsif Child.Tag.all = "do-not-save" then
             Target.Properties.Do_Not_Save := Boolean'Value (Child.Value.all);
 
+         elsif Child.Tag.all = "for-learning" then
+            Target.Properties.For_Learning := Boolean'Value (Child.Value.all);
+
          elsif Child.Tag.all = "target-type" then
             Set_Unbounded_String
               (Target.Properties.Target_Type, Child.Value.all);
@@ -1890,6 +1893,15 @@ package body Build_Configurations is
    begin
       return Target.Model.Is_Run;
    end Is_Run;
+
+   ---------------------
+   -- Is_For_Learning --
+   ---------------------
+
+   function Is_For_Learning (Target : Target_Access) return Boolean is
+   begin
+      return Target.Properties.For_Learning;
+   end Is_For_Learning;
 
    -------------
    -- Visible --

@@ -1473,9 +1473,10 @@ package body GPS.Search.GUI is
       Module.Default_Command := Command;
       Register_Action
          (Kernel, "Global Search", Command,
-          Description =>
+          Description  =>
              "Activate the global search field in the main toolbar",
-          Category => "Search");
+          Category     => "Search",
+          For_Learning => True);
 
       Pref_Proposals_Per_Provider := Create
         (Get_Preferences (Kernel),

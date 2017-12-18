@@ -39,6 +39,10 @@ with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
 
+------------------------
+-- GPS.Kernel.Actions --
+------------------------
+
 package body GPS.Kernel.Actions is
    Me : constant Trace_Handle := Create ("ACTIONS");
 
@@ -81,30 +85,58 @@ package body GPS.Kernel.Actions is
    ------------------------
 
    type Action_Learn_Item_Type is new Learn_Item_Type with record
-      Action : Action_Record_Access;
+      Action_Name : Unbounded_String;
    end record;
    type Action_Learn_Item is access all Action_Learn_Item_Type;
 
    overriding function Get_Help
-     (Self : not null access Action_Learn_Item_Type) return String
-   is
-     (if Self.Action = null then
-         ""
-      else
-         Get_Full_Description (Self.Action));
+     (Self : not null access Action_Learn_Item_Type) return String;
+   --  Return the associated action's help
 
    overriding function Is_Visible
      (Self        : not null access Action_Learn_Item_Type;
       Context     : Selection_Context;
-      Filter_Text : String) return Boolean
-   is
-     (Filter_Matches (Self.Action, Context));
+      Filter_Text : String) return Boolean;
+   --  Return True if the associated action is visible in the given context
 
    overriding procedure On_Double_Click
      (Self    : not null access Action_Learn_Item_Type;
       Context : Selection_Context);
    --  Execute the action associated with the given learn item when the user
    --  double-clicks on it.
+
+   --------------
+   -- Get_Help --
+   --------------
+
+   overriding function Get_Help
+     (Self : not null access Action_Learn_Item_Type) return String
+   is
+      Action : constant Action_Record_Access := Lookup_Action
+        (Provider.Kernel, To_String (Self.Action_Name));
+   begin
+      if Action = null then
+         return "";
+      else
+         return Get_Full_Description (Action);
+      end if;
+   end Get_Help;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+        (Self        : not null access Action_Learn_Item_Type;
+         Context     : Selection_Context;
+         Filter_Text : String) return Boolean
+   is
+      pragma Unreferenced (Filter_Text);
+      Action : constant Action_Record_Access := Lookup_Action
+        (Provider.Kernel, To_String (Self.Action_Name));
+   begin
+      return Filter_Matches (Action, Context);
+   end Is_Visible;
 
    ---------------------
    -- On_Double_Click --
@@ -118,7 +150,7 @@ package body GPS.Kernel.Actions is
    begin
       Success := Execute_Action
         (Provider.Kernel,
-         Action  => Get_Name (Self.Action),
+         Action  => To_String (Self.Action_Name),
          Context => Context);
    end On_Double_Click;
 
@@ -134,7 +166,8 @@ package body GPS.Kernel.Actions is
       Action_Size_Group : Gtk_Size_Group;
 
       procedure Create_Category_Learn_Group_If_Needed
-        (Action_Item : not null Action_Learn_Item);
+        (Action_Item : not null Action_Learn_Item;
+         Action      : not null Action_Record_Access);
       --  Create a learn group for the given action item's category if not
       --  created yet. This is used to group the actions that belong to a
       --  same category.
@@ -148,11 +181,12 @@ package body GPS.Kernel.Actions is
       -------------------------------------------
 
       procedure Create_Category_Learn_Group_If_Needed
-        (Action_Item : not null Action_Learn_Item)
+        (Action_Item : not null Action_Learn_Item;
+         Action      : not null Action_Record_Access)
       is
          use Learn_Item_Group_Lists;
 
-         Category       : constant String := Get_Category (Action_Item.Action);
+         Category       : constant String := Get_Category (Action);
          Category_Group : Learn_Item_Group;
          Cursor         : Learn_Item_Group_Lists.Cursor := No_Element;
       begin
@@ -199,7 +233,7 @@ package body GPS.Kernel.Actions is
          Shortcut_Label : Gtk_Label;
       begin
          Action_Item := new Action_Learn_Item_Type;
-         Action_Item.Action := Action;
+         Action_Item.Action_Name := To_Unbounded_String (Action_Name);
 
          Gtk.Flow_Box_Child.Initialize (Action_Item);
 
@@ -233,12 +267,17 @@ package body GPS.Kernel.Actions is
 
       for Action_Name of Self.Kernel.Actions_For_Learning loop
          declare
-            Action     : constant Action_Record_Access :=
+            Action      : constant Action_Record_Access :=
                            Lookup_Action (Self.Kernel, Action_Name);
             Action_Item : constant Action_Learn_Item :=
-                            Create_Action_Learn_Item (Action);
+                            (if Action /= null then
+                                Create_Action_Learn_Item (Action)
+                             else
+                                null);
          begin
-            Create_Category_Learn_Group_If_Needed (Action_Item);
+            if Action_Item /= null then
+               Create_Category_Learn_Group_If_Needed (Action_Item, Action);
+            end if;
          end;
       end loop;
 
@@ -386,6 +425,16 @@ package body GPS.Kernel.Actions is
       if Remove_Menus_And_Toolbars then
          Remove_UI_For_Action (Kernel, Name);
       end if;
+
+      declare
+         use Action_Lists;
+         Action_Cursor : Action_Lists.Cursor :=
+                           Kernel.Actions_For_Learning.Find (Name);
+      begin
+         if Action_Cursor /= No_Element then
+            Kernel.Actions_For_Learning.Delete (Action_Cursor);
+         end if;
+      end;
 
       --  Unregister the gtk+ action, too.
       Kernel.Get_Application.Remove_Action (Name);

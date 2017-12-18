@@ -2083,11 +2083,12 @@ package body Project_Explorers is
 
       Register_Action
         (Kernel, "Locate file in explorer",
-         Command     => new Locate_File_In_Explorer_Command,
-         Description => "Locate selected file in project view",
-         Filter      => Lookup_Filter (Kernel, "File")
-             and not Create (Module => Explorer_Module_Name),
-         Category    => -"Project Explorer");
+         Command      => new Locate_File_In_Explorer_Command,
+         Description  => "Locate selected file in project view",
+         Filter       => Lookup_Filter (Kernel, "File")
+         and not Create (Module => Explorer_Module_Name),
+         Category     => -"Projects",
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
          Action => "Locate file in explorer",
@@ -2095,11 +2096,12 @@ package body Project_Explorers is
 
       Register_Action
         (Kernel, "Locate project in explorer",
-         Command     => new Locate_Project_In_Explorer_Command,
-         Description => "Locate selected project in project view",
-         Filter      => Lookup_Filter (Kernel, "Project only")
-            and not Create (Module => Explorer_Module_Name),
-         Category    => -"Project Explorer");
+         Command      => new Locate_Project_In_Explorer_Command,
+         Description  => "Locate selected project in project view",
+         Filter       => Lookup_Filter (Kernel, "Project only")
+         and not Create (Module => Explorer_Module_Name),
+         Category     => -"Projects",
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
          Action => "Locate project in explorer",

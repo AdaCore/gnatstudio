@@ -917,7 +917,8 @@ package body Refactoring.Subprograms is
          Filter  => F
             and Create (Module => "Source_Editor")
             and Create (Language => "ada"),
-         Category    => -"Refactoring");
+         Category     => -"Refactoring",
+         For_Learning => True);
       Register_Contextual_Menu
         (Kernel,
          Label  => "Refactoring/Extract Subprogram",

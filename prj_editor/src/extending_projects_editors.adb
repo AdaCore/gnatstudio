@@ -444,7 +444,7 @@ package body Extending_Projects_Editors is
            "Add a copy of the selected file to an extending project (either"
            & " the root project or one the specifically extends the selected"
            & " project",
-         Category    => -"Project");
+         Category    => -"Projects");
       Register_Contextual_Menu (Kernel, "Add to extending project");
 
       Register_Action
@@ -454,7 +454,7 @@ package body Extending_Projects_Editors is
          Description =>
            "If the selected file belongs to an extending project, delete it"
            & " from that project",
-         Category    => -"Project");
+         Category    => -"Projects");
       Register_Contextual_Menu (Kernel, "Remove from extending project");
    end Register_Contextual_Menus;
 

@@ -2206,8 +2206,9 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "bookmark create", new Create_Bookmark_Command,
          -("Create a bookmark at the current location in the editor"),
-         Icon_Name => "gps-add-symbolic",
-         Category  => -"Bookmarks");
+         Icon_Name    => "gps-add-symbolic",
+         Category     => -"Bookmarks",
+         For_Learning => True);
 
       Register_Action
         (Kernel, "bookmark create unattached",
@@ -2233,18 +2234,22 @@ package body Bookmark_Views is
          Category    => -"Bookmarks");
 
       Register_Action
-        (Kernel      => Kernel,
-         Name        => "Goto Next Bookmark",
-         Command     => new Next_Bookmark_Command (Backward => False),
-         Description => -("Go to next bookmark in current file"),
-         Filter      => Src_Action_Context);
+        (Kernel       => Kernel,
+         Name         => "Goto Next Bookmark",
+         Command      => new Next_Bookmark_Command (Backward => False),
+         Description  => -("Go to next bookmark in current file"),
+         Filter       => Src_Action_Context,
+         Category     => -"Bookmarks",
+         For_Learning => True);
 
       Register_Action
-        (Kernel      => Kernel,
-         Name        => "Goto Previous Bookmark",
-         Command     => new Next_Bookmark_Command (Backward => True),
-         Description => -("Go to previous bookmark in current file"),
-         Filter      => Src_Action_Context);
+        (Kernel       => Kernel,
+         Name         => "Goto Previous Bookmark",
+         Command      => new Next_Bookmark_Command (Backward => True),
+         Description  => -("Go to previous bookmark in current file"),
+         Filter       => Src_Action_Context,
+         Category     => -"Bookmarks",
+         For_Learning => True);
 
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Command_Handler'Access,

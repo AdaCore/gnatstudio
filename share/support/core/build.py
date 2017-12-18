@@ -426,6 +426,7 @@ name="U_pdate file XRef in background">
     <iconname>gps-build-main-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
+    <for-learning>TRUE</for-learning>
     <target-type>main</target-type>
     <command-line>
        <arg>%builder</arg>
@@ -447,6 +448,7 @@ name="U_pdate file XRef in background">
     <iconname>gps-build-all-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
+    <for-learning>TRUE</for-learning>
     <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
@@ -498,6 +500,7 @@ name="U_pdate file XRef in background">
     <iconname>gps-clean-symbolic</iconname>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
+    <for-learning>TRUE</for-learning>
     <command-line>
        <arg>%gprclean</arg>
        <arg>-r</arg>
@@ -559,6 +562,7 @@ name="U_pdate file XRef in background">
     <iconname>gps-custom-build-symbolic</iconname>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
+    <for-learning>TRUE</for-learning>
     <command-line />
  </target>
 </GPS>

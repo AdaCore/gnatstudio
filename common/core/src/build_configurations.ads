@@ -287,6 +287,10 @@ package Build_Configurations is
       Do_Not_Save       : Boolean          := False;
       --  When set to True, the target should not be saved
 
+      For_Learning     : Boolean := False;
+      --  True if the target's associated action should be displayed in the
+      --  Learn view.
+
       Server           : Server_Type := GPS_Server;
       --  Server used to launch the target. If equal to GPS_Server, then its
       --  model's server is used.
@@ -401,6 +405,10 @@ package Build_Configurations is
 
    function Is_Run (Target : Target_Access) return Boolean;
    --  Return True if the target belong to a "run" model
+
+   function Is_For_Learning (Target : Target_Access) return Boolean;
+   --  Return True if the target should be displayed in the Learn view, False
+   --  otherwise.
 
    function Get_Model (Target : Target_Access) return String;
    --  Return the name of the model for Target

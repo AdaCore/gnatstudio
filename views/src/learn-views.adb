@@ -112,13 +112,22 @@ package body Learn.Views is
       Pref   : Preference);
    --  Called when the preferences have changed.
 
+   type On_Context_Changed is new Context_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
+   --  Called when the context changes
+
    function Filter_Learn_Item
      (Child : not null access Gtk_Flow_Box_Child_Record'Class) return Boolean;
    --  Called each time we want to refilter the learn items contained in the
    --  Learn view.
 
-   procedure MDI_Child_Selected (Self : access Gtk_Widget_Record'Class);
-   --  Called each time the selected MDI child changes
+   procedure Filter_Learn_Items
+     (Self    : not null access Learn_View_Record'Class;
+      Context : Selection_Context);
+   --  TODO
 
    procedure Change_Pane_Orientation (Self : access Gtk_Widget_Record'Class);
    --  Called each time the Learn view's MDI child has been reorganized
@@ -211,6 +220,26 @@ package body Learn.Views is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Self);
+      use Generic_Learn_Views;
+
+      View  : constant Generic_Learn_Views.View_Access :=
+                Generic_Learn_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         View.Filter_Learn_Items (Context);
+      end if;
+   end Execute;
+
    -----------------------
    -- Filter_Learn_Item --
    -----------------------
@@ -226,27 +255,29 @@ package body Learn.Views is
    end Filter_Learn_Item;
 
    ------------------------
-   -- MDI_Child_Selected --
+   -- Filter_Learn_Items --
    ------------------------
 
-   procedure MDI_Child_Selected (Self : access Gtk_Widget_Record'Class) is
-      View : constant Learn_View := Learn_View (Self);
-      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (View.Kernel));
+   procedure Filter_Learn_Items
+     (Self    : not null access Learn_View_Record'Class;
+      Context : Selection_Context)
+   is
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Self.Kernel));
    begin
       --  Don't refresh the view according to the context if the Learn view
       --  gains the focus: the user probably wants to click on a learn item
       --  to display its help.
 
       if Child /= null and then Child.Get_Title /= "Learn" then
-         for Provider_Widgets of View.Provider_Widgets_Map loop
+         for Provider_Widgets of Self.Provider_Widgets_Map loop
             for Group_Widget of Provider_Widgets.Group_Widgets loop
                Group_Widget.Force_Refilter;
             end loop;
          end loop;
 
-         View.Previous_Context := View.Kernel.Get_Current_Context;
+         Self.Previous_Context := Context;
       end if;
-   end MDI_Child_Selected;
+   end Filter_Learn_Items;
 
    -----------------------------
    -- Change_Pane_Orientation --
@@ -277,7 +308,7 @@ package body Learn.Views is
 
       View.Show_All;
 
-      MDI_Child_Selected (View);
+      View.Filter_Learn_Items (View.Kernel.Get_Current_Context);
    end Change_Pane_Orientation;
 
    ----------------------------
@@ -368,12 +399,11 @@ package body Learn.Views is
       Gtk_New_Vpaned (View.Paned_View);
       View.Pack_Start (View.Paned_View);
 
-      --  Connect to the Signal_Child_Selected signal to refilter all the
-      --  learn intems contained in the view.
+      --  Connect to the On_Context_Changed hook to filter the learn items
 
-      Widget_Callback.Object_Connect
-        (Get_MDI (View.Kernel), Signal_Child_Selected,
-         Widget_Callback.To_Marshaller (MDI_Child_Selected'Access), View);
+      Context_Changed_Hook.Add_Debounce
+        (new On_Context_Changed,
+         Watch => View);
 
       --  Connect to the Signal_Child_Reorganized to change the paned view's
       --  orientation depending on the Learn view's orientation.
