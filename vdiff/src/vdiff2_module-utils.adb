@@ -626,16 +626,16 @@ package body Vdiff2_Module.Utils is
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      --  Note: we need to open the "ref" editor first, so that the focus is
-      --  given to the "real" editor. This way, opening multiple vdiffs on
-      --  unopened editors will not create a cascade of refs.
+      --  Note: we need to open the "real" editor first, so that it will not
+      --  split into its-own column. This way, closing vdiffs won't keep "real"
+      --  editor in splitted state.
 
       if Ref = 1 then
-         Edit (Kernel, Item.Files (1));
          Edit (Kernel, Item.Files (2));
+         Edit (Kernel, Item.Files (1));
       else
-         Edit (Kernel, Item.Files (2));
          Edit (Kernel, Item.Files (1));
+         Edit (Kernel, Item.Files (2));
       end if;
 
       --  Synchronize the scrollings

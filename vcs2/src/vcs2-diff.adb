@@ -246,6 +246,12 @@ package body VCS2.Diff is
       Tmp_File := Create_From_Dir
         (Get_Tmp_Directory,
          "ref$" & Self.File.Base_Name);
+
+      if Tmp_File.Is_Regular_File then
+         --  If file still exists ensure we can rewrite it.
+         Tmp_File.Set_Writable (True);
+      end if;
+
       W := Write_File (Tmp_File, Append => False);
       Write (W, Contents);
       Close (W);

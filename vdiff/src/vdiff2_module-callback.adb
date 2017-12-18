@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with Gtk.Window;                        use Gtk.Window;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -463,7 +464,10 @@ package body Vdiff2_Module.Callback is
          for J in Diff.Files'Range loop
             if Diff.Files (J) /= No_File
               and then Diff.Files (J) /= File
-              and then not Is_Regular_File (Diff.Files (J))
+              and then
+                (not Is_Regular_File (Diff.Files (J))
+                 or else Starts_With
+                   (Diff.Files (J).Display_Base_Name, String (Ref_Prefix)))
             then
                declare
                   Child : constant MDI_Child :=
