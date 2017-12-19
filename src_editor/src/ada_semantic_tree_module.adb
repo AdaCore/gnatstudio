@@ -34,7 +34,7 @@ with Src_Editor_Box;               use Src_Editor_Box;
 with Time_Utils;                   use Time_Utils;
 
 package body Ada_Semantic_Tree_Module is
-   Me : constant Trace_Handle := Create ("TREE");
+   Me : constant Trace_Handle := Create ("Ada_Semantic_Tree_Module", On);
 
    use GPS.Kernel;
 
@@ -122,6 +122,14 @@ package body Ada_Semantic_Tree_Module is
          Read_File_With_Charset (File, UTF8, UTF8_Len, Props);
          --  We don't use Interfaces.C.Strings.Value function here to
          --  avoid stack overflow.
+
+         if UTF8 = Null_Ptr then
+            --  Defensive programming
+            Trace (Me, "Could not read/convert contents of" &
+                   (+File.Full_Name));
+            return new String'("");
+         end if;
+
          Result := new String (1 .. UTF8_Len);
          Result.all := To_Unchecked_String (UTF8) (1 .. UTF8_Len);
          Interfaces.C.Strings.Free (UTF8);
