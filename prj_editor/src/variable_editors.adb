@@ -585,6 +585,10 @@ package body Variable_Editors is
    exception
       when E : others =>
          Trace (Me, E);
+         Ignore := Message_Dialog
+           (Msg     => -"Failed to create the scenario variable",
+            Buttons => Button_OK,
+            Parent  => Gtk_Window (Editor));
          return False;
    end Update_Variable;
 
