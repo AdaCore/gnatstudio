@@ -449,6 +449,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end loop;
 
+      Debugger.Detect_Language;
+
       declare
          Block : Process_Proxies.Parse_File_Switch
            (Debugger.Process) with Unreferenced;
@@ -821,6 +823,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       if V.Name = "" then
          return "";
       end if;
+
+      Debugger.Detect_Language;
 
       if Is_Empty (V.Nodes) then
          if V.Childs < 2 then

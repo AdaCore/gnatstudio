@@ -540,7 +540,7 @@ package body GVD.Variables.View is
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
    begin
       if Process /= null then
-         Process_User_Command (Process, Cmd);
+         Process_User_Command (Process, Cmd, Mode => Internal);
       end if;
    end Execute_In_Debugger;
 
