@@ -749,12 +749,13 @@ package body GVD.Consoles is
       Register_Filter
         (Kernel, Filter, "No Execution console");
 
-      Register_Action
-        (Kernel, "open debugger execution",
-         Command     => new Open_Execution_Command,
-         Description => "Open the Debugger Execution console",
-         Filter      => Filter,
-         Category    => -"Debug");
-
+      if GNAT.TTY.TTY_Supported then
+         Register_Action
+           (Kernel, "open debugger execution",
+            Command     => new Open_Execution_Command,
+            Description => "Open the Debugger Execution console",
+            Filter      => Filter,
+            Category    => -"Debug");
+      end if;
    end Register_Module;
 end GVD.Consoles;
