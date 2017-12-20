@@ -30,7 +30,6 @@ with Language;                    use Language;
 with String_Utils;                use String_Utils;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Editors;
 with GPS.Markers;
 
 with GVD.Dialogs;                 use GVD.Dialogs;
@@ -616,9 +615,6 @@ package body Debugger.Base_Gdb is
 
       List     : Breakpoint_Vectors.Vector;
       Location : Location_Marker;
-      Remove   : Boolean := False;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Editable_Line_Type;
    begin
       if Num = No_Breakpoint then
          return;
@@ -636,27 +632,15 @@ package body Debugger.Base_Gdb is
          return;
       end if;
 
-      File := GPS.Editors.Get_File (Location);
-      Line := GPS.Editors.Get_Line (Location);
-
       for Item of List loop
          if Item.Num /= Num
            and then Similar (Item.Location, Location)
          then
-            --  we have another breakpoint in same location, so delete them all
-            Remove := True;
-            if Item.Num /= No_Breakpoint then
-               Debugger.Remove_Breakpoint (Item.Num);
-            else
-               Debugger.Remove_Breakpoint_At (File, Line);
-            end if;
+            --  we have duplicates, so delete this just created breakpoint
+            Debugger.Remove_Breakpoint (Num);
+            exit;
          end if;
       end loop;
-
-      if Remove then
-         --  we have duplicates, so delete this just created breakpoint
-         Debugger.Remove_Breakpoint (Num);
-      end if;
    end Remove_Breakpoint_Duplicates;
 
    ------------------
