@@ -287,18 +287,18 @@ package body CodePeer.Module.Bridge is
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
       Commands.Builder.Launch_Target
-        (Builder     => Builder,
-         Target_Name => "CodePeer Bridge",
-         Mode_Name   => "codepeer",
-         Force_File  => No_File,
-         Extra_Args  => Extra_Args,
-         Quiet       => False,
-         Synchronous => False,
-         Dialog      => Force_No_Dialog,
-         Via_Menu    => False,
-         Main        => No_File,
+        (Builder      => Builder,
+         Target_Name  => "CodePeer Bridge",
+         Mode_Name    => "codepeer",
+         Force_File   => No_File,
+         Extra_Args   => Extra_Args,
+         Quiet        => False,
+         Synchronous  => False,
+         Dialog       => Force_No_Dialog,
+         Via_Menu     => False,
+         Main         => No_File,
          Main_Project => No_Project,
-         Background   => True,
+         Background   => False,
          Directory    => No_File);
       Free (Extra_Args (1));
       Free (Extra_Args);
