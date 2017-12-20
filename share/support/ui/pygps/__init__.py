@@ -276,7 +276,8 @@ try:
            first window whose title starts with prefix
         """
 
-        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window) and
+        result = [x for x in WidgetTree(list) if
+                  isinstance(x, Gtk.Window) and
                   x.get_title() and
                   x.get_title().startswith(prefix)]
         if result:
@@ -309,6 +310,24 @@ try:
         return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button) and
                 x.get_image() and
                 x.get_image().get_icon_name()[0] == icon_name][0]
+
+    # ###########
+    # # Labels ##
+    # ###########
+
+    def get_label_from_text(text, parents=None):
+        """
+        Return the first Gtk.Label that displays the given ``text`` or
+        None if there is no matching label.
+        """
+        result = [x for x in WidgetTree(parents) if
+                  isinstance(x, Gtk.Label) and
+                  x.get_label() == text and
+                  x.is_visible()]
+        if result:
+            return result[0]
+        else:
+            return None
 
     # ##########
     # # Menus ##

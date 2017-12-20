@@ -598,7 +598,7 @@ package body Learn.Views is
             Show_Provider_Pref := Create
               (Manager  => Prefs_Manager,
                Path     => ":Learn View",
-               Name     => "learn-view-show" & Provider_Name,
+               Name     => "learn-view-show-" & Provider_Name,
                Label    => Pref_Label,
                Doc      => Pref_Label & " in Learn vieww",
                Default  => True);

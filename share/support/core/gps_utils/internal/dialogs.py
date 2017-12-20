@@ -16,6 +16,7 @@ import pygps.tree
 from pygps.tree import select_in_tree
 import gps_utils
 from gps_utils.internal.tree import dump_tree_model
+from gps_utils.internal.editor import click_in_widget
 import re
 
 
@@ -382,6 +383,45 @@ class KeyShortcuts(Dialog):
                 return
 
         gps_assert(False, True, action + ' not found in key shortcuts editor')
+
+
+#########
+# Learn #
+#########
+
+class Learn(Dialog):
+    """
+    Interface to the Learn view
+    """
+
+    def open_and_yield(self):
+        GPS.execute_action("open Learn")
+        self.dialog = GPS.MDI.get('Learn').pywidget()
+        self.paned_view = get_widgets_by_type(Gtk.Paned, self.dialog)[0]
+        self.doc_label = get_widgets_by_type(
+            Gtk.Label, self.paned_view.get_child2())[0]
+
+    def yield_click_on_item(self, label_text, button=1,
+                            events=pygps.single_click_events):
+        """
+        Clicks on the Learn view's item identified with the given
+        ``label_text``.
+        """
+        children = get_widgets_by_type(Gtk.FlowBoxChild, self.dialog)
+
+        for child in children:
+            label = get_widgets_by_type(Gtk.Label, child)[0]
+            if label.get_label() == label_text:
+                if isinstance(child.get_parent(), Gtk.FlowBox):
+                    click_in_widget(child.get_window(), -1, -1, events=events)
+                    yield wait_idle()
+                    return
+
+    def get_current_doc(self):
+        """
+        Return the documentation currently displayed in the Learn view.
+        """
+        return self.doc_label.get_label()
 
 
 ###############
