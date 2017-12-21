@@ -194,6 +194,11 @@ package Dialog_Utils is
       Spacing : Guint);
    --  Set the spacing between the dialog group's columns
 
+   procedure Set_Row_Spacing
+     (Self    : not null access Dialog_Group_Widget_Record'Class;
+      Spacing : Guint);
+   --  Set the spacing between the dialog group's rows
+
    function Create_Child
      (Self        : not null access Dialog_Group_Widget_Record'Class;
       Widget      : not null access Gtk_Widget_Record'Class;

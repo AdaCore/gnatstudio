@@ -490,6 +490,17 @@ package body Dialog_Utils is
       Self.Flow_Box.Set_Column_Spacing (Spacing);
    end Set_Column_Spacing;
 
+   ---------------------
+   -- Set_Row_Spacing --
+   ---------------------
+
+   procedure Set_Row_Spacing
+     (Self    : not null access Dialog_Group_Widget_Record'Class;
+      Spacing : Guint) is
+   begin
+      Self.Flow_Box.Set_Row_Spacing (Spacing);
+   end Set_Row_Spacing;
+
    ------------------
    -- Create_Child --
    ------------------

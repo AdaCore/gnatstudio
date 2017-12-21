@@ -140,12 +140,15 @@
  *********************/
 
 .learn-groups {
-   padding: 10px;
+   padding-left: 10px;
+   padding-right: 10px;
 }
 
 .learn-groups > GtkLabel {
    font-weight: normal;
    color: @inactive_tab_color;
+   padding-top: 10px;
+   padding-bottom: 10px;
 }
 
 .learn-provider-labels {

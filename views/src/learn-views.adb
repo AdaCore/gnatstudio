@@ -462,6 +462,7 @@ package body Learn.Views is
                   Slot => View);
 
                Group_Widget.Set_Column_Spacing (10);
+               Group_Widget.Set_Row_Spacing (3);
 
                Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
 
