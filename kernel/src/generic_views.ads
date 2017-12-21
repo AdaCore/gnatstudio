@@ -334,9 +334,13 @@ package Generic_Views is
       --  Init is called even if the view already existed.
 
       function Retrieve_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+        (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Visible_Only : Boolean := False)
          return View_Access;
       --  Retrieve any of the existing views.
+      --  If Visible_Only is True, this function returns the view only if it's
+      --  visible in the current perspective. Otherwise, the view will be
+      --  returned and automatically put back in the current perspective.
 
       procedure Reset_Toolbar
         (View       : not null access Formal_View_Record'Class;

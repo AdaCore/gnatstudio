@@ -880,8 +880,12 @@ package body Generic_Views is
       procedure Find
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
-         View         : out View_Access);
-      --  Find any existing view
+         View         : out View_Access;
+         Visible_Only : Boolean := False);
+      --  Find any existing view.
+      --  If Visible_Only is True, this function returns the view only if it's
+      --  visible in the current perspective. Otherwise, the view will be
+      --  returned and automatically put back in the current perspective.
 
       procedure Store_Position (View : View_Access);
       --  Store in history the position of the view's dialog
@@ -1090,7 +1094,8 @@ package body Generic_Views is
       procedure Find
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
-         View         : out View_Access)
+         View         : out View_Access;
+         Visible_Only : Boolean := False)
       is
          T   : Ada.Tags.Tag;
          MDI : MDI_Window;
@@ -1105,7 +1110,8 @@ package body Generic_Views is
          View := null;
 
          if MDI /= null then
-            Child := GPS_MDI_Child (MDI.Find_MDI_Child_By_Tag (T));
+            Child := GPS_MDI_Child
+              (MDI.Find_MDI_Child_By_Tag (T, Visible_Only => Visible_Only));
             if Child /= null then
                View := View_From_Child (Child);
             end if;
@@ -1416,13 +1422,18 @@ package body Generic_Views is
       -------------------
 
       function Retrieve_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+        (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Visible_Only : Boolean := False)
          return View_Access
       is
          Child        : GPS_MDI_Child;
          View         : View_Access;
       begin
-         Find (Kernel, Child, View);
+         Find
+           (Kernel,
+            Child        => Child,
+            View         => View,
+            Visible_Only => Visible_Only);
 
          return View;
       end Retrieve_View;
