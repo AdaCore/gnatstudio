@@ -568,6 +568,8 @@ package body GVD.Breakpoints is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
    begin
       if Count_Running_Debuggers (View.Kernel) <= 1 then
+         Refresh_Breakpoints_List (View.Kernel, null);
+
          --  Show the persistent breakpoints instead
          Update (View);
       else

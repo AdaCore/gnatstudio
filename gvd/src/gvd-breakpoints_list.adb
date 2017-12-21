@@ -109,8 +109,13 @@ package body GVD.Breakpoints_List is
    --  have breakpoints.
 
    procedure Show_Breakpoints_In_All_Editors
-     (Kernel : not null access Kernel_Handle_Record'Class);
+     (Kernel                    : not null access Kernel_Handle_Record'Class;
+      Show_Debugger_Breakpoints : Boolean := True);
    --  Update the side column for all editors, and show the breakpoints info
+   --
+   --  When Show_Debugger_Breakpoints is True, the breakpoints shown in the
+   --  editors will be the ones stored for the currently used debugger, if any.
+   --  Otherwise, it's the persistant ones that will be shown.
 
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -983,7 +988,8 @@ package body GVD.Breakpoints_List is
             --  This can mean that the executable has not been compiled with
             --  the debug flags for instance.
 
-            Process.Output_Text
+            if not Warning_Displayed then
+               Process.Output_Text
                  (Str          => -"Some breakpoints set graphically are not "
                   & "recognized by the debugger and, thus, will be lost "
                   & "when running it. "
@@ -993,10 +999,10 @@ package body GVD.Breakpoints_List is
                   & "flags or when the breakpoint's source file is not found "
                   & "in the symbols table."
                   & ASCII.LF);
-            Process.Debugger.Display_Prompt;
-            Warning_Displayed := True;
+               Process.Debugger.Display_Prompt;
 
-            exit;
+               Warning_Displayed := True;
+            end if;
          end if;
       end loop;
 
@@ -1092,7 +1098,10 @@ package body GVD.Breakpoints_List is
          end loop;
       end if;
 
-      Show_Breakpoints_In_All_Editors (Kernel);
+      Show_Breakpoints_In_All_Editors
+        (Kernel,
+         Show_Debugger_Breakpoints => Process /= null);
+
       Debugger_Breakpoints_Changed_Hook.Run (Kernel, Process);
    end Refresh_Breakpoints_List;
 
@@ -1173,10 +1182,15 @@ package body GVD.Breakpoints_List is
    -------------------------------------
 
    procedure Show_Breakpoints_In_All_Editors
-     (Kernel : not null access Kernel_Handle_Record'Class)
+     (Kernel                    : not null access Kernel_Handle_Record'Class;
+      Show_Debugger_Breakpoints : Boolean := True)
    is
       Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
+                  (if Show_Debugger_Breakpoints then
+                      Visual_Debugger
+                         (Get_Current_Debugger (Kernel))
+                   else
+                      null);
    begin
       Get_Messages_Container (Kernel).Remove_Category
         (Messages_Category_For_Breakpoints,
