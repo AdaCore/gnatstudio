@@ -3076,7 +3076,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("^(\*stopped.*|\^done,)frame={(.*)}", Multiple_Lines);
 
    Line_Pattern     : constant Pattern_Matcher := Compile
-     ("^~""Line (\d+) of \\""(.*)\\"" is at address (0x[0-9a-f]+)",
+     ("^~""Line (\d+) of \\""(.*)\\"" (is at address|starts at address)" &
+        " (0x[0-9a-f]+)",
       Multiple_Lines);
 
    CLI_Frame_Pattern : constant Pattern_Matcher := Compile
@@ -3153,7 +3154,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       if Matched (0) /= No_Match then
          Debugger.Current_Frame.Frame := 0;
          Debugger.Current_Frame.Addr := String_To_Address
-           (Str (Matched (3).First .. Matched (3).Last));
+           (Str (Matched (4).First .. Matched (4).Last));
          Debugger.Current_Frame.File := To_Unbounded_String
            (Strip_Escape (Str (Matched (2).First .. Matched (2).Last)));
          Debugger.Current_Frame.Line := Integer'Value
