@@ -1298,7 +1298,10 @@ package body Project_Explorers_Files is
          F    : Virtual_File;
          Dummy : Boolean;
       begin
-         if File.Full_Name.all = "/" then
+         if File = No_File
+           --  ??? The test below seems unix-centric
+           or else File.Full_Name.all = "/"
+         then
             Iter := V.Model.Get_Iter_First;
          else
             --  Non tail terminal recursion: goes to the root node and
