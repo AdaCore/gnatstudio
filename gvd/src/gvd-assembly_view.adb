@@ -517,7 +517,9 @@ package body GVD.Assembly_View is
       Columns := (FG_Color_Column, BG_Color_Column, PC_Pixmap_Column);
 
       Start_Iter := Model.Get_Iter_First;
+      Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (1), Null_RGBA);
+      Glib.Values.Init (Values (2), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (2), Null_RGBA);
       Values (3) := As_String ("");
 
@@ -538,10 +540,12 @@ package body GVD.Assembly_View is
 
          --  Highlight the new range
 
-         Columns (1) := BG_Color_Column;
-         Gdk.RGBA.Set_Value (Values (1), Editor_Current_Line_Color.Get_Pref);
-
          if Found then
+            Columns (1) := BG_Color_Column;
+            Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value
+              (Values (1), Editor_Current_Line_Color.Get_Pref);
+
             while Start_Iter /= Null_Iter
               and then String_To_Address
                 (Model.Get_String (Start_Iter, Address_Column)) <=
@@ -560,12 +564,12 @@ package body GVD.Assembly_View is
 
          --  Highlight breakpoint lines
 
+      Columns (1) := BG_Color_Column;
       for B of Get_Stored_List_Of_Breakpoints (Process).List loop
-         Columns (1) := BG_Color_Column;
-
          if B.Address /= Invalid_Address then
             Iter_From_Address (View, B.Address, Start_Iter, Found);
             if Found then
+               Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
                Gdk.RGBA.Set_Value
                  (Values (1),
                   (if not B.Enabled then
