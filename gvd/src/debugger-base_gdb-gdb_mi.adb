@@ -56,7 +56,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ---------------
 
    Prompt_Regexp             : constant Pattern_Matcher :=
-     Compile ("^\(gdb\) ", Multiple_Lines);
+     Compile ("^~"">""|^\(gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -457,6 +457,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
             return "";
          end if;
       end loop;
+
+      Debugger.Detect_Language;
 
       declare
          Block : Process_Proxies.Parse_File_Switch
@@ -911,6 +913,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
       if V.Name = "" then
          return "";
       end if;
+
+      Debugger.Detect_Language;
 
       if Is_Empty (V.Nodes) then
          if V.Childs < 2 then
@@ -4629,7 +4633,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       pragma Unreferenced (Debugger);
       J        : Integer := Str'First;
-      First    : Integer;
       New_Line : Boolean := True;
 
    begin
@@ -4641,7 +4644,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
                --  Replace ~"...." by ....
 
                J := J + 2;
-               First := J;
 
                while J <= Str'Last and then Str (J) /= '"' loop
                   if Str (J) /= '\'
@@ -4654,7 +4656,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         when '\' | '"' =>
                            Append (Result, Str (J));
                         when 'n' | 'r' =>
-                           null;
+                           if J < Str'Last
+                             and then Str (J + 1) /= '"'
+                           then
+                              Append (Result, ASCII.LF);
+                           end if;
+
                         when others =>
                            Append (Result, Str (J - 1 .. J));
                      end case;
@@ -4673,18 +4680,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   J := J + 1;
                end loop;
 
-            elsif Mode = User
+            elsif Mode in User | Visible
               and then J + 4 <= Str'Last
               and then Str (J .. J + 4) = "^done"
             then
                --  Strip "^done[,]", keep the rest (result expected by user)
-               if Str'Last > J + 4
-                 and then Str (J + 5) = ','
-               then
                   J := J + 5;
-               else
-                  J := J + 4;
-               end if;
 
             elsif Str (J) in '^' | '*' | '=' then
                --  Strip [^*=]...
@@ -4694,17 +4695,32 @@ package body Debugger.Base_Gdb.Gdb_MI is
                  and then Str (J .. J + 10) = "error,msg="""
                then
                   J := J + 11;
-                  First := J;
 
                   while J <= Str'Last and then Str (J) /= '"' loop
+                     if Str (J) /= '\'
+                       or else J = Str'Last
+                     then
+                        Append (Result, Str (J));
+                     else
+                        J := J + 1;
+                        case Str (J) is
+                           when '\' | '"' =>
+                              Append (Result, Str (J));
+                           when 'n' | 'r' =>
+                              if J < Str'Last
+                                and then Str (J + 1) /= '"'
+                              then
+                                 Append (Result, ASCII.LF);
+                              end if;
+
+                           when others =>
+                              Append (Result, Str (J - 1 .. J));
+                        end case;
+                     end if;
+
                      J := J + 1;
                   end loop;
 
-                  if J <= Str'Last then
-                     Append (Result, Str (First .. J - 1));
-                  else
-                     Append (Result, Str (First .. Str'Last));
-                  end if;
                else
                   if J + 6 < Str'Last
                     and then Str (J .. J + 6) = "stopped"
@@ -4772,6 +4788,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
            and then Str (J) = ASCII.LF
            and then J - 6 >= Str'First
            and then Str (J - 6 .. J - 1) = "(gdb) "
+         then
+            --  Strip last LF after prompt
+            null;
+
+         elsif J = Str'Last
+           and then Str (J) = ASCII.LF
+           and then J - 2 >= Str'First
+           and then Str (J - 2 .. J - 1) = ">"""
          then
             --  Strip last LF after prompt
             null;
