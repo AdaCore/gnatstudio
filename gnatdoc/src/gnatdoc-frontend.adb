@@ -1638,6 +1638,8 @@ package body GNATdoc.Frontend is
          Cursor                 : Extended_Cursor.Extended_Cursor;
          Last_Idx               : Natural := 0;
          Par_Count              : Natural := 0;
+         Prev_Prev_Token        : Tokens := Tok_Unknown;
+         Prev_Prev_Token_Loc    : Source_Location;
          Prev_Token             : Tokens := Tok_Unknown;
          Prev_Token_Loc         : Source_Location;
          Token                  : Tokens := Tok_Unknown;
@@ -1706,6 +1708,9 @@ package body GNATdoc.Frontend is
             Prev_Token_Loc := No_Source_Location;
             Token          := Tok_Unknown;
             Token_Loc      := No_Source_Location;
+
+            Prev_Prev_Token     := Tok_Unknown;
+            Prev_Prev_Token_Loc := No_Source_Location;
 
             Nested_Variants_Count  := 0;
             In_Compilation_Unit    := False;
@@ -2739,6 +2744,14 @@ package body GNATdoc.Frontend is
                           Comment_Result'
                             (Text       => Doc,
                              Start_Line => Doc_Start_Line));
+
+                     elsif Prev_Prev_Token = Tok_Overriding
+                       and then Doc_End_Line = Prev_Prev_Token_Loc.Line - 1
+                     then
+                        Set_Doc_Before (E,
+                          Comment_Result'
+                            (Text       => Doc,
+                             Start_Line => Doc_Start_Line));
                      end if;
                   end if;
                end Set_Doc_Before;
@@ -2878,6 +2891,12 @@ package body GNATdoc.Frontend is
 
                            elsif Doc_End_Line
                              = LL.Get_Location (E).Line - 1
+                           then
+                              Set_Doc_Before (E);
+
+                           elsif Prev_Prev_Token = Tok_Overriding
+                             and then
+                               Doc_End_Line = Prev_Prev_Token_Loc.Line - 1
                            then
                               Set_Doc_Before (E);
 
@@ -3980,6 +3999,9 @@ package body GNATdoc.Frontend is
                procedure Update_Prev_Known_Token is
                begin
                   if Token /= Tok_Unknown then
+                     Prev_Prev_Token := Prev_Token;
+                     Prev_Prev_Token_Loc := Prev_Token_Loc;
+
                      Prev_Token := Token;
                      Prev_Token_Loc := Token_Loc;
                   end if;
@@ -5308,6 +5330,9 @@ package body GNATdoc.Frontend is
                procedure Update_Prev_Known_Token is
                begin
                   if Token /= Tok_Unknown then
+                     Prev_Prev_Token := Token;
+                     Prev_Prev_Token_Loc := Token_Loc;
+
                      Prev_Token := Token;
                      Prev_Token_Loc := Token_Loc;
                   end if;
