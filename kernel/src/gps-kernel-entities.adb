@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2014-2017, AdaCore                     --
+--                     Copyright (C) 2014-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1283,6 +1283,7 @@ package body GPS.Kernel.Entities is
 
       Register_Contextual_Submenu
         (Kernel, "References",
+         Filter     => Lookup_Filter (Kernel, "Entity"),
          Ref_Item   => "goto other file",
          Add_Before => False);
 

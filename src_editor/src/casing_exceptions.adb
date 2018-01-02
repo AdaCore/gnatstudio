@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -506,17 +506,15 @@ package body Casing_Exceptions is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filename           : constant Virtual_File :=
-                             Create_From_Dir
-                               (Get_Home_Dir (Kernel),
-                                Case_Exceptions_Filename);
-      Label              : Contextual_Label;
+      Filename         : constant Virtual_File :=
+        Create_From_Dir (Get_Home_Dir (Kernel), Case_Exceptions_Filename);
+      Label            : Contextual_Label;
       Substring_Filter : constant Action_Filter := new Substring_Filter_Record;
-      Empty_Filter : constant Action_Filter := new Empty_Filter_Record;
-      Filter       : constant Action_Filter :=
+      Empty_Filter     : constant Action_Filter := new Empty_Filter_Record;
+      Filter           : constant Action_Filter :=
         Create (Module => Src_Editor_Module_Name) and not Empty_Filter;
-      RW_Filter    : Action_Filter := new RW_Filter_Record;
-      F                  : Action_Filter;
+      RW_Filter        : Action_Filter := new RW_Filter_Record;
+      F                : Action_Filter;
    begin
       RW_Filter := Filter and RW_Filter;
 
@@ -531,6 +529,11 @@ package body Casing_Exceptions is
         (Casing_Module_Id.Casing_Exceptions_Table,
          Filename,
          Read_Only => False);
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name   => -"Casing",
+         Filter => Filter);
 
       Label   := new Contextual_Label_Record;
       Label.Casing := Lower;

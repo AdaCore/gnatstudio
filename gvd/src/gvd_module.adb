@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1578,7 +1578,8 @@ package body GVD_Module is
       Register_Filter
         (Kernel, Is_Not_Command_Filter, "Debugger not command variable");
 
-      Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
+      Register_Contextual_Submenu
+        (Kernel, "Debug", Ref_Item => "References");
 
       Register_Action
         (Kernel, "debug set value",

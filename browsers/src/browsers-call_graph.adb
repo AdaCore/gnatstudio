@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -808,6 +808,12 @@ package body Browsers.Call_Graph is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Callgraph_Views.Register_Module (Kernel);
+
+      Register_Contextual_Submenu
+        (Kernel => Kernel,
+         Name   => "Browsers",
+         Filter => Lookup_Filter (Kernel, "Entity") or
+             Lookup_Filter (Kernel, "In project"));
 
       Register_Action
         (Kernel, "Browser: entity calls",

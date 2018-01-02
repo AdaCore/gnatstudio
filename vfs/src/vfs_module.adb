@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2002-2017, AdaCore                     --
+--                     Copyright (C) 2002-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -847,6 +847,11 @@ package body VFS_Module is
         (Kernel,
          Filter => Dir_Filter,
          Name   => "Dir_Filter");
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name => "File operations",
+         Filter => Is_Dir or Is_File);
 
       --  ??? Can we use the command 'new file' instead ?
       Command := new Create_Command;

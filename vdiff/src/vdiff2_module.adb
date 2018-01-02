@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -46,6 +46,12 @@ package body Vdiff2_Module is
      (Filter  : access In_3Diff_List_Filter;
       Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
+
+   type Has_File_And_Dir_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_File_And_Dir_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Check wether context contains a file and directory
 
    File1_Cst : aliased constant String := "file1";
    File2_Cst : aliased constant String := "file2";
@@ -240,6 +246,7 @@ package body Vdiff2_Module is
       use Default_Preferences;
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
+      Submenu_Filter : Action_Filter;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.Vector;
@@ -252,8 +259,14 @@ package body Vdiff2_Module is
          Module_Name => Vdiff_Module_Name,
          Priority    => Default_Priority);
 
-      Filter := new In_Diff_List_Filter;
+      Filter         := new In_Diff_List_Filter;
       Filter_3_Files := new In_3Diff_List_Filter;
+      Submenu_Filter := new Has_File_And_Dir_Filter;
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name   => -"Visual Diff",
+         Filter => Submenu_Filter);
 
       Register_Action
         (Kernel, "vdiff remove difference",
@@ -402,6 +415,20 @@ package body Vdiff2_Module is
         and then Is_In_3Diff_List
           (File_Information (Context),
            VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_File_And_Dir_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Has_File_Information (Context)
+        and then Has_Directory_Information (Context);
    end Filter_Matches_Primitive;
 
 end Vdiff2_Module;

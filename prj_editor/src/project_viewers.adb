@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1179,7 +1179,7 @@ package body Project_Viewers is
       File_Views.Register_Module (Kernel);
 
       Filter  := Lookup_Filter (Kernel, "Project only");
-      Filter2  := Lookup_Filter (Kernel, "Project only")
+      Filter2 := Lookup_Filter (Kernel, "Project only")
         and Lookup_Filter (Kernel, "Editable Project");
 
       --  These two commands are doing the same work, but the second can be
@@ -1208,6 +1208,11 @@ package body Project_Viewers is
         (Kernel, "edit switches for file", new Edit_File_Switches,
          -"Edit the switches for the selected files",
          Icon_Name => "gps-edit-symbolic");
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name  => "Project",
+         Filter => Filter);
 
       Register_Contextual_Menu
         (Kernel,

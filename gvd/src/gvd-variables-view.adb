@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1500,7 +1500,8 @@ package body GVD.Variables.View is
          Command => new Set_Format_Command,
          Description =>
            -"Set format for the variable in the Variables view",
-         Filter      => Is_Editable_Filter,
+         Filter      => Kernel.Lookup_Filter
+           ("Debugger inactive or stopped") and Is_Editable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
