@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2017, AdaCore                        --
+--                     Copyright (C) 2017-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,7 +19,7 @@ with System.Storage_Elements;
 with Interfaces.C;
 with LAL.Switching_Tree_Providers; use LAL.Switching_Tree_Providers;
 with Language.Ada;
-with Libadalang.Analysis.C;
+with Libadalang.Analysis.Implementation.C;
 with GNATCOLL.Python;
 with GNATCOLL.Scripts.Python;      use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
@@ -61,7 +61,7 @@ package body LAL.Module is
         Kernel.Get_Buffer_Factory.Buffer_From_Instance (Instance);
 
       Unit   : Libadalang.Analysis.Analysis_Unit;
-      Unit_C : Libadalang.Analysis.C.ada_analysis_unit;
+      Unit_C : Libadalang.Analysis.Implementation.C.ada_analysis_unit;
       Int    : System.Storage_Elements.Integer_Address;
       Value  : GNATCOLL.Python.PyObject;
       Args   : Callback_Data'Class := Python.Create (1);
@@ -71,7 +71,7 @@ package body LAL.Module is
          Filename    => Buffer.File.Display_Full_Name,
          Buffer      => Buffer.Get_Chars);
 
-      Unit_C := Libadalang.Analysis.C.Wrap (Unit);
+      Unit_C := Libadalang.Analysis.Implementation.C.Wrap (Unit);
       Int := System.Storage_Elements.To_Integer (System.Address (Unit_C));
       Value := GNATCOLL.Python.PyInt_FromSize_t (Interfaces.C.size_t (Int));
       Python_Callback_Data'Class (Args).Set_Nth_Arg (1, Value);

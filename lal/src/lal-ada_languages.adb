@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2017, AdaCore                        --
+--                     Copyright (C) 2017-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -106,12 +106,11 @@ package body LAL.Ada_Languages is
       Unit := Libadalang.Analysis.Get_From_Buffer
         (Context     => Lang.Context,
          Filename    => "aaa",  --  ??
-         Buffer      => Buffer,
-         With_Trivia => True);
+         Buffer      => Buffer);
 
       Root := Libadalang.Analysis.Root (Unit);
 
-      if Root = null then
+      if Root = Libadalang.Analysis.No_Ada_Node then
          Lang.Kernel.Messages_Window.Insert_UTF8
            ("Error during parsing:",
             Mode => GPS.Messages_Windows.Error);

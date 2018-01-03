@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2017, AdaCore                        --
+--                     Copyright (C) 2017-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -39,19 +39,9 @@ private
    overriding function Get_Unit
      (Provider    : Unit_Provider;
       Context     : Libadalang.Analysis.Analysis_Context;
-      Node        : Libadalang.Analysis.Ada_Node;
-      Kind        : Libadalang.Analysis.Unit_Kind;
-      Charset     : String := "";
-      Reparse     : Boolean := False;
-      With_Trivia : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
-
-   overriding function Get_Unit
-     (Provider    : Unit_Provider;
-      Context     : Libadalang.Analysis.Analysis_Context;
       Name        : Wide_Wide_String;
       Kind        : Libadalang.Analysis.Unit_Kind;
       Charset     : String := "";
-      Reparse     : Boolean := False;
-      With_Trivia : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
+      Reparse     : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
 
 end LAL.Unit_Providers;

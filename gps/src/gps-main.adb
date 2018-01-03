@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -675,7 +675,9 @@ procedure GPS.Main is
                    ">log.$$.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
-                        "DEBUG.COLORS=no" & ASCII.LF &
+                     "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
+                     "LEXICAL_ENV=no" & ASCII.LF &  --  Turn LAL traces off
+                     "DEBUG.COLORS=no" & ASCII.LF &
                      "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
                      "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
                      "DEBUG.STACK_TRACE=no" & ASCII.LF &
