@@ -45,6 +45,10 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="c++">c++arm</compiler>
   </toolchain>
 
+  <toolchain name="aarch64-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="arm-wrs-vxworks7">
     <debugger/>
   </toolchain>
