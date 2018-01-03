@@ -464,6 +464,11 @@ Shadow builds''', inpython=False),
         [Param('name', '__hookname__'),
          Param('debugger', 'Debugger')]),
 
+    'debugger_breakpoint_hook': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('debugger', 'Debugger'),
+         Param('id', 'Integer')]),
+
     'debugger_states_hooks': Hook_Type(
         [Param('name',      '__hookname__'),
          Param('debugger',  'Debugger'),
@@ -626,6 +631,21 @@ and store precomputed data in it.\n
     Hook('debugger_breakpoints_changed', 'debugger_hooks', descr='''
 The list of breakpoints set in the debugger was reloaded. It might
 not have changed since the last time. The Debugger given in argument
+might actually be set to None when the list of breakpoints is changed
+before the debugger starts.'''),
+
+    Hook('debugger_breakpoint_added', 'debugger_breakpoint_hook', descr='''
+The breakpoint with ID as parameter is added. The Debugger given in argument
+might actually be set to None when the list of breakpoints is changed
+before the debugger starts.'''),
+
+    Hook('debugger_breakpoint_changed', 'debugger_breakpoint_hook', descr='''
+The breakpoint with ID as parameter is changed. The Debugger given in argument
+might actually be set to None when the list of breakpoints is changed
+before the debugger starts.'''),
+
+    Hook('debugger_breakpoint_deleted', 'debugger_breakpoint_hook', descr='''
+The breakpoint with ID as parameter is deleted. The Debugger given in argument
 might actually be set to None when the list of breakpoints is changed
 before the debugger starts.'''),
 

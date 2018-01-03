@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1085,17 +1085,58 @@ package body GVD.Breakpoints_List is
         and then Process.Debugger /= null
         and then not Process.Command_In_Process
       then
-         Process.Debugger.List_Breakpoints (Kernel, Process.Breakpoints.List);
-         Process.Breakpoints.Has_Temporary_Breakpoint := False;
+         declare
+            use Breakpoint_Vectors;
+            Old : constant Breakpoint_Vectors.Vector :=
+              Process.Breakpoints.List;
+            Pos : Breakpoint_Vectors.Cursor := Old.First;
+         begin
+            Process.Debugger.List_Breakpoints
+              (Kernel, Process.Breakpoints.List);
+            Process.Breakpoints.Has_Temporary_Breakpoint := False;
 
-         --  Check whether we have temporary breakpoints
+            --  Check whether we have temporary breakpoints
 
-         for B of Process.Breakpoints.List loop
-            if B.Disposition /= Keep and then B.Enabled then
-               Process.Breakpoints.Has_Temporary_Breakpoint := True;
-               exit;
-            end if;
-         end loop;
+            for B of Process.Breakpoints.List loop
+               if B.Disposition /= Keep
+                 and then B.Enabled
+               then
+                  Process.Breakpoints.Has_Temporary_Breakpoint := True;
+               end if;
+
+               if not Has_Element (Pos) then
+                  Debugger_Breakpoint_Added_Hook.Run
+                    (Kernel, Process, Integer (B.Num));
+               else
+                  while Has_Element (Pos)
+                    and then Element (Pos).Num < B.Num
+                  loop
+                     Debugger_Breakpoint_Deleted_Hook.Run
+                       (Kernel, Process, Integer (Element (Pos).Num));
+                     Next (Pos);
+                  end loop;
+
+                  if Has_Element (Pos)
+                    and then Element (Pos).Num = B.Num
+                  then
+                     if Element (Pos) /= B then
+                        Debugger_Breakpoint_Changed_Hook.Run
+                          (Kernel, Process, Integer (B.Num));
+                     end if;
+                     Next (Pos);
+                  else
+                     Debugger_Breakpoint_Added_Hook.Run
+                       (Kernel, Process, Integer (B.Num));
+                  end if;
+               end if;
+            end loop;
+
+            while Has_Element (Pos) loop
+               Debugger_Breakpoint_Deleted_Hook.Run
+                 (Kernel, Process, Integer (Element (Pos).Num));
+               Next (Pos);
+            end loop;
+         end;
       end if;
 
       Show_Breakpoints_In_All_Editors
