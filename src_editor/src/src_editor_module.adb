@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,6 +32,7 @@ with Glib.Values;
 
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -2972,7 +2973,8 @@ package body Src_Editor_Module is
       pragma Unreferenced (Child);
       Item : Gtk_Menu_Item;
       Id : constant Source_Editor_Module :=
-             Source_Editor_Module (Src_Editor_Module_Id);
+               Source_Editor_Module (Src_Editor_Module_Id);
+      Sep : Gtk_Separator_Menu_Item;
    begin
       Gtk_New (Item, "Close all other editors");
 
@@ -2980,7 +2982,12 @@ package body Src_Editor_Module is
         (Item, Gtk.Menu_Item.Signal_Activate,
          Register_Editor_Close'Access,
          Get_Kernel (Id.all));
-      Append (Menu, Item);
+
+      --  Insert it just after the "Close" menu item and add a separator under
+      --  it.
+      Menu.Insert (Item, 1);
+      Gtk_New (Sep);
+      Menu.Insert (Sep, 2);
    end Tab_Contextual;
 
    -----------------------
