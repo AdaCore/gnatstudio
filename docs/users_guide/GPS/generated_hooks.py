@@ -312,8 +312,9 @@ class Predefined_Hooks:
     # debugger_breakpoint_added = 'debugger_breakpoint_added'
     def debugger_breakpoint_added(name,debugger,id):
         """
-      The breakpoint with ID as parameter is added. Called by notification from
-      debugger so does not work when debugger is not started.
+      The breakpoint with ID as parameter is added. The Debugger given in argument
+      might actually be set to None when the list of breakpoints is changed
+      before the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:
@@ -324,8 +325,9 @@ class Predefined_Hooks:
     # debugger_breakpoint_changed = 'debugger_breakpoint_changed'
     def debugger_breakpoint_changed(name,debugger,id):
         """
-      The breakpoint with ID as parameter is changed. Called by notification from
-      debugger so does not work when debugger is not started.
+      The breakpoint with ID as parameter is changed. The Debugger given in argument
+      might actually be set to None when the list of breakpoints is changed
+      before the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:
@@ -336,8 +338,9 @@ class Predefined_Hooks:
     # debugger_breakpoint_deleted = 'debugger_breakpoint_deleted'
     def debugger_breakpoint_deleted(name,debugger,id):
         """
-      The breakpoint with ID as parameter is deleted. Called by notification from
-      debugger so does not work when debugger is not started.
+      The breakpoint with ID as parameter is deleted. The Debugger given in argument
+      might actually be set to None when the list of breakpoints is changed
+      before the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:

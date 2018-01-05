@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -142,6 +142,8 @@ package GVD.Breakpoints_List is
       --  The action of the breakpoint
    end record;
    --  Information for a specific breakpoint
+
+   function Is_Equal (B1, B2 : Breakpoint_Data) return Boolean;
 
    overriding function "=" (B1, B2 : Breakpoint_Data) return Boolean
      is (B1.Num = B2.Num);

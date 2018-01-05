@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -380,7 +380,6 @@ package body GVD.Breakpoints is
       end if;
 
       for Br of Get_Stored_List_Of_Breakpoints (Self.Get_Process).List loop
-
          if Br.Location /= No_Marker
            and then Get_File (Br.Location) = File
            and then Natural (Get_Line (Br.Location)) = Line

@@ -1036,19 +1036,18 @@ package body GVD.Breakpoints_List is
       for Num of List loop
          for B of Get_Stored_List_Of_Breakpoints (Process).List loop
             if B.Num = Num then
-               B.Enabled := State;
-
                if Cond then
                   Process.Debugger.Enable_Breakpoint
-                    (B.Num, B.Enabled, Mode => GVD.Types.Visible);
+                    (B.Num, State, Mode => GVD.Types.Visible);
+               else
+                  B.Enabled := State;
+                  Show_Breakpoints_In_All_Editors (Kernel);
                end if;
 
                exit;
             end if;
          end loop;
       end loop;
-
-      Show_Breakpoints_In_All_Editors (Kernel);
    end Set_Breakpoints_State;
 
    ----------------------------
@@ -1119,7 +1118,7 @@ package body GVD.Breakpoints_List is
                   if Has_Element (Pos)
                     and then Element (Pos).Num = B.Num
                   then
-                     if Element (Pos) /= B then
+                     if not Is_Equal (Element (Pos), B) then
                         Debugger_Breakpoint_Changed_Hook.Run
                           (Kernel, Process, Integer (B.Num));
                      end if;
@@ -1258,6 +1257,29 @@ package body GVD.Breakpoints_List is
          return Visual_Debugger (Debugger).Breakpoints'Access;
       end if;
    end Get_Stored_List_Of_Breakpoints;
+
+   --------------
+   -- Is_Equal --
+   --------------
+
+   function Is_Equal (B1, B2 : Breakpoint_Data) return Boolean is
+   begin
+      return B1.Num = B2.Num
+        and then B1.The_Type    = B2.The_Type
+        and then B1.Disposition = B2.Disposition
+        and then B1.Enabled     = B2.Enabled
+        and then B1.Address     = B2.Address
+        and then B1.Trigger     = B2.Trigger
+        and then B1.Expression  = B2.Expression
+        and then B1.Except      = B2.Except
+        and then B1.Subprogram  = B2.Subprogram
+        and then Similar (B1.Location, B2.Location)
+        and then B1.Condition   = B2.Condition
+        and then B1.Ignore      = B2.Ignore
+        and then B1.Commands    = B2.Commands
+        and then B1.Scope       = B2.Scope
+        and then B1.Action      = B2.Action;
+   end Is_Equal;
 
    --------------------
    -- Is_Interactive --
