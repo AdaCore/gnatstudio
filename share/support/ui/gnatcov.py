@@ -210,6 +210,8 @@ class GNATcovPlugin(object):
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
             X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
             X('iconname').children('gps-build-all-symbolic'),
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
@@ -249,6 +251,8 @@ class GNATcovPlugin(object):
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
             X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
             X('iconname').children('gps-build-all-symbolic'),
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
