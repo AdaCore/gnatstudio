@@ -894,6 +894,32 @@ examples on how to do that::
     GPS.Preference('explorer-show-directories').set(True)
 
 
+.. index:: windows; learn view
+.. _The_Learn_View:
+
+The :guilabel:`Learn` view
+============================
+
+.. image:: learn_view.png
+
+The :guilabel:`Learn` view's purpose is to help users to familiarize with GPS.
+
+In particular the :guilabel:`Learn` view displays a list of the most commonly
+used and useful GPS actions, with their optional key shortcut.
+
+The actual contents of the :guilabel:`Learn` view is filtered depending on the
+current context: for instance, the actions related to text editing will only
+be listed when an editor is focused. Same thing when it comes to debugging:
+the actions related to debugging will only be displayed when a debugger is
+running, etc.
+This way, you will be able to discover which actions can be executed in a
+given context.
+
+Single-clicking on a particular action will display the associated
+documentation, providing more details on what the action actually does. You
+can also double-click on it if you want to actually run it.
+
+
 .. index:: project; scenario variables
 .. index:: windows; scenario view
 .. index:: project; scenario variable
@@ -1082,7 +1108,7 @@ how the outline view is displayed:
   (package, type, pragma, sub-program, etc.) to a single line in the
   Outline View. This works only in Flat View mode, so turning this option
   on makes the Flat View automatically enabled.
-  
+
 * :guilabel:`Dynamic link with editor`
 
   Causes the current subprogram to be selected in the outline view each
