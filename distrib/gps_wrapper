@@ -3,8 +3,8 @@
 #
 # Copyright 2002-2017 AdaCore
 
-prog=`basename $0`
-root=`dirname $0`
+prog="$(basename "$0")"
+root="$(dirname "$0")"
 
 ## Run with "gps debug ..." to run under the debugger
 debug=${1:-false}
@@ -13,7 +13,7 @@ if [ "$debug" = debug ]; then
 fi
 
 # Get absolute directory and strip 'bin' directory to retrieve real root
-root=`cd $root/..; pwd`
+root="$(cd "$root/.."; pwd)"
 pixbuf_base="$root/lib/gps/gdk-pixbuf-2.0/2.10.0/"
 
 #
