@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2017, AdaCore                          --
+--                     Copyright (C) 2017-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -491,6 +491,7 @@ package body GVD.Variables.Types.Simples is
 
             Self.Value := Line_Vector.To_Vector (Lines'Length);
             for L in 1 .. Positive (Self.Value.Length) loop
+               Self.Value (L).Value := To_Unbounded_String (Lines (L).all);
                if Old.Is_Empty then
                   Self.Value (L).Modified := True;
                else
