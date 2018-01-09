@@ -84,6 +84,8 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="powerpc64-generic-linux-gnu"/>
 
+  <toolchain name="powerpc-generic-linux-gnu"/>
+
   <toolchain name="powerpc-wrs-linux"/>
 
   <toolchain name="powerpc-sysgo-pikeos"/>
