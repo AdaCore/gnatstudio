@@ -649,7 +649,7 @@ messages. Full: same as normal, plus run-time checks related messages">
     </target>
 
     <target model="codepeer_bridge" category="CodePeer"
-            name="CodePeer Bridge" messages_category="CodePeer">
+            name="CodePeer Bridge" messages_category="CodePeer Bridge">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
