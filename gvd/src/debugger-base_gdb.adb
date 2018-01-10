@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2017, AdaCore                          --
+--                     Copyright (C) 2017-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -910,7 +910,9 @@ package body Debugger.Base_Gdb is
    is
       Debugger : constant Debugger_Access := Process.Debugger;
       Lang     : constant String :=
-        Str (Matched (3).First .. Matched (3).Last);
+        (if Matched (3) /= No_Match
+         then Str (Matched (3).First .. Matched (3).Last)
+         else "auto");
       Language : Language_Access;
 
    begin
