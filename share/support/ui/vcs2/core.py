@@ -745,7 +745,8 @@ class vcs_action:
                 self.method = run_in_background(method)
 
             def filter(self, context):
-                return GPS.VCS2.active_vcs().name == vcs_name
+                return (GPS.VCS2.active_vcs() and
+                        GPS.VCS2.active_vcs().name == vcs_name)
 
             def __call__(self):
                 v = GPS.VCS2.active_vcs()
@@ -831,5 +832,6 @@ def _diff(left_file, right_file, result_file):
     f = io.open(result_file.path, "wb")
     f.writelines(out)
     f.close()
+
 
 GPS.VCS2._diff = _diff
