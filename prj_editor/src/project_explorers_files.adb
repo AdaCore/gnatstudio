@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1331,7 +1331,7 @@ package body Project_Explorers_Files is
             Path := V.Model.Get_Path (Parent);
             --  Can't get the children, so try to expand the parent node
             --  to load the children in cache.
-            Tree_Expand_Row_Cb (V, Parent, Path);
+            Dummy := V.Expand_Row (Path, Open_All => False);
             Iter := V.Model.Children (V.Model.Get_Iter (Path));
 
             --  Search in the added children
