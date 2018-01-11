@@ -90,6 +90,7 @@ UPDATE_INFO = "update_info"
 VALID = "Valid"
 
 # Constants related to the interface: name of console, prooftree etc
+DEBUG_CONSOLE = "Debug Manual Proof"
 ITP_CONSOLE = "Manual Proof"
 PROOF_TASK = "Verification Condition"
 PROOF_TREE_TITLE = "Proof Tree"
@@ -105,7 +106,8 @@ COLUMN_STATUS = "Status"
 def print_debug(s):
     """print debugging information when debug_mode is set"""
     if debug_mode:
-        print(s)
+        console = GPS.Console(DEBUG_CONSOLE)
+        console.write(s)
 
 
 def print_error(message, prompt=True):
@@ -156,7 +158,7 @@ def parse_notif(j, abs_tree, proof_task):
         notification on the proof tree. It makes the appropriate updates to the
         tree model.
     """
-    print_debug(j)
+    print_debug(str(j))
     # Most of the changes concern only the tree part.
     tree = abs_tree.tree
     if NOTIFICATION in j:
@@ -677,8 +679,7 @@ class Tree_with_process:
             and this is easier to have the simplest function in a timeout.
         """
 
-        if debug_mode:
-            print_message(s)
+        print_debug(s)
         self.send_queue = self.send_queue + s + ">>>>"
         self.size_queue = self.size_queue + len(s) + 4
         # From different documentation, it can be assumed that pipes have a
