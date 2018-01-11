@@ -145,6 +145,7 @@ def prove_check():
     elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
         return advanced_prove_check
 
+
 show_report = 'Show Report'
 clean_up = 'Clean Proofs'
 check_msg_prefix = 'medium: '
@@ -741,7 +742,7 @@ def on_prove_line(self):
                 + ":" + str(self.message().get_line())
         args.append(llarg)
         target = prove_line_loc()
-    except:  # No message in context
+    except Exception:  # No message in context
         target = prove_line()
 
     generic_on_analyze(target, args=args)
@@ -807,7 +808,7 @@ def compute_subp_sloc(self):
             start_loc = subprogram_start(edloc)
         else:
             return None
-    except:
+    except Exception:
         return None
 
     if not start_loc:
@@ -823,7 +824,7 @@ def compute_subp_sloc(self):
     try:
         entity = GPS.Entity(name, start_loc.buffer().file(),
                             start_loc.line(), start_loc.column())
-    except:
+    except Exception:
         return None
     if entity is not None:
         return entity.declaration()
@@ -875,12 +876,12 @@ def inside_generic_unit_context(self):
             try:
                 entity = GPS.Entity(name, unit_loc.buffer().file(),
                                     unit_loc.line(), unit_loc.column())
-            except:
+            except Exception:
                 return False
             return entity.is_generic()
         else:
             return False
-    except:
+    except Exception:
         return False
 
 
@@ -972,6 +973,7 @@ class UnknownVCError(Exception):
     def __init__(self, msg):
         self.msg = msg
 
+
 vc_msg_dict = {
     # VC_RTE_Kind - run-time checks
 
@@ -1052,7 +1054,7 @@ def prove_check_context(context, edit_session):
         try:
             context._loc_msg = context.message()
             return is_unproved_check_message(context._loc_msg)
-        except:  # No message in context
+        except Exception:  # No message in context
             tmp = get_line_warn(context)
             if len(tmp) == 1:
                 context._loc_msg = tmp[0]
@@ -1125,6 +1127,7 @@ def compute_gnatserver_path():
     bin_dir = os.path.dirname(gnatprove)
     gs_rel = os.path.join("..", "libexec", "spark", "bin", "gnat_server")
     return (os.path.abspath(os.path.join(bin_dir, gs_rel)))
+
 
 gnat_server = compute_gnatserver_path()
 itp_lib.print_debug("[gnat_server path]:" + gnat_server)
@@ -1251,7 +1254,7 @@ def exit_ITP(dummy_arg):
         try:
             tree.exit()
             return True
-        except:
+        except Exception:
             return True
     else:
         print_error("Interactive theorem proving requires version 18 of SPARK")

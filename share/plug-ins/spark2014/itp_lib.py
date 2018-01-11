@@ -404,7 +404,7 @@ class Tree:
             row = self.node_id_to_row_ref[node]
             path = row.get_path()
             return (self.model.get_iter(path))
-        except:
+        except Exception:
             if debug_mode:
                 print ("get_iter error: node does not exists %d", node)
             return None
@@ -489,7 +489,7 @@ class Tree:
                 to_node_row = self.node_id_to_row_ref[to_node]
                 to_node_path = to_node_row.get_path()
                 tree_selection.select_path(to_node_path)
-        except:
+        except Exception:
             # The node we are jumping to does not exists
             err_message = "Error in jumping: the node : " + str(to_node)
             print_debug(err_message + " probably does not exists")
@@ -568,23 +568,23 @@ class Tree_with_process:
         # nothing when the first exiting function fail.
         try:
             a.destroy()
-        except:
+        except Exception:
             print ("Cannot close console")
         try:
             self.proof_task.close()  # TODO force ???
-        except:
+        except Exception:
             print ("Cannot close proof_task")
         try:
             self.tree.exit()
-        except:
+        except Exception:
             print ("Cannot close tree")
         try:
             self.process.kill()
-        except:
+        except Exception:
             print ("Cannot kill why3_server process")
         try:
             self.timeout.remove()
-        except:
+        except Exception:
             print ("Cannot stop timeout")
 
     def exit(self):
