@@ -1253,6 +1253,7 @@ def exit_ITP(dummy_arg):
     if is_itp:
         try:
             tree.exit()
+            GPS.Hook("before_exit_action_hook").remove(exit_ITP)
             return True
         except Exception:
             return True
