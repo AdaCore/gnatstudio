@@ -1197,7 +1197,11 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     else:
         command = gnat_server + " " + "--proof-dir " + proof_dir + " "
     if edit_session:
-        command = command + mlw_file
+        if itp_lib.debug_file == "":
+            command = command + mlw_file
+        else:
+            d_st = "--debug-stack-trace "
+            command = command + d_st + mlw_file + " 2> " + itp_lib.debug_file
     else:
         command = command + arg_limit_line + " " + mlw_file
     itp_lib.print_debug(command)

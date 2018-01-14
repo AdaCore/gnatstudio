@@ -5,6 +5,9 @@ from os import path, utime
 from gi.repository import Gtk, Gdk
 
 debug_mode = False
+# This is a file which is used as output to the stderr of gnat_server (in cases
+# it fails during manual proof edition). Use "/tmp/itp_default" for example.
+debug_file = ""
 
 # Gdk colors constants
 GREEN = Gdk.RGBA(0, 1, 0, 0.2)
