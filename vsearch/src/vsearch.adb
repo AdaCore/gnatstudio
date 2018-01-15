@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1517,15 +1517,7 @@ package body Vsearch is
 
       if View /= null then
          Set_First_Next_Mode (View, Find_Next => False);
-
-         --  Do not reset the interactive context when we are in incremental
-         --  mode and if the currently selected search module supports it
-         --  since the interactive search context is systematically reset in
-         --  this case (see On_Patter_Combo_Changed).
-
-         if not Is_In_Incremental_Mode then
-            Reset_Interactive_Context (View);
-         end if;
+         Reset_Interactive_Context (View);
       end if;
    end Execute;
 
