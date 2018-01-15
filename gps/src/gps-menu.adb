@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib.Object;            use Glib.Object;
 with Glib.Types;             use Glib.Types;
 with Glib;                   use Glib;
@@ -28,6 +29,7 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
@@ -370,10 +372,15 @@ package body GPS.Menu is
      (Command : access Recompute_Recent_Menus_Command)
       return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Command.Kernel;
-      V : constant String_List_Access :=  --  Do not free
-        Get_History (Kernel.Get_History.all, Project_History_Key);
-      F : Virtual_File;
+      Kernel          : constant Kernel_Handle := Command.Kernel;
+      V               : constant String_List_Access :=  --  Do not free
+                          Get_History
+                            (Kernel.Get_History.all,
+                             Project_History_Key);
+      F               : Virtual_File;
+      File_Menu_Paths : constant Unbounded_String_Array := Split
+        (To_String (Menu_List_For_Action ("open project dialog")),
+         On => '/');
    begin
       --  Remove old menus and actions
       for Action of Menu_Module.Recent_Project_Actions loop
@@ -381,7 +388,13 @@ package body GPS.Menu is
       end loop;
       Menu_Module.Recent_Project_Actions.Clear;
 
-      --  Add new menus
+      --  Add new menus.
+      --
+      --  We retrieve the toplevel menu from the 'open project dialog' action:
+      --  this ensures that the 'open recent project' and the 'open file'
+      --  actions are always in the same toplevel menu, even when menus.xml
+      --  has been changed by the user.
+
       for N of V.all loop
          if GNATCOLL.VFS.Create_From_UTF8 (N.all).Is_Regular_File then
             F := Create (+N.all);
@@ -394,7 +407,8 @@ package body GPS.Menu is
                Category    => "Internal");
             Register_Menu
               (Kernel,
-               Path   => "/File/Open Recent Projects/" & Escape_Underscore
+               Path   => To_String (File_Menu_Paths (File_Menu_Paths'First))
+               & "/Open Recent Projects/" & Escape_Underscore
                  (F.Display_Base_Name),
                Action => "open recent project: " & N.all);
             Menu_Module.Recent_Project_Actions.Append
