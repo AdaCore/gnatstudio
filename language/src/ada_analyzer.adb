@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -919,6 +919,9 @@ package body Ada_Analyzer is
          Partial_Entity : Boolean) return Boolean;
       --  Call Callback and take into account Aspect_Clause/Aspect_Clause_Sloc
       --  if needed.
+
+      procedure Set_Prev_Token (Token : Token_Type);
+      --  Update Prev_Token and Prev_Prev_Token local variables
 
       --------------------
       -- Stack Routines --
@@ -2990,7 +2993,7 @@ package body Ada_Analyzer is
          Adjust          : Natural;
          Insert_Spaces   : Boolean;
          Char            : Character;
-         Prev_Prev_Token : Token_Type := No_Token;
+         Prev2_Token     : Token_Type := No_Token;
          Prev3_Token     : Token_Type;
          Local_Top_Token : Token_Stack.Generic_Type_Access;
          Tmp             : Boolean;
@@ -3088,7 +3091,7 @@ package body Ada_Analyzer is
             Char         : Character;
 
          begin
-            Prev_Token := Tok_Colon;
+            Set_Prev_Token (Tok_Colon);
             Non_Blank := Start_Of_Line;
             Is_Parameter := False;
             Is_Discriminant := False;
@@ -3238,13 +3241,13 @@ package body Ada_Analyzer is
                --            =>
 
                Compute_Indentation
-                 (Tok_Arrow, Prev_Token, Prev_Prev_Token,
+                 (Tok_Arrow, Prev_Token, Prev2_Token,
                   P, L, Num_Spaces);
             else
                Do_Indent (P, L, Num_Spaces);
             end if;
 
-            Prev_Token := Tok_Arrow;
+            Set_Prev_Token (Tok_Arrow);
             Next_Tok := Next (Tokens);
 
             if (Local_Top_Token.Token = Tok_When
@@ -3730,14 +3733,14 @@ package body Ada_Analyzer is
                   Skip_First_Line    => False);
             end if;
 
-            Prev3_Token := Prev_Prev_Token;
-            Prev_Prev_Token := Prev_Token;
+            Prev3_Token := Prev2_Token;
+            Prev2_Token := Prev_Token;
             Token_Found := True;
 
             case Buffer (P) is
                when '#' =>
                   First := P;
-                  Prev_Token := Tok_Pound;
+                  Set_Prev_Token (Tok_Pound);
 
                   if (P = Buffer'First
                       or else not Is_Alphanumeric (Buffer (P - 1)))
@@ -3750,15 +3753,15 @@ package body Ada_Analyzer is
 
                when '[' =>
                   First := P;
-                  Prev_Token := Tok_Left_Square_Bracket;
+                  Set_Prev_Token (Tok_Left_Square_Bracket);
 
                when ']' =>
                   First := P;
-                  Prev_Token := Tok_Right_Square_Bracket;
+                  Set_Prev_Token (Tok_Right_Square_Bracket);
 
                when '(' =>
                   First := P;
-                  Prev_Token := Tok_Left_Paren;
+                  Set_Prev_Token (Tok_Left_Paren);
 
                   if Num_Parens = 0 then
                      if In_Declaration = Subprogram_Decl
@@ -3769,7 +3772,7 @@ package body Ada_Analyzer is
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
                         Is_Discriminant := True;
-                     elsif Prev_Prev_Token = Tok_Is
+                     elsif Prev2_Token = Tok_Is
                        and then Local_Top_Token.Token = Tok_Function
                      then
                         --  This is an expression function so we won't have
@@ -3789,11 +3792,11 @@ package body Ada_Analyzer is
                      Push (Paren_Stack, Top (Paren_Stack).all);
                   elsif Local_Top_Token.Token = Tok_Type then
                      Push (Paren_Stack, Type_Declaration);
-                  elsif Prev_Prev_Token in Tok_Return | Tok_Use then
+                  elsif Prev2_Token in Tok_Return | Tok_Use then
                      Push (Paren_Stack, Aggregate);
-                  elsif Prev_Prev_Token in Reserved_Token_Type then
+                  elsif Prev2_Token in Reserved_Token_Type then
                      Push (Paren_Stack, Conditional);
-                  elsif Prev_Prev_Token = Tok_Identifier then
+                  elsif Prev2_Token = Tok_Identifier then
                      Push (Paren_Stack, Function_Call);
                   else
                      Push (Paren_Stack, Aggregate);
@@ -3822,7 +3825,7 @@ package body Ada_Analyzer is
                        and then not Is_Blank (Char)
                        and then Char /= '('
                        and then Char /= '''
-                       and then not Is_Extended_Operator (Prev_Prev_Token)
+                       and then not Is_Extended_Operator (Prev2_Token)
                      then
                         Spaces (2) := Buffer (P);
                         Replace_Text (P, P + 1, L, Spaces (1 .. 2));
@@ -3832,18 +3835,18 @@ package body Ada_Analyzer is
                      --  Indent with extra spaces if the '(' is the first
                      --  non blank character on the line
 
-                     if Prev_Prev_Token = Tok_Comma then
+                     if Prev2_Token = Tok_Comma then
                         Adjust := 1;
                      else
                         Adjust := Indent_Continue + 1;
                      end if;
 
-                     if Prev_Prev_Token = Tok_Comma
-                       or else Prev_Prev_Token = Tok_Ampersand
+                     if Prev2_Token = Tok_Comma
+                       or else Prev2_Token = Tok_Ampersand
                      then
                         Do_Indent (P, L, Num_Spaces);
                      else
-                        if Prev_Prev_Token = Tok_Colon_Equal
+                        if Prev2_Token = Tok_Colon_Equal
                           and then Local_Top_Token.Colon_Col /= 0
                           and then Continuation_Val = 0
                         then
@@ -3856,10 +3859,10 @@ package body Ada_Analyzer is
                         Do_Indent
                           (P, L, Num_Spaces,
                            Continuation =>
-                             Prev_Prev_Token = Tok_Apostrophe
-                             or else Prev_Prev_Token = Tok_Arrow
+                             Prev2_Token = Tok_Apostrophe
+                             or else Prev2_Token = Tok_Arrow
                              or else not Paren_In_Middle
-                             or else Prev_Prev_Token in Reserved_Token_Type);
+                             or else Prev2_Token in Reserved_Token_Type);
                         Paren_In_Middle := Tmp;
                      end if;
                   end if;
@@ -3908,7 +3911,7 @@ package body Ada_Analyzer is
 
                      elsif In_Declaration = Subprogram_Decl
                        or else Top (Paren_Stack).all = Type_Declaration
-                       or else Prev_Prev_Token = Tok_Arrow
+                       or else Prev2_Token = Tok_Arrow
                        or else (Format and then
                                 (Num_Parens = 1
                                  or else Find_Arrow (P + 1) /= 0))
@@ -3925,7 +3928,7 @@ package body Ada_Analyzer is
                      else
                         if Top (Indents).Level = None then
                            Level := Num_Spaces + Adjust;
-                        elsif Prev_Prev_Token = Tok_Left_Paren
+                        elsif Prev2_Token = Tok_Left_Paren
                           or else Top (Indents).Line = L
                         then
                            Level := Top (Indents).Level;
@@ -3987,7 +3990,7 @@ package body Ada_Analyzer is
                   end if;
 
                   First := P;
-                  Prev_Token := Tok_Right_Paren;
+                  Set_Prev_Token (Tok_Right_Paren);
                   Close_Parenthesis;
 
                when '"' =>
@@ -4031,15 +4034,15 @@ package body Ada_Analyzer is
                            Local_Top_Token.Sloc_Name.Index := First;
                         end if;
 
-                        Prev_Token := Tok_Operator_Symbol;
+                        Set_Prev_Token (Tok_Operator_Symbol);
                         Entity     := Block_Text;
                      else
-                        Prev_Token := Tok_String_Literal;
+                        Set_Prev_Token (Tok_String_Literal);
                         Entity     := String_Text;
                      end if;
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, Prev3_Token,
+                       (Prev_Token, Prev2_Token, Prev3_Token,
                         P, L, Num_Spaces);
 
                      if Callback /= null then
@@ -4068,12 +4071,12 @@ package body Ada_Analyzer is
                   case Buffer (P) is
                      when '+' | '-' =>
                         if Buffer (P) = '-' then
-                           Prev_Token := Tok_Minus;
+                           Set_Prev_Token (Tok_Minus);
                         else
-                           Prev_Token := Tok_Plus;
+                           Set_Prev_Token (Tok_Plus);
                         end if;
 
-                        if Prev_Prev_Token = Tok_Identifier
+                        if Prev2_Token = Tok_Identifier
                           and then
                             (P <= Buffer'First + 1
                              or else To_Upper (Buffer (P - 1)) /= 'E'
@@ -4092,9 +4095,9 @@ package body Ada_Analyzer is
 
                      when '&' | '|' =>
                         if Buffer (P) = '&' then
-                           Prev_Token := Tok_Ampersand;
+                           Set_Prev_Token (Tok_Ampersand);
                         else
-                           Prev_Token := Tok_Vertical_Bar;
+                           Set_Prev_Token (Tok_Vertical_Bar);
                         end if;
 
                         Insert_Spaces := True;
@@ -4122,13 +4125,13 @@ package body Ada_Analyzer is
                            Handle_Two_Chars ('=');
 
                            if Buffer (P) = '/' then
-                              Prev_Token := Tok_Not_Equal;
+                              Set_Prev_Token (Tok_Not_Equal);
                            else
-                              Prev_Token := Tok_Colon_Equal;
+                              Set_Prev_Token (Tok_Colon_Equal);
                            end if;
 
                         elsif Buffer (P) = '/' then
-                           Prev_Token := Tok_Slash;
+                           Set_Prev_Token (Tok_Slash);
                         else
                            Handle_Colon;
                         end if;
@@ -4146,9 +4149,9 @@ package body Ada_Analyzer is
                           and then Buffer (Next_Char (P)) = '*'
                         then
                            Handle_Two_Chars ('*');
-                           Prev_Token := Tok_Double_Asterisk;
+                           Set_Prev_Token (Tok_Double_Asterisk);
                         else
-                           Prev_Token := Tok_Asterisk;
+                           Set_Prev_Token (Tok_Asterisk);
                         end if;
 
                      when '.' =>
@@ -4162,9 +4165,9 @@ package body Ada_Analyzer is
 
                         if Insert_Spaces then
                            Handle_Two_Chars ('.');
-                           Prev_Token := Tok_Dot_Dot;
+                           Set_Prev_Token (Tok_Dot_Dot);
                         else
-                           Prev_Token := Tok_Dot;
+                           Set_Prev_Token (Tok_Dot);
                         end if;
 
                      when '<' =>
@@ -4175,25 +4178,25 @@ package body Ada_Analyzer is
                               case Buffer (Next_Tmp) is
                                  when '=' =>
                                     Insert_Spaces := True;
-                                    Prev_Token    := Tok_Less_Equal;
+                                    Set_Prev_Token (Tok_Less_Equal);
                                     Handle_Two_Chars ('=');
 
                                  when '<' =>
-                                    Prev_Token    := Tok_Less_Less;
+                                    Set_Prev_Token (Tok_Less_Less);
                                     Insert_Spaces := False;
                                     Handle_Two_Chars ('<');
 
                                  when '>' =>
-                                    Prev_Token    := Tok_Box;
+                                    Set_Prev_Token (Tok_Box);
                                     Insert_Spaces := False;
                                     Handle_Two_Chars ('>');
 
                                  when others =>
-                                    Prev_Token    := Tok_Less;
+                                    Set_Prev_Token (Tok_Less);
                                     Insert_Spaces := True;
                               end case;
                            else
-                              Prev_Token    := Tok_Less;
+                              Set_Prev_Token (Tok_Less);
                               Insert_Spaces := True;
                            end if;
                         end;
@@ -4206,20 +4209,20 @@ package body Ada_Analyzer is
                               case Buffer (Next_Tmp) is
                                  when '=' =>
                                     Insert_Spaces := True;
-                                    Prev_Token    := Tok_Greater_Equal;
+                                    Set_Prev_Token (Tok_Greater_Equal);
                                     Handle_Two_Chars ('=');
 
                                  when '>' =>
-                                    Prev_Token    := Tok_Greater_Greater;
+                                    Set_Prev_Token (Tok_Greater_Greater);
                                     Insert_Spaces := False;
                                     Handle_Two_Chars ('>');
 
                                  when others =>
-                                    Prev_Token    := Tok_Greater;
+                                    Set_Prev_Token (Tok_Greater);
                                     Insert_Spaces := True;
                               end case;
                            else
-                              Prev_Token    := Tok_Greater;
+                              Set_Prev_Token (Tok_Greater);
                               Insert_Spaces := True;
                            end if;
                         end;
@@ -4232,7 +4235,7 @@ package body Ada_Analyzer is
                         then
                            Handle_Arrow;
                         else
-                           Prev_Token := Tok_Equal;
+                           Set_Prev_Token (Tok_Equal);
                         end if;
 
                      when others =>
@@ -4257,7 +4260,7 @@ package body Ada_Analyzer is
 
                   if (Num_Parens = 0
                       or else Prev_Token = Tok_Vertical_Bar
-                      or else Prev_Prev_Token
+                      or else Prev2_Token
                                 in Tok_Arrow | Tok_Then | Tok_Else)
                     and then Local_Top_Token.Token /= Tok_When
                   then
@@ -4267,7 +4270,7 @@ package body Ada_Analyzer is
                      --  handled separately.
 
                      Compute_Indentation
-                       (Prev_Token, Prev_Prev_Token, Prev3_Token,
+                       (Prev_Token, Prev2_Token, Prev3_Token,
                         P, L, Num_Spaces);
                   else
                      Do_Indent (P, L, Num_Spaces);
@@ -4282,7 +4285,7 @@ package body Ada_Analyzer is
                   First := P;
 
                   if Buffer (P) = ';' then
-                     Prev_Token := Tok_Semicolon;
+                     Set_Prev_Token (Tok_Semicolon);
                      Right_Assignment := False;
 
                      if Aspect_Clause
@@ -4339,7 +4342,7 @@ package body Ada_Analyzer is
                      end if;
 
                   else
-                     Prev_Token := Tok_Comma;
+                     Set_Prev_Token (Tok_Comma);
 
                      if Local_Top_Token.In_Declaration
                        and then Local_Top_Token.Token = Tok_Identifier
@@ -4395,7 +4398,7 @@ package body Ada_Analyzer is
                      or else Prev_Token in Token_Class_Literal
                      or else P = End_Of_Line
                   then
-                     Prev_Token := Tok_Apostrophe;
+                     Set_Prev_Token (Tok_Apostrophe);
                   else
                      if P = End_Of_Line - 1 then
                         P := P + 1;
@@ -4409,7 +4412,7 @@ package body Ada_Analyzer is
                         P := Next_Char (P);
                      end loop;
 
-                     Prev_Token := Tok_Char_Literal;
+                     Set_Prev_Token (Tok_Char_Literal);
 
                      if Callback /= null then
                         if Call_Callback
@@ -4487,6 +4490,16 @@ package body Ada_Analyzer is
             Padding := Padding + Str'Length - (Last - First);
          end if;
       end Replace_Text;
+
+      --------------------
+      -- Set_Prev_Token --
+      --------------------
+
+      procedure Set_Prev_Token (Token : Token_Type) is
+      begin
+         Prev_Prev_Token := Prev_Token;
+         Prev_Token := Token;
+      end Set_Prev_Token;
 
       -------------------
       -- Call_Callback --
@@ -4861,9 +4874,8 @@ package body Ada_Analyzer is
                Current, Line_Count, Num_Spaces);
          end if;
 
-         Prec            := Current + 1;
-         Prev_Prev_Token := Prev_Token;
-         Prev_Token      := Token;
+         Prec := Current + 1;
+         Set_Prev_Token (Token);
 
          exit Main_Loop when Prec > Buffer_Last;
 
