@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2010-2017, AdaCore                     --
+--                     Copyright (C) 2010-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1021,7 +1021,7 @@ package body Toolchains_Editor is
       Trace (Me, "Refresh_Details_View called");
 
       --  If no toolchain has been scanned yet, don't display the view yet
-      if not Page.Compilers_Scanned then
+      if Page.Scan_Status in Not_Launched .. Scanning then
          return;
       end if;
 
@@ -1386,12 +1386,23 @@ package body Toolchains_Editor is
       return Command_Return_Type is
       Manager : constant Toolchain_Manager :=
                   Get_Or_Create_Manager (Command.Editor.Kernel);
+      Success : aliased Boolean;
    begin
       Trace (Me, "Scanning all the avalaible toolchains...");
 
+      Command.Editor.Scan_Status := Scanning;
+
       --  Scan all the avalaible toolchains using GPRconfig
       Compute_Gprconfig_Compilers
-        (Manager, Success => Command.Editor.Compilers_Scanned);
+        (Manager,
+         Success => Success);
+
+      if Success then
+         Command.Editor.Scan_Status := Complete;
+      else
+         Command.Editor.Scan_Status := Failed;
+      end if;
+
       Manager.Do_Snapshot;
 
       return Commands.Success;
@@ -1415,11 +1426,12 @@ package body Toolchains_Editor is
       Command.Editor.Model.Clear;
 
       --  Display an error message if avalaible compilers could not be scanned
-      if not Command.Editor.Compilers_Scanned then
+      if Command.Editor.Scan_Status = Failed then
          Command.Editor.Kernel.Insert
            ("Warning: GPS could not scan all the avalaible compilers on "
-            & "your host. Please verify if your GPRbuild version supports this"
-            & " feature (>= 1.5.0).",
+            & "your host. Please verify that GPRbuild is available in your "
+            & "PATH and if your GPRbuild version supports this "
+            & "feature (>= 1.5.0).",
             Mode => Error);
       end if;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2010-2017, AdaCore                     --
+--                     Copyright (C) 2010-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -91,9 +91,12 @@ private
       Kernel          : access Kernel_Handle_Record'Class;
       Languages       : Gtk_Tree_View;
       Lang_Model      : Gtk_Tree_Store;
-
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
    end record;
+
+   type Compilers_Scan_Status is (Not_Launched, Scanning, Complete, Failed);
+   --  Type representing the different statuses when scanning the compilers
+   --  available on the user's host.
 
    type Toolchain_Page_Record is new Project_Editor_Page_Record
      (Flags => Multiple_Projects or Multiple_Scenarios)
@@ -104,7 +107,7 @@ private
       Toolchains_View   : Dialog_View_With_Button_Box;
       Details_View      : Dialog_View;
       Toolchain         : Toolchains.Toolchain := Toolchains.Null_Toolchain;
-      Compilers_Scanned : Boolean := False;
+      Scan_Status       : Compilers_Scan_Status := Not_Launched;
       Read_Only         : Boolean := False;
       Edited_Prj        : GNATCOLL.Projects.Project_Type;
 
