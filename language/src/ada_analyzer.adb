@@ -750,7 +750,8 @@ package body Ada_Analyzer is
       --  Aspect_Clause is True.
 
       type In_Declaration_Kind is
-        (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl);
+        (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl,
+         Expression_Function);
 
       In_Declaration : In_Declaration_Kind := No_Decl;
       --  Identifies when we are in a declaration
@@ -3779,12 +3780,7 @@ package body Ada_Analyzer is
                         --  and 'end function', unindent accordingly.
 
                         Num_Spaces := Num_Spaces - Indent_Level;
-
-                        --  ??? The code below is not quite right: ideally we
-                        --  want to register the end of the expression function
-                        --  at the semicolon.
-
-                        Pop_And_Set_Local (Tokens);
+                        In_Declaration := Expression_Function;
                      end if;
                   end if;
 
@@ -4825,7 +4821,7 @@ package body Ada_Analyzer is
                  or else (Token = Tok_Is and then not In_Generic)
                then
                   In_Declaration := No_Decl;
-               elsif In_Declaration = Subprogram_Decl
+               elsif In_Declaration in Subprogram_Decl | Expression_Function
                  and then Token = Tok_With
                then
                   In_Declaration := Subprogram_Aspect;
