@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -755,9 +755,11 @@ package body GPS.Kernel.Preferences is
         (Name    => "Src-Editor-Transient-Mark",
          Default => False,
          Doc     =>
-           -("If unset, the selected region is never unselected when "
-           & "the clipboard is modified by a Cut/Copy/Paste operation. "
-           & "This is broadly similar to the Emacs mode with the same name"),
+           -("The selected region normally remains selected when the"
+           & " clipboard is modified by a Cut/Copy/Paste operation. If this"
+           & " option is set, the selection will become unset when the"
+           & " clipboard is modified. This is similar to the Emacs mode"
+           & " with the same name."),
          Label   => -"Transient mark",
          Path    => -"Editor:Behavior");
 
