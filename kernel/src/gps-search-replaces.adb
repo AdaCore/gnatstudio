@@ -437,6 +437,9 @@ package body GPS.Search.Replaces is
                   Pos := Pos + Result.References (Count).Object.Origin_Length;
                elsif Replace_String (Pos + 1) = '\' then
                   Pos := Pos + 2;
+               else
+                  --  Not a known pattern, do not interpret the \.
+                  Pos := Pos + 1;
                end if;
             else
                Pos := Pos + 1;
