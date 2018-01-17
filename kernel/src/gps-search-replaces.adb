@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013-2017, AdaCore                     --
+--                     Copyright (C) 2013-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -437,6 +437,9 @@ package body GPS.Search.Replaces is
                   Pos := Pos + Result.References (Count).Object.Origin_Length;
                elsif Replace_String (Pos + 1) = '\' then
                   Pos := Pos + 2;
+               else
+                  --  Not a known pattern, do not interpret the \.
+                  Pos := Pos + 1;
                end if;
             else
                Pos := Pos + 1;
