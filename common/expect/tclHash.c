@@ -4,7 +4,7 @@
  *	Implementation of in-memory hash tables for Tcl and Tcl-based
  *	applications.
  *
- * Copyright (C) 2006-2017, AdaCore
+ * Copyright (C) 2006-2018, AdaCore
  * Copyright (c) 1991-1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *
