@@ -273,7 +273,7 @@ class BoardLoader(Module):
                 process = GPS.Process(["st-util", '--help'])
                 output = process.get_result()
                 has_semihosting = semihosting_switch in output
-            except:
+            except Exception:
                 has_semihosting = False
 
             if has_semihosting:
@@ -347,7 +347,7 @@ class BoardLoader(Module):
 
         # Create the build targets needed in order to flash/debug the board
         # if not created yet.
-        if not self.__buildTargets and active:
+        if not self.__buildTargets:
             workflows.create_target_from_workflow(
                 parent_menu='/Build/Bareboard/Flash to Board/',
                 target_name="Flash to Board",
@@ -440,7 +440,7 @@ class BoardLoader(Module):
 
         try:
             con = promises.ProcessWrapper(cmd)
-        except:
+        except Exception:
             self.__error_exit("Could not launch executable %s" % (cmd[0]))
             return
 
@@ -460,7 +460,7 @@ class BoardLoader(Module):
 
         try:
             con = promises.ProcessWrapper(cmd)
-        except:
+        except Exception:
             self.__error_exit("Could not launch executable %s." % (cmd[0]))
             return
 
@@ -482,7 +482,7 @@ class BoardLoader(Module):
                 self.__error_exit(msg="Could not flash the executable.")
                 con.terminate()
                 return
-        except:
+        except Exception:
             self.__error_exit("Could not connect to the board.")
             return
 
@@ -547,7 +547,7 @@ class BoardLoader(Module):
             if output is None:
                 self.__error_exit(msg="Could not connect to the board.")
                 return
-        except:
+        except Exception:
             self.__error_exit("Could not connect to the board.")
             return
 
