@@ -100,6 +100,10 @@ package body Code_Analysis_Module is
 
    type Code_Analysis_Instance is access Code_Analysis_Instance_Record;
 
+   function Get_Analysis
+     (View : Code_Analysis_View) return Code_Analysis_Instance;
+   --  Retrieve the analysis from the view.
+
    --------------
    -- Analyzes --
    --------------
@@ -421,6 +425,17 @@ package body Code_Analysis_Module is
    procedure Activate_Pango_Markup (Item : Gtk_Menu_Item);
    --  Allow to use pango markup when setting the item label
 
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr;
+   --  Save the status of the code analysis view to an XML tree
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Restore the status of the code analysis view from a saved XML tree
+
    procedure Dump_To_File
      (Analysis : Code_Analysis_Instance;
       File     : GNATCOLL.VFS.Virtual_File);
@@ -437,6 +452,28 @@ package body Code_Analysis_Module is
       Command : String);
    --  Replace the current coverage information in memory with the given
    --  xml-formated file one
+
+   ------------------
+   -- Get_Analysis --
+   ------------------
+
+   function Get_Analysis
+     (View : Code_Analysis_View) return Code_Analysis_Instance
+   is
+      use Code_Analysis_Instances;
+      Cursor : Code_Analysis_Instances.Cursor :=
+                 Code_Analysis_Module_ID.Analyzes.First;
+   begin
+      while Has_Element (Cursor) loop
+         if View.Name = Element (Cursor).Name.all then
+            return Element (Cursor);
+         end if;
+
+         Next (Cursor);
+      end loop;
+
+      return null;
+   end Get_Analysis;
 
    -------------
    -- Destroy --
@@ -1944,6 +1981,61 @@ package body Code_Analysis_Module is
    end Activate_Pango_Markup;
 
    ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      Root     : Node_Ptr;
+      Analysis : Code_Analysis_Instance;
+
+   begin
+      if Widget.all in Code_Analysis_View_Record'Class then
+         Analysis := Get_Analysis (Code_Analysis_View (Widget));
+         Root     := new XML_Utils.Node;
+         Root.Tag := new String'("Code_Analysis_Tree");
+         if Analysis /= null then
+            Set_Attribute (Root, "name", Analysis.Name.all);
+         else
+            Set_Attribute (Root, "name", -"Coverage");
+         end if;
+
+         return Root;
+      else
+         return null;
+      end if;
+   end Save_Desktop;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      Analysis    : Code_Analysis_Instance;
+
+   begin
+      if Node.Tag.all = "Code_Analysis_Tree" then
+         Analysis := Get_Or_Create (Get_Attribute (Node, "name"));
+
+         --  We do not parse the subtree, as the project is not loaded yet,
+         --  and we need it loaded to restore the view. This will be done later
+         --  upon "project_changed" hook.
+         --  We just create the report view and display it.
+         return MDI_Child (Get_Or_Create (User, Analysis, Create => True));
+      else
+         return null;
+      end if;
+   end Load_Desktop;
+
+   ------------------
    -- Dump_To_File --
    ------------------
 
@@ -2131,6 +2223,8 @@ package body Code_Analysis_Module is
 
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+
+      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       --  Shell commands registration
       Register_Command

@@ -16,14 +16,12 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;            use GNAT.Strings;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with Code_Coverage;           use Code_Coverage;
 with Projects;                use Projects;
 with UTF8_Utils;              use UTF8_Utils;
 
 package body Code_Analysis_XML is
-   Me : constant Trace_Handle := Create ("CODE_ANALYSIS");
 
    procedure Dump_Project
      (Prj_Node : Project_Access;
@@ -44,43 +42,6 @@ package body Code_Analysis_XML is
    procedure Parse_File
      (File_Node : Code_Analysis.File_Access;
       Parent    : Node_Ptr);
-
-   ----------------------
-   -- Dump_Desktop_XML --
-   ----------------------
-
-   procedure Dump_Desktop_XML
-     (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr)
-   is
-      use Project_Maps, File_Maps;
-      Prj_Cur   : Project_Maps.Cursor := Projects.First;
-      Prj_Node  : Node_Ptr;
-      File_Cur  : File_Maps.Cursor;
-      File_Node : Node_Ptr;
-   begin
-      while Has_Element (Prj_Cur) loop
-         --  Create the project node
-         Prj_Node := new XML_Utils.Node;
-         Prj_Node.Tag := new String'("Project");
-         Add_Child (Parent, Prj_Node, True);
-         Add_File_Child
-           (Prj_Node, "name", Project_Path (Element (Prj_Cur).Name));
-
-         --  And add files as children
-         File_Cur := Element (Prj_Cur).Files.First;
-         while Has_Element (File_Cur) loop
-            File_Node := new XML_Utils.Node;
-            File_Node.Tag := new String'("File");
-            Add_Child (Prj_Node, File_Node, True);
-            Add_File_Child (File_Node, "name", Element (File_Cur).Name);
-
-            Next (File_Cur);
-         end loop;
-
-         Next (Prj_Cur);
-      end loop;
-   end Dump_Desktop_XML;
 
    -------------------
    -- Dump_Full_XML --
@@ -107,61 +68,6 @@ package body Code_Analysis_XML is
          Dump_Project (Sort_Arr (J), Parent);
       end loop;
    end Dump_Full_XML;
-
-   -----------------------
-   -- Parse_Desktop_XML --
-   -----------------------
-
-   procedure Parse_Desktop_XML
-     (Project  : Project_Type;
-      Node     : Node_Ptr)
-   is
-      Iter       : Project_Iterator;
-      Prj_Child  : Node_Ptr;
-      File       : Virtual_File;
-      File_Child : Node_Ptr;
-
-   begin
-      if Node = null then
-         return;
-      end if;
-
-      Prj_Child := Node.Child;
-
-      while Prj_Child /= null loop
-         if Prj_Child.Tag.all = "Project" then
-
-            --  Let's find the corresponding Project_Type
-            File    := Get_File_Child (Prj_Child, "name");
-            Iter    := Start (Project, True, False, True);
-
-            while Current (Iter) /= No_Project loop
-               exit when Project_Path (Current (Iter)) = File;
-               Next (Iter);
-            end loop;
-
-            --  Found the project: now get its source files
-            if Current (Iter) /= No_Project then
-               File_Child := Prj_Child.Child;
-
-               while File_Child /= null loop
-                  if File_Child.Tag.all = "File" then
-                     File := Get_File_Child (File_Child, "name");
-                     On_New_File (Current (Iter), File);
-                  end if;
-
-                  File_Child := File_Child.Next;
-               end loop;
-            end if;
-         end if;
-
-         Prj_Child := Prj_Child.Next;
-      end loop;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Parse_Desktop_XML;
 
    --------------------
    -- Parse_Full_XML --
