@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -67,6 +67,12 @@ package Src_Contexts is
    type Source_Search_Occurrence is
      access all Source_Search_Occurrence_Record'Class;
    --  Type used to represent a search occurence for source files
+
+   overriding function Is_Equal
+     (Left  : not null access Source_Search_Occurrence_Record;
+      Right : not null access Source_Search_Occurrence_Record) return Boolean;
+   --  Return True when the Left and Right occurrences are equal (i.e: same
+   --  location).
 
    ------------------
    -- File context --

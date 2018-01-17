@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -312,6 +312,19 @@ package body Src_Contexts is
    --  Return the window on which the loop back popup should be displayed.
    --  This should be the current editor's window (if any) or the GPS current
    --  window.
+
+   --------------
+   -- Is_Equal --
+   --------------
+
+   overriding function Is_Equal
+     (Left  : not null access Source_Search_Occurrence_Record;
+      Right : not null access Source_Search_Occurrence_Record)
+      return Boolean is
+   begin
+      return (Left.Match_From = Right.Match_From
+              and then Left.Match_Up_To = Right.Match_Up_To);
+   end Is_Equal;
 
    -----------------
    -- Scan_Buffer --

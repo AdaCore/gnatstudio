@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -193,6 +193,12 @@ package Find_Utils is
    --  This can be used to keep track of all the occurrences that have been
    --  found until now and to display one in particular (see the
    --  Highlight_Occurrence subprogram).
+
+   function Is_Equal
+     (Left  : not null access Search_Occurrence_Record;
+      Right : not null access Search_Occurrence_Record) return Boolean
+      is abstract;
+   --  Return true when the given search occurrences are equal.
 
    procedure Initialize
      (Occurrence : not null access Search_Occurrence_Record'Class;

@@ -1072,11 +1072,24 @@ package body Vsearch is
                Found                => Found,
                Continue             => Has_Next);
 
-            --  Push the occurrence in the module's search occurrences stack
-            --  if it supports the incremental search mode. Free it otherwise.
+            --  Push the occurrence in the module's search occurrences stack if
+            --  it supports the incremental search mode and if it's different
+            --  from the last one that was pushed. Free it otherwise.
+
             if Occurrence /= null then
                if Is_In_Incremental_Mode then
-                  Module.Push_Occurrence (Occurrence);
+                  declare
+                     Last_Occurrence : constant Search_Occurrence :=
+                                         Module.Get_Last_Occurrence;
+                  begin
+                     if Last_Occurrence = null
+                       or else not Last_Occurrence.Is_Equal (Occurrence)
+                     then
+                        Module.Push_Occurrence (Occurrence);
+                     else
+                        Free (Occurrence);
+                     end if;
+                  end;
                else
                   Free (Occurrence);
                end if;
@@ -1115,8 +1128,9 @@ package body Vsearch is
                      Is_Error  => True);
                end if;
                Ctxt.Set_End_Notif_Done (True);
-               Vsearch_Module_Id.Search_Has_Failed := True;
             end if;
+
+            Vsearch_Module_Id.Search_Has_Failed := not Found;
 
             --  We keep the "Next" mode until a new context is created by
             --  the user, so that even after reaching the end of the search,
@@ -1612,58 +1626,48 @@ package body Vsearch is
                return False;
             end if;
 
-            --  Pop the last saved occurence and use the one just after, so
-            --  that we don't go to the same occurrence every time.
             if not Vsearch_Module_Id.Search_Has_Failed then
+
+               --  Pop the last saved occurence and use the one just after, so
+               --  that we don't go to the same occurrence every time.
                Occurrence := Module.Pop_Occurrence;
                Free (Occurrence);
-            else
-               Vsearch_Module_Id.Search_Has_Failed := False;
-            end if;
 
-            Occurrence := Module.Get_Last_Occurrence;
+               Occurrence := Module.Get_Last_Occurrence;
 
-            if Occurrence /= null then
+               if Occurrence /= null then
 
-               --  Clear the module's occurrences stack if the last
-               --  occurrence's pattern contains only one character. This
-               --  avoids going back to previous searches.
-               if Occurrence.Get_Pattern'Length = 1 then
-                  Module.Clear_Occurrences;
-                  return False;
+                  --  Clear the module's occurrences stack if the last
+                  --  occurrence's pattern contains only one character. This
+                  --  avoids going back to previous searches.
+                  if Occurrence.Get_Pattern'Length = 1 then
+                     Module.Clear_Occurrences;
+                     return False;
+                  end if;
+
+                  Vsearch_Module_Id.Locked := True;
+
+                  --  Remove any displayed information since and set the
+                  --  sensitivity of the 'Replace' and 'Replace and Find'
+                  --  buttons since a match has been found.
+                  Remove_Information_On_Child
+                    (Vsearch.Main_View,
+                     Child_Key => Pattern_Child_Key);
+                  Vsearch.Replace_Button.Set_Sensitive (True);
+                  Vsearch.Replace_Search_Button.Set_Sensitive (True);
+                  Reset_Interactive_Context (Vsearch);
+
+                  Set_Active_Text
+                    (Vsearch.Pattern_Combo,
+                     Occurrence.Get_Pattern);
+                  Gtk_Entry
+                    (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
+                  Module.Highlight_Occurrence (Occurrence);
+
+                  Vsearch_Module_Id.Locked := False;
+
+                  return True;
                end if;
-
-               Vsearch_Module_Id.Locked := True;
-
-               --  Remove any displayed information since and set the
-               --  sensitivity of the 'Replace' and 'Replace and Find'
-               --  buttons since a match has been found.
-               Remove_Information_On_Child
-                 (Vsearch.Main_View,
-                  Child_Key => Pattern_Child_Key);
-               Vsearch.Replace_Button.Set_Sensitive (True);
-               Vsearch.Replace_Search_Button.Set_Sensitive (True);
-               Reset_Interactive_Context (Vsearch);
-
-               Set_Active_Text (Vsearch.Pattern_Combo, Occurrence.Get_Pattern);
-               Gtk_Entry
-                 (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
-               Module.Highlight_Occurrence (Occurrence);
-
-               Vsearch_Module_Id.Locked := False;
-
-               return True;
-            end if;
-         end;
-      elsif Key = GDK_Escape then
-         declare
-            Occurrence : constant Search_Occurrence :=
-                           Module.Get_Last_Occurrence;
-         begin
-            if Occurrence /= null then
-               Module.Give_Focus_To_Occurrence (Occurrence);
-
-               return True;
             end if;
          end;
       end if;
