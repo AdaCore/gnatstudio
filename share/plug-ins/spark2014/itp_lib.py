@@ -585,7 +585,7 @@ class Tree_with_process:
             print ("Cannot close tree")
         try:
             self.process.kill()
-        except Exception:
+        except BaseException:  # This is caught somewhere else and hang
             print ("Cannot kill why3_server process")
         try:
             self.timeout.remove()
@@ -611,6 +611,12 @@ class Tree_with_process:
             # Remove remaining stderr output (stderr and stdout are mixed) by
             # looking for the beginning of the notification (begins with {).
             i = notification.find("{")
+            notif = notification[i:]
+            if notif[:10] == "{ Failure:":
+                irr_error = "Irrecoverable error of manual proof." + notif
+                GPS.MDI.dialog(irr_error)
+                self.kill()
+                return
             p = json.loads(notification[i:])
             parse_notif(p, self, self.proof_task)
         except (ValueError):
@@ -657,7 +663,7 @@ class Tree_with_process:
         # send/on_match from GPS.Process (obviously not here).
         if not self.size_queue == 0 and not self.checking_notification:
             # We send only complete request and less than 4080 char
-            n = find_last(self.send_queue, ">>>>", 0, 4080)
+            n = find_last(self.send_queue, "\n", 0, 4080)
             if n == -1 or n == 0 or n is None:
                 self.send_queue = ""
                 self.size_queue = 0
@@ -680,7 +686,7 @@ class Tree_with_process:
         """
 
         print_debug(s)
-        self.send_queue = self.send_queue + s + ">>>>"
+        self.send_queue = self.send_queue + s + "\n"
         self.size_queue = self.size_queue + len(s) + 4
         # From different documentation, it can be assumed that pipes have a
         # size of at least 4096 (on all platforms). So, our heuristic is to

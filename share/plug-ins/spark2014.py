@@ -1192,16 +1192,19 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     # --limit-line=a.adb:42:42:VC_POSTCONDITION
     arg_limit_line = args[0].replace('=', ' ')
     proof_dir = has_proof_dir()
-    if proof_dir == "":
-        command = gnat_server + " "
+    if itp_lib.debug_file == "":
+        command = gnat_server
     else:
-        command = gnat_server + " " + "--proof-dir " + proof_dir + " "
+        command = gnat_server + " --debug-stack-trace"
+    if proof_dir == "":
+        command = command + " "
+    else:
+        command = command + " " + "--proof-dir " + proof_dir + " "
     if edit_session:
         if itp_lib.debug_file == "":
             command = command + mlw_file
         else:
-            d_st = "--debug-stack-trace "
-            command = command + d_st + mlw_file + " 2> " + itp_lib.debug_file
+            command = command + mlw_file + " 2> " + itp_lib.debug_file
     else:
         command = command + arg_limit_line + " " + mlw_file
     itp_lib.print_debug(command)
