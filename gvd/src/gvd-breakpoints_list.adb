@@ -108,15 +108,6 @@ package body GVD.Breakpoints_List is
    --  This is a good time to show, on the side of the editor, which lines
    --  have breakpoints.
 
-   procedure Show_Breakpoints_In_All_Editors
-     (Kernel                    : not null access Kernel_Handle_Record'Class;
-      Show_Debugger_Breakpoints : Boolean := True);
-   --  Update the side column for all editors, and show the breakpoints info
-   --
-   --  When Show_Debugger_Breakpoints is True, the breakpoints shown in the
-   --  editors will be the ones stored for the currently used debugger, if any.
-   --  Otherwise, it's the persistant ones that will be shown.
-
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
       B       : Breakpoint_Data);

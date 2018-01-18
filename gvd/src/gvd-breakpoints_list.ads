@@ -178,6 +178,15 @@ package GVD.Breakpoints_List is
    --  that debugger. Otherwise, this is the global list of persistent
    --  breakpoints.
 
+   procedure Show_Breakpoints_In_All_Editors
+     (Kernel                    : not null access Kernel_Handle_Record'Class;
+      Show_Debugger_Breakpoints : Boolean := True);
+   --  Update the side column for all editors, and show the breakpoints info
+   --
+   --  When Show_Debugger_Breakpoints is True, the breakpoints shown in the
+   --  editors will be the ones stored for the currently used debugger, if any.
+   --  Otherwise, it's the persistant ones that will be shown.
+
 private
    Null_Breakpoint : constant Breakpoint_Data :=
      (Num => No_Breakpoint, others => <>);
