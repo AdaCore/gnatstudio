@@ -1121,6 +1121,32 @@ package body GPS.Kernel.Contexts is
    end Debugging_Variable;
 
    ------------------------------
+   -- Set_Refactoring_Variable --
+   ------------------------------
+
+   procedure Set_Refactoring_Variable
+     (Context  : Selection_Context;
+      Variable : Context_Item_Access) is
+   begin
+      Context.Ref.Get.Refactoring_Variable := Variable;
+   end Set_Refactoring_Variable;
+
+   ------------------------------
+   -- Get_Refactoring_Variable --
+   ------------------------------
+
+   function Get_Refactoring_Variable
+     (Context : Selection_Context)
+      return Context_Item_Access is
+   begin
+      if not Context.Ref.Is_Null then
+         return Context.Ref.Get.Refactoring_Variable;
+      else
+         return null;
+      end if;
+   end Get_Refactoring_Variable;
+
+   ------------------------------
    -- Register_Default_Filters --
    ------------------------------
 

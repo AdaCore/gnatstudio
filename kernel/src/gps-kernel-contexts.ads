@@ -356,6 +356,18 @@ package GPS.Kernel.Contexts is
       return Context_Item_Access;
    --  Store information about debugger variable.
 
+   ------------------------
+   -- Debugger variables --
+   ------------------------
+
+   procedure Set_Refactoring_Variable
+     (Context  : Selection_Context;
+      Variable : Context_Item_Access);
+   function Get_Refactoring_Variable
+     (Context : Selection_Context)
+      return Context_Item_Access;
+   --  Store information about debugger variable.
+
 private
 
    pragma Inline (Has_Project_Information);

@@ -15,41 +15,44 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Basic_Types;            use Basic_Types;
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Glib;                   use Glib;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.Xref;          use GNATCOLL.Xref;
-with GPS.Editors;            use GPS.Editors;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Basic_Types;                     use Basic_Types;
+with Commands.Interactive;            use Commands, Commands.Interactive;
+with Glib;                            use Glib;
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Xref;                   use GNATCOLL.Xref;
+with GPS.Editors;                     use GPS.Editors;
+with GPS.Intl;                        use GPS.Intl;
+with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
 use GPS.Kernel.Messages, GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Dialog;             use Gtk.Dialog;
-with Gtk.GEntry;             use Gtk.GEntry;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Widget;             use Gtk.Widget;
-with Language;               use Language;
-with Language.Tree.Database; use Language.Tree.Database;
-with Refactoring.Services;   use Refactoring.Services;
-with Refactoring.Performers; use Refactoring.Performers;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Dialogs;            use GPS.Dialogs;
-with Xref;                   use Xref;
+with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;           use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;              use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
+with GPS.Kernel;                      use GPS.Kernel;
+with Gtk.Box;                         use Gtk.Box;
+with Gtk.Dialog;                      use Gtk.Dialog;
+with Gtk.GEntry;                      use Gtk.GEntry;
+with Gtk.Label;                       use Gtk.Label;
+with Gtk.Stock;                       use Gtk.Stock;
+with Gtk.Widget;                      use Gtk.Widget;
+with Language;                        use Language;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language.Tree.Database;          use Language.Tree.Database;
+with Refactoring.Services;            use Refactoring.Services;
+with Refactoring.Performers;          use Refactoring.Performers;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Utils;                  use GNATCOLL.Utils;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GPS.Dialogs;                     use GPS.Dialogs;
+with Xref;                            use Xref;
 
 package body Refactoring.Subprograms is
 
@@ -80,10 +83,6 @@ package body Refactoring.Subprograms is
       Source   : Virtual_File;
       --  The file in which the extracted code is at the start
 
-      Parent   : Root_Entity_Ref;
-      --  The subprogram that contained the extracted code before the
-      --  refactoring
-
       Entities : Extracted_Entity_Lists.List;
       --  The entities referenced in the extracted code
    end record;
@@ -99,6 +98,13 @@ package body Refactoring.Subprograms is
    --  Compute all entities referenced in the context.
    --  Returns Invalid_Context if something prevents the refactoring (an error
    --  message has already been displayed in that case).
+
+   type Separate_Method_Command is new Interactive_Command with null record;
+
+   overriding function Execute
+     (Command : access Separate_Method_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called for "Separate Method" menu
 
    ----------------
    -- Parameters --
@@ -186,6 +192,18 @@ package body Refactoring.Subprograms is
    --  Prepares the extracted code for pretty printing to its new location.
    --  In particular, this skips leading and trailing white spaces, and if the
    --  code starts with a comment it separates the comment from the code
+
+   type Separate_Context_Item is new Context_Item with record
+      From : Natural := 0;
+      To   : Natural := 0;
+   end record;
+   type Separate_Context_Item_Access is access all Separate_Context_Item;
+
+   type Is_Top_Level_Subprogram is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Top_Level_Subprogram;
+      Context : Selection_Context) return Boolean;
+   --  True if the Context contains package level subprogramm.
 
    ----------
    -- Free --
@@ -807,13 +825,12 @@ package body Refactoring.Subprograms is
       Get_Area (Context.Context, From_Line, To_Line);
       Extract := (Code => Create_Range
                   (Context => Get_Kernel (Context.Context).Refactoring_Context,
-                   File    => File_Information (Context.Context),
-                   Project => Project_Information (Context.Context),
+                   File      => File_Information (Context.Context),
+                   Project   => Project_Information (Context.Context),
                    From_Line => From_Line,
                    To_Line   => To_Line),
-                  Source         => No_File,
-                  Parent         => <>,
-                  Entities       => <>);
+                  Source     => No_File,
+                  Entities   => <>);
       Compute_Context_Entities
         (Extract, Db => Get_Kernel (Context.Context).Databases);
 
@@ -885,7 +902,6 @@ package body Refactoring.Subprograms is
                    From_Line => Nth_Arg (Data, 2),
                    To_Line   => Nth_Arg (Data, 3)),
                   Source         => No_File,
-                  Parent         => <>,
                   Entities       => <>);
       Compute_Context_Entities (Context, Db => Get_Kernel (Data).Databases);
 
@@ -899,6 +915,171 @@ package body Refactoring.Subprograms is
 
       Free (Context);
    end Command_Handler;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Top_Level_Subprogram;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+
+   begin
+      if not Has_Entity_Name_Information (Context) then
+         return False;
+      end if;
+
+      declare
+         Entity : constant Root_Entity'Class := Get_Entity (Context);
+      begin
+         if Entity = No_Root_Entity
+           or else not Is_Subprogram (Entity)
+         then
+            --  No Entity or it is not a subprogram
+            return False;
+         end if;
+
+         --  Checks whether the Entity is a subprogram body,
+         --  defined at a package level
+         declare
+            Loc : constant General_Location := Get_Body (Entity);
+         begin
+            if Loc.File /= File_Information (Context)
+              or else Loc.Line > GPS.Kernel.Contexts.Line_Information (Context)
+            then
+               --  It is not a body
+               return False;
+            end if;
+
+            --  Checking Entity's parent
+            declare
+               Current : Semantic_Tree_Iterator'Class :=
+                 Get_Kernel (Context).Get_Abstract_Tree_For_File
+                 ("EDIT", File_Information (Context)).Root_Iterator;
+            begin
+               while Has_Element (Current) loop
+                  declare
+                     Node : constant Semantic_Node'Class := Element (Current);
+                  begin
+                     if Node.Category in Cat_Procedure .. Cat_Method
+                       and then Node.Name = Get_Name (Get_Entity (Context))
+                       and then not Node.Is_Declaration
+                     then
+                        --  It is a semantic node which belong to the Entity
+                        if Node.Parent = No_Semantic_Node
+                          or else Node.Parent.Category /= Cat_Package
+                        then
+                           --  Entity's parent is not a package
+                           return False;
+                        end if;
+
+                        --  Is Entity's parent a top level package?
+                        if Node.Parent.Parent = No_Semantic_Node then
+                           declare
+                              Item : constant access Separate_Context_Item :=
+                                new Separate_Context_Item;
+                           begin
+                              --  Fill information and add it into the Context
+                              --  for a future usage in
+                              --  Separate_Method_Command.Execurt
+
+                              Item.From := Node.Sloc_Start.Line;
+                              Item.To   := Node.Sloc_End.Line;
+                              Item.Text := To_Unbounded_String
+                                (Name (Node.Parent));
+
+                              Set_Refactoring_Variable
+                                (Context, Context_Item_Access (Item));
+                           end;
+
+                           return True;
+                        else
+                           --  Entity's parent is not a top level package
+                           return False;
+                        end if;
+                     end if;
+                  end;
+
+                  Next (Current);
+               end loop;
+            end;
+         end;
+      end;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Separate_Method_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Item : constant Separate_Context_Item_Access :=
+        Separate_Context_Item_Access
+          (Get_Refactoring_Variable (Context.Context));
+      XEntity : constant Root_Entity'Class := Get_Entity (Context.Context);
+      Entity  : constant Language.Tree.Database.Entity_Access :=
+        Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
+      Editor : constant Editor_Buffer'Class :=
+      Get_Buffer_Factory (Kernel).Get (File_Information (Context.Context));
+      Loc_Start : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Item.From);
+      Loc_End   : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Item.To).End_Of_Line;
+
+      Struct : Structured_File_Access;
+      Spec   : Ada.Strings.Unbounded.Unbounded_String;
+      Impl   : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      Struct := Get_Or_Create
+        (Db   => Kernel.Refactoring_Context.Db.Constructs,
+         File => File_Information (Context.Context));
+      Update_Contents (Struct);
+
+      Spec := To_Unbounded_String
+        ((if Returned_Type (XEntity) = No_Root_Entity
+         then "   procedure "
+         else "   function ") & Get_Name (XEntity) & " " &
+           Get_Tree_Language (Struct).Get_Profile (Entity) & " is separate;" &
+           ASCII.LF);
+
+      Impl := To_Unbounded_String (Editor.Get_Chars (Loc_Start, Loc_End));
+      Editor.Start_Undo_Group;
+      Editor.Delete (Loc_Start, Loc_End);
+      Editor.Insert (Loc_Start, To_String (Spec));
+      Editor.Indent (Loc_Start, Loc_Start);
+      Editor.Finish_Undo_Group;
+
+      declare
+         New_Editor : constant Editor_Buffer'Class :=
+           Get_Buffer_Factory (Kernel).Get
+           (Create_From_Dir
+              (Dir (File_Information (Context.Context)),
+               Get_Project (Kernel).File_From_Unit
+               (Unit_Name       => Ada.Characters.Handling.To_Lower
+                (To_String (Item.Text) & "." & Get_Name (XEntity)),
+                Part            => GNATCOLL.Projects.Unit_Body,
+                File_Must_Exist => False,
+                Language        => "ada")),
+            Force => True, Open_Buffer => True, Open_View => True);
+      begin
+         New_Editor.Insert
+           (New_Editor.End_Of_Buffer,
+            "separate (" & To_String (Item.Text) & ")" & ASCII.LF &
+              To_String (Impl));
+         New_Editor.Indent
+           (New_Editor.Beginning_Of_Buffer, New_Editor.End_Of_Buffer);
+      end;
+
+      return Success;
+   end Execute;
 
    --------------------------
    -- Register_Refactoring --
@@ -923,6 +1104,21 @@ package body Refactoring.Subprograms is
         (Kernel,
          Label  => "Refactoring/Extract Subprogram",
          Action => "extract subprogram");
+
+      Register_Action
+        (Kernel, "separate subprogram",
+         Command     => new Separate_Method_Command,
+         Description =>
+           -"Move selected subprogram into its own separate package",
+         Filter  => Create (Module => "Source_Editor")
+         and Create (Language => "ada")
+         and new Is_Top_Level_Subprogram,
+         Category     => -"Refactoring",
+         For_Learning => True);
+      Register_Contextual_Menu
+        (Kernel,
+         Label  => "Refactoring/Separate Subprogram %e",
+         Action => "separate subprogram");
 
       if Active (Testsuite_Handle) then
          Kernel.Scripts.Register_Command

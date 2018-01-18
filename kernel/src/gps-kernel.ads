@@ -972,6 +972,8 @@ private
       --  Cache the result of each filter object applied to this context.
 
       GVD_Variable : Context_Item_Access := null;
+
+      Refactoring_Variable : Context_Item_Access := null;
    end record;
 
    procedure Free (Self : in out Selection_Context_Data_Record);

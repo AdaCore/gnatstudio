@@ -739,6 +739,7 @@ package body GPS.Kernel is
       end if;
 
       Unchecked_Free (Self.GVD_Variable);
+      Unchecked_Free (Self.Refactoring_Variable);
 
       Self.Instances.Free;
    end Free;
