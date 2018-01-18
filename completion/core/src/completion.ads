@@ -276,7 +276,7 @@ package Completion is
 
    function Get_Documentation
      (Proposal : Completion_Proposal)
-      return String is ("");
+      return String is abstract;
    --  Return custom documentation associated with this proposal
 
    function Is_Valid (Proposal : Completion_Proposal) return Boolean;
@@ -458,6 +458,9 @@ private
    overriding function Get_Visibility
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
+
+   overriding function Get_Documentation
+     (Proposal : Simple_Completion_Proposal) return String is ("");
 
    overriding function Match
      (Proposal : Simple_Completion_Proposal;

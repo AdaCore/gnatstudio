@@ -67,7 +67,7 @@ package Engine_Wrappers is
    function Get_Documentation
      (Proposal : Root_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String is ("");
+      return String is abstract;
    --  Some extra explanation on the proposal, to be displayed in the
    --  completion dialog. Typically, this will display the documentation for
    --  the corresponding entity if the proposal is based on a source code

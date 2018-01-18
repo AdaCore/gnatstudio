@@ -356,6 +356,24 @@ package body Completion.Python is
          Manager   => <>);
    end Create;
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   overriding function Deep_Copy
+     (Proposal : Simple_Python_Completion_Proposal)
+      return Completion_Proposal'Class is
+   begin
+      return Simple_Python_Completion_Proposal'
+        (Resolver      => Proposal.Resolver,
+         Name          => new String'(Proposal.Name.all),
+         Category      => Proposal.Category,
+         Label         => Proposal.Label,
+         Documentation => Proposal.Documentation,
+         Icon_Name     => Proposal.Icon_Name,
+         Action_Name   => Proposal.Action_Name);
+   end Deep_Copy;
+
    ---------------------------------
    -- Get_Initial_Completion_List --
    ---------------------------------
