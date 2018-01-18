@@ -53,8 +53,8 @@ returns a list of completion proposals, and one which is a function
 
     # Register both resolvers
 
-    GPS.Completion.register(Simple_Resolver())
-    GPS.Completion.register(Advanced_Resolver())
+    GPS.Completion.register(Simple_Resolver(), 'Ada')
+    GPS.Completion.register(Advanced_Resolver(), 'Ada')
 
 """
 

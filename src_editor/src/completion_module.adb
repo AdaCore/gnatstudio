@@ -1377,7 +1377,7 @@ package body Completion_Module is
         (Kernel, "Completion");
    begin
       Register_Command
-        (Kernel, "register", 1, 2,
+        (Kernel, "register", 2, 2,
          Command_Handler'Access, Completion_Class, Static_Method => True);
 
       --  ??? Need to implement the destructor

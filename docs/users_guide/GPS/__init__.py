@@ -9893,9 +9893,10 @@ class Completion(object):
     """
 
     @staticmethod
-    def register(resolver):
+    def register(resolver, language):
         """
         Registers a resolver, which inherits from :class:`CompletionResolver`.
+        language is a string indicating which language this resolver supports.
         """
 
 ###########################################################
