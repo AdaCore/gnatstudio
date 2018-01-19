@@ -24,18 +24,21 @@ with GPS.Editors; use GPS.Editors;
 
 package body LAL.Unit_Providers is
 
-   --------------
-   -- Get_Unit --
-   --------------
+   function Get_Unit_Filename
+     (Self : Unit_Provider'Class;
+      Name : Wide_Wide_String;
+      Kind : Libadalang.Analysis.Unit_Kind)
+      return GNATCOLL.VFS.Filesystem_String;
 
-   overriding function Get_Unit
-     (Provider    : Unit_Provider;
-      Context     : Libadalang.Analysis.Analysis_Context;
-      Name        : Wide_Wide_String;
-      Kind        : Libadalang.Analysis.Unit_Kind;
-      Charset     : String := "";
-      Reparse     : Boolean := False)
-      return Libadalang.Analysis.Analysis_Unit
+   -----------------------
+   -- Get_Unit_Filename --
+   -----------------------
+
+   function Get_Unit_Filename
+     (Self : Unit_Provider'Class;
+      Name : Wide_Wide_String;
+      Kind : Libadalang.Analysis.Unit_Kind)
+      return GNATCOLL.VFS.Filesystem_String
    is
       Map : constant array (Libadalang.Analysis.Unit_Kind) of
         GNATCOLL.Projects.Unit_Parts :=
@@ -48,13 +51,46 @@ package body LAL.Unit_Providers is
         Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode (Name);
 
       File : constant GNATCOLL.VFS.Filesystem_String :=
-        Provider.Kernel.Get_Project_Tree.Root_Project.File_From_Unit
+        Self.Kernel.Get_Project_Tree.Root_Project.File_From_Unit
           (Unit_Name => Unit_Name,
            Part      => Map (Kind),
            Language  => "Ada");
+   begin
+      return File;
+   end Get_Unit_Filename;
+
+   -----------------------
+   -- Get_Unit_Filename --
+   -----------------------
+
+   overriding function Get_Unit_Filename
+     (Self : Unit_Provider;
+      Name : Wide_Wide_String;
+      Kind : Libadalang.Analysis.Unit_Kind) return String
+   is
+      File : constant GNATCOLL.VFS.Filesystem_String :=
+        Get_Unit_Filename (Self, Name, Kind);
+   begin
+      return String (File);
+   end Get_Unit_Filename;
+
+   --------------
+   -- Get_Unit --
+   --------------
+
+   overriding function Get_Unit
+     (Self    : Unit_Provider;
+      Context : Libadalang.Analysis.Analysis_Context;
+      Name    : Wide_Wide_String;
+      Kind    : Libadalang.Analysis.Unit_Kind;
+      Charset : String := "";
+      Reparse : Boolean := False) return Libadalang.Analysis.Analysis_Unit
+   is
+      File : constant GNATCOLL.VFS.Filesystem_String :=
+        Get_Unit_Filename (Self, Name, Kind);
 
       Buffer : constant Editor_Buffer'Class :=
-        Provider.Kernel.Get_Buffer_Factory.Get
+        Self.Kernel.Get_Buffer_Factory.Get
           (File        => GNATCOLL.VFS.Create (File),
            Open_Buffer => False,
            Open_View   => False);

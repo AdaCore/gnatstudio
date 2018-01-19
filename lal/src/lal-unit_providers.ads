@@ -37,11 +37,16 @@ private
    end record;
 
    overriding function Get_Unit
-     (Provider    : Unit_Provider;
-      Context     : Libadalang.Analysis.Analysis_Context;
-      Name        : Wide_Wide_String;
-      Kind        : Libadalang.Analysis.Unit_Kind;
-      Charset     : String := "";
-      Reparse     : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
+     (Self    : Unit_Provider;
+      Context : Libadalang.Analysis.Analysis_Context;
+      Name    : Wide_Wide_String;
+      Kind    : Libadalang.Analysis.Unit_Kind;
+      Charset : String := "";
+      Reparse : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
+
+   overriding function Get_Unit_Filename
+     (Self : Unit_Provider;
+      Name : Wide_Wide_String;
+      Kind : Libadalang.Analysis.Unit_Kind) return String;
 
 end LAL.Unit_Providers;
