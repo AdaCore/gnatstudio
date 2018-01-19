@@ -9,6 +9,9 @@ debug_mode = False
 # it fails during manual proof edition). Use "/tmp/itp_default" for example.
 debug_file = ""
 
+# True iff manual proof is active
+itp_started = False
+
 # Gdk colors constants
 GREEN = Gdk.RGBA(0, 1, 0, 0.2)
 RED = Gdk.RGBA(1, 0, 0, 0.2)
@@ -531,6 +534,9 @@ class Tree_with_process:
     def start(self, command, mlw_file_name, dir_gnat_server):
         """ start interactive theorem proving """
 
+        global itp_started
+
+        itp_started = True
         self.file_name = mlw_file_name
         # init local variables
         self.save_and_exit = False
@@ -568,6 +574,8 @@ class Tree_with_process:
     def kill(self):
         """ Kill everything created during interactive theorem proving """
 
+        global itp_started
+
         a = GPS.Console(ITP_CONSOLE)
         # Any closing destroying can fail so try are needed to avoid killing
         # nothing when the first exiting function fail.
@@ -591,6 +599,7 @@ class Tree_with_process:
             self.timeout.remove()
         except Exception:
             print ("Cannot stop timeout")
+        itp_started = False
 
     def exit(self):
         """ exit itp """

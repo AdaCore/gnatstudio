@@ -1163,6 +1163,13 @@ def has_proof_dir():
     return(proof_dir)
 
 
+def manual_proof_started():
+    """ This is used to grey the "Exit Manual Proof" when Manual Proof has not
+        been started.
+    """
+    return itp_lib.itp_started
+
+
 def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     """ Function used to start interactive theorem proving. It actually build
         the command line, find appropriate files and then use the start method
@@ -1256,11 +1263,12 @@ def exit_ITP(dummy_arg):
         hook. We don't use tree.exit directly because we want to make sure that
         this function always succeeds otherwise we cannot exit GPS.
     """
-    global tree
+    global tree, hook_itp
     if is_itp:
         try:
             tree.exit()
             GPS.Hook("before_exit_action_hook").remove(exit_ITP)
+            hook_itp = False
             return True
         except Exception:
             return True
