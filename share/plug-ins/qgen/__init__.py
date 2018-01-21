@@ -1772,9 +1772,12 @@ else:
             that can be associated to a block.
             """
 
-            b = QGEN_Module.modeling_map.get_block(
-                context.file(), context.location().line())
-            return b is not None
+            try:
+                b = QGEN_Module.modeling_map.get_block(
+                    context.file(), context.location().line())
+                return b is not None
+            except:
+                return False
 
         def __contextual_filter_sources(self, context):
             """
