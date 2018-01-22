@@ -84,7 +84,7 @@ class Output:
             Console().write(
                 "   => {} depends on {}\n".format(
                     os.path.basename(file.path),
-                    os.path.basename(depends_on.file().path)
+                    os.path.basename(depends_on.path)
                 )
             )
 
@@ -130,7 +130,7 @@ class XMLOutput:
     def explain_dependency(self, file, depends_on):
         self.xml = self.xml + \
             "<file src='" + \
-            file.path + "'>" + depends_on.file().path + "</file>\n"
+            file.path + "'>" + depends_on.path + "</file>\n"
 
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
