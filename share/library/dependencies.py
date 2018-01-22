@@ -208,7 +208,7 @@ def compute_project_dependencies(output):
 
                 try:
                     current_deps[p].remove(dep)
-                except:
+                except ValueError:
                     pass
 
             for dep in current_deps[p]:
@@ -216,7 +216,7 @@ def compute_project_dependencies(output):
                     output.add_dependency(dep, newdep=False, removed=True)
 
         output.close()
-    except:
+    except Exception:
         Console().write("Unexpected exception " + traceback.format_exc())
 
 
