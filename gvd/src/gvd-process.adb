@@ -318,6 +318,7 @@ package body GVD.Process is
       pragma Unreferenced (Set_Position);
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
+      Console_Child : MDI_Child;
    begin
       if Process.Debugger_Text /= null then
          if Is_Command then
@@ -348,8 +349,12 @@ package body GVD.Process is
             end loop;
          end if;
 
-         Highlight_Child
-           (Find_MDI_Child (Get_MDI (Process.Kernel), Process.Debugger_Text));
+         Console_Child := Find_MDI_Child
+           (Get_MDI (Process.Kernel), Process.Debugger_Text);
+
+         if Console_Child /= null then
+            Highlight_Child (Console_Child);
+         end if;
       end if;
    end Output_Text;
 

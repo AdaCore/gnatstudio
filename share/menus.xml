@@ -601,6 +601,10 @@
       <separator/>
    </toolbar>
 
+   <toolbar id='Debugger Console'>
+      <button action='debug clear console'/>
+   </toolbar>
+
    <toolbar id='Breakpoints'>
       <button action='debug clear breakpoints'/>
       <button action='debug delete breakpoint'/>
