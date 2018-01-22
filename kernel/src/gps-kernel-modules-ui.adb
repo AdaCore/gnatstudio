@@ -2138,6 +2138,8 @@ package body GPS.Kernel.Modules.UI is
    begin
       if Menu = null then
          Kernel.Insert (-"Can't execute " & Menu_Name, Mode => Error);
+         Trace (Testsuite_Handle,
+                "Could not execute """ & Menu_Name & '"');
       elsif Menu.all in Action_Menu_Item_Record'Class then
          Execute_Action
            (Menu, Action_Menu_Item (Menu).Data, In_Foreground => True);

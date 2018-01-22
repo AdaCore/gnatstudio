@@ -358,6 +358,8 @@ package body GPS.Kernel.Scripts is
 
             if not Success then
                Data.Set_Error_Msg ("Could not execute """ & Action_Name & '"');
+               Trace (Testsuite_Handle,
+                      "Could not execute """ & Action_Name & '"');
             end if;
          end;
 
