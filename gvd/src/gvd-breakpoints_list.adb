@@ -1221,6 +1221,7 @@ package body GVD.Breakpoints_List is
             Tooltip_Text       => Msg.Get_Text,
             Image              => Null_Unbounded_String,
             Message            => Create (Message_Access (Msg)),
+            Line_Number        => 0,
             Associated_Command => Create_Set_Breakpoint_Command
               (Kernel,
                Mode => Unset,

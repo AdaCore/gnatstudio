@@ -354,6 +354,7 @@ package body GNAThub.Loader is
                Name          => File,
                Subprograms   => Code_Analysis.Subprogram_Maps.Empty_Map,
                Lines         => null,
+               Line_Infos    => Line_Info_List.Empty_List,
                Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
                Counts        => (others => 0),
                Messages      => Messages_Vectors.Empty_Vector);

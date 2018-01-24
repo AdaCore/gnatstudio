@@ -25,6 +25,7 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
@@ -58,8 +59,14 @@ package Code_Analysis is
       Undetermined);
       --  The status is undetermined.
 
+   type Line_Information_Access is
+     access GPS.Editors.Line_Information.Line_Information_Record;
+
+   package Line_Info_List is
+     new Ada.Containers.Doubly_Linked_Lists (Line_Information_Access);
+
    type Coverage is abstract tagged record
-      Coverage : Natural := 0;
+      Coverage   : Natural := 0;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts and the Subprogram, File and Project
@@ -244,6 +251,8 @@ package Code_Analysis is
       Name        : GNATCOLL.VFS.Virtual_File;
       Subprograms : Subprogram_Maps.Map;
       Lines       : Line_Array_Access;
+      Line_Infos  : Line_Info_List.List;
+      --  List used to track the expanded coverage lines in the editor
    end record;
 
    type Project is new Node with record
@@ -334,6 +343,9 @@ package Code_Analysis is
    --  Coverage record if allocated
    --  and futur other specific analysis records should be added here
 
+   procedure Free_Line_Info_List (List : in out Line_Info_List.List);
+   --  Free every children and empty itself
+
 private
 
    procedure Unchecked_Free is new
@@ -350,5 +362,10 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project'Class, Project_Access);
+
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GPS.Editors.Line_Information.Line_Information_Record,
+        Line_Information_Access);
 
 end Code_Analysis;

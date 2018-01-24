@@ -35,8 +35,8 @@ with String_Utils;                    use String_Utils;
 with Code_Coverage;                   use Code_Coverage;
 with Code_Coverage.Gcov;
 with Code_Coverage.GNATcov;
-with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
+with Commands;                        use Commands;
 
 package body Coverage_GUI is
 
@@ -249,6 +249,9 @@ package body Coverage_GUI is
       File_Node : Code_Analysis.File_Access)
    is
    begin
+      --  Remove the previous annotation if they are already present
+      Remove_File_Coverage_Annotations (Kernel, File_Node);
+
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          declare
             Line_Info : Line_Information_Array (File_Node.Lines'Range);
@@ -264,6 +267,14 @@ package body Coverage_GUI is
                        (Line_Cov'Access,
                         Kernel,
                         Binary_Coverage_Mode);
+                     Line_Info (J).Line_Number := J;
+                     if Current_Coverage_Tool = GNATcov
+                       and then Line_Info (J) /= Empty_Line_Information
+                       and then Line_Info (J).Associated_Command /= null
+                     then
+                        File_Node.Line_Infos.Append
+                          (new Line_Information_Record'(Line_Info (J)));
+                     end if;
                   end;
                else
                   Line_Info (J).Text := Space_String;
@@ -479,6 +490,124 @@ package body Coverage_GUI is
          Next (Map_Cur);
       end loop;
    end Hide_All_Coverage_Information;
+
+   ------------------------------
+   -- Clean_All_Expanded_Lines --
+   ------------------------------
+
+   procedure Clean_All_Expanded_Lines
+     (Kernel   : Kernel_Handle;
+      Projects : Code_Analysis_Tree)
+   is
+      use Project_Maps;
+      Project_Map_Cur : Project_Maps.Cursor := Projects.First;
+      use File_Maps;
+      File_Map_Cur : File_Maps.Cursor;
+   begin
+      if Current_Coverage_Tool /= GNATcov then
+         return;
+      end if;
+
+      --  Through the projects
+      for J in 1 .. Integer (Projects.Length) loop
+         File_Map_Cur := Element (Project_Map_Cur).Files.First;
+
+         --  Through the files
+         for I in 1 .. Integer (Element (Project_Map_Cur).Files.Length) loop
+            Clean_File_Expanded_Lines (Kernel, Element (File_Map_Cur));
+            Next (File_Map_Cur);
+         end loop;
+         Next (Project_Map_Cur);
+      end loop;
+   end Clean_All_Expanded_Lines;
+
+   -------------------------------
+   -- Clean_File_Expanded_Lines --
+   -------------------------------
+
+   procedure Clean_File_Expanded_Lines
+     (Kernel : Kernel_Handle;
+      File   : Code_Analysis.File_Access)
+   is
+      pragma Unreferenced (Kernel);
+      use Line_Info_List;
+   begin
+      if File = null
+        or else File.Analysis_Data.Coverage_Data = null
+        or else File.Line_Infos = Empty_List
+      then
+         return;
+      end if;
+
+      for Line of File.Line_Infos loop
+         --  Remove the expanded lines
+         Code_Coverage.GNATcov.Remove_Inlined_Detailed_Messages
+           (Code_Coverage.GNATcov.Detail_Messages_Command
+              (Line.Associated_Command.all));
+      end loop;
+
+      --  Empty the list
+      Free_Line_Info_List (File.Line_Infos);
+   end Clean_File_Expanded_Lines;
+
+   -----------------------
+   -- Add_Expanded_Line --
+   -----------------------
+
+   procedure Add_Expanded_Line
+     (Kernel      : Kernel_Handle;
+      File        : Code_Analysis.File_Access;
+      Line_Number : Integer)
+   is
+      Success : Command_Return_Type;
+      pragma Unreferenced (Kernel, Success);
+      use Line_Info_List;
+   begin
+      if File = null
+        or else Current_Coverage_Tool /= GNATcov
+        or else File.Line_Infos = Empty_List
+      then
+         return;
+      end if;
+
+      for Line_Info of File.Line_Infos loop
+         if Line_Info.Line_Number = Line_Number then
+            Success := Execute (Line_Info.Associated_Command);
+            return;
+         end if;
+      end loop;
+   end Add_Expanded_Line;
+
+   --------------------------------
+   -- Find_File_Node_In_Projects --
+   --------------------------------
+
+   function Find_File_Node_In_Projects
+     (Projects : Code_Analysis_Tree;
+      File     : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access
+   is
+      Project_Map_Cur : Project_Maps.Cursor;
+      File_Map_Cur    : File_Maps.Cursor;
+      use Project_Maps;
+      use File_Maps;
+   begin
+      Project_Map_Cur := Projects.First;
+      --  Through the projects
+      for J in 1 .. Integer (Projects.Length) loop
+         File_Map_Cur := Element (Project_Map_Cur).Files.First;
+
+         --  Through the files
+         for I in 1 .. Integer (Element (Project_Map_Cur).Files.Length) loop
+            if Key (File_Map_Cur) = File then
+               return Element (File_Map_Cur);
+            end if;
+            Next (File_Map_Cur);
+         end loop;
+         Next (Project_Map_Cur);
+      end loop;
+
+      return null;
+   end Find_File_Node_In_Projects;
 
    --------------------
    -- Find_Gcov_File --

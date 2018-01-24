@@ -142,6 +142,10 @@ package Code_Coverage.GNATcov is
      (Self : access Detail_Messages_Command)
       return Commands.Command_Return_Type;
 
+   procedure Remove_Inlined_Detailed_Messages
+     (Self : in out Detail_Messages_Command);
+   --  Remove all detailed messages associated to this command
+
    overriding procedure Primitive_Free
      (Self : in out Detail_Messages_Command);
 

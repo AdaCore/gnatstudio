@@ -288,6 +288,11 @@ package body Code_Analysis_Module is
       Command : String);
    --  Add node and coverage info provided by a gcov file parsing
 
+   procedure Expand_Line_Coverage_Info
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  If possible, expand the coverage information at Line in File
+
    procedure Add_Gcov_File_Info_In_Callback
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance;
@@ -353,6 +358,13 @@ package body Code_Analysis_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Call Destroy_All_Analyzes
+
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+   --  Clear the editor containing the file
 
    type On_Project_Changing is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -452,6 +464,11 @@ package body Code_Analysis_Module is
       Command : String);
    --  Replace the current coverage information in memory with the given
    --  xml-formated file one
+
+   function Find_File_Node_In_Analysis
+     (File : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access;
+   --  Return the first node corresponding to File in the analysis or null if
+   --  not found
 
    ------------------
    -- Get_Analysis --
@@ -599,6 +616,62 @@ package body Code_Analysis_Module is
    exception
       when E : others => Trace (Me, E);
    end Add_Gcov_File_Info_From_Menu;
+
+   -------------------------------
+   -- Expand_Line_Coverage_Info --
+   -------------------------------
+
+   procedure Expand_Line_Coverage_Info
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      File_Inst   : Class_Instance;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+   begin
+      if Current_Coverage_Tool /= GNATcov then
+         return;
+      end if;
+
+      --  Get the file
+      File_Inst := Nth_Arg
+        (Data, 1, Get_File_Class (Get_Kernel (Data)),
+         Default => No_Class_Instance, Allow_Null => True);
+
+      if File_Inst = No_Class_Instance then
+         File := GNATCOLL.VFS.No_File;
+      else
+         File := Get_Data (File_Inst);
+      end if;
+
+      --  Get the line number
+      Line_Number := Nth_Arg (Data, 2);
+
+      Add_Expanded_Line
+        (Get_Kernel (Data), Find_File_Node_In_Analysis (File), Line_Number);
+   end Expand_Line_Coverage_Info;
+
+   --------------------------------
+   -- Find_File_Node_In_Analysis --
+   --------------------------------
+
+   function Find_File_Node_In_Analysis
+     (File : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access
+   is
+      use Code_Analysis_Instances;
+      Cur       : Cursor := Code_Analysis_Module_ID.Analyzes.First;
+      File_Node : Code_Analysis.File_Access := null;
+   begin
+      --  Get the first node matching file
+      while Has_Element (Cur) and then File_Node = null loop
+         File_Node :=
+           Find_File_Node_In_Projects (Element (Cur).Projects, File);
+         Next (Cur);
+      end loop;
+
+      return File_Node;
+   end Find_File_Node_In_Analysis;
 
    -----------------------------------
    -- Add_Gcov_File_Info_From_Shell --
@@ -1329,12 +1402,39 @@ package body Code_Analysis_Module is
    -------------
 
    overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Self);
+      File_Node : Code_Analysis.File_Access := null;
+   begin
+      if Current_Coverage_Tool /= GNATcov then
+         return;
+      end if;
+
+      File_Node := Find_File_Node_In_Analysis (File);
+
+      if File_Node /= null then
+         --  Clean the annotations and expanded lines
+         Clean_File_Expanded_Lines
+           (Kernel_Handle (Kernel), File_Node);
+         Clear_File_Locations
+           (Kernel_Handle (Kernel), File_Node);
+         Remove_File_Coverage_Annotations (Kernel_Handle (Kernel), File_Node);
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
-      Dummy  : Code_Analysis_Instance;
-      pragma Unreferenced (Self, File, Dummy);
+      pragma Unreferenced (Self, File);
    begin
       Destroy_All_Analyzes (Kernel_Handle (Kernel));
    end Execute;
@@ -1435,6 +1535,9 @@ package body Code_Analysis_Module is
         (Uncovered_Category, Coverage_Message_Flags);
       Get_Messages_Container (Kernel).Remove_Category
         (Partially_Covered_Category, Coverage_Message_Flags);
+      if not Kernel.Is_In_Destruction then
+         Clean_All_Expanded_Lines (Kernel, Analysis.Projects);
+      end if;
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 
@@ -1517,6 +1620,7 @@ package body Code_Analysis_Module is
                     Get_Or_Create (Analysis.Projects, CB_Data.Project);
       File_Node : constant Code_Analysis.File_Access :=
                     Get_Or_Create (Prj_Node, CB_Data.File);
+      Loaded    : Boolean := False;
 
    begin
       if not Have_Gcov_Info
@@ -1524,6 +1628,7 @@ package body Code_Analysis_Module is
       then
          Add_Gcov_File_Info_In_Callback
            (CB_Data.Kernel, Analysis, CB_Data.Project, CB_Data.File);
+         Loaded := True;
 
          if not Have_Gcov_Info
            (Analysis.Projects, CB_Data.Project, CB_Data.File)
@@ -1545,7 +1650,9 @@ package body Code_Analysis_Module is
       List_File_Uncovered_Lines
         (CB_Data.Kernel, File_Node, False,
          Allow_Auto_Jump_To_First => False);
-      Add_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
+      if not Loaded then
+         Add_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
+      end if;
    end Show_File_Coverage_Information_From_Menu;
 
    ----------------------------------------------
@@ -1565,6 +1672,7 @@ package body Code_Analysis_Module is
                     Get_Or_Create (Prj_Node, CB_Data.File);
 
    begin
+      Clean_File_Expanded_Lines (CB_Data.Kernel, File_Node);
       Clear_File_Locations (CB_Data.Kernel, File_Node);
       Remove_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
 
@@ -2221,6 +2329,7 @@ package body Code_Analysis_Module is
          Category    => -"Coverage",
          Description => -"Clear coverage information from memory");
 
+      File_Closed_Hook.Add (new On_File_Closed);
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
@@ -2254,6 +2363,13 @@ package body Code_Analysis_Module is
          Maximum_Args  => 2,
          Class         => Code_Analysis_Class,
          Handler       => Add_Gcov_File_Info_From_Shell'Access);
+      Register_Command
+        (Kernel, "expand_line_cov_info",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Code_Analysis_Class,
+         Handler      => Expand_Line_Coverage_Info'Access,
+         Static_Method => True);
       Register_Command
         (Kernel, "show_coverage_information",
          Class         => Code_Analysis_Class,

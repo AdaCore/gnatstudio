@@ -189,6 +189,8 @@ Classes
 
    .. automethod:: GPS.CodeAnalysis.dump_to_file
 
+   .. automethod:: GPS.CodeAnalysis.expand_line_cov_info
+
    .. automethod:: GPS.CodeAnalysis.get
 
    .. automethod:: GPS.CodeAnalysis.hide_coverage_information

@@ -2049,7 +2049,8 @@ package body VCS.Generic_VCS is
                 Tooltip_Text       => Null_Unbounded_String,
                 Image              => Null_Unbounded_String,
                 Message            => <>,
-                Associated_Command => null),
+                Associated_Command => null,
+                Line_Number        => 0),
              Every_Line => False);
          Add_Line_Information
             (Kernel,

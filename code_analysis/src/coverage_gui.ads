@@ -142,6 +142,28 @@ package Coverage_GUI is
    --  Does nothing if the lines are not listed in.
    --  Remove every coverage annotations of opened source file editors.
 
+   procedure Clean_All_Expanded_Lines
+     (Kernel   : Kernel_Handle;
+      Projects : Code_Analysis_Tree);
+   --  Remove from the editor the expanded coverage lines of the Projects
+
+   procedure Clean_File_Expanded_Lines
+     (Kernel : Kernel_Handle;
+      File   : Code_Analysis.File_Access);
+   --  Remove the expanded coverage lines in File
+
+   procedure Add_Expanded_Line
+     (Kernel      : Kernel_Handle;
+      File        : Code_Analysis.File_Access;
+      Line_Number : Integer);
+   --  Add an expanded coverage line in File at Line_Number
+
+   function Find_File_Node_In_Projects
+     (Projects : Code_Analysis_Tree;
+      File     : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access;
+   --  Return the first node corresponding to File in the Projects or null if
+   --  not found
+
    function Find_Gcov_File
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;

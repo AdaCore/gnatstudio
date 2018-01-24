@@ -1180,7 +1180,7 @@ package body GPS.Kernel.Hooks is
          for F of Kernel.Open_Files loop
             File_Line_Action_Hook.Run
                (Kernel       => Kernel,
-                File         => File,
+                File         => F,
                 Identifier   => Identifier,
                 Info         => null);
          end loop;
@@ -1211,7 +1211,7 @@ package body GPS.Kernel.Hooks is
          for F of Kernel.Open_Files loop
             File_Line_Action_Hook.Run
                (Kernel       => Kernel,
-                File         => File,
+                File         => F,
                 Identifier   => Identifier,
                 Info         => Info'Unrestricted_Access,
                 Tooltip      => Tooltip,

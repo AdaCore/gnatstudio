@@ -202,7 +202,9 @@ package body Tooltips is
       --  Both cases are difficult to detect by listening to events purely
       --  on the On_Widget
 
-      if Global_Tooltip.On_Widget.In_Destruction then
+      if Global_Tooltip.On_Widget = null
+        or else Global_Tooltip.On_Widget.In_Destruction
+      then
          return False;
       end if;
 

@@ -76,10 +76,6 @@ package body Code_Coverage.GNATcov is
    --  Call Process for each detailed message in Coverage. If there is no
    --  detailed message, process a default one.
 
-   procedure Remove_Inlined_Detailed_Messages
-     (Self : in out Detail_Messages_Command);
-   --  Remove all detailed messages associated to this command
-
    -------------------
    -- Add_File_Info --
    -------------------

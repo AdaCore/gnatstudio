@@ -973,6 +973,19 @@ class CodeAnalysis(object):
         pass  # implemented in Ada
 
     @staticmethod
+    def expand_line_cov_info(file, line):
+        """
+        Expand the coverage information at line of file
+
+        :param file: The file
+        :type file: :class:`GPS.File`
+
+        :param line: The line number
+        :type line: A positive integer
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
     def get(name):
         """
         Creates an empty code analysis data structure. Data can be put in this

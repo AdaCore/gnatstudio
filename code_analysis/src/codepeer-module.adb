@@ -509,7 +509,8 @@ package body CodePeer.Module is
             Message            =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
             Associated_Command =>
-              Module.Review_Command));
+              Module.Review_Command,
+            Line_Number => 0));
 
       if From_File /= No_File then
          declare
