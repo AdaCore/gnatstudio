@@ -2072,6 +2072,10 @@ package body Src_Editor_Buffer is
       Cursor_Previously_Held : Boolean;
 
    begin
+      if Buffer.Inserting_Count > 0 then
+         return;
+      end if;
+
       --  If in multi cursors manual slave mode, update corresponding command
       --  and sel mark
       if Buffer.Cursors_Sync.Mode = Manual_Slave then
