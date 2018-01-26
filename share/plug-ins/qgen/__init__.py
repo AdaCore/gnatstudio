@@ -1972,8 +1972,7 @@ else:
                 name='MDL generate code for file',
                 category='QGen',
                 filter=CLI.is_model_file,
-                contextual='%f',
-                static_path='Generate code for')
+                contextual='Generate code for %f')
 
             gps_utils.make_interactive(
                 callback=CLI.workflow_compile_project_to_source_code,
