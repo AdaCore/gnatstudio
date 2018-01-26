@@ -383,7 +383,7 @@ class CLI(GPS.Process):
             else:
                 f = ctx_or_file
             return f.language() == 'simulink'
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -626,7 +626,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     if v.file == f:
                         return v
             return None
-        except:
+        except Exception:
             return None
 
     @staticmethod
@@ -639,7 +639,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             win = GPS.MDI.current()
             if hasattr(win, '_gmc_viewer'):
                 return win._gmc_viewer
-        except:
+        except Exception:
             return None
 
     @staticmethod
@@ -1030,14 +1030,14 @@ else:
             if self._deadline:
                 try:
                     self._deadline.remove()
-                except:
+                except Exception:
                     pass
                 self._deadline = None
 
             if self._timer:
                 try:
                     self._timer.remove()
-                except:
+                except Exception:
                     pass
                 self._timer = None
 
@@ -1200,7 +1200,7 @@ else:
             """
             try:
                 debugger = GPS.Debugger.get()
-            except:
+            except Exception:
                 return
             ss = QGEN_Module.get_var_from_item(debugger, item)
             if ss is not None:
@@ -1272,7 +1272,7 @@ else:
 
             try:
                 debugger = GPS.Debugger.get()
-            except:
+            except Exception:
                 debugger = None
 
             QGEN_Module.update_bp_labels(viewer, diag)
@@ -1678,7 +1678,7 @@ else:
             try:
                 GPS.Debugger.get()   # or raise exception
                 return self.__contextual_filter_sources(context)
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_debug_and_symbols(self, context):
@@ -1690,7 +1690,7 @@ else:
                 GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
                 return len(self.modeling_map.get_symbols(blockid=it.id)) != 0
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_debug_and_watchpoint(self, context):
@@ -1700,7 +1700,7 @@ else:
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
                 return sig_obj.watched
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_debug_and_logpoint(self, context):
@@ -1715,7 +1715,7 @@ else:
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
                 return sig_obj.logged
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_debugger_active(self, context):
@@ -1726,7 +1726,7 @@ else:
             try:
                 GPS.Debugger.get()   # or raise exception
                 return True
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_viewer_active_history_parent(self, context):
@@ -1734,21 +1734,21 @@ else:
                 viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
                 return viewer.nav_index \
                     != -1 and viewer.diagram.id != viewer.root_diag_id
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_viewer_active_history(self, context):
             try:
                 viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
                 return viewer.nav_index > 0
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_viewer_active(self, context):
             try:
                 return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() \
                     is not None
-            except:
+            except Exception:
                 return False
 
         def __contextual_show_original_block(self):
@@ -1776,7 +1776,7 @@ else:
                 b = QGEN_Module.modeling_map.get_block(
                     context.file(), context.location().line())
                 return b is not None
-            except:
+            except Exception:
                 return False
 
         def __contextual_filter_sources(self, context):
@@ -1787,7 +1787,7 @@ else:
             try:
                 it = self.get_item_with_sources(context.modeling_item)
                 return it is not None
-            except:
+            except Exception:
                 return False
 
         def __contextual_name_for_break_on_block(self, context):
@@ -1947,9 +1947,9 @@ else:
                 for f, b in QGEN_Module.modeling_map.get_file_funcinfos(
                         os.path.basename(file.path)):
                     if f.endswith('comp'):
-                        for l in rg:
-                            if l >= b[0] and l <= b[1]:
-                                line = l
+                        for ln in rg:
+                            if ln >= b[0] and ln <= b[1]:
+                                line = ln
                                 break
                         break
 
