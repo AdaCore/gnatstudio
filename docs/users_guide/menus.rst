@@ -60,13 +60,11 @@ The File Menu
 
    Open a dialog to create a new project from an existing template
    
-   
 .. index:: menu; file --> open project...
 
 * :menuselection:`File --> Open Project...`
 
    Open the Open Project dialog
-   
    
 .. index:: menu; file --> open project from host...
 
@@ -74,13 +72,11 @@ The File Menu
 
    Open remote project
    
-   
 .. index:: menu; file --> project --> add complex file naming conventions...
 
 * :menuselection:`File --> Project --> Add Complex File Naming Conventions...`
 
    Ask naming patterns to the user and run gnatname on the current project to add the files located in the project's source directories matching these patterns to project's sources files.
-   
    
 .. index:: menu; file --> project --> reload project
 
@@ -88,13 +84,11 @@ The File Menu
 
    Recompute the list of source files for the project. This should be used whenever you create or remove files outside of GPS
    
-   
 .. index:: menu; file --> new file
 
 * :menuselection:`File --> New File`
 
    Create a new empty editor
-   
    
 .. index:: menu; file --> new file view
 
@@ -102,14 +96,13 @@ The File Menu
 
    Create a new view for the selected editor
    
-   
 .. index:: menu; file --> open file...
 
 * :menuselection:`File --> Open File...`
 
    Open an existing file
    
-   
+   Shortcut: F3
 .. index:: menu; file --> open file from host...
 
 * :menuselection:`File --> Open File from Host...`
@@ -117,7 +110,6 @@ The File Menu
    Open a file from a remote host
    
    Shortcut: Ctrl+F3
-   
 .. index:: menu; file --> save
 
 * :menuselection:`File --> Save`
@@ -125,13 +117,11 @@ The File Menu
    Save the current editor
    
    Shortcut: Ctrl+S
-   
 .. index:: menu; file --> save as...
 
 * :menuselection:`File --> Save As...`
 
    Save the current editor with a different name
-   
    
 .. index:: menu; file --> save more --> all
 
@@ -139,13 +129,11 @@ The File Menu
 
    Save all modified files and projects
    
-   
 .. index:: menu; file --> save more --> projects
 
 * :menuselection:`File --> Save More --> Projects`
 
    Save all modified projects to disk
-   
    
 .. index:: menu; file --> save more --> desktop
 
@@ -153,13 +141,11 @@ The File Menu
 
    Save the layout of the desktop to a file, so that it is restored when GPS is restarted later with the same project
    
-   
 .. index:: menu; file --> change directory...
 
 * :menuselection:`File --> Change Directory...`
 
    Change the current directory
-   
    
 .. index:: menu; file --> locations --> export locations to editor
 
@@ -167,13 +153,11 @@ The File Menu
 
    Export all messages listed in the Locations view to an editor.
    
-   
 .. index:: menu; file --> print
 
 * :menuselection:`File --> Print`
 
    Print the current editor
-   
    
 .. index:: menu; file --> close
 
@@ -182,13 +166,11 @@ The File Menu
    Close the currently selected window
    
    Shortcut: Ctrl+W
-   
 .. index:: menu; file --> close all
 
 * :menuselection:`File --> Close All`
 
    Close all open windows, asking for confirmation when relevant
-   
    
 .. index:: menu; file --> close all editors
 
@@ -196,13 +178,11 @@ The File Menu
 
    Save and close all source editors.
    
-   
 .. index:: menu; file --> close all editors except current
 
 * :menuselection:`File --> Close All Editors except Current`
 
    Save and close all source editors, except the curret one.
-   
    
 .. index:: menu; file --> reset all perspectives
 
@@ -210,15 +190,13 @@ The File Menu
 
    Reset all perspectives for all projects to their default. This also closes all editors.
    
-   
 .. index:: menu; file --> exit
 
 * :menuselection:`File --> Exit`
 
    Exit GPS, after confirming whether to save modified files
    
-   Shortcut: Shift+Ctrl+Q
-   
+   Shortcut: Ctrl+Q
 .. index:: edit
 
 .. _The_Edit_Menu:
@@ -233,7 +211,6 @@ The Edit Menu
    Undo the last command
    
    Shortcut: Ctrl+Z
-   
 .. index:: menu; edit --> redo
 
 * :menuselection:`Edit --> Redo`
@@ -241,7 +218,6 @@ The Edit Menu
    Redo the last command that was undone
    
    Shortcut: Ctrl+R
-   
 .. index:: menu; edit --> cut
 
 * :menuselection:`Edit --> Cut`
@@ -249,7 +225,6 @@ The Edit Menu
    Cut the current selection to the clipboard
    
    Shortcut: Shift+Delete or Ctrl+X
-   
 .. index:: menu; edit --> copy
 
 * :menuselection:`Edit --> Copy`
@@ -257,7 +232,6 @@ The Edit Menu
    Copy the current selection to the clipboard
    
    Shortcut: Ctrl+Insert or Ctrl+C
-   
 .. index:: menu; edit --> paste
 
 * :menuselection:`Edit --> Paste`
@@ -265,7 +239,6 @@ The Edit Menu
    Paste the contents of the clipboard into the current text area
    
    Shortcut: Shift+Insert or Ctrl+V
-   
 .. index:: menu; edit --> paste previous
 
 * :menuselection:`Edit --> Paste Previous`
@@ -273,13 +246,11 @@ The Edit Menu
    Cancel the previous Paste operation, and instead insert the text copied before through Copy To Clipboard
    
    Shortcut: Shift+Ctrl+Insert
-   
 .. index:: menu; edit --> select all
 
 * :menuselection:`Edit --> Select All`
 
    Select the whole contents of the editor
-   
    
 .. index:: menu; edit --> cursors --> add cursor and go down
 
@@ -287,8 +258,7 @@ The Edit Menu
 
    
    
-   Shortcut: Shift+Ctrl+Down
-   
+   Shortcut: Shift+Alt+Down
 .. index:: menu; edit --> cursors --> add cursor and go up
 
 * :menuselection:`Edit --> Cursors --> Add cursor and go up`
@@ -296,14 +266,13 @@ The Edit Menu
    
    
    Shortcut: Shift+Alt+Up
-   
 .. index:: menu; edit --> cursors --> cursor select next occurence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor select next occurence of selection`
 
    
    
-   
+   Shortcut: Shift+Ctrl+N
 .. index:: menu; edit --> cursors --> cursor skip next occurence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor skip next occurence of selection`
@@ -311,20 +280,18 @@ The Edit Menu
    
    
    Shortcut: Ctrl+Alt+N
-   
-.. index:: menu; edit --> cursors --> add cursors to every reference of entity
+.. index:: menu; edit --> cursors --> add cursors to all references of entity
 
-* :menuselection:`Edit --> Cursors --> Add cursors to every reference of entity`
+* :menuselection:`Edit --> Cursors --> Add cursors to all references of entity`
 
    
    
-   
+   Shortcut: Shift+Ctrl+E
 .. index:: menu; edit --> insert file...
 
 * :menuselection:`Edit --> Insert File...`
 
    Insert the contents of the file into the current editor
-   
    
 .. index:: menu; edit --> compare --> two files...
 
@@ -332,13 +299,11 @@ The Edit Menu
 
    Compare two files
    
-   
 .. index:: menu; edit --> compare --> three files...
 
 * :menuselection:`Edit --> Compare --> Three Files...`
 
    Compare three files
-   
    
 .. index:: menu; edit --> increase text size
 
@@ -348,7 +313,6 @@ The Edit Menu
    This impacts the corresponding preferences.
    
    Shortcut: Ctrl++
-   
 .. index:: menu; edit --> decrease text size
 
 * :menuselection:`Edit --> Decrease Text Size`
@@ -356,22 +320,17 @@ The Edit Menu
    Decrease the size of fonts in the source editors.
    This impacts the corresponding preferences.
    
-   Shortcut: Shift+Ctrl++
-   
 .. index:: menu; edit --> project properties...
 
 * :menuselection:`Edit --> Project Properties...`
 
    Open the project properties editor
    
-   
 .. index:: menu; edit --> preferences...
 
 * :menuselection:`Edit --> Preferences...`
 
    Open (or reuse if it already exists) the 'Preferences' view
-   
-   Shortcut: Shift+Ctrl+P
    
 .. index:: navigate
 
@@ -387,7 +346,6 @@ The Navigate Menu
    Goto previous location
    
    Shortcut: Shift+Ctrl+{
-   
 .. index:: menu; navigate --> forward
 
 * :menuselection:`Navigate --> Forward`
@@ -395,21 +353,17 @@ The Navigate Menu
    Goto next location
    
    Shortcut: Shift+Ctrl+}
-   
 .. index:: menu; navigate --> goto declaration
 
 * :menuselection:`Navigate --> Goto Declaration`
 
    Jump to the declaration of the current entity
    
-   Shortcut: Arabic switch D
-   
 .. index:: menu; navigate --> goto body
 
 * :menuselection:`Navigate --> Goto Body`
 
    Jump to the implementation/body of the current entity
-   
    
 .. index:: menu; navigate --> goto matching delimiter
 
@@ -418,7 +372,6 @@ The Navigate Menu
    Jump to the matching delimiter ()[]{}
    
    Shortcut: Ctrl+'
-   
 .. index:: menu; navigate --> goto line...
 
 * :menuselection:`Navigate --> Goto Line...`
@@ -426,13 +379,11 @@ The Navigate Menu
    Open a dialog to select a line to go to
    
    Shortcut: Ctrl+G
-   
 .. index:: menu; navigate --> goto file spec<->body
 
 * :menuselection:`Navigate --> Goto File Spec<->Body`
 
    Open the corresponding spec or body file
-   
    
 .. index:: menu; navigate --> locate in files view
 
@@ -440,13 +391,11 @@ The Navigate Menu
 
    Display the files view, and expand nodes to show the selected file
    
-   
 .. index:: menu; navigate --> add bookmark
 
 * :menuselection:`Navigate --> Add Bookmark`
 
    Create a bookmark at the current location in the editor
-   
    
 .. index:: menu; navigate --> start of statement
 
@@ -455,7 +404,6 @@ The Navigate Menu
    Move to the beginning of the current statement
    
    Shortcut: Alt+Up
-   
 .. index:: menu; navigate --> end of statement
 
 * :menuselection:`Navigate --> End of Statement`
@@ -463,7 +411,6 @@ The Navigate Menu
    Move to the end of the current statement
    
    Shortcut: Alt+Down
-   
 .. index:: menu; navigate --> previous subprogram
 
 * :menuselection:`Navigate --> Previous Subprogram`
@@ -471,7 +418,6 @@ The Navigate Menu
    Move to the previous subprogram
    
    Shortcut: Ctrl+Up
-   
 .. index:: menu; navigate --> next subprogram
 
 * :menuselection:`Navigate --> Next Subprogram`
@@ -479,23 +425,20 @@ The Navigate Menu
    Move to the next subprogram
    
    Shortcut: Ctrl+Down
-   
 .. index:: menu; navigate --> previous locations message
 
 * :menuselection:`Navigate --> Previous Locations Message`
 
    Move to the previous message from the Locations window
    
-   Shortcut: Ctrl+,
-   
+   Shortcut: Ctrl+<
 .. index:: menu; navigate --> next locations message
 
 * :menuselection:`Navigate --> Next Locations Message`
 
    Move to the next message from the Locations window
    
-   Shortcut: Ctrl+.
-   
+   Shortcut: Ctrl+>
 .. index:: find
 
 .. _The_Find_Menu:
@@ -510,7 +453,6 @@ The Find Menu
    Open the search dialog. If you have selected the preference Search/Preserve search context, the same context will be selected, otherwise the context is reset depending on the active window
    
    Shortcut: Ctrl+F
-   
 .. index:: menu; find --> replace...
 
 * :menuselection:`Find --> Replace...`
@@ -518,7 +460,6 @@ The Find Menu
    Open the search dialog in the replace mode. If you have selected the preference Search/Preserve Search Context, the same context will be selected, otherwise the context is reset depending on the active window
    
    Shortcut: Shift+Ctrl+F
-   
 .. index:: menu; find --> find previous
 
 * :menuselection:`Find --> Find Previous`
@@ -526,7 +467,6 @@ The Find Menu
    Find the previous occurrence of the search pattern
    
    Shortcut: Ctrl+P
-   
 .. index:: menu; find --> find next
 
 * :menuselection:`Find --> Find Next`
@@ -534,13 +474,11 @@ The Find Menu
    Find the next occurrence of the search pattern
    
    Shortcut: Ctrl+N
-   
 .. index:: menu; find --> find action
 
 * :menuselection:`Find --> Find Action`
 
    Search amongst the GPS commands, and execute the selected one
-   
    
 .. index:: menu; find --> find bookmark
 
@@ -548,20 +486,17 @@ The Find Menu
 
    Search amongst all bookmarks
    
-   
 .. index:: menu; find --> find build target
 
 * :menuselection:`Find --> Find Build Target`
 
    Search amongst build targets
    
-   
 .. index:: menu; find --> find in current source
 
 * :menuselection:`Find --> Find in Current Source`
 
    Search for references in the current editor
-   
    
 .. index:: menu; find --> find entity
 
@@ -570,7 +505,6 @@ The Find Menu
    Searches amonst entities defined in the project
    
    Shortcut: Ctrl+T
-   
 .. index:: menu; find --> find file in project
 
 * :menuselection:`Find --> Find File in Project`
@@ -582,14 +516,11 @@ The Find Menu
    Possible completions are found by testing the filename pattern with the base names of the source files, unless filename contains a '/' or '\', in which case the full name of the source file is used.
    
    Shortcut: Shift+F3
-   
 .. index:: menu; find --> find open window
 
 * :menuselection:`Find --> Find Open Window`
 
    Search amongst opened windows
-   
-   Shortcut: Shift+Ctrl+H
    
 .. index:: menu; find --> find plugin
 
@@ -597,13 +528,11 @@ The Find Menu
 
    Search amongst the GPS plugins, and display the associated page in the preferences editor dialog.
    
-   
 .. index:: menu; find --> find preference
 
 * :menuselection:`Find --> Find Preference`
 
    Search amongst the GPS preferences, and display the page containing it.
-   
    
 .. index:: menu; find --> find text in all sources
 
@@ -611,13 +540,11 @@ The Find Menu
 
    Search in the contents of all source files of the projects
    
-   
 .. index:: menu; find --> find all references
 
 * :menuselection:`Find --> Find All References`
 
    List all references to the selected entity in the Locations window
-   
    
 .. index:: view
 
@@ -632,13 +559,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Files' view
    
-   
 .. index:: menu; view --> project
 
 * :menuselection:`View --> Project`
 
    Open (or reuse if it already exists) the 'Project' view
-   
    
 .. index:: menu; view --> outline
 
@@ -646,13 +571,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Outline' view
    
-   
 .. index:: menu; view --> bookmarks
 
 * :menuselection:`View --> Bookmarks`
 
    Open (or reuse if it already exists) the 'Bookmarks' view
-   
    
 .. index:: menu; view --> locations
 
@@ -660,13 +583,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Locations' view
    
-   
 .. index:: menu; view --> messages
 
 * :menuselection:`View --> Messages`
 
    Open (or reuse if it already exists) the 'Messages' view
-   
    
 .. index:: menu; view --> call trees
 
@@ -674,13 +595,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Call Trees' view
    
-   
 .. index:: menu; view --> clipboard
 
 * :menuselection:`View --> Clipboard`
 
    Open (or reuse if it already exists) the 'Clipboard' view
-   
    
 .. index:: menu; view --> file switches
 
@@ -688,13 +607,17 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Switches editor' view
    
-   
 .. index:: menu; view --> files
 
 * :menuselection:`View --> Files`
 
    Open (or reuse if it already exists) the 'Files' view
    
+.. index:: menu; view --> learn
+
+* :menuselection:`View --> Learn`
+
+   Open (or reuse if it already exists) the 'Learn' view
    
 .. index:: menu; view --> metrics
 
@@ -702,13 +625,11 @@ The View Menu
 
    Open the Metrics view
    
-   
 .. index:: menu; view --> memory usage
 
 * :menuselection:`View --> Memory Usage`
 
    Open (or reuse if it already exists) the 'Memory Usage' view
-   
    
 .. index:: menu; view --> remote
 
@@ -716,13 +637,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Remote' view
    
-   
 .. index:: menu; view --> scenario
 
 * :menuselection:`View --> Scenario`
 
    Open (or reuse if it already exists) the 'Scenario' view
-   
    
 .. index:: menu; view --> tasks
 
@@ -734,13 +653,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Commits' view
    
-   
 .. index:: menu; view --> vcs --> history
 
 * :menuselection:`View --> VCS --> History`
 
    Open (or reuse if it already exists) the 'History' view
-   
    
 .. index:: menu; view --> vcs --> branches
 
@@ -748,13 +665,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Branches' view
    
-   
 .. index:: menu; view --> windows
 
 * :menuselection:`View --> Windows`
 
    Open (or reuse if it already exists) the 'Windows' view
-   
    
 .. index:: menu; view --> call graph browser
 
@@ -762,13 +677,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Call Graph Browser' view
    
-   
 .. index:: menu; view --> dependency browser
 
 * :menuselection:`View --> Dependency Browser`
 
    Open (or reuse if it already exists) the 'Dependency Browser' view
-   
    
 .. index:: menu; view --> elaboration circularities browser
 
@@ -776,13 +689,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Elaboration Circularities' view
    
-   
 .. index:: menu; view --> entity browser
 
 * :menuselection:`View --> Entity Browser`
 
    Open (or reuse if it already exists) the 'Entity Browser' view
-   
    
 .. index:: menu; view --> project browser
 
@@ -790,13 +701,11 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Project Browser' view
    
-   
 .. index:: menu; view --> python console
 
 * :menuselection:`View --> Python Console`
 
    Open (or reuse if it already exists) the 'Python' view
-   
    
 .. index:: menu; view --> os shell
 
@@ -804,20 +713,17 @@ The View Menu
 
    Spawns the user's shell as read from the environment variable SHELL
    
-   
 .. index:: menu; view --> auxiliary builds
 
 * :menuselection:`View --> Auxiliary Builds`
 
    Open the Auxiliary Builds console
    
-   
 .. index:: menu; view --> background builds
 
 * :menuselection:`View --> Background Builds`
 
    Open the Backgorund Builds console
-   
    
 .. index:: code
 
@@ -832,7 +738,6 @@ The Code Menu
 
    Automatically indent the current line or selection
    
-   
 .. index:: menu; code --> selection --> comment lines
 
 * :menuselection:`Code --> Selection --> Comment Lines`
@@ -840,7 +745,6 @@ The Code Menu
    Comment the selected lines
    
    Shortcut: Ctrl+-
-   
 .. index:: menu; code --> selection --> uncomment lines
 
 * :menuselection:`Code --> Selection --> Uncomment Lines`
@@ -848,13 +752,11 @@ The Code Menu
    Uncomment the selected lines
    
    Shortcut: Ctrl+_
-   
 .. index:: menu; code --> selection --> print
 
 * :menuselection:`Code --> Selection --> Print`
 
    Print the current selection
-   
    
 .. index:: menu; code --> selection --> refill
 
@@ -863,20 +765,17 @@ The Code Menu
    Reformat selected lines or current paragraph so that the list are shorter than the grey line on the right
    
    Shortcut: Ctrl+=
-   
 .. index:: menu; code --> selection --> sort
 
 * :menuselection:`Code --> Selection --> Sort`
 
    Sorts the current selection, in ascending order
    
-   
 .. index:: menu; code --> selection --> sort reverse
 
 * :menuselection:`Code --> Selection --> Sort Reverse`
 
    Sorts the current selection, in descending order
-   
    
 .. index:: menu; code --> selection --> move right
 
@@ -886,16 +785,14 @@ The Code Menu
        negative, moves to the left. If there is no selection, indent the current
        line.
    
-   Shortcut: Ctrl+Right
-   
+   Shortcut: Ctrl+Alt+>
 .. index:: menu; code --> selection --> move left
 
 * :menuselection:`Code --> Selection --> Move Left`
 
    
    
-   Shortcut: Ctrl+Left
-   
+   Shortcut: Ctrl+Alt+<
 .. index:: menu; code --> selection --> untabify
 
 * :menuselection:`Code --> Selection --> Untabify`
@@ -903,7 +800,6 @@ The Code Menu
    Replace tab characters in the current selection (or the whole buffer) with
        the correct amount of spaces. The tab stops are every n columns where n is
        specified by a preference in the Preferences dialog.
-   
    
 .. index:: menu; code --> selection --> comment box
 
@@ -914,8 +810,6 @@ The Code Menu
        the subprogram. This provides helpful separations between subprograms, and
        is similar to the style used in the GNAT compiler or GPS themselves
    
-   Shortcut: Ctrl+H
-   
 .. index:: menu; code --> smart completion
 
 * :menuselection:`Code --> Smart Completion`
@@ -923,14 +817,11 @@ The Code Menu
    Complete current identifier based on advanced entities database
    
    Shortcut: Ctrl+Space
-   
 .. index:: menu; code --> more completion --> expand alias
 
 * :menuselection:`Code --> More Completion --> Expand Alias`
 
    Expand the alias found just before the cursor
-   
-   Shortcut: Shift+Ctrl+O
    
 .. index:: menu; code --> more completion --> complete identifier
 
@@ -939,7 +830,6 @@ The Code Menu
    Complete current identifier based on the contents of the editor
    
    Shortcut: Ctrl+/
-   
 .. index:: menu; code --> more completion --> complete block
 
 * :menuselection:`Code --> More Completion --> Complete Block`
@@ -950,13 +840,11 @@ The Code Menu
 
    Fold all blocks (if, loops,...)
    
-   
 .. index:: menu; code --> unfold all blocks
 
 * :menuselection:`Code --> Unfold All Blocks`
 
    Unfold all blocks (if, loops,...)
-   
    
 .. index:: menu; code --> edit with external editor
 
@@ -964,13 +852,11 @@ The Code Menu
 
    Edit the file with an external editor, as configued in the preferences
    
-   
 .. index:: menu; code --> generate body
 
 * :menuselection:`Code --> Generate Body`
 
    Run gnatstub on the selected Ada specification to generate a matching body file.
-   
    
 .. index:: menu; code --> pretty print
 
@@ -980,13 +866,11 @@ The Code Menu
          reformated version. Specific formating options can be set in the project
          file
    
-   
 .. index:: menu; code --> aliases...
 
 * :menuselection:`Code --> Aliases...`
 
    Open the aliases editor
-   
    
 .. index:: vcs
 
@@ -1001,13 +885,11 @@ The VCS Menu
 
    Open (or reuse if it already exists) the 'Commits' view
    
-   
 .. index:: menu; vcs --> branches
 
 * :menuselection:`VCS --> Branches`
 
    Open (or reuse if it already exists) the 'Branches' view
-   
    
 .. index:: menu; vcs --> view global history
 
@@ -1015,13 +897,11 @@ The VCS Menu
 
    Open (or reuse if it already exists) the 'History' view
    
-   
 .. index:: menu; vcs --> view file history
 
 * :menuselection:`VCS --> View file history`
 
    Show the History view and display the history of changes for the current file only.
-   
    
 .. index:: menu; vcs --> pull & rebase
 
@@ -1029,12 +909,10 @@ The VCS Menu
 
    
    
-   
 .. index:: menu; vcs --> pull
 
 * :menuselection:`VCS --> Pull`
 
-   
    
    
 .. index:: menu; vcs --> review
@@ -1044,13 +922,11 @@ The VCS Menu
    Push all local changes to Gerrit, so that they can be reviewed by
            other team members.
    
-   
 .. index:: menu; vcs --> push
 
 * :menuselection:`VCS --> Push`
 
    Push all changes to the remote repository.
-   
    
 .. index:: menu; vcs --> show local changes for file
 
@@ -1058,14 +934,11 @@ The VCS Menu
 
    Display the local changes for the current file
    
-   
 .. index:: menu; vcs --> show local changes for file (in editor)
 
 * :menuselection:`VCS --> Show local changes for file (in editor)`
 
    Display the local changes for the current file in an editor
-   
-   Shortcut: Ctrl+D
    
 .. index:: menu; vcs --> show all local changes
 
@@ -1073,20 +946,17 @@ The VCS Menu
 
    Display all the local changes for the current version control system
    
-   
 .. index:: menu; vcs --> show last modification for lines
 
 * :menuselection:`VCS --> Show last modification for lines`
 
    For each line of the current file, show when the last modification was done
    
-   
 .. index:: menu; vcs --> hide last modification for lines
 
 * :menuselection:`VCS --> Hide last modification for lines`
 
    Remove annotations done on each line of the current file that show when the last modification was done
-   
    
 .. index:: build
 
@@ -1101,13 +971,11 @@ The Build Menu
 
    Build target Check Syntax
    
-   
 .. index:: menu; build --> check semantic
 
 * :menuselection:`Build --> Check Semantic`
 
    Build target Check Semantic
-   
    
 .. index:: menu; build --> compile file
 
@@ -1116,13 +984,11 @@ The Build Menu
    Build target Compile File
    
    Shortcut: Shift+F4
-   
 .. index:: menu; build --> project --> build all
 
 * :menuselection:`Build --> Project --> Build All`
 
    Build target Build All
-   
    
 .. index:: menu; build --> project --> compile all sources
 
@@ -1130,13 +996,11 @@ The Build Menu
 
    Build target Compile All Sources
    
-   
 .. index:: menu; build --> project --> build <current file>
 
 * :menuselection:`Build --> Project --> Build <current file>`
 
    Build target Build <current file>
-   
    
 .. index:: menu; build --> project --> custom build...
 
@@ -1145,13 +1009,11 @@ The Build Menu
    Build target Custom Build...
    
    Shortcut: F9
-   
 .. index:: menu; build --> clean --> clean all
 
 * :menuselection:`Build --> Clean --> Clean All`
 
    Build target Clean All
-   
    
 .. index:: menu; build --> clean --> clean root
 
@@ -1159,13 +1021,11 @@ The Build Menu
 
    Build target Clean Root
    
-   
 .. index:: menu; build --> run --> custom...
 
 * :menuselection:`Build --> Run --> Custom...`
 
    Build target Custom...
-   
    
 .. index:: menu; build --> settings --> toolchains
 
@@ -1173,12 +1033,10 @@ The Build Menu
 
    Open the toolchains editor (for builds)
    
-   
 .. index:: menu; build --> recompute xref info
 
 * :menuselection:`Build --> Recompute Xref Info`
 
-   
    
    
 .. index:: analyze
@@ -1194,12 +1052,10 @@ The Analyze Menu
 
    
    
-   
 .. index:: menu; analyze --> gnathub --> run...
 
 * :menuselection:`Analyze --> GNAThub --> Run...`
 
-   
    
    
 .. index:: menu; analyze --> coverage --> show report
@@ -1208,13 +1064,11 @@ The Analyze Menu
 
    Display the coverage report (must load data first)
    
-   
 .. index:: menu; analyze --> coverage --> load data for all projects
 
 * :menuselection:`Analyze --> Coverage --> Load Data for All Projects`
 
    Load coverage data for all projects
-   
    
 .. index:: menu; analyze --> coverage --> load data for current project
 
@@ -1222,13 +1076,11 @@ The Analyze Menu
 
    Load coverage data for current project
    
-   
 .. index:: menu; analyze --> coverage --> load data for current file
 
 * :menuselection:`Analyze --> Coverage --> Load Data for Current File`
 
    Load coverage data for current file
-   
    
 .. index:: menu; analyze --> coverage --> clear coverage from memory
 
@@ -1236,13 +1088,11 @@ The Analyze Menu
 
    Clear coverage information from memory
    
-   
 .. index:: menu; analyze --> coverage --> gcov --> compute coverage files
 
 * :menuselection:`Analyze --> Coverage --> Gcov --> Compute Coverage Files`
 
    Run gcov to generate the coverage files
-   
    
 .. index:: menu; analyze --> coverage --> gcov --> remove coverage files
 
@@ -1250,13 +1100,11 @@ The Analyze Menu
 
    Cleanup the gcov coverage files
    
-   
 .. index:: menu; analyze --> metrics --> compute metrics on current file
 
 * :menuselection:`Analyze --> Metrics --> Compute Metrics on Current File`
 
    Launch GNAT metric on the current file
-   
    
 .. index:: menu; analyze --> metrics --> compute metrics on current project
 
@@ -1264,12 +1112,34 @@ The Analyze Menu
 
    Launch GNAT metric on the current project
    
-   
 .. index:: menu; analyze --> metrics --> compute metrics on current project & subprojects
 
 * :menuselection:`Analyze --> Metrics --> Compute Metrics on Current Project & Subprojects`
 
    Launch GNAT metric on the current project
+   
+.. index:: menu; analyze --> stack analysis --> analyze stack usage
+
+* :menuselection:`Analyze --> Stack Analysis --> Analyze Stack Usage`
+
+   
+   
+.. index:: menu; analyze --> stack analysis --> open undefined subprograms editor
+
+* :menuselection:`Analyze --> Stack Analysis --> Open Undefined Subprograms Editor`
+
+   
+   
+.. index:: menu; analyze --> stack analysis --> load last stack usage
+
+* :menuselection:`Analyze --> Stack Analysis --> Load Last Stack Usage`
+
+   
+   
+.. index:: menu; analyze --> stack analysis --> clear stack usage information
+
+* :menuselection:`Analyze --> Stack Analysis --> Clear Stack Usage Information`
+
    
    
 .. index:: menu; analyze --> coding standard --> edit rules file
@@ -1278,13 +1148,11 @@ The Analyze Menu
 
    Edit the coding standard file
    
-   
 .. index:: menu; analyze --> coding standard --> check root project & subprojects
 
 * :menuselection:`Analyze --> Coding Standard --> Check Root Project & Subprojects`
 
    Check coding standard for the root project and its subprojects
-   
    
 .. index:: menu; analyze --> coding standard --> check root project
 
@@ -1292,19 +1160,16 @@ The Analyze Menu
 
    Check coding standard of the root project
    
-   
 .. index:: menu; analyze --> gnattest --> generate unit test setup
 
 * :menuselection:`Analyze --> GNATtest --> Generate Unit Test Setup`
 
    Run gnattest on root project
    
-   
 .. index:: menu; analyze --> gnattest --> show not implemented tests
 
 * :menuselection:`Analyze --> GNATtest --> Show not Implemented Tests`
 
-   
    
    
 .. index:: menu; analyze --> gnattest --> open harness project
@@ -1313,13 +1178,11 @@ The Analyze Menu
 
    Open harness project for current project
    
-   
 .. index:: menu; analyze --> gnattest --> exit from harness project
 
 * :menuselection:`Analyze --> GNATtest --> Exit from Harness Project`
 
    Return to user project from current harness project
-   
    
 .. index:: menu; analyze --> documentation --> generate project
 
@@ -1327,20 +1190,17 @@ The Analyze Menu
 
    Launch GNATdoc on the current project
    
-   
 .. index:: menu; analyze --> documentation --> generate project & subprojects
 
 * :menuselection:`Analyze --> Documentation --> Generate Project & Subprojects`
 
    Launch GNATdoc on the the project, recursively
    
-   
 .. index:: menu; analyze --> documentation --> generate current file
 
 * :menuselection:`Analyze --> Documentation --> Generate Current File`
 
    Launch GNATdoc on the current project
-   
    
 .. index:: debug
 
@@ -1355,13 +1215,11 @@ The Debug Menu
 
    Initialize the debugger, no file specified
    
-   
 .. index:: menu; debug --> debug --> connect to board...
 
 * :menuselection:`Debug --> Debug --> Connect to Board...`
 
    Opens a simple dialog to connect to a remote board. This option is only relevant to cross debuggers.
-   
    
 .. index:: menu; debug --> debug --> load file...
 
@@ -1369,13 +1227,11 @@ The Debug Menu
 
    Opens a file selection dialog that allows you to choose a program to debug. The program to debug is either an executable for native debugging, or a partially linked module for cross environments (e.g VxWorks).
    
-   
 .. index:: menu; debug --> debug --> add symbols...
 
 * :menuselection:`Debug --> Debug --> Add Symbols...`
 
    Add the symbols from a given file/module. This corresponds to the gdb command add-symbol-file. This menu is particularly useful under VxWorks targets, where the modules can be loaded independently of the debugger.  For instance, if a module is independently loaded on the target (e.g. using windshell), it is absolutely required to use this functionality, otherwise the debugger won't work properly.
-   
    
 .. index:: menu; debug --> debug --> attach...
 
@@ -1383,13 +1239,11 @@ The Debug Menu
 
    Attach to a running process
    
-   
 .. index:: menu; debug --> debug --> detach
 
 * :menuselection:`Debug --> Debug --> Detach`
 
    Detach the application from the debugger
-   
    
 .. index:: menu; debug --> debug --> debug core file...
 
@@ -1397,20 +1251,11 @@ The Debug Menu
 
    Debug a core file instead of a running process
    
-   
 .. index:: menu; debug --> debug --> kill
 
 * :menuselection:`Debug --> Debug --> Kill`
 
    Kill the debuggee process
-   
-   
-.. index:: menu; debug --> data --> data window
-
-* :menuselection:`Debug --> Data --> Data Window`
-
-   Open the Data Window for the debugger
-   
    
 .. index:: menu; debug --> data --> variables
 
@@ -1418,13 +1263,11 @@ The Debug Menu
 
    Open the Variables view for the debugger
    
-   
 .. index:: menu; debug --> data --> call stack
 
 * :menuselection:`Debug --> Data --> Call Stack`
 
    Open the Call Stack window for the debugger
-   
    
 .. index:: menu; debug --> data --> protection domains
 
@@ -1432,13 +1275,11 @@ The Debug Menu
 
    Open the 'Protection Domains' window for the debugger
    
-   
 .. index:: menu; debug --> data --> threads
 
 * :menuselection:`Debug --> Data --> Threads`
 
    Open the 'Threads' window for the debugger
-   
    
 .. index:: menu; debug --> data --> tasks
 
@@ -1446,13 +1287,11 @@ The Debug Menu
 
    Open the 'Tasks' window for the debugger
    
-   
 .. index:: menu; debug --> data --> assembly
 
 * :menuselection:`Debug --> Data --> Assembly`
 
    Open the Assembly view for the debugger
-   
    
 .. index:: menu; debug --> data --> breakpoints
 
@@ -1460,6 +1299,17 @@ The Debug Menu
 
    Open the Breakpoints Editor for the debugger
    
+.. index:: menu; debug --> data --> registers
+
+* :menuselection:`Debug --> Data --> Registers`
+
+   Open the Registers view for the debugger
+   
+.. index:: menu; debug --> data --> execution
+
+* :menuselection:`Debug --> Data --> Execution`
+
+   Open the Debugger Execution console
    
 .. index:: menu; debug --> data --> examine memory
 
@@ -1467,35 +1317,23 @@ The Debug Menu
 
    Examine the contents of the memory at the location of the selected variable
    
-   
 .. index:: menu; debug --> data --> display local variables
 
 * :menuselection:`Debug --> Data --> Display Local Variables`
 
-   Display local variables in the data window
-   
+   Display the local variables in the Variables view
    
 .. index:: menu; debug --> data --> display arguments
 
 * :menuselection:`Debug --> Data --> Display Arguments`
 
-   Display arguments to the current subprogram
-   
-   Shortcut: Ctrl+U
-   
-.. index:: menu; debug --> data --> display registers
-
-* :menuselection:`Debug --> Data --> Display Registers`
-
-   Display the contents of registers in data window
-   
+   Display the arguments of the current subprogram in the  Variables view
    
 .. index:: menu; debug --> data --> display any expression...
 
 * :menuselection:`Debug --> Data --> Display Any Expression...`
 
-   Opens a dialog to choose an expression to display
-   
+   Display the value of any expression in the Variables view
    
 .. index:: menu; debug --> run...
 
@@ -1504,7 +1342,6 @@ The Debug Menu
    Choose the arguments to the program, and start running it
    
    Shortcut: F2
-   
 .. index:: menu; debug --> step
 
 * :menuselection:`Debug --> Step`
@@ -1512,7 +1349,6 @@ The Debug Menu
    Execute until program reaches a new line of source code
    
    Shortcut: F5
-   
 .. index:: menu; debug --> step instruction
 
 * :menuselection:`Debug --> Step Instruction`
@@ -1520,15 +1356,13 @@ The Debug Menu
    Execute the program for one machine instruction only
    
    Shortcut: Shift+F5
-   
 .. index:: menu; debug --> next
 
 * :menuselection:`Debug --> Next`
 
    Execute the program until the next source line, stepping over subprogram calls
    
-   Shortcut: Ctrl+Arabic switch Ctrl+N
-   
+   Shortcut: F6
 .. index:: menu; debug --> next instruction
 
 * :menuselection:`Debug --> Next Instruction`
@@ -1536,7 +1370,6 @@ The Debug Menu
    Execute the program until the next machine instruction, stepping over subprogram calls
    
    Shortcut: Shift+F6
-   
 .. index:: menu; debug --> finish
 
 * :menuselection:`Debug --> Finish`
@@ -1544,7 +1377,6 @@ The Debug Menu
    Continue execution until selected stack frame returns
    
    Shortcut: F7
-   
 .. index:: menu; debug --> continue
 
 * :menuselection:`Debug --> Continue`
@@ -1553,28 +1385,24 @@ The Debug Menu
    Start the debugger if not started yet
    
    Shortcut: F8
-   
 .. index:: menu; debug --> interrupt
 
 * :menuselection:`Debug --> Interrupt`
 
    Asynchronously interrupt the debuggee program
    
-   Shortcut: Ctrl+I
-   
+   Shortcut: Ctrl+Backslash
 .. index:: menu; debug --> terminate current
 
 * :menuselection:`Debug --> Terminate Current`
 
    Terminate the current debugger
    
-   
 .. index:: menu; debug --> terminate
 
 * :menuselection:`Debug --> Terminate`
 
    Terminate all running debugger
-   
    
 .. index:: spark
 
@@ -1670,13 +1498,11 @@ The Help Menu
 
    Open (or reuse if it already exists) the 'Welcome' view
    
-   
 .. index:: menu; help --> contents
 
 * :menuselection:`Help --> Contents`
 
    Display a HTML page with a pointer to all documentation known to GPS
-   
    
 .. index:: menu; help --> gps --> welcome
 
@@ -1684,13 +1510,11 @@ The Help Menu
 
    Load the documentation for 'Welcome' into an external web browser
    
-   
 .. index:: menu; help --> gps --> tutorial
 
 * :menuselection:`Help --> GPS --> Tutorial`
 
    Load the documentation for 'GNAT Programming Studio Tutorial' into an external web browser
-   
    
 .. index:: menu; help --> gps --> gps user's guide
 
@@ -1698,20 +1522,17 @@ The Help Menu
 
    Load the documentation for 'GPS User's Guide' into an external web browser
    
-   
 .. index:: menu; help --> gps --> python extensions
 
 * :menuselection:`Help --> GPS --> Python extensions`
 
    Load the documentation for 'GPS extensions for Python' into an external web browser
    
-   
 .. index:: menu; help --> gps --> release notes
 
 * :menuselection:`Help --> GPS --> Release Notes`
 
    Load the documentation for 'GPS Release Notes' into an external web browser
-   
    
 .. index:: menu; help --> gnat runtime
 
@@ -1726,13 +1547,11 @@ The Help Menu
 
    Load the documentation for 'Python tutorial' into an external web browser
    
-   
 .. index:: menu; help --> python --> python library
 
 * :menuselection:`Help --> Python --> Python Library`
 
    Load the documentation for 'Python Library' into an external web browser
-   
    
 .. index:: menu; help --> python --> pygtk tutorial
 
@@ -1740,18 +1559,15 @@ The Help Menu
 
    Load the documentation for 'PyGTK tutorial' into an external web browser
    
-   
 .. index:: menu; help --> python --> pygtk reference manual
 
 * :menuselection:`Help --> Python --> PyGTK Reference Manual`
 
    Load the documentation for 'PyGTK Reference Manual' into an external web browser
    
-   
 .. index:: menu; help --> about
 
 * :menuselection:`Help --> About`
 
    Display the About dialog
-   
    
