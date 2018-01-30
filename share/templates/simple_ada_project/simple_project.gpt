@@ -1,0 +1,13 @@
+# Header
+Name: Simple Ada Project
+Category: Basic
+Project: @_project_name_@.gpr
+
+# Variables
+Project_Name: default: The name of the project.
+Main_Name: main: The name of the main file.
+
+# Description
+[Description]
+A minimal Ada project structure, including a main file,
+with separate source and object directories.
