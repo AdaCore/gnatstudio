@@ -73,6 +73,8 @@ package body Ada_Semantic_Tree.Units is
    --  entity, at the annotation level. Note that this leaves the database
    --  in an inconsistent state which should be taken care of afterwards.
 
+   function Come_After (First, Second : Entity_Access) return Boolean;
+
    ----------
    -- Free --
    ----------
@@ -395,6 +397,15 @@ package body Ada_Semantic_Tree.Units is
       end if;
    end Get_Children;
 
+   ----------------
+   -- Come_After --
+   ----------------
+
+   function Come_After (First, Second : Entity_Access) return Boolean is
+   begin
+      return Get_File (First) = Get_File (Second) and then Second < First;
+   end Come_After;
+
    ------------------
    -- File_Updated --
    ------------------
@@ -662,6 +673,7 @@ package body Ada_Semantic_Tree.Units is
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
                  and then Get_Project (Get_File (It_Unit.Entity))
                  = Get_Project (Get_File (Unit.Entity))
+                 and then not Come_After (Unit_Entity, It_Entity)
                then
                   Unlink_Parent (It_Unit.all);
 
@@ -752,6 +764,7 @@ package body Ada_Semantic_Tree.Units is
                  and then Equal (It_Unit.Name.all, Unit.Name.all, False)
                  and then Get_Project (Get_File (It_Unit.Entity))
                  = Get_Project (Get_File (Unit.Entity))
+                 and then not Come_After (It_Entity, Unit_Entity)
                then
                   Unlink_Parent (Unit.all);
 
