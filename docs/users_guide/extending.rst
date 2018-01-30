@@ -5933,8 +5933,8 @@ create one template description file, which is a text file with the
   Project: <project file>
   <optional_hook_line>
 
-  <variable_1>: <variable_1_default_value>: <variable_1_description>
-  <variable_2>: <variable_2_default_value>: <variable_3_description>
+  <variable_1>: <variable_1_default_value>: <variable_1_description>[:<optional_variable_1_choices>]
+  <variable_2>: <variable_2_default_value>: <variable_3_description>[:<optional_variable_3_choices>]
   <etc>
 
   [Description]
@@ -5965,6 +5965,14 @@ Where the following are specified:
 * :file:`<variable_1_description>`
 
   Description of variable 1.
+
+* :file:`<optional_variable_1_choices>`
+
+  An optional semicolon-separated list of possible choices for the given
+  variable. The different choices will then be displayed in a combo box.
+  Example::
+
+     :my_var:choice_1: A simple variable:choice_1;choice_2.
 
 * :file:`<optional_hook_line>`
 

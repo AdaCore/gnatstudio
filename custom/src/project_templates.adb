@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
 with String_Utils;   use String_Utils;
@@ -125,12 +124,12 @@ package body Project_Templates is
       Errors    : out Unbounded_String;
       Templates : in out Project_Templates_List.List)
    is
-      Contents : GNAT.Strings.String_Access := File.Read_File;
-      Lines    : constant Unbounded_String_Array := Split
+      Contents              : GNAT.Strings.String_Access := File.Read_File;
+      Lines                 : constant Unbounded_String_Array := Split
         (Contents.all, ASCII.LF);
-      Current  : Project_Template := Null_Project_Template;
-      Index, Index2 : Natural;
-      In_Description : Boolean := False;
+      Current               : Project_Template := Null_Project_Template;
+      Index, Index2, Index3 : Natural;
+      In_Description        : Boolean := False;
    begin
       for J in Lines'Range loop
          declare
@@ -177,6 +176,7 @@ package body Project_Templates is
                        (+File.Base_Name & J'Img
                         & ": invalid syntax, expected "
                         & "<name>:<default value>:<description>"
+                        & "[<choice_1>;<choice2>;...]"
                         & ASCII.LF));
                else
                   Index2 := Find (Line, ':', Index + 1);
@@ -187,16 +187,34 @@ package body Project_Templates is
                           (+File.Base_Name & J'Img
                            & ": invalid syntax, expected "
                            & "<name>:<default value>:<description>"
+                           & "[:<choice_1>;<choice2>;...]"
                            & ASCII.LF));
                   end if;
 
-                  Current.Variables.Append
-                    ((To_Unbounded_String
-                     (Strip_Quotes (Line (Line'First .. Index - 1))),
-                     To_Unbounded_String
-                       (Strip_Quotes (Line (Index + 1 .. Index2 - 1))),
-                     To_Unbounded_String
-                       (Strip_Quotes (Line (Index2 + 1 .. Line'Last)))));
+                  Index3 := Find (Line, ':', Index2 + 1);
+
+                  declare
+                     Choices : Unbounded_String_Array := Split
+                       (Str  => Line (Index3 + 1 .. Line'Last),
+                        On   => ';');
+                  begin
+                     for Choice of Choices loop
+                        Choice := To_Unbounded_String
+                          (Strip_Quotes (To_String (Choice)));
+                     end loop;
+
+                     Current.Variables.Append
+                       (New_Item =>
+                          Variable'(
+                            Nb_Choices    => Choices'Length,
+                            Label         => To_Unbounded_String
+                              (Strip_Quotes (Line (Line'First .. Index - 1))),
+                            Default_Value => To_Unbounded_String
+                              (Strip_Quotes (Line (Index + 1 .. Index2 - 1))),
+                            Description   => To_Unbounded_String
+                              (Strip_Quotes (Line (Index2 + 1 .. Line'Last))),
+                            Choices       => Choices));
+                  end;
                end if;
             end if;
          end;

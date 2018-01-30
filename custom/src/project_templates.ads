@@ -21,11 +21,13 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 
 with Ada.Strings.Unbounded.Hash;
 
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 package Project_Templates is
 
@@ -33,13 +35,21 @@ package Project_Templates is
    --  Extension for recognized template files
    --  (".gpt" stands for GNAT Project Template).
 
-   type Variable is record
-      Label         : Unbounded_String; --  The label of the variable
-      Default_Value : Unbounded_String; --  The default value
-      Description   : Unbounded_String; --  A one-line description
+   type Variable (Nb_Choices : Integer) is record
+      Label         : Unbounded_String;
+      --  The label of the variable
+
+      Default_Value : Unbounded_String;
+      --  The default value
+
+      Description   : Unbounded_String;
+      --  A one-line description
+
+      Choices       : Unbounded_String_Array (1 .. Nb_Choices);
+      --  An optional choices' list
    end record;
 
-   package Variables_List is new Ada.Containers.Doubly_Linked_Lists
+   package Variables_List is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Variable);
 
    type Project_Template is record

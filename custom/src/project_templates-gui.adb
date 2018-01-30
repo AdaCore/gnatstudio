@@ -29,6 +29,7 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gtk.Assistant;            use Gtk.Assistant;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
@@ -65,9 +66,18 @@ package body Project_Templates.GUI is
       Desc_Col      => GType_String);
 
    type Variable_Widget_Record is record
-      Name : Unbounded_String;
-      Ent  : Gtk_Entry;
+      Name   : Unbounded_String;
+      Widget : Gtk_Widget;
    end record;
+
+   function Get_Text (V : Variable_Widget_Record) return String
+   is
+     (if V.Widget = null then
+         ""
+      elsif V.Widget.all in Gtk_Combo_Box_Text_Record'Class then
+         Gtk_Combo_Box_Text (V.Widget).Get_Active_Text
+      else
+         Gtk_Entry (V.Widget).Get_Text);
 
    package Variable_Widgets is new Ada.Containers.Doubly_Linked_Lists
      (Variable_Widget_Record);
@@ -160,12 +170,42 @@ package body Project_Templates.GUI is
 
       begin
          Var_Widget.Name := Var.Label;
-         Gtk_New (Var_Widget.Ent);
-         Set_Text (Var_Widget.Ent, To_String (Var.Default_Value));
+
+         if Var.Nb_Choices = 0 then
+            declare
+               Ent : Gtk_Entry;
+            begin
+               Gtk_New (Ent);
+               Set_Text (Ent, To_String (Var.Default_Value));
+               Var_Widget.Widget := Gtk_Widget (Ent);
+            end;
+         else
+            declare
+               Combo         : Gtk_Combo_Box_Text;
+               Default_Index : Gint := 0;
+               J             : Gint := 0;
+            begin
+               Gtk_New (Combo);
+
+               for Choice of Var.Choices loop
+                  Combo.Append_Text (To_String (Choice));
+
+                  if Var.Default_Value = Choice then
+                     Default_Index := J;
+                  end if;
+
+                  J := J + 1;
+               end loop;
+
+               Combo.Set_Active (Default_Index);
+               Var_Widget.Widget := Gtk_Widget (Combo);
+            end;
+         end if;
+
          Widget.Var_Widgets.Append (Var_Widget);
 
          Group_Widget.Create_Child
-           (Var_Widget.Ent,
+           (Var_Widget.Widget,
             Label     => To_String
               (Translate (Var.Label, M'Unrestricted_Access)),
             Doc       => To_String (Var.Description),
@@ -235,7 +275,7 @@ package body Project_Templates.GUI is
       C := Page.Var_Widgets.First;
 
       while Has_Element (C) loop
-         if Get_Text (Element (C).Ent) = "" then
+         if Get_Text (Element (C)) = "" then
             return False;
          end if;
          Next (C);
@@ -261,7 +301,7 @@ package body Project_Templates.GUI is
 
       while Has_Element (C) loop
          V := Element (C);
-         R.Insert (V.Name, To_Unbounded_String (Get_Text (V.Ent)));
+         R.Insert (V.Name, To_Unbounded_String (Get_Text (V)));
 
          Next (C);
       end loop;
@@ -488,7 +528,7 @@ package body Project_Templates.GUI is
 
             while Has_Element (C) loop
                Object_Callback.Object_Connect
-                 (Element (C).Ent, "changed",
+                 (Element (C).Widget, "changed",
                   Check_Completeness'Unrestricted_Access,
                   Slot_Object => Page);
                Next (C);
