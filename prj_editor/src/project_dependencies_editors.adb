@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -278,7 +278,7 @@ package body Project_Dependencies_Editors is
       begin
          Kernel.Insert
            (S & ASCII.LF,
-            Mode => GPS.Kernel.Error,
+            Mode   => GPS.Kernel.Error,
             Add_LF => False);
          Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;
@@ -286,79 +286,90 @@ package body Project_Dependencies_Editors is
       Use_Relative_Path : constant Boolean :=
                             Get_Paths_Type
                               (Importing_Project) = Projects.Relative
-                            or else
-                              (Get_Paths_Type (Importing_Project) = From_Pref
-                               and then Generate_Relative_Paths.Get_Pref);
+                                or else
+                                  (Get_Paths_Type
+                                     (Importing_Project) = From_Pref
+                                   and then Generate_Relative_Paths.Get_Pref);
       Changed           : Import_Project_Error;
       Result            : Message_Dialog_Buttons;
       Must_Recompute    : Boolean := False;
 
    begin
-      loop
-         Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
-           (Project                   => Importing_Project,
-            Imported_Project_Location => Imported_Project_Path,
-            Errors                    => Report_Error'Unrestricted_Access,
-            Use_Base_Name             => Use_Base_Name,
-            Use_Relative_Path         => Use_Relative_Path,
-            Limited_With              => Limited_With);
+      Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
+        (Project                   => Importing_Project,
+         Imported_Project_Location => Imported_Project_Path,
+         Errors                    => Report_Error'Unrestricted_Access,
+         Use_Base_Name             => Use_Base_Name,
+         Use_Relative_Path         => Use_Relative_Path,
+         Limited_With              => Limited_With);
+      Get_Registry (Kernel).Tree.Recompute_View;
 
-         exit when Changed /= Project_Already_Exists;
-
+      if Changed = Project_Already_Exists then
          --  If there is already a project by that name in the tree,
          --  confirm whether we should rename it everywhere
 
          Result := Message_Dialog
-           (Msg => -("A project with this name already exists in the"
-                     & ASCII.LF
-                     & "project graph. Do you want to replace all"
-                     & ASCII.LF
-                     & "occurences with the new project, or"
-                     & ASCII.LF
-                     & "cancel the new dependency ?"),
+           (Msg         => -("A project with this name already exists in the"
+            & ASCII.LF
+            & "project graph. Do you want to replace all"
+            & ASCII.LF
+            & "occurences with the new project, or"
+            & ASCII.LF
+            & "cancel the new dependency ?"),
             Dialog_Type => Gtkada.Dialogs.Error,
             Buttons     => Button_OK or Button_Cancel,
             Title       => -"Project already exists",
             Parent      => Get_Current_Window (Kernel));
 
-         exit when Result = Button_Cancel;
+         if Result = Button_OK then
 
-         --  Replace all occurrences of the old project with the new one
+            --  Replace all occurrences of the old project with the new one
 
-         declare
-            Imported : constant Project_Type :=
-              Get_Registry (Kernel).Tree.Project_From_Name
-              (+Imported_Project_Path.Base_Name (Project_File_Extension));
-            Iter : Project_Iterator :=
-              Get_Registry (Kernel).Tree.Root_Project.Start;
-            Prj : Project_Type;
-            Is_Limited_With : Boolean;
-            Imports : Boolean;
-         begin
-            loop
-               Prj := Current (Iter);
-               exit when Prj = No_Project;
+            declare
+               Tree            : constant Project_Tree_Access :=
+                                   Get_Registry (Kernel).Tree;
+               Imported        : constant Project_Type :=
+                                   Tree.Project_From_Name
+                                     (+Imported_Project_Path.Base_Name
+                                        (Project_File_Extension));
+               Iter            : Project_Iterator :=
+                                   Get_Registry
+                                     (Kernel).Tree.Root_Project.Start;
+               Prj             : Project_Type;
+               Is_Limited_With : Boolean;
+               Imports         : Boolean;
+            begin
+               loop
+                  Prj := Current (Iter);
+                  exit when Prj = No_Project;
 
-               Prj.Project_Imports
-                 (Imported, Imports => Imports,
-                  Is_Limited_With => Is_Limited_With);
-               if Imports then
-                  Prj.Remove_Imported_Project (Imported);
-                  Changed := Get_Registry (Kernel).Tree.Add_Imported_Project
-                    (Project           => Prj,
-                     Imported_Project_Location => Imported_Project_Path,
-                     Errors            => Report_Error'Unrestricted_Access,
-                     Use_Base_Name     => Use_Base_Name,
-                     Use_Relative_Path => Use_Relative_Path,
-                     Limited_With      => Is_Limited_With);
-               end if;
+                  Prj.Project_Imports
+                    (Imported,
+                     Imports          => Imports,
+                     Is_Limited_With  => Is_Limited_With);
 
-               Next (Iter);
-            end loop;
+                  if Imports then
+                     Prj.Remove_Imported_Project (Imported);
+                     Tree.Recompute_View;
 
-            Must_Recompute := True;
-         end;
-      end loop;
+                     Changed := Tree.Add_Imported_Project
+                       (Project                   => Prj,
+                        Imported_Project_Location => Imported_Project_Path,
+                        Errors                    =>
+                          Report_Error'Unrestricted_Access,
+                        Use_Base_Name             => Use_Base_Name,
+                        Use_Relative_Path         => Use_Relative_Path,
+                        Limited_With              => Is_Limited_With);
+                     Tree.Recompute_View;
+                  end if;
+
+                  Next (Iter);
+               end loop;
+
+               Must_Recompute := True;
+            end;
+         end if;
+      end if;
 
       if Changed = Success or else Must_Recompute then
          Recompute_View (Kernel);
