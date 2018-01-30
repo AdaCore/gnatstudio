@@ -1,0 +1,14 @@
+# Header
+Name: Ada Library Project
+Category: Basic
+Project: @_project_name_@.gpr
+
+# Variables
+Project_Name: default: The name of the project.
+Library_Name: my_ada_lib: The name of the library.
+Library_Kind: static: The library's kind:static;static-pic;dynamic;relocatable
+
+# Description
+[Description]
+A minimal Ada library project structure with separate source, object
+and library directories.
