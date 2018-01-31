@@ -1094,6 +1094,10 @@ arguments.  This code is useful when you are writing a full python script.
   The name of the Remote Build server (defaults to 'localhost' when no such
   server is configured, hence the final 'l' in the name of the macro).
 
+* :file:`%(env:VAR)`
+
+  Value of an environment variable with name VAR.
+
 Another type of macros are expanded before commands are executed: they start
 with the :kbd:`$` character and represent parameters passed to the action
 by its caller. Depending on the context, GPS passes zero, one or many

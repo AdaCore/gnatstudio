@@ -74,25 +74,26 @@ private
    Doc : constant String :=
       Shared_Macros.Doc & LF
       & LF & "Current Context Information" & LF
-      & "%d      directory (of current file,...)" & LF
-      & "%dk     krunched directory" & LF
-      & "%e      entity name" & LF
-      & "%ef     entity name, with indicator if xref is not up-to-date" & LF
-      & "%s      entity name (if available) or current selection" & LF
-      & "%S      entity name, current selection or current expression" & LF
-      & "%l      line number" & LF
-      & "%c      column number" & LF
-      & "%a      category of current message (in Locations window)" & LF
-      & "%i      name of importing project (in Project view)" & LF
-      & "%ts     short title for the current window" & LF
-      & "%tl     long title for the current window" & LF
+      & "%d       directory (of current file,...)" & LF
+      & "%dk      krunched directory" & LF
+      & "%e       entity name" & LF
+      & "%ef      entity name, with indicator if xref is not up-to-date" & LF
+      & "%s       entity name (if available) or current selection" & LF
+      & "%S       entity name, current selection or current expression" & LF
+      & "%l       line number" & LF
+      & "%c       column number" & LF
+      & "%a       category of current message (in Locations window)" & LF
+      & "%i       name of importing project (in Project view)" & LF
+      & "%ts      short title for the current window" & LF
+      & "%tl      long title for the current window" & LF
 
       & LF & "System Information" & LF
-      & "%rbl    name of the remote build host (or 'localhost')" & LF
-      & "%GPS    user's directory to store GPS settings" & LF
+      & "%rbl     name of the remote build host (or 'localhost')" & LF
+      & "%GPS     user's directory to store GPS settings" & LF
       & "%system_bin_dir GPS install prefix" & LF
-      & "%gnat   name of the GNAT driver to use" & LF
-      & "%target switch --target= to pass to various tools";
+      & "%gnat    name of the GNAT driver to use" & LF
+      & "%target  switch --target= to pass to various tools" & LF
+      & "%(env:X) value of an enviroment variable with name X";
 
    type Requirements is record
       File        : Boolean := False;

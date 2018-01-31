@@ -24,6 +24,7 @@ with String_Utils;            use String_Utils;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Xref;                    use Xref;
 
@@ -317,6 +318,18 @@ package body GPS.Kernel.Macros is
 
       elsif Param = "" then
          return "%";
+
+      elsif Starts_With (Param, "env:") then
+         declare
+            Env : constant Environment := Get_Kernel (Context).Get_Environment;
+            Name : constant String := Param (Param'First + 4 .. Param'Last);
+         begin
+            if Env.Has_Element (Name) then
+               return Env.Value (Name);
+            else
+               return "";
+            end if;
+         end;
 
       else
          return Shared_Macros_Substitute
