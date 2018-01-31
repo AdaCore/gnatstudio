@@ -373,19 +373,30 @@ package body GVD.Breakpoints_List is
 
    begin
       if Process = null then
-         for Idx in Module.Breakpoints.List.First_Index
-           .. Module.Breakpoints.List.Last_Index
-         loop
-            if Get_File (Module.Breakpoints.List (Idx).Location) = File
-              and then Get_Line (Module.Breakpoints.List (Idx).Location) = Line
-            then
-               Module.Breakpoints.List.Delete (Idx);
-               exit;
-            end if;
-         end loop;
-         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
-         Show_Breakpoints_In_All_Editors (Kernel);
+         declare
+            To_Delete_List : List_Breakpoint_Identifiers.List;
+         begin
 
+            --  Find the breakpoint to delete
+
+            for Idx in Module.Breakpoints.List.First_Index
+              .. Module.Breakpoints.List.Last_Index
+            loop
+               if Get_File (Module.Breakpoints.List (Idx).Location) = File
+                 and then
+                   Get_Line (Module.Breakpoints.List (Idx).Location) = Line
+               then
+                  To_Delete_List.Append (Module.Breakpoints.List (Idx).Num);
+                  exit;
+               end if;
+            end loop;
+
+            --  Delete it if it has been found
+
+            if not To_Delete_List.Is_Empty then
+               Delete_Multiple_Breakpoints (Kernel, To_Delete_List);
+            end if;
+         end;
       else
          for Idx in Process.Breakpoints.List.First_Index ..
            Process.Breakpoints.List.Last_Index
@@ -412,7 +423,8 @@ package body GVD.Breakpoints_List is
       List   : List_Breakpoint_Identifiers.List)
    is
       Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
+                  Visual_Debugger (Get_Current_Debugger (Kernel));
+      Deleted : Boolean := False;
    begin
       if not List.Is_Empty then
 
@@ -423,14 +435,32 @@ package body GVD.Breakpoints_List is
                loop
                   if Module.Breakpoints.List (Idx).Num = Num then
                      Module.Breakpoints.List.Delete (Idx);
+                     Deleted := True;
                      exit;
                   end if;
                end loop;
 
-               Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
             end loop;
 
-            Show_Breakpoints_In_All_Editors (Kernel);
+            if Deleted then
+
+               --  Reset the breakpoints numbers when deleting some of them
+               --  outside of a running debugger.
+
+               Module.Breakpoints.Dummy_Id := 1;
+
+               for Idx in Module.Breakpoints.List.First_Index
+                    .. Module.Breakpoints.List.Last_Index
+               loop
+                  Module.Breakpoints.List (Idx).Num :=
+                    Module.Breakpoints.Dummy_Id;
+                  Module.Breakpoints.Dummy_Id :=
+                    Module.Breakpoints.Dummy_Id + 1;
+               end loop;
+
+               Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+               Show_Breakpoints_In_All_Editors (Kernel);
+            end if;
 
          else
             --  Check the interactivity only once:
