@@ -33,7 +33,7 @@ package body GPS.Environments is
         (Users_Value => To_Unbounded_String (Users_Value),
          GPS_Value   => To_Unbounded_String (GPS_Value));
    begin
-      Self.Map.Insert (To_Unbounded_String (Name), Value);
+      Self.Map.Include (To_Unbounded_String (Name), Value);
    end Append;
 
    ---------------------------
@@ -46,13 +46,15 @@ package body GPS.Environments is
       while Maps.Has_Element (Cursor) loop
          declare
             Name  : constant String := To_String (Maps.Key (Cursor));
-            Value : constant String :=
-              To_String (Maps.Element (Cursor).GPS_Value);
+            Item  : Environment_Values renames Maps.Element (Cursor);
          begin
-            if Value = "" then
+            if Item.Users_Value = Item.GPS_Value then
+               --  Nothing to do here
+               null;
+            elsif Length (Item.GPS_Value) = 0 then
                Clear (Name);
             else
-               Set (Name, Value);
+               Set (Name, To_String (Item.GPS_Value));
             end if;
 
             Maps.Next (Cursor);
@@ -70,18 +72,42 @@ package body GPS.Environments is
       while Maps.Has_Element (Cursor) loop
          declare
             Name  : constant String := To_String (Maps.Key (Cursor));
-            Value : constant String :=
-              To_String (Maps.Element (Cursor).Users_Value);
+            Item  : Environment_Values renames Maps.Element (Cursor);
          begin
-            if Value = "" then
+            if Item.Users_Value = Item.GPS_Value then
+               --  Nothing to do here
+               null;
+            elsif Length (Maps.Element (Cursor).Users_Value) = 0 then
                Clear (Name);
             else
-               Set (Name, Value);
+               Set (Name, To_String (Maps.Element (Cursor).Users_Value));
             end if;
 
             Maps.Next (Cursor);
          end;
       end loop;
    end Apply_Users_Environment;
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element
+     (Self : Environment_Record;
+      Name : String) return Boolean is
+   begin
+      return Self.Map.Contains (To_Unbounded_String (Name));
+   end Has_Element;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value
+     (Self : Environment_Record;
+      Name : String) return String is
+   begin
+      return To_String (Self.Map (To_Unbounded_String (Name)).Users_Value);
+   end Value;
 
 end GPS.Environments;

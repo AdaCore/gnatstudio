@@ -474,6 +474,11 @@ procedure GPS.Main is
                   Users_Value => Value,
                   GPS_Value   => Getenv (Unprefixed_Name));
             end;
+         elsif not Env.Has_Element (Name) then
+            Env.Append
+              (Name        => Name,
+               Users_Value => Value,
+               GPS_Value   => Value);
          end if;
       end Each_Environment_Variable;
    begin

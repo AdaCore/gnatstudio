@@ -31,6 +31,16 @@ package GPS.Environments is
       Users_Value : String;
       GPS_Value   : String);
 
+   function Has_Element
+     (Self : Environment_Record;
+      Name : String) return Boolean;
+   --  Check in environment contains a variable with given Name
+
+   function Value
+     (Self : Environment_Record;
+      Name : String) return String;
+   --  Return a variable value from the environment provided by the user
+
    procedure Apply_Users_Environment (Self : Environment_Record);
    procedure Apply_GPS_Environment (Self : Environment_Record);
 
