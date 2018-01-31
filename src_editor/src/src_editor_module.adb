@@ -1744,6 +1744,14 @@ package body Src_Editor_Module is
 
          return True;
 
+      elsif File.Is_Regular_File and then not File.Is_Readable then
+         --  Don't open a file which can't be read
+
+         Kernel.Get_Messages_Window.Insert_Error
+           ((-"Cannot open file ") & "'" & Display_Full_Name (File)
+            & "', the file is not readable" & ASCII.LF);
+         return False;
+
       else
          Source := Open_File
            (Kernel, File,

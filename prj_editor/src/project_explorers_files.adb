@@ -288,12 +288,6 @@ package body Project_Explorers_Files is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
 
-   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Project_View_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class);
-   --  Callback for the "project_view_changed" hook
-
    type On_File_Renamed is new File2_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_File_Renamed;
@@ -429,13 +423,14 @@ package body Project_Explorers_Files is
 
       case Kind is
 
-         when File_Node | Directory_Node =>
+         when File_Node =>
             File := Get_File (M, Iter, File_Column);
             begin
                if not File.Is_Readable then
                   Kernel.Get_Messages_Window.Insert_Error
-                    ("Source " & (+(File.Base_Name)) &
-                       " is not readable" & ASCII.LF);
+                    ("File """ & (+(File.Base_Name)) &
+                       """ is not readable" & ASCII.LF);
+                  return;
                end if;
 
             exception
@@ -449,7 +444,7 @@ package body Project_Explorers_Files is
 
       Gtk.Selection_Data.Selection_Data_Set
         (Data, Gtk.Selection_Data.Get_Target (Data), 8,
-         "file:///" & File.Display_Full_Name);
+         "file://" & File.Display_Full_Name);
    end Drag_Data_Get;
 
    ------------------------
@@ -1068,8 +1063,6 @@ package body Project_Explorers_Files is
       File_Deleted_Hook.Add (new On_Deleted, Watch => Explorer);
       File_Saved_Hook.Add (new On_File_Saved, Watch => Explorer);
       File_Renamed_Hook.Add (new On_File_Renamed, Watch => Explorer);
-      Project_View_Changed_Hook.Add
-        (new On_Project_View_Changed, Watch => Explorer);
 
       P := new On_Pref_Changed;
       P.Explorer := Project_Explorer_Files (Explorer);
@@ -1688,21 +1681,6 @@ package body Project_Explorers_Files is
         Explorer_Files_Views.Retrieve_View (Kernel);
    begin
       Add_File (V, File);
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Project_View_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Self);
-      V : constant Project_Explorer_Files :=
-        Explorer_Files_Views.Retrieve_View (Kernel);
-   begin
-      Refresh (V);
    end Execute;
 
    -------------

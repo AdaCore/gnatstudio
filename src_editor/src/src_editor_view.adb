@@ -79,7 +79,7 @@ with Src_Editor_Buffer.Cursors;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
-with Gtk.Selection_Data;
+with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gdk.Dnd;
 with Gtk.Target_List;            use Gtk.Target_List;
@@ -1340,6 +1340,11 @@ package body Src_Editor_View is
       pragma Unreferenced (X, Y, Info, Time);
       View : constant Source_View := Source_View (Self);
    begin
+      --  Do nothing when receiving empty data
+      if Data.Get_Length = -1 then
+         return;
+      end if;
+
       if Atom_Name (Data.Get_Target) = "text/uri-list" then
          Gtk.Handlers.Emit_Stop_By_Name
            (Object => Self, Name => "drag-data-received");
@@ -1354,7 +1359,7 @@ package body Src_Editor_View is
                   New_File => False);
                Gtk.Dnd.Finish (Context => Drag_Context (Context),
                                Success => True,
-                               Del     => True);
+                               Del     => False);
             end loop;
          end;
       else
