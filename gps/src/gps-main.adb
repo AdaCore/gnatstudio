@@ -569,6 +569,25 @@ procedure GPS.Main is
          end;
       end if;
 
+      --  Load EDITION.txt file to add to version information
+
+      declare
+         Edition_File : constant Virtual_File :=
+           Create_From_Dir (Prefix_Dir, "share/gps/EDITION.txt");
+         Content      : String_Access;
+
+      begin
+         if Edition_File.Is_Readable then
+            Content := Edition_File.Read_File;
+            Config.Version := Content.all & ' ' & Config.Version;
+            Free (Content);
+         end if;
+
+      exception
+         when others =>
+            null;
+      end;
+
       declare
          Tmp     : constant String := Getenv ("PATH");
          Prefix  : constant String := Prefix_Dir.Display_Full_Name;
@@ -805,8 +824,8 @@ procedure GPS.Main is
          Stack_Trace_Depth => Memory_Stack_Depth,
          Disable_Free      => False);
 
-      Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
-             ") hosted on " & Config.Target);
+      Trace (Me, "GPS " & To_String (Config.Version) & " ("
+             & Config.Source_Date & ") hosted on " & Config.Target);
       Trace (Me, "Gtk+ static version: "
              & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
              & String_Utils.Image (Integer (Gtk.Minor_Version)) & '.'
@@ -875,13 +894,11 @@ procedure GPS.Main is
             --  Get_Help (True) will only print options from the main
             --  group
             Help : constant String :=
-                     "GPS " &
-                     Config.Version & " (" &
-                     Config.Source_Date & ") hosted on " &
-                     Config.Target & ASCII.LF &
-                     ASCII.LF &
-                     GPS_Command_Line.Context.Get_Help
-              (Switch /= "--help-all", null);
+                     "GPS " & To_String (Config.Version) & " ("
+                       & Config.Source_Date & ") hosted on "
+                       & Config.Target & ASCII.LF & ASCII.LF
+                       & GPS_Command_Line.Context.Get_Help
+                           (Switch /= "--help-all", null);
          begin
             Put_Line (Help);
          end;
@@ -894,10 +911,9 @@ procedure GPS.Main is
       elsif Switch = "--version" or else Switch = "-v" then
          declare
             Version : constant String :=
-                        "GPS " &
-                        Config.Version & " (" &
-                        Config.Source_Date & ") hosted on " &
-                        Config.Target;
+                        "GPS " & To_String (Config.Version) & " ("
+                          & Config.Source_Date & ") hosted on "
+                          & Config.Target;
          begin
             Put_Line (Version);
          end;
@@ -2427,11 +2443,11 @@ procedure GPS.Main is
             About_Contents := new String'("");
          end if;
          GPS_Main.Kernel.Insert
-           (-"Welcome to GPS " & Config.Version &
-              " (" & Config.Source_Date &
-            (-") hosted on ") & Config.Target & ASCII.LF &
-            (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
-              "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
+           (-"Welcome to GPS " & To_String (Config.Version)
+            & " (" & Config.Source_Date
+            & (-") hosted on ") & Config.Target & ASCII.LF
+            & (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all
+            & "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
          Free (About_Contents);
       end;
 

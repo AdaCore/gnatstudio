@@ -2641,7 +2641,7 @@ package body GUI_Utils is
       Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-subtitle");
       Vbox.Pack_Start (Label, Expand => False);
 
-      Gtk_New (Label, "Version " & Config.Version);
+      Gtk_New (Label, "Version " & To_String (Config.Version));
       Label.Set_Alignment (0.0, 0.5);
       Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
       Vbox.Pack_Start (Label, Expand => False);

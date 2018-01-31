@@ -848,9 +848,9 @@ package body Help_Module is
 
       Set_Unbounded_String
         (About_Text,
-         "GPS " & Config.Version & " (" & Config.Source_Date &
-         (-") hosted on ") & Config.Target & LF &
-         (-"GNAT ") & GNAT_Version (Kernel) & LF);
+         "GPS " & To_String (Config.Version) & " (" & Config.Source_Date
+         & (-") hosted on ") & Config.Target & LF
+         & (-"GNAT ") & GNAT_Version (Kernel) & LF);
 
       if Codepeer /= No_File then
          declare

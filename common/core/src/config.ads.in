@@ -20,8 +20,9 @@
 --  This package contains target specific parameters that are set at configure
 --  time.
 
+with Ada.Strings.Unbounded;
+
 package Config is
-   pragma Pure;
 
    pragma Style_Checks (Off);
 
@@ -35,7 +36,8 @@ package Config is
    Current_Year : constant String := "@CURRENT_YEAR@";
    --  The year to display in copyright notices
 
-   Version : constant String := "@GPS_VERSION@";
+   Version : Ada.Strings.Unbounded.Unbounded_String :=
+     Ada.Strings.Unbounded.To_Unbounded_String ("@GPS_VERSION@");
    --  Version number of this software
 
    Target  : constant String := "@TARGET@";

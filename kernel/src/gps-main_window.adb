@@ -1343,7 +1343,7 @@ package body GPS.Main_Window is
                Status => Nth_Arg (Data, 2, 0));
 
       elsif Command = "version" then
-         Set_Return_Value (Data, Config.Version);
+         Set_Return_Value (Data, To_String (Config.Version));
 
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);

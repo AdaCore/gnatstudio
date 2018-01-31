@@ -1443,7 +1443,7 @@ package body GNATdoc is
             & GNATdoc.Project_Environments.GNATdoc_Project_Environment'Class
               (Kernel.Registry.Environment.all).Get_GNAT_Version);
          Write_Line
-           (" GNATdoc version: " & Config.Version
+           (" GNATdoc version: " & To_String (Config.Version)
             &  " (" & Config.Source_Date & ")");
          Write_Line ("            Host: " & Config.Target);
 

@@ -41,6 +41,7 @@ with Language.Cpp;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;
@@ -246,10 +247,10 @@ package body GPS.CLI_Utils is
             end if;
          elsif Switch = "--version" or else Switch = "-v" then
             Put_Line
-              ("GPS version " &
-               Config.Version & " (" &
-               Config.Source_Date & ") hosted on " &
-               Config.Target);
+              ("GPS version "
+               & Ada.Strings.Unbounded.To_String (Config.Version) & " ("
+               & Config.Source_Date & ") hosted on "
+               & Config.Target);
             GNAT.OS_Lib.OS_Exit (0);
          end if;
 

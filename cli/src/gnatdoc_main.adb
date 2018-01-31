@@ -403,10 +403,10 @@ begin
    if Show_Version then
       declare
          Version : constant String :=
-                     "GNATdoc " &
-                     Config.Version & " (" &
-                     Config.Source_Date & ") hosted on " &
-                     Config.Target;
+                     "GNATdoc "
+                       & To_String (Config.Version) & " ("
+                       & Config.Source_Date & ") hosted on "
+                       & Config.Target;
       begin
          Put_Line (Version);
          return;
