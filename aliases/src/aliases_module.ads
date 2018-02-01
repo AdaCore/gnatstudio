@@ -20,9 +20,9 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 
-with Glib;                               use Glib;
+with Glib;       use Glib;
 
-with GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Aliases_Module is
    package SU renames Ada.Strings.Unbounded;
@@ -46,6 +46,11 @@ package Aliases_Module is
    function Get_Expansion (Alias : Alias_Type) return String;
    --  Return the given alias' expansion text
 
+   function Has_Same_Parameters
+     (Left, Right : Alias_Type) return Boolean;
+   --  Return True if Left and Right has the same number of parameters and if
+   --  the name of their parameters match.
+
    package Alias_Parameter_Substitution_Map is
      new Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
@@ -56,14 +61,30 @@ package Aliases_Module is
    --  Used to associate alias parameters' names and their corresponding
    --  values.
 
+   type Alias_Option_Type is private;
+   --  Type representing an option in the alias expanding dialog.
+
+   No_Option : constant Alias_Option_Type;
+
+   function Create
+     (Label         : String;
+      Default_Value : Boolean := False;
+      Doc           : String := "") return Alias_Option_Type;
+   --  Create an option will be displayed in the Expand_Alias function's
+   --  dialog, with the associated Doc, if any.
+
+   function Is_Enabled (Option : Alias_Option_Type) return Boolean;
+   --  True if the option has been enabled, False otherwise.
+
    function Expand_Alias
      (Alias                : Alias_Type;
-      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kernel               : not null access Kernel_Handle_Record'Class;
       Cursor               : out Integer;
       Must_Reindent        : out Boolean;
       Params_Substitutions : out Alias_Parameter_Substitution_Map.Map;
       Offset_Column        : Gint := 0;
-      Dialog_Title         : String := "Alias Parameters Selection")
+      Dialog_Title         : String := "Alias Parameters Selection";
+      Option               : access Alias_Option_Type := null)
       return String;
    --  Return the expanded version of Alias, displaying, if needed, a dialog
    --  asking the user to enter values for its parameters.
@@ -77,16 +98,31 @@ package Aliases_Module is
    --  alias parameter.
    --
    --  Dialog_Title is used to set the dialog's title.
+   --
+   --  Option is used to create an optional checkbox with the option's label.
+   --  Use the Is_Enabled function to know whether the given option has been
+   --  checked or not.
 
    function Expand_Alias
      (Alias         : Alias_Type;
-      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       Cursor        : out Integer;
       Must_Reindent : out Boolean;
       Offset_Column : Gint := 0;
       Dialog_Title  : String := "Alias Parameters Selection")
       return String;
    --  Same as above, but without the Params_Subsitutions parameter.
+
+   function Expand_Alias_With_Values
+     (Alias                : Alias_Type;
+      Kernel               : not null access Kernel_Handle_Record'Class;
+      Params_Substitutions : Alias_Parameter_Substitution_Map.Map;
+      Cursor               : out Integer;
+      Offset_Column        : Gint := 0)
+      return String;
+   --  Same as above but uses the values already provided in
+   --  Params_Substitutions instead of asking the user to enter values for the
+   --  parameters.
 
    type Alias_List is array (Positive range <>) of Alias_Type;
 
@@ -183,6 +219,17 @@ private
       Must_Reindent : Boolean;
       --  Whether the editor should be reindented after insertion of the macro
    end record;
+
+   type Alias_Option_Type is record
+      Label   : SU.Unbounded_String;
+      Doc     : SU.Unbounded_String;
+      Enabled : Boolean;
+   end record;
+
+   No_Option : constant Alias_Option_Type :=
+                 Alias_Option_Type'(Label   => SU.Null_Unbounded_String,
+                                    Doc     => SU.Null_Unbounded_String,
+                                    Enabled => False);
 
    No_Alias : constant Alias_Type :=
                 Alias_Type'(Name          => SU.Null_Unbounded_String,

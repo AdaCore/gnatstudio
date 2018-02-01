@@ -5879,7 +5879,8 @@ class FileTemplate(object):
     """
 
     @staticmethod
-    def register(alias_name, label, unit_param, language, is_impl):
+    def register(alias_name, label, unit_param, language,
+                 is_impl, impl_alias_name=None):
         """
         Register a new file template and create a 'New/create ``label``
         contextual menu allowing users to create a new file from it for a given
@@ -5897,11 +5898,19 @@ class FileTemplate(object):
         implementation file or a specification file. The file is then placed
         in the directory from which the contextual menu was spawned.
 
+        The optional ``impl_alias_name`` is used when when the file template
+        should be used for a specification file (i.e: when ``is_impl`` is
+        False): when specified, the user will have the choice to also create
+        the corresponding implementation file from the given alias (e.g: create
+        also the Ada body file when creating a package specification file).
+        The parameters of both aliases should match in that case.
+
         :param str alias_name: the name of the alias to use
         :param str label: label used for displaying purposes
         :param str unit_param: the alias parameter to use for naming
         :param str language: the file template's language
         :param bool is_impl: whether it's an implementation file or not
+        :param string impl_alias_name: The optional implementation alias name
         """
         pass  # implemented in Ada
 

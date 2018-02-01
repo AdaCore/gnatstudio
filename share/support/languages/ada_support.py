@@ -18,6 +18,7 @@ from gps_utils import hook
 def __on_switch_editor():
     gps_utils.gnat_rules.EnsureInitialized()
 
+
 XML = r"""<?xml version="1.0" ?>
 <GPS>
    <vsearch-pattern>
@@ -213,7 +214,8 @@ def __on_gps_started():
         label="Ada Package",
         unit_param="name",
         language="ada",
-        is_impl=False)
+        is_impl=False,
+        impl_alias_name="package_body")
 
     GPS.FileTemplate.register(
         alias_name="main_unit",

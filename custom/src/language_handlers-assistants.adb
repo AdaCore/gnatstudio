@@ -27,6 +27,7 @@ with GNATCOLL.Xref;                      use GNATCOLL.Xref;
 with Aliases_Module;                     use Aliases_Module;
 with Commands;                           use Commands;
 with Commands.Interactive;               use Commands.Interactive;
+with Default_Preferences;                use Default_Preferences;
 with GPS.Editors;                        use GPS.Editors;
 with GPS.Kernel.Actions;                 use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;                use GPS.Kernel.Contexts;
@@ -45,15 +46,21 @@ package body Language_Handlers.Assistants is
    --  The contextual menu group used when creating the file templates actions
    --  contextual menus.
 
+   Create_Impl_Pref         : Boolean_Preference;
+
    type File_Template_Type is tagged record
       Alias      : Alias_Type;
       Label      : Unbounded_String;
       Unit_Param : Unbounded_String;
       Language   : Unbounded_String;
       Is_Impl    : Boolean;
+      Impl_Alias : Alias_Type := No_Alias;
    end record;
    package File_Template_Lists is new Ada.Containers.Doubly_Linked_Lists
      (File_Template_Type, "=");
+
+   function Get_Create_Impl_Option
+     (File_Template : File_Template_Type) return Alias_Option_Type;
 
    type Language_Assistants_Module_Id_Record is new Module_ID_Record
    with record
@@ -90,13 +97,15 @@ package body Language_Handlers.Assistants is
    --  Hook function used to indent the editors associated with files created
    --  by registered file templates.
 
-   function Register_File_Template
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Alias_Name : String;
-      Label      : String;
-      Unit_Param : String;
-      Language   : String;
-      Is_Impl    : Boolean) return Boolean;
+   procedure Register_File_Template
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Alias_Name      : String;
+      Label           : String;
+      Unit_Param      : String;
+      Language        : String;
+      Is_Impl         : Boolean;
+      Impl_Alias_Name : String := "";
+      Error_Msg       : out Unbounded_String);
    --  Register a new file template.
    --
    --  Alias_Name is used to retrieve the alias to expand when creating a file
@@ -113,7 +122,9 @@ package body Language_Handlers.Assistants is
    --
    --  Is_Impl is used to know which file extension we should use.
    --
-   --  Return False if no alias has been found for Alias_Name, True otherwise.
+   --  Error_Msg is set to a non-null string if errors are detected while
+   --  trying to register the file template (e.g: when the alias does not
+   --  exist).
 
    procedure File_Template_Handler
      (Data    : in out Callback_Data'Class;
@@ -121,24 +132,76 @@ package body Language_Handlers.Assistants is
    --  Script handler for the FileTemplate class
 
    ----------------------------
+   -- Get_Create_Impl_Option --
+   ----------------------------
+
+   function Get_Create_Impl_Option
+     (File_Template : File_Template_Type) return Alias_Option_Type is
+   begin
+      if not File_Template.Is_Impl
+        and then File_Template.Impl_Alias /= No_Alias
+      then
+         return Create
+           (Label         => "Create also the corresponding implementation "
+            & "file",
+            Default_Value => Create_Impl_Pref.Get_Pref);
+      else
+         return No_Option;
+      end if;
+   end Get_Create_Impl_Option;
+
+   ----------------------------
    -- Register_File_Template --
    ----------------------------
 
-   function Register_File_Template
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Alias_Name : String;
-      Label      : String;
-      Unit_Param : String;
-      Language   : String;
-      Is_Impl    : Boolean) return Boolean
+   procedure Register_File_Template
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Alias_Name      : String;
+      Label           : String;
+      Unit_Param      : String;
+      Language        : String;
+      Is_Impl         : Boolean;
+      Impl_Alias_Name : String := "";
+      Error_Msg       : out Unbounded_String)
    is
-      Alias : constant Alias_Type := Get_Alias (Alias_Name);
+      Alias      : constant Alias_Type := Get_Alias (Alias_Name);
+      Impl_Alias : constant Alias_Type := Get_Alias (Impl_Alias_Name);
    begin
+      Error_Msg := Null_Unbounded_String;
+
+      --  Check if the alias exists
+
       if Alias = No_Alias then
-         Kernel.Insert
-           ("No alias registered for the name: " & Alias_Name,
-            Mode => Error);
-         return False;
+         Error_Msg := To_Unbounded_String
+           ("No alias registered for the name: "
+            & Alias_Name & ASCII.LF);
+      end if;
+
+      --  If the optional Impl_Alias_Name has been specified, check that it
+      --  exists.
+
+      if Impl_Alias_Name /= "" and then Impl_Alias = No_Alias then
+         Error_Msg := Error_Msg
+           & To_Unbounded_String
+           ("No alias registered for the name: "
+            & Impl_Alias_Name & ASCII.LF);
+      end if;
+
+      --  If Alias and the optional Impl_Alias_Name exist, check that they have
+      --  then same parameters.
+
+      if Impl_Alias /= No_Alias
+        and then not Has_Same_Parameters (Alias, Impl_Alias)
+      then
+         Error_Msg := Error_Msg
+           & To_Unbounded_String
+           (Impl_Alias_Name
+            & " should have the same parameters as "
+            & Alias_Name & ASCII.LF);
+      end if;
+
+      if Error_Msg /= "" then
+         return;
       end if;
 
       declare
@@ -159,7 +222,8 @@ package body Language_Handlers.Assistants is
                            Label      => To_Unbounded_String (Label),
                            Unit_Param => To_Unbounded_String (Unit_Param),
                            Language   => To_Unbounded_String (Language),
-                           Is_Impl    => Is_Impl);
+                           Is_Impl    => Is_Impl,
+                           Impl_Alias => Impl_Alias);
          Language_Assistants_Module.File_Templates.Append
            (File_Template);
 
@@ -180,8 +244,6 @@ package body Language_Handlers.Assistants is
             Action => Command_Name,
             Label  => "New/" & Label,
             Group  => File_Templates_Contextual_Group);
-
-         return True;
       end;
    end Register_File_Template;
 
@@ -195,25 +257,27 @@ package body Language_Handlers.Assistants is
    begin
       if Command = "register" then
          declare
-            Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-            Alias_Name : constant String := Data.Nth_Arg (1);
-            Label      : constant String := Data.Nth_Arg (2);
-            Unit_Param : constant String := Data.Nth_Arg (3);
-            Language   : constant String := Data.Nth_Arg (4);
-            Is_Impl    : constant Boolean := Data.Nth_Arg (5);
-            Success    : Boolean;
+            Kernel          : constant Kernel_Handle := Get_Kernel (Data);
+            Alias_Name      : constant String := Data.Nth_Arg (1);
+            Label           : constant String := Data.Nth_Arg (2);
+            Unit_Param      : constant String := Data.Nth_Arg (3);
+            Language        : constant String := Data.Nth_Arg (4);
+            Is_Impl         : constant Boolean := Data.Nth_Arg (5);
+            Impl_Alias_Name : constant String := Data.Nth_Arg (6, "");
+            Error_Msg       : aliased Unbounded_String;
          begin
-            Success := Register_File_Template
-              (Kernel     => Kernel,
-               Alias_Name => Alias_Name,
-               Label      => Label,
-               Unit_Param => Unit_Param,
-               Language   => Language,
-               Is_Impl    => Is_Impl);
+            Register_File_Template
+              (Kernel          => Kernel,
+               Alias_Name      => Alias_Name,
+               Label           => Label,
+               Unit_Param      => Unit_Param,
+               Language        => Language,
+               Is_Impl         => Is_Impl,
+               Impl_Alias_Name => Impl_Alias_Name,
+               Error_Msg       => Error_Msg);
 
-            if not Success then
-               Data.Set_Error_Msg
-                 ("No alias registered for the name: " & Alias_Name);
+            if Error_Msg /= Null_Unbounded_String then
+               Data.Set_Error_Msg (To_String (Error_Msg));
             end if;
          end;
       end if;
@@ -233,12 +297,12 @@ package body Language_Handlers.Assistants is
                                Directory_Information (Context.Context);
       Project              : constant Project_Type :=
                                Project_Information (Context.Context);
-      File                 : Virtual_File;
-      W_File               : Writable_File;
-      Cursor               : Integer;
       Must_Reindent        : Boolean;
       Params_Substitutions : Alias_Parameter_Substitution_Map.Map :=
                                Alias_Parameter_Substitution_Map.Empty_Map;
+      Option               : aliased Alias_Option_Type :=
+                               Get_Create_Impl_Option (Command.File_Template);
+      Cursor               : Integer;
       Expanded_Text        : constant String := Expand_Alias
         (Alias                => Command.File_Template.Alias,
          Kernel               => Kernel,
@@ -246,7 +310,8 @@ package body Language_Handlers.Assistants is
          Must_Reindent        => Must_Reindent,
          Params_Substitutions => Params_Substitutions,
          Dialog_Title         =>
-           "Create " & To_String (Command.File_Template.Label));
+           "Create " & To_String (Command.File_Template.Label),
+         Option               => Option'Unchecked_Access);
       Unit_Name            : constant String :=
                                (if Expanded_Text /= "" then
                                    Params_Substitutions
@@ -254,30 +319,35 @@ package body Language_Handlers.Assistants is
                                      (Command.File_Template.Unit_Param))
                                 else
                                    "");
-      Line                 : Integer;
-      Column               : Integer;
 
-      function Get_Base_Name return String;
+      function Get_Base_Name (Part : Unit_Parts) return String;
       --  Return the base name of the file to create
 
       procedure Get_Line_And_Column_From_Cursor
-        (Line   : out Integer;
+        (Text   : String;
+         Cursor : Integer;
+         Line   : out Integer;
          Column : out Integer);
       --  Get the line and column from Cursor.
       --  This is needed in order to place the cursor at the right position.
+
+      procedure Create_File_From_Expanded_Template
+        (Part   : Unit_Parts;
+         Text   : String;
+         Cursor : Integer);
+      --  Create a file for the given the given expanded template Text.
+      --  Part is used to know the file extension.
+      --  Cursor is used to place the cursor when opening the new file.
 
       -------------------
       -- Get_Base_Name --
       -------------------
 
-      function Get_Base_Name return String is
+      function Get_Base_Name (Part : Unit_Parts) return String is
       begin
          return +Project.File_From_Unit
            (Unit_Name       => Unit_Name,
-            Part            => (if Command.File_Template.Is_Impl then
-                                   Unit_Body
-                                else
-                                   Unit_Spec),
+            Part            => Part,
             Language        => To_String (Command.File_Template.Language),
             File_Must_Exist => False);
       end Get_Base_Name;
@@ -287,70 +357,128 @@ package body Language_Handlers.Assistants is
       -------------------------------------
 
       procedure Get_Line_And_Column_From_Cursor
-        (Line   : out Integer;
+        (Text   : String;
+         Cursor : Integer;
+         Line   : out Integer;
          Column : out Integer)
       is
          Lines : constant Unbounded_String_Array := GNATCOLL.Utils.Split
-           (Expanded_Text (Expanded_Text'First .. Cursor),
+           (Text (Text'First .. Cursor),
             On               => ASCII.LF,
             Omit_Empty_Lines => False);
       begin
          Line := Lines'Length;
-         Column := Length (Lines (Lines'Last));
+         Column := Length (Lines (Lines'Last)) + 1;
       end Get_Line_And_Column_From_Cursor;
+
+      ----------------------------------------
+      -- Create_File_From_Expanded_Template --
+      ----------------------------------------
+
+      procedure Create_File_From_Expanded_Template
+        (Part   : Unit_Parts;
+         Text   : String;
+         Cursor : Integer)
+      is
+         File   : Virtual_File;
+         W_File : Writable_File;
+         Line   : Integer := 1;
+         Column : Integer := 1;
+      begin
+         --  Create the file from its basename and the directory information
+
+         File := Create_From_Dir (Dir, +Get_Base_Name (Part));
+         W_File := GNATCOLL.VFS.Write_File (File);
+
+         if W_File = Invalid_File then
+            Kernel.Insert
+              ("Cannot create file " & File.Display_Full_Name,
+               Mode => Error);
+            return;
+         end if;
+
+         --  Write the template expanded text in it
+
+         GNATCOLL.VFS.Write (W_File, Text);
+         GNATCOLL.VFS.Close (W_File);
+
+         File_Saved_Hook.Run (Kernel, File);
+
+         --  Recompute the view
+
+         if Project /= No_Project then
+            Recompute_View (Kernel);
+         end if;
+
+         --  Open the created file and place the cursor at the right position
+
+         Get_Line_And_Column_From_Cursor
+           (Text   => Text,
+            Cursor => Cursor,
+            Line   => Line,
+            Column => Column);
+
+         --  If the expanded text should be reindented, add our hook function
+         --  to the File_Edited_Hook to indent the editor when it gets opened.
+
+         if Must_Reindent then
+            File_Edited_Hook.Add
+              (new On_Open_File_From_Template'(Hook_Function with
+               File    => File,
+               Project => Project));
+         end if;
+
+         --  Open an editor for the newly created file
+
+         Open_File_Action_Hook.Run
+           (Kernel,
+            File    => File,
+            Project => Project,
+            Line    => Line,
+            Column  => Visible_Column (Column));
+      end Create_File_From_Expanded_Template;
 
    begin
       if Expanded_Text = "" then
          return Success;
       end if;
 
-      --  Create the file from its basename and the directory information
+      --  If the 'Create implementation' option is present and enabled,
+      --  also create the corresponding implentation file (e.g: package body
+      --  file for Ada).
 
-      File := Create_From_Dir (Dir, +Get_Base_Name);
-      W_File := GNATCOLL.VFS.Write_File (File);
+      if Option /= No_Option then
+         Set_Pref
+           (Pref    => Create_Impl_Pref,
+            Manager => Kernel.Get_Preferences,
+            Value   => Is_Enabled (Option));
 
-      if W_File = Invalid_File then
-         Kernel.Insert
-           ("Cannot create file " & File.Display_Full_Name,
-            Mode => Error);
-         return Success;
+         if Is_Enabled (Option) then
+            declare
+               Impl_Cursor        : Integer;
+               Impl_Expanded_Text : constant String :=
+                                      Expand_Alias_With_Values
+                 (Alias                => Command.File_Template.Impl_Alias,
+                  Kernel               => Kernel,
+                  Params_Substitutions => Params_Substitutions,
+                  Cursor               => Impl_Cursor);
+            begin
+               Create_File_From_Expanded_Template
+                 (Part   => Unit_Body,
+                  Text   => Impl_Expanded_Text,
+                  Cursor => Impl_Cursor);
+            end;
+         end if;
       end if;
 
-      --  Write the template expanded text in it
-
-      GNATCOLL.VFS.Write (W_File, Expanded_Text);
-      GNATCOLL.VFS.Close (W_File);
-
-      File_Saved_Hook.Run (Kernel, File);
-
-      --  Recompute the view
-
-      if Project /= No_Project then
-         Recompute_View (Kernel);
-      end if;
-
-      --  Open the created file and place the cursor at the right position
-
-      Get_Line_And_Column_From_Cursor (Line, Column);
-
-      --  If the expanded text should be reindented, add our hook function to
-      --  the File_Edited_Hook to indent the editor when it gets opened.
-
-      if Must_Reindent then
-         File_Edited_Hook.Add
-           (new On_Open_File_From_Template'(Hook_Function with
-            File    => File,
-            Project => Project));
-      end if;
-
-      --  Open an editor for the newly created file
-
-      Open_File_Action_Hook.Run
-        (Kernel,
-         File    => File,
-         Project => Project,
-         Line    => Line,
-         Column  => Visible_Column (Column));
+      Create_File_From_Expanded_Template
+        (Part   =>
+           (if Command.File_Template.Is_Impl then
+               Unit_Body
+            else
+               Unit_Spec),
+         Text   => Expanded_Text,
+         Cursor => Cursor);
 
       return Success;
    end Execute;
@@ -438,10 +566,21 @@ package body Language_Handlers.Assistants is
                            2 => Param ("label"),
                            3 => Param ("unit_param"),
                            4 => Param ("language"),
-                           5 => Param ("is_impl")),
+                           5 => Param ("is_impl"),
+                           6 => Param ("impl_alias_name", Optional => True)),
          Handler       => File_Template_Handler'Access,
          Class         => File_Template_Class,
          Static_Method => True);
+
+      Create_Impl_Pref := Create
+        (Get_Preferences (Kernel),
+         Name    => "Create-Impl-Template",
+         Label   => "Incremental search",
+         Path    => ":File Templates",
+         Doc     =>
+           "Create also the corresponding implementation file when creating "
+         & "a new specification file from a template.",
+         Default => False);
    end Register_Module;
 
 end Language_Handlers.Assistants;
