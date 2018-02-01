@@ -32,9 +32,12 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 
+limited with GPS.Kernel;
+
 package Task_Manager is
 
-   type Task_Manager_Record is tagged private;
+   type Task_Manager_Record
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is tagged private;
    type Task_Manager_Access is access all Task_Manager_Record'Class;
    No_Task_Manager : constant Task_Manager_Access;
 
@@ -175,7 +178,9 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Task_Queue_Array, Task_Queue_Array_Access);
 
-   type Task_Manager_Record is tagged record
+   type Task_Manager_Record
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is tagged record
       Queues               : Task_Queue_Array_Access;
 
       Passive_Index        : Integer := 0;

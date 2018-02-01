@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GPS.Kernel.Hooks;
 
 package body Task_Manager is
    Me : constant Trace_Handle := Create ("TASK");
@@ -283,6 +284,7 @@ package body Task_Manager is
 
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Status = Completed then
+               GPS.Kernel.Hooks.Task_Finished_Hook.Run (Manager.Kernel);
                Free (Command_Lists.List (Manager.Queues (J).Queue));
             end if;
          end loop;

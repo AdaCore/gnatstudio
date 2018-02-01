@@ -1039,6 +1039,15 @@ class Predefined_Hooks:
 
         """
 
+    # task_finished = 'task_finished'
+    def task_finished(name):
+        """
+      Emitted when a background task is finished
+
+      :param str name:
+
+        """
+
     # task_started = 'task_started'
     def task_started(name):
         """

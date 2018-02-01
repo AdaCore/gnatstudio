@@ -156,7 +156,7 @@ package body GPS.Kernel.Task_Manager is
    is
       Manager : Task_Manager_Access;
    begin
-      Manager := new Task_Manager_Record;
+      Manager := new Task_Manager_Record (Kernel);
       Set_Task_Manager (Kernel, Manager);
 
       Standard.Task_Manager.Shell.Register_Commands (Kernel);

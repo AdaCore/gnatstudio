@@ -951,6 +951,9 @@ macro.'''),
     Hook('task_started', 'simple_hooks', descr='''
 Emitted when a new background task is started'''),
 
+    Hook('task_finished', 'simple_hooks', descr='''
+Emitted when a background task is finished'''),
+
     Hook('variable_changed', 'simple_hooks', descr='''
 Emitted when one of the scenario variables has been renamed, removed or
 when one of its possible values has changed.'''),
