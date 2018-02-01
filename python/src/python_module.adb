@@ -56,7 +56,7 @@ with Xref;                       use Xref;
 package body Python_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me  : constant Trace_Handle := Create ("Python_Module");
+   Me  : constant Trace_Handle := Create ("GPS.OTHERS.Python_Module");
 
    type Hash_Index is range 0 .. 100000;
    function Hash is new String_Utils.Hash (Hash_Index);

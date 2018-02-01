@@ -64,7 +64,7 @@ with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Coverage_GUI;                           use Coverage_GUI;
 
 package body Code_Analysis_Module is
-   Me : constant Trace_Handle := Create ("CODE_ANALYSIS");
+   Me : constant Trace_Handle := Create ("GPS.CODE_ANALYSIS.CODE_ANALYSIS");
 
    Src_File_Cst : aliased constant String := "src";
    --  Constant String that represents the name of the source file parameter

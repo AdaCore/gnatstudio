@@ -67,9 +67,9 @@ with System;
 with Config;    use Config;
 
 package body Generic_Views is
-   Me : constant Trace_Handle := Create ("Views");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.GENERIC_VIEWS");
    No_Transient_Views : constant Trace_Handle :=
-     Create ("Views.No_Transient_Views", Default => Off);
+     Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS", Default => Off);
 
    function Has_Right_Expander
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)

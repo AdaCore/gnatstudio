@@ -76,7 +76,7 @@ with Vsearch;                    use Vsearch;
 package body Src_Contexts is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Src_Contexts");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.CONTEXTS");
 
    package Match_Vectors is new Ada.Containers.Vectors
      (Positive, GPS.Search.Search_Context);

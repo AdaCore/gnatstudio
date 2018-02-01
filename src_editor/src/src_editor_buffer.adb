@@ -122,10 +122,10 @@ package body Src_Editor_Buffer is
    Editors_Factory : Src_Editor_Factory_Access;
 
    Me                   : constant Trace_Handle :=
-                            Create ("Source_Editor_Buffer");
+                            Create ("GPS.Source_Editor.Buffer");
 
    Prevent_Align        : constant Trace_Handle :=
-                            Create ("PREVENT_ALIGN_ON_TAB", On);
+                            Create ("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB", On);
    pragma Unreferenced (Prevent_Align);
    --  This trace is setup here for the benefit of tab.py
 

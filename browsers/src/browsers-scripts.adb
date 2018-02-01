@@ -49,7 +49,7 @@ with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 
 package body Browsers.Scripts is
-   Me : constant Trace_Handle := Create ("BROWSERS");
+   Me : constant Trace_Handle := Create ("GPS.BROWSERS.BROWSERS");
 
    P_Stroke             : constant := 2;
    P_Fill               : constant := 3;

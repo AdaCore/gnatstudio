@@ -40,7 +40,7 @@ with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
 
 package body GPS.Kernel.Actions is
-   Me : constant Trace_Handle := Create ("ACTIONS");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.ACTIONS");
 
    use Actions_Htable.String_Hash_Table;
 

@@ -44,7 +44,7 @@ with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
 with Xref;                   use Xref;
 
 package body Refactoring.Parameters is
-   Me : constant Trace_Handle := Create ("Refactor.Params");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.PARAMS");
 
    Location_Cst               : aliased constant String := "location";
 

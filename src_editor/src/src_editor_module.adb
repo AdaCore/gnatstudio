@@ -92,7 +92,7 @@ package body Src_Editor_Module is
    use type GNATCOLL.Xref.Visible_Column;
    use type Pango.Font.Pango_Font_Description;
 
-   Me : constant Trace_Handle := Create ("Src_Editor_Module");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.MODULE");
 
    Hist_Key : constant History_Key := "reopen_files";
    --  Key to use in the kernel histories to store the most recently opened

@@ -25,7 +25,7 @@ with GPS.Main_Window;           use GPS.Main_Window;
 
 package body GPS.Callbacks is
 
-   Gtk_Trace : constant Trace_Handle := Create ("Gtk+");
+   Gtk_Trace : constant Trace_Handle := Create ("GPS.OTHERS.Gtk+");
 
    -------------
    -- Gtk_Log --

@@ -25,7 +25,7 @@ with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 
 package body VCS2.Engines is
-   Me : constant Trace_Handle := Create ("VCS2");
+   Me : constant Trace_Handle := Create ("GPS.VCS.VCS2");
 
    Default_Display_Unmodified : constant Status_Display :=
      (Label     => To_Unbounded_String ("Up to date"),

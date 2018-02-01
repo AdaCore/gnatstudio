@@ -49,7 +49,7 @@ with GPS.Dialogs;                use GPS.Dialogs;
 with Xref;                       use Xref;
 
 package body Refactoring.Rename is
-   Me : constant Trace_Handle := Create ("RENAME");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.RENAME");
 
    use Location_Arrays;
 

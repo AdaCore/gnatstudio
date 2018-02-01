@@ -32,8 +32,9 @@ with Default_Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GPS.Search is
-   Me : constant Trace_Handle := Create ("SEARCH");
-   Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM", Off);
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH");
+   Memcheck_Handle : constant Trace_Handle := Create
+     ("TESTSUITE.MEM", Off);
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
 

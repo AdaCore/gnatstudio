@@ -29,7 +29,7 @@ with Histories;                   use Histories;
 with Pango.Layout;                use Pango.Layout;
 
 package body VCS2.Views is
-   Me : constant Trace_Handle := Create ("VIEWS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.VIEWS");
 
    type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
       record

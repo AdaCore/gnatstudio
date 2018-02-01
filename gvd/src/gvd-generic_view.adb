@@ -30,7 +30,8 @@ with String_Utils;         use String_Utils;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body GVD.Generic_View is
-   Me : constant GNATCOLL.Traces.Trace_Handle := Create ("GVD");
+   Me : constant GNATCOLL.Traces.Trace_Handle := Create
+     ("GPS.DEBUGGING.GENERIC_VIEW");
 
    -----------------
    -- Set_Process --

@@ -26,7 +26,7 @@ with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;
 
 package body Build_Configurations is
-   Me : constant Trace_Handle := Create ("Build_Configurations");
+   Me : constant Trace_Handle := Create ("GPS.BUILD.BUILD_CONFIGURATIONS");
 
    use GNAT.OS_Lib;
    use Target_List;

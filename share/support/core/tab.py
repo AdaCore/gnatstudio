@@ -14,7 +14,7 @@ import aliases
 import align
 
 
-if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
+if not GPS.Logger("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB").active:
     tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
     tabs_align_selection.create(
         "Align selection on tab", "boolean",
@@ -47,7 +47,7 @@ def smart_tab():
 
     # If multiple lines are selected, perform various alignments
 
-    if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
+    if not GPS.Logger("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB").active:
         if tabs_align_selection.get():
             start = editor.selection_start()
             end = editor.selection_end()
@@ -165,7 +165,7 @@ def smart_escape():
                     current_view.close()
                 else:
                     GPS.MDI.present_main_window()
-            except:
+            except Exception:
                 return False
 
             return True

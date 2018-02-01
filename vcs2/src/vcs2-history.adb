@@ -73,7 +73,7 @@ with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 
 package body VCS2.History is
-   Me : constant Trace_Handle := Create ("HISTORY");
+   Me : constant Trace_Handle := Create ("GPS.VCS.HISTORY");
 
    Column_Line    : constant := 0;
    Column_Author  : constant := 1;

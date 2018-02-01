@@ -29,7 +29,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 package Default_Preferences.Assistants is
 
    Auto_Run_Assistant : constant Trace_Handle :=
-     Create ("auto_run_assistant", GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.AUTO_RUN_ASSISTANT", GNATCOLL.Traces.Off);
 
    type Preferences_Assistant_Page is tagged private;
    type Preferences_Assistant_Page_Array is

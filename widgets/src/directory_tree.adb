@@ -60,7 +60,7 @@ with UTF8_Utils;                use UTF8_Utils;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Directory_Tree is
-   Me : constant Trace_Handle := Create ("Directory_Tree");
+   Me : constant Trace_Handle := Create ("GPS.WIDGETS.DIRECTORY_TREE");
 
    Icon_Column      : constant := 0;
    Base_Name_Column : constant := 1;

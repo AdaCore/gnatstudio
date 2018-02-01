@@ -33,7 +33,7 @@ with String_Utils;               use String_Utils;
 
 package body Build_Command_Utils is
 
-   Me : constant Trace_Handle := Create ("Build_Command_Manager");
+   Me : constant Trace_Handle := Create ("GPS.BUILD.BUILD_COMMAND_MANAGER");
 
    Max_Number_Of_Mains : constant := 128;
    --  The maximum number of Mains that we accept to display in the Menus

@@ -68,7 +68,7 @@ with XML_Parsers;
 
 package body Default_Preferences is
 
-   Me : constant Trace_Handle := Create ("Default_Prefs");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.DEFAULT_PREFS");
 
    ------------------
    -- Saved_Params --

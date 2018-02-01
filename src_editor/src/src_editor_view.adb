@@ -103,10 +103,10 @@ with String_Utils; use String_Utils;
 
 package body Src_Editor_View is
 
-   Me : constant Trace_Handle := Create ("Editor_View");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.VIEW");
 
    Trace_Override_Middle_Click_Paste : constant Trace_Handle :=
-     Create ("OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
    --  When this is On, we do our own handling of middle mouse click to
    --  implement paste on Unix platforms. The default handling of the Xserver
    --  also copies the syntax highlighting which is unwanted if for instance we

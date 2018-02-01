@@ -96,7 +96,7 @@ with Ada.Containers.Ordered_Sets;
 
 package body GUI_Utils is
 
-   Me : constant Trace_Handle := Create ("GUI_Utils");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.GUI_Utils");
 
    Busy_Cursor : Gdk.Gdk_Cursor;
    --  A global variable, allocated once and never freed

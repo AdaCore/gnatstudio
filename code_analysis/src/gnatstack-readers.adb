@@ -18,7 +18,7 @@
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GNATStack.Readers is
-   Me : constant Trace_Handle := Create ("GNATSTACK");
+   Me : constant Trace_Handle := Create ("GPS.CODE_ANALYSIS.GNATSTACK");
 
    use Ada.Strings.Unbounded;
    use Subprogram_Information_Maps;

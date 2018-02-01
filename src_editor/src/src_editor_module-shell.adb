@@ -68,7 +68,7 @@ with Src_Editor_View;                 use Src_Editor_View;
 package body Src_Editor_Module.Shell is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Editor.Shell");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.SHELL");
 
    Editor_Location_Class_Name : constant String := "EditorLocation";
 

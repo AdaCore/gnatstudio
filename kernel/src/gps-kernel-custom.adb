@@ -28,7 +28,7 @@ with XML_Parsers;
 
 package body GPS.Kernel.Custom is
 
-   Me            : constant Trace_Handle := Create ("Kernel.Custom");
+   Me            : constant Trace_Handle := Create ("GPS.KERNEL.CUSTOM");
    XML_Extension : constant Filesystem_String := ".xml";
 
    use Scripts_Hash.String_Hash_Table;

@@ -28,7 +28,7 @@ with Codefix.Text_Manager.Commands; use Codefix.Text_Manager.Commands;
 package body Codefix.Text_Manager.Ada_Commands is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Codefix");
+   Me : constant Trace_Handle := Create ("GPS.CODEFIX.CODEFIX");
 
    function Get_Beginning_Of_Name
      (Current_Text : Text_Navigator_Abstr'Class;

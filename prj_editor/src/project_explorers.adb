@@ -82,7 +82,7 @@ with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;
 
 package body Project_Explorers is
-   Me : constant Trace_Handle := Create ("PRJ_VIEW");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.PRJ_VIEW");
 
    Show_Absolute_Paths : Boolean_Preference;
    Show_Basenames      : Boolean_Preference;

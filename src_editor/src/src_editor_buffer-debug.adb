@@ -42,7 +42,8 @@ use Src_Editor_Module.Line_Highlighting;
 
 package body Src_Editor_Buffer.Debug is
 
-   Me : constant Trace_Handle := Create ("buffer_debug", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create
+     ("GPS.INTERNAL.SOURCE_EDITOR.BUFFER_DEBUG", GNATCOLL.Traces.Off);
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class

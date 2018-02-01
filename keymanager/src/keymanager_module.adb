@@ -58,10 +58,11 @@ with XML_Utils;                use XML_Utils;
 
 package body KeyManager_Module is
 
-   Me : constant Trace_Handle := Create ("Keymanager", GNATCOLL.Traces.Off);
-   Debug : constant Trace_Handle := Create ("KM");
+   Me : constant Trace_Handle := Create
+     ("GPS.KEY_MANAGER.MODULE", GNATCOLL.Traces.Off);
+   Debug : constant Trace_Handle := Create ("GPS.KEY_MANAGER.MODULE_DEBUG");
    Event_Debug_Trace : constant Trace_Handle := Create
-     ("Event_Debug", GNATCOLL.Traces.Off);
+     ("GPS.KEY_MANAGER.MODULE_EVENT_DEBUG", GNATCOLL.Traces.Off);
 
    use Key_Htable;
 

@@ -23,7 +23,7 @@ with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
 
 package body Memory_Usage_Views.Providers is
 
-   Me : constant Trace_Handle := Create ("MEMORY_USAGE_VIEWS.PROVIDERS");
+   Me : constant Trace_Handle := Create ("GPS.MEMORY_USAGE.PROVIDERS");
 
    package Memory_Usage_Provider_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps

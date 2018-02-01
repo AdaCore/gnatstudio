@@ -36,7 +36,7 @@ with Builder_Facility_Module;
 with JSON_Utils;
 
 package body Toolchains_Module is
-   Me : constant Trace_Handle := Create ("TOOLCHAINS");
+   Me : constant Trace_Handle := Create ("GPS.TOOLCHAINS.MODULE");
 
    type Toolchains_Property is new Property_Record with record
       Active           : Boolean;

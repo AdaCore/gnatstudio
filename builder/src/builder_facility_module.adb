@@ -85,9 +85,9 @@ with GPS.Core_Kernels;
 package body Builder_Facility_Module is
 
    Me          : constant Trace_Handle :=
-                   Create ("Builder_Facility_Module");
+                   Create ("GPS.BUILD.BUILDER_FACILITY_MODULE");
    Modes_Trace : constant Trace_Handle :=
-                   Create ("Builder.Modes", GNATCOLL.Traces.Off);
+                   Create ("GPS.INTERNAL.Builder_Modes", GNATCOLL.Traces.Off);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Any_Type, Any_Type_Access);

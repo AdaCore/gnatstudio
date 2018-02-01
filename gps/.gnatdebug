@@ -25,10 +25,10 @@ UNEXPECTED_EXCEPTIONS=yes
 --  Should we override the X11 server's default handling of middle mouse
 --  button to paste the selection (and thus do not paste text highlight)
 
-OVERRIDE_MIDDLE_CLICK_PASTE = yes
+GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE = yes
 
 --  Whether to use opaque resizing in the MDI (this is on by default)
-MDI_OPAQUE_RESIZING = yes
+GPS.INTERNAL.MDI_OPAQUE_RESIZING = yes
 
 --  Select the modules that should be loaded
 
@@ -44,8 +44,8 @@ MDI_OPAQUE_RESIZING = yes
 --  MODULE.PROJECT_EXPLORER   = yes
 --  MODULE.FILES_EXPLORER     = yes
 --  MODULE.EXTERNAL_EDITOR    = yes
-MODULE.VCS                = no
-MODULE.VCS2               = yes
+GPS.INTERNAL.MODULE_VCS    = no
+GPS.INTERNAL.MODULE_VCS2   = yes
 --  MODULE.CUSTOM             = yes
 --  MODULE.ACTION_EDITOR      = yes
 --  MODULE.CODEFIX            = yes
@@ -60,7 +60,6 @@ MODULE.VCS2               = yes
 
 --  Change behavior of GPS. These debug handle do not add extra logs
 
-COMMENT_EXTRACTION                = yes
 ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
@@ -78,10 +77,14 @@ PROJECTS.GNAT = no
 
 XREF.* = yes
 LIBCLANG.*=no
+GPS.COMPLETION.LIBCLANG_COMPLETION=no
+GPS.LIBCLANG.LIBCLANG=no
+GPS.LIBCLANG.POOL=no
 ALI=no
 ALI.PARSING=yes
 ALI.Assert=no
 CPP=no
+GPS.CPP.MODULE=no
 
 --  ENTITIES.*=yes
 ENTITIES.DEBUG=no
@@ -90,7 +93,7 @@ ENTITIES.REF  = no
 ENTITIES.QUERIES = no
 
 --  Monitor keybindings
-KEYMANAGER=no
+GPS.KEY_MANAGER.MODULE=no
 
 --  Deactivate this to disable the use of sql-based entities.
 --  This cannot be set from the command line, since the kernel and the xref
@@ -99,15 +102,15 @@ ENTITIES.SQLITE = yes
 
 SCRIPTS.REF = no
 CONTEXTS.REF = no
-CONTEXTS.MEM = no
+GPS.KERNEL.CONTEXTS.MEM = no
 
 GPS.KERNEL.HELP = no
 
 --  Enable the fallback on the construct tree for xref queries (on by default)
-ENTITIES.CONSTRUCTS = yes
+GPS.INTERNAL.ENTITIES.CONSTRUCTS = yes
 
 --  Debugging slow filters
-FILTERS=no
+GPS.INTERNAL.FILTERS=no
 
 --  Debug handles related to scripts
 
@@ -117,10 +120,10 @@ GPS.KERNEL.MODULES=no
 PYTHON.OUT=yes
 SCRIPTS.LOG=no
 PYTHON.ERRORS=yes
-COMMANDS.CUSTOM=no
-HOOKS=no
-EXPECT=no
-TERM=no
+GPS.KERNEL.Commands_Custom=no
+GPS.KERNEL.HOOKS=no
+GPS.KERNEL.TIMEOUT_EXPECT=no
+GPS.WIDGETS.TERMINAL=no
 
 --  Display full traceback for all calls from python to Ada (expensive)
 PYTHON.TB=no
@@ -128,21 +131,25 @@ PYTHON.TB=no
 REMOTE_FULL=no
 PYTHON_REF_COUNT=no
 
-COMPLETION_ADVANCED=no
+GPS.COMPLETION.MODULE_ADVANCED=no
 
 --  Debug handles related to the editor
-buffer_debug=no
+GPS.INTERNAL.SOURCE_EDITOR.BUFFER_DEBUG=no
 
 --  Omnisearch
 SEARCH.*=yes
+GPS.KERNEL.SEARCH_FILENAMES=yes
+GPS.KERNEL.SEARCH_SOURCES=yes
+GPS.KERNEL.SEARCH_GUI=yes
+GPS.KERNEL.SEARCH=yes
 
 --  Active in development mode
 
-GPS.KERNEL.MODULES.UI=no
+GPS.Kernel.Modules_UI=no
 
 SQL.SQLITE.GNADE=yes
 
-MODULE.GNAThub=yes
+GPS.INTERNAL.MODULE_GNAThub=yes
 
 --  Disable traces for mdl2json (QGen). They interfer with sending the
 --  JSON on stdout

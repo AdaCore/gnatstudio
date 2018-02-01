@@ -68,7 +68,7 @@ with String_Utils;               use String_Utils;
 with Glib_String_Utils;          use Glib_String_Utils;
 
 package body Revision_Views is
-   Me : constant Trace_Handle := Create ("REVISIONS");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.REVISIONS");
 
    Root_Color_Name : constant String := "blue";
 

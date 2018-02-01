@@ -45,7 +45,7 @@ with BT.Xml.Reader;
 
 package body CodePeer.Backtrace_View is
 
-   Me : constant Trace_Handle := Create ("CodePeer-bt");
+   Me : constant Trace_Handle := Create ("GPS.CODEPEER.CODEPEER-BT");
 
    type Backtrace_View is access all Backtrace_View_Record'Class;
 

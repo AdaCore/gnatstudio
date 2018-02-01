@@ -127,7 +127,7 @@ package Vdiff2_Module.Utils is
 
 private
 
-   Me                   : constant Trace_Handle := Create ("VDiff2_Utils");
+   Me                   : constant Trace_Handle := Create ("GPS.VDIFF.Utils");
    Default_Style        : constant String       := "default_diff";
    Old_Style            : constant String       := "old_diff";
    Append_Style         : constant String       := "append_diff";

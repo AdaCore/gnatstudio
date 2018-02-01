@@ -52,7 +52,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 package body VFS_Module is
 
    VFS_Module_Name : constant String := "VFS_Module";
-   Me              : constant Trace_Handle := Create (VFS_Module_Name);
+   Me              : constant Trace_Handle := Create ("GPS.OTHERS.VFS_MODULE");
    VFS_Module_Id   : Module_ID;
 
    Dir_Cst               : aliased constant String := "dir";

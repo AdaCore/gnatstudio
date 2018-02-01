@@ -76,7 +76,7 @@ with Xref;                        use Xref;
 
 package body Call_Graph_Views is
 
-   Me : constant Trace_Handle := Create ("CALLGRAPH");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.CALL_GRAPH_VIEW");
 
    ---------------
    -- Constants --

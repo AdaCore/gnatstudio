@@ -47,7 +47,7 @@ with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 
 package body Switches_Editors is
 
-   Me : constant Trace_Handle := Create ("Switches_Editors");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.Switches_Editors");
 
    ---------------------
    -- Switches editor --

@@ -54,7 +54,7 @@ with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 
 package body Remote.Rsync is
 
-   Me : constant Trace_Handle := Create ("remote_sync_module");
+   Me : constant Trace_Handle := Create ("GPS.REMOTE.remote_sync_module");
 
    Progress_Regexp         : constant Pattern_Matcher := Compile
      ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);

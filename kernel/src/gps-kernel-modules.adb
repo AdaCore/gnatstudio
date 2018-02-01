@@ -27,7 +27,7 @@ with Glib.Object;               use Glib.Object;
 package body GPS.Kernel.Modules is
 
    Me : constant Trace_Handle :=
-          Create ("GPS.Kernel.Modules", GNATCOLL.Traces.Off);
+          Create ("GPS.KERNEL.MODULES", GNATCOLL.Traces.Off);
 
    procedure Free (Module : in out Module_ID);
    --  Free memory associated to a Module_ID

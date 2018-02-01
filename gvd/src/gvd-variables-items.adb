@@ -22,7 +22,7 @@ with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
 
 package body GVD.Variables.Items is
 
-   Me : constant Trace_Handle := Create ("ITEMS");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_VARIABLES_ITEMS");
 
    ----------
    -- Name --

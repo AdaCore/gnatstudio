@@ -71,7 +71,7 @@ with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
 package body GVD_Module is
-   Me : constant Trace_Handle := Create ("GVD_MODULE");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_MODULE");
 
    Run_Arguments_History_Key : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.

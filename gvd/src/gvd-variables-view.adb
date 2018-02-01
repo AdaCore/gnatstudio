@@ -78,7 +78,7 @@ with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 
 package body GVD.Variables.View is
-   Me : constant Trace_Handle := Create ("Variables_View");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.Variables_View");
 
    Show_Types : Boolean_Preference;
 

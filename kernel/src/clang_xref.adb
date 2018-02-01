@@ -54,7 +54,8 @@ package body Clang_Xref is
    --    operations on every reference might, by definition, be costly in terms
    --    of computation power.
 
-   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create
+     ("GPS.KERNEL.LIBCLANG");
 
    function Kernel return Core_Kernel is
      (Core_Kernel (Clang_Module_Id.Get_Kernel));

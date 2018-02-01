@@ -51,7 +51,7 @@ with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 
 package body Variable_Editors is
 
-   Me : constant Trace_Handle := Create ("Variable_Editors");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.Variable_Editors");
 
    New_Value_Name : constant String := -"<Enter value name>";
    --  Name used for the new variables

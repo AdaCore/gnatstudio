@@ -40,7 +40,7 @@ with XML_Parsers;
 
 package body Histories is
 
-   Me : constant Trace_Handle := Create ("Histories");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.HISTORIES");
 
    use History_Hash.String_Hash_Table;
 

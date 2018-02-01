@@ -46,7 +46,8 @@ with Toolchains_Old;            use Toolchains_Old;
 
 package body External_Editor_Module is
 
-   Me : constant Trace_Handle := Create ("External_Editor_Module");
+   Me : constant Trace_Handle := Create
+     ("GPS.SOURCE_EDITOR.EXTERNAL_EDITOR_MODULE");
 
    Timeout : constant Guint := 500;
    --  Timeout in millisecond to check the external editor processes.

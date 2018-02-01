@@ -38,7 +38,8 @@ with GPS.Kernel.Hyper_Mode; use GPS.Kernel.Hyper_Mode;
 
 package body Src_Editor_View.Hyper_Mode is
 
-   Me : constant Trace_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create
+     ("GPS.SOURCE_EDITOR.HYPER_MODE", GNATCOLL.Traces.Off);
 
    ---------------
    -- Callbacks --

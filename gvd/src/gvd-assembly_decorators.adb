@@ -24,7 +24,8 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body GVD.Assembly_Decorators is
 
-   Me : constant Trace_Handle := Create ("Assembly_Decorators", On);
+   Me : constant Trace_Handle := Create
+     ("GPS.DEBUGGING.ASSEMBLY_DECORATORS", On);
 
    Location_Pattern : constant Pattern_Matcher := Compile
      ("^(0x[0-9a-zA-Z]+)");

@@ -59,7 +59,7 @@ with String_Utils;                use String_Utils;
 
 package body Debugger.LLDB is
 
-   Me : constant Trace_Handle := Create ("LLDB", On);
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.LLDB", On);
 
    LLDB_Options                    : constant String := "--debug";
    --  Options always passed to lldb

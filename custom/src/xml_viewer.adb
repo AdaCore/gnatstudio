@@ -54,7 +54,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 
 package body XML_Viewer is
-   Me : constant Trace_Handle := Create ("XML");
+   Me : constant Trace_Handle := Create ("GPS.CUSTOM.XML");
 
    type XML_Viewer_Record is abstract new Abstract_XML_Viewer_Record with
       record

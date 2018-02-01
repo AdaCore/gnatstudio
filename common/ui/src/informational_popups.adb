@@ -34,7 +34,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 package body Informational_Popups is
-   Me : constant Trace_Handle := Create ("POPUPS");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.POPUPS");
 
    Informational_Popup_Display_Time : constant Guint := 1_000;
    --  The amount of time during which an informational popup is displayed, in

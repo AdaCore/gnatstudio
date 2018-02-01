@@ -32,7 +32,7 @@ package body Code_Coverage.GNATcov is
 
    GNATcov_Code_Coverage_Module_Trace : constant Trace_Handle
      := GNATCOLL.Traces.Create
-       ("GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
+       ("GPS.CODE_ANALYSIS.GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
 
    type Coverage_Status_Char_Type is
      array (GNATcov_Line_Coverage_Status) of Character;

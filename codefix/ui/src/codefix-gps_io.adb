@@ -22,7 +22,7 @@ with GNATCOLL.Xref;
 package body Codefix.GPS_Io is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Codefix.GPS_IO");
+   Me : constant Trace_Handle := Create ("GPS.CODEFIX.GPS_IO");
 
    ------------------
    -- Get_New_Mark --

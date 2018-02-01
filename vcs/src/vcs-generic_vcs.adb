@@ -60,7 +60,7 @@ package body VCS.Generic_VCS is
 
    use type GNAT.Strings.String_Access;
 
-   Me : constant Trace_Handle := Create ("Generic_VCS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.GENERIC_VCS");
    Revision_Handling_Queue : constant String := "Revision View";
 
    Max_Matches : constant := 64;

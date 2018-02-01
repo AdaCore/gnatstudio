@@ -37,7 +37,7 @@ with Remote.View;
 
 package body Remote_Module is
 
-   Me : constant Trace_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("GPS.REMOTE.MODULE");
 
    type Remote_Module_Record is new Module_ID_Record with record
       Database : Remote.Db.Remote_Db_Type_Access;

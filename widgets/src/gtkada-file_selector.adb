@@ -69,10 +69,10 @@ with Unchecked_Deallocation;
 
 package body Gtkada.File_Selector is
 
-   Me : constant Trace_Handle := Create ("Gtkada.File_Selector");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.GTKADA_FILE_SELECTOR");
 
    Use_Gtk_Selector : constant Trace_Handle :=
-     Create ("gtk_file_selector", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.GTK_FILE_SELECTOR", GNATCOLL.Traces.On);
    --  Use Gtk_File_Chooser_Dialog from Gtk instead Dialog from GPS
 
    Directories_Hist_Key : constant Histories.History_Key := "directories";

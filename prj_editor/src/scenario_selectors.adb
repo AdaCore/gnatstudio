@@ -51,7 +51,7 @@ with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Scenario_Selectors is
 
-   Me : constant Trace_Handle := Create ("SCENARIO_SELECTORS");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.SCENARIO_SELECTORS");
 
    Selected_Column      : constant := 0;
    Project_Name_Column  : constant := 1;

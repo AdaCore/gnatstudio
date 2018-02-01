@@ -23,7 +23,7 @@ with Xref;             use Xref;
 with Ada.Containers.Indefinite_Vectors;
 
 package body Completion.C.Constructs_Extractor is
-   Me : constant Trace_Handle := Create ("COMPLETION.C");
+   Me : constant Trace_Handle := Create ("GPS.COMPLETION.C");
 
    Resolver_ID : constant String := "CNST_C  ";
 

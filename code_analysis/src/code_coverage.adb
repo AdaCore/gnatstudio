@@ -37,7 +37,8 @@ with Coverage_GUI;
 
 package body Code_Coverage is
 
-   Me : constant Trace_Handle := Create ("CODE_COVERAGE", GNATCOLL.Traces.On);
+   Me : constant Trace_Handle := Create
+     ("GPS.CODE_ANALYSIS.CODE_COVERAGE", GNATCOLL.Traces.On);
 
    Int_Image_Pad : constant Positive := 5;
    --  Size of padding wanted with GNATCOLL.Utils.Image

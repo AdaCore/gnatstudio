@@ -49,7 +49,7 @@ with XML_Utils;                  use XML_Utils;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Navigation_Module is
-   Me : constant Trace_Handle := Create ("Navigation");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.NAVIGATION_MODULE");
 
    Max_Locations_In_History : constant := 200;
    --  Maximum number of locations stored in the history

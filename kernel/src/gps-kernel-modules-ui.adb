@@ -96,7 +96,7 @@ with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
    Me : constant Trace_Handle :=
-     Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
+     Create ("GPS.Kernel.Modules_UI", GNATCOLL.Traces.Off);
 
    type GPS_Contextual_Menu_Record is new Gtk.Menu.Gtk_Menu_Record with record
       Kernel : access Kernel_Handle_Record'Class;

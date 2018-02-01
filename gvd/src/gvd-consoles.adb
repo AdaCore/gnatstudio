@@ -70,10 +70,10 @@ with Default_Preferences;    use Default_Preferences;
 
 package body GVD.Consoles is
 
-   Me : constant Trace_Handle := Create ("CONSOLES");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.CONSOLES");
 
    ANSI_Support : constant Trace_Handle :=
-                   Create ("GVD.ANSI_Support", GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.GVD_ANSI_Support", GNATCOLL.Traces.Off);
 
    Regexp_Any : constant Pattern_Matcher :=
      Compile (".+", Single_Line or Multiple_Lines);

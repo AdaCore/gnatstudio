@@ -31,7 +31,7 @@ package body Vdiff2_Command_Block is
    use Diff_Head_List;
    use Diff_Chunk_List;
 
-   Me : constant Trace_Handle := Create ("VDiff2_Command");
+   Me : constant Trace_Handle := Create ("GPS.VDIFF.Command");
    Id : Diff_Head_List_Access;
 
    ------------

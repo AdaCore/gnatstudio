@@ -32,7 +32,7 @@ with GPS.VCS;
 with Log_Utils;                    use Log_Utils;
 
 package body VCS_Utils is
-   Me : constant Trace_Handle := Create ("VCS_UTILS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.UTILS");
 
    use type GNAT.Strings.String_Access;
 

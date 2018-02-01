@@ -25,7 +25,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GPS.Kernel.Style_Manager is
 
-   Me : constant Trace_Handle := Create ("Style_Manager");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Style_Manager");
 
    use Style_Map;
 

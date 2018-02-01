@@ -91,7 +91,7 @@ with Projects;                  use Projects;
 with XML_Utils;                 use XML_Utils;
 
 package body Vsearch is
-   Me : constant Trace_Handle := Create ("Vsearch");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.VSEARCH_MODULE");
 
    Search_Module_Name : constant String := "Search";
 

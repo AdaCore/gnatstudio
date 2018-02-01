@@ -25,7 +25,7 @@ with Memory_Usage_Views.Providers; use Memory_Usage_Views.Providers;
 
 package body Memory_Usage_Views.Scripts is
 
-   Me : constant Trace_Handle := Create ("MEMORY_USAGE_VIEWS.SCRIPTS");
+   Me : constant Trace_Handle := Create ("GPS.MEMORY_USAGE.SCRIPTS");
 
    Memory_Usage_Provider_Class_Name : constant String := "MemoryUsageProvider";
 

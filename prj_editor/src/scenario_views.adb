@@ -60,7 +60,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 package body Scenario_Views is
 
-   Me : constant Trace_Handle := Create ("Scenario_Views");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.Scenario_Views");
 
    package Build_Mode_Lists is new
      Ada.Containers.Indefinite_Doubly_Linked_Lists (String);

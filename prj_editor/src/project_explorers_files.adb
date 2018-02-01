@@ -74,7 +74,7 @@ with Tooltips;                   use Tooltips;
 with Project_Explorers_Common;   use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
-   Me : constant Trace_Handle := Create ("FILES");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.FILES");
 
    use Explorer_Expansion;
 

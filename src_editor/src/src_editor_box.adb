@@ -87,7 +87,7 @@ with Xref; use Xref;
 package body Src_Editor_Box is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Source_Editor");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.EDITOR_BOX");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup

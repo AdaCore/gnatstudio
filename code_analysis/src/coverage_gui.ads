@@ -52,7 +52,8 @@ package Coverage_GUI is
      GPS.Kernel.Messages.Side_And_Locations;
 
    Binary_Coverage_Trace : constant Trace_Handle :=
-                          Create ("BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
+
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not, if true no line execution coverage count will be displayed.

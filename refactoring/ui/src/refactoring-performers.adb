@@ -29,7 +29,7 @@ with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Refactoring.Performers is
-   Me : constant Trace_Handle := Create ("REFACTORING.PERFORMERS");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.PERFORMERS");
    use Location_Arrays;
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with

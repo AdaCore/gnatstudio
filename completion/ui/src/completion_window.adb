@@ -63,7 +63,7 @@ with Language.Cpp;
 with Language.C;
 
 package body Completion_Window is
-   Me : constant Trace_Handle := Create ("COMPLETION");
+   Me : constant Trace_Handle := Create ("GPS.COMPLETION.WINDOW");
 
    Max_Window_Width : constant := 330;
    --  Maximum width of the window, in pixels

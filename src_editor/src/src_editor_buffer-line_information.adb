@@ -51,7 +51,7 @@ with Src_Editor_Module;        use Src_Editor_Module;
 package body Src_Editor_Buffer.Line_Information is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Src_Editor_Buffer.Line_Information");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.LINE_INFORMATION");
 
    type Line_Info_Note_Record is new Abstract_Note with record
       Style : Style_Access := null;

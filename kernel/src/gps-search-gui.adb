@@ -63,7 +63,7 @@ with GPS.Main_Window;               use GPS.Main_Window;
 with Histories;                     use Histories;
 
 package body GPS.Search.GUI is
-   Me : constant Trace_Handle := Create ("SEARCH");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_GUI");
 
    Pref_Proposals_Per_Provider : Integer_Preference;
    --  Preference for the number of proposals per provider

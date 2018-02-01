@@ -74,7 +74,7 @@ package body CodePeer.Module is
    use type Code_Analysis.Code_Analysis_Tree;
    use type GPS.Editors.Editor_Buffer'Class;
 
-   Me : constant Trace_Handle := Create ("CodePeer");
+   Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
    CodePeer_Subdir : constant Filesystem_String := "codepeer";
 
    type Module_Context is record

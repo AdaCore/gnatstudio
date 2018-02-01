@@ -51,7 +51,7 @@ with String_Utils;              use String_Utils;
 
 package body Commands.Custom is
 
-   Me : constant Trace_Handle := Create ("Commands.Custom", Off);
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Commands_Custom", Off);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);

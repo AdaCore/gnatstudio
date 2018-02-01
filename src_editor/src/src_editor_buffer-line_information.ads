@@ -318,7 +318,7 @@ package Src_Editor_Buffer.Line_Information is
    --  included
 
    Visualize_Internal_Buffers : constant Trace_Handle := Create
-     ("Source_Editor_Buffer.Visualize_Internals", Default => Off);
+     ("GPS.INTERNAL.SOURCE_EDITOR_BUFFER_VISUALIZE_INTERNALS", Default => Off);
    --  Controls whether framework for displaying buffer internal data is active
 
 end Src_Editor_Buffer.Line_Information;

@@ -56,7 +56,7 @@ package body Debugger is
 
    use String_History, Language_Lists;
 
-   Me : constant Trace_Handle := Create ("Debugger");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DEBUGGER");
 
    procedure Free is new
      Ada.Unchecked_Deallocation (Command_Record, Command_Access);

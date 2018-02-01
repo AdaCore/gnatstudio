@@ -50,7 +50,7 @@ with String_Utils;           use String_Utils;
 with Default_Preferences;    use Default_Preferences;
 
 package body GPS.Kernel.Console is
-   Me : constant Trace_Handle := Create ("CONSOLE");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.CONSOLE");
 
    Wrap_Lines : Boolean_Preference;
 

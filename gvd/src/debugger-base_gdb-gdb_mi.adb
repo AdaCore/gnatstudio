@@ -48,7 +48,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb.Gdb_MI is
 
-   Me : constant Trace_Handle := Create ("Gdb_MI", On);
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GDB_MI", On);
 
    ---------------
    -- Constants --

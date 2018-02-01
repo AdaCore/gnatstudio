@@ -28,7 +28,7 @@ with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
 package body Commands.Codefix is
 
-   Me : constant Trace_Handle := Create ("Commands.Codefix", Off);
+   Me : constant Trace_Handle := Create ("GPS.CODEFIX.COMMANDS", Off);
 
    -------------
    -- Execute --

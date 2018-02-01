@@ -73,7 +73,7 @@ with Toolchains_Old;             use Toolchains_Old;
 
 package body GVD.Process is
 
-   Me : constant Trace_Handle := Create ("GVD.Process");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_PROCESS");
 
    type GPS_Proxy is new Process_Proxy with record
       Process : Visual_Debugger;

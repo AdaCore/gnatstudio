@@ -78,7 +78,7 @@ with Remote_Module;              use Remote_Module;
 
 package body Remote.Config_Dialog is
 
-   Me : constant Trace_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("GPS.REMOTE.CONFIG_DIALOG");
 
    ------------------------
    -- Server list dialog --

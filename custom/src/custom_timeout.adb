@@ -29,7 +29,7 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body Custom_Timeout is
-   Me : constant Trace_Handle := Create ("CUSTOM");
+   Me : constant Trace_Handle := Create ("GPS.CUSTOM.TIMEOUT");
 
    Timeout_Cst         : aliased constant String := "timeout";
    Action_Cst          : aliased constant String := "action";

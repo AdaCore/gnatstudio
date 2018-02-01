@@ -32,8 +32,9 @@ package body GPS.Kernel.Properties is
 
    use Properties_Indefinite_Hashed_Maps;
 
-   Me   : constant Trace_Handle := Create ("Properties");
-   Dump : constant Trace_Handle := Create ("TESTSUITE.DUMP_PROPERTIES", Off);
+   Me   : constant Trace_Handle := Create ("GPS.KERNEL.PROPERTIES");
+   Dump : constant Trace_Handle := Create
+     ("TESTSUITE.DUMP_PROPERTIES", Off);
 
    function Get_Properties_Filename
      (Kernel : access Kernel_Handle_Record'Class;

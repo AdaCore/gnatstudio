@@ -21,7 +21,7 @@ with String_Utils;            use String_Utils;
 
 package body Language.Tree is
 
-   Me : constant Trace_Handle := Create ("TREE");
+   Me : constant Trace_Handle := Create ("GPS.LANGUAGE.TREE");
 
    --------------
    -- Contains --

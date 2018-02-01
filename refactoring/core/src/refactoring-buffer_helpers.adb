@@ -24,7 +24,7 @@ with GNATCOLL.Xref;
 package body Refactoring.Buffer_Helpers is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Refactoring");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.REFACTORING");
 
    EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.

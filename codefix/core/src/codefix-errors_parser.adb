@@ -19,7 +19,7 @@ with GNATCOLL.Traces;  use GNATCOLL.Traces;
 
 package body Codefix.Errors_Parser is
 
-   Me : constant Trace_Handle := Create ("Codefix");
+   Me : constant Trace_Handle := Create ("GPS.CODEFIX.ERROR_PARSER");
 
    -------------------
    -- Get_Solutions --

@@ -40,7 +40,7 @@ with String_Utils;              use String_Utils;
 
 package body Project_Explorers_Common is
 
-   Me : constant Trace_Handle := Create ("Project_Explorers_Common");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.EXPLORERS_COMMON");
 
    procedure Add_Column_Name
      (Name    : String;

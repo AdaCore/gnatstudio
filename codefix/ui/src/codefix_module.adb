@@ -60,7 +60,7 @@ with Glib;
 
 package body Codefix_Module is
 
-   Me          : constant Trace_Handle := Create ("Codefix_Module");
+   Me          : constant Trace_Handle := Create ("GPS.CODEFIX.MODULE");
 
    Codefix_Class_Name       : constant String := "Codefix";
    Codefix_Error_Class_Name : constant String := "CodefixError";

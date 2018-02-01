@@ -55,7 +55,7 @@ with VCS_Module;                use VCS_Module;
 with VCS_View;                  use VCS_View;
 
 package body VCS_Activities_View_API is
-   Me : constant Trace_Handle := Create ("VCS_ACTIVITIES");
+   Me : constant Trace_Handle := Create ("GPS.VCS.VCS_ACTIVITIES_API");
 
    procedure Commit_Activity
      (Kernel   : not null access Kernel_Handle_Record'Class;

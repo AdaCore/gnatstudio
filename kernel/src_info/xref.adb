@@ -35,14 +35,14 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Language; use Language;
 
 package body Xref is
-   Me : constant Trace_Handle := Create ("Xref");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Xref");
 
    Force_Local_Database : constant Trace_Handle := Create
-     ("FORCE_LOCAL_DB", Off);
+     ("GPS.INTERNAL.FORCE_LOCAL_DB", Off);
    --  Whether to use a DB in the temporary directory
 
    Constructs_Heuristics : constant Trace_Handle :=
-     Create ("Entities.Constructs", On);
+     Create ("GPS.INTERNAL.Entities_Constructs", On);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Entity'Class, Root_Entity_Access);

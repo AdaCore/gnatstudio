@@ -45,7 +45,7 @@ with XML_Parsers;                   use XML_Parsers;
 with XML_Utils;                     use XML_Utils;
 
 package body GPS.Kernel.Messages is
-   Me : constant Trace_Handle := Create ("MSG");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.MSG");
 
    use Category_Maps;
    use File_Maps;

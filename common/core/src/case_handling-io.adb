@@ -40,7 +40,7 @@ with XML_Parsers;
 
 package body Case_Handling.IO is
 
-   Me : constant Trace_Handle := Create ("Case_Handling.IO");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.CASE_HANDLING_IO");
 
    ---------------------
    -- Load_Exceptions --

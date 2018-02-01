@@ -62,7 +62,8 @@ procedure Ada_Semantic_Tree.Test_Driver is
    Tree         : constant Project_Tree_Access := new Project_Tree;
    Construct_Db : constant Construct_Database_Access := new Construct_Database;
 
-   Test_Trace : constant Trace_Handle := Create ("Ada_Semantic_Tree.Test");
+   Test_Trace : constant Trace_Handle := Create
+     ("GPS.INTERNAL.ADA_SEMANTIC_TREE.TEST");
 
    -----------------------
    -- Next_Test_Command --

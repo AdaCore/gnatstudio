@@ -50,7 +50,7 @@ with XML_Utils;                     use XML_Utils;
 with Xref;                          use Xref;
 
 package body Browsers.Call_Graph is
-   Me : constant Trace_Handle := Create ("CALL_GRAPH");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.CALL_GRAPH");
    use type GNATCOLL.Xref.Visible_Column;
 
    Call_Graph_Module_Name : constant String := "Call_Graph";

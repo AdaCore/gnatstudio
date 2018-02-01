@@ -48,7 +48,7 @@ with GNATStack.Module.Editors;
 with GNATStack.Shell_Commands;
 
 package body GNATStack.Module is
-   Me : constant Trace_Handle := Create ("GNATSTACK");
+   Me : constant Trace_Handle := Create ("GPS.CODE_ANALYSIS.GNATSTACK");
 
    use GNATStack.Data_Model;
    use GNATStack.Data_Model.Object_Information_Vectors;

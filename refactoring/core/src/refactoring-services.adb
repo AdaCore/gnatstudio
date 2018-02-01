@@ -34,7 +34,7 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;              use GNATCOLL.Xref;
 
 package body Refactoring.Services is
-   Me : constant Trace_Handle := Create ("Refactoring");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.SERVICES");
 
    procedure Skip_Keyword
      (Str : String; Index : in out Integer; Word : String);

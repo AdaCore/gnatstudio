@@ -57,7 +57,7 @@ package body GPS.Kernel.Xref is
 
    use Root_Entity_Refs;
 
-   Me : constant Trace_Handle := Create ("Xref");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Xref");
 
    type Examine_Callback is record
       Iter              : Root_Reference_Iterator_Ref;

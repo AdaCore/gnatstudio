@@ -130,7 +130,7 @@ package body Codefix.Formal_Errors is
 
    exception
       when E : Constraint_Error =>
-         Trace (Create ("CODEFIX.EXCEPTIONS"),
+         Trace (Create ("GPS.CODEFIX.EXCEPTIONS"),
                 "Unexpected exception " & Exception_Information (E)
                & " on message '" & To_String (Error_Line) & "'");
          Free (This);

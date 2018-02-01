@@ -78,7 +78,7 @@ package body Outline_View is
 
    Outline_View_Class_Name : constant String := "OutlineView";
 
-   Me : constant Trace_Handle := Create ("OUTLINE.VIEW");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.OUTLINE_VIEW");
 
    type Outline_View_Module_Record is new Module_ID_Record with null record;
 

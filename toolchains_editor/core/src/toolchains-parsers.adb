@@ -30,7 +30,7 @@ with GPR.Sinput;              use GPR.Sinput;
 with GPR.Tree;                use GPR.Tree;
 
 package body Toolchains.Parsers is
-   Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
+   Me : constant Trace_Handle := Create ("GPS.TOOLCHAINS.PARSER");
 
    package Toolchain_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Toolchain);

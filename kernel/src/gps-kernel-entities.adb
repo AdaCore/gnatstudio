@@ -61,7 +61,7 @@ with UTF8_Utils;
 with Xref;                          use Xref;
 
 package body GPS.Kernel.Entities is
-   Me : constant Trace_Handle := Create ("ENTITIES");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.ENTITIES");
 
    Locations_At_A_Time : constant := 20;
    --  Number of locations that will be inserted in the locations view in

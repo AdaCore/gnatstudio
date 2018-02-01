@@ -42,7 +42,7 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Browsers.Projects is
 
-   Me : constant Trace_Handle := Create ("Browsers.Projects");
+   Me : constant Trace_Handle := Create ("GPS.BROWSERS.PROJECTS");
 
    ---------------------
    -- Project_Browser --

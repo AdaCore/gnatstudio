@@ -30,7 +30,7 @@ with String_Utils;                use String_Utils;
 
 package body Debugger.Base_Gdb.Ada is
 
-   Me : constant Trace_Handle := Create ("Debug.Gdb.Ada", Off);
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GDB.ADA", Off);
 
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part

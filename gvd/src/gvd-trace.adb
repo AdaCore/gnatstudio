@@ -24,8 +24,9 @@ with System;
 
 package body GVD.Trace is
 
-   Me : constant Trace_Handle := Create ("GVD.OUT");
-   Me_Large : constant Trace_Handle := Create ("GVD.OUT.LARGE", Off);
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_OUT");
+   Me_Large : constant Trace_Handle := Create
+     ("GPS.DEBUGGING.GVD_OUT_LARGE", Off);
 
    Max_Lines : constant := 3;
    --  Maximum number of lines to output for each command, in GVD.OUT.

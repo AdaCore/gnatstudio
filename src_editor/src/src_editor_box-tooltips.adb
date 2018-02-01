@@ -49,7 +49,7 @@ with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 package body Src_Editor_Box.Tooltips is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle := Create ("Editor.Tooltips");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_Editor.Tooltips");
 
    type Editor_Tooltips is new Standard.Tooltips.Tooltips with record
       Box : Source_Editor_Box;

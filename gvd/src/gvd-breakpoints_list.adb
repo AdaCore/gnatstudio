@@ -44,7 +44,7 @@ with JSON_Utils;
 
 package body GVD.Breakpoints_List is
 
-   Me : constant Trace_Handle := Create ("Breakpoints");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.BREAKPOINTS");
 
    type Breakpoints_Module is new Module_ID_Record with record
       Breakpoints : aliased Breakpoint_List;

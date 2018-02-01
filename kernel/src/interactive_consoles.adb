@@ -75,7 +75,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Stock_Icons;          use GPS.Stock_Icons;
 
 package body Interactive_Consoles is
-   Me : constant Trace_Handle := Create ("Console");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.INTERACTIVE_CONSOLE");
 
    package Console_Idle is new Glib.Main.Generic_Sources (Interactive_Console);
 

@@ -74,7 +74,7 @@ with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
 
-   Me : constant Trace_Handle := Create ("Project_Viewers");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.VIEWERS");
 
    type Naming_Page is record
       Language : GNAT.Strings.String_Access;

@@ -43,7 +43,7 @@ with GUI_Utils;           use GUI_Utils;
 
 package body Welcome_Dialogs is
 
-   Me : constant Trace_Handle := Create ("WELCOME_DIALOG");
+   Me : constant Trace_Handle := Create ("GPS.MAIN.WELCOME_DIALOG");
 
    type Welcome_Dialog_Record is new GPS_Dialog_Record with record
       Response : Welcome_Dialog_Response := Quit_GPS;

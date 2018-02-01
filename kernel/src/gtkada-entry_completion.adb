@@ -78,7 +78,7 @@ with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 
 package body Gtkada.Entry_Completion is
-   Me : constant Trace_Handle := Create ("SEARCH");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH");
 
    Do_Grabs : constant Boolean := False;
    --  Whether to attempt grabbing the pointer

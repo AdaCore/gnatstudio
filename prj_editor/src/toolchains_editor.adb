@@ -77,7 +77,7 @@ with XML_Utils;
 
 package body Toolchains_Editor is
 
-   Me : constant Trace_Handle := Create ("Toolchains_Editor");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.Toolchains_Editor");
 
    type Toolchains_Module_Record is new Module_ID_Record with null record;
    type Toolchains_Module is access all Toolchains_Module_Record'Class;

@@ -92,7 +92,7 @@ with Toolchains_Editor;            use Toolchains_Editor;
 package body Project_Properties is
    use Widget_List;
 
-   Me : constant Trace_Handle := Create ("Project_Properties");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.PROPERTIES");
 
    type Attribute_Editor_Record;
    type Attribute_Editor is access all Attribute_Editor_Record'Class;

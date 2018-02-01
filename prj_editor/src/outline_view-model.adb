@@ -39,7 +39,7 @@ package body Outline_View.Model is
 
    use Sorted_Node_Vector;
 
-   Me : constant Trace_Handle := Create ("OUTLINE");
+   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.OUTLINE");
 
    Sort_Nodes_Threshold : constant := 1000;
    --  Above a certain threshold, using Sorted_Insert to insert new nodes in

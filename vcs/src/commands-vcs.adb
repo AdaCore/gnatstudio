@@ -29,7 +29,7 @@ package body Commands.VCS is
 
    use type GNAT.Strings.String_Access;
 
-   Me : constant Trace_Handle := Create ("Command.VCS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.COMMANDS");
 
    --------------------
    -- Primitive_Free --

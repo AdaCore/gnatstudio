@@ -50,7 +50,7 @@ with GUI_Utils;               use GUI_Utils;
 with KeyManager_Module;       use KeyManager_Module;
 
 package body Command_Window is
-   Me : constant Trace_Handle := Create ("COMMAND");
+   Me : constant Trace_Handle := Create ("GPS.KEY_MANAGER.COMMAND");
 
    type Rectangle is record
       X, Y, Width, Height : Gint;

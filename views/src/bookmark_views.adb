@@ -101,7 +101,7 @@ with XML_Utils;                    use XML_Utils;
 
 package body Bookmark_Views is
 
-   Me : constant Trace_Handle := Create ("Bookmarks");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.BOOKMARKS");
 
    Bookmark_Class_Name : constant String := "Bookmark";
 

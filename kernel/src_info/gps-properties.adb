@@ -26,7 +26,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Properties is
 
-   Me : constant Trace_Handle := Create ("PROPERTIES");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.PROPERTIES");
 
    use Properties_Indefinite_Hashed_Maps;
 

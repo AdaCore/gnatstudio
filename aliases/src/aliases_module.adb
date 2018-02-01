@@ -119,7 +119,7 @@ package body Aliases_Module is
                      return String
                      renames SU.To_String;
 
-   Me : constant Trace_Handle := Create ("Aliases");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.ALIASES");
 
    Special : constant Character := '%';
 

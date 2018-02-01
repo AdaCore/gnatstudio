@@ -71,7 +71,7 @@ with Xref;                            use Xref;
 
 package body Src_Editor_Module.Commands is
 
-   Me : constant Trace_Handle := Create ("Source_Editor_Module.Commands");
+   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.COMMANDS");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Entity'Class,

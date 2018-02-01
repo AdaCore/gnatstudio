@@ -30,7 +30,7 @@ pragma Warnings (On);
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Projects is
-   Me : constant Trace_Handle := Create ("GPS.PROJECTS");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECTS");
 
    -----------------------
    -- Project_Name_Hash --

@@ -38,7 +38,7 @@ package body Diff_Utils2 is
    use Diff_Chunk_List;
    use Diff_Head_List;
 
-   Me : constant Trace_Handle := Create ("diff_utils2");
+   Me : constant Trace_Handle := Create ("GPS.VDIFF.DIFF_UTILS2");
 
    type Ptr_Match_Array is access all Match_Array;
    type String_Array is array (Natural range <>) of String_Access;

@@ -83,10 +83,10 @@ with Gtk.Style_Context;         use Gtk.Style_Context;
 
 package body GPS.Kernel.MDI is
 
-   Me : constant Trace_Handle := Create ("gps_kernel.mdi");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.MDI");
 
    Me_Perspectives : constant Trace_Handle :=
-     Create ("gps_kernel.mdi.perspectives");
+     Create ("GPS.INTERNAL.KERNEL_MDI_PERSPECTIVES");
    --  for testing purposes, do not copy predifined perspectives if inactive
 
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
@@ -100,7 +100,8 @@ package body GPS.Kernel.MDI is
    package Show_Tabs_Policy_Preferences is new
      Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
 
-   MDI_Opaque : constant Trace_Handle := Create ("mdi_opaque_resizing", On);
+   MDI_Opaque : constant Trace_Handle := Create
+     ("GPS.INTERNAL.mdi_opaque_resizing", On);
    --  If disabled, resizing windows in the MDI will simply draw line on top
    --  of the windows, rather than resize windows on the fly.
 

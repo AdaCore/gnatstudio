@@ -38,7 +38,7 @@ with Gexpect.Db;           use Gexpect.Db;
 
 package body GNAT.Expect.TTY.Remote is
 
-   Me : constant Trace_Handle := Create ("GNAT.Expect.TTY.Remote");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.GNAT_Expect_TTY_Remote");
 
    Finalized : Boolean := False;
 

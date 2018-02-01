@@ -39,7 +39,7 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Window;           use Gtk.Window;
 
 package body Tooltips is
-   Me : constant Trace_Handle := Create ("TOOLTIPS");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.TOOLTIPS");
 
    Hover_Timeout : constant Guint := 500;
    --  Timeout before the initial display of the tooltip.

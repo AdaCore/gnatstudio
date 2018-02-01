@@ -25,7 +25,7 @@ with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
 with Gtk.Icon_Theme;    use Gtk.Icon_Theme;
 
 package body GPS.Stock_Icons is
-   Me : constant Trace_Handle := Create ("STOCK");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.STOCK");
 
    --------------------------
    -- Register_Stock_Icons --

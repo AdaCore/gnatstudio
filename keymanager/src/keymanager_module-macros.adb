@@ -45,11 +45,11 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Intl;                  use GPS.Intl;
 
 package body KeyManager_Module.Macros is
-   Me                  : constant Trace_Handle := Create ("Keymanager.Macros");
+   Me                  : constant Trace_Handle := Create
+     ("GPS.KEY_MANAGER.MACROS");
 
-   Mouse_Macro_Support : constant Trace_Handle :=
-                           Create
-                             ("Keymanager.Mouse_Macro", GNATCOLL.Traces.Off);
+   Mouse_Macro_Support : constant Trace_Handle := Create
+     ("GPS.INTERNAL.Keymanager_Mouse_Macro", GNATCOLL.Traces.Off);
    --  ??? For now disable by default since this is a work in progress
 
    File_Cst                  : aliased constant String := "file";

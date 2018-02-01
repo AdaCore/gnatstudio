@@ -36,7 +36,7 @@ with XML_Utils;              use XML_Utils;
 
 package body Remote.Db is
 
-   Me : constant Trace_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("GPS.REMOTE.DB");
 
    Prompt_Regexp : constant Pattern_Matcher :=
                      Compile

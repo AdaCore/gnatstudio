@@ -934,7 +934,7 @@ selected. The :guilabel:`GPS clipboard`, when set, overrides the
 By default, GPS overrides the X mechanism. To prevent this, add the
 following line::
 
-  OVERRIDE_MIDDLE_CLICK_PASTE = no
+  GPS.INTERNAL.OVERRIDE_MIDDLE_CLICK_PASTE = no
 
 to your :file:`traces.cfg` file (typically in :file:`~/.gps/`). Note that
 the X mechanism pastes all attributes of text, including coloring and

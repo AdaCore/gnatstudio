@@ -52,7 +52,8 @@ package body Language.Libclang is
    Nb_Tasks_Preference : Integer_Preference;
    --  Number of concurrent tasks used for parsing.
 
-   Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
+   Me       : constant Trace_Handle := GNATCOLL.Traces.Create
+     ("GPS.KERNEL.LIBCLANG");
    --  Main libclang trace
 
    Cache_Constant_Marker : constant Natural := 123454321;
@@ -64,11 +65,11 @@ package body Language.Libclang is
    --  files.
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_DIAGNOSTICS", Off);
+     GNATCOLL.Traces.Create ("GPS.KERNEL.LIBCLANG_DIAGNOSTICS", Off);
    --  Whether diagnostics should be shown in the traces or not
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+     GNATCOLL.Traces.Create ("GPS.INTERNAL.LIBCLANG_XREF", On);
    --  Whether clang-based cross references should be activated or not
 
    type Translation_Unit_Wrapper

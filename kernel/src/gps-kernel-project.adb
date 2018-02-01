@@ -47,10 +47,10 @@ with Xref;
 
 package body GPS.Kernel.Project is
 
-   Me : constant Trace_Handle := Create ("GPS.Kernel.Project");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECT");
 
    Report_Missing_Dirs : constant Trace_Handle :=
-      Create ("PROJECTS.MISSING_DIRS_WARNING", Default => On);
+      Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING", Default => On);
 
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the

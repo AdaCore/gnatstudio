@@ -61,7 +61,7 @@ with Language.Shell;
 
 package body Custom_Module is
 
-   Me : constant Trace_Handle := Create ("custom_module");
+   Me : constant Trace_Handle := Create ("GPS.CUSTOM.MODULE");
 
    type Custom_Module_ID_Record is new Module_ID_Record with null record;
 

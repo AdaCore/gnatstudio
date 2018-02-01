@@ -56,7 +56,7 @@ with Xref;                            use Xref;
 
 package body Refactoring.Subprograms is
 
-   Me : constant Trace_Handle := Create ("Refactor.Subprograms");
+   Me : constant Trace_Handle := Create ("GPS.REFACTORING.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
 

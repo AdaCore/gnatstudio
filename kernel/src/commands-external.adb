@@ -29,7 +29,7 @@ with String_Utils;               use String_Utils;
 
 package body Commands.External is
 
-   Me : constant Trace_Handle := Create ("Commands.External");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.EXTERNAL_COMMANDS");
 
    -----------------------
    -- Local subprograms --

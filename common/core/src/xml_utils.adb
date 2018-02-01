@@ -29,7 +29,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body XML_Utils is
 
-   Me : constant Trace_Handle := Create ("XML_Utils");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.XML_Utils");
 
    procedure Skip_Blanks (Buf : String; Index : in out Natural);
    --  Skip blanks, LF and CR, starting at Index. Index is updated to the

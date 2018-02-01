@@ -81,9 +81,10 @@ with String_List_Utils;         use String_List_Utils;
 
 package body Completion_Module is
 
-   Me : constant Trace_Handle := Create ("Completion");
+   Me : constant Trace_Handle := Create ("GPS.COMPLETION.MODULE");
 
-   Me_Adv : constant Trace_Handle := Create ("Completion_Advanced", Off);
+   Me_Adv : constant Trace_Handle := Create
+     ("GPS.COMPLETION.MODULE_ADVANCED", Off);
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 

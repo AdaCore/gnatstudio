@@ -26,7 +26,7 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 package body MI.Lexer is
 
-   Me : constant Trace_Handle := Create ("MI.Lexer", On);
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.MI_LEXER", On);
 
    package Handler is
       --  This package is meant to simplify operations on the input stream

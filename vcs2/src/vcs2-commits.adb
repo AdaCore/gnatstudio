@@ -69,7 +69,7 @@ with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 
 package body VCS2.Commits is
-   Me : constant Trace_Handle := Create ("COMMITS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.COMMITS");
 
    Column_File          : constant := 0;
    Column_Staged        : constant := 1;

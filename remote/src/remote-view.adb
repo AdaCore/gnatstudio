@@ -63,7 +63,7 @@ with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
 package body Remote.View is
 
-   Me : constant Trace_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("GPS.REMOTE.VIEW");
 
    subtype Config_Servers is Server_Type range GPS_Server .. Debug_Server;
 

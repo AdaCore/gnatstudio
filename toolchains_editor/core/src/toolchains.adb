@@ -39,7 +39,7 @@ pragma Warnings (On);
 
 package body Toolchains is
 
-   Me : constant Trace_Handle := Create ("TOOLCHAINS");
+   Me : constant Trace_Handle := Create ("GPS.TOOLCHAINS.TOOLCHAINS");
 
    procedure Free (This : in out Ada_Library_Info_Access);
    --  Free the memory associated to this library info. This should only be

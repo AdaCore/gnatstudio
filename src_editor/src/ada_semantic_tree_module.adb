@@ -34,7 +34,7 @@ with Src_Editor_Box;               use Src_Editor_Box;
 with Time_Utils;                   use Time_Utils;
 
 package body Ada_Semantic_Tree_Module is
-   Me : constant Trace_Handle := Create ("Ada_Semantic_Tree_Module", On);
+   Me : constant Trace_Handle := Create ("GPS.ADA_SEMANTIC_TREE.MODULE", On);
 
    use GPS.Kernel;
 

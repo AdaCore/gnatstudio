@@ -58,7 +58,7 @@ package Cpp_Semantic_Tree is
 
 private
    Test_Trace : constant Trace_Handle :=
-     Create ("Cpp_Semantic_Tree.Test", Off);
+     Create ("GPS.CPP.SEMANTIC_TREE_TEST", Off);
 
    Null_Parsed_Expression : constant Parsed_Expression :=
      (Tokens => Token_List.Empty_Vector);

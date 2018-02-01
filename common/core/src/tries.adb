@@ -24,7 +24,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Tries is
 
-   Me : constant Trace_Handle := Create ("Tries");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.Tries");
 
    pragma Warnings (Off);
    --  These 4 UCs are safe aliasing-wise, so kill warning

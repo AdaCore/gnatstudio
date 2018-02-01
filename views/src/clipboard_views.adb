@@ -57,7 +57,7 @@ with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body Clipboard_Views is
-   Me : constant Trace_Handle := Create ("CLIPBOARD");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.CLIPBOARD");
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;

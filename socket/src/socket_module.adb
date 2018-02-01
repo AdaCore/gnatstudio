@@ -33,7 +33,7 @@ with GNAT.Strings;
 
 package body Socket_Module is
 
-   Me : constant Trace_Handle := Create ("Socket_Module");
+   Me : constant Trace_Handle := Create ("GPS.OTHERS.SOCKET_MODULE");
 
    Socket_Module_ID   : GPS.Kernel.Modules.Module_ID;
    Socket_Module_Name : constant String := "Socket";

@@ -52,7 +52,7 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Language;                   use Language;
 
 package body GPS.Kernel.Preferences is
-   Me : constant Trace_Handle := Create ("GPS_KERNEL");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.PREFERENCES");
 
    use type Config.Host_Type;
 

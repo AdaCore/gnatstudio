@@ -28,7 +28,7 @@ with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Language.Shell is
    pragma Warnings (Off);
-   Me : constant Trace_Handle := Create ("LANGUAGE.SHELL");
+   Me : constant Trace_Handle := Create ("GPS.CUSTOM.LANGUAGE_SHELL");
 
    Construct_List_Class_Name : constant String := "ConstructsList";
    Language_Class_Name       : constant String := "Language";

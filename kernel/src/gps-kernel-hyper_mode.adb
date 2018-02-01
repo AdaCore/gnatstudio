@@ -32,7 +32,8 @@ package body GPS.Kernel.Hyper_Mode is
    Watch_Timeout : constant := 100;
    --  The interval at which to watch for hyper mode, in milliseconds
 
-   Me : constant Trace_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create
+     ("GPS.KERNEL.HYPER_MODE", GNATCOLL.Traces.Off);
 
    type Hyper_Mode_Data_Record is record
       Kernel                   : Kernel_Handle;

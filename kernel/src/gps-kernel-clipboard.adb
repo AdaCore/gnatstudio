@@ -41,7 +41,7 @@ with XML_Parsers;
 
 package body GPS.Kernel.Clipboard is
 
-   Me : constant Trace_Handle := Create ("Clipboard");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.CLIPBOARD");
 
    Clipboard_Size_Pref : Integer_Preference;
 

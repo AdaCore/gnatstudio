@@ -191,94 +191,95 @@ with Vdiff2_Module;
 with Vsearch;
 with Language.Libclang;
 with Ada_Semantic_Tree.Lang;
+with GPS.Traces;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
    use ICS;
    use type Glib.Gint;
 
-   Me         : constant Trace_Handle := Create ("GPS");
+   Me         : constant Trace_Handle := Create ("GPS.MAIN.GPS");
    Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
-   Gtk_Errors : constant Trace_Handle := Create ("GTK");
+   Gtk_Errors : constant Trace_Handle := Create ("GPS.MAIN.GTK");
 
    Memory_Monitor : Boolean;
    Memory_Stack_Depth : constant := 3;
    --  Stack depth for GNATCOLL.Memory
 
    Refactor_Trace         : constant Trace_Handle :=
-                     Create ("MODULE.Refactor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Refactor", GNATCOLL.Traces.On);
    Python_Trace           : constant Trace_Handle :=
-                     Create ("MODULE.Python", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Python", GNATCOLL.Traces.On);
    Call_Graph_Trace       : constant Trace_Handle :=
-                     Create ("MODULE.Call_Graph", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Call_Graph", GNATCOLL.Traces.On);
    Dependency_Trace       : constant Trace_Handle :=
-                     Create ("MODULE.Dependency", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Dependency", GNATCOLL.Traces.On);
    Project_Browser_Trace  : constant Trace_Handle :=
-                     Create ("MODULE.Project_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Browser", GNATCOLL.Traces.On);
    Browsers_Trace         : constant Trace_Handle :=
-                     Create ("MODULE.Browsers", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Browsers", GNATCOLL.Traces.On);
    Entities_Browser_Trace : constant Trace_Handle :=
-                     Create ("MODULE.Entities_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Entities_Browser", GNATCOLL.Traces.On);
    Revision_Views_Trace   : constant Trace_Handle :=
-                     Create ("MODULE.Revision_Views", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Revision_Views", GNATCOLL.Traces.On);
    Aliases_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.Aliases", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Aliases", GNATCOLL.Traces.On);
    Project_Explorer_Trace : constant Trace_Handle :=
-                     Create ("MODULE.Project_Explorer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Explorer", GNATCOLL.Traces.On);
    Files_Explorer_Trace   : constant Trace_Handle :=
-                     Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Files_Explorer", GNATCOLL.Traces.On);
    VCS_Trace              : constant Trace_Handle :=
-                     Create ("MODULE.VCS", GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.MODULE_VCS", GNATCOLL.Traces.Off);
    VCS2_Trace             : constant Trace_Handle :=
-                     Create ("MODULE.VCS2", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_VCS2", GNATCOLL.Traces.On);
    External_Editor_Trace  : constant Trace_Handle :=
-                        Create ("MODULE.External_Editor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_External_Editor", GNATCOLL.Traces.On);
    Custom_Trace           : constant Trace_Handle :=
-                     Create ("MODULE.Custom", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=
-                     Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Templates", GNATCOLL.Traces.On);
    Code_Analysis_Trace    : constant Trace_Handle :=
-                     Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Code_Analysis", GNATCOLL.Traces.On);
    GNAThub_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.GNAThub", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GNAThub", GNATCOLL.Traces.On);
    CodePeer_Trace         : constant Trace_Handle :=
-                     Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_CodePeer", GNATCOLL.Traces.On);
    GNATStack_Trace        : constant Trace_Handle :=
-                     Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GNATStack", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.Codefix", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.Builder", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Builder", GNATCOLL.Traces.On);
    GVD_Trace              : constant Trace_Handle :=
-                     Create ("MODULE.GVD", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GVD", GNATCOLL.Traces.On);
    GNATTest_Trace         : constant Trace_Handle :=
-                     Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_GNATTest", GNATCOLL.Traces.On);
    Startup_Trace          : constant Trace_Handle :=
-                     Create ("MODULE.Startup", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Startup", GNATCOLL.Traces.On);
    VFS_Trace              : constant Trace_Handle :=
-                     Create ("MODULE.VFS", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_VFS", GNATCOLL.Traces.On);
    Help_Trace             : constant Trace_Handle :=
-                     Create ("MODULE.Help", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Help", GNATCOLL.Traces.On);
    Scenario_View_Trace    : constant Trace_Handle :=
-                     Create ("MODULE.SCENARIO", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_SCENARIO", GNATCOLL.Traces.On);
    Project_Viewer_Trace   : constant Trace_Handle :=
-                     Create ("MODULE.Project_Viewer", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Viewer", GNATCOLL.Traces.On);
    Project_Properties_Trace : constant Trace_Handle :=
-                     Create ("MODULE.Project_Properties", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Project_Properties", GNATCOLL.Traces.On);
    CPP_Trace              : constant Trace_Handle :=
-                     Create ("MODULE.CPP", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_CPP", GNATCOLL.Traces.On);
    Outline_View_Trace     : constant Trace_Handle :=
-                     Create ("MODULE.Outline", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Outline", GNATCOLL.Traces.On);
    Call_Graph_View_Trace  : constant Trace_Handle :=
-                     Create ("MODULE.Call_Graph_View", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Call_Graph_View", GNATCOLL.Traces.On);
    Clipboard_View_Trace   : constant Trace_Handle :=
-                     Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Clipboard_Vview", GNATCOLL.Traces.On);
    Toolchains_Trace       : constant Trace_Handle :=
-                     Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Toolchains", GNATCOLL.Traces.On);
    Toolchains_Editor_Trace  : constant Trace_Handle :=
-                     Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Toolchains_Editor", GNATCOLL.Traces.On);
    Elaboration_Browser_Trace : constant Trace_Handle :=
-                     Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.MODULE_Elaboration_Browser", GNATCOLL.Traces.On);
 
    Debugger_GDB_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_GDB", GNATCOLL.Traces.Off);
@@ -2372,6 +2373,8 @@ procedure GPS.Main is
       --  the themes loaded at startup are still overridden by the user's
       --  local choices. Note that the preferences have already been loaded
       --  once before, to take into account the splash screen pref for instance
+
+      GPS.Traces.Register_Module (GPS_Main.Kernel, GPS_Home_Dir);
 
       Load_Preferences (GPS_Main.Kernel);
 

@@ -89,12 +89,13 @@ with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 
 package body GPS.Kernel is
 
-   Me        : constant Trace_Handle := Create ("gps_kernel");
+   Me        : constant Trace_Handle := Create ("GPS.KERNEL.GPS_KERNEL");
    Me_Filters : constant Trace_Handle :=
-      Create ("FILTERS", GNATCOLL.Traces.Off);
+      Create ("GPS.INTERNAL.FILTERS", GNATCOLL.Traces.Off);
    Create_Me : constant Trace_Handle :=
-      Create ("Contexts.Mem", GNATCOLL.Traces.Off);
-   Me_Hooks  : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
+      Create ("GPS.KERNEL.CONTEXTS_MEM", GNATCOLL.Traces.Off);
+   Me_Hooks  : constant Trace_Handle := Create
+     ("GPS.KERNEL.HOOKS", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history

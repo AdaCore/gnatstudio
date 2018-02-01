@@ -56,8 +56,8 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 package body Src_Editor_Module.Editors is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Trace_Handle :=
-     Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create
+     ("GPS.SOURCE_EDITOR.EDITOR_BUFFER", Default => GNATCOLL.Traces.Off);
 
    package MC renames Src_Editor_Buffer.Cursors;
 

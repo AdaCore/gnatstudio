@@ -35,7 +35,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Language_Handlers is
 
-   Me : constant Trace_Handle := Create ("Language_Handlers");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.LANGUAGE_HANDLERS");
 
    function Get_Index_From_Language
      (Handler       : access Language_Handler_Record'Class;

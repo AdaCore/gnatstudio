@@ -53,7 +53,7 @@ with UTF8_Utils;                       use UTF8_Utils;
 with VCS.Branching_Commands; use VCS.Branching_Commands;
 
 package body Log_Utils is
-   Me : constant Trace_Handle := Create ("LOG_UTILS");
+   Me : constant Trace_Handle := Create ("GPS.VCS.LOG_UTILS");
 
    function Check_Handler
      (Kernel : not null access Kernel_Handle_Record'Class;

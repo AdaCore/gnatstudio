@@ -19,7 +19,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;
 
 package body Task_Manager is
-   Me : constant Trace_Handle := Create ("TASK");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.TASK");
 
    Timeout : constant := 100;
 

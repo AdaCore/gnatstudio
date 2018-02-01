@@ -39,7 +39,7 @@ with XML_Parsers;
 
 package body VCS_Activities is
 
-   Me : constant Trace_Handle := Create ("VCS_Activities");
+   Me : constant Trace_Handle := Create ("GPS.VCS.VCS_Activities");
 
    Activities_Filename : constant Filesystem_String := "activities.xml";
 

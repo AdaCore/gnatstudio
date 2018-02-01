@@ -57,7 +57,7 @@ with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
 
 package body GVD.Dialogs is
-   Me : constant Trace_Handle := Create ("GVD.Dialogs");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DIALOGS");
 
    type Is_Vx653_Debugger is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive

@@ -78,7 +78,7 @@ with Xref;                      use Xref;
 
 package body GVD.Assembly_View is
 
-   Me : constant Trace_Handle := Create ("GVD.Assembly_View");
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.ASSEMBLY_VIEW");
 
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;

@@ -34,7 +34,7 @@ with XML_Parsers;
 
 package body VCS_Status is
 
-   Me : constant Trace_Handle := Create ("VCS_Status");
+   Me : constant Trace_Handle := Create ("GPS.VCS.Status");
 
    VCS_Cache_Filename : constant Filesystem_String := "vcs_cache.xml";
 

@@ -23,7 +23,7 @@ with String_Utils; use String_Utils;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package body Switches_Parser is
-   Me : constant Trace_Handle := Create ("SWITCHES");
+   Me : constant Trace_Handle := Create ("GPS.COMMON.SWITCHES");
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function.

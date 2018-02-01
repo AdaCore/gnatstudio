@@ -31,7 +31,8 @@ with Ada_Semantic_Tree.Std_Entities;    use Ada_Semantic_Tree.Std_Entities;
 
 package body Ada_Semantic_Tree.Declarations is
 
-   Me : constant Trace_Handle := Create ("Declarations", Off);
+   Me : constant Trace_Handle := Create
+     ("GPS.ADA_SEMANTIC_TREE.DECLARATIONS", Off);
 
    use Token_List;
 

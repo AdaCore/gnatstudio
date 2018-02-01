@@ -40,7 +40,7 @@ with Language.Libclang_Tree; use Language.Libclang_Tree;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package body Cpp_Module is
-   Me : constant Trace_Handle := Create ("CPP");
+   Me : constant Trace_Handle := Create ("GPS.CPP.MODULE");
 
    C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
    C_Use_Tabs              : Boolean_Preference;

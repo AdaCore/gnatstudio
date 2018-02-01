@@ -50,7 +50,7 @@ with XML_Utils;                 use XML_Utils;
 
 package body Language.Custom is
 
-   Me : constant Trace_Handle := Create ("Language.Custom");
+   Me : constant Trace_Handle := Create ("GPS.LANGUAGE.CUSTOM");
 
    procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
      (Project_Field_Array, Project_Field_Array_Access);

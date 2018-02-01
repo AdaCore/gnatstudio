@@ -23,7 +23,7 @@ with Task_Manager.Shell;        use Task_Manager.Shell;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body GPS.Kernel.Task_Manager is
-   Me : constant Trace_Handle := Create ("Tasks");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Tasks");
 
    ----------------------
    -- Set_Task_Manager --

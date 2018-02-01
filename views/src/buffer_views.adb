@@ -65,7 +65,7 @@ with Tooltips;                 use Tooltips;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 
 package body Buffer_Views is
-   Me : constant Trace_Handle := Create ("BUFFERS");
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.BUFFERS");
 
    Icon_Name_Column : constant := 0;
    Name_Column      : constant := 1;

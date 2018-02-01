@@ -84,9 +84,9 @@ with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
 
 package body GPS.Main_Window is
-   Me : constant Trace_Handle := Create ("MAIN");
+   Me : constant Trace_Handle := Create ("GPS.MAIN.WINDOW");
    Store_Window_Positions : constant Trace_Handle :=
-     Create ("STORE_WINDOW_POSITIONS", On);
+     Create ("GPS.INTERNAL.STORE_WINDOW_POSITIONS", On);
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";

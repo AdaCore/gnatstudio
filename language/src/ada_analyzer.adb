@@ -29,7 +29,7 @@ with UTF8_Utils; use UTF8_Utils;
 
 package body Ada_Analyzer is
 
-   Me : constant Trace_Handle := Create ("LANGUAGE.ADA_ANALYZER", On);
+   Me : constant Trace_Handle := Create ("GPS.LANGUAGE.ADA_ANALYZER", On);
 
    use Indent_Stack.Stack;
 

@@ -47,8 +47,9 @@ with Time_Utils;                 use Time_Utils;
 
 package body GPS.Kernel.Timeout is
 
-   Me : constant Trace_Handle := Create ("Timeout");
-   Me_Expect : constant Trace_Handle := Create ("EXPECT", Off);
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.Timeout");
+   Me_Expect : constant Trace_Handle := Create
+     ("GPS.KERNEL.TIMEOUT_EXPECT", Off);
 
    package System_Callbacks is new Gtk.Handlers.User_Return_Callback
      (Interactive_Console_Record, Boolean, System.Address);
