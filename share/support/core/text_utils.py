@@ -391,6 +391,7 @@ def move_block(chars=1):
                 cursor_line,
                 max(0, cursor_col + chars)))
 
+
 make_interactive(lambda: move_block(-1),
                  category="Editor", filter="Source editor",
                  name="Move block left")
@@ -510,7 +511,7 @@ def serialize(increment=1):
 
     try:
         value = int(buffer.get_chars(loc, repl - 1)) + increment
-    except:
+    except Exception:
         GPS.Console().write("Cursor must be before a number")
         return
 
@@ -737,7 +738,8 @@ def goto_end_of_line_ext_sel():
     _goto_line_bound(beginning=False, extend_selection=True)
 
 
-@interactive("Editor", filter_text_actions, name="goto end of line")
+@interactive("Editor", filter_text_actions, name="goto end of line",
+             for_learning=True)
 def goto_end_of_line():
     _goto_line_bound(beginning=False, extend_selection=False)
 
@@ -773,7 +775,7 @@ def backward_delete():
                 # see if I should forward deletion by 4
                 try:
                     did = python_forward_indent(e, cursor)
-                except:
+                except Exception:
                     pass
 
             # if justice(auto indent by 4) has been done
@@ -869,7 +871,7 @@ def goto_word_end(loc, underscore_is_word=True):
             try:
                 if loc.get_char() != '_':
                     return loc.forward_char(-1)
-            except:
+            except Exception:
                 return loc.buffer().end_of_buffer()
 
     else:
@@ -879,7 +881,7 @@ def goto_word_end(loc, underscore_is_word=True):
             try:
                 if loc.get_char() == '_':
                     return prev
-            except:
+            except Exception:
                 # Probably an invalid position.
                 return loc.buffer().end_of_buffer()
         return loc
@@ -1233,6 +1235,7 @@ class LineIterator:
             self.mark.move(loc2 + 1)
             return (loc, loc2)
 
+
 # Emulating Emacs selection:
 # In Emacs, one sets the mark first, then when the cursor is moved the
 # selection is extended appropriately. This is rather tricky to emulate
@@ -1350,7 +1353,7 @@ def insert_extended_character(location=None):
     try:
         prev_char = r[0]
         num = int(r[0].strip())
-    except:
+    except Exception:
         GPS.Console().write("Please enter a decimal number")
         return
 
@@ -1389,7 +1392,7 @@ def cancel_mark_command(buffer=None):
     try:
         buffer.unselect()
         override_key_bindings(select=False)
-    except:
+    except Exception:
         pass  # No such mark
 
 
