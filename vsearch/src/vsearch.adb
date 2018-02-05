@@ -469,6 +469,12 @@ package body Vsearch is
       Event  : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the pattern field.
 
+   function Testsuite_Key_Press
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Called when a key event occurs in the GPS testsuite. Used to handle
+   --  keys in a platform-independant way (e.g: Backspace).
+
    function Key_Press_Replace
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -1677,6 +1683,124 @@ package body Vsearch is
       return False;
    end Key_Press;
 
+   -------------------------
+   -- Testsuite_Key_Press --
+   -------------------------
+
+   function Testsuite_Key_Press
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      Vsearch             : constant Vsearch_Access := Vsearch_Access (Widget);
+      Module              : constant Search_Module :=
+                              Find_Module
+                                (Vsearch_Module_Id.Kernel,
+                                 To_String
+                                   (Vsearch_Module_Id.Context));
+      In_Incremental_Mode : constant Boolean := Is_In_Incremental_Mode;
+      Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
+   begin
+      if Key = GDK_Return or else Key = GDK_KP_Enter then
+         if Is_Sensitive (Vsearch.Search_Next_Button) then
+
+            --  Don't give the focus to the search/next button when we are in
+            --  the incremental mode so that the user can still modify the
+            --  entry after pressing the Enter/Return key.
+            if not In_Incremental_Mode then
+               Grab_Focus (Vsearch.Search_Next_Button);
+            end if;
+
+            On_Search (Vsearch);
+         else
+            Grab_Focus (Vsearch.Replace_Search_Button);
+            On_Replace (Vsearch);
+         end if;
+
+         return True;
+      elsif In_Incremental_Mode and then Key = GDK_BackSpace then
+         declare
+            Occurrence    : Search_Occurrence;
+            Start_Pos     : Gint;
+            End_Pos       : Gint;
+            Has_Selection : Boolean;
+         begin
+            Get_Selection_Bounds (Gtk_Entry (Vsearch.Pattern_Combo.Get_Child),
+                                  Start_Pos     => Start_Pos,
+                                  End_Pos       => End_Pos,
+                                  Has_Selection => Has_Selection);
+
+            --  If some text is selected in the search pattern entry, return
+            --  False directly so that the text gets deleted.
+            if Has_Selection then
+               Gtk_Entry
+                 (Vsearch.Pattern_Combo.Get_Child).Delete_Text
+                 (Start_Pos => Start_Pos,
+                  End_Pos   => End_Pos);
+               return True;
+            end if;
+
+            if not Vsearch_Module_Id.Search_Has_Failed then
+
+               --  Pop the last saved occurence and use the one just after, so
+               --  that we don't go to the same occurrence every time.
+               Occurrence := Module.Pop_Occurrence;
+               Free (Occurrence);
+
+               Occurrence := Module.Get_Last_Occurrence;
+
+               if Occurrence /= null then
+
+                  --  Clear the module's occurrences stack if the last
+                  --  occurrence's pattern contains only one character. This
+                  --  avoids going back to previous searches.
+                  if Occurrence.Get_Pattern'Length = 1 then
+                     Module.Clear_Occurrences;
+                     Gtk_Entry
+                       (Vsearch.Pattern_Combo.Get_Child).Delete_Text
+                       (Start_Pos => 0);
+                     return True;
+                  end if;
+
+                  Vsearch_Module_Id.Locked := True;
+
+                  --  Remove any displayed information since and set the
+                  --  sensitivity of the 'Replace' and 'Replace and Find'
+                  --  buttons since a match has been found.
+                  Remove_Information_On_Child
+                    (Vsearch.Main_View,
+                     Child_Key => Pattern_Child_Key);
+                  Vsearch.Replace_Button.Set_Sensitive (True);
+                  Vsearch.Replace_Search_Button.Set_Sensitive (True);
+                  Reset_Interactive_Context (Vsearch);
+
+                  Set_Active_Text
+                    (Vsearch.Pattern_Combo,
+                     Occurrence.Get_Pattern);
+                  Gtk_Entry
+                    (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
+                  Module.Highlight_Occurrence (Occurrence);
+
+                  Vsearch_Module_Id.Locked := False;
+
+                  return True;
+               end if;
+            else
+               declare
+                  Ent      : constant Gtk_Entry := Gtk_Entry
+                    (Vsearch.Pattern_Combo.Get_Child);
+                  Curs_Pos : constant Gint := Ent.Get_Position;
+               begin
+                  Ent.Delete_Text (Curs_Pos - 1);
+
+                  return True;
+               end;
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Testsuite_Key_Press;
+
    -----------------------
    -- Key_Press_Replace --
    -----------------------
@@ -2194,10 +2318,20 @@ package body Vsearch is
 
       Self.On_Destroy (On_Vsearch_Destroy'Access);
 
-      --  Any change to the fields resets the search mode
-      Return_Callback.Object_Connect
-        (Self.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (Key_Press'Access), Self);
+      --  Connect to the proper key event handler depending on whether GPS
+      --  is launched for testing or not.
+
+      if Active (Testsuite_Handle) then
+         Return_Callback.Object_Connect
+           (Self.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
+            Return_Callback.To_Marshaller (Testsuite_Key_Press'Access), Self);
+      else
+         --  Any change to the fields resets the search mode
+         Return_Callback.Object_Connect
+           (Self.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
+            Return_Callback.To_Marshaller (Key_Press'Access), Self);
+      end if;
+
       Return_Callback.Object_Connect
         (Self.Replace_Combo.Get_Child, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Self);
