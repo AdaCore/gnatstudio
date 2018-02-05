@@ -639,6 +639,7 @@ package body GVD.Breakpoints is
         (Breakpoint_Clicked'Access, Self);
       Self.Breakpoint_List.Get_Selection.On_Changed
         (Recompute_Filters'Access, Self);
+      Self.Breakpoint_List.Set_Search_Column (Col_File);
       Main_Vbox.Pack_Start (Self.Breakpoint_List);
 
       Self.Breakpoint_List.Get_Column (Col_Activatable).Set_Visible (False);

@@ -1810,6 +1810,7 @@ package body Bookmark_Views is
             Capability_Type  => Filtered,
             Set_Visible_Func => True);
       View.Tree.Set_Name ("Bookmark TreeView"); --  For the testsuite
+      View.Tree.Set_Search_Column (Name_Column);
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);
 

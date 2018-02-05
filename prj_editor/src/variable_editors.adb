@@ -152,6 +152,7 @@ package body Variable_Editors is
       Editor.Set_Screen (Get_Main_Window (Kernel).Get_Screen);
 
       Set_Mode (Get_Selection (Editor.Values_List), Selection_Single);
+      Set_Enable_Search (Editor.Values_List, False);
 
       --  Create the model that contains the data to show in the tree
 

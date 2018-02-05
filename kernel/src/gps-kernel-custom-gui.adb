@@ -353,6 +353,7 @@ package body GPS.Kernel.Custom.GUI is
          Show_Column_Titles => True,
          Initial_Sort_On    => Column_Name + 1);
       Editor.Model := -Get_Model (Editor.Tree);
+      Set_Search_Column (Editor.Tree, Column_Name);
       Scrolled.Add (Editor.Tree);
 
       --  Set the different callbacks for the events triggered by the tree

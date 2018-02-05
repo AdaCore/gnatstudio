@@ -951,6 +951,7 @@ package body VCS2.History is
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (True);
       Self.Tree.Set_Fixed_Height_Mode (True);
+      Self.Tree.Set_Search_Column (Column_Subject);
       Self.Tree.Set_Show_Expanders (False);
       Self.Tree.On_Button_Press_Event (On_Button_Press'Access, Self);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
@@ -990,7 +991,6 @@ package body VCS2.History is
       Set_Placeholder
         (Self.Details, -"Select one or more lines to view details");
       Scrolled2.Add (Self.Details);
-
       return Gtk_Widget (Self.Tree);
    end Initialize;
 
@@ -1456,6 +1456,7 @@ package body VCS2.History is
          end if;
          Tree.Graph.Queue_Draw;
 
+         Tree.Set_Search_Column (Column_Subject);
          return False;  --  All done
       end case;
    end On_Layout_Idle;

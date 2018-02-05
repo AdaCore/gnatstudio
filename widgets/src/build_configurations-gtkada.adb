@@ -991,6 +991,7 @@ package body Build_Configurations.Gtkada is
 
       --  Create the tree view
       Gtk_New (Config_UI.Build_UI.View, Column_Types);
+      Set_Search_Column (Config_UI.Build_UI.View, Name_Column);
       Config_UI.Build_UI.View.Set_Headers_Visible (False);
 
       Gtk_New (Col);

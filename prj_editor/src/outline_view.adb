@@ -845,6 +845,7 @@ package body Outline_View is
       Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
 
       Set_Headers_Visible (Outline.Tree, False);
+      Set_Search_Column (Outline.Tree, Display_Name_Column);
 
       --  Create an explicit columns for the expander
 

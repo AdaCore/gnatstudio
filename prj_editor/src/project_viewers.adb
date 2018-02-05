@@ -524,6 +524,7 @@ package body Project_Viewers is
       Gtk_New (Viewer.Model, Column_Types);
       Gtk_New (Viewer.Tree,  Viewer.Model);
       Set_Mode (Get_Selection (Viewer.Tree), Selection_Multiple);
+      Set_Search_Column (Viewer.Tree, File_Column);
       Add (Scrolled, Viewer.Tree);
 
       Gtk_New (Col);

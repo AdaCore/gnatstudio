@@ -1461,11 +1461,12 @@ package body Call_Graph_Views is
          Sortable_Columns   => True);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
       View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      View.Tree.Set_Search_Column (Name_Column);
       Scroll.Add (View.Tree);
 
       --  Set custom order by column: Name & Decl
-      View.Tree.Get_Column (0).Set_Sort_Column_Id (Sort_Column);
-      View.Tree.Get_Column (0).Clicked;
+      View.Tree.Get_Column (Name_Column).Set_Sort_Column_Id (Sort_Column);
+      View.Tree.Get_Column (Name_Column).Clicked;
 
       Gtk_New (Scroll);
       Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -1482,6 +1483,7 @@ package body Call_Graph_Views is
                 Location_File_Column      => Get_Virtual_File_Type));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
+      View.Locations_Tree.Set_Enable_Search (False);
       Scroll.Add (View.Locations_Tree);
 
       Set_Name (View.Locations_Tree, "Call Graph Location Tree");

@@ -746,7 +746,7 @@ package body Buffer_Views is
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);
       View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
-      View.Tree.Set_Enable_Search (True);
+      View.Tree.Set_Search_Column (Name_Column);
 
       Gtk_New (Col);
       Dummy := View.Tree.Append_Column (Col);

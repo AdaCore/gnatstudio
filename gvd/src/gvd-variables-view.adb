@@ -1143,6 +1143,7 @@ package body GVD.Variables.View is
          Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Set_Name (Self.Tree, "Variables Tree");  --  For testsuite
+      Self.Tree.Set_Search_Column (Column_Full_Name);
 
       Scrolled.Add (Self.Tree);
 

@@ -1000,6 +1000,7 @@ package body Project_Explorers_Files is
       Explorer.Tree.Kernel := Explorer.Kernel;
       Explorer.Tree.Initialize
         (Column_Types => Columns_Types);
+      Explorer.Tree.Set_Enable_Search (False);
       Set_Name (Explorer.Tree, "File Explorer Tree");
 
       Scrolled.Add (Explorer.Tree);
