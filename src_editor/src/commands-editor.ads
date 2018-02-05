@@ -109,12 +109,15 @@ package Commands.Editor is
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type;
       Text         : UTF8_String;
-      Force_End    : Boolean := False);
+      Force_End    : Boolean := False;
+      Move_Cursor  : Boolean := True);
    --  Create a new Editor_Replace_Slice command.
    --  If Force_End then the cursor will always be placed at the end of the
    --  newly inserted text, otherwise it is placed at the end when executing
    --  the command, and at the beginning when undoing it.
    --  Text is must be a UTF-8 encoded string.
+   --  Set Move_Cursor to False to avoid moving cursor and scrolling in the
+   --  editor
 
    overriding function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type;
@@ -229,6 +232,7 @@ private
       Text_After        : GNAT.Strings.String_Access;
 
       Force_End         : Boolean;
+      Move_Cursor       : Boolean;
    end record;
 
    overriding function Debug_String

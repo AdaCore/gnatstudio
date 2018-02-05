@@ -6625,7 +6625,8 @@ package body Src_Editor_Buffer is
                   Start_Column,
                   Editable_Line_Type (Line),
                   End_Column,
-                  Replace);
+                  Replace,
+                  Move_Cursor => False);
                Enqueue (Buffer, Command_Access (Replace_Cmd), External);
             end;
          end if;

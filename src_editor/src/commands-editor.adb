@@ -502,7 +502,7 @@ package body Commands.Editor is
             Command.End_Column_After);
       end if;
 
-      if Is_Valid_Position
+      if Command.Move_Cursor and then Is_Valid_Position
         (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
       then
          Editor := Get_Source_Box_From_MDI
@@ -589,7 +589,8 @@ package body Commands.Editor is
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type;
       Text         : Basic_Types.UTF8_String;
-      Force_End    : Boolean := False)
+      Force_End    : Boolean := False;
+      Move_Cursor  : Boolean := True)
    is
    begin
       Item := new Editor_Replace_Slice_Type;
@@ -604,6 +605,7 @@ package body Commands.Editor is
         (Get_Text (Buffer, Start_Line, Start_Column, End_Line, End_Column));
 
       Item.Text_After := new String'(Text);
+      Item.Move_Cursor := Move_Cursor;
    end Create;
 
    -------------
