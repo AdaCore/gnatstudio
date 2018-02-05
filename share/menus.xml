@@ -495,7 +495,7 @@
          <menu label='XMLAda'/>
          <menu label='Ada'/>
          <menu label='Python'>
-            <menu label='Python library help' action='display python library help' optional='true'/>
+            <menu label='Python Library' action='display python library help' optional='true'/>
          </menu>
          <menu label='AWS'/>
          <menu label='SPARK'/>

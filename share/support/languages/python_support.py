@@ -28,6 +28,7 @@ import sys
 import ast
 import os.path
 import gps_utils
+import os_utils
 from constructs import CAT_FUNCTION, VISIBILITY_PUBLIC, CAT_PARAMETER, \
     VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT, CAT_IF_STATEMENT
 import text_utils
@@ -197,14 +198,6 @@ class PythonSupport(object):
            <menu>/Help/Python/Python Tutorial</menu>
            <category>Scripts</category>
         </documentation_file>
-        <documentation_file>
-          <shell lang="python">"""
-
-        XML += """GPS.execute_action('display python library help')</shell>
-          <descr>Python Library</descr>
-          <menu>/Help/Python/Python Library</menu>
-          <category>Scripts</category>
-        </documentation_file>
         """
 
         if Gtk:
@@ -230,10 +223,11 @@ class PythonSupport(object):
         Initializations done after the gps_started hook
         """
 
-        gps_utils.make_interactive(
-            callback=self.show_python_library,
-            filter='Python file',
-            name='display python library help')
+        # This action requires pydoc
+        if os_utils.locate_exec_on_path('pydoc'):
+            gps_utils.make_interactive(
+                callback=self.show_python_library,
+                name='display python library help')
 
         gps_utils.make_interactive(
             callback=self.reload_file,
@@ -392,7 +386,7 @@ class PythonSupport(object):
             else:
                 try:
                     sys.path.index(os.path.dirname(f.path))
-                except:
+                except Exception:
                     sys.path = [os.path.dirname(f.path)] + sys.path
                 __import__(module)
 
@@ -402,7 +396,7 @@ class PythonSupport(object):
                 # The proper solution is to execute in the context of the GPS
                 # console
                 GPS.exec_in_console("import " + module)
-        except:
+        except Exception:
             pass   # Current context is not a file
 
     def _project_recomputed(self, hook_name):
@@ -418,7 +412,7 @@ class PythonSupport(object):
             GPS.Project.root().languages(recursive=True).index("python")
             # The rest is done only if we support python
             GPS.Project.add_predefined_paths(sources=os.pathsep.join(sys.path))
-        except:
+        except Exception:
             pass
 
     def show_python_library(self):
@@ -461,6 +455,7 @@ class PythonTracer(object):
     def trace(self, frame, event, arg):
         filename, lineno = frame.f_code.co_filename, frame.f_lineno
         self.logger.log("%s:%s:%s:%s" % (filename, lineno, event, arg))
+
 
 # Create the class once GPS is started, so that the filter is created
 # immediately when parsing XML, and we can create our actions.
