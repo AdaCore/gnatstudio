@@ -98,14 +98,6 @@ private
       --  Set of the message review statuses, which is show in the report
    end record;
 
-   type Subprogram_Item is
-     new Code_Analysis.Tree_Models.Subprogram_Item with record
-      Computed        : Boolean := False;
-      Messages_Counts : CodePeer.Utilities.Messages_Counts;
-   end record;
-
-   type Subprogram_Item_Access is access all Subprogram_Item'Class;
-
    type File_Item is new Code_Analysis.Tree_Models.File_Item with record
       Computed        : Boolean := False;
       Messages_Counts : CodePeer.Utilities.Messages_Counts;
@@ -138,11 +130,6 @@ private
       File : Code_Analysis.File_Access)
       return Code_Analysis.Tree_Models.File_Item_Access;
 
-   overriding function Create
-     (Self       : access Messages_Summary_Model_Record;
-      Subprogram : Code_Analysis.Subprogram_Access)
-      return Code_Analysis.Tree_Models.Subprogram_Item_Access;
-
    overriding function Is_Visible
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
@@ -159,8 +146,8 @@ private
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
-      return Boolean;
-   --  Returns True if specified subprogram must be visible in the tree
+      return Boolean is (False);
+   --  There are no subprogram nodes in this view, nothing to display.
 
    overriding function Is_Changed
      (Self    : access Messages_Summary_Model_Record;

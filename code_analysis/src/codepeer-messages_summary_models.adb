@@ -25,8 +25,6 @@ with CodePeer.Module;
 
 package body CodePeer.Messages_Summary_Models is
 
-   use type Code_Analysis.Project_Access;
-   use type Code_Analysis.Subprogram_Access;
    use type CodePeer.Utilities.Counts;
 
    -----------
@@ -68,21 +66,6 @@ package body CodePeer.Messages_Summary_Models is
 
    begin
       return new Project_Item (Project);
-   end Create;
-
-   ------------
-   -- Create --
-   ------------
-
-   overriding function Create
-     (Self       : access Messages_Summary_Model_Record;
-      Subprogram : Code_Analysis.Subprogram_Access)
-      return Code_Analysis.Tree_Models.Subprogram_Item_Access
-   is
-      pragma Unreferenced (Self);
-
-   begin
-      return new Subprogram_Item (Subprogram);
    end Create;
 
    ---------------------
@@ -144,14 +127,10 @@ package body CodePeer.Messages_Summary_Models is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      use type Code_Analysis.Tree_Models.Subprogram_Item_Access;
-
-      Project_Node    : constant Project_Item_Access :=
+      Project_Node : constant Project_Item_Access :=
         Project_Item_Access (Self.Project (Iter));
-      File_Node       : constant File_Item_Access :=
+      File_Node    : constant File_Item_Access :=
         File_Item_Access (Self.File (Iter));
-      Subprogram_Node : constant Subprogram_Item_Access :=
-        Subprogram_Item_Access (Self.Subprogram (Iter));
 
       procedure Set_Lifeage_Sign (Lifeage : Lifeage_Kinds);
       --  Sets Value parameter to "+"/"-"/"" for Added/Removed/Unchanged
@@ -177,11 +156,7 @@ package body CodePeer.Messages_Summary_Models is
 
       procedure Set_Count_Image (Level : CodePeer.Message_Ranking_Level) is
       begin
-         if Subprogram_Node /= null then
-            Set_Integer_Image
-              (Subprogram_Node.Messages_Counts (Level).Current, True);
-
-         elsif File_Node /= null then
+         if File_Node /= null then
             Set_Integer_Image
               (File_Node.Messages_Counts (Level).Current, True);
 
@@ -266,9 +241,7 @@ package body CodePeer.Messages_Summary_Models is
          when Entity_Icon_Name_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
 
-            if Subprogram_Node /= null then
-               Glib.Values.Set_String (Value, Subp_Pixbuf_Cst);
-            elsif File_Node /= null then
+            if File_Node /= null then
                Glib.Values.Set_String (Value, File_Pixbuf_Cst);
             elsif Project_Node /= null then
                Glib.Values.Set_String (Value, Prj_Pixbuf_Cst);
@@ -277,11 +250,7 @@ package body CodePeer.Messages_Summary_Models is
             end if;
 
          when Entity_Name_Column =>
-            if Subprogram_Node /= null then
-               Glib.Values.Init (Value, Glib.GType_String);
-               Glib.Values.Set_String (Value, Subprogram_Node.Node.Name.all);
-
-            elsif File_Node /= null then
+            if File_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String (Value, +File_Node.Node.Name.Base_Name);
 
@@ -304,13 +273,7 @@ package body CodePeer.Messages_Summary_Models is
             end if;
 
          when Entity_Lifeage_Column =>
-            if Subprogram_Node /= null then
-               Set_Lifeage_Sign
-                 (CodePeer.Subprogram_Data
-                    (Subprogram_Node.Node.Analysis_Data.CodePeer_Data.all).
-                    Lifeage);
-
-            elsif File_Node /= null then
+            if File_Node /= null then
                Set_Lifeage_Sign
                  (CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).Lifeage);
@@ -344,12 +307,7 @@ package body CodePeer.Messages_Summary_Models is
             Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (High));
 
          when Passed_Checks_Count_Column =>
-            if Subprogram_Node /= null then
-               --  Nothing to output, checks are counted per file
-
-               Set_Integer_Image (0, True);
-
-            elsif File_Node /= null then
+            if File_Node /= null then
                declare
                   Total  : constant Natural := CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
@@ -415,12 +373,7 @@ package body CodePeer.Messages_Summary_Models is
             end if;
 
          when Total_Checks_Count_Column =>
-            if Subprogram_Node /= null then
-               --  Nothing to output, checks are counted per file
-
-               Set_Integer_Image (0, True);
-
-            elsif File_Node /= null then
+            if File_Node /= null then
                Set_Integer_Image
                  (CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
@@ -596,40 +549,6 @@ package body CodePeer.Messages_Summary_Models is
         or else File_Node.Messages_Counts (Low)    /= (others => 0)
         or else File_Node.Messages_Counts (Medium) /= (others => 0)
         or else File_Node.Messages_Counts (High)   /= (others => 0);
-   end Is_Visible;
-
-   ----------------
-   -- Is_Visible --
-   ----------------
-
-   overriding function Is_Visible
-     (Self       : access Messages_Summary_Model_Record;
-      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
-      File       : Code_Analysis.Tree_Models.File_Item_Access;
-      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
-      return Boolean
-   is
-      pragma Unreferenced (Project, File);
-
-      Subprogram_Node : constant Subprogram_Item_Access :=
-                          Subprogram_Item_Access (Subprogram);
-      Dummy           : Natural;
-
-   begin
-      CodePeer.Utilities.Compute_Messages_Count
-        (Subprogram_Node.Node,
-         Self.Message_Categories,
-         Self.CWE_Categories,
-         Self.Message_Lifeages,
-         Self.Message_Statuses,
-         Subprogram_Node.Messages_Counts,
-         Dummy);
-      Subprogram_Node.Computed := True;
-
-      return Self.Show_All_Subprograms
-        or else Subprogram_Node.Messages_Counts (Low)    /= (others => 0)
-        or else Subprogram_Node.Messages_Counts (Medium) /= (others => 0)
-        or else Subprogram_Node.Messages_Counts (High)   /= (others => 0);
    end Is_Visible;
 
    ------------------------------
