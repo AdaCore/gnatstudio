@@ -242,7 +242,7 @@ class SVN(core_staging.Emulate_Staging,
         """
         branches = [('trunk', parent_url.endswith('/trunk'), '',
                      os.path.join(parent_url, 'trunk'))]
-        base = os.path.join(parent_url, 'branches')
+        base = parent_url + '/branches'
         p = self._svn(['list', base])
         while True:
             line = yield p.wait_line()
@@ -261,7 +261,7 @@ class SVN(core_staging.Emulate_Staging,
         A generator that returns the list of tags via `visitor.tags`
         """
         tags = []
-        base = os.path.join(parent_url, 'tags')
+        base = parent_url + 'tags'
         p = self._svn(['list', base])
         while True:
             line = yield p.wait_line()
