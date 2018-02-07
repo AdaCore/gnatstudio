@@ -738,7 +738,9 @@ package body CodePeer.Bridge.Inspection_Readers is
                 (Id          =>
                    Positive'Value (Attrs.Get_Value ("identifier")),
                  File        => Self.File_Node,
-                 Subprogram  => Self.Subprogram_Node,
+                 Subprogram  =>
+                   Ada.Strings.Unbounded.To_Unbounded_String
+                     (Self.Subprogram_Node.Name.all),
                  Merged      => Merged,
                  Lifeage     => Lifeage,
                  Line        => Positive'Value (Attrs.Get_Value ("line")),

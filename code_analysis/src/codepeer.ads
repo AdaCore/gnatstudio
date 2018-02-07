@@ -117,7 +117,7 @@ package CodePeer is
    type Message is new GPS.Kernel.Messages.Primary_Abstract_Message with record
       Id               : Natural;
       File             : Code_Analysis.File_Access;
-      Subprogram       : Code_Analysis.Subprogram_Access;
+      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Category         : Message_Category_Access;

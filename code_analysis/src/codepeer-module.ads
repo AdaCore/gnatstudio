@@ -96,7 +96,7 @@ package CodePeer.Module is
    function Create_CodePeer_Message
      (Id               : Natural;
       File             : Code_Analysis.File_Access;
-      Subprogram       : Code_Analysis.Subprogram_Access;
+      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Line             : Positive;

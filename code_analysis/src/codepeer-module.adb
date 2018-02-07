@@ -436,7 +436,7 @@ package body CodePeer.Module is
    function Create_CodePeer_Message
      (Id               : Natural;
       File             : Code_Analysis.File_Access;
-      Subprogram       : Code_Analysis.Subprogram_Access;
+      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Line             : Positive;
@@ -1462,7 +1462,8 @@ package body CodePeer.Module is
             Module.Output_Directory,
             CodePeer.Message'Class (Message.all).File.Name,
             Message,
-            CodePeer.Message'Class (Message.all).Subprogram.Name.all,
+            Ada.Strings.Unbounded.To_String
+              (CodePeer.Message'Class (Message.all).Subprogram),
             (if CodePeer.Message'Class (Message.all).Is_Check
              then CodePeer.Message'Class (Message.all).Vns
              else Natural_Sets.Empty_Set));
