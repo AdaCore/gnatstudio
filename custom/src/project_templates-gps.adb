@@ -122,7 +122,7 @@ package body Project_Templates.GPS is
          Dir           => Dir,
          Project       => Project,
          Errors        => E,
-         Default_Label => "Simple Project");
+         Default_Label => "Simple Ada Project");
 
       if Installed then
          Success := True;
