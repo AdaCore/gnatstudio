@@ -704,7 +704,7 @@ procedure GPS.Main is
 
             File := Traces_File.Write_File;
             Write (File,
-                   ">log.$$.txt:buffer_size=0" & ASCII.LF &
+                   ">log.$T.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
                      "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
@@ -729,7 +729,7 @@ procedure GPS.Main is
                if File_Contents /= null then
                   declare
                      Pattern      : constant String :=
-                                      ">log.$$.txt:buffer_size=";
+                                      ">log.$T.txt:buffer_size=";
                      New_Contents : Unbounded_String := To_Unbounded_String
                        (File_Contents.all);
                   begin
