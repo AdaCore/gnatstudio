@@ -6,7 +6,7 @@
 <GPS>
   <key action="Interrupt">shift-primary-C</key>
 
-  <key action="debug run dialog">F2</key>
+  <key action="debug run dialog">shift+F9</key>
   <key action="debug step">F5</key>
   <key action="debug stepi">shift-F5</key>
   <key action="debug next">F6</key>
@@ -51,7 +51,6 @@
   <key action="Move to next line">Down</key>
   <key action="forward delete" >Delete</key>
   <key action="backward delete" >BackSpace</key>
-  <key action="backward delete" >primary-BackSpace</key>
   <key action="goto beginning of line" >Home</key>
   <key action="goto end of line" >End</key>
   <key action="goto beginning of line (extend selection)" >shift-Home</key>
@@ -71,6 +70,9 @@
   <key action="Move tab to right">shift-primary-alt-Right</key>
   <key action="Move to next tab">primary-alt-Right</key>
   <key action="Move to previous tab">primary-alt-Left</key>
+
+  <key action="delete file" >BackSpace</key>
+  <key action="Rename file" >F2</key>
 
   <key action="Global Search in context: File Names">shift-F3</key>
 </GPS>
