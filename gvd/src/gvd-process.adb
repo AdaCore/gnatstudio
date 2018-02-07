@@ -402,7 +402,8 @@ package body GVD.Process is
            (Kernel  => Process.Kernel,
             Process => Process,
             File    => To_File (Process.Kernel, To_String (File)),
-            Line    => Line);
+            Line    => Line,
+            Focus   => False);
 
       elsif Addr /= Invalid_Address
         and then Process.Current_File /= No_File
@@ -412,7 +413,8 @@ package body GVD.Process is
            (Kernel  => Process.Kernel,
             Process => Process,
             File    => GNATCOLL.VFS.No_File,
-            Line    => 0);
+            Line    => 0,
+            Focus   => False);
 
          Process.Kernel.Messages_Window.Insert
            (-"There is no debug information for this frame.");
@@ -420,18 +422,7 @@ package body GVD.Process is
 
       Process.Post_Processing := False;
       Free (Process.Current_Output);
-
-      --  Preserve the focus in the console for interactive execution
-
-      if Process.Is_From_Dbg_Console then
-         if Process.Debugger_Text /= null then
-            Set_Focus_Child
-              (Find_MDI_Child
-                 (Get_MDI (Process.Kernel), Process.Debugger_Text));
-         end if;
-
-         Process.Is_From_Dbg_Console := False;
-      end if;
+      Process.Is_From_Dbg_Console := False;
 
       if Always_Emit_Hooks or else Mode /= Internal then
          if Breakpoints_Might_Have_Changed

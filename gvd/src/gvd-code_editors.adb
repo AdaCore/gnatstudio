@@ -16,11 +16,14 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Gtkada.MDI;                   use Gtkada.MDI;
+
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.GtkAda;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
@@ -48,7 +51,8 @@ package body GVD.Code_Editors is
       Process   : access Base_Visual_Debugger'Class := null;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
-      Highlight : Boolean := True)
+      Highlight : Boolean := True;
+      Focus     : Boolean := True)
    is
       P   : constant Visual_Debugger := Visual_Debugger (Process);
       Msg : Simple_Message_Access;
@@ -66,11 +70,24 @@ package body GVD.Code_Editors is
       then
          declare
             Buffer : constant Editor_Buffer'Class :=
-              Kernel.Get_Buffer_Factory.Get (File, Open_Buffer => True);
+              Kernel.Get_Buffer_Factory.Get
+                (File, Open_Buffer => True, Focus => Focus);
          begin
             Buffer.Current_View.Cursor_Goto
               (Location   => Buffer.New_Location_At_Line (Line),
-               Raise_View => True);
+               Raise_View => Focus);
+
+            if not Focus then
+               --  raise the source editor without giving a focus
+               declare
+                  C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
+                    (Buffer.Current_View);
+               begin
+                  if C /= null then
+                     Raise_Child (C, False);
+                  end if;
+               end;
+            end if;
          end;
       end if;
 

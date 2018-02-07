@@ -29,7 +29,8 @@ package GVD.Code_Editors is
       Process   : access Base_Visual_Debugger'Class := null;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
-      Highlight : Boolean := True);
+      Highlight : Boolean := True;
+      Focus     : Boolean := True);
    --  Set the file and line which the debugger is stopped at.
    --  Process might be null if no debugger is running
    --  Highlight line as current debugging line if Highlight parameter is true
