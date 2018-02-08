@@ -32,7 +32,6 @@ b__*
 *.cgpr
 /Makefile
 shared.gpr
-common/Makefile.common
 common/common.gpr
 common/expect/Makefile
 common/core/src/config.ads
