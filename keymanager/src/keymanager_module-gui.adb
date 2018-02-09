@@ -17,6 +17,7 @@
 
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with System;                   use System;
 
 with GNAT.Case_Util;           use GNAT.Case_Util;
@@ -58,9 +59,8 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Size_Group;           use Gtk.Size_Group;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
-with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Tool_Button;          use Gtk.Tool_Button;
@@ -90,6 +90,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Main_Window;          use GPS.Main_Window;
 with GPS.Search;               use GPS.Search;
 with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -174,7 +175,7 @@ package body KeyManager_Module.GUI is
       Model              : Gtk_Tree_Store;
       Filter             : Gtk_Tree_Model_Filter;
       Sort               : Gtk_Tree_Model_Sort;
-      Help               : Gtk_Text_Buffer;
+      Help               : Gtk_Label;
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Toggle_Button;
       Disable_Filtering  : Boolean := False;
@@ -780,14 +781,13 @@ package body KeyManager_Module.GUI is
          --  Action could be null if we chose to display only lines with
          --  shortcuts and the user clicks on a line for a category
          if Action /= null then
-            Set_Text
-              (Ed.Help,
-               Get_Full_Description (Action, Ed.Kernel, Use_Markup => False));
+            Ed.Help.Set_Markup
+              (Get_Full_Description (Action, Ed.Kernel, Use_Markup => True));
          end if;
       else
          Set_Sensitive (Ed.Remove_Button, False);
          Set_Sensitive (Ed.Grab_Button, False);
-         Set_Text (Ed.Help, "");
+         Ed.Help.Set_Markup ("");
       end if;
 
    exception
@@ -826,7 +826,7 @@ package body KeyManager_Module.GUI is
                Row_Visible :=
                  Data.Filter_Pattern.Start
                    (Get_Full_Description
-                      (Action, Kernel => null, Use_Markup => False))
+                      (Action, Kernel => null, Use_Markup => True))
                  /= No_Match;
             end if;
          end if;
@@ -1055,7 +1055,7 @@ package body KeyManager_Module.GUI is
       For_Filter  : Boolean;
       For_Display : Boolean := False) return String
    is
-      Grabbed, Tmp : String_Access;
+      Grabbed, Tmp : GNAT.Strings.String_Access;
       Key          : Gdk_Key_Type;
       Modif        : Gdk_Modifier_Type;
       Id           : Glib.Main.G_Source_Id;
@@ -1068,7 +1068,7 @@ package body KeyManager_Module.GUI is
          if For_Filter then
             View.Filter_Grab.Set_Label ("Grab");
          else
-            View.Grab_Button.Set_Label ("Modify");
+            View.Grab_Button.Set_Label ("Add");
          end if;
 
          Unblock_Key_Shortcuts (View.Kernel);
@@ -1166,7 +1166,7 @@ package body KeyManager_Module.GUI is
          then
             declare
                Key          : constant String :=
-                 Grab_Multiple_Key (Ed, For_Filter => False);
+                                Grab_Multiple_Key (Ed, For_Filter => False);
                Old_Action   : constant String := Lookup_Action_From_Key
                  (Key, Get_Shortcuts (Ed.Kernel));
                Old_Prefix   : constant String := Actions_With_Key_Prefix
@@ -1178,7 +1178,11 @@ package body KeyManager_Module.GUI is
                                    To_Set (String'(1 => ASCII.LF)));
                New_Action   : constant String :=
                                 Get_String (Ed.Model, Iter, Action_Column);
-               Do_Nothing   : Boolean := False;
+
+               type Key_Binding_Action_Type is
+                 (Unbind_Old_Actions, Keep_Old_Bindings, Nothing);
+
+               Binding_Action : Key_Binding_Action_Type := Keep_Old_Bindings;
             begin
                if Key /= "" and then Key /= "Escape" then
                   --  Do we already have an action with such a binding ?
@@ -1199,7 +1203,7 @@ package body KeyManager_Module.GUI is
                   then
                      --  key already bound to Old_Action and no clash for the
                      --  prefix, nothing to do.
-                     Do_Nothing := True;
+                     Binding_Action := Nothing;
 
                   elsif Count_Prefix > 1
                     or else (Count_Prefix = 1
@@ -1211,32 +1215,60 @@ package body KeyManager_Module.GUI is
                         --  is from python otherwise (probably because it is
                         --  running in its own gtk+ loop).
 
-                        Do_Nothing := False;  --  Perform the replacement
+                        --  Perform the replacement
+                        Binding_Action := Unbind_Old_Actions;
+
                         Trace
                           (Testsuite_Handle,
                            "Dialog for already assigned key would have"
                            & " been displayed, old_action='"
                            & Old_Action & "' action='" & New_Action & "'");
 
-                     elsif Message_Dialog
-                       (Msg =>
-                          Key
-                        & (-" (or prefix) is already used for: ")
-                        & ASCII.LF & ASCII.LF
-                        & Old_Prefix & ASCII.LF
-                        & (-"Do you want to assign ") & Key & (-" to """)
-                        & New_Action
-                        & (-""" and disable all actions above ?"),
-                        Dialog_Type => Confirmation,
-                        Buttons => Button_OK or Button_Cancel,
-                        Title   => -"Key shortcut already exists",
-                        Parent  => Get_Main_Window (Ed.Kernel)) /= Button_OK
-                     then
-                        Do_Nothing := True;
+                     else
+                        declare
+                           Dialog : Gtk_Dialog;
+                           Button : Gtk_Widget;
+                        begin
+                           Dialog := Create_Gtk_Dialog
+                             (Msg           =>  Key
+                              & (-" (or prefix) is already assigned to: ")
+                              & ASCII.LF & ASCII.LF
+                              & Old_Prefix & ASCII.LF
+                              & (-"Do you want to remove other assignments?"),
+                              Dialog_Type   => Warning,
+                              Title         =>
+                                -"Key shortcuts already exist",
+                              Parent        => Get_Main_Window (Ed.Kernel));
+                           Button := Dialog.Add_Button
+                             (Text        => "Leave",
+                              Response_Id => Gtk_Response_Yes);
+                           Button.Grab_Default;
+
+                           Button := Dialog.Add_Button
+                             (Text        => Stock_Remove,
+                              Response_Id => Gtk_Response_OK);
+
+                           Button := Dialog.Add_Button
+                             (Text        => Stock_Cancel,
+                              Response_Id => Gtk_Response_Cancel);
+
+                           Dialog.Show_All;
+
+                           case Dialog.Run is
+                              when Gtk_Response_Yes =>
+                                 Binding_Action := Keep_Old_Bindings;
+                              when Gtk_Response_OK =>
+                                 Binding_Action := Unbind_Old_Actions;
+                              when others =>
+                                 Binding_Action := Nothing;
+                           end case;
+
+                           Dialog.Destroy;
+                        end;
                      end if;
                   end if;
 
-                  if Do_Nothing then
+                  if Binding_Action = Nothing then
                      Set_Active (Ed.Grab_Button, False);
                      return;
                   end if;
@@ -1247,8 +1279,9 @@ package body KeyManager_Module.GUI is
                      Action           => New_Action,
                      Key              => Key,
                      Save_In_Keys_XML => True,
-                     Remove_Existing_Actions_For_Shortcut => True,
-                     Remove_Existing_Shortcuts_For_Action => True);
+                     Remove_Existing_Actions_For_Shortcut =>
+                       (Binding_Action = Unbind_Old_Actions),
+                     Remove_Existing_Shortcuts_For_Action => False);
                   Save_Custom_Keys (Ed.Kernel);
                   Refresh_Editor (Ed);
                end if;
@@ -1349,6 +1382,146 @@ package body KeyManager_Module.GUI is
       Selection  : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Sort_Model : Gtk_Tree_Model;
       Iter, Filter_Iter, Sort_Iter  : Gtk_Tree_Iter;
+
+      function Run_Remove_Dialog
+        (Keys : Unbounded_String_Array) return Unbounded_String_Array;
+      --  Run a dialog asking which key bindings the user wants to remove.
+      --  Return the list of the key bindings to remove.
+
+      function Contains
+        (List : Unbounded_String_Array;
+         S    : Unbounded_String) return Boolean
+      is
+        (for some Val of List => S = Val);
+      --  Return True if List contains S
+
+      -----------------------
+      -- Run_Remove_Dialog --
+      -----------------------
+
+      function Run_Remove_Dialog
+        (Keys : Unbounded_String_Array) return Unbounded_String_Array
+      is
+         Dialog       : Gtk_Dialog;
+         View         : Dialog_View;
+         Group_Widget : Dialog_Group_Widget;
+         Label        : Gtk_Label;
+         Tree         : Gtk_Tree_View;
+         Tree_Model   : Gtk_Tree_Store;
+         Button       : Gtk_Widget with Unreferenced;
+         Response     : Gtk_Response_Type;
+         Iter         : Gtk_Tree_Iter;
+         Col_Name     : aliased String := "Key Binding";
+      begin
+         --  Create the dialog
+
+         Gtk_New (Dialog,
+                  Title  => -"Remove key bindings",
+                  Parent => Get_Main_Window (Ed.Kernel),
+                  Flags  => Modal or Destroy_With_Parent);
+         Set_Default_Size_From_History
+           (Dialog,
+            Name   => Dialog.Get_Title,
+            Kernel => Ed.Kernel,
+            Width  => 300,
+            Height => 200);
+
+         --  Create the help label
+
+         View := new Dialog_View_Record;
+         Dialog_Utils.Initialize (View);
+         Dialog.Get_Content_Area.Pack_Start (View);
+
+         Group_Widget := new Dialog_Group_Widget_Record;
+         Initialize (Group_Widget, Parent_View => View);
+         Gtk_New
+           (Label,
+            "Select the key bindings that you want ro remove for this "
+            & "action.");
+         Apply_Doc_Style (Label);
+         Group_Widget.Append_Child (Label, Expand => False);
+
+         --  Create the tree view listing the key bindings
+
+         Group_Widget := new Dialog_Group_Widget_Record;
+         Initialize
+           (Group_Widget,
+            Parent_View         => View,
+            Allow_Multi_Columns => False);
+
+         Tree := Create_Tree_View
+           (Column_Types     => (0 => GType_String),
+            Column_Names     => (1 => Col_Name'Unchecked_Access),
+            Sortable_Columns => False);
+
+         Tree.Get_Selection.Set_Mode (Selection_Multiple);
+         Tree_Model := -Tree.Get_Model;
+
+         for Key of Keys loop
+            Tree_Model.Append (Iter, Null_Iter);
+            Tree_Model.Set (Iter, 0, To_String (Key));
+         end loop;
+
+         Group_Widget.Append_Child (Tree);
+
+         --  Create the reponse buttons
+
+         Button := Dialog.Add_Button ("Remove", Gtk_Response_OK);
+         Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+
+         Dialog.Show_All;
+         Response := Dialog.Run;
+
+         case Response is
+            when Gtk_Response_OK =>
+               declare
+                  use Gtk_Tree_Path_List;
+                  Count  : constant Integer := Integer
+                    (Tree.Get_Selection.Count_Selected_Rows);
+                  Model  : Gtk_Tree_Model;
+                  List   : Gtk_Tree_Path_List.Glist;
+                  G_Iter : Gtk_Tree_Path_List.Glist;
+                  Path   : Gtk_Tree_Path;
+                  Result : Unbounded_String_Array (1 .. Count);
+                  J      : Integer := Result'First;
+               begin
+                  Tree.Get_Selection.Get_Selected_Rows (Model, List);
+                  Tree_Model := -Model;
+
+                  if Model /= Null_Gtk_Tree_Model
+                    and then List /= Gtk_Tree_Path_List.Null_List
+                  then
+                     G_Iter := Gtk_Tree_Path_List.First (List);
+
+                     while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+                        Path := Gtk_Tree_Path
+                          (Gtk_Tree_Path_List.Get_Data (G_Iter));
+                        Iter := Get_Iter (Model, Path);
+                        Result (J) := To_Unbounded_String
+                          (Tree_Model.Get_String (Iter, 0));
+                        J := J + 1;
+                        G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+                     end loop;
+
+                  end if;
+
+                  Free (List);
+                  Dialog.Destroy;
+
+                  return Result;
+               end;
+            when others =>
+               declare
+                  Result : constant Unbounded_String_Array (1 .. 0) :=
+                             (others => <>);
+               begin
+                  Dialog.Destroy;
+
+                  return Result;
+               end;
+         end case;
+      end Run_Remove_Dialog;
+
    begin
       Get_Selected (Selection, Sort_Model, Sort_Iter);
       Convert_Iter_To_Child_Iter (Ed.Sort, Filter_Iter, Sort_Iter);
@@ -1359,16 +1532,60 @@ package body KeyManager_Module.GUI is
       if Iter /= Null_Iter
         and then Children (Ed.Model, Iter) = Null_Iter
       then
-         Bind_Default_Key_Internal
-           (Table             => Get_Shortcuts (Ed.Kernel).all,
-            Kernel            => Ed.Kernel,
-            Action            => Get_String (Ed.Model, Iter, Action_Column),
-            Key               => "",
-            Save_In_Keys_XML  => True,
-            Remove_Existing_Shortcuts_For_Action => True,
-            Remove_Existing_Actions_For_Shortcut => True);
-         Save_Custom_Keys (Ed.Kernel);
-         Refresh_Editor (Ed);
+         declare
+            Action     : constant String :=
+                           Get_String (Ed.Model, Iter, Action_Column);
+            Table      : constant HTable_Access :=
+                           Get_Shortcuts (Ed.Kernel);
+            Keys       : constant Unbounded_String_Array :=
+                           Lookup_Keys_From_Action
+              (Table       => Table,
+               Action      => Action,
+               For_Display => False);
+            Nb_Bindings : constant Integer := Keys'Length;
+         begin
+            case Nb_Bindings is
+               when 0 =>
+                  return;
+               when 1 =>
+                  Bind_Default_Key_Internal
+                    (Table             => Table.all,
+                     Kernel            => Ed.Kernel,
+                     Action            =>
+                        Get_String (Ed.Model, Iter, Action_Column),
+                     Key               => "",
+                     Save_In_Keys_XML  => True,
+                     Remove_Existing_Shortcuts_For_Action => True,
+                     Remove_Existing_Actions_For_Shortcut => False);
+               when others =>
+                  declare
+                     Keys_To_Remove : constant Unbounded_String_Array :=
+                                        Run_Remove_Dialog (Keys);
+                  begin
+                     Remove_In_Keymap (Table.all, Action);
+
+                     for Key of Keys loop
+                        if not Contains (Keys_To_Remove, Key) then
+                           Bind_Default_Key_Internal
+                             (Table                                =>
+                                Table.all,
+                              Kernel                               =>
+                                Ed.Kernel,
+                              Action                               =>
+                                Get_String (Ed.Model, Iter, Action_Column),
+                              Key                                  =>
+                                To_String (Key),
+                              Save_In_Keys_XML                     => True,
+                              Remove_Existing_Shortcuts_For_Action => False,
+                              Remove_Existing_Actions_For_Shortcut => False);
+                        end if;
+                     end loop;
+                  end;
+            end case;
+
+            Save_Custom_Keys (Ed.Kernel);
+            Refresh_Editor (Ed);
+         end;
       end if;
 
    exception
@@ -1504,7 +1721,6 @@ package body KeyManager_Module.GUI is
       Pixbuf             : Gtk_Cell_Renderer_Pixbuf;
       Frame              : Gtk_Frame;
       Pane               : Gtk_Paned;
-      Text               : Gtk_Text_View;
       Ignore             : Gint;
       Sep                : Gtk_Separator;
       Selected           : Gint := 0;
@@ -1623,8 +1839,9 @@ package body KeyManager_Module.GUI is
         (Editor.Remove_Button,
          Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
 
-      Gtk_New (Editor.Grab_Button, -"Modify");
-      Editor.Grab_Button.Set_Tooltip_Text (-"Modify selected key binding");
+      Gtk_New (Editor.Grab_Button, -"Add");
+      Editor.Grab_Button.Set_Tooltip_Text
+        (-"Add a new key binding to the selected action");
       Editor.Grab_Button.Set_Sensitive (False);
       Bbox.Add (Editor.Grab_Button);
       Widget_Callback.Object_Connect
@@ -1641,10 +1858,11 @@ package body KeyManager_Module.GUI is
       Frame.Add (Scrolled);
 
       Gtk_New (Editor.Help);
-      Gtk_New (Text, Editor.Help);
-      Text.Set_Wrap_Mode (Wrap_Word);
-      Text.Set_Editable (False);
-      Scrolled.Add (Text);
+      Editor.Help.Set_Alignment (0.0, 0.0);
+      Editor.Help.Set_Use_Markup (True);
+      Editor.Help.Set_Line_Wrap (True);
+      Editor.Help.Set_Justify (Justify_Fill);
+      Scrolled.Add (Editor.Help);
 
       --  The tree
 

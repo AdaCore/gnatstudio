@@ -356,7 +356,7 @@ class KeyShortcuts(Dialog):
         self.editor = get_widget_by_name('Key shortcuts')
 
         if self.editor:
-            self.modify_button = get_button_from_label('Modify', self.editor)
+            self.modify_button = get_button_from_label('Add', self.editor)
             self.remove_button = get_button_from_label('Remove', self.editor)
             self.close_button = get_button_from_label('Close')
 

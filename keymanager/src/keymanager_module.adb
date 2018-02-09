@@ -119,10 +119,6 @@ package body KeyManager_Module is
    --  Validator returns True. Callback is called when the argument has been
    --  read.
 
-   procedure Dump_Shortcuts (Prefix : String);
-   pragma Unreferenced (Dump_Shortcuts);
-   --  Debug: dump the existing shortcuts to the traces
-
    type Event_Handler_Record;
    type Event_Handler_Access is access all Event_Handler_Record;
    type Event_Handler_Record is record
@@ -601,7 +597,8 @@ package body KeyManager_Module is
    function Hash (Key : Key_Binding) return Keys_Header_Num is
    begin
       return Keys_Header_Num
-        ((Long_Integer (Key.Key) + Long_Integer (Key.Modifier) * 16#FFFF#)
+        ((Long_Integer (Key.Key)
+         + Long_Integer (Key.Modifier) * 16#FFFF#)
           mod Long_Integer (Keys_Header_Num'Last + 1));
    end Hash;
 
@@ -711,9 +708,6 @@ package body KeyManager_Module is
          Default_Mod : Gdk.Types.Gdk_Modifier_Type);
       --  Internal version that allows setting the Changed attribute
 
-      procedure Remove_In_Keymap (Table : in out Key_Htable.Instance);
-      --  Remove all bindings to Action in Table and its secondary keymaps
-
       -------------------
       -- Bind_Internal --
       -------------------
@@ -782,71 +776,6 @@ package body KeyManager_Module is
          end if;
       end Bind_Internal;
 
-      ----------------------
-      -- Remove_In_Keymap --
-      ----------------------
-
-      procedure Remove_In_Keymap (Table : in out Key_Htable.Instance) is
-         Iter                : Key_Htable.Cursor;
-         List, Previous, Tmp : Key_Description_List;
-         Move_To_Next        : Boolean;
-      begin
-         Get_First (Table, Iter);
-         while Get_Element (Iter) /= null loop
-            List := Get_Element (Iter);
-            Move_To_Next := True;
-
-            Previous := null;
-            while List /= null loop
-               if List.Keymap /= null then
-                  Remove_In_Keymap (List.Keymap.Table);
-                  Previous := List;
-                  List := List.Next;
-
-               elsif List.Action /= null
-                 and then Equal
-                   (List.Action.all, Real_Action, Case_Sensitive => False)
-               then
-                  if Previous = null then
-                     if List.Next /= null then
-                        --  Remove list from the list of keybindings, without
-                        --  modifying the htable itself to avoid invalidating
-                        --  the iterator
-                        Tmp := List.Next;
-                        Free (List.Action);
-                        List.all := Tmp.all;
-                        Unchecked_Free (Tmp);
-                     else
-                        --  There was a single element with this key binding.
-                        --  We need to remove it from the table (otherwise that
-                        --  keybinding will remain unusable for the rest of the
-                        --  session, since GPS would believe it is associated
-                        --  with a secondary keymap), but we cannot do that
-                        --  directly or that would invalidate the iterator.
-                        Free (List.Action);
-                        Remove_And_Get_Next (Table, Iter);
-                        Move_To_Next := False;
-                        List := null;
-                     end if;
-
-                  else
-                     Previous.Next := List.Next;
-                     Free_Non_Recursive (List);
-                     List := Previous.Next;
-                  end if;
-
-               else
-                  Previous := List;
-                  List := List.Next;
-               end if;
-            end loop;
-
-            if Move_To_Next then
-               Get_Next (Table, Iter);
-            end if;
-         end loop;
-      end Remove_In_Keymap;
-
       Partial_Key           : Gdk_Key_Type;
       Modif                 : Gdk_Modifier_Type;
       First, Last           : Integer;
@@ -857,9 +786,11 @@ package body KeyManager_Module is
    begin
       --  Are we trying to cancel all bindings to Action ?
       if Remove_Existing_Shortcuts_For_Action
-        or else Key = "" or else Key = -Disabled_String
+        or else Key = ""
+        or else Key = -Disabled_String
+        or else Get_Shortcut (Kernel, Real_Action) = ""
       then
-         Remove_In_Keymap (Table);
+         Remove_In_Keymap (Table, Real_Action);
       end if;
 
       --  On Windows binding control-c to non default copy action can result in
@@ -949,6 +880,74 @@ package body KeyManager_Module is
          First := Last + 1;
       end loop;
    end Bind_Default_Key_Internal;
+
+   ----------------------
+   -- Remove_In_Keymap --
+   ----------------------
+
+   procedure Remove_In_Keymap
+     (Table  : in out Key_Htable.Instance;
+      Action : String)
+   is
+      Iter                : Key_Htable.Cursor;
+      List, Previous, Tmp : Key_Description_List;
+      Move_To_Next        : Boolean;
+   begin
+      Get_First (Table, Iter);
+      while Get_Element (Iter) /= null loop
+         List := Get_Element (Iter);
+         Move_To_Next := True;
+
+         Previous := null;
+         while List /= null loop
+            if List.Keymap /= null then
+               Remove_In_Keymap (List.Keymap.Table, Action);
+               Previous := List;
+               List := List.Next;
+
+            elsif List.Action /= null
+              and then Equal
+                (List.Action.all, Action, Case_Sensitive => False)
+            then
+               if Previous = null then
+                  if List.Next /= null then
+                     --  Remove list from the list of keybindings, without
+                     --  modifying the htable itself to avoid invalidating
+                     --  the iterator
+                     Tmp := List.Next;
+                     Free (List.Action);
+                     List.all := Tmp.all;
+                     Unchecked_Free (Tmp);
+                  else
+                     --  There was a single element with this key binding.
+                     --  We need to remove it from the table (otherwise that
+                     --  keybinding will remain unusable for the rest of the
+                     --  session, since GPS would believe it is associated
+                     --  with a secondary keymap), but we cannot do that
+                     --  directly or that would invalidate the iterator.
+                     Free (List.Action);
+                     Remove_And_Get_Next (Table, Iter);
+                     Move_To_Next := False;
+                     List := null;
+                  end if;
+
+               else
+                  Previous.Next := List.Next;
+                  Free_Non_Recursive (List);
+                  List := Previous.Next;
+               end if;
+
+            else
+               Previous := List;
+               List := List.Next;
+            end if;
+         end loop;
+
+         if Move_To_Next then
+            Get_Next (Table, Iter);
+         end if;
+      end loop;
+   end Remove_In_Keymap;
 
    --------------------------
    -- Get_Secondary_Keymap --
@@ -1187,12 +1186,19 @@ package body KeyManager_Module is
          --  random, since it depends in what order the key shortcuts were
          --  defined.
          while Binding /= No_Key loop
-            if Binding.Action = null then
+
+            --  If the binding does not refer to an action, check its secondary
+            --  keymap the next time, if not empty.
+
+            if Binding.Action = null
+              and then Binding.Keymap /= null
+              and then not Is_Empty (Binding.Keymap)
+            then
                Trace (Me, "Checking secondary keymap");
                Keymanager_Module.Secondary_Keymap := Binding.Keymap;
                Found_Action := True;
 
-            else
+            elsif Binding.Action /= null then
                Trace (Me, "Checking action: " & Binding.Action.all);
                --  If we have not found the accelerator using the Gtk+
                --  mechanism, fallback on the standard mechanism to lookup
@@ -1374,6 +1380,16 @@ package body KeyManager_Module is
    begin
       Add_To_History (Get_History (Kernel).all, Hist_Key_Theme, Name);
    end Set_Key_Theme;
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Keymap : not null access Keymap_Record) return Boolean
+   is
+   begin
+      return Keymap.all = Empty_Keymap;
+   end Is_Empty;
 
    --------------------
    -- Load_Key_Theme --
@@ -1650,8 +1666,8 @@ package body KeyManager_Module is
                         Action           => Action,
                         Key              => Child.Value.all,
                         Save_In_Keys_XML => User_Defined,
-                        Remove_Existing_Shortcuts_For_Action => User_Defined,
-                        Remove_Existing_Actions_For_Shortcut => User_Defined);
+                        Remove_Existing_Shortcuts_For_Action => False,
+                        Remove_Existing_Actions_For_Shortcut => False);
                   end if;
                end;
 
@@ -1699,6 +1715,7 @@ package body KeyManager_Module is
       Default           : String := "none";
       Use_Markup        : Boolean := True;
       Return_Multiple   : Boolean := True;
+      For_Display       : Boolean := True;
       Is_User_Changed   : access Boolean) return String
    is
       use Ada.Strings.Unbounded;
@@ -1754,22 +1771,23 @@ package body KeyManager_Module is
 
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.User_Defined;
-
-                     if Use_Markup then
-                        Append
-                          (Result,
-                           Escape_Text
-                             (Prefix
-                              & Gtk.Accel_Group.Accelerator_Get_Label
-                                (Get_Key (Iter).Key,
-                                 Get_Key (Iter).Modifier)));
-                     else
-                        Append
-                          (Result,
-                           Prefix
-                           & Gtk.Accel_Group.Accelerator_Get_Label
-                             (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
-                     end if;
+                     declare
+                        Key_Img : constant String :=
+                                    (if For_Display then
+                                     Prefix
+                                     & Gtk.Accel_Group.Accelerator_Get_Label
+                                       (Get_Key (Iter).Key,
+                                        Get_Key (Iter).Modifier)
+                                     else
+                                        Image (Get_Key (Iter).Key,
+                                       Get_Key (Iter).Modifier));
+                     begin
+                        if Use_Markup then
+                           Append (Result, Escape_Text (Key_Img));
+                        else
+                           Append (Result, Key_Img);
+                        end if;
+                     end;
 
                   elsif Prefix = "" then
                      --  When returning a single key binding, give priority to
@@ -1809,6 +1827,35 @@ package body KeyManager_Module is
          return To_String (Result);
       end if;
    end Lookup_Key_From_Action;
+
+   -----------------------------
+   -- Lookup_Keys_From_Action --
+   -----------------------------
+
+   function Lookup_Keys_From_Action
+     (Table       : HTable_Access;
+      Action      : String;
+      For_Display : Boolean := True)
+      return GNATCOLL.Utils.Unbounded_String_Array
+   is
+      Is_User_Changed : aliased Boolean;
+      Keys            : constant String := Lookup_Key_From_Action
+        (Table           => Table,
+         Action          => Action,
+         Default         => "none",
+         Use_Markup      => False,
+         Return_Multiple => True,
+         For_Display     => For_Display,
+         Is_User_Changed => Is_User_Changed'Access);
+   begin
+      return GNATCOLL.Utils.Split
+        (Str              => GNATCOLL.Utils.Replace
+           (S           => Keys,
+            Pattern     => " or ",
+            Replacement => ";"),
+         On               => ';',
+         Omit_Empty_Lines => True);
+   end Lookup_Keys_From_Action;
 
    ------------------
    -- Get_Shortcut --

@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;
 with GNATCOLL.VFS;
+with GNATCOLL.Utils;
 
 with Gdk.Event;
 with Gdk.Types;
@@ -168,6 +169,9 @@ private
    type Keymap_Record;
    type Keymap_Access is access Keymap_Record;
 
+   function Is_Empty (Keymap : not null access Keymap_Record) return Boolean;
+   --  Return True if the given Keymap is empty
+
    type Key_Description;
    type Key_Description_List is access Key_Description;
    type Key_Description is record
@@ -206,6 +210,11 @@ private
    --  shortcuts for menus in general, although it might after the key
    --  shortcuts editor has been opened.
 
+   Empty_Keymap : constant Keymap_Record :=
+                    Keymap_Record'(Table => Key_Htable.Nil);
+   --  Constant representing an empty keymap (i.e: a keymap that does not
+   --  contain key bindings).
+
    Disabled_String   : constant String := "";
    --  Displayed for the shortcut of unassigned actions
 
@@ -218,6 +227,7 @@ private
       Default           : String := "none";
       Use_Markup        : Boolean := True;
       Return_Multiple   : Boolean := True;
+      For_Display       : Boolean := True;
       Is_User_Changed   : access Boolean) return String;
    --  Return the list of key bindings set for a specific action. The returned
    --  string can be displayed as is to the user, but is not suitable for
@@ -232,6 +242,17 @@ private
    --  On exit, Is_User_Changed is set to true if at least one of the key
    --  bindings has been modified by the user (as opposed to being set by a
    --  script or by default in GPS)
+   --  If For_Display is true, the returned string is suitable for displaying
+   --  the shortcut to the user, but not to parse it into its components.
+
+   function Lookup_Keys_From_Action
+     (Table       : HTable_Access;
+      Action      : String;
+      For_Display : Boolean := True)
+      return GNATCOLL.Utils.Unbounded_String_Array;
+   --  Convenience function return the key bindings set for Action as a list.
+   --  If For_Display is true, the returned string is suitable for displaying
+   --  the shortcut to the user, but not to parse it into its components.
 
    function Lookup_Action_From_Key
      (Key      : String;
@@ -281,6 +302,11 @@ private
    --  the editor is saved. If Update_Menus is True, then
    --  Remove_Existing_Actions_For_Shortcut also applies to menus.
 
+   procedure Remove_In_Keymap
+     (Table  : in out Key_Htable.Instance;
+      Action : String);
+      --  Remove all bindings to Action in Table and its secondary keymaps
+
    function Get_Shortcuts
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return HTable_Access;
@@ -301,5 +327,8 @@ private
 
    procedure Set_GUI_Running (Running : Boolean);
    --  Inform the module whether the GUI is currently running
+
+   procedure Dump_Shortcuts (Prefix : String);
+   --  Debug: dump the existing shortcuts to the traces
 
 end KeyManager_Module;
