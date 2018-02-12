@@ -21,8 +21,6 @@ with Interfaces.C;                      use Interfaces.C;
 with Libclang.Task_Parser_Pool;         use Libclang.Task_Parser_Pool;
 with String_Utils;
 
-with GPS.Kernel.Hooks;
-
 package body Language.Libclang_Tree is
 
    type Update_Async_Record is new Parse_Callback with record
@@ -48,9 +46,7 @@ package body Language.Libclang_Tree is
    is
       pragma Unreferenced (TU);
    begin
-      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
-        (Kernel => GPS.Kernel.Kernel_Handle (Self.Kernel),
-         File   => File);
+      Self.Kernel.Semantic_Tree_Updated (File);
    end Call;
 
    ------------

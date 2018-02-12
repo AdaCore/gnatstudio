@@ -1302,6 +1302,10 @@ private
      (Self : not null access Kernel_Handle_Record)
       return GPS.Process_Launchers.Process_Launcher;
 
+   overriding procedure Semantic_Tree_Updated
+     (Kernel  : not null access Kernel_Handle_Record;
+      File    : GNATCOLL.VFS.Virtual_File);
+
    function Get_Contextual_Menu_Open
      (Handle : access Kernel_Handle_Record) return Boolean
    is

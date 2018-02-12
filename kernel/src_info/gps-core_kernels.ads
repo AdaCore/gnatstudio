@@ -98,6 +98,12 @@ package GPS.Core_Kernels is
    --  dispatching on the correct underlying implementation of the tree API.
    --  See Abstract_Language_Tree for Context description.
 
+   procedure Semantic_Tree_Updated
+     (Kernel  : not null access Core_Kernel_Record;
+      File    : GNATCOLL.VFS.Virtual_File) is null;
+   --  This procedure is called each time when a semantic tree finishes
+   --  Update_Async routine.
+
    function Registry
      (Kernel : access Core_Kernel_Record'Class)
       return Projects.Project_Registry_Access;

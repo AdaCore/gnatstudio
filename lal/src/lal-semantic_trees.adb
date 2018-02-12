@@ -1013,7 +1013,8 @@ package body LAL.Semantic_Trees is
             Self.Unit.all :=
               Libadalang.Analysis.Get_From_File
                 (Context     => Self.Context,
-                 Filename    => String (Name));
+                 Filename    => String (Name),
+                 Reparse     => True);
          else
             Self.Unit.all :=
               Libadalang.Analysis.Get_From_Buffer
@@ -1023,7 +1024,15 @@ package body LAL.Semantic_Trees is
          end if;
       end Update;
 
-      overriding procedure Update_Async (Self : Tree) renames Update;
+      ------------------
+      -- Update_Async --
+      ------------------
+
+      overriding procedure Update_Async (Self : Tree) is
+      begin
+         Self.Update;
+         Self.Kernel.Semantic_Tree_Updated (Self.File);
+      end Update_Async;
 
    end Trees;
 
@@ -1038,13 +1047,22 @@ package body LAL.Semantic_Trees is
    is
       pragma Unreferenced (Context);
 
+      Name   : constant GNATCOLL.VFS.Filesystem_String := File.Full_Name;
+
       Result : constant Trees.Tree :=
         Trees.Tree'(Kernel  => Self.Kernel,
                     Context => Self.Context,
                     File    => File,
                     Unit    => <>);
    begin
-      Result.Update;
+      if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then
+         Result.Unit.all :=
+           Libadalang.Analysis.Get_From_File
+             (Context     => Self.Context,
+              Filename    => String (Name));
+      else
+         Result.Update;
+      end if;
 
       --  Check whether the parsing was completed successfully
       if Libadalang.Analysis.Root (Result.Unit.all) = No_Ada_Node then

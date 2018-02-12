@@ -2370,4 +2370,17 @@ package body GPS.Kernel is
       VCS.Make_File_Writable (File, Writable);
    end Make_File_Writable;
 
+   ---------------------------
+   -- Semantic_Tree_Updated --
+   ---------------------------
+
+   overriding procedure Semantic_Tree_Updated
+     (Kernel  : not null access Kernel_Handle_Record;
+      File    : GNATCOLL.VFS.Virtual_File) is
+   begin
+      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
+        (Kernel => Kernel,
+         File   => File);
+   end Semantic_Tree_Updated;
+
 end GPS.Kernel;

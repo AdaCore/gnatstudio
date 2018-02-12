@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Gtkada.Style;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
-with GPS.Kernel.Hooks;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 with Tooltips;
 with Xref;                    use Xref;
@@ -176,14 +175,10 @@ package body Language.Abstract_Construct_Tree is
    -- Update_Async --
    ------------------
 
-   overriding procedure Update_Async (Self : Abstract_Construct_Tree)
-   is
+   overriding procedure Update_Async (Self : Abstract_Construct_Tree) is
    begin
       Self.Update;
-
-      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
-        (Kernel => Self.Kernel,
-         File   => Self.File);
+      Self.Kernel.Semantic_Tree_Updated (Self.File);
    end Update_Async;
 
    --------------
