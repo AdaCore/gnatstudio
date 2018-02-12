@@ -29,10 +29,6 @@ project Common is
        for Switches ("Ada") use ("-E");
    end Binder;
 
-   package Naming is
-      for Implementation ("xml_parsers") use "xml_parsers__xmlada.adb";
-   end Naming;
-
    package Linker extends Shared.Linker is
       for Linker_Options use Shared.Linker'Linker_Options &
         @TARGET_LFLAGS@;
