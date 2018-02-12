@@ -20,6 +20,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+      <arg>%subdirsarg</arg>
     </command-line>
     <switches command="%(tool_name)s" columns="2">
     <title line="1" column="1">Available plugins</title>
@@ -47,6 +48,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
+      <arg>%subdirsarg</arg>
     </command-line>
   </target>
 
