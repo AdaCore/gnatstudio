@@ -1215,7 +1215,7 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     else:
         command = command + arg_limit_line + " " + mlw_file
     itp_lib.print_debug(command)
-    tree.start(command, abs_fn_path, dir_gnat_server)
+    tree.start(command, abs_fn_path, dir_gnat_server, mlw_file)
 
 
 def on_prove_itp(context, edit_session=False):
