@@ -21,29 +21,12 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Gtkada.Style;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 
-with Commands;                use Commands;
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Task_Manager;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 with Tooltips;
 with Xref;                    use Xref;
 
 package body Language.Abstract_Construct_Tree is
-
-   type Update_Async_Record is new Root_Command with record
-      Kernel : Kernel_Handle;
-      Tree   : Abstract_Construct_Tree;
-   end record;
-   --  This action is used to update a tree asynchronously
-
-   type Update_Async_Access is access all Update_Async_Record;
-
-   overriding function Execute
-     (Command : access Update_Async_Record)
-      return Command_Return_Type;
-
-   overriding function Name
-     (Command : access Update_Async_Record) return String;
 
    ------------
    -- Create --
@@ -195,15 +178,12 @@ package body Language.Abstract_Construct_Tree is
 
    overriding procedure Update_Async (Self : Abstract_Construct_Tree)
    is
-      Command : constant Update_Async_Access := new Update_Async_Record'
-        (Root_Command with Kernel => Self.Kernel, Tree => Self);
    begin
-      GPS.Kernel.Task_Manager.Launch_Background_Command
-        (Self.Kernel, Command_Access (Command),
-         Active     => True,
-         Show_Bar   => False,
-         Queue_Id   => "semantic tree",
-         Block_Exit => False);
+      Self.Update;
+
+      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
+        (Kernel => Self.Kernel,
+         File   => Self.File);
    end Update_Async;
 
    --------------
@@ -295,18 +275,6 @@ package body Language.Abstract_Construct_Tree is
    is
    begin
       return Get_Construct (Self).Name;
-   end Name;
-
-   ----------
-   -- Name --
-   ----------
-
-   overriding function Name
-     (Command : access Update_Async_Record) return String
-   is
-      pragma Unreferenced (Command);
-   begin
-      return "Semantic tree update";
    end Name;
 
    ----------------
@@ -551,23 +519,6 @@ package body Language.Abstract_Construct_Tree is
             Self.Kernel);
       end if;
    end Element;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Update_Async_Record)
-      return Commands.Command_Return_Type is
-   begin
-      Command.Tree.Update;
-
-      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
-        (Kernel => Command.Kernel,
-         File   => Command.Tree.File);
-
-      return Success;
-   end Execute;
 
    -----------------
    -- Has_Element --

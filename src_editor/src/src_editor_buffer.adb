@@ -84,6 +84,7 @@ with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;               use GPS.Kernel.Properties;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;
 with GPS.Properties;
 with Language;                            use Language;
 with Language.Unknown;                    use Language.Unknown;
@@ -1130,10 +1131,19 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Request an asynchronous update of the semantic tree
-
       if Buffer.Filename /= No_File then
-         Buffer.Kernel.Get_Abstract_Tree_For_File
-           ("EDIT", Buffer.Filename).Update_Async;
+         declare
+            Command : constant Update_Async_Access := new Update_Async_Record'
+              (Root_Command with Buffer => Buffer);
+         begin
+            GPS.Kernel.Task_Manager.Launch_Background_Command
+              (Buffer.Kernel,
+               Command_Access (Command),
+               Active     => True,
+               Show_Bar   => False,
+               Queue_Id   => "semantic tree",
+               Block_Exit => False);
+         end;
       end if;
 
       --  Unregister the timeout

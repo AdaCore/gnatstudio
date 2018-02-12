@@ -193,6 +193,21 @@ package Commands.Editor is
    overriding function Debug_String
      (C : Unhide_Editable_Lines_Type) return String;
 
+   type Update_Async_Record is new Root_Command with record
+      Buffer : Source_Buffer;
+   end record;
+   --  This action is used to update a tree asynchronously
+
+   type Update_Async_Access is access all Update_Async_Record;
+
+   overriding function Execute
+     (Command : access Update_Async_Record)
+      return Command_Return_Type;
+   --  Request an asynchronous update of the semantic tree
+
+   overriding function Name
+     (Command : access Update_Async_Record) return String;
+
 private
 
    type Check_Modified_State_Type is new Base_Editor_Command_Type with record

@@ -653,6 +653,32 @@ package body Commands.Editor is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Update_Async_Record)
+      return Commands.Command_Return_Type is
+   begin
+      Command.Buffer.Get_Kernel.Get_Abstract_Tree_For_File
+        ("EDIT", Command.Buffer.Get_Filename).Update_Async;
+
+      return Success;
+   end Execute;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name
+     (Command : access Update_Async_Record) return String
+   is
+      pragma Unreferenced (Command);
+   begin
+      return "Semantic tree update";
+   end Name;
+
    ------------------
    -- Debug_String --
    ------------------
