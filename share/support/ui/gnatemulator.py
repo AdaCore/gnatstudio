@@ -26,6 +26,30 @@ project_attributes = """
   >
     <string/>
   </project_attribute>
+  <project_attribute
+   package="emulator"
+   name="Board"
+   label="Board"
+   editor_page="GNATemulator"
+   hide_in="wizard library_wizard"
+   """ + \
+   "description='If GNATemulator provides multiple emulations for the" + \
+   " target platform, use this option to select a specific board. Use" + \
+   " `gnatemu --help` to get the list of boards.'" + """
+  >
+    <string/>
+  </project_attribute>
+  <project_attribute
+   package="emulator"
+   name="Switches"
+   label="Switches"
+   editor_page="GNATemulator"
+   hide_in="wizard library_wizard"
+   description="A list of switches processed before the command line switches"
+   list="true"
+  >
+    <string/>
+  </project_attribute>
 """
 
 # This has to be done at GPS start, before the project is actually loaded.
