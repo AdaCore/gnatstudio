@@ -330,6 +330,20 @@ class Project_View(Dialog, Tree):
         yield self._open_and_yield("open project")
         self.dialog = get_widget_by_name('Project Explorer Tree')
 
+    def get_selected_name(self):
+        """
+        Return the displayed name of the Project view's selected node, or None
+        if there is no selection.
+        """
+
+        _, select_iter = self.dialog.get_selection().get_selected()
+        if not select_iter:
+            return None
+
+        selected_name = self.dialog.get_model().get_value(select_iter, 1)
+
+        return selected_name
+
 
 #############
 # Bookmarks #
