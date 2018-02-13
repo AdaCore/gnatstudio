@@ -162,10 +162,7 @@ def open_harness_filter(context):
     if not isinstance(context, GPS.FileContext):
         return False
 
-    project = context.project()
-
-    if not project:
-        return False
+    project = context.project() or GPS.Project.root()
 
     return os.path.exists(get_harness_project_file(project))
 
@@ -176,7 +173,9 @@ def open_harness():
     """
     Open harness project for current project
     """
-    open_harness_project(GPS.current_context().project())
+    project = GPS.current_context().project() or GPS.Project.root()
+
+    open_harness_project(project)
 
 
 XML = r"""<?xml version="1.0" ?>
