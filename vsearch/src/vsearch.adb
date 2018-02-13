@@ -153,6 +153,7 @@ package body Vsearch is
    type Vsearch_Record is new View_Record with record
       Mode                    : Vsearch_Mode := Unknown;
       Main_View               : Dialog_View_With_Button_Box;
+      Group_Widget            : Dialog_Group_Widget;
       Mode_Combo              : Gtkada_Combo_Tool_Button;
       Replace_Combo           : Gtk_Combo_Box;
       Context_Combo           : Gtk_Combo_Box_Text;
@@ -219,7 +220,6 @@ package body Vsearch is
       Commands_Category      => "",  --  no automatic command
       MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
       Areas                  => Sides_Only,
-      Default_Width          => -1,
       Default_Height         => -1,
       Add_Close_Button_On_Float => True);
    use Search_Views;
@@ -1377,7 +1377,10 @@ package body Vsearch is
       Has_Whole_Word      : Boolean;
       Has_Backward        : Boolean;
       Child               : MDI_Child;
-
+      Dummy               : Gint;
+      Scroll_Width        : Gint;
+      Scroll_Height       : Gint;
+      Button_Width        : Gint;
    begin
       if Module /= null then
          Set_Last_Search_Module (Vsearch_Module_Id.Kernel, Module);
@@ -1450,8 +1453,14 @@ package body Vsearch is
 
          Child := Search_Views.Child_From_View (Vsearch);
          if Child /= null and then Is_Floating (Child) then
-            --  Reset if any size was set previously
-            Vsearch.Set_Size_Request (-1, -1);
+            --  Set the optimal size
+            Vsearch.Group_Widget.Get_Preferred_Width (Dummy, Scroll_Width);
+            Vsearch.Group_Widget.Get_Preferred_Height (Dummy, Scroll_Height);
+            Vsearch.Search_All_Button.Get_Preferred_Width
+              (Dummy, Button_Width);
+            --  The view contains the group_children/buttons/separator
+            Vsearch.Main_View.Set_Size_Request
+              (Scroll_Width + Button_Width + 10, Scroll_Height);
             Vsearch.Queue_Resize;
          end if;
 
@@ -2155,7 +2164,6 @@ package body Vsearch is
             Key => Last_Search_Module_Key);
       end Initialize_From_History;
 
-      Group_Widget : Dialog_Group_Widget;
       Replace_Row  : Gtk_Widget;
       Layout       : Gtk_Cell_Layout;
       Renderer     : Gtk_Cell_Renderer_Text;
@@ -2171,9 +2179,10 @@ package body Vsearch is
 
       --  Find/Replace combo boxes
 
-      Group_Widget := new Dialog_Group_Widget_Record;
+      Self.Group_Widget := new Dialog_Group_Widget_Record;
+
       Initialize
-        (Group_Widget,
+        (Self.Group_Widget,
          Parent_View         => Self.Main_View,
          Allow_Multi_Columns => False);
 
@@ -2205,7 +2214,7 @@ package body Vsearch is
       Set_Tooltip_Text (Self.Pattern_Combo,
                         -"The searched word or pattern");
 
-      Group_Widget.Create_Child
+      Self.Group_Widget.Create_Child
         (Self.Pattern_Combo,
          Label     => "Find",
          Child_Key => Pattern_Child_Key,
@@ -2232,7 +2241,7 @@ package body Vsearch is
       Self.Replace_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
 
-      Replace_Row := Group_Widget.Create_Child
+      Replace_Row := Self.Group_Widget.Create_Child
         (Self.Replace_Combo,
          Label     => "Replace",
          Child_Key => Replace_Child_Key);
@@ -2253,14 +2262,15 @@ package body Vsearch is
          On_Context_Combo_Changed'Access, Self);
       Self.Context_Combo.Set_Name ("search scope combo");
 
-      Group_Widget.Create_Child
+      Self.Group_Widget.Create_Child
         (Self.Scope_Selector_Box,
          Label     => "Where",
          Expand    => True,
          Fill      => True);
 
       Gtk_New_Vbox (Self.Scope_Optional_Box, Homogeneous => False);
-      Group_Widget.Append_Child (Self.Scope_Optional_Box, Expand => False);
+      Self.Group_Widget.Append_Child
+        (Self.Scope_Optional_Box, Expand => False);
 
       --  The buttons
 
