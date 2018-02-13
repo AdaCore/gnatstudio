@@ -1689,7 +1689,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug step", new Step_Command,
-         Icon_Name    => "gps-debugger-step",
+         Icon_Name    => "gps-debugger-step-symbolic",
          Filter       => Debugger_Active,
          Description  =>
            -"Execute until program reaches a new line of source code",
@@ -1705,7 +1705,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug next", new Next_Command,
-         Icon_Name    => "gps-debugger-next",
+         Icon_Name    => "gps-debugger-next-symbolic",
          Filter       => Debugger_Active,
          Description  =>
            -("Execute the program until the next source line, stepping over"
@@ -1723,7 +1723,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug finish", new Finish_Command,
-         Icon_Name    => "gps-debugger-finish",
+         Icon_Name    => "gps-debugger-finish-symbolic",
          Filter       => Debugger_Active,
          Description  =>
            -("Continue execution until selected stack frame returns"),
@@ -1732,7 +1732,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug continue", new Continue_Command,
-         Icon_Name    => "gps-debugger-run",
+         Icon_Name    => "gps-debugger-run-symbolic",
          Filter       => Debugger_Active,
          Description  =>
            -("Continue execution until next breakpoint." & ASCII.LF
@@ -1742,14 +1742,14 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug up", new Up_Command,
-         Icon_Name   => "gps-debugger-up",
+         Icon_Name   => "gps-debugger-up-symbolic",
          Filter      => Debugger_Active,
          Description => "Move up one frame",
          Category    => -"Debug");
 
       Register_Action
         (Kernel, "debug down", new Down_Command,
-         Icon_Name   => "gps-debugger-down",
+         Icon_Name   => "gps-debugger-down-symbolic",
          Filter      => Debugger_Active,
          Description => "Move down one frame",
          Category    => -"Debug");
