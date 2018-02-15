@@ -72,6 +72,16 @@ project Shared is
       --  a faulty libiconv in macports)
       for Switches ("Ada") use Clang_Libs & ("-lstdc++");
 
+      case OS is
+         when "osx" =>
+            --  This ensure that location in which gps looks for its shared
+            --  libraries can be changed.
+            for Switches ("Ada") use Linker'Switches ("Ada")
+               & ("-Wl,-headerpad_max_install_names");
+         when others =>
+            null;
+      end case;
+
       case Enable_LTO is
          when "true" =>
             case OS is
