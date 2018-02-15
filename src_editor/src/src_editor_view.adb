@@ -753,8 +753,9 @@ package body Src_Editor_View is
       Iter : Gtk_Text_Iter;
       pragma Unreferenced (Params);
       Has_Focus : constant Boolean :=
-        Gtkada.MDI.MDI_Child (User.Child) =
-        Get_Focus_Child (Get_MDI (User.Kernel));
+                    (User.Child /= null
+                     and then Gtkada.MDI.MDI_Child (User.Child) =
+                       Get_Focus_Child (Get_MDI (User.Kernel)));
    begin
       Buffer.Get_Iter_At_Mark (Iter, Buffer.Get_Insert);
       Line := Get_Line (Iter) + 1;
