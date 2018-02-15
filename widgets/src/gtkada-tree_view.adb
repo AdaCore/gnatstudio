@@ -552,6 +552,30 @@ package body Gtkada.Tree_View is
    end Get_Store_Iter_For_Filter_Path;
 
    ------------------------
+   -- Get_First_Selected --
+   ------------------------
+
+   procedure Get_First_Selected
+     (Self   : not null access Tree_View_Record'Class;
+      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      List : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+      use Gtk_Tree_Path_List;
+   begin
+      Self.Get_Selection.Get_Selected_Rows (Model, List);
+      if List /= Null_List then
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+      else
+         Iter := Null_Iter;
+      end if;
+      Free (List);
+   end Get_First_Selected;
+
+   ------------------------
    -- Remove_Dummy_Child --
    ------------------------
 
@@ -1284,7 +1308,11 @@ package body Gtkada.Tree_View is
       Data        : Editing_Data;
    begin
       if Store_Iter = Null_Iter then
-         Self.Get_Selection.Get_Selected (Model, Filter_Iter);
+         if Self.Get_Selection.Get_Mode = Selection_Single then
+            Self.Get_Selection.Get_Selected (Model, Filter_Iter);
+         else
+            Self.Get_First_Selected (Model, Filter_Iter);
+         end if;
       else
          Model := (if Self.Filter /= null then +Self.Filter else +Self.Model);
          Filter_Iter := Self.Convert_To_Filter_Iter (Store_Iter);

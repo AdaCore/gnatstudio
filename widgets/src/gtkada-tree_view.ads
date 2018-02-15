@@ -329,6 +329,12 @@ package Gtkada.Tree_View is
    --  In general, you don't need to call this function, call Add_Row_Children
    --  instead (or let Add_Children be called automatically.
 
+   procedure Get_First_Selected
+     (Self   : not null access Tree_View_Record'Class;
+      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Returns the first selected element with Selection_Multiple.
+
    -------------
    -- Editing --
    -------------

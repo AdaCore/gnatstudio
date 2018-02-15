@@ -702,66 +702,41 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : Gtk_Tree_Model;
-      Data  : Bookmark_Data_Access;
-      Filter_Iter  : Gtk_Tree_Iter;
-      Filter_Path  : Gtk_Tree_Path;
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
+      Data   : Bookmark_Data_Access;
 
-      function Path_To_Select (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path;
-      --  Return the path that will be selected after we have deleted Iter
-
-      function Path_To_Select (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path is
-         P, P2 : Gtk_Tree_Path;
-         Iter2 : Gtk_Tree_Iter;
-         Dummy : Boolean;
-      begin
-         P := View.Tree.Filter.Get_Path (Iter);
-
-         --  If there is a next node, it will be found at the same position as
-         --  Iter, so we use the same path.
-         Iter2 := Iter;
-         View.Tree.Filter.Next (Iter2);
-         if Iter2 /= Null_Iter then
-            return P;
-         end if;
-
-         --  Otherwise, select the previous node at the same level
-         P2 := Copy (P);
-         if Prev (P2) then
-            Path_Free (P);
-            return P2;
-         end if;
-
-         --  Otherwise, select the parent
-         Dummy := Up (P);
-         return P;
-      end Path_To_Select;
-
+      use Gtk_Tree_Path_List;
    begin
       if View /= null then
          View.Deleting := True;
-         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
-         if Filter_Iter /= Null_Iter then
-            Filter_Path := Path_To_Select (Filter_Iter);
-            Data := View.Tree.Get_Data
-              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+         Get_Selected_Rows (View.Tree.Get_Selection, Model, List);
 
-            if Data /= null then
-               Delete_Bookmark (Get_Kernel (Context.Context), Data);
-            end if;
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before there fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+               Data := View.Tree.Get_Data
+                 (Store_Iter =>
+                    View.Tree.Convert_To_Store_Iter (Get_Iter (Model, Path)));
+
+               if Data /= null then
+                  Delete_Bookmark (Get_Kernel (Context.Context), Data);
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
          end if;
+
+         Gtk_Tree_Path_List.Free (List);
          View.Deleting := False;
-
          Refresh (View);
-
-         --  Select another row, to make it easy to do multiple deletions
-         if Filter_Path /= Null_Gtk_Tree_Path then
-            Filter_Iter := View.Tree.Filter.Get_Iter (Filter_Path);
-            if Filter_Iter /= Null_Iter then
-               View.Tree.Get_Selection.Select_Iter (Filter_Iter);
-            end if;
-            Path_Free (Filter_Path);
-         end if;
       end if;
 
       return Success;
@@ -920,7 +895,7 @@ package body Bookmark_Views is
       Data        : Bookmark_Data_Access;
    begin
       if View /= null then
-         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
+         View.Tree.Get_First_Selected (Model, Filter_Iter);
 
          if Filter_Iter /= Null_Iter then
             Data := View.Tree.Get_Data
@@ -1058,6 +1033,7 @@ package body Bookmark_Views is
       if Event /= null then
          Iter := Find_Iter_For_Event (V.Tree, Event);
          if Iter /= Null_Iter then
+            V.Tree.Get_Selection.Unselect_All;
             Select_Iter (Get_Selection (V.Tree), Iter);
          end if;
       end if;
@@ -1262,7 +1238,7 @@ package body Bookmark_Views is
 
       --  If we have a selection, insert in the same group
 
-      View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
+      View.Tree.Get_First_Selected (Model, Filter_Iter);
       if Filter_Iter /= Null_Iter then
          Gr := View.Tree.Get_Data
            (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
@@ -1374,6 +1350,7 @@ package body Bookmark_Views is
          end if;
 
          if Select_Path /= Null_Gtk_Tree_Path then
+            View.Tree.Get_Selection.Unselect_All;
             View.Tree.Get_Selection.Select_Iter
               (View.Tree.Filter.Get_Iter (Select_Path));
             Path_Free (Select_Path);
@@ -1451,6 +1428,7 @@ package body Bookmark_Views is
            and then Integer (Get_Line (B.Marker)) = Line
            and then Get_File (B.Marker) = File
          then
+            View.Tree.Get_Selection.Unselect_All;
             View.Tree.Get_Selection.Select_Iter
               (View.Tree.Convert_To_Filter_Iter (Iter));
             return True;  --  Stop iteration
@@ -1811,6 +1789,7 @@ package body Bookmark_Views is
             Set_Visible_Func => True);
       View.Tree.Set_Name ("Bookmark TreeView"); --  For the testsuite
       View.Tree.Set_Search_Column (Name_Column);
+      View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);
 
@@ -2199,8 +2178,8 @@ package body Bookmark_Views is
          Icon_Name => "gps-rename-symbolic");
 
       Register_Action
-        (Kernel, "bookmark remove", new Delete_Bookmark_Command,
-         -"Delete the bookmark currently selected in the bookmarks view",
+        (Kernel, "bookmark remove selected", new Delete_Bookmark_Command,
+         -"Delete the selected bookmarks in the bookmarks view",
          Icon_Name => "gps-remove-symbolic",
          Category => -"Bookmarks");
 

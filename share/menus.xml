@@ -554,7 +554,7 @@
       <button action='bookmark create'/>
       <button action='bookmark create group'/>
       <button action='bookmark create unattached'/>
-      <button action='bookmark remove'/>
+      <button action='bookmark remove selected'/>
       <separator/>
       <button action='bookmark rename'/>
       <button action='bookmark edit note'/>
