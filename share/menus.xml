@@ -581,8 +581,8 @@
       <button action='locations remove selection'/>
       <button action='locations export to text file'/>
       <separator/>
-      <button action='locations expand files in category'/>
-      <button action='locations collapse all files'/>
+      <button action='locations expand selected'/>
+      <button action='locations collapse selected'/>
    </toolbar>
 
    <toolbar id='Messages'>

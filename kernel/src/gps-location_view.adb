@@ -218,19 +218,13 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type;
    --  Changes sort order in locations view.
 
-   type Expand_Category_Command is new Interactive_Command with null record;
+   type Locations_Collapse_Or_Expand_Command (Is_Collapse : Boolean) is
+     new Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Expand_Category_Command;
+     (Self    : access Locations_Collapse_Or_Expand_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
-   --  Expand all files within the current category
-
-   type Collapse_All_Files_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Collapse_All_Files_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Collapse all files
+   --  Collapse or Expand the selected files
 
    --------------
    -- Messages --
@@ -622,83 +616,45 @@ package body GPS.Location_View is
    -------------
 
    overriding function Execute
-     (Self    : access Expand_Category_Command;
+     (Self    : access Locations_Collapse_Or_Expand_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Self);
       K : constant Kernel_Handle := Get_Kernel (Context.Context);
       V : constant Location_View := Location_Views.Retrieve_View (K);
 
-      List  : Gtk_Tree_Path_List.Glist;
-      Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
-      Dummy : Boolean;
-      pragma Unreferenced (Dummy);
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
 
-      use type Gtk_Tree_Path_List.Glist;
-
+      use Gtk_Tree_Path_List;
    begin
       if V /= null then
-         V.View.Get_Selection.Get_Selected_Rows (Model, List);
-         if Model /= Null_Gtk_Tree_Model
-           and then List /= Gtk_Tree_Path_List.Null_List
-         then
-            Path := Gtk_Tree_Path
-              (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Get_Selected_Rows (V.View.Get_Selection, Model, List);
 
-            while Path.Get_Depth > 1 and then Path.Up loop
-               null;
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before there fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  if Self.Is_Collapse then
+                     Dummy := Collapse_Row (V.View, Path);
+                  else
+                     Dummy := Expand_Row (V.View, Path, False);
+                  end if;
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
-
-            Dummy := V.View.Expand_Row (Path, True);
          end if;
-         Free (List);
+         Gtk_Tree_Path_List.Free (List);
       end if;
-
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self    : access Collapse_All_Files_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type
-   is
-      pragma Unreferenced (Self);
-      K     : constant Kernel_Handle := Get_Kernel (Context.Context);
-      V     : constant Location_View := Location_Views.Retrieve_View (K);
-      Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
-      List  : Gtk_Tree_Path_List.Glist;
-
-      use type Gtk_Tree_Path_List.Glist;
-   begin
-      --  When Locations view doesn't have focus it just clear selection on
-      --  collapse all action. Selection is moved to category row to workaround
-      --  this.
-      if V /= null then
-         V.View.Get_Selection.Get_Selected_Rows (Model, List);
-         if Model /= Null_Gtk_Tree_Model
-           and then List /= Gtk_Tree_Path_List.Null_List
-         then
-            Path := Gtk_Tree_Path
-              (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
-
-            while Path.Get_Depth > 1 and then Path.Up loop
-               null;
-            end loop;
-
-            V.View.Get_Selection.Select_Path (Path);
-         end if;
-         Free (List);
-
-         V.View.Collapse_All;
-      end if;
-
       return Commands.Success;
    end Execute;
 
@@ -1502,16 +1458,16 @@ package body GPS.Location_View is
          Category => -"Locations");
 
       Register_Action
-        (Kernel, "locations expand files in category",
-         new Expand_Category_Command,
-         -"Expand all files in the current category",
+        (Kernel, "locations expand selected",
+         new Locations_Collapse_Or_Expand_Command (False),
+         -"Expand the selected rows in the locations view",
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Locations");
 
       Register_Action
-        (Kernel, "locations collapse all files",
-         new Collapse_All_Files_Command,
-         -"Collapse all files in the locations view",
+        (Kernel, "locations collapse selected",
+         new Locations_Collapse_Or_Expand_Command (True),
+         -"Collapse the selected rows in the locations view",
          Icon_Name => "gps-collapse-all-symbolic",
          Category => -"Locations");
 
