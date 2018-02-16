@@ -6,7 +6,7 @@
 <GPS>
   <key action="Interrupt">shift-primary-C</key>
 
-  <key action="debug run dialog">shift+F9</key>
+  <key action="debug run dialog">shift-F9</key>
   <key action="debug step">F5</key>
   <key action="debug stepi">shift-F5</key>
   <key action="debug next">F6</key>
