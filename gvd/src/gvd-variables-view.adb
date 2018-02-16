@@ -285,6 +285,12 @@ package body GVD.Variables.View is
    --  If Filter_Iter is Null_Iter, the currently selection is used (and
    --  Filter_Iter is updated accordingly)
 
+   function Item_From_Iter
+     (Self       : not null access GVD_Variable_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter)
+      return Item;
+   --  Return a row in the variables view converted into an item
+
    procedure Add_Row
      (Self              : not null access Variable_Tree_View_Record'Class;
       Entity            : GVD_Type_Holder;
@@ -589,21 +595,49 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant GVD_Variable_View :=
+      View       : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
-      It   : Item;
-      Filter_Iter : Gtk_Tree_Iter;
+      It         : Item;
+      List       : Gtk_Tree_Path_List.Glist;
+      G_Iter     : Gtk_Tree_Path_List.Glist;
+      Path       : Gtk_Tree_Path;
+      Model      : Gtk_Tree_Model;
+      Store_Iter : Gtk_Tree_Iter;
+
+      use Gtk_Tree_Path_List;
    begin
       if View /= null then
-         Filter_Iter := Null_Iter;
-         Item_From_Iter (View, Filter_Iter => Filter_Iter, It => It);
-         if It.Info.Cmd /= Null_Unbounded_String then
-            Execute_In_Debugger
-              (Context, "tree undisplay `" & To_String (It.Info.Cmd) & "`");
-         elsif It.Info.Varname /= Null_Unbounded_String then
-            Execute_In_Debugger
-              (Context, "tree undisplay " & To_String (It.Info.Varname));
+         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before there fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  Store_Iter :=
+                    View.Tree.Convert_To_Store_Iter (Get_Iter (Model, Path));
+                  It := Item_From_Iter (View, Store_Iter);
+
+                  if It.Info.Cmd /= Null_Unbounded_String then
+                     Execute_In_Debugger
+                       (Context,
+                        "tree undisplay `" & To_String (It.Info.Cmd) & "`");
+                  elsif It.Info.Varname /= Null_Unbounded_String then
+                     Execute_In_Debugger
+                       (Context,
+                        "tree undisplay " & To_String (It.Info.Varname));
+                  end if;
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
          end if;
+
+         Gtk_Tree_Path_List.Free (List);
       end if;
 
       return Commands.Success;
@@ -1144,6 +1178,7 @@ package body GVD.Variables.View is
          Set_Visible_Func => True);
       Set_Name (Self.Tree, "Variables Tree");  --  For testsuite
       Self.Tree.Set_Search_Column (Column_Full_Name);
+      Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
 
       Scrolled.Add (Self.Tree);
 
@@ -1211,35 +1246,48 @@ package body GVD.Variables.View is
       Filter_Iter : in out Gtk_Tree_Iter;
       It          : out Item)
    is
-      Store_Iter, Parent : Gtk_Tree_Iter;
-      Id                 : Item_ID;
-      M                  : Gtk_Tree_Model;
+      Store_Iter : Gtk_Tree_Iter;
+      M          : Gtk_Tree_Model;
    begin
       if Filter_Iter = Null_Iter then
-         Self.Tree.Get_Selection.Get_Selected (M, Filter_Iter);
+         Self.Tree.Get_First_Selected (M, Filter_Iter);
          Store_Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
       else
          Store_Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
       end if;
 
-      Find_Item_Id :
-      while Store_Iter /= Null_Iter loop
-         Parent := Self.Tree.Model.Parent (Store_Iter);
-         if Parent = Null_Iter then
-            Id := Item_ID (Self.Tree.Model.Get_Int (Store_Iter, Column_Id));
+      It := Item_From_Iter (Self, Store_Iter);
+   end Item_From_Iter;
 
-            for It2 of Self.Tree.Items loop
-               if It2.Id = Id then
-                  It := It2;
-                  return;
+   --------------------
+   -- Item_From_Iter --
+   --------------------
+
+   function Item_From_Iter
+     (Self       : not null access GVD_Variable_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter)
+      return Item
+   is
+      Id       : Item_ID;
+      Parent   : Gtk_Tree_Iter;
+      Cur_Iter : Gtk_Tree_Iter := Store_Iter;
+   begin
+      while Cur_Iter /= Null_Iter loop
+         Parent := Self.Tree.Model.Parent (Cur_Iter);
+         if Parent = Null_Iter then
+            Id := Item_ID (Self.Tree.Model.Get_Int (Cur_Iter, Column_Id));
+
+            for It of Self.Tree.Items loop
+               if It.Id = Id then
+                  return It;
                end if;
             end loop;
          end if;
 
-         Store_Iter := Parent;
-      end loop Find_Item_Id;
+         Cur_Iter := Parent;
+      end loop;
 
-      It := No_Item;
+      return No_Item;
    end Item_From_Iter;
 
    -------------------
@@ -1262,6 +1310,7 @@ package body GVD.Variables.View is
       if Event /= null then
          Filter_Iter := Find_Iter_For_Event (View.Tree, Event);
          Item_From_Iter (View, Filter_Iter => Filter_Iter, It => It);
+         View.Tree.Get_Selection.Unselect_All;
          View.Tree.Get_Selection.Select_Iter (Filter_Iter);
       else
          Filter_Iter := Null_Iter;
@@ -1543,7 +1592,8 @@ package body GVD.Variables.View is
         (Kernel, "debug tree undisplay",
          Command     => new Tree_Undisplay_Command,
          Description =>
-           -"Remove the display of a variable in the Variables view",
+           -"Remove the display of the selected variables"
+           & " in the Variables view",
          Filter      => Debugger_Stopped_Filter,
          Icon_Name   => "gps-remove-symbolic",
          Category    => -"Debug");
