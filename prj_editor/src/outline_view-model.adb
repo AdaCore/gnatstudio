@@ -17,7 +17,6 @@
 
 with System;                      use System;
 with Ada.Calendar;                use Ada.Calendar;
-with Ada.Containers.Bounded_Hashed_Maps;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -389,7 +388,6 @@ package body Outline_View.Model is
       Sem_Node, Sem_Parent : Semantic_Node'Class;
       Sort                 : Boolean := True)
    is
-      use Sem_Tree_Holders;
       use Sorted_Node_Vector;
       Parent_Node   : Sorted_Node_Access;
       Root          : Sorted_Node_Access;  --  node for Sem_Node
@@ -454,9 +452,7 @@ package body Outline_View.Model is
       end Sorted_Insert;
 
    begin
-      if Model = null
-        or else Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
-      then
+      if Model = null then
          return;
       end if;
 
@@ -540,6 +536,9 @@ package body Outline_View.Model is
                  (Show_Param_Names => Model.Filter.Show_Param_Names);
             end if;
 
+            Root.Sloc_Start := Sem_Node.Sloc_Start;
+            Root.Sloc_End := Sem_Node.Sloc_End;
+
             if Sort then
                Sorted_Insert (Root.Parent.Children, Root);
             else
@@ -580,7 +579,6 @@ package body Outline_View.Model is
       --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
       Model.Filter := Filter;
-      Model.Semantic_Tree := Sem_Tree_Holders.To_Holder (Sem_Tree);
       if Sem_Tree = No_Semantic_Tree then
          return;
       end if;
@@ -1008,127 +1006,11 @@ package body Outline_View.Model is
    ------------------
 
    procedure File_Updated
-     (Model : access Outline_Model_Record;
-      Tree  : Semantic_Tree'Class)
-   is
-
-      procedure Update_Nodes
-        (Model_Nodes : Sorted_Node_Vector.Vector;
-         Sem_Nodes   : Semantic_Node_Array'Class;
-         Sem_Parent  : Semantic_Node'Class);
-
-      procedure Update_Nodes
-        (Model_Nodes : Sorted_Node_Vector.Vector;
-         Sem_Nodes   : Semantic_Node_Array'Class;
-         Sem_Parent  : Semantic_Node'Class)
-      is
-         New_Nodes : array (1 .. Sem_Nodes.Length) of Boolean
-           := (others => True);
-         C   : Sorted_Node_Vector.Cursor;
-         To_Remove_Nodes : Sorted_Node_Vector.Vector;
-
-         function Hash (H : Hash_Type) return Hash_Type is (H);
-
-         package Ids_Hash_Map is new Ada.Containers.Bounded_Hashed_Maps
-           (Hash_Type, Natural, Hash, "=", "=");
-         Childs_Map : Ids_Hash_Map.Map (Count_Type (Sem_Nodes.Length), 100);
-
-         function Find_Child_With_Id (Id : Node_Id) return Natural;
-
-         function Find_Child_With_Id (Id : Node_Id) return Natural is
-            use Ids_Hash_Map;
-            El : constant Ids_Hash_Map.Cursor := Childs_Map.Find (Hash (Id));
-         begin
-            if El /= Ids_Hash_Map.No_Element then
-               return Element (El);
-            else
-               return 0;
-            end if;
-         end Find_Child_With_Id;
-
-         El : Sorted_Node_Access;
-
-         procedure Process_Node (NI : Semantic_Node_Info);
-         procedure Process_Node (NI : Semantic_Node_Info) is
-         begin
-            if NI = No_Node_Info then
-               return;
-            end if;
-
-            declare
-               Sem_Child_Idx : constant Natural :=
-                 Find_Child_With_Id (S_Unique_Id (NI));
-               Sem_Child : constant Semantic_Node'Class :=
-                 (if Sem_Child_Idx /= 0
-                  then Sem_Nodes.Get (Positive (Sem_Child_Idx))
-                  else No_Semantic_Node);
-            begin
-               if Sem_Child /= No_Semantic_Node then
-                  if Sem_Child.Is_Declaration then
-                     El.Spec_Info := Sem_Child.Info;
-                  else
-                     El.Body_Info := Sem_Child.Info;
-                  end if;
-
-                  New_Nodes (Sem_Child_Idx) := False;
-                  Update_Nodes
-                    (El.Children, Sem_Child.Children, Sem_Child);
-               elsif To_Remove_Nodes.Is_Empty
-                 or else To_Remove_Nodes.Last_Element /= Element (C)
-               then
-                  To_Remove_Nodes.Append (Element (C));
-               end if;
-            end;
-         end Process_Node;
-
-      begin
-         for I in 1 .. Sem_Nodes.Length loop
-            Childs_Map.Include
-              (Hash (S_Unique_Id (Sem_Nodes.Get (I))), I);
-         end loop;
-
-         C := Model_Nodes.First;
-         while Has_Element (C) loop
-            El := Element (C);
-            Process_Node (El.Spec_Info);
-            Process_Node (El.Body_Info);
-            Next (C);
-         end loop;
-
-         for Node of To_Remove_Nodes loop
-            Clean_Node (Outline_Model (Model), Node);
-         end loop;
-
-         for I in 1 .. Sem_Nodes.Length loop
-            if New_Nodes (I)
-              and then Construct_Filter (Model, Sem_Nodes.Get (I))
-            then
-               Add_Recursive (Model, Sem_Nodes.Get (I), Sem_Parent);
-            end if;
-         end loop;
-
-      end Update_Nodes;
-
+     (Model  : access Outline_Model_Record;
+      Tree   : Semantic_Tree'Class;
+      Filter : Tree_Filter) is
    begin
-      --  ??? Using a Gtkada.Tree_View, we could just clear the model and
-      --  recreate from scratch, which would be faster than trying to preserve
-      --  existing nodes.
-
-      --  Tree might have changed from the stored Semantic_Tree:
-      if Tree /= Model.Semantic_Tree.Element
-        or else Model.Filter.Flat_View
-        or else Model.Filter_Pattern /= null
-      then
-         --  Don't use the selective update mode in flat view or when there
-         --  is an active filter pattern. Just reset the tree. For the filter
-         --  pattern, since we show node that don't necessarily have parents,
-         --  the selective update does not make sense.
-         Set_Tree (Model, Tree, Model.Filter);
-      else
-         Update_Nodes
-           (Model.Phantom_Root.Children,
-            Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
-      end if;
+      Set_Tree (Model, Tree, Filter);
    end File_Updated;
 
    ---------------------------------
@@ -1141,42 +1023,63 @@ package body Outline_View.Model is
    is
       Node     : Sorted_Node_Access := null;
       Path     : Gtk_Tree_Path;
-      use type Sem_Tree_Holders.Holder;
+
+      Target_Loc : constant Sloc_T := (Line, Visible_Column_Type (Column), 0);
+
+      function Explore (Node : Sorted_Node_Access) return Sorted_Node_Access;
+      --  The iterative explorer function, return a Sorted_Node_Access that
+      --  contains the location, or null if nothing was found.
+
+      function Explore (Node : Sorted_Node_Access) return Sorted_Node_Access is
+         use type Visible_Column_Type;
+
+         function "<=" (L, R : Sloc_T) return Boolean is
+           (L.Line < R.Line
+            or else (L.Line = R.Line and then L.Column <= R.Column));
+
+      begin
+         if Node = null then
+            return null;
+         end if;
+
+         if Node.Sloc_Start = No_Sloc
+           or else (Node.Sloc_Start <= Target_Loc
+                    and then Target_Loc <= Node.Sloc_End)
+         then
+            --  We have found a node which either has no sloc (like a category
+            --  node or the phantom root) or which contains the sloc.
+
+            --  If this is not a leaf node, attempt to find a better one
+            for E of Node.Children loop
+               declare
+                  Found_Node : constant Sorted_Node_Access := Explore (E);
+               begin
+                  if Found_Node /= null then
+                     return Found_Node;
+                  end if;
+               end;
+            end loop;
+
+            --  This is a valid node, and there are no better node found in
+            --  the children? return this.
+            if Node.Sloc_Start /= No_Sloc then
+               return Node;
+            end if;
+         end if;
+
+         return null;
+      end Explore;
+
    begin
-      if Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
-        or else not Model.Semantic_Tree.Element.Is_Ready
-      then
+      --  Iterate through all the rows, until we find a node that contains
+      --  the given line, column.
+      Node := Explore (Model.Phantom_Root'Access);
+      if Node = null then
          Gtk_New (Path);
          return Path;
+      else
+         return Get_Path (Model, Node);
       end if;
-
-      declare
-         Sem_Node : Semantic_Node'Class
-           := Model.Semantic_Tree.Element.Node_At
-             ((Line, Visible_Column_Type (Column), 0));
-      begin
-         while Sem_Node /= No_Semantic_Node loop
-            Node := Get_Node (Model, Sem_Node);
-            exit when Node /= null;
-
-            Node := Get_Node_Next_Part (Model, Sem_Node);
-            exit when Node /= null;
-
-            declare
-               Parent : constant Semantic_Node'Class := Sem_Node.Parent;
-            begin
-               exit when Parent = No_Semantic_Node;
-               Sem_Node := Parent;
-            end;
-         end loop;
-
-         if Node = null then
-            Gtk_New (Path);
-            return Path;
-         else
-            return Get_Path (Model, Node);
-         end if;
-      end;
    end Get_Path_Enclosing_Location;
 
    -----------------------------

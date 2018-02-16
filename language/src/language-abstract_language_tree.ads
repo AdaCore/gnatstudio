@@ -357,9 +357,6 @@ package Language.Abstract_Language_Tree is
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
    function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
 
-   package Sem_Tree_Holders is new Ada.Containers.Indefinite_Holders
-     (Semantic_Tree'Class);
-
    package Sem_Node_Holders is new Ada.Containers.Indefinite_Holders
      (Semantic_Node'Class);
 

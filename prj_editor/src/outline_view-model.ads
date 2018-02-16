@@ -162,7 +162,8 @@ private package Outline_View.Model is
 
    procedure File_Updated
      (Model    : access Outline_Model_Record;
-      Tree     : Semantic_Tree'Class);
+      Tree     : Semantic_Tree'Class;
+      Filter   : Tree_Filter);
    --  In order to keep the model up to date with the tree, this function
    --  should be called every time the construct tree is changed.
 
@@ -193,6 +194,8 @@ private
 
    type Sorted_Node_Kind is (Leaf_Node_Kind, Category_Node_Kind);
 
+   No_Sloc : constant Sloc_T := (0, 0, 0);
+
    type Sorted_Node (Kind : Sorted_Node_Kind := Leaf_Node_Kind) is record
 
       Model             : Outline_Model;
@@ -200,6 +203,9 @@ private
       Parent            : Sorted_Node_Access;
       Index_In_Siblings : Integer := -1;
       --  This is used to build a Gtk_Tree_Path from a node
+
+      Sloc_Start : Sloc_T := No_Sloc;
+      Sloc_End   : Sloc_T := No_Sloc;
 
       case Kind is
          when Leaf_Node_Kind =>
@@ -229,9 +235,6 @@ private
    type Sorted_Node_Array is array (Language_Category) of Sorted_Node_Access;
 
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record
-      Semantic_Tree     : Sem_Tree_Holders.Holder :=
-        Sem_Tree_Holders.Empty_Holder;
-
       Filter            : Tree_Filter;
       Filter_Pattern    : GPS.Search.Search_Pattern_Access := null;
 
