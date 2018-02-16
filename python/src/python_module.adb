@@ -565,7 +565,7 @@ package body Python_Module is
             Set_Return_Value
               (Data,
                Create_MDI_Window_Instance
-                 (Get_Script (Data), Get_Kernel (Data), C));
+                 (Get_Script (Data), C));
          end if;
       end if;
    end Python_GUI_Command_Handler;

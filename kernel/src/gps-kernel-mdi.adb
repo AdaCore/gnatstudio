@@ -185,7 +185,7 @@ package body GPS.Kernel.MDI is
    --  Called when the user is displaying the contextual menu on tabs
 
    procedure On_Child_Selected
-     (MDI    : access GObject_Record'Class;
+     (Self   : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Called when a different child gains the focus
 
@@ -955,12 +955,13 @@ package body GPS.Kernel.MDI is
    -----------------------
 
    procedure On_Child_Selected
-     (MDI    : access GObject_Record'Class;
+     (Self   : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (MDI);
+      MDI : constant MDI_Window := MDI_Window (Self);
    begin
       Check_Monitored_Files_In_Background (Kernel);
+      Mdi_Child_Selected_Hook.Run (Kernel, Get_Focus_Child (MDI));
    end On_Child_Selected;
 
    -----------------------------------------
@@ -1972,7 +1973,7 @@ package body GPS.Kernel.MDI is
          begin
             Set_Nth_Arg
               (Args, 1, Create_MDI_Window_Instance
-                 (Get_Script (Self.Save_Desktop.all), Self.Kernel, Self));
+                 (Get_Script (Self.Save_Desktop.all), Self));
 
             declare
                R : constant List_Instance'Class :=

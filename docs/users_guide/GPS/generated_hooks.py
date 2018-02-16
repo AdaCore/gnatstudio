@@ -777,6 +777,19 @@ class Predefined_Hooks:
 
         """
 
+    # mdi_child_selected = 'mdi_child_selected'
+    def mdi_child_selected(name,child):
+        """
+      Emitted when the currently focused MDI child has changed in GPS (e.g: when
+      switching editors)
+
+      :param str name:
+      :param GPS.MDIWindow child:
+
+      :asynchronouse 400 (ms)
+
+        """
+
     # message_selected = 'message_selected'
     def message_selected(name,message):
         """

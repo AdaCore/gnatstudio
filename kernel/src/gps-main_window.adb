@@ -1260,7 +1260,7 @@ package body GPS.Main_Window is
             end loop;
 
             Result := Create_MDI_Window_Instance
-              (Get_Script (Data), Kernel, Child2);
+              (Get_Script (Data), Child2);
             Set_Return_Value (Data, Result);
          end;
 
@@ -1292,7 +1292,6 @@ package body GPS.Main_Window is
 
    function Create_MDI_Window_Instance
      (Script : not null access Scripting_Language_Record'Class;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Child  : access MDI_Child_Record'Class) return Class_Instance
    is
       MDI_Window_Class : Class_Type;
@@ -1304,7 +1303,7 @@ package body GPS.Main_Window is
 
       Inst := Get_Instance (Script, Child);
       if Inst = No_Class_Instance then
-         MDI_Window_Class := New_Class (Kernel, "MDIWindow");
+         MDI_Window_Class := New_Class (Get_Kernel (Script), "MDIWindow");
          Inst := New_Instance (Script, MDI_Window_Class);
          Set_Data (Inst, Glib.Object.GObject (Child));
       end if;
@@ -1372,7 +1371,7 @@ package body GPS.Main_Window is
             Child := Get_Focus_Child (Get_MDI (Kernel));
          end if;
 
-         Inst := Create_MDI_Window_Instance (Get_Script (Data), Kernel, Child);
+         Inst := Create_MDI_Window_Instance (Get_Script (Data), Child);
          Set_Return_Value (Data, Inst);
 
       elsif Command = "children" then
@@ -1383,7 +1382,7 @@ package body GPS.Main_Window is
             while Get (Iter) /= null loop
                Child := Get (Iter);
                Inst := Create_MDI_Window_Instance
-                 (Get_Script (Data), Kernel, Child);
+                 (Get_Script (Data), Child);
                Set_Return_Value (Data, Inst);
                Next (Iter);
             end loop;

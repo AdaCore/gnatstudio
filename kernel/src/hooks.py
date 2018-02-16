@@ -205,7 +205,7 @@ types = {
         topython='GPS.VCS.Create_VCS_Instance (Data.Get_Script, %(ada)s)',
         toada='GPS.VCS.Get_VCS (Data.Nth_Arg (%(idx)d, Allow_Null => False))',
         withs=['GPS.VCS']),
-                          
+
     'VCS_File_Properties': Mapping(
         ada='GPS.VCS.VCS_File_Properties',
         python='int',
@@ -214,7 +214,7 @@ types = {
             '(Status => GPS.VCS.VCS_File_Status ' +
               '(Integer\'(Data.Nth_Arg (%(idx)d))), others => <>)',
         withs=['GPS.VCS']),
-         
+
     'Project': Mapping(
         ada='GNATCOLL.Projects.Project_Type',
         python='GPS.Project',
@@ -266,6 +266,15 @@ types = {
         topython='GPS.Debuggers.To_String (%(ada)s)',
         toada='GPS.Debuggers.From_String (Data.Nth_Arg (%(idx)d))',
         withs=['GPS.Debuggers']),
+
+     'MDI_Child' : Mapping(
+         ada='Gtkada.MDI.MDI_Child',
+         python='GPS.MDIWindow',
+         topython='GPS.Main_Window.Create_MDI_Window_Instance'
+            ' (Get_Script (Data), %(ada)s)',
+         toada='GPS.Main_Window.Get_Child (Data.Nth_Arg (%(idx)d))',
+         withs=['Gtkada.MDI'],
+         body_withs=['GPS.Main_Window'])
 }
 
 # The following describe hook types (the various hook families with
@@ -340,6 +349,12 @@ background task or process'''),
          Param('context', 'Context')],
         debounce=400,
         descr='Hooks that take a context as parameter'),
+
+    'mdi_child_hooks': Debounce_Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('child', 'MDI_Child')],
+        debounce=400,
+        descr='Hooks that take a MDI child as parameter'),
 
     'two_lines_hooks': Hook_Type(
         [Param('name', '__hookname__'),
@@ -484,10 +499,10 @@ Shadow builds''', inpython=False),
     'vcs_file_status_hooks': Hook_Type(
         [Param('VCS',       'VCS_Engine'),
          Param('files',     'FileSet'),
-         Param('props',     'VCS_File_Properties')]),       
-              
+         Param('props',     'VCS_File_Properties')]),
+
     'vcs_hooks': Hook_Type(
-        [Param('VCS',       'VCS_Engine')]),          
+        [Param('VCS',       'VCS_Engine')]),
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -851,6 +866,10 @@ locations, where the user can navigate backwards and forwards.'''),
 
     Hook('message_selected', 'message_hooks'),
 
+    Hook('mdi_child_selected', 'mdi_child_hooks', descr='''
+Emitted when the currently focused MDI child has changed in GPS (e.g: when
+switching editors)'''),
+
     Hook('open_file_action_hook', 'open_file_hooks', descr='''
 Emitted when GPS needs to open a file. You can connect to this hook if
 you want to have your own editor open, instead of GPS's internal
@@ -967,7 +986,7 @@ Emitted when the cross-reference information has been updated.'''),
 
     Hook('semantic_tree_updated', 'file_hooks', descr='''
 Emitted when the semantic_tree for a file has been updated.'''),
-         
+
     Hook('vcs_file_status_changed', 'vcs_file_status_hooks', descr='''
 Emitted when the VCS status of a file has been recomputed. The file might now
 be up to date, staged for commit, locally modified,... It might also have a
@@ -975,16 +994,16 @@ different version number, for file-based systems.
 This hook is only called on actual change of the status, and provides basic
 information on the new status. Check GPS.VCS.file_status to get more
 details.'''),
-         
+
     Hook('vcs_active_changed', 'simple_hooks', descr='''
 Emitted when the active VCS has changed. This is the VCS on which operations
 like commit and log happen.'''),
-         
+
     Hook('vcs_refresh', 'simple_hooks', descr='''
 Run this hook to force a refresh of all VCS-related views. They will
 resynchronize their contents from the disk, rather than rely on cached
 information'''),
-         
+
 ]
 
 #########################################################################

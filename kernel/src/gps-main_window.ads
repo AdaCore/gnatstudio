@@ -174,7 +174,6 @@ package GPS.Main_Window is
 
    function Create_MDI_Window_Instance
      (Script : not null access Scripting_Language_Record'Class;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Child  : access MDI_Child_Record'Class) return Class_Instance;
    --  Create a class instance wrapping child
 
