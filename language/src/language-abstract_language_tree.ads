@@ -99,7 +99,6 @@
 
 with Language.Tree; use Language.Tree;
 with Ada.Containers; use Ada.Containers;
-with Ada.Containers.Indefinite_Holders;
 
 package Language.Abstract_Language_Tree is
 
@@ -356,9 +355,6 @@ package Language.Abstract_Language_Tree is
    No_Semantic_Tree : constant Semantic_Tree'Class;
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
    function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
-
-   package Sem_Node_Holders is new Ada.Containers.Indefinite_Holders
-     (Semantic_Node'Class);
 
 private
 

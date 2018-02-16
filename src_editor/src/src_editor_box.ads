@@ -173,8 +173,7 @@ package Src_Editor_Box is
    --  needed (this may depend on the user preferences).
 
    procedure Update_Subprogram_Name
-     (Box : not null access Source_Editor_Box_Record'Class;
-      Update_Tree : Boolean := False);
+     (Box : not null access Source_Editor_Box_Record'Class);
    --  Update the name of the current subprogram
 
    procedure Scroll_To_Mark

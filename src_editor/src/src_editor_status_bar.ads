@@ -48,8 +48,7 @@ package Src_Editor_Status_Bar is
    --  as well as the writable/read-only status
 
    procedure Update_Subprogram_Name
-     (Bar : not null access Source_Editor_Status_Bar_Record'Class;
-      Update_Tree : Boolean := False);
+     (Bar : not null access Source_Editor_Status_Bar_Record'Class);
    --  Update the suprogram name label in Bar
 
 private

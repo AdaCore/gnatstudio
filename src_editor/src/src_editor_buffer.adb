@@ -6393,7 +6393,6 @@ package body Src_Editor_Buffer is
                      First_Line => Editable_Line_Type (Node.Sloc_Start.Line),
                      Last_Line  => Editable_Line_Type (Node.Sloc_End.Line),
                      Name              => Node.Name,
-                     Tree_Node         => Sem_Node_Holders.To_Holder (Node),
                      Block_Type        => Node.Category,
                      Color             => Null_RGBA);
                end if;

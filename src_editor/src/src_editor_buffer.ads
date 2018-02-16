@@ -885,11 +885,6 @@ package Src_Editor_Buffer is
 
       Color             : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The color to use when highlighting this block
-
-      Tree_Node         : Sem_Node_Holders.Holder;
-      --  The iterator representing the current construct. This can only used
-      --  until the file is modified, so should never be stored outside of this
-      --  block_record
    end record;
 
    function Get_Block
@@ -1334,7 +1329,7 @@ private
 
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
-      Gdk.RGBA.Null_RGBA, Sem_Node_Holders.Empty_Holder);
+      Gdk.RGBA.Null_RGBA);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;

@@ -768,12 +768,7 @@ package body Src_Editor_Module is
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
-            Update_Subprogram_Name
-              (Box,
-               --  Call with Update_Tree => False: this is in reaction to
-               --  Semantic_Tree_Updated_Hook, so we know the info is exact
-               --  without having to force it.
-               Update_Tree => False);
+            Update_Subprogram_Name (Box);
          end if;
          Box.Get_View.Queue_Draw;
       end if;
@@ -799,7 +794,7 @@ package body Src_Editor_Module is
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
-            Update_Subprogram_Name (Box, Update_Tree => False);
+            Update_Subprogram_Name (Box);
          end if;
          Box.Get_View.Queue_Draw;
       end if;

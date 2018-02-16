@@ -42,7 +42,6 @@ with Gtk.Style_Context;               use Gtk.Style_Context;
 with Gtk.Text_Iter;                   use Gtk.Text_Iter;
 with Gtkada.Handlers;
 with Gtkada.MDI;                      use Gtkada.MDI;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Language;                        use Language;
 with Pango.Layout;                    use Pango.Layout;
 with Src_Editor_Box;                  use Src_Editor_Box;
@@ -182,16 +181,14 @@ package body Src_Editor_Status_Bar is
    ----------------------------
 
    procedure Update_Subprogram_Name
-     (Bar : not null access Source_Editor_Status_Bar_Record'Class;
-      Update_Tree : Boolean := False)
+     (Bar : not null access Source_Editor_Status_Bar_Record'Class)
    is
-      Block : Block_Record;
-      Node  : Sem_Node_Holders.Holder;
+      Block  : Block_Record;
+      Parent : Block_Record;
       Val   : Unbounded_String;
    begin
       if Display_Subprogram_Names.Get_Pref then
-         Block := Get_Subprogram_Block
-           (Bar.Buffer, Bar.Current_Line, Update_Tree);
+         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line);
          if Block.Block_Type /= Cat_Unknown
            and then Block.Name /= No_Symbol
          then
@@ -201,15 +198,18 @@ package body Src_Editor_Status_Bar is
                & Glib.Convert.Escape_Text (Get (Block.Name).all)
                & "</a></span>");
 
-            Node := Sem_Node_Holders.To_Holder
-              (Block.Tree_Node.Element.Parent);
-            while Node.Element /= No_Semantic_Node loop
-               Val :=
-                 "<span underline='none'><a href='"
-                 & Node.Element.Sloc_Start.Line'Img
-                 & "'>" & Get (Node.Element.Name).all & "</a></span>."
-                 & Val;
-               Node.Replace_Element (Node.Element.Parent);
+            Parent := Block;
+
+            while Parent.First_Line > 1 loop
+               Parent := Get_Subprogram_Block (Bar.Buffer,
+                                               Parent.First_Line - 1);
+               if Parent.Name /= GNATCOLL.Symbols.No_Symbol then
+                  Val :=
+                    "<span underline='none'><a href='"
+                    & Parent.First_Line'Img
+                    & "'>" & Get (Parent.Name).all & "</a></span>."
+                    & Val;
+               end if;
             end loop;
 
             Bar.Function_Label.Set_Markup (To_String (Val));
