@@ -1141,7 +1141,9 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Self);
       View     : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
+                   Explorer_Views.Get_Or_Create_View
+                     (Get_Kernel (Context.Context),
+                      Focus => False);
       Iter     : Gtk_Tree_Iter := Get_Iter_First (View.Tree.Model);
       Sort     : constant Gint := Freeze_Sort (View.Tree.Model);
 
@@ -1913,8 +1915,6 @@ package body Project_Explorers is
       end Expand_Recursive;
 
    begin
-      Grab_Focus (Explorer.Tree);
-
       Path := Get_Path (Explorer.Tree.Model, Target_Node);
       Filter_Path := Explorer.Tree.Filter.Convert_Child_Path_To_Path (Path);
       Parent := Copy (Filter_Path);
@@ -1944,7 +1944,7 @@ package body Project_Explorers is
       File     : constant Virtual_File  := File_Information (Context.Context);
       S        : File_Info_Set;
       View     : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
       Node     : Gtk_Tree_Iter;
       Success  : Boolean := False;
       --  Needed to store the result of Expand_Row
@@ -2007,7 +2007,7 @@ package body Project_Explorers is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       View     : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel);
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
       Node     : Gtk_Tree_Iter;
    begin
       Node := Find_Project_Node (View, Project_Information (Context.Context));
