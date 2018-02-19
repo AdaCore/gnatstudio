@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -56,6 +56,7 @@ with Ada.Finalization;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;  use Gtk.Tree_Model_Filter;
@@ -126,6 +127,19 @@ package Gtkada.Tree_View is
      (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Sort
      with Inline;
    --  Optional sortable model
+
+   overriding procedure Scroll_To_Cell
+     (Self      : not null access Tree_View_Record;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column    : access Gtk_Tree_View_Column_Record'Class;
+      Use_Align : Boolean;
+      Row_Align : Gfloat;
+      Col_Align : Gfloat);
+   --  This is a slightly modified version of the Gtk.Tree_View.Scroll_To_Cell
+   --  procedure: since Gtkada.Tree_Views can be scrolled automatically at some
+   --  moments (e.g: when retrieving the previous scrolling information), this
+   --  procedure will delay in an Idle function the specified scrolling
+   --  operation.
 
    ---------------
    -- Expansion --
@@ -411,6 +425,22 @@ package Gtkada.Tree_View is
    --  Returned value must be freed by caller
 
 private
+
+   type User_Scroll_Data_Type is record
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column    : access Gtk_Tree_View_Column_Record'Class;
+      Use_Align : Boolean;
+      Row_Align : Gfloat;
+      Col_Align : Gfloat;
+   end record;
+
+   Null_Scroll_Data : constant User_Scroll_Data_Type := User_Scroll_Data_Type'
+     (Path      => Null_Gtk_Tree_Path,
+      Column    => null,
+      Use_Align => False,
+      Row_Align => 0.0,
+      Col_Align => 0.0);
+
    type Tree_View_Record is new Gtk_Tree_View_Record with record
       Model : Gtk_Tree_Store;
       --  The data model.
@@ -428,6 +458,11 @@ private
       Target_Path_For_Scroll : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Background_Scroll_Id   : Glib.Main.G_Source_Id := No_Source_Id;
       --  Ensure this path is visible, in an idle.
+
+      User_Scroll_Data : User_Scroll_Data_Type := Null_Scroll_Data;
+      User_Scroll_Id   : Glib.Main.G_Source_Id := No_Source_Id;
+      --  Used when delaying scrolling requests via the overrided
+      --  Scroll_To_Cell procedure.
 
       Lock  : Boolean := False;
       --  Whether the expand callbacks should do anything.

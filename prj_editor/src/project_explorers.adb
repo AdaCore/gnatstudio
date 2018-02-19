@@ -1953,7 +1953,7 @@ package body Project_Explorers is
       Path_Free (Parent);
 
       Set_Cursor (Explorer.Tree, Filter_Path, null, False);
-      Scroll_To_Cell (Explorer.Tree, Filter_Path, null, True, 0.1, 0.1);
+      Scroll_To_Cell (Explorer.Tree, Filter_Path, null, True, 0.5, 0.0);
 
       Path_Free (Path);
       Path_Free (Filter_Path);

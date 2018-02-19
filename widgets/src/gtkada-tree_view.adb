@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -84,6 +84,10 @@ package body Gtkada.Tree_View is
    --  This cannot be done immediately in case we have detached and then
    --  reattached the view, since gtk+ cannot immediately compute the visible
    --  area and thus ends up scrolling too much.
+
+   function On_User_Scroll (Self : Tree_View) return Boolean;
+   --  Scroll the tree in a timeout using the scrolling data stored in
+   --  Self.User_Scroll_Data.
 
    ---------------
    -- Callbacks --
@@ -608,7 +612,7 @@ package body Gtkada.Tree_View is
    function On_Idle_Scroll (Self : Tree_View) return Boolean is
    begin
       if Self.Target_Path_For_Scroll /= Null_Gtk_Tree_Path then
-         Self.Scroll_To_Cell
+         Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
             (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
          Path_Free (Self.Target_Path_For_Scroll);
          Self.Target_Path_For_Scroll := Null_Gtk_Tree_Path;
@@ -616,6 +620,27 @@ package body Gtkada.Tree_View is
       Self.Background_Scroll_Id := No_Source_Id;
       return False;   --  do not execute again
    end On_Idle_Scroll;
+
+   --------------------
+   -- On_User_Scroll --
+   --------------------
+
+   function On_User_Scroll (Self : Tree_View) return Boolean is
+   begin
+      if Self.User_Scroll_Data /= Null_Scroll_Data then
+         Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
+           (Path      => Self.User_Scroll_Data.Path,
+            Column    => Self.User_Scroll_Data.Column,
+            Use_Align => Self.User_Scroll_Data.Use_Align,
+            Row_Align => Self.User_Scroll_Data.Row_Align,
+            Col_Align => Self.User_Scroll_Data.Col_Align);
+         Path_Free (Self.User_Scroll_Data.Path);
+         Self.User_Scroll_Data := Null_Scroll_Data;
+      end if;
+
+      Self.User_Scroll_Id := No_Source_Id;
+      return False;
+   end On_User_Scroll;
 
    ----------------
    -- On_Destroy --
@@ -1068,7 +1093,7 @@ package body Gtkada.Tree_View is
          Self.Model.Foreach (Expand_Node'Unrestricted_Access);
 
          if Status.Has_Scroll_Info then
-            Self.Scroll_To_Cell
+            Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
               (Path      => Status.Scroll_Y,
                Column    => null,
                Use_Align => False,
@@ -1313,5 +1338,38 @@ package body Gtkada.Tree_View is
            (Start_Editing_Idle'Access, Data, Priority   => Priority_High_Idle);
       end if;
    end Start_Editing;
+
+   --------------------
+   -- Scroll_To_Cell --
+   --------------------
+
+   overriding procedure Scroll_To_Cell
+     (Self      : not null access Tree_View_Record;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column    : access Gtk_Tree_View_Column_Record'Class;
+      Use_Align : Boolean;
+      Row_Align : Gfloat;
+      Col_Align : Gfloat) is
+   begin
+      if Self.User_Scroll_Id = No_Source_Id then
+         if Self.Background_Scroll_Id /= No_Source_Id then
+            Self.User_Scroll_Data := User_Scroll_Data_Type'
+              (Path      => Copy (Path),
+               Column    => Column,
+               Use_Align => Use_Align,
+               Row_Align => Row_Align,
+               Col_Align => Col_Align);
+            Self.User_Scroll_Id :=
+              Tree_Sources.Idle_Add (On_User_Scroll'Access, Self);
+         else
+            Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
+              (Path      => Path,
+               Column    => Column,
+               Use_Align => Use_Align,
+               Row_Align => Row_Align,
+               Col_Align => Col_Align);
+         end if;
+      end if;
+   end Scroll_To_Cell;
 
 end Gtkada.Tree_View;
