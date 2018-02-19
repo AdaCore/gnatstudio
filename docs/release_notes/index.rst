@@ -10,7 +10,7 @@ Release Date: October 2017
    :numbered:
    :maxdepth: 3
 
-The main goal for the development cycke of GPS 18 was to improve
+The main goal for the development cycle of GPS 18 was to improve
 stability, and a better experience for newcomers. 
 It includes a number of new features as well.
 
@@ -269,7 +269,7 @@ that monitor a workflow. This can conveniently replace some uses of the
 `GPS.Timeout` API, and integrates within the GPS Task Manager, allowing to
 provide progress indication for background tasks.
 
-Python API of Libadalang is available for plugind, and can be used in GPS
+Python API of Libadalang is available for plugins, and can be used in GPS
 plugins to implement custom code checkers.
 
 The `GPS.Debugger` provides new methods to manipulate frames - `current_frame`,
