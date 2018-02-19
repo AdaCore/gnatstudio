@@ -284,6 +284,13 @@ package body GVD.Preferences is
          Label    => -"Natural",
          Default  => False);
 
+      Debugger_Console_All_Interactions := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "debugger-all-interactions",
+         Default  =>  False,
+         Label    => -"All interactions",
+         Doc      => -"Display all interactions in the console");
+
    end Register_Default_Preferences;
 
 end GVD.Preferences;

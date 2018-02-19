@@ -38,6 +38,7 @@ with Commands;                   use Commands;
 with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
+with GVD.Preferences;            use GVD.Preferences;
 with GVD.Process;                use GVD.Process;
 with GVD.Types;                  use GVD.Types;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -562,7 +563,9 @@ package body Debugger is
 
          --  Display the command in the output window if necessary
 
-         if Mode = Visible then
+         if Mode = Visible
+           or else Debugger_Console_All_Interactions.Get_Pref
+         then
             Output_Text (Process, Cmd & ASCII.LF, True);
          end if;
 
@@ -759,7 +762,9 @@ package body Debugger is
                   return;
 
                elsif Tmp /= "" then
-                  if Mode in Visible_Command then
+                  if Mode in Visible_Command
+                    or else Debugger_Console_All_Interactions.Get_Pref
+                  then
                      Process.Output_Text
                        (Tmp,
                         Is_Command   => False,

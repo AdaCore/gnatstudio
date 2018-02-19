@@ -80,4 +80,8 @@ package GVD.Preferences is
    Load_Executable_On_Init       : Boolean_Preference;
    Connection_Timeout            : Integer_Preference;
 
+   -- Console --
+   Debugger_Console_All_Interactions : Boolean_Preference;
+   --  Whether display all interactions in the debugger console
+
 end GVD.Preferences;

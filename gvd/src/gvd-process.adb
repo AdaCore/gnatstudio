@@ -603,17 +603,16 @@ package body GVD.Process is
 
       Mode := Get_Command_Mode (Get_Process (Process.Debugger));
 
-      case Mode is
-         when User | GVD.Types.Visible =>
-            Filter_Output (Process.Debugger, Mode, Str, Result);
+      if Mode = User
+        or else Mode = GVD.Types.Visible
+        or else Debugger_Console_All_Interactions.Get_Pref
+      then
+         Filter_Output (Process.Debugger, Mode, Str, Result);
 
-            if Length (Result) > 0 then
-               Output_Text (Process, To_String (Result), Set_Position => True);
-            end if;
-
-         when Hidden | Internal =>
-            null;
-      end case;
+         if Length (Result) > 0 then
+            Output_Text (Process, To_String (Result), Set_Position => True);
+         end if;
+      end if;
    end Text_Output_Filter;
 
    ----------------
@@ -740,7 +739,9 @@ package body GVD.Process is
          return;
       end if;
 
-      if Output_Command then
+      if Output_Command
+        or else Debugger_Console_All_Interactions.Get_Pref
+      then
          Debugger.Output_Text (Command & ASCII.LF, Is_Command => True);
       end if;
 

@@ -59,6 +59,7 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GVD.Generic_View;       use GVD.Generic_View;
+with GVD.Preferences;        use GVD.Preferences;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
@@ -92,6 +93,10 @@ package body GVD.Consoles is
    type Debugger_Console_Record is new Console_Process_View_Record with
      null record;
    type Debugger_Console is access all Debugger_Console_Record'Class;
+
+   overriding procedure Create_Menu
+     (View    : not null access Debugger_Console_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Debuggee_Console_Record is new Console_Process_View_Record with
       record
@@ -148,7 +153,9 @@ package body GVD.Consoles is
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles,
       Position           => Position_Bottom,
-      Initialize         => Initialize);
+      Initialize         => Initialize,
+      Local_Toolbar      => True,
+      Local_Config       => True);
    subtype Console is Debugger_MDI_Views.View_Access;
    package Debugger_Views is new GVD.Generic_View.Simple_Views
      (Views              => Debugger_MDI_Views,
@@ -438,6 +445,17 @@ package body GVD.Consoles is
       return "";
    end Interpret_Command_Handler;
 
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Debugger_Console_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   begin
+      Append_Menu (Menu, View.Kernel, Debugger_Console_All_Interactions);
+   end Create_Menu;
+
    ------------------------------
    -- Debuggee_Console_Handler --
    ------------------------------
@@ -486,8 +504,7 @@ package body GVD.Consoles is
          Key                 => "gvd_console",
          Wrap_Mode           => Wrap_Char,
          ANSI_Support        => Active (ANSI_Support),
-         Empty_Equals_Repeat => True,
-         Toolbar_Name        => "Debugger Console");
+         Empty_Equals_Repeat => True);
       Self.Console.Set_Key_Handler (Key_Handler'Access, System.Null_Address);
       Self.Pack_Start (Self.Console, Fill => True, Expand => True);
       Set_Font_And_Colors (Self.Console.Get_View, Fixed_Font => True);
@@ -764,9 +781,8 @@ package body GVD.Consoles is
    is
       Filter : Action_Filter;
    begin
-      --  Register the debugger console last so that it gets the initial focus
-      Debuggee_Views.Register_Module (Kernel);
       Debugger_Views.Register_Module (Kernel);
+      Debuggee_Views.Register_Module (Kernel);
 
       Filter := new No_Execution_Console_Filter;
       Kernel.Register_Filter (Filter, "No Execution console");
