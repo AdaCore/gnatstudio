@@ -465,7 +465,7 @@ package body Project_Explorers_Files is
       Data    : constant Gtk_Selection_Data :=
                   From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
-      Action  : constant Drag_Action := Get_Actions (Context);
+      Action  : constant Drag_Action := Get_Selected_Action (Context);
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
 
@@ -1460,7 +1460,8 @@ package body Project_Explorers_Files is
             File_Append_Directory
               (Explorer.Tree, Cur_Dir.Get_Root,
                Null_Iter,
-               Append_To_Dir => Cur_Dir, Idle    => True);
+               Append_To_Dir => Cur_Dir,
+               Idle          => True);
          end if;
       end if;
    end Refresh;
