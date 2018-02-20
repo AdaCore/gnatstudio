@@ -28,7 +28,7 @@ class Gerrit(core.Extension):
                     if prefix.strip().lower() == 'host':
                         self.host = value.strip()
                     elif prefix.strip().lower() == 'port':
-                        self.port = ':%s' % value.strip()
+                        self.port = '%s' % value.strip()
                     elif prefix.strip().lower() == 'project':
                         self.project = value.strip()
 
