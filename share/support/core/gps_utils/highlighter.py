@@ -10,7 +10,7 @@ import traceback
 try:
     from gi.repository import GLib
     gobject_available = 1
-except:
+except Exception:
     gobject_available = 0
 
 
@@ -207,6 +207,8 @@ class Background_Highlighter(object):
         # or the GPS.Timeout instance
         self.__buffers = []      # The list of buffers to highlight
         self.terminated = False
+        self.highlighted = 0
+        self.highlighted_limit = 0
 
         self.style = style
         GPS.Hook("before_exit_action_hook").add(self.__before_exit)
@@ -293,7 +295,7 @@ class Background_Highlighter(object):
             # in case the user has computed data for it (see
             # Location_Highlighter)
             self.__buffers.append(
-                (buffer, line, line + 1, start_line, end_line))
+                (buffer, line, line + 1, start_line, end_line, True, 0))
 
             if self.style and self.style.use_messages():
                 self.style.remove(buffer)
@@ -396,11 +398,12 @@ class Background_Highlighter(object):
 
         try:
             (buffer, min_line, max_line,
-             start_line, end_line) = self.__buffers[0]
+             start_line, end_line, backward,
+             self.highlighted) = self.__buffers[0]
 
             changed = False
 
-            if min_line >= start_line:
+            if min_line >= start_line and (backward or max_line >= end_line):
                 from_line = max(start_line, min_line - self.batch_size)
 
                 f = buffer.at(from_line, 1)
@@ -414,6 +417,8 @@ class Background_Highlighter(object):
                     self.process(f, e)
 
                 min_line = from_line - 1
+                if max_line < end_line:
+                    backward = False
                 changed = True
 
             elif max_line < end_line:
@@ -433,13 +438,17 @@ class Background_Highlighter(object):
                         self.process(f, e)
 
                     max_line = to_line + 1
+                    if min_line >= start_line:
+                        backward = True
                     changed = True
-                except:
+                except Exception:
                     pass
 
-            if changed:
+            if changed and (self.highlighted_limit == 0 or
+                            self.highlighted < self.highlighted_limit):
                 self.__buffers[0] = (
-                    buffer, min_line, max_line, start_line, end_line)
+                    buffer, min_line, max_line, start_line, end_line,
+                    backward, self.highlighted)
             else:
                 self.__buffers.pop(0)
                 if self.__buffers:
@@ -593,12 +602,13 @@ class Location_Highlighter(Background_Highlighter):
 
                 try:
                     e2 = s2 + (len(u) - 1)
-                except:
+                except Exception:
                     # An invalid location ?
                     continue
 
                 b = ed.get_chars(s2, e2).decode("utf-8").lower()
                 if b == u:
+                    self.highlighted += 1
                     self.style.apply(s2, e2)
 
                 elif self.context > 0:
@@ -610,6 +620,7 @@ class Location_Highlighter(Background_Highlighter):
                             e2 = s2 + (len(u) - 1)
                             b = ed.get_chars(s2, e2).decode("utf-8").lower()
                             if b == u:
+                                self.highlighted += 1
                                 self.style.apply(s2, e2)
                                 break
 
@@ -619,9 +630,10 @@ class Location_Highlighter(Background_Highlighter):
                             e2 = s2 + (len(u) - 1)
                             b = ed.get_chars(s2, e2).decode("utf-8").lower()
                             if b == u:
+                                self.highlighted += 1
                                 self.style.apply(s2, e2)
                                 break
-                        except:
+                        except Exception:
                             # An invalid location ?
                             continue
 

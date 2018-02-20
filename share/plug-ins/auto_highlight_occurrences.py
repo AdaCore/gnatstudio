@@ -52,6 +52,12 @@ GPS.Preference(
     "Attempt to highlight the word under the cursor.",
     False)
 
+GPS.Preference(
+    "Plugins/auto_highlight_occurrences/highlighting_limit").create(
+    "Highlighting limit", "integer",
+    "Maximum number of locations that can be highlighted if is not zero.",
+    0, 0)
+
 MSG_PREFIX = 'dynamic occurrences '
 # Messages created by this plugin have a category that starts with this
 
@@ -89,6 +95,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         self.current_buffer = None
 
+        self.highlighted_limit = GPS.Preference(
+            "Plugins/auto_highlight_occurrences/highlighting_limit").get()
+
         # Words that should not be highlighted.
         # ??? This should be based on the language
 
@@ -125,6 +134,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
         if v != self.highlight_word:
             self.highlight_word = v
             changed = True
+
+        self.highlighted_limit = GPS.Preference(
+            "Plugins/auto_highlight_occurrences/highlighting_limit").get()
 
         if changed:
             self.remove_highlight()
@@ -173,6 +185,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
                                 s[end_index].isalnum() or s[end_index] == '_'):
                             end_index += 1
                         if s[index:end_index] == self.word:
+                            self.highlighted += 1
                             self.style.apply(
                                 start=GPS.EditorLocation(
                                     buffer,
@@ -224,7 +237,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
             buffer = GPS.EditorBuffer.get(open=False)
             context = GPS.current_context()
             location = buffer.current_view().cursor()
-        except:
+        except Exception:
             buffer = None
 
         # If we want to highlight based on the selection, look for it first
@@ -250,7 +263,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 context.entity_name()):
             try:
                 entity = context.entity(approximate_search_fallback=False)
-            except:
+            except Exception:
                 entity = None
 
         # No entity found, highlight the current text
