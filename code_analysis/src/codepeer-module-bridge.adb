@@ -61,7 +61,6 @@ package body CodePeer.Module.Bridge is
       Object_Directory  : Virtual_File;
       Command_File_Name : Virtual_File;
       Success           : Boolean;
-      Ids               : Natural_Sets.Set;
       All_Messages      : Message_Vectors.Vector;
       pragma Warnings (Off, Success);
 
@@ -77,18 +76,6 @@ package body CodePeer.Module.Bridge is
       --  Generate command file
 
       case Module.Version is
-         when 3 =>
-            Ids.Insert (Messages.First_Element.Id);
-            Ids.Union (Messages.First_Element.Merged);
-
-            CodePeer.Bridge.Commands.Add_Audit_Record_V3
-              (Command_File_Name,
-               Codepeer_Output_Directory (Module.Kernel),
-               Ids,
-               Messages.First_Element.Audit_V3.First_Element.Status,
-               Messages.First_Element.Audit_V3.First_Element.Approved_By,
-               Messages.First_Element.Audit_V3.First_Element.Comment);
-
          when 4 | 5 =>
             for Message of Messages loop
                All_Messages.Append (Message);

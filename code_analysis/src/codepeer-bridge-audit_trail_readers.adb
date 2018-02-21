@@ -31,8 +31,8 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
      (Self : in out Reader;
       Text : Unicode.CES.Byte_Sequence) is
    begin
-      if Self.Audit_Record_V3 /= null then
-         Append (Self.Audit_Record_V3.Comment, Text);
+      if Self.Audit_Record /= null then
+         Append (Self.Audit_Record.Comment, Text);
       end if;
    end Characters;
 
@@ -50,8 +50,8 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
-         Self.Message.Audit_V3.Append (Self.Audit_Record_V3);
-         Self.Audit_Record_V3 := null;
+         Self.Message.Audit.Append (Self.Audit_Record);
+         Self.Audit_Record := null;
       end if;
    end End_Element;
 
@@ -64,9 +64,9 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
       Input    : in out Input_Sources.Input_Source'Class;
       Messages : CodePeer.Message_Maps.Map) is
    begin
-      Self.Messages := Messages'Unchecked_Access;
-      Self.Audit_Record_V3 := null;
-      Self.Version := Supported_Format_Version'First;
+      Self.Messages     := Messages'Unchecked_Access;
+      Self.Audit_Record := null;
+      Self.Version      := Supported_Format_Version'First;
 
       Self.Parse (Input);
    end Parse;
@@ -103,8 +103,8 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
          Self.Message.Audit_Loaded := True;
 
       elsif Qname = Audit_Tag then
-         Self.Audit_Record_V3 :=
-           new CodePeer.Audit_Record_V3'
+         Self.Audit_Record :=
+           new CodePeer.Audit_Record'
              (Status      =>
                 Audit_Status_Kinds'Value (Attrs.Get_Value ("status")),
               Approved_By =>

@@ -151,15 +151,14 @@ package body CodePeer is
    overriding procedure Finalize (Self : not null access Message) is
 
       procedure Free is
-        new Ada.Unchecked_Deallocation
-          (Audit_Record_V3, Audit_Record_V3_Access);
+        new Ada.Unchecked_Deallocation (Audit_Record, Audit_Record_Access);
 
    begin
-      for J of Self.Audit_V3 loop
+      for J of Self.Audit loop
          Free (J);
       end loop;
 
-      Self.Audit_V3.Clear;
+      Self.Audit.Clear;
 
       GPS.Kernel.Messages.Primary_Abstract_Message (Self.all).Finalize;
    end Finalize;

@@ -149,17 +149,17 @@ package body CodePeer.Single_Message_Review_Dialogs is
       Dummy_I       : Glib.Gint;
       pragma Warnings (Off, Dummy_I);
 
-      procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor);
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor);
       --  Fill GtkTreeStore of history view
 
       -------------------
       -- Process_Audit --
       -------------------
 
-      procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor)
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor)
       is
-         Audit : constant CodePeer.Audit_Record_V3_Access :=
-           CodePeer.Audit_V3_Vectors.Element (Position);
+         Audit : constant CodePeer.Audit_Record_Access :=
+           CodePeer.Audit_Vectors.Element (Position);
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_All_And_Clear
@@ -306,7 +306,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
 
       Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 
-      Message.Audit_V3.Iterate (Process_Audit'Access);
+      Message.Audit.Iterate (Process_Audit'Access);
 
       Gtk.Tree_View.Gtk_New (Tree_View, Store);
       Scrolled.Add (Tree_View);
@@ -396,8 +396,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
                      -(Self.New_Status.Get_Model);
       Iter       : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                      Self.New_Status.Get_Active_Iter;
-      New_Record : constant CodePeer.Audit_Record_V3_Access :=
-                     new CodePeer.Audit_Record_V3;
+      New_Record : constant CodePeer.Audit_Record_Access :=
+                     new CodePeer.Audit_Record;
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
 
@@ -421,7 +421,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
       New_Record.Timestamp :=
         To_Unbounded_String
           (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
-      Self.Message.Audit_V3.Prepend (New_Record);
+      Self.Message.Audit.Prepend (New_Record);
 
       --  Emit signal
 

@@ -469,7 +469,7 @@ package body CodePeer.Module is
          Status_Editable => True,
          Text            => To_Unbounded_String (Text),
          Audit_Loaded    => False,
-         Audit_V3        => CodePeer.Audit_V3_Vectors.Empty_Vector,
+         Audit           => <>,
          Checks          => Checks,
          Vns             => Vns,
          CWEs            => CWEs,

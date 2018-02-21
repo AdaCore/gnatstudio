@@ -33,10 +33,10 @@ package CodePeer.Bridge.Audit_Trail_Readers is
 private
 
    type Reader is new Sax.Readers.Reader with record
-      Version         : Supported_Format_Version;
-      Messages        : access constant CodePeer.Message_Maps.Map;
-      Message         : CodePeer.Message_Access;
-      Audit_Record_V3 : CodePeer.Audit_Record_V3_Access;
+      Version      : Supported_Format_Version;
+      Messages     : access constant CodePeer.Message_Maps.Map;
+      Message      : CodePeer.Message_Access;
+      Audit_Record : CodePeer.Audit_Record_Access;
    end record;
 
    overriding procedure Start_Element

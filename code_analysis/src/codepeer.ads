@@ -34,7 +34,7 @@ package CodePeer is
    type Format_Version is new Positive;
    --  Version of format of interchange files.
 
-   subtype Supported_Format_Version is Format_Version range 3 .. 5;
+   subtype Supported_Format_Version is Format_Version range 4 .. 5;
    --  Range of suppoted versions of format of interchange file.
 
    Unknown_Timestamp : constant Ada.Calendar.Time :=
@@ -99,43 +99,43 @@ package CodePeer is
    package Message_Category_Sets is new Ada.Containers.Ordered_Sets
      (Message_Category_Access, Less, "=");
 
-   type Audit_Record_V3 is record
+   type Audit_Record is record
       Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
       Comment     : Ada.Strings.Unbounded.Unbounded_String;
       Approved_By : Ada.Strings.Unbounded.Unbounded_String;
       Status      : Audit_Status_Kinds;
    end record;
 
-   type Audit_Record_V3_Access is access all Audit_Record_V3;
+   type Audit_Record_Access is access all Audit_Record;
 
-   package Audit_V3_Vectors is
-     new Ada.Containers.Vectors (Positive, Audit_Record_V3_Access);
+   package Audit_Vectors is
+     new Ada.Containers.Vectors (Positive, Audit_Record_Access);
 
    package Natural_Sets is
      new Ada.Containers.Ordered_Sets (Natural);
 
    type Message is new GPS.Kernel.Messages.Primary_Abstract_Message with record
-      Id               : Natural;
-      File             : Code_Analysis.File_Access;
-      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
-      Merged           : Natural_Sets.Set;
-      Lifeage          : Lifeage_Kinds;
-      Category         : Message_Category_Access;
-      Is_Check         : Boolean;
+      Id              : Natural;
+      File            : Code_Analysis.File_Access;
+      Subprogram      : Ada.Strings.Unbounded.Unbounded_String;
+      Merged          : Natural_Sets.Set;
+      Lifeage         : Lifeage_Kinds;
+      Category        : Message_Category_Access;
+      Is_Check        : Boolean;
       --  True means this message is check.
-      Ranking          : Message_Ranking_Level;
-      Status           : Audit_Status_Kinds;
-      Status_Editable  : Boolean;
+      Ranking         : Message_Ranking_Level;
+      Status          : Audit_Status_Kinds;
+      Status_Editable : Boolean;
       --  True means that audit status can be changed by review.
-      Text             : Ada.Strings.Unbounded.Unbounded_String;
-      Audit_Loaded     : Boolean;
-      Audit_V3         : Audit_V3_Vectors.Vector;
-      Checks           : Message_Category_Sets.Set;
-      Vns              : Natural_Sets.Set;
-      CWEs             : CWE_Category_Sets.Set;
-      Display_CWEs     : Boolean;
+      Text            : Ada.Strings.Unbounded.Unbounded_String;
+      Audit_Loaded    : Boolean;
+      Audit           : Audit_Vectors.Vector;
+      Checks          : Message_Category_Sets.Set;
+      Vns             : Natural_Sets.Set;
+      CWEs            : CWE_Category_Sets.Set;
+      Display_CWEs    : Boolean;
       --  Enable displaying of CWEs
-      Removed_Color    : Default_Preferences.Color_Preference;
+      Removed_Color   : Default_Preferences.Color_Preference;
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
    end record;

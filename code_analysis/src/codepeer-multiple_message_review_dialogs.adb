@@ -332,7 +332,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Approved   : constant Unbounded_String :=
                      To_Unbounded_String (Self.Approved_Entry.Get_Text);
       Comment    : Unbounded_String;
-      New_Record : CodePeer.Audit_Record_V3_Access;
+      New_Record : CodePeer.Audit_Record_Access;
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
 
@@ -348,12 +348,12 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       for Message of Self.Messages loop
          Message.Status := Status;
          New_Record :=
-           new CodePeer.Audit_Record_V3'
+           new CodePeer.Audit_Record'
              (Timestamp   => Timestamp,
               Comment     => Comment,
               Approved_By => Approved,
               Status      => Status);
-         Message.Audit_V3.Prepend (New_Record);
+         Message.Audit.Prepend (New_Record);
       end loop;
 
       --  Emit signal
