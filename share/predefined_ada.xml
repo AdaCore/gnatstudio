@@ -293,18 +293,16 @@ except that it is separately controllable using pragma
        <DOC>This aspect provides a light-weight mechanism for loops and quantified
 expressions over container types, without the overhead imposed by the
 tampering checks of standard Ada 2012 iterators. The value of the
-aspect is an aggregate with six named components, or which the last
-three are optional: `First',
-
-`Next', `Has_Element',``Element``, `Last', and `Previous'.
-
-When only the first three components are specified, only the `for ..
-in' form of iteration over cursors is available. When `Element' is
-specified, both this form and the `for .. of' form of iteration over
-elements are available. If the last two components are specified,
-reverse iterations over the container can be specified (analogous to
-what can be done over predefined containers that support the
-Reverse_Iterator interface).  The following is a typical example of use:
+aspect is an aggregate with six named components, of which the last
+three are optional: `First', `Next', `Has_Element', `Element', `Last',
+and `Previous'.  When only the first three components are specified,
+only the `for .. in' form of iteration over cursors is available. When
+`Element' is specified, both this form and the `for .. of' form of
+iteration over elements are available. If the last two components are
+specified, reverse iterations over the container can be specified
+(analogous to what can be done over predefined containers that support
+the `Reverse_Iterator' interface).  The following is a typical example
+of use:
 
 type List is private with
 Iterable =&gt; (First        =&gt; First_Cursor,
@@ -3157,6 +3155,7 @@ Assert_And_Cut       |
 Assume               |
 Contract_Cases       |
 Debug                |
+Ghost                |
 Invariant            |
 Invariant'Class      |
 Loop_Invariant       |
@@ -4131,15 +4130,24 @@ pragma Elaborate_Body [(library_unit_name)];</DOC>
 
 pragma Elaboration_Checks (Dynamic | Static);
 
-This is a configuration pragma that provides control over the
-elaboration model used by the compilation affected by the pragma.  If
-the parameter is `Dynamic', then the dynamic elaboration model
-described in the Ada Reference Manual is used, as though the `-gnatE'
-switch had been specified on the command line.  If the parameter is
-`Static', then the default GNAT static model is used.  This
-configuration pragma overrides the setting of the command line.  For
-full details on the elaboration models used by the GNAT compiler, see
-the chapter on elaboration order handling in the `GNAT User's Guide'.</DOC>
+This is a configuration pragma which specifies the elaboration model to
+be used during compilation. For more information on the elaboration
+models of GNAT, consult the chapter on elaboration order handling in
+the `GNAT User's Guide'.
+
+The pragma may appear in the following contexts:
+
+* Configuration pragmas file
+
+* Prior to the context clauses of a compilation unit's initial
+declaration
+
+Any other placement of the pragma will result in a warning and the
+effects of the offending pragma will be ignored.
+
+If the pragma argument is `Dynamic', then the dynamic elaboration model
+is in effect. If the pragma argument is `Static', then the static
+elaboration model is in effect.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Eliminate" origin="GNAT RM">
       <DOC>Syntax:
