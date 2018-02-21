@@ -1699,6 +1699,8 @@ Classes
 
    .. automethod:: GPS.Project.root
 
+   .. automethod:: GPS.Project.save
+
    .. automethod:: GPS.Project.scenario_variables
 
    .. automethod:: GPS.Project.scenario_variables_cmd_line

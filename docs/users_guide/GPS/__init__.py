@@ -5880,7 +5880,7 @@ class FileTemplate(object):
 
     @staticmethod
     def register(alias_name, label, unit_param, language,
-                 is_impl, impl_alias_name=None):
+                 is_impl, impl_alias_name=None, post_action=None):
         """
         Register a new file template and create a 'New/create ``label``
         contextual menu allowing users to create a new file from it for a given
@@ -5905,12 +5905,48 @@ class FileTemplate(object):
         also the Ada body file when creating a package specification file).
         The parameters of both aliases should match in that case.
 
+        The optional ``post_action`` parameter allows you to specify a function
+        that will be called after the creation of a file from this template.
+        This function will receive the newly created file and its associated
+        project as parameters and should return True if it succeeds, False
+        otherwise.
+
+        example:
+
+        # post_action callback
+        def __add_to_main_units(project, file):
+            # Ask the user if he wants to add the newly created main unit to
+            # the project's main units.
+
+            unit = file.unit()
+            dialog_msg = ("Do you want to add '%s' to the main units of "
+                  "project '%s'?" % (unit, project.name()))
+
+            if GPS.MDI.yes_no_dialog(dialog_msg):
+                project.add_main_unit(unit)
+                project.save()
+                project.recompute()
+
+            return True
+
+        # Register the 'Main Unit' FileTemplate
+        GPS.FileTemplate.register(
+            alias_name="main_unit",
+            label="Ada Main Unit",
+            unit_param="name",
+            language="ada",
+            is_impl=True,
+            post_action=__add_to_main_units)
+
         :param str alias_name: the name of the alias to use
         :param str label: label used for displaying purposes
         :param str unit_param: the alias parameter to use for naming
         :param str language: the file template's language
         :param bool is_impl: whether it's an implementation file or not
         :param string impl_alias_name: The optional implementation alias name
+        :param post_action:  A subprogram called after the creation of a file
+        from this template.
+        :type post_action: (:class:`GPS.File`, :class:`GPS.Project`) -> bool
         """
         pass  # implemented in Ada
 
@@ -8343,6 +8379,14 @@ class Project(object):
         :return: An instance of :class:`GPS.Project`
         """
         pass  # implemented in Ada
+
+    def save(self):
+        """
+        Save the project. Return True if the project was saved without
+        problems, False otherwise.
+
+        :return: A bool indicating the saving status
+        """
 
     def name(self):
         """

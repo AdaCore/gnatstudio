@@ -49,12 +49,13 @@ package body Language_Handlers.Assistants is
    Create_Impl_Pref         : Boolean_Preference;
 
    type File_Template_Type is tagged record
-      Alias      : Alias_Type;
-      Label      : Unbounded_String;
-      Unit_Param : Unbounded_String;
-      Language   : Unbounded_String;
-      Is_Impl    : Boolean;
-      Impl_Alias : Alias_Type := No_Alias;
+      Alias       : Alias_Type;
+      Label       : Unbounded_String;
+      Unit_Param  : Unbounded_String;
+      Language    : Unbounded_String;
+      Is_Impl     : Boolean;
+      Impl_Alias  : Alias_Type := No_Alias;
+      Post_Action : Subprogram_Type;
    end record;
    package File_Template_Lists is new Ada.Containers.Doubly_Linked_Lists
      (File_Template_Type, "=");
@@ -105,6 +106,7 @@ package body Language_Handlers.Assistants is
       Language        : String;
       Is_Impl         : Boolean;
       Impl_Alias_Name : String := "";
+      Post_Action     : Subprogram_Type := null;
       Error_Msg       : out Unbounded_String);
    --  Register a new file template.
    --
@@ -121,6 +123,9 @@ package body Language_Handlers.Assistants is
    --  file.
    --
    --  Is_Impl is used to know which file extension we should use.
+   --
+   --  If non-null, the Post_Action subprogram will be called after creating
+   --  the file(s) of the given template.
    --
    --  Error_Msg is set to a non-null string if errors are detected while
    --  trying to register the file template (e.g: when the alias does not
@@ -162,6 +167,7 @@ package body Language_Handlers.Assistants is
       Language        : String;
       Is_Impl         : Boolean;
       Impl_Alias_Name : String := "";
+      Post_Action     : Subprogram_Type := null;
       Error_Msg       : out Unbounded_String)
    is
       Alias      : constant Alias_Type := Get_Alias (Alias_Name);
@@ -218,12 +224,13 @@ package body Language_Handlers.Assistants is
       begin
          --  Add the file template in the list
 
-         File_Template := (Alias      => Alias,
-                           Label      => To_Unbounded_String (Label),
-                           Unit_Param => To_Unbounded_String (Unit_Param),
-                           Language   => To_Unbounded_String (Language),
-                           Is_Impl    => Is_Impl,
-                           Impl_Alias => Impl_Alias);
+         File_Template := (Alias       => Alias,
+                           Label       => To_Unbounded_String (Label),
+                           Unit_Param  => To_Unbounded_String (Unit_Param),
+                           Language    => To_Unbounded_String (Language),
+                           Is_Impl     => Is_Impl,
+                           Impl_Alias  => Impl_Alias,
+                           Post_Action => Post_Action);
          Language_Assistants_Module.File_Templates.Append
            (File_Template);
 
@@ -264,6 +271,8 @@ package body Language_Handlers.Assistants is
             Language        : constant String := Data.Nth_Arg (4);
             Is_Impl         : constant Boolean := Data.Nth_Arg (5);
             Impl_Alias_Name : constant String := Data.Nth_Arg (6, "");
+            Post_Action     : constant Subprogram_Type :=
+                                Data.Nth_Arg (7, null);
             Error_Msg       : aliased Unbounded_String;
          begin
             Register_File_Template
@@ -274,6 +283,7 @@ package body Language_Handlers.Assistants is
                Language        => Language,
                Is_Impl         => Is_Impl,
                Impl_Alias_Name => Impl_Alias_Name,
+               Post_Action     => Post_Action,
                Error_Msg       => Error_Msg);
 
             if Error_Msg /= Null_Unbounded_String then
@@ -319,6 +329,8 @@ package body Language_Handlers.Assistants is
                                      (Command.File_Template.Unit_Param))
                                 else
                                    "");
+      Impl_File            : Virtual_File := No_File with Unreferenced;
+      New_File             : Virtual_File := No_File;
 
       function Get_Base_Name (Part : Unit_Parts) return String;
       --  Return the base name of the file to create
@@ -331,13 +343,18 @@ package body Language_Handlers.Assistants is
       --  Get the line and column from Cursor.
       --  This is needed in order to place the cursor at the right position.
 
-      procedure Create_File_From_Expanded_Template
+      function Create_File_From_Expanded_Template
         (Part   : Unit_Parts;
          Text   : String;
-         Cursor : Integer);
+         Cursor : Integer) return Virtual_File;
       --  Create a file for the given the given expanded template Text.
       --  Part is used to know the file extension.
       --  Cursor is used to place the cursor when opening the new file.
+
+      procedure Execute_Post_Action
+        (Project : Project_Type;
+         File    : Virtual_File);
+      --  Execute the post action, if any
 
       -------------------
       -- Get_Base_Name --
@@ -375,10 +392,10 @@ package body Language_Handlers.Assistants is
       -- Create_File_From_Expanded_Template --
       ----------------------------------------
 
-      procedure Create_File_From_Expanded_Template
+      function Create_File_From_Expanded_Template
         (Part   : Unit_Parts;
          Text   : String;
-         Cursor : Integer)
+         Cursor : Integer) return Virtual_File
       is
          File   : Virtual_File;
          W_File : Writable_File;
@@ -394,7 +411,7 @@ package body Language_Handlers.Assistants is
             Kernel.Insert
               ("Cannot create file " & File.Display_Full_Name,
                Mode => Error);
-            return;
+            return No_File;
          end if;
 
          --  Write the template expanded text in it
@@ -436,7 +453,46 @@ package body Language_Handlers.Assistants is
             Project => Project,
             Line    => Line,
             Column  => Visible_Column (Column));
+
+         return File;
       end Create_File_From_Expanded_Template;
+
+      -------------------------
+      -- Execute_Post_Action --
+      -------------------------
+
+      procedure Execute_Post_Action
+        (Project : Project_Type;
+         File    : Virtual_File) is
+      begin
+         if Command.File_Template.Post_Action = null
+           or else File = No_File
+         then
+            return;
+         end if;
+
+         declare
+            Script : constant Scripting_Language :=
+                       Command.File_Template.Post_Action.Get_Script;
+            Data   : Callback_Data'Class := Script.Create (2);
+            Result : Boolean;
+         begin
+            Data.Set_Nth_Arg (1, Create_Project (Script, Project));
+            Data.Set_Nth_Arg (2, Create_File (Script, File));
+
+            Result := Command.File_Template.Post_Action.Execute (Data);
+            Free (Data);
+
+            if not Result then
+               Kernel.Insert
+                 ("Failed to execute post action '"
+                  & Command.File_Template.Post_Action.Get_Name
+                  & "' of '"
+                  & To_String (Command.File_Template.Label)
+                  & "' file template.");
+            end if;
+         end;
+      end Execute_Post_Action;
 
    begin
       if Expanded_Text = "" then
@@ -463,7 +519,7 @@ package body Language_Handlers.Assistants is
                   Params_Substitutions => Params_Substitutions,
                   Cursor               => Impl_Cursor);
             begin
-               Create_File_From_Expanded_Template
+               Impl_File := Create_File_From_Expanded_Template
                  (Part   => Unit_Body,
                   Text   => Impl_Expanded_Text,
                   Cursor => Impl_Cursor);
@@ -471,14 +527,19 @@ package body Language_Handlers.Assistants is
          end if;
       end if;
 
-      Create_File_From_Expanded_Template
+      New_File := Create_File_From_Expanded_Template
         (Part   =>
            (if Command.File_Template.Is_Impl then
-               Unit_Body
+                 Unit_Body
             else
                Unit_Spec),
          Text   => Expanded_Text,
          Cursor => Cursor);
+
+      --  Execute the post action, if any
+      Execute_Post_Action
+        (Project => Project,
+         File    => New_File);
 
       return Success;
    end Execute;
@@ -567,7 +628,8 @@ package body Language_Handlers.Assistants is
                            3 => Param ("unit_param"),
                            4 => Param ("language"),
                            5 => Param ("is_impl"),
-                           6 => Param ("impl_alias_name", Optional => True)),
+                           6 => Param ("impl_alias_name", Optional => True),
+                           7 => Param ("post_action", Optional => True)),
          Handler       => File_Template_Handler'Access,
          Class         => File_Template_Class,
          Static_Method => True);

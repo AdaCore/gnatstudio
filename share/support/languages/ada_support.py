@@ -207,6 +207,24 @@ end;</text>
 GPS.parse_xml(XML)
 
 
+def __add_to_main_units(project, file):
+    """
+    Ask the user if he wants to add the newly created main unit to the
+    project's main units.
+    """
+
+    unit = file.unit()
+    dialog_msg = ("Do you want to add '%s' to the main units of "
+                  "project '%s'?" % (unit, project.name()))
+
+    if GPS.MDI.yes_no_dialog(dialog_msg):
+        project.add_main_unit(unit)
+        project.save()
+        project.recompute()
+
+    return True
+
+
 @hook('gps_started')
 def __on_gps_started():
     GPS.FileTemplate.register(
@@ -222,4 +240,5 @@ def __on_gps_started():
         label="Ada Main Unit",
         unit_param="name",
         language="ada",
-        is_impl=True)
+        is_impl=True,
+        post_action=__add_to_main_units)
