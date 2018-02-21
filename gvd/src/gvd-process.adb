@@ -405,9 +405,7 @@ package body GVD.Process is
             Line    => Line,
             Focus   => False);
 
-      elsif Addr /= Invalid_Address
-        and then Process.Current_File /= No_File
-      then
+      elsif Addr /= Invalid_Address then
          --  the address without debugging information
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,

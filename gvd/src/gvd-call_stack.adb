@@ -352,7 +352,7 @@ package body GVD.Call_Stack is
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
             Frame, Frame_Info);
 
-         if Frame_Info = Location_Found then
+         if Frame_Info /= Location_Not_Found then
             S.Block := True;
             Gtk_New (Path, To_String (Frame));
             Select_Path (Get_Selection (S.Tree), Path);

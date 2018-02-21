@@ -173,7 +173,8 @@ package body Debugger.LLDB is
    --  Regular expression for detect error
 
    Frame_Regexp                    : constant Pattern_Matcher := Compile
-     ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\s\S]+)( at (\S+)))", Multiple_Lines);
+     ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\s\S]+)( at (\S+))?)",
+      Multiple_Lines);
    --  Regular expression for parse a frame information
 
    Running_Regexp                  : constant Pattern_Matcher := Compile
@@ -1719,7 +1720,12 @@ package body Debugger.LLDB is
 
       Match (Frame_Regexp, Str, Matched);
       if Matched (0) /= No_Match then
-         Message := Location_Found;
+         if Matched (5) /= No_Match then
+            Message := Location_Found;
+         else
+            Message := No_Debug_Info;
+         end if;
+
          Frame   := To_Unbounded_String
            (Str (Matched (1).First .. Matched (1).Last));
       end if;

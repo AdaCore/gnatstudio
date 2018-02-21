@@ -96,49 +96,48 @@ package body GVD.Code_Editors is
       if Highlight
         and then P /= null
       then
-         if P.Current_File = File
-           and then P.Current_Line = Line
+         if P.Current_File /= File
+           or else P.Current_Line /= Line
          then
-            return;
-         end if;
+            P.Current_File := File;
+            P.Current_Line := Line;
 
-         P.Current_File := File;
-         P.Current_Line := Line;
+            Unhighlight_Current_Line (Kernel);
 
-         Unhighlight_Current_Line (Kernel);
+            if File /= GNATCOLL.VFS.No_File
+              and then Line /= 0
+            then
+               Msg := Create_Simple_Message
+                 (Get_Messages_Container (Kernel),
+                  Category                 =>
+                    Messages_Category_For_Current_Line,
+                  File                     => File,
+                  Line                     => Line,
+                  Column                   => 1,
+                  Text                     => "Current line in debugger",
+                  Weight                   => 0,
+                  Flags                    => Breakpoints_Current_Line_Flags,
+                  Allow_Auto_Jump_To_First => False);
 
-         if File /= GNATCOLL.VFS.No_File
-           and then Line /= 0
-         then
-            Msg := Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               Category                 => Messages_Category_For_Current_Line,
-               File                     => File,
-               Line                     => Line,
-               Column                   => 1,
-               Text                     => "Current line in debugger",
-               Weight                   => 0,
-               Flags                    => Breakpoints_Current_Line_Flags,
-               Allow_Auto_Jump_To_First => False);
+               if Current_Line_Style = null then
+                  Current_Line_Style :=
+                    Get_Style_Manager (Kernel_Handle (Kernel))
+                      .Create_From_Preferences
+                        ("debugger current line",
+                         Fg_Pref => null,
+                         Bg_Pref => Editor_Current_Line_Color);
+                  Set_In_Speedbar (Current_Line_Style, True);
+               end if;
 
-            if Current_Line_Style = null then
-               Current_Line_Style :=
-                 Get_Style_Manager (Kernel_Handle (Kernel))
-                   .Create_From_Preferences
-                     ("debugger current line",
-                      Fg_Pref => null,
-                      Bg_Pref => Editor_Current_Line_Color);
-               Set_In_Speedbar (Current_Line_Style, True);
+               Msg.Set_Highlighting (Current_Line_Style, Highlight_Whole_Line);
+               Msg.Set_Action
+                 (new Line_Information_Record'
+                    (Text         => Null_Unbounded_String,
+                     Tooltip_Text =>
+                       To_Unbounded_String ("Current line in debugger"),
+                     Image        => Current_Line_Pixbuf,
+                     others       => <>));
             end if;
-
-            Msg.Set_Highlighting (Current_Line_Style, Highlight_Whole_Line);
-            Msg.Set_Action
-              (new Line_Information_Record'
-                 (Text         => Null_Unbounded_String,
-                  Tooltip_Text =>
-                    To_Unbounded_String ("Current line in debugger"),
-                  Image        => Current_Line_Pixbuf,
-                  others       => <>));
          end if;
 
          if P.Debugger.Is_Started then
