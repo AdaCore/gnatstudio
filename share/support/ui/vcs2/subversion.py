@@ -135,31 +135,35 @@ class SVN(core_staging.Emulate_Staging,
         class line_to_block:
             def __init__(self):
                 self.current = None
+                # keep previous commit until we find id of next one
+                self.prev = None
 
             def __call__(self, out_stream, line):
                 if line.startswith('--------------------------------------'):
                     if self.current:
-                        out_stream.emit(self.current)
+                        if self.prev:
+                            # Point Prev.parents to current.id
+                            self.prev[4] = [self.current[0]]
+                            out_stream.emit(self.prev)
+                        self.prev = self.current
                     self.current = None
                 else:
                     m = _re_log.search(line)
                     if m:
-                        rev = int(m.group('rev'))
-                        if rev == 1:
-                            parents = None
-                        else:
-                            parents = [str(rev - 1)]
-
                         self.current = GPS.VCS2.Commit(
                             id=m.group('rev'),
                             author=m.group('author'),
                             date=m.group('date'),
                             subject='',
-                            parents=parents)
+                            parents=None)
                     elif self.current:
                         if self.current[3]:
                             self.current[3] += '\n'
                         self.current[3] += line   # subject
+
+            def oncompleted(self, out_stream, status):
+                if self.prev:
+                    out_stream.emit(self.prev)
 
         p = self._svn(['log', '--non-interactive'] + args)
         return p.lines.flatMap(line_to_block())
@@ -180,6 +184,7 @@ class SVN(core_staging.Emulate_Staging,
         f = [self._relpath(for_file.path)] if for_file else []
         yield self._log_stream([
             '-rHEAD:1',
+            '--limit=%d' % (max_lines + 1),
             '--stop-on-copy'] + f).subscribe(add_log)
         visitor.history_lines(result)
 
