@@ -19,20 +19,22 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk.Event;      use Gdk.Event;
-with Glib;           use Glib;
-with Gtk.Tree_Model; use Gtk.Tree_Model;
-with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Gtk.Widget;     use Gtk.Widget;
-with Gtkada.MDI;     use Gtkada.MDI;
-with Gtkada.Tree_View; use Gtkada.Tree_View;
+with Gdk.Event;         use Gdk.Event;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Gtk.Tree_Model;    use Gtk.Tree_Model;
+with Gtk.Tree_Store;    use Gtk.Tree_Store;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.MDI;        use Gtkada.MDI;
+with Gtkada.Tree_View;  use Gtkada.Tree_View;
 
-with GPS.Kernel;       use GPS.Kernel;
-with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
-with GPS.VCS;          use GPS.VCS;
-with Language;         use Language;
-with Tooltips;         use Tooltips;
+with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;    use GPS.Kernel.MDI;
+with GPS.VCS;           use GPS.VCS;
+with Language;          use Language;
+with Tooltips;          use Tooltips;
 
 package Project_Explorers_Common is
 
@@ -50,6 +52,7 @@ package Project_Explorers_Common is
    type Base_Explorer_Tree_Record is new Tree_View_Record with record
       Kernel : Kernel_Handle;
    end record;
+   type Base_Explorer_Tree is access all Base_Explorer_Tree_Record'Class;
 
    ------------------------
    -- Column definitions --
@@ -275,6 +278,18 @@ package Project_Explorers_Common is
       Context : in out Selection_Context;
       Iter    : Gtk_Tree_Iter);
    --  Return the context to use for the contextual menu
+
+   procedure Drag_Data_Get
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Get drag&drop data from Base_Explorer_Tree widgets
+
+   procedure Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Accept drag&drop data in Base_Explorer_Tree widgets
 
 private
 

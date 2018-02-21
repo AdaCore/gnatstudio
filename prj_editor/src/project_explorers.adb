@@ -37,6 +37,7 @@ with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -641,14 +642,20 @@ package body Project_Explorers is
       H1.Explorer := Project_Explorer (Explorer);
       Project_View_Changed_Hook.Add (H1, Watch => Explorer);
 
-      --  The explorer (project view) is automatically refreshed when the
-      --  project view is changed.
+      --  Set the DnD handlers
 
       Gtk.Dnd.Dest_Set
-        (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
+        (Explorer.Tree, Dest_No_Default, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.Tree, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Explorer.Kernel);
+        (Explorer.Tree,
+         Signal_Drag_Data_Received,
+         Project_Explorers_Common.Drag_Data_Received'Access,
+         Explorer.Kernel);
+      Explorer.Tree.Enable_Model_Drag_Source
+        (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
+      Kernel_Callback.Connect
+        (Explorer.Tree, Signal_Drag_Data_Get,
+         Drag_Data_Get'Access, Explorer.Kernel);
 
       --  Sorting is not alphabetic: directories come first, then files. Use
       --  a custom sort function
