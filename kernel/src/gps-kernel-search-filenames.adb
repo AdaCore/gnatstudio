@@ -18,7 +18,7 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
+with Interfaces.C;              use Interfaces.C;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
@@ -640,8 +640,9 @@ package body GPS.Kernel.Search.Filenames is
 
          if UTF8 /= Gtkada.Types.Null_Ptr then
             Tmp := new String (1 .. Length);
-            To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
-            Free (UTF8);
+            To_Ada (Gtkada.Types.Value (UTF8, size_t (Length)),
+                    Tmp.all, Count, False);
+            Gtkada.Types.g_free (UTF8);
          end if;
       end;
 

@@ -18,7 +18,6 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Text_IO;
-with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off);
@@ -143,7 +142,7 @@ package body Src_Editor_Buffer is
    package Buffer_Timeout is new Glib.Main.Generic_Sources (Source_Buffer);
 
    function Strlen
-     (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
+     (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
    pragma Import (C, Strlen);
    --  Import Strlen directly, for efficiency
 
@@ -838,7 +837,7 @@ package body Src_Editor_Buffer is
 
    procedure Free (S : in out Src_String) is
       function To_chars_ptr is new Ada.Unchecked_Conversion
-        (Unchecked_String_Access, Interfaces.C.Strings.chars_ptr);
+        (Unchecked_String_Access, Gtkada.Types.Chars_Ptr);
    begin
       if not S.Read_Only then
          --  was returned by Gtk.Text_Buffer.Get_Text
@@ -870,7 +869,7 @@ package body Src_Editor_Buffer is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Success              : Boolean;
       Result               : Src_String;
-      Chars                : Interfaces.C.Strings.chars_ptr;
+      Chars                : Gtkada.Types.Chars_Ptr;
 
    begin
       if Line not in 1 .. Buffer.Last_Editable_Line then
@@ -912,7 +911,7 @@ package body Src_Editor_Buffer is
    is
       Start, The_End : Gtk_Text_Iter;
       Result         : GNAT.Strings.String_Access;
-      Chars          : Interfaces.C.Strings.chars_ptr;
+      Chars          : Gtkada.Types.Chars_Ptr;
       C_Str          : Unchecked_String_Access;
 
    begin
@@ -3078,8 +3077,8 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Local_Highlight is
-         UTF8   : constant Interfaces.C.Strings.chars_ptr :=
-                    Get_Slice (Entity_Start, Entity_End);
+         UTF8   : constant Gtkada.Types.Chars_Ptr :=
+           Get_Slice (Entity_Start, Entity_End);
 
          --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
          --  since this would give the number of chars, not bytes.

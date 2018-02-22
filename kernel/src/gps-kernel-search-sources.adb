@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C.Strings;       use Interfaces.C, Interfaces.C.Strings;
+with Interfaces.C;               use Interfaces.C;
 with GNAT.Strings;               use GNAT.Strings;
 with GNAT.Heap_Sort;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;

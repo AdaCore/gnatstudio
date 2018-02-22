@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C.Strings;       use Interfaces.C.Strings;
+with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Convert;               use Glib.Convert;
@@ -32,6 +32,7 @@ with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
+with Gtkada.Types;               use Gtkada.Types;
 
 package body GPS.Kernel.Charsets is
    CHARSET : constant GNAT.Strings.String_Access := Getenv ("CHARSET");
@@ -326,6 +327,10 @@ package body GPS.Kernel.Charsets is
       First_Invalid : Natural;
       Charset : constant String := Get_File_Charset (File);
       C             : Integer := Charsets'First;
+
+      function To_Unchecked_String is new Ada.Unchecked_Conversion
+        (Chars_Ptr, Unchecked_String_Access);
+
    begin
       Props := (Invalid_UTF8          => False,
                 CR_Found              => False,

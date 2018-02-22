@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Unchecked_Conversion;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
@@ -30,6 +31,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Convert;              use Glib.Convert;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Types;
 
 with GUI_Utils;
 with GPS.Editors;               use GPS.Editors;
@@ -210,9 +212,11 @@ package body VFS_Module is
         (File : in out Writable_File; N : Positive; LF : Boolean)
       is
          Local     : GNAT.OS_Lib.String_Access;
-         Res       : chars_ptr;
+         Res       : Gtkada.Types.Chars_Ptr;
          B_Read    : aliased Natural;
          B_Written : aliased Natural;
+         function Convert is new Ada.Unchecked_Conversion
+           (Gtkada.Types.Chars_Ptr, Interfaces.C.Strings.chars_ptr);
       begin
          declare
             Content : Unbounded_String := Nth_Arg (Data, N);
@@ -239,9 +243,9 @@ package body VFS_Module is
 
          GNAT.OS_Lib.Free (Local);
 
-         Write (File, Res);
+         Write (File, Convert (Res));
 
-         Free (Res);
+         Gtkada.Types.g_free (Res);
       end Write;
 
    begin

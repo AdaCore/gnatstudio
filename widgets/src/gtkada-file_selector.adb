@@ -58,7 +58,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
-with Gtkada.Types;              use Gtkada.Types;
 
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
@@ -105,15 +104,15 @@ package body Gtkada.File_Selector is
       Patternname : String;
       Defaultname : String;
       Style       : Integer;
-      Kind        : Integer) return Chars_Ptr;
+      Kind        : Integer) return Interfaces.C.Strings.chars_ptr;
    pragma Import (C, NativeFileSelection, "NativeFileSelection");
 
    function NativeDirSelection
      (Title   : String;
-      Basedir : String) return Chars_Ptr;
+      Basedir : String) return Interfaces.C.Strings.chars_ptr;
    pragma Import (C, NativeDirSelection, "NativeDirSelection");
 
-   procedure c_free (S : Chars_Ptr);
+   procedure c_free (S : Interfaces.C.Strings.chars_ptr);
    pragma Import (C, c_free, "free");
 
    -----------------------
@@ -467,7 +466,7 @@ package body Gtkada.File_Selector is
    is
       Pos_Mouse     : constant := 2;
       File_Selector : File_Selector_Window_Access;
-      S             : Chars_Ptr;
+      S             : Interfaces.C.Strings.chars_ptr;
       Working_Dir   : Virtual_File;
       Initial_Dir   : Virtual_File;
       Default_File  : Virtual_File;

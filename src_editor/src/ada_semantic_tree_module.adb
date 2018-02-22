@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;                 use Ada.Calendar;
-with Interfaces.C.Strings;         use Interfaces.C.Strings;
+with Ada.Unchecked_Conversion;
 
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
@@ -119,6 +119,9 @@ package body Ada_Semantic_Tree_Module is
          UTF8_Len : Natural;
          Props    : File_Props;
          Result   : String_Access;
+
+         function To_Unchecked_String is new Ada.Unchecked_Conversion
+           (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
       begin
          Read_File_With_Charset (File, UTF8, UTF8_Len, Props);
          --  We don't use Interfaces.C.Strings.Value function here to

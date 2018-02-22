@@ -25,6 +25,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
 with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;
@@ -55,6 +56,7 @@ with Ada.Strings.Unbounded;
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with Gtk.Clipboard;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Gtkada.Types;
 
 package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
@@ -1117,6 +1119,9 @@ package Src_Editor_Buffer is
 
    function To_String (S : Src_String) return String;
    --  Return the string in Src_String, and the empty string if S is null
+
+   function To_Unchecked_String is new Ada.Unchecked_Conversion
+     (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
 
    procedure Free (S : in out Src_String);
    --  Free the memory associated with S
