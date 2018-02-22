@@ -271,7 +271,7 @@ package body GPS.Kernel.Search.Sources is
                  (Value (UTF8, size_t (Length)), Self.Text.all, Count, False);
             end if;
 
-            Free (UTF8);
+            g_free (UTF8);
          end if;
       end if;
 
@@ -543,7 +543,7 @@ package body GPS.Kernel.Search.Sources is
 
       Tmp := new String (1 .. Length);
       To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
-      Free (UTF8);
+      g_free (UTF8);
 
       if Count <= 0 then
          GNAT.Strings.Free (Tmp);

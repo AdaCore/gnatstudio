@@ -103,6 +103,7 @@ package GPS.Kernel.Charsets is
    --  The returned string is UTF8. Only the UTF8_Len first characters should
    --  be used.
    --  This also normalizes newline characters.
-   --  Caller must free UTF8.
+   --  Caller must free UTF8. NOTE: make sure to free the string with g_free,
+   --  not Interfaces.C.Strings.Free!
 
 end GPS.Kernel.Charsets;
