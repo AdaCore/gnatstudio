@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2017, AdaCore                     --
+--                     Copyright (C) 2007-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -28,6 +28,7 @@ with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
+with Gtkada.Types;                 use Gtkada.Types;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
@@ -114,7 +115,7 @@ package body Ada_Semantic_Tree_Module is
       --  Ensure result is UTF8 encoded
 
       declare
-         UTF8     : chars_ptr;
+         UTF8     : Gtkada.Types.Chars_Ptr;
          UTF8_Len : Natural;
          Props    : File_Props;
          Result   : String_Access;
@@ -123,7 +124,7 @@ package body Ada_Semantic_Tree_Module is
          --  We don't use Interfaces.C.Strings.Value function here to
          --  avoid stack overflow.
 
-         if UTF8 = Null_Ptr then
+         if UTF8 = Gtkada.Types.Null_Ptr then
             --  Defensive programming
             Trace (Me, "Could not read/convert contents of" &
                    (+File.Full_Name));
@@ -132,7 +133,7 @@ package body Ada_Semantic_Tree_Module is
 
          Result := new String (1 .. UTF8_Len);
          Result.all := To_Unchecked_String (UTF8) (1 .. UTF8_Len);
-         Interfaces.C.Strings.Free (UTF8);
+         g_free (UTF8);
 
          return Result;
       end;

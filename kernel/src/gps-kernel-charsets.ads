@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2017, AdaCore                     --
+--                     Copyright (C) 2005-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -103,6 +103,7 @@ package GPS.Kernel.Charsets is
    --  The returned string is UTF8. Only the UTF8_Len first characters should
    --  be used.
    --  This also normalizes newline characters.
-   --  Caller must free UTF8.
+   --  Caller must free UTF8. NOTE: make sure to free the string with g_free,
+   --  not Interfaces.C.Strings.Free!
 
 end GPS.Kernel.Charsets;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013-2017, AdaCore                     --
+--                     Copyright (C) 2013-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -271,7 +271,7 @@ package body GPS.Kernel.Search.Sources is
                  (Value (UTF8, size_t (Length)), Self.Text.all, Count, False);
             end if;
 
-            Free (UTF8);
+            g_free (UTF8);
          end if;
       end if;
 
@@ -543,7 +543,7 @@ package body GPS.Kernel.Search.Sources is
 
       Tmp := new String (1 .. Length);
       To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
-      Free (UTF8);
+      g_free (UTF8);
 
       if Count <= 0 then
          GNAT.Strings.Free (Tmp);
