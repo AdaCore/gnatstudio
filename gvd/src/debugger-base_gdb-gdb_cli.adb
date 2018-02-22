@@ -2771,7 +2771,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                     (S (Matched (2).First .. Matched (2).Last));
                end if;
             else
-               if Matched (5) /= No_Match then
+               if Matched (6) /= No_Match then
+                  Current.Except := To_Unbounded_String
+                    (S (Matched (6).First .. Matched (6).Last));
+
+               elsif Matched (5) /= No_Match then
                   Current.Except := To_Unbounded_String
                     (S (Matched (5).First .. Matched (5).Last));
                else

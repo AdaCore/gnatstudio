@@ -3458,7 +3458,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         (Matched (2).First .. Matched (2).Last));
                   end if;
                else
-                  if Matched (5) /= No_Match then
+                  if Matched (6) /= No_Match then
+                     B.Except := To_Unbounded_String
+                       (Element (C).Text
+                        (Matched (6).First .. Matched (6).Last));
+
+                  elsif Matched (5) /= No_Match then
                      B.Except := To_Unbounded_String
                        (Element (C).Text
                         (Matched (5).First .. Matched (5).Last));
