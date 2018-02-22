@@ -86,6 +86,9 @@ package body Completion_Module is
    Me_Adv : constant Trace_Handle := Create
      ("GPS.COMPLETION.MODULE_ADVANCED", Off);
 
+   Completion_Trace : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.MODULE_COMPLETION", GNATCOLL.Traces.On);
+
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
    Smart_Completion_Trigger_Timeout : Integer_Preference;
@@ -1215,7 +1218,9 @@ package body Completion_Module is
    is
       File : Structured_File_Access;
    begin
-      if Smart_Completion.Get_Pref /= Disabled then
+      if Completion_Trace.Active
+        and then Smart_Completion.Get_Pref /= Disabled
+      then
          declare
             Project_Files : File_Array_Access :=
               Get_Registry (Kernel).Tree.Root_Project.Source_Files (True);
@@ -1621,6 +1626,10 @@ package body Completion_Module is
              & "'Normal' is 'Manual' + language specific characters. "
              & "'Dynamic' is on every character."),
          Default => Dynamic);
+
+      if not Completion_Trace.Active then
+         Smart_Completion.Set_Pref (Manager, "Disabled");
+      end if;
 
       Smart_Completion_Trigger_Timeout := Create
         (Manager,
