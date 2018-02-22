@@ -16,10 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Debugger;             use Debugger;
-with GNAT.Expect;          use GNAT.Expect;
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
-with Process_Proxies;      use Process_Proxies;
+with GNAT.Expect;               use GNAT.Expect;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with Debugger;                  use Debugger;
+with GVD.Preferences;           use GVD.Preferences;
+with Process_Proxies;           use Process_Proxies;
 with System;
 
 package body GVD.Trace is
@@ -88,13 +89,13 @@ package body GVD.Trace is
       Str     : String;
       Kind    : IO_Kind := Input_Kind)
    is
-      Num  : constant String := Integer'Image (Process.Debugger_Num);
-      Output : String (1 .. Str'Length * 2);
+      Num        : constant String := Integer'Image (Process.Debugger_Num);
+      Output     : String (1 .. Str'Length * 2);
       pragma Warnings (Off, Output);
-      Index  : Natural := Output'First;
-      Prefix : constant String := '[' & Num (2 .. Num'Last) & "] ";
+      Index      : Natural := Output'First;
+      Prefix     : constant String := '[' & Num (2 .. Num'Last) & "] ";
       Had_Output : Boolean := False;
-      H : Trace_Handle;
+      H          : Trace_Handle;
 
    begin
       if Kind = Input_Kind
@@ -168,6 +169,14 @@ package body GVD.Trace is
       pragma Unreferenced (Descriptor);
       P : constant Visual_Debugger := To_Process (Process);
    begin
+      if Debugger_Console_All_Interactions.Get_Pref then
+         P.Output_Text (Str);
+      end if;
+
+      if P.Store_History then
+         P.Interactions_History.Append (Str);
+      end if;
+
       Output_Message (P, Str, Input_Kind);
       P.Log_Lines := 1;
    end Input_Filter;
@@ -184,6 +193,14 @@ package body GVD.Trace is
       pragma Unreferenced (Descriptor);
       P : constant Visual_Debugger := To_Process (Process);
    begin
+      if Debugger_Console_All_Interactions.Get_Pref then
+         P.Output_Text (Str);
+      end if;
+
+      if P.Store_History then
+         P.Interactions_History.Append (Str);
+      end if;
+
       Output_Message (P, Str, Output_Kind);
    end Output_Filter;
 

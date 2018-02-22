@@ -37,6 +37,7 @@ with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GPS.Dialogs;          use GPS.Dialogs;
 with GNAT.TTY;
+with String_List_Utils;
 
 package GVD.Process is
 
@@ -155,6 +156,11 @@ package GVD.Process is
       --  optimize the handling of regexp filters.
 
       Pc : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+
+      --  Interactions history for full log in the Message window
+      --  when we can't start gdb
+      Store_History        : Boolean := True;
+      Interactions_History : String_List_Utils.String_List.Vector;
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 

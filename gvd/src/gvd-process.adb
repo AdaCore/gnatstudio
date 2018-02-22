@@ -601,9 +601,8 @@ package body GVD.Process is
 
       Mode := Get_Command_Mode (Get_Process (Process.Debugger));
 
-      if Mode = User
-        or else Mode = GVD.Types.Visible
-        or else Debugger_Console_All_Interactions.Get_Pref
+      if not Debugger_Console_All_Interactions.Get_Pref
+        and then (Mode = User or else Mode = GVD.Types.Visible)
       then
          Filter_Output (Process.Debugger, Mode, Str, Result);
 
@@ -738,7 +737,7 @@ package body GVD.Process is
       end if;
 
       if Output_Command
-        or else Debugger_Console_All_Interactions.Get_Pref
+        and then not Debugger_Console_All_Interactions.Get_Pref
       then
          Debugger.Output_Text (Command & ASCII.LF, Is_Command => True);
       end if;
@@ -1203,11 +1202,21 @@ package body GVD.Process is
          Raise_Child (Console_Child);
       end if;
 
+      Process.Store_History := False;
+      Process.Interactions_History.Clear;
+
       return Process;
 
    exception
       when Process_Died =>
          GNATCOLL.Traces.Trace (Me, "could not launch the debugger");
+
+         for Str of Process.Interactions_History loop
+            Kernel.Messages_Window.Insert (Str, Mode => Error);
+         end loop;
+         Process.Store_History := False;
+         Process.Interactions_History.Clear;
+
          declare
             Dummy : constant Message_Dialog_Buttons :=
               Message_Dialog
@@ -1224,6 +1233,12 @@ package body GVD.Process is
          end;
 
       when Spawn_Error =>
+         for Str of Process.Interactions_History loop
+            Kernel.Messages_Window.Insert (Str, Mode => Error);
+         end loop;
+         Process.Store_History := False;
+         Process.Interactions_History.Clear;
+
          --  Do not display a dialog here since the Spawn procedure displays
          --  a dialog before raising Spawn_Error.
 
@@ -1234,6 +1249,12 @@ package body GVD.Process is
          return null;
 
       when E : others =>
+         for Str of Process.Interactions_History loop
+            Kernel.Messages_Window.Insert (Str, Mode => Error);
+         end loop;
+         Process.Store_History := False;
+         Process.Interactions_History.Clear;
+
          GNATCOLL.Traces.Trace (Me, E);
          return Process;
    end Spawn;

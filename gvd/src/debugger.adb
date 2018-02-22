@@ -564,7 +564,7 @@ package body Debugger is
          --  Display the command in the output window if necessary
 
          if Mode = Visible
-           or else Debugger_Console_All_Interactions.Get_Pref
+           and then not Debugger_Console_All_Interactions.Get_Pref
          then
             Output_Text (Process, Cmd & ASCII.LF, True);
          end if;
@@ -763,7 +763,7 @@ package body Debugger is
 
                elsif Tmp /= "" then
                   if Mode in Visible_Command
-                    or else Debugger_Console_All_Interactions.Get_Pref
+                    and then not Debugger_Console_All_Interactions.Get_Pref
                   then
                      Process.Output_Text
                        (Tmp,
