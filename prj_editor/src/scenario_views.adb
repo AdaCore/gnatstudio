@@ -455,7 +455,9 @@ package body Scenario_Views is
 
                --  Find the Variable with the same name as Combo
                for J in Scenar'Range loop
-                  if External_Name (Scenar (J)) = To_String (Name) then
+                  if External_Name (Scenar (J)) = To_String (Name)
+                    and then To_String (Val) /= ""
+                  then
                      Trace (Me, "Set value of '" & To_String (Name) & "' to '"
                             & To_String (Val) & "'");
                      Add_New_Value (K, To_String (Val), Scenar (J));
@@ -769,8 +771,7 @@ package body Scenario_Views is
       --  The View is built after the initialise, Show_All must be called to
       --  show the added widgets.
       Show_All (View);
-      --  After a refresh the view is up to date so hide the warning label
-      Hide (View.Warning_Lbl);
+      Show_Msg_If_Modified (View);
       if not Show_Build then
          Hide (View.Build_Group);
       end if;
