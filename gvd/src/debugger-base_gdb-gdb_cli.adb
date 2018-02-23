@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -262,6 +262,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  and (t)break in other case.
 
    procedure Update_Frame_Info (Debugger : access Gdb_Debugger);
+
+   procedure Force_Kill (Debugger : not null access Gdb_Debugger);
+   --  Kill the underlying GDB process.
 
    --------------------
    -- Break_Or_Catch --
@@ -767,6 +770,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -----------
 
    overriding procedure Close (Debugger : access Gdb_Debugger) is
+      Can_Quit : Boolean := True;
    begin
       --  If the debugger process is dead, do not attempt to communicate
       --  with the underlying process.
@@ -777,23 +781,30 @@ package body Debugger.Base_Gdb.Gdb_CLI is
           GNAT.Expect.Invalid_Pid
       then
          --  In case the debugger was waiting for some input, or was busy
-         --  processing a command.
+         --  processing a command, interrupt it.
          --  Try to handle case were gdb is waiting on a user question.
 
          if Command_In_Process (Debugger.Process) then
-            Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
+            Send
+              (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
             Interrupt (Debugger);
 
-            --  Force the waiting of a prompt between sending the Ctrl-C above
-            --  and sending "quit".
-            Send (Debugger, "echo",
-                  Wait_For_Prompt => True,
-                  Force_Send      => True,
-                  Mode            => Internal);
+            --  Wait for the prompt after interrupting it. Sometimes the
+            --  interrupt signal is not well treated by GDB: in that case
+            --  we don't want to block GPS so wait only for 1s.
+
+            Can_Quit := Wait_Prompt (Debugger, Timeout => 1_000);
          end if;
 
-         --  Now exit the debugger
-         Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
+         --  Try to quit the debugger properly or, if no prompt was received
+         --  after interrupting GDB, kill the debugger directly.
+
+         if Can_Quit then
+            Send
+              (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
+         else
+            Force_Kill (Debugger);
+         end if;
       end if;
 
       Close (Debugger_Root (Debugger.all)'Access);
@@ -4004,5 +4015,34 @@ package body Debugger.Base_Gdb.Gdb_CLI is
            (R (Matched (1).First .. Matched (1).Last));
       end if;
    end Update_Frame_Info;
+
+   ----------------
+   -- Force_Kill --
+   ----------------
+
+   procedure Force_Kill (Debugger : not null access Gdb_Debugger) is
+      Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
+      Descriptor : constant Process_Descriptor_Access :=
+                     Get_Descriptor (Proxy);
+      SIGKILL    : constant Integer := 9;
+   begin
+      --  Should only do this when running under Windows, in native mode,
+      --  with an external execution window, and the debuggee running.
+
+      if Debugger.Debuggee_Pid /= 0           -- valid pid
+        and then Is_Started (Debugger)        -- debuggee started
+        and then Command_In_Process (Proxy)   -- and likely running
+        and then Host = Windows               -- Windows host
+        and then Is_Local (Debug_Server)      -- no remote debugging
+        and then Debugger.Execution_Window    -- external window
+      then
+         GNAT.Expect.TTY.Terminate_Process (Debugger.Debuggee_Pid);
+      elsif Descriptor /= null then
+         Send_Signal (Descriptor.all, SIGKILL);
+      end if;
+
+      --  Killing the debugger closes any remote connection
+      Debugger.Target_Connected := False;
+   end Force_Kill;
 
 end Debugger.Base_Gdb.Gdb_CLI;
