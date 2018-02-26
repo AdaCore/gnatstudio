@@ -866,7 +866,7 @@ package body LAL.Semantic_Trees is
         (Self : Node) return GNATCOLL.VFS.Virtual_File
       is
          Unit      : constant Libadalang.Analysis.Analysis_Unit :=
-           Libadalang.Analysis.Get_Unit (Self.Ada_Node);
+           Libadalang.Analysis.Unit (Self.Ada_Node);
          File_Name : constant String :=
            Libadalang.Analysis.Get_Filename (Unit);
       begin
