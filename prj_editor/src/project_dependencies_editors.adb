@@ -246,6 +246,7 @@ package body Project_Dependencies_Editors is
             Use_Align => False,
             Row_Align => 0.0,
             Col_Align => 0.0);
+         Editor.Dependencies_Tree.Get_Selection.Unselect_All;
          Editor.Dependencies_Tree.Get_Selection.Select_Iter (Iter);
 
          --  Remove the newly dropped row of the 'Known Projects' tree view
@@ -635,6 +636,7 @@ package body Project_Dependencies_Editors is
             Use_Align => False,
             Row_Align => 0.0,
             Col_Align => 0.0);
+         Editor.Dependencies_Tree.Get_Selection.Unselect_All;
          Editor.Dependencies_Tree.Get_Selection.Select_Iter (Iter);
       end if;
    end Add_New_Project;
@@ -650,14 +652,33 @@ package body Project_Dependencies_Editors is
                     Project_Dependencies_Editor (Self);
       Selection : constant Gtk_Tree_Selection :=
                     Get_Selection (Editor.Dependencies_Tree);
+      List      : Gtk_Tree_Path_List.Glist;
+      G_Iter    : Gtk_Tree_Path_List.Glist;
+      Path      : Gtk_Tree_Path;
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
-   begin
-      Get_Selected (Selection, Model, Iter);
 
-      if Iter /= Null_Iter then
-         Remove (-Model, Iter);
+      use Gtk_Tree_Path_List;
+   begin
+      Selection.Get_Selected_Rows (Model, List);
+
+      if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+         G_Iter := Gtk_Tree_Path_List.Last (List);
+
+         while G_Iter /= Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+            if Path /= Null_Gtk_Tree_Path then
+               Iter := Get_Iter (Model, Path);
+               Remove (-Model, Iter);
+            end if;
+
+            Path_Free (Path);
+            G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+         end loop;
       end if;
+
+      Gtk_Tree_Path_List.Free (List);
    end Remove_Project;
 
    ----------------
@@ -743,7 +764,7 @@ package body Project_Dependencies_Editors is
             1 + Project_Info_Column => Cst_Project_Name'Unchecked_Access),
          Show_Column_Titles => True,
          Initial_Sort_On    => 1 + Project_Info_Column,
-         Selection_Mode     => Gtk.Enums.Selection_Single);
+         Selection_Mode     => Gtk.Enums.Selection_Multiple);
       Add (Scrolled, Self.Dependencies_Tree);
       Model := -Get_Model (Self.Dependencies_Tree);
       Dependencies_View.Append (Scrolled, Expand => True, Fill => True);

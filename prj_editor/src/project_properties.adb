@@ -343,6 +343,13 @@ package body Project_Properties is
    --  Check whether any other attribute used this one as an index, and update
    --  their editor
 
+   procedure Get_First_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Model     : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : out Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Get_Selected equivalent which selects and returns the first selected
+   --  node when multiple selections
+
    ---------------------------------
    -- Attribute editors (indexed) --
    ---------------------------------
@@ -1836,6 +1843,34 @@ package body Project_Properties is
       end loop;
    end Select_Attribute_In_List;
 
+   ------------------------
+   -- Get_First_Selected --
+   ------------------------
+
+   procedure Get_First_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Model     : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      List : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+      use Gtk_Tree_Path_List;
+   begin
+      Selection.Get_Selected_Rows (Model, List);
+
+      if List /= Gtk_Tree_Path_List.Null_List then
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+         Selection.Unselect_All;
+         Selection.Select_Iter (Iter);
+      else
+         Iter := Null_Iter;
+      end if;
+
+      Free (List);
+   end Get_First_Selected;
+
    ----------------------------
    -- Attribute_List_Changed --
    ----------------------------
@@ -2297,20 +2332,42 @@ package body Project_Properties is
      (Self : access Glib.Object.GObject_Record'Class)
    is
       Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Self);
-      M    : Gtk_Tree_Model;
-      Iter : Gtk_Tree_Iter;
-   begin
-      Get_Selected (Get_Selection (Ed.View), M, Iter);
-      if Iter /= Null_Iter then
-         Select_Attribute_In_List
-           (Project     => Ed.Project,
-            Index_Pkg   => Ed.Attribute.Get_Pkg,
-            Index_Name  => Ed.Attribute.Get_Name,
-            Index_Value => Get_String (Ed.Model, Iter, 0),
-            Is_Selected => False);
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
 
-         Remove (Ed.Model, Iter);
+      use Gtk_Tree_Path_List;
+   begin
+      Ed.View.Get_Selection.Get_Selected_Rows (Model, List);
+
+      if Model /= Null_Gtk_Tree_Model
+        and then List /= Gtk_Tree_Path_List.Null_List
+      then
+         G_Iter := Gtk_Tree_Path_List.Last (List);
+
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+            if Path /= Null_Gtk_Tree_Path then
+               Iter := Get_Iter (Model, Path);
+               Select_Attribute_In_List
+                 (Project     => Ed.Project,
+                  Index_Pkg   => Ed.Attribute.Get_Pkg,
+                  Index_Name  => Ed.Attribute.Get_Name,
+                  Index_Value => Get_String (Ed.Model, Iter, 0),
+                  Is_Selected => False);
+
+               Remove (Ed.Model, Iter);
+            end if;
+
+            Path_Free (Path);
+            G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+         end loop;
       end if;
+
+      Gtk_Tree_Path_List.Free (List);
    end Remove_String_From_List;
 
    --------------------
@@ -2324,7 +2381,7 @@ package body Project_Properties is
       Iter, Iter2 : Gtk_Tree_Iter;
       Path        : Gtk_Tree_Path;
    begin
-      Get_Selected (Get_Selection (Ed.View), M, Iter);
+      Get_First_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
          Path := Get_Path (Ed.Model, Iter);
 
@@ -2342,6 +2399,7 @@ package body Project_Properties is
                   Parent  => Parent (Ed.Model, Iter),
                   Sibling => Iter);
                Set_And_Clear (Ed.Model, Iter2, Values);
+               Unselect_All (Get_Selection (Ed.View));
                Select_Iter (Get_Selection (Ed.View), Iter2);
             end if;
          end;
@@ -2361,7 +2419,7 @@ package body Project_Properties is
       M           : Gtk_Tree_Model;
       Iter, Iter2 : Gtk_Tree_Iter;
    begin
-      Get_Selected (Get_Selection (Ed.View), M, Iter);
+      Get_First_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
          declare
             Values : constant Glib.Values.GValue_Array :=
@@ -2377,6 +2435,7 @@ package body Project_Properties is
                Insert_After
                  (Ed.Model, Iter2, Parent => Parent (Ed.Model, Iter),
                   Sibling                 => Iter);
+               Unselect_All (Get_Selection (Ed.View));
                Select_Iter (Get_Selection (Ed.View), Iter2);
                Set_And_Clear (Ed.Model, Iter2, Values);
             end if;
@@ -2544,6 +2603,7 @@ package body Project_Properties is
                                  2 => GType_String)); --  relative name
 
          Gtk_New (Editor.View, Editor.Model);
+         Editor.View.Get_Selection.Set_Mode (Selection_Multiple);
          Scrolled.Add (Editor.View);
 
          --  Add an 'Include subdirectories' option if the list displays
@@ -2972,7 +3032,7 @@ package body Project_Properties is
       if Editor.Ent /= null then
          return Get_Safe_Text (Editor.Ent);
       else
-         Get_Selected (Get_Selection (Editor.View), M, Iter);
+         Get_First_Selected (Get_Selection (Editor.View), M, Iter);
          if Iter = Null_Iter then
             Iter := Get_Iter_First (Editor.Model);
          end if;
