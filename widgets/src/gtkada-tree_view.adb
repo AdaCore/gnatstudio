@@ -17,7 +17,6 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
 with Glib.Object;          use Glib.Object;
 with Glib.Properties;      use Glib.Properties;
@@ -30,6 +29,7 @@ with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
 with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.Types;         use Gtkada.Types;
 with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 

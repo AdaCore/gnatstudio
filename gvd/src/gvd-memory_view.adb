@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with Interfaces.C.Strings;
 
 with Gdk;                      use Gdk;
 with Gdk.Event;                use Gdk.Event;
@@ -80,6 +79,7 @@ with Gtk.Widget;            use Gtk.Widget;
 with Memory_View_Pkg;       use Memory_View_Pkg;
 with GNAT.Strings;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with Gtkada.Types;
 
 package body GVD.Memory_View is
 
@@ -1822,7 +1822,7 @@ package body GVD.Memory_View is
             begin
                declare
                   Str : constant String :=
-                    Interfaces.C.Strings.Value (Arg1.Key.String);
+                    Gtkada.Types.Value (Arg1.Key.String);
                begin
                   if Str'Length /= 0 then
                      Insert (View, Str);

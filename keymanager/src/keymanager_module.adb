@@ -40,6 +40,7 @@ with Gdk.Device;               use Gdk.Device;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
+with Gtkada.Types;             use Gtkada.Types;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Convert;             use Glib.Convert;
 with Glib;                     use Glib;
@@ -50,7 +51,6 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Style;
 with Histories;                use Histories;
-with Interfaces.C.Strings;
 with KeyManager_Module.GUI;
 with System.Assertions;        use System.Assertions;
 with XML_Parsers;
@@ -1112,7 +1112,7 @@ package body KeyManager_Module is
                   else
                      Keymanager_Module.Argument_Current := new String'
                        (Tmp.all
-                        & Interfaces.C.Strings.Value (Event.Key.String));
+                        & Gtkada.Types.Value (Event.Key.String));
                   end if;
                   Free (Tmp);
                end;
@@ -2268,7 +2268,7 @@ package body KeyManager_Module is
                 Group            => 0,
                 State            => 0,
                 Length           => 1,
-                String           => Interfaces.C.Strings.Null_Ptr,
+                String           => Null_Ptr,
                 Hardware_Keycode => Keycode);
             Ref (Event.Key.Window);
 

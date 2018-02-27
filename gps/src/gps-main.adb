@@ -76,6 +76,7 @@ with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.MDI;                       use Gtkada.MDI;
 with Gtkada.Style;
+with Gtkada.Types;                     use Gtkada.Types;
 
 with Config;                           use Config;
 with Default_Preferences;              use Default_Preferences;
@@ -195,7 +196,7 @@ with GPS.Traces;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
-   use ICS;
+   use type ICS.chars_ptr;
    use type Glib.Gint;
 
    Me         : constant Trace_Handle := Create ("GPS.MAIN.GPS");
@@ -1096,232 +1097,232 @@ procedure GPS.Main is
       end To_Gchar;
 
       Opt_Project  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("project"),
+                       (Long_Name       => New_String ("project"),
                         Short_Name      => To_Gchar ('P'),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Load project file project or project.gpr"),
-                        Arg_Description => ICS.New_String ("project"));
+                        Arg_Description => New_String ("project"));
       Opt_Scenario  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("scenario"),
+                       (Long_Name       => New_String ("scenario"),
                         Short_Name      => To_Gchar ('X'),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Set the value of a scenario variable"),
-                        Arg_Description => ICS.New_String ("var=value"));
+                        Arg_Description => New_String ("var=value"));
       Opt_Help     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("help"),
+                       (Long_Name       => New_String ("help"),
                         Short_Name      => To_Gchar ('h'),
                         Flags           => G_Option_Flag_No_Arg,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Show this help message and exit"),
-                        Arg_Description => ICS.Null_Ptr);
+                        Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Help_All : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("help-all"),
+                       (Long_Name       => New_String ("help-all"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => G_Option_Flag_No_Arg +
                                          G_Option_Flag_Hidden,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Show this help message with all options"),
-                        Arg_Description => ICS.Null_Ptr);
+                        Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Version  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("version"),
+                       (Long_Name       => New_String ("version"),
                         Short_Name      => To_Gchar ('v'),
                         Flags           => G_Option_Flag_No_Arg,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Show the GPS version and exit"),
-                        Arg_Description => ICS.Null_Ptr);
+                        Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Debug    : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("debug"),
+                       (Long_Name       => New_String ("debug"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => G_Option_Flag_Optional_Arg +
                                          G_Option_Flag_Filename,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Start a debug session"),
-                        Arg_Description => ICS.New_String ("[program]"));
+                        Arg_Description => New_String ("[program]"));
       Opt_Debugger : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("debugger"),
+                       (Long_Name       => New_String ("debugger"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => G_Option_Flag_Filename,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Specify the debugger's command line"),
-                        Arg_Description => ICS.New_String
+                        Arg_Description => New_String
                           ("debugger"));
       Opt_Hide     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("hide"),
+                       (Long_Name       => New_String ("hide"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => G_Option_Flag_No_Arg,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Hide GPS main window"),
-                        Arg_Description => ICS.Null_Ptr);
+                        Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Host     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("host"),
+                       (Long_Name       => New_String ("host"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Use tools_host to launch tools (e.g. gdb)"),
-                        Arg_Description => ICS.New_String ("tools_host"));
+                        Arg_Description => New_String ("tools_host"));
       Opt_Target   : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("target"),
+                       (Long_Name       => New_String ("target"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Load program on machine TARG using " &
                            "protocol PRO"),
-                        Arg_Description => ICS.New_String ("TARG:PRO"));
+                        Arg_Description => New_String ("TARG:PRO"));
       Opt_Load     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("load"),
+                       (Long_Name       => New_String ("load"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Execute an external file written in " &
                            "the language lang"),
-                        Arg_Description => ICS.New_String ("lang:file"));
+                        Arg_Description => New_String ("lang:file"));
       Opt_Eval     : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("eval"),
+                       (Long_Name       => New_String ("eval"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Execute a command written in the language " &
                            "lang (before --load)"),
-                        Arg_Description => ICS.New_String ("lang:cmd"));
+                        Arg_Description => New_String ("lang:cmd"));
       Opt_Readonly : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("readonly"),
+                       (Long_Name       => New_String ("readonly"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => G_Option_Flag_No_Arg,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Open all files in read-only mode"),
-                        Arg_Description => ICS.Null_Ptr);
+                        Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Server   : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("server"),
+                       (Long_Name       => New_String ("server"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Start GPS in server mode, opening a " &
                            "socket on the given port"),
-                        Arg_Description => ICS.New_String ("port"));
+                        Arg_Description => New_String ("port"));
       Opt_Traceon  : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("traceon"),
+                       (Long_Name       => New_String ("traceon"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Activate traces for a specific debug stream"),
-                        Arg_Description => ICS.New_String ("stream"));
+                        Arg_Description => New_String ("stream"));
       Opt_Traceoff : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => ICS.New_String ("traceoff"),
+                       (Long_Name       => New_String ("traceoff"),
                         Short_Name      => To_Gchar (ASCII.NUL),
                         Flags           => 0,
                         Arg             => G_Option_Arg_Callback,
                         Arg_Data        => On_Switch'Address,
-                        Description     => ICS.New_String
+                        Description     => New_String
                           ("Disable traces for a specific debug stream"),
-                        Arg_Description => ICS.New_String ("stream"));
+                        Arg_Description => New_String ("stream"));
       Opt_Tracefile : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("tracefile"),
+                        (Long_Name       => New_String ("tracefile"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Load traces configuration from file"),
-                         Arg_Description => ICS.New_String ("file"));
+                         Arg_Description => New_String ("file"));
       Opt_Tracelist : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("tracelist"),
+                        (Long_Name       => New_String ("tracelist"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_No_Arg,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("List all available debug streams"),
-                         Arg_Description => ICS.Null_Ptr);
+                         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Pwd       : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("pwd"),
+                        (Long_Name       => New_String ("pwd"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Initial current directory"),
-                         Arg_Description => ICS.New_String ("PWD"));
+                         Arg_Description => New_String ("PWD"));
       Opt_Path      : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("path"),
+                        (Long_Name       => New_String ("path"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Prepend to PATH environment variable"),
-                         Arg_Description => ICS.New_String ("PATH"));
+                         Arg_Description => New_String ("PATH"));
 
       --  Config files
 
       Opt_Config : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("config"),
+                        (Long_Name       => New_String ("config"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Specify the configuration file (.cgpr) to load"),
-                         Arg_Description => ICS.New_String ("file"));
+                         Arg_Description => New_String ("file"));
       Opt_Autoconf : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("autoconf"),
+                        (Long_Name       => New_String ("autoconf"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_No_Arg,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Generate .cgpr automatically if needed"),
-                         Arg_Description => ICS.Null_Ptr);
+                         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Configdb : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String ("configdb"),
+                        (Long_Name       => New_String ("configdb"),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_Switch'Address,
-                         Description     => ICS.New_String
+                         Description     => New_String
                            ("Extra directories for gprconfig"),
-                         Arg_Description => ICS.New_String ("dir"));
+                         Arg_Description => New_String ("dir"));
 
       --  Option for remaining arguments
       Opt_Remaining : constant Glib.Option.GOption_Entry :=
-                        (Long_Name       => ICS.New_String (""),
+                        (Long_Name       => New_String (""),
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
                          Arg_Data        => On_File_Switch'Address,
-                         Description     => ICS.Null_Ptr,
-                         Arg_Description => ICS.Null_Ptr);
+                         Description     => Gtkada.Types.Null_Ptr,
+                         Arg_Description => Gtkada.Types.Null_Ptr);
       Opt_Entries   : constant Glib.Option.GOption_Entry_Array :=
                         (Opt_Project,
                          Opt_Scenario,

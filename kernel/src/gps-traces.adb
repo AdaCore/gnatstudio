@@ -19,7 +19,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                use GNAT.Regpat;
-with Interfaces.C.Strings;
 
 with GNATCOLL.Utils;
 
@@ -56,6 +55,7 @@ with GPS.Kernel.MDI;
 with GPS.Search;                 use GPS.Search;
 
 with Glib_Values_Utils;          use Glib_Values_Utils;
+with Gtkada.Types;               use Gtkada.Types;
 
 package body GPS.Traces is
 
@@ -158,7 +158,7 @@ package body GPS.Traces is
 
    package Cell_Renderer_Toggle_Callbacks_Marshallers is
      new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-       (Interfaces.C.Strings.chars_ptr, Glib.Values.Get_Chars);
+       (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
@@ -168,7 +168,7 @@ package body GPS.Traces is
    procedure On_Select_Trace_Toggled
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Chars_Ptr;
       Self   : Traces_Editor);
    --  Called on click on the list's item
 
@@ -420,7 +420,7 @@ package body GPS.Traces is
    procedure On_Select_Trace_Toggled
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Chars_Ptr;
       Self   : Traces_Editor)
    is
       pragma Unreferenced (Object);
@@ -428,7 +428,7 @@ package body GPS.Traces is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
           (Gtk.Tree_Model.To_Interface (Self.Model),
-           Interfaces.C.Strings.Value (Path));
+           Value (Path));
 
       Parent_Iter, Parent_Parent_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin

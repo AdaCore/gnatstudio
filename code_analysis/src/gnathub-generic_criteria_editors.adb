@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Ada.Strings.Fixed;
 with Ada.Tags;
-with Interfaces.C.Strings;
 
 with Glib.Object;
 with Gtk.Cell_Renderer_Text;
@@ -26,6 +26,7 @@ with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Tree_View_Column;
 with Gtkada.Abstract_Tree_Model;
+with Gtkada.Types;
 
 package body GNAThub.Generic_Criteria_Editors is
 
@@ -37,7 +38,7 @@ package body GNAThub.Generic_Criteria_Editors is
    procedure On_Toggle_Category_Visibility
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Gtkada.Types.Chars_Ptr;
       Self   : Criteria_Editor);
    --  Called on click on the list's item
 
@@ -62,7 +63,7 @@ package body GNAThub.Generic_Criteria_Editors is
 
    package Cell_Renderer_Toggle_Callbacks_Marshallers is
      new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-           (Interfaces.C.Strings.chars_ptr, Glib.Values.Get_Chars);
+           (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
 
    package Tree_View_Column_Callbacks is
      new Gtk.Handlers.User_Callback
@@ -80,7 +81,7 @@ package body GNAThub.Generic_Criteria_Editors is
       Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
+     (1 => New_String (String (Signal_Criteria_Changed)));
 
    function Signal_Parameters return Glib.Object.Signal_Parameter_Types;
 
@@ -364,7 +365,7 @@ package body GNAThub.Generic_Criteria_Editors is
    procedure On_Toggle_Category_Visibility
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Gtkada.Types.Chars_Ptr;
       Self   : Criteria_Editor)
    is
       P    : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -374,12 +375,12 @@ package body GNAThub.Generic_Criteria_Editors is
       if Is_Visible /= null then
          Self.Filter.Convert_Iter_To_Child_Iter
            (Iter, Self.Filter.Get_Iter_From_String
-              (Interfaces.C.Strings.Value (Path)));
+              (Gtkada.Types.Value (Path)));
 
       else
          Iter := Gtk.Tree_Model.Get_Iter_From_String
           (Gtk.Tree_Model.To_Interface (Self.Model),
-           Interfaces.C.Strings.Value (Path));
+           Gtkada.Types.Value (Path));
       end if;
 
       P := Gtk.Tree_Model.Get_Path

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
-with Interfaces.C.Strings;
 with System;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -86,6 +85,7 @@ with Gtk.Target_List;            use Gtk.Target_List;
 with Gdk.Property;               use Gdk.Property;
 with GNAT.Strings;
 with Glib.Convert;               use Glib.Convert;
+with Gtkada.Types;               use Gtkada.Types;
 
 with GUI_Utils;    use GUI_Utils;
 with String_Utils; use String_Utils;
@@ -125,8 +125,8 @@ package body Src_Editor_View is
    package Source_View_Idle renames Source_View_Timeout;
 
    Target_Table : constant Target_Entry_Array :=
-     ((Interfaces.C.Strings.New_String ("text/uri-list"), 0, 0),
-      (Interfaces.C.Strings.New_String ("text/plain"), 0, 1));
+     ((New_String ("text/uri-list"), 0, 0),
+      (New_String ("text/plain"), 0, 1));
 
    procedure On_Draw_Layer
      (Widget : System.Address;
@@ -2323,7 +2323,6 @@ package body Src_Editor_View is
 
       Key         : Gdk_Key_Type;
 
-      use Interfaces.C.Strings;
    begin
       if not Active (Testsuite_Handle) then
          if not View.Get_Realized then
@@ -2355,8 +2354,7 @@ package body Src_Editor_View is
             when others =>
                if Event.Key.String /= Null_Ptr then
                   declare
-                     Str : constant String := Interfaces.C.Strings.Value
-                       (Event.Key.String);
+                     Str : constant String := Value (Event.Key.String);
                   begin
                      if Str'Length >= 1 then
                         Insert
@@ -2424,8 +2422,7 @@ package body Src_Editor_View is
          when others =>
             if Event.Key.String /= Null_Ptr then
                declare
-                  Key_Str : constant String := Interfaces.C.Strings.Value
-                    (Event.Key.String);
+                  Key_Str : constant String := Value (Event.Key.String);
                begin
                   if Key_Str'Length = 1
                     and then

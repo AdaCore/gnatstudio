@@ -24,7 +24,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Vectors;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
@@ -73,6 +72,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Action_Combo_Tool;  use Gtkada.Action_Combo_Tool;
+with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -321,7 +321,7 @@ package body GPS.Kernel.Modules.UI is
 
    type GPS_Action_Record is new Gsimple_Action_Record with record
       --  ??? This is already stored by the Gsimple_Action
-      CName : chars_ptr;
+      CName : Chars_Ptr;
       Data  : aliased GPS_Action_Proxy;
    end record;
    type GPS_Action is access all GPS_Action_Record'Class;
@@ -352,7 +352,7 @@ package body GPS.Kernel.Modules.UI is
    function On_GPS_Action_Get_Enabled (Self : Gaction) return Gboolean;
    pragma Convention (C, On_GPS_Action_Get_Enabled);
 
-   function On_GPS_Action_Get_Name (Self : Gaction) return chars_ptr;
+   function On_GPS_Action_Get_Name (Self : Gaction) return Chars_Ptr;
    pragma Convention (C, On_GPS_Action_Get_Name);
 
    function On_GPS_Action_Get_Parameter_Type
@@ -3808,7 +3808,7 @@ package body GPS.Kernel.Modules.UI is
    -- On_GPS_Action_Get_Name --
    ----------------------------
 
-   function On_GPS_Action_Get_Name (Self : Gaction) return chars_ptr is
+   function On_GPS_Action_Get_Name (Self : Gaction) return Chars_Ptr is
       S : constant GPS_Action := GPS_Action (To_Object (Self));
    begin
       return S.CName;

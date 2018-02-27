@@ -27,6 +27,7 @@ with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
+with Gtkada.Types; use Gtkada.Types;
 
 package body CodePeer.Generic_Criteria_Editors is
 
@@ -36,7 +37,7 @@ package body CodePeer.Generic_Criteria_Editors is
    procedure On_Toggle_Category_Visibility
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Chars_Ptr;
       Self   : Criteria_Editor);
    --  Called on click on the list's item
 
@@ -64,7 +65,7 @@ package body CodePeer.Generic_Criteria_Editors is
 
    package Cell_Renderer_Toggle_Callbacks_Marshallers is
      new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-           (Interfaces.C.Strings.chars_ptr, Glib.Values.Get_Chars);
+           (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
 
    package Tree_View_Column_Callbacks is
      new Gtk.Handlers.User_Callback
@@ -287,13 +288,13 @@ package body CodePeer.Generic_Criteria_Editors is
    procedure On_Toggle_Category_Visibility
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
+      Path   : Chars_Ptr;
       Self   : Criteria_Editor)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
           (Gtk.Tree_Model.To_Interface (Self.Model),
-           Interfaces.C.Strings.Value (Path));
+           Value (Path));
 
    begin
       if Object.Get_Active then

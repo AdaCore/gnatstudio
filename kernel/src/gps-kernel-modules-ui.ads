@@ -77,7 +77,7 @@ with Gtk.Menu_Bar;       use Gtk.Menu_Bar;
 with Gtk.Target_List;
 with Gtk.Toolbar;
 with Gtk.Widget;
-with Interfaces.C.Strings;
+with Gtkada.Types;
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with XML_Utils;
@@ -439,7 +439,7 @@ package GPS.Kernel.Modules.UI is
 
    My_Target_Url    : constant Guint := 0;
    Target_Table_Url : constant Gtk.Target_List.Target_Entry_Array :=
-     (1 => (Interfaces.C.Strings.New_String ("text/uri-list"),
+     (1 => (Gtkada.Types.New_String ("text/uri-list"),
             0, My_Target_Url));
 
    procedure Drag_Data_Received
