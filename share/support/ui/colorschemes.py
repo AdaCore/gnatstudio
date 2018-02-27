@@ -109,7 +109,10 @@ class ColorThemeSwitcher(object):
 
         self.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
-        Gtk.StyleContext.add_provider_for_screen(screen, self.provider, 901)
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            self.provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         self.__set_gtk_properties()
 
@@ -120,7 +123,7 @@ class ColorThemeSwitcher(object):
                 self.provider.load_from_data("*{}")  # Clear contents
             else:
                 self.provider.load_from_data(c)
-        except:
+        except Exception:
             GPS.Console().write(
                  "resetting theme preference %s\n" % self.gtkpref_name)
             GPS.Preference(self.gtkpref_name).set('')
@@ -153,6 +156,7 @@ class ColorThemeSwitcher(object):
             (with special-case support for CSS-defined values, see above.)
         """
         theme.apply_preferences(self.provider)
+
 
 the_theme_switcher = ColorThemeSwitcher()
 
@@ -226,7 +230,6 @@ class ColorSchemePicker(object):
 
         vbox, self.light_theme_radio = self.__create_radio_box(
             default, radio_group=None)
-        self.light_theme_radio.set_active(True)
         self.flow.add(vbox)
         self.flow.select_child(
             self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
@@ -240,6 +243,8 @@ class ColorSchemePicker(object):
         self.flow.add(vbox)
 
         self.flow.connect("child-activated", self.__on_child_activated)
+
+        self.light_theme_radio.set_active(True)
 
         return self.vbox
 

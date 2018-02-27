@@ -38,10 +38,7 @@ with Gtk.List_Box_Row;                      use Gtk.List_Box_Row;
 with Gtk.Notebook;                          use Gtk.Notebook;
 with Gtk.Paned;                             use Gtk.Paned;
 with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;                       use Gtk.Text_Buffer;
-with Gtk.Text_Iter;                         use Gtk.Text_Iter;
 with Gtk.Text_Tag;                          use Gtk.Text_Tag;
-with Gtk.Text_View;                         use Gtk.Text_View;
 with Gtk.Tree_Model;                        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;                    use Gtk.Tree_Selection;
 with Gtk.Tree_Store;                        use Gtk.Tree_Store;
@@ -451,10 +448,7 @@ package body GPS.Kernel.Custom.GUI is
    is
       Page_View        : Preferences_Page_View;
       Doc_Group_Widget : Preferences_Group_Widget;
-      Doc_Text_View    : Gtk_Text_View;
-      Doc_Text_Buffer  : Gtk_Text_Buffer;
-      Doc_Text_Iter    : Gtk_Text_Iter;
-
+      Doc_Label        : Gtk_Label;
    begin
       --  Create a new page
       Page_View := new Preferences_Page_View_Record;
@@ -469,14 +463,9 @@ package body GPS.Kernel.Custom.GUI is
       Doc_Group_Widget.Initialize
         (Group_Name  => "Documentation",
          Parent_View => Page_View);
-      Gtk_New (Doc_Text_View);
-      Doc_Text_View.Set_Wrap_Mode (Wrap_Word);
-      Doc_Text_View.Set_Editable (False);
-      Doc_Text_Buffer := Doc_Text_View.Get_Buffer;
-      Doc_Text_Buffer.Get_End_Iter (Doc_Text_Iter);
-      Doc_Text_Buffer.Insert (Iter => Doc_Text_Iter,
-                              Text => Self.Get_Documentation);
-      Doc_Group_Widget.Append_Child (Doc_Text_View);
+      Gtk_New (Doc_Label, Self.Get_Documentation);
+      Doc_Label.Set_Alignment (0.0, 0.0);
+      Doc_Group_Widget.Append_Child (Doc_Label);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;

@@ -12,44 +12,25 @@
    @define-color theme_bg_color green;
 */
 
-@define-color middle-gray #888;
-@define-color border-gray #666;
+@define-color theme_base_color mix(@theme_bg_color, @editor_bg_color, 0.8);
 
-@define-color mdi_border_color #ddd;
-@define-color local_toolbar_color #f8f8f8;
-@define-color notebook_background #ededed;
-@define-color toolbar_button_color #555;
-@define-color toolbar_button_insensitive_color #aaa;
-@define-color inactive_tab_color #666;
-@define-color active_tab_color black;
-@define-color scrollbar_slider_color #c3c5c6;
-@define-color gutter_color grey;
-@define-color gutter_background #f8f8f8;
-
-@define-color browser_decoration_color grey;
-@define-color browser_decoration_background #f8f8f8;
-
-@define-color completion-border-color shade (@theme_base_color, 0.7);
-@define-color completion-selected-color mix(@theme_base_color, @middle-gray, 0.5);
-@define-color completion-background-color shade(@theme_base_color, 1.10);
-@define-color completion-notes-color mix(shade(@theme_base_color, 1.40), @middle-gray, 0.2);
-@define-color completion-notes-text-color mix(@theme_fg_color, @middle-gray, 0.2);
-
-@define-color tooltip-border-color shade (@theme_base_color, 0.7);
-@define-color tooltip-background-color mix(shade(@theme_base_color, 1.40), @middle-gray, 0.2);
-@define-color tooltip-text-color mix(@theme_fg_color, @middle-gray, 0.2);
+@define-color inactive_items_color mix(@theme_base_color, @theme_fg_color, 0.55);
+@define-color inactive_items_selected_color mix(@theme_selected_bg_color, @theme_selected_fg_color, 0.7);
 
 @define-color error-color mix(@theme_base_color, red, 0.5);
-@define-color warning-color #ff7400;
+@define-color warning-color mix(@theme_base_color, darkorange, 0.9);
 
-@define-color learn-items-color shade(@theme_base_color, 1.10);
+/*********************
+ * General
+ *********************/
 
-/* The colors used to highlight the notebook tabs that are raised. Only one
- * of them (at most) has the keyboard focus and is highlighted with
- * gps_active_tab. The others are highlighting with gps_inactive_tab.
- */
-@define-color gps_active_tab   @theme_selected_bg_color;
-@define-color gps_inactive_tab @inactive_tab_color;
+.view, .menu, column-header .button, GtkListBox, GtkFlowBox {
+   background-color: @theme_base_color;
+}
+
+.mdi, GtkTextView.view {
+   background-color: @editor_bg_color;
+}
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -58,21 +39,47 @@
    -GtkNotebook-arrow-spacing: 0;
 }
 
+GtkComboBox .button {
+   border-width: 0px;
+}
+
+/*********************
+ * Task Manager
+ *********************/
+
 .gps-task-manager GtkProgressBar {
    -GtkProgressBar-min-horizontal-bar-height: 1;
 }
 
-.gps-local-toolbar {  /* local toolbar in the panes/views */
+/*************
+ * Dialogs   *
+ *************/
+
+GtkDialog > GtkBox {
+   background-color: @theme_base_color;
 }
 
-*:selected,
-*:selected:focused {
-    background-color: #B4D5FF;
-    color: @theme_fg_color;
+GtkDialog {
+   -GtkDialog-content-area-border: 0px;
+   -GtkDialog-content-area-spacing: 0px;
+   -GtkDialog-action-area-border: 0px;
+   border-width: 0px;
+}
+
+.dialog-action-box, .dialog .buttonbox {
+   background-color: @notebook_background;
 }
 
 /*************
- * Gui Utils *
+ * Menubar   *
+ *************/
+
+.menubar {
+   box-shadow: none;
+}
+
+/*************
+ * GUI Utils *
  *************/
 
 .warning-label {
@@ -120,14 +127,14 @@
 .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
    font-size: x-small;
-   color: @inactive_tab_color;
+   color: @inactive_items_color;
+   padding-top: 4px;
 }
-
 
 *:selected .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
    font-size: x-small;
-   color: @theme_fg_color;
+   color: @inactive_items_selected_color;
 }
 
 .dialog-views-button-boxes {
@@ -153,7 +160,7 @@
 
 .learn-groups > GtkLabel {
    font-weight: normal;
-   color: @inactive_tab_color;
+   color: @inactive_items_color;
    padding-top: 10px;
    padding-bottom: 10px;
 }
@@ -203,14 +210,14 @@
 
 .gps-welcome-dialog-subtitle {
    font-size: x-large;
-   color: @inactive_tab_color;
+   color: @inactive_items_color;
 }
 
 .gps-welcome-dialog-version {
    font-weight: 100;
    font-style: italic;
    font-size: large;
-   color: @tooltip-background-color;;
+   color: @tooltip-background-color;
 }
 
 /***********************
@@ -225,7 +232,7 @@
 
 .gps-welcome-view-desc {
    font-size: x-large;
-   color: @inactive_tab_color;
+   color: @inactive_items_color;
    padding-left: 12px;
    padding-bottom: 40px;
 }
@@ -245,16 +252,23 @@
    box-shadow: none;
 }
 
-GtkMenu {
+.menu .menuitem:hover {
+   background: @theme_selected_bg_color;
+   color: @theme_selected_fg_color;
+}
+
+.menubar {
+   background: @notebook_background;
+}
+
+.menu {
   border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
 }
 
-.menuitem.separator,
-.menubar .menuitem.separator,
-.primary-toolbar .menuitem.separator {
-  /* Change the color of the menu separators to make them more visible in
+.separator {
+  /* Change the color of the separators to make them more visible in
      dark themes */
-  color: @notebook_background;
+  color: @mdi_border_color;
 }
 
 /*********************
@@ -262,25 +276,8 @@ GtkMenu {
  *********************/
 
 .pane-separator {
-   background-color: @notebook_background;
+   background-color: @mdi_border_color;
    background-image: none;
-}
-
-/*********************
- * Notebooks
- *********************/
-
-GtkNotebook.noTabs {
-  /* notebooks with no tabs need borders all around */
-  border: 1px solid @mdi_border_color;
-}
-
-/* Shenanigans to support tabs-not-on-top */
-
-.notebook.leftTabs, .notebook.rightTabs {
-   /* When the MDI tabs are displayed on the left or on the right, we do not
-    * want an extra space at the top, before the first tab */
-   -GtkNotebook-initial-gap: 0;
 }
 
 /*********************
@@ -288,15 +285,12 @@ GtkNotebook.noTabs {
  *********************/
 
 .notebook.mdi {
-  -GtkNotebook-initial-gap: 5;
-
-  background-color: @notebook_background;
-  background-image: none;
-  border: 1px solid @mdi_border_color;
-  border-top-width: 0px;
+   -GtkNotebook-initial-gap: 0;
 
    /* No space between tabs */
    -GtkNotebook-tab-overlap: 0;
+
+   background-color: @notebook_background;
 }
 
 /***********************
@@ -308,48 +302,19 @@ GtkNotebook.noTabs {
   box-shadow: none;
 }
 
-.notebook.mdi.header.top {
-  border-bottom: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi.header.left {
-  border-right: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi.header.right {
-  border-left: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi.header.bottom {
-  border-top: 1px solid @mdi_border_color;
-}
-
 /*********************
  * MDI Notebook tabs
  *********************/
 
-.notebook.mdi.leftTabs {
-  border-top-width: 1px;
-  border-left-width: 0px;
-}
-
-.notebook.mdi.rightTabs {
-  border-top-width: 1px;
-  border-right-width: 0px;
-}
-
-.notebook.mdi.bottomTabs {
-  border-top-width: 1px;
-  border-bottom-width: 0px;
-}
 
 .notebook.mdi tab {
-   border-width: 0;
+   border-width: 0px;
+   border-color: @mdi_border_color;
 }
 
 .notebook.mdi tab GtkLabel {
    font-weight: normal;
-   color: @inactive_tab_color;
+   color: @inactive_items_color;
 }
 
 .notebook.mdi tab.top,
@@ -359,75 +324,41 @@ GtkNotebook.noTabs {
 
 .notebook.mdi tab.left {
    padding: 2px 5px 6px 5px;
-   border-top-width: 0px;
-   border-right-width: 1px;
 }
 .notebook.mdi tab.right {
    padding: 6px 5px 2px 5px;
-   border-top-width: 0px;
-   border-right-width: 1px;
 }
 
-.notebook.mdi tab.bottom {
-   border-top-width: 1px;
-}
-
-.notebook.mdi tab:hover {
-   background-color: @local_toolbar_color;
-}
-
-.notebook.mdi tab:active GtkLabel {
-   font-weight: normal;
-   color: blue;
+.notebook.mdifocused tab:active {
+   background-color: @theme_base_color;
 }
 
 .notebook.mdi .active-page GtkLabel {
-   color: @active_tab_color;
-   background-image: none;
-}
-
-.notebook.mdi tab:active {
-   background-color: @local_toolbar_color;
+   color: @theme_fg_color;;
 }
 
 .notebook.mdi .mdi-highlighted-tab {
-   color: @gps_active_tab;
-}
-
-.notebook.mdi tab:active.top {
-   border: 1px solid @mdi_border_color;
-   border-top-color: @gps_inactive_tab;
-   border-top-width: 3px;
-   border-bottom-width: 0;
-}
-
-.notebook.mdi tab:active.left {
-   border: 1px solid @mdi_border_color;
-   border-left-color: @gps_inactive_tab;
-   border-left-width: 3px;
-   border-right-width: 0;
-}
-
-.notebook.mdi tab:active.right {
-   border: 1px solid @mdi_border_color;
-   border-right-color: @gps_inactive_tab;
-   border-right-width: 3px;
-   border-left-width: 0;
-}
-
-.notebook.mdi tab:active.bottom {
-   border: 1px solid @mdi_border_color;
-   border-bottom-color: @gps_inactive_tab;
-   border-bottom-width: 3px;
-   border-top-width: 0;
+   color: @theme_selected_bg_color;
 }
 
 .notebook.mdifocused tab:active.top {
-   border-top-color: @gps_active_tab;
+   border-top-width: 2px;
+   border-top-color: @theme_selected_bg_color;
 }
 
 .notebook.mdifocused tab:active.left {
-   border-left-color: @gps_active_tab;
+   border-left-width: 2px;
+   border-left-color: @theme_selected_bg_color;
+}
+
+.notebook.mdifocused tab:active.right {
+   border-right-width: 2px;
+   border-right-color: @theme_selected_bg_color;
+}
+
+.notebook.mdifocused tab:active.bottom {
+   border-bottom-width: 2px;
+   border-bottom-color: @theme_selected_bg_color;
 }
 
 /**********************
@@ -435,14 +366,11 @@ GtkNotebook.noTabs {
  **********************/
 
 .scrollbar {
-/*   background-color: @local_toolbar_color; */
-
-/* Uncomment this to activate scrollbar steppers
-  -GtkScrollbar-has-backward-stepper: true;
-  -GtkScrollbar-has-forward-stepper: true;
-*/
-
+   border-width: 0px;
+   -GtkRange-slider-width: 8px;
+   background-color: @theme_base_color;
 }
+
 .scrollbar.slider {
    background-color: @scrollbar_slider_color;
 }
@@ -451,25 +379,25 @@ GtkNotebook.noTabs {
  * Toolbars
  **********************/
 
+.toolbar {
+   background: @notebook_background;
+}
+
 .toolbar GtkButton {
   padding: 4px;
 }
 
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
-   background: @local_toolbar_color;
-   border-bottom-width: 1px;
-   border-bottom-color: @mdi_border_color;
-   margin-bottom: 10px;
+   background: @theme_base_color;
    padding: 0px;
 }
 
-.gps-editor-status-bar {
-   background: @local_toolbar_color;
+.gps-local-toolbar * {
+   margin: 0px;
+   padding: 2px;
 }
-.gps-editor-status-bar GtkToolbar {
-   background: @local_toolbar_color;
-}
+
 .gps-editor-status-bar GtkButton {
    padding: 0px 2px;
 }
@@ -482,88 +410,6 @@ GtkNotebook.noTabs {
    background: @theme_base_color;
 }
 
-.gps-local-toolbar * {
-   margin: 0px;
-   padding: 2px;
-}
-
-.toolbar GtkImage,
-.toolbar {
-  color: @toolbar_button_color;
-}
-
-.toolbar GtkImage:insensitive {
-  color: @toolbar_button_insensitive_color;
-}
-
-/***************************
- * Search fields
- ***************************/
-
-/* Search and filter fields */
-GtkEntry.search {
-  border-radius: 3px;
-  border-color: transparent;
-  border-width: 1px;
-  box-shadow: none;
-  padding-left: 2px;
-}
-
-.completion-list {
-   /* The list of possible completions, in a completion entry */
-}
-
-#completion-frame {
-    border-style:solid;
-    border-width:1px;
-    border-color: @completion-border-color;
-    background-color: @completion-background-color;
-    margin: 5px;
-    padding: 5px;
-}
-
-.window-rounded {
-    border-radius: 4px;
-}
-
-#completion-scroll {
-    margin: 5px;
-    padding: 5px;
-}
-
-#completion-view {
-    background-color: @completion-background-color;
-}
-
-#completion-view:selected {
-    background-color: @completion-selected-color;
-    border-radius: 5px;
-    color:@theme_fg_color;
-}
-
-#notes-frame * {
-    background-color: @completion-notes-color;
-    padding: 3px;
-}
-
-#notes-frame GtkViewport {
-    border-width: 0;
-}
-
-.notes-doc-frames {
-    box-shadow: none;
-    border-width: 0;
-}
-
-/**********************************
- * Editors
- **********************************/
-
-.gps_gutter {
-  background-color: @gutter_background;
-  color: @gutter_color;
-}
-
 /**********************************
  * Browsers
  **********************************/
@@ -574,22 +420,67 @@ GtkEntry.search {
 }
 
 /**********************************
- * Tooltips
+ * Tooltips, Completion
  **********************************/
 
-.tooltip {
+.tooltip, .completion {
    color: @tooltip-text-color;
    text-shadow: none;
    margin: 0;
    border-radius: 0;
-   border: 1px solid @tooltip-border-color;
+   border: 1px solid @popup_border_color;
 }
-.tooltip.background {
+
+.tooltip.background, .completion {
    background-color: @tooltip-background-color;
 }
 
 .tooltip * {
    padding: 12px;
+}
+
+.completion.notes * {
+  padding: 3px;
+  border-width: 0px;
+}
+
+.completion.search GtkTreeView column:first-child {
+   background-color: @notebook_background;
+}
+
+.completion.search GtkTreeView column:first-child:selected {
+   background-color: @theme_selected_bg_color;
+}
+
+.completion.search GtkTreeView column:first-child * {
+   color: @inactive_items_color;
+}
+
+.completion.search GtkTreeView column:first-child:selected * {
+   color: @inactive_items_selected_color;
+}
+
+/**********************************
+ * Editors
+ **********************************/
+
+.gps_gutter {
+  background-color: @editor_bg_color;
+  color: @gutter_color;
+}
+
+GtkTextView.view.editor {
+  background-color: @editor_bg_color;
+  color: @editor_fg_color;
+}
+
+/**********************************
+ * Selection
+ **********************************/
+
+*:selected, GtkTextView.view:selected {
+  background-color: @theme_selected_bg_color;
+  color: @theme_selected_fg_color;
 }
 
 /*

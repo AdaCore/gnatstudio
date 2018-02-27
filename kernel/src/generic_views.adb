@@ -1287,6 +1287,8 @@ package body Generic_Views is
          Gtk_New
            (Abstract_View.Button_Box,
             Orientation_Horizontal);
+         Get_Style_Context (Abstract_View.Button_Box).Add_Class
+           ("dialog-action-box");
          Abstract_View.Button_Box.Set_Layout (Buttonbox_End);
          View.Pack_End (Abstract_View.Button_Box, Expand => False);
 

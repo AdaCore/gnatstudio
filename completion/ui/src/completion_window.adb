@@ -1759,7 +1759,6 @@ package body Completion_Window is
       Explorer.Index := 1;
 
       Gtk_New (Viewport);
-      Get_Style_Context (Viewport).Add_Class ("tooltip");
 
       Set_Shadow_Type (Viewport, Shadow_None);
       Explorer.Notes_Container := Gtk_Bin (Viewport);
@@ -1847,7 +1846,8 @@ package body Completion_Window is
    begin
       --  Create the window as a popup
       Initialize (Window, Window_Popup);
-      Get_Style_Context (Window).Add_Class ("tooltip");
+      Get_Style_Context (Window).Add_Class ("completion");
+      Get_Style_Context (Window).Add_Class ("notes");
 
       Window.Set_App_Paintable (True);
       Window.On_Draw (Window_On_Draw'Access);
@@ -1931,6 +1931,7 @@ package body Completion_Window is
       Gtk.Window.Initialize (Window, Window_Popup);
 
       Set_Decorated (Window, False);
+      Get_Style_Context (Window).Add_Class ("completion");
 
       Window.Set_App_Paintable (True);
       Window.On_Draw (Window_On_Draw'Access);

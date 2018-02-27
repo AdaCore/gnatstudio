@@ -6,23 +6,25 @@ import gps_utils
 from gi.repository import Gtk, Gdk
 
 css_template = """
+@define-color editor_bg_color {editor_bg};
+@define-color editor_fg_color {editor_fg};
 @define-color gutter_color {gutter_fg};
-@define-color gutter_background {gutter_bg};
 @define-color browser_decoration_background  {browser_decoration_bg};
 @define-color browser_decoration_color {browser_decoration_fg};
+@define-color theme_selected_bg_color {theme_selected_bg};
+@define-color theme_selected_fg_color {theme_selected_fg};
 
 GtkTextView [ -GtkWidget-cursor-color: {caret}; ]
-
-*:selected, *:selected:focus [
-   color: {theme_selected_fg};
-   background-color: {theme_selected_bg};
-]
 """
 # The CSS template ready for processing with .format
 
-css_colors = ['theme_selected_bg', 'theme_selected_fg',
-              'gutter_bg', 'gutter_fg',
-              'browser_decoration_bg', 'browser_decoration_fg',
+css_colors = ['editor_bg',
+              'editor_fg',
+              'theme_selected_bg',
+              'theme_selected_fg',
+              'gutter_fg',
+              'browser_decoration_bg',
+              'browser_decoration_fg',
               'caret']
 # These are the colors that are interpreted by the CSS template
 
@@ -134,16 +136,16 @@ class Color:
            a given amount between -1.0 and 1.0. If amount is negative, darken
            the color, otherwise lighten it.
         """
-        h, l, s = colorsys.rgb_to_hls(self.r, self.g, self.b)
+        h, light, s = colorsys.rgb_to_hls(self.r, self.g, self.b)
 
-        l = l + amount
+        light = light + amount
 
-        if l < 0.0:
-            l = 0.0
-        if l > 1.0:
-            l = 1.0
+        if light < 0.0:
+            light = 0.0
+        if light > 1.0:
+            light = 1.0
 
-        r, g, b = colorsys.hls_to_rgb(h, l, s)
+        r, g, b = colorsys.hls_to_rgb(h, light, s)
         return Color(from_rgba=(c(r), c(g), c(b), c(self.a)))
 
     def saturate(self, amount):
@@ -174,9 +176,9 @@ class Color:
 
         h = (1 - coef) * ha + coef * hb
         s = (1 - coef) * sa + coef * sb
-        l = (1 - coef) * la + coef * lb
+        light = (1 - coef) * la + coef * lb
 
-        r, g, b = colorsys.hls_to_rgb(h, l, s)
+        r, g, b = colorsys.hls_to_rgb(h, light, s)
         return Color(from_rgba=(c(r), c(g), c(b),
                                 c((1 - coef) * self.a + coef * other.a)))
 
@@ -184,6 +186,7 @@ class Color:
 def Rgba(r, g, b, a=255):
     """shortcut"""
     return Color(from_rgba=(r, g, b, a))
+
 
 transparent = Rgba(0, 0, 0, 0)
 black = Rgba(0, 0, 0, 255)
@@ -424,13 +427,13 @@ class Theme(object):
         # Add line numbers
         num = 1
         prefixed = []
-        for l in label_markup.splitlines():
+        for line in label_markup.splitlines():
             prefixed.append(
                 '<span color="{}" background="{}">{:4d} </span> {}'.format(
                     self.d['gutter_fg'].to_hex6_string(),
                     self.d['gutter_bg'].to_hex6_string(),
                     num,
-                    l))
+                    line))
             num = num + 1
 
         font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
@@ -438,12 +441,12 @@ class Theme(object):
             prefixed) + '</span>'
 
         b = Gtk.HBox()
-        l = Gtk.Label()
-        b.pack_start(l, False, False, 0)
+        label = Gtk.Label()
+        b.pack_start(label, False, False, 0)
         _, bg = Gdk.Color.parse(self.d['editor_bg'].to_hex6_string())
         _, fg = Gdk.Color.parse(self.d['editor_fg'].to_hex6_string())
         b.modify_bg(Gtk.StateType.NORMAL, bg)
-        l.modify_fg(Gtk.StateType.NORMAL, fg)
+        label.modify_fg(Gtk.StateType.NORMAL, fg)
         process_dict = {'i': "</span>"}
         for key in ['keywords', 'blocks', 'comments',
                     'strings', 'numbers', 'aspects', 'types']:
@@ -457,5 +460,5 @@ class Theme(object):
                 'font-weight="BOLD"' if 'BOLD' in val[0] else '' +
                 ' font-style="ITALIC"' if "ITALIC" in val[0] else '')
 
-        l.set_markup(label_markup.format(**process_dict))
+        label.set_markup(label_markup.format(**process_dict))
         return b

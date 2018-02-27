@@ -1777,7 +1777,7 @@ procedure GPS.Main is
          Trace (Me, "Loading " & Global.Display_Full_Name);
          Gtkada.Style.Load_Css_File
            (Global.Display_Full_Name, Put_Line'Access,
-            Priority_Settings);
+            Priority_User);
       end if;
 
       if Local.Is_Regular_File then

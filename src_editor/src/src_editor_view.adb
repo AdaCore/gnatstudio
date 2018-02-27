@@ -1470,6 +1470,7 @@ package body Src_Editor_View is
 
       G_New (View, View_Get_Type);
       View.Set_Buffer (Buffer);
+      Get_Style_Context (View).Add_Class ("editor");
 
       Gtk.Dnd.Dest_Set
         (View,

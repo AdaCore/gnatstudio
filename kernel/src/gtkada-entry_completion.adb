@@ -32,7 +32,6 @@ with Gdk.Window;                 use Gdk.Window;
 with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
-with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
 with Gtk.Alignment;              use Gtk.Alignment;
 with Gtk.Box;                    use Gtk.Box;
@@ -96,10 +95,6 @@ package body Gtkada.Entry_Completion is
    Result_Width : constant := 300;
    --  Maximum width of the popup window
 
-   Provider_Column_Fg_Modifier : constant := 0.3;
-   Provider_Column_Bg_Modifier : constant := 0.05;
-   --  Color modifier amount for the provider column of the popup tree view
-
    type Search_Kind_Radio_Button_Record is new Gtk_Radio_Button_Record
    with record
       Entry_View : Gtkada_Entry;
@@ -112,16 +107,6 @@ package body Gtkada.Entry_Completion is
 
    type Search_Kind_Radio_Button_Array is
      array (Integer range <>) of Search_Kind_Radio_Button;
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with
-      record
-         Entry_View : Gtkada_Entry;
-      end record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Callback called when preferences change
 
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
@@ -284,42 +269,6 @@ package body Gtkada.Entry_Completion is
        Column_Score    => GType_Int,
        Column_Data     => GType_Pointer,
        Column_Provider => GType_String);
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Kernel);
-
-   begin
-      --  The color of the providers renderer is derived from the background
-      --  color of editors.
-      if Pref /= Preference (Default_Style) then
-         return;
-      end if;
-
-      declare
-         Color  : Gdk_RGBA;
-         Render : constant Gtk_Cell_Renderer :=  Cell_Renderer_List.Get_Data
-           (Self.Entry_View.Column_Provider.Get_Cells);
-      begin
-         Color := Default_Style.Get_Pref_Bg;
-
-         Set_Property
-           (Render,
-            Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
-            Shade_Or_Lighten (Color, Provider_Column_Fg_Modifier));
-         Set_Property
-           (Render,
-            Gtk.Cell_Renderer_Text.Background_Rgba_Property,
-            Shade_Or_Lighten (Color, Provider_Column_Bg_Modifier));
-      end;
-   end Execute;
 
    --------------------
    -- Get_Last_Child --
@@ -671,6 +620,7 @@ package body Gtkada.Entry_Completion is
          Self.Popup.Set_Skip_Taskbar_Hint (True);
          Self.Popup.Set_Skip_Pager_Hint (True);
          Get_Style_Context (Self.Popup).Add_Class ("completion");
+         Get_Style_Context (Self.Popup).Add_Class ("search");
 
          Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
          Gtk_New (Frame);
@@ -685,6 +635,7 @@ package body Gtkada.Entry_Completion is
          Popup.Set_Skip_Taskbar_Hint (True);
          Popup.Set_Skip_Pager_Hint (True);
          Get_Style_Context (Popup).Add_Class ("completion");
+         Get_Style_Context (Popup).Add_Class ("notes");
       else
          Box := Gtk_Box (Self);
       end if;
@@ -740,15 +691,6 @@ package body Gtkada.Entry_Completion is
         (Render, "markup", Column_Provider);
 
       Color := Default_Style.Get_Pref_Bg;
-      Set_Property
-        (Render, Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
-         Shade_Or_Lighten (Color, Provider_Column_Fg_Modifier));
-      Set_Property
-        (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
-         Shade_Or_Lighten (Color, Provider_Column_Bg_Modifier));
-      Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
-      Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
-
       Self.Color_To_Locations := Shade_Or_Lighten (Color, 0.3);
 
       Gtk_New (Self.Column_Match);
@@ -850,13 +792,6 @@ package body Gtkada.Entry_Completion is
       --  pop up the completion window immediately.
       Gtk.Editable.On_Changed
         (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
-
-      --  Register a callback on the Preferences_Changed hook to update the
-      --  popup colors when the theme preference changes.
-      Preferences_Changed_Hook.Add
-        (Obj   => new On_Pref_Changed'(Hook_Function
-         with Entry_View => Gtkada_Entry (Self)),
-         Watch => Self);
 
       On_Settings_Changed (Self);
    end Initialize;

@@ -548,7 +548,7 @@ package body GPS.Main_Window is
                Gtk.Style_Context.Add_Provider_For_Screen
                  (Get_Default_Screen (Get_Default),
                   +Theme_Specific_Css_Provider,
-                  Priority => Gtk.Style_Provider.Priority_Application);
+                  Priority => Gtk.Style_Provider.Priority_Theme);
             end if;
 
             Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir
@@ -628,7 +628,7 @@ package body GPS.Main_Window is
                Add_Provider_For_Screen
                  (Get_Default_Screen (Get_Default),
                   +Tooltips_Background_Provider,
-                  Priority => Gtk.Style_Provider.Priority_User);
+                  Priority => Gtk.Style_Provider.Priority_Theme);
                Unref (Tooltips_Background_Provider);
             end if;
 
@@ -718,8 +718,7 @@ package body GPS.Main_Window is
    --------------------
 
    procedure Setup_Menu_Bar
-     (Self : not null access GPS_Application_Window_Record'Class)
-   is
+     (Self : not null access GPS_Application_Window_Record'Class) is
    begin
       Install_Menus (Self.Application.Kernel, Menubar => Self.Menu_Bar);
       if Self.Menu_Bar /= null then
