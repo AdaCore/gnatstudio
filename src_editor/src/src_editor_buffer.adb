@@ -8638,7 +8638,7 @@ package body Src_Editor_Buffer is
    procedure Enable_Highlighting
      (Buffer : access Source_Buffer_Record'Class) is
    begin
-      Buffer.Highlight_Enabled := False;
+      Buffer.Highlight_Enabled := True;
    end Enable_Highlighting;
 
    --------------------------
