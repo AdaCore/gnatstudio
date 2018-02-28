@@ -2,12 +2,17 @@
 This file provides support for gnattest.
 """
 
-###########################################################################
+#
 # No user customization below this line
-###########################################################################
+#
 
 import os.path
 import GPS
+
+from gnatemulator import GNATemulator
+
+import workflows
+
 from gps_utils import hook, interactive
 
 last_gnattest = {
@@ -15,6 +20,32 @@ last_gnattest = {
     'root':    None,  # root project opened before switching to harness
     'harness': None   # harness project name before switching to it
 }
+
+
+def run_test_list_in_emulator(main_name):
+    """
+    We run a test-drivers list in GNATemulator. If we have one executable,
+    we have access to the Locations view. Otherwise, we run all the executables
+    in consoles. This function does not build the executables, we can't
+    get the main file associated with a given executable. It yields the promise
+    that would be `returned` by run_gnatemu, so that we can launch multiple
+    gnatemu instance in parallel.
+    """
+    fname = get_driver_list()
+    with open(fname) as f:
+        lines = [line.strip() for line in f]
+    in_console = len(lines) > 1
+    for exec_path in lines:
+        yield GNATemulator.run_gnatemu([exec_path], in_console=in_console)
+
+
+__targetsDef = [
+    ["Run test driver with emulator", "run-test-driver-with-emulator",
+     lambda x: GNATemulator.build_and_run(
+         x, in_console=False), "gps-gnattest-run"],
+    ["Run test-drivers list with emulator",
+     "run-test-drivers-list-with-emulator",
+     run_test_list_in_emulator, "gps-gnattest-run"]]
 
 
 def run(project, target, extra_args=""):
@@ -119,25 +150,59 @@ def __on_compilation_finished(category, target_name="",
 def __update_build_targets_visibility():
     """
     Update the GNATtest/'Run Main' Build Targets visibility regarding
-    the nature of the loaded project.
+    the nature of the loaded project. Also check whether or not we need
+    to display GNATtest emulator Build Targets.
     """
     test_run_target = GPS.BuildTarget("Run a test-driver")
     test_run_targets = GPS.BuildTarget("Run a test drivers list")
     run_main_target = GPS.BuildTarget("Run Main")
+    test_run_emulator_target = GPS.BuildTarget("Run test driver with emulator")
+    test_run_emulator_targets = GPS.BuildTarget(
+        "Run test-drivers list with emulator")
 
     if not GPS.Project.root().is_harness_project():
         run_main_target.show()
         test_run_target.hide()
         test_run_targets.hide()
-        return
+        test_run_emulator_targets.hide()
+        test_run_emulator_target.hide()
     elif get_driver_list() == "":
+        """ We have a single test driver. """
         run_main_target.hide()
-        test_run_target.show()
         test_run_targets.hide()
+        test_run_emulator_targets.hide()
+        if GNATemulator.gnatemu_on_path():
+            test_run_emulator_target.show()
+            test_run_target.hide()
+        else:
+            test_run_emulator_target.hide()
+            test_run_target.show()
     else:
+        """
+        The file 'test_drivers.list' is present.
+        We have a list of test drivers to execute.
+        """
         run_main_target.hide()
         test_run_target.hide()
-        test_run_targets.show()
+        test_run_emulator_target.hide()
+        if GNATemulator.gnatemu_on_path():
+            test_run_targets.hide()
+            test_run_emulator_targets.show()
+        else:
+            test_run_targets.show()
+            test_run_emulator_targets.hide()
+
+
+def create_build_targets_gnatemu():
+    """
+    Creates the Build Targets used to call gnatemu when in a test harness.
+    """
+    global __targetsDef
+
+    for target_def in __targetsDef:
+        workflows.create_target_from_workflow(
+            target_def[0], target_def[1], target_def[2], target_def[3],
+            parent_menu='/Build/Emulator/%s/' % target_def[0])
 
 
 @hook('gps_started')
@@ -543,3 +608,7 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 GPS.parse_xml(XML)
+
+# We create the Build Targets related to gnatemu when GPS is launched.
+# Afteward we only update the visibility of the affected Build Targets
+create_build_targets_gnatemu()
