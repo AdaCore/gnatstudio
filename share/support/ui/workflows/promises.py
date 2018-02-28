@@ -369,6 +369,23 @@ def wait_tasks(other_than=None):
     return p
 
 
+def wait_specific_tasks(names):
+    """
+    Allows to delay the execution of the rest of a workflow until given tasks
+    are terminated.
+    """
+    p = Promise()
+
+    def timeout_handler():
+        if not filter(lambda x: x.name() in names, GPS.Task.list()):
+            GLib.idle_add(lambda: p.resolve())
+            return False
+        return True   # will try again
+
+    GLib.timeout_add(200, timeout_handler)
+    return p
+
+
 def modal_dialog(action_fn, msecs=300):
     """
     This primitive executes a blocking function in the context of a workflow.
