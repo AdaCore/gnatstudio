@@ -738,7 +738,7 @@ class Tree_with_process:
     def get_task(self, node_id):
         """ Specific request for a new task from the itp server """
         request = ('{"ide_request": "Get_task", "' + NODE_ID + '":' +
-                   str(node_id) + ', "do_intros": true, "loc": false, ' +
+                   str(node_id) + ', "loc": false, ' +
                    '"full_context": false }')
         self.send(request)
 
