@@ -52,6 +52,41 @@ private
    package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Entry_Point_Information_Access, Hash, "=");
 
+   --------------------------------
+   -- Abstract_Inspection_Reader --
+   --------------------------------
+
+   type Abstract_Inspection_Reader is limited interface;
+   --  Base type for inspection reader for particular exchange format.
+
+   type Inspection_Reader_Access is
+     access all Abstract_Inspection_Reader'Class;
+
+   not overriding procedure Start_Element
+     (Self  : in out Abstract_Inspection_Reader;
+      Name  : String;
+      Attrs : Sax.Attributes.Attributes'Class) is abstract;
+
+   not overriding procedure End_Element
+     (Self  : in out Abstract_Inspection_Reader;
+      Name  : String) is abstract;
+
+   not overriding function Get_Code_Analysis_Tree
+     (Self : Abstract_Inspection_Reader)
+      return Code_Analysis.Code_Analysis_Tree is abstract;
+
+   not overriding function Get_Race_Category
+     (Self : Abstract_Inspection_Reader)
+      return CodePeer.Message_Category_Access is abstract;
+
+   not overriding function Get_Annotation_Categories
+     (Self : Abstract_Inspection_Reader)
+      return Annotation_Category_Maps.Map is abstract;
+
+   ------------
+   -- Reader --
+   ------------
+
    type Reader is new Sax.Readers.Reader with record
       Kernel                : GPS.Kernel.Kernel_Handle;
 
@@ -62,28 +97,21 @@ private
       --   2 - is_warning attribute is reported by CodePeer
       --   3 - new content of audit records
 
+      Reader                : Inspection_Reader_Access;
+      Reader_Depth          : Natural := 0;
+      --  Reader of the given version of exchange format and depth of nested
+      --  XML elements.
+
       Ignore_Depth          : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
       --  of newer version when GPS module supports.
 
-      Projects              : Code_Analysis.Code_Analysis_Tree;
-      Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
-      Message_Categories    : Message_Category_Maps.Map;
-      CWE_Categories        : CWE_Category_Maps.Map;
-      Annotation_Categories : Annotation_Category_Maps.Map;
-      Entry_Point_Map       : Entry_Point_Maps.Map;
-      File_Node             : Code_Analysis.File_Access;
-      Subprogram_Node       : Code_Analysis.Subprogram_Access;
-      Subprogram_Data       : CodePeer.Subprogram_Data_Access;
-      Object_Race           : CodePeer.Object_Race_Information;
-      Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
-      Messages              : access CodePeer.Message_Maps.Map;
-      Current_Message       : CodePeer.Message_Access;
-      Race_Category         : CodePeer.Message_Category_Access;
-
       Base_Directory        : GNATCOLL.VFS.Virtual_File;
       --  base directory to reconstruct full paths to referenced data files
       --  (values, backtraces, annotations). Added in version 5.
+
+      Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
+      Messages              : access CodePeer.Message_Maps.Map;
    end record;
 
    overriding procedure Start_Element
@@ -98,7 +126,5 @@ private
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
-
-   overriding procedure Start_Document (Self : in out Reader);
 
 end CodePeer.Bridge.Inspection_Readers;
