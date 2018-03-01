@@ -78,11 +78,105 @@ package body CodePeer.Bridge.Inspection_Readers is
    --  elements are optional; set of CWE categories is populated from lists
    --  of CWEs from message_category elements.
 
+   procedure Start_Annotation
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Annotation_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
    procedure Update_CWE
      (Self : in out Reader'Class;
       Set  : in out CWE_Category_Sets.Set;
       CWEs : String);
    --  Update sets of CWEs for given set and project node.
+
+   procedure Start_CWE_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Entry_Point
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Entry_Point_Access
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure End_Entry_Point_Access (Self : in out Reader'Class);
+
+   procedure Start_File
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Message
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure End_Message (Self : in out Reader'Class);
+
+   procedure Start_Message_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Object_Access
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure Start_Object_Race
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   procedure End_Object_Race (Self : in out Reader'Class);
+
+   procedure Start_Subprogram
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   function Get_Lifeage
+     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds;
+
+   function Get_Optional_Column
+     (Attrs : Sax.Attributes.Attributes'Class) return Positive;
+   --  Returns value of "column" attribute is specified and 1 instead.
+
+   ----------------------------
+   -- End_Entry_Point_Access --
+   ----------------------------
+
+   procedure End_Entry_Point_Access (Self : in out Reader'Class) is
+   begin
+      Self.Object_Race.Entry_Points.Append (Self.Object_Accesses);
+      Self.Object_Accesses :=
+        (null, CodePeer.Object_Access_Vectors.Empty_Vector);
+   end End_Entry_Point_Access;
+
+   -----------------
+   -- End_Message --
+   -----------------
+
+   procedure End_Message (Self : in out Reader'Class) is
+   begin
+      Self.Current_Message := null;
+   end End_Message;
+
+   ---------------------
+   -- End_Object_Race --
+   ---------------------
+
+   procedure End_Object_Race (Self : in out Reader'Class) is
+   begin
+      CodePeer.Project_Data'Class
+        (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
+      Self.Object_Race :=
+        (Name         => Null_Unbounded_String,
+         Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
+         File         => GNATCOLL.VFS.No_File,
+         Line         => 0,
+         Column       => 0,
+         Message      => null);
+   end End_Object_Race;
 
    -----------------
    -- End_Element --
@@ -103,25 +197,51 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Ignore_Depth := Self.Ignore_Depth - 1;
 
       elsif Qname = Message_Tag then
-         Self.Current_Message := null;
+         Self.End_Message;
 
       elsif Qname = Object_Race_Tag then
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
-         Self.Object_Race :=
-           (Name         => Null_Unbounded_String,
-            Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
-            File         => GNATCOLL.VFS.No_File,
-            Line         => 0,
-            Column       => 0,
-            Message      => null);
+         Self.End_Object_Race;
 
       elsif Qname = Entry_Point_Access_Tag then
-         Self.Object_Race.Entry_Points.Append (Self.Object_Accesses);
-         Self.Object_Accesses :=
-           (null, CodePeer.Object_Access_Vectors.Empty_Vector);
+         Self.End_Entry_Point_Access;
       end if;
    end End_Element;
+
+   -----------------
+   -- Get_Lifeage --
+   -----------------
+
+   function Get_Lifeage
+     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds
+   is
+      Index : constant Integer := Attrs.Get_Index ("lifeage");
+
+   begin
+      if Index = -1 then
+         return Unchanged;
+
+      else
+         return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
+      end if;
+   end Get_Lifeage;
+
+   -------------------------
+   -- Get_Optional_Column --
+   -------------------------
+
+   function Get_Optional_Column
+     (Attrs : Sax.Attributes.Attributes'Class) return Positive
+   is
+      Index : constant Integer := Attrs.Get_Index (Column_Attribute);
+
+   begin
+      if Index /= -1 then
+         return Integer'Value (Attrs.Get_Value (Index));
+
+      else
+         return 1;
+      end if;
+   end Get_Optional_Column;
 
    ----------
    -- Hash --
@@ -193,6 +313,94 @@ package body CodePeer.Bridge.Inspection_Readers is
       Annotation_Categories := Self.Annotation_Categories;
    end Parse;
 
+   ----------------------
+   -- Start_Annotation --
+   ----------------------
+
+   procedure Start_Annotation
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      Annotation_Category : CodePeer.Annotation_Category_Access;
+
+   begin
+      Annotation_Category :=
+        Self.Annotation_Categories.Element
+          (Natural'Value (Attrs.Get_Value ("category")));
+
+      if not Self.Subprogram_Data.Annotations.Contains
+        (Annotation_Category)
+      then
+         Self.Subprogram_Data.Annotations.Insert
+           (Annotation_Category,
+            new CodePeer.Annotation_Vectors.Vector);
+      end if;
+
+      Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
+        (new CodePeer.Annotation'
+           (Get_Lifeage (Attrs),
+            To_Unbounded_String (Attrs.Get_Value ("text"))));
+   end Start_Annotation;
+
+   -------------------------------
+   -- Start_Annotation_Category --
+   -------------------------------
+
+   procedure Start_Annotation_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      function Get_Vn return Natural;
+      --  Returns value of "vn_id" attribute if specified, overwise returns 0.
+
+      ------------
+      -- Get_Vn --
+      ------------
+
+      function Get_Vn return Natural is
+         Index : constant Integer := Attrs.Get_Index (Vn_Id_Attribute);
+
+      begin
+         if Index /= -1 then
+            return Integer'Value (Attrs.Get_Value (Index));
+
+         else
+            return 0;
+         end if;
+      end Get_Vn;
+
+      Annotation_Category : CodePeer.Annotation_Category_Access;
+
+   begin
+      Annotation_Category :=
+        new CodePeer.Annotation_Category'
+          (Order => Natural'Value (Attrs.Get_Value ("identifier")),
+           Text  => To_Unbounded_String (Attrs.Get_Value ("name")),
+           Vn    => Get_Vn);
+      CodePeer.Project_Data'Class
+        (Self.Root_Inspection.all).Annotation_Categories.Insert
+        (Annotation_Category);
+      Self.Annotation_Categories.Insert
+        (Natural'Value (Attrs.Get_Value ("identifier")),
+         Annotation_Category);
+   end Start_Annotation_Category;
+
+   ------------------------
+   -- Start_CWE_Category --
+   ------------------------
+
+   procedure Start_CWE_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class) is
+   begin
+      Self.Include_CWE_Category
+        (Id   =>
+           CWE_Identifier'Value (Attrs.Get_Value (Identifier_Attribute)),
+         Name =>
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Attrs.Get_Value (Name_Attribute)));
+   end Start_CWE_Category;
+
    --------------------
    -- Start_Document --
    --------------------
@@ -208,71 +416,73 @@ package body CodePeer.Bridge.Inspection_Readers is
          Message      => null);
    end Start_Document;
 
-   -------------------
-   -- Start_Element --
-   -------------------
+   -----------------------
+   -- Start_Entry_Point --
+   -----------------------
 
-   overriding procedure Start_Element
-     (Self          : in out Reader;
-      Namespace_URI : Unicode.CES.Byte_Sequence;
-      Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence;
-      Attrs         : Sax.Attributes.Attributes'Class)
+   procedure Start_Entry_Point
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
    is
-      pragma Unreferenced (Namespace_URI, Local_Name);
+      Entry_Point : CodePeer.Entry_Point_Information_Access;
 
-      Message_Category    : CodePeer.Message_Category_Access;
-      Annotation_Category : CodePeer.Annotation_Category_Access;
-      File_Name           : GNATCOLL.VFS.Virtual_File;
-      Relocated_Name      : GNATCOLL.VFS.Virtual_File;
-      Project_Node        : Code_Analysis.Project_Access;
-      Entry_Point         : CodePeer.Entry_Point_Information_Access;
-      Object_Access       : CodePeer.Object_Access_Information;
+   begin
+      Entry_Point :=
+        new Entry_Point_Information'
+          (Name   => To_Unbounded_String (Attrs.Get_Value (Name_Attribute)),
+           File   =>
+             GPS.Kernel.Create
+               (+Attrs.Get_Value (File_Attribute), Self.Kernel),
+           Line   => Integer'Value (Attrs.Get_Value (Line_Attribute)),
+           Column => Get_Optional_Column (Attrs));
+      CodePeer.Project_Data'Class
+        (Self.Root_Inspection.all).Entry_Points.Insert (Entry_Point);
+      Self.Entry_Point_Map.Insert
+        (Integer'Value (Attrs.Get_Value ("identifier")), Entry_Point);
+   end Start_Entry_Point;
 
-      function Lifeage return Lifeage_Kinds;
+   ------------------------------
+   -- Start_Entry_Point_Access --
+   ------------------------------
 
-      function Merged return Natural_Sets.Set;
-      --  Returns set of merged messages as specified in 'merged_messages'
-      --  attribute. Returns empty set when attribute is not specified.
+   procedure Start_Entry_Point_Access
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      Entry_Point : CodePeer.Entry_Point_Information_Access;
 
-      function Checks return Natural;
+   begin
+      Entry_Point :=
+        Self.Entry_Point_Map.Element
+          (Integer'Value (Attrs.Get_Value (Entry_Point_Attribute)));
+      Self.Object_Accesses :=
+        (Entry_Point, CodePeer.Object_Access_Vectors.Empty_Vector);
+      --  Entry point's object access information is added in the
+      --  End_Element callback.
+   end Start_Entry_Point_Access;
+
+   ----------------
+   -- Start_File --
+   ----------------
+
+   procedure Start_File
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+
+      function Get_Checks return Natural;
       --  Returns value of "checks" attribiute if any, otherwise returns zero.
-
-      function Is_Check return Boolean;
-      --  Returns value of "is_check" attribute is any, otherwise returns
-      --  False.
 
       function Get_Optional_Annotations return GNATCOLL.VFS.Virtual_File;
       --  Returns full name of the file spewcified by "annotations"  attribute,
       --  or No_File when it is not specified. Relative names are resolved to
       --  full names using directory name of the inspection data file.
 
-      function Get_Optional_Column return Positive;
-      --  Returns value of "column" attribute is specified and 1 instead.
+      ----------------
+      -- Get_Checks --
+      ----------------
 
-      function Get_Optional_File return GNATCOLL.VFS.Virtual_File;
-      --  Returns value of "file" attribute if specified; overwise returns
-      --  No_File.
-
-      function Get_Optional_Line return Natural;
-      --  Returns value of "line" attribute if specified, overwise returns 0.
-
-      function Get_Rank return Message_Ranking_Level;
-      --  Returns value of "rank" attribute. Handle old representation of Info
-      --  literal ("INFORMATIONAL").
-
-      function Get_Vns return Natural_Sets.Set;
-      --  Returns value of "vn_ids" attribute if specified, overwise returns
-      --  empty set.
-
-      function Get_Vn return Natural;
-      --  Returns value of "vn_id" attribute if specified, overwise returns 0.
-
-      ------------
-      -- Checks --
-      ------------
-
-      function Checks return Natural is
+      function Get_Checks return Natural is
          Index : constant Integer := Attrs.Get_Index (Checks_Attribute);
 
       begin
@@ -282,7 +492,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          else
             return Natural'Value (Attrs.Get_Value (Index));
          end if;
-      end Checks;
+      end Get_Checks;
 
       ------------------------------
       -- Get_Optional_Annotations --
@@ -303,55 +513,108 @@ package body CodePeer.Bridge.Inspection_Readers is
          end if;
       end Get_Optional_Annotations;
 
-      -----------------------
-      -- Get_Optional_File --
-      -----------------------
+      File_Name           : GNATCOLL.VFS.Virtual_File;
+      Relocated_Name      : GNATCOLL.VFS.Virtual_File;
+      Project_Node        : Code_Analysis.Project_Access;
 
-      function Get_Optional_File return GNATCOLL.VFS.Virtual_File is
-         Index : constant Integer := Attrs.Get_Index (File_Attribute);
+   begin
+      File_Name :=
+        GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
 
+      --  Try to find file with the same base name in the current project.
+      --  Use this file instead of original name which comes from the
+      --  database to be able to reuse database between several users.
+
+      Relocated_Name := Self.Kernel.Create_From_Base (File_Name.Base_Name);
+
+      if Relocated_Name.Is_Regular_File then
+         File_Name := Relocated_Name;
+      end if;
+
+      declare
+         F_Info : constant GNATCOLL.Projects.File_Info'Class :=
+           GNATCOLL.Projects.File_Info'Class
+             (Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
+              .First_Element);
       begin
-         if Index /= -1 then
-            return
-              GPS.Kernel.Create
-                (+Attrs.Get_Value (File_Attribute), Self.Kernel);
+         Project_Node :=
+           Code_Analysis.Get_Or_Create
+             (Self.Projects,
+              F_Info.Project);
+      end;
 
-         else
-            return GNATCOLL.VFS.No_File;
-         end if;
-      end Get_Optional_File;
+      Self.File_Node :=
+        Code_Analysis.Get_Or_Create (Project_Node, File_Name);
+      Self.File_Node.Analysis_Data.CodePeer_Data :=
+        new CodePeer.File_Data'
+          (Lifeage            => Get_Lifeage (Attrs),
+           Total_Checks       => Get_Checks,
+           Annotations_File   => Get_Optional_Annotations,
+           Annotations_Loaded => False);
+   end Start_File;
 
-      -----------------------
-      -- Get_Optional_Line --
-      -----------------------
+   ----------------------------
+   -- Start_Message_Category --
+   ----------------------------
 
-      function Get_Optional_Line return Natural is
-         Index : constant Integer := Attrs.Get_Index (Line_Attribute);
+   procedure Start_Message_Category
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      Message_Category : CodePeer.Message_Category_Access;
 
-      begin
-         if Index /= -1 then
-            return Natural'Value (Attrs.Get_Value (Index));
+   begin
+      Message_Category :=
+        new CodePeer.Message_Category'
+          (Name => To_Unbounded_String (Attrs.Get_Value ("name")),
+           CWEs => <>);
 
-         else
-            return 0;
-         end if;
-      end Get_Optional_Line;
+      if Attrs.Get_Index (Is_Check_Attribute) /= -1
+        and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
+      then
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).Check_Subcategories.Include
+           (Message_Category);
+      end if;
 
-      -------------------------
-      -- Get_Optional_Column --
-      -------------------------
+      CodePeer.Project_Data'Class
+        (Self.Root_Inspection.all).Message_Categories.Insert
+        (Message_Category);
+      Self.Message_Categories.Insert
+        (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
 
-      function Get_Optional_Column return Positive is
-         Index : constant Integer := Attrs.Get_Index (Column_Attribute);
+      Self.Update_CWE
+        (Message_Category.CWEs,
+         (if Attrs.Get_Index (CWE_Attribute) /= -1
+          then Attrs.Get_Value (CWE_Attribute)
+          else ""));
+   end Start_Message_Category;
 
-      begin
-         if Index /= -1 then
-            return Integer'Value (Attrs.Get_Value (Index));
+   -------------------
+   -- Start_Message --
+   -------------------
 
-         else
-            return 1;
-         end if;
-      end Get_Optional_Column;
+   procedure Start_Message
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      function Get_Rank return Message_Ranking_Level;
+      --  Returns value of "rank" attribute. Handle old representation of Info
+      --  literal ("INFORMATIONAL").
+
+      function Get_Vns return Natural_Sets.Set;
+      --  Returns value of "vn_ids" attribute if specified, overwise returns
+      --  empty set.
+
+      function Is_Check return Boolean;
+      --  Returns value of "is_check" attribute is any, otherwise returns
+      --  False.
+
+      function Merged return Natural_Sets.Set;
+      --  Returns set of merged messages as specified in 'merged_messages'
+      --  attribute. Returns empty set when attribute is not specified.
 
       --------------
       -- Get_Rank --
@@ -368,22 +631,6 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Message_Ranking_Level'Value (Image);
          end if;
       end Get_Rank;
-
-      ------------
-      -- Get_Vn --
-      ------------
-
-      function Get_Vn return Natural is
-         Index : constant Integer := Attrs.Get_Index (Vn_Id_Attribute);
-
-      begin
-         if Index /= -1 then
-            return Integer'Value (Attrs.Get_Value (Index));
-
-         else
-            return 0;
-         end if;
-      end Get_Vn;
 
       -------------
       -- Get_Vns --
@@ -428,22 +675,6 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Boolean'Value (Attrs.Get_Value (Index));
          end if;
       end Is_Check;
-
-      -------------
-      -- Lifeage --
-      -------------
-
-      function Lifeage return Lifeage_Kinds is
-         Index : constant Integer := Attrs.Get_Index ("lifeage");
-
-      begin
-         if Index = -1 then
-            return Unchanged;
-
-         else
-            return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
-         end if;
-      end Lifeage;
 
       ------------
       -- Merged --
@@ -492,71 +723,304 @@ package body CodePeer.Bridge.Inspection_Readers is
          return Result;
       end Merged;
 
+      Checks      : Message_Category_Sets.Set;
+      From_File   : GNATCOLL.VFS.Virtual_File;
+      From_Line   : Positive := 1;
+      From_Column : Positive := 1;
+      CWEs        : CWE_Category_Sets.Set;
+
+   begin
+      --  Only primary checks need to be displayed.
+
+      if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
+         declare
+            Check_Ids : GNAT.Strings.String_List_Access :=
+              GNATCOLL.Utils.Split
+                (Attrs.Get_Value (Primary_Checks_Attribute),
+                                   ' ',
+                 True);
+
+         begin
+            for Index in Check_Ids'Range loop
+               Checks.Insert
+                 (Self.Message_Categories
+                    (Natural'Value (Check_Ids (Index).all)));
+            end loop;
+
+            GNAT.Strings.Free (Check_Ids);
+         end;
+      end if;
+
+      if Attrs.Get_Index ("from_file") /= -1 then
+         From_File :=
+           GPS.Kernel.Create
+             (+Attrs.Get_Value ("from_file"), Self.Kernel);
+         From_Line :=
+           Positive'Value (Attrs.Get_Value ("from_line"));
+         From_Column :=
+           Positive'Value (Attrs.Get_Value ("from_column"));
+      end if;
+
+      Self.Update_CWE
+        (CWEs,
+         (if Attrs.Get_Index (CWE_Attribute) /= -1
+          then Attrs.Get_Value (CWE_Attribute)
+          else ""));
+
+      Self.Current_Message :=
+        CodePeer.Module.Create_CodePeer_Message
+          (Id          =>
+             Positive'Value (Attrs.Get_Value ("identifier")),
+           File        => Self.File_Node,
+           Subprogram  =>
+             Ada.Strings.Unbounded.To_Unbounded_String
+               (Self.Subprogram_Node.Name.all),
+           Merged      => Merged,
+           Lifeage     => Get_Lifeage (Attrs),
+           Line        => Positive'Value (Attrs.Get_Value ("line")),
+           Column      => Positive'Value (Attrs.Get_Value ("column")),
+           Category    =>
+             Self.Message_Categories.Element
+               (Positive'Value (Attrs.Get_Value (Category_Attribute))),
+           Is_Check    => Is_Check,
+           Ranking     => Get_Rank,
+           Text        => Attrs.Get_Value ("text"),
+           From_File   => From_File,
+           From_Line   => From_Line,
+           From_Column => From_Column,
+           Checks      => Checks,
+           Vns         => Get_Vns,
+           CWEs        => CWEs);
+
+      if Self.Messages.Contains (Self.Current_Message.Id) then
+         Self.Kernel.Insert
+           (Text   =>
+              "CodePeer: duplicate message"
+            & Natural'Image (Self.Current_Message.Id),
+            Add_LF => False,
+            Mode   => GPS.Kernel.Error);
+
+      else
+         Self.Messages.Insert
+           (Self.Current_Message.Id, Self.Current_Message);
+      end if;
+
+      --  Append message to the list of subprogram's messages
+
+      Self.Subprogram_Data.Messages.Append (Self.Current_Message);
+
+      --  Append message's category to the list of corresponding
+      --  categories.
+
+      if Self.Current_Message.Is_Check then
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).Check_Subcategories.Include
+           (Self.Current_Message.Category);
+
+      else
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).Warning_Subcategories.Include
+           (Self.Current_Message.Category);
+      end if;
+   end Start_Message;
+
+   -------------------------
+   -- Start_Object_Access --
+   -------------------------
+
+   procedure Start_Object_Access
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      Object_Access : CodePeer.Object_Access_Information;
+
+   begin
+      Object_Access :=
+        (Kind    =>
+           Object_Access_Kinds'Value (Attrs.Get_Value (Kind_Attribute)),
+         File    =>
+           GPS.Kernel.Create (+Attrs.Get_Value (File_Attribute), Self.Kernel),
+         Line    => Natural'Value (Attrs.Get_Value (Line_Attribute)),
+         Column  => Get_Optional_Column (Attrs),
+         Message => null);
+      Self.Object_Accesses.Object_Accesses.Append (Object_Access);
+   end Start_Object_Access;
+
+   -----------------------
+   -- Start_Object_Race --
+   -----------------------
+
+   procedure Start_Object_Race
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      function Get_Optional_File return GNATCOLL.VFS.Virtual_File;
+      --  Returns value of "file" attribute if specified; overwise returns
+      --  No_File.
+
+      function Get_Optional_Line return Natural;
+      --  Returns value of "line" attribute if specified, overwise returns 0.
+
+      -----------------------
+      -- Get_Optional_File --
+      -----------------------
+
+      function Get_Optional_File return GNATCOLL.VFS.Virtual_File is
+         Index : constant Integer := Attrs.Get_Index (File_Attribute);
+
+      begin
+         if Index /= -1 then
+            return
+              GPS.Kernel.Create
+                (+Attrs.Get_Value (File_Attribute), Self.Kernel);
+
+         else
+            return GNATCOLL.VFS.No_File;
+         end if;
+      end Get_Optional_File;
+
+      -----------------------
+      -- Get_Optional_Line --
+      -----------------------
+
+      function Get_Optional_Line return Natural is
+         Index : constant Integer := Attrs.Get_Index (Line_Attribute);
+
+      begin
+         if Index /= -1 then
+            return Natural'Value (Attrs.Get_Value (Index));
+
+         else
+            return 0;
+         end if;
+      end Get_Optional_Line;
+
+   begin
+      if Self.Race_Category = null then
+         Self.Race_Category :=
+           new CodePeer.Message_Category'
+             (Name =>
+                To_Unbounded_String
+                  (CodePeer.Module.Race_Condition_Category),
+              CWEs => CodePeer.CWE_Category_Sets.Empty_Set);
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).Warning_Subcategories.Include
+           (Self.Race_Category);
+      end if;
+
+      Self.Object_Race.Name :=
+        To_Unbounded_String (Attrs.Get_Value (Name_Attribute));
+      Self.Object_Race.File := Get_Optional_File;
+      Self.Object_Race.Line := Get_Optional_Line;
+      Self.Object_Race.Column := Get_Optional_Column (Attrs);
+      --  Object race information is added to data in the End_Element
+      --  callback.
+   end Start_Object_Race;
+
+   ----------------------
+   -- Start_Subprogram --
+   ----------------------
+
+   procedure Start_Subprogram
+     (Self  : in out Reader'Class;
+      Attrs : Sax.Attributes.Attributes'Class) is
+   begin
+      Self.Subprogram_Node :=
+        Code_Analysis.Get_Or_Create
+          (Self.File_Node, Attrs.Get_Value ("name"));
+      Self.Subprogram_Node.Name :=
+        new String'(Attrs.Get_Value ("name"));
+      Self.Subprogram_Node.Line :=
+        Positive'Value (Attrs.Get_Value ("line"));
+      Self.Subprogram_Node.Column :=
+        Positive'Value (Attrs.Get_Value ("column"));
+      Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
+        new CodePeer.Subprogram_Data'
+          (Lifeage       => Get_Lifeage (Attrs),
+           Messages      => Message_Vectors.Empty_Vector,
+           Annotations   => Annotation_Maps.Empty_Map,
+           Mark          => <>,
+           Special_Lines => 0);
+      Self.Subprogram_Data :=
+        CodePeer.Subprogram_Data_Access
+          (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
+   end Start_Subprogram;
+
+   -------------------
+   -- Start_Element --
+   -------------------
+
+   overriding procedure Start_Element
+     (Self          : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence;
+      Attrs         : Sax.Attributes.Attributes'Class)
+   is
+      pragma Unreferenced (Namespace_URI, Local_Name);
+
+      function Get_Value
+        (Attrs      : Sax.Attributes.Attributes'Class;
+         Local_Name : String;
+         Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
+            return Ada.Calendar.Time;
+      --  Returns values of given attribute if present or value of
+      --  Default.
+
+      function Get_Value
+        (Attrs      : Sax.Attributes.Attributes'Class;
+         Local_Name : String) return Ada.Strings.Unbounded.Unbounded_String;
+      --  Returns values of given attribute if present or empty string.
+
+      ---------------
+      -- Get_Value --
+      ---------------
+
+      function Get_Value
+        (Attrs      : Sax.Attributes.Attributes'Class;
+         Local_Name : String;
+         Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
+            return Ada.Calendar.Time
+      is
+         Index : constant Integer := Attrs.Get_Index (Local_Name);
+
+      begin
+         if Index /= -1 then
+            return
+              Ada.Calendar.Formatting.Value (Attrs.Get_Value (Index));
+
+         else
+            return Default;
+         end if;
+      end Get_Value;
+
+      ---------------
+      -- Get_Value --
+      ---------------
+
+      function Get_Value
+        (Attrs      : Sax.Attributes.Attributes'Class;
+         Local_Name : String) return Ada.Strings.Unbounded.Unbounded_String
+      is
+         Index : constant Integer := Attrs.Get_Index (Local_Name);
+
+      begin
+         if Index /= -1 then
+            return
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value (Index));
+
+         else
+            return Ada.Strings.Unbounded.Null_Unbounded_String;
+         end if;
+      end Get_Value;
+
    begin
       if Self.Ignore_Depth /= 0 then
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
 
       elsif Qname = Inspection_Tag then
          declare
-
-            function Get_Value
-              (Attrs      : Sax.Attributes.Attributes'Class;
-               Local_Name : String;
-               Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
-               return Ada.Calendar.Time;
-            --  Returns values of given attribute if present or value of
-            --  Default.
-
-            function Get_Value
-              (Attrs      : Sax.Attributes.Attributes'Class;
-               Local_Name : String)
-               return Ada.Strings.Unbounded.Unbounded_String;
-            --  Returns values of given attribute if present or empty string.
-
-            ---------------
-            -- Get_Value --
-            ---------------
-
-            function Get_Value
-              (Attrs      : Sax.Attributes.Attributes'Class;
-               Local_Name : String;
-               Default    : Ada.Calendar.Time := CodePeer.Unknown_Timestamp)
-               return Ada.Calendar.Time
-            is
-               Index : constant Integer := Attrs.Get_Index (Local_Name);
-
-            begin
-               if Index /= -1 then
-                  return
-                    Ada.Calendar.Formatting.Value (Attrs.Get_Value (Index));
-
-               else
-                  return Default;
-               end if;
-            end Get_Value;
-
-            ---------------
-            -- Get_Value --
-            ---------------
-
-            function Get_Value
-              (Attrs      : Sax.Attributes.Attributes'Class;
-               Local_Name : String)
-               return Ada.Strings.Unbounded.Unbounded_String
-            is
-               Index : constant Integer := Attrs.Get_Index (Local_Name);
-
-            begin
-               if Index /= -1 then
-                  return
-                    Ada.Strings.Unbounded.To_Unbounded_String
-                      (Attrs.Get_Value (Index));
-
-               else
-                  return Ada.Strings.Unbounded.Null_Unbounded_String;
-               end if;
-            end Get_Value;
-
             Data : CodePeer.Project_Data'Class
               renames CodePeer.Project_Data'Class (Self.Root_Inspection.all);
 
@@ -583,285 +1047,37 @@ package body CodePeer.Bridge.Inspection_Readers is
          end;
 
       elsif Qname = CWE_Category_Tag then
-         Self.Include_CWE_Category
-           (Id   =>
-              CWE_Identifier'Value (Attrs.Get_Value (Identifier_Attribute)),
-            Name =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value (Name_Attribute)));
+         Self.Start_CWE_Category (Attrs);
 
       elsif Qname = Message_Category_Tag then
-         Message_Category :=
-           new CodePeer.Message_Category'
-             (Name => To_Unbounded_String (Attrs.Get_Value ("name")),
-              CWEs => <>);
-
-         if Attrs.Get_Index (Is_Check_Attribute) /= -1
-           and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
-         then
-            CodePeer.Project_Data'Class
-              (Self.Root_Inspection.all).Check_Subcategories.Include
-              (Message_Category);
-         end if;
-
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Message_Categories.Insert
-           (Message_Category);
-         Self.Message_Categories.Insert
-           (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
-
-         Self.Update_CWE
-           (Message_Category.CWEs,
-            (if Attrs.Get_Index (CWE_Attribute) /= -1
-             then Attrs.Get_Value (CWE_Attribute)
-             else ""));
+         Self.Start_Message_Category (Attrs);
 
       elsif Qname = Annotation_Category_Tag then
-         Annotation_Category :=
-           new CodePeer.Annotation_Category'
-             (Order => Natural'Value (Attrs.Get_Value ("identifier")),
-              Text  => To_Unbounded_String (Attrs.Get_Value ("name")),
-              Vn    => Get_Vn);
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Annotation_Categories.Insert
-           (Annotation_Category);
-         Self.Annotation_Categories.Insert
-           (Natural'Value (Attrs.Get_Value ("identifier")),
-            Annotation_Category);
+         Self.Start_Annotation_Category (Attrs);
 
       elsif Qname = File_Tag then
-         File_Name :=
-           GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
-         --  ??? Potentially non-utf8 string should not be
-         --  stored in an XML attribute.
-
-         --  Try to find file with the same base name in the current project.
-         --  Use this file instead of original name which comes from the
-         --  database to be able to reuse database between several users.
-
-         Relocated_Name := Self.Kernel.Create_From_Base (File_Name.Base_Name);
-
-         if Relocated_Name.Is_Regular_File then
-            File_Name := Relocated_Name;
-         end if;
-
-         declare
-            F_Info : constant GNATCOLL.Projects.File_Info'Class :=
-              GNATCOLL.Projects.File_Info'Class
-                (Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
-                 .First_Element);
-         begin
-            Project_Node :=
-              Code_Analysis.Get_Or_Create
-                (Self.Projects,
-                 F_Info.Project);
-         end;
-
-         Self.File_Node :=
-           Code_Analysis.Get_Or_Create (Project_Node, File_Name);
-         Self.File_Node.Analysis_Data.CodePeer_Data :=
-           new CodePeer.File_Data'
-                 (Lifeage            => Lifeage,
-                  Total_Checks       => Checks,
-                  Annotations_File   => Get_Optional_Annotations,
-                  Annotations_Loaded => False);
+         Self.Start_File (Attrs);
 
       elsif Qname = Subprogram_Tag then
-         Self.Subprogram_Node :=
-           Code_Analysis.Get_Or_Create
-             (Self.File_Node, Attrs.Get_Value ("name"));
-         Self.Subprogram_Node.Name :=
-           new String'(Attrs.Get_Value ("name"));
-         Self.Subprogram_Node.Line :=
-           Positive'Value (Attrs.Get_Value ("line"));
-         Self.Subprogram_Node.Column :=
-           Positive'Value (Attrs.Get_Value ("column"));
-         Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
-           new CodePeer.Subprogram_Data'
-             (Lifeage       => Lifeage,
-              Messages      => Message_Vectors.Empty_Vector,
-              Annotations   => Annotation_Maps.Empty_Map,
-              Mark          => <>,
-              Special_Lines => 0);
-         Self.Subprogram_Data :=
-           CodePeer.Subprogram_Data_Access
-             (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
+         Self.Start_Subprogram (Attrs);
 
       elsif Qname = Message_Tag then
-         declare
-            Checks      : Message_Category_Sets.Set;
-            From_File   : GNATCOLL.VFS.Virtual_File;
-            From_Line   : Positive := 1;
-            From_Column : Positive := 1;
-            CWEs        : CWE_Category_Sets.Set;
-
-         begin
-            --  Only primary checks need to be displayed.
-
-            if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
-               declare
-                  Check_Ids : GNAT.Strings.String_List_Access :=
-                                GNATCOLL.Utils.Split
-                                  (Attrs.Get_Value (Primary_Checks_Attribute),
-                                   ' ',
-                                   True);
-
-               begin
-                  for Index in Check_Ids'Range loop
-                     Checks.Insert
-                       (Self.Message_Categories
-                          (Natural'Value (Check_Ids (Index).all)));
-                  end loop;
-
-                  GNAT.Strings.Free (Check_Ids);
-               end;
-            end if;
-
-            if Attrs.Get_Index ("from_file") /= -1 then
-               From_File :=
-                 GPS.Kernel.Create
-                   (+Attrs.Get_Value ("from_file"), Self.Kernel);
-               From_Line :=
-                 Positive'Value (Attrs.Get_Value ("from_line"));
-               From_Column :=
-                 Positive'Value (Attrs.Get_Value ("from_column"));
-            end if;
-
-            Self.Update_CWE
-              (CWEs,
-               (if Attrs.Get_Index (CWE_Attribute) /= -1
-                then Attrs.Get_Value (CWE_Attribute)
-                else ""));
-
-            Self.Current_Message :=
-              CodePeer.Module.Create_CodePeer_Message
-                (Id          =>
-                   Positive'Value (Attrs.Get_Value ("identifier")),
-                 File        => Self.File_Node,
-                 Subprogram  =>
-                   Ada.Strings.Unbounded.To_Unbounded_String
-                     (Self.Subprogram_Node.Name.all),
-                 Merged      => Merged,
-                 Lifeage     => Lifeage,
-                 Line        => Positive'Value (Attrs.Get_Value ("line")),
-                 Column      => Positive'Value (Attrs.Get_Value ("column")),
-                 Category    =>
-                   Self.Message_Categories.Element
-                     (Positive'Value (Attrs.Get_Value (Category_Attribute))),
-                 Is_Check    => Is_Check,
-                 Ranking     => Get_Rank,
-                 Text        => Attrs.Get_Value ("text"),
-                 From_File   => From_File,
-                 From_Line   => From_Line,
-                 From_Column => From_Column,
-                 Checks      => Checks,
-                 Vns         => Get_Vns,
-                 CWEs        => CWEs);
-         end;
-
-         if Self.Messages.Contains (Self.Current_Message.Id) then
-            Self.Kernel.Insert
-              (Text   =>
-                 "CodePeer: duplicate message"
-               & Natural'Image (Self.Current_Message.Id),
-               Add_LF => False,
-               Mode   => GPS.Kernel.Error);
-
-         else
-            Self.Messages.Insert
-              (Self.Current_Message.Id, Self.Current_Message);
-         end if;
-
-         --  Append message to the list of subprogram's messages
-
-         Self.Subprogram_Data.Messages.Append (Self.Current_Message);
-
-         --  Append message's category to the list of corresponding
-         --  categories.
-
-         if Self.Current_Message.Is_Check then
-            CodePeer.Project_Data'Class
-              (Self.Root_Inspection.all).Check_Subcategories.Include
-              (Self.Current_Message.Category);
-
-         else
-            CodePeer.Project_Data'Class
-              (Self.Root_Inspection.all).Warning_Subcategories.Include
-              (Self.Current_Message.Category);
-         end if;
+         Self.Start_Message (Attrs);
 
       elsif Qname = Annotation_Tag then
-         Annotation_Category :=
-           Self.Annotation_Categories.Element
-             (Natural'Value (Attrs.Get_Value ("category")));
-
-         if not Self.Subprogram_Data.Annotations.Contains
-                  (Annotation_Category)
-         then
-            Self.Subprogram_Data.Annotations.Insert
-              (Annotation_Category,
-               new CodePeer.Annotation_Vectors.Vector);
-         end if;
-
-         Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
-           (new CodePeer.Annotation'
-              (Lifeage, To_Unbounded_String (Attrs.Get_Value ("text"))));
+         Self.Start_Annotation (Attrs);
 
       elsif Qname = Entry_Point_Tag then
-         Entry_Point :=
-           new Entry_Point_Information'
-             (Name   => To_Unbounded_String (Attrs.Get_Value (Name_Attribute)),
-              File   =>
-                GPS.Kernel.Create
-                  (+Attrs.Get_Value (File_Attribute), Self.Kernel),
-              Line   => Integer'Value (Attrs.Get_Value (Line_Attribute)),
-              Column => Get_Optional_Column);
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Entry_Points.Insert (Entry_Point);
-         Self.Entry_Point_Map.Insert
-           (Integer'Value (Attrs.Get_Value ("identifier")), Entry_Point);
+         Self.Start_Entry_Point (Attrs);
 
       elsif Qname = Object_Race_Tag then
-         if Self.Race_Category = null then
-            Self.Race_Category :=
-              new CodePeer.Message_Category'
-                (Name =>
-                   To_Unbounded_String
-                     (CodePeer.Module.Race_Condition_Category),
-                 CWEs => CodePeer.CWE_Category_Sets.Empty_Set);
-            CodePeer.Project_Data'Class
-              (Self.Root_Inspection.all).Warning_Subcategories.Include
-              (Self.Race_Category);
-         end if;
-
-         Self.Object_Race.Name :=
-           To_Unbounded_String (Attrs.Get_Value (Name_Attribute));
-         Self.Object_Race.File := Get_Optional_File;
-         Self.Object_Race.Line := Get_Optional_Line;
-         Self.Object_Race.Column := Get_Optional_Column;
-         --  Object race information is added to data in the End_Element
-         --  callback.
+         Self.Start_Object_Race (Attrs);
 
       elsif Qname = Entry_Point_Access_Tag then
-         Entry_Point :=
-           Self.Entry_Point_Map.Element
-             (Integer'Value (Attrs.Get_Value (Entry_Point_Attribute)));
-         Self.Object_Accesses :=
-           (Entry_Point, CodePeer.Object_Access_Vectors.Empty_Vector);
-         --  Entry point's object access information is added in the
-         --  End_Element callback.
+         Self.Start_Entry_Point_Access (Attrs);
 
       elsif Qname = Object_Access_Tag then
-         Object_Access :=
-           (Kind    =>
-              Object_Access_Kinds'Value (Attrs.Get_Value (Kind_Attribute)),
-            File    =>
-              GPS.Kernel.Create
-                (+Attrs.Get_Value (File_Attribute), Self.Kernel),
-            Line    => Natural'Value (Attrs.Get_Value (Line_Attribute)),
-            Column  => Get_Optional_Column,
-            Message => null);
-         Self.Object_Accesses.Object_Accesses.Append (Object_Access);
+         Self.Start_Object_Access (Attrs);
 
       else
          --  Activate ignore of nested XML elements to be able to load data
