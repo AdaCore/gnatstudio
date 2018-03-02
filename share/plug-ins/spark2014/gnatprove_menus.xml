@@ -618,6 +618,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_tagged_stacks" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/tagged_stacks/test.gpr"</shell>
+      <shell>Editor.edit "stacks.adb"</shell>
+      <shell>Editor.edit "stacks.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tagged_stacks">
+        <title>tagged__stacks</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_tetris" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/tetris/test.gpr"</shell>
