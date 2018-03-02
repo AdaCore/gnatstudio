@@ -21,7 +21,7 @@ with XML_Utils;
 
 package body CodePeer.Bridge.Commands is
 
-   procedure Audit_Trail_V4_V5
+   procedure Audit_Trail_V4_5_6
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
@@ -32,11 +32,11 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version);
    --  Generates request of messages' audit trail in format version 4 and 5.
 
-   ----------------------------
-   -- Add_Audit_Record_V4_V5 --
-   ----------------------------
+   -----------------------------
+   -- Add_Audit_Record_V4_5_6 --
+   -----------------------------
 
-   procedure Add_Audit_Record_V4_V5
+   procedure Add_Audit_Record_V4_5_6
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
@@ -100,7 +100,7 @@ package body CodePeer.Bridge.Commands is
 
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Add_Audit_Record_V4_V5;
+   end Add_Audit_Record_V4_5_6;
 
    -----------------
    -- Audit_Trail --
@@ -117,8 +117,8 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version) is
    begin
       case Version is
-         when 4 | 5 =>
-            Audit_Trail_V4_V5
+         when 4 | 5 | 6 =>
+            Audit_Trail_V4_5_6
               (Command_File_Name,
                Output_Directory,
                DB_Directory,
@@ -130,11 +130,11 @@ package body CodePeer.Bridge.Commands is
       end case;
    end Audit_Trail;
 
-   -----------------------
-   -- Audit_Trail_V4_V5 --
-   -----------------------
+   ------------------------
+   -- Audit_Trail_V4_5_6 --
+   ------------------------
 
-   procedure Audit_Trail_V4_V5
+   procedure Audit_Trail_V4_5_6
      (Command_File_Name   : Virtual_File;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
@@ -192,7 +192,7 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Audit_Trail_V4_V5;
+   end Audit_Trail_V4_5_6;
 
    ----------------
    -- Inspection --

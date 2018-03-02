@@ -76,7 +76,7 @@ package body CodePeer.Module.Bridge is
       --  Generate command file
 
       case Module.Version is
-         when 4 | 5 =>
+         when 4 | 5 | 6 =>
             for Message of Messages loop
                All_Messages.Append (Message);
 
@@ -85,7 +85,7 @@ package body CodePeer.Module.Bridge is
                end loop;
             end loop;
 
-            CodePeer.Bridge.Commands.Add_Audit_Record_V4_V5
+            CodePeer.Bridge.Commands.Add_Audit_Record_V4_5_6
               (Command_File_Name,
                Codepeer_Output_Directory (Module.Kernel),
                Codepeer_Database_Directory (Project),

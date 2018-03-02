@@ -22,6 +22,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with CodePeer.Bridge.Inspection_Readers.V4_5;
+with CodePeer.Bridge.Inspection_Readers.V6;
 
 package body CodePeer.Bridge.Inspection_Readers is
 
@@ -208,13 +209,26 @@ package body CodePeer.Bridge.Inspection_Readers is
             Self.Version :=
               Format_Version'Value (Attrs.Get_Value (Format_Attribute));
 
-            Self.Reader :=
-              CodePeer.Bridge.Inspection_Readers.V4_5
-                .Create_Inspection_Reader_V4_5
-                  (Self.Kernel,
-                   Self.Base_Directory,
-                   Self.Root_Inspection,
-                   Self.Messages);
+            case Self.Version is
+               when 4 .. 5 =>
+                  Self.Reader :=
+                    CodePeer.Bridge.Inspection_Readers.V4_5
+                      .Create_Inspection_Reader_V4_5
+                        (Self.Kernel,
+                         Self.Base_Directory,
+                         Self.Root_Inspection,
+                         Self.Messages);
+
+               when 6 =>
+                  Self.Reader :=
+                    CodePeer.Bridge.Inspection_Readers.V6
+                      .Create_Inspection_Reader_V6
+                        (Self.Kernel,
+                         Self.Base_Directory,
+                         Self.Root_Inspection,
+                         Self.Messages);
+            end case;
+
             Self.Reader_Depth := 1;
          end;
 

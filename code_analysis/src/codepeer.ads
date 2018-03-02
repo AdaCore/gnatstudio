@@ -34,7 +34,7 @@ package CodePeer is
    type Format_Version is new Positive;
    --  Version of format of interchange files.
 
-   subtype Supported_Format_Version is Format_Version range 4 .. 5;
+   subtype Supported_Format_Version is Format_Version range 4 .. 6;
    --  Range of suppoted versions of format of interchange file.
 
    Unknown_Timestamp : constant Ada.Calendar.Time :=
