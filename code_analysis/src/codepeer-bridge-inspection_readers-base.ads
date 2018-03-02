@@ -19,20 +19,73 @@ private package CodePeer.Bridge.Inspection_Readers.Base is
 
    type Base_Inspection_Reader
      (Kernel : not null GPS.Kernel.Kernel_Handle) is
-         limited new Abstract_Inspection_Reader with private;
+         abstract limited new Abstract_Inspection_Reader with private;
 
-   function Create_Base_Inspection_Reader
-     (Kernel          : not null GPS.Kernel.Kernel_Handle;
+   procedure Initialize
+     (Self            : in out Base_Inspection_Reader'Class;
       Base_Directory  : GNATCOLL.VFS.Virtual_File;
       Root_Inspection : Code_Analysis.CodePeer_Data_Access;
-      Messages        : access CodePeer.Message_Maps.Map)
-      return not null Inspection_Reader_Access;
+      Messages        : access CodePeer.Message_Maps.Map);
+   --  Subprogram to initialize object
+
+   overriding procedure Start_Element
+     (Self  : in out Base_Inspection_Reader;
+      Name  : String;
+      Attrs : Sax.Attributes.Attributes'Class);
+   --  Process start of XML element.
+
+   overriding procedure End_Element
+     (Self  : in out Base_Inspection_Reader;
+      Name  : String);
+   --  Process end of XML element
+
+   overriding function Get_Code_Analysis_Tree
+     (Self : Base_Inspection_Reader) return Code_Analysis.Code_Analysis_Tree;
+
+   overriding function Get_Race_Category
+     (Self : Base_Inspection_Reader) return CodePeer.Message_Category_Access;
+
+   overriding function Get_Annotation_Categories
+     (Self : Base_Inspection_Reader) return Annotation_Category_Maps.Map;
+
+   function File_Node
+     (Self : Base_Inspection_Reader'Class) return Code_Analysis.File_Access;
+   --  Returns currently processed file node
+
+   not overriding function Subprogram_Node
+     (Self : Base_Inspection_Reader)
+      return Code_Analysis.Subprogram_Access is abstract;
+   --  Returns currently processed subprogram node
+
+   function Subprogram_Data
+     (Self : Base_Inspection_Reader'Class)
+      return CodePeer.Subprogram_Data_Access;
+   --  Returns analysis information for currently processed subprogram node
+
+   not overriding procedure Start_Message
+     (Self  : in out Base_Inspection_Reader;
+      Attrs : Sax.Attributes.Attributes'Class);
+   --  Process start of 'message' element
+
+   not overriding procedure End_Message
+     (Self : in out Base_Inspection_Reader);
+   --  Process end of 'message' element
+
+   not overriding procedure Start_Subprogram
+     (Self  : in out Base_Inspection_Reader;
+      Attrs : Sax.Attributes.Attributes'Class) is abstract;
+   --  Process start of 'subprogram' element
+
+   function Annotation_Category
+     (Self : Base_Inspection_Reader'Class;
+      Id   : Natural) return Annotation_Category_Access;
+   --  Return annotation category for given identifier.
 
 private
 
    type Base_Inspection_Reader
      (Kernel : not null GPS.Kernel.Kernel_Handle) is
-         limited new Abstract_Inspection_Reader with
+         abstract limited new Abstract_Inspection_Reader with
    record
       Ignore_Depth          : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
@@ -51,8 +104,6 @@ private
       Messages              : access CodePeer.Message_Maps.Map;
 
       File_Node             : Code_Analysis.File_Access;
-      Subprogram_Node       : Code_Analysis.Subprogram_Access;
-      Subprogram_Data       : CodePeer.Subprogram_Data_Access;
       Current_Message       : CodePeer.Message_Access;
 
       Entry_Point_Map       : Entry_Point_Maps.Map;
@@ -60,23 +111,5 @@ private
       Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
       Race_Category         : CodePeer.Message_Category_Access;
    end record;
-
-   overriding procedure Start_Element
-     (Self  : in out Base_Inspection_Reader;
-      Name  : String;
-      Attrs : Sax.Attributes.Attributes'Class);
-
-   overriding procedure End_Element
-     (Self  : in out Base_Inspection_Reader;
-      Name  : String);
-
-   overriding function Get_Code_Analysis_Tree
-     (Self : Base_Inspection_Reader) return Code_Analysis.Code_Analysis_Tree;
-
-   overriding function Get_Race_Category
-     (Self : Base_Inspection_Reader) return CodePeer.Message_Category_Access;
-
-   overriding function Get_Annotation_Categories
-     (Self : Base_Inspection_Reader) return Annotation_Category_Maps.Map;
 
 end CodePeer.Bridge.Inspection_Readers.Base;

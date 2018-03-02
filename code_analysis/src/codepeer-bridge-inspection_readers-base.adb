@@ -23,9 +23,10 @@ with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with CodePeer.Module;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
+with CodePeer.Bridge.Inspection_Readers.Utilities;
+
 package body CodePeer.Bridge.Inspection_Readers.Base is
 
-   Annotation_Tag          : constant String := "annotation";
    Annotation_Category_Tag : constant String := "annotation_category";
    CWE_Category_Tag        : constant String := "cwe_category";
    Entry_Point_Tag         : constant String := "entry_point";
@@ -54,10 +55,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    Vn_Id_Attribute              : constant String := "vn-id";
    Vn_Ids_Attribute             : constant String := "vn-ids";
 
-   procedure Start_Annotation
-     (Self  : in out Base_Inspection_Reader'Class;
-      Attrs : Sax.Attributes.Attributes'Class);
-
    procedure Start_Annotation_Category
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
@@ -81,12 +78,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   procedure Start_Message
-     (Self  : in out Base_Inspection_Reader'Class;
-      Attrs : Sax.Attributes.Attributes'Class);
-
-   procedure End_Message (Self : in out Base_Inspection_Reader'Class);
-
    procedure Start_Message_Category
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
@@ -100,10 +91,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Attrs : Sax.Attributes.Attributes'Class);
 
    procedure End_Object_Race (Self : in out Base_Inspection_Reader'Class);
-
-   procedure Start_Subprogram
-     (Self  : in out Base_Inspection_Reader'Class;
-      Attrs : Sax.Attributes.Attributes'Class);
 
    procedure Include_CWE_Category
      (Self : in out Base_Inspection_Reader'Class;
@@ -120,60 +107,20 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       CWEs : String);
    --  Update sets of CWEs for given set and project node.
 
-   function Get_Lifeage
-     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds;
-
    function Get_Optional_Column
      (Attrs : Sax.Attributes.Attributes'Class) return Positive;
    --  Returns value of "column" attribute is specified and 1 instead.
 
-   function Get_Value
-     (Attrs : Sax.Attributes.Attributes'Class;
-      Name  : String) return Ada.Strings.Unbounded.Unbounded_String;
+   -------------------------
+   -- Annotation_Category --
+   -------------------------
 
-   -----------------------------------
-   -- Create_Base_Inspection_Reader --
-   -----------------------------------
-
-   function Create_Base_Inspection_Reader
-     (Kernel          : not null GPS.Kernel.Kernel_Handle;
-      Base_Directory  : GNATCOLL.VFS.Virtual_File;
-      Root_Inspection : Code_Analysis.CodePeer_Data_Access;
-      Messages        : access CodePeer.Message_Maps.Map)
-      return not null Inspection_Reader_Access is
+   function Annotation_Category
+     (Self : Base_Inspection_Reader'Class;
+      Id   : Natural) return Annotation_Category_Access is
    begin
-      return Result : constant not null Inspection_Reader_Access :=
-        new Base_Inspection_Reader (Kernel)
-      do
-         declare
-            Self         : Base_Inspection_Reader'Class
-              renames Base_Inspection_Reader'Class (Result.all);
-            Root_Project : Code_Analysis.Project_Access;
-
-         begin
-            Self.Base_Directory  := Base_Directory;
-            Self.Root_Inspection := Root_Inspection;
-
-            Self.Projects        := new Code_Analysis.Project_Maps.Map;
-            Self.Messages        := Messages;
-            Self.Message_Categories.Clear;
-            Self.Messages.Clear;
-            Root_Project :=
-              Code_Analysis.Get_Or_Create
-                (Self.Projects,
-                 GPS.Kernel.Project.Get_Project (Kernel));
-            Root_Project.Analysis_Data.CodePeer_Data := Self.Root_Inspection;
-
-            Self.Object_Race :=
-              (Name         => <>,
-               Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
-               File         => GNATCOLL.VFS.No_File,
-               Line         => 0,
-               Column       => 0,
-               Message      => null);
-         end;
-      end return;
-   end Create_Base_Inspection_Reader;
+      return Self.Annotation_Categories.Element (Id);
+   end Annotation_Category;
 
    -----------------
    -- End_Element --
@@ -189,7 +136,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Self.Ignore_Depth := Self.Ignore_Depth - 1;
 
       elsif Name = Message_Tag then
-         Self.End_Message;
+         Base_Inspection_Reader'Class (Self).End_Message;
 
       elsif Name = Object_Race_Tag then
          Self.End_Object_Race;
@@ -215,7 +162,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- End_Message --
    -----------------
 
-   procedure End_Message (Self : in out Base_Inspection_Reader'Class) is
+   not overriding procedure End_Message
+     (Self : in out Base_Inspection_Reader) is
    begin
       Self.Current_Message := null;
    end End_Message;
@@ -237,6 +185,16 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Message      => null);
    end End_Object_Race;
 
+   ---------------
+   -- File_Node --
+   ---------------
+
+   function File_Node
+     (Self : Base_Inspection_Reader'Class) return Code_Analysis.File_Access is
+   begin
+      return Self.File_Node;
+   end File_Node;
+
    -------------------------------
    -- Get_Annotation_Categories --
    -------------------------------
@@ -256,24 +214,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       return Self.Projects;
    end Get_Code_Analysis_Tree;
-
-   -----------------
-   -- Get_Lifeage --
-   -----------------
-
-   function Get_Lifeage
-     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds
-   is
-      Index : constant Integer := Attrs.Get_Index ("lifeage");
-
-   begin
-      if Index = -1 then
-         return Unchanged;
-
-      else
-         return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
-      end if;
-   end Get_Lifeage;
 
    -------------------------
    -- Get_Optional_Column --
@@ -303,18 +243,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       return Self.Race_Category;
    end Get_Race_Category;
 
-   ---------------
-   -- Get_Value --
-   ---------------
-
-   function Get_Value
-     (Attrs : Sax.Attributes.Attributes'Class;
-      Name  : String) return Ada.Strings.Unbounded.Unbounded_String is
-   begin
-      return
-        Ada.Strings.Unbounded.To_Unbounded_String (Attrs.Get_Value (Name));
-   end Get_Value;
-
    --------------------------
    -- Include_CWE_Category --
    --------------------------
@@ -335,33 +263,40 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       end if;
    end Include_CWE_Category;
 
-   ----------------------
-   -- Start_Annotation --
-   ----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Start_Annotation
-     (Self  : in out Base_Inspection_Reader'Class;
-      Attrs : Sax.Attributes.Attributes'Class)
+   procedure Initialize
+     (Self            : in out Base_Inspection_Reader'Class;
+      Base_Directory  : GNATCOLL.VFS.Virtual_File;
+      Root_Inspection : Code_Analysis.CodePeer_Data_Access;
+      Messages        : access CodePeer.Message_Maps.Map)
    is
-      Annotation_Category : CodePeer.Annotation_Category_Access;
+      Root_Project : Code_Analysis.Project_Access;
 
    begin
-      Annotation_Category :=
-        Self.Annotation_Categories.Element
-          (Natural'Value (Attrs.Get_Value ("category")));
+      Self.Base_Directory  := Base_Directory;
+      Self.Root_Inspection := Root_Inspection;
 
-      if not Self.Subprogram_Data.Annotations.Contains
-        (Annotation_Category)
-      then
-         Self.Subprogram_Data.Annotations.Insert
-           (Annotation_Category,
-            new CodePeer.Annotation_Vectors.Vector);
-      end if;
+      Self.Projects        := new Code_Analysis.Project_Maps.Map;
+      Self.Messages        := Messages;
+      Self.Message_Categories.Clear;
+      Self.Messages.Clear;
+      Root_Project :=
+        Code_Analysis.Get_Or_Create
+          (Self.Projects,
+           GPS.Kernel.Project.Get_Project (Self.Kernel));
+      Root_Project.Analysis_Data.CodePeer_Data := Self.Root_Inspection;
 
-      Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
-        (new CodePeer.Annotation'
-           (Get_Lifeage (Attrs), Get_Value (Attrs, "text")));
-   end Start_Annotation;
+      Self.Object_Race :=
+        (Name         => <>,
+         Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
+         File         => GNATCOLL.VFS.No_File,
+         Line         => 0,
+         Column       => 0,
+         Message      => null);
+   end Initialize;
 
    -------------------------------
    -- Start_Annotation_Category --
@@ -396,7 +331,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Annotation_Category :=
         new CodePeer.Annotation_Category'
           (Order => Natural'Value (Attrs.Get_Value ("identifier")),
-           Text  => Get_Value (Attrs, "name"),
+           Text  => Utilities.Get_Value (Attrs, "name"),
            Vn    => Get_Vn);
       CodePeer.Project_Data'Class
         (Self.Root_Inspection.all).Annotation_Categories.Insert
@@ -429,8 +364,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    overriding procedure Start_Element
      (Self  : in out Base_Inspection_Reader;
       Name  : String;
-      Attrs : Sax.Attributes.Attributes'Class)
-   is
+      Attrs : Sax.Attributes.Attributes'Class) is
    begin
       if Self.Ignore_Depth /= 0 then
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
@@ -448,13 +382,10 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Self.Start_File (Attrs);
 
       elsif Name = Subprogram_Tag then
-         Self.Start_Subprogram (Attrs);
+         Base_Inspection_Reader'Class (Self).Start_Subprogram (Attrs);
 
       elsif Name = Message_Tag then
-         Self.Start_Message (Attrs);
-
-      elsif Name = Annotation_Tag then
-         Self.Start_Annotation (Attrs);
+         Base_Inspection_Reader'Class (Self).Start_Message (Attrs);
 
       elsif Name = Entry_Point_Tag then
          Self.Start_Entry_Point (Attrs);
@@ -489,7 +420,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       Entry_Point :=
         new Entry_Point_Information'
-          (Name   => Get_Value (Attrs, Name_Attribute),
+          (Name   => Utilities.Get_Value (Attrs, Name_Attribute),
            File   =>
              GPS.Kernel.Create
                (+Attrs.Get_Value (File_Attribute), Self.Kernel),
@@ -609,7 +540,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
         Code_Analysis.Get_Or_Create (Project_Node, File_Name);
       Self.File_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.File_Data'
-          (Lifeage            => Get_Lifeage (Attrs),
+          (Lifeage            => Utilities.Get_Lifeage (Attrs),
            Total_Checks       => Get_Checks,
            Annotations_File   => Get_Optional_Annotations,
            Annotations_Loaded => False);
@@ -619,8 +550,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Start_Message --
    -------------------
 
-   procedure Start_Message
-     (Self  : in out Base_Inspection_Reader'Class;
+   not overriding procedure Start_Message
+     (Self  : in out Base_Inspection_Reader;
       Attrs : Sax.Attributes.Attributes'Class)
    is
       function Get_Rank return Message_Ranking_Level;
@@ -797,9 +728,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            File        => Self.File_Node,
            Subprogram  =>
              Ada.Strings.Unbounded.To_Unbounded_String
-               (Self.Subprogram_Node.Name.all),
+               (Base_Inspection_Reader'Class (Self).Subprogram_Node.Name.all),
            Merged      => Merged,
-           Lifeage     => Get_Lifeage (Attrs),
+           Lifeage     => Utilities.Get_Lifeage (Attrs),
            Line        => Positive'Value (Attrs.Get_Value ("line")),
            Column      => Positive'Value (Attrs.Get_Value ("column")),
            Category    =>
@@ -830,7 +761,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
       --  Append message to the list of subprogram's messages
 
-      Self.Subprogram_Data.Messages.Append (Self.Current_Message);
+      Base_Inspection_Reader'Class
+        (Self).Subprogram_Data.Messages.Append (Self.Current_Message);
 
       --  Append message's category to the list of corresponding
       --  categories.
@@ -860,7 +792,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       Message_Category :=
         new CodePeer.Message_Category'
-          (Name => Get_Value (Attrs, "name"), CWEs => <>);
+          (Name => Utilities.Get_Value (Attrs, "name"), CWEs => <>);
 
       if Attrs.Get_Index (Is_Check_Attribute) /= -1
         and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
@@ -977,34 +909,18 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       --  callback.
    end Start_Object_Race;
 
-   ----------------------
-   -- Start_Subprogram --
-   ----------------------
+   ---------------------
+   -- Subprogram_Data --
+   ---------------------
 
-   procedure Start_Subprogram
-     (Self  : in out Base_Inspection_Reader'Class;
-      Attrs : Sax.Attributes.Attributes'Class) is
+   function Subprogram_Data
+     (Self : Base_Inspection_Reader'Class)
+      return CodePeer.Subprogram_Data_Access is
    begin
-      Self.Subprogram_Node :=
-        Code_Analysis.Get_Or_Create
-          (Self.File_Node, Attrs.Get_Value ("name"));
-      Self.Subprogram_Node.Name :=
-        new String'(Attrs.Get_Value ("name"));
-      Self.Subprogram_Node.Line :=
-        Positive'Value (Attrs.Get_Value ("line"));
-      Self.Subprogram_Node.Column :=
-        Positive'Value (Attrs.Get_Value ("column"));
-      Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
-        new CodePeer.Subprogram_Data'
-          (Lifeage       => Get_Lifeage (Attrs),
-           Messages      => Message_Vectors.Empty_Vector,
-           Annotations   => Annotation_Maps.Empty_Map,
-           Mark          => <>,
-           Special_Lines => 0);
-      Self.Subprogram_Data :=
+      return
         CodePeer.Subprogram_Data_Access
           (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
-   end Start_Subprogram;
+   end Subprogram_Data;
 
    ----------------
    -- Update_CWE --
