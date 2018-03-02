@@ -25,7 +25,6 @@
 
 with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
@@ -33,6 +32,7 @@ with GNATCOLL.Projects;                     use GNATCOLL.Projects;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors.Line_Information;
+with Commands;
 
 package Code_Analysis is
 
@@ -58,12 +58,6 @@ package Code_Analysis is
       --  The gcov file could not be parsed.
       Undetermined);
       --  The status is undetermined.
-
-   type Line_Information_Access is
-     access GPS.Editors.Line_Information.Line_Information_Record;
-
-   package Line_Info_List is
-     new Ada.Containers.Doubly_Linked_Lists (Line_Information_Access);
 
    type Coverage is abstract tagged record
       Coverage   : Natural := 0;
@@ -248,11 +242,11 @@ package Code_Analysis is
    --  Stop is the ending line of the definition of the subprogram
 
    type File is new Node with record
-      Name        : GNATCOLL.VFS.Virtual_File;
-      Subprograms : Subprogram_Maps.Map;
-      Lines       : Line_Array_Access;
-      Line_Infos  : Line_Info_List.List;
-      --  List used to track the expanded coverage lines in the editor
+      Name          : GNATCOLL.VFS.Virtual_File;
+      Subprograms   : Subprogram_Maps.Map;
+      Lines         : Line_Array_Access;
+      Line_Commands : Commands.Command_Lists.List;
+      --  List used to track the coverage commands in the editor
    end record;
 
    type Project is new Node with record
@@ -343,9 +337,6 @@ package Code_Analysis is
    --  Coverage record if allocated
    --  and futur other specific analysis records should be added here
 
-   procedure Free_Line_Info_List (List : in out Line_Info_List.List);
-   --  Free every children and empty itself
-
 private
 
    procedure Unchecked_Free is new
@@ -362,10 +353,5 @@ private
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Project'Class, Project_Access);
-
-   procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation
-       (GPS.Editors.Line_Information.Line_Information_Record,
-        Line_Information_Access);
 
 end Code_Analysis;

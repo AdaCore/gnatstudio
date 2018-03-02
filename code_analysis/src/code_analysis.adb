@@ -289,18 +289,6 @@ package body Code_Analysis is
       return Project_Node;
    end Get_Or_Create;
 
-   -------------------------
-   -- Free_Line_Info_List --
-   -------------------------
-
-   procedure Free_Line_Info_List (List : in out Line_Info_List.List) is
-   begin
-      for Line of List loop
-         Unchecked_Free (Line);
-      end loop;
-      List.Clear;
-   end Free_Line_Info_List;
-
    -------------------
    -- Free_Analysis --
    -------------------

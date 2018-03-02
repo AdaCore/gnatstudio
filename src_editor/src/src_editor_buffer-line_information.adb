@@ -1864,8 +1864,7 @@ package body Src_Editor_Buffer.Line_Information is
                Tooltip_Text       => Null_Unbounded_String,
                Image              => To_Unbounded_String (Icon_Name),
                Message            => <>,
-               Associated_Command => Command,
-               Line_Number        => Integer (Editable_Line))),
+               Associated_Command => Command)),
          0);
    end Add_Block_Command;
 

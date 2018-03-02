@@ -39,7 +39,6 @@ package GPS.Editors.Line_Information is
       --  Reference to the message that will be put into context of execution
       --  of associated command.
       Associated_Command : Commands.Command_Access := null;
-      Line_Number        : Natural := 0;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
    --  markup format.
@@ -106,7 +105,6 @@ private
       Tooltip_Text       => Ada.Strings.Unbounded.Null_Unbounded_String,
       Image              => Ada.Strings.Unbounded.Null_Unbounded_String,
       Message            => <>,
-      Associated_Command => null,
-      Line_Number        => 0);
+      Associated_Command => null);
 
 end GPS.Editors.Line_Information;

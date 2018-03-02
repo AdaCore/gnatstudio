@@ -267,13 +267,12 @@ package body Coverage_GUI is
                        (Line_Cov'Access,
                         Kernel,
                         Binary_Coverage_Mode);
-                     Line_Info (J).Line_Number := J;
                      if Current_Coverage_Tool = GNATcov
                        and then Line_Info (J) /= Empty_Line_Information
-                       and then Line_Info (J).Associated_Command /= null
                      then
-                        File_Node.Line_Infos.Append
-                          (new Line_Information_Record'(Line_Info (J)));
+                        Ref (Line_Info (J).Associated_Command);
+                        File_Node.Line_Commands.Append
+                          (Line_Info (J).Associated_Command);
                      end if;
                   end;
                else
@@ -530,24 +529,28 @@ package body Coverage_GUI is
       File   : Code_Analysis.File_Access)
    is
       pragma Unreferenced (Kernel);
-      use Line_Info_List;
+      use Command_Lists;
    begin
       if File = null
         or else File.Analysis_Data.Coverage_Data = null
-        or else File.Line_Infos = Empty_List
+        or else File.Line_Commands = Empty_List
       then
          return;
       end if;
 
-      for Line of File.Line_Infos loop
-         --  Remove the expanded lines
-         Code_Coverage.GNATcov.Remove_Inlined_Detailed_Messages
-           (Code_Coverage.GNATcov.Detail_Messages_Command
-              (Line.Associated_Command.all));
+      for C of File.Line_Commands loop
+         if C /= null
+           and then
+             Code_Coverage.GNATcov.Detail_Messages_Command (C.all).Added
+         then
+            --  Remove the expanded lines
+            Code_Coverage.GNATcov.Remove_Inlined_Detailed_Messages
+              (Code_Coverage.GNATcov.Detail_Messages_Command (C.all));
+         end if;
       end loop;
 
-      --  Empty the list
-      Free_Line_Info_List (File.Line_Infos);
+      --  Unref all the saved commands
+      Free (File.Line_Commands);
    end Clean_File_Expanded_Lines;
 
    -----------------------
@@ -561,18 +564,22 @@ package body Coverage_GUI is
    is
       Success : Command_Return_Type;
       pragma Unreferenced (Kernel, Success);
-      use Line_Info_List;
+      use Command_Lists;
    begin
       if File = null
         or else Current_Coverage_Tool /= GNATcov
-        or else File.Line_Infos = Empty_List
+        or else File.Line_Commands = Empty_List
       then
          return;
       end if;
 
-      for Line_Info of File.Line_Infos loop
-         if Line_Info.Line_Number = Line_Number then
-            Success := Execute (Line_Info.Associated_Command);
+      for C of File.Line_Commands loop
+         if C /= null
+           and then
+             Code_Coverage.GNATcov.Detail_Messages_Command (C.all).Line.Line
+           = Line_Number
+         then
+            Success := Execute (C);
             return;
          end if;
       end loop;
