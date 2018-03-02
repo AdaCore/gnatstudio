@@ -1422,14 +1422,6 @@ package body Src_Editor_Buffer is
          Buffer.End_Delimiters_Highlight := Create_Mark
            (Buffer, "", Last_Highlight_Iter);
 
-         if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
-            Backward_To_Tag_Toggle (First_Highlight_Iter, null, Success);
-            Forward_To_Tag_Toggle (Last_Highlight_Iter, null, Success);
-
-            Highlight_Slice
-              (Buffer, First_Highlight_Iter, Last_Highlight_Iter);
-         end if;
-
          Buffer.Has_Delimiters_Highlight := True;
       end if;
    end Highlight_Parenthesis;
