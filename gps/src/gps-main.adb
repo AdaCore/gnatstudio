@@ -168,6 +168,7 @@ with Ada_Semantic_Tree_Module;
 with LAL.Module;
 with Language_Handlers.Assistants;
 with Learn.Views;
+with Log_File_Views;
 with Memory_Usage_Views.Module;
 with Navigation_Module;
 with Outline_View;
@@ -832,6 +833,8 @@ procedure GPS.Main is
          File : constant Virtual_File :=
                   Create_From_Dir (GPS_Home_Dir, "traces.cfg");
       begin
+         Log_File_Views.Register_Interceptor;
+
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
             Default      => File,
@@ -1036,6 +1039,8 @@ procedure GPS.Main is
          GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
 
       elsif Switch = "--tracefile" then
+         Log_File_Views.Register_Interceptor;
+
          GNATCOLL.Traces.Parse_Config_File
            (Filename => Create_From_Base (+ICS.Value (Value)));
 
@@ -2649,6 +2654,7 @@ procedure GPS.Main is
       end if;
 
       Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Unrestricted_Access);
+      Log_File_Views.Register_Module (GPS_Main.Kernel);
 
       return False;
    end Finish_Setup;

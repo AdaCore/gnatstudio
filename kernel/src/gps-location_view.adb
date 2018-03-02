@@ -35,7 +35,6 @@ with Glib.Object;                      use Glib.Object;
 with Glib.Values;                      use Glib.Values;
 
 with Gtk.Box;                          use Gtk.Box;
-with Gtk.Check_Menu_Item;              use Gtk.Check_Menu_Item;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
@@ -71,6 +70,7 @@ with GPS.Tree_View;                    use GPS.Tree_View;
 with GPS.Tree_View.Locations;          use GPS.Tree_View.Locations;
 with GUI_Utils;                        use GUI_Utils;
 with Histories;                        use Histories;
+with Filter_Panels;                    use Filter_Panels;
 
 package body GPS.Location_View is
 
@@ -1331,9 +1331,7 @@ package body GPS.Location_View is
 
    overriding procedure Create_Toolbar
      (View    : not null access Location_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      use Generic_Views;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,

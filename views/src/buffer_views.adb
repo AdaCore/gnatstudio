@@ -63,6 +63,7 @@ with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Tooltips;                 use Tooltips;
 with Commands.Interactive;     use Commands, Commands.Interactive;
+with Filter_Panels;            use Filter_Panels;
 
 package body Buffer_Views is
    Me : constant Trace_Handle := Create ("GPS.VIEWS.BUFFERS");

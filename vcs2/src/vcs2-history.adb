@@ -71,6 +71,7 @@ with Pango.Enums;                 use Pango.Enums;
 with VCS2.Diff;                   use VCS2.Diff;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
+with Filter_Panels;               use Filter_Panels;
 
 package body VCS2.History is
    Me : constant Trace_Handle := Create ("GPS.VCS.HISTORY");

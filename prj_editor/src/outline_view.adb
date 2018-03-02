@@ -70,6 +70,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language;                  use Language;
 with Tooltips;                  use Tooltips;
+with Filter_Panels;             use Filter_Panels;
 
 with Outline_View.Model; use Outline_View.Model;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;

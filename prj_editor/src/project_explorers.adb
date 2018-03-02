@@ -81,6 +81,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;
+with Filter_Panels;             use Filter_Panels;
 
 package body Project_Explorers is
    Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.PRJ_VIEW");

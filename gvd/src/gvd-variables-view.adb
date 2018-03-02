@@ -80,6 +80,7 @@ with System.Storage_Elements;     use System.Storage_Elements;
 with System;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
+with Filter_Panels;               use Filter_Panels;
 
 package body GVD.Variables.View is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.Variables_View");

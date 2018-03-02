@@ -39,6 +39,7 @@ with GPS.Search;             use GPS.Search;
 with GPS.Intl;               use GPS.Intl;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Commands.Interactive;   use Commands, Commands.Interactive;
+with Filter_Panels;          use Filter_Panels;
 
 package body Browsers.Projects is
 

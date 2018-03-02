@@ -98,6 +98,7 @@ with GPS.Dialogs;                  use GPS.Dialogs;
 with Tooltips;                     use Tooltips;
 with XML_Parsers;
 with XML_Utils;                    use XML_Utils;
+with Filter_Panels;                use Filter_Panels;
 
 package body Bookmark_Views is
 

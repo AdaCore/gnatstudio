@@ -34,6 +34,7 @@ with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
 with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
 with String_Utils;                          use String_Utils;
+with Filter_Panels;                         use Filter_Panels;
 
 package body Memory_Usage_Views is
 

@@ -472,10 +472,11 @@
          <menu label="Project Browser"                   action="open project browser"/>
 
       <separator />
-         <menu label="_Python Console"                    action="open python"/>
+         <menu label="_Python Console"            action="open python"/>
          <menu label="OS Shell"                   action="open os shell"/>
          <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
          <menu label="_Background Builds"         action="open background builds"/>
+         <menu label="_Log"                       action="open log view"/>
       </menu>
 
       <menu label='_Window'> <!-- TODO: add the ability for GPS to add here-->
@@ -686,4 +687,10 @@
       <button action='MDL goto parent subsystem'/>
       <button action='MDL goto previous subsystem'/>
    </toolbar>
+
+   <toolbar id='Log View'>
+      <button action='log save'/>
+      <button action='log configure'/>
+   </toolbar>
+
 </GPS>

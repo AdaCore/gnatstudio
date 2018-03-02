@@ -56,6 +56,7 @@ with GPS.Search;                 use GPS.Search;
 
 with Glib_Values_Utils;          use Glib_Values_Utils;
 with Gtkada.Types;               use Gtkada.Types;
+with Filter_Panels;              use Filter_Panels;
 
 package body GPS.Traces is
 

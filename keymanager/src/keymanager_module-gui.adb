@@ -96,6 +96,7 @@ with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Histories;                use Histories;
 with GPS.Dialogs;              use GPS.Dialogs;
+with Filter_Panels;            use Filter_Panels;
 
 package body KeyManager_Module.GUI is
 

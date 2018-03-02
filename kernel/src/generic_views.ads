@@ -20,30 +20,29 @@
 --  to open them.
 --  This package must be instanciated at library-level
 
-private with Gdk.Event;
-with GPS.Kernel.Modules;
-with GPS.Kernel.MDI;
-with GPS.Kernel.Search;
-with GPS.Search;
-with Glib.Main;
-private with Glib.Object;
-with XML_Utils;
-with Gtkada.Handlers;
+with Glib;
 with Gtk.Box;
-private with Gtk.Check_Menu_Item;
-private with Gtk.Radio_Menu_Item;
-private with GNAT.Strings;
 with Gtk.Button;
 with Gtk.Button_Box; use Gtk.Button_Box;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
-private with Gtk.Toggle_Tool_Button;
 with Gtk.Widget;
-private with Gtkada.Entry_Completion;
-private with Gtkada.Search_Entry;
+with Gtkada.Handlers;
 with Gtkada.MDI;
+
+with GPS.Kernel.Modules;
+with GPS.Kernel.MDI;
+with GPS.Kernel.Search;
+with GPS.Search;
+with XML_Utils;
 with Histories;
+with Filter_Panels;
+
+private with Glib.Object;
+private with Gdk.Event;
+private with Gtk.Toggle_Tool_Button;
+private with Gtkada.Entry_Completion;
 
 package Generic_Views is
 
@@ -166,24 +165,13 @@ package Generic_Views is
    -- Search and filter fields --
    ------------------------------
 
-   type Filter_Options_Mask is mod Natural'Last;
-   Has_Regexp      : constant Filter_Options_Mask := 2 ** 0;
-   Has_Negate      : constant Filter_Options_Mask := 2 ** 1;
-   Has_Whole_Word  : constant Filter_Options_Mask := 2 ** 2;
-   Has_Approximate : constant Filter_Options_Mask := 2 ** 3;
-   Has_Fuzzy       : constant Filter_Options_Mask := 2 ** 4;
-   Debounce        : constant Filter_Options_Mask := 2 ** 5;
-   --  If Debouncs is set, then all changes to the filter are reported when the
-   --  user presses <enter>. Otherwise, they are reported for all changes to
-   --  the pattern, as they occur.
-
    procedure Build_Filter
      (Self        : not null access View_Record;
       Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Hist_Prefix : Histories.History_Key;
       Tooltip     : String := "";
       Placeholder : String := "";
-      Options     : Filter_Options_Mask := 0;
+      Options     : Filter_Panels.Filter_Options_Mask := 0;
       Name        : String := "");
    --  Build a filter panel which provides a standard look-and-feel:
    --     * rounded corner (through the theme)
@@ -420,26 +408,6 @@ package Generic_Views is
    end Simple_Views;
 
 private
-   type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
-     with record
-      Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
-      Options : Filter_Options_Mask;
-      Pattern_Config_Menu : Gtk.Menu.Gtk_Menu;
-
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      History_Prefix : GNAT.Strings.String_Access;
-      --  Prefix for the entries in the histories.ads API
-
-      Whole_Word  : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Negate      : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Full_Text   : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Regexp      : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Fuzzy       : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Approximate : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-
-      Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
-     end record;
-   type Filter_Panel is access all Filter_Panel_Record'Class;
 
    type Search_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
    with record
@@ -452,8 +420,8 @@ private
    type View_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel  : GPS.Kernel.Kernel_Handle;
       Toolbar : Gtk.Toolbar.Gtk_Toolbar;
-      Filter  : Filter_Panel;   --  might be null
-      Search  : Search_Panel;   --  might be null
+      Filter  : Filter_Panels.Filter_Panel;   --  might be null
+      Search  : Search_Panel;                 --  might be null
 
       Config  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
       Config_Menu : Gtk.Menu.Gtk_Menu;

@@ -23,7 +23,6 @@ with Glib.Object;            use Glib.Object;
 with Glib_Values_Utils;      use Glib_Values_Utils;
 
 with Gtk.Box;                use Gtk.Box;
-with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;

@@ -17,7 +17,6 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
-with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;

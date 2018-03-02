@@ -27,6 +27,7 @@ with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtkada.Tree_View;       use Gtkada.Tree_View;
 with VCS2.Engines;           use VCS2.Engines;
+with Filter_Panels;          use Filter_Panels;
 
 package VCS2.Views is
 
