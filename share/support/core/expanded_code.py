@@ -21,6 +21,7 @@ def create_dg(f, str):
 
     res.close()
 
+
 expanded_code_marks = {}
 # A dictionary that associates a source filename with a list of marks
 
@@ -104,7 +105,7 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
         if line.startswith("-- "):
             if current_code:
                 if (block_first == 0 or
-                        (block_first < current_line < block_last)):
+                        (block_first < current_line <= block_last)):
                     mark = srcbuf.add_special_line(current_line + 1,
                                                    "\n".join(current_code),
                                                    highlighting)
@@ -117,13 +118,32 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
                         expanded_code_marks[source_filename] += [mark_num]
                     else:
                         expanded_code_marks[source_filename] = [mark_num]
-
+                elif current_line == block_last:
+                    break
             current_line = int(line[3:line.find(":")])
             current_code = []
         else:
             if line != "":
                 lines += 1
                 current_code.append(line)
+    # The above algorithm only displays the expanded lines after finding a line
+    # of code => it will lost the expanded lines located after the last line
+    # of the current block.
+    if current_code:
+        if (block_first == 0 or
+                (current_line <= block_last)):
+            mark = srcbuf.add_special_line(current_line + 1,
+                                           "\n".join(current_code),
+                                           highlighting)
+
+            # Add mark to the list of marks
+
+            mark_num = (mark, len(current_code))
+
+            if source_filename in expanded_code_marks:
+                expanded_code_marks[source_filename] += [mark_num]
+            else:
+                expanded_code_marks[source_filename] = [mark_num]
 
 
 # noinspection PyUnusedLocal
@@ -143,19 +163,19 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
 
     try:
         if context.project():
-            l = context.project().object_dirs(False)
+            list_dir = context.project().object_dirs(False)
             prj = ' -P """' + \
                 GPS.Project.root().file().name("Build_Server") + '"""'
         else:
-            l = GPS.Project.root().object_dirs(False)
+            list_dir = GPS.Project.root().object_dirs(False)
             prj = " -a"
     except Exception:
         GPS.Console("Messages").write(
             "Could not obtain project information for this file")
         return
 
-    if l:
-        objdir = l[0]
+    if list_dir:
+        objdir = list_dir[0]
     else:
         objdir = GPS.get_tmp_dir()
         GPS.Console("Messages").write(
