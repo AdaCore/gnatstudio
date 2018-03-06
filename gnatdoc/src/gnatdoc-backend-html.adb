@@ -1363,6 +1363,11 @@ package body GNATdoc.Backend.HTML is
            (Entity_Entries, "Dispatching subprograms", Entities.Methods);
       end if;
 
+      if not Entities.Pkgs_Instances.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Generic instantiations", Entities.Pkgs_Instances);
+      end if;
+
       if not Entities.Pkgs.Is_Empty then
          declare
             Entity_Kind_Entry : constant JSON_Value := Create_Object;
@@ -1507,9 +1512,13 @@ package body GNATdoc.Backend.HTML is
         and then LL.Get_Location (Entity).File
                    = LL.Get_Location (Get_Scope (Entity)).File
       then
-         return
-           (if No (Get_Corresponding_Spec (Entity))
-            then "(nested)" else "(nested, body)");
+         if not Present (LL.Get_Instance_Of (Entity)) then
+            return
+              (if No (Get_Corresponding_Spec (Entity))
+               then "(nested)" else "(nested, body)");
+         else
+            return "(generic instantiation)";
+         end if;
 
       else
          return
