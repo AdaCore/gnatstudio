@@ -317,26 +317,6 @@ In addition to these choices, you can also load a recently opened project by
 clicking the project of interest in the left-hand pane listing the known recent
 projects.
 
-.. index:: tip of the day
-.. index:: windows; tip of the day
-.. _The_Tip_of_the_Day:
-
-The Tip of the Day
-==================
-
-.. image:: tip-of-the-day.png
-
-This dialog displays short tips on making the most efficient use of the
-GNAT Programming Studio.  Click on the :guilabel:`Previous` and
-:guilabel:`Next` buttons to access all tips or close the dialog by either
-clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
-
-.. index:: preferences; tip of the day
-
-Disable this dialog by unchecking the :guilabel:`Display Tip of the Day on
-startup` check box.  To reenable this dialog, go to the
-:menuselection:`Edit --> Preferences...` menu.
-
 .. index:: tool bar
 .. _The_Tool_Bar:
 
