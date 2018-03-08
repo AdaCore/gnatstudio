@@ -5,6 +5,7 @@ to generate code, so any change to it requires a rebuilding
 of GPS.
 '''
 
+
 class Mapping(object):
     '''
     Describe how to map an Ada type to a python type.
@@ -69,13 +70,15 @@ class Debounce_Hook_Type(Hook_Type):
         """
         :param debounce: set up the timeout for interact asynchronously
         """
-        Hook_Type.__init__(self,params,None,None,-1,descr,internal_run,override_run_from_python)
+        Hook_Type.__init__(self, params, None, None, -1,
+                           descr, internal_run, override_run_from_python)
         self.debounce = debounce
 
 
 class Param(object):
     '''The description of one parameter for a hook type'''
-    def __init__(self, name, type, default=None, descr='', inpython=True, asynch_key=None):
+    def __init__(self, name, type, default=None,
+                 descr='', inpython=True, asynch_key=None):
         self.name = name
         self.type = type
         self.descr = descr
@@ -267,11 +270,11 @@ types = {
         toada='GPS.Debuggers.From_String (Data.Nth_Arg (%(idx)d))',
         withs=['GPS.Debuggers']),
 
-     'MDI_Child' : Mapping(
+    'MDI_Child': Mapping(
          ada='Gtkada.MDI.MDI_Child',
          python='GPS.MDIWindow',
          topython='GPS.Main_Window.Create_MDI_Window_Instance'
-            ' (Get_Script (Data), %(ada)s)',
+                ' (Get_Script (Data), %(ada)s)',
          toada='GPS.Main_Window.Get_Child (Data.Nth_Arg (%(idx)d))',
          withs=['Gtkada.MDI'],
          body_withs=['GPS.Main_Window'])
@@ -335,14 +338,14 @@ background task or process'''),
 
     'diff_hooks': Hook_Type(
         [Param('name', '__hookname__'),
-         Param('vcs_file', 'File'), # ??? From_Callback_Data_Diff used to
-                                    # test Is_Cygin_Path and format it
+         Param('vcs_file', 'File'),  # ??? From_Callback_Data_Diff used to
+                                     # test Is_Cygin_Path and format it
          Param('orig_file', 'File'),
          Param('new_file', 'File'),
          Param('diff_file', 'File'),
          Param('title', 'String', default='""')],
         returns='Boolean',
-        return_default='False'), # stops when one returns True
+        return_default='False'),  # stops when one returns True
 
     'context_hooks': Debounce_Hook_Type(
         [Param('name', '__hookname__'),
@@ -385,7 +388,7 @@ If -1, all editors for this file will be closed instead'''),
          Param('Areas', 'Allowed_Areas', inpython=False,
                default='Gtkada.MDI.Central_Only'),
          Param('Title', 'String', default='""', inpython=False)
-        ],
+         ],
         returns='Boolean',
         return_default='False',  # Stops when one returns True
         returns_run=None),        # Ignore return value for Run
@@ -431,7 +434,7 @@ multiple toolchains mode is activated, the builds generating xref are
 Shadow builds'''),
          Param('background', 'Boolean')],
         returns='Boolean',
-        return_default='True'), # Stops when one returns False
+        return_default='True'),  # Stops when one returns False
 
     'compilation_finished_hooks': Hook_Type(
         [Param('name', '__hookname__'),
@@ -463,8 +466,8 @@ Shadow builds''', inpython=False),
          Param('enable_navigation', 'Boolean', default=True),
          Param('anchor', 'String', default='""')],
         returns='Boolean',
-        return_default='False', # Stop when one function returns True
-        returns_run=None),      # Ignore return value for Run
+        return_default='False',  # Stop when one function returns True
+        returns_run=None),       # Ignore return value for Run
 
     'message_hooks': Hook_Type(
         [Param('name', '__hookname__'),
@@ -501,8 +504,9 @@ Shadow builds''', inpython=False),
          Param('files',     'FileSet'),
          Param('props',     'VCS_File_Properties')]),
 
-    'vcs_hooks': Hook_Type(
-        [Param('VCS',       'VCS_Engine')]),
+    'vcs_refresh_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('is_file_saved', 'Boolean')]),
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -897,8 +901,8 @@ the keyboard focus.\n
               0)   # force_reload'''),
 
     Hook('preferences_changed',
-        # ??? Should not be emitted if Kernel.Preferences.Is_Frozen
-        'preferences_hooks', descr='''
+         # ??? Should not be emitted if Kernel.Preferences.Is_Frozen
+         'preferences_hooks', descr='''
 Emitted when the value of some of the preferences changes. Modules should
 refresh themselves dynamically.'''),
 
@@ -999,10 +1003,11 @@ details.'''),
 Emitted when the active VCS has changed. This is the VCS on which operations
 like commit and log happen.'''),
 
-    Hook('vcs_refresh', 'simple_hooks', descr='''
+    Hook('vcs_refresh', 'vcs_refresh_hooks', descr='''
 Run this hook to force a refresh of all VCS-related views. They will
 resynchronize their contents from the disk, rather than rely on cached
-information'''),
+information. Set `is_file_saved` parameter to True when the hook is being
+run after saving a file, False otherwise''')
 
 ]
 
@@ -1021,7 +1026,7 @@ def generate():
              for p in t.params
              for n in types[p.type].withs}
     withs.update({'with %s;' % n
-                  for t in hook_types.values()  if t.returns is not None
+                  for t in hook_types.values() if t.returns is not None
                   for n in types[t.returns].withs})
     withs = '\n'.join(sorted(withs))
 
@@ -1110,7 +1115,7 @@ package GPS.Kernel.Hooks is
              for p in t.params
              for n in types[p.type].body_withs}
     withs.update({'with %s;' % n
-                  for t in hook_types.values()  if t.returns is not None
+                  for t in hook_types.values() if t.returns is not None
                   for n in types[t.returns].body_withs})
     withs = '\n'.join(sorted(withs))
 
@@ -1333,17 +1338,17 @@ package body GPS.Kernel.Hooks is
 
         if isinstance(t, Debounce_Hook_Type):
             asynch_plist = [', Data.%s' % p.name.title()
-                     for p in t.params if p.show_in_ada()]
+                            for p in t.params if p.show_in_ada()]
 
             compare_keys = ['Data.%s = %s' % (
                             p.name.title(),
                             p.name.title())
-                      for p in t.params if p.asynch_key]
+                            for p in t.params if p.asynch_key]
 
             compare = ['%s%s' % (
                             ' and then ' if idx > 0 else '',
                             p)
-                      for idx, p in enumerate(compare_keys)]
+                       for idx, p in enumerate(compare_keys)]
 
             assign = ['               Data.%s := %s;\n' % (
                             p.name.title(),
@@ -1355,11 +1360,11 @@ package body GPS.Kernel.Hooks is
             subst['assign'] = ''.join(assign)
 
             if len(compare) > 0:
-               subst['compare'] = 'if ' + ''.join (compare) + ' then'
-               subst['end_compare'] = 'end if;'
+                subst['compare'] = 'if ' + ''.join(compare) + ' then'
+                subst['end_compare'] = 'end if;'
             else:
-               subst['compare'] = ''
-               subst['end_compare'] = ''
+                subst['compare'] = ''
+                subst['end_compare'] = ''
 
         # Settings for the callback function
 
@@ -1449,10 +1454,13 @@ package body GPS.Kernel.Hooks is
 
         hooks.sort(key=lambda h: h.name)
 
-        f.write('''
-   --------------
-   -- %(name)s --
-   --------------%(descr)s
+        ada_indent = '\n' + ' ' * 3
+        header = '-- %(name)s --' % subst
+        header = (ada_indent + '-' * len(header) +
+                  ada_indent + header +
+                  ada_indent + '-' * len(header))
+
+        f.write(header + '''%(descr)s
 
    type %(name)s_Function is abstract new Hook_Function
       with null record;
@@ -1463,11 +1471,11 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           f.write('''
+            f.write('''
    type %(name)s is new Debounce_Hook_Types with null record;
 ''' % subst)
         else:
-           f.write('''
+            f.write('''
    type %(name)s is new Hook_Types with null record;
 ''' % subst)
 
@@ -1483,7 +1491,7 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           f.write('''
+            f.write('''
    procedure Add_Debounce
       (Self  : in out %(name)s;
        Obj   : not null access %(name)s_Function'Class;
@@ -1498,7 +1506,7 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           f.write('''
+            f.write('''
    procedure Force_Debounce
       (Self    : in out %(name)s;
        Kernel  : not null access Kernel_Handle_Record'Class%(params)s);
@@ -1530,7 +1538,7 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           b.write('''
+            b.write('''
    ------------------
    -- Add_Debounce --
    ------------------
@@ -1655,10 +1663,13 @@ package body GPS.Kernel.Hooks is
    end On_%(name)s_Timeout;
 ''' % subst)
 
-        b.write('''
-   ---------
-   -- %(run_name)s --
-   ---------
+        ada_indent = '\n' + ' ' * 3
+        header = '-- %(run_name)s --' % subst
+        header = (ada_indent + '-' * len(header) +
+                  ada_indent + header +
+                  ada_indent + '-' * len(header))
+
+        b.write(header + '''
 
    %(run_proc_or_func)s %(run_name)s
       (Self   : in out %(name)s;
@@ -1670,7 +1681,7 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           b.write('''
+            b.write('''
    begin
       Call (Self, Self.Funcs, Kernel%(plist)s);
 
@@ -1704,7 +1715,7 @@ package body GPS.Kernel.Hooks is
       end;
 ''' % subst)
         else:
-           b.write('''
+            b.write('''
       List : array (1 .. Natural (Self.Funcs.Length)) of
         access Hook_Function'Class;
       Last : Natural := 0;
@@ -1752,7 +1763,7 @@ package body GPS.Kernel.Hooks is
 ''' % subst)
 
         if isinstance(t, Debounce_Hook_Type):
-           b.write('''
+            b.write('''
    --------------------
    -- Force_Debounce --
    --------------------
@@ -1836,7 +1847,7 @@ package body GPS.Kernel.Hooks is
 ''')
     for h in hooks:
         if isinstance(hook_types[h.type], Debounce_Hook_Type):
-           b.write('''
+            b.write('''
       for D of %(name)s.Asynch_Data loop
          declare
             Data : constant %(type)s_Params_Access :=
@@ -1932,7 +1943,7 @@ class Predefined_Hooks:
         }
 
         if isinstance(type, Debounce_Hook_Type):
-            subst['asynch'] =  type.debounce
+            subst['asynch'] = type.debounce
 
         f.write('''
     # %(base)s = '%(base)s'

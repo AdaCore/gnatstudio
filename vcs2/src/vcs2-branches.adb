@@ -195,10 +195,11 @@ package body VCS2.Branches is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
-   type On_VCS_Refresh is new Simple_Hooks_Function with null record;
+   type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class);
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean);
 
    type Has_Selected_Branch_Filter is
      new Action_Filter_Record with null record;
@@ -519,10 +520,11 @@ package body VCS2.Branches is
    -------------
 
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class)
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean)
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Self, Is_File_Saved);
       View : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
    begin
       if View /= null then

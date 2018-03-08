@@ -1107,13 +1107,15 @@ class Predefined_Hooks:
         """
 
     # vcs_refresh = 'vcs_refresh'
-    def vcs_refresh(name):
+    def vcs_refresh(name,is_file_saved):
         """
       Run this hook to force a refresh of all VCS-related views. They will
       resynchronize their contents from the disk, rather than rely on cached
-      information
+      information. Set `is_file_saved` parameter to True when the hook is being
+      run after saving a file, False otherwise
 
       :param str name:
+      :param bool is_file_saved:
 
         """
 

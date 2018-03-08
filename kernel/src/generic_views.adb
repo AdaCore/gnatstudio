@@ -1467,7 +1467,7 @@ package body Generic_Views is
                View_Record (View.all).Config := Config;
                Config.Set_Icon_Name ("gps-config-menu-symbolic");
                Config.Set_Name ("local-config");
-               Config.Set_Tooltip_Text (-"Configure this panel");
+               Config.Set_Tooltip_Text (-"Configuration panel");
                View.Append_Toolbar (Toolbar, Config, Right_Align => True);
                Config.Get_Child.On_Button_Press_Event
                  (On_Display_Local_Config_Access, View);

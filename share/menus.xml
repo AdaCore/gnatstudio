@@ -530,6 +530,10 @@
       <button action='Project view: collapse all projects'/>
    </toolbar>
 
+   <toolbar id='History'>
+      <button action='history refresh'/>
+   </toolbar>
+
    <toolbar id='Clipboard'>
       <button action='clipboard View Append To Previous'/>
       <button action='clipboard View Remove Entry'/>

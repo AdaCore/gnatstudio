@@ -326,14 +326,20 @@ package body VCS2.History is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the active VCS changes
 
-   type On_VCS_Refresh is new Simple_Hooks_Function with null record;
+   type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class);
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean);
 
    type History_For_File is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access History_For_File;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Refresh_History is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Refresh_History;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_History_Command is new Root_Command with record
@@ -1487,13 +1493,14 @@ package body VCS2.History is
    -------------
 
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class)
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean)
    is
       pragma Unreferenced (Self);
       View : constant History_View := History_Views.Retrieve_View (Kernel);
    begin
-      if View /= null then
+      if View /= null and then not Is_File_Saved then
          Refresh (View);
       end if;
    end Execute;
@@ -1553,6 +1560,23 @@ package body VCS2.History is
          VCS.Queue_Fetch_History (Visitor => Seen, Filter => Tree.User_Filter);
       end if;
    end Refresh;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Refresh_History;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant History_View  :=
+                 History_Views.Get_Or_Create_View (Kernel);
+   begin
+      Refresh (View);
+      return Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -1683,6 +1707,14 @@ package body VCS2.History is
          Command     => new History_For_File,
          Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
+
+      Register_Action
+        (Kernel, "history refresh",
+         Description =>
+           -("Refresh the history view"),
+         Command     => new Refresh_History,
+         Category    => "VCS2",
+         Icon_Name   => "gps-refresh-symbolic");
 
       Register_Contextual_Menu
         (Kernel,

@@ -275,10 +275,11 @@ package body VCS2.Commits is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
-   type On_VCS_Refresh is new Simple_Hooks_Function with null record;
+   type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class);
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean);
 
    function On_Commit_Focus_Out
      (View  : access GObject_Record'Class;
@@ -608,10 +609,11 @@ package body VCS2.Commits is
    -------------
 
    overriding procedure Execute
-     (Self   : On_VCS_Refresh;
-      Kernel : not null access Kernel_Handle_Record'Class)
+     (Self          : On_VCS_Refresh;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Is_File_Saved : Boolean)
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Self, Is_File_Saved);
       View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
@@ -849,7 +851,7 @@ package body VCS2.Commits is
 
       --  Force a refresh of all VCS status
       Kernel.VCS.Invalidate_All_Caches;
-      Vcs_Refresh_Hook.Run (Kernel);
+      Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
    end On_Success;
 
    -------------
@@ -1295,7 +1297,7 @@ package body VCS2.Commits is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Invalidate_All_Caches (Kernel.VCS);
-      Vcs_Refresh_Hook.Run (Kernel);
+      Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
       return Commands.Success;
    end Execute;
 

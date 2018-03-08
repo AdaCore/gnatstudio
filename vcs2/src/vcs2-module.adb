@@ -254,7 +254,7 @@ package body VCS2.Module is
          VCS_Engine_Access (Kernel.VCS.Get_VCS (Project));
    begin
       V.Invalidate_File_Status_Cache (File);
-      Vcs_Refresh_Hook.Run (Kernel);
+      Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => True);
    end Execute;
 
    -------------
@@ -268,7 +268,7 @@ package body VCS2.Module is
       pragma Unreferenced (Self);
    begin
       Kernel.VCS.Invalidate_All_Caches;
-      Vcs_Refresh_Hook.Run (Kernel);
+      Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
    end Execute;
 
    ---------------------

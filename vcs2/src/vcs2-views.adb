@@ -251,7 +251,7 @@ package body VCS2.Views is
    begin
       Trace (Me, "Refreshing all VCS views");
       Self.Kernel.VCS.Invalidate_All_Caches;
-      Vcs_Refresh_Hook.Run (Self.Kernel);
+      Vcs_Refresh_Hook.Run (Self.Kernel, Is_File_Saved => False);
    end On_Terminate;
 
    --------------------------
