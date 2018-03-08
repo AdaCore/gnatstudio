@@ -444,12 +444,15 @@ class BoardLoader(Module):
             self.__error_exit("Could not launch executable %s" % (cmd[0]))
             return
 
-        output = yield con.wait_until_match("\.text .+")
+        # We want to match the line after
+        # the Algn to get the first load address.
+        output = yield con.wait_until_match("Algn\n.+")
         if output is None:
             self.__error_exit("%s returned an error." % (cmd[0]))
             return
 
-        self.__load_address = "0x%s" % (output.split()[2])
+        # We know that the first LMA is at index 5.
+        self.__load_address = "0x%s" % (output.split()[5])
         self.__display_message("Load address is: %s" % (self.__load_address))
 
         # Create the flashable binary with objcopy
