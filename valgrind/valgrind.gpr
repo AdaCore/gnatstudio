@@ -1,0 +1,29 @@
+with "../kernel/kernel_core";
+with "../shared";
+
+with "gnatcoll_python";
+project Valgrind is
+
+   Target := Project'Target;
+
+   for Source_Dirs use ("core");
+   for Object_Dir use Shared'Object_Dir;
+
+   package Compiler renames Shared.Compiler;
+
+   package Naming is
+      case Target is
+         when "x86_64-pc-linux-gnu" =>
+            for Body ("GPS.Valgrind.Binding")
+              use "gps-valgrind-binding__amd64.adb";
+         when "x86-pc-linux-gnu" =>
+            for Body ("GPS.Valgrind.Binding")
+              use "gps-valgrind-binding__x86.adb";
+         when others =>
+            for Body ("GPS.Valgrind.Binding")
+              use "gps-valgrind-binding__null.adb";
+      end case;
+   end Naming;
+
+end Valgrind;
+

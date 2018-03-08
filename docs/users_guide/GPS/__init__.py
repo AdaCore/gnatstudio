@@ -9391,6 +9391,50 @@ class Unexpected_Exception(Exception):
 
 
 ###########################################################
+# Valgrind
+###########################################################
+
+class Valgrind(object):
+    """
+    This class helps testing GPS. To use it run GPS under valgrind and call
+    corresponding methods to turn on/off callgrin for intresting part of
+    GPS execution. See more info in valgrind documentation.
+    """
+
+    @staticmethod
+    def callgrind_dump_stats():
+        """
+        Force generation of a profile dump at specified position in code,
+        for the current thread only. Written counters will be reset to zero.
+        """
+
+    @staticmethod
+    def callgrind_start_instrumentation():
+        """
+        Start full Callgrind instrumentation if not already enabled.
+        """
+
+    @staticmethod
+    def callgrind_stop_instrumentation():
+        """
+        Stop full Callgrind instrumentation if not already disabled.
+        """
+
+    @staticmethod
+    def callgrind_toggle_collect():
+        """
+        Toggle the collection state. This allows to ignore events with
+        regard to profile counters.
+        """
+
+    @staticmethod
+    def callgrind_zero_stats():
+        """
+        Reset the profile counters for the current thread to zero.
+        """
+
+
+###########################################################
 # VCS2
 ###########################################################
 

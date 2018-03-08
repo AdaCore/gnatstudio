@@ -35,6 +35,7 @@ with "../vdiff/vdiff";
 with "../views/views";
 with "../vfs/vfs";
 with "../vsearch/vsearch";
+with "../valgrind/valgrind";
 
 project GPS is
 

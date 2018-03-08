@@ -194,6 +194,7 @@ with Vsearch;
 with Language.Libclang;
 with Ada_Semantic_Tree.Lang;
 with GPS.Traces;
+with GPS.Valgrind;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
@@ -2077,6 +2078,7 @@ procedure GPS.Main is
 
       GPS.Kernel.Hooks.Register_Hooks (GPS_Main.Kernel);
       GPS.Kernel.Scripts.Hooks.Register_Module (GPS_Main.Kernel);
+      GPS.Valgrind.Register_Module (GPS_Main.Kernel);
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
 

@@ -2056,6 +2056,23 @@ Classes
 
    .. automethod:: GPS.VCS2_Task_Visitor.tooltip
 
+:class:`GPS.Valgrind`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Valgrind()
+
+
+
+   .. automethod:: GPS.Valgrind.callgrind_dump_stats
+
+   .. automethod:: GPS.Valgrind.callgrind_start_instrumentation
+
+   .. automethod:: GPS.Valgrind.callgrind_stop_instrumentation
+
+   .. automethod:: GPS.Valgrind.callgrind_toggle_collect
+
+   .. automethod:: GPS.Valgrind.callgrind_zero_stats
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 
