@@ -1,0 +1,15 @@
+with "../kernel/kernel_core";
+with "../shared";
+with "../laltools/src/lal_tools";
+
+with "libadalang";
+with "gnatcoll_python";
+project LAL_Core is
+
+   for Source_Dirs use ("core");
+   for Object_Dir use Shared'Object_Dir;
+
+   package Compiler renames Shared.Compiler;
+
+end LAL_Core;
+

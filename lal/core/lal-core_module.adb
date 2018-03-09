@@ -26,7 +26,7 @@ with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GPS.Editors;
 with GPS.Scripts;
 
-package body LAL.Module is
+package body LAL.Core_Module is
 
    Module : LAL_Module_Id;
 
@@ -116,4 +116,4 @@ package body LAL.Module is
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
    end Register_Module;
 
-end LAL.Module;
+end LAL.Core_Module;

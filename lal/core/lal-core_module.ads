@@ -14,7 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Main entry point for libAdaLang integration module
+--  Main entry point for libAdaLang integration module (GUI independent part)
 
 with GPS.Core_Kernels;
 with Libadalang.Analysis;
@@ -22,7 +22,7 @@ with LAL.Unit_Providers;
 with LAL.Ada_Languages;
 with Language.Tree.Database;
 
-package LAL.Module is
+package LAL.Core_Module is
 
    type LAL_Module_Id_Record is
      new GPS.Core_Kernels.Abstract_Module_Record with record
@@ -40,4 +40,4 @@ package LAL.Module is
       Legacy : Language.Tree.Database.Tree_Language_Access);
    --  Register module
 
-end LAL.Module;
+end LAL.Core_Module;
