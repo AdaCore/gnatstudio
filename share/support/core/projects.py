@@ -11,6 +11,18 @@ window when a project is loaded
 
 
 import GPS
+import pip
+import os_utils
+
+has_st_util = os_utils.locate_exec_on_path("st-util") != ""
+has_openocd = os_utils.locate_exec_on_path("openocd") != ""
+has_pyocd_binary = os_utils.locate_exec_on_path("pyocd-gdbserver") != ""
+has_pyocd = False
+
+installed_packages = pip.get_installed_distributions()
+for i in installed_packages:
+    if i.key == "pyocd":
+        has_pyocd = True
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
@@ -86,11 +98,27 @@ XML = r"""<?xml version="1.0" ?>
       package="IDE"
       editor_page="Embedded"
       editor_section="Tools"
-      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD and st-util."
+      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD, st-util or pyOCD."
       hide_in="wizard library_wizard"
       label="Connection tool">
+"""
+
+if has_st_util:
+    XML = XML + """
       <choice>st-util</choice>
+"""
+
+if has_openocd:
+    XML = XML + """
       <choice>openocd</choice>
+"""
+
+if has_pyocd and has_pyocd_binary:
+    XML = XML + """
+      <choice>pyocd</choice>
+"""
+
+XML = XML + """
       <string />
    </project_attribute>
 

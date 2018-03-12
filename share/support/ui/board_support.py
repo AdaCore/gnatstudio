@@ -2,7 +2,7 @@
 This plugin creates buttons on the toolbar to conveniently
 flash and debug programs on external boards.
 
-Two tool suites are currently supported by GPS to flash/debug
+Three tool suites are currently supported by GPS to flash/debug
 a specific board:
 
 . st-util/st-flash (for STM32 family boards only)
@@ -34,6 +34,19 @@ a specific board:
    the '/usr/local/share/openocd/scripts/board' directory. Set the
    IDE'Configuration_File project attribute to choose the configuration file
    to use with OpenOCD for your project.
+
+. pyOCD (using CMSIS-DAP)
+
+   pyOCD is an Open Source python 2.7 based library for programming and
+   debugging ARM Cortex-M microcontrollers using CMSIS-DAP. Linux, OSX and
+   Windows are supported.
+
+   To use pyOCD in order to debug/flash a specific board, set the
+   IDE'Connection_Tool project attribute to 'pyocd'.
+
+   Note that pyOCD will need permissions to talk with the board so it's better
+   to add a UDEV rules saying that the device is accessible for non-privileged
+   users.
 """
 
 import GPS
@@ -200,6 +213,9 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "st-flash":
             args = ["--reset", "write", binary, self.__load_address]
 
+        elif self.__flashing_tool == "pyocd-flashtool":
+            args = ["-a", self.__load_address, binary]
+
         return cmd + args
 
     def __get_flashing_complete_regexp(self):
@@ -213,6 +229,9 @@ class BoardLoader(Module):
             return "Flash written and verified! jolly good!"
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
+        elif self.__flashing_tool == "pyocd-flashtool":
+            return "^INFO:root:Programmed \d+ bytes \(\d+ pages\) " \
+              "at [\d\.]+ kB\/s|^No operation performed"
         else:
             return ""
 
@@ -246,6 +265,9 @@ class BoardLoader(Module):
         elif self.__connection_tool == "st-util":
             self.__flashing_tool = "st-flash"
             self.__config_file = ""
+        elif self.__connection_tool == "pyocd":
+            self.__flashing_tool = "pyocd-flashtool"
+            self.__config_file = ""
         else:
             self.__flashing_tool = self.__connection_tool
             self.__config_file = ""
@@ -256,7 +278,11 @@ class BoardLoader(Module):
         (e.g: the target address/port used to interact with GDB).
         """
 
-        cmd = [self.__connection_tool]
+        if self.__connection_tool == "pyocd":
+            cmd = ["pyocd-gdbserver"]
+        else:
+            cmd = [self.__connection_tool]
+
         args = []
         gdb_port = self.__remote_target.split(':')[-1]
 
@@ -278,6 +304,8 @@ class BoardLoader(Module):
 
             if has_semihosting:
                 args += [semihosting_switch]
+        elif self.__connection_tool == "pyocd":
+            args = ["-S", "-p %s" % (gdb_port)]
 
         return cmd + args
 
@@ -294,6 +322,8 @@ class BoardLoader(Module):
             return "Listening at"
         elif self.__connection_tool == "openocd":
             return ".cpu: hardware has"
+        elif self.__connection_tool == "pyocd":
+            return "^\d+:INFO:gdbserver:GDB server started at port:\d+"
         else:
             return ""
 
@@ -310,6 +340,9 @@ class BoardLoader(Module):
             # Kill the task attached to the connection tool  if it still there
             for i in GPS.Task.list():
                 if self.__connection_tool in i.name():
+                    i.interrupt()
+                elif self.__connection_tool == "pyocd" and \
+                        i.name() == "pyocd-gdbserver":
                     i.interrupt()
 
         # Workflow has been reset and any existing connection has been killed:
