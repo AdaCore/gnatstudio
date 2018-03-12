@@ -217,6 +217,11 @@ package body GNATdoc.Backend.Base is
                   if LL.Is_Primitive (Entity) then
                      Append_Unique_Elmt (Entities.Methods, Entity);
                      Append_Unique_Elmt (Self.Entities.Methods, Entity);
+
+                  elsif Present (LL.Get_Instance_Of (Entity)) then
+                     Entities.Subprgs_Instances.Append (Entity);
+                     Self.Entities.Subprgs_Instances.Append (Entity);
+
                   else
                      Entities.Subprgs.Append (Entity);
                      Self.Entities.Subprgs.Append (Entity);

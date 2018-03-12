@@ -36,6 +36,9 @@ package GNATdoc.Backend.Base is
       Record_Types      : EInfo_List.Vector;
       Simple_Types      : EInfo_List.Vector;
       Subprgs           : aliased EInfo_List.Vector;
+      --  Ordinary subprograms.
+      Subprgs_Instances : EInfo_List.Vector;
+      --  Generic subprograms instantiations.
       Tagged_Types      : EInfo_List.Vector;
       Variables         : EInfo_List.Vector;
       Tasks             : EInfo_List.Vector;

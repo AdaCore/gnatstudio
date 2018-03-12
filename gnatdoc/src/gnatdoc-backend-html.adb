@@ -970,6 +970,8 @@ package body GNATdoc.Backend.HTML is
    is
       pragma Unreferenced (Scope_Level);
 
+      use type EInfo_List.Vector;
+
       procedure Build_Entity_Entries
         (Entity_Entries : in out JSON_Array;
          Label          : String;
@@ -1380,7 +1382,9 @@ package body GNATdoc.Backend.HTML is
 
       if not Entities.Pkgs_Instances.Is_Empty then
          Build_Entity_Entries
-           (Entity_Entries, "Generic instantiations", Entities.Pkgs_Instances);
+           (Entity_Entries,
+            "Generic instantiations",
+            Entities.Pkgs_Instances & Entities.Subprgs_Instances);
       end if;
 
       if not Entities.Pkgs.Is_Empty then
@@ -1526,19 +1530,18 @@ package body GNATdoc.Backend.HTML is
    function Get_Qualifier
      (Entity : Entity_Id; Include_Nested : Boolean := True) return String is
    begin
-      if Include_Nested
+      if Present (LL.Get_Instance_Of (Entity)) then
+         return "(generic instantiation)";
+
+      elsif Include_Nested
         and then Get_Kind (Entity) in E_Package | E_Generic_Package
         and then Present (Get_Scope (Entity))
         and then LL.Get_Location (Entity).File
                    = LL.Get_Location (Get_Scope (Entity)).File
       then
-         if not Present (LL.Get_Instance_Of (Entity)) then
-            return
-              (if No (Get_Corresponding_Spec (Entity))
-               then "(nested)" else "(nested, body)");
-         else
-            return "(generic instantiation)";
-         end if;
+         return
+           (if No (Get_Corresponding_Spec (Entity))
+            then "(nested)" else "(nested, body)");
 
       else
          return
