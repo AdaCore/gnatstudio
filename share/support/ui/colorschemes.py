@@ -244,7 +244,9 @@ class ColorSchemePicker(object):
 
         self.flow.connect("child-activated", self.__on_child_activated)
 
-        self.light_theme_radio.set_active(True)
+        # Select the 'Default' theme by default
+
+        self.__on_chosen(self.light_theme_radio, default)
 
         return self.vbox
 
@@ -328,10 +330,12 @@ class ColorSchemePicker(object):
         return vbox
 
 
+picker = ColorSchemePicker()
+
 # Register the color theme picker as a preferences page
 
 GPS.PreferencesPage.create(name="General/Color Theme",
-                           get_widget=ColorSchemePicker().get_preferences_page,
+                           get_widget=picker.get_preferences_page,
                            priority=0)
 
 # Register a simpler page for the color theme. This page will be displayed
@@ -339,5 +343,5 @@ GPS.PreferencesPage.create(name="General/Color Theme",
 
 GPS.PreferencesPage.create(
     name="Color Theme Assistant",
-    get_widget=ColorSchemePicker().get_preferences_assistant_page,
+    get_widget=picker.get_preferences_assistant_page,
     is_integrated=True)
