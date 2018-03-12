@@ -84,10 +84,11 @@ private
    --  Returns hyper reference to documentation of entity.
 
    procedure Set_Label_And_Href
-     (Object : GNATCOLL.JSON.JSON_Value;
-      Entity : Entity_Id);
-   --  Set the "label" field of Object from the Short_Name of Entity.
-   --  If Entity contain hyper reference information, set the "href" field
-   --  of object to it.
+     (Object    : GNATCOLL.JSON.JSON_Value;
+      Entity    : Entity_Id;
+      Full_Name : Boolean := False);
+   --  Set the "label" field of Object from the Short_Name or Full_Name of
+   --  the Entity. If Entity contain hyper reference information, set the
+   --  "href" field of object to it.
 
 end GNATdoc.Backend.HTML;

@@ -372,6 +372,23 @@ function buildDocumentationPage() {
                     pane.appendChild(paragraph);
                 }
 
+                //  Display instantiation information
+
+                if (entity.instantiation !== undefined) {
+                    var paragraph = document.createElement('p');
+                    paragraph.appendChild(
+                      document.createTextNode('Instantiation of '));
+
+                    href = document.createElement('a');
+                    href.href = '../' + entity.instantiation.docHref;
+                    href.target = 'contentView';
+                    href.appendChild(
+                      document.createTextNode(entity.instantiation.label));
+                    paragraph.appendChild(href);
+
+                    pane.appendChild(paragraph);
+                }
+
                 if (entity.parameters !== undefined) {
                     list = document.createElement('dl');
 

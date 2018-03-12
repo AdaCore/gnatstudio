@@ -1098,7 +1098,22 @@ package body GNATdoc.Backend.HTML is
                Entity_Entry.Set_Field ("description", Description);
             end if;
 
-            if Is_Subprogram_Or_Entry (E)
+            if Present (LL.Get_Instance_Of (E)) then
+               declare
+                  Instance_Of : constant Entity_Id :=
+                    Find_Unique_Entity
+                       (Get_Declaration (LL.Get_Instance_Of (E)).Loc);
+                  Object      : JSON_Value;
+
+               begin
+                  if Present (Instance_Of) then
+                     Object := Create_Object;
+                     Set_Label_And_Href (Object, Instance_Of, True);
+                     Entity_Entry.Set_Field ("instantiation", Object);
+                  end if;
+               end;
+
+            elsif Is_Subprogram_Or_Entry (E)
               and then Present (Get_Comment (E))
             then
                --  Extract parameters
@@ -1476,10 +1491,15 @@ package body GNATdoc.Backend.HTML is
    ------------------------
 
    procedure Set_Label_And_Href
-     (Object : JSON_Value;
-      Entity : Entity_Id) is
+     (Object    : JSON_Value;
+      Entity    : Entity_Id;
+      Full_Name : Boolean := False) is
    begin
-      Object.Set_Field ("label", Get_Short_Name (Entity));
+      Object.Set_Field
+        ("label",
+         (if Full_Name
+            then Get_Full_Name (Entity)
+            else Get_Short_Name (Entity)));
       Object.Set_Field ("docHref", Get_Docs_Href (Entity));
    end Set_Label_And_Href;
 
