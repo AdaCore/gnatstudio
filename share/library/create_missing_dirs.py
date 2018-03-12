@@ -1,8 +1,7 @@
 """
-This script will create missing object-directories for a
-project tree when loading it into GPS.
-It is different from the gnatmake switch -p, which will also create
-the directories but only when the project is compiled. Since the project
+This script will create missing directories for a project tree when loading
+it into GPS. It is different from the gnatmake switch -p, which will also
+create the directories but only when the project is compiled. Since the project
 is first loaded in GPS, the latter would return errors when creating the
 project if some directories are missing.
 
@@ -27,7 +26,7 @@ def on_project_changed(self):
     created = []
     try:
         must_create = GPS.Preference("Auto-Create-Dirs").get()
-    except:
+    except Exception:
         must_create = True
 
     if must_create:
@@ -37,7 +36,10 @@ def on_project_changed(self):
             dirs = [i.get_attribute_as_string("Exec_Dir"),
                     i.get_attribute_as_string("Library_Dir"),
                     i.get_attribute_as_string("Object_Dir"),
-                    i.get_attribute_as_string("Library_Src_Dir")]
+                    i.get_attribute_as_string("Library_Src_Dir"),
+                    i.get_attribute_as_string("Library_ALI_Dir"),
+                    i.get_attribute_as_string("Artifacts_Dir", "IDE"),
+                    i.get_attribute_as_string("Documentation_Dir", "IDE")]
             for j in dirs:
                 if i and i not in [".", "", " "]:
                     dir = os.path.join(
@@ -54,6 +56,7 @@ def on_project_changed(self):
             GPS.Console("Messages").write(string.join(created, "\n"))
             GPS.Console("Messages").write("\n")
             GPS.Project.recompute()
+
 
 GPS.parse_xml("""
 <preference name="Auto-Create-Dirs"
