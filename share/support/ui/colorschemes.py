@@ -8,13 +8,18 @@ These themes are inspired from:
 
 import os
 import GPS
-from theme_handling import Theme, Rgba, transparent
+from gps_utils import hook
+from theme_handling import (
+    Theme, Rgba, transparent, Color,
+    gtk_css_pref_name)
 import textmate
 
 try:
     from gi.repository import Gtk, Gdk
 except ImportError:
     pass
+
+logger = GPS.Logger("COLORSCHEMES")
 
 STYLE_WARNING = GPS.Style("editor-warnings")
 STYLE_WARNING.set_background(
@@ -33,37 +38,37 @@ default = Theme("Default", True, {
 darkside = Theme("Darkside", False, {})
 
 monokai = Theme("Monokai", False, {
-    "debugger_current":   Rgba(58, 71, 54, 153),
-    "current_line":       Rgba(73, 72, 62),
-    "editor_fg":          Rgba(248, 248, 242),
-    "editor_bg":          Rgba(39, 40, 34),
-    "hyperlinks":         ("DEFAULT", Rgba(114, 159, 207), transparent),
-    "strings":            ("DEFAULT", Rgba(230, 219, 116), transparent),
-    "numbers":            ("DEFAULT", Rgba(255, 51, 51),   transparent),
-    "annotated_comments": ("DEFAULT", Rgba(117, 113, 94),  transparent),
-    "comments":           ("DEFAULT", Rgba(117, 113, 94),  transparent),
-    "keywords":           ("DEFAULT", Rgba(249, 38, 114),  transparent),
-    "types":              ("DEFAULT", Rgba(102, 217, 239), transparent),
-    "blocks":             ("DEFAULT", Rgba(230, 219, 116), transparent),
-    "browsers_bg":        Rgba(39, 40, 34)
+    "debugger_current": Rgba(58, 71, 54, 153),
+    "current_line": Rgba(73, 72, 62),
+    "editor_fg": Rgba(248, 248, 242),
+    "editor_bg": Rgba(39, 40, 34),
+    "hyperlinks": ("DEFAULT", Rgba(114, 159, 207), transparent),
+    "strings": ("DEFAULT", Rgba(230, 219, 116), transparent),
+    "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
+    "annotated_comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
+    "comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
+    "keywords": ("DEFAULT", Rgba(249, 38, 114), transparent),
+    "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
+    "blocks": ("DEFAULT", Rgba(230, 219, 116), transparent),
+    "browsers_bg": Rgba(39, 40, 34)
 })
 
 iplastic = Theme("iPlastic", True, {
-    "theme_selected_bg":  Rgba(74, 144, 217),
-    "debugger_current":   Rgba(125, 236, 57, 153),
-    "current_line":       Rgba(226, 226, 226, 102),
-    "editor_fg":          Rgba(0, 0, 0),
-    "editor_bg":          Rgba(238, 238, 238),
-    "hyperlinks":         ("DEFAULT", Rgba(0, 0, 255), transparent),
-    "strings":            ("DEFAULT", Rgba(0, 153, 51), transparent),
-    "numbers":            ("DEFAULT", Rgba(255, 51, 51), transparent),
+    "theme_selected_bg": Rgba(74, 144, 217),
+    "debugger_current": Rgba(125, 236, 57, 153),
+    "current_line": Rgba(226, 226, 226, 102),
+    "editor_fg": Rgba(0, 0, 0),
+    "editor_bg": Rgba(238, 238, 238),
+    "hyperlinks": ("DEFAULT", Rgba(0, 0, 255), transparent),
+    "strings": ("DEFAULT", Rgba(0, 153, 51), transparent),
+    "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
     "annotated_comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "aspects":            ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "comments":           ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "keywords":           ("DEFAULT", Rgba(0, 0, 255), transparent),
-    "types":              ("DEFAULT", Rgba(102, 217, 239), transparent),
-    "blocks":             ("DEFAULT", Rgba(255, 128, 0), transparent),
-    "browsers_bg":        Rgba(238, 238, 238)
+    "aspects": ("DEFAULT", Rgba(0, 102, 255), transparent),
+    "comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
+    "keywords": ("DEFAULT", Rgba(0, 0, 255), transparent),
+    "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
+    "blocks": ("DEFAULT", Rgba(255, 128, 0), transparent),
+    "browsers_bg": Rgba(238, 238, 238)
 })
 
 themes = []
@@ -99,13 +104,11 @@ def pref_set(gps_pref, val):
 
 class ColorThemeSwitcher(object):
 
-    pref_gtk_theme = "GPS6-Gtk-Theme-Name"
-    gtkpref_name = "/ColorTheme gtk+"
-
     def __init__(self):
         self.__modified = False
 
-        GPS.Preference(self.gtkpref_name).create("", "string", "", "")
+        GPS.Preference(gtk_css_pref_name).create(
+            "Custom theme's CSS", "string", "", "")
 
         self.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
@@ -117,7 +120,7 @@ class ColorThemeSwitcher(object):
         self.__set_gtk_properties()
 
     def __set_gtk_properties(self):
-        c = GPS.Preference(self.gtkpref_name).get()
+        c = GPS.Preference(gtk_css_pref_name).get()
         try:
             if c == "":
                 self.provider.load_from_data("*{}")  # Clear contents
@@ -125,8 +128,8 @@ class ColorThemeSwitcher(object):
                 self.provider.load_from_data(c)
         except Exception:
             GPS.Console().write(
-                 "resetting theme preference %s\n" % self.gtkpref_name)
-            GPS.Preference(self.gtkpref_name).set('')
+                "resetting theme preference %s\n" % gtk_css_pref_name)
+            GPS.Preference(gtk_css_pref_name).set('')
 
     def __for_each_pref(self, theme, cb):
         """For each preference defined in the theme, calls cb with:
@@ -329,6 +332,49 @@ class ColorSchemePicker(object):
 
         return vbox
 
+    def no_theme_fallback(self):
+        """
+        If needed, Try to deduce a theme from the user's preferences and, if
+        found, applies it.
+        Otherwise, expose the editor's CSS colors directly from the associated
+        preferences.
+        Needed for compatibility.
+        """
+
+        if not GPS.Preference(gtk_css_pref_name).get():
+            logger.log("Searching for a fallback theme...")
+
+            # Get the color values for the editor's style preferences and
+            # compare them with the editor colors of the known themes.
+            # If there is a match, apply the given theme.
+            # Otherwise, define directly the needed editor CSS colors from
+            # the editor's style preference value.
+
+            editor_style = GPS.Preference(
+                "Src-Editor-Reference-Style").get().split("@")
+            editor_bg_color = Color(from_pref=editor_style[2])
+            editor_fg_color = Color(from_pref=editor_style[1])
+
+            themes = get_themes()
+            fallback_theme = None
+            for t in themes:
+                if (t.d['editor_bg'] == editor_bg_color
+                        and t.d['editor_fg'] == editor_fg_color):
+                    fallback_theme = t
+                    break
+
+            if fallback_theme:
+                logger.log("%s used as fallback theme" % (fallback_theme.name))
+                the_theme_switcher.apply_theme(fallback_theme)
+            else:
+                logger.log("No fallback theme found: applying default CSS")
+                css = ("""
+@define-color editor_bg_color %s;
+@define-color editor_fg_color %s;""" % (editor_bg_color.to_rgba_string(),
+                                        editor_fg_color.to_rgba_string()))
+                the_theme_switcher.provider.load_from_data(css)
+                GPS.Preference(gtk_css_pref_name).set(css)
+
 
 picker = ColorSchemePicker()
 
@@ -345,3 +391,10 @@ GPS.PreferencesPage.create(
     name="Color Theme Assistant",
     get_widget=picker.get_preferences_assistant_page,
     is_integrated=True)
+
+
+# Check if we need to apply a fallback theme for compatibility reasons
+
+@hook("gps_started")
+def on_started():
+    picker.no_theme_fallback()

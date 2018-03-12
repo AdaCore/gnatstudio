@@ -4,6 +4,16 @@ import GPS
 import colorsys
 import gps_utils
 from gi.repository import Gtk, Gdk
+import re
+
+
+gtk_theme_pref_name = "GPS6-Gtk-Theme-Name"
+# The preference that controls the Gtk+ base theme (e.g: Adwaita).
+
+gtk_css_pref_name = "Gtk-Theme-Custom-CSS"
+# The preference used to control the various CSS colors
+# according to the user's theme.
+
 
 css_template = """
 @define-color editor_bg_color {editor_bg};
@@ -88,12 +98,13 @@ def c(x):
 class Color:
     """Represents a color"""
 
-    def __init__(self, from_hex=None, from_rgba=None):
+    def __init__(self, from_hex=None, from_rgba=None, from_pref=None):
         """Initialize self from
             - a hex representation "#03f4b2" (rgb) or "#09889904" (rgba), or
             - r,g,b,a values provided between 0 and 255
                (a is optional, defaulting to 255)
-
+            - a color preference's string value (e.g: rgba(20, 40, 30, 0)
+              or rgb(20, 40, 30))
         """
         # self.r, self.g, self.b, self.a are floats between 0
         self.a = 1.0
@@ -103,10 +114,28 @@ class Color:
                 for x in xrange(3))
             if len(from_hex) == 9:
                 self.a = float(int(from_hex[7:9], 16)) / 255.0
-        else:
+        elif from_rgba:
             self.r, self.g, self.b = (x / 255.0 for x in from_rgba[0:3])
             if len(from_rgba) == 4:
                 self.a = from_rgba[3] / 255.0
+        else:
+            rgba_values = re.findall('\d+', from_pref)
+            self.r, self.g, self.b = (int(x) / 255.0 for x in rgba_values[0:3])
+            if len(rgba_values) == 4:
+                self.a = int(from_rgba[3]) / 255.0
+
+    def __eq__(self, other):
+        """Return True if the Colors RGBA components match"""
+        if isinstance(self, other.__class__):
+            return (self.r == other.r
+                    and self.g == other.g
+                    and self.b == other.b
+                    and self.a == other.a)
+
+        return False
+
+    def __ne__(self, other):
+        return not self.__eg_other()
 
     def get_luminosity(self):
         """Return the luminosity as a float between 0.0 and 1.0 """
@@ -367,15 +396,11 @@ class Theme(object):
                 # or reuse existing colors
                 pass
 
-        # Create internal preference
-        pref_gtk_theme = "GPS6-Gtk-Theme-Name"
-        gtkpref_name = "/ColorTheme gtk+"
-
         # Freeze the preferences
 
         with gps_utils.freeze_prefs():
             # The theme preference
-            pref_set(pref_gtk_theme, self.d['base_theme'])
+            pref_set(gtk_theme_pref_name, self.d['base_theme'])
 
             # The editor fg and bg
             font = GPS.Preference(
@@ -399,7 +424,7 @@ class Theme(object):
             **{k: self.d[k].to_hex6_string() for k in css_colors}
         ).replace('[', '{').replace(']', '}')
         provider.load_from_data(css)
-        GPS.Preference(gtkpref_name).set(css)
+        GPS.Preference(gtk_css_pref_name).set(css)
 
     def generate_example_label(self):
         """Generate an example Gtk.Label demoing this theme"""
