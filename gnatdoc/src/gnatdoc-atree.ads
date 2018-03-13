@@ -945,6 +945,7 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
+   --  Return true if E is package or generic package.
    function Is_Package_Body
      (E : Entity_Id) return Boolean;
 
