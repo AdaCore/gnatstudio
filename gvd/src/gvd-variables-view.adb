@@ -22,33 +22,37 @@ with GNAT.Decode_UTF8_String;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Debugger;                    use Debugger;
 with Default_Preferences;         use Default_Preferences;
+with Gdk.Dnd;                     use Gdk.Dnd;
+with Gdk.Drag_Contexts;           use Gdk.Drag_Contexts;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.RGBA;                    use Gdk.RGBA;
 with Generic_Views;               use Generic_Views;
-with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
+with Glib;                        use Glib;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with GPS.Intl;                    use GPS.Intl;
 with GPS.Debuggers;               use GPS.Debuggers;
 with GPS.Dialogs;                 use GPS.Dialogs;
+with GPS.Intl;                    use GPS.Intl;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
+use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Properties;              use GPS.Properties;
 with GPS.Search;                  use GPS.Search;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
+with Gtk.Dnd;                     use Gtk.Dnd;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
@@ -63,17 +67,17 @@ with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
 with GVD.Contexts;                use GVD.Contexts;
 with GVD.Generic_View;            use GVD.Generic_View;
-with GVD_Module;                  use GVD_Module;
 with GVD.Preferences;             use GVD.Preferences;
 with GVD.Process;                 use GVD.Process;
 with GVD.Types;                   use GVD.Types;
 with GVD.Variables.Items;         use GVD.Variables.Items;
-with GVD.Variables.Types;         use GVD.Variables.Types;
 with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
-with Language;                    use Language;
+with GVD.Variables.Types;         use GVD.Variables.Types;
+with GVD_Module;                  use GVD_Module;
 with Language.Icons;              use Language.Icons;
-with System;
+with Language;                    use Language;
 with System.Storage_Elements;     use System.Storage_Elements;
+with System;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 
@@ -336,6 +340,52 @@ package body GVD.Variables.View is
    function Print_Access_Label_Expansion
      (Context : Selection_Context) return String;
    --  Expand "%C" to the dereferenced name for the variable.
+
+   procedure On_Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  DnD handler called when users drag some text in the Variables view.
+   --  If this text corresponds to an entity, display it in the view.
+
+   ---------------------------
+   -- On_Drag_Data_Received --
+   ---------------------------
+
+   procedure On_Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      Tree    : constant Variable_Tree_View := Variable_Tree_View (Object);
+      Model   : constant Gtk_Tree_Store := Tree.Model;
+      pragma Unreferenced (Model);
+      Dnd_Context : constant Drag_Context :=
+                  Drag_Context (Get_Object (Nth (Args, 1)));
+   begin
+      --  Do nothing when the DnD comes from the Variables view
+
+      if Get_Source_Widget (Dnd_Context) = Object then
+         return;
+      end if;
+
+      --  Try to execute the "debug tree display variable" action with the
+      --  current context: the text being dragged is already present in the
+      --  current context since the user needs to select it in order to drag
+      --  it.
+
+      declare
+         Success : Boolean;
+      begin
+         Success := Execute_Action
+           (Kernel,
+            Action  => "debug tree display variable");
+         Gtk.Dnd.Finish
+              (Dnd_Context,
+               Success => Success,
+               Del     => False);
+      end;
+   end On_Drag_Data_Received;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1204,7 +1254,19 @@ package body GVD.Variables.View is
       Pref.Execute (Self.Kernel, null);
       Preferences_Changed_Hook.Add (Pref, Watch => Self);
 
+      Dest_Set
+        (Widget  => Self.Tree,
+         Flags   => Dest_Default_All,
+         Actions => Action_Copy);
+      Self.Tree.Drag_Dest_Add_Text_Targets;
+      Kernel_Callback.Connect
+        (Self.Tree,
+         Signal_Drag_Data_Received,
+         On_Drag_Data_Received'Access,
+         Self.Kernel);
+
       Self.Show_All;
+
       return Gtk_Widget (Self.Tree);
    end Initialize;
 
