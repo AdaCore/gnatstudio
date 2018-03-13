@@ -13,6 +13,7 @@
   <key action="debug nexti">shift-F6</key>
   <key action="debug finish">F7</key>
   <key action="debug continue">F8</key>
+  <key action="debug tree undisplay">BackSpace</key>
 
   <key action="start of statement">alt-Up</key>
   <key action="end of statement">alt-Down</key>
