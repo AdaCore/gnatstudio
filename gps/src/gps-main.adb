@@ -2318,13 +2318,14 @@ procedure GPS.Main is
 
       LAL.Module.Register_Module
         (GPS_Main.Kernel,
-         (LAL.Use_LAL_In_Editor  => Use_LAL_In_Editor.Get_Pref,
-          LAL.Use_LAL_In_Outline => Use_LAL_In_Outline.Get_Pref,
-          LAL.Use_LAL_In_Shell   => Use_LAL_In_Shell.Get_Pref,
-          LAL.Use_LAL_In_Info    => Use_LAL_In_Info.Get_Pref,
-          LAL.Use_LAL_In_GNATHUB => Use_LAL_In_GNATHUB.Get_Pref,
-          LAL.Use_LAL_In_COV     => Use_LAL_In_COV.Get_Pref,
-          LAL.Use_LAL_In_Indent  => Use_LAL_In_Indent.Get_Pref),
+         (LAL.Use_LAL_In_Editor    => Use_LAL_In_Editor.Get_Pref,
+          LAL.Use_LAL_In_Outline   => Use_LAL_In_Outline.Get_Pref,
+          LAL.Use_LAL_In_Shell     => Use_LAL_In_Shell.Get_Pref,
+          LAL.Use_LAL_In_Info      => Use_LAL_In_Info.Get_Pref,
+          LAL.Use_LAL_In_GNATHUB   => Use_LAL_In_GNATHUB.Get_Pref,
+          LAL.Use_LAL_In_COV       => Use_LAL_In_COV.Get_Pref,
+          LAL.Use_LAL_In_Indent    => Use_LAL_In_Indent.Get_Pref,
+          LAL.Use_LAL_In_Highlight => Use_LAL_In_Highlight.Get_Pref),
          Legacy => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
 
       if Active (CPP_Trace) then

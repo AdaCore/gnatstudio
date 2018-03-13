@@ -27,7 +27,8 @@ package LAL is
       Use_LAL_In_Info,
       Use_LAL_In_GNATHUB,
       Use_LAL_In_COV,
-      Use_LAL_In_Indent);
+      Use_LAL_In_Indent,
+      Use_LAL_In_Highlight);
 
    type Use_LAL_Configuration is array (Use_LAL_Kinds) of Boolean;
 

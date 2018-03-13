@@ -524,6 +524,12 @@ package body GPS.Kernel.Preferences is
          Doc      => -("Enable usage of libadalang in indent."),
          Default  => False);
 
+      Use_LAL_In_Highlight := Manager.Create_Invisible_Pref
+        (Name     => "use-lal-in-highlight",
+         Label    => -"Use LAL to highlight",
+         Doc      => -("Enable usage of libadalang to highlight code."),
+         Default  => False);
+
       -- General --
 
       Gtk_Theme := Manager.Create
