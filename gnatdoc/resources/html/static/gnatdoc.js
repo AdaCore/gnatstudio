@@ -283,6 +283,23 @@ function buildDocumentationPage() {
     pane.appendChild(header);
     buildText(pane, GNATdoc.Documentation.description);
 
+    //  Display renaming information
+
+    if (GNATdoc.Documentation.renaming !== undefined) {
+        var paragraph = document.createElement('p');
+        paragraph.appendChild(
+          document.createTextNode('Renaming of '));
+
+        href = document.createElement('a');
+        href.href = '../' + GNATdoc.Documentation.renaming.docHref;
+        href.target = 'contentView';
+        href.appendChild(
+          document.createTextNode(GNATdoc.Documentation.renaming.label));
+        paragraph.appendChild(href);
+
+        pane.appendChild(paragraph);
+    }
+
     /* Build entities description sections */
 
     for (var index = 0; index < GNATdoc.Documentation.entities.length; index++)

@@ -1318,6 +1318,26 @@ package body GNATdoc.Backend.HTML is
       Documentation.Set_Field ("summary", Summary);
       Documentation.Set_Field ("description", Description);
 
+      --  Process entity specific information
+
+      if Present (LL.Get_Alias (Entity))
+        and then (Is_Subprogram (Entity) or Is_Package (Entity))
+      then
+         declare
+            Alias_Of : constant Entity_Id :=
+              Find_Unique_Entity
+                (Get_Declaration (LL.Get_Alias (Entity)).Loc);
+            Object   : JSON_Value;
+
+         begin
+            if Present (Alias_Of) then
+               Object := Create_Object;
+               Set_Label_And_Href (Object, Alias_Of, True);
+               Documentation.Set_Field ("renaming", Object);
+            end if;
+         end;
+      end if;
+
       --  Process entities
 
       if not Entities.Generic_Formals.Is_Empty then
@@ -1540,12 +1560,14 @@ package body GNATdoc.Backend.HTML is
                    = LL.Get_Location (Get_Scope (Entity)).File
       then
          return
-           (if No (Get_Corresponding_Spec (Entity))
+           (if Present (LL.Get_Alias (Entity)) then "(renaming)"
+            elsif No (Get_Corresponding_Spec (Entity))
             then "(nested)" else "(nested, body)");
 
       else
          return
-           (if No (Get_Corresponding_Spec (Entity)) then "" else "(body)");
+           (if Present (LL.Get_Alias (Entity)) then "(renaming)"
+            elsif No (Get_Corresponding_Spec (Entity)) then "" else "(body)");
       end if;
    end Get_Qualifier;
 

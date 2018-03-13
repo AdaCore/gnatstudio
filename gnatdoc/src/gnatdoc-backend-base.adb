@@ -134,12 +134,8 @@ package body GNATdoc.Backend.Base is
 
             if Is_Package (Entity) then
                if No (LL.Get_Instance_Of (Entity)) then
-                  if not Is_Alias (Entity) then
-                     --  Ignore package renamings
-
-                     Entities.Pkgs.Append (Entity);
-                     Self.Entities.Pkgs.Append (Entity);
-                  end if;
+                  Entities.Pkgs.Append (Entity);
+                  Self.Entities.Pkgs.Append (Entity);
 
                else
                   Entities.Pkgs_Instances.Append (Entity);
