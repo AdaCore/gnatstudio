@@ -314,6 +314,7 @@ procedure GPS.Main is
    Home_Dir                   : Virtual_File;
    Prefix_Dir                 : Virtual_File;
    GPS_Home_Dir               : Virtual_File;
+   GPS_Log_Dir                : Virtual_File;
    Show_Preferences_Assistant : Boolean := False;
    Batch_File                 : String_Access;
    Batch_Script               : String_Access;
@@ -551,6 +552,8 @@ procedure GPS.Main is
       end;
 
       GPS_Home_Dir := Create_From_Dir (Home_Dir, ".gps");
+      GPS_Log_Dir := Create_From_Dir (GPS_Home_Dir, "log");
+
       Ensure_Directory (GPS_Home_Dir);
 
       declare
@@ -698,6 +701,10 @@ procedure GPS.Main is
             Make_Dir (GPS_Home_Dir);
          end if;
 
+         if not Is_Directory (GPS_Log_Dir) then
+            Make_Dir (GPS_Log_Dir);
+         end if;
+
          if not Is_Regular_File (Traces_File) then
 
             --  Create a default configuration file for the traces.
@@ -706,7 +713,7 @@ procedure GPS.Main is
 
             File := Traces_File.Write_File;
             Write (File,
-                   ">log.$T.txt:buffer_size=0" & ASCII.LF &
+                   ">log/log.$T.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
                      "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
@@ -761,13 +768,25 @@ procedure GPS.Main is
                               Pattern     => ">log.$$",
                               Replacement => Pattern & "0");
                         end if;
-
-                        File := Traces_File.Write_File;
-                        Write (File, To_String (New_Contents));
-                        Close (File);
-                        Free (File_Contents);
                      end if;
+
+                     --  Check if the log files are already redirected to the
+                     --  .gps/log subdirectory. If it's not, add the
+                     --  reditection to the traces file.
+
+                     if Index (New_Contents, ">log/log.") = 0 then
+                        Replace
+                          (S           => New_Contents,
+                           Pattern     => ">log.",
+                           Replacement => ">log/log.");
+                     end if;
+
+                     File := Traces_File.Write_File;
+                     Write (File, To_String (New_Contents));
+                     Close (File);
                   end;
+
+                  Free (File_Contents);
                end if;
             end;
          end if;
