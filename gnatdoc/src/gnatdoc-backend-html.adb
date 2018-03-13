@@ -118,6 +118,12 @@ package body GNATdoc.Backend.HTML is
       Entity : Entity_Id) return Boolean;
    --  Returns True when given entity declared in specification.
 
+   procedure Add_Instantiation_Information
+     (Documentation : in out JSON_Value;
+      Entity        : Entity_Id);
+   --  Adds instantiation information for instantiation of generic package or
+   --  generic subprogram.
+
    ---------
    -- "<" --
    ---------
@@ -154,6 +160,31 @@ package body GNATdoc.Backend.HTML is
 
       return False;
    end "<";
+
+   -----------------------------------
+   -- Add_Instantiation_Information --
+   -----------------------------------
+
+   procedure Add_Instantiation_Information
+     (Documentation : in out JSON_Value;
+      Entity        : Entity_Id) is
+   begin
+      if Present (LL.Get_Instance_Of (Entity)) then
+         declare
+            Instance_Of : constant Entity_Id :=
+              Find_Unique_Entity
+                (Get_Declaration (LL.Get_Instance_Of (Entity)).Loc);
+            Object      : JSON_Value;
+
+         begin
+            if Present (Instance_Of) then
+               Object := Create_Object;
+               Set_Label_And_Href (Object, Instance_Of, True);
+               Documentation.Set_Field ("instantiation", Object);
+            end if;
+         end;
+      end if;
+   end Add_Instantiation_Information;
 
    ------------------------------------
    -- Compilation_Unit_File_Basename --
@@ -1101,19 +1132,7 @@ package body GNATdoc.Backend.HTML is
             end if;
 
             if Present (LL.Get_Instance_Of (E)) then
-               declare
-                  Instance_Of : constant Entity_Id :=
-                    Find_Unique_Entity
-                       (Get_Declaration (LL.Get_Instance_Of (E)).Loc);
-                  Object      : JSON_Value;
-
-               begin
-                  if Present (Instance_Of) then
-                     Object := Create_Object;
-                     Set_Label_And_Href (Object, Instance_Of, True);
-                     Entity_Entry.Set_Field ("instantiation", Object);
-                  end if;
-               end;
+               Add_Instantiation_Information (Entity_Entry, E);
 
             elsif Is_Subprogram_Or_Entry (E)
               and then Present (Get_Comment (E))
@@ -1293,7 +1312,7 @@ package body GNATdoc.Backend.HTML is
         Compilation_Unit_File_Basename (Entity);
       HTML_File_Name : constant String := File_Base_Name & ".html";
       JS_File_Name   : constant String := File_Base_Name & ".js";
-      Documentation  : constant JSON_Value := Create_Object;
+      Documentation  : JSON_Value := Create_Object;
       Index_Entry    : constant JSON_Value := Create_Object;
       Summary        : JSON_Array;
       Description    : JSON_Array;
@@ -1301,11 +1320,9 @@ package body GNATdoc.Backend.HTML is
       Default_Group  : Boolean := True;
 
    begin
-      --  Skip generic instantiations and separates.
+      --  Skip separates.
 
-      if Present (LL.Get_Instance_Of (Entity))
-        or else Is_Separate_Unit (Entity)
-      then
+      if Is_Separate_Unit (Entity) then
          return;
       end if;
 
@@ -1337,6 +1354,8 @@ package body GNATdoc.Backend.HTML is
             end if;
          end;
       end if;
+
+      Add_Instantiation_Information (Documentation, Entity);
 
       --  Process entities
 

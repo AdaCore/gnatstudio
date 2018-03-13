@@ -199,6 +199,29 @@ function buildText(root, data) {
  * ???
  */
 
+function buildInstantiationInformation(pane, entity) {
+    //  Display instantiation information
+
+    if (entity.instantiation !== undefined) {
+        var paragraph = document.createElement('p');
+        paragraph.appendChild(
+          document.createTextNode('Instantiation of '));
+
+        var href = document.createElement('a');
+        href.href = '../' + entity.instantiation.docHref;
+        href.target = 'contentView';
+        href.appendChild(
+          document.createTextNode(entity.instantiation.label));
+        paragraph.appendChild(href);
+
+        pane.appendChild(paragraph);
+    }
+}
+
+/**
+ * ???
+ */
+
 function buildDocumentationPage() {
     var pane = document.getElementById('body');
 
@@ -300,6 +323,8 @@ function buildDocumentationPage() {
         pane.appendChild(paragraph);
     }
 
+    buildInstantiationInformation(pane, GNATdoc.Documentation);
+
     /* Build entities description sections */
 
     for (var index = 0; index < GNATdoc.Documentation.entities.length; index++)
@@ -391,20 +416,7 @@ function buildDocumentationPage() {
 
                 //  Display instantiation information
 
-                if (entity.instantiation !== undefined) {
-                    var paragraph = document.createElement('p');
-                    paragraph.appendChild(
-                      document.createTextNode('Instantiation of '));
-
-                    href = document.createElement('a');
-                    href.href = '../' + entity.instantiation.docHref;
-                    href.target = 'contentView';
-                    href.appendChild(
-                      document.createTextNode(entity.instantiation.label));
-                    paragraph.appendChild(href);
-
-                    pane.appendChild(paragraph);
-                }
+                buildInstantiationInformation(pane, entity);
 
                 if (entity.parameters !== undefined) {
                     list = document.createElement('dl');
