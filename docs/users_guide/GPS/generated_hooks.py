@@ -726,6 +726,21 @@ class Predefined_Hooks:
 
         """
 
+    # highlight_range = 'highlight_range'
+    def highlight_range(name,phase,file,from_line,to_line):
+        """
+      Request to highlight range of text in given file.
+      Phase 1 is executed on each keystroke and should work fast.
+      Phase 2 is executed when semantic information is ready and may use it.
+
+      :param str name:
+      :param int phase:
+      :param GPS.File file:
+      :param int from_line:
+      :param int to_line:
+
+        """
+
     # html_action_hook = 'html_action_hook'
     def html_action_hook(name,url_or_file,enable_navigation,anchor):
         """
