@@ -1667,7 +1667,7 @@ package body KeyManager_Module is
                         Action           => Action,
                         Key              => Child.Value.all,
                         Save_In_Keys_XML => User_Defined,
-                        Remove_Existing_Shortcuts_For_Action => False,
+                        Remove_Existing_Shortcuts_For_Action => User_Defined,
                         Remove_Existing_Actions_For_Shortcut => False);
                   end if;
                end;
