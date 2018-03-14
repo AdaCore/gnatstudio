@@ -39,7 +39,8 @@ def on_project_changed(self):
                     i.get_attribute_as_string("Library_Src_Dir"),
                     i.get_attribute_as_string("Library_ALI_Dir"),
                     i.get_attribute_as_string("Artifacts_Dir", "IDE"),
-                    i.get_attribute_as_string("Documentation_Dir", "IDE")]
+                    i.get_attribute_as_string("Documentation_Dir",
+                                              "Documentation")]
             for j in dirs:
                 if i and i not in [".", "", " "]:
                     dir = os.path.join(
