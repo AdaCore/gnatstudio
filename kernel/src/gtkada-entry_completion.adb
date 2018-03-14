@@ -59,6 +59,7 @@ with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.MDI;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtkada.Style;               use Gtkada.Style;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -832,19 +833,26 @@ package body Gtkada.Entry_Completion is
    ----------------------
 
    function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean is
+      use type Gtkada.MDI.MDI_Child;
    begin
       if not Self.Has_Focus then
          Popdown (Self);
 
-         --  Unref the previously focused widget and set it to null when the
-         --  focus goes out of the entry.
-         if Self.Previous_Focus /= null then
-            Self.Previous_Focus.Unref;
-            Self.Previous_Focus := null;
-         end if;
+         --  Check whether some widget has a focus which could be moved to
+         --  another app and we do not need to clear "focus history" in such
+         --  case
 
-         --  Unset the previous context
-         Self.Previous_Context := No_Context;
+         if Get_MDI (Self.Kernel).Get_Focus_Child /= null then
+            --  Unref the previously focused widget and set it to null when the
+            --  focus goes out of the entry.
+            if Self.Previous_Focus /= null then
+               Self.Previous_Focus.Unref;
+               Self.Previous_Focus := null;
+            end if;
+
+            --  Unset the previous context
+            Self.Previous_Context := No_Context;
+         end if;
       end if;
 
       Self.Focus_Check_Idle := No_Source_Id;
@@ -868,10 +876,10 @@ package body Gtkada.Entry_Completion is
       if Self.Previous_Focus = null then
          Self.Previous_Focus := Gtk_Widget
            (Get_MDI (Self.Kernel).Get_Focus_Child);
-      end if;
 
-      if Self.Previous_Focus /= null then
-         Self.Previous_Focus.Ref;
+         if Self.Previous_Focus /= null then
+            Self.Previous_Focus.Ref;
+         end if;
       end if;
 
       --  Get the current context
@@ -1161,6 +1169,13 @@ package body Gtkada.Entry_Completion is
       elsif Event.Keyval = GDK_KP_Down
          or else Event.Keyval = GDK_Down
       then
+         if not Self.View.Is_Visible then
+            --  View is not visible (in case we just switched from another app)
+            --  Do not process arrows in this case
+
+            return True;
+         end if;
+
          Self.View.Get_Selection.Get_Selected (M, Iter);
          Get_Iter_Next (M, Iter);
          if Iter /= Null_Iter then
@@ -1171,6 +1186,13 @@ package body Gtkada.Entry_Completion is
       elsif Event.Keyval = GDK_KP_Up
          or else Event.Keyval = GDK_Up
       then
+         if not Self.View.Is_Visible then
+            --  View is not visible (in case we just switched from another app)
+            --  Do not process arrows in this case
+
+            return True;
+         end if;
+
          Self.View.Get_Selection.Get_Selected (M, Iter);
          Get_Iter_Prev (M, Iter);
          if Iter /= Null_Iter then
