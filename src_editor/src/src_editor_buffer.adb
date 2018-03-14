@@ -570,6 +570,11 @@ package body Src_Editor_Buffer is
    procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer);
 
+   procedure Run_Highlight_Hook
+     (Buffer : Source_Buffer;
+      Phase  : Positive);
+   --  Run Highlight_Range_Hook to highlight given buffer
+
    -------------------------
    -- Set_Current_Command --
    -------------------------
@@ -754,6 +759,13 @@ package body Src_Editor_Buffer is
          if Self.Buffer.Parse_Blocks then
             Compute_Blocks (Self.Buffer, Immediate => False);
             Self.Buffer.Blocks_Exact := True;
+         end if;
+
+         --  Trigger syntax highlighting if it is deferred
+         if Self.Buffer.Use_Highlighting_Hook
+           and then Self.Buffer.Highlight_Needed
+         then
+            Run_Highlight_Hook (Self.Buffer, Phase => 2);
          end if;
       end if;
    end Execute;
@@ -4520,16 +4532,19 @@ package body Src_Editor_Buffer is
       Buffer_Start_Iter : Gtk_Text_Iter;
       Buffer_End_Iter   : Gtk_Text_Iter;
    begin
+      Buffer.Use_Highlighting_Hook := Lang.Get_Name = "Ada"
+        and then Use_LAL_In_Highlight.Get_Pref;
+
       if Buffer.Lang /= Lang then
          Buffer.Lang := Lang;
          Get_Bounds (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
 
          --  Do not try to highlight an empty buffer
          if not Is_End (Buffer_Start_Iter) then
-            if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
-               Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-            else
+            if not Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
                Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
+            elsif not Buffer.Use_Highlighting_Hook then
+               Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
             end if;
          end if;
 
@@ -8098,7 +8113,11 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Buffer.Inserting and Buffer.Highlight_Enabled then
-         Process_Highlight_Region (Buffer);
+         if not Buffer.Use_Highlighting_Hook then
+            Process_Highlight_Region (Buffer);
+         elsif Buffer.Highlight_Needed then
+            Run_Highlight_Hook (Buffer, Phase => 1);
+         end if;
       end if;
    end Update_Highlight_Region;
 
@@ -8110,7 +8129,7 @@ package body Src_Editor_Buffer is
       Start_Iter  : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
    begin
-      if not Buffer.Highlight_Needed then
+      if not Buffer.Highlight_Needed or else Buffer.Use_Highlighting_Hook then
          return;
       end if;
 
@@ -8120,6 +8139,33 @@ package body Src_Editor_Buffer is
       Highlight_Slice (Buffer, Start_Iter, End_Iter);
       Buffer.Highlight_Needed := False;
    end Process_Highlight_Region;
+
+   ------------------------
+   -- Run_Highlight_Hook --
+   ------------------------
+
+   procedure Run_Highlight_Hook
+     (Buffer : Source_Buffer;
+      Phase  : Positive)
+   is
+      Start_Iter  : Gtk_Text_Iter;
+      End_Iter    : Gtk_Text_Iter;
+      From, To    : Integer;
+   begin
+      Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
+      From := Integer (Get_Line (Start_Iter)) + 1;
+      Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
+      To := Integer (Get_Line (End_Iter)) + 1;
+
+      Highlight_Range_Hook.Run
+        (Kernel    => Buffer.Kernel,
+         Phase     => Phase,
+         File      => Buffer.Filename,
+         From_Line => From,
+         To_Line   => To);
+
+      Buffer.Highlight_Needed := False;
+   end Run_Highlight_Hook;
 
    -------------------------
    -- Refresh_Side_Column --

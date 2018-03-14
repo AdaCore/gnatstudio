@@ -1681,6 +1681,9 @@ private
       Highlight_Delimiters : Boolean := False;
       --  Cache corresponding preference
 
+      Use_Highlighting_Hook : Boolean := False;
+      --  Use hook to implement text highlight
+
       Tab_Width : Positive := 8;
       --  Width of a Tab character
 
