@@ -286,11 +286,14 @@ class BoardLoader(Module):
         Get the regexp used to detect when the target connector is successfully
         connected to the board.
         This regexp depends on the currently used connection tool.
+        OpenOCD output is not constant and depends on the interface used for
+        debugging, when it displays the number of hardware breakpoints, we
+        can assume that the connection is established.
         """
         if self.__connection_tool == "st-util":
             return "Listening at"
         elif self.__connection_tool == "openocd":
-            return "Target voltage"
+            return ".cpu: hardware has"
         else:
             return ""
 
