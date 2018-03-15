@@ -148,9 +148,13 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
 
 # noinspection PyUnusedLocal
 def on_exit(process, status, full_output):
-    create_dg(process.dg, full_output)
-    edit_dg(process.dg, process.source_filename,
-            process.line, process.for_subprogram, process.in_external_editor)
+    if status:
+        GPS.Console("Messages").write(process.get_result(), mode="error")
+    else:
+        create_dg(process.dg, full_output)
+        edit_dg(process.dg, process.source_filename,
+                process.line, process.for_subprogram,
+                process.in_external_editor)
 
 
 def show_gnatdg(for_subprogram=False, in_external_editor=False):
@@ -185,8 +189,12 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     dg = os.path.join(objdir, os.path.basename(local_file)) + '.dg'
 
     if distutils.dep_util.newer(local_file, dg):
-        cmd = 'gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL """%s"""' % (
-            prj, file)
+        file_name = '"""%s"""' % file
+        scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
+        cmd = 'gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL' % prj
+        cmd += ' ' + file_name
+        if scenario:
+            cmd += ' ' + scenario
 
         GPS.Console("Messages").write("Generating " + dg + "...\n")
         proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
