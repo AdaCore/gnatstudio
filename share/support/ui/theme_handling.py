@@ -199,17 +199,13 @@ class Color:
             Coef is where to place the cursor: 0.0 for color self,
             1.0 for color other.
         """
+        def m(a, b):
+            return a * (1 - coef) + b * coef
 
-        ha, la, sa = colorsys.rgb_to_hls(self.r, self.g, self.b)
-        hb, lb, sb = colorsys.rgb_to_hls(other.r, other.g, other.b)
-
-        h = (1 - coef) * ha + coef * hb
-        s = (1 - coef) * sa + coef * sb
-        light = (1 - coef) * la + coef * lb
-
-        r, g, b = colorsys.hls_to_rgb(h, light, s)
-        return Color(from_rgba=(c(r), c(g), c(b),
-                                c((1 - coef) * self.a + coef * other.a)))
+        return Color(from_rgba=(c(m(self.r, other.r)),
+                                c(m(self.g, other.g)),
+                                c(m(self.b, other.b)),
+                                c(m(self.a, other.a))))
 
 
 def Rgba(r, g, b, a=255):
@@ -454,9 +450,8 @@ class Theme(object):
         prefixed = []
         for line in label_markup.splitlines():
             prefixed.append(
-                '<span color="{}" background="{}">{:4d} </span> {}'.format(
+                '<span color="{}">{:4d} </span> {}'.format(
                     self.d['gutter_fg'].to_hex6_string(),
-                    self.d['gutter_bg'].to_hex6_string(),
                     num,
                     line))
             num = num + 1

@@ -155,7 +155,7 @@ class TextmateTheme(object):
 
         # Compute nice gutter settings
 
-        d['gutter_fg'] = fg_color.saturate(-0.6).lighten(0.2 * light_val)
+        d['gutter_fg'] = fg_color.mix(bg_color, 0.4)
         d['gutter_bg'] = bg_color.lighten(-0.03 * light_val)
 
         # Compute nice browser settings
@@ -185,16 +185,15 @@ class TextmateTheme(object):
         d["current_block"] = cb_color
         d["annotations"] = ("DEFAULT", transparent, cl_color)
 
-        # Compute values for the auto-highlight-occurrences
-        # For the simple case, mix the normal fg and bg, then lighten
-        # and make it transparent
-        es_color = fg_color.mix(bg_color, 0.2).lighten(0.25 * light_val)
-        d["ephemeral_simple"] = ("DEFAULT", transparent, es_color)
-
         kw_color = fg_color
         # Attempt to find the fg color for the keywords
         if "keywords" in d:
             kw_color = d["keywords"][1]
+
+        # Compute values for the auto-highlight-occurrences
+        # For the simple case, mix the normal fg and keyword color
+        es_color = bg_color.mix(fg_color, 0.3)
+        d["ephemeral_simple"] = ("DEFAULT", transparent, es_color)
 
         kw_color.a = 0.6
         d["ephemeral_smart"] = (
@@ -217,7 +216,7 @@ def textmate_themes():
             'share', 'gps', 'color_themes', 'themes', '*', '*.tmTheme')):
         try:
             results.append(TextmateTheme(file).theme())
-        except:
+        except Exception:
             msg, _, tb = sys.exc_info()
             tb = "\n".join(traceback.format_list(traceback.extract_tb(tb)))
 
