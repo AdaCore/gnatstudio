@@ -703,9 +703,29 @@ procedure GPS.Main is
             Make_Dir (GPS_Home_Dir);
          end if;
 
-         if not Is_Directory (GPS_Log_Dir) then
-            Make_Dir (GPS_Log_Dir);
-         end if;
+         declare
+            Success : Boolean;
+         begin
+            if not Is_Directory (GPS_Log_Dir) then
+               --  A safety check: a previous version of GPS could have left
+               --  a regular file ~/.gps/log.
+               if Is_Regular_File (GPS_Log_Dir) then
+                  GNATCOLL.VFS.Delete (GPS_Log_Dir, Success);
+                  --  Another safety: on bad filesystems, deletion isn't always
+                  --  instantaneous - it's a very rare case and should not
+                  --  occur regularly, so use a delay here.
+                  delay 1.0;
+               end if;
+               Make_Dir (GPS_Log_Dir);
+            end if;
+         exception
+            when VFS_Directory_Error =>
+               Put_Line (Standard_Error,
+                         (-"Cannot create logs directory ") &
+                           GPS_Log_Dir.Display_Full_Name & ASCII.LF);
+               Status_Code := 1;
+               return;
+         end;
 
          if not Is_Regular_File (Traces_File) then
 
