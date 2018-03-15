@@ -524,7 +524,7 @@ package body GVD.Consoles is
         (Kernel          => Self.Kernel,
          Event_On_Widget => Self.Console.Get_View);
 
-      return Gtk_Widget (Self);
+      return Gtk_Widget (Self.Console.Get_View);
    end Initialize;
 
    ------------------

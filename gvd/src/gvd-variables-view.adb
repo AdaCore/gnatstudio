@@ -322,6 +322,12 @@ package body GVD.Variables.View is
      (Filter  : access Access_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Is_Variables_View_Focused_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Variables_View_Focused_Filter;
+      Context : Selection_Context) return Boolean;
+
    function Display_Value_Select_Dialog is
      new Display_Select_Dialog (Debugger.Value_Format);
 
@@ -446,6 +452,34 @@ package body GVD.Variables.View is
          begin
             return Info.Cmd = "" and then
               Info.Entity.Get_Type.all in GVD_Access_Type'Class;
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Variables_View_Focused_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant GVD_Variable_View :=
+               Variable_MDI_Views.Retrieve_View
+                 (Get_Kernel (Context),
+                  Visible_Only => True);
+   begin
+      if View /= null then
+         declare
+            Focus_Child : constant MDI_Child :=
+                            Get_Focus_Child (Get_MDI (View.Kernel));
+            View_Child  : constant MDI_Child :=
+                            Variable_MDI_Views.Child_From_View (View);
+         begin
+            return Focus_Child = View_Child;
          end;
       end if;
 
@@ -1570,7 +1604,7 @@ package body GVD.Variables.View is
       Is_Editable_Filter      : Action_Filter;
       Not_Connamd_Filter      : Action_Filter;
       Access_Filter           : Action_Filter;
-
+      View_Focused_Filter     : Action_Filter;
       Command                 : Interactive_Command_Access;
    begin
       Variable_Views.Register_Module (Kernel);
@@ -1658,6 +1692,17 @@ package body GVD.Variables.View is
            -"Remove the display of the selected variables"
            & " in the Variables view",
          Filter      => Debugger_Stopped_Filter,
+         Icon_Name   => "gps-remove-symbolic",
+         Category    => -"Debug");
+
+      View_Focused_Filter := new Is_Variables_View_Focused_Filter;
+      Register_Action
+        (Kernel, "debug tree remove selected variables",
+         Command     => new Tree_Undisplay_Command,
+         Description =>
+           -"Remove the display of the selected variables"
+           & " in the Variables view, when focused",
+         Filter      => View_Focused_Filter and Debugger_Stopped_Filter,
          Icon_Name   => "gps-remove-symbolic",
          Category    => -"Debug");
 
