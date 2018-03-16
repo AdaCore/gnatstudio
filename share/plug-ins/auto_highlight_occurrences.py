@@ -38,7 +38,7 @@ GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
     "Highlight entities", "boolean",
     "Highlight occurrences of the current entity.",
-    True)
+    False)
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_selection").create(
@@ -50,7 +50,7 @@ GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_word").create(
     "Highlight current word", "boolean",
     "Attempt to highlight the word under the cursor.",
-    False)
+    True)
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlighting_limit").create(
