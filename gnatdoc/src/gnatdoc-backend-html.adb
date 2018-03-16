@@ -1337,13 +1337,11 @@ package body GNATdoc.Backend.HTML is
 
       --  Process entity specific information
 
-      if Present (LL.Get_Alias (Entity))
+      if Present (Get_Alias (Entity))
         and then (Is_Subprogram (Entity) or Is_Package (Entity))
       then
          declare
-            Alias_Of : constant Entity_Id :=
-              Find_Unique_Entity
-                (Get_Declaration (LL.Get_Alias (Entity)).Loc);
+            Alias_Of : constant Entity_Id := Get_Alias (Entity);
             Object   : JSON_Value;
 
          begin
@@ -1579,13 +1577,13 @@ package body GNATdoc.Backend.HTML is
                    = LL.Get_Location (Get_Scope (Entity)).File
       then
          return
-           (if Present (LL.Get_Alias (Entity)) then "(renaming)"
+           (if Present (Get_Alias (Entity)) then "(renaming)"
             elsif No (Get_Corresponding_Spec (Entity))
             then "(nested)" else "(nested, body)");
 
       else
          return
-           (if Present (LL.Get_Alias (Entity)) then "(renaming)"
+           (if Present (Get_Alias (Entity)) then "(renaming)"
             elsif No (Get_Corresponding_Spec (Entity)) then "" else "(body)");
       end if;
    end Get_Qualifier;
