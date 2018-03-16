@@ -565,11 +565,6 @@
       <button action='bookmark edit note'/>
    </toolbar>
 
-   <toolbar id='Scenario'>
-      <button action='scenario validate variable'/>
-      <button action='scenario revert modification'/>
-   </toolbar>
-
    <toolbar id='Switches editor'>
       <button action='edit switches for file'/>
    </toolbar>
