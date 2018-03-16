@@ -87,7 +87,8 @@ package body LAL.Core_Module is
    procedure Register_Module
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access)
+      Legacy : Language.Tree.Database.Tree_Language_Access;
+      Result : out LAL_Module_Id)
    is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
@@ -98,6 +99,7 @@ package body LAL.Core_Module is
         (Unit_Provider => Module.Unit_Provider'Access);
 
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
+      Module.Highlighter.Initialize (Module);
 
       Kernel.Scripts.Register_Command
         (Command => "get_analysis_unit",
@@ -114,6 +116,7 @@ package body LAL.Core_Module is
          new Provider'(Config, (Module.Kernel, Module.Context)));
 
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
+      Result := Module;
    end Register_Module;
 
 end LAL.Core_Module;

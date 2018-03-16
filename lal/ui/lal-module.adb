@@ -15,9 +15,63 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.VFS;
+with GPS.Editors;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;
 with LAL.Core_Module;
 
 package body LAL.Module is
+
+   type Highlight_Hook is new Highlight_Hooks_Function with null record;
+
+   overriding procedure Execute
+     (Self      : Highlight_Hook;
+      Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Phase     : Integer;
+      File      : GNATCOLL.VFS.Virtual_File;
+      From_Line : Integer;
+      To_Line   : Integer);
+   --  Highlight piece of code between From_Line and To_Line in a buffer
+   --  corresponding to given File.
+   --  If Phase = 1 do fastest highlighting, take only token information into
+   --  account, due to this phase runs immediate after each keystroke.
+   --  If Phase = 2 do most accurate highlighting. This phase runs when LAL
+   --  tree is ready.
+
+   type LAL_UI_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record with
+   record
+      Hook : aliased Highlight_Hook;
+      Core : LAL.Core_Module.LAL_Module_Id;
+   end record;
+
+   type LAL_UI_Module_Id is access all LAL_UI_Module_Id_Record'Class;
+
+   Module : LAL_UI_Module_Id;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self      : Highlight_Hook;
+      Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Phase     : Integer;
+      File      : GNATCOLL.VFS.Virtual_File;
+      From_Line : Integer;
+      To_Line   : Integer)
+   is
+      pragma Unreferenced (Self);
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+   begin
+      if Phase = 1 then
+         Module.Core.Highlighter.Highlight_Fast (Buffer, From_Line, To_Line);
+      else
+         Module.Core.Highlighter.Highlight_Using_Tree
+           (Buffer, From_Line, To_Line);
+      end if;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -28,7 +82,9 @@ package body LAL.Module is
       Config : Use_LAL_Configuration;
       Legacy : Language.Tree.Database.Tree_Language_Access) is
    begin
-      LAL.Core_Module.Register_Module (Kernel, Config, Legacy);
+      Module := new LAL_UI_Module_Id_Record;
+      LAL.Core_Module.Register_Module (Kernel, Config, Legacy, Module.Core);
+      Highlight_Range_Hook.Add (Module.Hook'Access);
    end Register_Module;
 
 end LAL.Module;
