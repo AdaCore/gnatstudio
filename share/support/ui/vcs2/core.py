@@ -184,7 +184,7 @@ class Profile:
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         if self.time_only:
-            GPS.Logger("GIT").log(
+            GPS.Logger("VCS2").log(
                 "Total time: %ss" % (time.time() - self.start, ))
         else:
             import pstats
@@ -193,7 +193,7 @@ class Profile:
             s = StringIO.StringIO()
             ps = pstats.Stats(self.c, stream=s).sort_stats('cumulative')
             ps.print_stats()
-            GPS.Logger("GIT").log(s.getvalue())
+            GPS.Logger("VCS2").log(s.getvalue())
 
 
 class Extension(object):

@@ -270,16 +270,14 @@ package body VCS2.History is
    procedure On_Selection_Changed (View : access GObject_Record'Class);
    --  Called when one or more files are selected
 
-   type Detached_Model_Access is access Expansion.Detached_Model;
-
    type Layout_Step is (Step_Compute, Step_Insert);
    type Layout_Idle_Data is record
-      Detached : Detached_Model_Access;
-      Is_Free  : Boolean_Vectors.Vector;
-      Current  : Natural;  --  in lines
-      Step     : Layout_Step;
-      Inserted : Natural;   --  number of items inserted in tree
+      Is_Free   : Boolean_Vectors.Vector;
+      Current   : Natural;  --  in lines
+      Step      : Layout_Step;
+      Inserted  : Natural;   --  number of items inserted in tree
       To_Select : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Kernel    : Kernel_Handle;
    end record;
    type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
@@ -1080,9 +1078,13 @@ package body VCS2.History is
       Names   : in out Commit_Names_Access;
       Flags   : Commit_Flags)
    is
-      Tree   : constant History_Tree := History_Tree (Self.Data.Detached.Tree);
-      C       : Commit_Maps.Cursor;
-      N, Parent_N : Node_Data_Access;
+      View              : constant History_View :=
+                            History_Views.Retrieve_View (Self.Kernel);
+      Tree              : constant History_Tree :=
+                            (if View /= null then
+                               History_Tree (View.Tree) else null);
+      C                 : Commit_Maps.Cursor;
+      N, Parent_N       : Node_Data_Access;
       Is_Head_Of_Branch : Boolean;
    begin
       if Tree /= null then
@@ -1217,13 +1219,13 @@ package body VCS2.History is
    procedure Free (Self : in out Layout_Idle_Data_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Layout_Idle_Data, Layout_Idle_Data_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Expansion.Detached_Model, Detached_Model_Access);
-      Tree   : constant History_Tree := History_Tree (Self.Detached.Tree);
+      View : constant History_View :=
+               History_Views.Retrieve_View (Self.Kernel);
+      Tree : constant History_Tree :=
+               (if View /= null then History_Tree (View.Tree) else null);
    begin
       Trace (Me, "Free layout_idle_data");
       if Tree /= null then
-         Unchecked_Free (Self.Detached);
 
          if Self.To_Select /= Null_Gtk_Tree_Path then
             Tree.Get_Selection.Select_Path (Self.To_Select);
@@ -1285,10 +1287,13 @@ package body VCS2.History is
    --------------------
 
    function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean is
-      Tree   : constant History_Tree := History_Tree (Data.Detached.Tree);
-      Iter   : Gtk_Tree_Iter;
-      V      : Glib.Values.GValue_Array (All_Columns);
-      Tmp    : Unbounded_String;
+      View     : constant History_View :=
+                   History_Views.Retrieve_View (Data.Kernel);
+      Tree     : constant History_Tree :=
+                   (if View /= null then History_Tree (View.Tree) else null);
+      Iter     : Gtk_Tree_Iter;
+      V        : Glib.Values.GValue_Array (All_Columns);
+      Tmp      : Unbounded_String;
       Is_First : Boolean;
 
       function Next_Empty_Col return Graph_Column;
@@ -1522,27 +1527,32 @@ package body VCS2.History is
          --  Do this before we reset the data, since detaching requires
          --  computing the ID of lines.
 
-         Self.Data := new Layout_Idle_Data;
-         Self.Data.Detached := new Expansion.Detached_Model'
-           (Expansion.Detach_Model_From_View (Tree, Save_Expansion => False));
-         Self.Data.Step := Step_Compute;
-         Self.Data.Inserted := 0;
-         Self.Data.Current := 1;
-         Tree.Max_Columns := 0;
+         declare
+            Dummy : constant Expansion.Detached_Model :=
+              Expansion.Detach_Model_From_View (Tree, Save_Expansion => False);
+         begin
+            Self.Data := new Layout_Idle_Data;
+            Self.Data.Kernel := View.Kernel;
+            Self.Data.Step := Step_Compute;
+            Self.Data.Inserted := 0;
+            Self.Data.Current := 1;
+            Tree.Max_Columns := 0;
 
-         --  If we have a filter, we can't show the graph, since we are
-         --  missing too many commits.
-         Tree.Show_Graph := Tree.User_Filter.Filter = ""
-            and then Tree.User_Filter.For_File = No_File
-            and then Tree.User_Filter.Select_Id = "";
+            --  If we have a filter, we can't show the graph, since we are
+            --  missing too many commits.
+            Tree.Show_Graph := Tree.User_Filter.Filter = ""
+              and then Tree.User_Filter.For_File = No_File
+              and then Tree.User_Filter.Select_Id = "";
 
-         Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
-         Tree.User_Filter.Current_Branch_Only := not Tree.Config.All_Branches;
+            Tree.User_Filter.Branch_Commits_Only := Tree.Config.Collapse;
+            Tree.User_Filter.Current_Branch_Only :=
+              not Tree.Config.All_Branches;
 
-         --  Remove all data from the tree model
+            --  Remove all data from the tree model
 
-         Reset_Lines (Tree);
-         Clear_View (Tree);
+            Reset_Lines (Tree);
+            Clear_View (Tree);
+         end;
       end if;
    end On_Start;
 
