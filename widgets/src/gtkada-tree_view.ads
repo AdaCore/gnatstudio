@@ -483,6 +483,9 @@ private
       --  See Set_Propagate_Filtered_Status
 
       Row_Expanded_Callback_ID : Handler_Id;
+
+      Being_Edited : Boolean := False;
+      --  Whether or not a node is being edited
    end record;
 
    function Model

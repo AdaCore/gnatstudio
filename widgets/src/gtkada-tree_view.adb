@@ -1261,18 +1261,21 @@ package body Gtkada.Tree_View is
       Id : Handler_Id;
       D  : Editing_Data;
    begin
-      --  Prevent interactive editing via single click
-      Set_Property
-        (Data.Render, Gtk.Cell_Renderer_Text.Editable_Property, False);
+      if Data.Tree.Being_Edited then
+         --  Prevent interactive editing via single click
+         Set_Property
+           (Data.Render, Gtk.Cell_Renderer_Text.Editable_Property, False);
+         Data.Tree.Being_Edited := False;
 
-      Id := Data.Edited_Cb;
-      Disconnect (V, Id);
+         Id := Data.Edited_Cb;
+         Disconnect (V, Id);
 
-      Id := Data.Canceled_Cb;
-      Disconnect (V, Id);
+         Id := Data.Canceled_Cb;
+         Disconnect (V, Id);
 
-      D := Data;
-      Unchecked_Free (D);
+         D := Data;
+         Unchecked_Free (D);
+      end if;
    end On_Editing_Canceled;
 
    ---------------
@@ -1288,12 +1291,15 @@ package body Gtkada.Tree_View is
       Text        : constant UTF8_String := Get_String (Nth (Params, 2));
       Filter_Iter  : Gtk_Tree_Iter;
    begin
-      Filter_Iter := Data.Tree.Filter.Get_Iter_From_String (Filter_Path);
-      Data.Tree.On_Edited
-        (Store_Iter  => Data.Tree.Convert_To_Store_Iter (Filter_Iter),
-         View_Column => Data.View_Column,
-         Text        => Text);
-      On_Editing_Canceled (V, Data);
+      if Data.Tree.Being_Edited then
+         Filter_Iter := Data.Tree.Filter.Get_Iter_From_String (Filter_Path);
+         Data.Tree.On_Edited
+           (Store_Iter  => Data.Tree.Convert_To_Store_Iter (Filter_Iter),
+            View_Column => Data.View_Column,
+            Text        => Text);
+         --  On_Editing_Canceled will reset Being_Edited
+         On_Editing_Canceled (V, Data);
+      end if;
    end On_Edited;
 
    ------------------------
@@ -1345,7 +1351,8 @@ package body Gtkada.Tree_View is
          Self.Get_Selection.Select_Iter (Filter_Iter);
       end if;
 
-      if Filter_Iter /= Null_Iter then
+      if Filter_Iter /= Null_Iter and then not Self.Being_Edited then
+         Self.Being_Edited := True;
          Data := new Editing_Data_Record;
          Data.all :=
            (Tree        => Tree_View (Self),
