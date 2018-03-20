@@ -231,6 +231,7 @@ package body GVD.Call_Stack is
         or else Pref = Preference (Show_Program_Counter)
         or else Pref = Preference (Show_Subprogram_Name)
         or else Pref = Preference (Show_Parameters)
+        or else Pref = Preference (Show_File_Location)
       then
          Stack := CS_MDI_Views.Retrieve_View (Kernel);
          Set_Column_Types (Stack);
