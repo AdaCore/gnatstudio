@@ -441,6 +441,8 @@ many cores as available on the machine)." />
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files."
          />
+         <check label="GNATcheck" switch="--gnatcheck"
+                column="2" tip="Launch GNATcheck and collect its messages" />
          <hidden switch="-dbg-on" separator=" "/>
          <hidden switch="-dbg-off" separator=" "/>
        </switches>
