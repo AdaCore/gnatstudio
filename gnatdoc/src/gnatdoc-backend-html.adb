@@ -1417,7 +1417,9 @@ package body GNATdoc.Backend.HTML is
            (Entity_Entries, "Dispatching subprograms", Entities.Methods);
       end if;
 
-      if not Entities.Pkgs_Instances.Is_Empty then
+      if not Entities.Pkgs_Instances.Is_Empty
+        or not Entities.Subprgs_Instances.Is_Empty
+      then
          Build_Entity_Entries
            (Entity_Entries,
             "Generic instantiations",
