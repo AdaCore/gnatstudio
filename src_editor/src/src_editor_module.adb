@@ -2598,7 +2598,7 @@ package body Src_Editor_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
-      pragma Unreferenced (Self, Pref);
+      pragma Unreferenced (Self);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref /= Never;
       Pref_Display_Subprogram_Names : constant Boolean :=
@@ -2647,6 +2647,10 @@ package body Src_Editor_Module is
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
          Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
 
+         Line_Display_Has_Changed := True;
+      end if;
+
+      if Pref = Preference (Line_Info_Min_Width) then
          Line_Display_Has_Changed := True;
       end if;
 

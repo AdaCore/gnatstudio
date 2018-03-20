@@ -349,7 +349,7 @@ package body Src_Editor_View is
    procedure Size_Side_Column (View : access Source_View_Record'Class) is
    begin
       Set_Size_Request
-        (View.Area, View.Speed_Bar_Width + 1 + View.Side_Info_Width, -1);
+        (View.Area, View.Speed_Bar_Width + View.Side_Info_Width, -1);
    end Size_Side_Column;
 
    -------------------
@@ -1501,8 +1501,6 @@ package body Src_Editor_View is
       Unset (Value);
 
       Get_Style_Context (View.Area).Add_Class ("gps_gutter");
-      Get_Style_Context (View.Scroll.Get_Vscrollbar).Add_Class ("gps_gutter");
-      Get_Style_Context (View.Scroll.Get_Hscrollbar).Add_Class ("gps_gutter");
 
       Register_View (Buffer, Add => True);
 

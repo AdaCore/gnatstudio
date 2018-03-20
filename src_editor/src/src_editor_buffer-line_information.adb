@@ -284,6 +284,7 @@ package body Src_Editor_Buffer.Line_Information is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
       Line_Char_Width : constant Gint := Line_Number_Character_Width;
       Dummy           : Editable_Line_Type := 1;
+      Min_Width       : constant Integer := Line_Info_Min_Width.Get_Pref;
    begin
       if Line_Char_Width > 0 then
          Buffer.Line_Numbers_Width := 2;
@@ -308,6 +309,12 @@ package body Src_Editor_Buffer.Line_Information is
       else
          Buffer.Line_Numbers_Width := 0;
       end if;
+
+      --  Use the line numbers' minimum width specified in the preferences
+      --  or the one calculated dynamically if not sufficient.
+
+      Buffer.Line_Numbers_Width := Integer'Max
+        (Min_Width, Buffer.Line_Numbers_Width);
 
       Buffer.Total_Column_Width := Buffer.Line_Numbers_Width;
 
@@ -1035,11 +1042,13 @@ package body Src_Editor_Buffer.Line_Information is
       Layout       : Pango_Layout;
       Cr           : Cairo.Cairo_Context)
    is
-      Line_Nums : constant Line_Number_Policy := Display_Line_Numbers.Get_Pref;
-      BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Ctxt       : constant Gtk_Style_Context := Get_Style_Context (Area);
-      Max_Width  : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
-      Prev_Width : Gdouble;
+      Line_Nums   : constant Line_Number_Policy :=
+                      Display_Line_Numbers.Get_Pref;
+      BL          : Columns_Config_Access renames
+                      Buffer.Editable_Line_Info_Columns;
+      Ctxt        : constant Gtk_Style_Context := Get_Style_Context (Area);
+      Max_Width   : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
+      Num_Start_X : Gdouble;
 
       procedure Draw_Line_Info
         (Y             : Gdouble;
@@ -1124,19 +1133,23 @@ package body Src_Editor_Buffer.Line_Information is
          if Line_Nums = All_Lines
            or else (Line_Nums = Some_Lines and then Editable_Line mod 5 = 0)
          then
-            Prev_Width := Max_Width;
+            --  Center the number in the gutter
+            Num_Start_X := Gdouble
+              ((Gint (Buffer.Total_Column_Width)
+               + Line_Number_Character_Width)) / 2.0;
+
             if Visualize_Internal_Buffers.Is_Active
               or else Editable_Line > 0
             --  don't draw 0 (codepeer)
             then
-               Draw_Number (Integer (Editable_Line), Prev_Width, 0.0);
+               Draw_Number (Integer (Editable_Line), Num_Start_X, 0.0);
             end if;
 
             if Visualize_Internal_Buffers.Is_Active then
                --  Draw File_Line
                Draw_Number
                  (Integer (Buffer.Line_Data (Line).File_Line),
-                  Prev_Width, 2.0);
+                  Num_Start_X, 2.0);
 
                --  Draw Editable_Lines
                if Editable_Line in Buffer.Editable_Lines'Range
@@ -1146,7 +1159,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Draw_Number
                     (Integer
                        (Buffer.Editable_Lines (Editable_Line).Buffer_Line),
-                     Prev_Width, 2.0);
+                     Num_Start_X, 2.0);
                end if;
             end if;
          end if;
