@@ -295,13 +295,14 @@ class SVN(core_staging.Emulate_Staging,
         if url:
             # Assume the standard 'trunk', 'branches' and 'tags' naming
             parent = url
-            while True:
+            while parent:
                 parent, tail = os.path.split(parent)
                 if tail in ('trunk', 'branches', 'tags'):
                     break
 
-            yield join(self._branches(visitor, parent),
-                       self._tags(visitor, parent))
+            if parent:
+                yield join(self._branches(visitor, parent),
+                           self._tags(visitor, parent))
 
     @core.run_in_background
     def async_action_on_branch(self, visitor, action, category, id, text=''):
