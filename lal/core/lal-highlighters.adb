@@ -16,8 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;                      use Basic_Types;
+with GNATCOLL.VFS;
 with LAL.Core_Module;
+with Langkit_Support.Slocs;
 with Language;
+with Libadalang.Analysis;
 
 package body LAL.Highlighters is
 
@@ -30,6 +33,67 @@ package body LAL.Highlighters is
 
    function To_Style (E : Libadalang.Lexer.Token_Kind) return String;
    --  Get the name of a style name from a language token
+
+   generic
+      type Node_Type is new Libadalang.Analysis.Ada_Node with private;
+      --  Type of enclosing node, e.g. Accept_Stmt
+      type Id_Type is new Libadalang.Analysis.Ada_Node with private;
+      --  Type of the field in the enclosing node, e.g. Identifier or Name
+
+      with function To_Node
+        (Node : Libadalang.Analysis.Ada_Node'Class) return Node_Type;
+      --  Cast from Ada_Node to Node_Type, e.g. As_Accept_Stmt
+      with function Field (Node : Node_Type'Class) return Id_Type;
+      --  Field getter function, e.g. F_Name
+
+      --  Node kind range for given Node_Type, e.g. Ada_Accept_Stmt_Range'Range
+      From : Libadalang.Analysis.Ada_Node_Kind_Type;
+      To   : Libadalang.Analysis.Ada_Node_Kind_Type;
+   function Generic_Match_Field
+     (Node : Libadalang.Analysis.Ada_Node) return Boolean;
+   --  Check if Node stored in given Field of its parent.
+
+   -------------------------
+   -- Generic_Match_Field --
+   -------------------------
+
+   function Generic_Match_Field
+     (Node : Libadalang.Analysis.Ada_Node) return Boolean
+   is
+      use type Libadalang.Analysis.Ada_Node;
+      Parent : constant Libadalang.Analysis.Ada_Node := Node.Parent;
+   begin
+      if Parent.Kind in From .. To then
+         declare
+            Value : constant Id_Type := Field (To_Node (Parent));
+         begin
+            return Libadalang.Analysis.As_Ada_Node (Value) = Node;
+         end;
+      else
+         return False;
+      end if;
+   end Generic_Match_Field;
+
+   function Base_Type_Decl_Name is new Generic_Match_Field
+     (Node_Type => Libadalang.Analysis.Base_Type_Decl,
+      Id_Type   => Libadalang.Analysis.Identifier,
+      To_Node   => Libadalang.Analysis.As_Base_Type_Decl,
+      Field     => Libadalang.Analysis.F_Name,
+      From      => Libadalang.Analysis.Ada_Base_Type_Decl'First,
+      To        => Libadalang.Analysis.Ada_Base_Type_Decl'Last);
+
+   function Exception_Handler_Exception_Name is new Generic_Match_Field
+     (Node_Type => Libadalang.Analysis.Exception_Handler,
+      Id_Type   => Libadalang.Analysis.Identifier,
+      To_Node   => Libadalang.Analysis.As_Exception_Handler,
+      Field     => Libadalang.Analysis.F_Exception_Name,
+      From      => Libadalang.Analysis.Ada_Exception_Handler,
+      To        => Libadalang.Analysis.Ada_Exception_Handler);
+
+   Id_List : constant array (Positive range <>) of access
+     function (Node : Libadalang.Analysis.Ada_Node) return Boolean :=
+       (Base_Type_Decl_Name'Access,
+        Exception_Handler_Exception_Name'Access);
 
    --------------
    -- To_Style --
@@ -220,11 +284,64 @@ package body LAL.Highlighters is
       Self.Diags.Clear;
    end Highlight_Fast;
 
+   --------------------------
+   -- Highlight_Using_Tree --
+   --------------------------
+
    not overriding procedure Highlight_Using_Tree
      (Self   : in out Highlighter;
       Buffer : GPS.Editors.Editor_Buffer'Class;
       From   : Integer;
-      To     : Integer) renames Highlight_Fast;
+      To     : Integer)
+   is
+      use Libadalang.Analysis;
+      use Langkit_Support.Slocs;
+      package L renames Libadalang.Lexer;
+
+      From_Line : constant Line_Number := Line_Number (From);
+
+      File : constant GNATCOLL.VFS.Virtual_File := Buffer.File;
+      Unit : constant Analysis_Unit := Get_From_File
+        (Context     => Self.Module.Context,
+         Filename    => File.Display_Full_Name);
+
+      Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
+      Index : Token_Type := Lookup_Token (Unit, (From_Line, 1));
+   begin
+      while Index /= No_Token loop
+         declare
+            Token : constant Token_Data_Type := Data (Index);
+            Style : constant String := To_Style (Kind (Token));
+            Loc   : constant Source_Location_Range := Sloc_Range (Token);
+            Line  : constant Positive := Positive (Loc.Start_Line);
+            Start : constant Visible_Column_Type :=
+              Visible_Column_Type (Loc.Start_Column);
+            Stop  : constant Visible_Column_Type :=
+              Visible_Column_Type (Loc.End_Column);
+         begin
+            exit when Line > To;
+
+            if Style /= "" then
+               Buffer.Apply_Style (Style, Line, Start, Stop);
+            elsif Kind (Token) in L.Ada_Identifier then
+               declare
+                  Node : constant Ada_Node := Root.Lookup
+                    ((Loc.Start_Line, Loc.Start_Column));
+               begin
+                  if (for some Check of Id_List => Check (Node)) then
+                     Buffer.Apply_Style ("block", Line, Start, Stop);
+                  else
+                     Remove_Style (Buffer, Line, Start, Stop);
+                  end if;
+               end;
+            else
+               Remove_Style (Buffer, Line, Start, Stop);
+            end if;
+
+            Index := Next (Index);
+         end;
+      end loop;
+   end Highlight_Using_Tree;
 
    ----------------
    -- Initialize --
