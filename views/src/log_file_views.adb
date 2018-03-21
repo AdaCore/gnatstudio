@@ -196,11 +196,17 @@ package body Log_File_Views is
       Msg    : in out Msg_Strings.XString)
    is
       pragma Unreferenced (Handle, Self);
-      Str  : constant String := Msg_Strings.To_String (Msg);
-      View : View_Access;
+      Str    : constant String := Msg_Strings.To_String (Msg);
+      View   : View_Access;
+      Kernel : constant Kernel_Handle := Log_File_Views.Kernel;
    begin
-      if Enable_Log_View = null
-        or else not Enable_Log_View.Get_Pref
+      --  Do nothing if GPS is exiting or if the Enable_Log_View
+      --  preference is set to False.
+
+      if (Kernel /= null and then Kernel.Is_In_Destruction)
+        or else
+        (Enable_Log_View = null
+           or else not Enable_Log_View.Get_Pref)
       then
          return;
       end if;
