@@ -3244,9 +3244,11 @@ package body Debugger.LLDB is
 
    overriding procedure Set_TTY
      (Debugger : access LLDB_Debugger;
-      TTY : String) is
+      TTY      : String)
+   is
+      pragma Unreferenced (Debugger, TTY);
    begin
-      null;
+      raise Unknown_Command;
    end Set_TTY;
 
    ---------------------

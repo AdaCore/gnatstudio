@@ -534,7 +534,10 @@ package body GVD.Consoles is
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class) is
       Created : Boolean := False;
    begin
-      if not Console.TTY_Initialized then
+      if not Console.TTY_Initialized
+        and then Visual_Debugger (Console.Get_Process).Debugger /= null
+        and then Visual_Debugger (Console.Get_Process).Debugger.Support_TTY
+      then
          if Visual_Debugger
            (Console.Get_Process).Debuggee_TTY = Null_TTY
          then
