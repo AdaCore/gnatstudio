@@ -180,6 +180,7 @@ package body Log_File_Views is
    Name_Column   : constant := 0;
    Toggle_Column : constant := 1;
 
+   Registered             : Boolean := False;
    Preferences_Registered : Boolean := False;
    Enable_Log_View        : Boolean_Preference := null;
    Lines                  : Strings.Vector;
@@ -198,8 +199,8 @@ package body Log_File_Views is
       Str  : constant String := Msg_Strings.To_String (Msg);
       View : View_Access;
    begin
-      if Enable_Log_View /= null
-        and then not Enable_Log_View.Get_Pref
+      if Enable_Log_View = null
+        or else not Enable_Log_View.Get_Pref
       then
          return;
       end if;
@@ -730,8 +731,11 @@ package body Log_File_Views is
 
    procedure Register_Interceptor is
    begin
-      Add_Global_Decorator (new Interceptor_Type, "LOGVIEWER");
-      Set_Active (Create ("LOGVIEWER"), True);
+      if not Registered then
+         Registered := True;
+         Add_Global_Decorator (new Interceptor_Type, "LOGVIEWER");
+         Set_Active (Create ("LOGVIEWER"), True);
+      end if;
    end Register_Interceptor;
 
    ---------------------
@@ -764,7 +768,7 @@ package body Log_File_Views is
       Register_Action
         (Kernel, "log configure",
          new Configure_Command,
-         "Close log file",
+         "Configure log view",
          Icon_Name => "gps-settings-symbolic");
 
       Generic_View.Register_Module (Kernel);
