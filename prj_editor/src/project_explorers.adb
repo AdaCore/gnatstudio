@@ -171,6 +171,10 @@ package body Project_Explorers is
    type Project_Explorer_Record is new Generic_Views.View_Record with record
       Tree        : Explorer_Tree_View;
       Text_Rend   : Gtk_Cell_Renderer_Text;
+      Is_New_Root : Boolean := True;
+      --  When the project changed a new root node is created and must be
+      --  expanded during the first refresh
+
    end record;
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Record;
@@ -277,10 +281,6 @@ package body Project_Explorers is
        Project  : Project_Type) return Node_Types;
    --  The node type to use for a project
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
    procedure Set_Column_Types
      (Self : not null access Project_Explorer_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
@@ -366,6 +366,14 @@ package body Project_Explorers is
      (Explorer    : Project_Explorer;
       Target_Node : Gtk_Tree_Iter);
    --  Select Target_Node, and make sure it is visible on the screen
+
+   type On_Project_Changed is new Simple_Hooks_Function with record
+      Explorer : Project_Explorer;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the project changes. Expand the root node at that time
 
    --------------
    -- Commands --
@@ -581,6 +589,7 @@ package body Project_Explorers is
       return Gtk.Widget.Gtk_Widget
    is
       H1       : access On_Refresh;
+      H2       : access On_Project_Changed;
       Tooltip  : Explorer_Tooltips_Access;
       Scrolled : Gtk_Scrolled_Window;
       P        : access On_Pref_Changed;
@@ -642,6 +651,11 @@ package body Project_Explorers is
       H1 := new On_Refresh;
       H1.Explorer := Project_Explorer (Explorer);
       Project_View_Changed_Hook.Add (H1, Watch => Explorer);
+
+      --  Automatically expand the root node when the project changes
+      H2 := new On_Project_Changed;
+      H2.Explorer := Project_Explorer (Explorer);
+      Project_Changed_Hook.Add (H2, Watch => Explorer);
 
       --  Set the DnD handlers
 
@@ -1350,6 +1364,19 @@ package body Project_Explorers is
       Refresh (Self.Explorer);
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Self.Explorer.Is_New_Root := True;
+   end Execute;
+
    -------------------------
    -- Directory_Node_Text --
    -------------------------
@@ -1454,17 +1481,20 @@ package body Project_Explorers is
          end if;
       end;
 
-      declare
-         Path    : Gtk_Tree_Path;
-         Success : Boolean with Unreferenced;
-      begin
+      if T.Is_New_Root then
+         T.Is_New_Root := False;
          --  Expand the node for the root project. Its contents
          --  has already been added, so this operation is fast.
-         Path := T.Tree.Get_Filter_Path_For_Store_Iter
-            (T.Tree.Model.Get_Iter_First);
-         Success := Expand_Row (T.Tree, Path, False);
-         Path_Free (Path);
-      end;
+         declare
+            Path    : Gtk_Tree_Path;
+            Success : Boolean with Unreferenced;
+         begin
+            Path := T.Tree.Get_Filter_Path_For_Store_Iter
+              (T.Tree.Model.Get_Iter_First);
+            Success := Expand_Row (T.Tree, Path, False);
+            Path_Free (Path);
+         end;
+      end if;
    end Refresh;
 
    -----------------------
