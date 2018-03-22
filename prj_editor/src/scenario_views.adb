@@ -182,14 +182,6 @@ package body Scenario_Views is
 
    Show_Build_Modes : Boolean_Preference;
 
-   procedure Add_New_Value
-     (Kernel   : Kernel_Handle;
-      New_Val  : String;
-      Variable : in out Scenario_Variable);
-   --  If New_Val is not already defined in Variable,
-   --  add it in the list of possible values.
-   --  Change current value of Variable to New_Val.
-
    type Command_Validate_Variable is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Command_Validate_Variable;
@@ -410,37 +402,6 @@ package body Scenario_Views is
       return No_Variable;
    end Selected_Variable;
 
-   -------------------
-   -- Add_New_Value --
-   -------------------
-
-   procedure Add_New_Value
-     (Kernel   : Kernel_Handle;
-      New_Val  : String;
-      Variable : in out Scenario_Variable)
-   is
-      Already_Here : Boolean := False;
-      List_Values  : constant GNAT.Strings.String_List
-        := Get_Registry (Kernel).Tree.Possible_Values_Of (Variable);
-      List_New_Val : GNAT.Strings.String_List (1 .. 1);
-      Ptr_New_Val  : constant GNAT.Strings.String_Access
-        := new String'(New_Val);
-   begin
-      for Val in List_Values'Range loop
-         if List_Values (Val).all = New_Val then
-            Already_Here := True;
-            exit;
-         end if;
-      end loop;
-      --  If not already here, add the value
-      if not Already_Here then
-         List_New_Val (1) := Ptr_New_Val;
-         Add_Values (Get_Registry (Kernel).Tree.all, Variable, List_New_Val);
-         GNAT.Strings.Free (List_New_Val (1));
-      end if;
-      Set_Value (Variable, New_Val);
-   end Add_New_Value;
-
    -------------
    -- Execute --
    -------------
@@ -471,7 +432,7 @@ package body Scenario_Views is
                   then
                      Trace (Me, "Set value of '" & Var_Name & "' to '"
                             & Value & "'");
-                     Add_New_Value (K, Value, Scenar (J));
+                     Set_Value (Scenar (J), Value);
                      Get_Registry (K).Tree.Change_Environment
                        ((1 => Scenar (J)));
                   end if;
