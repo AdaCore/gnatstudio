@@ -254,7 +254,7 @@ package body Variable_Editors is
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
       E           : constant New_Var_Edit := New_Var_Edit (Editor);
       Iter, Iter2 : Gtk_Tree_Iter;
-
+      Path        : Gtk_Tree_Path;
    begin
       --  Add a new entry. This will become the default value if this is also
       --  the first one in the list.
@@ -266,6 +266,22 @@ package body Variable_Editors is
          Is_Default  => Iter2 = Null_Iter,
          Value       => New_Value_Name,
          Is_Editable => True);
+
+      --  Select the new entry in editing mode
+
+      Path := Get_Path (E.Model, Iter);
+
+      E.Values_List.Scroll_To_Cell
+        (Path      => Path,
+         Column    => null,
+         Use_Align => False,
+         Row_Align => 0.0,
+         Col_Align => 0.0);
+      E.Values_List.Set_Cursor_On_Cell
+        (Path          => Path,
+         Focus_Column  => Get_Column (E.Values_List, Value_Column),
+         Focus_Cell    => null,
+         Start_Editing => True);
    end New_Variable;
 
    ---------------------

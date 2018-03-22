@@ -17,7 +17,6 @@
 
 with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl;        use GPS.Intl;
 with GPS.Main_Window; use GPS.Main_Window;
 
@@ -112,31 +111,40 @@ package body New_Variable_Editor_Pkg is
       Set_Shadow_Type (New_Variable_Editor.Viewport1, Shadow_In);
       Add (New_Variable_Editor.Scrolledwindow2, New_Variable_Editor.Viewport1);
 
-      Gtk_New_Vbox (New_Variable_Editor.Vbox54, False, 0);
-      Add (New_Variable_Editor.Viewport1, New_Variable_Editor.Vbox54);
+      New_Variable_Editor.Values_List_Box :=
+        new Dialog_View_With_Button_Box_Record;
+      Dialog_Utils.Initialize
+        (Self     => New_Variable_Editor.Values_List_Box,
+         Position => Pos_Left);
+      Add (New_Variable_Editor.Viewport1, New_Variable_Editor.Values_List_Box);
 
       Gtk_New (New_Variable_Editor.Values_List);
-      Pack_Start
-        (New_Variable_Editor.Vbox54,
-         New_Variable_Editor.Values_List, True, True, 0);
+      New_Variable_Editor.Values_List_Box.Append
+        (New_Variable_Editor.Values_List);
 
-      Gtk_New (New_Variable_Editor.Hbuttonbox4);
-      Set_Spacing (New_Variable_Editor.Hbuttonbox4, 30);
-      Set_Layout (New_Variable_Editor.Hbuttonbox4, Buttonbox_End);
-      Pack_Start (New_Variable_Editor.Vbox54, New_Variable_Editor.Hbuttonbox4,
-                  False, False, 0);
+      Gtk_New_From_Icon_Name
+        (New_Variable_Editor.Delete_Variable,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      New_Variable_Editor.Delete_Variable.Set_Relief (Relief_None);
+      New_Variable_Editor.Values_List_Box.Append_Button
+        (New_Variable_Editor.Delete_Variable);
 
-      Gtk_New_From_Stock (New_Variable_Editor.Delete_Variable, Stock_Remove);
-      Add (New_Variable_Editor.Hbuttonbox4,
-           New_Variable_Editor.Delete_Variable);
+      Gtk_New_From_Icon_Name
+        (New_Variable_Editor.New_Variable,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      New_Variable_Editor.New_Variable.Set_Relief (Relief_None);
+      New_Variable_Editor.Values_List_Box.Append_Button
+        (New_Variable_Editor.New_Variable);
 
-      Gtk_New_From_Stock (New_Variable_Editor.New_Variable, Stock_Add);
-      Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
-
-      Gtk_New (New_Variable_Editor.Rename_Variable, -"Rename");
-      Add (New_Variable_Editor.Hbuttonbox4,
-           New_Variable_Editor.Rename_Variable);
-
+      Gtk_New_From_Icon_Name
+        (New_Variable_Editor.Rename_Variable,
+         Icon_Name => "gps-edit-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      New_Variable_Editor.Rename_Variable.Set_Relief (Relief_None);
+      New_Variable_Editor.Values_List_Box.Append_Button
+           (New_Variable_Editor.Rename_Variable);
    end Initialize;
 
 end New_Variable_Editor_Pkg;

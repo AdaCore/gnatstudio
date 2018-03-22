@@ -20,13 +20,14 @@ with GPS.Kernel.MDI;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Viewport;        use Gtk.Viewport;
 with GPS.Dialogs;         use GPS.Dialogs;
+
+with Dialog_Utils;        use Dialog_Utils;
 
 package New_Variable_Editor_Pkg is
 
@@ -39,11 +40,10 @@ package New_Variable_Editor_Pkg is
       Label60             : Gtk_Label;
       Scrolledwindow2     : Gtk_Scrolled_Window;
       Viewport1           : Gtk_Viewport;
-      Vbox54              : Gtk_Vbox;
+      Values_List_Box     : Dialog_View_With_Button_Box;
       --  Values_List : Gtk_Clist;
       Values_List         : Gtk_Tree_View;
       Label61             : Gtk_Label;
-      Hbuttonbox4         : Gtk_Hbutton_Box;
       Delete_Variable     : Gtk_Button;
       New_Variable        : Gtk_Button;
       Rename_Variable     : Gtk_Button;
