@@ -276,6 +276,7 @@ class BoardLoader(Module):
         """
         Get the command line used to invoke the currently set connection tool
         (e.g: the target address/port used to interact with GDB).
+        Semihosting should work for all tools.
         """
 
         if self.__connection_tool == "pyocd":
@@ -287,7 +288,9 @@ class BoardLoader(Module):
         gdb_port = self.__remote_target.split(':')[-1]
 
         if self.__connection_tool == "openocd":
-            args = ["-f", self.__config_file, "-c", "gdb_port %s" % (gdb_port)]
+            # Semihosting command can only be used after the `init` command.
+            args = ["-f", self.__config_file, "-c", "gdb_port %s" % (gdb_port),
+                    "-c init", "-c arm semihosting enable"]
         elif self.__connection_tool == "st-util":
             has_semihosting = False
             semihosting_switch = "--semihosting"
@@ -305,7 +308,7 @@ class BoardLoader(Module):
             if has_semihosting:
                 args += [semihosting_switch]
         elif self.__connection_tool == "pyocd":
-            args = ["-S", "-p %s" % (gdb_port)]
+            args = ["-S", "-p %s" % (gdb_port), "--semihosting"]
 
         return cmd + args
 
