@@ -320,13 +320,16 @@ class BoardLoader(Module):
         OpenOCD output is not constant and depends on the interface used for
         debugging, when it displays the number of hardware breakpoints, we
         can assume that the connection is established.
+        For pyOCD detection, we dont know if we have a system-wide or just
+        user specific installation, we just match whatever is between the
+        two colons.
         """
         if self.__connection_tool == "st-util":
             return "Listening at"
         elif self.__connection_tool == "openocd":
             return ".cpu: hardware has"
         elif self.__connection_tool == "pyocd":
-            return "^\d+:INFO:gdbserver:GDB server started at port:\d+"
+            return "INFO:.+:GDB server started at port:\d+"
         else:
             return ""
 
