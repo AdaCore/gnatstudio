@@ -34,6 +34,29 @@ package body LAL.Highlighters is
    function To_Style (E : Libadalang.Lexer.Token_Kind) return String;
    --  Get the name of a style name from a language token
 
+   type Node_Kind_Array is array (Positive range <>) of
+     Libadalang.Analysis.Ada_Node_Kind_Type;
+
+   function Get_Toppest_Node
+     (Node  : Libadalang.Analysis.Ada_Node;
+      Kinds : Node_Kind_Array)
+      return Libadalang.Analysis.Ada_Node;
+   --  Find a node of given kind enclosing given Node, which in its turn isn't
+   --  enclosed by another node of this kind.
+
+   function The_Toppest_Dotted_Name
+     (Node  : Libadalang.Analysis.Ada_Node)
+      return Libadalang.Analysis.Ada_Node is
+        (Get_Toppest_Node (Node, (1 => Libadalang.Analysis.Ada_Dotted_Name)));
+   --  Find a Dotted_Name enclosing given Node, which in its turn isn't
+   --  enclosed by another Dotted_Name
+
+   function Kind_Of
+     (Node  : Libadalang.Analysis.Ada_Node;
+      Value : Libadalang.Analysis.Ada_Node_Kind_Type) return Boolean is
+        (Node.Kind in Value);
+   --  Check if given node has given kind
+
    generic
       type Node_Type is new Libadalang.Analysis.Ada_Node with private;
       --  Type of enclosing node, e.g. Accept_Stmt
@@ -51,7 +74,7 @@ package body LAL.Highlighters is
       To   : Libadalang.Analysis.Ada_Node_Kind_Type;
    function Generic_Match_Field
      (Node : Libadalang.Analysis.Ada_Node) return Boolean;
-   --  Check if Node stored in given Field of its parent.
+   --  Check if Node is stored in given Field of its parent.
 
    -------------------------
    -- Generic_Match_Field --
@@ -346,42 +369,56 @@ package body LAL.Highlighters is
       From      => Libadalang.Analysis.Ada_Exception_Handler,
       To        => Libadalang.Analysis.Ada_Exception_Handler);
 
-   Id_List : constant array (Positive range <>) of access
-     function (Node : Libadalang.Analysis.Ada_Node) return Boolean :=
-       (Base_Type_Decl_Name'Access,
-        Single_Protected_Decl_Name'Access,
-        Accept_Stmt_Name'Access,
-        Label_Decl_Name'Access,
-        Named_Stmt_Decl_Name'Access,
-        Generic_Package_Instantiation_Name'Access,
-        Generic_Subp_Renaming_Decl_Name'Access,
-        Package_Body_Stub_Name'Access,
-        Package_Renaming_Decl_Name'Access,
-        Protected_Body_Name'Access,
-        Protected_Body_Stub_Name'Access,
-        Subunit_Name'Access,
-        Task_Body_Name'Access,
-        Task_Body_Stub_Name'Access,
-        Generic_Package_Renaming_Decl_Name'Access,
-        Entry_Body_Entry_Name'Access,
-        Entry_Spec_Entry_Name'Access,
-        Protected_Def_End_Name'Access,
-        Task_Def_End_Name'Access,
-        Accept_Stmt_With_Stmts_End_Name'Access,
-        Base_Loop_Stmt_End_Name'Access,
-        Decl_Block_End_Name'Access,
-        Begin_Block_End_Name'Access,
-        Entry_Body_End_Name'Access,
-        Package_Body_End_Name'Access,
-        Protected_Body_End_Name'Access,
-        Subp_Body_End_Name'Access,
-        Task_Body_End_Name'Access,
-        Base_Package_Decl_End_Name'Access,
-        Base_Package_Decl_Package_Name'Access,
-        Subp_Spec_Subp_Name'Access,
-        Generic_Subp_Instantiation_Subp_Name'Access,
-        Package_Body_Package_Name'Access,
-        Exception_Handler_Exception_Name'Access);
+   type Check_List is array (Positive range <>) of access
+     function (Node : Libadalang.Analysis.Ada_Node) return Boolean;
+
+   function Check
+     (List : Check_List;
+      Node : Libadalang.Analysis.Ada_Node) return Boolean is
+        (for some Item of List => Item (Node));
+   --  Find if there is at least one item in the List that matches Node
+
+   --  List of places in LAL tree where a dotted_name should be highlithed
+   --  with 'block' style
+   Dotted_Name_List : constant Check_List :=
+     (Generic_Package_Instantiation_Name'Access,
+      Generic_Subp_Renaming_Decl_Name'Access,
+      Package_Body_Stub_Name'Access,
+      Package_Renaming_Decl_Name'Access,
+      Protected_Body_Name'Access,
+      Protected_Body_Stub_Name'Access,
+      Subunit_Name'Access,
+      Task_Body_Name'Access,
+      Task_Body_Stub_Name'Access,
+      Generic_Package_Renaming_Decl_Name'Access,
+      Entry_Body_End_Name'Access,
+      Package_Body_End_Name'Access,
+      Protected_Body_End_Name'Access,
+      Subp_Body_End_Name'Access,
+      Task_Body_End_Name'Access,
+      Base_Package_Decl_End_Name'Access,
+      Base_Package_Decl_Package_Name'Access,
+      Subp_Spec_Subp_Name'Access,
+      Generic_Subp_Instantiation_Subp_Name'Access,
+      Package_Body_Package_Name'Access);
+
+   --  List of places in LAL tree where an identifier should be highlithed
+   --  with 'block' style
+   Id_List : constant Check_List := Dotted_Name_List &
+     (Base_Type_Decl_Name'Access,
+      Single_Protected_Decl_Name'Access,
+      Accept_Stmt_Name'Access,
+      Label_Decl_Name'Access,
+      Named_Stmt_Decl_Name'Access,
+      Entry_Body_Entry_Name'Access,
+      Entry_Spec_Entry_Name'Access,
+      Protected_Def_End_Name'Access,
+      Task_Def_End_Name'Access,
+      Accept_Stmt_With_Stmts_End_Name'Access,
+      Base_Loop_Stmt_End_Name'Access,
+      Decl_Block_End_Name'Access,
+      Begin_Block_End_Name'Access,
+      Exception_Handler_Exception_Name'Access);
 
    --------------
    -- To_Style --
@@ -519,6 +556,33 @@ package body LAL.Highlighters is
       end case;
    end To_Style;
 
+   ----------------------
+   -- Get_Toppest_Node --
+   ----------------------
+
+   function Get_Toppest_Node
+     (Node  : Libadalang.Analysis.Ada_Node;
+      Kinds : Node_Kind_Array)
+      return Libadalang.Analysis.Ada_Node
+   is
+      use type Libadalang.Analysis.Ada_Node_Kind_Type;
+      Next : Libadalang.Analysis.Ada_Node := Node;
+   begin
+      loop
+         declare
+            Parent : constant Libadalang.Analysis.Ada_Node := Next.Parent;
+            Kind   : constant Libadalang.Analysis.Ada_Node_Kind_Type :=
+              Parent.Kind;
+         begin
+            if not (for some Item of Kinds => Kind = Item) then
+               return Next;
+            else
+               Next := Parent;
+            end if;
+         end;
+      end loop;
+   end Get_Toppest_Node;
+
    --------------------
    -- Highlight_Fast --
    --------------------
@@ -616,7 +680,29 @@ package body LAL.Highlighters is
                   Node : constant Ada_Node := Root.Lookup
                     ((Loc.Start_Line, Loc.Start_Column));
                begin
-                  if (for some Check of Id_List => Check (Node)) then
+                  --  Check if identifier itself should be highlighted
+                  if Check (Id_List, Node)
+                    or else
+                      --  check if identifier is part of such dotted_name
+                      (Kind_Of (Node.Parent,
+                                Libadalang.Analysis.Ada_Dotted_Name)
+                       and then Check (Dotted_Name_List,
+                                       The_Toppest_Dotted_Name (Node)))
+                  then
+                     Buffer.Apply_Style ("block", Line, Start, Stop);
+                  else
+                     Remove_Style (Buffer, Line, Start, Stop);
+                  end if;
+               end;
+            elsif Kind (Token) in L.Ada_Dot then
+               declare
+                  Node : constant Ada_Node := Root.Lookup
+                    ((Loc.Start_Line, Loc.Start_Column));
+               begin
+                  --  Check if dot is part of dotted_name should be highlighted
+                  if Check (Dotted_Name_List,
+                            The_Toppest_Dotted_Name (Node))
+                  then
                      Buffer.Apply_Style ("block", Line, Start, Stop);
                   else
                      Remove_Style (Buffer, Line, Start, Stop);
