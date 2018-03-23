@@ -59,9 +59,11 @@ import workflows.promises as promises
 
 class BoardLoader(Module):
 
-    # The build targets that have been created lazily. See comments in
-    # gnatemulator.py
-    __buildTargets = []
+    # The list of debug build targets created by this plugin
+    __debug_build_targets = []
+
+    # The list of flash build targets created by this plugin
+    __flash_build_targets = []
 
     # The target on which we want to debug/flash.
     # Retrieved from the Target project attribute.
@@ -124,6 +126,35 @@ class BoardLoader(Module):
 
         self.__reset_all()
 
+    def __update_build_targets_visibility(self, active):
+        """
+        Update the Build & Run, Build & Debug and the plugin's associated
+        Build Targets depending on ``active``.
+        """
+
+        build_run_target = GPS.BuildTarget("Build & Run")
+        build_debug_target = GPS.BuildTarget("Build & Debug")
+
+        if active:
+            build_run_target.hide()
+            build_debug_target.hide()
+            for target in self.__debug_build_targets:
+                target.show()
+
+            if self.__flashing_tool:
+                for target in self.__flash_build_targets:
+                    target.show()
+            else:
+                for target in self.__flash_build_targets:
+                    target.hide()
+        else:
+            build_run_target.show()
+            build_debug_target.show()
+            for target in self.__debug_build_targets:
+                target.hide()
+            for target in self.__flash_build_targets:
+                target.hide()
+
     @workflows.run_as_workflow
     def __open_remote_project_properties(self, text):
         """
@@ -148,16 +179,6 @@ class BoardLoader(Module):
         message_header = ("Can't debug on board:" if for_debug
                           else "Can't flash the board:")
         result = True
-
-        if not self.__connection_tool:
-            console.write(("%s no connection tool specified. Please set the "
-                           % (message_header)),
-                          mode="error")
-            console.insert_link("IDE'Connection_Tool",
-                                self.__open_remote_project_properties)
-            console.write(" project attribute\n",
-                          mode="error")
-            result = False
 
         if self.__connection_tool == "openocd" and not self.__config_file:
             console.write(("%s no configuration file specified. "
@@ -279,12 +300,14 @@ class BoardLoader(Module):
         Semihosting should work for all tools.
         """
 
+        cmd = []
+        args = []
+
         if self.__connection_tool == "pyocd":
             cmd = ["pyocd-gdbserver"]
         else:
             cmd = [self.__connection_tool]
 
-        args = []
         gdb_port = self.__remote_target.split(':')[-1]
 
         if self.__connection_tool == "openocd":
@@ -389,33 +412,15 @@ class BoardLoader(Module):
 
         # Create the build targets needed in order to flash/debug the board
         # if not created yet.
-        if not self.__buildTargets:
-            workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/Flash to Board/',
-                target_name="Flash to Board",
-                workflow_name="flash-to-board",
-                workflow=self.__flash_wf,
-                icon_name="gps-boardloading-flash-symbolic")
-            self.__buildTargets.append(GPS.BuildTarget("Flash to Board"))
-
+        if not self.__debug_build_targets:
             workflows.create_target_from_workflow(
                 parent_menu='/Build/Bareboard/Debug on Board/',
                 target_name="Debug on Board",
                 workflow_name="debug-on-board",
                 workflow=self.__debug_wf,
                 icon_name="gps-boardloading-debug-symbolic")
-            self.__buildTargets.append(GPS.BuildTarget("Debug on Board"))
-
-            workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/',
-                target_name="Flash <current file> to Board",
-                workflow_name="flash-current-to-board",
-                workflow=self.__flash_wf,
-                icon_name="gps-boardloading-flash-symbolic",
-                in_toolbar=False,
-                main_arg="%fp")
-            self.__buildTargets.append(
-                GPS.BuildTarget("Flash <current file> to Board"))
+            self.__debug_build_targets.append(
+                GPS.BuildTarget("Debug on Board"))
 
             workflows.create_target_from_workflow(
                 parent_menu='/Build/Bareboard/',
@@ -425,16 +430,32 @@ class BoardLoader(Module):
                 icon_name="gps-boardloading-debug-symbolic",
                 in_toolbar=False,
                 main_arg="%fp")
-            self.__buildTargets.append(
+            self.__debug_build_targets.append(
                 GPS.BuildTarget("Debug <current file> on Board"))
 
+        if not self.__flash_build_targets:
+            workflows.create_target_from_workflow(
+                parent_menu='/Build/Bareboard/Flash to Board/',
+                target_name="Flash to Board",
+                workflow_name="flash-to-board",
+                workflow=self.__flash_wf,
+                icon_name="gps-boardloading-flash-symbolic")
+            self.__flash_build_targets.append(
+                GPS.BuildTarget("Flash to Board"))
+
+            workflows.create_target_from_workflow(
+                parent_menu='/Build/Bareboard/',
+                target_name="Flash <current file> to Board",
+                workflow_name="flash-current-to-board",
+                workflow=self.__flash_wf,
+                icon_name="gps-boardloading-flash-symbolic",
+                in_toolbar=False,
+                main_arg="%fp")
+            self.__flash_build_targets.append(
+                GPS.BuildTarget("Flash <current file> to Board"))
+
         # Show/Hide the build targets accordingly
-        if active:
-            for b in self.__buildTargets:
-                b.show()
-        else:
-            for b in self.__buildTargets:
-                b.hide()
+        self.__update_build_targets_visibility(active)
 
     ###############################
     # The following are workflows #
@@ -579,22 +600,24 @@ class BoardLoader(Module):
         # connection tool console is still visible when spawning the debugger.
         GPS.MDI.load_perspective("Debug")
 
-        # Launch the connection tool with its associated console
-        cmd = self.__connector.get_command_line()
-        self.__display_message("Launching %s" % (self.__connection_tool))
-        try:
-            self.__connection = promises.ProcessWrapper(
-                cmdargs=cmd,
-                spawn_console=True)
-            output = yield self.__connection.wait_until_match(
-                self.__get_connection_detection_regexp(),
-                120000)
-            if output is None:
-                self.__error_exit(msg="Could not connect to the board.")
+        # Launch the connection tool, if any
+        if self.__connector:
+            # Launch the connection tool with its associated console
+            cmd = self.__connector.get_command_line()
+            self.__display_message("Launching %s" % (self.__connection_tool))
+            try:
+                self.__connection = promises.ProcessWrapper(
+                    cmdargs=cmd,
+                    spawn_console=True)
+                output = yield self.__connection.wait_until_match(
+                    self.__get_connection_detection_regexp(),
+                    120000)
+                if output is None:
+                    self.__error_exit(msg="Could not connect to the board.")
+                    return
+            except Exception:
+                self.__error_exit("Could not connect to the board.")
                 return
-        except Exception:
-            self.__error_exit("Could not connect to the board.")
-            return
 
         # Spawn the debugger on the executable and load it
         self.__display_message("Launching debugger.")
@@ -616,7 +639,7 @@ class BoardLoader(Module):
 
     def setup(self):
         """
-        When setting up the module, create target and buildTargets.
+        When setting up the module, create the associated Build Targets.
         """
 
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)

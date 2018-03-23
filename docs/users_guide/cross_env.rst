@@ -120,4 +120,9 @@ For bare-metal development, all these steps can be done at once using the
 These buttons allow you to build, flash and/or debug your software on the
 board, spawning the remote debug agent set in the :guilabel:`Connection tool`
 project property from the :guilabel:`Embedded` page. GPS currently supports
-:guilabel:`OpenOCD` and :guilabel:`st-util` as connection tools.
+:guilabel:`OpenOCD`, :guilabel:`st-util` and :guilabel:`py-ocd` as connection
+tools.
+You can leave the :guilabel:`Connection tool` attribute empty if you are
+using a connection tool that is not supported by GPS: in that case, GPS
+will still try to connect to the board and everything should work fine
+if your connection tool has been spawned correctly.

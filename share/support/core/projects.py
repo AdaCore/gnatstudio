@@ -86,7 +86,7 @@ XML = r"""<?xml version="1.0" ?>
       package="IDE"
       editor_page="Embedded"
       editor_section="Tools"
-      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD, st-util or pyOCD."
+      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD, st-util or pyOCD. You can leave this attribute empty if you are using a custom tool spawned outside of GPS."
       hide_in="wizard library_wizard"
       label="Connection tool">
       <choice>st-util</choice>
