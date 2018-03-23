@@ -1756,7 +1756,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug interrupt", new Interrupt_Command,
-         Icon_Name    => "gps-debugger-stop",
+         Icon_Name    => "gps-debugger-pause-symbolic",
          Filter       => Debugger_Active,
          Description  => -"Asynchronously interrupt the debuggee program",
          Category     => -"Debug",
@@ -1764,6 +1764,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "terminate debugger", new Terminate_Command,
+         Icon_Name   => "gps-debugger-terminate-symbolic",
          Description => -"Terminate the current debugger",
          Filter      => Debugger_Active);
 

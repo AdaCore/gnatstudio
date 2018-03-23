@@ -517,6 +517,9 @@
       <separator id='build'/>
       <separator id='debug'/>
       <button action="debug continue" hide='true'/>
+      <button action="debug interrupt" hide='true'/>
+      <button action="terminate debugger" hide='true'/>
+      <separator/>
       <button action="debug next" hide='true'/>
       <button action="debug finish" hide='true'/>
       <button action="debug step" hide='true'/>
