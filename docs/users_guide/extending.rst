@@ -51,15 +51,12 @@ but it is still possible to use them by entering the font name manually.
 The Key Shortcuts Editor
 ========================
 
-.. image:: key-shortcuts.jpg
+.. image:: key-shortcuts.png
 
-This editor is started through the :menuselection:`Edit --> Key Shortcuts`
-menu. It provides a convenient way to edit the keyboard shortcuts that
+This editor is started through the :menuselection:`Edit --> Preferences`
+menu, then by selecting the :guilabel:`Preferences` page.
+It provides a convenient way to edit the keyboard shortcuts that
 are available throughout GPS.
-
-This editor is displayed as a separate dialog (floating window) by default,
-but you can embed it in the main GPS window by selecting the menu
-:menuselection:`Window --> Floating`.
 
 All keyboard shortcuts are associated with actions, which are either
 predefined in GPS, or defined in your customization python files,
@@ -122,10 +119,10 @@ grouped into two logical sets:
   provided for this at the moment.
 
 * The second group of buttons lets you edit the shortcut for the currently
-  selected action either by removing the shortcut, or by overriding the
-  ones that is currently set.
+  selected action either by removing a shortcut, or by overriding the
+  ones that are currently set.
 
-  When you click on the :guilabel:`Modify` button, GPS waits for you to
+  When you click on the :guilabel:`Add` button, GPS waits for you to
   press any keyboard shortcut you wish to associate with the action. This
   shortcut can include multiple keys, so for instance to get an Emacs-like
   binding you could for instance press :kbd:`Ctrl-x` and then press
@@ -134,14 +131,6 @@ grouped into two logical sets:
   and update the menus, when relevant, to show the new binding. Note that
   multi-key shortcuts cannot be displayed in menus due to technical
   limitations of the GUI toolkit.
-
-  Assigning a new shortcut to an action causes the following:
-
-  - All actions and menus currently associated with key are no longer
-    executed when the key is pressed.
-
-  - All key shortcuts defined for this action are replaced by the new one;
-    the action is only executable through this new shortcut.
 
 Any change to the shortcuts is immediately and automatically saved, so that
 they become instantly usable in GPS, and will be restored properly when GPS
