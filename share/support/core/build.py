@@ -17,6 +17,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
   <extra-args sections="-cargs">
      <arg>--subdirs=%subdir</arg>
      <arg section="-cargs">-g</arg>
@@ -31,6 +33,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
   <substitutions>
     <substitute src="%builder" dest="%gprbuild"/>
     <substitute src="%gnatmake" dest="%gprbuild"/>
@@ -60,6 +64,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
   <substitutions>
     <substitute src="%builder" dest="%gprbuild"/>
     <substitute src="%gnatmake" dest="%gprbuild"/>
@@ -80,6 +86,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
   <extra-args sections="-cargs -largs">
      <arg>--subdirs=%subdir</arg>
      <arg section="-cargs">-g</arg>
@@ -97,6 +105,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
   <extra-args sections="-cargs -largs">
      <arg>--subdirs=%subdir</arg>
      <arg section="-cargs">-g</arg>

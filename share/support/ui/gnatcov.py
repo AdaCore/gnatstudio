@@ -179,6 +179,8 @@ class GNATcovPlugin(object):
             X('supported-model', filter='--subdirs=').children(
                 'gnatcov-coverage'),
             X('supported-model', filter='--subdirs=').children('gprclean'),
+            X('supported-model', filter='--subdirs=').children(
+                'GNATtest execution mode'),
             X('extra-args', sections='-cargs').children(
                 X('arg').children("%attr(ide_coverage'gnatcov_mode_switches)"),
                 X('arg').children('--subdirs=%subdir'),
