@@ -960,3 +960,37 @@ class Save_As(Dialog):
 
     def set_new_name(self, text):
         self.entry.set_text(text)
+
+
+############
+# GNATtest #
+############
+
+class GNATtest(Dialog):
+    """
+    Interface to the gnattest in generation mode.
+    """
+
+    def open_and_yield(self):
+        yield self._open_and_yield('run gnattest on root')
+
+    def ok(self):
+        get_button_from_label("Execute", self.dialogs).clicked()
+        yield wait_idle()
+
+    def get_checkbox(self, name):
+        return [w for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
+                if w.get_label().startswith(name)][0]
+
+
+class GNATtest_Run(Dialog):
+    """
+    Interface to the gnattest in execution mode.
+    """
+
+    def open_and_yield(self):
+        yield self._open_and_yield('Run a test drivers list Number 1')
+
+    def ok(self):
+        get_button_from_label("Execute", self.dialogs).clicked()
+        yield wait_idle()
