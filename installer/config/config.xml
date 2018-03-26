@@ -1,9 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Installer>
     <Name>GNAT Programming Studio</Name>
-    <Version>19.0w</Version>
+    <Version>19.0</Version>
     <Title>GNAT Programming Studio Installer</Title>
     <Publisher>AdaCore</Publisher>
+    <ControlScript>configscript.qs</ControlScript>
+
+    <TargetDir>@HomeDir@/opt/gps-@ProductVersion@</TargetDir>
+    <!--  TargetDir is defined on Windows by configscript.qs script  -->
+
+    <!--  Linux specific part  -->
+    <AdminTargetDir>/opt/gps-@ProductVersion@</AdminTargetDir>
+
+    <!--  Windows specific part  -->
     <StartMenuDir>GNAT Pro</StartMenuDir>
-    <TargetDir>@HomeDir@/InstallationDirectory</TargetDir>
 </Installer>
