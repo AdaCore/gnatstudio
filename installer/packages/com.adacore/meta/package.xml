@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Package>
+    <DisplayName>AdaCore Products</DisplayName>
+    <Description>Install AdaCore Products</Description>
+    <Version>18.0-1</Version>
+    <ReleaseDate>2017-10-10</ReleaseDate>
+    <Licenses>
+        <License name='GPL v3' file='LICENSE-GPL3.txt'/>
+    </Licenses>
+</Package>
