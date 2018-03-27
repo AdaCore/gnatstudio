@@ -5,4 +5,8 @@
     <Version>18.0-1</Version>
     <ReleaseDate>2017-10-10</ReleaseDate>
     <Default>true</Default>
+    <Script>installscript.qs</Script>
+    <UserInterfaces>
+        <UserInterface>registerfileextensionsform.ui</UserInterface>
+    </UserInterfaces>
 </Package>
