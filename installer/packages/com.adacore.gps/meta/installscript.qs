@@ -23,9 +23,9 @@ Component.prototype.createOperations = function()
 
     if (component.userInterface("RegisterFileExtensionsForm").RegisterFileExtensionsCheckBox.checked && installer.value("os") == "win")
     {
-        component.addOperation("RegisterFileType", "ada", "@TargetDir@\\bin\\gps.exe %1", "Ada file");
-        component.addOperation("RegisterFileType", "ads", "@TargetDir@\\bin\\gps.exe %1", "Ada spec file");
-        component.addOperation("RegisterFileType", "adb", "@TargetDir@\\bin\\gps.exe %1", "Ada body file");
-        component.addOperation("RegisterFileType", "gpr", "@TargetDir@\\bin\\gps.exe -P%1", "GNAT project file");
+        component.addOperation("RegisterFileType", "ada", "@TargetDir@\\bin\\gps.exe %1", "Ada file", "text/plain", "@TargetDir@\\gnaticons.dll,17");
+        component.addOperation("RegisterFileType", "ads", "@TargetDir@\\bin\\gps.exe %1", "Ada spec file", "text/plain", "@TargetDir@\\gnaticons.dll,16");
+        component.addOperation("RegisterFileType", "adb", "@TargetDir@\\bin\\gps.exe %1", "Ada body file", "text/plain", "@TargetDir@\\gnaticons.dll,15");
+        component.addOperation("RegisterFileType", "gpr", "@TargetDir@\\bin\\gps.exe -P%1", "GNAT project file", "text/plain", "@TargetDir@\\gnaticons.dll,14");
     }
 }

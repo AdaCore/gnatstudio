@@ -93,6 +93,10 @@ Copy installed files to data directory:
 
   cp -r <anod_sandbox>/<platform>/gps/install/* <gps_src>/installer/packages/com.adacore.gps/data
 
+(Windows) Copy gnaticons.dll to data directory:
+
+  cp gnaticons.dll <gps_src>/installer/packages/com.adacore/data
+
 Run installer's builder
 
   cd <gps_src>/installer
