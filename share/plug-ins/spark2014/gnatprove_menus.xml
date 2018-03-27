@@ -424,6 +424,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_nuclear_system" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/nuclear_system/test.gpr"</shell>
+      <shell>Editor.edit "nuclear_system.adb"</shell>
+      <shell>Editor.edit "nuclear_system.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_nuclear_system">
+        <title>nuclear__system</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_n_queens" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/n_queens/test.gpr"</shell>
