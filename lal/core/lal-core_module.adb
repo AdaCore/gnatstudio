@@ -69,7 +69,8 @@ package body LAL.Core_Module is
       Unit := Libadalang.Analysis.Get_From_Buffer
         (Context     => Module.Context,
          Filename    => Buffer.File.Display_Full_Name,
-         Buffer      => Buffer.Get_Chars);
+         Buffer      => Buffer.Get_Chars,
+         Charset     => "UTF-8");
 
       Unit_C := Libadalang.Analysis.Implementation.C.Wrap (Unit);
       Int := System.Storage_Elements.To_Integer (System.Address (Unit_C));
@@ -85,10 +86,11 @@ package body LAL.Core_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access;
-      Result : out LAL_Module_Id)
+     (Kernel  : access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Config  : Use_LAL_Configuration;
+      Legacy  : Language.Tree.Database.Tree_Language_Access;
+      Charset : String;
+      Result  : out LAL_Module_Id)
    is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
@@ -96,7 +98,9 @@ package body LAL.Core_Module is
       Module         := new LAL_Module_Id_Record;
       Module.Kernel  := GPS.Core_Kernels.Core_Kernel (Kernel);
       Module.Context := Libadalang.Analysis.Create
-        (Unit_Provider => Module.Unit_Provider'Access);
+        (Unit_Provider => Module.Unit_Provider'Access,
+         With_Trivia   => True,
+         Charset       => Charset);
 
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
       Module.Highlighter.Initialize (Module);

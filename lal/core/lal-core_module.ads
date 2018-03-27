@@ -37,10 +37,11 @@ package LAL.Core_Module is
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;
 
    procedure Register_Module
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access;
-      Result : out LAL_Module_Id);
-   --  Register module
+     (Kernel  : access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Config  : Use_LAL_Configuration;
+      Legacy  : Language.Tree.Database.Tree_Language_Access;
+      Charset : String;
+      Result  : out LAL_Module_Id);
+   --  Register module. Charset is default charset for reading files.
 
 end LAL.Core_Module;

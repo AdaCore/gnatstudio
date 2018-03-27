@@ -108,7 +108,7 @@ package body LAL.Unit_Providers is
            (Context     => Context,
             Filename    => String (File),
             Buffer      => Buffer.Get_Chars,
-            Charset     => Charset);
+            Charset     => "UTF-8");
       end if;
    end Get_Unit;
 
