@@ -37,6 +37,10 @@ package body LAL.Highlighters is
    type Node_Kind_Array is array (Positive range <>) of
      Libadalang.Analysis.Ada_Node_Kind_Type;
 
+   Dotted_Name_Or_Attribute : constant Node_Kind_Array :=
+     (Libadalang.Analysis.Ada_Dotted_Name,
+      Libadalang.Analysis.Ada_Attribute_Ref);
+
    function Get_Toppest_Node
      (Node  : Libadalang.Analysis.Ada_Node;
       Kinds : Node_Kind_Array)
@@ -369,6 +373,14 @@ package body LAL.Highlighters is
       From      => Libadalang.Analysis.Ada_Exception_Handler,
       To        => Libadalang.Analysis.Ada_Exception_Handler);
 
+   function Subtype_Indication_Name is new Generic_Match_Field
+     (Node_Type => Libadalang.Analysis.Subtype_Indication,
+      Id_Type   => Libadalang.Analysis.Name,
+      To_Node   => Libadalang.Analysis.As_Subtype_Indication,
+      Field     => Libadalang.Analysis.F_Name,
+      From      => Libadalang.Analysis.Ada_Subtype_Indication,
+      To        => Libadalang.Analysis.Ada_Subtype_Indication);
+
    type Check_List is array (Positive range <>) of access
      function (Node : Libadalang.Analysis.Ada_Node) return Boolean;
 
@@ -419,6 +431,11 @@ package body LAL.Highlighters is
       Decl_Block_End_Name'Access,
       Begin_Block_End_Name'Access,
       Exception_Handler_Exception_Name'Access);
+
+   --  List of places in LAL tree where an identifier, dotted_name or
+   --  attribute_ref should be highlithed with 'type' style
+   Type_Expr_List : constant Check_List :=
+     (1 => Subtype_Indication_Name'Access);
 
    --------------
    -- To_Style --
@@ -690,11 +707,19 @@ package body LAL.Highlighters is
                                        The_Toppest_Dotted_Name (Node)))
                   then
                      Buffer.Apply_Style ("block", Line, Start, Stop);
+
+                     --  Check if identifier is type name
+                  elsif Check
+                    (Type_Expr_List,
+                     Get_Toppest_Node (Node, Dotted_Name_Or_Attribute))
+                  then
+                     Buffer.Apply_Style ("type", Line, Start, Stop);
+
                   else
                      Remove_Style (Buffer, Line, Start, Stop);
                   end if;
                end;
-            elsif Kind (Token) in L.Ada_Dot then
+            elsif Kind (Token) in L.Ada_Dot then  --  Highlight '.'
                declare
                   Node : constant Ada_Node := Root.Lookup
                     ((Loc.Start_Line, Loc.Start_Column));
@@ -704,6 +729,13 @@ package body LAL.Highlighters is
                             The_Toppest_Dotted_Name (Node))
                   then
                      Buffer.Apply_Style ("block", Line, Start, Stop);
+
+                  elsif Check
+                          (Type_Expr_List,
+                           Get_Toppest_Node (Node, Dotted_Name_Or_Attribute))
+                  then
+                     Buffer.Apply_Style ("type", Line, Start, Stop);
+
                   else
                      Remove_Style (Buffer, Line, Start, Stop);
                   end if;
@@ -744,6 +776,7 @@ package body LAL.Highlighters is
       Buffer.Remove_Style ("number", Line, Start, Stop);
       Buffer.Remove_Style ("comment", Line, Start, Stop);
       Buffer.Remove_Style ("block", Line, Start, Stop);
+      Buffer.Remove_Style ("type", Line, Start, Stop);
    end Remove_Style;
 
 end LAL.Highlighters;
