@@ -1195,9 +1195,6 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     if mlw_file == "":
         itp_lib.print_debug("TODO")
 
-    # The arguments passed are of the following form (remove '='):
-    # --limit-line=a.adb:42:42:VC_POSTCONDITION
-    arg_limit_line = args[0].replace('=', ' ')
     proof_dir = has_proof_dir()
     if itp_lib.debug_file == "":
         command = gnat_server
@@ -1213,6 +1210,9 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
         else:
             command = command + mlw_file + " 2> " + itp_lib.debug_file
     else:
+        # The arguments passed are of the following form (remove '='):
+        # --limit-line=a.adb:42:42:VC_POSTCONDITION
+        arg_limit_line = args[0].replace('=', ' ')
         command = command + arg_limit_line + " " + mlw_file
     itp_lib.print_debug(command)
     tree.start(command, abs_fn_path, dir_gnat_server, mlw_file)
