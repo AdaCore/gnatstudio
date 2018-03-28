@@ -692,7 +692,7 @@ package body GNATdoc.Frontend.Comment_Parser is
               (Comment    => Get_Comment (Enum),
                Entity     => LL.Get_Entity (Value),
                Value_Name => To_Unbounded_String (Get_Short_Name (Value)),
-               Text       => Get_Doc (Value).Text);
+               Text       => To_Unbounded_String (Get_Doc (Value).Text));
          end loop;
 
          --  Parse the documentation
@@ -751,7 +751,7 @@ package body GNATdoc.Frontend.Comment_Parser is
               (Comment    => Get_Comment (Rec),
                Entity     => LL.Get_Entity (Comp),
                Field_Name => To_Unbounded_String (Get_Short_Name (Comp)),
-               Text       => Get_Doc (Comp).Text);
+               Text       => To_Unbounded_String (Get_Doc (Comp).Text));
          end loop;
 
          --  Parse the documentation of the record
@@ -816,7 +816,7 @@ package body GNATdoc.Frontend.Comment_Parser is
               (Comment    => Get_Comment (Subp),
                Entity     => LL.Get_Entity (Param),
                Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
-               Text       => Get_Doc (Param).Text);
+               Text       => To_Unbounded_String (Get_Doc (Param).Text));
          end loop;
 
          --  Parse the documentation of the subprogram
@@ -1139,22 +1139,29 @@ package body GNATdoc.Frontend.Comment_Parser is
    -- May_Have_Tags --
    -------------------
 
-   function May_Have_Tags (Text : Unbounded_String) return Boolean is
+   function May_Have_Tags
+     (Text : Unbounded_String_Vectors.Vector) return Boolean is
    begin
-      if Index (Text, "@") > 0 then
-         return True;
+      for Line of Text loop
+         if Index (Line, "@") > 0 then
+            return True;
 
-      else
-         declare
-            S       : constant String := To_String (Text);
-            Matches : Match_Array (0 .. 3);
+         else
+            declare
+               S       : constant String := To_String (Line);
+               Matches : Match_Array (0 .. 3);
 
-         begin
-            Match (XML_Regpat, S, Matches);
+            begin
+               Match (XML_Regpat, S, Matches);
 
-            return Matches (0) /= No_Match;
-         end;
-      end if;
+               if Matches (0) /= No_Match then
+                  return True;
+               end if;
+            end;
+         end if;
+      end loop;
+
+      return False;
    end May_Have_Tags;
 
 end GNATdoc.Frontend.Comment_Parser;

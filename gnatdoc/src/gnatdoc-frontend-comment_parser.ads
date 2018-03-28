@@ -17,7 +17,8 @@
 
 private package GNATdoc.Frontend.Comment_Parser is
 
-   function May_Have_Tags (Text : Unbounded_String) return Boolean;
+   function May_Have_Tags
+     (Text : Unbounded_String_Vectors.Vector) return Boolean;
    --  Return true if Text may contain some tag
 
    procedure Build_Structured_Comments

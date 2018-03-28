@@ -552,8 +552,9 @@ package body Xref.Docgen is
          Format           : Formatting := Text) return Comment_Result
       is
          pragma Unreferenced (Format);
-         Beginning, Current   : Natural;
-         Result : Unbounded_String;
+         Beginning : Natural;
+         Current   : Natural;
+         Result    : GNATdoc.Unbounded_String_Vectors.Vector;
          Pos, Last : Integer;
 
          Leading_Spaces : Integer := -1;
@@ -679,9 +680,10 @@ package body Xref.Docgen is
                end if;
 
                if Pos = Last then
-                  Append (Result, ASCII.LF);
+                  Result.Append (Null_Unbounded_String);
+
                else
-                  Append (Result, Buffer (Pos .. Last));
+                  Result.Append (To_Unbounded_String (Buffer (Pos .. Last)));
                end if;
                Pos := Last + 1;
             end loop;
@@ -772,8 +774,7 @@ package body Xref.Docgen is
 
       begin
          if Location = No_Location then
-            return Comment_Result'(Text       => Null_Unbounded_String,
-                                   Start_Line => -1);
+            return No_Comment_Result;
          end if;
 
          if Load_Buffer then
@@ -794,9 +795,11 @@ package body Xref.Docgen is
                                            else Integer (End_Loc.Column)),
                   Language          => Language,
                   Format            => Format);
+
             begin
-               if Result.Text /= "" then
+               if not Result.Text.Is_Empty then
                   Free_Buffer;
+
                   return Result;
                end if;
             end;
@@ -804,8 +807,7 @@ package body Xref.Docgen is
             Free_Buffer;
          end if;
 
-         return Comment_Result'(Text       => Null_Unbounded_String,
-                                Start_Line => -1);
+         return No_Comment_Result;
       end Comment;
 
    end GNATCOLL_Extensions;
@@ -841,7 +843,6 @@ package body Xref.Docgen is
       Context : constant Language.Language_Context_Access :=
         Language.Get_Language_Context
           (Get_Language_From_File (Handler, Source_Filename => Location.File));
-      Result  : Unbounded_String;
 
    begin
       if Location /= No_Location then
@@ -859,17 +860,15 @@ package body Xref.Docgen is
             --   Self.Xref.Comment
             --     (Buffer, Entity.Entity, Context.Syntax, Form);
 
-            S1 : constant String := To_String (C_Result.Text);
-
          begin
-            Append (Result, S1 & ASCII.LF);
-
-            C_Result.Text :=
-              Ada.Strings.Unbounded.Trim
-                (Result,
-                 Left => Ada.Strings.Maps.Null_Set,
-                 Right => Ada.Strings.Maps.To_Set
-                   (' ' & ASCII.HT & ASCII.LF & ASCII.CR));
+            for J in C_Result.Text.First_Index .. C_Result.Text.Last_Index loop
+               C_Result.Text (J) :=
+                 Ada.Strings.Unbounded.Trim
+                   (C_Result.Text (J),
+                    Left => Ada.Strings.Maps.Null_Set,
+                    Right => Ada.Strings.Maps.To_Set
+                      (' ' & ASCII.HT & ASCII.LF & ASCII.CR));
+            end loop;
 
             return C_Result;
          end;

@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Latin_1;
+
 package body GNATdoc.Utils is
 
    ------------
@@ -188,6 +190,11 @@ package body GNATdoc.Utils is
       return Text /= Null_Unbounded_String;
    end Present;
 
+   function Present (Text : Unbounded_String_Vectors.Vector) return Boolean is
+   begin
+      return not Text.Is_Empty;
+   end Present;
+
    -----------------
    -- Spaces_Only --
    -----------------
@@ -221,5 +228,34 @@ package body GNATdoc.Utils is
          return Str;
       end if;
    end To_String;
+
+   function To_String (Text : Unbounded_String_Vectors.Vector) return String is
+      Aux : Unbounded_String;
+
+   begin
+      for S of Text loop
+         Append (Aux, S);
+         Append (Aux, Ada.Characters.Latin_1.LF);
+      end loop;
+
+      return To_String (Aux);
+   end To_String;
+
+   -------------------------
+   -- To_Unbounded_String --
+   -------------------------
+
+   function To_Unbounded_String
+     (Text : Unbounded_String_Vectors.Vector) return Unbounded_String is
+      Aux : Unbounded_String;
+
+   begin
+      for S of Text loop
+         Append (Aux, S);
+         Append (Aux, Ada.Characters.Latin_1.LF);
+      end loop;
+
+      return Aux;
+   end To_Unbounded_String;
 
 end GNATdoc.Utils;

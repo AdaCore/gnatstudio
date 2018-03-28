@@ -134,6 +134,10 @@ package GNATdoc is
    --  documented. If Filename is specified then only this file is
    --  documented.
 
+   package Unbounded_String_Vectors is
+     new Ada.Containers.Vectors
+       (Positive, Ada.Strings.Unbounded.Unbounded_String);
+
 private
 
    --  Package containing utility routines for Virtual Files

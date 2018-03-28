@@ -71,11 +71,21 @@ private package GNATdoc.Utils is
    function Present (Text : Unbounded_String) return Boolean;
    --  Return true if Text /= Null_Unbounded_String
 
+   function Present (Text : Unbounded_String_Vectors.Vector) return Boolean;
+   --  Return true is Test is not empty vector
+
    function Spaces_Only (Text : String) return Boolean;
    --  Returns true if the string is not empty and all its characters are ' '
 
    function To_String (N : Integer) return String;
    --  Convert Number to String removing spaces
+
+   function To_String (Text : Unbounded_String_Vectors.Vector) return String;
+   --  Convert vector of strings into string using LF as separator.
+
+   function To_Unbounded_String
+     (Text : Unbounded_String_Vectors.Vector) return Unbounded_String;
+   --  Convert vector of strings into string using LF as separator.
 
 private
    pragma Inline (No);

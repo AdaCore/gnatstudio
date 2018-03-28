@@ -1360,38 +1360,27 @@ package body GNATdoc.Frontend is
       procedure Filter_Doc (E : Entity_Id) is
          use type GNAT.Expect.Pattern_Matcher_Access;
 
+         Doc : Comment_Result := Get_Doc (E);
+
       begin
-         if Get_Doc (E) = No_Comment_Result
+         if Doc = No_Comment_Result
            or else Context.Options.Comments_Filter = null
          then
             return;
          end if;
 
          declare
-            Doc     : Comment_Result := Get_Doc (E);
-            S       : constant String := To_String (Doc.Text);
-            Matches : Match_Array (0 .. 0);
-            New_Doc : Unbounded_String;
-            F       : Natural;
-            L       : Natural;
+            Orig_Text : constant Unbounded_String_Vectors.Vector := Doc.Text;
+            Matches   : Match_Array (0 .. 0);
 
          begin
-            L := S'First;
+            Doc.Text.Clear;
 
-            while L <= S'Last loop
+            --  Apply to it the user-defined filter
 
-               --  Identify the next comment line
-
-               F := L;
-
-               while L <= S'Last and then S (L) /= ASCII.LF loop
-                  L := L + 1;
-               end loop;
-
-               --  Apply to it the user-defined filter
-
+            for L of Orig_Text loop
                declare
-                  Line : constant String := S (F .. L - 1);
+                  Line : constant String := To_String (L);
 
                begin
                   Match
@@ -1410,19 +1399,12 @@ package body GNATdoc.Frontend is
                           Line (Line'First .. F1 - 1) &
                           Line (L1 + 1 .. Line'Last);
                      begin
-                        Append (New_Doc, Filtered_Line & ASCII.LF);
+                        Doc.Text.Append (To_Unbounded_String (Filtered_Line));
                      end;
                   end if;
                end;
-
-               --  Skip line terminators
-
-               while L <= S'Last and then S (L) = ASCII.LF loop
-                  L := L + 1;
-               end loop;
             end loop;
 
-            Doc.Text := New_Doc;
             Set_Doc (E, Doc);
          end;
       end Filter_Doc;
@@ -1439,7 +1421,7 @@ package body GNATdoc.Frontend is
          No_Line        : constant Natural := 0;
          Doc_Start_Line : Natural := No_Line;
          Doc_End_Line   : Natural := No_Line;
-         Doc            : Unbounded_String;
+         Doc            : Unbounded_String_Vectors.Vector;
 
          Printout       : Unbounded_String;
          Src_Conc_Type  : Unbounded_String;
@@ -1563,7 +1545,8 @@ package body GNATdoc.Frontend is
               (Text'Length > Comment_Prefix'Length
                and then Comment_Prefix =
                  Text (Text'First .. Text'First + Comment_Prefix'Length - 1));
-            Doc := Doc & Text (Text'First + 2 .. Text'Last);
+            Doc.Append
+              (To_Unbounded_String (Text (Text'First + 2 .. Text'Last - 1)));
          end Append_Comment;
 
          procedure Append_Conc_Type_Sources (Text : String) is
@@ -1609,7 +1592,7 @@ package body GNATdoc.Frontend is
             if Doc_Start_Line /= No_Line then
                Doc_Start_Line := No_Line;
                Doc_End_Line   := No_Line;
-               Doc            := Null_Unbounded_String;
+               Doc.Clear;
             end if;
          end Clear_Doc;
 

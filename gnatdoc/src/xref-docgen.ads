@@ -16,18 +16,19 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;
+with GNATdoc;
 with Language_Handlers;
 with Xref;                use Xref;
 
 package Xref.Docgen is
 
    type Comment_Result is record
-      Text       : Unbounded_String;
+      Text       : GNATdoc.Unbounded_String_Vectors.Vector;
       Start_Line : Integer := -1;
    end record;
 
    No_Comment_Result : constant Comment_Result :=
-     (Text       => Null_Unbounded_String,
+     (Text       => <>,
       Start_Line => -1);
 
    function No (Comment : Comment_Result) return Boolean;
