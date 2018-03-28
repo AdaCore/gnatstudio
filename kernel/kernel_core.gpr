@@ -1,6 +1,7 @@
 with "../common/common";
 with "../shared";
 with "gnatcoll";
+with "gnatcoll_sql";
 with "gnatcoll_sqlite";
 with "gnatcoll_xref";
 with "../language/language";
