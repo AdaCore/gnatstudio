@@ -429,6 +429,7 @@ package body Dialog_Utils is
       Self.Flow_Box.Set_Max_Children_Per_Line (Max_Children_Per_Line);
       Self.Flow_Box.Set_Selection_Mode (Selection);
       Self.Flow_Box.Set_Homogeneous (False);
+      Self.Flow_Box.Set_Can_Focus (False);
 
       if Selection = Selection_None then
          Self.Flow_Box.On_Button_Press_Event
@@ -717,6 +718,10 @@ package body Dialog_Utils is
             else
                Widget));
       end if;
+
+      --  Disable the focus on the Gtk_Flow_Box_Child to ensure that the focus
+      --  is directly passed to its child on keynav.
+      Widget.Get_Parent.Set_Can_Focus (False);
 
       --  Update the number of children
       Self.Number_Of_Children := Self.Number_Of_Children + 1;
