@@ -911,6 +911,7 @@ package body Outline_View is
       Semantic_Tree_Updated_Hook.Add
         (new On_Semantic_Tree_Updated, Watch => Outline);
 
+      Outline.Set_File (GNATCOLL.VFS.No_File);
       return Gtk_Widget (Outline.Tree);
    end Initialize;
 
@@ -1018,7 +1019,7 @@ package body Outline_View is
 
       if File /= Outline.File then
          Outline.Set_File (File);
-      elsif Outline.File = GNATCOLL.VFS.No_File then
+      elsif File = GNATCOLL.VFS.No_File then
          Refresh (Outline);
       end if;
    end On_Changed;
@@ -1250,59 +1251,61 @@ package body Outline_View is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
       Model : Outline_Model;
-      Tree : constant Semantic_Tree'Class :=
-        Outline.Kernel.Get_Abstract_Tree_For_File ("OUTLINE", File);
 
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path;
       Node : Gint := 0;
-
-      Filter : constant Tree_Filter :=
-        Get_Filter_Record (Outline.Kernel);
    begin
       if Outline /= null and then Outline.File /= No_File
         and then Outline.File = File
       then
-         Model := Get_Outline_Model (Outline);
-         File_Updated (Model, Tree, Filter);
+         declare
+            Tree   : constant Semantic_Tree'Class :=
+              Outline.Kernel.Get_Abstract_Tree_For_File ("OUTLINE", File);
+            Filter : constant Tree_Filter :=
+              Get_Filter_Record (Outline.Kernel);
+         begin
+            Model := Get_Outline_Model (Outline);
+            File_Updated (Model, Tree, Filter);
 
-         --  Find which is the package node and expand it
+            --  Find which is the package node and expand it
 
-         if Tree /= No_Semantic_Tree
-           and then Tree.Is_Ready
-           and then not Flat_View.Get_Pref
-         then
-            if Show_With.Get_Pref then
-               Node := 1;  -- package node is second
+            if Tree /= No_Semantic_Tree
+              and then Tree.Is_Ready
+              and then not Flat_View.Get_Pref
+            then
+               if Show_With.Get_Pref then
+                  Node := 1;  -- package node is second
 
-               --  Restore state of Root_With node
-               declare
-                  Value  : GPS.Properties.Boolean_Property;
-                  Found  : Boolean;
-               begin
-                  GPS.Properties.Get_Property
-                    (Value, Outline.File, "Outline_Root_With", Found);
+                  --  Restore state of Root_With node
+                  declare
+                     Value  : GPS.Properties.Boolean_Property;
+                     Found  : Boolean;
+                  begin
+                     GPS.Properties.Get_Property
+                       (Value, Outline.File, "Outline_Root_With", Found);
 
-                  if Found
-                    and then Value.Value
-                  then
-                     Iter := Model.Root_With_Iter;
-                     if Iter /= Null_Iter then
-                        Path := Model.Get_Path (Model.Root_With_Iter);
-                        Outline.Tree.Expand_To_Path (Path);
-                        Path_Free (Path);
+                     if Found
+                       and then Value.Value
+                     then
+                        Iter := Model.Root_With_Iter;
+                        if Iter /= Null_Iter then
+                           Path := Model.Get_Path (Model.Root_With_Iter);
+                           Outline.Tree.Expand_To_Path (Path);
+                           Path_Free (Path);
+                        end if;
                      end if;
-                  end if;
-               end;
-            end if;
+                  end;
+               end if;
 
-            --  Expand package node
-            Gtk_New (Path);
-            Append_Index (Path, Node);
-            Expand_To_Path (Outline.Tree, Path);
-            Path_Free (Path);
-         end if;
-         Location_Changed (Outline.Kernel, File);
+               --  Expand package node
+               Gtk_New (Path);
+               Append_Index (Path, Node);
+               Expand_To_Path (Outline.Tree, Path);
+               Path_Free (Path);
+            end if;
+            Location_Changed (Outline.Kernel, File);
+         end;
       end if;
    end Execute;
 
