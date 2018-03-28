@@ -49,8 +49,10 @@ package body GNAThub.Reports.Models is
 
       for Project of Model.Tree.all loop
          for Index in Model.Total'Range loop
-            Model.Total (Index).Value := Model.Total (Index).Value +
-              GNAThub_Project_Access (Project).Counts (Index);
+            if Index in GNAThub_Project_Access (Project).Counts'Range then
+               Model.Total (Index).Value := Model.Total (Index).Value +
+                 GNAThub_Project_Access (Project).Counts (Index);
+            end if;
          end loop;
       end loop;
    end Calculate_Total;
@@ -75,7 +77,10 @@ package body GNAThub.Reports.Models is
       function Is_Color_Pref return Boolean is
       begin
          for Index in Self.Model.Total'Range loop
-            if Preference (Self.Model.Total (Index).Severity.Color) = Pref then
+            if Self.Model.Total (Index).Severity /= null
+              and then
+                Preference (Self.Model.Total (Index).Severity.Color) = Pref
+            then
                return True;
             end if;
          end loop;

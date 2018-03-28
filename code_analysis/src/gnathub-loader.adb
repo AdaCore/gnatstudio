@@ -38,8 +38,9 @@ package body GNAThub.Loader is
    Empty_Severity_Id : constant := 0;
    --  Code for unspecified (NULL) severity
 
-   procedure Cleanup (Self : in out Loader'Class);
+   procedure Cleanup (Self : in out Loader'Class; Full : Boolean := False);
    --  Stop loading (when necessary) and cleanup resources.
+   --  If Full, then also cleans the analysis data stored in memory.
 
    procedure Load_Severities (Self : in out Loader'Class);
    --  Loads list of severities from the database
@@ -67,7 +68,7 @@ package body GNAThub.Loader is
    -- Cleanup --
    -------------
 
-   procedure Cleanup (Self : in out Loader'Class) is
+   procedure Cleanup (Self : in out Loader'Class; Full : Boolean := False) is
 
       use type GPS.Scripts.Commands.Scheduled_Command_Access;
 
@@ -75,12 +76,15 @@ package body GNAThub.Loader is
         new Ada.Unchecked_Deallocation (Resource_Record, Resource_Access);
 
       Resource : Resource_Access;
-
    begin
       if Self.Command /= null then
          GPS.Kernel.Task_Manager.Interrupt_Queue
            (Self.Module.Get_Kernel, Self.Command);
          Self.Command := null;
+      end if;
+
+      if Full then
+         Clear_Code_Analysis (Self.Module.Tree);
       end if;
 
       while not Self.Resources.Is_Empty loop
@@ -119,13 +123,6 @@ package body GNAThub.Loader is
 
          return Commands.Success;
       end if;
-
-   exception
-      when others =>
-         Self.Loader.Command := null;
-         Self.Loader.Cleanup;
-
-         return Commands.Failure;
    end Execute;
 
    ----------------
@@ -153,7 +150,7 @@ package body GNAThub.Loader is
       Id  : Natural := 1;
 
    begin
-      Self.Cleanup;
+      Self.Cleanup (Full => True);
 
       GNATCOLL.SQL.Sessions.Setup
         (Descr        =>

@@ -485,6 +485,10 @@ package body Python_Module is
       Data : Callback_Data'Class := Create (Script, 2);
       Inst : Class_Instance;
    begin
+      if Node.Tag = null or else Node.Value = null then
+         return null;
+      end if;
+
       Set_Nth_Arg (Data, 1, Node.Tag.all);
       Set_Nth_Arg (Data, 2, Node.Value.all);
       Data.Execute_Command ("modules.Module_Metaclass.load_desktop");
