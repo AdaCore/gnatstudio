@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013-2017, AdaCore                     --
+--                     Copyright (C) 2013-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -619,8 +619,7 @@ begin
            Default => "");
       Pattern : constant String :=
         (if Regular_Expr.all = "" then Doc_Pattern_In_Project
-         else Regular_Expr.all
-                (Regular_Expr.all'First + 1 .. Regular_Expr.all'Last));
+         else Regular_Expr.all);
 
       --  Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
 
