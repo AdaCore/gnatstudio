@@ -51,8 +51,4 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
 
-   overriding procedure Characters
-     (Self : in out Reader;
-      Text : Unicode.CES.Byte_Sequence);
-
 end CodePeer.Bridge.Annotations_Readers;

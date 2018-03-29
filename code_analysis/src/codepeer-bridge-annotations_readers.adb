@@ -25,17 +25,6 @@ package body CodePeer.Bridge.Annotations_Readers is
    Text_Attribute     : constant String := "text";
    Lifeage_Attribute  : constant String := "lifeage";
 
-   ----------------
-   -- Characters --
-   ----------------
-
-   overriding procedure Characters
-     (Self : in out Reader;
-      Text : Unicode.CES.Byte_Sequence) is
-   begin
-      null;
-   end Characters;
-
    -----------------
    -- End_Element --
    -----------------
