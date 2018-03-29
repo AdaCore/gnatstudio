@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1155,7 +1155,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Debugger.Set_Executable (Debugger.Executable, Mode => Visible);
-
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if
@@ -1186,6 +1185,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Debugger.Send ("info line", Mode => Internal);
          end if;
 
+         Debugger.Display_Prompt;
       end if;
 
       if Debugger.Executable_Args /= null then
@@ -1405,7 +1405,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                --  "file" command doesn't return prompt in answer,
                --  so add it manually
-               Process.Output_Text (Prompt_String, True, True);
+               Debugger.Display_Prompt;
             end if;
          end;
       end Launch_Command_And_Output;
@@ -3110,7 +3110,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       if Proc /= null then
          Proc.Output_Text
-           ("(gdb) ", Is_Command => False, Set_Position => True);
+           (Prompt_String, Is_Command => False, Set_Position => True);
       end if;
    end Display_Prompt;
 
