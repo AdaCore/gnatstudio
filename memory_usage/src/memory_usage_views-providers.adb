@@ -101,14 +101,38 @@ package body Memory_Usage_Views.Providers is
      (Self           : not null access Provider_Task_Visitor_Type;
       Memory_Regions : Memory_Region_Description_Maps.Map)
    is
+
+      function Has_Memory_Overflow return Boolean
+      is
+        (for some Region of Memory_Regions =>
+            Region.Used_Size > Region.Length);
+
    begin
       if not Memory_Regions.Is_Empty then
          declare
-            View : constant Memory_Usage_MDI_Views.View_Access :=
-                     Memory_Usage_MDI_Views.Get_Or_Create_View
-                       (Self.Kernel,
-                        Init => Memory_Usage_Views.On_Init'Access);
+            use Memory_Usage_MDI_Views;
+
+            View       : Memory_Usage_MDI_Views.View_Access :=
+                           Memory_Usage_MDI_Views.Retrieve_View
+                             (Kernel       => Self.Kernel,
+                              Visible_Only => True);
+            Give_Focus : constant Boolean :=
+                           (View = null or else Has_Memory_Overflow);
          begin
+            --  Raise the view only if it was not there before or if a memory
+            --  overflow occured.
+            View := Memory_Usage_MDI_Views.Get_Or_Create_View
+              (Self.Kernel,
+               Focus => Give_Focus,
+               Init  => Memory_Usage_Views.On_Init'Access);
+
+            --  Highlight the view when it does not gain the focus to warn
+            --  users that the view has been refreshed.
+            if not Give_Focus then
+               Highlight_Child
+                 (Memory_Usage_MDI_Views.Child_From_View (View));
+            end if;
+
             View.Refresh (Memory_Regions => Memory_Regions);
          end;
       end if;
