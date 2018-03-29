@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with CodePeer.Bridge.Reader_Utilities;
+
 package body CodePeer.Bridge.Annotations_Readers is
 
    Annotation_Element : constant String := "annotation";
@@ -23,7 +25,6 @@ package body CodePeer.Bridge.Annotations_Readers is
 
    Category_Attribute : constant String := "category";
    Text_Attribute     : constant String := "text";
-   Lifeage_Attribute  : constant String := "lifeage";
 
    -----------------
    -- End_Element --
@@ -69,25 +70,6 @@ package body CodePeer.Bridge.Annotations_Readers is
 
       Annotation_Category : CodePeer.Annotation_Category_Access;
 
-      function Lifeage return Lifeage_Kinds;
-      --  Returns value of "lifeage" attribute or Unchanged when not specified.
-
-      -------------
-      -- Lifeage --
-      -------------
-
-      function Lifeage return Lifeage_Kinds is
-         Index : constant Integer := Attrs.Get_Index (Lifeage_Attribute);
-
-      begin
-         if Index = -1 then
-            return Unchanged;
-
-         else
-            return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
-         end if;
-      end Lifeage;
-
    begin
       if Qname = File_Element then
          null;
@@ -122,9 +104,8 @@ package body CodePeer.Bridge.Annotations_Readers is
 
          Self.Subprogram.Annotations.Element (Annotation_Category).Append
            (new CodePeer.Annotation'
-              (Lifeage,
-               Ada.Strings.Unbounded.To_Unbounded_String
-                 (Attrs.Get_Value (Text_Attribute))));
+              (Reader_Utilities.Get_Lifeage (Attrs),
+               Reader_Utilities.Get_Value (Attrs, Text_Attribute)));
       end if;
    end Start_Element;
 

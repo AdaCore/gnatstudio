@@ -23,7 +23,7 @@ with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with CodePeer.Module;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
-with CodePeer.Bridge.Inspection_Readers.Utilities;
+with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.Base is
 
@@ -340,7 +340,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Annotation_Category :=
         new CodePeer.Annotation_Category'
           (Order => Natural'Value (Attrs.Get_Value ("identifier")),
-           Text  => Utilities.Get_Value (Attrs, "name"),
+           Text  => Reader_Utilities.Get_Value (Attrs, "name"),
            Vn    => Get_Vn);
       CodePeer.Project_Data'Class
         (Self.Root_Inspection.all).Annotation_Categories.Insert
@@ -429,7 +429,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       Entry_Point :=
         new Entry_Point_Information'
-          (Name   => Utilities.Get_Value (Attrs, Name_Attribute),
+          (Name   => Reader_Utilities.Get_Value (Attrs, Name_Attribute),
            File   =>
              GPS.Kernel.Create
                (+Attrs.Get_Value (File_Attribute), Self.Kernel),
@@ -549,7 +549,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
         Code_Analysis.Get_Or_Create (Project_Node, File_Name);
       Self.File_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.File_Data'
-          (Lifeage            => Utilities.Get_Lifeage (Attrs),
+          (Lifeage            => Reader_Utilities.Get_Lifeage (Attrs),
            Total_Checks       => Get_Checks,
            Annotations_File   => Get_Optional_Annotations,
            Annotations_Loaded => False);
@@ -739,7 +739,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
              Ada.Strings.Unbounded.To_Unbounded_String
                (Base_Inspection_Reader'Class (Self).Subprogram_Node.Name.all),
            Merged      => Merged,
-           Lifeage     => Utilities.Get_Lifeage (Attrs),
+           Lifeage     => Reader_Utilities.Get_Lifeage (Attrs),
            Line        => Positive'Value (Attrs.Get_Value ("line")),
            Column      => Positive'Value (Attrs.Get_Value ("column")),
            Category    =>
@@ -801,7 +801,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       Message_Category :=
         new CodePeer.Message_Category'
-          (Name => Utilities.Get_Value (Attrs, "name"), CWEs => <>);
+          (Name => Reader_Utilities.Get_Value (Attrs, "name"), CWEs => <>);
 
       if Attrs.Get_Index (Is_Check_Attribute) /= -1
         and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))

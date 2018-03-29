@@ -15,18 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities function to process different types of values of attributes, to
---  be resused by inspection readers of different versions.
+package body CodePeer.Bridge.Reader_Utilities is
 
-private package CodePeer.Bridge.Inspection_Readers.Utilities is
+   -----------------
+   -- Get_Lifeage --
+   -----------------
+
+   function Get_Lifeage
+     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds
+   is
+      Index : constant Integer := Attrs.Get_Index ("lifeage");
+
+   begin
+      if Index = -1 then
+         return Unchanged;
+
+      else
+         return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
+      end if;
+   end Get_Lifeage;
+
+   ---------------
+   -- Get_Value --
+   ---------------
 
    function Get_Value
      (Attrs : Sax.Attributes.Attributes'Class;
-      Name  : String) return Ada.Strings.Unbounded.Unbounded_String;
-   --  Returns value of the attribute as Unbounded_String
+      Name  : String) return Ada.Strings.Unbounded.Unbounded_String is
+   begin
+      return
+        Ada.Strings.Unbounded.To_Unbounded_String (Attrs.Get_Value (Name));
+   end Get_Value;
 
-   function Get_Lifeage
-     (Attrs : Sax.Attributes.Attributes'Class) return Lifeage_Kinds;
-   --  Returns value of "lifeage" attribure if present, and Unchanged overwise.
-
-end CodePeer.Bridge.Inspection_Readers.Utilities;
+end CodePeer.Bridge.Reader_Utilities;

@@ -14,7 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with CodePeer.Bridge.Inspection_Readers.Utilities;
+with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.V6 is
 
@@ -98,7 +98,7 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
         Positive'Value (Attrs.Get_Value ("column"));
       Subprogram_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.Subprogram_Data'
-          (Lifeage       => Utilities.Get_Lifeage (Attrs),
+          (Lifeage       => Reader_Utilities.Get_Lifeage (Attrs),
            Messages      => Message_Vectors.Empty_Vector,
            Annotations   => Annotation_Maps.Empty_Map,
            Mark          => <>,

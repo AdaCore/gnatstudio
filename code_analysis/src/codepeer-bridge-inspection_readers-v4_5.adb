@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with CodePeer.Bridge.Inspection_Readers.Utilities;
+with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.V4_5 is
 
@@ -74,8 +74,8 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
 
       Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
         (new CodePeer.Annotation'
-           (Utilities.Get_Lifeage (Attrs),
-            Utilities.Get_Value (Attrs, "text")));
+           (Reader_Utilities.Get_Lifeage (Attrs),
+            Reader_Utilities.Get_Value (Attrs, "text")));
    end Start_Annotation;
 
    -------------------
@@ -114,7 +114,7 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
         Positive'Value (Attrs.Get_Value ("column"));
       Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.Subprogram_Data'
-          (Lifeage       => Utilities.Get_Lifeage (Attrs),
+          (Lifeage       => Reader_Utilities.Get_Lifeage (Attrs),
            Messages      => Message_Vectors.Empty_Vector,
            Annotations   => Annotation_Maps.Empty_Map,
            Mark          => <>,
