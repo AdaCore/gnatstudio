@@ -1918,6 +1918,8 @@ package body Src_Editor_View is
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
       end case;
+
+      Recompute_Visible_Area (View);
    end Scroll_To_Cursor_Location;
 
    -------------------
