@@ -58,39 +58,49 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    procedure Start_Annotation_Category
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'annotation_category' element
 
    procedure Start_CWE_Category
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'cwe_category' element
 
    procedure Start_Entry_Point
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'entry_point' element
 
    procedure Start_Entry_Point_Access
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'entry_point_access' element
 
    procedure End_Entry_Point_Access
      (Self : in out Base_Inspection_Reader'Class);
+   --  Process ending tag of 'entry_point_access' element
 
    procedure Start_File
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'file' element
 
    procedure Start_Message_Category
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'message_category' element
 
    procedure Start_Object_Access
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'object_access' element
 
    procedure Start_Object_Race
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
+   --  Process starting tag of 'object_race' element
 
    procedure End_Object_Race (Self : in out Base_Inspection_Reader'Class);
+   --  Process ending tag of 'object_race' element
 
    procedure Include_CWE_Category
      (Self : in out Base_Inspection_Reader'Class;
@@ -162,8 +172,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- End_Message --
    -----------------
 
-   not overriding procedure End_Message
-     (Self : in out Base_Inspection_Reader) is
+   procedure End_Message (Self : in out Base_Inspection_Reader) is
    begin
       Self.Current_Message := null;
    end End_Message;
@@ -550,7 +559,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Start_Message --
    -------------------
 
-   not overriding procedure Start_Message
+   procedure Start_Message
      (Self  : in out Base_Inspection_Reader;
       Attrs : Sax.Attributes.Attributes'Class)
    is

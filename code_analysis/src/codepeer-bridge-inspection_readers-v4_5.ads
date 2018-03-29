@@ -14,6 +14,9 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+--  Implementation of Inspection reader for format version 4 and 5.
+
 with CodePeer.Bridge.Inspection_Readers.Base;
 
 private package CodePeer.Bridge.Inspection_Readers.V4_5 is
@@ -27,6 +30,8 @@ private package CodePeer.Bridge.Inspection_Readers.V4_5 is
       Root_Inspection : Code_Analysis.CodePeer_Data_Access;
       Messages        : access CodePeer.Message_Maps.Map)
       return not null Inspection_Reader_Access;
+   --  Creates inspection data reader for format version 4 and 5 and initialize
+   --  it to process data.
 
 private
 

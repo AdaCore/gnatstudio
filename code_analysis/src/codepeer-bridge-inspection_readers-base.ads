@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Base implementation of inspection data reader.
+
 private package CodePeer.Bridge.Inspection_Readers.Base is
 
    type Base_Inspection_Reader
@@ -41,18 +43,21 @@ private package CodePeer.Bridge.Inspection_Readers.Base is
 
    overriding function Get_Code_Analysis_Tree
      (Self : Base_Inspection_Reader) return Code_Analysis.Code_Analysis_Tree;
+   --  Returns build code analisys tree
 
    overriding function Get_Race_Category
      (Self : Base_Inspection_Reader) return CodePeer.Message_Category_Access;
+   --  Returns messages category for race conditions
 
    overriding function Get_Annotation_Categories
      (Self : Base_Inspection_Reader) return Annotation_Category_Maps.Map;
+   --  Returns set of annotation categories
 
    function File_Node
      (Self : Base_Inspection_Reader'Class) return Code_Analysis.File_Access;
    --  Returns currently processed file node
 
-   not overriding function Subprogram_Node
+   function Subprogram_Node
      (Self : Base_Inspection_Reader)
       return Code_Analysis.Subprogram_Access is abstract;
    --  Returns currently processed subprogram node
@@ -62,16 +67,16 @@ private package CodePeer.Bridge.Inspection_Readers.Base is
       return CodePeer.Subprogram_Data_Access;
    --  Returns analysis information for currently processed subprogram node
 
-   not overriding procedure Start_Message
+   procedure Start_Message
      (Self  : in out Base_Inspection_Reader;
       Attrs : Sax.Attributes.Attributes'Class);
    --  Process start of 'message' element
 
-   not overriding procedure End_Message
+   procedure End_Message
      (Self : in out Base_Inspection_Reader);
    --  Process end of 'message' element
 
-   not overriding procedure Start_Subprogram
+   procedure Start_Subprogram
      (Self  : in out Base_Inspection_Reader;
       Attrs : Sax.Attributes.Attributes'Class) is abstract;
    --  Process start of 'subprogram' element
