@@ -155,7 +155,7 @@ class TextmateTheme(object):
 
         # Compute nice gutter settings
 
-        d['gutter_fg'] = fg_color.mix(bg_color, 0.4)
+        d['gutter_fg'] = fg_color.mix(bg_color, 0.6)
         d['gutter_bg'] = bg_color.lighten(-0.03 * light_val)
 
         # Compute nice browser settings

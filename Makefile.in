@@ -54,6 +54,7 @@ ifeq ($(OS),Windows_NT)
 		> share/support/core/vcs/subversion_native_windows.py
 endif
 	$(RM) -f $(sharedir)/gps/GPS_old
+	$(RM) -rf $(sharedir)/gps/color_themes/
 	$(RM) -rf $(sharedir)/gps/library/
 	$(RM) -rf $(sharedir)/gps/plug-ins/
 	$(RM) -rf $(sharedir)/gps/support/core/

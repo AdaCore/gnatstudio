@@ -81,8 +81,19 @@ def get_themes():
     global themes
 
     if not themes:
-        themes = [default, darkside, monokai, iplastic
-                  ] + textmate.textmate_themes()
+
+        # Recompute the gutter's foreground color directly from
+        # the editors colors for the basic themes.
+        # It makes sure that that the line numbers can't be mixed with
+        # the actual code.
+
+        basic_themes = [default, darkside, monokai, iplastic]
+        for theme in basic_themes:
+            fg_color = theme.d['editor_fg']
+            bg_color = theme.d['editor_bg']
+            theme.d['gutter_fg'] = fg_color.mix(bg_color, 0.6)
+
+        themes = basic_themes + textmate.textmate_themes()
 
     return themes
 
