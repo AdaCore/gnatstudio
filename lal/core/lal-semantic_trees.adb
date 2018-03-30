@@ -57,21 +57,21 @@ package body LAL.Semantic_Trees is
    --  Context where name occurs inside use-clause
 
    Param_Context : constant Ada_Node_Kind_Array :=
-     (1 => (Ada_Param_Spec, Ada_Identifier_List));
+     (1 => (Ada_Param_Spec, Ada_Defining_Name_List, Ada_Defining_Name));
    --  Context where name occurs inside subprogram parameter
 
    Field_Context : constant Ada_Node_Kind_Array :=
-     (1 => (Ada_Component_Decl, Ada_Identifier_List));
+     (1 => (Ada_Component_Decl, Ada_Defining_Name_List, Ada_Defining_Name));
    --  Context where name occurs inside record component declaration
 
    Object_Context : constant Ada_Node_Kind_Array :=
-     (1 => (Ada_Object_Decl, Ada_Identifier_List),
-      2 => (Ada_Number_Decl, Ada_Identifier_List),
-      3 => (Ada_Exception_Decl, Ada_Identifier_List));
+     (1 => (Ada_Object_Decl, Ada_Defining_Name_List, Ada_Defining_Name),
+      2 => (Ada_Number_Decl, Ada_Defining_Name_List, Ada_Defining_Name),
+      3 => (Ada_Exception_Decl, Ada_Defining_Name_List, Ada_Defining_Name));
    --  Context where name occurs inside object declaration
 
    Discriminant_Context : constant Ada_Node_Kind_Array :=
-     (1 => (Ada_Discriminant_Spec, Ada_Identifier_List));
+     (1 => (Ada_Discriminant_Spec, Ada_Defining_Name_List, Ada_Defining_Name));
    --  Context where name occurs inside discriminant declaration
 
    package Trees is
@@ -713,6 +713,9 @@ package body LAL.Semantic_Trees is
 
                      return Self.Kernel.Symbols.Find (To_String (Image));
                   end;
+
+               when Ada_Defining_Name =>
+                  return To_Symbol (Node.As_Defining_Name.F_Name);
 
                when others =>
                   raise Constraint_Error;

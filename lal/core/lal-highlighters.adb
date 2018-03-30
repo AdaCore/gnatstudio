@@ -103,7 +103,7 @@ package body LAL.Highlighters is
 
    function Base_Type_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Base_Type_Decl,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Base_Type_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Base_Type_Decl'First,
@@ -111,7 +111,7 @@ package body LAL.Highlighters is
 
    function Single_Protected_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Single_Protected_Decl,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Single_Protected_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Single_Protected_Decl,
@@ -127,7 +127,7 @@ package body LAL.Highlighters is
 
    function Label_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Label_Decl,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Label_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Label_Decl,
@@ -135,7 +135,7 @@ package body LAL.Highlighters is
 
    function Named_Stmt_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Named_Stmt_Decl,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Named_Stmt_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Named_Stmt_Decl,
@@ -143,7 +143,7 @@ package body LAL.Highlighters is
 
    function Generic_Package_Instantiation_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Package_Instantiation,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Package_Instantiation,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Generic_Package_Instantiation,
@@ -151,7 +151,7 @@ package body LAL.Highlighters is
 
    function Generic_Subp_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Subp_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Subp_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Generic_Subp_Renaming_Decl,
@@ -159,7 +159,7 @@ package body LAL.Highlighters is
 
    function Package_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Package_Body_Stub,
@@ -167,7 +167,7 @@ package body LAL.Highlighters is
 
    function Package_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Package_Renaming_Decl,
@@ -175,7 +175,7 @@ package body LAL.Highlighters is
 
    function Protected_Body_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Protected_Body,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Protected_Body,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Protected_Body,
@@ -183,7 +183,7 @@ package body LAL.Highlighters is
 
    function Protected_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Protected_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Protected_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Protected_Body_Stub,
@@ -199,7 +199,7 @@ package body LAL.Highlighters is
 
    function Task_Body_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Task_Body,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Task_Body,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Task_Body,
@@ -207,7 +207,7 @@ package body LAL.Highlighters is
 
    function Task_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Task_Body_Stub,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Task_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Task_Body_Stub,
@@ -215,7 +215,7 @@ package body LAL.Highlighters is
 
    function Generic_Package_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Package_Renaming_Decl,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Package_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
       From      => Libadalang.Analysis.Ada_Generic_Package_Renaming_Decl,
@@ -223,7 +223,7 @@ package body LAL.Highlighters is
 
    function Entry_Body_Entry_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Entry_Body,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Entry_Body,
       Field     => Libadalang.Analysis.F_Entry_Name,
       From      => Libadalang.Analysis.Ada_Entry_Body,
@@ -231,111 +231,15 @@ package body LAL.Highlighters is
 
    function Entry_Spec_Entry_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Entry_Spec,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Entry_Spec,
       Field     => Libadalang.Analysis.F_Entry_Name,
       From      => Libadalang.Analysis.Ada_Entry_Spec,
       To        => Libadalang.Analysis.Ada_Entry_Spec);
 
-   function Protected_Def_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Protected_Def,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Protected_Def,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Protected_Def,
-      To        => Libadalang.Analysis.Ada_Protected_Def);
-
-   function Task_Def_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Task_Def,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Task_Def,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Task_Def,
-      To        => Libadalang.Analysis.Ada_Task_Def);
-
-   function Accept_Stmt_With_Stmts_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Accept_Stmt_With_Stmts,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Accept_Stmt_With_Stmts,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Accept_Stmt_With_Stmts,
-      To        => Libadalang.Analysis.Ada_Accept_Stmt_With_Stmts);
-
-   function Base_Loop_Stmt_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Base_Loop_Stmt,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Base_Loop_Stmt,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Base_Loop_Stmt'First,
-      To        => Libadalang.Analysis.Ada_Base_Loop_Stmt'Last);
-
-   function Decl_Block_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Decl_Block,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Decl_Block,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Decl_Block,
-      To        => Libadalang.Analysis.Ada_Decl_Block);
-
-   function Begin_Block_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Begin_Block,
-      Id_Type   => Libadalang.Analysis.Identifier,
-      To_Node   => Libadalang.Analysis.As_Begin_Block,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Begin_Block,
-      To        => Libadalang.Analysis.Ada_Begin_Block);
-
-   function Entry_Body_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Entry_Body,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Entry_Body,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Entry_Body,
-      To        => Libadalang.Analysis.Ada_Entry_Body);
-
-   function Package_Body_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Package_Body,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Package_Body,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Package_Body,
-      To        => Libadalang.Analysis.Ada_Package_Body);
-
-   function Protected_Body_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Protected_Body,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Protected_Body,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Protected_Body,
-      To        => Libadalang.Analysis.Ada_Protected_Body);
-
-   function Subp_Body_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Subp_Body,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Subp_Body,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Subp_Body,
-      To        => Libadalang.Analysis.Ada_Subp_Body);
-
-   function Task_Body_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Task_Body,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Task_Body,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Task_Body,
-      To        => Libadalang.Analysis.Ada_Task_Body);
-
-   function Base_Package_Decl_End_Name is new Generic_Match_Field
-     (Node_Type => Libadalang.Analysis.Base_Package_Decl,
-      Id_Type   => Libadalang.Analysis.Name,
-      To_Node   => Libadalang.Analysis.As_Base_Package_Decl,
-      Field     => Libadalang.Analysis.F_End_Name,
-      From      => Libadalang.Analysis.Ada_Base_Package_Decl'First,
-      To        => Libadalang.Analysis.Ada_Base_Package_Decl'Last);
-
    function Base_Package_Decl_Package_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Base_Package_Decl,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Base_Package_Decl,
       Field     => Libadalang.Analysis.F_Package_Name,
       From      => Libadalang.Analysis.Ada_Base_Package_Decl'First,
@@ -343,7 +247,7 @@ package body LAL.Highlighters is
 
    function Subp_Spec_Subp_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Subp_Spec,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Subp_Spec,
       Field     => Libadalang.Analysis.F_Subp_Name,
       From      => Libadalang.Analysis.Ada_Subp_Spec,
@@ -351,7 +255,7 @@ package body LAL.Highlighters is
 
    function Generic_Subp_Instantiation_Subp_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Subp_Instantiation,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Subp_Instantiation,
       Field     => Libadalang.Analysis.F_Subp_Name,
       From      => Libadalang.Analysis.Ada_Generic_Subp_Instantiation,
@@ -359,7 +263,7 @@ package body LAL.Highlighters is
 
    function Package_Body_Package_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Body,
-      Id_Type   => Libadalang.Analysis.Name,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Body,
       Field     => Libadalang.Analysis.F_Package_Name,
       From      => Libadalang.Analysis.Ada_Package_Body,
@@ -367,7 +271,7 @@ package body LAL.Highlighters is
 
    function Exception_Handler_Exception_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Exception_Handler,
-      Id_Type   => Libadalang.Analysis.Identifier,
+      Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Exception_Handler,
       Field     => Libadalang.Analysis.F_Exception_Name,
       From      => Libadalang.Analysis.Ada_Exception_Handler,
@@ -393,44 +297,37 @@ package body LAL.Highlighters is
    --  List of places in LAL tree where a dotted_name should be highlithed
    --  with 'block' style
    Dotted_Name_List : constant Check_List :=
-     (Generic_Package_Instantiation_Name'Access,
-      Generic_Subp_Renaming_Decl_Name'Access,
-      Package_Body_Stub_Name'Access,
-      Package_Renaming_Decl_Name'Access,
-      Protected_Body_Name'Access,
-      Protected_Body_Stub_Name'Access,
-      Subunit_Name'Access,
-      Task_Body_Name'Access,
-      Task_Body_Stub_Name'Access,
-      Generic_Package_Renaming_Decl_Name'Access,
-      Entry_Body_End_Name'Access,
-      Package_Body_End_Name'Access,
-      Protected_Body_End_Name'Access,
-      Subp_Body_End_Name'Access,
-      Task_Body_End_Name'Access,
-      Base_Package_Decl_End_Name'Access,
-      Base_Package_Decl_Package_Name'Access,
-      Subp_Spec_Subp_Name'Access,
-      Generic_Subp_Instantiation_Subp_Name'Access,
-      Package_Body_Package_Name'Access);
+     (1 => Subunit_Name'Access);
+
+   --  List of places in LAL tree where a defining_name should be highlithed
+   --  with 'block' style
+   Defining_Name_List : constant Check_List :=
+      (Base_Type_Decl_Name'Access,
+       Single_Protected_Decl_Name'Access,
+       Label_Decl_Name'Access,
+       Named_Stmt_Decl_Name'Access,
+       Entry_Body_Entry_Name'Access,
+       Entry_Spec_Entry_Name'Access,
+       Exception_Handler_Exception_Name'Access,
+       Task_Body_Name'Access,
+       Task_Body_Stub_Name'Access,
+       Generic_Package_Renaming_Decl_Name'Access,
+       Generic_Package_Instantiation_Name'Access,
+       Generic_Subp_Renaming_Decl_Name'Access,
+       Package_Body_Stub_Name'Access,
+       Package_Renaming_Decl_Name'Access,
+       Protected_Body_Name'Access,
+       Protected_Body_Stub_Name'Access,
+       Base_Package_Decl_Package_Name'Access,
+       Subp_Spec_Subp_Name'Access,
+       Generic_Subp_Instantiation_Subp_Name'Access,
+       Package_Body_Package_Name'Access
+      );
 
    --  List of places in LAL tree where an identifier should be highlithed
    --  with 'block' style
    Id_List : constant Check_List := Dotted_Name_List &
-     (Base_Type_Decl_Name'Access,
-      Single_Protected_Decl_Name'Access,
-      Accept_Stmt_Name'Access,
-      Label_Decl_Name'Access,
-      Named_Stmt_Decl_Name'Access,
-      Entry_Body_Entry_Name'Access,
-      Entry_Spec_Entry_Name'Access,
-      Protected_Def_End_Name'Access,
-      Task_Def_End_Name'Access,
-      Accept_Stmt_With_Stmts_End_Name'Access,
-      Base_Loop_Stmt_End_Name'Access,
-      Decl_Block_End_Name'Access,
-      Begin_Block_End_Name'Access,
-      Exception_Handler_Exception_Name'Access);
+      (1 => Accept_Stmt_Name'Access);
 
    --  List of places in LAL tree where an identifier, dotted_name or
    --  attribute_ref should be highlithed with 'type' style
@@ -696,15 +593,24 @@ package body LAL.Highlighters is
                declare
                   Node : constant Ada_Node := Root.Lookup
                     ((Loc.Start_Line, Loc.Start_Column));
+                  TDN : constant Ada_Node :=
+                    The_Toppest_Dotted_Name (Node);
                begin
                   --  Check if identifier itself should be highlighted
                   if Check (Id_List, Node)
                     or else
                       --  check if identifier is part of such dotted_name
-                      (Kind_Of (Node.Parent,
-                                Libadalang.Analysis.Ada_Dotted_Name)
-                       and then Check (Dotted_Name_List,
-                                       The_Toppest_Dotted_Name (Node)))
+                      (Kind_Of (TDN, Libadalang.Analysis.Ada_Dotted_Name)
+                       and then Check (Dotted_Name_List, TDN))
+                    or else
+                      --  check if identifier is part of such defining_name
+                      (Kind_Of (TDN.Parent,
+                                Libadalang.Analysis.Ada_Defining_Name)
+                       and then Check (Defining_Name_List, TDN.Parent))
+                    or else
+                      --  check if identifier is part of any end_name
+                      Kind_Of (TDN.Parent,
+                               Libadalang.Analysis.Ada_End_Name)
                   then
                      Buffer.Apply_Style ("block", Line, Start, Stop);
 
