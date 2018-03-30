@@ -69,6 +69,7 @@ with Language_Handlers;          use Language_Handlers;
 with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
+with Toolchains;                 use Toolchains;
 with Toolchains_Old;             use Toolchains_Old;
 
 package body GVD.Process is
@@ -942,6 +943,9 @@ package body GVD.Process is
       function Is_MI_Protocol_Allowed return Boolean;
       --  check whether GDB version is correct for using MI protocol
 
+      function Get_Debugger_Executable return String;
+      --  Returns name of debugger and parameters for it
+
       --------------
       -- Get_Main --
       --------------
@@ -1024,18 +1028,8 @@ package body GVD.Process is
          return Exec;
       end Get_Main;
 
-      Target      : constant String := Kernel.Get_Target;
-      Default_Gdb : constant String :=
-        (if Target = "" then "gdb" else Target & "-gdb");
-      Default_LLDB : constant String := "lldb";
-      Args2       : GNAT.OS_Lib.Argument_List_Access :=
-        GNAT.OS_Lib.Argument_String_To_List
-          (Project.Attribute_Value
-             (Debugger_Command_Attribute,
-              Default =>
-                (if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.LLDB
-                 then Default_LLDB
-                 else Default_Gdb)));
+      Target       : constant String := Kernel.Get_Target;
+      Args2        : GNAT.OS_Lib.Argument_List_Access;
       Actual_Remote_Target   : constant String :=
         (if Remote_Target /= ""
          then Remote_Target
@@ -1094,6 +1088,39 @@ package body GVD.Process is
             return False;
       end Is_MI_Protocol_Allowed;
 
+      -----------------------------
+      -- Get_Debugger_Executable --
+      -----------------------------
+
+      function Get_Debugger_Executable return String
+      is
+         Default_Gdb : constant String :=
+           (if Target = "" then "gdb" else Target & "-gdb");
+      begin
+         if Project.Has_Attribute (Debugger_Command_Attribute) then
+            --  return debuger from project
+            return Project.Attribute_Value (Debugger_Command_Attribute);
+         end if;
+
+         declare
+            Tc : constant Toolchain :=
+              Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+            Command : constant String := Get_Command (Tc, Toolchains.Debugger);
+         begin
+            if Command /= "" then
+               --  return debuger from toolchain
+               return Command;
+            end if;
+         end;
+
+         --  return default debugger for target
+         if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.LLDB then
+            return "lldb";
+         else
+            return Default_Gdb;
+         end if;
+      end Get_Debugger_Executable;
+
    begin
       Process := new Visual_Debugger_Record;
       GVD.Process.Initialize (Process, Top);
@@ -1104,6 +1131,8 @@ package body GVD.Process is
 
       Proxy := new GPS_Proxy;
       GPS_Proxy (Proxy.all).Process := Process;
+
+      Args2 := GNAT.OS_Lib.Argument_String_To_List (Get_Debugger_Executable);
 
       Process.Descriptor.Debugger      := Kind;
       Process.Descriptor.Program       := Executable;
