@@ -15,16 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with CodePeer.Bridge.Reader_Utilities;
+with Ada.Unchecked_Deallocation;
+
+with CodePeer.Bridge.Annotations_Readers.Base;
 
 package body CodePeer.Bridge.Annotations_Readers is
-
-   Annotation_Element : constant String := "annotation";
-   File_Element       : constant String := "file";
-   Subprogram_Element : constant String := "subprogram";
-
-   Category_Attribute : constant String := "category";
-   Text_Attribute     : constant String := "text";
 
    -----------------
    -- End_Element --
@@ -34,9 +29,12 @@ package body CodePeer.Bridge.Annotations_Readers is
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
-      Qname         : Unicode.CES.Byte_Sequence) is
+      Qname         : Unicode.CES.Byte_Sequence)
+   is
+      pragma Unreferenced (Namespace_URI, Local_Name);
+
    begin
-      null;
+      Self.Reader.End_Element (Qname);
    end End_Element;
 
    -----------
@@ -47,12 +45,18 @@ package body CodePeer.Bridge.Annotations_Readers is
      (Self                  : in out Reader;
       Input                 : in out Input_Sources.Input_Source'Class;
       Annotation_Categories : Annotation_Category_Maps.Map;
-      File                  : in out Code_Analysis.File'Class) is
+      File                  : in out Code_Analysis.File'Class)
+   is
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Abstract_Annotations_Reader'Class, Annotations_Reader_Access);
+
    begin
-      Self.Categories := Annotation_Categories;
-      Self.File := File'Unchecked_Access;
+      Self.Reader :=
+        CodePeer.Bridge.Annotations_Readers.Base.Create_Reader
+          (Annotation_Categories, File'Unchecked_Access);
       Self.Parse (Input);
-      Self.File := null;
+      Free (Self.Reader);
    end Parse;
 
    -------------------
@@ -68,45 +72,8 @@ package body CodePeer.Bridge.Annotations_Readers is
    is
       pragma Unreferenced (Namespace_URI, Local_Name);
 
-      Annotation_Category : CodePeer.Annotation_Category_Access;
-
    begin
-      if Qname = File_Element then
-         null;
-
-      elsif Qname = Subprogram_Element then
-         declare
-            Subprogram_Name : constant String :=
-              Attrs.Get_Value ("name");
-
-         begin
-            if Self.File.Subprograms.Contains (Subprogram_Name) then
-               Self.Subprogram :=
-                 CodePeer.Subprogram_Data_Access
-                   (Code_Analysis.Get_Or_Create
-                      (Self.File,
-                       Subprogram_Name).Analysis_Data.CodePeer_Data);
-            end if;
-         end;
-
-      elsif Qname = Annotation_Element then
-         Annotation_Category :=
-           Self.Categories
-             (Natural'Value (Attrs.Get_Value (Category_Attribute)));
-
-         if not Self.Subprogram.Annotations.Contains
-                  (Annotation_Category)
-         then
-            Self.Subprogram.Annotations.Insert
-              (Annotation_Category,
-               new CodePeer.Annotation_Vectors.Vector);
-         end if;
-
-         Self.Subprogram.Annotations.Element (Annotation_Category).Append
-           (new CodePeer.Annotation'
-              (Reader_Utilities.Get_Lifeage (Attrs),
-               Reader_Utilities.Get_Value (Attrs, Text_Attribute)));
-      end if;
+      Self.Reader.Start_Element (Qname, Attrs);
    end Start_Element;
 
 end CodePeer.Bridge.Annotations_Readers;

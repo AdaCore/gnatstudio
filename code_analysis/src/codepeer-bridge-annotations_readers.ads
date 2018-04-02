@@ -32,10 +32,33 @@ package CodePeer.Bridge.Annotations_Readers is
 
 private
 
+   ---------------------------------
+   -- Abstract_Annotations_Reader --
+   ---------------------------------
+
+   type Abstract_Annotations_Reader is limited interface;
+   --  Base type for annotations reader for particular exchange format.
+
+   type Annotations_Reader_Access is
+     access all Abstract_Annotations_Reader'Class;
+
+   procedure Start_Element
+     (Self  : in out Abstract_Annotations_Reader;
+      Name  : String;
+      Attrs : Sax.Attributes.Attributes'Class) is abstract;
+   --  Process start tag of element
+
+   procedure End_Element
+     (Self  : in out Abstract_Annotations_Reader;
+      Name  : String) is abstract;
+   --  Process end tag of element
+
+   ------------
+   -- Reader --
+   ------------
+
    type Reader is new Sax.Readers.Reader with record
-      Categories : Annotation_Category_Maps.Map;
-      File       : access Code_Analysis.File'Class;
-      Subprogram : access CodePeer.Subprogram_Data'Class;
+      Reader : Annotations_Reader_Access;
    end record;
 
    overriding procedure Start_Element
