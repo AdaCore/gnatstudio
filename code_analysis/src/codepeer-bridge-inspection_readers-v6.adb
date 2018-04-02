@@ -52,15 +52,6 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
       Self.Subprogram_Node := null;
    end End_Message;
 
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Item : Positive) return Ada.Containers.Hash_Type is
-   begin
-      return Ada.Containers.Hash_Type (Item);
-   end Hash;
-
    -------------------
    -- Start_Message --
    -------------------

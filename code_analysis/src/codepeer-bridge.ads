@@ -24,4 +24,12 @@ package CodePeer.Bridge is
    package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Annotation_Category_Access, Hash, "=");
 
+   package Positive_Subprogram_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Positive,
+        Code_Analysis.Subprogram_Access,
+        Hash,
+        "=",
+        Code_Analysis."=");
+
 end CodePeer.Bridge;

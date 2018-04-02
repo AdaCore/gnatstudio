@@ -30,16 +30,6 @@ private package CodePeer.Bridge.Inspection_Readers.V6 is
 
 private
 
-   function Hash (Item : Positive) return Ada.Containers.Hash_Type;
-
-   package Positive_Subprogram_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Positive,
-        Code_Analysis.Subprogram_Access,
-        Hash,
-        "=",
-        Code_Analysis."=");
-
    type Inspection_Reader_V6 is
      limited new Base.Base_Inspection_Reader with record
       Subprogram_Map  : Positive_Subprogram_Maps.Map;
