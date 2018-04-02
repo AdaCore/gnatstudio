@@ -17,7 +17,8 @@
 
 with Ada.Unchecked_Deallocation;
 
-with CodePeer.Bridge.Annotations_Readers.Base;
+with CodePeer.Bridge.Annotations_Readers.V4_5;
+with CodePeer.Bridge.Annotations_Readers.V6;
 
 package body CodePeer.Bridge.Annotations_Readers is
 
@@ -43,6 +44,7 @@ package body CodePeer.Bridge.Annotations_Readers is
 
    procedure Parse
      (Self                  : in out Reader;
+      Format                : CodePeer.Supported_Format_Version;
       Input                 : in out Input_Sources.Input_Source'Class;
       Annotation_Categories : Annotation_Category_Maps.Map;
       File                  : in out Code_Analysis.File'Class)
@@ -52,9 +54,18 @@ package body CodePeer.Bridge.Annotations_Readers is
           (Abstract_Annotations_Reader'Class, Annotations_Reader_Access);
 
    begin
-      Self.Reader :=
-        CodePeer.Bridge.Annotations_Readers.Base.Create_Reader
-          (Annotation_Categories, File'Unchecked_Access);
+      case Format is
+         when 4 .. 5 =>
+            Self.Reader :=
+              CodePeer.Bridge.Annotations_Readers.V4_5.Create_Reader
+                (Annotation_Categories, File'Unchecked_Access);
+
+         when 6 =>
+            Self.Reader :=
+              CodePeer.Bridge.Annotations_Readers.V6.Create_Reader
+                (Annotation_Categories, File'Unchecked_Access);
+      end case;
+
       Self.Parse (Input);
       Free (Self.Reader);
    end Parse;

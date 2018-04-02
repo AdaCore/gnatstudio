@@ -26,21 +26,6 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
    Category_Attribute : constant String := "category";
    Text_Attribute     : constant String := "text";
 
-   -------------------
-   -- Create_Reader --
-   -------------------
-
-   function Create_Reader
-     (Categories : Annotation_Category_Maps.Map;
-      File       : not null Code_Analysis.File_Access)
-      return Annotations_Reader_Access is
-   begin
-      return new Annotations_Reader_Base'
-        (Categories => Categories,
-         File       => File,
-         Subprogram => null);
-   end Create_Reader;
-
    -----------------
    -- End_Element --
    -----------------
@@ -52,6 +37,55 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
       null;
    end End_Element;
 
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File
+     (Self : Annotations_Reader_Base'Class) return Code_Analysis.File_Access is
+   begin
+      return Self.File;
+   end Get_File;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self       : in out Annotations_Reader_Base'Class;
+      Categories : Annotation_Category_Maps.Map;
+      File       : not null Code_Analysis.File_Access) is
+   begin
+      Self.Categories := Categories;
+      Self.File       := File;
+   end Initialize;
+
+   ----------------------
+   -- Start_Annotation --
+   ----------------------
+
+   procedure Start_Annotation
+     (Self  : in out Annotations_Reader_Base;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      Annotation_Category : constant CodePeer.Annotation_Category_Access :=
+        Self.Categories (Natural'Value (Attrs.Get_Value (Category_Attribute)));
+      Subprogram          : constant CodePeer.Subprogram_Data_Access :=
+        Annotations_Reader_Base'Class (Self).Get_Subprogram;
+
+   begin
+      if not Subprogram.Annotations.Contains (Annotation_Category) then
+         Subprogram.Annotations.Insert
+           (Annotation_Category,
+            new CodePeer.Annotation_Vectors.Vector);
+      end if;
+
+      Subprogram.Annotations.Element (Annotation_Category).Append
+        (new CodePeer.Annotation'
+           (Reader_Utilities.Get_Lifeage (Attrs),
+            Reader_Utilities.Get_Value (Attrs, Text_Attribute)));
+   end Start_Annotation;
+
    -------------------
    -- Start_Element --
    -------------------
@@ -61,44 +95,15 @@ package body CodePeer.Bridge.Annotations_Readers.Base is
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class)
    is
-      Annotation_Category : CodePeer.Annotation_Category_Access;
-
    begin
       if Name = File_Element then
          null;
 
       elsif Name = Subprogram_Element then
-         declare
-            Subprogram_Name : constant String :=
-              Attrs.Get_Value ("name");
-
-         begin
-            if Self.File.Subprograms.Contains (Subprogram_Name) then
-               Self.Subprogram :=
-                 CodePeer.Subprogram_Data_Access
-                   (Code_Analysis.Get_Or_Create
-                      (Self.File,
-                       Subprogram_Name).Analysis_Data.CodePeer_Data);
-            end if;
-         end;
+         Annotations_Reader_Base'Class (Self).Start_Subprogram (Attrs);
 
       elsif Name = Annotation_Element then
-         Annotation_Category :=
-           Self.Categories
-             (Natural'Value (Attrs.Get_Value (Category_Attribute)));
-
-         if not Self.Subprogram.Annotations.Contains
-                  (Annotation_Category)
-         then
-            Self.Subprogram.Annotations.Insert
-              (Annotation_Category,
-               new CodePeer.Annotation_Vectors.Vector);
-         end if;
-
-         Self.Subprogram.Annotations.Element (Annotation_Category).Append
-           (new CodePeer.Annotation'
-              (Reader_Utilities.Get_Lifeage (Attrs),
-               Reader_Utilities.Get_Value (Attrs, Text_Attribute)));
+         Annotations_Reader_Base'Class (Self).Start_Annotation (Attrs);
       end if;
    end Start_Element;
 

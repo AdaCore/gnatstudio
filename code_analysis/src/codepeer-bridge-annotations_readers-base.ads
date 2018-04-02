@@ -18,21 +18,22 @@
 private package CodePeer.Bridge.Annotations_Readers.Base is
 
    type Annotations_Reader_Base is
-     limited new Abstract_Annotations_Reader with private;
+     abstract limited new Abstract_Annotations_Reader with private;
 
-   function Create_Reader
-     (Categories : Annotation_Category_Maps.Map;
-      File       : not null Code_Analysis.File_Access)
-      return Annotations_Reader_Access;
-
-private
-
-   type Annotations_Reader_Base is
-     limited new Abstract_Annotations_Reader with record
+   procedure Initialize
+     (Self       : in out Annotations_Reader_Base'Class;
       Categories : Annotation_Category_Maps.Map;
-      File       : access Code_Analysis.File'Class;
-      Subprogram : access CodePeer.Subprogram_Data'Class;
-   end record;
+      File       : not null Code_Analysis.File_Access);
+   --  Initialize object
+
+   function Get_File
+     (Self : Annotations_Reader_Base'Class) return Code_Analysis.File_Access;
+   --  Returns file node for currently processed file
+
+   function Get_Subprogram
+     (Self : Annotations_Reader_Base)
+      return CodePeer.Subprogram_Data_Access is abstract;
+   --  Returns subprogram node for the currently processed subprogram
 
    overriding procedure Start_Element
      (Self  : in out Annotations_Reader_Base;
@@ -42,5 +43,23 @@ private
    overriding procedure End_Element
      (Self  : in out Annotations_Reader_Base;
       Name  : String);
+
+   procedure Start_Subprogram
+     (Self : in out Annotations_Reader_Base;
+      Attrs : Sax.Attributes.Attributes'Class) is abstract;
+   --  Process start of "subprogram" element
+
+   procedure Start_Annotation
+     (Self  : in out Annotations_Reader_Base;
+      Attrs : Sax.Attributes.Attributes'Class);
+   --  Process start of "annotation" element
+
+private
+
+   type Annotations_Reader_Base is
+     abstract limited new Abstract_Annotations_Reader with record
+      Categories : Annotation_Category_Maps.Map;
+      File       : access Code_Analysis.File'Class;
+   end record;
 
 end CodePeer.Bridge.Annotations_Readers.Base;

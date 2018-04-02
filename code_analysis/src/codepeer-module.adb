@@ -1032,7 +1032,7 @@ package body CodePeer.Module is
 
          Data.Annotations_Loaded := True;
          Input_Sources.File.Open (+Data.Annotations_File.Full_Name, Input);
-         Reader.Parse (Input, Self.Annotation_Categories, File);
+         Reader.Parse (Self.Version, Input, Self.Annotation_Categories, File);
          Input_Sources.File.Close (Input);
 
       else

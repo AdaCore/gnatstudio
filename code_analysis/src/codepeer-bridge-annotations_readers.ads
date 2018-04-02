@@ -26,6 +26,7 @@ package CodePeer.Bridge.Annotations_Readers is
 
    procedure Parse
      (Self                  : in out Reader;
+      Format                : CodePeer.Supported_Format_Version;
       Input                 : in out Input_Sources.Input_Source'Class;
       Annotation_Categories : Annotation_Category_Maps.Map;
       File                  : in out Code_Analysis.File'Class);
