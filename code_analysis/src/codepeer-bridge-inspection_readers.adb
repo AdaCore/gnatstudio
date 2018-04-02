@@ -17,6 +17,7 @@
 
 with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
@@ -88,6 +89,10 @@ package body CodePeer.Bridge.Inspection_Readers is
       Version               : out Supported_Format_Version;
       Race_Category         : out CodePeer.Message_Category_Access)
    is
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Abstract_Inspection_Reader'Class, Inspection_Reader_Access);
+
    begin
       Self.Kernel          := Kernel;
       Self.Base_Directory  :=
@@ -104,6 +109,8 @@ package body CodePeer.Bridge.Inspection_Readers is
       Version               := Self.Version;
       Race_Category         := Self.Reader.Get_Race_Category;
       Annotation_Categories := Self.Reader.Get_Annotation_Categories;
+
+      Free (Self.Reader);
    end Parse;
 
    -------------------
