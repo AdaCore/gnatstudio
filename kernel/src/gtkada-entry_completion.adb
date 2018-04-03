@@ -892,15 +892,20 @@ package body Gtkada.Entry_Completion is
 
    function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean is
       use type Gtkada.MDI.MDI_Child;
+      Focus_Child : constant Gtkada.MDI.MDI_Child :=
+                      Get_MDI (Self.Kernel).Get_Focus_Child;
    begin
-      if not Self.Has_Focus then
+      --  Popdown the omnisearch's popup only if the user has clicked on
+      --  another GPS MDI child, not when another app has the focus.
+
+      if not Self.Has_Focus and then Focus_Child /= null then
          Popdown (Self);
 
          --  Check whether some widget has a focus which could be moved to
          --  another app and we do not need to clear "focus history" in such
          --  case
 
-         if Get_MDI (Self.Kernel).Get_Focus_Child /= null then
+         if Focus_Child /= null then
             --  Unref the previously focused widget and set it to null when the
             --  focus goes out of the entry.
             if Self.Previous_Focus /= null then
