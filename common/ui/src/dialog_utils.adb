@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Event;          use Gdk.Event;
 with Gtk.Separator;      use Gtk.Separator;
 with Gtk.Style_Context;  use Gtk.Style_Context;
 with Pango.Enums;        use Pango.Enums;
@@ -29,16 +28,6 @@ package body Dialog_Utils is
    --  Called each time a group widget's child is going to be filtered.
    --  Used to hide the group widget if all the children are not visible
    --  anymore.
-
-   function On_Non_Selectable_Row_Click
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean;
-   --  Called each time the user clicks on a non-selectable group widget's row
-   --  (i.e: when the surrounding Gtk_Flow_Box has Selection_None).
-   --  Return True to avoid the Gtk_Flow_Box default's behavior in that case,
-   --  which is to draw a dotted selection rectangle around the row.
-   --  This also avoid potential focus conflicts with the row's child (e.g:
-   --  when the row contains a Gtk_Text_View).
 
    procedure Refilter_On_Show (Self : access Gtk_Widget_Record'Class);
    --  Called each time a dialog group widget has been shown.
@@ -76,18 +65,6 @@ package body Dialog_Utils is
 
       return Result;
    end Filter_Func_Wrapper;
-
-   ---------------------------------
-   -- On_Non_Selectable_Row_Click --
-   ---------------------------------
-
-   function On_Non_Selectable_Row_Click
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean is
-      pragma Unreferenced (Self, Event);
-   begin
-      return True;
-   end On_Non_Selectable_Row_Click;
 
    ----------------
    -- Initialize --
@@ -430,13 +407,6 @@ package body Dialog_Utils is
       Self.Flow_Box.Set_Selection_Mode (Selection);
       Self.Flow_Box.Set_Homogeneous (False);
       Self.Flow_Box.Set_Can_Focus (False);
-
-      if Selection = Selection_None then
-         Self.Flow_Box.On_Button_Press_Event
-           (On_Non_Selectable_Row_Click'Access);
-         Self.Flow_Box.On_Button_Release_Event
-           (On_Non_Selectable_Row_Click'Access);
-      end if;
 
       if Sorting_Function /= null then
          Self.Flow_Box.Set_Sort_Func (Sorting_Function);
