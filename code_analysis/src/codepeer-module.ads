@@ -145,11 +145,6 @@ private
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Version_Limit          : Format_Version := Format_Version'Last;
-      --  Limit of maximum supported version of interchange format to
-      --  workaround bug in CodePeer up to 3.1.1 (gps_codepeer_bridge reports
-      --  error when GPS asks newer version when supported instead of fallback
-      --  to latest supported version).
       Version                : Supported_Format_Version;
       --  Used version of format of interchange files.
       Output_Directory       : GNATCOLL.VFS.Virtual_File;

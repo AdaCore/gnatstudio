@@ -170,9 +170,7 @@ package body CodePeer.Module.Bridge is
             Inspection_File_Name => Reply_File_Name,
             Status_File_Name     => Status_File_Name,
             Import_Annotations   => Module.Import_Annotations.Get_Pref,
-            Maximum_Version      =>
-              Format_Version'Min
-                (Module.Version_Limit, Supported_Format_Version'Last));
+            Maximum_Version      => Supported_Format_Version'Last);
 
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
