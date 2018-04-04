@@ -238,7 +238,7 @@ package GPS.Kernel.Preferences is
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;
    Highlight_Column          : Integer_Preference;
-   Line_Info_Min_Width       : Integer_Preference;
+   Gutter_Right_Margin       : Integer_Preference;
    Use_ACL                   : Boolean_Preference;
 
    -- Debugger --

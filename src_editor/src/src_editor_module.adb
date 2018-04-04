@@ -2650,7 +2650,7 @@ package body Src_Editor_Module is
          Line_Display_Has_Changed := True;
       end if;
 
-      if Pref = Preference (Line_Info_Min_Width) then
+      if Pref = Preference (Gutter_Right_Margin) then
          Line_Display_Has_Changed := True;
       end if;
 

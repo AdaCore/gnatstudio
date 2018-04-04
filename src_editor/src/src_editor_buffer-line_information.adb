@@ -67,9 +67,17 @@ package body Src_Editor_Buffer.Line_Information is
    end record;
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
 
-   Default_Icon_Width : constant := 10;
+   Default_Icon_Width : constant := 16;
    --  Maximum size to display icons in the sidebar of editors.
    --  The actual size will be smaller if the line height is smaller.
+
+   Default_Info_Col_Starting_X : constant := 2;
+   --  The default starting X for line information columns. This corresponds
+   --  to the space between the first information column and the line numbers.
+
+   Default_Line_Number_Left_Margin : constant := 6;
+   --  The default left margin of line numbers. This corresponds to the
+   --  minimal space left between line numbers and the left border of editors.
 
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
@@ -283,47 +291,63 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class)
    is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Line_Char_Width : constant Gint := Line_Number_Character_Width;
-      Dummy           : Editable_Line_Type := 1;
-      Min_Width       : constant Integer := Line_Info_Min_Width.Get_Pref;
+      Line_Char_Width    : constant Natural := Natural
+        (Line_Number_Character_Width);
+      Dummy              : Editable_Line_Type := 1;
+      Info_Columns_Width : Natural;
    begin
       if Line_Char_Width > 0 then
-         Buffer.Line_Numbers_Width := 2;
 
+         --  Add the default left margin to the minimal space needed
+         Buffer.Line_Numbers_Width := Default_Line_Number_Left_Margin;
+
+         --  Create the default line information column if needed
          if BL.all = null then
             Create_Line_Information_Column
               (Buffer, Default_Column, True, Empty_Line_Information);
          end if;
 
+         --  Calculate the width needed depending on the number of characters
+         --  needed to display all the lines.
          loop
             Buffer.Line_Numbers_Width :=
-              Buffer.Line_Numbers_Width + Natural (Line_Char_Width);
+              Buffer.Line_Numbers_Width + Line_Char_Width;
+            Dummy := Dummy * 10;
 
-            Dummy := Dummy * Default_Icon_Width;
             exit when Dummy > Buffer.Last_Editable_Line;
          end loop;
+
+         --  Reserve space for 2 line characters if the file contains less
+         --  than 10 lines: this way the space needed won't be changed if
+         --  the editor grows to get more that 10 lines.
+         if Buffer.Last_Editable_Line < 10 then
+            Buffer.Line_Numbers_Width :=
+              Buffer.Line_Numbers_Width + Line_Char_Width;
+         end if;
 
          if Visualize_Internal_Buffers.Is_Active then
             Buffer.Line_Numbers_Width := Buffer.Line_Numbers_Width * 3 + 4;
          end if;
-
       else
          Buffer.Line_Numbers_Width := 0;
       end if;
 
-      --  Use the line numbers' minimum width specified in the preferences
-      --  or the one calculated dynamically if not sufficient.
+      --  Get the total width of all the information columns (i.e: where
+      --  block folding icons are drawn etc.).
 
-      Buffer.Line_Numbers_Width := Integer'Max
-        (Min_Width, Buffer.Line_Numbers_Width);
+      Info_Columns_Width :=
+        (if BL /= null then
+            BL.all (BL.all'Last).Starting_X + BL.all (BL.all'Last).Width
+         else
+            0);
 
-      Buffer.Total_Column_Width := Buffer.Line_Numbers_Width;
+      --  Set the total width of the gutter by additioning the width taken
+      --  by the line numbers, the info columns and the gutter right margin
+      --  preference.
 
-      if BL.all /= null then
-         Buffer.Total_Column_Width :=
-           Buffer.Total_Column_Width
-             + BL.all (BL.all'Last).Starting_X + BL.all (BL.all'Last).Width;
-      end if;
+      Buffer.Total_Column_Width := Buffer.Line_Numbers_Width
+        + Info_Columns_Width
+        + Gutter_Right_Margin.Get_Pref;
    end Recalculate_Side_Column_Width;
 
    ----------------------------
@@ -444,10 +468,9 @@ package body Src_Editor_Buffer.Line_Information is
          Columns_Config.all := new Line_Info_Display_Array (1 .. 1);
          Columns_Config.all (1) := new Line_Info_Display_Record'
            (Identifier  => new String'(Identifier),
-            Starting_X  => 2,
+            Starting_X  => Default_Info_Col_Starting_X,
             Width       => Width,
             Every_Line  => Every_Line);
-
       else
          declare
             A : Line_Info_Display_Array
@@ -1135,9 +1158,7 @@ package body Src_Editor_Buffer.Line_Information is
            or else (Line_Nums = Some_Lines and then Editable_Line mod 5 = 0)
          then
             --  Center the number in the gutter
-            Num_Start_X := Gdouble
-              ((Gint (Buffer.Total_Column_Width)
-               + Line_Number_Character_Width)) / 2.0;
+            Num_Start_X := Gdouble (Buffer.Line_Numbers_Width);
 
             if Visualize_Internal_Buffers.Is_Active
               or else Editable_Line > 0

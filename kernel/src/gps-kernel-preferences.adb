@@ -703,16 +703,16 @@ package body GPS.Kernel.Preferences is
          Label   => -"Right margin",
          Path    => -"Editor:Display");
 
-      Line_Info_Min_Width := Manager.Create
-        (Name    => "Src-Editor-Gutter-Min-Width",
+      Gutter_Right_Margin := Manager.Create
+        (Name    => "Src-Editor-Gutter-Right-Margin",
          Minimum => 0,
          Maximum => 100,
-         Default => 25,
+         Default => 0,
          Doc     =>
-           -("The minimum width used to display the line numbers. "
-           & "If the specified width is not sufficient, "
-           & "GPS will calculate the needed width dynamically."),
-         Label   => -"Line numbers' width",
+           -("The space that will be added between the text contained in an "
+           & "editor and its gutter (i.e: where line numbers are drawn "
+           & "etc.)."),
+         Label   => -"Gutter right margin",
          Path    => -"Editor:Display");
 
       Highlight_Delimiters := Manager.Create
