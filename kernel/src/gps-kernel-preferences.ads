@@ -213,11 +213,17 @@ package GPS.Kernel.Preferences is
    Blocks_Style              : Variant_Preference;
    Types_Style               : Variant_Preference;
    Comments_Style            : Variant_Preference;
+   Strings_Style             : Variant_Preference;
+   Numbers_Style             : Variant_Preference;
    Code_Annotations_Style    : Variant_Preference;
    Annotated_Comments_Style  : Variant_Preference;
    Aspects_Style             : Variant_Preference;
-   Strings_Style             : Variant_Preference;
-   Numbers_Style             : Variant_Preference;
+   Aspects_Keywords_Style    : Variant_Preference;
+   Aspects_Blocks_Style      : Variant_Preference;
+   Aspects_Types_Style       : Variant_Preference;
+   Aspects_Comments_Style    : Variant_Preference;
+   Aspects_Strings_Style     : Variant_Preference;
+   Aspects_Numbers_Style     : Variant_Preference;
    Hyper_Links_Style         : Variant_Preference;
    Bookmark_Color            : Color_Preference;
 

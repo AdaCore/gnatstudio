@@ -936,6 +936,66 @@ package body GPS.Kernel.Preferences is
          Doc          => "",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
+      Aspects_Blocks_Style := Manager.Create
+        (Name            => "Src-Editor-Aspects-Block-Variant",
+         Label           => -"Ghost names",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg      => "#60615F",
+         Default_Bg      => "white",
+         Path            => -"Editor/Fonts & Colors:SPARK");
+
+      Aspects_Types_Style := Manager.Create
+        (Name         => "Src-Editor-Aspects-Type-Variant",
+         Label        => -"Types in ghost",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Doc             => "",
+         Default_Fg   => "#009900",
+         Default_Bg   => "white",
+         Path         => -"Editor/Fonts & Colors:SPARK");
+
+      Aspects_Keywords_Style := Manager.Create
+        (Name         => "Src-Editor-Aspects-Keywords-Variant",
+         Label        => -"Keywords in aspect",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Doc             => "",
+         Default_Fg      => "#0000E6",
+         Default_Bg      => "white",
+         Path            => -"Editor/Fonts & Colors:SPARK");
+
+      Aspects_Comments_Style := Manager.Create
+        (Name         => "Src-Editor-Aspects-Comments-Variant",
+         Label        => -"Comments in aspect",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#969696",
+         Default_Bg   => "white",
+         Path         => -"Editor/Fonts & Colors:SPARK");
+
+      Aspects_Strings_Style := Manager.Create
+        (Name         => "Src-Editor-Aspects-Strings-Variant",
+         Label        => -"Strings in aspect",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#CE7B00",
+         Default_Bg   => "white",
+         Path         => -"Editor/Fonts & Colors:SPARK");
+
+      Aspects_Numbers_Style := Manager.Create
+        (Name         => "Src-Editor-Aspects-Numbers-Variant",
+         Label        => -"Numbers in aspect",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#FF3333",
+         Default_Bg   => "white",
+         Path         => -"Editor/Fonts & Colors:SPARK");
+
       Ephemeral_Highlighting_Simple := Manager.Create
         (Name            => "Src-Editor-Ephemeral-Simple",
          Label           => -"Ephemeral highlighting (simple)",

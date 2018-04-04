@@ -85,13 +85,35 @@ package body GPS.Default_Styles is
          Comment_Text           => Comments_Style,
          Annotated_Keyword_Text => Keywords_Style,
          Annotated_Comment_Text => Annotated_Comments_Style,
-         Aspect_Keyword_Text    => Keywords_Style,
-         Aspect_Comment_Text    => Comments_Style,
+         Aspect_Keyword_Text    => Aspects_Keywords_Style,
+         Aspect_Comment_Text    => Aspects_Comments_Style,
          Aspect_Text            => Aspects_Style,
          Character_Text         => Strings_Style,
          String_Text            => Strings_Style);
 
+      Aspect_Styles : array (1 .. 4) of Style_Access;
+      pragma Unreferenced (Aspect_Styles);
+
    begin
+      Aspect_Styles (1) := M.Create_From_Preferences
+        (Key     => "aspect_block",
+         Style   => Default_Style,
+         Variant => Aspects_Blocks_Style);
+
+      Aspect_Styles (2) := M.Create_From_Preferences
+        (Key     => "aspect_type",
+         Style   => Default_Style,
+         Variant => Aspects_Types_Style);
+
+      Aspect_Styles (3) := M.Create_From_Preferences
+        (Key     => "aspect_string",
+         Style   => Default_Style,
+         Variant => Aspects_Strings_Style);
+
+      Aspect_Styles (4) := M.Create_From_Preferences
+        (Key     => "aspect_number",
+         Style   => Default_Style,
+         Variant => Aspects_Numbers_Style);
 
       ------------
       -- Editor --
