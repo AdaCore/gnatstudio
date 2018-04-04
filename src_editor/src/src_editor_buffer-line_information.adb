@@ -42,6 +42,7 @@ with Pango.Cairo;              use Pango.Cairo;
 with Commands.Editor;          use Commands.Editor;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
@@ -2676,10 +2677,19 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Highlight the inserted text
 
-      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Start_Buffer_Line - 1));
-      Get_Iter_At_Line (Buffer, End_Iter, Gint (Current_B - 1));
+      if Buffer.Use_Highlighting_Hook then
+         Highlight_Range_Hook.Run
+           (Kernel    => Buffer.Kernel,
+            Phase     => 2,
+            File      => Buffer.Filename,
+            From_Line => Natural (Start_Buffer_Line),
+            To_Line   => Natural (Current_B));
+      else
+         Get_Iter_At_Line (Buffer, Start_Iter, Gint (Start_Buffer_Line - 1));
+         Get_Iter_At_Line (Buffer, End_Iter, Gint (Current_B - 1));
 
-      Highlight_Slice (Buffer, Start_Iter, End_Iter);
+         Highlight_Slice (Buffer, Start_Iter, End_Iter);
+      end if;
 
       --  Redraw the side column
 
