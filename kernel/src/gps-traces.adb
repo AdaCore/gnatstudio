@@ -34,7 +34,7 @@ with Gtk.Cell_Renderer_Toggle;   use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
@@ -48,7 +48,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Default_Preferences;        use Default_Preferences;
 with Default_Preferences.GUI;    use Default_Preferences.GUI;
-with Dialog_Utils;
+with Dialog_Utils;               use Dialog_Utils;
 with Generic_Views;              use Generic_Views;
 
 with GPS.Kernel.MDI;
@@ -211,17 +211,49 @@ package body GPS.Traces is
       Editor        : access Traces_Editor_Record;
       Editor_View   : Gtk_Widget;
       Focus_Widget  : Gtk_Widget;
+      Group_Widget  : Dialog_Group_Widget;
+      Doc_Label     : Gtk_Label;
       pragma Unreferenced (Manager, Focus_Widget);
    begin
       Page_View := new Traces_Editor_Preferences_Page_View_Record;
       Dialog_Utils.Initialize (Page_View);
+
+      --  Add a 'Description' group widget that introduces the Traces
+      --  preferences page.
+
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Group_Widget.Initialize
+        (Parent_View         => Page_View,
+         Group_Name          => "Description",
+         Allow_Multi_Columns => False);
+
+      Gtk_New
+        (Doc_Label,
+         "This page allows you to enable or disable the GPS traces that will "
+         & "be written in the GPS log files. These traces are organized in "
+         & "different categories."
+         & ASCII.LF
+         & "Don't hesitate to enable all the traces of a given category when "
+         & "you encounter bugs in a specific area of GPS (e.g: DEBUG).");
+      Doc_Label.Set_Line_Wrap (True);
+      Doc_Label.Set_Alignment (0.0, 0.5);
+      Group_Widget.Append_Child (Doc_Label, Expand => False);
+
+      --  Add the 'Traces' editor group widget
+
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Group_Widget.Initialize
+        (Parent_View         => Page_View,
+         Group_Name          => "Traces",
+         Allow_Multi_Columns => False);
 
       Editor := new Traces_Editor_Record;
       Editor.Set_Kernel (Self.Kernel);
       Focus_Widget := Initialize (Editor);
       Editor_View := Create_Finalized_View (Editor);
 
-      Page_View.Append (Editor_View, Expand => True, Fill => True);
+      Group_Widget.Append_Child (Editor_View);
+
       Page_View.Editor := Editor;
 
       return Gtk_Widget (Page_View);
@@ -234,8 +266,6 @@ package body GPS.Traces is
    function Initialize
      (Editor : access Traces_Editor_Record'Class) return Gtk_Widget
    is
-      Scrolled      : Gtk_Scrolled_Window;
-      Box           : Gtk_Vbox;
       Col           : Gtk_Tree_View_Column;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
@@ -258,20 +288,9 @@ package body GPS.Traces is
         (Editor.Filter, Is_Visible'Access, Editor);
 
       Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
-
-      --  A hbox: on the left, the list of actions and help, on the left some
-      --  buttons to modify key shortcuts
-
-      Gtk_New_Vbox (Box);
-      Editor.Pack_Start (Box, Expand => True, Fill => True);
-
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Box.Pack_Start (Scrolled);
-
       Gtk_New (Editor.View, Editor.Sort);
       Editor.View.Set_Name ("Traces editor tree"); --  for testsuite
-      Scrolled.Add (Editor.View);
+      Editor.Pack_Start (Editor.View);
 
       --  The tree
 
