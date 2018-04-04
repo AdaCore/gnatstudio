@@ -186,7 +186,7 @@ package body LAL.Semantic_Trees is
       type Iterator is limited new Semantic_Tree_Iterator with record
          Done    : Boolean := True;
          Node    : Nodes.Node;
-         Cursor  : Libadalang.Iterators.Traverse_Iterator;
+         Cursor  : Libadalang.Iterators.Local_Find_Iterator;
       end record;
 
       overriding procedure Next (Self : in out Iterator);
@@ -926,11 +926,17 @@ package body LAL.Semantic_Trees is
       -------------------
 
       overriding function Root_Iterator
-        (Self : Tree) return Semantic_Tree_Iterator'Class is
+        (Self : Tree) return Semantic_Tree_Iterator'Class
+      is
+         Root      : constant Ada_Node :=
+           Libadalang.Analysis.Root (Self.Unit.all);
       begin
-         return Result : Iterators.Iterator do
-            Result.Node := (Kernel => Self.Kernel, Ada_Node => No_Ada_Node);
-            Result.Next;
+         return Result : Iterators.Iterator :=
+           (Cursor => Libadalang.Iterators.Find (Root, Is_Exposed'Access),
+            others => <>)
+         do
+            Result.Done := not Result.Cursor.Next (Result.Node.Ada_Node);
+            Result.Node.Kernel := Self.Kernel;
          end return;
       end Root_Iterator;
 
