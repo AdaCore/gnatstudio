@@ -17,9 +17,8 @@ text_variant_prefs = {
     "constant.character":     "strings",
     "constant.language":      "aspects",  # because why not
     "keyword":                "keywords",
-    "entity.name.type":       "types",
     "entity.name.type.class": "types",
-    "storage.type":           "types",
+    "entity.name.type":       "types",
     "string":                 "strings",
     "entity.name.function":   "blocks",
     "string.other.link":      "hyperlinks",
@@ -185,21 +184,24 @@ class TextmateTheme(object):
         d["current_block"] = cb_color
         d["annotations"] = ("DEFAULT", transparent, cl_color)
 
-        kw_color = fg_color
-        # Attempt to find the fg color for the keywords
-        if "keywords" in d:
-            kw_color = d["keywords"][1]
-
         # Compute values for the auto-highlight-occurrences
-        # For the simple case, mix the normal fg and keyword color
-        es_color = bg_color.mix(fg_color, 0.3)
-        d["ephemeral_simple"] = ("DEFAULT", transparent, es_color)
 
-        kw_color.a = 0.6
+        # For the simple case, mix the normal fg and keyword color
+        e_simple_color = bg_color.mix(fg_color, 0.3)
+        d["ephemeral_simple"] = ("DEFAULT", transparent, e_simple_color)
+
+        # For the smart cases, use preferably the keywords fg color but
+        # applying some alpha to it. Otherwise fallback to the default
+        # foreground color with some alpha too.
+        e_smart_color = Color(from_hex=fg_color.to_hex6_string())
+        if "keywords" in d:
+            e_smart_color = Color(from_hex=d["keywords"][1].to_hex6_string())
+
+        e_smart_color.a = 0.6
+
         d["ephemeral_smart"] = (
             "DEFAULT", transparent,
-            # For the smart case, use the keyword foreground as background
-            kw_color)
+            e_smart_color)
 
         return Theme(self.name, is_light, d)
 
