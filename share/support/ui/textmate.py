@@ -197,7 +197,7 @@ class TextmateTheme(object):
         if "keywords" in d:
             e_smart_color = Color(from_hex=d["keywords"][1].to_hex6_string())
 
-        e_smart_color.a = 0.6
+        e_smart_color.a = 0.2
 
         d["ephemeral_smart"] = (
             "DEFAULT", transparent,
