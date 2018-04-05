@@ -198,6 +198,35 @@ package body Dialog_Utils is
       Self.Number_Of_Children := Self.Number_Of_Children + 1;
    end Append;
 
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Self          : not null access Dialog_View_Record'Class;
+      Widget        : not null access Gtk_Widget_Record'Class;
+      Position      : Gint;
+      Expand        : Boolean := True;
+      Fill          : Boolean := True;
+      Add_Separator : Boolean := True) is
+   begin
+      Self.Append
+        (Widget        => Widget,
+         Expand        => Expand,
+         Fill          => Fill,
+         Add_Separator => Add_Separator);
+
+      Self.Main_Box.Reorder_Child
+        (Widget,
+         Position => Position);
+
+      if Add_Separator then
+         Self.Main_Box.Reorder_Child
+           (Self.Main_Box.Get_Child (Gint (Self.Number_Of_Children) - 1),
+            Position => Position + 1);
+      end if;
+   end Insert;
+
    -------------------------
    -- Remove_All_Children --
    -------------------------

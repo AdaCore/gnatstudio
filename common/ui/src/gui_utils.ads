@@ -40,11 +40,13 @@ with Gtk.Container;
 with Gtk.Enums;
 with Gtk.Event_Box;
 with Gtk.Handlers;
+with Gtk.Info_Bar;
 with Gtk.Label;
 with Gtk.List_Store;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
+with Gtk.Message_Dialog;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
@@ -652,9 +654,22 @@ package GUI_Utils is
       Label : out Gtk.Label.Gtk_Label);
    --  Create a new warning label, see the style defined in CSS
 
-  ----------
-  -- Misc --
-  ----------
+   --------------
+   -- Infobars --
+   --------------
+
+   function Create_Info_Bar
+     (Message      : String;
+      Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
+      return Gtk.Info_Bar.Gtk_Info_Bar;
+   --  Create an info bar that displays the given Message.
+   --  A little close button is added on the left of the infobar: when
+   --  clicked, this button hides the info bar.
+   --  The Message_Type parameter is used to set the style of the info bar.
+
+   ----------
+   -- Misc --
+   ----------
 
    function Create_Logo_And_Title_Area return Gtk.Widget.Gtk_Widget;
    --  Create a widget displaying the GPS logo and title (See the Welcome view

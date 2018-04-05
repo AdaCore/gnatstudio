@@ -1908,6 +1908,64 @@ package body GUI_Utils is
       Add (Event, Label);
    end Create_Blue_Label;
 
+   function On_Close_Info_Bar
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+
+   -----------------------
+   -- On_Close_Info_Bar --
+   -----------------------
+
+   function On_Close_Info_Bar
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Event);
+      Info_Bar : constant Gtk.Info_Bar.Gtk_Info_Bar :=
+                   Gtk.Info_Bar.Gtk_Info_Bar (Self);
+   begin
+      Info_Bar.Hide;
+
+      return True;
+   end On_Close_Info_Bar;
+
+   ---------------------
+   -- Create_Info_Bar --
+   ---------------------
+
+   function Create_Info_Bar
+     (Message      : String;
+      Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
+      return Gtk.Info_Bar.Gtk_Info_Bar
+   is
+      use Gtk.Message_Dialog;
+
+      Info_Bar : Gtk.Info_Bar.Gtk_Info_Bar;
+      Label    : Gtk_Label;
+      Event    : Gtk_Event_Box;
+      Close_UTF8 : constant String :=
+                     Character'Val (16#C3#) & Character'Val (16#97#);
+   begin
+      Gtk.Info_Bar.Gtk_New (Info_Bar);
+
+      Gtk_New (Event);
+      Gtk_New (Label, Close_UTF8);
+      Event.Add (Label);
+      Event.On_Button_Press_Event (On_Close_Info_Bar'Access, Info_Bar);
+      Gtk_New (Label, Message);
+
+      if Message_Type = Message_Error then
+         Get_Style_Context (Info_Bar).Add_Class ("display_error");
+      else
+         Info_Bar.Set_Message_Type (Message_Type);
+      end if;
+
+      Gtk_Container (Info_Bar.Get_Content_Area).Add (Event);
+      Gtk_Container (Info_Bar.Get_Content_Area).Add (Label);
+
+      return Info_Bar;
+   end Create_Info_Bar;
+
    ----------------------
    -- Create_Tree_View --
    ----------------------

@@ -82,6 +82,22 @@ package Dialog_Utils is
    --  If Add_Separator is True, a separator is appended before the given
    --  Widget.
 
+   procedure Insert
+     (Self          : not null access Dialog_View_Record'Class;
+      Widget        : not null access Gtk_Widget_Record'Class;
+      Position      : Gint;
+      Expand        : Boolean := True;
+      Fill          : Boolean := True;
+      Add_Separator : Boolean := True);
+   --  Insert an already built widget in the given dialog view, at Position
+   --  (starting from 0).
+   --
+   --  The Expand and Fill properties have the same role as in the
+   --  Gtk.Box.Pack_Start procedure.
+   --
+   --  If Add_Separator is True, a separator is appended before the given
+   --  Widget.
+
    procedure Remove_All_Children
      (Self : not null access Dialog_View_Record'Class);
    --  Remove all the children that have been appended to the dialog view

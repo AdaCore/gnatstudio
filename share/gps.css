@@ -116,7 +116,7 @@ GtkDialog {
    padding-right: 12px;
 }
 
-.dialog-views-groups-rows.display_error {
+.dialog-views-groups-rows.display_error, GtkInfoBar.display_error {
    background-color: @error-color;
 }
 
