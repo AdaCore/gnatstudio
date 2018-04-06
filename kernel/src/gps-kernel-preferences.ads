@@ -114,6 +114,13 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Strip_Trailing_Blanks_Policy);
    --  The list of possible behaviours for stripping trailing blanks
 
+   type Current_Line_Highlighting_Type is
+     (Whole_Line, Underline, Gutter_Only);
+   package Current_Line_Highlighting_Prefs is new
+     Default_Preferences.Enums.Generics (Current_Line_Highlighting_Type);
+   --  The list of possible choices regarding editors' current line
+   --  highlighting.
+
    ------------------------------------------
    -- Associating preferences with widgets --
    ------------------------------------------
@@ -222,7 +229,7 @@ package GPS.Kernel.Preferences is
    Block_Highlighting        : Boolean_Preference;
    Automatic_Syntax_Check    : Boolean_Preference;
    Current_Line_Color        : Color_Preference;
-   Current_Line_Thin         : Boolean_Preference;
+   Current_Line_Highlighting : Current_Line_Highlighting_Prefs.Preference;
    Current_Block_Color       : Color_Preference;
    Alter_Bg_For_RO_Files     : Boolean_Preference;
 

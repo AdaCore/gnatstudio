@@ -668,12 +668,13 @@ package body GPS.Kernel.Preferences is
          Label   => -"Tooltips",
          Path    => -"Editor:Display");
 
-      Current_Line_Thin := Manager.Create
-        (Name    => "Src-Editor-Current-Line-Thin",
-         Default => False,
+      Current_Line_Highlighting := Current_Line_Highlighting_Prefs.Create
+        (Manager => Manager,
+         Name    => "Src-Editor-Current-Line-Highlighting",
+         Default => Gutter_Only,
          Doc     =>
-            -"Underline current line rather than full background highlight.",
-         Label   => -"Draw current line as a thin line",
+            -"Select the way GPS will highlight the current line.",
+         Label   => -"Current line highlighting",
          Path    => -"Editor:Highlighting");
 
       Alter_Bg_For_RO_Files := Manager.Create

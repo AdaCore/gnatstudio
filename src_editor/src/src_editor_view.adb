@@ -68,7 +68,6 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
@@ -1070,24 +1069,30 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-            if View.Highlight_As_Line then
-               Set_Line_Width (Cr, 1.0);
+            case View.Highlight_As_Line is
+               when Whole_Line =>
+                  Set_Source_RGBA (Cr, View.Current_Line_Color);
+                  Cairo.Rectangle
+                    (Cr,
+                     0.0,
+                     Gdouble (Buffer_Line_Y),
+                     Gdouble (Rect.Width),
+                     Gdouble (Line_Height));
+                  Cairo.Fill (Cr);
+               when Underline =>
+                  Set_Line_Width (Cr, 1.0);
 
-               Draw_Line (Cr, View.Current_Line_Color,
-                          -1,
-                          Buffer_Line_Y + Line_Height,
-                          Rect.Width,
-                          Buffer_Line_Y + Line_Height);
-            else
-               Set_Source_RGBA (Cr, View.Current_Line_Color);
-               Cairo.Rectangle
-                 (Cr,
-                  0.0,
-                  Gdouble (Buffer_Line_Y),
-                  Gdouble (Rect.Width),
-                  Gdouble (Line_Height));
-               Cairo.Fill (Cr);
-            end if;
+                  Draw_Line (Cr, View.Current_Line_Color,
+                             -1,
+                             Buffer_Line_Y + Line_Height,
+                             Rect.Width,
+                             Buffer_Line_Y + Line_Height);
+               when Gutter_Only =>
+                  --  We don't need to draw anything in the text area when
+                  --  the current line should only be highlighted in the
+                  --  gutter.
+                  null;
+            end case;
          end if;
       end Draw_Below;
 
@@ -1777,7 +1782,7 @@ package body Src_Editor_View is
 
       Source.Current_Block_Color := Current_Block_Color.Get_Pref;
       Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
-      Source.Highlight_As_Line := Current_Line_Thin.Get_Pref;
+      Source.Highlight_As_Line := Current_Line_Highlighting.Get_Pref;
 
       if Source.Speed_Column_Buffer /= Null_Surface then
          Destroy (Source.Speed_Column_Buffer);
@@ -2509,14 +2514,17 @@ package body Src_Editor_View is
       end if;
 
       Draw_Line_Info
-        (Src_Buffer, View.Top_Line, View.Bottom_Line,
-         Buffer_Line_Type (View.Current_Line),
-         View.Highlight_As_Line,
-         Gtk_Text_View (View),
-         View.Area,
-         Num_Color,
-         View.Current_Line_Color,
-         Layout, Cr);
+        (Src_Buffer,
+         Top_Line     => View.Top_Line,
+         Bottom_Line  => View.Bottom_Line,
+         Current_Line => Buffer_Line_Type (View.Current_Line),
+         As_Line      => View.Highlight_As_Line = Underline,
+         View         => Gtk_Text_View (View),
+         Area         => View.Area,
+         Color        => Num_Color,
+         Line_Color   => View.Current_Line_Color,
+         Layout       => Layout,
+         Cr           => Cr);
 
       Unref (Layout);
    end Redraw_Columns;

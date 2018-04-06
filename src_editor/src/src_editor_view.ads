@@ -38,6 +38,7 @@ with GNATCOLL.VFS;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
 with Completion_Window;      use Completion_Window;
@@ -251,14 +252,13 @@ private
 
       Speed_Bar_Width     : Gint := 0;
       --  The width of the speed bar
-
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
       Current_Line_Color  : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Current   : Boolean := False;
-      Highlight_As_Line   : Boolean := False;
+      Highlight_As_Line   : Current_Line_Highlighting_Type := Gutter_Only;
 
       Cursor_Set_Explicitely : Boolean := False;
       --  True when the user requested to scroll to this position when the
