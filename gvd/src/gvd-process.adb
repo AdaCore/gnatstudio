@@ -1039,7 +1039,8 @@ package body GVD.Process is
          then Remote_Protocol
          else Project.Attribute_Value (Protocol_Attribute));
 
-      Executable : GNATCOLL.VFS.Virtual_File;
+      Executable    : GNATCOLL.VFS.Virtual_File;
+      Debugger_Kind : GVD.Types.Debugger_Type := Kind;
 
       ----------------------------
       -- Is_MI_Protocol_Allowed --
@@ -1099,22 +1100,42 @@ package body GVD.Process is
       begin
          if Project.Has_Attribute (Debugger_Command_Attribute) then
             --  return debuger from project
-            return Project.Attribute_Value (Debugger_Command_Attribute);
+            declare
+               Name : constant String := Project.Attribute_Value
+                 (Debugger_Command_Attribute);
+            begin
+               if Starts_With (Name, "lldb") then
+                  Debugger_Kind := GVD.Types.LLDB;
+               else
+                  Debugger_Kind := GVD.Types.Gdb_MI;
+               end if;
+
+               return Name;
+            end;
          end if;
 
-         declare
-            Tc : constant Toolchain :=
-              Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
-            Command : constant String := Get_Command (Tc, Toolchains.Debugger);
-         begin
-            if Command /= "" then
-               --  return debuger from toolchain
-               return Command;
-            end if;
-         end;
+         if not Active (Testsuite_Handle) then
+            declare
+               Tc : constant Toolchain :=
+                 Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+               Command : constant String := Get_Command
+                 (Tc, Toolchains.Debugger);
+            begin
+               if Command /= "" then
+                  --  return debuger from toolchain
+                  if Starts_With (Command, "lldb") then
+                     Debugger_Kind := GVD.Types.LLDB;
+                  else
+                     Debugger_Kind := GVD.Types.Gdb_MI;
+                  end if;
+
+                  return Command;
+               end if;
+            end;
+         end if;
 
          --  return default debugger for target
-         if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.LLDB then
+         if Debugger_Kind = GVD.Types.LLDB then
             return "lldb";
          else
             return Default_Gdb;
@@ -1134,11 +1155,11 @@ package body GVD.Process is
 
       Args2 := GNAT.OS_Lib.Argument_String_To_List (Get_Debugger_Executable);
 
-      Process.Descriptor.Debugger      := Kind;
+      Process.Descriptor.Debugger      := Debugger_Kind;
       Process.Descriptor.Program       := Executable;
       Process.Descriptor.Debugger_Name := new String'(Args2 (1).all);
 
-      case Kind is
+      case Debugger_Kind is
          when GVD.Types.Gdb =>
             Process.Debugger := new Gdb_Debugger;
 
