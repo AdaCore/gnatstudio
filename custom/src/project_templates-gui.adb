@@ -688,6 +688,7 @@ package body Project_Templates.GUI is
 
       Gtk_New (Assistant);
       Assistant.Set_Name ("Project Templates Assistant");
+      Assistant.Set_Modal (True);
       Assistant.Set_Transient_For (Parent);
 
       Gtk_New_Vbox (Page_Box, Homogeneous => False);
