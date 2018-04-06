@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -146,7 +146,8 @@ package Browsers.Canvas is
 
    function Load_From_XML
      (Self : not null access General_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class is (null);
+      Dummy_Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class is (null);
    procedure Load_From_XML
      (Self     : not null access General_Browser_Record;
       Node     : XML_Utils.Node_Ptr;

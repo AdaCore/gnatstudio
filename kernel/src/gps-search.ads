@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013-2017, AdaCore                     --
+--                     Copyright (C) 2013-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -455,7 +455,7 @@ package GPS.Search is
 
    function Complete_Suffix
      (Self      : not null access Search_Provider;
-      Pattern   : not null access Search_Pattern'Class)
+      Dummy_Pattern   : not null access Search_Pattern'Class)
       return String is ("");
    --  Used to implement completion through <tab>.
    --  Returns the possible completion for pattern.

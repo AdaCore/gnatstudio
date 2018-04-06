@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2017, AdaCore                     --
+--                     Copyright (C) 2005-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -261,7 +261,7 @@ package GPS.Kernel.MDI is
 
    function Build_Context
      (Self  : not null access GPS_MDI_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
+      Dummy_Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
      is (New_Context (Self.Kernel, Get_Module_From_Child (Self)));
    --  Return the current context for Self.

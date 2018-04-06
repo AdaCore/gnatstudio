@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2017, AdaCore                     --
+--                     Copyright (C) 2009-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -373,7 +373,7 @@ private
 
    overriding function Get
      (Self : Dummy_Semantic_Node_Array;
-      Index : Positive) return Semantic_Node'Class
+      Dummy_Index : Positive) return Semantic_Node'Class
    is (No_Semantic_Node);
 
    overriding function Length
@@ -439,7 +439,7 @@ private
 
    overriding function Profile
      (Self             : Dummy_Semantic_Node;
-      Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
+      Dummy_Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
      is (GNATCOLL.Symbols.Empty_String);
 
    overriding function Definition
@@ -489,8 +489,8 @@ private
       is (No_Semantic_Node_Array);
 
    overriding function Node_At
-     (Self : Dummy_Semantic_Tree; Sloc : Sloc_T;
-      Category_Filter : Category_Array := Null_Category_Array)
+     (Self : Dummy_Semantic_Tree; Dummy_Sloc : Sloc_T;
+      Dummy_Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class is (No_Semantic_Node);
 
    overriding function File

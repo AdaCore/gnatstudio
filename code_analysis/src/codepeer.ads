@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -88,7 +88,7 @@ package CodePeer is
 
    function Get_Name (Self : Message_Category) return String;
 
-   function Get_Tooltip (Item : Message_Category) return String is ("");
+   function Get_Tooltip (Dummy_Item : Message_Category) return String is ("");
    --  Returns tooltip's text to be displayed for given message category.
 
    type Message_Category_Access is access all Message_Category;

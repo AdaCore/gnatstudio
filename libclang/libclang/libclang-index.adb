@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2014-2017, AdaCore                   --
+--                       Copyright (C) 2014-2018, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -305,8 +305,8 @@ package body Libclang.Index is
       end Index_Reference_Internal;
 
       function Imported_AST_File_Internal
-        (arg1 : CXClientData;
-         arg2 : access constant CXIdxImportedASTFileInfo)
+        (Dummy_arg1 : CXClientData;
+         Dummy_arg2 : access constant CXIdxImportedASTFileInfo)
          return CXIdxClientASTFile
       is
         (CXIdxClientASTFile (System.Null_Address));

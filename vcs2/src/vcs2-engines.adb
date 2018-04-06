@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -113,7 +113,7 @@ package body VCS2.Engines is
       From_User : Boolean) is null;
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
-      File    : Virtual_File) return VCS_File_Properties
+      Dummy_File    : Virtual_File) return VCS_File_Properties
      is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
    overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Dummy_VCS_Engine;

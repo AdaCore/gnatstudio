@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -967,8 +967,8 @@ private
 
    overriding function Create_Mark
      (This : Dummy_Editor_Location;
-      Name : String := "";
-      Left_Gravity : Boolean := True)
+      Dummy_Name : String := "";
+      Dummy_Left_Gravity : Boolean := True)
       return Editor_Mark'Class is (Nil_Editor_Mark);
 
    overriding function Forward_Char
@@ -1078,14 +1078,14 @@ private
 
    overriding function New_Location_Offset
      (This   : Dummy_Editor_Buffer;
-      Line   : Integer;
-      Column : Character_Offset_Type) return Editor_Location'Class
+      Dummy_Line   : Integer;
+      Dummy_Column : Character_Offset_Type) return Editor_Location'Class
    is
       (Nil_Editor_Location);
 
    overriding function New_Location
      (This   : Dummy_Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class
+      Dummy_Offset : Natural) return Editor_Location'Class
    is (Nil_Editor_Location);
 
    overriding function New_View
@@ -1180,7 +1180,8 @@ private
    overriding function File (This : Dummy_Editor_Buffer) return Virtual_File;
 
    overriding function Has_Information_Column
-      (This : Dummy_Editor_Buffer; Id : String) return Boolean is (False);
+     (This : Dummy_Editor_Buffer;
+      Dummy_Id : String) return Boolean is (False);
    overriding procedure Copy
      (This   : Dummy_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
@@ -1217,7 +1218,7 @@ private
 
    overriding function Add_Cursor
      (This : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) return Editor_Cursor'Class
+      Dummy_Location : Editor_Location'Class) return Editor_Cursor'Class
    is
       (Nil_Editor_Cursor);
 
@@ -1301,7 +1302,7 @@ private
    overriding function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return Boolean;
    overriding function Get_Property
-     (This : Dummy_Editor_Overlay; Name : String) return Integer is (0);
+     (This : Dummy_Editor_Overlay; Dummy_Name : String) return Integer is (0);
    overriding procedure Set_Property
      (This : Dummy_Editor_Overlay; Name : String; Value : String) is null;
    overriding procedure Set_Property

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2014-2017, AdaCore                     --
+--                     Copyright (C) 2014-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1649,7 +1649,7 @@ package body Clang_Xref is
      (Client_Data : in out Indexer_Data; Info : Clang_Ref_Info);
 
    function Abort_Query
-     (Client_Data : in out Indexer_Data) return Boolean is (False);
+     (Dummy_Client_Data : in out Indexer_Data) return Boolean is (False);
    procedure Diagnostic
      (Client_Data : in out Indexer_Data;
       Diagnostics : Clang_Diagnostic_Set) is null;

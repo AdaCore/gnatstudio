@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2017, AdaCore                     --
+--                     Copyright (C) 2007-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -334,7 +334,8 @@ package Switches_Chooser is
 
       function Get_Tool_By_Name
         (Editor : Root_Switches_Editor;
-         Tool_Name : String) return Root_Switches_Editor_Access is (null);
+         Dummy_Tool_Name : String)
+         return Root_Switches_Editor_Access is (null);
       --  Return the editor for the switches of Tool. By default, this returns
       --  null. When the editor is found, it is possible that changing some
       --  switches in Editor will also impact switches from the returned editor

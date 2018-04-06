@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -85,22 +85,22 @@ private
 
    overriding function Is_Changed
      (Self    : access Messages_Model_Record;
-      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
-     is (True);
+      Dummy_Project : Code_Analysis.Tree_Models.Project_Item_Access)
+      return Boolean is (True);
    --  Returns True if specified project data has been changed
 
    overriding function Is_Changed
      (Self    : access Messages_Model_Record;
-      Project : Code_Analysis.Tree_Models.Project_Item_Access;
-      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
-     is (True);
+      Dummy_Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      Dummy_File    : Code_Analysis.Tree_Models.File_Item_Access)
+      return Boolean is (True);
    --  Returns True if specified file data has been changed
 
    overriding function Is_Changed
      (Self       : access Messages_Model_Record;
-      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
-      File       : Code_Analysis.Tree_Models.File_Item_Access;
-      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+      Dummy_Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      Dummy_File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Dummy_Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
       return Boolean is (True);
    --  Returns True if specified subprogram data has been changed
 

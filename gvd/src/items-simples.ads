@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -127,8 +127,8 @@ private
    type Base_Simple_Type is abstract new Generic_Type with null record;
    overriding function Replace
      (Parent       : access Base_Simple_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
+      Dummy_Current      : access Generic_Type'Class;
+      Dummy_Replace_With : access Generic_Type'Class)
       return Generic_Type_Access
    is (null);
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -219,11 +219,11 @@ package body Browsers.Canvas is
      (Marker : not null access Browser_Marker_Data) return XML_Utils.Node_Ptr;
    overriding function Similar
      (Left  : not null access Browser_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Boolean
+      Dummy_Right : not null access Location_Marker_Data'Class) return Boolean
      is (False);
    overriding function Distance
      (Left  : not null access Browser_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Integer
+      Dummy_Right : not null access Location_Marker_Data'Class) return Integer
      is (Integer'Last);
    --  See inherited documentation
 

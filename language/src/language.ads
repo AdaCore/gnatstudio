@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -659,7 +659,7 @@ package Language is
 
    function Should_Refresh_Constructs_Tree
      (Lang   : not null access Language_Root;
-      File   : GNATCOLL.VFS.Virtual_File)
+      Dummy_File   : GNATCOLL.VFS.Virtual_File)
       return Boolean is (False);
    --  Whether Parse_Constructs should be called to refresh the contents of
    --  the semantic tree associated with the file.
@@ -669,8 +669,8 @@ package Language is
 
    function Clicked_On_Construct
      (Lang      : not null access Language_Root;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Construct : Semantic_Node_Info) return Boolean is (False);
+      Dummy_File      : GNATCOLL.VFS.Virtual_File;
+      Dummy_Construct : Semantic_Node_Info) return Boolean is (False);
    --  Called when the user clicked on a construct (in particular in the
    --  Outline).
    --  This function should return True if it handled the click, and False for
@@ -680,7 +680,7 @@ package Language is
 
    function Get_Last_Selected_Construct_ID
      (Lang : not null access Language_Root;
-      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
+      Dummy_File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
    is
       (GNATCOLL.Symbols.No_Symbol);
    --  Called when the Outline view needs to reselect the last selected

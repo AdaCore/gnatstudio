@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -142,7 +142,7 @@ package GPS.Kernel.Modules is
 
    function Bookmark_Handler
      (Module : access Module_ID_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
+      Dummy_Load   : XML_Utils.Node_Ptr := null) return Location_Marker
      is (No_Marker);
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the

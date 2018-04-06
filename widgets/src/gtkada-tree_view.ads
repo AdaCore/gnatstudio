@@ -302,7 +302,7 @@ package Gtkada.Tree_View is
 
    function Is_Visible
      (Self    : not null access Tree_View_Record;
-      Iter    : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is (True);
+      Dummy_Iter    : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is (True);
    --  Whether the given row in the model should be made visible (along with
    --  its parents)
    --  Iter applies to Self.Model

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -51,7 +51,7 @@ package GPS.Markers is
 
    function Similar
      (Left  : not null access Location_Marker_Data;
-      Right : not null access Location_Marker_Data'Class)
+      Dummy_Right : not null access Location_Marker_Data'Class)
       return Boolean is (False);
    --  Return True if Left and Right point to the same location in the sense
    --  that GPS should not add a new marker in history for two locations that
@@ -59,7 +59,7 @@ package GPS.Markers is
 
    function Distance
      (Left  : not null access Location_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Integer
+      Dummy_Right : not null access Location_Marker_Data'Class) return Integer
       is (Integer'Last);
    --  Return a value represented distance between two locations.
    --  Return Integer'Last if locations are not comparable, for example marks

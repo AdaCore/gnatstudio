@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2017, AdaCore                     --
+--                     Copyright (C) 2009-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -66,7 +66,7 @@ package Engine_Wrappers is
 
    function Get_Documentation
      (Proposal : Root_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      Dummy_Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
       return String is ("");
    --  Some extra explanation on the proposal, to be displayed in the
    --  completion dialog. Typically, this will display the documentation for

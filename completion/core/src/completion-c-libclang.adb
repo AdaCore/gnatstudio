@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2014-2017, AdaCore                     --
+--                     Copyright (C) 2014-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -67,8 +67,8 @@ package body Completion.C.Libclang is
 
    overriding function Match
      (Proposal   : Libclang_Completion;
-      Context    : Completion_Context;
-      Offset     : String_Index_Type) return Boolean is (True);
+      Dummy_Context    : Completion_Context;
+      Dummy_Offset     : String_Index_Type) return Boolean is (True);
    --  This function is not actually used, need to be clarified some day ???
 
    overriding function Get_Action_Name
@@ -84,7 +84,7 @@ package body Completion.C.Libclang is
 
    overriding function Get_Completion
      (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db       : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.UTF8_String is (+Proposal.Completion);
    --  Return stored completion string
 
@@ -104,7 +104,7 @@ package body Completion.C.Libclang is
 
    overriding function Get_Label
      (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db       : access Xref.General_Xref_Database_Record'Class)
       return String is (To_String (Proposal.Label));
    --  Return stored label directly
 

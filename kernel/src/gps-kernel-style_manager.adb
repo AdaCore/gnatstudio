@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2015-2017, AdaCore                   --
+--                       Copyright (C) 2015-2018, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -103,7 +103,7 @@ package body GPS.Kernel.Style_Manager is
    end record;
    overriding function Depends_On_Pref
      (Source : Source_Shade_Or_Lighten;
-      Pref   : access Preference_Record'Class) return Boolean is (False);
+      Dummy_Pref   : access Preference_Record'Class) return Boolean is (False);
    overriding procedure Apply
      (Source : Source_Shade_Or_Lighten;
       Style  : in out Style_Record);
@@ -113,7 +113,7 @@ package body GPS.Kernel.Style_Manager is
    type Source_Override is new Root_Source with null record;
    overriding function Depends_On_Pref
      (Source : Source_Override;
-      Pref   : access Preference_Record'Class) return Boolean is (False);
+      Dummy_Pref   : access Preference_Record'Class) return Boolean is (False);
    overriding procedure Apply
      (Source : Source_Override;
       Style  : in out Style_Record) is null;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -72,7 +72,7 @@ package Project_Viewers is
 
    function Is_Visible
      (Self         : not null access Project_Editor_Page_Record;
-      Languages    : GNAT.Strings.String_List) return Boolean is (True);
+      Dummy_Languages    : GNAT.Strings.String_List) return Boolean is (True);
    --  Called to check whether a page should be visible, given the current
    --  list of languages.
    --  This function should also take care of hidding nested pages, when they

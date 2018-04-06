@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                        Copyright (C) 2013-2017, AdaCore                  --
+--                        Copyright (C) 2013-2018, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -210,7 +210,7 @@ package GPS.Core_Kernels is
 
    function Get_Scheduled_Command
      (Kernel  : not null access Core_Kernel_Record;
-      Command : access Commands.Root_Command'Class)
+      Dummy_Command : access Commands.Root_Command'Class)
       return Commands.Command_Access
      is (null);
    --  Return the command that wraps Command in the task manager. Such a

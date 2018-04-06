@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2000-2017, AdaCore                     --
+--                     Copyright (C) 2000-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -309,8 +309,8 @@ private
       is (null);
    overriding function Field_Name
      (Self : Empty_Iterator;
-      Lang : not null access Language_Root'Class;
-      Base : String := "") return String is ("");
+      Dummy_Lang : not null access Language_Root'Class;
+      Dummy_Base : String := "") return String is ("");
 
    type Field_Descr is record
       Name : Unbounded_String := Null_Unbounded_String;

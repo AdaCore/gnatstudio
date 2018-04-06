@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -350,19 +350,19 @@ package body GPS.Kernel.Modules.UI is
    pragma Convention (C, On_GPS_Action_Get_Name);
 
    function On_GPS_Action_Get_Parameter_Type
-     (Self : Gaction) return Gvariant_Type is (null);
+     (Dummy_Self : Gaction) return Gvariant_Type is (null);
    pragma Convention (C, On_GPS_Action_Get_Parameter_Type);
 
    function On_GPS_Action_Get_State
-     (Self : Gaction) return System.Address is (System.Null_Address);
+     (Dummy_Self : Gaction) return System.Address is (System.Null_Address);
    pragma Convention (C, On_GPS_Action_Get_State);
 
    function On_GPS_Action_Get_State_Hint
-     (Self : Gaction) return System.Address is (System.Null_Address);
+     (Dummy_Self : Gaction) return System.Address is (System.Null_Address);
    pragma Convention (C, On_GPS_Action_Get_State_Hint);
 
    function On_GPS_Action_Get_State_Type
-     (Self : Gaction) return Gvariant_Type is (null);
+     (Dummy_Self : Gaction) return Gvariant_Type is (null);
    pragma Convention (C, On_GPS_Action_Get_State_Type);
 
    Property_Name           : constant Property_Id := 1;

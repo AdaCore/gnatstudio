@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -127,7 +127,7 @@ package body Gtkada.Action_Combo_Tool is
      (Self    : not null access Action_Combo_Tool_Record'Class;
       Action  : String)
    is
-      function Predicate (Item : String; Data : User_Data) return Boolean
+      function Predicate (Dummy_Item : String; Data : User_Data) return Boolean
          is (Action_User_Data_Access (Data).Action = Action);
    begin
       Self.Remove_If (Predicate'Access);

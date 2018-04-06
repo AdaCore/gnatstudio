@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2002-2017, AdaCore                     --
+--                     Copyright (C) 2002-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -78,7 +78,8 @@ package body Ada_Module is
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
-     (Kernel : not null access Kernel_Handle_Record'Class; Lang : String)
+     (Dummy_Kernel : not null access Kernel_Handle_Record'Class;
+      Dummy_Lang : String)
       return not null access Project_Editor_Page_Record'Class is
       (new Ada_Naming_Editor_Record);
    --  Create the naming scheme editor page

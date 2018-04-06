@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,8 +19,6 @@ with Gdk.RGBA;     use Gdk.RGBA;
 with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Pango.Font;   use Pango.Font;
-
-with Language;     use Language;
 
 package body Src_Highlighting is
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -74,7 +74,7 @@ private
 
    overriding function To_Completion_Id
      (Proposal : Alias_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db       : access Xref.General_Xref_Database_Record'Class)
    return Completion_Id is (Proposal.Name'Length,
                             "ALIAS   ",
                             Proposal.Name.all,
