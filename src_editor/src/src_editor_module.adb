@@ -18,7 +18,6 @@
 with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
 
@@ -1272,14 +1271,11 @@ package body Src_Editor_Module is
    procedure Regenerate_Recent_Files_Menu
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      M               : constant Source_Editor_Module :=
-                          Source_Editor_Module (Src_Editor_Module_Id);
-      V               : constant String_List_Access :=  --  Do not free
-                          Get_History (Kernel.Get_History.all, Hist_Key);
-      F               : Virtual_File;
-      File_Menu_Paths : constant Unbounded_String_Array := Split
-        (To_String (Menu_List_For_Action ("open file")),
-         On => '/');
+      M : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      V : constant String_List_Access :=  --  Do not free
+        Get_History (Kernel.Get_History.all, Hist_Key);
+      F : Virtual_File;
    begin
       --  Remove old menus and actions
 
@@ -1288,12 +1284,7 @@ package body Src_Editor_Module is
       end loop;
       M.Recent_File_Actions.Clear;
 
-      --  Regenerate the menus and actions.
-      --
-      --  We retrieve the toplevel menu from the 'open file' action: this
-      --  ensures that the 'open recent files' and the 'open file' actions are
-      --  always in the same toplevel menu, even when menus.xml has been
-      --  changed by the user.
+      --  Regenerate the menus and actions
 
       if V /= null then
          for N of V.all loop
@@ -1307,8 +1298,7 @@ package body Src_Editor_Module is
                Category    => "Internal");
             Register_Menu
               (Kernel,
-               Path     => To_String (File_Menu_Paths (File_Menu_Paths'First))
-               & "/Open Recent Files/"
+               Path     => "/File/Open Recent Files/"
                & Escape_Underscore (F.Display_Base_Name),
                Action   => "open recent file: " & N.all);
             M.Recent_File_Actions.Append ("open recent file: " & N.all);
