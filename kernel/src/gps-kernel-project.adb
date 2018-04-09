@@ -207,19 +207,32 @@ package body GPS.Kernel.Project is
    procedure Save_Scenario_Vars
      (Self : not null access GPS_Project_Tree'Class)
    is
-      Vars : access Scenario_Vars_Property;
-      Known_Vars : constant Scenario_Variable_Array := Self.Scenario_Variables;
+      Vars         : access Scenario_Vars_Property;
+      Typed_Vars   : constant Scenario_Variable_Array :=
+                       Self.Scenario_Variables;
+      Untyped_Vars : constant Untyped_Variable_Array :=
+                       Self.Untyped_Variables;
    begin
       --  Save existing scenario in the properties, so that we can restore it
       --  when the project is reloaded
 
       if Self.Status = From_File then
          Vars := new Scenario_Vars_Property;
-         for V in Known_Vars'Range loop
+
+         --  Save the typed scenario variables
+         for Var of Typed_Vars loop
             Vars.Map.Include
-              (External_Name (Known_Vars (V)),
-               Value (Known_Vars (V)));
+              (External_Name (Var),
+               Value (Var));
          end loop;
+
+         --  Save the untyped scenario variables
+         for Var of Untyped_Vars loop
+            Vars.Map.Include
+              (External_Name (Var),
+               Value (Var));
+         end loop;
+
          Set_Property
            (Kernel     => Self.Handle,
             File       => Self.Root_Project.Project_Path,
@@ -787,6 +800,17 @@ package body GPS.Kernel.Project is
    begin
       return Kernel.Registry.Tree.Scenario_Variables;
    end Scenario_Variables;
+
+   -----------------------
+   -- Untyped_Variables --
+   -----------------------
+
+   function Untyped_Variables
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Untyped_Variable_Array is
+   begin
+      return Kernel.Registry.Tree.Untyped_Variables;
+   end Untyped_Variables;
 
    ------------------
    -- Save_Project --

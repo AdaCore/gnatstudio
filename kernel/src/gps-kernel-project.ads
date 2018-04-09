@@ -166,6 +166,12 @@ package GPS.Kernel.Project is
    --  that future calls are fast.
    --  See also the signal "variable_changed" for the kernel.
 
+   function Untyped_Variables
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.Projects.Untyped_Variable_Array;
+   --  Return the list of untyped variables used in the whole project
+   --  tree. This list is cached so that future calls are fast.
+
    ----------------
    -- Attributes --
    ----------------

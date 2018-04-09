@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
 with Glib;                     use Glib;
@@ -85,6 +86,7 @@ package body Scenario_Views is
    type Variable_Combo_Box_Record is new Gtk_Combo_Box_Text_Record with record
       Kernel   : Kernel_Handle;
       Var_Name : Unbounded_String;
+      Untyped  : Boolean := False;
    end record;
    type Variable_Combo_Box is access all Variable_Combo_Box_Record'Class;
 
@@ -92,6 +94,22 @@ package body Scenario_Views is
      (Element_Type    => Variable_Combo_Box,
       "="             => "=");
    use Variable_Combo_Lists;
+
+   function Get_Current_Value
+     (Combo  : not null access Variable_Combo_Box_Record'Class)
+      return String;
+   --  Return the current value in the project tree of the scenario variable
+   --  associated with the given combo.
+
+   function Has_Valid_Value
+     (Combo : not null access Variable_Combo_Box_Record'Class)
+      return Boolean;
+   --  Return True if the combo's active text is a valid value for the
+   --  associated variable or False otherwise.
+
+   procedure Apply_Value
+     (Combo : not null access Variable_Combo_Box_Record'Class);
+   --  Apply the value currently set in the combo to the associated variable.
 
    type Scenario_View_Module_Record is new Module_ID_Record with record
       Modes : Build_Mode_Lists.List;
@@ -285,6 +303,121 @@ package body Scenario_Views is
       end if;
    end Execute;
 
+   -----------------------
+   -- Get_Current_Value --
+   -----------------------
+
+   function Get_Current_Value
+     (Combo  : not null access Variable_Combo_Box_Record'Class)
+      return String
+   is
+      Tree     : constant Project_Tree_Access := Combo.Kernel.Registry.Tree;
+      Var_Name : constant String := To_String (Combo.Var_Name);
+   begin
+      if Tree = null then
+         return "";
+      end if;
+
+      if Combo.Untyped then
+         declare
+            Untyped_Var : constant Untyped_Variable :=
+                            Tree.Get_Untyped_Variable
+                              (Var_Name);
+         begin
+            return Value (Untyped_Var);
+         end;
+      else
+         declare
+            Typed_Var : constant Scenario_Variable :=
+                          Tree.Scenario_Variables
+                            (Var_Name);
+         begin
+            return Value (Typed_Var);
+         end;
+      end if;
+   end Get_Current_Value;
+
+   ---------------------
+   -- Has_Valid_Value --
+   ---------------------
+
+   function Has_Valid_Value
+     (Combo : not null access Variable_Combo_Box_Record'Class)
+      return Boolean
+   is
+      Tree  : constant Project_Tree_Access := Combo.Kernel.Registry.Tree;
+      Value : constant String := Combo.Get_Active_Text;
+   begin
+      if Tree = null then
+         return True;
+      end if;
+
+      --  Always return True for untyped variables.
+      --  For typed ones, verify that the value set in the combo is contained
+      --  in the variable's possible values.
+
+      if Combo.Untyped then
+         return True;
+      else
+         declare
+
+            Var             : constant Scenario_Variable :=
+                                Tree.Scenario_Variables
+                                  (To_String (Combo.Var_Name));
+            Possible_Values : GNAT.Strings.String_List :=
+                                Tree.Possible_Values_Of (Var);
+         begin
+            return Is_Valid : constant Boolean :=
+              (for some Possible_Value of Possible_Values =>
+                 Value = Possible_Value.all)
+            do
+               GNATCOLL.Utils.Free (Possible_Values);
+            end return;
+         end;
+      end if;
+   end Has_Valid_Value;
+
+   -----------------
+   -- Apply_Value --
+   -----------------
+
+   procedure Apply_Value
+     (Combo : not null access Variable_Combo_Box_Record'Class)
+   is
+      Var_Name : constant String := To_String (Combo.Var_Name);
+      Value    : constant String := Combo.Get_Active_Text;
+      Tree     : constant Project_Tree_Access := Combo.Kernel.Registry.Tree;
+   begin
+      if Tree = null then
+         return;
+      end if;
+
+      Trace (Me, "Set value of '" & Var_Name & "' to '"
+             & Value & "'");
+
+      if Combo.Untyped then
+         declare
+            Untyped_Var : Untyped_Variable :=
+                            Tree.Get_Untyped_Variable
+                              (Var_Name);
+         begin
+            Set_Value (Untyped_Var, Value);
+            Tree.Change_Environment
+              (Vars  => All_Scenarios,
+               UVars => (1 => Untyped_Var));
+         end;
+      else
+         declare
+            Typed_Var : Scenario_Variable :=
+                          Tree.Scenario_Variables
+                            (Var_Name);
+         begin
+            Set_Value (Typed_Var, Value);
+            Tree.Change_Environment (Vars => (1 => Typed_Var));
+         end;
+      end if;
+   end Apply_Value;
+
    ----------------
    -- Initialize --
    ----------------
@@ -431,33 +564,17 @@ package body Scenario_Views is
       pragma Unreferenced (Self);
       K      : constant Kernel_Handle     := Get_Kernel (Context.Context);
       V      : constant Scenario_View     := Scenario_Views.Retrieve_View (K);
-      Scenar : Scenario_Variable_Array    := Scenario_Variables (K);
    begin
-      if not V.Variable_Combo_List.Is_Empty then
-         --  Set val of the scenario variables
+      --  Apply the values of the scenario variables
 
+      if not V.Variable_Combo_List.Is_Empty then
          for Variable_Combo of V.Variable_Combo_List loop
-            declare
-               Value : constant String := Variable_Combo.Get_Active_Text;
-               Var_Name : constant String := To_String
-                 (Variable_Combo.Var_Name);
-            begin
-               --  Find the Variable with the same name as Combo
-               for J in Scenar'Range loop
-                  if External_Name (Scenar (J)) = Var_Name
-                    and then Value /= ""
-                  then
-                     Trace (Me, "Set value of '" & Var_Name & "' to '"
-                            & Value & "'");
-                     Set_Value (Scenar (J), Value);
-                     Get_Registry (K).Tree.Change_Environment
-                       ((1 => Scenar (J)));
-                  end if;
-               end loop;
-            end;
+            Apply_Value (Variable_Combo);
          end loop;
       end if;
+
       Recompute_View (K);
+
       return Commands.Success;
    end Execute;
 
@@ -600,9 +717,6 @@ package body Scenario_Views is
       pragma Unreferenced (Params);
       Has_Modif : Boolean := False;
       Var_Name  : constant String := To_String (Combo.Var_Name);
-      Var       : constant Scenario_Variable :=
-                    Get_Registry (Combo.Kernel).Tree.Scenario_Variables
-                         (Var_Name);
       Ent       : constant Gtk_Entry := Gtk_Entry (Combo.Get_Child);
    begin
       --  Hide the error info bar when some variables' values are modified
@@ -613,7 +727,7 @@ package body Scenario_Views is
 
       --  Update the combo's entry icons if the value has been modified
 
-      if Combo.Get_Active_Text /= Value (Var) then
+      if Combo.Get_Active_Text /= Get_Current_Value (Combo) then
          Ent.Set_Icon_From_Icon_Name
            (Icon_Pos  => Gtk_Entry_Icon_Primary,
             Icon_Name => Modified_Icon_Name);
@@ -682,22 +796,16 @@ package body Scenario_Views is
    procedure On_Apply_Button_Clicked
      (Self : access Glib.Object.GObject_Record'Class)
    is
-      View    : constant Scenario_View := Scenario_View (Self);
-      Success : Boolean with Unreferenced;
+      View         : constant Scenario_View := Scenario_View (Self);
+      Success      : Boolean with Unreferenced;
       Should_Apply : Boolean := True;
    begin
       for Combo of View.Variable_Combo_List loop
          declare
             Var_Name  : constant String := To_String (Combo.Var_Name);
-            Var       : constant Scenario_Variable :=
-                          Get_Registry (Combo.Kernel).Tree.Scenario_Variables
-                          (Var_Name);
-            Values    : constant GNAT.Strings.String_List := Get_Registry
-              (View.Kernel).Tree.Possible_Values_Of (Var);
+            Value     : constant String := Combo.Get_Active_Text;
             Ent       : constant Gtk_Entry := Gtk_Entry (Combo.Get_Child);
-            Cur_Value : constant String := Ent.Get_Text;
-            Is_Valid  : constant Boolean :=
-                          (for some Value of Values => Value.all = Cur_Value);
+            Is_Valid  : constant Boolean := Has_Valid_Value (Combo);
          begin
             Should_Apply := Should_Apply and Is_Valid;
 
@@ -707,9 +815,15 @@ package body Scenario_Views is
                   Icon_Name => Not_Valid_Icon_Name);
                View.Scenar_View.Display_Information_On_Child
                  (Child_Key => Var_Name,
-                  Message   => "'" & Cur_Value & "' is not a valid value for "
+                  Message   => "'" & Value & "' is not a valid value for "
                   & Var_Name,
                   Is_Error  => True);
+            end if;
+
+            --  Append the value to the combo for untyped variables.
+
+            if Combo.Untyped then
+               Add_Unique_Combo_Entry (Combo, Value);
             end if;
          end;
       end loop;
@@ -782,6 +896,78 @@ package body Scenario_Views is
       Group      : Dialog_Group_Widget;
       View       : constant Scenario_View := Scenario_View (Self.View);
       Show_Build : constant Boolean := Show_Build_Modes.Get_Pref;
+
+      procedure Add_Scenario_Variable_Combo
+        (Name            : String;
+         Possible_Values : GNAT.Strings.String_List;
+         Value           : String;
+         Untyped         : Boolean);
+
+      ---------------------------------
+      -- Add_Scenario_Variable_Combo --
+      ---------------------------------
+
+      procedure Add_Scenario_Variable_Combo
+        (Name            : String;
+         Possible_Values : GNAT.Strings.String_List;
+         Value           : String;
+         Untyped         : Boolean)
+      is
+         Flow_Child : Gtk_Widget;
+      begin
+         Combo := new Variable_Combo_Box_Record'
+           (GObject_Record with
+            Kernel   => Kernel_Handle (Kernel),
+            Var_Name => To_Unbounded_String (Name),
+            Untyped  => Untyped);
+
+         Gtk.Combo_Box_Text.Initialize_With_Entry (Combo);
+         Flow_Child := Create_Child
+           (Group, Combo, Label => Name, Child_Key => Name);
+
+         --  Set the name to variable name needed by Selected_Variable
+         Flow_Child.Set_Name (Name);
+
+         --  Store it in the scenario combo box list
+         View.Variable_Combo_List.Append (Combo);
+
+         for Value of Possible_Values loop
+            if Value.all /= "" then
+               Combo.Append_Text (Locale_To_UTF8 (Value.all));
+            end if;
+         end loop;
+
+         --  Select the variable's current value
+         Set_Active_Text (Combo, Value);
+
+         Ent := Gtk_Entry (Combo.Get_Child);
+
+         --  Display the 'up-to-date' icon in the combo's entry
+         Ent.Set_Icon_From_Icon_Name
+           (Icon_Pos  => Gtk_Entry_Icon_Primary,
+            Icon_Name => Up_To_Date_Icon_Name);
+
+         Variable_Combo_Callbacks.Connect
+           (Combo, Gtk.Editable.Signal_Changed,
+            On_Variable_Combo_Changed'Access,
+            User_Data   => View);
+
+         --  The combo needs to have the name of the variable
+         Combo.Set_Name (Name);
+
+         --  Set an 'empty' placeholder to make it clear that the variable
+         --  has an empty value.
+         if Value = "" then
+            Ent.Set_Placeholder_Text ("empty");
+         end if;
+
+         --  Disable the combo's button sensitivity for untyped variables
+         --  since we don't have any values to propose.
+         if Untyped then
+            Combo.Set_Button_Sensitivity (Sensitivity_Off);
+         end if;
+      end Add_Scenario_Variable_Combo;
+
    begin
       Trace (Me, "Recomputing list of scenario variables");
 
@@ -791,8 +977,10 @@ package body Scenario_Views is
       View.Error_Info_Bar := null;
 
       declare
-         Scenar_Var  : constant Scenario_Variable_Array
+         Typed_Vars  : constant Scenario_Variable_Array
            := Scenario_Variables (Kernel);
+         Untyped_Vars : constant Untyped_Variable_Array
+           := Untyped_Variables (Kernel);
       begin
          --  Create the group containing a combobox for each of the variable
          Group := new Dialog_Group_Widget_Record;
@@ -805,59 +993,52 @@ package body Scenario_Views is
                                     Sort_Scenario_By_Name'Access);
          View.Scenar_Group := Group;
 
-         --  Fill the combobox group
-         if Scenar_Var'Length /= 0 then
-            for J in Scenar_Var'Range loop
+         --  Add the typed scenario variables' combos
+
+         if Typed_Vars'Length /= 0 then
+            for J in Typed_Vars'Range loop
                declare
-                  Name         : constant String
-                    := External_Name (Scenar_Var (J));
-                  Values       : constant GNAT.Strings.String_List
+                  Name            : constant String
+                    := External_Name (Typed_Vars (J));
+                  Value           : constant String := GNATCOLL.Projects.Value
+                    (Typed_Vars (J));
+                  Possible_Values : GNAT.Strings.String_List
                     := Get_Registry (Kernel).Tree.Possible_Values_Of
-                    (Scenar_Var (J));
-                  Flow_Child   : Gtk_Widget;
+                    (Typed_Vars (J));
                begin
-                  Combo := new Variable_Combo_Box_Record'
-                    (GObject_Record with
-                     Kernel   => Kernel_Handle (Kernel),
-                     Var_Name => To_Unbounded_String (Name));
-
-                  Gtk.Combo_Box_Text.Initialize_With_Entry (Combo);
-                  Flow_Child := Create_Child
-                    (Group, Combo, Label => Name, Child_Key => Name);
-                  --  Set the name to variable name needed by Selected_Variable
-                  Flow_Child.Set_Name (Name);
-
-                  --  Store it in the scenario combo box list
-                  View.Variable_Combo_List.Append (Combo);
-
-                  for Val in Values'Range loop
-                     if Values (Val).all = Value (Scenar_Var (J)) then
-                        --  Put the selected value in the first column
-                        Combo.Prepend_Text (Locale_To_UTF8 (Values (Val).all));
-                     else
-                        Combo.Append_Text (Locale_To_UTF8 (Values (Val).all));
-                     end if;
-                  end loop;
-
-                  Ent := Gtk_Entry (Combo.Get_Child);
-
-                  --  Display the 'up-to-date' icon in the combo's entry
-                  Ent.Set_Icon_From_Icon_Name
-                    (Icon_Pos  => Gtk_Entry_Icon_Primary,
-                     Icon_Name => Up_To_Date_Icon_Name);
-
-                  --  Show the selected value
-                  Combo.Set_Active (0);
-                  Variable_Combo_Callbacks.Connect
-                    (Combo, Gtk.Editable.Signal_Changed,
-                     On_Variable_Combo_Changed'Access,
-                     User_Data   => View);
-
-                  --  The combo needs to have the name of the variable
-                  Combo.Set_Name (Name);
+                  Add_Scenario_Variable_Combo
+                    (Name,
+                     Possible_Values => Possible_Values,
+                     Value           => Value,
+                     Untyped         => False);
+                  GNATCOLL.Utils.Free (Possible_Values);
                end;
             end loop;
+         end if;
 
+         --  Add the untyped scenario variables' combos
+
+         if Untyped_Vars'Length /= 0 then
+            for J in Untyped_Vars'Range loop
+               declare
+                  Name            : constant String
+                    := External_Name (Untyped_Vars (J));
+                  Value           : constant String := GNATCOLL.Projects.Value
+                    (Untyped_Vars (J));
+                  Possible_Values : GNAT.Strings.String_List
+                    (1 .. 0) := (others => null);
+               begin
+                  Add_Scenario_Variable_Combo
+                    (Name,
+                     Possible_Values => Possible_Values,
+                     Value           => Value,
+                     Untyped         => True);
+                  GNATCOLL.Utils.Free (Possible_Values);
+               end;
+            end loop;
+         end if;
+
+         if Typed_Vars'Length > 0 or else Untyped_Vars'Length > 0 then
             declare
                HButton_Box : Gtk_Button_Box;
             begin
@@ -894,10 +1075,10 @@ package body Scenario_Views is
                   Expand      => False,
                   Homogeneous => False);
             end;
-         end if;
 
-         --  Force a resort
-         Group.Force_Sort;
+            --  Force a resort
+            Group.Force_Sort;
+         end if;
       end;
 
       --  The View is built after the initialize, Show_All must be called to
