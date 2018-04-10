@@ -26,9 +26,8 @@ package body LAL.Highlighters is
 
    procedure Remove_Style
      (Buffer : GPS.Editors.Editor_Buffer'Class;
-      Line   : Positive;
-      Start  : Visible_Column_Type;
-      Stop   : Visible_Column_Type);
+      From   : Positive;
+      To     : Positive);
    --  Remove any highlight related styles from text span in the Buffer
 
    function To_Style (E : Libadalang.Lexer.Token_Kind) return String;
@@ -515,6 +514,8 @@ package body LAL.Highlighters is
       Index : Libadalang.Lexer.Token_Data_Handlers.Token_Or_Trivia_Index;
       Text : constant String := Buffer.Get_Chars (First, Last);
    begin
+      Remove_Style (Buffer, From, To);
+
       Libadalang.Lexer.Lex_From_Buffer
         (Buffer      => Text,
          Charset     => "utf-8",
@@ -537,9 +538,7 @@ package body LAL.Highlighters is
             Stop : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.End_Column);
          begin
-            if Style = "" then
-               Remove_Style (Buffer, Line, Start, Stop);
-            else
+            if Style /= "" then
                Buffer.Apply_Style (Style, Line, Start, Stop);
             end if;
          end;
@@ -574,6 +573,8 @@ package body LAL.Highlighters is
       Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Index : Token_Type := Lookup_Token (Unit, (From_Line, 1));
    begin
+      Remove_Style (Buffer, From, To);
+
       while Index /= No_Token loop
          declare
             Token : constant Token_Data_Type := Data (Index);
@@ -621,8 +622,6 @@ package body LAL.Highlighters is
                   then
                      Buffer.Apply_Style ("type", Line, Start, Stop);
 
-                  else
-                     Remove_Style (Buffer, Line, Start, Stop);
                   end if;
                end;
             elsif Kind (Token) in L.Ada_Dot then  --  Highlight '.'
@@ -642,12 +641,8 @@ package body LAL.Highlighters is
                   then
                      Buffer.Apply_Style ("type", Line, Start, Stop);
 
-                  else
-                     Remove_Style (Buffer, Line, Start, Stop);
                   end if;
                end;
-            else
-               Remove_Style (Buffer, Line, Start, Stop);
             end if;
 
             Index := Next (Index);
@@ -672,17 +667,18 @@ package body LAL.Highlighters is
 
    procedure Remove_Style
      (Buffer : GPS.Editors.Editor_Buffer'Class;
-      Line   : Positive;
-      Start  : Visible_Column_Type;
-      Stop   : Visible_Column_Type) is
+      From   : Positive;
+      To     : Positive) is
    begin
-      Buffer.Remove_Style ("keyword", Line, Start, Stop);
-      Buffer.Remove_Style ("string", Line, Start, Stop);
-      Buffer.Remove_Style ("character", Line, Start, Stop);
-      Buffer.Remove_Style ("number", Line, Start, Stop);
-      Buffer.Remove_Style ("comment", Line, Start, Stop);
-      Buffer.Remove_Style ("block", Line, Start, Stop);
-      Buffer.Remove_Style ("type", Line, Start, Stop);
+      for Line in From .. To loop
+         Buffer.Remove_Style ("keyword", Line, 1);
+         Buffer.Remove_Style ("string", Line, 1);
+         Buffer.Remove_Style ("character", Line, 1);
+         Buffer.Remove_Style ("number", Line, 1);
+         Buffer.Remove_Style ("comment", Line, 1);
+         Buffer.Remove_Style ("block", Line, 1);
+         Buffer.Remove_Style ("type", Line, 1);
+      end loop;
    end Remove_Style;
 
 end LAL.Highlighters;
