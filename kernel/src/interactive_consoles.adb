@@ -1683,6 +1683,34 @@ package body Interactive_Consoles is
       Delete (Console.Buffer, Start, The_End);
    end Clear;
 
+   --------------------
+   -- Set_Foreground --
+   --------------------
+
+   procedure Set_Foreground
+     (Term  : not null access Interactive_Console_Record'Class;
+      Color : Gtkada.Terminal.Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA) is
+   begin
+      if Term.Buffer.all in Gtkada.Terminal.Gtkada_Terminal_Record'Class then
+         Gtkada_Terminal (Term.Buffer).Set_Foreground (Color, Value);
+      end if;
+   end Set_Foreground;
+
+   --------------------
+   -- Set_Background --
+   --------------------
+
+   procedure Set_Background
+     (Term  : not null access Interactive_Console_Record'Class;
+      Color : Gtkada.Terminal.Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA) is
+   begin
+      if Term.Buffer.all in Gtkada.Terminal.Gtkada_Terminal_Record'Class then
+         Gtkada_Terminal (Term.Buffer).Set_Background (Color, Value);
+      end if;
+   end Set_Background;
+
    ----------------------------
    -- Set_Completion_Handler --
    ----------------------------

@@ -41,6 +41,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Terminal;
 with Gtkada.Types;              use Gtkada.Types;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -50,6 +51,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Search;                use GPS.Search;
@@ -75,6 +77,7 @@ package body Log_File_Views is
       Msg    : in out Msg_Strings.XString);
 
    type Log_View_Record is new Interactive_Console_Record with null record;
+   type Log_View is access all Interactive_Console_Record'Class;
 
    function Initialize (View : access Log_View_Record'Class) return Gtk_Widget;
    --  Create a new log view
@@ -177,6 +180,15 @@ package body Log_File_Views is
       Self   : Properties_Editor);
    --  Called on click on the list's item
 
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      View : Log_View;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+   --  Called when the preferences have changed
+
    Name_Column   : constant := 0;
    Toggle_Column : constant := 1;
 
@@ -196,7 +208,6 @@ package body Log_File_Views is
       Msg    : in out Msg_Strings.XString)
    is
       pragma Unreferenced (Handle, Self);
-      Str    : constant String := Msg_Strings.To_String (Msg);
       View   : View_Access;
       Kernel : constant Kernel_Handle := Log_File_Views.Kernel;
    begin
@@ -211,15 +222,19 @@ package body Log_File_Views is
          return;
       end if;
 
-      Strings.Append (Lines, Msg_Strings.To_String (Msg));
+      declare
+         Str : constant String := Msg_Strings.To_String (Msg);
+      begin
+         Strings.Append (Lines, Str);
 
-      if Log_File_Views.Kernel /= null then
-         View := Generic_View.Retrieve_View (Log_File_Views.Kernel, False);
+         if Log_File_Views.Kernel /= null then
+            View := Generic_View.Retrieve_View (Log_File_Views.Kernel, False);
 
-         if View /= null then
-            Log_View_Access (View).Append (Str);
+            if View /= null then
+               Log_View_Access (View).Append (Str);
+            end if;
          end if;
-      end if;
+      end;
    end After_Message;
 
    ------------
@@ -231,7 +246,7 @@ package body Log_File_Views is
       Str  : String) is
    begin
       if View.Is_Allowed (Str) then
-         View.Insert (Str);
+         View.Insert_UTF8 (Str);
       end if;
    end Append;
 
@@ -403,7 +418,9 @@ package body Log_File_Views is
    ----------------
 
    function Initialize
-     (View : access Log_View_Record'Class) return Gtk_Widget is
+     (View : access Log_View_Record'Class) return Gtk_Widget
+   is
+      Hook : access On_Pref_Changed;
    begin
       Register_Preferences (View.Kernel);
 
@@ -415,12 +432,17 @@ package body Log_File_Views is
          View.Kernel.all'Address,
          Highlight    => null,
          History_List => null,
-         ANSI_Support => False,
+         ANSI_Support => True,
          Key          => "",
          Wrap_Mode    => Wrap_Char);
 
       View.Enable_Prompt_Display (False);
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
+
+      Hook := new On_Pref_Changed;
+      Hook.View := Log_View (View);
+      Preferences_Changed_Hook.Add (Hook, Watch => View);
+      Hook.Execute (View.Kernel, Pref => null);
 
       Refresh (View);
 
@@ -726,10 +748,57 @@ package body Log_File_Views is
 
       for Str of Lines loop
          if View.Is_Allowed (Str) then
-            View.Insert (Str);
+            View.Insert_UTF8 (Str);
          end if;
       end loop;
    end Refresh;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Pref = null
+        or else Pref = Preference (GPS.Kernel.Preferences.Default_Style)
+        or else Pref = Preference (GPS.Kernel.Preferences.Numbers_Style)
+        or else Pref = Preference (GPS.Kernel.Preferences.Types_Style)
+        or else Pref = Preference (GPS.Kernel.Preferences.Strings_Style)
+        or else Pref = Preference (GPS.Kernel.Preferences.Keywords_Style)
+        or else Pref = Preference (GPS.Kernel.Preferences.Bookmark_Color)
+        or else Pref = Preference (GPS.Kernel.Preferences.Comments_Style)
+      then
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Black,
+            GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Red,
+            GPS.Kernel.Preferences.Numbers_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Green,
+            GPS.Kernel.Preferences.Types_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Yellow,
+            GPS.Kernel.Preferences.Strings_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Blue,
+            GPS.Kernel.Preferences.Keywords_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Magenta,
+            GPS.Kernel.Preferences.Bookmark_Color.Get_Pref);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.Cyan,
+            GPS.Kernel.Preferences.Comments_Style.Get_Pref_Fg);
+         Self.View.Set_Foreground
+           (Gtkada.Terminal.White,
+            GPS.Kernel.Preferences.Default_Style.Get_Pref_Bg);
+      end if;
+   end Execute;
 
    --------------------------
    -- Register_Interceptor --

@@ -20,6 +20,7 @@
 --  Currently, it knows how to emulate xterm.
 
 with Glib;
+with Gdk.RGBA;
 with Gtk.Text_Buffer;
 with Gtk.Text_Mark;
 with Gtk.Text_Iter;
@@ -59,13 +60,33 @@ package Gtkada.Terminal is
    --  terminal is not a widget in itself, you must override this subprogram to
    --  make something useful with it
 
+   --------------------------------
+   --  ANSI color representation --
+   --------------------------------
+
+   type Color_Kind is (Black, Red, Green, Yellow, Blue, Magenta, Cyan, White);
+
+   procedure Set_Foreground
+     (Term  : not null access Gtkada_Terminal_Record;
+      Color : Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA);
+   --  Set Color which will be used for foreground instead of default
+   --  Value color when text contains ANSI codes for highlighting
+
+   procedure Set_Background
+     (Term  : not null access Gtkada_Terminal_Record;
+      Color : Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA);
+   --  Set Color which will be used for background instead of default
+   --  Value color when text contains ANSI codes for highlighting
+
 private
    type FSM_Transition;
    type FSM_Transition_Access is access FSM_Transition;
    --  A finite state machine used to parse the text written on the terminal,
    --  and efficiently detect special escape sequences.
 
-   type Tag_Array is array (1 .. 8) of Gtk.Text_Tag.Gtk_Text_Tag;
+   type Tag_Array is array (Color_Kind) of Gtk.Text_Tag.Gtk_Text_Tag;
    type Numerical_Arguments is array (1 .. 9) of Integer;
 
    type FSM_Current_State is record
@@ -99,6 +120,16 @@ private
    --  http://www.sweger.com/ansiplus/EscSeqScroll.html#ScrollingRegion
    --  These are implemented as offsets added to cursor positions
 
+   type Selected_Color (Is_Active : Boolean := False) is record
+      case Is_Active is
+         when True =>
+            Color : Color_Kind;
+         when False =>
+            null;
+      end case;
+   end record;
+   --  Holds a color if it is set
+
    type Gtkada_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
       FSM : FSM_Transition_Access;
@@ -125,10 +156,10 @@ private
       --  Whether text should be printed in reverse video
 
       Foreground_Tags    : Tag_Array;
-      Current_Foreground : Integer := -1;
+      Current_Foreground : Selected_Color;
 
       Background_Tags    : Tag_Array;
-      Current_Background : Integer := -1;
+      Current_Background : Selected_Color;
 
       Region             : Scrolling_Region;
 

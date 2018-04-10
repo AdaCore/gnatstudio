@@ -25,6 +25,7 @@ with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNAT.Strings;
 
+with Gdk.RGBA;
 with Gdk.Types;
 with Glib;
 with Glib.Main;
@@ -34,6 +35,7 @@ with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
+with Gtkada.Terminal;
 
 with Generic_Views;
 with Histories;
@@ -392,6 +394,20 @@ package Interactive_Consoles is
      (Self : access Interactive_Console_Record'Class)
       return access Console_Messages_Window;
    --  Convert Interactive_Console to Console_Messages_Window
+
+   --------------------------------
+   --  ANSI color representation --
+   --------------------------------
+
+   procedure Set_Foreground
+     (Term  : not null access Interactive_Console_Record'Class;
+      Color : Gtkada.Terminal.Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA);
+
+   procedure Set_Background
+     (Term  : not null access Interactive_Console_Record'Class;
+      Color : Gtkada.Terminal.Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA);
 
 private
 

@@ -15,8 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Types;
@@ -828,8 +830,8 @@ package body Gtkada.Terminal is
    begin
       Term.Bold := False;
       Term.Standout := False;
-      Term.Current_Foreground := -1;
-      Term.Current_Background := -1;
+      Term.Current_Foreground := (Is_Active => False);
+      Term.Current_Background := (Is_Active => False);
    end End_All_Modes;
 
    ----------------------
@@ -858,27 +860,47 @@ package body Gtkada.Terminal is
          when 27 =>   --  end standout mode
             End_All_Modes (Term);
             Term.Standout := False;
-         when 30 | 90 => Term.Current_Foreground := Tag_Array'First;
-         when 31 | 91 => Term.Current_Foreground := Tag_Array'First + 1;
-         when 32 | 92 => Term.Current_Foreground := Tag_Array'First + 2;
-         when 33 | 93 => Term.Current_Foreground := Tag_Array'First + 3;
-         when 34 | 94 => Term.Current_Foreground := Tag_Array'First + 4;
-         when 35 | 95 => Term.Current_Foreground := Tag_Array'First + 5;
-         when 36 | 96 => Term.Current_Foreground := Tag_Array'First + 6;
-         when 37 | 97 => Term.Current_Foreground := Tag_Array'First + 7;
-         when 38 | 98 => Term.Current_Foreground := Tag_Array'First;
-         when 39 | 99 => Term.Current_Foreground := -1;
+         when 30 | 90 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Black);
+         when 31 | 91 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Red);
+         when 32 | 92 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Green);
+         when 33 | 93 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Yellow);
+         when 34 | 94 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Blue);
+         when 35 | 95 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Magenta);
+         when 36 | 96 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Cyan);
+         when 37 | 97 => Term.Current_Foreground :=
+              (Is_Active => True, Color => White);
+         when 38 | 98 => Term.Current_Foreground :=
+              (Is_Active => True, Color => Black);
+         when 39 | 99 => Term.Current_Foreground :=
+              (Is_Active => False);
 
-         when 40 | 100 => Term.Current_Background := Tag_Array'First;
-         when 41 | 101 => Term.Current_Background := Tag_Array'First + 1;
-         when 42 | 102 => Term.Current_Background := Tag_Array'First + 2;
-         when 43 | 103 => Term.Current_Background := Tag_Array'First + 3;
-         when 44 | 104 => Term.Current_Background := Tag_Array'First + 4;
-         when 45 | 105 => Term.Current_Background := Tag_Array'First + 5;
-         when 46 | 106 => Term.Current_Background := Tag_Array'First + 6;
-         when 47 | 107 => Term.Current_Background := Tag_Array'First + 7;
-         when 48 | 108 => Term.Current_Background := Tag_Array'First;
-         when 49 | 109 => Term.Current_Background := -1;
+         when 40 | 100 => Term.Current_Background :=
+              (Is_Active => True, Color => Black);
+         when 41 | 101 => Term.Current_Background :=
+              (Is_Active => True, Color => Red);
+         when 42 | 102 => Term.Current_Background :=
+              (Is_Active => True, Color => Green);
+         when 43 | 103 => Term.Current_Background :=
+              (Is_Active => True, Color => Yellow);
+         when 44 | 104 => Term.Current_Background :=
+              (Is_Active => True, Color => Blue);
+         when 45 | 105 => Term.Current_Background :=
+              (Is_Active => True, Color => Magenta);
+         when 46 | 106 => Term.Current_Background :=
+              (Is_Active => True, Color => Cyan);
+         when 47 | 107 => Term.Current_Background :=
+              (Is_Active => True, Color => White);
+         when 48 | 108 => Term.Current_Background :=
+              (Is_Active => True, Color => Black);
+         when 49 | 109 => Term.Current_Background :=
+              (Is_Active => False);
 
          when others =>
             Trace (Me, "Set_Attribute:" & Ansi'Img);
@@ -919,16 +941,18 @@ package body Gtkada.Terminal is
          Apply_Tag (Term, Term.Standout_Tag, Iter2, Iter);
       end if;
 
-      if Term.Current_Foreground in Tag_Array'Range then
+      if Term.Current_Foreground.Is_Active then
          Get_Iter_At_Offset (Term, Iter2, Start_Offset);
          Apply_Tag
-           (Term, Term.Foreground_Tags (Term.Current_Foreground), Iter2, Iter);
+           (Term, Term.Foreground_Tags
+              (Term.Current_Foreground.Color), Iter2, Iter);
       end if;
 
-      if Term.Current_Background in Tag_Array'Range then
+      if Term.Current_Background.Is_Active then
          Get_Iter_At_Offset (Term, Iter2, Start_Offset);
          Apply_Tag
-           (Term, Term.Background_Tags (Term.Current_Background), Iter2, Iter);
+           (Term, Term.Background_Tags
+              (Term.Current_Background.Color), Iter2, Iter);
       end if;
 
       if Overwrite_Mode then
@@ -1507,6 +1531,36 @@ package body Gtkada.Terminal is
       end if;
    end On_Destroy;
 
+   --------------------
+   -- Set_Background --
+   --------------------
+
+   procedure Set_Background
+     (Term  : not null access Gtkada_Terminal_Record;
+      Color : Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA) is
+   begin
+      Set_Property
+        (Term.Background_Tags (Color),
+         Gtk.Text_Tag.Foreground_Property,
+         Gdk.RGBA.To_String (Value));
+   end Set_Background;
+
+   --------------------
+   -- Set_Foreground --
+   --------------------
+
+   procedure Set_Foreground
+     (Term  : not null access Gtkada_Terminal_Record;
+      Color : Color_Kind;
+      Value : Gdk.RGBA.Gdk_RGBA) is
+   begin
+      Set_Property
+        (Term.Foreground_Tags (Color),
+         Gtk.Text_Tag.Foreground_Property,
+         Gdk.RGBA.To_String (Value));
+   end Set_Foreground;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1586,39 +1640,18 @@ package body Gtkada.Terminal is
       Table.Add (Self.Standout_Tag);
       Unref (Self.Standout_Tag);
 
-      for T in Tag_Array'Range loop
+      for T in Color_Kind'Range loop
          Gtk_New (F);
          Self.Foreground_Tags (T) := F;
+         Set_Property
+           (F, Gtk.Text_Tag.Foreground_Property,
+            Ada.Characters.Handling.To_Lower (Color_Kind'Image (T)));
 
          Gtk_New (B);
          Self.Background_Tags (T) := B;
-
-         case T is
-            when 1 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "black");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "black");
-            when 2 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "red");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "red");
-            when 3 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "green");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "green");
-            when 4 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "yellow");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "yellow");
-            when 5 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "blue");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "blue");
-            when 6 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "magenta");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "magenta");
-            when 7 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "cyan");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "cyan");
-            when 8 =>
-               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "white");
-               Set_Property (B, Gtk.Text_Tag.Background_Property, "white");
-         end case;
+         Set_Property
+           (B, Gtk.Text_Tag.Background_Property,
+            Ada.Characters.Handling.To_Lower (Color_Kind'Image (T)));
 
          Table.Add (F);
          Table.Add (B);
