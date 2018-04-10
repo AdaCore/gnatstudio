@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
+
 with Basic_Types;                      use Basic_Types;
 with GNATCOLL.VFS;
 with LAL.Core_Module;
@@ -32,27 +34,6 @@ package body LAL.Highlighters is
 
    function To_Style (E : Libadalang.Lexer.Token_Kind) return String;
    --  Get the name of a style name from a language token
-
-   type Node_Kind_Array is array (Positive range <>) of
-     Libadalang.Analysis.Ada_Node_Kind_Type;
-
-   Dotted_Name_Or_Attribute : constant Node_Kind_Array :=
-     (Libadalang.Analysis.Ada_Dotted_Name,
-      Libadalang.Analysis.Ada_Attribute_Ref);
-
-   function Get_Toppest_Node
-     (Node  : Libadalang.Analysis.Ada_Node;
-      Kinds : Node_Kind_Array)
-      return Libadalang.Analysis.Ada_Node;
-   --  Find a node of given kind enclosing given Node, which in its turn isn't
-   --  enclosed by another node of this kind.
-
-   function The_Toppest_Dotted_Name
-     (Node  : Libadalang.Analysis.Ada_Node)
-      return Libadalang.Analysis.Ada_Node is
-        (Get_Toppest_Node (Node, (1 => Libadalang.Analysis.Ada_Dotted_Name)));
-   --  Find a Dotted_Name enclosing given Node, which in its turn isn't
-   --  enclosed by another Dotted_Name
 
    function Kind_Of
      (Node  : Libadalang.Analysis.Ada_Node;
@@ -328,11 +309,6 @@ package body LAL.Highlighters is
    Id_List : constant Check_List := Dotted_Name_List &
       (1 => Accept_Stmt_Name'Access);
 
-   --  List of places in LAL tree where an identifier, dotted_name or
-   --  attribute_ref should be highlithed with 'type' style
-   Type_Expr_List : constant Check_List :=
-     (1 => Subtype_Indication_Name'Access);
-
    --------------
    -- To_Style --
    --------------
@@ -457,44 +433,8 @@ package body LAL.Highlighters is
             return "comment";
          when Ada_Prep_Line =>
             return "";
-
-            --  Other Standout_Language_Entity styles:
-            --  "block";
-            --  "type";
-            --  "annotated_keyword";
-            --  "annotated_comment";
-            --  "aspect_keyword";
-            --  "aspect_comment";
-            --  "aspect";
       end case;
    end To_Style;
-
-   ----------------------
-   -- Get_Toppest_Node --
-   ----------------------
-
-   function Get_Toppest_Node
-     (Node  : Libadalang.Analysis.Ada_Node;
-      Kinds : Node_Kind_Array)
-      return Libadalang.Analysis.Ada_Node
-   is
-      use type Libadalang.Analysis.Ada_Node_Kind_Type;
-      Next : Libadalang.Analysis.Ada_Node := Node;
-   begin
-      loop
-         declare
-            Parent : constant Libadalang.Analysis.Ada_Node := Next.Parent;
-            Kind   : constant Libadalang.Analysis.Ada_Node_Kind_Type :=
-              Parent.Kind;
-         begin
-            if not (for some Item of Kinds => Kind = Item) then
-               return Next;
-            else
-               Next := Parent;
-            end if;
-         end;
-      end loop;
-   end Get_Toppest_Node;
 
    --------------------
    -- Highlight_Fast --
@@ -563,6 +503,156 @@ package body LAL.Highlighters is
       use Langkit_Support.Slocs;
       package L renames Libadalang.Lexer;
 
+      type Context is record
+         In_Block_Name   : Boolean := False;
+         In_Subtype_Mark : Boolean := False;
+      end record;
+
+      package Context_Lists is new Ada.Containers.Doubly_Linked_Lists
+        (Element_Type => Context);
+
+      procedure Fill_Stack
+        (Stack : in out Context_Lists.List;
+         Node  : Ada_Node);
+      --  Walk from tree root to the Node and collect contexts along the path
+
+      procedure Adjust_Context
+        (Value : in out Context;
+         Node  : Ada_Node);
+      --  Modify enclosing context according to the node
+
+      procedure Next_Token
+        (Index : in out Token_Type;
+         Stack : in out Context_Lists.List;
+         Node  : in out Ada_Node);
+      --  Step to next token, find corresponding enclosing node and correct
+      --  stack of contexts according to the new node.
+
+      --------------------
+      -- Adjust_Context --
+      --------------------
+
+      procedure Adjust_Context
+        (Value : in out Context;
+         Node  : Ada_Node) is
+      begin
+         --  Calculate In_Block_Name
+
+         --  Ignore root node
+         if Node.Parent.Is_Null then
+            null;
+         --  Check if identifier itself should be highlighted
+         elsif (Kind_Of (Node, Libadalang.Analysis.Ada_Identifier)
+             and then Check (Id_List, Node))
+           --  check if node is a dotted_name to be highlighted
+           or else
+             (Kind_Of (Node, Libadalang.Analysis.Ada_Dotted_Name)
+              and then Check (Dotted_Name_List, Node))
+           --  check if node is a defining_name to be highlighted
+           or else
+             (Kind_Of (Node,
+                       Libadalang.Analysis.Ada_Defining_Name)
+              and then Check (Defining_Name_List, Node))
+           --  check if node is part of any end_name
+           or else
+             Kind_Of (Node.Parent,
+                      Libadalang.Analysis.Ada_End_Name)
+         then
+            Value.In_Block_Name := True;
+
+         --  Check if node is subtype mark in subtype indication
+         elsif Subtype_Indication_Name (Node) then
+            Value.In_Subtype_Mark := True;
+
+         end if;
+      end Adjust_Context;
+
+      ----------------
+      -- Fill_Stack --
+      ----------------
+
+      procedure Fill_Stack
+        (Stack : in out Context_Lists.List;
+         Node  : Ada_Node)
+      is
+      begin
+         Stack.Clear;
+         for Parent of reverse Node.Parents loop
+            declare
+               Value : Context;
+            begin
+               Adjust_Context (Value, Parent);
+               Stack.Append (Value);
+            end;
+         end loop;
+      end Fill_Stack;
+
+      ----------------
+      -- Next_Token --
+      ----------------
+
+      procedure Next_Token
+        (Index : in out Token_Type;
+         Stack : in out Context_Lists.List;
+         Node  : in out Ada_Node) is
+      begin
+         Index := Next (Index);
+
+         if Index /= No_Token then
+            declare
+               Again : Boolean := True;
+               Token : constant Token_Data_Type := Data (Index);
+               Loc   : constant Source_Location :=
+                 Start_Sloc (Sloc_Range (Token));
+            begin
+               --  Pop stack and node until node enclosing the token is found
+               while Node.Compare (Loc) /= Inside loop
+                  if Node.Parent.Is_Null then
+                     return;
+                  end if;
+
+                  Node := Node.Parent;
+                  Stack.Delete_Last;
+               end loop;
+
+               --  Find any child of the node that encloses the token
+               while Again loop
+                  Again := False;
+
+                  for Child of Node.Children loop
+                     if not Child.Is_Null then
+                        declare
+                           Span : constant Source_Location_Range :=
+                             Child.Sloc_Range;
+                        begin
+                           case Compare (Span, Loc) is
+                              when After =>
+                                 null;  --  token after child, go to next
+                              when Inside =>
+                                 declare
+                                    Value : Context := Stack.Last_Element;
+                                 begin
+                                    --  descent into child enclosing token
+                                    Node := Child;
+                                    Adjust_Context (Value, Node);
+                                    Stack.Append (Value);
+                                    Again := True;
+                                    exit;
+                                 end;
+                              when Before =>
+                                 --  if not empty span
+                                 exit when
+                                   Start_Sloc (Span) /= End_Sloc (Span);
+                           end case;
+                        end;
+                     end if;
+                  end loop;
+               end loop;
+            end;
+         end if;
+      end Next_Token;
+
+      Stack     : Context_Lists.List;
       From_Line : constant Line_Number := Line_Number (From);
 
       File : constant GNATCOLL.VFS.Virtual_File := Buffer.File;
@@ -572,11 +662,20 @@ package body LAL.Highlighters is
 
       Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Index : Token_Type := Lookup_Token (Unit, (From_Line, 1));
+      Node  : Ada_Node := Root.Lookup (Start_Sloc (Sloc_Range (Data (Index))));
    begin
       Remove_Style (Buffer, From, To);
 
+      if Node.Is_Null then
+         --  Keep node not null even if we look at token outside the tree
+         Node := Root;
+      end if;
+
+      Fill_Stack (Stack, Node);
+
       while Index /= No_Token loop
          declare
+            Top   : constant Context := Stack.Last_Element;
             Token : constant Token_Data_Type := Data (Index);
             Style : constant String := To_Style (Kind (Token));
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
@@ -590,62 +689,16 @@ package body LAL.Highlighters is
 
             if Style /= "" then
                Buffer.Apply_Style (Style, Line, Start, Stop);
-            elsif Kind (Token) in L.Ada_Identifier then
-               declare
-                  Node : constant Ada_Node := Root.Lookup
-                    ((Loc.Start_Line, Loc.Start_Column));
-                  TDN : constant Ada_Node :=
-                    The_Toppest_Dotted_Name (Node);
-               begin
-                  --  Check if identifier itself should be highlighted
-                  if Check (Id_List, Node)
-                    or else
-                      --  check if identifier is part of such dotted_name
-                      (Kind_Of (TDN, Libadalang.Analysis.Ada_Dotted_Name)
-                       and then Check (Dotted_Name_List, TDN))
-                    or else
-                      --  check if identifier is part of such defining_name
-                      (Kind_Of (TDN.Parent,
-                                Libadalang.Analysis.Ada_Defining_Name)
-                       and then Check (Defining_Name_List, TDN.Parent))
-                    or else
-                      --  check if identifier is part of any end_name
-                      Kind_Of (TDN.Parent,
-                               Libadalang.Analysis.Ada_End_Name)
-                  then
-                     Buffer.Apply_Style ("block", Line, Start, Stop);
+            elsif Kind (Token) in L.Ada_Identifier | L.Ada_Dot then
+               if Top.In_Block_Name then
+                  Buffer.Apply_Style ("block", Line, Start, Stop);
+               elsif Top.In_Subtype_Mark then
+                  Buffer.Apply_Style ("type", Line, Start, Stop);
 
-                     --  Check if identifier is type name
-                  elsif Check
-                    (Type_Expr_List,
-                     Get_Toppest_Node (Node, Dotted_Name_Or_Attribute))
-                  then
-                     Buffer.Apply_Style ("type", Line, Start, Stop);
-
-                  end if;
-               end;
-            elsif Kind (Token) in L.Ada_Dot then  --  Highlight '.'
-               declare
-                  Node : constant Ada_Node := Root.Lookup
-                    ((Loc.Start_Line, Loc.Start_Column));
-               begin
-                  --  Check if dot is part of dotted_name should be highlighted
-                  if Check (Dotted_Name_List,
-                            The_Toppest_Dotted_Name (Node))
-                  then
-                     Buffer.Apply_Style ("block", Line, Start, Stop);
-
-                  elsif Check
-                          (Type_Expr_List,
-                           Get_Toppest_Node (Node, Dotted_Name_Or_Attribute))
-                  then
-                     Buffer.Apply_Style ("type", Line, Start, Stop);
-
-                  end if;
-               end;
+               end if;
             end if;
 
-            Index := Next (Index);
+            Next_Token (Index, Stack, Node);
          end;
       end loop;
    end Highlight_Using_Tree;
