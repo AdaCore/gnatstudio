@@ -25,4 +25,8 @@ project Language is
       end case;
    end Compiler;
 
+   package Linker is
+      for Switches ("Ada") use Shared.Linker'Switches ("Ada");
+   end Linker;
+
 end Language;

@@ -13,6 +13,10 @@ project Shared is
    --  Whether to enable link-time-optimization, and removal of
    --  unused subprograms
 
+   Enable_Gperftools : Boolean_Type := "false";
+   --  Whether to enable profilling
+   --  gperftools sould be installed
+
    Global_Objects_Root := External("GPS_OBJECTS_ROOT", "");
 
    for Source_Dirs use ();
@@ -94,6 +98,15 @@ project Shared is
                when others =>
                   null;
             end case;
+
+         when "false" =>
+            null;
+      end case;
+
+      case Enable_Gperftools is
+         when "true" =>
+            for Switches ("Ada") use Linker'Switches ("Ada") &
+               ("-lprofiler");
 
          when "false" =>
             null;
