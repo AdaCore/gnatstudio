@@ -51,7 +51,7 @@ def mark_read_only_areas(buffer):
     global read_only_locations
 
     read_only_overlay = None
-    loc = buffer.beginning_of_buffer()
+    loc = buffer.at(1, 1)
 
     # Iterate over read-only areas
     while loc:

@@ -1633,6 +1633,12 @@ package body Src_Editor_Buffer.Line_Information is
                              Line       => EL,
                              Start_Iter => Iter,
                              End_Iter   => End_Iter);
+
+            --  Save the style for each of the added lines
+            for J in 0 .. Number - 1 loop
+               Buffer.Line_Data
+                 (Buffer_Line_Type (Integer (Line) + J)).Style := Style;
+            end loop;
          end;
       end if;
 
@@ -1773,7 +1779,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Sanity check: verify that Line does contain Message
 
-      if not Message_Is_On_Line (Buffer, Message, Line) then
+      if Line /= 0 and then not Message_Is_On_Line (Buffer, Message, Line) then
          --  This call is slow, only here for extra safety - we should never
          --  go through this
          New_Line := Find_Line_With_Message (Buffer, Message);
@@ -1847,8 +1853,8 @@ package body Src_Editor_Buffer.Line_Information is
       Style    : Style_Access;
       Length   : Highlight_Length;
       End_Col  : Visible_Column_Type;
-      EL       : Editable_Line_Type := 0; --  The actual buffer line
-      BL       : Buffer_Line_Type := 0;   --  The actual editable line
+      EL       : Editable_Line_Type := 0; --  The actual editable line
+      BL       : Buffer_Line_Type := 0;   --  The actual buffer line
 
       Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
 
@@ -1864,11 +1870,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Compute_BL is
       begin
-         if BL = 0 then
-            if Buffer_Line /= 0 then
-               BL := Buffer_Line;
-            else
-               Compute_EL;
+         if Buffer_Line /= 0 then
+            BL := Buffer_Line;
+         else
+            Compute_EL;
+            if EL in Buffer.Editable_Lines'Range then
                BL := Buffer.Editable_Lines (EL).Buffer_Line;
             end if;
          end if;
@@ -1880,12 +1886,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Compute_EL is
       begin
-         if EL = 0 then
-            if Editable_Line /= 0 then
-               EL := Editable_Line;
-            else
-               EL := Editable_Line_Type (Mark.Line);
-            end if;
+         if Editable_Line /= 0 then
+            EL := Editable_Line;
+         else
+            EL := Editable_Line_Type (Mark.Line);
          end if;
       end Compute_EL;
 
@@ -1906,11 +1910,12 @@ package body Src_Editor_Buffer.Line_Information is
          Note.Style := Style;
       end if;
 
+      Compute_BL;
+
       --  Highlight if needed
-      if Style /= null then
+      if Style /= null and then BL /= 0 then
          Length := Message.Get_Highlighting_Length;
 
-         Compute_BL;
          Set_Line_Highlighting
            (Editor       => Buffer,
             Line         => BL,
@@ -2508,9 +2513,11 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Iter     : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Mark);
-      Remove_Blank_Lines
-        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1), Number);
+      if Mark /= null then
+         Get_Iter_At_Mark (Buffer, Iter, Mark);
+         Remove_Blank_Lines
+           (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1), Number);
+      end if;
    end Remove_Blank_Lines;
 
    ----------------
@@ -2725,6 +2732,11 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Iter, End_Iter : Gtk_Text_Iter;
 
    begin
+      if Start_Line = 0 then
+         --  This should never happen
+         return;
+      end if;
+
       --  Initializations
 
       Buffer.Modifying_Real_Lines := True;
@@ -2732,12 +2744,6 @@ package body Src_Editor_Buffer.Line_Information is
       Current := Start_Line;
       Current_B := Buffer.Editable_Lines (Start_Line).Buffer_Line;
       Start_Buffer_Line := Current_B;
-
-      if Current = 0 then
-         --  This should never happen
-         Buffer.Modifying_Real_Lines := False;
-         return;
-      end if;
 
       --  Disable emitting new cursor positions while we hide lines
 
@@ -2800,14 +2806,14 @@ package body Src_Editor_Buffer.Line_Information is
 
             when Special =>
                declare
-                  M    : Gtk_Text_Mark;
-                  Iter : Gtk_Text_Iter;
+                  Mark      : Gtk_Text_Mark;
+                  Mark_Iter : Gtk_Text_Iter;
                begin
-                  M := Add_Blank_Lines
+                  Mark := Add_Blank_Lines
                     (Buffer             => Buffer,
                      Line               => Current_B,
                      EL                 => Current + 1,
-                     Style              => null,
+                     Style              => U.Data.Style,
                      Text               => U.Text.all,
                      Name               => "",
                      Column_Id          => "",
@@ -2817,13 +2823,13 @@ package body Src_Editor_Buffer.Line_Information is
                   --  location of the new mark.
 
                   if U.Line_Mark /= null then
-                     Get_Iter_At_Mark (Buffer, Iter, M);
+                     Get_Iter_At_Mark (Buffer, Mark_Iter, Mark);
                      Move_Mark (Buffer => Buffer,
                                 Mark   => U.Line_Mark,
-                                Where  => Iter);
+                                Where  => Mark_Iter);
                   end if;
-
-                  Delete_Mark (Buffer, M);
+                  Buffer.Line_Data (Current_B) := U.Data;
+                  Delete_Mark (Buffer, Mark);
                end;
          end case;
 

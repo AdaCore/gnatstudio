@@ -241,9 +241,9 @@ package Src_Editor_Buffer is
    --  Return the charset used for the buffer
 
    function Is_Valid_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Gint;
-      Column : Gint := 0) return Boolean;
+     (Buffer       : access Source_Buffer_Record;
+      Line         : Gint;
+      Column       : Gint := 0) return Boolean;
    --  Return True if the given cursor position is valid. If Column is
    --  set to 0, then this function just verifies the given line number
    --  (column 0 of a given line always exists).
@@ -269,6 +269,19 @@ package Src_Editor_Buffer is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type) return Boolean;
    pragma Inline (Is_Valid_Position);
+   --  Same as above
+
+   procedure Ensure_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type := 1);
+   --  Wrapper around Is_Valide_Postion which raises an Location_Exception
+   --  if the location is invalid.
+
+   procedure Ensure_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type);
    --  Same as above
 
    procedure Set_Cursor_Position
@@ -1310,18 +1323,21 @@ private
       --  The array corresponding to information to be displayed in columns,
       --  indexed on columns.
 
-      Editable_Line      : Editable_Line_Type;
+      Editable_Line  : Editable_Line_Type;
       --  The line in the real buffer
 
-      Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
+      Line_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The mark used for referencing special lines, for example.
       --  -1 if there is no marker for this line.
 
-      File_Line          : File_Line_Type;
+      File_Line      : File_Line_Type;
       --  The corresponding line in the file corresponding to Buffer.
       --  0 if the line is not in the file.
 
-      Highlighting : Highlighting_Data_Array;
+      Style          : Style_Access;
+      --  The style used to display the line.
+
+      Highlighting   : Highlighting_Data_Array;
       --  Highlighting information.
    end record;
 
@@ -1342,7 +1358,7 @@ private
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (null, 0, null, 0, (others => (null, 0)));
+     (null, 0, null, 0, null, (others => (null, 0)));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
@@ -1396,7 +1412,7 @@ private
       --  The text contained in the original special line
 
       Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The mark used for referencing special lines, for example
+      --  The mark used for referencing special lines
 
       --  ??? Need to store the line category
    end record;

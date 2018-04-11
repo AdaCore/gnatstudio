@@ -34,10 +34,12 @@ package GPS.Editors.Line_Information is
       Text               : Ada.Strings.Unbounded.Unbounded_String;
       Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String;
       --  A text to be displayed in a tooltip
+
       Image              : Ada.Strings.Unbounded.Unbounded_String;
       Message            : GPS.Kernel.Messages.References.Message_Reference;
       --  Reference to the message that will be put into context of execution
       --  of associated command.
+
       Associated_Command : Commands.Command_Access := null;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango

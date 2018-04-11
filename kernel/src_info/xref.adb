@@ -1076,7 +1076,7 @@ package body Xref is
       --  This will issue a null Structured_File_Access, which is why
       --  we're protecting the following code with the above condition
 
-      if not Is_Null (Data_File) then
+      if not Is_Null (Data_File) and then Decl.Line /= 0 then
          --  Find_Declaration does more than Get_Iterator_At, so use it.
          Ent := Tree_Lang.Find_Declaration
             (Data_File, Decl.Line,

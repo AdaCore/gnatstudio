@@ -616,15 +616,11 @@ package body Src_Editor_Module.Editors is
    is
       Iter : Gtk_Text_Iter;
    begin
-      if Is_Valid_Position (Buffer.Contents.Buffer, Line, Column) then
-         Get_Iter_At_Screen_Position
-           (Buffer.Contents.Buffer, Iter, Line, Column);
+      Ensure_Valid_Position (Buffer.Contents.Buffer, Line, Column);
+      Get_Iter_At_Screen_Position
+        (Buffer.Contents.Buffer, Iter, Line, Column);
 
-         return Create_Editor_Location (Buffer, Iter);
-      else
-         raise Editor_Exception
-           with (-"Unable to create location at" & Line'Img & Column'Img);
-      end if;
+      return Create_Editor_Location (Buffer, Iter);
    end Create_Editor_Location;
 
    ------------------
@@ -1999,6 +1995,9 @@ package body Src_Editor_Module.Editors is
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
          Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
          Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
+         if From = Nil_Editor_Location then
+            Begin_Line := 1;
+         end if;
          return Get_Text
            (This.Contents.Buffer, Begin_Line, Begin_Col, End_Line, End_Col);
       else
@@ -2053,7 +2052,16 @@ package body Src_Editor_Module.Editors is
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         if Get_Writable (This.Contents.Buffer) then
+         if From /= Nil_Editor_Location then
+            Ensure_Valid_Position
+              (This.Contents.Buffer, Editable_Line_Type (From.Line));
+         end if;
+         if To /= Nil_Editor_Location then
+            Ensure_Valid_Position
+              (This.Contents.Buffer, Editable_Line_Type (To.Line));
+         end if;
+
+         if Get_Writable (This.Contents.Buffer)  then
             Delete_Interactive (This.Contents.Buffer, Iter, Iter2, True, Res);
             End_Action (This.Contents.Buffer);
          else
@@ -2601,34 +2609,42 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       if This.Contents.Box /= null then
-         Get_Location (Iter, Src_Editor_Location (Location), Iter, Success);
+         declare
+            Src_Location : constant Src_Editor_Location :=
+              Src_Editor_Location (Location);
+         begin
+            if Src_Location.Line = 0 then
+               return;
+            end if;
 
-         if Success then
-            declare
-               Line : Editable_Line_Type;
-               Col  : Character_Offset_Type;
-            begin
-               Get_Iter_Position
-                 (Get_Buffer (This.Contents.Box), Iter, Line, Col);
+            Get_Location (Iter, Src_Location, Iter, Success);
 
-               --  Remember prev. location in history for /Navigate/Back
-               Push_Current_Editor_Location_In_History
-                 (This.Contents.Box.Get_Kernel);
+            if Success then
+               declare
+                  Line : Editable_Line_Type;
+                  Col  : Character_Offset_Type;
+               begin
+                  Get_Iter_Position
+                    (Get_Buffer (This.Contents.Box), Iter, Line, Col);
 
-               Set_Cursor_Location
-                 (This.Contents.Box,
-                  Line         => Line,
-                  Column       => Col,
-                  Force_Focus  => Raise_View,
-                  Raise_Child  => Raise_View,
-                  Centering    => Centering,
-                  Extend_Selection => Extend_Selection);
+                  --  Remember prev. location in history for /Navigate/Back
+                  Push_Current_Editor_Location_In_History
+                    (This.Contents.Box.Get_Kernel);
 
-               --  Remembrer new location in history for /Navigate/Forward
-               This.Contents.Box.Add_Navigation_Location;
-            end;
+                  Set_Cursor_Location
+                    (This.Contents.Box,
+                     Line         => Line,
+                     Column       => Col,
+                     Force_Focus  => Raise_View,
+                     Raise_Child  => Raise_View,
+                     Centering    => Centering,
+                     Extend_Selection => Extend_Selection);
 
-         end if;
+                  --  Remembrer new location in history for /Navigate/Forward
+                  This.Contents.Box.Add_Navigation_Location;
+               end;
+            end if;
+         end;
       end if;
    end Cursor_Goto;
 

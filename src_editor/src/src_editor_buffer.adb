@@ -2887,7 +2887,7 @@ package body Src_Editor_Buffer is
             return True;
 
          else
-            Trace (Me, "invalid buffer line");
+            Trace (Me, "Invalid Buffer Line");
             return False;
          end if;
 
@@ -2905,6 +2905,30 @@ package body Src_Editor_Buffer is
       return Is_Valid_Position
         (Buffer, Line, Collapse_Tabs (Buffer, Line, Column));
    end Is_Valid_Position;
+
+   ---------------------------
+   -- Ensure_Valid_Position --
+   ---------------------------
+
+   procedure Ensure_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type := 1) is
+   begin
+      if not Is_Valid_Position (Buffer, Line, Column) then
+         raise Location_Exception with (-"Invalid Buffer Line");
+      end if;
+   end Ensure_Valid_Position;
+
+   procedure Ensure_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Visible_Column_Type) is
+   begin
+      if not Is_Valid_Position (Buffer, Line, Column) then
+         raise Location_Exception with (-"Invalid Buffer Line");
+      end if;
+   end Ensure_Valid_Position;
 
    ---------------------
    -- Highlight_Slice --
@@ -4922,13 +4946,6 @@ package body Src_Editor_Buffer is
    begin
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
-
-      --  Default the Line to 1
-
-      if Line = 0 then
-         Line := 1;
-      end if;
-
       Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
    end Get_Iter_Position;
 
@@ -8068,7 +8085,8 @@ package body Src_Editor_Buffer is
 
          declare
             A : GNAT.Strings.String_Access :=
-              Get_Buffer_Lines (Buffer, Start_Line + 1, Real_End_Line - 1);
+              Get_Buffer_Lines
+                (Buffer, Start_Line + 1, Real_End_Line - 1);
             S : constant String :=
               Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
                 & A.all & Get_Text (Buffer, End_Begin, End_Iter);

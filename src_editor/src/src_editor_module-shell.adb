@@ -212,10 +212,12 @@ package body Src_Editor_Module.Shell is
       Triplet : Child_Triplet_Access);
    --  Called when synchronized editor Child in Triplet is deleted
 
-   procedure MC_Cmds (Data : in out Callback_Data'Class; Command : String);
+   procedure MC_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
 
-   procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
+   procedure Buffer_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
 
    procedure Location_Cmds
@@ -2075,6 +2077,9 @@ package body Src_Editor_Module.Shell is
    exception
       when E : Editor_Exception =>
          Set_Error_Msg (Data, Exception_Message (E));
+      when E : Location_Exception =>
+         Set_Error_Msg
+           (Data, "Can't execute " & Command & ": " & Exception_Message (E));
    end Buffer_Cmds;
 
    -------------------
@@ -2345,6 +2350,10 @@ package body Src_Editor_Module.Shell is
                Get_Location
                  (Data, 1).Backward_Overlay (Get_Overlay (Data, 2, True))));
       end if;
+   exception
+      when E : Location_Exception =>
+         Set_Error_Msg
+           (Data, "Can't execute " & Command & ": " & Exception_Message (E));
    end Location_Cmds;
 
    ---------------

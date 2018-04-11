@@ -72,6 +72,9 @@ package GPS.Editors is
    --  Exception raised by the subprograms below when the arguments are not
    --  expected (all kind of errors, the specific error is part of the
    --  exception's Error_Message).
+   Location_Exception : exception;
+   --  Exception raised when trying to access an invalid location in the
+   --  current context.
 
    --------------------
    -- Editor_Overlay --

@@ -826,13 +826,16 @@ def delete(forward=True):
 
         no_selection = mc.mark().location() == mc.sel_mark().location()
         for c in ed.cursors():
-            if no_selection:
-                start = c.mark().location()
-                end = start.forward_char(1 if forward else -1)
-                if start != end:
-                    _delete(start, end)
-            else:
-                _delete(c.mark().location(), c.sel_mark().location())
+            try:
+                if no_selection:
+                    start = c.mark().location()
+                    end = start.forward_char(1 if forward else -1)
+                    if end and start != end:
+                        _delete(start, end)
+                else:
+                    _delete(c.mark().location(), c.sel_mark().location())
+            except GPS.Exception:
+                return
 
     if ed.has_slave_cursors():
         with ed.new_undo_group():

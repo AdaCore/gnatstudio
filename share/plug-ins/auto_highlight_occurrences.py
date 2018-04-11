@@ -244,13 +244,16 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         if self.highlight_selection:
             if buffer:
-                start_loc = buffer.selection_start()
-                end_loc = buffer.selection_end()
-                if start_loc != end_loc:
-                    end_loc = end_loc.forward_char(-1)
-                    word = buffer.get_chars(start_loc, end_loc).strip()
-                    word = word.decode("utf8")  # make unicode-string
-
+                try:
+                    start_loc = buffer.selection_start()
+                    end_loc = buffer.selection_end()
+                    if start_loc != end_loc:
+                        end_loc = end_loc.forward_char(-1)
+                        word = buffer.get_chars(start_loc, end_loc)
+                        # make unicode-string
+                        word = word.strip().decode("utf8")
+                except GPS.Exception:
+                    return
         # Attempt entity highlighting.
         # Do this only if there is indeed an entity under the cursor,
         # and, then, only if the semantic tree for this file is already
