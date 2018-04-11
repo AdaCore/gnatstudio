@@ -1137,7 +1137,7 @@ package body CodePeer.Module is
 
       case Action is
          when Load_UI =>
-            CodePeer.Module.Bridge.Inspection (Module);
+            CodePeer.Module.Bridge.Inspection (Module, True);
 
          when Audit_Trail =>
             Module.Review_Messages

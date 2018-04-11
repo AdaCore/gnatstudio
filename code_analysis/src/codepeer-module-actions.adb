@@ -126,7 +126,7 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      CodePeer.Module.Bridge.Inspection (Self.Module);
+      CodePeer.Module.Bridge.Inspection (Self.Module, False);
 
       return Success;
    end Execute;

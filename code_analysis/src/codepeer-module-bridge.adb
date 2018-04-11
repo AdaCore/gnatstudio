@@ -43,9 +43,11 @@ package body CodePeer.Module.Bridge is
      "review_status_data.xml";
 
    procedure Run_GPS_Codepeer_Bridge
-     (Module       : not null access CodePeer.Module.Module_Id_Record'Class;
-      Command_File : GNATCOLL.VFS.Virtual_File);
-   --  Runs gps_codepeer_bridge
+     (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
+      Command_File    : GNATCOLL.VFS.Virtual_File;
+      Preserve_Output : Boolean);
+   --  Runs gps_codepeer_bridge. Don't clear GPS Messages view when
+   --  Preserve_Output is True.
 
    ----------------------
    -- Add_Audit_Record --
@@ -96,7 +98,7 @@ package body CodePeer.Module.Bridge is
       end case;
 
       Module.Action := None;
-      Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
+      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Add_Audit_Record;
 
@@ -105,7 +107,8 @@ package body CodePeer.Module.Bridge is
    ----------------
 
    procedure Inspection
-     (Module : not null access CodePeer.Module.Module_Id_Record'Class)
+     (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
+      Preserve_Output : Boolean)
    is
       Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
@@ -175,7 +178,7 @@ package body CodePeer.Module.Bridge is
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
          Module.Status_File := Status_File_Name;
-         Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
+         Run_GPS_Codepeer_Bridge (Module, Command_File_Name, Preserve_Output);
       end if;
    end Inspection;
 
@@ -225,7 +228,7 @@ package body CodePeer.Module.Bridge is
       Module.Action := Audit_Trail;
       Module.Inspection_File := Reply_File_Name;
       Module.Bridge_Messages := Messages;
-      Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
+      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Load_Audit_Trail;
 
@@ -261,8 +264,9 @@ package body CodePeer.Module.Bridge is
    -----------------------------
 
    procedure Run_GPS_Codepeer_Bridge
-     (Module       : not null access CodePeer.Module.Module_Id_Record'Class;
-      Command_File : GNATCOLL.VFS.Virtual_File)
+     (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
+      Command_File    : GNATCOLL.VFS.Virtual_File;
+      Preserve_Output : Boolean)
    is
       Builder    : constant Builder_Context := Builder_Context
         (Module.Kernel.Module (Builder_Context_Record'Tag));
@@ -272,19 +276,20 @@ package body CodePeer.Module.Bridge is
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
       Commands.Builder.Launch_Target
-        (Builder      => Builder,
-         Target_Name  => "CodePeer Bridge",
-         Mode_Name    => "codepeer",
-         Force_File   => No_File,
-         Extra_Args   => Extra_Args,
-         Quiet        => False,
-         Synchronous  => False,
-         Dialog       => Force_No_Dialog,
-         Via_Menu     => False,
-         Main         => No_File,
-         Main_Project => No_Project,
-         Background   => False,
-         Directory    => No_File);
+        (Builder         => Builder,
+         Target_Name     => "CodePeer Bridge",
+         Mode_Name       => "codepeer",
+         Force_File      => No_File,
+         Extra_Args      => Extra_Args,
+         Quiet           => False,
+         Synchronous     => False,
+         Dialog          => Force_No_Dialog,
+         Via_Menu        => False,
+         Main            => No_File,
+         Main_Project    => No_Project,
+         Background      => False,
+         Directory       => No_File,
+         Preserve_Output => Preserve_Output);
       Free (Extra_Args (1));
       Free (Extra_Args);
    end Run_GPS_Codepeer_Bridge;
