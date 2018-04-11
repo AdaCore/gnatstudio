@@ -15,9 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded.Hash;
+with Ada.Strings.Hash;
+with Ada.Characters.Handling;
 
 package body GNAThub is
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Item : Severity_Record)
+                      return Ada.Strings.Unbounded.Unbounded_String is
+   begin
+      return
+        Ada.Strings.Unbounded.To_Unbounded_String
+          (Ada.Characters.Handling.To_Lower
+             (Severity_Enum'Image (Item.Ranking)));
+   end Get_Name;
 
    ----------
    -- Hash --
@@ -25,7 +39,7 @@ package body GNAThub is
 
    function Hash (Item : Severity_Access) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Strings.Unbounded.Hash (Item.Name);
+      return Ada.Strings.Hash (Severity_Enum'Image (Item.Ranking));
    end Hash;
 
    ----------
@@ -44,33 +58,8 @@ package body GNAThub is
    ----------
 
    function Less (L, R : GNAThub.Severity_Access) return Boolean is
-      Index_L, Index_R : Natural;
    begin
-      Index_L := Ada.Strings.Unbounded.Index (L.Name, "_");
-      if Index_L < 1 then
-         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
-      end if;
-
-      Index_R := Ada.Strings.Unbounded.Index (R.Name, "_");
-      if Index_R < 1 then
-         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
-      end if;
-
-      if Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) =
-        Ada.Strings.Unbounded.Slice (R.Name, 1, Index_R)
-      then
-         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
-      end if;
-
-      if Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) = "HIGH_" then
-         return True;
-      elsif Ada.Strings.Unbounded.Slice (R.Name, 1, Index_R) = "HIGH_" then
-         return False;
-      elsif Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) = "MEDIUM_" then
-         return True;
-      else
-         return False;
-      end if;
+      return L.Ranking > R.Ranking;
    end Less;
 
 end GNAThub;

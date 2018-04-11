@@ -48,7 +48,7 @@ package body GNAThub.Filters is
                Flags          =>
                  (Locations   => True,
                   Editor_Line => False,
-                  Editor_Side => M.Get_Severity.On_Sidebar));
+                  Editor_Side => True));
 
          else
             return (Non_Applicable => False,

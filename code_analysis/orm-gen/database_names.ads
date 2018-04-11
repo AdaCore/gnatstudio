@@ -1,8 +1,6 @@
 with GNATCOLL.SQL; use GNATCOLL.SQL;
 package Database_Names is
    pragma Style_Checks (Off);
-   TC_Categories : aliased constant String := "categories";
-   Ta_Categories : constant Cst_String_Access := TC_Categories'Access;
    TC_Entities : aliased constant String := "entities";
    Ta_Entities : constant Cst_String_Access := TC_Entities'Access;
    TC_Entities_Messages : aliased constant String := "entities_messages";
@@ -24,8 +22,6 @@ package Database_Names is
    TC_Tools : aliased constant String := "tools";
    Ta_Tools : constant Cst_String_Access := TC_Tools'Access;
 
-   NC_Category_Id : aliased constant String := "category_id";
-   N_Category_Id : constant Cst_String_Access := NC_category_id'Access;
    NC_Child_Id : aliased constant String := "child_id";
    N_Child_Id : constant Cst_String_Access := NC_child_id'Access;
    NC_Col_Begin : aliased constant String := "col_begin";
@@ -42,20 +38,18 @@ package Database_Names is
    N_Identifier : constant Cst_String_Access := NC_identifier'Access;
    NC_Kind : aliased constant String := "kind";
    N_Kind : constant Cst_String_Access := NC_kind'Access;
-   NC_Label : aliased constant String := "label";
-   N_Label : constant Cst_String_Access := NC_label'Access;
    NC_Line : aliased constant String := "line";
    N_Line : constant Cst_String_Access := NC_line'Access;
    NC_Message_Id : aliased constant String := "message_id";
    N_Message_Id : constant Cst_String_Access := NC_message_id'Access;
    NC_Name : aliased constant String := """name""";
    N_Name : constant Cst_String_Access := NC_name'Access;
-   NC_On_Side : aliased constant String := "on_side";
-   N_On_Side : constant Cst_String_Access := NC_on_side'Access;
    NC_Parent_Id : aliased constant String := "parent_id";
    N_Parent_Id : constant Cst_String_Access := NC_parent_id'Access;
    NC_Property_Id : aliased constant String := "property_id";
    N_Property_Id : constant Cst_String_Access := NC_property_id'Access;
+   NC_Ranking : aliased constant String := "ranking";
+   N_Ranking : constant Cst_String_Access := NC_ranking'Access;
    NC_Resource_Id : aliased constant String := "resource_id";
    N_Resource_Id : constant Cst_String_Access := NC_resource_id'Access;
    NC_Rule_Id : aliased constant String := "rule_id";

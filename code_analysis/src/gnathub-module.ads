@@ -61,8 +61,8 @@ package GNAThub.Module is
 
    function New_Severity
      (Self       : in out GNAThub_Module_Id_Record'Class;
-      Name       : Ada.Strings.Unbounded.Unbounded_String;
-      On_Sidebar : Boolean) return Severity_Access;
+      Severity   : Severity_Enum)
+      return Severity_Access;
    --  Creates new severity object
 
    function New_Tool

@@ -380,7 +380,7 @@ package body GNAThub.Loader is
 
             --  Use Empty_Severity_Id if M.Category_Id is NULL
             Severity := Self.Severities
-              (Natural'Max (Empty_Severity_Id, M.Category_Id));
+              (Natural'Max (Empty_Severity_Id, M.Ranking));
             Rule     := Self.Rules (M.Rule_Id);
             Position := Rule.Count.Find (Severity);
 
@@ -501,31 +501,12 @@ package body GNAThub.Loader is
    ---------------------
 
    procedure Load_Severities (Self : in out Loader'Class) is
-      Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                   GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Database.Orm.Category_List       :=
-                   Database.Orm.All_Categories.Get (Session);
-      S        : Database.Orm.Category;
       Severity : Severity_Access;
-
    begin
-      while List.Has_Row loop
-         S := List.Element;
-         Severity :=
-           Self.Module.New_Severity
-             (Name       => To_Unbounded_String (S.Label),
-              On_Sidebar => S.On_Side);
-         Self.Severities.Insert (S.Id, Severity);
-         List.Next;
+      for S in Severity_Enum loop
+         Severity := Self.Module.New_Severity (S);
+         Self.Severities.Insert (Severity_Enum'Pos (S), Severity);
       end loop;
-
-      if not Self.Severities.Contains (Empty_Severity_Id) then
-         Severity :=
-           Self.Module.New_Severity
-             (Name       => To_Unbounded_String ("Unspecified"),
-              On_Sidebar => True);
-         Self.Severities.Insert (Empty_Severity_Id, Severity);
-      end if;
    end Load_Severities;
 
    --------------------------

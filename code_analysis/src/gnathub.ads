@@ -34,16 +34,22 @@ package GNAThub is
    -- Severity --
    --------------
 
+   type Severity_Enum is (Annotation,
+                          Unspecified,
+                          Info,
+                          Low,
+                          Medium,
+                          High);
+
    type Severity_Record is limited record
-      Name       : Ada.Strings.Unbounded.Unbounded_String;
-      On_Sidebar : Boolean;
-      Color      : Color_Preference;
+      Ranking : Severity_Enum;
+      Color   : Color_Preference;
    end record;
 
    type Severity_Access is access all Severity_Record;
 
-   package Severity_Vectors is
-     new Ada.Containers.Vectors (Positive, Severity_Access);
+   function Get_Name (Item : Severity_Record)
+                      return Ada.Strings.Unbounded.Unbounded_String;
 
    function Hash (Item : Severity_Access) return Ada.Containers.Hash_Type;
 

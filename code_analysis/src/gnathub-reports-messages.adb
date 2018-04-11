@@ -205,7 +205,8 @@ package body GNAThub.Reports.Messages is
 
       for Severity of Severities loop
          Gtk.Tree_View_Column.Gtk_New (Column);
-         Column.Set_Title (Ada.Strings.Unbounded.To_String (Severity.Name));
+         Column.Set_Title
+           (Ada.Strings.Unbounded.To_String (Get_Name (Severity.all)));
          Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
 
          Column.Pack_Start (Text_Renderer, False);

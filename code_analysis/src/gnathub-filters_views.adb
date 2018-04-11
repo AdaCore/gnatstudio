@@ -76,7 +76,7 @@ package body GNAThub.Filters_Views is
 
    function Get_History_Name
      (Item : GNAThub.Severity_Record; View : Gtk.Widget.Gtk_Widget)
-      return String is (Ada.Strings.Unbounded.To_String (Item.Name));
+      return String is (Ada.Strings.Unbounded.To_String (Get_Name (Item)));
 
    function Is_Severity_Visible
      (Item : GNAThub.Severity_Access;
@@ -513,7 +513,7 @@ package body GNAThub.Filters_Views is
    begin
       if Column = 0 then
          Glib.Values.Init_Set_String
-           (Value, Ada.Strings.Unbounded.To_String (Self.Name));
+           (Value, Ada.Strings.Unbounded.To_String (Get_Name (Self.all)));
 
       elsif Column = 1 then
          declare

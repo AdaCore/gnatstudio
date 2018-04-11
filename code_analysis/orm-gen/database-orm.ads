@@ -36,16 +36,8 @@ package Database.Orm is
     --  this is much more efficient since only the current element needs to be
     --  stored in memory(and retrieved from the server).
 
-   type Category is new Orm_Element with null record;
-   type Category_DDR is new Detached_Data (3) with private;
-   type Detached_Category is  --  Get() returns a Category_DDR
-   new Sessions.Detached_Element with private;
-   type Detached_Category_Access is access all Detached_Category'Class;
-   No_Detached_Category : constant Detached_Category;
-   No_Category : constant Category;
-
    type Entity is new Orm_Element with null record;
-   type Entity_DDR is new Detached_Data (5) with private;
+   type Entity_DDR is new Detached_Data (7) with private;
    type Detached_Entity is  --  Get() returns a Entity_DDR
    new Sessions.Detached_Element with private;
    type Detached_Entity_Access is access all Detached_Entity'Class;
@@ -61,7 +53,7 @@ package Database.Orm is
    No_Entity_Message : constant Entity_Message;
 
    type Message is new Orm_Element with null record;
-   type Message_DDR is new Detached_Data (6) with private;
+   type Message_DDR is new Detached_Data (5) with private;
    type Detached_Message is  --  Get() returns a Message_DDR
    new Sessions.Detached_Element with private;
    type Detached_Message_Access is access all Detached_Message'Class;
@@ -301,16 +293,6 @@ package Database.Orm is
    --  Compares two elements using only the primary keys. All other fields are
    --  ignored
 
-   function Category_Id (Self : Message) return Integer;
-   function Category_Id (Self : Detached_Message) return Integer;
-   procedure Set_Category_Id (Self : Detached_Message; Value : Integer);
-   function Category_Id (Self : Message) return Category'Class;
-   function Category_Id (Self : Detached_Message) return Detached_Category'Class;
-   procedure Set_Category_Id
-     (Self  : Detached_Message;
-      Value : Detached_Category'Class);
-   --  Category of the rule
-
    function Data (Self : Message) return String;
    function Data (Self : Detached_Message) return String;
    procedure Set_Data (Self : Detached_Message; Value : String);
@@ -319,6 +301,11 @@ package Database.Orm is
    function Id (Self : Message) return Integer;
    function Id (Self : Detached_Message) return Integer;
    --  Auto-generated id
+
+   function Ranking (Self : Message) return Integer;
+   function Ranking (Self : Detached_Message) return Integer;
+   procedure Set_Ranking (Self : Detached_Message; Value : Integer);
+   --  Values : 0-Annotation, 1-Unspecified, 2-Info, 3-Low, 4-Medium, 5-High
 
    function Rule_Id (Self : Message) return Integer;
    function Rule_Id (Self : Detached_Message) return Integer;
@@ -371,6 +358,16 @@ package Database.Orm is
    function Name (Self : Detached_Entity) return String;
    procedure Set_Name (Self : Detached_Entity; Value : String);
    --  Entitie's name
+
+   function Resource_Id (Self : Entity) return Integer;
+   function Resource_Id (Self : Detached_Entity) return Integer;
+   procedure Set_Resource_Id (Self : Detached_Entity; Value : Integer);
+   function Resource_Id (Self : Entity) return Resource'Class;
+   function Resource_Id (Self : Detached_Entity) return Detached_Resource'Class;
+   procedure Set_Resource_Id
+     (Self  : Detached_Entity;
+      Value : Detached_Resource'Class);
+   --  Entitie's associated ressource
 
    function Detach (Self : Entity'Class) return Detached_Entity'Class;
 
@@ -435,44 +432,6 @@ package Database.Orm is
    --  not, the returned value will be a null element (test with Is_Null)
 
    function New_Message_Property return Detached_Message_Property'Class;
-
-   --------------------------
-   -- Elements: Categories --
-   --------------------------
-
-   function "=" (Op1 : Category; Op2 : Category) return Boolean;
-   function "="
-     (Op1 : Detached_Category;
-      Op2 : Detached_Category)
-     return Boolean;
-   --  Compares two elements using only the primary keys. All other fields are
-   --  ignored
-
-   function Id (Self : Category) return Integer;
-   function Id (Self : Detached_Category) return Integer;
-   --  Auto-generated id
-
-   function Label (Self : Category) return String;
-   function Label (Self : Detached_Category) return String;
-   procedure Set_Label (Self : Detached_Category; Value : String);
-   --  Categorie's label
-
-   function On_Side (Self : Category) return Boolean;
-   function On_Side (Self : Detached_Category) return Boolean;
-   procedure Set_On_Side (Self : Detached_Category; Value : Boolean);
-   --  Whether messages belonging to this category should be displayed on the
-   --  side
-
-   function Detach (Self : Category'Class) return Detached_Category'Class;
-
-   function From_Cache
-     (Session : Session_Type;
-      Id      : Integer)
-     return Detached_Category'Class;
-   --  Check whether there is already an element with this primary key. If
-   --  not, the returned value will be a null element (test with Is_Null)
-
-   function New_Category return Detached_Category'Class;
 
    ---------------------------------
    -- Elements: Entities_Messages --
@@ -639,14 +598,6 @@ package Database.Orm is
    -- Managers(Implementation Details) --
    --------------------------------------
 
-   procedure Internal_Query_Categories
-     (Fields    : in out SQL_Field_List;
-      From      : out SQL_Table_List;
-      Criteria  : in out Sql_Criteria;
-      Depth     : Natural;
-      Follow_LJ : Boolean;
-      Pk_Only   : Boolean := False);
-
    procedure Internal_Query_Entities
      (Fields    : in out SQL_Field_List;
       From      : out SQL_Table_List;
@@ -730,19 +681,6 @@ package Database.Orm is
    -------------------
    -- Manager Types --
    -------------------
-
-   type I_Categories_Managers is abstract new Manager with null record;
-   package I_Categories is new Generic_Managers
-     (I_Categories_Managers, Category, Related_Depth, DBA.Categories,
-      Internal_Query_Categories);
-   type Categories_Managers is new I_Categories.Manager with null record;
-   subtype Categories_Stmt is I_Categories.ORM_Prepared_Statement;
-
-   subtype Category_List is I_Categories.List;
-   subtype Direct_Category_List is I_Categories.Direct_List;
-   Empty_Category_List : constant Category_List := I_Categories.Empty_List;
-   Empty_Direct_Category_List : constant Direct_Category_List :=
-   I_Categories.Empty_Direct_List;
 
    type I_Entities_Managers is abstract new Manager with null record;
    package I_Entities is new Generic_Managers
@@ -955,11 +893,11 @@ package Database.Orm is
      return Resources_Messages_Managers;
 
    function Filter
-     (Self        : Messages_Managers'Class;
-      Id          : Integer := -1;
-      Rule_Id     : Integer := -1;
-      Data        : String := No_Update;
-      Category_Id : Integer := -1)
+     (Self    : Messages_Managers'Class;
+      Id      : Integer := -1;
+      Rule_Id : Integer := -1;
+      Data    : String := No_Update;
+      Ranking : Integer := -1)
      return Messages_Managers;
 
    function Get_Message
@@ -1004,12 +942,13 @@ package Database.Orm is
      return Entities_Messages_Managers;
 
    function Filter
-     (Self      : Entities_Managers'Class;
-      Id        : Integer := -1;
-      Name      : String := No_Update;
-      Line      : Integer := -1;
-      Col_Begin : Integer := -1;
-      Col_End   : Integer := -1)
+     (Self        : Entities_Managers'Class;
+      Id          : Integer := -1;
+      Name        : String := No_Update;
+      Line        : Integer := -1;
+      Col_Begin   : Integer := -1;
+      Col_End     : Integer := -1;
+      Resource_Id : Integer := -1)
      return Entities_Managers;
 
    function Get_Entity
@@ -1036,32 +975,6 @@ package Database.Orm is
       Depth            : Related_Depth := 0;
       Follow_Left_Join : Boolean := False)
      return Detached_Message_Property'Class;
-
-   -------------------------
-   -- Manager: Categories --
-   -------------------------
-
-   function Category_Messages (Self : Category'Class) return Messages_Managers;
-   function Category_Messages
-     (Self : Detached_Category'Class)
-     return Messages_Managers;
-   function Category_Messages
-     (Self : I_Categories_Managers'Class)
-     return Messages_Managers;
-
-   function Filter
-     (Self    : Categories_Managers'Class;
-      Id      : Integer := -1;
-      Label   : String := No_Update;
-      On_Side : Triboolean := Indeterminate)
-     return Categories_Managers;
-
-   function Get_Category
-     (Session          : Session_Type;
-      Id               : Integer;
-      Depth            : Related_Depth := 0;
-      Follow_Left_Join : Boolean := False)
-     return Detached_Category'Class;
 
    --------------------------------
    -- Manager: Entities_Messages --
@@ -1143,6 +1056,13 @@ package Database.Orm is
    function Get_Resource
      (Self : I_Resources_Managers'Class)
      return Resources_Messages_Managers;
+   function Get_Resource (Self : Resource'Class) return Entities_Managers;
+   function Get_Resource
+     (Self : Detached_Resource'Class)
+     return Entities_Managers;
+   function Get_Resource
+     (Self : I_Resources_Managers'Class)
+     return Entities_Managers;
 
    function Filter
      (Self      : Resources_Managers'Class;
@@ -1183,9 +1103,6 @@ package Database.Orm is
    -- Managers --
    --------------
 
-   All_Categories : constant Categories_Managers :=
-     (I_Categories.All_Managers with null record);
-
    All_Entities : constant Entities_Managers :=
      (I_Entities.All_Managers with null record);
 
@@ -1221,7 +1138,6 @@ package Database.Orm is
    -- Internal --
    --------------
 
-   overriding procedure Free (Self : in out Category_Ddr);
    overriding procedure Free (Self : in out Entity_Ddr);
    overriding procedure Free (Self : in out Entity_Message_Ddr);
    overriding procedure Free (Self : in out Message_Ddr);
@@ -1233,10 +1149,6 @@ package Database.Orm is
    overriding procedure Free (Self : in out Rule_Ddr);
    overriding procedure Free (Self : in out Tool_Ddr);
 
-   overriding procedure Insert_Or_Update
-     (Self        : in out Detached_Category;
-      Pk_Modified : in out Boolean;
-      Mask        : Dirty_Mask);
    overriding procedure Insert_Or_Update
      (Self        : in out Detached_Entity;
       Pk_Modified : in out Boolean;
@@ -1278,7 +1190,6 @@ package Database.Orm is
       Pk_Modified : in out Boolean;
       Mask        : Dirty_Mask);
 
-   overriding procedure Internal_Delete (Self : Detached_Category);
    overriding procedure Internal_Delete (Self : Detached_Entity);
    overriding procedure Internal_Delete (Self : Detached_Entity_Message);
    overriding procedure Internal_Delete (Self : Detached_Message);
@@ -1290,7 +1201,6 @@ package Database.Orm is
    overriding procedure Internal_Delete (Self : Detached_Rule);
    overriding procedure Internal_Delete (Self : Detached_Tool);
 
-   overriding function Key (Self : Category_Ddr) return Element_Key;
    overriding function Key (Self : Entity_Ddr) return Element_Key;
    overriding function Key (Self : Entity_Message_Ddr) return Element_Key;
    overriding function Key (Self : Message_Ddr) return Element_Key;
@@ -1302,6 +1212,7 @@ package Database.Orm is
    overriding function Key (Self : Rule_Ddr) return Element_Key;
    overriding function Key (Self : Tool_Ddr) return Element_Key;
 
+   overriding procedure On_Persist (Self : Detached_Entity);
    overriding procedure On_Persist (Self : Detached_Entity_Message);
    overriding procedure On_Persist (Self : Detached_Message);
    overriding procedure On_Persist (Self : Detached_Message_Property);
@@ -1311,19 +1222,14 @@ package Database.Orm is
 
 private
 
-    type Category_DDR is new Detached_Data (3) with record
-       ORM_Id         : Integer := -1;
-       ORM_Label      : Unbounded_String := Null_Unbounded_String;
-       ORM_On_Side    : Boolean := False;
-    end record;
-    type Category_Data is access all Category_DDR;
-    
-    type Entity_DDR is new Detached_Data (5) with record
-       ORM_Col_Begin    : Integer := -1;
-       ORM_Col_End      : Integer := -1;
-       ORM_Id           : Integer := -1;
-       ORM_Line         : Integer := -1;
-       ORM_Name         : Unbounded_String := Null_Unbounded_String;
+    type Entity_DDR is new Detached_Data (7) with record
+       ORM_Col_Begin      : Integer := -1;
+       ORM_Col_End        : Integer := -1;
+       ORM_FK_Resource_Id : Detached_Resource_Access := null;
+       ORM_Id             : Integer := -1;
+       ORM_Line           : Integer := -1;
+       ORM_Name           : Unbounded_String := Null_Unbounded_String;
+       ORM_Resource_Id    : Integer := -1;
     end record;
     type Entity_Data is access all Entity_DDR;
     
@@ -1336,13 +1242,12 @@ private
     end record;
     type Entity_Message_Data is access all Entity_Message_DDR;
     
-    type Message_DDR is new Detached_Data (6) with record
-       ORM_Category_Id    : Integer := -1;
-       ORM_Data           : Unbounded_String := Null_Unbounded_String;
-       ORM_FK_Category_Id : Detached_Category_Access := null;
-       ORM_FK_Rule_Id     : Detached_Rule_Access := null;
-       ORM_Id             : Integer := -1;
-       ORM_Rule_Id        : Integer := -1;
+    type Message_DDR is new Detached_Data (5) with record
+       ORM_Data       : Unbounded_String := Null_Unbounded_String;
+       ORM_FK_Rule_Id : Detached_Rule_Access := null;
+       ORM_Id         : Integer := -1;
+       ORM_Ranking    : Integer := 1;
+       ORM_Rule_Id    : Integer := -1;
     end record;
     type Message_Data is access all Message_DDR;
     
@@ -1408,12 +1313,6 @@ private
     type Tool_Data is access all Tool_DDR;
     
 
-    type Detached_Category
-       is new Sessions.Detached_Element with null record;
-    No_Category : constant Category :=(No_Orm_Element with null record);
-    No_Detached_Category : constant Detached_Category :=
-      (Sessions.Detached_Element with null record);
- 
     type Detached_Entity
        is new Sessions.Detached_Element with null record;
     No_Entity : constant Entity :=(No_Orm_Element with null record);

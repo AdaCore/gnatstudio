@@ -228,10 +228,13 @@ package body GNAThub.Module is
    ------------------
 
    function New_Severity
-     (Self       : in out GNAThub_Module_Id_Record'Class;
-      Name       : Ada.Strings.Unbounded.Unbounded_String;
-      On_Sidebar : Boolean) return Severity_Access
+     (Self     : in out GNAThub_Module_Id_Record'Class;
+      Severity : Severity_Enum)
+      return Severity_Access
    is
+      N    : constant String           := Severity_Enum'Image (Severity);
+      Name : constant Unbounded_String := To_Unbounded_String (N);
+
       function Get_Default_Color return String;
 
       -----------------------
@@ -249,13 +252,10 @@ package body GNAThub.Module is
          end if;
       end Get_Default_Color;
 
-      N : constant String := Ada.Strings.Unbounded.To_String (Name);
-
    begin
-      return Severity : constant Severity_Access :=
+      return Sev : constant Severity_Access :=
         new Severity_Record'
-          (Name       => Name,
-           On_Sidebar => On_Sidebar,
+          (Ranking    => Severity,
            Color      => Self.Kernel.Get_Preferences.Create
              (Path    => ":Local Configuration",
               Name    => Severity_History_Prefix & "-" & N & "-color",
@@ -263,7 +263,7 @@ package body GNAThub.Module is
               Doc     => "",
               Default => Get_Default_Color))
       do
-         Self.Severities.Insert (Severity);
+         Self.Severities.Insert (Sev);
       end return;
    end New_Severity;
 

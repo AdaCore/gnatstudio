@@ -134,7 +134,7 @@ package body Search_Provider is
 
       if Is_Severity_Visible (Severity, Gtk.Widget.Gtk_Widget (View)) then
          declare
-            Name : constant String := To_String (Severity.Name);
+            Name : constant String := To_String (Get_Name (Severity.all));
          begin
             Context := Self.Pattern.Search_Best_Match (Name);
 

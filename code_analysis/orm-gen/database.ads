@@ -9,32 +9,6 @@ package Database is
    pragma Style_Checks (Off);
    pragma Elaborate_Body;
 
-   type T_Abstract_Categories
-      (Instance : Cst_String_Access;
-       Index    : Integer)
-   is abstract new SQL_Table (Ta_Categories, Instance, Index) with
-   record
-      Id : SQL_Field_Integer (Ta_Categories, Instance, N_Id, Index);
-      --  Auto-generated id
-
-      Label : SQL_Field_Text (Ta_Categories, Instance, N_Label, Index);
-      --  Categorie's label
-
-      On_Side : SQL_Field_Boolean (Ta_Categories, Instance, N_On_Side, Index);
-      --  Whether messages belonging to this category should be displayed on
-      --  the side
-
-   end record;
-
-   type T_Categories (Instance : Cst_String_Access)
-      is new T_Abstract_Categories (Instance, -1) with null record;
-   --  To use named aliases of the table in a query
-   --  Use Instance=>null to use the default name.
-
-   type T_Numbered_Categories (Index : Integer)
-      is new T_Abstract_Categories (null, Index) with null record;
-   --  To use aliases in the form name1, name2,...
-
    type T_Abstract_Entities
       (Instance : Cst_String_Access;
        Index    : Integer)
@@ -54,6 +28,9 @@ package Database is
 
       Col_End : SQL_Field_Integer (Ta_Entities, Instance, N_Col_End, Index);
       --  Entitie's column end
+
+      Resource_Id : SQL_Field_Integer (Ta_Entities, Instance, N_Resource_Id, Index);
+      --  Entitie's associated ressource
 
    end record;
 
@@ -106,8 +83,9 @@ package Database is
       --  Value associated with the message, possibly a numeric value for
       --  metrics
 
-      Category_Id : SQL_Field_Integer (Ta_Messages, Instance, N_Category_Id, Index);
-      --  Category of the rule
+      Ranking : SQL_Field_Integer (Ta_Messages, Instance, N_Ranking, Index);
+      --  Values : 0-Annotation, 1-Unspecified, 2-Info, 3-Low, 4-Medium,
+      --  5-High
 
    end record;
 
@@ -308,16 +286,15 @@ package Database is
       is new T_Abstract_Tools (null, Index) with null record;
    --  To use aliases in the form name1, name2,...
 
+   function FK (Self : T_Entities'Class; Foreign : T_Resources'Class) return SQL_Criteria;
    function FK (Self : T_Entities_Messages'Class; Foreign : T_Entities'Class) return SQL_Criteria;
    function FK (Self : T_Entities_Messages'Class; Foreign : T_Messages'Class) return SQL_Criteria;
    function FK (Self : T_Messages'Class; Foreign : T_Rules'Class) return SQL_Criteria;
-   function FK (Self : T_Messages'Class; Foreign : T_Categories'Class) return SQL_Criteria;
    function FK (Self : T_Messages_Properties'Class; Foreign : T_Messages'Class) return SQL_Criteria;
    function FK (Self : T_Messages_Properties'Class; Foreign : T_Properties'Class) return SQL_Criteria;
    function FK (Self : T_Resources_Messages'Class; Foreign : T_Messages'Class) return SQL_Criteria;
    function FK (Self : T_Resources_Messages'Class; Foreign : T_Resources'Class) return SQL_Criteria;
    function FK (Self : T_Rules'Class; Foreign : T_Tools'Class) return SQL_Criteria;
-   Categories : T_Categories (null);
    Entities : T_Entities (null);
    Entities_Messages : T_Entities_Messages (null);
    Messages : T_Messages (null);
