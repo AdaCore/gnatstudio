@@ -321,10 +321,13 @@ package body Builder_Facility_Module is
    type On_Compilation_Starting is new Compilation_Hooks_Function
       with null record;
    overriding function Execute
-      (Self   : On_Compilation_Starting;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Category : String;
-       Quiet, Shadow, Background : Boolean) return Boolean;
+      (Self            : On_Compilation_Starting;
+       Kernel          : not null access Kernel_Handle_Record'Class;
+       Category        : String;
+       Quiet           : Boolean;
+       Shadow          : Boolean;
+       Background      : Boolean;
+       Preserve_Output : Boolean) return Boolean;
    --  Called when the compilation is starting
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
@@ -994,10 +997,13 @@ package body Builder_Facility_Module is
    -------------
 
    overriding function Execute
-      (Self   : On_Compilation_Starting;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Category : String;
-       Quiet, Shadow, Background : Boolean) return Boolean
+      (Self            : On_Compilation_Starting;
+       Kernel          : not null access Kernel_Handle_Record'Class;
+       Category        : String;
+       Quiet           : Boolean;
+       Shadow          : Boolean;
+       Background      : Boolean;
+       Preserve_Output : Boolean) return Boolean
    is
       pragma Unreferenced (Self);
    begin
@@ -1021,8 +1027,10 @@ package body Builder_Facility_Module is
       Clear_Compilation_Output
         (Kernel_Handle (Kernel),
          Category        => Category,
-         Clear_Console   => (not Quiet)
-           and then (Shadow or else Builder_Module_ID.Build_Count = 0),
+         Clear_Console   =>
+            not Preserve_Output
+              and then not Quiet
+              and then (Shadow or else Builder_Module_ID.Build_Count = 0),
          Clear_Locations => (not Quiet)
            and then Builder_Module_ID.Build_Count = 0,
          Shadow          => Shadow,

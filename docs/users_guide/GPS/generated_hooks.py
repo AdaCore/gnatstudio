@@ -175,7 +175,7 @@ class Predefined_Hooks:
         """
 
     # compilation_starting = 'compilation_starting'
-    def compilation_starting(name,category,quiet,shadow,background):
+    def compilation_starting(name,category,quiet,shadow,background,preserve_output):
         """
       Emitted when a compilation operation is about to start.
       
@@ -232,6 +232,8 @@ class Predefined_Hooks:
          multiple toolchains mode is activated, the builds generating xref are
          Shadow builds
       :param bool background:
+      :param bool preserve_output:
+         Content of Messages view is not cleaned
       :return: bool
 
 

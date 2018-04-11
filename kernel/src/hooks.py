@@ -432,7 +432,9 @@ Whether the build launched was a Shadow builds, i.e. a secondary build
 launched automatically by GPS after a real build. For instance, when
 multiple toolchains mode is activated, the builds generating xref are
 Shadow builds'''),
-         Param('background', 'Boolean')],
+         Param('background', 'Boolean'),
+         Param('preserve_output', 'Boolean', descr='''
+Content of Messages view is not cleaned''')],
         returns='Boolean',
         return_default='True'),  # Stops when one returns False
 
