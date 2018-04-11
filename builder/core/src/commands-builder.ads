@@ -32,20 +32,21 @@ package Commands.Builder is
    --  -"Builder results"
 
    procedure Launch_Target
-     (Builder     : Builder_Context;
-      Target_Name : String;
-      Mode_Name   : String;
-      Force_File  : Virtual_File;
-      Extra_Args  : Argument_List_Access;
-      Quiet       : Boolean;
-      Synchronous : Boolean;
-      Dialog      : Dialog_Mode;
-      Via_Menu    : Boolean;
-      Main        : Virtual_File;
-      Main_Project : Project_Type;
-      Background  : Boolean;
-      Directory   : Virtual_File := No_File;
-      On_Exit     : Subprogram_Type := null);
+     (Builder         : Builder_Context;
+      Target_Name     : String;
+      Mode_Name       : String;
+      Force_File      : Virtual_File;
+      Extra_Args      : Argument_List_Access;
+      Quiet           : Boolean;
+      Synchronous     : Boolean;
+      Dialog          : Dialog_Mode;
+      Via_Menu        : Boolean;
+      Main            : Virtual_File;
+      Main_Project    : Project_Type;
+      Background      : Boolean;
+      Preserve_Output : Boolean         := False;
+      Directory       : Virtual_File    := No_File;
+      On_Exit         : Subprogram_Type := null);
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the mode Mode_Name will be
    --  used.
@@ -59,6 +60,7 @@ package Commands.Builder is
    --  If Synchronous is True, GPS will block until the command is terminated.
    --  See document of Dialog_Mode for details on Dialog values.
    --  Via_Menu is true iff the target was launched via the global menu.
+   --  If Preserve_Output is true, Messages view will not be cleared.
    --
    --  Main, if not empty, indicates the main to build.
    --  It belongs to the Main_Project projec (important in case we are using

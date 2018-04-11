@@ -48,20 +48,21 @@ package body Commands.Builder is
    -------------------
 
    procedure Launch_Target
-     (Builder     : Builder_Context;
-      Target_Name : String;
-      Mode_Name   : String;
-      Force_File  : Virtual_File;
-      Extra_Args  : Argument_List_Access;
-      Quiet       : Boolean;
-      Synchronous : Boolean;
-      Dialog      : Dialog_Mode;
-      Via_Menu    : Boolean;
-      Main        : Virtual_File;
-      Main_Project : Project_Type;
-      Background   : Boolean;
-      Directory   : Virtual_File := No_File;
-      On_Exit     : Subprogram_Type := null)
+     (Builder         : Builder_Context;
+      Target_Name     : String;
+      Mode_Name       : String;
+      Force_File      : Virtual_File;
+      Extra_Args      : Argument_List_Access;
+      Quiet           : Boolean;
+      Synchronous     : Boolean;
+      Dialog          : Dialog_Mode;
+      Via_Menu        : Boolean;
+      Main            : Virtual_File;
+      Main_Project    : Project_Type;
+      Background      : Boolean;
+      Preserve_Output : Boolean         := False;
+      Directory       : Virtual_File    := No_File;
+      On_Exit         : Subprogram_Type := null)
    is
       T              : Target_Access;
       All_Extra_Args : Argument_List_Access;
@@ -136,24 +137,25 @@ package body Commands.Builder is
          --  Configure output parser fabrics
          Launch_Build_Command
            (Builder          => Builder,
-            Build            => (Target       => T,
-                                 Main         => Main,
-                                 Main_Project => Main_Project,
-                                 Force_File => Force_File,
-                                 Env        => Background_Env,
-                                 Category   => Category_Name,
-                                 Mode       => To_Unbounded_String (Mode),
-                                 Background => Background,
-                                 Shadow     => Shadow,
-                                 Quiet      => Quiet,
-                                 Console    => null,
-                                 Full       => (Dir    => Directory,
-                                                others => <>),
-                                 Extra_Args => All_Extra_Args,
-                                 Dialog     => Dialog,
-                                 Via_Menu   => Via_Menu,
-                                 Launch     => True,
-                                 On_Exit    => The_Exit),
+            Build            => (Target          => T,
+                                 Main            => Main,
+                                 Main_Project    => Main_Project,
+                                 Force_File      => Force_File,
+                                 Env             => Background_Env,
+                                 Category        => Category_Name,
+                                 Mode            => To_Unbounded_String (Mode),
+                                 Background      => Background,
+                                 Shadow          => Shadow,
+                                 Quiet           => Quiet,
+                                 Preserve_Output => Preserve_Output,
+                                 Console         => null,
+                                 Full            => (Dir    => Directory,
+                                                     others => <>),
+                                 Extra_Args      => All_Extra_Args,
+                                 Dialog          => Dialog,
+                                 Via_Menu        => Via_Menu,
+                                 Launch          => True,
+                                 On_Exit         => The_Exit),
             Server           => Server,
             Synchronous      => Synchronous);
       end Launch_For_Mode;

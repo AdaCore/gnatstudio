@@ -258,11 +258,12 @@ package body Build_Command_Manager.End_Of_Build is
         and then not Uses_Python (Build.Target)
       then
          Build.Launch := Compilation_Starting_Hook.Run
-           (Kernel     => Kernel_Handle (Self.Builder.Kernel),
-            Category   => To_String (Build.Category),
-            Quiet      => Build.Quiet,
-            Shadow     => Build.Shadow,
-            Background => Build.Background);
+           (Kernel          => Kernel_Handle (Self.Builder.Kernel),
+            Category        => To_String (Build.Category),
+            Quiet           => Build.Quiet,
+            Shadow          => Build.Shadow,
+            Background      => Build.Background,
+            Preserve_Output => Build.Preserve_Output);
       end if;
 
       Force_File := Self.Builder.Get_Last_Build.Force_File;

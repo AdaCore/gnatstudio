@@ -336,24 +336,25 @@ package Build_Command_Utils is
    -----------------
 
    type Build_Information is record
-      Target      : Target_Access;
-      Main        : Virtual_File;
-      Main_Project : Project_Type;
-      Force_File  : Virtual_File;
-      Env         : Extending_Environment;
-      Category    : Unbounded_String;
-      Mode        : Unbounded_String;
-      Background  : Boolean;
-      Shadow      : Boolean;
-      Quiet       : Boolean;
-      Console     : Abstract_Messages_Window_Access;
-      Full        : Expansion_Result;
-      Extra_Args  : Argument_List_Access;
-      Dialog      : Dialog_Mode;
-      Via_Menu    : Boolean;
-      Launch      : Boolean;
+      Target          : Target_Access;
+      Main            : Virtual_File;
+      Main_Project    : Project_Type;
+      Force_File      : Virtual_File;
+      Env             : Extending_Environment;
+      Category        : Unbounded_String;
+      Mode            : Unbounded_String;
+      Background      : Boolean;
+      Shadow          : Boolean;
+      Quiet           : Boolean;
+      Preserve_Output : Boolean;
+      Console         : Abstract_Messages_Window_Access;
+      Full            : Expansion_Result;
+      Extra_Args      : Argument_List_Access;
+      Dialog          : Dialog_Mode;
+      Via_Menu        : Boolean;
+      Launch          : Boolean;
 
-      On_Exit     : Subprogram_Type := null;
+      On_Exit         : Subprogram_Type := null;
       --  The scripting subprogram which should be called at the end of the
       --  build.
    end record;
