@@ -96,6 +96,10 @@ package body Gtkada.Entry_Completion is
    Result_Width : constant := 300;
    --  Maximum width of the popup window
 
+   Minimnum_Nb_Results_For_Display : constant := 10;
+   --  The minimum number of search results needed to display the popup's
+   --  search results' tree view.
+
    type Search_Kind_Radio_Button_Record is new Gtk_Radio_Button_Record
    with record
       Entry_View : Gtkada_Entry;
@@ -202,6 +206,12 @@ package body Gtkada.Entry_Completion is
       (Self : not null access Gtkada_Entry_Record'Class;
        Height_Only : Boolean);
    --  Resize the popup window depending on its contents
+
+   procedure Set_Search_Results_Visibility
+     (Self    : not null access Gtkada_Entry_Record'Class;
+      Visible : Boolean);
+   --  Display the search results in the popup and hide the spinner if it
+   --  still visible.
 
    procedure Get_Iter_Next
       (Tree : Gtk_Tree_Model;
@@ -396,9 +406,12 @@ package body Gtkada.Entry_Completion is
          case Get_Provider_Column_Role (Model, Iter) is
             when Role_Provider =>
                Res := Convert (Get_Address (Child, Child_It, Column_Data));
-               Set_String
-                 (Value, Res.Provider.Display_Name & " ("
-                  & Image (Res.Provider.Count, Min_Width => 0) & ")");
+
+               if Res.Provider /= null then
+                  Set_String
+                    (Value, Res.Provider.Display_Name & " ("
+                     & Image (Res.Provider.Count, Min_Width => 0) & ")");
+               end if;
             when Role_To_Locations =>
                Set_String (Value,
                            --  encoding for U+21D2 (right arrow)
@@ -640,6 +653,19 @@ package body Gtkada.Entry_Completion is
       else
          Box := Gtk_Box (Self);
       end if;
+
+      --  Add the spinner that is displayed while loading search results
+
+      Gtk_New (Self.Spinner_Frame);
+      Gtk.Spinner.Gtk_New (Self.Spinner);
+      Self.Spinner_Frame.Add (Self.Spinner);
+      Box.Pack_Start (Self.Spinner_Frame);
+
+      --  Add the label that is displayed when there is no search results
+
+      Gtk_New (Self.No_Results_Label, "No results");
+      Get_Style_Context (Self.No_Results_Label).Add_Class ("no-results-label");
+      Box.Pack_Start (Self.No_Results_Label);
 
       Gtk_New_Hbox (Self.Completion_Box, Homogeneous => False);
       Box.Pack_Start (Self.Completion_Box, Expand => True, Fill => True);
@@ -1372,17 +1398,22 @@ package body Gtkada.Entry_Completion is
       loop
          if Result /= null then
             Insert_Proposal (Self, Result);
+
             Inserted := True;
             Matched := Matched + 1;
          end if;
 
          if not Has_Next then
             Self.Idle := No_Source_Id;
-            if Active (Me) then
-               Trace (Me, "No more match for this provider "
-                      & Count'Img & " chunks ("
-                      & Matched'Img & " matches)");
-            end if;
+            Trace (Me, "No more match for this provider "
+                   & Count'Img & " chunks ("
+                   & Matched'Img & " matches)");
+
+            --  Stop and hide the spinner when there is no more search results.
+            --  Display the search results tree view.
+
+            Set_Search_Results_Visibility (Self, Visible => True);
+
             return False;
          end if;
 
@@ -1393,6 +1424,22 @@ package body Gtkada.Entry_Completion is
          Result := null;
          Self.Completion.Next (Result => Result, Has_Next => Has_Next);
       end loop;
+
+      --  Stop and hide the spinner when we have inserted a sufficient number
+      --  of search results.
+      --  Display the search results tree view.
+
+      if not Self.Completion_Box.Is_Visible
+        and then Self.Completion.Count >= Minimnum_Nb_Results_For_Display
+      then
+         Trace
+           (Me,
+            "We have at least "
+            & Integer'Image (Minimnum_Nb_Results_For_Display) & " search "
+            & "results: hide the spinner and show the search "
+            & "results tree");
+         Set_Search_Results_Visibility (Self, Visible => True);
+      end if;
 
       if Active (Me) then
          Trace (Me, "Tested" & Count'Img & " chunks ("
@@ -1441,7 +1488,7 @@ package body Gtkada.Entry_Completion is
          Toplevel := Self.Get_Toplevel;
          Get_Origin (Get_Window (Toplevel), Root_X, Root_Y);
          MaxX := Root_X + Toplevel.Get_Allocated_Width;
-         MaxY := Root_Y + Toplevel.Get_Allocated_Height;
+         MaxY := Root_Y + Toplevel.Get_Allocated_Height / 2;
 
          --  Compute the ideal height. We do not compute the ideal width,
          --  since we don't want to have to move the window around and want
@@ -1471,6 +1518,35 @@ package body Gtkada.Entry_Completion is
       end if;
    end Resize_Popup;
 
+   -----------------------------------
+   -- Set_Search_Results_Visibility --
+   -----------------------------------
+
+   procedure Set_Search_Results_Visibility
+     (Self    : not null access Gtkada_Entry_Record'Class;
+      Visible : Boolean) is
+   begin
+      if Visible then
+         Self.Spinner_Frame.Hide;
+         Self.Spinner.Stop;
+
+         if Self.Completion.Count > 0 then
+            Self.No_Results_Label.Hide;
+            Self.Completion_Box.Show_All;
+         else
+            Self.No_Results_Label.Show;
+            Self.Completion_Box.Hide;
+         end if;
+
+      else
+         Self.Spinner_Frame.Set_No_Show_All (False);
+         Self.Spinner_Frame.Show_All;
+         Self.Spinner.Start;
+         Self.Completion_Box.Hide;
+         Self.No_Results_Label.Hide;
+      end if;
+   end Set_Search_Results_Visibility;
+
    -----------
    -- Popup --
    -----------
@@ -1487,6 +1563,13 @@ package body Gtkada.Entry_Completion is
             Gtk_Window (Toplevel).Get_Group.Add_Window (Self.Popup);
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
          end if;
+
+         --  Don't show the spinner and the 'no results' label when showing
+         --  the whole popup: they should be shown only when the user types
+         --  something in the entry.
+
+         Self.Spinner_Frame.Set_No_Show_All (True);
+         Self.No_Results_Label.Set_No_Show_All (True);
 
          Self.Popup.Set_Screen (Self.Get_Screen);
          Gtk_Window (Self.Notes_Popup).Set_Screen (Self.Get_Screen);
@@ -1635,6 +1718,13 @@ package body Gtkada.Entry_Completion is
    is
       Text : constant String := Self.GEntry.Get_Text;
    begin
+      --  Clear the search results' list and don't perform any search when
+      --  the text is empty.
+      if Text = "" then
+         Self.Clear;
+         return;
+      end if;
+
       Self.Pattern := GPS.Search.Build
         (Pattern         => Text,
          Allow_Highlight => True,
@@ -1647,6 +1737,10 @@ package body Gtkada.Entry_Completion is
       if Self.Idle = No_Source_Id then
          Self.Idle := Completion_Sources.Idle_Add (On_Idle'Access, Self);
       end if;
+
+      --  Show the spinner and hide the search results tree when starting a new
+      --  search.
+      Set_Search_Results_Visibility (Self, Visible => False);
    end Start_Searching;
 
    ----------------------

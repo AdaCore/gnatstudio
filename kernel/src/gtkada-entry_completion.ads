@@ -21,18 +21,21 @@
 with Gdk.Device;
 with Gdk.RGBA;
 with Glib.Main;
-with Gtk.Box;
-with Gtk.Toggle_Button;
-with Gtk.Scrolled_Window;
-with Gtk.Tree_View_Column;
-with Gtk.List_Store;
-with Gtkada.Search_Entry;
-with Gtk.Spin_Button;
-with Gtk.Tree_View;
-with Gtk.Widget;
-with Gtk.Window;
 with GPS.Kernel;
 with GPS.Search;
+with Gtk.Box;
+with Gtk.Frame;
+with Gtk.Label;
+with Gtk.List_Store;
+with Gtk.Scrolled_Window;
+with Gtk.Spin_Button;
+with Gtk.Spinner;
+with Gtk.Toggle_Button;
+with Gtk.Tree_View;
+with Gtk.Tree_View_Column;
+with Gtk.Widget;
+with Gtk.Window;
+with Gtkada.Search_Entry;
 with Histories;
 
 package Gtkada.Entry_Completion is
@@ -143,6 +146,15 @@ private
 
       Popup            : Gtk.Window.Gtk_Window;
       --  The popup window
+
+      Spinner          : Gtk.Spinner.Gtk_Spinner;
+      --  The spinned that is displayed while search results are being loaded
+
+      Spinner_Frame    : Gtk.Frame.Gtk_Frame;
+      --  The frame that contains the spinner
+
+      No_Results_Label : Gtk.Label.Gtk_Label;
+      --  The label that is displayed when there is no search results
 
       Previous_Focus   : Gtk.Widget.Gtk_Widget;
       --  The widget that had the focus before we gave it to the search field

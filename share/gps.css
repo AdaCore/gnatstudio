@@ -457,6 +457,17 @@ GtkDialog {
   border-width: 0px;
 }
 
+.completion.search GtkFrame {
+   background-color: @theme_base_color;
+   box-shadow: none;
+   border-width: 0;
+}
+
+.completion.search .no-results-label {
+   color: @inactive_items_color;
+   font-size: xx-large;
+}
+
 .completion.search GtkTreeView column:first-child {
    background-color: @notebook_background;
 }
