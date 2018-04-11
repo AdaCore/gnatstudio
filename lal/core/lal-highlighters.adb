@@ -32,8 +32,15 @@ package body LAL.Highlighters is
       To     : Positive);
    --  Remove any highlight related styles from text span in the Buffer
 
-   function To_Style (E : Libadalang.Lexer.Token_Kind) return String;
+   function To_Style
+     (Token     : Libadalang.Lexer.Token_Kind;
+      In_Aspect : Boolean) return String;
    --  Get the name of a style name from a language token
+
+   function Aspect_Prefix
+     (Style     : String;
+      In_Aspect : Boolean) return String;
+   --  Append corresponding style prefix if In_Aspect = True
 
    function Kind_Of
      (Node  : Libadalang.Analysis.Ada_Node;
@@ -309,18 +316,38 @@ package body LAL.Highlighters is
    Id_List : constant Check_List := Dotted_Name_List &
       (1 => Accept_Stmt_Name'Access);
 
+   -------------------
+   -- Aspect_Prefix --
+   -------------------
+
+   function Aspect_Prefix
+     (Style     : String;
+      In_Aspect : Boolean) return String is
+   begin
+      if not In_Aspect then
+         return Style;  --  Keep style unprefixed
+      elsif Style = "" then
+         return "aspect";
+      else
+         return "aspect_" & Style;
+      end if;
+   end Aspect_Prefix;
+
    --------------
    -- To_Style --
    --------------
 
-   function To_Style (E : Libadalang.Lexer.Token_Kind) return String is
+   function To_Style
+     (Token     : Libadalang.Lexer.Token_Kind;
+      In_Aspect : Boolean) return String
+   is
       use Libadalang.Lexer;
    begin
-      case E is
+      case Token is
          when Ada_Termination |
               Ada_Lexing_Failure |
               Ada_Identifier =>
-            return "";
+            return Aspect_Prefix ("", In_Aspect);
          when
               Ada_Abort |
               Ada_Abs |
@@ -391,7 +418,7 @@ package body LAL.Highlighters is
               Ada_While |
               Ada_With |
               Ada_Xor =>
-            return "keyword";
+            return Aspect_Prefix ("keyword", In_Aspect);
          when
            Ada_Amp |
            Ada_Arrow |
@@ -420,19 +447,17 @@ package body LAL.Highlighters is
            Ada_Semicolon |
            Ada_Tick |
            Ada_Target =>
-            return "";
-         when Ada_String =>
-            return "string";
-         when Ada_Char =>
-            return "character";
+            return Aspect_Prefix ("", In_Aspect);
+         when Ada_String | Ada_Char =>
+            return Aspect_Prefix ("string", In_Aspect);
          when Ada_Decimal |
               Ada_Integer =>
-            return "number";
+            return Aspect_Prefix ("number", In_Aspect);
 
          when Ada_Comment =>
-            return "comment";
+            return Aspect_Prefix ("comment", In_Aspect);
          when Ada_Prep_Line =>
-            return "";
+            return Aspect_Prefix ("", In_Aspect);
       end case;
    end To_Style;
 
@@ -470,7 +495,7 @@ package body LAL.Highlighters is
          declare
             Token : constant Libadalang.Lexer.Token_Data_Type :=
               Data (Index, Self.TDH);
-            Style : constant String := To_Style (Token.Kind);
+            Style : constant String := To_Style (Token.Kind, False);
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
             Start : constant Visible_Column_Type :=
@@ -504,6 +529,7 @@ package body LAL.Highlighters is
       package L renames Libadalang.Lexer;
 
       type Context is record
+         In_Aspect       : Boolean := False;
          In_Block_Name   : Boolean := False;
          In_Subtype_Mark : Boolean := False;
       end record;
@@ -541,6 +567,10 @@ package body LAL.Highlighters is
          --  Ignore root node
          if Node.Parent.Is_Null then
             null;
+         --  check if node is an aspect
+         elsif Kind_Of (Node, Libadalang.Analysis.Ada_Aspect_Assoc) then
+            Value.In_Aspect := True;
+
          --  Check if identifier itself should be highlighted
          elsif (Kind_Of (Node, Libadalang.Analysis.Ada_Identifier)
              and then Check (Id_List, Node))
@@ -675,9 +705,10 @@ package body LAL.Highlighters is
 
       while Index /= No_Token loop
          declare
+            Done  : Boolean := False;
             Top   : constant Context := Stack.Last_Element;
             Token : constant Token_Data_Type := Data (Index);
-            Style : constant String := To_Style (Kind (Token));
+            Style : constant String := To_Style (Kind (Token), Top.In_Aspect);
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
             Line  : constant Positive := Positive (Loc.Start_Line);
             Start : constant Visible_Column_Type :=
@@ -687,15 +718,26 @@ package body LAL.Highlighters is
          begin
             exit when Line > To;
 
-            if Style /= "" then
-               Buffer.Apply_Style (Style, Line, Start, Stop);
-            elsif Kind (Token) in L.Ada_Identifier | L.Ada_Dot then
+            if Kind (Token) in L.Ada_Identifier | L.Ada_Dot then
                if Top.In_Block_Name then
-                  Buffer.Apply_Style ("block", Line, Start, Stop);
+                  Buffer.Apply_Style
+                    (Aspect_Prefix ("block", Top.In_Aspect),
+                     Line,
+                     Start,
+                     Stop);
+                  Done := True;
                elsif Top.In_Subtype_Mark then
-                  Buffer.Apply_Style ("type", Line, Start, Stop);
-
+                  Buffer.Apply_Style
+                    (Aspect_Prefix ("type", Top.In_Aspect),
+                     Line,
+                     Start,
+                     Stop);
+                  Done := True;
                end if;
+            end if;
+
+            if not Done and then Style /= "" then
+               Buffer.Apply_Style (Style, Line, Start, Stop);
             end if;
 
             Next_Token (Index, Stack, Node);
