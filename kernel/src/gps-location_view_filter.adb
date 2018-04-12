@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GPS.Location_View.Listener;
 with GPS.Search;                  use GPS.Search;
 with GNATCOLL.Utils;
@@ -114,26 +115,47 @@ package body GPS.Location_View_Filter is
                   Visible := Natural (Self.N_Children (Iter));
                end if;
 
-               if Total = 1 then
-                  Glib.Values.Set_String
-                    (Value, Text & " (" & Total_Image & " item)");
+               declare
+                  Num_Files_Str : Unbounded_String;
+                  Num_Files     : Gint;
+               begin
+                  if Gtk.Tree_Model.Get_Depth (Proxy_Path) = 1 then
+                     Num_Files := Self.N_Children (Iter);
+                     Num_Files_Str := " in" & To_Unbounded_String
+                       (Num_Files'Img);
 
-               else
-                  if Visible = Natural (Total) then
-                     Glib.Values.Set_String
-                       (Value, Text & " (" & Total_Image & " items)");
+                     if Num_Files = 1 then
+                        Num_Files_Str := Num_Files_Str & " file";
+                     else
+                        Num_Files_Str := Num_Files_Str & " files";
+                     end if;
+                  end if;
 
-                  else
+                  if Total = 1 then
                      Glib.Values.Set_String
                        (Value,
-                        Text
-                        & " ("
-                        & GNATCOLL.Utils.Image (Visible, 1)
-                        & " of "
-                        & Total_Image
-                        & " items)");
+                        Text & " (" & Total_Image & " item"
+                        & To_String (Num_Files_Str) & ")");
+
+                  else
+                     if Visible = Natural (Total) then
+                        Glib.Values.Set_String
+                          (Value, Text & " (" & Total_Image & " items"
+                           & To_String (Num_Files_Str) & ")");
+
+                     else
+                        Glib.Values.Set_String
+                          (Value,
+                           Text
+                           & " ("
+                           & GNATCOLL.Utils.Image (Visible, 1)
+                           & " of "
+                           & Total_Image
+                           & " items"
+                           & To_String (Num_Files_Str) & ")");
+                     end if;
                   end if;
-               end if;
+               end;
             end;
          end if;
       end if;
