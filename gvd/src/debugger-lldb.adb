@@ -1269,6 +1269,28 @@ package body Debugger.LLDB is
       Debugger.Send ("process continue", Mode => Mode);
    end Continue;
 
+   -----------------------------
+   -- Continue_Until_Location --
+   -----------------------------
+
+   overriding procedure Continue_Until_Location
+     (Debugger : access LLDB_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      BP_Identifier : GVD.Types.Breakpoint_Identifier with Unreferenced;
+   begin
+      --  There is no real equivalent of the GDB "until" command in LLDB so
+      --  set a temporary breakpoint and continue until we reach it instead.
+      BP_Identifier := Debugger.Break_Source
+        (File      => File,
+         Line      => Line,
+         Temporary => True,
+         Mode      => Mode);
+      Debugger.Continue (Mode => Mode);
+   end Continue_Until_Location;
+
    ---------------
    -- Interrupt --
    ---------------

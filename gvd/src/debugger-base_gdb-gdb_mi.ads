@@ -189,6 +189,12 @@ package Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding procedure Continue_Until_Location
+     (Debugger : access Gdb_MI_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    overriding function Current_Frame
      (Debugger : access Gdb_MI_Debugger)
       return Integer;

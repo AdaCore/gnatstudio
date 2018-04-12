@@ -204,6 +204,12 @@ package Debugger.LLDB is
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding procedure Continue_Until_Location
+     (Debugger : access LLDB_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    overriding procedure Interrupt (Debugger : access LLDB_Debugger);
 
    overriding function Command_Kind

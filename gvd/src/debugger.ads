@@ -486,6 +486,14 @@ package Debugger is
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
 
+   procedure Continue_Until_Location
+     (Debugger : access Debugger_Root;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Continue the program until the given location.
+   --  GDB_COMMAND: "until <location>"
+
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
 

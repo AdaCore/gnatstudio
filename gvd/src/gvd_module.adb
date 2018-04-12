@@ -19,56 +19,60 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
-with GNAT.Strings;              use GNAT.Strings;
+with GNAT.Strings;                 use GNAT.Strings;
 
-with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
-with Glib;                      use Glib;
+with Glib;                         use Glib;
 
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
+with Gtk.Check_Button;             use Gtk.Check_Button;
+with Gtk.Dialog;                   use Gtk.Dialog;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Label;                    use Gtk.Label;
+with Gtk.Widget;                   use Gtk.Widget;
+with Gtk.Window;                   use Gtk.Window;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Dialogs;               use Gtkada.Dialogs;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
 
-with Commands.Interactive;      use Commands.Interactive;
-with Commands;                  use Commands;
-with Debugger;                  use Debugger;
-with Default_Preferences;       use Default_Preferences;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GUI_Utils;                 use GUI_Utils;
-with GVD.Code_Editors;          use GVD.Code_Editors;
+with Basic_Types;                  use Basic_Types;
+with Commands.Interactive;         use Commands.Interactive;
+with Commands;                     use Commands;
+with Debugger;                     use Debugger;
+with Default_Preferences;          use Default_Preferences;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Main_Window;              use GPS.Main_Window;
+with GUI_Utils;                    use GUI_Utils;
+with GVD.Code_Editors;             use GVD.Code_Editors;
 with GVD.Consoles;
-with GVD.Contexts;              use GVD.Contexts;
-with GVD.Preferences;           use GVD.Preferences;
-with GVD.Process;               use GVD.Process;
-with GVD.Process_Lists;         use GVD.Process_Lists;
+with GVD.Contexts;                 use GVD.Contexts;
+with GVD.Preferences;              use GVD.Preferences;
+with GVD.Process;                  use GVD.Process;
+with GVD.Process_Lists;            use GVD.Process_Lists;
 with GVD.Scripts;
-with GVD.Types;                 use GVD.Types;
-with Histories;                 use Histories;
-with Language;                  use Language;
-with Process_Proxies;           use Process_Proxies;
-with GPS.Dialogs;               use GPS.Dialogs;
-with Remote;                    use Remote;
-with String_Utils;              use String_Utils;
-with Xref;                      use Xref;
+with GVD.Types;                    use GVD.Types;
+with Histories;                    use Histories;
+with Language;                     use Language;
+with Process_Proxies;              use Process_Proxies;
+with GPS.Dialogs;                  use GPS.Dialogs;
+with Remote;                       use Remote;
+with String_Utils;                 use String_Utils;
+with Xref;                         use Xref;
 
 package body GVD_Module is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_MODULE");
@@ -105,12 +109,43 @@ package body GVD_Module is
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
 
+   Messages_Category_Continue_To_Line : constant String :=
+                                         "debugger-run-to-line";
+   Continue_To_Line_Messages_Flags    : constant Message_Flags :=
+                                         (Editor_Line => True,
+                                          Locations   => False,
+                                          Editor_Side => False);
+
    type On_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
       (Self   : On_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
+
+   type On_Location_Changed is new File_Location_Hooks_Function with
+     null record;
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type);
+   --  Called when the current editor's location changes.
+   --  Used to display a clickable icon on the gutter to continue the
+   --  execution until we reach the given location.
+
+   type On_Debugger_Terminated is new Debugger_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Debugger_Terminated;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
+   --  Called when a debugger terminates.
+   --  Used to remove the "Continue to line" clickable icon, if any.
+
+   procedure Remove_Continue_To_Line_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Remove the message associated with the "Continue to line" action
 
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
@@ -231,6 +266,16 @@ package body GVD_Module is
       Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Continue menu
 
+   type Continue_Until_Line_Command is new Interactive_Command
+   with record
+      File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line : Integer := -1;
+   end record;
+   overriding function Execute
+     (Command : access Continue_Until_Line_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Continue until current line
+
    type Interrupt_Command is new Dbg_Command.Debugger_Command with null record;
    overriding function Execute_Dbg
      (Command : access Interrupt_Command;
@@ -284,6 +329,12 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean;
    --  True if the debugger has been started but is now idle waiting for new
    --  commands.
+
+   type Debuggee_Started_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggee_Started_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if the debuggee has been started
 
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -674,6 +725,39 @@ package body GVD_Module is
 
       return Commands.Success;
    end Execute_Dbg;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Continue_Until_Line_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process : constant Visual_Debugger :=
+                  Visual_Debugger (Get_Current_Debugger (Kernel));
+      File    : constant Virtual_File :=
+                  (if Command.File /= GNATCOLL.VFS.No_File then
+                      Command.File
+                   else
+                      File_Information (Context.Context));
+      Line    : constant Editable_Line_Type := Editable_Line_Type
+        ((if Command.Line > 0 then
+            Command.Line
+         elsif Has_File_Line_Information (Context.Context) then
+            File_Line_Information (Context.Context)
+         else
+            Line_Information (Context.Context)));
+   begin
+      Continue_Until_Location
+        (Process.Debugger,
+         File => File,
+         Line => Line,
+         Mode => GVD.Types.Visible);
+
+      return Commands.Success;
+   end Execute;
 
    -----------------
    -- Execute_Dbg --
@@ -1143,6 +1227,23 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggee_Started_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
+   begin
+      return Process /= null
+        and then Process.Debugger /= null
+        and then Process.Debugger.Is_Started;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1521,6 +1622,106 @@ package body GVD_Module is
          Debug_Terminate (Kernel_Handle (Kernel));
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type)
+   is
+      use Ada.Strings.Unbounded;
+      pragma Unreferenced (Self, Column, Project);
+      Process : constant Visual_Debugger := Visual_Debugger
+        (Get_Current_Debugger (Kernel));
+   begin
+      --  Return imediately if there is no debugger.
+      if Process = null then
+         return;
+      end if;
+
+      --  Remove the previous message
+      Remove_Continue_To_Line_Messages (Kernel);
+
+      declare
+         Filter  : constant Action_Filter := Lookup_Filter
+           (Kernel => Kernel,
+            Name   => "Debugger stopped")
+           and Lookup_Filter
+             (Kernel => Kernel,
+              Name   => "Debuggee started");
+         Ctxt    : constant Selection_Context := Kernel.Get_Current_Context;
+         Msg     : Simple_Message_Access;
+      begin
+         --  If the debuggee has started and if the cursor is not placed on the
+         --  debugger's current line, add the "Continue to line" clickable icon
+         --  in the gutter.
+
+         if not (Process.Current_File = File
+                 and then Process.Current_Line = Line)
+           and then Filter.Filter_Matches_Primitive (Ctxt)
+         then
+            declare
+               Help_Text : constant String :=
+                             "Continue to line " & Integer'Image (Line);
+            begin
+               Msg := Create_Simple_Message
+                 (Get_Messages_Container (Kernel),
+                  Category                 =>
+                    Messages_Category_Continue_To_Line,
+                  File                     => File,
+                  Line                     => Line,
+                  Column                   => 1,
+                  Text                     => Help_Text,
+                  Weight                   => 0,
+                  Flags                    => Continue_To_Line_Messages_Flags,
+                  Allow_Auto_Jump_To_First => False);
+
+               Msg.Set_Action
+                 (new Line_Information_Record'
+                    (Text               => Null_Unbounded_String,
+                     Tooltip_Text       => To_Unbounded_String (Help_Text),
+                     Image              => To_Unbounded_String
+                       ("gps-debugger-continue-until"),
+                     Message            => <>,
+                     Associated_Command => new Continue_Until_Line_Command'
+                       (Root_Command with
+                        File => File,
+                        Line => Line)));
+            end;
+         end if;
+      end;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self     : On_Debugger_Terminated;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Self, Debugger);
+   begin
+      Remove_Continue_To_Line_Messages (Kernel);
+   end Execute;
+
+   --------------------------------------
+   -- Remove_Continue_To_Line_Messages --
+   --------------------------------------
+
+   procedure Remove_Continue_To_Line_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Get_Messages_Container (Kernel).Remove_Category
+        (Messages_Category_Continue_To_Line,
+         Continue_To_Line_Messages_Flags);
+   end Remove_Continue_To_Line_Messages;
+
    -----------------------
    -- Create_GVD_Module --
    -----------------------
@@ -1562,6 +1763,9 @@ package body GVD_Module is
 
       Debugger_Filter := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger stopped");
+
+      Debugger_Filter := new Debuggee_Started_Filter;
+      Register_Filter (Kernel, Debugger_Filter, "Debuggee started");
 
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
@@ -1618,8 +1822,11 @@ package body GVD_Module is
          Label  => -"Debug/Show current location",
          Action => "debug show current location");
 
-      --  Dynamic /Debug/Initialize menu
+      --  Add hooks' callbacks
+
       Project_View_Changed_Hook.Add (new On_View_Changed);
+      Location_Changed_Hook.Add (new On_Location_Changed);
+      Debugger_Terminated_Hook.Add (new On_Debugger_Terminated);
 
       --  Add debugger menus
 
@@ -1739,6 +1946,19 @@ package body GVD_Module is
            & "Start the debugger if not started yet"),
          Category     => -"Debug",
          For_Learning => True);
+
+      Register_Action
+        (Kernel, "debug continue until",
+         new Continue_Until_Line_Command,
+         Filter       => Debugger_Active,
+         Description  =>
+           -("Continue execution until the given line."),
+         Category     => -"Debug",
+         For_Learning => True);
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Continue until line %l",
+         Action => "debug continue until line");
 
       Register_Action
         (Kernel, "debug up", new Up_Command,

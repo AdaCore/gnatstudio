@@ -144,7 +144,6 @@ package body GVD.Breakpoints_List is
 
    type Set_Breakpoint_Command_Context is new Interactive_Command with record
       On_Line       : Boolean := False;  --  If False, on entity
-      Continue_Till : Boolean := False;  --  Continue until given line ?
    end record;
    overriding function Execute
      (Command : access Set_Breakpoint_Command_Context;
@@ -202,7 +201,7 @@ package body GVD.Breakpoints_List is
       Value    : GNATCOLL.JSON.JSON_Value);
 
    procedure Save_Persistent_Breakpoints
-     (Kernel   : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Save persistent breakpoints to properties.
 
    ------------------------------
@@ -556,27 +555,9 @@ package body GVD.Breakpoints_List is
       use GPS.Kernel.Contexts;
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-      Num      : Breakpoint_Identifier with Unreferenced;
-
+      Num     : Breakpoint_Identifier with Unreferenced;
    begin
-      if Command.Continue_Till then
-         --  Only works if there is a current debugger
-         if Process /= null
-           and then Is_Interactive (Kernel, Process)
-         then
-            Num := Process.Debugger.Break_Source
-              (File_Information (Context.Context),
-               Editable_Line_Type
-                 ((if Has_File_Line_Information (Context.Context)
-                  then File_Line_Information (Context.Context)
-                  else Contexts.Line_Information (Context.Context))),
-               Temporary => True);
-            Process.Debugger.Continue (Mode => GVD.Types.Visible);
-         end if;
-
-      elsif Command.On_Line then
+      if Command.On_Line then
          Break_Source
            (Kernel,
             File  => File_Information (Context.Context),
@@ -609,6 +590,7 @@ package body GVD.Breakpoints_List is
             Unbreak_Source
               (Self.Kernel, File => Self.File, Line => Self.Line);
       end case;
+
       return Success;
    end Execute;
 
@@ -859,6 +841,7 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       pragma Unreferenced (Self);
    begin
+
       --  We always save the debugger-specific breakpoints to the global list,
       --  so that later debuggers are started with the same list. If we don't
       --  do that, and the Preserve_State_On_Exit pref is disabled, we would
@@ -1360,7 +1343,7 @@ package body GVD.Breakpoints_List is
       Register_Action
         (Kernel, "debug set line breakpoint",
          Command     => new Set_Breakpoint_Command_Context'
-           (Interactive_Command with On_Line => True, Continue_Till => False),
+           (Interactive_Command with On_Line => True),
          Description => "Set a breakpoint on line",
          Filter      => No_Debugger_Or_Stopped and
            Kernel.Lookup_Filter ("Source editor"),
@@ -1373,19 +1356,6 @@ package body GVD.Breakpoints_List is
            (Action_Filter_Record with Found => False));
 
       Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
-
-      Register_Action
-        (Kernel, "debug continue until",
-         Command     => new Set_Breakpoint_Command_Context'
-           (Interactive_Command with On_Line => True, Continue_Till => True),
-         Description => "Continue executing until the given line",
-         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
-           Kernel.Lookup_Filter ("Source editor"),
-         Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Continue until line %l",
-         Action => "debug continue until");
 
       Register_Action
         (Kernel, "debug remove breakpoint",

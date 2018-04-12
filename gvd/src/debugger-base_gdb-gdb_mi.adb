@@ -1990,6 +1990,21 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Send ("-exec-continue", Mode => Mode);
    end Continue;
 
+   -----------------------------
+   -- Continue_Until_Location --
+   -----------------------------
+
+   overriding procedure Continue_Until_Location
+     (Debugger : access Gdb_MI_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Debugger.Send
+        ("-exec-until " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
+         Mode => Mode);
+   end Continue_Until_Location;
+
    -------------------
    -- Current_Frame --
    -------------------
