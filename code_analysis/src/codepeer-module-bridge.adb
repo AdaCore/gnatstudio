@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2017, AdaCore                     --
+--                     Copyright (C) 2009-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -292,7 +292,7 @@ package body CodePeer.Module.Bridge is
          Mode_Name    => "codepeer",
          Force_File   => No_File,
          Extra_Args   => Extra_Args,
-         Quiet        => False,
+         Quiet        => True,
          Synchronous  => False,
          Dialog       => Force_No_Dialog,
          Via_Menu     => False,
