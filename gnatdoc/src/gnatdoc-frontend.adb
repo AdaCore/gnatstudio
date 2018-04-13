@@ -1423,6 +1423,11 @@ package body GNATdoc.Frontend is
          Doc_End_Line   : Natural := No_Line;
          Doc            : Unbounded_String_Vectors.Vector;
 
+         Doc_Before_Generics            : Unbounded_String_Vectors.Vector;
+         Doc_Before_Generics_Start_Line : Natural := No_Line;
+         --  Documentation found before token 'generic' of generic packages and
+         --  generic subprograms.
+
          Printout       : Unbounded_String;
          Src_Conc_Type  : Unbounded_String;
 
@@ -2745,6 +2750,13 @@ package body GNATdoc.Frontend is
             begin
                case Token is
 
+                  when Tok_Generic =>
+                     if Doc_End_Line = Sloc_End.Line - 1 then
+                        Doc_Before_Generics := Doc;
+                        Doc_Before_Generics_Start_Line := Doc_Start_Line;
+                        Clear_Doc;
+                     end if;
+
                   --  Expanded names & identifiers
 
                   when Tok_Id =>
@@ -2895,6 +2907,21 @@ package body GNATdoc.Frontend is
                            --  Reset the documentation
                            Clear_Doc;
                         end;
+                     end if;
+
+                     --  Handle documentation associated with a generic unit
+                     --  located before the keyword 'generic'.
+
+                     if In_Next_Entity
+                       and then Is_Generic (Extended_Cursor.Entity (Cursor))
+                       and then Present (Doc_Before_Generics)
+                     then
+                        Set_Doc_Before (Extended_Cursor.Entity (Cursor),
+                          Comment_Result'
+                            (Text       => Doc_Before_Generics,
+                             Start_Line => Doc_Before_Generics_Start_Line));
+                        Doc_Before_Generics.Clear;
+                        Doc_Before_Generics_Start_Line := No_Line;
                      end if;
 
                   when Tok_Begin =>
