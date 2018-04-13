@@ -13,10 +13,10 @@ project Valgrind is
 
    package Naming is
       case Target is
-         when "x86_64-pc-linux-gnu" =>
+         when "x86_64-linux" =>
             for Body ("GPS.Valgrind.Binding")
               use "gps-valgrind-binding__amd64.adb";
-         when "x86-pc-linux-gnu" =>
+         when "x86-linux" =>
             for Body ("GPS.Valgrind.Binding")
               use "gps-valgrind-binding__x86.adb";
          when others =>
