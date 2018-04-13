@@ -71,7 +71,7 @@ package body Src_Editor_Buffer.Line_Information is
    --  Maximum size to display icons in the sidebar of editors.
    --  The actual size will be smaller if the line height is smaller.
 
-   Default_Info_Col_Starting_X : constant := 2;
+   Default_Info_Col_Starting_X : constant := 4;
    --  The default starting X for line information columns. This corresponds
    --  to the space between the first information column and the line numbers.
 
@@ -127,10 +127,10 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Put_Message
      (Buffer        : access Source_Buffer_Record'Class;
+      Message       : not null Message_Access;
       Editable_Line : Editable_Line_Type;
       Buffer_Line   : Buffer_Line_Type;
-      Column        : Integer;
-      Message       : Message_Access);
+      Column        : Integer);
    --  Add Message in the column in Buffer.
    --  Either Editable_Line or Buffer_Line must be null: if Editable_Line is
    --  null, put the message at Buffer_Line, and vice versa.
@@ -160,6 +160,27 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer  : access Source_Buffer_Record'Class;
       Message : Message_Access) return Editable_Line_Type;
    --  Return the Line which contains Message, 0 if it wasn't found.
+
+   function Find_Line_Info_With_Type
+     (Line_Infos : Line_Information_Array;
+      Info_Type  : Line_Information_Display_Type)
+      return Line_Information_Record;
+   --  Return the first encountered line information that matches the given
+   --  type.
+   --  Return Empty_Line_Information if there is no match.
+
+   procedure On_Click_On_Line_Number
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type);
+   --  Called when the user clicks on a line number.
+   --  Execute the action associated to the given line number, if any.
+
+   procedure On_Click_On_Side_Column
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type;
+      Col    : Natural);
+   --  Called when the user clicks on a side column (e.g: to fold a block).
+   --  Execute the action associated with the given column, if any.
 
    function Image (Data : Line_Info_Width_Array_Access) return String;
    function Image (Data : Line_Info_Width) return String;
@@ -989,40 +1010,28 @@ package body Src_Editor_Buffer.Line_Information is
       Messages       : Message_Array;
       At_Buffer_Line : Buffer_Line_Type)
    is
-      Column : Integer := -1;
-
-      Editable_Line : Editable_Line_Type;
-      BL            : Buffer_Line_Type;
+      Column_From_ID : constant Integer := Column_For_Identifier
+        (Buffer, Identifier);
+      Editable_Line  : Editable_Line_Type;
+      BL             : Buffer_Line_Type;
    begin
-
-      --  Get the column that corresponds to Identifier
-
-      Column := Column_For_Identifier (Buffer, Identifier);
-
-      --  The column has been found: update the stored data
-
-      if At_Buffer_Line = 0 then
-         for K in Messages'Range loop
-            Editable_Line := Editable_Line_Type (Get_Line (Messages (K)));
-            Put_Message
-              (Buffer        => Buffer,
-               Editable_Line => Editable_Line,
-               Buffer_Line   => 0,
-               Column        => Column,
-               Message       => Messages (K));
-         end loop;
-      else
-         for K in Messages'Range loop
+      for Message of Messages loop
+         if At_Buffer_Line = 0 then
+            Editable_Line := Editable_Line_Type (Message.Get_Line);
+            BL := 0;
+         else
+            Editable_Line := 0;
             BL := At_Buffer_Line + Buffer_Line_Type
-              (Messages (K).Get_Line - Messages (Messages'First).Get_Line);
-            Put_Message
-              (Buffer        => Buffer,
-               Editable_Line => 0,
-               Buffer_Line   => BL,
-               Column        => Column,
-               Message       => Messages (K));
-         end loop;
-      end if;
+              (Message.Get_Line - Messages (Messages'First).Get_Line);
+         end if;
+
+         Put_Message
+           (Buffer        => Buffer,
+            Editable_Line => Editable_Line,
+            Buffer_Line   => BL,
+            Column        => Column_From_ID,
+            Message       => Message);
+      end loop;
 
       Side_Column_Configuration_Changed (Buffer);
    end Add_Side_Information;
@@ -1103,7 +1112,6 @@ package body Src_Editor_Buffer.Line_Information is
 
          LH            : constant Gdouble := Gdouble (Line_Height);
          X             : Gdouble;
-         Action        : Line_Information_Record;
          Height, Width : Gint;
 
          procedure Draw_Number
@@ -1113,6 +1121,16 @@ package body Src_Editor_Buffer.Line_Information is
          --  Draws the number e.g. the line number.
          --  Right side will be "From" minus "Indentation".
          --  Returns left side in "From".
+
+         procedure Draw_Line_Number_Line_Info
+           (Line_Info : Line_Information_Record);
+
+         procedure Draw_Side_Area_Line_Info
+           (Line_Info : Line_Information_Record);
+
+         -----------------
+         -- Draw_Number --
+         -----------------
 
          procedure Draw_Number
            (Num         : Integer;
@@ -1126,30 +1144,138 @@ package body Src_Editor_Buffer.Line_Information is
             Show_Layout (Cr, Layout);
          end Draw_Number;
 
+         --------------------------------
+         -- Draw_Line_Number_Line_Info --
+         --------------------------------
+
+         procedure Draw_Line_Number_Line_Info
+           (Line_Info : Line_Information_Record) is
+         begin
+            Save (Cr);
+            Set_Source_RGBA
+              (Cr,
+               Get_Background
+                 (Line_Info.Message.Message.Get_Highlighting_Style));
+
+            New_Path (Cr);
+            Move_To (Cr, 0.0, Y);
+            Line_To (Cr, Max_Width, Y);
+
+            --  We should make sure that we never draw on top of
+            --  the first line's information column: that's why we
+            --  draw until where the column starts.
+            Line_To
+              (Cr,
+               Max_Width + Gdouble (Default_Info_Col_Starting_X),
+               Y + LH / 2.0);
+
+            Line_To (Cr, Max_Width, Y + LH);
+            Line_To (Cr, 0.0, Y + LH);
+            Close_Path (Cr);
+            Cairo.Fill (Cr);
+            Restore (Cr);
+         end Draw_Line_Number_Line_Info;
+
+         ------------------------------
+         -- Draw_Side_Area_Line_Info --
+         ------------------------------
+
+         procedure Draw_Side_Area_Line_Info
+           (Line_Info : Line_Information_Record)
+         is
+            Image : Unbounded_String := Line_Info.Image;
+         begin
+            --  Draw the associated text first, if any
+
+            if Line_Info.Text /= Null_Unbounded_String then
+               Set_Markup (Layout, To_String (Line_Info.Text));
+               Move_To (Cr, X, Y);
+               Show_Layout (Cr, Layout);
+            end if;
+
+            --  If there is no image set directly in the line info, look at the
+            --  image set in the associated message, if any.
+
+            if Image = Null_Unbounded_String then
+               if not Line_Info.Message.Is_Empty then
+                  declare
+                     Message : constant Message_Access :=
+                                 Line_Info.Message.Message;
+                     Action  : Action_Item;
+                  begin
+                     if Message /= null then
+                        Action := Message.Get_Action;
+                        if Action /= null then
+                           Image := Action.Image;
+                        end if;
+                     end if;
+                  end;
+               end if;
+            end if;
+
+            --  Draw the image, if any
+
+            if Image /= Null_Unbounded_String then
+               declare
+                  P            : Gdk_Pixbuf;
+                  Info         : Gtk_Icon_Info;
+                  Was_Symbolic : aliased Boolean;
+                  Error        : aliased Glib.Error.GError;
+                  Strs         : GNAT.Strings.String_List :=
+                                   (1 => new String'(To_String (Image)));
+               begin
+                  --   ??? Should have a cache
+                  Info := Choose_Icon_For_Scale
+                    (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
+                  Free (Strs);
+
+                  if Info /= null then
+                     P := Load_Symbolic_For_Context
+                       (Icon_Info    => Info,
+                        Context      => Ctxt,
+                        Was_Symbolic => Was_Symbolic'Access,
+                        Error        => Error'Access);
+                     Render_Icon
+                       (Ctxt, Cr, P,
+                        X,
+                        Y + Gdouble ((Line_Height - Size) / 2));
+                     Unref (P);
+                     Unref (Info);
+                  end if;
+               end;
+            end if;
+         end Draw_Side_Area_Line_Info;
+
       begin
-         --  Draw line numbers background
+         --  Draw messages
 
          for Col in BL.all'Range loop
-            Action := Get_Relevant_Action (Info (Col));
-            if not Action.Message.Is_Empty
-              and then Action.Message.Message.Get_Flags (Editor_Line)
-            then
-               Save (Cr);
-               Set_Source_RGBA
-                 (Cr,
-                  Get_Background
-                    (Action.Message.Message.Get_Highlighting_Style));
+            X := Gdouble (Buffer.Line_Numbers_Width + BL.all (Col).Starting_X);
 
-               New_Path (Cr);
-               Move_To (Cr, 0.0, Y);
-               Line_To (Cr, Max_Width, Y);
-               Line_To (Cr, Max_Width + 6.0, Y + LH / 2.0);
-               Line_To (Cr, Max_Width, Y + LH);
-               Line_To (Cr, 0.0, Y + LH);
-               Close_Path (Cr);
-               Cairo.Fill (Cr);
-               Restore (Cr);
-            end if;
+            declare
+               Line_Infos            : constant Line_Information_Array :=
+                                         Get_Line_Infos (Info (Col));
+               Line_Number_Line_Info : constant Line_Information_Record :=
+                                         Find_Line_Info_With_Type
+                                           (Line_Infos => Line_Infos,
+                                            Info_Type  => On_Line_Number);
+               Side_Area_Line_Info   : constant Line_Information_Record :=
+                                         Find_Line_Info_With_Type
+                                           (Line_Infos => Line_Infos,
+                                            Info_Type  => On_Side_Area);
+            begin
+               --  Draw the first line information that should be displayed
+               --  on line numbers, if any.
+               if Line_Number_Line_Info /= Empty_Line_Information then
+                  Draw_Line_Number_Line_Info (Line_Number_Line_Info);
+               end if;
+
+               --  Draw the first line information that should be displayed
+               --  on the editor's side column, if any.
+               if Side_Area_Line_Info /= Empty_Line_Information then
+                  Draw_Side_Area_Line_Info (Side_Area_Line_Info);
+               end if;
+            end;
          end loop;
 
          --  Check if we should show line numbers
@@ -1185,56 +1311,6 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
             end if;
          end if;
-
-         --  Draw messages
-
-         for Col in BL.all'Range loop
-            X := Gdouble (Buffer.Line_Numbers_Width + BL.all (Col).Starting_X);
-            Action := Get_Relevant_Action (Info (Col));
-
-            if Action.Message.Is_Empty
-              or else Action.Message.Message.Get_Flags (Editor_Side)
-            then
-               if Action.Text /= Null_Unbounded_String then
-                  Set_Markup (Layout, To_String (Action.Text));
-                  Move_To (Cr, X, Y);
-                  Show_Layout (Cr, Layout);
-               end if;
-
-               --  ??? If there is no image, should we look at the message's
-               --  style's icon ?
-
-               if Action.Image /= Null_Unbounded_String then
-                  declare
-                     P            : Gdk_Pixbuf;
-                     Info         : Gtk_Icon_Info;
-                     Was_Symbolic : aliased Boolean;
-                     Error        : aliased Glib.Error.GError;
-                     Strs         : GNAT.Strings.String_List :=
-                       (1 => new String'(To_String (Action.Image)));
-                  begin
-                     --   ??? Should have a cache
-                     Info := Choose_Icon_For_Scale
-                       (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
-                     Free (Strs);
-
-                     if Info /= null then
-                        P := Load_Symbolic_For_Context
-                          (Icon_Info    => Info,
-                           Context      => Ctxt,
-                           Was_Symbolic => Was_Symbolic'Access,
-                           Error        => Error'Access);
-                        Render_Icon
-                          (Ctxt, Cr, P,
-                           X,
-                           Y + Gdouble ((Line_Height - Size) / 2));
-                        Unref (P);
-                        Unref (Info);
-                     end if;
-                  end;
-               end if;
-            end if;
-         end loop;
       end Draw_Line_Info;
 
       L               : Buffer_Line_Type;
@@ -1308,41 +1384,163 @@ package body Src_Editor_Buffer.Line_Information is
       end loop Drawing_Loop;
    end Draw_Line_Info;
 
-   -------------------------
-   -- Get_Relevant_Action --
-   -------------------------
+   --------------------
+   -- Get_Line_Infos --
+   --------------------
 
-   function Get_Relevant_Action
-     (Data : Line_Info_Width) return Line_Information_Record
+   function Get_Line_Infos
+     (Data : Line_Info_Width) return Line_Information_Array
    is
-      C      : Message_Reference_List.Cursor;
-      Action : GPS.Kernel.Messages.Action_Item;
-      M      : Message_Access;
+      package Line_Information_Lists is new Ada.Containers.Doubly_Linked_Lists
+        (Element_Type => Line_Information_Record,
+         "="          => "=");
+      M          : Message_Access;
+      Line_Info  : GPS.Kernel.Messages.Action_Item;
+      Line_Infos : Line_Information_Lists.List;
+      J          : Integer := 1;
    begin
 
-      --  First look for an action in the messages
-      C := Data.Messages.First;
-
-      while Message_Reference_List.Has_Element (C) loop
-         M := Message_Reference_List.Element (C).Message;
+      --  First look for line information in the messages
+      for Message_Ref of Data.Messages loop
+         M := Message_Ref.Message;
          if M /= null then
-            Action := M.Get_Action;
-            if Action /= null then
-               return Action.all;
+            Line_Info := M.Get_Action;
+            if Line_Info /= null then
+               Line_Infos.Append (Line_Info.all);
             end if;
          end if;
-
-         Message_Reference_List.Next (C);
       end loop;
 
       --  Next look in the action itself
       if Data.Action /= null then
-         return Data.Action.all;
+         Line_Infos.Append (Data.Action.all);
       end if;
 
-      --  Finally return an empty line information
+      return Result : Line_Information_Array (J .. Integer (Line_Infos.Length))
+      do
+         for Line_Info of Line_Infos loop
+            Result (J) := Line_Info;
+            J := J + 1;
+         end loop;
+      end return;
+   end Get_Line_Infos;
+
+   ------------------------------
+   -- Find_Line_Info_With_Type --
+   ------------------------------
+
+   function Find_Line_Info_With_Type
+     (Line_Infos : Line_Information_Array;
+      Info_Type  : Line_Information_Display_Type)
+      return Line_Information_Record is
+   begin
+      for Line_Info of Line_Infos loop
+         if Get_Display_Type (Line_Info) = Info_Type then
+            return Line_Info;
+         end if;
+      end loop;
+
       return Empty_Line_Information;
-   end Get_Relevant_Action;
+   end Find_Line_Info_With_Type;
+
+   -----------------------------
+   -- On_Click_On_Line_Number --
+   -----------------------------
+
+   procedure On_Click_On_Line_Number
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type)
+   is
+      BL         : Columns_Config_Access renames
+                     Buffer.Editable_Line_Info_Columns;
+      Info       : constant Line_Info_Width_Array_Access :=
+                     Buffer.Line_Data (Line).Side_Info_Data;
+      Line_Infos : constant Line_Information_Array :=
+                     Get_Line_Infos (Info (BL.all'First));
+      Line_Info  : constant Line_Information_Record :=
+                     Find_Line_Info_With_Type
+                       (Line_Infos => Line_Infos,
+                        Info_Type  => On_Line_Number);
+      Context    : Selection_Context;
+      Ignore     : Command_Return_Type;
+   begin
+      --  Execute the first line information's action that is related with
+      --  editor line numbers.
+
+      if Line_Info /= Empty_Line_Information then
+         Trace (Me, "Found one action in editor_line");
+         Context := Buffer.Kernel.New_Context
+           (Src_Editor_Module_Id);
+         Set_Messages_Information
+           (Context, (1 => Line_Info.Message.Message));
+         Buffer.Kernel.Context_Changed (Context);
+         Ignore := Line_Info.Associated_Command.Execute;
+         Buffer.Kernel.Refresh_Context;
+         return;
+      end if;
+
+      --  If there is no line informations' actions related with editor line
+      --  numbers, execute the default one.
+
+      Trace (Me, "Execute default action for click on line number");
+      Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
+      Set_File_Information
+        (Context,
+         Files     => (1 => Buffer.Filename),
+         Line      => Integer (Line),
+         File_Line => Natural (Buffer.Line_Data (Line).File_Line),
+         Column    => 0);
+      Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
+   end On_Click_On_Line_Number;
+
+   -----------------------------
+   -- On_Click_On_Side_Column --
+   -----------------------------
+
+   procedure On_Click_On_Side_Column
+     (Buffer : not null access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type;
+      Col    : Natural)
+   is
+      Info       : constant Line_Info_Width_Array_Access :=
+                     Buffer.Line_Data (Line).Side_Info_Data;
+      Line_Infos : constant Line_Information_Array       :=
+                     Get_Line_Infos (Info (Col));
+      Line_Info  : constant Line_Information_Record :=
+                     Find_Line_Info_With_Type
+                       (Line_Infos => Line_Infos,
+                        Info_Type  => On_Side_Area);
+      Ignore     : Command_Return_Type;
+      Context    : Selection_Context;
+   begin
+      if Line_Info.Associated_Command /= null then
+         if Line_Info.Associated_Command.all in
+           Base_Editor_Command_Type'Class
+         then
+            Base_Editor_Command_Type
+              (Line_Info.Associated_Command.all).Base_Line := Line;
+         end if;
+
+         if not Line_Info.Message.Is_Empty then
+            --  Update selection context when message
+            --  information was associated with Line_Info.
+
+            Context := Buffer.Kernel.New_Context
+              (Src_Editor_Module_Id);
+            Set_Messages_Information
+              (Context, (1 => Line_Info.Message.Message));
+            Buffer.Kernel.Context_Changed (Context);
+         end if;
+
+         Trace (Me, "Execute command for line" & Line'Img);
+         Ignore := Line_Info.Associated_Command.Execute;
+
+         if not Line_Info.Message.Is_Empty then
+            --  Refresh selection context to initial state
+            Buffer.Kernel.Refresh_Context;
+         end if;
+      end if;
+   end On_Click_On_Side_Column;
 
    --------------
    -- On_Click --
@@ -1353,15 +1551,7 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Buffer_Line_Type;
       Offset : Gint)
    is
-      BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-      Info   : constant Line_Info_Width_Array_Access :=
-        Buffer.Line_Data (Line).Side_Info_Data;
-      Ignore : Command_Return_Type;
-      pragma Unreferenced (Ignore);
-
-      Action  : Line_Information_Record;
-      Context : Selection_Context;
-
+      BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
    begin
       Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
@@ -1369,32 +1559,11 @@ package body Src_Editor_Buffer.Line_Information is
          null;
 
       --  Click on line numbers
-      elsif Offset <= Gint (Buffer.Line_Numbers_Width) then
-         for Col in BL.all'Range loop
-            Action := Get_Relevant_Action (Info (Col));
-            if not Action.Message.Is_Empty
-              and then Action.Message.Message.Get_Flags (Editor_Line)
-            then
-               Trace (Me, "Found one action in editor_line");
-               Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
-               Set_Messages_Information
-                 (Context, (1 => Action.Message.Message));
-               Buffer.Kernel.Context_Changed (Context);
-               Ignore := Action.Associated_Command.Execute;
-               Buffer.Kernel.Refresh_Context;
-               return;
-            end if;
-         end loop;
 
-         Trace (Me, "Execute default action for click on line number");
-         Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
-         Set_File_Information
-           (Context,
-            Files     => (1 => Buffer.Filename),
-            Line      => Integer (Line),
-            File_Line => Natural (Buffer.Line_Data (Line).File_Line),
-            Column    => 0);
-         Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
+      elsif Offset <= Gint (Buffer.Line_Numbers_Width) then
+         On_Click_On_Line_Number
+           (Buffer => Buffer,
+            Line   => Line);
 
       --  Click on other columns
 
@@ -1404,37 +1573,10 @@ package body Src_Editor_Buffer.Line_Information is
               (BL.all (Col).Width + BL.all (Col).Starting_X +
                  Buffer.Line_Numbers_Width)
             then
-               Action := Get_Relevant_Action (Info (Col));
-
-               if Action.Associated_Command /= null then
-                  if Action.Associated_Command.all in
-                    Base_Editor_Command_Type'Class
-                  then
-                     Base_Editor_Command_Type
-                       (Action.Associated_Command.all).Base_Line := Line;
-                  end if;
-
-                  if not Action.Message.Is_Empty then
-                     --  Update selection context when message information was
-                     --  associated with action.
-
-                     Context := Buffer.Kernel.New_Context
-                       (Src_Editor_Module_Id);
-                     Set_Messages_Information
-                       (Context, (1 => Action.Message.Message));
-                     Buffer.Kernel.Context_Changed (Context);
-                  end if;
-
-                  Trace (Me, "Execute command for line" & Line'Img);
-                  Ignore := Action.Associated_Command.Execute;
-
-                  if not Action.Message.Is_Empty then
-                     --  Refresh selection context to initial state
-
-                     Buffer.Kernel.Refresh_Context;
-                  end if;
-               end if;
-
+               On_Click_On_Side_Column
+                 (Buffer => Buffer,
+                  Line   => Line,
+                  Col    => Col);
                return;
             end if;
          end loop;
@@ -1808,17 +1950,15 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Put_Message
      (Buffer        : access Source_Buffer_Record'Class;
+      Message       : not null Message_Access;
       Editable_Line : Editable_Line_Type;
       Buffer_Line   : Buffer_Line_Type;
-      Column        : Integer;
-      Message       : Message_Access)
+      Column        : Integer)
    is
       Note     : Line_Info_Note;
       The_Data : Line_Info_Width_Array_Access;
       BL       : Buffer_Line_Type := 0;
-
       EL       : Editable_Line_Type := Editable_Line;
-
    begin
       if Message /= null then
          declare

@@ -45,6 +45,17 @@ package GPS.Editors.Line_Information is
 
    Empty_Line_Information : constant Line_Information_Record;
 
+   type Line_Information_Display_Type is
+     (No_Display, On_Line_Number, On_Side_Area);
+   --  The display type of line information data.
+   --  Line information can be displayed directly on the editor's line numbers
+   --  (On_Line_Number) or on the editor's left side area (On_Side_Area).
+
+   function Get_Display_Type
+     (Line_Info : Line_Information_Record)
+      return Line_Information_Display_Type;
+   --  Return the display type of the given line information data.
+
    type Line_Information_Array is array (Integer range <>)
      of Line_Information_Record;
 

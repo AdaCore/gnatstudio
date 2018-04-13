@@ -66,9 +66,11 @@ package GPS.Kernel.Messages is
    Side_And_Locations  : constant Message_Flags :=
      (Editor_Side => True, Locations => True, others => False);
    Sides_Only          : constant Message_Flags :=
-     (Editor_Side => True, others => False);
+                           (Editor_Side => True, others => False);
    Locations_Only      : constant Message_Flags :=
-     (Locations => True, others => False);
+                           (Locations => True, others => False);
+   Line_Numbers_Only   : constant Message_Flags :=
+                           (Editor_Line => True, others => False);
    --  A list of potential locations where a message should be shown.
 
    function To_Int (Flags : Message_Flags) return Integer;

@@ -306,9 +306,10 @@ package Src_Editor_Buffer.Line_Information is
    procedure Free_Note (Message : Message_Access);
    --  Free note associated with Message
 
-   function Get_Relevant_Action
-     (Data : Line_Info_Width) return Line_Information_Record;
-   --  Convenience function to get the relevant action in Data at column Column
+   function Get_Line_Infos
+     (Data : Line_Info_Width) return Line_Information_Array;
+   --  Convenience function to get all the line information, looking in the
+   --  associated message too.
 
    function Has_Special_Lines
      (Buffer     : access Source_Buffer_Record'Class;

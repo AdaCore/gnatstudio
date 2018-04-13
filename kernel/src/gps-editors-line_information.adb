@@ -15,9 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+
 package body GPS.Editors.Line_Information is
 
    use Commands;
+
+   ----------------------
+   -- Get_Display_Type --
+   ----------------------
+
+   function Get_Display_Type
+     (Line_Info : Line_Information_Record)
+      return Line_Information_Display_Type is
+   begin
+      if Line_Info.Message.Is_Empty then
+         return On_Side_Area;
+      elsif Line_Info.Message.Message.Get_Flags = Sides_Only then
+         return On_Side_Area;
+      elsif Line_Info.Message.Message.Get_Flags = Line_Numbers_Only then
+         return On_Line_Number;
+      else
+         return No_Display;
+      end if;
+   end Get_Display_Type;
 
    ----------
    -- Free --
