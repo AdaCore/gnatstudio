@@ -42,7 +42,7 @@ pp_words = "|".join(["define", "if", "elif", "else", "endif", "ifndef",
 
 preprocessor_directive = region(
     r"^{0}#{1}(?:{2})".format(ws, ws, pp_words), r'$',
-    tag=new_style(lang="C",
+    tag=new_style(lang="General",
                   name="preprocessor",
                   label="Preprocessor",
                   doc="Style used for preprocessor directives",

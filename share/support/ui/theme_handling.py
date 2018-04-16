@@ -50,8 +50,8 @@ variant_prefs = {
     'comments': "Src-Editor-Comments-Variant",
     'keywords': "Src-Editor-Keywords-Variant",
     'types': "Src-Editor-Type-Variant",
-    'blocks': "Src-Editor-Block-Variant"
-
+    'blocks': "Src-Editor-Block-Variant",
+    'preprocessor': "Editor/Fonts & Colors:General/preprocessor"
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -268,7 +268,9 @@ common_light = {
     'debugger_current': Rgba(125, 236, 57, 153),
     'current_line': Rgba(226, 226, 226, 102),
     'current_block': Rgba(226, 226, 226),
-    'browsers_bg': Rgba(255, 255, 255)
+    'browsers_bg': Rgba(255, 255, 255),
+
+    'preprocessor': ("DEFAULT", Color("#606090"), Color("#A0A0F0"))
 }
 
 common_dark = {
@@ -328,7 +330,9 @@ common_dark = {
     'debugger_current': Rgba(58, 71, 54, 153),
     'current_line':  Rgba(48, 51, 51),
     'current_block':  Rgba(48, 51, 51),
-    'browsers_bg': Rgba(255, 255, 255)
+    'browsers_bg': Rgba(255, 255, 255),
+
+    'preprocessor': ("DEFAULT", Color("#606090"), Color("#2E3436"))
 }
 
 
