@@ -371,14 +371,11 @@ def show_ce(ce):
                                               1)
                 buf = GPS.EditorBuffer.get(first_sloc.file())
                 goto_location(first_sloc)
-                overlay = get_trace_overlay(buf)
                 for line in ce[file]:
-                    text = get_str_indent(buf, int(line)) + "--  " + \
+                    text = get_str_indent(buf, int(line)) + \
+                           "[Counterexample] " + \
                            get_ce_text_for_line(ce[file][line])
                     add_ce_special_line(buf, int(line), text)
-                    buf.apply_overlay(overlay,
-                                      buf.at(int(line), 1),
-                                      buf.at(int(line), 1))
 
 
 def remove_ce(ce):
@@ -386,8 +383,6 @@ def remove_ce(ce):
         if GPS.File(file).language() == "ada":
             buf = GPS.EditorBuffer.get(GPS.File(file))
             remove_ce_special_lines(buf)
-            overlay = get_trace_overlay(buf)
-            buf.remove_overlay(overlay)
 
 
 def disable_trace_and_ce():
@@ -405,8 +400,11 @@ def toggle_trace(msg, lines, ce):
         trace_msg = msg
         trace_lines = lines
         counterexample = ce
-        show_trace(lines)
-        show_ce(ce)
+        # preferably show the counterexample without trace
+        if ce != {}:
+            show_ce(ce)
+        else:
+            show_trace(lines)
     elif trace_msg == msg:
         disable_trace_and_ce()
     else:
@@ -415,8 +413,11 @@ def toggle_trace(msg, lines, ce):
         trace_msg = msg
         trace_lines = lines
         counterexample = ce
-        show_trace(lines)
-        show_ce(ce)
+        # preferably show the counterexample without trace
+        if ce != {}:
+            show_ce(ce)
+        else:
+            show_trace(lines)
 
 
 def build_msg_full_text(file, line, col, text):
