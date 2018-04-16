@@ -3,7 +3,7 @@ This file provides the core functionnality for interactive aliases expansion
 in GPS
 """
 
-from GPS import Preference, Hook, Alias, EditorBuffer, execute_action
+from GPS import Hook, Alias, EditorBuffer, execute_action
 import GPS
 from gps_utils import interactive
 from itertools import izip_longest
@@ -15,13 +15,7 @@ from color_utils import Color
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
-color_pref_name = "Editor/Fonts & Colors:Ada/color_current_field"
-Preference(color_pref_name).create(
-    "Aliases current field color",
-    "color",
-    "Background color for the current field under completion",
-    "#AAF"
-)
+color_pref_name = "Src-Editor-Ephemeral-Smart"
 
 
 def get_paragraph_color():
@@ -43,6 +37,15 @@ def get_comments_colors():
     if c2 == "white" or c2 == "rgb(255,255,255)":
         c2 = None
     return c1, c2
+
+
+def get_current_field_bg_color():
+    """
+    Get the background color that should be used to highlight
+    aliases' current fields.
+    """
+    _, _, bg_color = GPS.Preference(color_pref_name).get().split("@")
+    return bg_color
 
 
 def reset_overlay(editor):
@@ -164,7 +167,7 @@ def toggle_next_field(editor=None):
         editor.current_view().goto(marks[0][0].location())
         try:
             execute_action("autoindent selection")
-        except:
+        except Exception:
             pass
 
         reset_overlay(editor)
@@ -248,7 +251,7 @@ def expand_alias(editor, alias):
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
     editor.aliases_overlay.set_property(
-        "background", Preference(color_pref_name).get()
+        "background", get_current_field_bg_color()
     )
 
     color, color1 = get_paragraph_color()
@@ -316,5 +319,6 @@ def expand_alias(editor, alias):
     editor.indent(editor.alias_begin_mark.location(),
                   editor.alias_end_mark.location())
     toggle_next_field(editor)
+
 
 EditorBuffer.expand_alias = expand_alias
