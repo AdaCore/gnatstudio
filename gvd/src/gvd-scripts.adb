@@ -424,7 +424,7 @@ package body GVD.Scripts is
          begin
             Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
             Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-            Process.Debugger.Backtrace (Bt);
+            Process.Debugger.Backtrace (-1, 0, Bt);
 
             Data.Set_Return_Value_As_List;
             for Frame of Bt loop

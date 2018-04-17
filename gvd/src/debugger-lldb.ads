@@ -239,6 +239,8 @@ package Debugger.LLDB is
 
    overriding procedure Backtrace
      (Debugger : access LLDB_Debugger;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector);
 
    overriding function Current_Frame

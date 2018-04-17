@@ -594,9 +594,13 @@ package Debugger is
 
    procedure Backtrace
      (Debugger : access Debugger_Root;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector) is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
+   --  From and To parameters are used for pointing which frames are needed or
+   --  set From to -1 if limitation is not needed
 
    function Current_Frame
      (Debugger : access Debugger_Root)

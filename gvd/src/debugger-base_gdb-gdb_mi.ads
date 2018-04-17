@@ -318,6 +318,8 @@ package Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_MI_Debugger;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector);
 
    overriding procedure Configure_Backtrace

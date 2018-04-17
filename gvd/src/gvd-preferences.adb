@@ -291,6 +291,17 @@ package body GVD.Preferences is
          Label    => -"All interactions",
          Doc      => -"Display all interactions in the console");
 
+      Frames_Limit := Create
+        (Manager  => Prefs,
+         Name     => "debugger-frames-limit",
+         Path     => "Debugger:Call Stack",
+         Label    => "Frames limit",
+         Doc      => "How many frames will be fetched at one time" &
+           " (unlimited - 0).",
+         Minimum  => 0,
+         Maximum  => Integer'Last,
+         Default  => 0);
+
    end Register_Default_Preferences;
 
 end GVD.Preferences;

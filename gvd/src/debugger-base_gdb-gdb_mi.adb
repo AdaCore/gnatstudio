@@ -2223,6 +2223,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_MI_Debugger;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector)
    is
       use Token_Lists;
@@ -2236,7 +2238,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       declare
          S : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-stack-list-frames", Mode => Internal);
+           ("-stack-list-frames" &
+            (if From >= 0
+               then Integer'Image (From) & Integer'Image (To)
+               else ""),
+            Mode => Internal);
       begin
          Tokens.List := Build_Tokens (S);
       end;

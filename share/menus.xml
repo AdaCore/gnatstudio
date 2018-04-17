@@ -620,6 +620,10 @@
       <button action='debug create breakpoint'/>
    </toolbar>
 
+   <toolbar id='Call Stack'>
+      <button action='debug callstack fetch'/>
+   </toolbar>
+
    <toolbar id="Debugger Variables">
       <button action="debug tree clear"/>
       <button action="debug tree display expression"/>

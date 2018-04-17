@@ -1764,13 +1764,20 @@ package body Debugger.LLDB is
 
    overriding procedure Backtrace
      (Debugger : access LLDB_Debugger;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector)
    is
       Block : Process_Proxies.Parse_File_Switch
         (Debugger.Process) with Unreferenced;
 
       Responce : constant String := Debugger.Send_And_Get_Clean_Output
-        ("thread backtrace", Internal);
+        ("thread backtrace" &
+         (if From >= 0
+            then " --start" & Integer'Image (From) &
+              " --count" & Integer'Image (To - From + 1)
+            else ""),
+         Internal);
       Matched  : Match_Array (0 .. 6);
       FMatched : Match_Array (0 .. 2);
    begin

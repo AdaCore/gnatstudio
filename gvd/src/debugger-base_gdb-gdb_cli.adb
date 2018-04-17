@@ -1719,11 +1719,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Backtrace
      (Debugger : access Gdb_Debugger;
+      From     : Integer;
+      To       : Integer;
       Value    : out Backtrace_Vector) is
    begin
       Parse_Backtrace_Info
         (Send_And_Get_Clean_Output
-           (Debugger, "where", Mode => Internal), Value);
+           (Debugger,
+            "where" &
+            (if From >= 0
+               then Integer'Image (To + 1)
+               else ""),
+            Mode => Internal), Value);
 
       if not Value.Is_Empty then
          Debugger.Current_Frame_Num := Value.First_Element.Frame_Id;

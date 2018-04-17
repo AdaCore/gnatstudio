@@ -84,4 +84,8 @@ package GVD.Preferences is
    Debugger_Console_All_Interactions : Boolean_Preference;
    --  Whether display all interactions in the debugger console
 
+   --  Call stack
+   Frames_Limit                  : Integer_Preference;
+   --  How many frames will be fetched at one time
+
 end GVD.Preferences;

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GNAT.Strings;           use GNAT.Strings;
 
 with Glib;                   use Glib;
@@ -42,17 +43,19 @@ with Generic_Views;          use Generic_Views;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Generic_View;       use GVD.Generic_View;
+with GVD.Preferences;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
+with Commands.Interactive;   use Commands.Interactive;
 with Process_Proxies;        use Process_Proxies;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package body GVD.Call_Stack is
 
@@ -84,10 +87,12 @@ package body GVD.Call_Stack is
    Show_File_Location   : Boolean_Preference;
 
    type Call_Stack_Record is new Process_View_Record with record
-      Tree                       : Gtk_Tree_View;
-      Model                      : Gtk_Tree_Store;
-      Block                      : Boolean := False;
+      Tree           : Gtk_Tree_View;
+      Model          : Gtk_Tree_Store;
+      Block          : Boolean := False;
       --  Whether to process selection events.
+      Selected_Frame : Ada.Strings.Unbounded.Unbounded_String;
+      Last           : Integer := -1;
    end record;
    overriding procedure Update (View   : not null access Call_Stack_Record);
    overriding procedure On_Process_Terminated
@@ -98,6 +103,11 @@ package body GVD.Call_Stack is
      (Self : not null access Call_Stack_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    --  See inherited documentation
+
+   procedure Fill
+     (View : not null access Call_Stack_Record'Class;
+      From : Integer;
+      To   : Integer);
 
    function Initialize
      (Widget : access Call_Stack_Record'Class) return Gtk_Widget;
@@ -119,6 +129,7 @@ package body GVD.Call_Stack is
       Reuse_If_Exist     => False,
       Commands_Category  => "",
       Local_Config       => True,
+      Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
@@ -155,6 +166,159 @@ package body GVD.Call_Stack is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences have changed
+
+   type Fetch_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Fetch_Command;
+      Context : Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Fetch next portion of frames
+
+   type Call_Stack_Fetch_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Call_Stack_Fetch_Filter;
+      Context : Selection_Context) return Boolean;
+   --  True if not all frames are fetched.
+
+   ----------
+   -- Fill --
+   ----------
+
+   procedure Fill
+     (View : not null access Call_Stack_Record'Class;
+      From : Integer;
+      To   : Integer)
+   is
+      Bt       : Backtrace_Vector;
+      Process  : Process_Proxy_Access;
+      Subp     : GNAT.Strings.String_Access;
+      Iter     : Gtk_Tree_Iter;
+      Params   : Ada.Strings.Unbounded.Unbounded_String;
+
+      function Image (Value : Natural) return String;
+
+      function Image (Value : Natural) return String is
+         S : constant String := Value'Img;
+      begin
+         return S (S'First + 1 .. S'Last);
+      end Image;
+
+   begin
+      View.Block := True;
+
+      if Get_Process (View) /= null then
+         Process :=
+           Get_Process (Visual_Debugger (Get_Process (View)).Debugger);
+      end if;
+
+      --  If the debugger was killed, no need to refresh
+
+      if Process = null then
+         Clear (View.Model);
+         View.Block := False;
+         return;
+      end if;
+
+      --  Parse the information from the debugger
+
+      Visual_Debugger (Get_Process (View)).Debugger.Backtrace (From, To, Bt);
+
+      if Bt.Is_Empty then
+         View.Last := Integer'Last;
+
+         if From < 1 then
+            --  we requested frames from the first one but have nothing
+            Clear (View.Model);
+         end if;
+
+         View.Block := False;
+         return;
+      end if;
+
+      --  Update the contents of the window
+
+      if From < 1
+        or else Bt.First_Element.Frame_Id = 0
+      --  gdb returns frames only from the first one in CLI mode
+      then
+         Clear (View.Model);
+      end if;
+
+      for J of Bt loop
+         if J.Selected then
+            View.Selected_Frame :=
+              To_Unbounded_String (Natural'Image (J.Frame_Id));
+         end if;
+
+         Subp := J.Subprogram;
+
+         View.Model.Append (Iter, Null_Iter);
+         Params := Null_Unbounded_String;
+
+         for P of J.Parameters loop
+            if P.Value /= null then
+               if Params /= Null_Unbounded_String then
+                  Append (Params, ", ");
+               end if;
+               Append (Params, P.Value.all);
+            end if;
+         end loop;
+
+         Set_All_And_Clear
+           (View.Model, Iter,
+            (0 => As_String (Natural'Image (J.Frame_Id)),
+             1 => As_String
+               (Escape_Text ((if J.Address = Invalid_Address then "<>"
+                   else Address_To_String (J.Address)))),
+             2 => As_String
+               ((if Subp /= null
+                then Escape_Text (Subp.all)
+                else "")),
+             3 => As_String (Escape_Text (To_String (Params))),
+             4 => As_String
+               (Escape_Text
+                  ((if J.File = No_File then "<>"
+                   else +(Full_Name (J.File))) &
+                   (if J.Line /= 0 then ":" & Image (J.Line)
+                      else "")))));
+
+         View.Last := J.Frame_Id;
+      end loop;
+
+      if View.Last < To then
+         View.Last := Integer'Last;
+      end if;
+
+      Free (Bt);
+      View.Block := False;
+   end Fill;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Call_Stack_Fetch_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if GVD.Preferences.Frames_Limit.Get_Pref = 0 then
+         return False;
+      end if;
+
+      declare
+         View : constant Call_Stack :=
+           Call_Stack (CS_MDI_Views.Retrieve_View (Get_Kernel (Context)));
+      begin
+         if View = null then
+            return False;
+         end if;
+
+         return View.Last < Integer'Last;
+      end;
+   end Filter_Matches_Primitive;
 
    --------------
    -- Get_View --
@@ -236,6 +400,30 @@ package body GVD.Call_Stack is
          Stack := CS_MDI_Views.Retrieve_View (Kernel);
          Set_Column_Types (Stack);
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Fetch_Command;
+      Context : Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View    : constant Call_Stack    :=
+        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
+   begin
+      View.Fill
+        (View.Last + 1, View.Last + GVD.Preferences.Frames_Limit.Get_Pref);
+
+      if View.Last = Integer'Last then
+         Kernel.Context_Changed (No_Context);
+      end if;
+
+      return Commands.Success;
    end Execute;
 
    -----------------
@@ -367,7 +555,11 @@ package body GVD.Call_Stack is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Fetch_Filter : constant Action_Filter :=
+        new Call_Stack_Fetch_Filter;
+
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
@@ -390,6 +582,15 @@ package body GVD.Call_Stack is
       Show_File_Location := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debug-callstack-show-file-loc", False,
          Label => -"Show File Location Number");
+
+      Register_Action
+        (Kernel,
+         "debug callstack fetch",
+         new Fetch_Command,
+         "Retrieve next portion of frames",
+         Icon_Name => "gps-goto-symbolic",
+         Category  => -"Debug",
+         Filter    => Fetch_Filter);
    end Register_Module;
 
    ----------------------
@@ -447,91 +648,27 @@ package body GVD.Call_Stack is
    ------------
 
    overriding procedure Update (View : not null access Call_Stack_Record) is
-      Bt       : Backtrace_Vector;
-      Process  : Process_Proxy_Access;
-      Subp     : GNAT.Strings.String_Access;
-      Iter     : Gtk_Tree_Iter;
-      Params   : Ada.Strings.Unbounded.Unbounded_String;
-
-      function Image (Value : Natural) return String;
-
-      function Image (Value : Natural) return String is
-         S : constant String := Value'Img;
-      begin
-         return S (S'First + 1 .. S'Last);
-      end Image;
-
-      Selected : Ada.Strings.Unbounded.Unbounded_String;
       Path     : Gtk_Tree_Path;
+      Limit    : constant Integer := GVD.Preferences.Frames_Limit.Get_Pref;
+      From     : Integer;
+      To       : Integer;
    begin
-      --  Remove previous stack information.
+      if Limit = 0 then
+         From := -1;
+         To   := 0;
+      else
+         From := 0;
+         To   := Limit - 1;
+      end if;
+
+      View.Selected_Frame := Null_Unbounded_String;
+      View.Fill (From, To);
 
       View.Block := True;
-      Clear (View.Model);
-
-      if Get_Process (View) /= null then
-         Process :=
-           Get_Process (Visual_Debugger (Get_Process (View)).Debugger);
-      end if;
-
-      --  If the debugger was killed, no need to refresh
-
-      if Process = null then
-         View.Block := False;
-         return;
-      end if;
-
-      --  Parse the information from the debugger
-
-      Backtrace (Visual_Debugger (Get_Process (View)).Debugger, Bt);
-
-      --  Update the contents of the window
-
-      for J of Bt loop
-         if J.Selected then
-            Selected := To_Unbounded_String (Natural'Image (J.Frame_Id));
-         end if;
-
-         Subp := J.Subprogram;
-
-         View.Model.Append (Iter, Null_Iter);
-         Params := Null_Unbounded_String;
-
-         for P of J.Parameters loop
-            if P.Value /= null then
-               if Params /= Null_Unbounded_String then
-                  Append (Params, ", ");
-               end if;
-               Append (Params, P.Value.all);
-            end if;
-         end loop;
-
-         Set_All_And_Clear
-           (View.Model, Iter,
-            (0 => As_String (Natural'Image (J.Frame_Id)),
-             1 => As_String
-               (Escape_Text ((if J.Address = Invalid_Address then "<>"
-                   else Address_To_String (J.Address)))),
-             2 => As_String
-               ((if Subp /= null
-                then Escape_Text (Subp.all)
-                else "")),
-             3 => As_String (Escape_Text (To_String (Params))),
-             4 => As_String
-               (Escape_Text
-                  ((if J.File = No_File then "<>"
-                   else +(Full_Name (J.File))) &
-                   (if J.Line /= 0 then ":" & Image (J.Line)
-                      else "")))));
-      end loop;
-
-      Free (Bt);
-
       View.Tree.Get_Selection.Set_Mode (Selection_Single);
 
-      View.Block := True;
-      if Selected /= Null_Unbounded_String then
-         Gtk_New (Path, To_String (Selected));
+      if View.Selected_Frame /= Null_Unbounded_String then
+         Gtk_New (Path, To_String (View.Selected_Frame));
          Select_Path (Get_Selection (View.Tree), Path);
          Path_Free (Path);
       else
@@ -539,6 +676,8 @@ package body GVD.Call_Stack is
             View.Tree.Get_Selection.Select_Iter (View.Model.Get_Iter_First);
          end if;
       end if;
+
+      View.Kernel.Context_Changed (No_Context);
       View.Block := False;
    end Update;
 
