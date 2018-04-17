@@ -187,7 +187,7 @@ function buildText(root, data) {
 
            case GNATdoc.EntityKind.HTML:
                element = document.createElement('span');
-               element.innerHtml = data[index].html;
+               element.innerHTML = data[index].html;
 
                break;
        }

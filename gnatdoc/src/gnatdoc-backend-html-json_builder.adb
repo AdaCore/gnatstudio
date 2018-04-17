@@ -151,32 +151,38 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                end if;
 
             when GNATdoc.Markup_Streams.Text =>
-               if String'(State.Object.Get ("kind")) = "code" then
-                  Object := Create_Object;
-                  Object.Set_Field ("kind", "span");
-                  Object.Set_Field ("text", To_String (Event.Text));
-
-                  Clear (Aux);
-                  Append (Aux, Object);
-
-                  Object := Create_Object;
-                  Object.Set_Field ("number", Number);
-                  Object.Set_Field ("children", Aux);
-                  Number := Number + 1;
+               if String'(State.Object.Get ("kind")) = "html" then
+                  State.Object.Set_Field ("html", To_String (Event.Text));
 
                else
-                  Object := Create_Object;
-                  Object.Set_Field ("kind", "span");
-                  Object.Set_Field ("text", To_String (Event.Text) & ASCII.LF);
-                  Set_CSS_Class (Object, State.Span_Attributes);
+                  if String'(State.Object.Get ("kind")) = "code" then
+                     Object := Create_Object;
+                     Object.Set_Field ("kind", "span");
+                     Object.Set_Field ("text", To_String (Event.Text));
 
-                  if State.Span_Attributes.Contains ("href") then
+                     Clear (Aux);
+                     Append (Aux, Object);
+
+                     Object := Create_Object;
+                     Object.Set_Field ("number", Number);
+                     Object.Set_Field ("children", Aux);
+                     Number := Number + 1;
+
+                  else
+                     Object := Create_Object;
+                     Object.Set_Field ("kind", "span");
                      Object.Set_Field
-                       ("href", State.Span_Attributes.Element ("href"));
-                  end if;
-               end if;
+                       ("text", To_String (Event.Text) & ASCII.LF);
+                     Set_CSS_Class (Object, State.Span_Attributes);
 
-               Append (State.Children, Object);
+                     if State.Span_Attributes.Contains ("href") then
+                        Object.Set_Field
+                          ("href", State.Span_Attributes.Element ("href"));
+                     end if;
+                  end if;
+
+                  Append (State.Children, Object);
+               end if;
          end case;
       end loop;
 
