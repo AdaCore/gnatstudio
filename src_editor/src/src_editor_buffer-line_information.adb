@@ -1685,6 +1685,23 @@ package body Src_Editor_Buffer.Line_Information is
             At_Buffer_Line => Line);
       end if;
 
+      --  Iterate over all the shifted lines to re-highlight the messages that
+      --  can be associated.
+
+      for J in Line + 1 .. Buffer.Line_Data'Last loop
+         if Buffer.Line_Data (J).Side_Info_Data /= null then
+            for Ref of Buffer.Line_Data (J).Side_Info_Data (1).Messages loop
+               if not Ref.Is_Empty then
+                  Highlight_Message
+                    (Buffer        => Buffer,
+                     Editable_Line => 0,
+                     Buffer_Line   => 0,
+                     Message       => Ref.Message);
+               end if;
+            end loop;
+         end if;
+      end loop;
+
       return Mark;
    end Add_Blank_Lines;
 
