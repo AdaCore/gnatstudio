@@ -173,9 +173,10 @@ package body Debugger.LLDB is
    --  Regular expression for detect error
 
    Frame_Regexp                    : constant Pattern_Matcher := Compile
-     ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\s\S]+)( at (\S+))?)",
+     ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\S]+)( at (\S+))?)",
       Multiple_Lines);
    --  Regular expression for parse a frame information
+   --    frame #0: 0x0000000000402b1c foo`_ada_foo at foo.adb:15
 
    Running_Regexp                  : constant Pattern_Matcher := Compile
      ("^Process \d+ launched:", Multiple_Lines);
