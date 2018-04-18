@@ -193,6 +193,11 @@ package Generic_Views is
    --  Pattern must be freed by the callee.
    --  null is passed when no pattern is set by the user.
 
+   function Get_Filter
+     (View : not null access View_Record'Class)
+      return Filter_Panels.Filter_Panel;
+   --  Return the filter or null if the filter is not defined for this view
+
    procedure Set_Filter
      (Self : not null access View_Record;
       Text : String);

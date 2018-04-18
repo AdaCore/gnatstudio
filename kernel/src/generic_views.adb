@@ -111,6 +111,17 @@ package body Generic_Views is
    end Get_Toolbar;
 
    ----------------
+   -- Get_Filter --
+   ----------------
+
+   function Get_Filter
+     (View : not null access View_Record'Class)
+      return Filter_Panels.Filter_Panel is
+   begin
+      return View.Filter;
+   end Get_Filter;
+
+   ----------------
    -- Set_Filter --
    ----------------
 

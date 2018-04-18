@@ -131,12 +131,12 @@ package body Project_Explorers is
    use Filter_Sets;
 
    type Explorer_Filter is record
-      Config      : Project_View_Config;
+      Config  : Project_View_Config;
 
-      Pattern  : GPS.Search.Search_Pattern_Access;
+      Pattern : GPS.Search.Search_Pattern_Access;
       --  The pattern on which we filter.
 
-      Visible  : Filter_Sets.Set;
+      Visible : Filter_Sets.Set;
       --  A cache of the filter. We do not manipulate the gtk model directly,
       --  because it does not contain everything in general (the contents of
       --  nodes is added dynamically).
@@ -185,6 +185,11 @@ package body Project_Explorers is
    overriding procedure Filter_Changed
      (Self    : not null access Project_Explorer_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
+
+   function On_Focus_Changed
+     (Explorer : access Gtk_Widget_Record'Class)
+      return Boolean;
+   --  Called when the filter gains or loses focus
 
    function Initialize
      (Explorer : access Project_Explorer_Record'Class)
@@ -397,6 +402,8 @@ package body Project_Explorers is
 
    type Project_View_Filter_Record is new Action_Filter_Record
       with null record;
+   type Project_Toolbar_Record is new Action_Filter_Record
+      with null record;
    type Project_Node_Filter_Record is new Action_Filter_Record
       with null record;
    type Directory_Node_Filter_Record is new Action_Filter_Record
@@ -405,6 +412,9 @@ package body Project_Explorers is
       with null record;
    overriding function Filter_Matches_Primitive
      (Context : access Project_View_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   overriding function Filter_Matches_Primitive
+     (Context : access Project_Toolbar_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    overriding function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
@@ -461,6 +471,23 @@ package body Project_Explorers is
       pragma Unreferenced (Context);
    begin
       return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Project_Toolbar_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Ctxt);
+      View   : constant Project_Explorer :=
+        Explorer_Views.Get_Or_Create_View (Kernel, Focus => False);
+   begin
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
+        and then View.Get_Filter.Get_Focus_Child /= null;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -935,7 +962,32 @@ package body Project_Explorers is
          Options     =>
            Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
          Name        => "Project Explorer Filter");
+      --  Recompute the filters when the filter focus state changes,
+      --  it's needed to properly receive the backspace key
+      Return_Callback.Object_Connect
+        (View.Get_Filter.Get_Focus_Widget,
+         Signal_Focus_In_Event,
+         Return_Callback.To_Marshaller (On_Focus_Changed'Access),
+         Slot_Object => View);
+      Return_Callback.Object_Connect
+        (View.Get_Filter.Get_Focus_Widget,
+         Signal_Focus_Out_Event,
+         Return_Callback.To_Marshaller (On_Focus_Changed'Access),
+         Slot_Object => View);
    end Create_Toolbar;
+
+   ----------------------
+   -- On_Focus_Changed --
+   ----------------------
+
+   function On_Focus_Changed
+     (Explorer : access Gtk_Widget_Record'Class)
+      return Boolean
+   is
+   begin
+      Refresh_Context (Project_Explorer (Explorer).Kernel);
+      return True;
+   end On_Focus_Changed;
 
    -----------------
    -- Create_Menu --
@@ -2062,13 +2114,15 @@ package body Project_Explorers is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Project_View_Filter   : constant Action_Filter :=
+      Project_View_Filter    : constant Action_Filter :=
                                 new Project_View_Filter_Record;
-      Project_Node_Filter   : constant Action_Filter :=
+      Project_Toolbar_Filter : constant Action_Filter :=
+                                new Project_Toolbar_Record;
+      Project_Node_Filter    : constant Action_Filter :=
                                 new Project_Node_Filter_Record;
-      Directory_Node_Filter : constant Action_Filter :=
+      Directory_Node_Filter  : constant Action_Filter :=
                                 new Directory_Node_Filter_Record;
-      File_Node_Filter      : constant Action_Filter :=
+      File_Node_Filter       : constant Action_Filter :=
                                 new File_Node_Filter_Record;
    begin
       Explorer_Views.Register_Module (Kernel => Kernel);
@@ -2162,6 +2216,10 @@ package body Project_Explorers is
         (Kernel,
          Filter => Project_View_Filter,
          Name   => "Explorer_View");
+      Register_Filter
+        (Kernel,
+         Filter => Project_Toolbar_Filter,
+         Name   => "Explorer_Toolbar_Filter");
       Register_Filter
         (Kernel,
          Filter => Project_Node_Filter,

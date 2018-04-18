@@ -825,7 +825,9 @@ package body VFS_Module is
    is
       File_View_Filter : constant Action_Filter :=
         Lookup_Filter (Kernel, "File_View")
-        or Create (Module => Explorer_Module_Name);
+        or (Lookup_Filter (Kernel, "Explorer_View")
+            and not Lookup_Filter (Kernel, "Explorer_Toolbar_Filter"));
+      --  The backspace key should go in the toolbar of the editor if focused
       File_Filter      : constant Action_Filter := new File_Filter_Record;
       Dir_Filter       : constant Action_Filter := new Dir_Filter_Record;
       Is_Dir           : constant Action_Filter :=
