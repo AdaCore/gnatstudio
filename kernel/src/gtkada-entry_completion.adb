@@ -116,6 +116,11 @@ package body Gtkada.Entry_Completion is
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
 
+   procedure On_Previous_Focus_Destroy
+     (Self : access Gtk_Widget_Record'Class);
+   --  Called when the widget that was focused before entering the entry is
+   --  destroyed.
+
    procedure On_Entry_Changed (Self  : access GObject_Record'Class);
    --  Handles changes in the entry field.
 
@@ -877,7 +882,9 @@ package body Gtkada.Entry_Completion is
             --  Unref the previously focused widget and set it to null when the
             --  focus goes out of the entry.
             if Self.Previous_Focus /= null then
-               Self.Previous_Focus.Unref;
+               Gtk.Handlers.Disconnect
+                 (Self.Previous_Focus,
+                  Id => Self.Previous_Focus_Handler_ID);
                Self.Previous_Focus := null;
             end if;
 
@@ -909,7 +916,12 @@ package body Gtkada.Entry_Completion is
            (Get_MDI (Self.Kernel).Get_Focus_Child);
 
          if Self.Previous_Focus /= null then
-            Self.Previous_Focus.Ref;
+            Self.Previous_Focus_Handler_ID := Widget_Callback.Object_Connect
+              (Widget      => Self.Previous_Focus,
+               Name        => Signal_Destroy,
+               Marsh       => Widget_Callback.To_Marshaller
+                 (On_Previous_Focus_Destroy'Access),
+               Slot_Object => Self);
          end if;
       end if;
 
@@ -1354,6 +1366,18 @@ package body Gtkada.Entry_Completion is
       Free (S.Pattern);
       Free (S.Completion);
    end On_Entry_Destroy;
+
+   -------------------------------
+   -- On_Previous_Focus_Destroy --
+   -------------------------------
+
+   procedure On_Previous_Focus_Destroy
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+   begin
+      S.Previous_Focus := null;
+   end On_Previous_Focus_Destroy;
 
    -----------
    -- Clear --

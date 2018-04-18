@@ -25,6 +25,7 @@ with GPS.Kernel;
 with GPS.Search;
 with Gtk.Box;
 with Gtk.Frame;
+with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.List_Store;
 with Gtk.Scrolled_Window;
@@ -159,6 +160,10 @@ private
       Previous_Focus   : Gtk.Widget.Gtk_Widget;
       --  The widget that had the focus before we gave it to the search field
       --  for the last time
+
+      Previous_Focus_Handler_ID : Gtk.Handlers.Handler_Id;
+      --  The ID of the handler that is called when the widget that had
+      --  previously the focus is destroyed.
 
       Previous_Context : GPS.Kernel.Selection_Context := GPS.Kernel.No_Context;
       --  The context that was set just before entering the search field.
