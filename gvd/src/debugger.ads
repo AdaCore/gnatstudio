@@ -494,6 +494,14 @@ package Debugger is
    --  Continue the program until the given location.
    --  GDB_COMMAND: "until <location>"
 
+   function Line_Contains_Code
+     (Debugger : not null access Debugger_Root;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type)
+      return Boolean is abstract;
+   --  Return True if the given line contains actual code, False otherwise.
+   --  GDB_COMMAND: "info line <location>"
+
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
 

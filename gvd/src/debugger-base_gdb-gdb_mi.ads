@@ -195,6 +195,12 @@ package Debugger.Base_Gdb.Gdb_MI is
       Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding function Line_Contains_Code
+     (Debugger : not null access Gdb_MI_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type)
+      return Boolean;
+
    overriding function Current_Frame
      (Debugger : access Gdb_MI_Debugger)
       return Integer;

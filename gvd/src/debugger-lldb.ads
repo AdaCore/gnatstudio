@@ -210,6 +210,14 @@ package Debugger.LLDB is
       Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding function Line_Contains_Code
+     (Debugger : not null access LLDB_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type)
+      return Boolean
+   is
+     (True);
+
    overriding procedure Interrupt (Debugger : access LLDB_Debugger);
 
    overriding function Command_Kind

@@ -1419,6 +1419,26 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Mode => Mode);
    end Continue_Until_Location;
 
+   ------------------------
+   -- Line_Contains_Code --
+   ------------------------
+
+   overriding function Line_Contains_Code
+     (Debugger : not null access Gdb_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type)
+      return Boolean
+   is
+      Block  : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+      Output : constant String := Debugger.Send_And_Get_Clean_Output
+           ("info line "
+            & (+Base_Name (File)) & ":" & Image (Integer (Line)),
+            Mode => Internal);
+   begin
+      return Index (Output, Pattern => "no code") = 0;
+   end Line_Contains_Code;
+
    -------------------
    -- Current_Frame --
    -------------------

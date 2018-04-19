@@ -193,6 +193,12 @@ package Debugger.Base_Gdb.Gdb_CLI is
       Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding function Line_Contains_Code
+     (Debugger : not null access Gdb_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Editable_Line_Type)
+      return Boolean;
+
    overriding function Current_Frame
      (Debugger : access Gdb_Debugger)
       return Integer;
