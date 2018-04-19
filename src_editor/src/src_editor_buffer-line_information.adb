@@ -205,7 +205,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Data : constant Line_Info_Width_Array_Access :=
         Get_Side_Information (Buffer, Line);
-      C    : Message_Reference_List.Cursor;
       use Message_Reference_List;
    begin
       if Data = null then
@@ -214,15 +213,13 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       for K in Data'Range loop
-         C := Data (K).Messages.First;
-
-         while Has_Element (C) loop
-            if Element (C).Message = Message then
+         for M_Ref of Data (K).Messages loop
+            if not M_Ref.Is_Empty and then M_Ref.Message = Message then
                return True;
             end if;
-            Next (C);
          end loop;
       end loop;
+
       return False;
    end Message_Is_On_Line;
 
@@ -676,7 +673,6 @@ package body Src_Editor_Buffer.Line_Information is
          D      : in out Line_Data_Record)
       is
          M    : Message_Access;
-         C    : Message_Reference_List.Cursor;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data /= null then
@@ -690,14 +686,10 @@ package body Src_Editor_Buffer.Line_Information is
             --  If there are messages in the column being removed, remove the
             --  messages
 
-            C := D.Side_Info_Data (Column).Messages.First;
-
-            while Message_Reference_List.Has_Element (C) loop
-               M := Message_Reference_List.Element (C).Message;
-
-               if M /= null then
+            for M_Ref of D.Side_Info_Data (Column).Messages loop
+               if not M_Ref.Is_Empty then
+                  M := M_Ref.Message;
                   M.Remove;
-                  C := D.Side_Info_Data (Column).Messages.First;
                end if;
             end loop;
 
