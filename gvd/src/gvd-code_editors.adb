@@ -63,34 +63,6 @@ package body GVD.Code_Editors is
          return;
       end if;
 
-      --  Jump to current location
-
-      if File /= GNATCOLL.VFS.No_File
-        and then Line /= 0
-      then
-         declare
-            Buffer : constant Editor_Buffer'Class :=
-              Kernel.Get_Buffer_Factory.Get
-                (File, Open_Buffer => True, Focus => Focus);
-         begin
-            Buffer.Current_View.Cursor_Goto
-              (Location   => Buffer.New_Location_At_Line (Line),
-               Raise_View => Focus);
-
-            if not Focus then
-               --  raise the source editor without giving a focus
-               declare
-                  C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-                    (Buffer.Current_View);
-               begin
-                  if C /= null then
-                     Raise_Child (C, False);
-                  end if;
-               end;
-            end if;
-         end;
-      end if;
-
       --  Highlight the current line if the debugger is active
 
       if Highlight
@@ -143,6 +115,34 @@ package body GVD.Code_Editors is
          if P.Debugger.Is_Started then
             Debugger_Location_Changed_Hook.Run (Kernel, P);
          end if;
+      end if;
+
+      --  Jump to current location
+
+      if File /= GNATCOLL.VFS.No_File
+        and then Line /= 0
+      then
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get
+                (File, Open_Buffer => True, Focus => Focus);
+         begin
+            Buffer.Current_View.Cursor_Goto
+              (Location   => Buffer.New_Location_At_Line (Line),
+               Raise_View => Focus);
+
+            if not Focus then
+               --  raise the source editor without giving a focus
+               declare
+                  C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
+                    (Buffer.Current_View);
+               begin
+                  if C /= null then
+                     Raise_Child (C, False);
+                  end if;
+               end;
+            end if;
+         end;
       end if;
    end Set_Current_File_And_Line;
 

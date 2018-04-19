@@ -111,6 +111,16 @@ package body GVD.Preferences is
          Debugger_Kind.Hide (GVD.Types.LLDB);
       end if;
 
+      Continue_To_Line_Buttons := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Continue-To-Line-Buttons",
+         Path      => -"Debugger:Editors",
+         Label     => -"Display 'Continue to line' buttons",
+         Doc       =>
+           -("Display the 'Continue to line' buttons on the left-side of "
+           & "editors."),
+         Default   => True);
+
       Editor_Current_Line_Color := Create
         (Manager   => Prefs,
          Name      => "Debugger-Editor-Current-Line",

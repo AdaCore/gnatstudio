@@ -44,6 +44,7 @@ package GVD.Preferences is
    Preserve_State_On_Exit        : Boolean_Preference;
 
    -- Source Window --
+   Continue_To_Line_Buttons      : Boolean_Preference;
    Editor_Current_Line_Color     : Color_Preference;
 
    -- Assembly Window --

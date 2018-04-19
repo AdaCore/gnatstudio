@@ -1399,7 +1399,7 @@ package body GVD.Breakpoints is
       T              : constant Breakpoint_Type :=
         Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
       Temporary      : constant Boolean := Self.Temporary.Get_Active;
-      Num    : Breakpoint_Identifier := Br.Num;
+      Num            : Breakpoint_Identifier := Br.Num;
    begin
       --  Create a new breakpoint if needed
 

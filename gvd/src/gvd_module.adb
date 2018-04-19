@@ -43,6 +43,7 @@ with Commands.Interactive;         use Commands.Interactive;
 with Commands;                     use Commands;
 with Debugger;                     use Debugger;
 with Default_Preferences;          use Default_Preferences;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -135,6 +136,31 @@ package body GVD_Module is
    --  Used to display a clickable icon on the gutter to continue the
    --  execution until we reach the given location.
 
+   type On_Debugger_Location_Changed is new Debugger_Hooks_Function with
+     null record;
+   overriding procedure Execute
+     (Self     : On_Debugger_Location_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
+   --  Called when the current debugger's location changes.
+   --  Used to remove the "Continue to line" clickable icon on the debugger's
+   --  current location.
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+
+   type On_Debugger_Started is new Debugger_Hooks_Function with
+     null record;
+   overriding procedure Execute
+     (Self     : On_Debugger_Started;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
+   --  Called when a debugger starts.
+   --  Used to add the "Continue to line" editor columns.
+
    type On_Debugger_Terminated is new Debugger_Hooks_Function with null record;
    overriding procedure Execute
      (Self     : On_Debugger_Terminated;
@@ -143,9 +169,20 @@ package body GVD_Module is
    --  Called when a debugger terminates.
    --  Used to remove the "Continue to line" clickable icon, if any.
 
+   procedure Create_Continue_To_Line_Columns
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Buffer : Editor_Buffer'Class);
+   --  Create the column where the "Continue to line" clcikable icons will
+   --  be displayed.
+
    procedure Remove_Continue_To_Line_Messages
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Remove the message associated with the "Continue to line" action
+
+   procedure Disable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Disable the "Continue to line" clickable icons on editors, removing the
+   --  associated messages and the extra column if necessary.
 
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
@@ -350,6 +387,11 @@ package body GVD_Module is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type In_Debugger_Frame_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Debugger_Frame_Filter;
       Context : Selection_Context) return Boolean;
 
    type Not_Command_Filter is
@@ -748,7 +790,7 @@ package body GVD_Module is
          elsif Has_File_Line_Information (Context.Context) then
             File_Line_Information (Context.Context)
          else
-            Line_Information (Context.Context)));
+            GPS.Kernel.Contexts.Line_Information (Context.Context)));
    begin
       Continue_Until_Location
         (Process.Debugger,
@@ -1304,6 +1346,74 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access In_Debugger_Frame_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Process : constant Visual_Debugger := Visual_Debugger
+        (Get_Current_Debugger (Kernel));
+
+      function In_Debugger_Frame
+        (Buffer : Editor_Buffer'Class;
+         Line   : Natural)
+         return Boolean;
+      --  Return True if the specified location is in the same frame as
+      --  the debugger's current location.
+
+      -----------------------
+      -- In_Debugger_Frame --
+      -----------------------
+
+      function In_Debugger_Frame
+        (Buffer : Editor_Buffer'Class;
+         Line   : Natural)
+         return Boolean
+      is
+         Debugger_Subprogram : constant String := Block_Name
+           (This        => Buffer.New_Location (Process.Current_Line, 0),
+            Subprogram  => True);
+         New_Loc_Subprogram : constant String := Block_Name
+           (This        => Buffer.New_Location (Line, 0),
+            Subprogram  => True);
+      begin
+         return Debugger_Subprogram = New_Loc_Subprogram;
+      end In_Debugger_Frame;
+
+   begin
+      if Process = null then
+         return False;
+      end if;
+
+      if Has_File_Information (Context)
+        and then Has_Line_Information (Context)
+      then
+         declare
+            File   : constant GNATCOLL.VFS.Virtual_File :=
+                       File_Information (Context);
+            Line   : constant Natural := Contexts.Line_Information (Context);
+            Buffer : constant Editor_Buffer'Class :=
+                       Kernel.Get_Buffer_Factory.Get
+                       (File        => File,
+                        Open_View   => False);
+         begin
+            if Process.Current_File = File
+              and then Process.Current_Line /= Line
+              and then Buffer /= Nil_Editor_Buffer
+            then
+               return In_Debugger_Frame (Buffer, Line);
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Not_Command_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1633,67 +1743,148 @@ package body GVD_Module is
       Line, Column : Integer;
       Project      : GNATCOLL.Projects.Project_Type)
    is
-      use Ada.Strings.Unbounded;
       pragma Unreferenced (Self, Column, Project);
-      Process : constant Visual_Debugger := Visual_Debugger
+      Process                 : constant Visual_Debugger := Visual_Debugger
         (Get_Current_Debugger (Kernel));
+      Buffer                  : constant Editor_Buffer'Class :=
+                                  Kernel.Get_Buffer_Factory.Get
+                                    (File        => File,
+                                     Open_View   => False);
+      Continue_To_Line_Filter : constant Action_Filter :=
+                                  Lookup_Filter
+                                    (Kernel,
+                                     Name => "Can continue until");
    begin
-      --  Return imediately if there is no debugger.
-      if Process = null then
+      --  Do nothing if there is no active debugger or if the debugger's
+      --  current file is different from the new location's one.
+      if Process = null or else Process.Current_File /= File then
          return;
       end if;
+
+      --  Create the side area colum that will display the "Continue to line"
+      --  clickable icons if needed.
+      Create_Continue_To_Line_Columns (Kernel, Buffer);
 
       --  Remove the previous message
       Remove_Continue_To_Line_Messages (Kernel);
 
-      declare
-         Filter  : constant Action_Filter := Lookup_Filter
-           (Kernel => Kernel,
-            Name   => "Debugger stopped")
-           and Lookup_Filter
-             (Kernel => Kernel,
-              Name   => "Debuggee started");
-         Ctxt    : constant Selection_Context := Kernel.Get_Current_Context;
-         Msg     : Simple_Message_Access;
-      begin
-         --  If the debuggee has started and if the cursor is not placed on the
-         --  debugger's current line, add the "Continue to line" clickable icon
-         --  in the gutter.
+      --  Add a "Continue to line" clickable icon if the context allows it
+      if Filter_Matches_Primitive
+        (Continue_To_Line_Filter, Context => Kernel.Get_Current_Context)
+      then
+         declare
+            Msg       : Simple_Message_Access;
+            Help_Text : constant String :=
+                          "Continue to line " & Integer'Image (Line);
+            use Ada.Strings.Unbounded;
+         begin
+            Msg := Create_Simple_Message
+              (Get_Messages_Container (Kernel),
+               Category                 =>
+                 Messages_Category_Continue_To_Line,
+               File                     => File,
+               Line                     => Line,
+               Column                   => 1,
+               Text                     => Help_Text,
+               Weight                   => 0,
+               Flags                    => Continue_To_Line_Messages_Flags,
+               Allow_Auto_Jump_To_First => False);
 
-         if not (Process.Current_File = File
-                 and then Process.Current_Line = Line)
-           and then Filter.Filter_Matches_Primitive (Ctxt)
-         then
-            declare
-               Help_Text : constant String :=
-                             "Continue to line " & Integer'Image (Line);
-            begin
-               Msg := Create_Simple_Message
-                 (Get_Messages_Container (Kernel),
-                  Category                 =>
-                    Messages_Category_Continue_To_Line,
-                  File                     => File,
-                  Line                     => Line,
-                  Column                   => 1,
-                  Text                     => Help_Text,
-                  Weight                   => 0,
-                  Flags                    => Continue_To_Line_Messages_Flags,
-                  Allow_Auto_Jump_To_First => False);
+            Msg.Set_Action
+              (new Line_Information_Record'
+                 (Text               => Null_Unbounded_String,
+                  Tooltip_Text       => To_Unbounded_String (Help_Text),
+                  Image              => To_Unbounded_String
+                    ("gps-debugger-continue-until"),
+                  Message            => <>,
+                  Associated_Command => new Continue_Until_Line_Command'
+                    (Root_Command with
+                     File => File,
+                     Line => Line)));
+         end;
+      end if;
+   end Execute;
 
-               Msg.Set_Action
-                 (new Line_Information_Record'
-                    (Text               => Null_Unbounded_String,
-                     Tooltip_Text       => To_Unbounded_String (Help_Text),
-                     Image              => To_Unbounded_String
-                       ("gps-debugger-continue-until"),
-                     Message            => <>,
-                     Associated_Command => new Continue_Until_Line_Command'
-                       (Root_Command with
-                        File => File,
-                        Line => Line)));
-            end;
-         end if;
-      end;
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference) is
+      pragma Unreferenced (Self);
+   begin
+      if Pref = Preference (Continue_To_Line_Buttons) then
+         declare
+            Process : constant Visual_Debugger := Visual_Debugger
+              (Get_Current_Debugger (Kernel));
+         begin
+            if Process = null then
+               return;
+            end if;
+
+            Disable_Continue_To_Line_On_Editors (Kernel);
+
+            if Continue_To_Line_Buttons.Get_Pref then
+               declare
+                  Func    : constant access File_Location_Hooks_Function'Class
+                    := new On_Location_Changed;
+                  Context : constant Selection_Context :=
+                           Kernel.Get_Current_Context;
+               begin
+                  --  Add the hook function that will monitor the debugging
+                  --  context to check if we can add the "Continue to line"
+                  --  clickable icon.
+                  Location_Changed_Hook.Add (Func);
+
+                  --  Execute it with the current editor's location, if any.
+                  if Has_File_Information (Context)
+                    and then Has_Line_Information (Context)
+                  then
+                     Func.Execute
+                       (Kernel  => Kernel,
+                        File    => File_Information (Context),
+                        Line    => Contexts.Line_Information (Context),
+                        Column  => 0);
+                  end if;
+               end;
+            end if;
+         end;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self     : On_Debugger_Started;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Self, Debugger, Kernel);
+   begin
+      if Continue_To_Line_Buttons.Get_Pref then
+
+         --  Add the hook function that will monitor the debugging context
+         --  to check if we can add the "Continue to line" clickable icon.
+         Location_Changed_Hook.Add (new On_Location_Changed);
+
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self     : On_Debugger_Location_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class) is
+      pragma Unreferenced (Self, Debugger);
+   begin
+      Remove_Continue_To_Line_Messages (Kernel);
    end Execute;
 
    -------------
@@ -1707,8 +1898,27 @@ package body GVD_Module is
    is
       pragma Unreferenced (Self, Debugger);
    begin
-      Remove_Continue_To_Line_Messages (Kernel);
+      Disable_Continue_To_Line_On_Editors (Kernel);
    end Execute;
+
+   -------------------------------------
+   -- Create_Continue_To_Line_Columns --
+   -------------------------------------
+
+   procedure Create_Continue_To_Line_Columns
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Buffer : Editor_Buffer'Class) is
+   begin
+      if Buffer /= Nil_Editor_Buffer
+        and then not  Buffer.Has_Information_Column
+          (Messages_Category_Continue_To_Line)
+      then
+         Create_Line_Information_Column
+           (Kernel     => Kernel,
+            File       => Buffer.File,
+            Identifier => Messages_Category_Continue_To_Line);
+      end if;
+   end Create_Continue_To_Line_Columns;
 
    --------------------------------------
    -- Remove_Continue_To_Line_Messages --
@@ -1721,6 +1931,38 @@ package body GVD_Module is
         (Messages_Category_Continue_To_Line,
          Continue_To_Line_Messages_Flags);
    end Remove_Continue_To_Line_Messages;
+
+   -----------------------------------------
+   -- Disable_Continue_To_Line_On_Editors --
+   -----------------------------------------
+
+   procedure Disable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+      Buffers : constant Buffer_Lists.List :=
+                  Kernel.Get_Buffer_Factory.Buffers;
+
+      function Is_Location_Changed_Function
+        (F : not null access Hook_Function'Class) return Boolean
+      is (F.all in On_Location_Changed'Class);
+   begin
+      --  We don't need to monitor the debugging context anymore so remove
+      --  the Location_Changed hook function.
+      Location_Changed_Hook.Remove
+        (Is_Location_Changed_Function'Access);
+
+      --  Remove the extra column we may have added on editors
+      for Buffer of Buffers loop
+         if Buffer /= Nil_Editor_Buffer
+           and Buffer.Has_Information_Column
+             (Messages_Category_Continue_To_Line)
+         then
+            Remove_Line_Information_Column
+              (Kernel     => Kernel,
+               File       => Buffer.File,
+               Identifier => Messages_Category_Continue_To_Line);
+         end if;
+      end loop;
+   end Disable_Continue_To_Line_On_Editors;
 
    -----------------------
    -- Create_GVD_Module --
@@ -1747,11 +1989,13 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Filter       : Action_Filter;
-      Debugger_Active       : Action_Filter;
-      Printable_Filter      : Action_Filter;
-      Subprogram_Filter     : Action_Filter;
-      Is_Not_Command_Filter : Action_Filter;
+      Debugger_Filter           : Action_Filter;
+      Debuggee_Started          : Action_Filter;
+      Debugger_Active           : Action_Filter;
+      Printable_Filter          : Action_Filter;
+      Subprogram_Filter         : Action_Filter;
+      Is_Not_Command_Filter     : Action_Filter;
+      Continue_Until_Filter     : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -1764,8 +2008,8 @@ package body GVD_Module is
       Debugger_Filter := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger stopped");
 
-      Debugger_Filter := new Debuggee_Started_Filter;
-      Register_Filter (Kernel, Debugger_Filter, "Debuggee started");
+      Debuggee_Started := new Debuggee_Started_Filter;
+      Register_Filter (Kernel, Debuggee_Started, "Debuggee started");
 
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
@@ -1781,6 +2025,11 @@ package body GVD_Module is
       Is_Not_Command_Filter := new Not_Command_Filter;
       Register_Filter
         (Kernel, Is_Not_Command_Filter, "Debugger not command variable");
+
+      Continue_Until_Filter :=
+        Debuggee_Started and new In_Debugger_Frame_Filter;
+      Register_Filter
+        (Kernel, Continue_Until_Filter, "Can continue until");
 
       Register_Contextual_Submenu
         (Kernel, "Debug", Ref_Item => "References");
@@ -1825,8 +2074,11 @@ package body GVD_Module is
       --  Add hooks' callbacks
 
       Project_View_Changed_Hook.Add (new On_View_Changed);
-      Location_Changed_Hook.Add (new On_Location_Changed);
-      Debugger_Terminated_Hook.Add (new On_Debugger_Terminated);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      Debugger_Started_Hook.Add (new On_Debugger_Started);
+      Debugger_Location_Changed_Hook.Add (new On_Debugger_Location_Changed);
+      Debugger_Terminated_Hook.Add (new On_Debugger_Terminated, Last => False);
+      Debugger_Executable_Changed_Hook.Add (new On_Executable_Changed);
 
       --  Add debugger menus
 
@@ -1950,7 +2202,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "debug continue until",
          new Continue_Until_Line_Command,
-         Filter       => Debugger_Active,
+         Filter       => Continue_Until_Filter,
          Description  =>
            -("Continue execution until the given line."),
          Category     => -"Debug",
@@ -1992,8 +2244,6 @@ package body GVD_Module is
         (Kernel, "terminate all debuggers", new Terminate_All_Command,
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
-
-      Debugger_Executable_Changed_Hook.Add (new On_Executable_Changed);
    end Register_Module;
 
    -------------
