@@ -207,11 +207,7 @@ package body Bookmark_Views is
    subtype Bookmark_Iter is Bookmark_Data_Access;
    function Bookmark_Iter_First return Bookmark_Iter
       is (Bookmark_Iter (Bookmark_Views_Module.Root));
-   function Next_Recursive (Iter : Bookmark_Iter) return Bookmark_Iter
-      is (if Iter.Next_Same_Level /= null
-          then Bookmark_Iter (Iter.Next_Same_Level)
-          elsif Iter.Parent = null then null
-          else Next_Recursive (Bookmark_Iter (Iter.Parent)));
+   function Next_Recursive (Iter : Bookmark_Iter) return Bookmark_Iter;
    --  Iter the whole tree recursively.
 
    type Bookmark_View_Record is tagged;
@@ -1113,6 +1109,32 @@ package body Bookmark_Views is
             Instances           => <>);
       end if;
    end New_Bookmark;
+
+   --------------------
+   -- Next_Recursive --
+   --------------------
+
+   function Next_Recursive (Iter : Bookmark_Iter) return Bookmark_Iter is
+      Next : Bookmark_Data_Access;
+   begin
+      if Iter.Typ = Group and then Iter.First_Child /= null then
+         Next := Iter.First_Child;
+      elsif Iter.Next_Same_Level /= null then
+         Next := Iter.Next_Same_Level;
+      else
+         Next := Iter.Parent;
+
+         while Next /= null and then Next.Next_Same_Level = null loop
+            Next := Next.Parent;
+         end loop;
+
+         if Next /= null then
+            Next := Next.Next_Same_Level;
+         end if;
+      end if;
+
+      return Bookmark_Iter (Next);
+   end Next_Recursive;
 
    ------------
    -- Insert --
