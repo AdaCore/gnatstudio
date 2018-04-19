@@ -394,6 +394,9 @@ package body Bookmark_Views is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
+   procedure Write_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles setters shell commands for this module
 
    type Refresh_Hook is new String_Hooks_Function with null record;
    overriding procedure Execute
@@ -2127,6 +2130,11 @@ package body Bookmark_Views is
          Data.Set_Return_Value
             (Bookmark_Proxies.From_Instance (Inst).Name.all);
 
+      elsif Command = "note" then
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         Data.Set_Return_Value
+            (To_String (Bookmark_Proxies.From_Instance (Inst).Note));
+
       elsif Command = "delete" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          B := Bookmark_Proxies.From_Instance (Inst);
@@ -2143,7 +2151,7 @@ package body Bookmark_Views is
          if B = null then
             Data.Set_Error_Msg ("Invalid bookmark");
          else
-            Bookmark_Added_Hook.Run (Kernel, B.Name.all);
+            Bookmark_Removed_Hook.Run (Kernel, B.Name.all);
             Free (B.Name);
             B.Name := new String'(Nth_Arg (Data, 2));
             Bookmark_Added_Hook.Run (Kernel, Data.Nth_Arg (2));
@@ -2176,6 +2184,29 @@ package body Bookmark_Views is
          end loop;
       end if;
    end Command_Handler;
+
+   ---------------------------
+   -- Write_Command_Handler --
+   ---------------------------
+
+   procedure Write_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Class    : constant Class_Type :=
+         Kernel.Scripts.New_Class (Bookmark_Class_Name);
+      Inst     : constant Class_Instance := Data.Nth_Arg (1, Class);
+      Note     : constant String := Data.Nth_Arg (2);
+      Bookmark : constant Bookmark_Data_Access :=
+           Bookmark_Proxies.From_Instance (Inst);
+   begin
+      if Command = "note" then
+         Bookmark.Note :=
+           To_Unbounded_String (Note);
+         Bookmark_Added_Hook.Run (Kernel, Bookmark.Name.all);
+         Save_Bookmarks (Kernel);
+      end if;
+   end Write_Command_Handler;
 
    ---------------------
    -- Register_Module --
@@ -2274,6 +2305,12 @@ package body Bookmark_Views is
         (Kernel, "delete", 0, 0, Command_Handler'Access, Bookmark_Class);
       Register_Command
         (Kernel, "goto", 0, 0, Command_Handler'Access, Bookmark_Class);
+
+      Kernel.Scripts.Register_Property
+        (Name   => "note",
+         Class  => Bookmark_Class,
+         Setter => Write_Command_Handler'Access,
+         Getter => Command_Handler'Access);
 
       P := new Bookmarks_Search_Provider;
       Register_Provider_And_Action (Kernel, P);

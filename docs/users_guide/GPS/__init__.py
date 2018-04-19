@@ -583,6 +583,11 @@ class Bookmark(object):
     browser, for example.
     """
 
+    note = ""
+    """
+    The bookmark's note value - A string.
+    """
+
     def __init__(self):
         """
         This function prevents the creation of a bookmark instance directly.

@@ -107,6 +107,10 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.Bookmark.note
+
+
    .. automethod:: GPS.Bookmark.__init__
 
    .. automethod:: GPS.Bookmark.create
