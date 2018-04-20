@@ -1316,73 +1316,80 @@ package body Debugger.LLDB is
       Command  : String)
       return Command_Category
    is
+      Index : Natural;
    begin
       if Command = "" then
          Debugger.Current_Command_Kind := Misc_Command;
+         return Misc_Command;
+      end if;
 
-      elsif Starts_With (Command, "target create") then
+      Index := Command'First;
+      Skip_Word (Command, Index);
+
+      if Starts_With (Command, "target create") then
          Debugger.Current_Command_Kind := Load_Command;
 
       elsif Starts_With (Command, "process launch")
-        or else Starts_With (Command, "run")
-        or else Starts_With (Command, "r")
         or else Starts_With (Command, "process continue")
-        or else Starts_With (Command, "continue")
-        or else Starts_With (Command, "c")
-        or else Starts_With (Command, "thread step")
-        or else Starts_With (Command, "next")
-        or else Starts_With (Command, "nexti")
-        or else Starts_With (Command, "ni")
-        or else Starts_With (Command, "s")
-        or else Starts_With (Command, "si")
-        or else Starts_With (Command, "sif")
-        or else Starts_With (Command, "step")
-        or else Starts_With (Command, "stepi")
-        or else Starts_With (Command, "finish")
         or else Starts_With (Command, "process detach")
+        or else Starts_With (Command, "thread step")
+        or else Command (Command'First .. Index - 1) = "run"
+        or else Command (Command'First .. Index - 1) = "r"
+        or else Command (Command'First .. Index - 1) = "continue"
+        or else Command (Command'First .. Index - 1) = "c"
+        or else Command (Command'First .. Index - 1) = "next"
+        or else Command (Command'First .. Index - 1) = "nexti"
+        or else Command (Command'First .. Index - 1) = "ni"
+        or else Command (Command'First .. Index - 1) = "s"
+        or else Command (Command'First .. Index - 1) = "si"
+        or else Command (Command'First .. Index - 1) = "sif"
+        or else Command (Command'First .. Index - 1) = "step"
+        or else Command (Command'First .. Index - 1) = "stepi"
+        or else Command (Command'First .. Index - 1) = "finish"
       then
          Debugger.Current_Command_Kind := Execution_Command;
 
-      elsif Starts_With (Command, "settings")
-        or else Starts_With (Command, "run-args")
-        or else Starts_With (Command, "breakpoint")
-        or else Starts_With (Command, "watchpoint")
-        or else Starts_With (Command, "rbreak")
-        or else Starts_With (Command, "tbreak")
-        or else Starts_With (Command, "b")
-        or else Starts_With (Command, "source")
-        or else Starts_With (Command, "image")
-        or else Starts_With (Command, "process status")
+      elsif Starts_With (Command, "process status")
         or else Starts_With (Command, "process kill")
-        or else Starts_With (Command, "thread")
         or else Starts_With (Command, "target symbols")
         or else Starts_With (Command, "frame info")
-        or else Starts_With (Command, "quit")
-        or else Starts_With (Command, "disassemble")
-        or else Starts_With (Command, "register")
         or else Starts_With (Command, "platform settings")
 
-        or else Starts_With (Command, "x")
-        or else Starts_With (Command, "bt")
-        or else Starts_With (Command, "call")
-        or else Starts_With (Command, "di")
-        or else Starts_With (Command, "dis")
-        or else Starts_With (Command, "display")
-        or else Starts_With (Command, "l")
-        or else Starts_With (Command, "list")
-        or else Starts_With (Command, "p")
-        or else Starts_With (Command, "parray")
-        or else Starts_With (Command, "po")
-        or else Starts_With (Command, "poarray")
-        or else Starts_With (Command, "print")
-        or else Starts_With (Command, "expression ")
+        or else Command (Command'First .. Index - 1) = "settings"
+        or else Command (Command'First .. Index - 1) = "run-args"
+        or else Command (Command'First .. Index - 1) = "breakpoint"
+        or else Command (Command'First .. Index - 1) = "watchpoint"
+        or else Command (Command'First .. Index - 1) = "rbreak"
+        or else Command (Command'First .. Index - 1) = "tbreak"
+        or else Command (Command'First .. Index - 1) = "b"
+        or else Command (Command'First .. Index - 1) = "source"
+        or else Command (Command'First .. Index - 1) = "image"
+        or else Command (Command'First .. Index - 1) = "thread"
+        or else Command (Command'First .. Index - 1) = "quit"
+        or else Command (Command'First .. Index - 1) = "disassemble"
+        or else Command (Command'First .. Index - 1) = "register"
+
+        or else Command (Command'First .. Index - 1) = "x"
+        or else Command (Command'First .. Index - 1) = "bt"
+        or else Command (Command'First .. Index - 1) = "call"
+        or else Command (Command'First .. Index - 1) = "di"
+        or else Command (Command'First .. Index - 1) = "dis"
+        or else Command (Command'First .. Index - 1) = "display"
+        or else Command (Command'First .. Index - 1) = "l"
+        or else Command (Command'First .. Index - 1) = "list"
+        or else Command (Command'First .. Index - 1) = "p"
+        or else Command (Command'First .. Index - 1) = "parray"
+        or else Command (Command'First .. Index - 1) = "po"
+        or else Command (Command'First .. Index - 1) = "poarray"
+        or else Command (Command'First .. Index - 1) = "print"
+        or else Command (Command'First .. Index - 1) = "expression"
       then
          Debugger.Current_Command_Kind := Misc_Command;
 
       elsif Starts_With (Command, "frame select")
-        or else Starts_With (Command, "down")
-        or else Starts_With (Command, "up")
-        or else Starts_With (Command, "f")
+        or else Command (Command'First .. Index - 1) = "down"
+        or else Command (Command'First .. Index - 1) = "up"
+        or else Command (Command'First .. Index - 1) = "f"
       then
          Debugger.Current_Command_Kind := Context_Command;
 
