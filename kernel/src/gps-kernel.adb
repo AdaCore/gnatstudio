@@ -97,6 +97,9 @@ package body GPS.Kernel is
    Me_Hooks  : constant Trace_Handle := Create
      ("GPS.KERNEL.HOOKS", GNATCOLL.Traces.Off);
 
+   History_File_Base_Name : constant String := "histories.xml";
+   --  The base name of the GPS history file.
+
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
@@ -415,9 +418,9 @@ package body GPS.Kernel is
       Handle.Messages_Container := Create_Messages_Container (Handle);
 
       Handle.History := new History_Record;
-      Trace (Me, "Loading histories.xml");
+      Trace (Me, "Loading " & History_File_Base_Name);
       Load (Handle.History.all,
-            Create_From_Dir (Handle.Home_Dir, "histories.xml"));
+            Handle.Get_History_File);
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       GPS.Properties.Set_Writer (Open_Persistent_Properties_DB (Handle));
@@ -940,6 +943,9 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Refactoring.Factory_Context_Record'Class,
          Refactoring.Factory_Context);
+
+      History_File : constant GNATCOLL.VFS.Virtual_File :=
+                       Handle.Get_History_File;
    begin
       Trace (Me, "Destroying the kernel");
 
@@ -960,16 +966,16 @@ package body GPS.Kernel is
       Close_Persistent_Properties_DB (Handle);
       Reset_Properties (Handle);
 
-      Trace (Me, "Saving histories.xml");
+      Trace (Me, "Saving " & History_File_Base_Name);
       Save (Handle.History.all,
-            Create_From_Dir (Handle.Home_Dir, "histories.xml"),
+            History_File,
             Success);
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
       if not Success then
          Report_Preference_File_Error
-           (Handle, Create_From_Dir (Handle.Home_Dir, "histories.xml"));
+           (Handle, History_File);
       end if;
 
       Reset (Handle.Startup_Scripts);
@@ -1055,6 +1061,16 @@ package body GPS.Kernel is
    begin
       return Handle.History;
    end Get_History;
+
+   ----------------------
+   -- Get_History_File --
+   ----------------------
+
+   function Get_History_File
+     (Self : not null access Kernel_Handle_Record) return Virtual_File
+   is begin
+      return Create_From_Dir (Self.Get_Home_Dir, +History_File_Base_Name);
+   end Get_History_File;
 
    --------------------
    -- Add_To_History --

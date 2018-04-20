@@ -139,6 +139,10 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record) return Histories.History;
    --  Return the history database
 
+   function Get_History_File
+     (Self : not null access Kernel_Handle_Record) return Virtual_File;
+   --  Return the file used to save the history.
+
    procedure Set_VCS
       (Self : not null access Kernel_Handle_Record;
        Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class);

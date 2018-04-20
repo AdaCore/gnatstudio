@@ -373,6 +373,8 @@ class KeyShortcuts(Dialog):
             self.modify_button = get_button_from_label('Add', self.editor)
             self.remove_button = get_button_from_label('Remove', self.editor)
             self.close_button = get_button_from_label('Close')
+            self.key_theme_combo = get_widgets_by_type(
+                Gtk.ComboBoxText, self.editor)[0]
 
     def yield_modify(self):
         yield idle_modal_dialog(self.modify_button.clicked)
@@ -384,6 +386,9 @@ class KeyShortcuts(Dialog):
     def yield_close(self):
         self.close_button.clicked()
         yield wait_idle()
+
+    def get_key_theme(self):
+        return self.key_theme_combo.get_active_text()
 
     def select_action(self, action):
         tree = get_widget_by_name('Key shortcuts tree', [self.editor])

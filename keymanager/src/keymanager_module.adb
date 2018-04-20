@@ -1348,13 +1348,21 @@ package body KeyManager_Module is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return String
    is
+      History_File : constant GNATCOLL.VFS.Virtual_File :=
+                       Kernel.Get_History_File;
    begin
-      --  Use the 'default_legacy' key theme when there is no key theme
-      --  specified in the history to avoid confusing users with the changes
-      --  in the default key shortcuts (e.g: control-minus bound to 'decrease
-      --  text size' instead of 'comment lines').
-      return Most_Recent
-        (Get_History (Kernel), Hist_Key_Theme, "default_legacy");
+      --  If there is no GPS history file, return the default key theme.
+      --  Otherwise, use the 'default_legacy' key theme when there is no key
+      --  theme specified in the history to avoid confusing users with the
+      --  changes in the default key shortcuts (e.g: control-minus bound to
+      --  'decrease text size' instead of 'comment lines').
+
+      if not History_File.Is_Regular_File then
+         return "default";
+      else
+         return Most_Recent
+           (Get_History (Kernel), Hist_Key_Theme, "default_legacy");
+      end if;
    end Get_Key_Theme;
 
    ------------------
