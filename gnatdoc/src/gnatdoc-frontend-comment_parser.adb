@@ -33,18 +33,56 @@ package body GNATdoc.Frontend.Comment_Parser is
    XML_Regpat : constant Pattern_Matcher :=
      Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
-   -------------------------------
-   -- Build_Structured_Comments --
-   -------------------------------
+   -------------
+   -- Parsers --
+   -------------
 
-   procedure Build_Structured_Comments
-     (Context : access constant Docgen_Context;
-      Root    : Entity_Id)
-   is
-      Backend_Name : constant String :=
-                       To_String (Context.Options.Backend_Name);
-      In_CM_Backend : constant Boolean := Backend_Name = "cm";
+   package Parsers is
       Private_Entities_List : aliased EInfo_List.Vector;
+
+      procedure Parse_Doc
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         Text    : String);
+      --  Parse the contents of Text and store its contents in the structured
+      --  comment of E (ie. E.Comment)
+
+      procedure Parse_Extract_Doc
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         Text    : in out Unbounded_String);
+      --  Parse the contents of Text extracting the documentation associated
+      --  with formals and generic formals of E, and storing it store on the
+      --  corresponding formals. On Text returns all the documentation that
+      --  could not be attached to any formal. This subprogram must be invoked
+      --  by the caller before invoking Parse_Doc, and the Text returned by
+      --  this subprogram must be the input text processed by Parse_Doc (since
+      --  it is the actual documentation of E).
+
+      procedure Parse_XML_Doc
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         Text    : String);
+      --  Parse the contents of S and store its contents in the structured
+      --  comment of E (ie. E.Comment)
+   end Parsers;
+   use Parsers;
+
+   -------------
+   -- Parsers --
+   -------------
+
+   package body Parsers is
+      Context       : access constant Docgen_Context;
+      S             : String_Access;
+      Tag_Indicator : constant Character := '@';
+
+      type Location is record
+         First : Natural;
+         Last  : Natural;
+      end record;
+
+      No_Location : constant Location := (0, 0);
 
       procedure Error
         (Entity  : Entity_Id;
@@ -52,56 +90,37 @@ package body GNATdoc.Frontend.Comment_Parser is
       --  Report the error message Msg on the location of Entity and store it
       --  on the entity.
 
+      procedure Finalize_Parser;
+      --  Clear the memory allocated by the parser
+
+      procedure Initialize_Parser
+        (Context : access constant Docgen_Context;
+         Text    : String);
+      --  Initialize the parser context and the text to be parsed
+
       function Is_Custom_Tag (Tag : String) return Boolean;
       --  Return True if Tag is a supported tag.
       --  ??? This info should be configurable in a separate file to allow
       --  customers to define their own tags
 
-      procedure Parse_Enumeration_Comments (Enum : Entity_Id);
-      --  Initialize the structured comment associated with Enum, parse the
-      --  block of comments retrieved from sources (and clean it), and report
-      --  errors/warnings on missing documentation.
+      function No (Loc : Location) return Boolean;
+      --  True if Loc = No_Location
 
-      procedure Parse_Record_Comments (Rec : Entity_Id);
-      --  Initialize the structured comment associated with Rec, parse the
-      --  block of comments retrieved from sources (and clean it), and report
-      --  errors/warnings on missing documentation.
+      function Present (Loc : Location) return Boolean;
+      --  True if Loc /= No_Location
 
-      procedure Parse_Subprogram_Comments (Subp : Entity_Id);
-      --  Initialize the structured comment associated with Subp, parse the
-      --  block of comments retrieved from sources (and clean it), and report
-      --  errors/warnings on missing documentation.
+      function Scan_Tag (Index : in out Natural) return Location;
+      --  Scan text in S searching for the next tag located after Index
 
-      procedure Parse_Doc_Wrapper
-        (Context      : access constant Docgen_Context;
-         E            : Entity_Id;
-         S            : String);
-      --  Perform a fast analysis of S and invoke Parse_Doc or Parse_XML_Doc
+      procedure Scan_Word
+        (J   : in out Natural;
+         Loc : out Location);
+      --  Scan next word in S
 
-      procedure Parse_Doc
-        (Context      : access constant Docgen_Context;
-         E            : Entity_Id;
-         S            : String);
-      --  Parse the contents of S and store its contents in the structured
-      --  comment of E (ie. E.Comment)
-
-      procedure Parse_XML_Doc
-        (Context      : access constant Docgen_Context;
-         E            : Entity_Id;
-         S            : String);
-      --  Parse the contents of S and store its contents in the structured
-      --  comment of E (ie. E.Comment)
-
-      function Process_Node
-        (Entity      : Entity_Id;
-         Scope_Level : Natural) return Traverse_Result;
-      --  Dispatch a call to build an structured comment between routines
-      --  Parse_Doc, Parse_Enumeration_Comments, Parse_Record_Comments,
-      --  and Parse_Subprogram_Comments.
-
-      procedure Remove_Private_Entities;
-      --  Private entities are those annotated with the private tag. This
-      --  routine takes care of removing them from the tree.
+      procedure Scan_Line
+        (J   : in out Natural;
+         Loc : out Location);
+      --  Scan S searching for the next end of line
 
       -----------
       -- Error --
@@ -117,6 +136,27 @@ package body GNATdoc.Frontend.Comment_Parser is
             Set_Error_Msg (Entity, To_Unbounded_String (Msg));
          end if;
       end Error;
+
+      ---------------------
+      -- Finalize_Parser --
+      ---------------------
+
+      procedure Finalize_Parser is
+      begin
+         Free (S);
+      end Finalize_Parser;
+
+      -----------------------
+      -- Initialize_Parser --
+      -----------------------
+
+      procedure Initialize_Parser
+        (Context : access constant Docgen_Context;
+         Text    : String) is
+      begin
+         Parsers.Context := Context;
+         S := new String'(Text);
+      end Initialize_Parser;
 
       -------------------
       -- Is_Custom_Tag --
@@ -159,31 +199,14 @@ package body GNATdoc.Frontend.Comment_Parser is
            or else Tag = "private";
       end Is_Custom_Tag;
 
-      -----------------------
-      -- Parse_Doc_Wrapper --
-      -----------------------
+      --------
+      -- No --
+      --------
 
-      procedure Parse_Doc_Wrapper
-        (Context : access constant Docgen_Context;
-         E       : Entity_Id;
-         S       : String)
-      is
-         Matches : Match_Array (0 .. 3);
-
+      function No (Loc : Location) return Boolean is
       begin
-         if Index (S, "@") > 0 then
-            Parse_Doc (Context, E, S);
-            return;
-         end if;
-
-         Match (XML_Regpat, S, Matches);
-
-         if Matches (0) /= No_Match then
-            Parse_XML_Doc (Context, E, S);
-         else
-            Parse_Doc (Context, E, S);
-         end if;
-      end Parse_Doc_Wrapper;
+         return Loc = No_Location;
+      end No;
 
       ---------------
       -- Parse_Doc --
@@ -192,9 +215,9 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Doc
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         S       : String)
+         Text    : String)
       is
-         pragma Unreferenced (Context);
+         S       : String renames Text;
          Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
@@ -202,35 +225,9 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the contents of S searching for the next tag
 
          procedure Parse (S : String) is
-            Tag_Indicator : constant Character := '@';
-
-            type Location is record
-               First : Natural;
-               Last  : Natural;
-            end record;
-            No_Location : constant Location := (0, 0);
 
             procedure Check_Tag (Tag_Name : String);
             --  Check if this tag is applicable to entity E
-
-            function No (Loc : Location) return Boolean;
-            --  True if Loc = No_Location
-
-            function Present (Loc : Location) return Boolean;
-            --  True if Loc /= No_Location
-
-            function Scan_Tag return Location;
-            --  Scan text in S searching for the next tag
-
-            procedure Scan_Word
-              (J   : in out Natural;
-               Loc : out Location);
-            --  Scan next word in S
-
-            procedure Scan_Line
-              (J   : in out Natural;
-               Loc : out Location);
-            --  Scan S searching for the next end of line
 
             ---------------
             -- Check_Tag --
@@ -310,122 +307,11 @@ package body GNATdoc.Frontend.Comment_Parser is
                end if;
             end Check_Tag;
 
-            --------
-            -- No --
-            --------
+            --  Local variables
 
-            function No (Loc : Location) return Boolean is
-            begin
-               return Loc = No_Location;
-            end No;
-
-            -------------
-            -- Present --
-            -------------
-
-            function Present (Loc : Location) return Boolean is
-            begin
-               return Loc /= No_Location;
-            end Present;
-
-            --------------
-            -- Scan_Tag --
-            --------------
-
-            function Scan_Tag return Location is
-               J     : Natural := S'First;
-               First : Natural;
-               Last  : Natural;
-            begin
-               while J <= S'Last
-                 and then S (J) /= Tag_Indicator
-               loop
-                  J := J + 1;
-               end loop;
-
-               if J <= S'Last then
-                  First := J;
-
-                  J := J + 1; --  past '@'
-                  while J <= S'Last
-                    and then S (J) /= ' '
-                    and then S (J) /= ASCII.LF
-                  loop
-                     J := J + 1;
-                  end loop;
-                  Last := J - 1;
-
-                  if Last > First then
-                     return Location'(First, Last);
-                  end if;
-               end if;
-
-               return No_Location;
-            end Scan_Tag;
-
-            ---------------
-            -- Scan_Word --
-            ---------------
-
-            procedure Scan_Word
-              (J   : in out Natural;
-               Loc : out Location)
-            is
-               First : Natural;
-               Last  : Natural;
-            begin
-               Loc := No_Location;
-
-               while J <= S'Last
-                 and then S (J) = ' '
-                 and then S (J) /= ASCII.LF
-               loop
-                  J := J + 1;
-               end loop;
-
-               First := J;
-               while J <= S'Last
-                 and then S (J) /= ' '
-                 and then S (J) /= ASCII.LF
-               loop
-                  J := J + 1;
-               end loop;
-               Last := J - 1;
-
-               if Last >= First then
-                  Loc := Location'(First, Last);
-               end if;
-            end Scan_Word;
-
-            ---------------
-            -- Scan_Line --
-            ---------------
-
-            procedure Scan_Line
-              (J   : in out Natural;
-               Loc : out Location)
-            is
-               First : constant Natural := J;
-               Last  : Natural;
-            begin
-               while J <= S'Last
-                 and then S (J) /= ASCII.LF
-               loop
-                  J := J + 1;
-               end loop;
-
-               Last := J - 1;
-               if Last > First then
-                  Loc := Location'(First, Last);
-               else
-                  Loc := No_Location;
-               end if;
-            end Scan_Line;
-
-            Tag_Loc : Location;
+            Index   : Natural := S'First;
+            Tag_Loc : constant Location := Scan_Tag (Index);
          begin
-            Tag_Loc := Scan_Tag;
-
             --  Regular string. Let's append it to the current node value.
 
             if No (Tag_Loc) then
@@ -634,6 +520,10 @@ package body GNATdoc.Frontend.Comment_Parser is
 
                      if Present (Text_Loc) then
                         declare
+                           Backend_Name : constant String :=
+                             To_String (Context.Options.Backend_Name);
+                           In_CM_Backend : constant Boolean :=
+                             Backend_Name = "cm";
                            Text : constant String :=
                              S (Text_Loc.First .. Text_Loc.Last);
                         begin
@@ -662,195 +552,281 @@ package body GNATdoc.Frontend.Comment_Parser is
             return;
          end if;
 
+         Initialize_Parser (Context, S);
          Parse (S);
+         Finalize_Parser;
          Set_Comment (E, Comment);
       end Parse_Doc;
 
-      --------------------------------
-      -- Parse_Enumeration_Comments --
-      --------------------------------
+      -----------------------
+      -- Parse_Extract_Doc --
+      -----------------------
 
-      procedure Parse_Enumeration_Comments (Enum : Entity_Id) is
-         Has_Values : constant Boolean := Present (Get_Entities (Enum));
+      procedure Parse_Extract_Doc
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         Text    : in out Unbounded_String)
+      is
+         S              : constant String := To_String (Text);
+         Current_E      : Entity_Id := No_Entity;
+         Current_E_Text : Unbounded_String;
+         E_Text         : Unbounded_String;
+
+         procedure Append_Text (Text : String);
+         --  Append Text to Current_E_Text if we are accumulating documentation
+         --  for Current_E; otherwise accumulate it in E_Text (for entity E).
+
+         procedure Parse (S : String);
+         --  Parse the contents of S searching for tags containing information
+         --  associated with a parameter of E or a generic formal of E.
+
+         -----------------
+         -- Append_Text --
+         -----------------
+
+         procedure Append_Text (Text : String) is
+         begin
+            if Present (Current_E) then
+               Current_E_Text := Current_E_Text & Filter (Text);
+
+            --  Accumulate this text without filtering (since filtering of this
+            --  text will be performed at a later stage by Parse_Doc).
+
+            else
+               E_Text := E_Text & Text;
+            end if;
+         end Append_Text;
+
+         -----------
+         -- Parse --
+         -----------
+
+         procedure Parse (S : String) is
+
+            procedure Process_Tag
+              (Tag_Loc : Location;
+               Index   : in out Natural);
+            --  Process the given tag: for tags with documentation of generic
+            --  formals (or subprogram formals) attach their documentation to
+            --  the corresponding formal; for any other tag accumulate their
+            --  documentation to attach it to E for processing at a latter
+            --  stage. Update Index to reference the next input character.
+
+            procedure Set_Current_Entity_Doc;
+            --  Attach to Current_E its extracted documentation.
+
+            ----------------------------
+            -- Set_Current_Entity_Doc --
+            ----------------------------
+
+            procedure Set_Current_Entity_Doc is
+               Doc : Unbounded_String_Vectors.Vector;
+            begin
+               Doc.Append (Current_E_Text);
+               Set_Doc (Current_E,
+                 Comment_Result'(Text => Doc,
+                                 Start_Line => -1));
+            end Set_Current_Entity_Doc;
+
+            -----------------
+            -- Process_Tag --
+            -----------------
+
+            procedure Process_Tag
+              (Tag_Loc : Location;
+               Index   : in out Natural)
+            is
+               Tag_Name : constant String :=
+                            To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
+
+               procedure Search_Generic_Formal (Name : String);
+               --  Search for the entity associated with the generic formal
+               --  Name
+
+               procedure Search_Parameter (Name : String);
+               --  Search for the entity associated with parameter Name
+
+               ---------------------------
+               -- Search_Generic_Formal --
+               ---------------------------
+
+               procedure Search_Generic_Formal (Name : String) is
+                  Found : Boolean := False;
+
+               begin
+                  for Param of Get_Generic_Formals (E).all loop
+                     if Get_Short_Name (Param) = Name then
+                        if Present (Get_Doc (Param)) then
+                           Error (Param,
+                             "generic formal '" & Name & "' documented twice");
+                        end if;
+
+                        Current_E := Param;
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Error (E, "generic formal '" & Name & "' not found");
+                  end if;
+               end Search_Generic_Formal;
+
+               ----------------------
+               -- Search_Parameter --
+               ----------------------
+
+               procedure Search_Parameter (Name : String) is
+                  Found : Boolean := False;
+
+               begin
+                  for Param of Get_Entities (E).all loop
+                     if Get_Short_Name (Param) = Name then
+                        if Present (Get_Doc (Param)) then
+                           Error (Param,
+                             "parameter '" & Name & "' documented twice");
+                        end if;
+
+                        Current_E := Param;
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Error (E, "parameter '" & Name & "' not found");
+                  end if;
+               end Search_Parameter;
+
+               --  Local variables
+
+               New_Tag   : constant String := "gen_param";
+               Param_Tag : constant String := "param";
+               Attr_Loc  : Location;
+               Text_Loc  : Location;
+               Line_Last : Natural;
+               J         : Natural;
+
+            --  Start of processing for Process_Tag
+
+            begin
+               --  Handle unexpected tags like raw text (that is, attaching
+               --  them and their documentation to E to process it at a latter
+               --  stage).
+
+               if Tag_Name /= Param_Tag
+                 and then Tag_Name /= New_Tag
+               then
+                  Append_Text
+                    (ASCII.LF & " "
+                      & S (Tag_Loc.First .. Tag_Loc.Last) & " ");
+                  Line_Last := Tag_Loc.Last;
+
+               else
+                  J := Tag_Loc.Last + 1;
+
+                  Scan_Word
+                    (J   => J,
+                     Loc => Attr_Loc);
+
+                  Scan_Line
+                    (J   => J,
+                     Loc => Text_Loc);
+
+                  Line_Last := J;
+                  pragma Assert (J > S'Last or else S (J) = ASCII.LF);
+
+                  if No (Attr_Loc) then
+                     Error (E, "missing parameter name");
+
+                  elsif Tag_Name = Param_Tag then
+                     Search_Parameter
+                       (S (Attr_Loc.First .. Attr_Loc.Last));
+
+                  elsif Tag_Name = New_Tag then
+                     Search_Generic_Formal
+                       (S (Attr_Loc.First .. Attr_Loc.Last));
+                  end if;
+
+                  if Present (Text_Loc) then
+                     Append_Text (S (Text_Loc.First .. Text_Loc.Last));
+                  end if;
+               end if;
+
+               Index := Line_Last + 1;
+            end Process_Tag;
+
+            --  Local variables
+
+            Index   : Natural := S'First;
+            Tag_Loc : Location;
+
+         --  Start of processing for Parse
+
+         begin
+            while Index < S'Last loop
+               declare
+                  Index_Before_Scanning : constant Natural := Index;
+
+               begin
+                  --  Search for the next tag in the input text
+
+                  Tag_Loc := Scan_Tag (Index);
+
+                  --  No tag found: append all the pending text to the current
+                  --  entity and stop processing.
+
+                  if No (Tag_Loc) then
+                     Append_Text (S (Index_Before_Scanning .. S'Last));
+
+                     if Present (Current_E) then
+                        Set_Current_Entity_Doc;
+                     end if;
+
+                     return;
+                  end if;
+
+                  --  Append the text located before the next tag to the
+                  --  current entity.
+
+                  if Tag_Loc.First > Index_Before_Scanning then
+                     Append_Text
+                       (S (Index_Before_Scanning .. Tag_Loc.First - 1));
+
+                     if Present (Current_E) then
+                        Set_Current_Entity_Doc;
+                     end if;
+                  end if;
+               end;
+
+               --  Reset the entity associated with the current formal (or
+               --  generic formal)
+
+               Current_E := No_Entity;
+               Set_Unbounded_String (Current_E_Text, "");
+
+               --  Process the documentation of this tag
+
+               Process_Tag (Tag_Loc, Index);
+            end loop;
+         end Parse;
+
+      --  Start of processing for Parse_Extract_Doc
+
       begin
-         --  No action needed if the enumeration has no values. This case
-         --  occurs in enumeration subtypes and generic formals.
-
-         if not Has_Values then
+         if S = "" then
             return;
          end if;
 
-         --  Initialize the structured comment associated with this entity
+         Initialize_Parser (Context, S);
+         Parse (S);
+         Finalize_Parser;
 
-         Set_Comment (Enum, New_Structured_Comment);
+         --  Return that text that could not be attached to any formal or
+         --  generic formal of E
 
-         --  Search for documentation located in middle of the declaration
-
-         for Value of Get_Entities (Enum).all loop
-            pragma Assert (Get_Kind (Value) = E_Enumeration_Literal);
-            Append_Value_Tag
-              (Comment    => Get_Comment (Enum),
-               Entity     => LL.Get_Entity (Value),
-               Value_Name => To_Unbounded_String (Get_Short_Name (Value)),
-               Text       => To_Unbounded_String (Get_Doc (Value).Text));
-         end loop;
-
-         --  Parse the documentation
-
-         if Get_Doc (Enum) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Enum, To_String (Get_Doc (Enum).Text));
-            Set_Doc (Enum, No_Comment_Result);
-         end if;
-
-         --  Report warning on undocumented values
-
-         declare
-            Cursor   : Tag_Cursor := First_Value (Get_Comment (Enum));
-            Tag_Info : Tag_Info_Ptr;
-         begin
-            loop
-               Tag_Info := Get (Cursor);
-
-               if No (Tag_Info.Text) then
-                  Warning
-                    (Context,
-                     Tag_Info.Entity.Element,
-                     "undocumented value ("
-                     & To_String (Tag_Info.Attr)
-                     & ")");
-               end if;
-
-               exit when Cursor = Last_Value (Get_Comment (Enum));
-               Next (Cursor);
-            end loop;
-         end;
-      end Parse_Enumeration_Comments;
-
-      ---------------------------
-      -- Parse_Record_Comments --
-      ---------------------------
-
-      procedure Parse_Record_Comments (Rec : Entity_Id) is
-         Has_Components : constant Boolean := Present (Get_Entities (Rec));
-      begin
-         --  Initialize the structured comment associated with this entity
-
-         Set_Comment (Rec, New_Structured_Comment);
-
-         --  Search for documentation located in the subprogram profile
-         --  (that is, comments located close to the parameter declarations)
-
-         for Comp of Get_Entities (Rec).all loop
-            --  Disabling temporarily this assertion since Xref has problems in
-            --  service Xref.Fields() with records defined in generic units???
-
-            --  pragma Assert (Get_Kind (Comp) = E_Discriminant
-            --    or else Get_Kind (Comp) = E_Component);
-
-            Append_Field_Tag
-              (Comment    => Get_Comment (Rec),
-               Entity     => LL.Get_Entity (Comp),
-               Field_Name => To_Unbounded_String (Get_Short_Name (Comp)),
-               Text       => To_Unbounded_String (Get_Doc (Comp).Text));
-         end loop;
-
-         --  Parse the documentation of the record
-
-         if Get_Doc (Rec) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Rec, To_String (Get_Doc (Rec).Text));
-            Set_Doc (Rec, No_Comment_Result);
-         end if;
-
-         --  Report warning on undocumented parameters
-
-         if Has_Components then
-            declare
-               C        : Tag_Cursor := First_Field (Get_Comment (Rec));
-               Tag_Info : Tag_Info_Ptr;
-            begin
-               loop
-                  Tag_Info := Get (C);
-
-                  if No (Tag_Info.Text) then
-                     Warning
-                       (Context,
-                        Tag_Info.Entity.Element,
-                        "undocumented field ("
-                        & To_String (Tag_Info.Attr)
-                        & ")");
-                  end if;
-
-                  exit when C = Last_Field (Get_Comment (Rec));
-                  Next (C);
-               end loop;
-            end;
-         end if;
-      end Parse_Record_Comments;
-
-      -------------------------------
-      -- Parse_Subprogram_Comments --
-      -------------------------------
-
-      procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
-         Has_Params : constant Boolean := Present (Get_Entities (Subp));
-      begin
-         --  Initialize the structured comment associated with this entity
-
-         Set_Comment (Subp, New_Structured_Comment);
-
-         --  For backward compatibility it is still missing to append the
-         --  tags of the generic formals???
-
-         --  Search for documentation located in the subprogram profile
-         --  (that is, comments located close to the parameter declarations)
-
-         for Param of Get_Entities (Subp).all loop
-            --  Temporarily disabling this assertion since the Xref.Field
-            --  service sometimes fails with protected objects returning
-            --  entities which correspond to formals of anonymous access to
-            --  subprograms of other entities defined in the same package ???
-
---            pragma Assert (Get_Kind (Param) = E_Formal);
-
-            Append_Param_Tag
-              (Comment    => Get_Comment (Subp),
-               Entity     => LL.Get_Entity (Param),
-               Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
-               Text       => To_Unbounded_String (Get_Doc (Param).Text));
-         end loop;
-
-         --  Parse the documentation of the subprogram
-
-         if Get_Doc (Subp) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Subp, To_String (Get_Doc (Subp).Text));
-            Set_Doc (Subp, No_Comment_Result);
-         end if;
-
-         --  Report warning on undocumented parameters
-
-         if Has_Params then
-            declare
-               C        : Tag_Cursor := First_Param (Get_Comment (Subp));
-               Tag_Info : Tag_Info_Ptr;
-            begin
-               loop
-                  Tag_Info := Get (C);
-
-                  if No (Tag_Info.Text) then
-                     Warning
-                       (Context,
-                        Tag_Info.Entity.Element,
-                        "undocumented parameter ("
-                        & To_String (Tag_Info.Attr)
-                        & ")");
-                  end if;
-
-                  exit when C = Last_Param (Get_Comment (Subp));
-                  Next (C);
-               end loop;
-            end;
-         end if;
-      end Parse_Subprogram_Comments;
+         Text := E_Text;
+      end Parse_Extract_Doc;
 
       -------------------
       -- Parse_XML_Doc --
@@ -859,20 +835,20 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_XML_Doc
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String)
+         Text         : String)
       is
          pragma Unreferenced (Context);
 
          Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
+         S       : String renames Text;
 
          procedure Parse (S : String);
          --  Parse the contents of S searching for the next tag
 
          procedure Parse (S : String) is
-            Matches      : Match_Array (0 .. 3);
-            Tag_Text     : Unbounded_String;
-            --  Stand_Alone  : Boolean;
+            Matches  : Match_Array (0 .. 3);
+            Tag_Text : Unbounded_String;
 
          begin
             Match (XML_Regpat, S, Matches);
@@ -1033,6 +1009,362 @@ package body GNATdoc.Frontend.Comment_Parser is
          Set_Comment (E, Comment);
       end Parse_XML_Doc;
 
+      -------------
+      -- Present --
+      -------------
+
+      function Present (Loc : Location) return Boolean is
+      begin
+         return Loc /= No_Location;
+      end Present;
+
+      --------------
+      -- Scan_Tag --
+      --------------
+
+      function Scan_Tag (Index : in out Natural) return Location is
+         J     : Natural renames Index;
+         First : Natural;
+         Last  : Natural;
+      begin
+         while J <= S'Last
+           and then S (J) /= Tag_Indicator
+         loop
+            J := J + 1;
+         end loop;
+
+         if J <= S'Last then
+            First := J;
+
+            J := J + 1; --  past '@'
+            while J <= S'Last
+              and then S (J) /= ' '
+              and then S (J) /= ASCII.LF
+            loop
+               J := J + 1;
+            end loop;
+            Last := J - 1;
+
+            if Last > First then
+               return Location'(First, Last);
+            end if;
+         end if;
+
+         return No_Location;
+      end Scan_Tag;
+
+      ---------------
+      -- Scan_Word --
+      ---------------
+
+      procedure Scan_Word
+        (J   : in out Natural;
+         Loc : out Location)
+      is
+         First : Natural;
+         Last  : Natural;
+      begin
+         Loc := No_Location;
+
+         while J <= S'Last
+           and then S (J) = ' '
+           and then S (J) /= ASCII.LF
+         loop
+            J := J + 1;
+         end loop;
+
+         First := J;
+         while J <= S'Last
+           and then S (J) /= ' '
+           and then S (J) /= ASCII.LF
+         loop
+            J := J + 1;
+         end loop;
+         Last := J - 1;
+
+         if Last >= First then
+            Loc := Location'(First, Last);
+         end if;
+      end Scan_Word;
+
+      ---------------
+      -- Scan_Line --
+      ---------------
+
+      procedure Scan_Line
+        (J   : in out Natural;
+         Loc : out Location)
+      is
+         First : constant Natural := J;
+         Last  : Natural;
+      begin
+         while J <= S'Last
+           and then S (J) /= ASCII.LF
+         loop
+            J := J + 1;
+         end loop;
+
+         Last := J - 1;
+         if Last > First then
+            Loc := Location'(First, Last);
+         else
+            Loc := No_Location;
+         end if;
+      end Scan_Line;
+   end Parsers;
+
+   -------------------------------
+   -- Build_Structured_Comments --
+   -------------------------------
+
+   procedure Build_Structured_Comments
+     (Context : access constant Docgen_Context;
+      Root    : Entity_Id)
+   is
+      procedure Parse_Enumeration_Comments (Enum : Entity_Id);
+      --  Initialize the structured comment associated with Enum, parse the
+      --  block of comments retrieved from sources (and clean it), and report
+      --  errors/warnings on missing documentation.
+
+      procedure Parse_Record_Comments (Rec : Entity_Id);
+      --  Initialize the structured comment associated with Rec, parse the
+      --  block of comments retrieved from sources (and clean it), and report
+      --  errors/warnings on missing documentation.
+
+      procedure Parse_Subprogram_Comments (Subp : Entity_Id);
+      --  Initialize the structured comment associated with Subp, parse the
+      --  block of comments retrieved from sources (and clean it), and report
+      --  errors/warnings on missing documentation.
+
+      procedure Parse_Doc_Wrapper
+        (Context      : access constant Docgen_Context;
+         E            : Entity_Id;
+         S            : String);
+      --  Perform a fast analysis of S and invoke Parse_Doc or Parse_XML_Doc
+
+      function Process_Node
+        (Entity      : Entity_Id;
+         Scope_Level : Natural) return Traverse_Result;
+      --  Dispatch a call to build an structured comment between routines
+      --  Parse_Doc, Parse_Enumeration_Comments, Parse_Record_Comments,
+      --  and Parse_Subprogram_Comments.
+
+      procedure Remove_Private_Entities;
+      --  Private entities are those annotated with the private tag. This
+      --  routine takes care of removing them from the tree.
+
+      -----------------------
+      -- Parse_Doc_Wrapper --
+      -----------------------
+
+      procedure Parse_Doc_Wrapper
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         S       : String)
+      is
+         Matches : Match_Array (0 .. 3);
+         Str     : Unbounded_String := To_Unbounded_String (S);
+
+      begin
+         if Index (S, "@") > 0 then
+            if Context.Options.Extensions_Enabled then
+               Parse_Extract_Doc (Context, E, Str);
+            end if;
+
+            Parse_Doc (Context, E, To_String (Str));
+            return;
+         end if;
+
+         Match (XML_Regpat, S, Matches);
+
+         if Matches (0) /= No_Match then
+            Parse_XML_Doc (Context, E, S);
+         else
+            Parse_Doc (Context, E, S);
+         end if;
+      end Parse_Doc_Wrapper;
+
+      --------------------------------
+      -- Parse_Enumeration_Comments --
+      --------------------------------
+
+      procedure Parse_Enumeration_Comments (Enum : Entity_Id) is
+         Has_Values : constant Boolean := Present (Get_Entities (Enum));
+      begin
+         --  No action needed if the enumeration has no values. This case
+         --  occurs in enumeration subtypes and generic formals.
+
+         if not Has_Values then
+            return;
+         end if;
+
+         --  Initialize the structured comment associated with this entity
+
+         Set_Comment (Enum, New_Structured_Comment);
+
+         --  Search for documentation located in middle of the declaration
+
+         for Value of Get_Entities (Enum).all loop
+            pragma Assert (Get_Kind (Value) = E_Enumeration_Literal);
+            Append_Value_Tag
+              (Comment    => Get_Comment (Enum),
+               Entity     => LL.Get_Entity (Value),
+               Value_Name => To_Unbounded_String (Get_Short_Name (Value)),
+               Text       => To_Unbounded_String (Get_Doc (Value).Text));
+         end loop;
+
+         --  Parse the documentation
+
+         if Get_Doc (Enum) /= No_Comment_Result then
+            Parse_Doc_Wrapper (Context, Enum, To_String (Get_Doc (Enum).Text));
+            Set_Doc (Enum, No_Comment_Result);
+         end if;
+
+         --  Report warning on undocumented values
+
+         declare
+            Cursor   : Tag_Cursor := First_Value (Get_Comment (Enum));
+            Tag_Info : Tag_Info_Ptr;
+         begin
+            loop
+               Tag_Info := Get (Cursor);
+
+               if No (Tag_Info.Text) then
+                  Warning
+                    (Context,
+                     Tag_Info.Entity.Element,
+                     "undocumented value ("
+                     & To_String (Tag_Info.Attr)
+                     & ")");
+               end if;
+
+               exit when Cursor = Last_Value (Get_Comment (Enum));
+               Next (Cursor);
+            end loop;
+         end;
+      end Parse_Enumeration_Comments;
+
+      ---------------------------
+      -- Parse_Record_Comments --
+      ---------------------------
+
+      procedure Parse_Record_Comments (Rec : Entity_Id) is
+         Has_Components : constant Boolean := Present (Get_Entities (Rec));
+      begin
+         --  Initialize the structured comment associated with this entity
+
+         Set_Comment (Rec, New_Structured_Comment);
+
+         --  Search for documentation located in the subprogram profile
+         --  (that is, comments located close to the parameter declarations)
+
+         for Comp of Get_Entities (Rec).all loop
+            --  Disabling temporarily this assertion since Xref has problems in
+            --  service Xref.Fields() with records defined in generic units???
+
+            --  pragma Assert (Get_Kind (Comp) = E_Discriminant
+            --    or else Get_Kind (Comp) = E_Component);
+
+            Append_Field_Tag
+              (Comment    => Get_Comment (Rec),
+               Entity     => LL.Get_Entity (Comp),
+               Field_Name => To_Unbounded_String (Get_Short_Name (Comp)),
+               Text       => To_Unbounded_String (Get_Doc (Comp).Text));
+         end loop;
+
+         --  Parse the documentation of the record
+
+         if Get_Doc (Rec) /= No_Comment_Result then
+            Parse_Doc_Wrapper (Context, Rec, To_String (Get_Doc (Rec).Text));
+            Set_Doc (Rec, No_Comment_Result);
+         end if;
+
+         --  Report warning on undocumented parameters
+
+         if Has_Components then
+            declare
+               C        : Tag_Cursor := First_Field (Get_Comment (Rec));
+               Tag_Info : Tag_Info_Ptr;
+            begin
+               loop
+                  Tag_Info := Get (C);
+
+                  if No (Tag_Info.Text) then
+                     Warning
+                       (Context,
+                        Tag_Info.Entity.Element,
+                        "undocumented field ("
+                        & To_String (Tag_Info.Attr)
+                        & ")");
+                  end if;
+
+                  exit when C = Last_Field (Get_Comment (Rec));
+                  Next (C);
+               end loop;
+            end;
+         end if;
+      end Parse_Record_Comments;
+
+      -------------------------------
+      -- Parse_Subprogram_Comments --
+      -------------------------------
+
+      procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
+         Has_Params : constant Boolean := Present (Get_Entities (Subp));
+      begin
+         --  Initialize the structured comment associated with this entity
+
+         Set_Comment (Subp, New_Structured_Comment);
+
+         --  For backward compatibility it is still missing to append the
+         --  tags of the generic formals???
+
+         --  Search for documentation located in the subprogram profile
+         --  (that is, comments located close to the parameter declarations)
+
+         if True then
+            for Param of Get_Entities (Subp).all loop
+               Append_Param_Tag
+                 (Comment    => Get_Comment (Subp),
+                  Entity     => LL.Get_Entity (Param),
+                  Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
+                  Text       => To_Unbounded_String (Get_Doc (Param).Text));
+            end loop;
+         end if;
+
+         --  Parse the documentation of the subprogram
+
+         if Get_Doc (Subp) /= No_Comment_Result then
+            Parse_Doc_Wrapper (Context, Subp, To_String (Get_Doc (Subp).Text));
+            Set_Doc (Subp, No_Comment_Result);
+         end if;
+
+         --  Report warning on undocumented parameters
+
+         if Has_Params then
+            declare
+               C        : Tag_Cursor := First_Param (Get_Comment (Subp));
+               Tag_Info : Tag_Info_Ptr;
+            begin
+               loop
+                  Tag_Info := Get (C);
+
+                  if No (Tag_Info.Text) then
+                     Warning
+                       (Context,
+                        Tag_Info.Entity.Element,
+                        "undocumented parameter ("
+                        & To_String (Tag_Info.Attr)
+                        & ")");
+                  end if;
+
+                  exit when C = Last_Param (Get_Comment (Subp));
+                  Next (C);
+               end loop;
+            end;
+         end if;
+      end Parse_Subprogram_Comments;
+
       ------------------
       -- Process_Node --
       ------------------
@@ -1128,6 +1460,7 @@ package body GNATdoc.Frontend.Comment_Parser is
 
       use type Ada.Containers.Count_Type;
    begin
+      Private_Entities_List.Clear;
       Traverse_Tree (Root, Process_Node'Access);
 
       if Private_Entities_List.Length > 0 then

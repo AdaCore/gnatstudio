@@ -61,6 +61,7 @@ procedure GNATdoc_Main is
    Encoding             : aliased GNAT.Strings.String_Access :=
                             new String'("iso-8859-1");
    Document_Bodies      : aliased Boolean := False;
+   Extensions_Enabled   : aliased Boolean := False;
    Process_C_Files      : aliased Boolean := False;
    Process_Bodies       : aliased Boolean := False;
    Project_Name         : aliased GNAT.Strings.String_Access;
@@ -300,6 +301,13 @@ begin
             Output       => Process_C_Files'Access,
             Switch       => "-c",
             Help         => "Process C/C++ files");
+
+      elsif Ada.Command_Line.Argument (J) = "-x" then
+         Define_Switch
+           (Cmdline,
+            Output       => Extensions_Enabled'Access,
+            Switch       => "-x",
+            Help         => "Extensions enabled");
       end if;
    end loop;
 
@@ -643,6 +651,7 @@ begin
          Backend_Name     => To_Unbounded_String (Backend_Name.all),
          Display_Time     => Internal_Output,
          Document_Bodies  => Document_Bodies,
+         Extensions_Enabled => Extensions_Enabled,
          Process_Bodies   => Process_Bodies,
          Show_Private     => Process_Private_Part,
          Output_Comments  => Internal_Output,

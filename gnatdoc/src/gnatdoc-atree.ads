@@ -1465,7 +1465,7 @@ private
    pragma Inline (Get_End_Of_Profile_Location);
    pragma Inline (Get_End_Of_Profile_Location_In_Body);
    pragma Inline (Get_End_Of_Scope_Loc);
---   pragma Inline (Get_End_Of_Syntax_Scope_Loc);
+   pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Etype);

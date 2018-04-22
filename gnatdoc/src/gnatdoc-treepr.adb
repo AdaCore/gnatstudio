@@ -138,10 +138,15 @@ package body GNATdoc.Treepr is
             return OK; -- Do not output this node
          end if;
 
-         --  Temporarily for backward output compatibility (to avoid
-         --  generating false regressions)???
+         if Context.Options.Extensions_Enabled
+           and then Get_Kind (Entity) = E_Formal
+         then
+            null;
 
-         if not Enhancements then
+         --  Temporarily for disable non-required output. Done to avoid
+         --  reporting false regressions.
+
+         elsif not Enhancements then
             if Get_Kind (Entity) = E_Formal then
                return Skip;
 

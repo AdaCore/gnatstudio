@@ -110,6 +110,9 @@ package GNATdoc is
       --  components processing files. Used to identify which components of
       --  GNATdoc must be optimized.
 
+      Extensions_Enabled : Boolean := False;
+      --  True to enable experimental extensions
+
       Tree_Output      : Tree_Output_Type := (Full, True);
       --  Enables the generation of tree listings. Used to write regression
       --  tests.

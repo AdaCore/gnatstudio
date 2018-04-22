@@ -157,6 +157,7 @@ package body GPS.CLI_Scripts is
                Backend_Name     => To_Unbounded_String (Backend_Name),
                Display_Time     => False,
                Document_Bodies  => False,
+               Extensions_Enabled => False,
                Process_Bodies   => False,
                Show_Private     => True,
                Output_Comments  => True,
