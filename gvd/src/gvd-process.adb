@@ -1121,7 +1121,9 @@ package body GVD.Process is
                Command : constant String := Get_Command
                  (Tc, Toolchains.Debugger);
             begin
-               if Command /= "" then
+               if not Is_Native (Tc)
+                 and then Command /= ""
+               then
                   --  return debuger from toolchain
                   if Starts_With (Command, "lldb") then
                      Debugger_Kind := GVD.Types.LLDB;
