@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
@@ -36,6 +38,7 @@ with Pango.Enums;               use Pango.Enums;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Search;                use GPS.Search;
 
 with Src_Editor_Buffer.Line_Information;
@@ -360,6 +363,12 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Mark  : Editor_Mark'Class;
       Lines : Integer);
+
+   overriding function Click_On_Side_Icon
+     (This      : Src_Editor_Buffer;
+      Line      : Integer;
+      Column    : Positive;
+      Icon_Name : String) return Boolean;
 
    overriding function Create_Overlay
      (This : Src_Editor_Buffer;
@@ -1805,6 +1814,72 @@ package body Src_Editor_Module.Editors is
          end;
       end if;
    end Remove_Special_Lines;
+
+   ------------------------
+   -- Click_On_Side_Icon --
+   ------------------------
+
+   overriding function Click_On_Side_Icon
+     (This      : Src_Editor_Buffer;
+      Line      : Integer;
+      Column    : Positive;
+      Icon_Name : String) return Boolean
+   is
+      Info : Line_Info_Width_Array_Access;
+   begin
+      if This.Contents.Buffer = null then
+         return False;
+      end if;
+
+      Info := Get_Side_Information
+        (Buffer => This.Contents.Buffer,
+         Line   => Editable_Line_Type (Line));
+
+      if Info = null or else Column not in Info.all'Range then
+         return False;
+      end if;
+
+      declare
+         Line_Infos : constant Line_Information_Array :=
+                        Get_Line_Infos (Info (Column));
+      begin
+         for Line_Info of Line_Infos loop
+            --  Try to match line information with the gievn Icon_Name
+            --  either directly on the line information data set for this
+            --  line or in the associated message.
+
+            if To_String (Line_Info.Image) = Icon_Name then
+               Execute_Line_Info
+                 (Buffer    => This.Contents.Buffer,
+                  Line_Info => Line_Info,
+                  At_Line   => Buffer_Line_Type (Line));
+
+               return True;
+
+            elsif not Line_Info.Message.Is_Empty then
+               declare
+                  Message   : constant Message_Access :=
+                                Line_Info.Message.Message;
+                  Line_Info : constant Action_Item :=
+                                Message.Get_Action;
+               begin
+                  if Line_Info /= null
+                    and then To_String (Line_Info.Image) = Icon_Name
+                  then
+                     Execute_Line_Info
+                       (Buffer    => This.Contents.Buffer,
+                        Line_Info => Line_Info.all,
+                        At_Line   => Buffer_Line_Type (Line));
+
+                     return True;
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         return False;
+      end;
+   end Click_On_Side_Icon;
 
    ------------------
    -- Current_View --

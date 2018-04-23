@@ -74,7 +74,7 @@ def click_in_text(
     view = text_view_from_location(loc)
     rect = view.get_iter_location(iter_from_location(loc))
     (x, y) = view.buffer_to_window_coords(Gtk.TextWindowType.TEXT, rect.x
-                                          + 1, rect.y + 1)
+                                          + 1 + xoffset, rect.y + 1)
 
     click_in_widget(view.get_window(Gtk.TextWindowType.TEXT), x=x, y=y,
                     button=button, events=events, through_gps=through_gps)

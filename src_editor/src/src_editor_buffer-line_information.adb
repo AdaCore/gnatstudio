@@ -1435,6 +1435,50 @@ package body Src_Editor_Buffer.Line_Information is
       return Empty_Line_Information;
    end Find_Line_Info_With_Type;
 
+   -----------------------
+   -- Execute_Line_Info --
+   -----------------------
+
+   procedure Execute_Line_Info
+     (Buffer    : access Source_Buffer_Record'Class;
+      Line_Info : Line_Information_Record;
+      At_Line   : Buffer_Line_Type)
+   is
+      Ignore  : Command_Return_Type;
+      Context : Selection_Context;
+   begin
+      if Line_Info.Associated_Command /= null then
+
+         --  If the associated command needs line information, set it before
+         --  executing it.
+
+         if Line_Info.Associated_Command.all in
+           Base_Editor_Command_Type'Class
+         then
+            Base_Editor_Command_Type
+              (Line_Info.Associated_Command.all).Base_Line := At_Line;
+         end if;
+
+         if not Line_Info.Message.Is_Empty then
+            --  Update selection context when message
+            --  information was associated with Line_Info.
+
+            Context := Buffer.Kernel.New_Context
+              (Src_Editor_Module_Id);
+            Set_Messages_Information
+              (Context, (1 => Line_Info.Message.Message));
+            Buffer.Kernel.Context_Changed (Context);
+         end if;
+
+         Ignore := Line_Info.Associated_Command.Execute;
+
+         if not Line_Info.Message.Is_Empty then
+            --  Refresh selection context to initial state
+            Buffer.Kernel.Refresh_Context;
+         end if;
+      end if;
+   end Execute_Line_Info;
+
    -----------------------------
    -- On_Click_On_Line_Number --
    -----------------------------
@@ -1461,13 +1505,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       if Line_Info /= Empty_Line_Information then
          Trace (Me, "Found one action in editor_line");
-         Context := Buffer.Kernel.New_Context
-           (Src_Editor_Module_Id);
-         Set_Messages_Information
-           (Context, (1 => Line_Info.Message.Message));
-         Buffer.Kernel.Context_Changed (Context);
-         Ignore := Line_Info.Associated_Command.Execute;
-         Buffer.Kernel.Refresh_Context;
+         Execute_Line_Info
+           (Buffer    => Buffer,
+            Line_Info => Line_Info,
+            At_Line   => Line);
          return;
       end if;
 
@@ -1502,35 +1543,13 @@ package body Src_Editor_Buffer.Line_Information is
                      Find_Line_Info_With_Type
                        (Line_Infos => Line_Infos,
                         Info_Type  => On_Side_Area);
-      Ignore     : Command_Return_Type;
-      Context    : Selection_Context;
    begin
       if Line_Info.Associated_Command /= null then
-         if Line_Info.Associated_Command.all in
-           Base_Editor_Command_Type'Class
-         then
-            Base_Editor_Command_Type
-              (Line_Info.Associated_Command.all).Base_Line := Line;
-         end if;
-
-         if not Line_Info.Message.Is_Empty then
-            --  Update selection context when message
-            --  information was associated with Line_Info.
-
-            Context := Buffer.Kernel.New_Context
-              (Src_Editor_Module_Id);
-            Set_Messages_Information
-              (Context, (1 => Line_Info.Message.Message));
-            Buffer.Kernel.Context_Changed (Context);
-         end if;
-
          Trace (Me, "Execute command for line" & Line'Img);
-         Ignore := Line_Info.Associated_Command.Execute;
-
-         if not Line_Info.Message.Is_Empty then
-            --  Refresh selection context to initial state
-            Buffer.Kernel.Refresh_Context;
-         end if;
+         Execute_Line_Info
+           (Buffer    => Buffer,
+            Line_Info => Line_Info,
+            At_Line   => Line);
       end if;
    end On_Click_On_Side_Column;
 

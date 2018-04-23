@@ -821,7 +821,7 @@ package Src_Editor_Buffer is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Record, Line_Info_Display_Access);
 
-   type Line_Info_Display_Array is array (Natural range <>)
+   type Line_Info_Display_Array is array (Positive range <>)
      of Line_Info_Display_Access;
 
    type Line_Info_Display_Array_Access is access Line_Info_Display_Array;

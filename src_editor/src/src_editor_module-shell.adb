@@ -2070,6 +2070,28 @@ package body Src_Editor_Module.Shell is
               (Get_Buffer (Data, 1).Extend_Existing_Selection);
          end if;
 
+      elsif Command = "click_on_side_icon" then
+         declare
+            Buffer    : constant GPS_Editor_Buffer'Class :=
+                          Get_Buffer (Data, 1);
+            Line      : constant Natural := Data.Nth_Arg (2);
+            Column    : constant Natural := Data.Nth_Arg (3);
+            Icon_Name : constant String := Data.Nth_Arg (4);
+            Success   : Boolean;
+         begin
+            Success := Buffer.Click_On_Side_Icon
+              (Line      => Line,
+               Column    => Column,
+               Icon_Name => Icon_Name);
+
+            if not Success then
+               Data.Set_Error_Msg
+                 ("No side icon found on line"
+                  & Integer'Image (Line)
+                  & " and column" & Natural'Image (Column)
+                  & " with the given name: "  & Icon_Name);
+            end if;
+         end;
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2907,6 +2929,13 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel,
          "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Kernel.Scripts.Register_Command
+        ("click_on_side_icon",
+         Params  => (1 => Param ("line"),
+                     2 => Param ("column"),
+                     3 => Param ("icon_name")),
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
       Kernel.Scripts.Register_Property
         ("extend_existing_selection",
          Class  => EditorBuffer,

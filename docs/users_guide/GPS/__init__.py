@@ -3389,6 +3389,21 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def click_on_side_icon(self, line, column, icon_name):
+        """
+        Simulate a click on the editor's side icon identified with the
+        given ``icon_name`` and present at the given ``line`` and in the given
+        side information ``column``.
+        The default side information ``column`` (i.e: the one that displays
+        block folding of codefix icons) starts at 1.
+
+        :param integer line: the line where the clickable icon is displayed
+        :param integer column: the side information column where the
+          clickable icon is displayed
+        :param string icon_name: the name of the clickable icon
+        """
+        pass  # implemented in Ada
+
     def close(self, force=False):
         """
         Closes the editor and all its views. If the buffer has been modified

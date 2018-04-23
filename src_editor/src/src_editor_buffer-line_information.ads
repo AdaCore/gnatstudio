@@ -118,6 +118,13 @@ package Src_Editor_Buffer.Line_Information is
       Offset : Gint);
    --  Perform a click in the side column for line Line, offset Offset
 
+   procedure Execute_Line_Info
+     (Buffer    : access Source_Buffer_Record'Class;
+      Line_Info : Line_Information_Record;
+      At_Line   : Buffer_Line_Type);
+   --  Excute the given line information's associated command, if any.
+   --  At_Line is used to set the command's line information when needed.
+
    function Add_Blank_Lines
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Buffer_Line_Type;

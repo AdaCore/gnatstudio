@@ -111,6 +111,17 @@ package GPS.Editors.Line_Information is
    --  Removes specified number of special lines at the specified mark. It
    --  doesn't delete the mark
 
+   function Click_On_Side_Icon
+     (This      : GPS_Editor_Buffer;
+      Line      : Integer;
+      Column    : Positive;
+      Icon_Name : String) return Boolean is abstract;
+   --  Simulate a click on the editor's side icon identified with the
+   --  given Icon_Name and present at the given Line and in the given side
+   --  information Column.
+   --  The default side information Column (i.e: the one that displays block
+   --  folding of codefix icons) starts at 1.
+
 private
 
    Empty_Line_Information : constant Line_Information_Record :=
