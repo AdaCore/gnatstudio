@@ -127,7 +127,7 @@ def goto_subprogram_start(cursor):
     while cursor.block_type() not in SUBPROGRAM_BLOCKS and cursor > min:
         cursor = cursor.block_start() - 1
 
-    if cursor > min:
+    if cursor >= min:
         return cursor
     else:
         return None
