@@ -1608,24 +1608,34 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Timeout  : Integer) return Boolean
    is
-      Num : Expect_Match;
+      Error_Match  : Expect_Match := Expect_Timeout;
+      Prompt_Match : Expect_Match;
    begin
       if not Debugger.Second_Wait then
-         Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+         --  Check if we have an error first: if it's the case, we should only
+         --  try to match the prompt once.
+         Debugger.Get_Process.Wait
+           (Error_Match, Error_Pattern, Timeout => Timeout);
 
-         if Num = Expect_Timeout then
+         Debugger.Get_Process.Wait
+           (Prompt_Match, Prompt_Regexp, Timeout => Timeout);
+
+         if Prompt_Match = Expect_Timeout then
             return False;
          end if;
       end if;
 
-      if Debugger.Is_Running
+      --  Don't try to match a second prompt if we encountered an error
+      if Error_Match = Expect_Timeout
+        and then Debugger.Is_Running
         and then Debugger.Current_Command_Kind = Execution_Command
       then
          --  We are running, wait for the second 'stopped' prompt
          Debugger.Second_Wait := True;
-         Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => Timeout);
+         Debugger.Get_Process.Wait
+           (Prompt_Match, Prompt_Regexp, Timeout => Timeout);
 
-         if Num = Expect_Timeout then
+         if Prompt_Match = Expect_Timeout then
             return False;
          end if;
       end if;
