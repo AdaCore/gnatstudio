@@ -215,9 +215,14 @@ def textmate_themes():
 
     results = []
 
-    for file in glob.glob(os.path.join(
+    default_themes = glob.glob(os.path.join(
         GPS.get_system_dir(),
-            'share', 'gps', 'color_themes', 'themes', '*', '*.tmTheme')):
+        'share', 'gps', 'color_themes', 'themes', '*', '*.tmTheme'))
+
+    user_themes = glob.glob(os.path.join(
+        GPS.get_home_dir(), 'themes', '*.tmTheme'))
+
+    for file in default_themes + user_themes:
         try:
             results.append(TextmateTheme(file).theme())
         except Exception:

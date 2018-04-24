@@ -271,15 +271,29 @@ class ColorSchemePicker(object):
         Initialize the general attributes of the color theme preferences page
         view.
         """
+        PADDING = 5
+
         self.vbox = Gtk.VBox()
         self.vbox.set_name(_VIEW_TITLE)
 
         self.snapshots_dir = os.path.join(
             GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
 
+        self.doc_label_hbox = Gtk.HBox()
+        self.vbox.pack_start(self.doc_label_hbox, False, False, PADDING)
+
+        self.doc_label = Gtk.Label()
+        self.doc_label.set_alignment(0.0, 0.5)
+        self.doc_label.set_markup(
+            "You can add your own themes in the TextMate "
+            "format (.tmTheme) by adding them in the "
+            "<b>GPS_HOME/.gps/themes/</b> directory.")
+        self.doc_label.get_style_context().add_class("dialog-views-doc-labels")
+        self.doc_label_hbox.pack_start(self.doc_label, False, False, PADDING)
+
         self.flow = Gtk.FlowBox()
         self.flow.set_min_children_per_line(2)
-        self.vbox.pack_start(self.flow, True, True, 0)
+        self.vbox.pack_start(self.flow, True, True, PADDING)
 
         self.themes = list(get_themes())
 

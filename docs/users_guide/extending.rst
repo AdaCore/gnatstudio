@@ -27,8 +27,10 @@ through the preferences dialog.
 
 GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
 format: at startup, GPS will look in the directory
-file:`INSTALL/share/gps/color_themes/themes/` and will include all the
-:file:`.tmTheme` found at the first level of each subdirectory.
+:file:`GPS_HOME/.gps/themes/` and will include all the
+:file:`.tmTheme` found at the first level of this subdirectory. You can
+also import your themes in the :file:`INSTALL/share/gps/color_themes/themes/`
+directory if you want to share themes accross your team.
 
 Custom Fonts
 ============
@@ -254,7 +256,7 @@ versions of GPS you should not have keep other files in these directories.
 
   The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
   automatically loads by default (unless overridden by the user via the
-  guilabel:`Plugins` section of the preferences editor dialog). These
+  :guilabel:`Plugins` section of the preferences editor dialog). These
   plugins are visible to any user on the system using the same GPS
   installation.  Reserve this directory for critical plugins that almost
   everyone will use.
