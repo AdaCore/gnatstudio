@@ -309,6 +309,14 @@ package body GNAThub.Module is
         (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
       GPS.Kernel.Hooks.Project_Changed_Hook.Add (new On_Project_Changed);
 
+      Hide_Node_Without_Messages :=
+        Kernel.Get_Preferences.Create
+          (Path    => ":Local Configuration",
+           Name    => "hide_node_without_messages",
+           Default => False,
+           Label   => -"Hide nodes without messages.",
+           Doc     => "");
+
       GNAThub.Filters_Views.Register_Module (Kernel);
    end Register_Module;
 

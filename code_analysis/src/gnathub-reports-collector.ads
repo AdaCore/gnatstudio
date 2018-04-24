@@ -21,6 +21,7 @@
 with Gtk.Box;
 with GPS.Kernel;
 with GNAThub.Reports.Messages;
+with GNAThub.Reports.Metrics;
 
 package GNAThub.Reports.Collector is
 
@@ -64,6 +65,7 @@ private
    type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with record
       Kernel          : GPS.Kernel.Kernel_Handle;
       Messages_Report : GNAThub.Reports.Messages.Messages_Report;
+      Metric_Report   : GNAThub.Reports.Metrics.Metrics_Report;
       Listener        : Message_Listener_Access;
    end record;
 

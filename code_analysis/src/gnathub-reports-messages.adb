@@ -294,4 +294,37 @@ package body GNAThub.Reports.Messages is
       Self.Analysis_Model.Reconstruct;
    end Update;
 
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (Self : not null access GNAThub_Report_Messages'Class)
+      return Gtk.Tree_View.Gtk_Tree_View is
+   begin
+      return Self.Analysis_View;
+   end Get_Tree;
+
+   ------------------------
+   -- Get_Analysis_Model --
+   ------------------------
+
+   function Get_Analysis_Model
+     (Self : not null access GNAThub_Report_Messages'Class)
+      return GNAThub.Reports.Models.Messages_Model is
+   begin
+      return Self.Analysis_Model;
+   end Get_Analysis_Model;
+
+   --------------------
+   -- Get_Sort_Model --
+   --------------------
+
+   function Get_Sort_Model
+     (Self : not null access GNAThub_Report_Messages'Class)
+      return Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort is
+   begin
+      return Self.Analysis_Sort_Model;
+   end Get_Sort_Model;
+
 end GNAThub.Reports.Messages;

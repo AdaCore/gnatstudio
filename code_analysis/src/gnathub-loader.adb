@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
@@ -35,9 +35,6 @@ with GNAThub.Messages;
 with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
-
-   Empty_Severity_Id : constant := 0;
-   --  Code for unspecified (NULL) severity
 
    procedure Cleanup (Self : in out Loader'Class; Full : Boolean := False);
    --  Stop loading (when necessary) and cleanup resources.
@@ -96,6 +93,7 @@ package body GNAThub.Loader is
 
       Self.Severities.Clear;
       Self.Rules.Clear;
+      Self.Metrics.Clear;
       GNATCOLL.Projects.Free (Self.Source_Files);
 
       GNATCOLL.SQL.Sessions.Free;
@@ -121,7 +119,7 @@ package body GNAThub.Loader is
          GNATCOLL.Projects.Free (Self.Loader.Source_Files);
          Self.Loader.Command := null;
          Self.Loader.Cleanup;
-
+         GNAThub.Module.Update_Report (Self.Loader.Module.all);
          return Commands.Success;
       end if;
    end Execute;
@@ -198,16 +196,17 @@ package body GNAThub.Loader is
       use type GNATCOLL.VFS.Virtual_File;
 
       File            : constant GNATCOLL.VFS.Virtual_File :=
-                         GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
+        GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
       Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                         GNATCOLL.SQL.Sessions.Get_New_Session;
+        GNATCOLL.SQL.Sessions.Get_New_Session;
       List            : Database.Orm.Resource_Message_List :=
-                         Database.Orm.Filter
-                          (Database.Orm.All_Resources_Messages,
-                           Resource_Id => Resource_Id).Get (Session);
+        Database.Orm.Filter
+          (Database.Orm.All_Resources_Messages,
+           Resource_Id => Resource_Id).Get (Session);
       R               : Database.Orm.Resource_Message;
       M               : Database.Orm.Message;
       Message         : GNAThub.Messages.Message_Access;
+      Metric_Message  : Metric;
       Visible         : Boolean;
       Rule            : GNAThub.Rule_Access;
       Severity        : GNAThub.Severity_Access;
@@ -221,20 +220,22 @@ package body GNAThub.Loader is
 
       function Insert
         (Project : GNATCOLL.Projects.Project_Type)
-        return GNAThub_Project_Access;
+         return GNAThub_Project_Access;
 
       function Insert
         (Project : GNAThub_Project_Access;
          File    : GNATCOLL.VFS.Virtual_File)
          return GNAThub_File_Access;
 
-      function Find_Subprogram return GNAThub_Subprogram_Access;
+      procedure Update_Tree;
+      --  Via a semantic analysis update the code_analysis tree
+      --  by adding the projects, files and subprograms.
 
-      ---------------------
-      -- Find_Subprogram --
-      ---------------------
+      -----------------
+      -- Update_Tree --
+      -----------------
 
-      function Find_Subprogram return GNAThub_Subprogram_Access
+      procedure Update_Tree
       is
          use Language.Abstract_Language_Tree;
          use GNAT.Strings;
@@ -245,7 +246,8 @@ package body GNAThub.Loader is
 
       begin
          if Tree = No_Semantic_Tree then
-            return Result;
+            Tree_Subprogram := null;
+            return;
          end if;
 
          declare
@@ -258,11 +260,11 @@ package body GNAThub.Loader is
                   if Node.Is_Valid
                     and then Node.Category in
                       Language.Cat_Procedure .. Language.Cat_Destructor
-                    and then Node.Sloc_Start.Line <= R.Line
-                    and then Node.Sloc_End.Line >= R.Line
-                    and then
-                      (Result = null
-                       or else Result.Line < Node.Sloc_Start.Line)
+                      and then Node.Sloc_Start.Line <= R.Line
+                      and then Node.Sloc_End.Line >= R.Line
+                      and then
+                        (Result = null
+                         or else Result.Line < Node.Sloc_Start.Line)
                   then
                      if Result = null then
                         Result := new GNAThub_Subprogram'
@@ -271,8 +273,8 @@ package body GNAThub.Loader is
                            Counts_Size   => Natural
                              (Self.Module.Severities.Length) + 1,
                            Counts        => (others => 0),
-                           Messages      =>
-                             Messages_Vectors.Empty_Vector,
+                           Messages      => Messages_Vectors.Empty_Vector,
+                           Metrics       => Metric_Tool_Maps.Empty_Map,
                            others => 0);
                      end if;
 
@@ -290,8 +292,47 @@ package body GNAThub.Loader is
             end loop;
          end;
 
-         return Result;
-      end Find_Subprogram;
+         for Index in Self.Source_Files'Range loop
+            if Self.Source_Files (Index).File = File then
+               Project := Self.Source_Files (Index).Project;
+               exit;
+            end if;
+         end loop;
+
+         Tree_Project := Insert (Project);
+         Tree_File    := Insert (Tree_Project, File);
+
+         if Project /= No_Project then
+            Tree_Subprogram := Result;
+         else
+            Tree_Subprogram := null;
+         end if;
+
+         if Tree_Subprogram /= null then
+            declare
+               use Subprogram_Maps;
+               Cursor : constant Subprogram_Maps.Cursor :=
+                 Tree_File.Subprograms.Find
+                   (Tree_Subprogram.Name.all);
+
+               procedure Unchecked_Free is new
+                 Ada.Unchecked_Deallocation
+                   (GNAThub_Subprogram, GNAThub_Subprogram_Access);
+
+            begin
+               if Has_Element (Cursor) then
+                  GNAT.Strings.Free (Tree_Subprogram.Name);
+                  Unchecked_Free (Tree_Subprogram);
+                  Tree_Subprogram := GNAThub_Subprogram_Access
+                    (Subprogram_Maps.Element (Cursor));
+               else
+                  Tree_File.Subprograms.Include
+                    (Tree_Subprogram.Name.all,
+                     Subprogram_Access (Tree_Subprogram));
+               end if;
+            end;
+         end if;
+      end Update_Tree;
 
       ------------
       -- Insert --
@@ -302,7 +343,6 @@ package body GNAThub.Loader is
          return GNAThub_Project_Access
       is
          use Code_Analysis.Project_Maps;
-
          Cursor : Code_Analysis.Project_Maps.Cursor;
          Result : GNAThub_Project_Access;
       begin
@@ -315,7 +355,8 @@ package body GNAThub.Loader is
                Name          => Project,
                Files         => Code_Analysis.File_Maps.Empty_Map,
                Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
-               Counts        => (others => 0));
+               Counts        => (others => 0),
+               Metrics       => Metric_Tool_Maps.Empty_Map);
             Self.Module.Tree.Include
               (Project, Code_Analysis.Project_Access (Result));
          end if;
@@ -355,7 +396,8 @@ package body GNAThub.Loader is
                Line_Commands => Commands.Command_Lists.Empty_List,
                Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
                Counts        => (others => 0),
-               Messages      => Messages_Vectors.Empty_Vector);
+               Messages      => Messages_Vectors.Empty_Vector,
+               Metrics       => Metric_Tool_Maps.Empty_Map);
             Project.Files.Include (File, Code_Analysis.File_Access (Result));
          end if;
 
@@ -375,13 +417,10 @@ package body GNAThub.Loader is
          M := Database.Orm.Filter
            (Database.Orm.All_Messages, Id => R.Message_Id)
            .Get (Session).Element;
+         Severity := Self.Severities (M.Ranking);
+         Severity_Id := Self.Module.Severities_Id.Element (Severity);
 
          if Self.Rules.Contains (M.Rule_Id) then
-            --  This is message
-
-            --  Use Empty_Severity_Id if M.Category_Id is NULL
-            Severity := Self.Severities
-              (Natural'Max (Empty_Severity_Id, M.Ranking));
             Rule     := Self.Rules (M.Rule_Id);
             Position := Rule.Count.Find (Severity);
 
@@ -404,58 +443,19 @@ package body GNAThub.Loader is
                File      => File,
                Line      => R.Line,
                Column    => Basic_Types.Visible_Column_Type (R.Col_Begin));
+
             GPS.Kernel.Messages.Set_Highlighting
               (Self   => Message,
                Style  => Analysis_Styles (Severity.Ranking));
 
             --  Update module's tree
 
-            Severity_Id := Self.Module.Severities_Id.Element (Severity);
-
             Filter_Result := Self.Module.Filter.Apply (Message.all);
             Visible := not Filter_Result.Non_Applicable
               and then Filter_Result.Flags (GPS.Kernel.Messages.Locations);
-
-            for Index in Self.Source_Files'Range loop
-               if Self.Source_Files (Index).File = File then
-                  Project := Self.Source_Files (Index).Project;
-                  exit;
-               end if;
-            end loop;
-
-            Tree_Project := Insert (Project);
-            Tree_File    := Insert (Tree_Project, File);
-
-            if Project /= No_Project then
-               Tree_Subprogram := Find_Subprogram;
-            else
-               Tree_Subprogram := null;
-            end if;
+            Update_Tree;
 
             if Tree_Subprogram /= null then
-               declare
-                  use Subprogram_Maps;
-                  Cursor : constant Subprogram_Maps.Cursor :=
-                    Tree_File.Subprograms.Find
-                      (Tree_Subprogram.Name.all);
-
-                  procedure Unchecked_Free is new
-                    Ada.Unchecked_Deallocation
-                      (GNAThub_Subprogram, GNAThub_Subprogram_Access);
-
-               begin
-                  if Has_Element (Cursor) then
-                     GNAT.Strings.Free (Tree_Subprogram.Name);
-                     Unchecked_Free (Tree_Subprogram);
-                     Tree_Subprogram := GNAThub_Subprogram_Access
-                       (Subprogram_Maps.Element (Cursor));
-                  else
-                     Tree_File.Subprograms.Include
-                       (Tree_Subprogram.Name.all,
-                        Subprogram_Access (Tree_Subprogram));
-                  end if;
-               end;
-
                Tree_Subprogram.Messages.Append
                  (GPS.Kernel.Messages.References.Create
                     (GPS.Kernel.Messages.Message_Access (Message)));
@@ -472,8 +472,38 @@ package body GNAThub.Loader is
                  (GPS.Kernel.Messages.References.Create
                     (GPS.Kernel.Messages.Message_Access (Message)));
             end if;
-         end if;
+         elsif Self.Metrics.Contains (M.Rule_Id) then
+            Rule := Self.Metrics (M.Rule_Id);
+            Metric_Message := new Metric_Record'(Severity => Severity,
+                                                 Rule => Rule,
+                                                 Value =>
+                                                   Float'Value
+                                                     (Database.Orm.Data (M)));
+            Visible := False;
+            Update_Tree;
 
+            if Tree_Subprogram /= null then
+               if not (Tree_Subprogram.Metrics.Contains
+                       (Metric_Message.Rule.Tool.Name))
+               then
+                  Tree_Subprogram.Metrics.Include
+                    (Metric_Message.Rule.Tool.Name,
+                     Metrics_Ordered_Sets.Empty_Set);
+               end if;
+               Tree_Subprogram.Metrics
+                 (Metric_Message.Rule.Tool.Name).Insert (Metric_Message);
+            else
+               if not (Tree_File.Metrics.Contains
+                       (Metric_Message.Rule.Tool.Name))
+               then
+                  Tree_File.Metrics.Include
+                    (Metric_Message.Rule.Tool.Name,
+                     Metrics_Ordered_Sets.Empty_Set);
+               end if;
+               Tree_File.Metrics
+                 (Metric_Message.Rule.Tool.Name).Insert (Metric_Message);
+            end if;
+         end if;
          List.Next;
       end loop;
    end Load_Messages;
@@ -484,9 +514,9 @@ package body GNAThub.Loader is
 
    procedure Load_Resources (Self : in out Loader'Class) is
       Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                   GNATCOLL.SQL.Sessions.Get_New_Session;
+        GNATCOLL.SQL.Sessions.Get_New_Session;
       List     : Database.Orm.Resource_List := Database.Orm.Filter
-         (Database.Orm.All_Resources, Kind => 2).Get (Session);
+        (Database.Orm.All_Resources, Kind => 2).Get (Session);
       R        : Database.Orm.Resource;
       Resource : Resource_Access;
 
@@ -519,21 +549,27 @@ package body GNAThub.Loader is
 
    procedure Load_Tools_And_Rules (Self : in out Loader'Class) is
       Session : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                  GNATCOLL.SQL.Sessions.Get_New_Session;
+        GNATCOLL.SQL.Sessions.Get_New_Session;
       TL      : Database.Orm.Tool_List := Database.Orm.All_Tools.Get (Session);
       T       : Database.Orm.Tool;
-      RL      : Database.Orm.Rule_List;
-      R       : Database.Orm.Rule;
-
       Tool    : Tool_Access;
-      Rule    : Rule_Access;
 
-   begin
-      while TL.Has_Row loop
-         T    := TL.Element;
-         Tool := Self.Module.New_Tool (To_Unbounded_String (T.Name));
+      procedure Retrieve_Kind (M : in out Rule_Maps.Map; Kind : Integer);
+      --  There are two types of rules:
+      --    Rule_Kind = 0: its messages are stored as String in the database
+      --    Metric_Kind = 1: its messages are stored as Float in the database
 
-         RL := Database.Orm.Filter (T.Tool_Rules, Kind => 0).Get (Session);
+      ------------------
+      -- Retieve_Kind --
+      ------------------
+
+      procedure Retrieve_Kind (M : in out Rule_Maps.Map; Kind : Integer)
+      is
+         RL   : Database.Orm.Rule_List;
+         R    : Database.Orm.Rule;
+         Rule : Rule_Access;
+      begin
+         RL := Database.Orm.Filter (T.Tool_Rules, Kind => Kind).Get (Session);
 
          while RL.Has_Row loop
             R := RL.Element;
@@ -542,10 +578,16 @@ package body GNAThub.Loader is
                 (Tool       => Tool,
                  Name       => To_Unbounded_String (R.Name),
                  Identifier => To_Unbounded_String (R.Identifier));
-            Self.Rules.Insert (R.Id, Rule);
+            M.Insert (R.Id, Rule);
             RL.Next;
          end loop;
-
+      end Retrieve_Kind;
+   begin
+      while TL.Has_Row loop
+         T := TL.Element;
+         Tool := Self.Module.New_Tool (To_Unbounded_String (T.Name));
+         Retrieve_Kind (Self.Rules, Kind => 0);
+         Retrieve_Kind (Self.Metrics, Kind => 1);
          TL.Next;
       end loop;
    end Load_Tools_And_Rules;

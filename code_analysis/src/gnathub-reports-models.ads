@@ -23,8 +23,8 @@ with Code_Analysis.Tree_Models;
 
 package GNAThub.Reports.Models is
 
-   Entity_Icon_Name_Column : constant := 0;
-   Entity_Name_Column      : constant := 1;
+   Entity_Icon_Name_Column    : constant := 0;
+   Entity_Name_Column         : constant := 1;
 
    type Messages_Model_Record (Columns_Count : Natural) is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;

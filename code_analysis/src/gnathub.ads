@@ -19,7 +19,8 @@
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 
 with Code_Analysis;                  use Code_Analysis;
 with GPS.Default_Styles;             use GPS.Default_Styles;
@@ -93,6 +94,31 @@ package GNAThub is
    package Tools_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (GNAThub.Tool_Access, Less, "=");
 
+   ------------
+   -- Metric --
+   ------------
+
+   type Metric_Record is record
+      Severity : Severity_Access;
+      Rule     : Rule_Access;
+      Value    : Float;
+   end record;
+   type Metric is access Metric_Record;
+
+   function Less (L, R : Metric) return Boolean is
+     (Ada.Strings.Unbounded."<" (L.Rule.Name, R.Rule.Name));
+
+   package Metrics_Ordered_Sets is new Ada.Containers.Ordered_Sets
+     (Metric, Less, "=");
+
+   package Metric_Tool_Maps is
+     new Ada.Containers.Hashed_Maps
+       (Key_Type        => Unbounded_String,
+        Element_Type    => Metrics_Ordered_Sets.Set,
+        Hash            => Ada.Strings.Unbounded.Hash,
+        Equivalent_Keys => "=",
+        "="             => Metrics_Ordered_Sets."=");
+
    --------------
    -- Analisis --
    --------------
@@ -109,7 +135,8 @@ package GNAThub is
 
    type GNAThub_Project (Counts_Size : Natural) is
      new Code_Analysis.Project with record
-      Counts : Counts_Array (1 .. Counts_Size);
+      Counts  : Counts_Array (1 .. Counts_Size);
+      Metrics : Metric_Tool_Maps.Map;
    end record;
    type GNAThub_Project_Access is access all GNAThub_Project;
 
@@ -121,6 +148,7 @@ package GNAThub is
      new Code_Analysis.File with record
       Counts   : Counts_Array (1 .. Counts_Size);
       Messages : Messages_Vectors.Vector;
+      Metrics  : Metric_Tool_Maps.Map;
    end record;
    type GNAThub_File_Access is access all GNAThub_File;
 
@@ -132,6 +160,7 @@ package GNAThub is
      new Code_Analysis.Subprogram with record
       Counts   : Counts_Array (1 .. Counts_Size);
       Messages : Messages_Vectors.Vector;
+      Metrics  : Metric_Tool_Maps.Map;
    end record;
    type GNAThub_Subprogram_Access is access all GNAThub_Subprogram;
 

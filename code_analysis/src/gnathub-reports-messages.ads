@@ -18,11 +18,11 @@
 --  Report of GNAThub's messages
 
 with Gtk.Box;
+with Gtk.Tree_Model_Sort;
+with Gtk.Tree_View;
+with GNAThub.Reports.Models;
 
 private with Glib;
-private with Gtk.Tree_Model_Sort;
-private with Gtk.Tree_View;
-private with GNAThub.Reports.Models;
 private with Gtk.Gesture_Multi_Press;
 
 package GNAThub.Reports.Messages is
@@ -45,6 +45,17 @@ package GNAThub.Reports.Messages is
 
    procedure Update (Self : not null access GNAThub_Report_Messages'Class);
 
+   function Get_Tree
+     (Self : not null access GNAThub_Report_Messages'Class)
+      return Gtk.Tree_View.Gtk_Tree_View;
+
+   function Get_Analysis_Model
+     (Self : not null access GNAThub_Report_Messages'Class)
+      return GNAThub.Reports.Models.Messages_Model;
+
+   function Get_Sort_Model
+     (Self : not null access GNAThub_Report_Messages'Class)
+     return Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
 private
 
    type GNAThub_Report_Messages is

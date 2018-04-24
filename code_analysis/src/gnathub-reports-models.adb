@@ -21,9 +21,10 @@ with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with Default_Preferences; use Default_Preferences;
-with GPS.Intl;            use GPS.Intl;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Intl;          use GPS.Intl;
+with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
+with GNAThub.Module;
 
 package body GNAThub.Reports.Models is
 
@@ -37,6 +38,12 @@ package body GNAThub.Reports.Models is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
+
+   function Has_Metric (P : GNAThub_Project_Access) return Boolean;
+   function Has_Metric (F : GNAThub_File_Access) return Boolean;
+   function Has_Metric (S : GNAThub_Subprogram_Access) return Boolean;
+   --  Return True is the preference display_node_with_metric is True
+   --  and then if the container or its children have metrics
 
    ---------------------
    -- Calculate_Total --
@@ -93,6 +100,7 @@ package body GNAThub.Reports.Models is
    begin
       if Pref = null
         or else Is_Color_Pref
+        or else Pref = Preference (GNAThub.Module.Hide_Node_Without_Messages)
       then
          Self.Model.Reconstruct;
       end if;
@@ -298,7 +306,7 @@ package body GNAThub.Reports.Models is
         GNAThub_Project_Access (Project.Node);
 
    begin
-      return Prj.Counts (Prj.Counts'Last) > 0;
+      return Prj.Counts (Prj.Counts'Last) > 0 or else Has_Metric (Prj);
    end Is_Visible;
 
    ----------------
@@ -319,7 +327,7 @@ package body GNAThub.Reports.Models is
          return False;
       end if;
 
-      return F.Counts (F.Counts'Last) > 0;
+      return F.Counts (F.Counts'Last) > 0 or else Has_Metric (F);
    end Is_Visible;
 
    ----------------
@@ -339,7 +347,56 @@ package body GNAThub.Reports.Models is
       S : constant GNAThub_Subprogram_Access :=
         GNAThub_Subprogram_Access (Subprogram.Node);
    begin
-      return S.Counts (S.Counts'Last) > 0;
+      return S.Counts (S.Counts'Last) > 0 or else Has_Metric (S);
    end Is_Visible;
+
+   ----------------
+   -- Has_Metric --
+   ----------------
+
+   function Has_Metric (P : GNAThub_Project_Access) return Boolean is
+   begin
+      if GNAThub.Module.Hide_Node_Without_Messages.Get_Pref then
+         return False;
+      end if;
+
+      for F of P.Files loop
+         if Has_Metric (GNAThub_File_Access (F)) then
+            return True;
+         end if;
+      end loop;
+      return not P.Metrics.Is_Empty;
+   end Has_Metric;
+
+   ----------------
+   -- Has_Metric --
+   ----------------
+
+   function Has_Metric (F : GNAThub_File_Access) return Boolean is
+   begin
+      if GNAThub.Module.Hide_Node_Without_Messages.Get_Pref then
+         return False;
+      end if;
+
+      for S of F.Subprograms loop
+         if Has_Metric (GNAThub_Subprogram_Access (S)) then
+            return True;
+         end if;
+      end loop;
+      return not F.Metrics.Is_Empty;
+   end Has_Metric;
+
+   ----------------
+   -- Has_Metric --
+   ----------------
+
+   function Has_Metric (S : GNAThub_Subprogram_Access) return Boolean is
+   begin
+      if GNAThub.Module.Hide_Node_Without_Messages.Get_Pref then
+         return False;
+      end if;
+
+      return not S.Metrics.Is_Empty;
+   end Has_Metric;
 
 end GNAThub.Reports.Models;

@@ -27,6 +27,7 @@ with Gtk.Handlers;
 with Gtk.Tree_View_Column;
 with Gtkada.Abstract_Tree_Model;
 with Gtkada.Types;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
 
 package body GNAThub.Generic_Criteria_Editors is
 
@@ -310,7 +311,11 @@ package body GNAThub.Generic_Criteria_Editors is
       Path  : Gtk.Tree_Model.Gtk_Tree_Path)
       return Item_Access is
    begin
-      return Self.Model.Item_At (Self.Model.Get_Iter (Path));
+      if Path /= Null_Gtk_Tree_Path then
+         return Self.Model.Item_At (Self.Model.Get_Iter (Path));
+      else
+         return Self.Model.Item_At (Null_Iter);
+      end if;
    end Item_By_Path;
 
    --------------------------

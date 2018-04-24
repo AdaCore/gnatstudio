@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 --  Main entry point for GNAThub module
+with Default_Preferences;        use Default_Preferences;
 
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -24,6 +25,8 @@ with GNAThub.Reports.Collector;
 limited with GNAThub.Loader;
 
 package GNAThub.Module is
+
+   Hide_Node_Without_Messages : Boolean_Preference;
 
    type Filter_Access is access all GNAThub.Filters.Message_Filter'Class;
 

@@ -59,7 +59,10 @@ private
    is tagged limited record
       Severities   : Severity_Maps.Map;
       Rules        : Rule_Maps.Map;
-      --  Database's id to object mappings.
+      --  Database's id to object mappings for the rules
+
+      Metrics      : Rule_Maps.Map;
+      --  Database's id to object mappings for the metrics
 
       Resources    : Resource_Maps.Map;
       Current      : Resource_Maps.Cursor;

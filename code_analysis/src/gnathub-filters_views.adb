@@ -462,6 +462,9 @@ package body GNAThub.Filters_Views is
               (Menu, GNAThub_Module.Kernel, Pref);
          end if;
       end loop;
+      GPS.Kernel.Preferences.Append_Menu
+        (Menu, GNAThub_Module.Kernel,
+         GNAThub.Module.Hide_Node_Without_Messages);
    end Create_Menu;
 
    --------------------
