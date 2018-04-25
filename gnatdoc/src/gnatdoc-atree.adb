@@ -2659,9 +2659,8 @@ package body GNATdoc.Atree is
    end Present;
 
    function Present (List : access EInfo_List.Vector) return Boolean is
-      Cursor : constant EInfo_List.Cursor := List.First;
    begin
-      return EInfo_List.Has_Element (Cursor);
+      return not List.Is_Empty;
    end Present;
 
    ----------------
