@@ -23,6 +23,7 @@ with LAL.Core_Module;
 with Langkit_Support.Slocs;
 with Language;
 with Libadalang.Analysis;
+with Langkit_Support.Text;
 
 package body LAL.Highlighters is
 
@@ -47,6 +48,10 @@ package body LAL.Highlighters is
       Value : Libadalang.Analysis.Ada_Node_Kind_Type) return Boolean is
         (Node.Kind in Value);
    --  Check if given node has given kind
+
+   function Is_Ghost_Root_Node
+     (Node  : Libadalang.Analysis.Ada_Node) return Boolean;
+   --  Check if given node is a declaration and has ghost aspect
 
    generic
       type Node_Type is new Libadalang.Analysis.Ada_Node with private;
@@ -594,6 +599,9 @@ package body LAL.Highlighters is
          elsif Subtype_Indication_Name (Node) then
             Value.In_Subtype_Mark := True;
 
+         elsif Is_Ghost_Root_Node (Node) then
+            Value.In_Aspect := True;
+
          end if;
       end Adjust_Context;
 
@@ -603,8 +611,7 @@ package body LAL.Highlighters is
 
       procedure Fill_Stack
         (Stack : in out Context_Lists.List;
-         Node  : Ada_Node)
-      is
+         Node  : Ada_Node) is
       begin
          Stack.Clear;
          for Parent of reverse Node.Parents loop
@@ -756,6 +763,106 @@ package body LAL.Highlighters is
       Self.Module := Module.all'Access;
    end Initialize;
 
+   ------------------------
+   -- Is_Ghost_Root_Node --
+   ------------------------
+
+   function Is_Ghost_Root_Node
+     (Node  : Libadalang.Analysis.Ada_Node) return Boolean
+   is
+      function Has_Ghost
+        (Aspect : Libadalang.Analysis.Aspect_Spec) return Boolean;
+      --  Check if Aspect has Ghost identifier
+
+      ---------------
+      -- Has_Ghost --
+      ---------------
+
+      function Has_Ghost
+        (Aspect : Libadalang.Analysis.Aspect_Spec) return Boolean
+      is
+         Ghost : constant Langkit_Support.Text.Text_Type := "Ghost";
+      begin
+         if Aspect.Is_Null then
+            return False;
+         end if;
+
+         for X of Aspect.F_Aspect_Assocs.Children loop
+            if X.As_Aspect_Assoc.F_Id.Text = Ghost then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Has_Ghost;
+
+   begin
+      case Node.Kind is
+         when Libadalang.Analysis.Ada_Entry_Decl =>
+            return Has_Ghost (Node.As_Entry_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Exception_Decl =>
+            return Has_Ghost (Node.As_Exception_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Expr_Function =>
+            return Has_Ghost (Node.As_Expr_Function.F_Aspects);
+         when Libadalang.Analysis.Ada_Formal_Subp_Decl =>
+            return Has_Ghost (Node.As_Formal_Subp_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Generic_Package_Instantiation =>
+            return Has_Ghost (Node.As_Generic_Package_Instantiation.F_Aspects);
+         when Libadalang.Analysis.Ada_Generic_Subp_Instantiation =>
+            return Has_Ghost (Node.As_Generic_Subp_Instantiation.F_Aspects);
+         when Libadalang.Analysis.Ada_Generic_Subp_Internal =>
+            return Has_Ghost (Node.As_Generic_Subp_Internal.F_Aspects);
+         when Libadalang.Analysis.Ada_Generic_Subp_Renaming_Decl =>
+            return Has_Ghost (Node.As_Generic_Subp_Renaming_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Null_Subp_Decl =>
+            return Has_Ghost (Node.As_Null_Subp_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Object_Decl =>
+            return Has_Ghost (Node.As_Object_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Package_Body =>
+            return Has_Ghost (Node.As_Package_Body.F_Aspects);
+         when Libadalang.Analysis.Ada_Package_Body_Stub =>
+            return Has_Ghost (Node.As_Package_Body_Stub.F_Aspects);
+         when Libadalang.Analysis.Ada_Package_Renaming_Decl =>
+            return Has_Ghost (Node.As_Package_Renaming_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Protected_Body =>
+            return Has_Ghost (Node.As_Protected_Body.F_Aspects);
+         when Libadalang.Analysis.Ada_Protected_Body_Stub =>
+            return Has_Ghost (Node.As_Protected_Body_Stub.F_Aspects);
+         when Libadalang.Analysis.Ada_Single_Protected_Decl =>
+            return Has_Ghost (Node.As_Single_Protected_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Subp_Body =>
+            return Has_Ghost (Node.As_Subp_Body.F_Aspects);
+         when Libadalang.Analysis.Ada_Subp_Body_Stub =>
+            return Has_Ghost (Node.As_Subp_Body_Stub.F_Aspects);
+         when Libadalang.Analysis.Ada_Subp_Decl =>
+            return Has_Ghost (Node.As_Subp_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Subp_Renaming_Decl =>
+            return Has_Ghost (Node.As_Subp_Renaming_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Task_Body =>
+            return Has_Ghost (Node.As_Task_Body.F_Aspects);
+         when Libadalang.Analysis.Ada_Task_Body_Stub =>
+            return Has_Ghost (Node.As_Task_Body_Stub.F_Aspects);
+         when Libadalang.Analysis.Ada_Abstract_Subp_Decl =>
+            return Has_Ghost (Node.As_Abstract_Subp_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Base_Package_Decl =>
+            return Has_Ghost (Node.As_Base_Package_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Component_Decl =>
+            return Has_Ghost (Node.As_Component_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Generic_Package_Renaming_Decl =>
+            return Has_Ghost (Node.As_Generic_Package_Renaming_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Protected_Type_Decl =>
+            return Has_Ghost (Node.As_Protected_Type_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Subtype_Decl =>
+            return Has_Ghost (Node.As_Subtype_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Task_Type_Decl =>
+            return Has_Ghost (Node.As_Task_Type_Decl.F_Aspects);
+         when Libadalang.Analysis.Ada_Type_Decl =>
+            return Has_Ghost (Node.As_Type_Decl.F_Aspects);
+         when others =>
+            return False;
+      end case;
+   end Is_Ghost_Root_Node;
+
    ------------------
    -- Remove_Style --
    ------------------
@@ -768,11 +875,17 @@ package body LAL.Highlighters is
       for Line in From .. To loop
          Buffer.Remove_Style ("keyword", Line, 1);
          Buffer.Remove_Style ("string", Line, 1);
-         Buffer.Remove_Style ("character", Line, 1);
          Buffer.Remove_Style ("number", Line, 1);
          Buffer.Remove_Style ("comment", Line, 1);
          Buffer.Remove_Style ("block", Line, 1);
          Buffer.Remove_Style ("type", Line, 1);
+         Buffer.Remove_Style ("aspect", Line, 1);
+         Buffer.Remove_Style ("aspect_keyword", Line, 1);
+         Buffer.Remove_Style ("aspect_string", Line, 1);
+         Buffer.Remove_Style ("aspect_number", Line, 1);
+         Buffer.Remove_Style ("aspect_comment", Line, 1);
+         Buffer.Remove_Style ("aspect_block", Line, 1);
+         Buffer.Remove_Style ("aspect_type", Line, 1);
       end loop;
    end Remove_Style;
 
