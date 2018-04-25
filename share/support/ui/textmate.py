@@ -186,8 +186,10 @@ class TextmateTheme(object):
 
         # Compute values for the auto-highlight-occurrences
 
-        # For the simple case, mix the normal fg and keyword color
-        e_simple_color = bg_color.mix(fg_color, 0.3)
+        # For the simple case, compute the color by lightening accordingly
+        # the editor's bakckground color.
+        e_simple_color = bg_color.lighten(-0.25 * light_val)
+        e_simple_color.a = 0.5
         d["ephemeral_simple"] = ("DEFAULT", transparent, e_simple_color)
 
         # For the smart cases, use preferably the keywords fg color but

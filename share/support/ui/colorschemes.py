@@ -50,7 +50,9 @@ monokai = Theme("Monokai", False, {
     "keywords": ("DEFAULT", Rgba(249, 38, 114), transparent),
     "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
     "blocks": ("DEFAULT", Rgba(230, 219, 116), transparent),
-    "browsers_bg": Rgba(39, 40, 34)
+    "browsers_bg": Rgba(39, 40, 34),
+    "ephemeral_simple": ("DEFAULT", transparent, Rgba(106, 108, 92, 128)),
+    "ephemeral_smart": ("DEFAULT", transparent, Rgba(128, 236, 255, 90))
 })
 
 iplastic = Theme("iPlastic", True, {
