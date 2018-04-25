@@ -142,9 +142,11 @@ package Generic_Views is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       P       : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
       Name                : Histories.History_Key;
-      Case_Sensitive      : Boolean := False);
+      Case_Sensitive      : Boolean := False;
+      Placeholder         : String := "search");
    --  Build a search bar panel, looking like the omnisearch bar, by giving a
    --  custom search provider.
+   --  Placeholder is used as the entry's placeholder text.
 
    procedure Override_Search_Provider
      (Self : not null access View_Record;

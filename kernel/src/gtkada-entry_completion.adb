@@ -469,12 +469,13 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive   : Boolean := False;
-      Completion_In_Popup : Boolean := True) is
+      Completion_In_Popup : Boolean := True;
+      Placeholder         : String := "search") is
    begin
       Self := new Gtkada_Entry_Record;
       Initialize
          (Self, Kernel, Completion, Name, Case_Sensitive,
-          Completion_In_Popup);
+          Completion_In_Popup, Placeholder);
    end Gtk_New;
 
    ----------------
@@ -487,7 +488,8 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive      : Boolean := False;
-      Completion_In_Popup : Boolean := True)
+      Completion_In_Popup : Boolean := True;
+      Placeholder         : String := "search")
    is
       Scrolled : Gtk_Scrolled_Window;
       Box  : Gtk_Box;
@@ -617,10 +619,9 @@ package body Gtkada.Entry_Completion is
       Self.Pack_Start (Self.GEntry, Expand => False, Fill => False);
       Self.GEntry.Set_Activates_Default (False);
       Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
-      Self.GEntry.Set_Placeholder_Text ("search");
+      Self.GEntry.Set_Placeholder_Text (Placeholder);
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
       Self.GEntry.Set_Name (String (Name));
-
       begin
          Self.GEntry.Set_Width_Chars
            (Gint'Value

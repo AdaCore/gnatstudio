@@ -145,8 +145,8 @@ package body Generic_Views is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       P       : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
       Name                : Histories.History_Key;
-      Case_Sensitive      : Boolean := False)
-   is
+      Case_Sensitive      : Boolean := False;
+      Placeholder         : String := "search") is
    begin
       --  If the view already contains a search panel, don't create another
       --  one.
@@ -167,7 +167,8 @@ package body Generic_Views is
          Completion          => P,
          Name                => Name,
          Case_Sensitive      => Case_Sensitive,
-         Completion_In_Popup => True);
+         Completion_In_Popup => True,
+         Placeholder         => Placeholder);
       Self.Search.Add (Self.Search.Completion_Entry);
 
       --  Ensure that Get_Can_Focus returns True, even if the

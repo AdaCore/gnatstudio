@@ -408,7 +408,8 @@ package body GPS.Kernel.Preferences_Views is
         (Toolbar        => Toolbar,
          P              => Overall_Provider,
          Name           => "preferences_editor_search",
-         Case_Sensitive => False);
+         Case_Sensitive => False,
+         Placeholder    => "search preference...");
    end Create_Toolbar;
 
    -----------------

@@ -54,14 +54,16 @@ package Gtkada.Entry_Completion is
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
       Case_Sensitive : Boolean := False;
-      Completion_In_Popup : Boolean := True);
+      Completion_In_Popup : Boolean := True;
+      Placeholder         : String := "search");
    procedure Initialize
      (Self           : not null access Gtkada_Entry_Record'Class;
       Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
       Case_Sensitive : Boolean := False;
-      Completion_In_Popup : Boolean := True);
+      Completion_In_Popup : Boolean := True;
+      Placeholder         : String := "search");
    --  Create a new entry.
    --
    --  Name is a unique name for this entry. It is used to store a number of
@@ -80,6 +82,8 @@ package Gtkada.Entry_Completion is
    --  dialog, since the latter will grab all events and the list of
    --  completions will not receive the mouse events. The layout is configured
    --  via Completion_In_Popup.
+   --
+   --  Placeholder is used as the entry's placeholder text.
 
    function Get_Type return Glib.GType;
    --  The internal gtk+ type
