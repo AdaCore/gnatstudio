@@ -107,7 +107,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --  How to get the range of addresses for a given line
 
    Address_Pattern           : constant Pattern_Matcher := Compile
-     (" (0x[0-9a-zA-Z]+)");
+     ("(0x[0-9a-zA-Z]+)");
 
    Question_Filter_Pattern1  : constant Pattern_Matcher :=
      Compile ("^~""\[0\][\S\s]*^~"">", Multiple_Lines);
@@ -4227,8 +4227,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
             while S_Index <= Last loop
 
-               --  Detect actual data : 0xXX... right after an ASCII.HT
-               if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
+               --  Detect actual data : 0xXX... right after an \t
+               if S (S_Index) = '0'
+                 and then S_Index - 2 > S'First
+                 and then S (S_Index - 1) = 't'
+                 and then S (S_Index - 1) = '\'
+               then
                   Append (Result (Result_Index).Value,
                           S (S_Index + 2 .. S_Index + 3));
                   Total := Total + 1;
@@ -4252,9 +4256,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Get_Label (S.all, S_Index, Result (Result_Index).Label);
 
          while S_Index <= Last loop
-            --  Detect actual data : 0xXX... right after an ASCII.HT
+            --  Detect actual data : 0xXX... right after an \t
 
-            if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
+            if S (S_Index) = '0'
+              and then S_Index - 2 > S'First
+              and then S (S_Index - 1) = 't'
+              and then S (S_Index - 2) = '\'
+            then
                Append (Result (Result_Index).Value,
                        Swap (S (S_Index + 2 .. S_Index + 17)));
                Total := Total + 8;
@@ -4447,10 +4455,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Last    : Match_Array (0 .. 1);
    begin
       --  find last occurence
+      Match (Address_Pattern, S, Matched);
       loop
-         Match (Address_Pattern, S, Matched);
          exit when Matched (1) = No_Match;
          Last := Matched;
+         Match (Address_Pattern, S (Last (1).Last + 1 .. S'Last), Matched);
       end loop;
 
       if Last (1) /= No_Match then

@@ -3180,7 +3180,7 @@ package body Debugger.LLDB is
       return String
    is
       S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("expression &(" & Variable & ")",
+        ("expression --raw -- &" & Variable,
          Mode => Internal);
       Matched : Match_Array (0 .. 1);
    begin

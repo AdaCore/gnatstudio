@@ -199,6 +199,7 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.View);
       Set_Editable (Memory_View.View, True);
       Memory_View.View.Get_Buffer.Set_Text ("");
+      Set_Name (Memory_View.View, "memory view text");
       Add (Memory_View.Scrolledwindow, Memory_View.View);
 
       Gtk_New_Hseparator (Hseparator2);

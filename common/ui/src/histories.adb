@@ -485,8 +485,11 @@ package body Histories is
             end if;
          end loop;
 
-         Set_Active (Combo, 0);
-         Select_Region (Gtk_Entry (Get_Child (Combo)), 0, -1);
+         if Value (Value'First).all /= "" then
+            --  select ony when combo had value last time
+            Set_Active (Combo, 0);
+            Select_Region (Gtk_Entry (Get_Child (Combo)), 0, -1);
+         end if;
 
       else
          Set_Text (Gtk_Entry (Get_Child (Combo)), "");
