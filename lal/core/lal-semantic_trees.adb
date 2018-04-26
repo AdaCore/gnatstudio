@@ -928,9 +928,13 @@ package body LAL.Semantic_Trees is
       overriding function Root_Iterator
         (Self : Tree) return Semantic_Tree_Iterator'Class
       is
-         Root      : constant Ada_Node :=
+         Root : constant Ada_Node :=
            Libadalang.Analysis.Root (Self.Unit.all);
       begin
+         if Root = No_Ada_Node then
+            return No_Semantic_Tree.Root_Iterator;
+         end if;
+
          return Result : Iterators.Iterator :=
            (Cursor => Libadalang.Iterators.Find (Root, Is_Exposed'Access),
             others => <>)
@@ -947,20 +951,27 @@ package body LAL.Semantic_Trees is
       overriding function Root_Nodes
         (Self : Tree) return Semantic_Node_Array'Class
       is
-         Root      : constant Ada_Node :=
+         Root : constant Ada_Node :=
            Libadalang.Analysis.Root (Self.Unit.all);
-         Immediate : aliased Immediate_Iterators.Immediate_Iterator :=
-           Immediate_Iterators.Children (Root);
-         Exposed   : Exposed_Iterators.Exposed_Iterator (Immediate'Access);
-         Vector : constant Libadalang.Analysis.Ada_Node_Array :=
-           Exposed.Consume;
       begin
-         return Result : Node_Arrays.Node_Array (Vector'Length) do
-            for J in Vector'Range loop
-               Result.Data (J) := (Kernel   => Self.Kernel,
-                                   Ada_Node => Vector (J));
-            end loop;
-         end return;
+         if Root = No_Ada_Node then
+            return No_Semantic_Tree.Root_Nodes;
+         end if;
+
+         declare
+            Immediate : aliased Immediate_Iterators.Immediate_Iterator :=
+              Immediate_Iterators.Children (Root);
+            Exposed   : Exposed_Iterators.Exposed_Iterator (Immediate'Access);
+            Vector : constant Libadalang.Analysis.Ada_Node_Array :=
+              Exposed.Consume;
+         begin
+            return Result : Node_Arrays.Node_Array (Vector'Length) do
+               for J in Vector'Range loop
+                  Result.Data (J) := (Kernel   => Self.Kernel,
+                                      Ada_Node => Vector (J));
+               end loop;
+            end return;
+         end;
       end Root_Nodes;
 
       -------------
@@ -975,14 +986,19 @@ package body LAL.Semantic_Trees is
       is
          pragma Unreferenced (Category_Filter);
 
+         Root : constant Ada_Node :=
+           Libadalang.Analysis.Root (Self.Unit.all);
+
          Loc  : constant Langkit_Support.Slocs.Source_Location :=
            (Langkit_Support.Slocs.Line_Number (Sloc.Line),
             Langkit_Support.Slocs.Column_Number (Sloc.Column));
 
-         Node : Libadalang.Analysis.Ada_Node :=
-           Libadalang.Analysis.Lookup
-             (Libadalang.Analysis.Root (Self.Unit.all), Loc);
+         Node : Libadalang.Analysis.Ada_Node := No_Ada_Node;
       begin
+         if Root /= No_Ada_Node then
+            Node := Libadalang.Analysis.Lookup (Root, Loc);
+         end if;
+
          while Node /= No_Ada_Node loop
             if Is_Exposed (Node) then
                return Nodes.Node'(Kernel => Self.Kernel, Ada_Node => Node);
@@ -1074,12 +1090,7 @@ package body LAL.Semantic_Trees is
          Result.Update;
       end if;
 
-      --  Check whether the parsing was completed successfully
-      if Libadalang.Analysis.Root (Result.Unit.all) = No_Ada_Node then
-         return No_Semantic_Tree;
-      else
-         return Result;
-      end if;
+      return Result;
    end Get_Tree_For_File;
 
    ----------------
