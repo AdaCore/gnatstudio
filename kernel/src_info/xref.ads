@@ -66,7 +66,7 @@ package Xref is
    function Parameters
      (Entity : Root_Entity) return Parameter_Array is abstract;
    --  Return the list of parameters for a given subprogram.
-   --  Called must free the returned value
+   --  Caller must free the returned value
 
    function Find_All_References
      (Entity                : Root_Entity;
