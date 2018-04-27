@@ -217,7 +217,6 @@ package body GNATdoc.Frontend.Comment_Parser is
          E       : Entity_Id;
          Text    : String)
       is
-         S       : String renames Text;
          Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
@@ -548,12 +547,12 @@ package body GNATdoc.Frontend.Comment_Parser is
       --  Start of processing for Parse_Doc
 
       begin
-         if S = "" then
+         if Text = "" then
             return;
          end if;
 
-         Initialize_Parser (Context, S);
-         Parse (S);
+         Initialize_Parser (Context, Text);
+         Parse (S.all);
          Finalize_Parser;
          Set_Comment (E, Comment);
       end Parse_Doc;
