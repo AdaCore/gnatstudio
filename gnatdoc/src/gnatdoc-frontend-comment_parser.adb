@@ -1210,7 +1210,7 @@ package body GNATdoc.Frontend.Comment_Parser is
               (Comment    => Get_Comment (Enum),
                Entity     => LL.Get_Entity (Value),
                Value_Name => To_Unbounded_String (Get_Short_Name (Value)),
-               Text       => To_Unbounded_String (Get_Doc (Value).Text));
+               Text       => Get_Doc (Value).Text);
          end loop;
 
          --  Parse the documentation
@@ -1269,7 +1269,7 @@ package body GNATdoc.Frontend.Comment_Parser is
               (Comment    => Get_Comment (Rec),
                Entity     => LL.Get_Entity (Comp),
                Field_Name => To_Unbounded_String (Get_Short_Name (Comp)),
-               Text       => To_Unbounded_String (Get_Doc (Comp).Text));
+               Text       => Get_Doc (Comp).Text);
          end loop;
 
          --  Parse the documentation of the record
@@ -1328,7 +1328,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                  (Comment    => Get_Comment (Subp),
                   Entity     => LL.Get_Entity (Param),
                   Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
-                  Text       => To_Unbounded_String (Get_Doc (Param).Text));
+                  Text       => Get_Doc (Param).Text);
             end loop;
          end if;
 

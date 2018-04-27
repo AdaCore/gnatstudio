@@ -32,7 +32,7 @@ package body GNATdoc.Comment is
       Tag_Name  : Unbounded_String;
       Entity    : Root_Entity'Class;
       Attr_Name : Unbounded_String;
-      Text      : Unbounded_String);
+      Text      : Unbounded_String_Vectors.Vector);
 
    ----------------------
    -- Append_Field_Tag --
@@ -42,7 +42,7 @@ package body GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Field_Name : Unbounded_String;
-      Text       : Unbounded_String) is
+      Text       : Unbounded_String_Vectors.Vector) is
    begin
       Internal_Append_Tag
         (Comment   => Comment,
@@ -60,7 +60,7 @@ package body GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Param_Name : Unbounded_String;
-      Text       : Unbounded_String) is
+      Text       : Unbounded_String_Vectors.Vector) is
    begin
       Internal_Append_Tag
         (Comment   => Comment,
@@ -78,7 +78,7 @@ package body GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Value_Name : Unbounded_String;
-      Text       : Unbounded_String) is
+      Text       : Unbounded_String_Vectors.Vector) is
    begin
       Internal_Append_Tag
         (Comment   => Comment,
@@ -97,15 +97,16 @@ package body GNATdoc.Comment is
       Tag       : Unbounded_String;
       Entity    : Root_Entity'Class;
       Attribute : Unbounded_String;
-      Text      : Unbounded_String := Null_Unbounded_String)
-         return Tag_Cursor
+      Text      : Unbounded_String_Vectors.Vector :=
+        Unbounded_String_Vectors.Empty_Vector)
+      return Tag_Cursor
    is
       New_Tag_Info : constant Tag_Info_Ptr :=
                        new Tag_Info'
                          (Tag    => Tag,
                           Entity => <>,
                           Attr   => Attribute,
-                          Text   => Text);
+                          Text   => To_Unbounded_String (Text));
       New_Node     : constant Node_Ptr :=
                        new Node'
                         (Tag_Info => New_Tag_Info,
@@ -224,7 +225,7 @@ package body GNATdoc.Comment is
       Tag_Name  : Unbounded_String;
       Entity    : Root_Entity'Class;
       Attr_Name : Unbounded_String;
-      Text      : Unbounded_String)
+      Text      : Unbounded_String_Vectors.Vector)
    is
       C : Tag_Cursor;
    begin

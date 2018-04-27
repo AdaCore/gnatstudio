@@ -83,7 +83,7 @@ private package GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Field_Name : Unbounded_String;
-      Text       : Unbounded_String);
+      Text       : Unbounded_String_Vectors.Vector);
    --  Append "@field Field_Name Text" to the comment. Entity is the entity
    --  associated with Field_Name.
 
@@ -91,7 +91,7 @@ private package GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Param_Name : Unbounded_String;
-      Text       : Unbounded_String);
+      Text       : Unbounded_String_Vectors.Vector);
    --  Append "@param Param_Name Text" to the comment. Entity is the entity
    --  associated with Param_Name.
 
@@ -99,7 +99,7 @@ private package GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Value_Name : Unbounded_String;
-      Text       : Unbounded_String);
+      Text       : Unbounded_String_Vectors.Vector);
    --  Append "@value Value_Name Text" to the comment. Entity is the entity
    --  associated with Value_Name.
 
@@ -108,8 +108,9 @@ private package GNATdoc.Comment is
       Tag       : Unbounded_String;
       Entity    : Root_Entity'Class;
       Attribute : Unbounded_String;
-      Text      : Unbounded_String := Null_Unbounded_String)
-     return Tag_Cursor;
+      Text      : Unbounded_String_Vectors.Vector :=
+        Unbounded_String_Vectors.Empty_Vector)
+      return Tag_Cursor;
    --  Append "@Tag Attribute Text" to the comment. Entity is the entity
    --  associated with Attribute.
 
