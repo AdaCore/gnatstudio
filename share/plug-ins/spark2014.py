@@ -648,8 +648,8 @@ class GNATprove_Parser(tool_output.OutputParser):
         # what is failing in a vc not the location of said vc.
         global map_msg
 
-        objdir = os.path.join(
-            GPS.Project.root().object_dirs()[0],
+        artifact_dir = os.path.join(
+            GPS.Project.root().artifacts_dir(),
             obj_subdir_name)
 
         map_msg = {}
@@ -661,12 +661,13 @@ class GNATprove_Parser(tool_output.OutputParser):
                 unit = get_compunit_for_message(m)
                 full_id = unit, id
                 if unit not in imported_units:
-                    self.parsejson(unit, os.path.join(objdir, unit + ".spark"))
+                    self.parsejson(unit, os.path.join(artifact_dir,
+                                                      unit + ".spark"))
                     imported_units.add(unit)
                 extra = {}
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
-                    self.act_on_extra_info(m, extra, objdir, command)
+                    self.act_on_extra_info(m, extra, artifact_dir, command)
 
         if self.child is not None:
             self.child.on_exit(status, command)
@@ -935,20 +936,19 @@ class GNATProve_Plugin:
     def show_report(self):
         """show report produced in gnatprove/gnatprove.out"""
 
-        objdirs = GPS.Project.root().object_dirs()
-        default_objdir = objdirs[0]
-        report_file = os.path.join(default_objdir, obj_subdir_name,
+        artifact_dir = GPS.Project.root().artifacts_dir()
+        report_file = os.path.join(artifact_dir, obj_subdir_name,
                                    report_file_name)
 
         # if build mode is not the default one, the report file may be found in
         # the parent directory of the current object directory
 
         if not os.path.exists(report_file):
-            if default_objdir.endswith(os.sep):
-                default_objdir = default_objdir[:-len(os.sep)]
-            default_objdir = os.path.dirname(default_objdir)
+            if artifact_dir.endswith(os.sep):
+                artifact_dir = artifact_dir[:-len(os.sep)]
+            artifact_dir = os.path.dirname(artifact_dir)
             candidate_report_file = \
-                os.path.join(default_objdir,
+                os.path.join(artifact_dir,
                              obj_subdir_name,
                              report_file_name)
 
@@ -1180,11 +1180,10 @@ def start_ITP(tree, file_name, abs_fn_path, args=[], edit_session=False):
     itp_lib.print_debug("[ITP] Launched")
 
     # TODO ??? start_ITP and prove_check to be merged.
-    objdirs = GPS.Project.root().object_dirs()
-    default_objdir = objdirs[0]
+    artifact_dir = GPS.Project.root().artifacts_dir()
     obj_subdir_name = "gnatprove"
     # gnat_server must be launched from gnatprove dir to find why3.conf
-    dir_gnat_server = os.path.join(default_objdir, obj_subdir_name)
+    dir_gnat_server = os.path.join(artifact_dir, obj_subdir_name)
     mlw_file = ""
     file_name_no_ext = os.path.splitext(file_name)[0]
     for dir_name, sub_dir_name, files in os.walk(dir_gnat_server):
