@@ -984,24 +984,61 @@ package body LAL.Semantic_Trees is
          Category_Filter : Language.Tree.Category_Array :=
            Language.Tree.Null_Category_Array) return Semantic_Node'Class
       is
-         pragma Unreferenced (Category_Filter);
+         use type Language.Language_Category;
+         use Langkit_Support.Slocs;
 
          Root : constant Ada_Node :=
            Libadalang.Analysis.Root (Self.Unit.all);
 
-         Loc  : constant Langkit_Support.Slocs.Source_Location :=
-           (Langkit_Support.Slocs.Line_Number (Sloc.Line),
-            Langkit_Support.Slocs.Column_Number (Sloc.Column));
+         Loc  : Source_Location :=
+           (Line_Number (Sloc.Line), Column_Number (Sloc.Column));
 
-         Node : Libadalang.Analysis.Ada_Node := No_Ada_Node;
+         Node     : Libadalang.Analysis.Ada_Node := No_Ada_Node;
+         Token    : Libadalang.Analysis.Token_Type :=
+            Libadalang.Analysis.Lookup_Token (Self.Unit.all, Loc);
+         Result   : Nodes.Node;
+         Category : Language.Language_Category;
       begin
          if Root /= No_Ada_Node then
+            --  All spaces on the starting line of some compound node
+            --  are considered to be part of the node itself.
+            --  So we make Loc correction here to find correct node:
+            --  When Loc is not inside a token then shift Loc to next token
+            --  if the token is on the same line.
+
+            if Token /= Libadalang.Analysis.No_Token
+              and then End_Sloc (Libadalang.Analysis.Sloc_Range
+                                 (Libadalang.Analysis.Data (Token))) < Loc
+            then
+               Token := Libadalang.Analysis.Next (Token);
+
+               if Token /= Libadalang.Analysis.No_Token then
+                  declare
+                     Token_Loc : constant Source_Location :=
+                       Start_Sloc (Libadalang.Analysis.Sloc_Range
+                                   (Libadalang.Analysis.Data (Token)));
+                  begin
+                     if Token_Loc.Line = Loc.Line then
+                        Loc := Token_Loc;
+                     end if;
+                  end;
+               end if;
+            end if;
+
             Node := Libadalang.Analysis.Lookup (Root, Loc);
          end if;
 
          while Node /= No_Ada_Node loop
             if Is_Exposed (Node) then
-               return Nodes.Node'(Kernel => Self.Kernel, Ada_Node => Node);
+               Result := (Kernel => Self.Kernel, Ada_Node => Node);
+               Category := Result.Category;
+
+               --  Apply Category_Filter if present
+               if Category_Filter'Length = 0 or else
+                 (for some Element of Category_Filter => Element = Category)
+               then
+                  return Result;
+               end if;
             end if;
 
             Node := Node.Parent;
