@@ -607,6 +607,13 @@ package body Vsearch is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether a search is in progress
 
+   type In_Docked_Search_View_Filter is new Action_Filter_Record with
+     null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Docked_Search_View_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether the Search view is docked and currently focused
+
    type Find_Next_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Find_Next_Command;
@@ -646,6 +653,13 @@ package body Vsearch is
    --  Command used to replace all the occurrences of the search pattern by the
    --  replace pattern.
 
+   type Exit_Search_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Exit_Search_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Command used to exit the Search view and give the focus back to the
+   --  previously focused area.
+
    type New_Predefined_Regexp is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : New_Predefined_Regexp;
@@ -679,11 +693,6 @@ package body Vsearch is
      (Vsearch : not null access Vsearch_Record'Class;
       Value   : String);
    --  Add a history entry to the combo box.
-
-   procedure On_Destroy_Child
-     (Self : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the Search view is destroyed. Give the focus to the current
-   --  editor.
 
    -------------------------
    -- Get_Label_From_Mode --
@@ -2597,27 +2606,7 @@ package body Vsearch is
       Widget_Callback.Connect (Child, Signal_Unfloat_Child, On_Float'Access);
 
       On_Float (Child);
-
-      Widget_Callback.Connect
-        (Child, Signal_Before_Destroy_Child, On_Destroy_Child'Access);
    end On_Create;
-
-   ----------------------
-   -- On_Destroy_Child --
-   ----------------------
-
-   procedure On_Destroy_Child
-     (Self : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Child  : constant GPS_MDI_Child := GPS_MDI_Child (Self);
-      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                  Child.Kernel.Get_Buffer_Factory.Get
-                    (Open_View => False,
-                     Focus     => True)
-        with Unreferenced;
-   begin
-      null;
-   end On_Destroy_Child;
 
    ---------------------------
    -- Get_Or_Create_Vsearch --
@@ -2916,6 +2905,23 @@ package body Vsearch is
       return Vsearch_Module_Id.Search_Started;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Docked_Search_View_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context), Visible_Only => True);
+   begin
+      return View /= null
+        and then not Search_Views.Child_From_View (View).Is_Floating
+        and then View.Pattern_Combo.Get_Child.Has_Focus;
+   end Filter_Matches_Primitive;
+
    -------------
    -- Execute --
    -------------
@@ -3067,6 +3073,35 @@ package body Vsearch is
       if View /= null and then View.Replace_All_Button.Get_Sensitive then
          On_Replace_Search (View);
       end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Exit_Search_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Kernel);
+   begin
+      if View /= null then
+         declare
+            Child : constant MDI_Child := Search_Views.Child_From_View (View);
+         begin
+            if Child /= null then
+               if not Child.Is_Floating then
+                  Child.Give_Focus_To_Previous_Child
+                    (From_Same_Area => False);
+               end if;
+            end if;
+         end;
+      end if;
+
       return Commands.Success;
    end Execute;
 
@@ -3549,6 +3584,14 @@ package body Vsearch is
          new Replace_All_Command,
          Description => -("Replace all the occurrences of the search pattern "
            & "by the replace pattern"),
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "exit search",
+         new Exit_Search_Command,
+         Description => -("Exit the Search view and give the focus back to "
+           & "the widget focused before entering the Search view."),
+         Filter      => new In_Docked_Search_View_Filter,
          Category    => -"Search");
 
       Register_Preferences (Kernel);

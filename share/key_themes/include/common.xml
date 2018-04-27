@@ -75,5 +75,6 @@
   <key action="delete file" >BackSpace</key>
   <key action="Rename file" >F2</key>
 
+  <key action="exit search">Escape</key>
   <key action="Global Search in context: File Names">shift-F3</key>
 </GPS>
