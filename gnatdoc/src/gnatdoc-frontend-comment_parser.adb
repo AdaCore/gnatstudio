@@ -1162,15 +1162,10 @@ package body GNATdoc.Frontend.Comment_Parser is
          S       : String)
       is
          Matches : Match_Array (0 .. 3);
-         Str     : Unbounded_String := To_Unbounded_String (S);
 
       begin
          if Index (S, "@") > 0 then
-            if Context.Options.Extensions_Enabled then
-               Parse_Extract_Doc (Context, E, Str);
-            end if;
-
-            Parse_Doc (Context, E, To_String (Str));
+            Parse_Doc (Context, E, S);
             return;
          end if;
 
@@ -1310,7 +1305,25 @@ package body GNATdoc.Frontend.Comment_Parser is
 
       procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
          Has_Params : constant Boolean := Present (Get_Entities (Subp));
+         Doc        : Comment_Result   := Get_Doc (Subp);
+         Text       : constant String  := To_String (Doc.Text);
+
       begin
+         --  Move documentation of generic formals and subprogram formals to
+         --  the corresponding entity.
+
+         if Context.Options.Extensions_Enabled
+           and then Index (Text, "@") > 0
+         then
+            declare
+               Str : Unbounded_String := To_Unbounded_String (Text);
+            begin
+               Parse_Extract_Doc (Context, Subp, Str);
+               Doc.Text.Clear;
+               Doc.Text.Append (Str);
+            end;
+         end if;
+
          --  Initialize the structured comment associated with this entity
 
          Set_Comment (Subp, New_Structured_Comment);
@@ -1321,15 +1334,21 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Search for documentation located in the subprogram profile
          --  (that is, comments located close to the parameter declarations)
 
-         if True then
-            for Param of Get_Entities (Subp).all loop
+         for Param of Get_Entities (Subp).all loop
+            if Context.Options.Extensions_Enabled then
+               Append_Param_Tag
+                 (Comment    => Get_Comment (Subp),
+                  Entity     => LL.Get_Entity (Param),
+                  Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
+                  Text       => Unbounded_String_Vectors.Empty_Vector);
+            else
                Append_Param_Tag
                  (Comment    => Get_Comment (Subp),
                   Entity     => LL.Get_Entity (Param),
                   Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
                   Text       => Get_Doc (Param).Text);
-            end loop;
-         end if;
+            end if;
+         end loop;
 
          --  Parse the documentation of the subprogram
 
