@@ -283,6 +283,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                then
                   if not Is_Package (E)
                     and then not Is_Subprogram_Or_Entry (E)
+                    and then not Is_Access_To_Subprogram_Type (E)
                   then
                      Report_Error;
                   end if;
@@ -290,7 +291,9 @@ package body GNATdoc.Frontend.Comment_Parser is
                elsif Tag_Name = "exception"
                  or else Tag_Name = "param"
                then
-                  if not Is_Subprogram_Or_Entry (E) then
+                  if not Is_Subprogram_Or_Entry (E)
+                    and then not Is_Access_To_Subprogram_Type (E)
+                  then
                      Report_Error;
                   end if;
 
@@ -300,7 +303,9 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end if;
 
                elsif Tag_Name = "return" then
-                  if Get_Kind (E) /= E_Function then
+                  if not Kind_In (Get_Kind (E), E_Function,
+                                                E_Access_Function_Type)
+                  then
                      Report_Error;
                   end if;
                end if;
@@ -1405,6 +1410,10 @@ package body GNATdoc.Frontend.Comment_Parser is
          end if;
 
          if Is_Subprogram_Or_Entry (Entity) then
+            Parse_Subprogram_Comments (Entity);
+            return Skip;
+
+         elsif Is_Access_To_Subprogram_Type (Entity) then
             Parse_Subprogram_Comments (Entity);
             return Skip;
 

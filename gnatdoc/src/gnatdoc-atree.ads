@@ -621,7 +621,8 @@ private package GNATdoc.Atree is
 
       --  Synthesized Ada values
 
-      E_Access_Subprogram_Type,
+      E_Access_Procedure_Type,
+      E_Access_Function_Type,
       E_Discriminant,
       E_Component,
       E_Formal,
@@ -901,6 +902,8 @@ private package GNATdoc.Atree is
    --  Return true if E1 and E2 are defined in the same file
 
    function Is_Alias
+     (E : Entity_Id) return Boolean;
+   function Is_Access_To_Subprogram_Type
      (E : Entity_Id) return Boolean;
 
    function Is_Compilation_Unit

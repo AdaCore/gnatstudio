@@ -52,6 +52,7 @@ package body GNATdoc.Frontend is
 
       --  Reserved Ada 83 words
       Tok_And,
+      Tok_Access,
       Tok_Begin,
       Tok_Body,
       Tok_Case,
@@ -2506,6 +2507,27 @@ package body GNATdoc.Frontend is
                                   or else Prev_Token = Tok_Semicolon)
                      then
                         In_Generic_Decl := True;
+
+                     --  Fix decoration of access to subprograms
+
+                     elsif In_Type_Definition
+                       and then Prev_Token = Tok_Access
+                     then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           pragma Assert (LL.Is_Access (Scope));
+
+                           if Token = Tok_Function then
+                              Set_Kind (Scope, E_Access_Function_Type);
+                           elsif Token = Tok_Procedure then
+                              Set_Kind (Scope, E_Access_Procedure_Type);
+                           else
+                              pragma Assert (False);
+                              raise Program_Error;
+                           end if;
+                        end;
                      end if;
 
                   when Tok_Pragma =>
@@ -3617,7 +3639,11 @@ package body GNATdoc.Frontend is
                                  then
                                     Do_Exit;
 
-                                 elsif Get_Kind (Scope) = E_Access_Type then
+                                 elsif Kind_In (Get_Kind (Scope),
+                                         E_Access_Type,
+                                         E_Access_Procedure_Type,
+                                         E_Access_Function_Type)
+                                 then
                                     Do_Exit;
 
                                  elsif
@@ -3980,7 +4006,11 @@ package body GNATdoc.Frontend is
                               Set_Src (Scope, Printout);
                               Clear_Src;
 
-                           elsif Get_Kind (Scope) = E_Access_Type then
+                           elsif Kind_In (Get_Kind (Scope),
+                                   E_Access_Type,
+                                   E_Access_Procedure_Type,
+                                   E_Access_Function_Type)
+                           then
                               if In_Representation_Clause then
                                  --  We should append here to Scope the
                                  --  sources of the representation clause???
@@ -4254,7 +4284,10 @@ package body GNATdoc.Frontend is
                  or else Is_Concurrent_Type_Or_Object (E)
                   --  Include access types to handle the formals of access to
                   --  subprograms
-                 or else Get_Kind (E) = E_Access_Type
+                 or else Kind_In (Get_Kind (E),
+                           E_Access_Type,
+                           E_Access_Procedure_Type,
+                           E_Access_Function_Type)
                  or else Get_Kind (E) = E_Enumeration_Type
                   --  Include class-wide types because the Xref database
                   --  decorates abstract tagged records as E_Class_Wide types
@@ -5303,7 +5336,11 @@ package body GNATdoc.Frontend is
                                  then
                                     Do_Exit;
 
-                                 elsif Get_Kind (Scope) = E_Access_Type then
+                                 elsif Kind_In (Get_Kind (Scope),
+                                         E_Access_Type,
+                                         E_Access_Procedure_Type,
+                                         E_Access_Function_Type)
+                                 then
                                     Do_Exit;
 
                                  elsif

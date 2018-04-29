@@ -2035,6 +2035,18 @@ package body GNATdoc.Atree is
       return E.Is_Alias;
    end Is_Alias;
 
+   ----------------------------------
+   -- Is_Access_To_Subprogram_Type --
+   ----------------------------------
+
+   function Is_Access_To_Subprogram_Type
+     (E : Entity_Id) return Boolean is
+   begin
+      return Kind_In (Get_Kind (E),
+               E_Access_Function_Type,
+               E_Access_Procedure_Type);
+   end Is_Access_To_Subprogram_Type;
+
    -------------------------
    -- Is_Compilation_Unit --
    -------------------------
