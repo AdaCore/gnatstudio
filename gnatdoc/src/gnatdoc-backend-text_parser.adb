@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Latin_1; use Ada.Characters.Latin_1;
+with Ada.Strings.Fixed;
 with GNAT.Regpat;            use GNAT.Regpat;
 
 with GNATdoc.Customization.Markup_Generators;
@@ -276,7 +277,9 @@ package body GNATdoc.Backend.Text_Parser is
                   Line_Events.Append
                     ((Text,
                       To_Unbounded_String
-                       (Line (First .. Doc_Tag_Matches (0).First - 1))));
+                       (Ada.Strings.Fixed.Trim
+                          (Line (First .. Doc_Tag_Matches (0).First - 1),
+                           Ada.Strings.Right))));
                end if;
 
                First := Doc_Tag_Matches (0).Last + 1;

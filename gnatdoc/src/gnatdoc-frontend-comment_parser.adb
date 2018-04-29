@@ -320,14 +320,8 @@ package body GNATdoc.Frontend.Comment_Parser is
 
             if No (Tag_Loc) then
                Append_Text (Current, S);
+
                return;
-            end if;
-
-            --  Append characters to the last opened tag.
-
-            if Tag_Loc.First > S'First then
-               Append_Text
-                 (Current, Filter (S (S'First .. Tag_Loc.First - 2)));
             end if;
 
             declare
@@ -348,10 +342,17 @@ package body GNATdoc.Frontend.Comment_Parser is
                if not Is_Custom_Tag (Tag_Text) then
                   Trace (Me, "--> Unknown tag: >" & Tag_Text & "<");
 
-                  Append_Text (Current, S (Tag_Loc.First .. Tag_Loc.Last));
-                  Line_Last := Tag_Loc.Last + 1;
+                  Append_Text (Current, S (S'First .. Tag_Loc.Last));
+                  Line_Last := Tag_Loc.Last;
 
                else
+                  --  Append characters to the last opened tag.
+
+                  if Tag_Loc.First > S'First then
+                     Append_Text
+                       (Current, Filter (S (S'First .. Tag_Loc.First - 2)));
+                  end if;
+
                   J := Tag_Loc.Last + 1;
 
                   Scan_Word
@@ -471,12 +472,14 @@ package body GNATdoc.Frontend.Comment_Parser is
                                     end loop;
 
                                     Append_Text (Current, Offset * ' ');
-                                 end if;
-
-                                 Append_Text (Current, Text);
-
-                                 if Present (Next_Loc) then
+                                    Append_Text
+                                      (Current,
+                                       Ada.Strings.Fixed.Trim
+                                         (Text, Ada.Strings.Left));
                                     Append_Text (Current, (1 => ASCII.LF));
+
+                                 else
+                                    Append_Text (Current, Text);
                                  end if;
                               end;
 
