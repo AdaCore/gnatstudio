@@ -2360,7 +2360,7 @@ package body Ada_Analyzer is
 
             Do_Push := True;
 
-         elsif     Reserved = Tok_Is
+         elsif    (Reserved = Tok_Is and then Num_Parens = 0)
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
