@@ -1871,6 +1871,12 @@ package body GNATdoc.Frontend is
                   end if;
                end Do_Breakpoint;
 
+               procedure Add_Internal_Return (E : Entity_Id);
+               --  E is a function, a generic function or an access to a
+               --  function. Build an internal E_Return entity and attach
+               --  it to E. It will be used to store the documentation of
+               --  E associated with its @return tag.
+
                procedure Decorate_Entity (E : Entity_Id);
                --  Complete the decoration of entity E
 
@@ -1882,6 +1888,19 @@ package body GNATdoc.Frontend is
 
                procedure Decorate_Scope (E : Entity_Id);
                --  Workaround missing decoration of the Scope
+
+               -------------------------
+               -- Add_Internal_Return --
+               -------------------------
+
+               procedure Add_Internal_Return (E : Entity_Id) is
+                  Return_E : constant Entity_Id :=
+                               New_Internal_Entity (Context, Lang, "return");
+               begin
+                  Set_Kind (Return_E, E_Return);
+                  LL.Set_Location (Return_E, LL.Get_Location (E));
+                  Set_Internal_Return (E, Return_E);
+               end Add_Internal_Return;
 
                ---------------------
                -- Decorate_Entity --
@@ -1933,8 +1952,19 @@ package body GNATdoc.Frontend is
                      end if;
                   end Fix_Wrong_Xref_Decoration;
 
+               --  Start of processing for Decorate_Entity
+
                begin
                   Decorate_Scope (E);
+
+                  if Context.Options.Extensions_Enabled then
+                     if Kind_In (Get_Kind (E),
+                          E_Function,
+                          E_Generic_Function)
+                     then
+                        Add_Internal_Return (E);
+                     end if;
+                  end if;
 
                   if In_Private_Part (Current_Context)
                     and then Get_Kind (E) /= E_Formal
@@ -2521,6 +2551,8 @@ package body GNATdoc.Frontend is
 
                            if Token = Tok_Function then
                               Set_Kind (Scope, E_Access_Function_Type);
+                              Add_Internal_Return (Scope);
+
                            elsif Token = Tok_Procedure then
                               Set_Kind (Scope, E_Access_Procedure_Type);
                            else

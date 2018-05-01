@@ -207,6 +207,11 @@
 --       inherited methods of the full view contains the methods inherited from
 --       the full view of its parent.
 
+--    Internal_Return
+--       Defined in all entities. Set in functions, access to functions, and
+--       generic functions. Used to attach the documentation associated with
+--       the @return tag.
+
 --    Instance_Of (LL)
 --       Defined in generics. Set in instances of generics.
 
@@ -632,6 +637,11 @@ private package GNATdoc.Atree is
         --  undecorated generic formals. To safely identify generic
         --  formals use Is_Generic_Formal
 
+      E_Return,
+        --  This kind of entity is used by the frontend to internally create
+        --  an entity to which attach the documentation associated with the
+        --  value returned by functions (i.e. documentation of tag @return).
+
       E_Tagged_Record_Type,
 
       --  C/C++
@@ -829,6 +839,12 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return String;
    function Get_Full_View
      (E : Entity_Id) return Entity_Id;
+
+   function Get_Internal_Return
+     (E : Entity_Id) return Entity_Id;
+   --  Return the internal entity added by the frontend to the scope of
+   --  functions and generic functions to attach the documentation found
+   --  in the @return tag.
 
    function Get_Generic_Formals_Loc
      (E : Entity_Id) return General_Location;
@@ -1056,6 +1072,9 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Boolean := True);
    procedure Set_Has_Unknown_Discriminants
      (E : Entity_Id);
+
+   procedure Set_Internal_Return
+     (E : Entity_Id; Value : Entity_Id);
 
    procedure Set_In_Private_Part
      (E : Entity_Id);
@@ -1369,6 +1388,10 @@ private
          Scope           : Entity_Id;
          Parent_Package  : Entity_Id;
          --  Present in packages
+         Internal_Return : Entity_Id;
+         --  Present in functions, access to functions and generic functions.
+         --  Internal entity used to attach the documentation associated with
+         --  the @return tag.
 
          Corresponding_Spec : Entity_Id;
          Corresponding_Body : Entity_Id;

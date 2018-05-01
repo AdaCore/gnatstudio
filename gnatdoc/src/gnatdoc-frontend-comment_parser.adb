@@ -84,6 +84,11 @@ package body GNATdoc.Frontend.Comment_Parser is
 
       No_Location : constant Location := (0, 0);
 
+      procedure Check_Tag
+         (E        : Entity_Id;
+          Tag_Name : String);
+      --  Check if this tag is applicable to entity E
+
       procedure Error
         (Entity  : Entity_Id;
          Msg     : String);
@@ -121,6 +126,88 @@ package body GNATdoc.Frontend.Comment_Parser is
         (J   : in out Natural;
          Loc : out Location);
       --  Scan S searching for the next end of line
+
+      ---------------
+      -- Check_Tag --
+      ---------------
+
+      procedure Check_Tag (E : Entity_Id; Tag_Name : String) is
+
+         function KindToText return String;
+         --  Convert the kind of E into a lower-case text replacing
+         --  underscores by spaces (for example, E_Record_Type is
+         --  returned as "record type").
+
+         procedure Report_Error;
+         --  Report the error
+
+         ----------------
+         -- KindToText --
+         ----------------
+
+         function KindToText return String is
+            Low_Ekind_Img : constant String := To_Lower (Get_Kind (E)'Img);
+            Ekind_Img     : constant String :=
+                              Low_Ekind_Img (Low_Ekind_Img'First + 2
+                                               .. Low_Ekind_Img'Last);
+            Result : String (Ekind_Img'Range);
+         begin
+            for J in Ekind_Img'Range loop
+               if Ekind_Img (J) = '_' then
+                  Result (J) := ' ';
+               else
+                  Result (J) := Ekind_Img (J);
+               end if;
+            end loop;
+
+            return Result;
+         end KindToText;
+
+         ------------------
+         -- Report_Error --
+         ------------------
+
+         procedure Report_Error is
+         begin
+            Error (E, "@" & Tag_Name & " not applicable to " & KindToText);
+         end Report_Error;
+
+      --  Start of processing for Check_Tag
+
+      begin
+         if Tag_Name = "description"
+           or else Tag_Name = "summary"
+         then
+            if not Is_Package (E)
+              and then not Is_Subprogram_Or_Entry (E)
+              and then not Is_Access_To_Subprogram_Type (E)
+            then
+               Report_Error;
+            end if;
+
+         elsif Tag_Name = "exception"
+           or else Tag_Name = "param"
+         then
+            if not Is_Subprogram_Or_Entry (E)
+              and then not Is_Access_To_Subprogram_Type (E)
+            then
+               Report_Error;
+            end if;
+
+         elsif Tag_Name = "field" then
+            if not Is_Record_Type (E) then
+               Report_Error;
+            end if;
+
+         elsif Tag_Name = "return" then
+            if not Kind_In (Get_Kind (E), E_Function,
+                                          E_Generic_Function,
+                                          E_Access_Function_Type)
+            then
+               Report_Error;
+            end if;
+         end if;
+      end Check_Tag;
 
       -----------
       -- Error --
@@ -224,97 +311,9 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the contents of S searching for the next tag
 
          procedure Parse (S : String) is
-
-            procedure Check_Tag (Tag_Name : String);
-            --  Check if this tag is applicable to entity E
-
-            ---------------
-            -- Check_Tag --
-            ---------------
-
-            procedure Check_Tag (Tag_Name : String) is
-
-               function KindToText return String;
-               --  Convert the kind of E into a lower-case text replacing
-               --  underscores by spaces (for example, E_Record_Type is
-               --  returned as "record type").
-
-               procedure Report_Error;
-               --  Report the error
-
-               ----------------
-               -- KindToText --
-               ----------------
-
-               function KindToText return String is
-                  Low_Ekind_Img : constant String :=
-                                    To_Lower (Get_Kind (E)'Img);
-                  Ekind_Img     : constant String :=
-                                    Low_Ekind_Img (Low_Ekind_Img'First + 2
-                                                     .. Low_Ekind_Img'Last);
-                  Result : String (Ekind_Img'Range);
-               begin
-                  for J in Ekind_Img'Range loop
-                     if Ekind_Img (J) = '_' then
-                        Result (J) := ' ';
-                     else
-                        Result (J) := Ekind_Img (J);
-                     end if;
-                  end loop;
-
-                  return Result;
-               end KindToText;
-
-               ------------------
-               -- Report_Error --
-               ------------------
-
-               procedure Report_Error is
-               begin
-                  Error (E,
-                    "@" & Tag_Name & " not applicable to " & KindToText);
-               end Report_Error;
-
-               --  Report the error
-
-            begin
-               if Tag_Name = "description"
-                 or else Tag_Name = "summary"
-               then
-                  if not Is_Package (E)
-                    and then not Is_Subprogram_Or_Entry (E)
-                    and then not Is_Access_To_Subprogram_Type (E)
-                  then
-                     Report_Error;
-                  end if;
-
-               elsif Tag_Name = "exception"
-                 or else Tag_Name = "param"
-               then
-                  if not Is_Subprogram_Or_Entry (E)
-                    and then not Is_Access_To_Subprogram_Type (E)
-                  then
-                     Report_Error;
-                  end if;
-
-               elsif Tag_Name = "field" then
-                  if not Is_Record_Type (E) then
-                     Report_Error;
-                  end if;
-
-               elsif Tag_Name = "return" then
-                  if not Kind_In (Get_Kind (E), E_Function,
-                                                E_Access_Function_Type)
-                  then
-                     Report_Error;
-                  end if;
-               end if;
-            end Check_Tag;
-
-            --  Local variables
-
             Index   : Natural := S'First;
             Tag_Loc : constant Location := Scan_Tag (Index);
+
          begin
             --  Regular string. Let's append it to the current node value.
 
@@ -366,7 +365,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                   Line_Last := J;
                   pragma Assert (J > S'Last or else S (J) = ASCII.LF);
 
-                  Check_Tag (Tag_Text);
+                  Check_Tag (E, Tag_Text);
 
                   if Tag_Text = Private_Tag then
                      Private_Entities_List.Append (E);
@@ -675,7 +674,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end loop;
 
                   if not Found then
-                     Error (E, "generic formal '" & Name & "' not found");
+                     Error (E, "wrong generic formal name '" & Name & "'");
                   end if;
                end Search_Generic_Formal;
 
@@ -701,18 +700,19 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end loop;
 
                   if not Found then
-                     Error (E, "parameter '" & Name & "' not found");
+                     Error (E, "wrong parameter name '" & Name & "'");
                   end if;
                end Search_Parameter;
 
                --  Local variables
 
-               New_Tag   : constant String := "gen_param";
-               Param_Tag : constant String := "param";
-               Attr_Loc  : Location;
-               Text_Loc  : Location;
-               Line_Last : Natural;
-               J         : Natural;
+               New_Tag    : constant String := "gen_param";
+               Param_Tag  : constant String := "param";
+               Return_Tag : constant String := "return";
+               Attr_Loc   : Location;
+               Text_Loc   : Location;
+               Line_Last  : Natural;
+               J          : Natural;
 
             --  Start of processing for Process_Tag
 
@@ -722,12 +722,51 @@ package body GNATdoc.Frontend.Comment_Parser is
                --  stage).
 
                if Tag_Name /= Param_Tag
+                 and then Tag_Name /= Return_Tag
                  and then Tag_Name /= New_Tag
                then
                   Append_Text
                     (ASCII.LF & " "
                       & S (Tag_Loc.First .. Tag_Loc.Last) & " ");
                   Line_Last := Tag_Loc.Last;
+
+               --  Handle Tags without entity name (for now only @return)
+
+               elsif Tag_Name = Return_Tag then
+                  J := Tag_Loc.Last + 1;
+
+                  Scan_Line
+                    (J   => J,
+                     Loc => Text_Loc);
+
+                  Line_Last := J;
+                  pragma Assert (J > S'Last or else S (J) = ASCII.LF);
+
+                  --  Attach this documentation to the internal entity
+                  --  added by the frontend.
+
+                  if Kind_In (Get_Kind (E), E_Access_Function_Type,
+                                            E_Function,
+                                            E_Generic_Function)
+                  then
+                     Current_E := Get_Internal_Return (E);
+                     pragma Assert (Present (Current_E));
+
+                     if Present (Get_Doc (Current_E)) then
+                        Error (Current_E, "return documented twice");
+                     end if;
+
+                  --  Report the error (wrong use of @return)
+
+                  else
+                     Check_Tag (E, Tag_Name);
+                  end if;
+
+                  if Present (Text_Loc) then
+                     Append_Text (S (Text_Loc.First .. Text_Loc.Last));
+                  end if;
+
+               --  Handle Tags with entity name
 
                else
                   J := Tag_Loc.Last + 1;
@@ -743,7 +782,10 @@ package body GNATdoc.Frontend.Comment_Parser is
                   Line_Last := J;
                   pragma Assert (J > S'Last or else S (J) = ASCII.LF);
 
-                  if No (Attr_Loc) then
+                  if No (Attr_Loc)
+                    and then (Tag_Name = Param_Tag
+                                or else Tag_Name = New_Tag)
+                  then
                      Error (E, "missing parameter name");
 
                   elsif Tag_Name = Param_Tag then
@@ -816,6 +858,10 @@ package body GNATdoc.Frontend.Comment_Parser is
 
                Process_Tag (Tag_Loc, Index);
             end loop;
+
+            if Present (Current_E) then
+               Set_Current_Entity_Doc;
+            end if;
          end Parse;
 
       --  Start of processing for Parse_Extract_Doc
@@ -1314,23 +1360,34 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
          Has_Params : constant Boolean := Present (Get_Entities (Subp));
          Doc        : Comment_Result   := Get_Doc (Subp);
-         Text       : constant String  := To_String (Doc.Text);
 
       begin
          --  Move documentation of generic formals and subprogram formals to
-         --  the corresponding entity.
+         --  the corresponding entity; on functions move also documentation
+         --  of returned info to the internal return entity built by the
+         --  frontend.
 
-         if Context.Options.Extensions_Enabled
-           and then Index (Text, "@") > 0
-         then
-            declare
-               Str : Unbounded_String := To_Unbounded_String (Text);
-            begin
-               Parse_Extract_Doc (Context, Subp, Str);
-               Doc.Text.Clear;
-               Doc.Text.Append (Str);
-            end;
-         end if;
+         declare
+            Text : constant String  := To_String (Doc.Text);
+
+         begin
+            if Context.Options.Extensions_Enabled
+              and then Index (Text, "@") > 0
+            then
+               declare
+                  Str : Unbounded_String := To_Unbounded_String (Text);
+               begin
+                  Parse_Extract_Doc (Context, Subp, Str);
+
+                  --  Update the subprogram documentation not moved to its
+                  --  formals and return entities. This pending documentation
+                  --  will be parsed by Parse_Doc_Wrapper.
+
+                  Doc.Text.Clear;
+                  Doc.Text.Append (Str);
+               end;
+            end if;
+         end;
 
          --  Initialize the structured comment associated with this entity
 
@@ -1361,7 +1418,7 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the documentation of the subprogram
 
          if Get_Doc (Subp) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Subp, To_String (Get_Doc (Subp).Text));
+            Parse_Doc_Wrapper (Context, Subp, To_String (Doc.Text));
             Set_Doc (Subp, No_Comment_Result);
          end if;
 

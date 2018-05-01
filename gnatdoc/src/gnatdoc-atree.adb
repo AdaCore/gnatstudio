@@ -1070,6 +1070,16 @@ package body GNATdoc.Atree is
       return E.Inherited_Methods'Access;
    end Get_Inherited_Methods;
 
+   -------------------------
+   -- Get_Internal_Return --
+   -------------------------
+
+   function Get_Internal_Return
+     (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Internal_Return;
+   end Get_Internal_Return;
+
    --------------
    -- Get_Kind --
    --------------
@@ -1958,6 +1968,7 @@ package body GNATdoc.Atree is
 
               Scope           => No_Entity,
               Parent_Package  => No_Entity,
+              Internal_Return => No_Entity,
 
               Corresponding_Spec => No_Entity,
               Corresponding_Body => No_Entity,
@@ -2997,6 +3008,22 @@ package body GNATdoc.Atree is
       E.Has_Private_Parent := Value;
    end Set_Has_Private_Parent;
 
+   -------------------------
+   -- Set_Internal_Return --
+   -------------------------
+
+   procedure Set_Internal_Return
+     (E : Entity_Id; Value : Entity_Id) is
+   begin
+      pragma Assert (Get_Kind (Value) = E_Return
+        and then Kind_In (Get_Kind (E),
+                   E_Access_Function_Type,
+                   E_Function,
+                   E_Generic_Function));
+
+      E.Internal_Return := Value;
+   end Set_Internal_Return;
+
    ------------------
    -- Set_Is_Alias --
    ------------------
@@ -3289,6 +3316,10 @@ package body GNATdoc.Atree is
 
                EInfo_List.Next (Cursor);
             end loop;
+
+            if Present (Get_Internal_Return (E_Info)) then
+               Do_Process (Get_Internal_Return (E_Info), Scope_Level + 1);
+            end if;
 
             --  (Ada) Do not process primitives of tagged types since they are
             --  defined in the scope of the tagged type (and hence they would
