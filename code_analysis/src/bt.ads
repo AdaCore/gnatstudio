@@ -33,7 +33,8 @@ package BT is
    type Event_Enum is
      (Postcondition_Assume_Event, Induction_Var_Assume_Event,
       Other_From_Assume_Event, Non_Invalid_Input_Assume_Event,
-      Precond_Assume_Event, Jump_Event, Check_Event, Precondition_Event);
+      Precond_Assume_Event, Jump_Event, Check_Event, Precondition_Event,
+      Conditional_Precond_Checks_Event);
    --  Events that may trigger a backtrace.
 
    subtype Line_Number is Integer range 0 .. 2 ** 21 - 1;

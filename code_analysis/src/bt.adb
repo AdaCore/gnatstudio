@@ -46,6 +46,8 @@ package body BT is
             return "precondition check";
          when Jump_Event =>
             return "jump";
+         when Conditional_Precond_Checks_Event =>
+            return "conditional precondition check";
       end case;
    end Readable_Event_Kind;
 
