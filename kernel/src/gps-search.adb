@@ -1512,4 +1512,14 @@ package body GPS.Search is
         & Text & "</span>";
    end Tag;
 
+   --------------------
+   -- Reset_Progress --
+   --------------------
+
+   procedure Reset_Progress
+     (Self : not null access Search_Provider) is
+   begin
+      Self.Searched_Count := 0;
+   end Reset_Progress;
+
 end GPS.Search;

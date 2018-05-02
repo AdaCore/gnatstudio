@@ -151,7 +151,8 @@ package body GPS.Kernel.Search.Filenames is
 
       case Step is
          when User_File =>
-            Self.Data := (Step => User_File);
+            Self.Data :=
+              (Step => User_File);
          when Project_Sources =>
             Trace (Me, "Will parse name of project sources");
             if Self.Files = null then
@@ -159,8 +160,8 @@ package body GPS.Kernel.Search.Filenames is
                  Get_Project (Self.Kernel).Source_Files (Recursive => True);
             end if;
             Self.Data :=
-              (Step  => Project_Sources,
-               Index => Self.Files'First - 1);
+              (Step   => Project_Sources,
+               Index  => Self.Files'First - 1);
          when Runtime_Sources =>
             Trace (Me, "Will parse name of runtime sources");
             if Self.Runtime = null then
@@ -174,8 +175,8 @@ package body GPS.Kernel.Search.Filenames is
          when Project_Files =>
             Trace (Me, "Will parse name of project files");
             Self.Data :=
-              (Step  => Project_Files,
-               Iter  => Get_Project (Self.Kernel).Start (Recursive => True));
+              (Step => Project_Files,
+               Iter => Get_Project (Self.Kernel).Start (Recursive => True));
          when Other_Files =>
             Trace (Me, "Will parse name of files in source_dirs");
 
@@ -193,7 +194,7 @@ package body GPS.Kernel.Search.Filenames is
                      (Recursive => True));
                end if;
 
-               Self.Data                 :=
+               Self.Data :=
                  (Step         => Other_Files,
                   Files_In_Dir => null,
                   Dirs_Index   => Self.Source_Dirs'First,
@@ -206,7 +207,7 @@ package body GPS.Kernel.Search.Filenames is
                end if;
 
             else
-               Self.Data                 :=
+               Self.Data :=
                  (Step         => Other_Files,
                   Files_In_Dir => null,
                   Dirs_Index   => Natural'Last,
@@ -247,6 +248,7 @@ package body GPS.Kernel.Search.Filenames is
          Ada.Strings.Fixed.Index (Text, "/") >= Text'First or else
          Ada.Strings.Fixed.Index (Text, "\") >= Text'First;
 
+      Self.Searched_Count := 0;
       Self.Seen.Clear;
       Set_Step (Self, User_File);
 
@@ -349,6 +351,7 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Index := Self.Data.Index + 1;
+               Self.Searched_Count := Self.Searched_Count + 1;
                Check (Self.Files (Self.Data.Index).File,
                       Self.Files (Self.Data.Index).Project);
                exit For_Each_Step when not Continue;
@@ -360,6 +363,7 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Runtime_Index := Self.Data.Runtime_Index + 1;
+               Self.Searched_Count := Self.Searched_Count + 1;
                Check (Self.Runtime (Self.Data.Runtime_Index), No_Project);
                exit For_Each_Step when not Continue;
             end loop;
@@ -371,6 +375,7 @@ package body GPS.Kernel.Search.Filenames is
                exit when Prj = No_Project;
                Check (Prj.Project_Path, Prj);
                Next (Self.Data.Iter);
+               Self.Searched_Count := Self.Searched_Count + 1;
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
@@ -383,6 +388,7 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.File_Index := Self.Data.File_Index + 1;
+               Self.Searched_Count := Self.Searched_Count + 1;
                Check (Self.Data.Files_In_Dir (Self.Data.File_Index),
                       No_Project);
                exit For_Each_Step when not Continue;
@@ -722,5 +728,81 @@ package body GPS.Kernel.Search.Filenames is
                  Default => True);
       Include.On_Toggled (Gtk.Toggle_Button.Cb_GObject_Void (On_Change), Data);
    end Edit_Settings;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   overriding function Get_Total_Progress
+     (Self : not null access Filenames_Search_Provider) return Integer
+   is
+      function Count_Source_Files return Integer;
+
+      function Count_Project_Files return Integer;
+
+      ------------------------
+      -- Count_Source_Files --
+      ------------------------
+
+      function Count_Source_Files return Integer is
+         Count : Integer := 0;
+      begin
+         if Self.Source_Dirs /= null then
+            for Source_Dir of Self.Source_Dirs.all loop
+               declare
+                  Files_In_Dir : File_Array_Access := Source_Dir.Read_Dir;
+               begin
+                  Count := Count + Files_In_Dir'Length;
+                  Unchecked_Free (Files_In_Dir);
+               end;
+            end loop;
+         end if;
+
+         return Count;
+      end Count_Source_Files;
+
+      -------------------------
+      -- Count_Project_Files --
+      -------------------------
+
+      function Count_Project_Files return Integer is
+         Iter  : GNATCOLL.Projects.Project_Iterator;
+         Count : Integer := 0;
+      begin
+         Iter := Get_Project (Self.Kernel).Start (Recursive => True);
+
+         while Current (Iter) /= No_Project loop
+            Count := Count + 1;
+            Next (Iter);
+         end loop;
+
+         return Count;
+      end Count_Project_Files;
+
+   begin
+      --  Retrieve all the filenames available for the currently loaded project
+
+      if Self.Files = null then
+         Self.Files :=
+           Get_Project (Self.Kernel).Source_Files (Recursive => True);
+      end if;
+
+      if Self.Runtime = null then
+         Self.Runtime := new File_Array'
+           (Get_Registry (Self.Kernel).Environment
+            .Predefined_Source_Files);
+      end if;
+
+      if Self.Source_Dirs = null then
+         Self.Source_Dirs := new File_Array'
+           (Get_Project (Self.Kernel).Source_Dirs
+            (Recursive => True));
+      end if;
+
+      return Self.Files'Length
+        + Self.Runtime'Length
+        + Count_Project_Files
+        + Count_Source_Files;
+   end Get_Total_Progress;
 
 end GPS.Kernel.Search.Filenames;

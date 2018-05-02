@@ -112,4 +112,11 @@ private
       --  The best proposals for the current provider.
    end record;
 
+   overriding function Get_Current_Progress
+     (Self : not null access Overall_Search_Provider) return Natural;
+   overriding function Get_Total_Progress
+     (Self : not null access Overall_Search_Provider) return Integer;
+   overriding procedure Reset_Progress
+     (Self : not null access Overall_Search_Provider);
+
 end GPS.Search.GUI;

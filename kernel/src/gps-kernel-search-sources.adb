@@ -51,7 +51,7 @@ with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
 
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_SOURCES", Off);
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_SOURCES");
 
    type Source_Search_Result is new Kernel_Search_Result with record
       File                 : GNATCOLL.VFS.Virtual_File;
@@ -337,6 +337,8 @@ package body GPS.Kernel.Search.Sources is
       end case;
 
       Self.Index := Self.Files'First;
+      Self.Searched_Count := 0;
+
       if Self.Files'Length > 0 then
          Self.Current.Set_File
            (Self.Files (Self.Index).File,
@@ -460,6 +462,8 @@ package body GPS.Kernel.Search.Sources is
       --  No more in current file, let's move to next file
 
       Self.Index := Self.Index + 1;
+      Self.Searched_Count := Self.Searched_Count + 1;
+
       if Self.Index > Self.Files'Last then
          Has_Next := False;
          return;
@@ -469,6 +473,22 @@ package body GPS.Kernel.Search.Sources is
         (Self.Files (Self.Index).File,
          Self.Files (Self.Index).Project);
    end Next;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   overriding function Get_Total_Progress
+     (Self : not null access Sources_Search_Provider) return Integer is
+   begin
+      if Self.Files = null then
+         Self.Files :=
+           Get_Project (Self.Kernel).Source_Files
+           (Recursive => True, Include_Project_Files => True);
+      end if;
+
+      return Self.Files'Length;
+   end Get_Total_Progress;
 
    -------------
    -- Execute --

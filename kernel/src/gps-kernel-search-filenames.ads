@@ -50,6 +50,8 @@ package GPS.Kernel.Search.Filenames is
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
       Data : not null access Glib.Object.GObject_Record'Class;
       On_Change : On_Settings_Changed_Callback);
+   overriding function Get_Total_Progress
+     (Self : not null access Filenames_Search_Provider) return Integer;
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
@@ -70,7 +72,7 @@ private
          when Runtime_Sources =>
             Runtime_Index : Integer; --  Last runtime file tested
          when Project_Files =>
-            Iter : GNATCOLL.Projects.Project_Iterator;
+            Iter  : GNATCOLL.Projects.Project_Iterator;
          when Other_Files =>
             Files_In_Dir : GNATCOLL.VFS.File_Array_Access;
             Dirs_Index : Integer;  --  Current dir being tested

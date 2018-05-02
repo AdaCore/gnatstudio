@@ -137,6 +137,56 @@ package body GPS.Search.GUI is
    --  Called when the user changes the number of proposals per provider
    --  through the settings.
 
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   overriding function Get_Current_Progress
+     (Self : not null access Overall_Search_Provider) return Natural
+   is
+      Progress : Integer := 0;
+   begin
+      for Provider_Info of Self.Registry.Providers loop
+         Progress := Progress + Provider_Info.Provider.Get_Current_Progress;
+      end loop;
+
+      return Progress;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   overriding function Get_Total_Progress
+     (Self : not null access Overall_Search_Provider) return Integer
+   is
+      Provider_Total_Progress : Integer;
+      Total_Progress          : Integer := 0;
+   begin
+      for Provider_Info of Self.Registry.Providers loop
+         Provider_Total_Progress := Provider_Info.Provider.Get_Total_Progress;
+
+         if Provider_Total_Progress /= -1 then
+            Total_Progress := Total_Progress + Provider_Total_Progress;
+         end if;
+      end loop;
+
+      return Total_Progress;
+   end Get_Total_Progress;
+
+   --------------------
+   -- Reset_Progress --
+   --------------------
+
+   overriding procedure Reset_Progress
+     (Self : not null access Overall_Search_Provider) is
+   begin
+      --  Reset all the registered providers' progress
+      for Provider_Info of Self.Registry.Providers loop
+         Provider_Info.Provider.Reset_Progress;
+      end loop;
+   end Reset_Progress;
+
    ----------------------------------
    -- Register_Provider_And_Action --
    ----------------------------------

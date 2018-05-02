@@ -24,13 +24,12 @@ with Glib.Main;
 with GPS.Kernel;
 with GPS.Search;
 with Gtk.Box;
-with Gtk.Frame;
 with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.List_Store;
 with Gtk.Scrolled_Window;
 with Gtk.Spin_Button;
-with Gtk.Spinner;
+with Gtk.Progress_Bar;
 with Gtk.Toggle_Button;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
@@ -152,11 +151,8 @@ private
       Popup            : Gtk.Window.Gtk_Window;
       --  The popup window
 
-      Spinner          : Gtk.Spinner.Gtk_Spinner;
-      --  The spinned that is displayed while search results are being loaded
-
-      Spinner_Frame    : Gtk.Frame.Gtk_Frame;
-      --  The frame that contains the spinner
+      Progress_Bar     : Gtk.Progress_Bar.Gtk_Progress_Bar;
+      --  Bar displaying the current search's progress
 
       No_Results_Label : Gtk.Label.Gtk_Label;
       --  The label that is displayed when there is no search results

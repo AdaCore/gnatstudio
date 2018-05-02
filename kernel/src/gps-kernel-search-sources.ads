@@ -38,7 +38,10 @@ package GPS.Kernel.Search.Sources is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Sources_Search_Provider) return String
-     is (Provider_Sources);
+   is
+     (Provider_Sources);
+   overriding function Get_Total_Progress
+     (Self : not null access Sources_Search_Provider) return Integer;
    --  Searches in all source files of the project
 
    type Single_Source_Search_Provider is new Kernel_Search_Provider

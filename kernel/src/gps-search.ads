@@ -262,9 +262,10 @@ package GPS.Search is
    ------------
 
    type Search_Provider is abstract tagged record
-      Rank  : Positive := 100;
-      Count : Natural := 0;
-      Enabled : Boolean := True;
+      Rank           : Positive := 100;
+      Count          : Natural  := 0;
+      Searched_Count : Natural  := 0;
+      Enabled        : Boolean  := True;
    end record;
    type Search_Provider_Access is access all Search_Provider'Class;
    --  Instances of this type will look for matches of a given pattern, in a
@@ -276,9 +277,17 @@ package GPS.Search is
    --  when the pattern is augmented.
    --  Rank is the order in which the user wants to sort the result (1 appears
    --  first,...)
+   --
    --  Count is the number of matches (non-null result) since the last call to
    --  Set_Pattern. It must set by the caller to Set_Pattern and Next, not by
    --  each provider, if the caller intends to use it.
+   --
+   --  Searched_Count is used for indicating the current search's progress.
+   --  It counts the number of items for which the provider try to match with
+   --  the current pattern (e.g: the number of filenames we tried to match for
+   --  a provider that searches among filenames).
+   --  It's the provider's reponsability to increment this pattern (usually in
+   --  the Next subprogram).
    --
    --  Enabled is only relevant for the global search field, and indicates
    --  whether this provider should be used.
@@ -381,6 +390,25 @@ package GPS.Search is
       (Self : not null access Search_Provider) return String is ("");
    --  The documentation for this provider. This explains what pattern is
    --  supported, where the search occurs,...
+
+   function Get_Current_Progress
+     (Self : not null access Search_Provider) return Natural
+   is
+     (Self.Searched_Count);
+   --  Return the current search's progress.
+   --  It's not necessary to override this function: just increment the
+   --  Searched_Count counter after trying to match an item in the provider's
+   --  list of items to search.
+
+   function Get_Total_Progress
+     (Self : not null access Search_Provider) return Integer is (-1)
+     with Post'Class => Get_Total_Progress'Result /= 0;
+   --  Return the total number of items to search (e.g: number of filenames
+   --  we should try to match for a provider that searches among filenames).
+
+   procedure Reset_Progress
+     (Self : not null access Search_Provider);
+   --  Reset the provider's Searched_Count progress counter.
 
    procedure Set_Pattern
      (Self    : not null access Search_Provider;
