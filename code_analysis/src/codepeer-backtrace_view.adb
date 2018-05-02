@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -42,6 +42,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 
 with BT;                     use BT;
 with BT.Xml.Reader;
+with Message_Kinds;          use Message_Kinds;
 
 package body CodePeer.Backtrace_View is
 
