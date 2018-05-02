@@ -38,36 +38,42 @@ package body Message_Kinds is
    -------------
 
    function CWE_Ids
-     (Kind : Message_Kinds.BE_Message_Subkind;
+     (Kind : Message_Kinds.Message_Subkind;
       Msg  : String := "") return String is
    begin
       case Kind is
          when Invalid_Check =>
-            return "232,236,475";
+            return "457";
          when Invalid_Or_Null_Check =>
-            return "252-253,476";
+            return "476";
          when Divide_By_Zero_Check =>
-            return "189";
+            return "369";
          when Array_Indexing_Check =>
-            return "124-127,129-131,135,170,193";
+            --  Return only the main id to avoid clutering the output
+            --  "120,124-127,129-131";
+            return "120";
          when Tag_Check | Type_Variant_Check =>
-            return "136,137";
+            --  "136,137";
+            return "136";
          when Numeric_Range_Check =>
-            return "118";
+            return "682";
          when Numeric_Overflow_Check |
               User_Assign_Stm_Check |
               Pre_Assign_Stm_Check |
               Post_Assign_Stm_Check =>
-            return "128,190-192,197";
+            --  "190-191";
+            return "190";
          when XSS_Check =>
             return "80,81,82,83,84,85,87";
          when SQL_Injection_Check =>
             return "89";
          when Unlocked_Reentrant_Update_Error |
               Unlocked_Shared_Daemon_Update_Error =>
-            return "362,366,367,374,820";
+            --  "362,366,820";
+            return "362";
          when Mismatched_Locked_Update_Error =>
-            return "362,366,367,374,821";
+            --  "362,366,821";
+            return "821";
          when Dead_Store_Warning |
               Dead_Outparam_Store_Warning |
               Same_Value_Dead_Store_Warning |
@@ -76,25 +82,30 @@ package body Message_Kinds is
          when Dead_Block_Warning |
               Dead_Edge_Warning |
               Plain_Dead_Edge_Warning |
-              True_Dead_Edge_Warning |
-              False_Dead_Edge_Warning |
-              True_Condition_Dead_Edge_Warning |
-              False_Condition_Dead_Edge_Warning |
               Unrepeatable_While_Loop_Warning =>
             return "561";
+         when False_Dead_Edge_Warning |
+              False_Condition_Dead_Edge_Warning =>
+            return "570";
+         when True_Dead_Edge_Warning |
+              True_Condition_Dead_Edge_Warning =>
+            return "571";
          when Infinite_Loop_Warning =>
             return "835";
          when Precondition_Check =>
             if Is_Suffix (Msg, "to be initialized") then
                --  Validity check message
-               return "232,236,475";
+               return "457";
             elsif Is_Suffix (Msg, "/= null") then
                --  Access check message
-               return "252-253,476";
+               return "476";
             else
                --  We cannot differentiate the other cases, so list all
-               --  possibilities. ??? Would be good to refine this.
-               return "118,124-131,135-137,170,190-193,197,252,253,476";
+               --  possibilities. ??? Would be good to refine this in
+               --  particular now that we propagate check info as part of
+               --  preconditions.
+               --  return "120,124-131,136-137,190-191,369,476,682";
+               return "120,136,190,369,476,682";
             end if;
 
          when others =>
@@ -153,11 +164,9 @@ package body Message_Kinds is
    function Primary_Original_Checks
      (Original_Checks : Check_Kinds_Array) return Check_Kinds_Array
    is
-      Overflow_Checks_In_Set     : Boolean := False;
-      Non_Overflow_Checks_In_Set : Boolean := False;
-      Range_Checks_In_Set        : Boolean := False;
-      Primary_Checks             : Check_Kinds_Array :=
-        Check_Kinds_Array_Default;
+      Some_Check          : Boolean := False;
+      Range_Checks_In_Set : Boolean := False;
+      Primary_Checks      : Check_Kinds_Array := Check_Kinds_Array_Default;
 
    begin
       --  Fill in the Primary_Checks, postponing invalid and overflow for this
@@ -193,7 +202,7 @@ package body Message_Kinds is
                   | User_Precondition_Check
                =>
                   Primary_Checks (C) := True;
-                  Non_Overflow_Checks_In_Set := True;
+                  Some_Check := True;
 
                when Invalid_Check
                =>
@@ -206,36 +215,28 @@ package body Message_Kinds is
                   | Numeric_Overflow_Check
                =>
                   --  Postpone processing of overflow checks, see loop below
-                  Overflow_Checks_In_Set := True;
+                  Some_Check := True;
 
                when Numeric_Range_Check
                   | Array_Indexing_Check
                   | Type_Variant_Check
                =>
-                  Range_Checks_In_Set := True;
-                  Non_Overflow_Checks_In_Set := True;
                   Primary_Checks (C) := True;
+                  Range_Checks_In_Set := True;
+                  Some_Check := True;
             end case;
          end if;
       end loop;
 
       --  Add invalid and overflow if needed:
-      --  - overflow hides validity if we have other checks as well;
-      --  - range check/discriminant_check/array_index_check hide overflow.
+      --  - range check/discriminant check/array index check hide overflow
+      --  - any check hides validity
 
       for C in Check_Kind_Enum'Range loop
          if Original_Checks (C) then
             case C is
                when Invalid_Check =>
-                  --  See comment above: we want to keep overflow+validity
-                  --  if there are no other checks, so that we do not lose
-                  --  validity information on e.g. tests for uninitialized
-                  --  variables, as found in the qualkit test suite.
-
-                  if not Range_Checks_In_Set
-                    and then not (Overflow_Checks_In_Set
-                                  and then Non_Overflow_Checks_In_Set)
-                  then
+                  if not Some_Check then
                      Primary_Checks (C) := True;
                   end if;
 
@@ -266,13 +267,9 @@ package body Message_Kinds is
    end Image;
 
    function Improve_Number_Readability_In_Messages
-     (S      : String;
-      For_HTML_Output : Boolean := True)
-      return   String
+     (S               : String;
+      For_HTML_Output : Boolean := True) return String
    is
-      --  Make various improvements to numbers, such as
-      --  replacing near powers-of-2 by 2<sup>X +/- n
-
       --  TBD: Should we handle various GNAT name encodings such as Uxx
       --       to mean Latin-1 character with hex code "xx"?
 
@@ -282,6 +279,9 @@ package body Message_Kinds is
 
       Exponent : Natural := 0;
       Offset   : Integer := 0;
+
+      function Attribute_Img (Is_Negative : Boolean) return String is
+        (if Is_Negative then "'First" else "'Last");
 
       function Offset_Part (Is_Negated : Boolean) return String;
       --  Return +/- Offset, or empty str if = 0
@@ -303,7 +303,9 @@ package body Message_Kinds is
          end if;
       end Offset_Part;
 
-      I : Positive := S'First;
+      Is_Negative : Boolean;
+      I           : Integer := S'First;
+      Prev        : Integer;
 
    begin --  Improve_Number_Readability_In_Messages
 
@@ -322,16 +324,16 @@ package body Message_Kinds is
                         Head : String renames S (I .. J - 3);
                         --  All but last two digits of number
 
-                        function Compute_Offset (Ref  : Natural)
-                        return Integer;
+                        function Compute_Offset
+                          (Ref  : Natural) return Integer;
 
-                        function Compute_Offset (Ref  : Natural)
-                        return Integer is
+                        function Compute_Offset
+                          (Ref  : Natural) return Integer
+                        is
                            Char_0 : constant Natural := Character'Pos ('0');
                            Tail   : constant Natural :=
                               (Character'Pos (S (J - 2)) - Char_0) * 10 +
-                              Character'Pos (S (J - 1)) -
-                              Char_0;
+                              Character'Pos (S (J - 1)) - Char_0;
 
                         begin
                            return Tail - Ref;
@@ -393,32 +395,38 @@ package body Message_Kinds is
                            --  Nothing special
                            I := J - 1;  --  skip past this number and exit loop
                            exit Loop_Over_Digits;
-                        elsif For_HTML_Output then
-                           --  Replace with 2<sup>exponent</sup>+/-offset
-                           return S (S'First .. I - 1) &
-                                     "2<SUP>" &
-                                     Image (Exponent) &
-                                     "</SUP>" &
-                                     Offset_Part
-                                        (Is_Negated => I > S'First
-                                             and then S (I - 1) = '-') &
-                                     Improve_Number_Readability_In_Messages
-                                        (S (J .. S'Last), For_HTML_Output);
-                        else  --  Text output
-                           --  Replace with 2**exponent+/-offset
-                           return S (S'First .. I - 1) &
-                                    "2**" &
-                                    Image (Exponent) &
-                                    Offset_Part
-                                       (Is_Negated => I > S'First
-                                          and then S (I - 1) = '-') &
-                                    Improve_Number_Readability_In_Messages
-                                       (S (J .. S'Last), For_HTML_Output);
+
+                        else
+                           Is_Negative := I > S'First and then S (I - 1) = '-';
+                           Prev := I - 1;
+
+                           if Exponent in 15 | 31 | 63 then
+                              if Is_Negative then
+                                 Prev := I - 2;
+                              else
+                                 Offset := Offset + 1;
+                              end if;
+                           end if;
+
+                           return S (S'First .. Prev) &
+                             (case Exponent is
+                                 when 15 =>
+                                    "Integer_16" & Attribute_Img (Is_Negative),
+                                 when 31 =>
+                                    "Integer_32" & Attribute_Img (Is_Negative),
+                                 when 63 =>
+                                    "Integer_64" & Attribute_Img (Is_Negative),
+                                 when others =>
+                                    (if For_HTML_Output
+                                     then "2<SUP>" & Image (Exponent) &
+                                          "</SUP>"
+                                     else "2**" & Image (Exponent))) &
+                             Offset_Part (Is_Negated => Is_Negative) &
+                             Improve_Number_Readability_In_Messages
+                               (S (J .. S'Last), For_HTML_Output);
                         end if;
                      end;
-
                   end if;
-
                end loop Loop_Over_Digits;
             --  If we get here, the number was nothing special
 
@@ -445,7 +453,12 @@ package body Message_Kinds is
                   --  the set to just be an ellipsis
                   declare
                      bi            : Positive := I + 1;
+                     Dot_Dot_Index : Natural  := 0;
                      Found_Dot_Dot : Boolean  := False;
+                     First, Second : Natural;
+                     First_Trunc   : Boolean  := False;
+                     Second_Trunc  : Boolean  := False;
+
                   begin
                      while bi <= S'Last
                        and then S (bi) /= ']'
@@ -454,8 +467,8 @@ package body Message_Kinds is
                         --  Is it true that there won't be
                         --  nested index expressions?
                         --  No, apparently not!
-                        --  TBD:                            pragma Assert(
-                        --  S(bi) /= '[' );
+                        --  TBD: pragma Assert(S(bi) /= '[');
+
                         if S (bi) = '.'
                           and then bi + 1 < S'Last
                           and then S (bi + 1) = '.'
@@ -463,6 +476,7 @@ package body Message_Kinds is
                           and then S (bi + 2) /= '.'
                         then
                            Found_Dot_Dot := True;
+                           Dot_Dot_Index := bi;
                         end if;
 
                         bi := bi + 1;
@@ -473,12 +487,30 @@ package body Message_Kinds is
                        and then (S (bi) = ']' or else S (bi) = ')')
                        and then bi - I > Max_Readable_Set_Length
                      then
+                        First := I + Max_Readable_Set_Length / 2;
+
+                        if Dot_Dot_Index - 1 < First then
+                           First := Dot_Dot_Index - 1;
+                        else
+                           First_Trunc := True;
+                        end if;
+
+                        Second := Dot_Dot_Index + Max_Readable_Set_Length / 2;
+
+                        if bi - 1 < Second then
+                           Second := bi - 1;
+                        else
+                           Second_Trunc := True;
+                        end if;
+
                         return S (S'First .. I) &
-                               "..." &
-                               S (bi) &
-                               Improve_Number_Readability_In_Messages
-                                  (S (bi + 1 .. S'Last),
-                                   For_HTML_Output);
+                          S (I + 1 .. First) &
+                          (if First_Trunc then "[...].." else "..") &
+                          S (Dot_Dot_Index + 2 .. Second) &
+                          (if Second_Trunc then "[...]" else "") &
+                          S (bi) &
+                          Improve_Number_Readability_In_Messages
+                            (S (bi + 1 .. S'Last), For_HTML_Output);
                      end if;
                   end;
                end if;
@@ -496,14 +528,113 @@ package body Message_Kinds is
                             (S (I + 7 .. S'Last),
                              For_HTML_Output);
                end if;
+
             when others =>
                null;
          end case;
+
          I := I + 1;
       end loop;
 
       --  No improvement necessary
       return S;
    end Improve_Number_Readability_In_Messages;
+
+   ------------
+
+   function Is_Warning (Subkind : Message_Subkind) return Boolean is
+   --  Return True if message is not considered a check, which
+   --  means there is no reason to add "requires ..." in front
+   --  of the text of the message.  Also, these messages are
+   --  *not* counted as one of the "check-related" messages.
+   begin
+      return Subkind in Suspicious_Precondition_Subkind
+            or else Subkind = Suspicious_Input_Warning
+            or else Subkind = Suspicious_Constant_Operation_Warning
+            or else Subkind = Unread_In_Out_Parameter_Warning
+            or else Subkind = Unassigned_In_Out_Parameter_Warning
+            or else Subkind = Non_Analyzed_Call_Warning
+            or else Subkind = Procedure_Does_Not_Return_Error
+            or else Subkind = Check_Fails_On_Every_Call_Error
+            or else Subkind = Unknown_Call_Warning
+            or else Subkind in Race_Condition_Subkind
+            or else Subkind in Dead_Store_Subkind
+            or else Subkind in Dead_Control_Flow_Subkind
+            or else Subkind = Dead_Block_Continuation_Warning
+            or else Subkind = Local_Lock_Of_Global_Object
+            or else Subkind in Analyzed_Module_Warning ..
+              Incompletely_Analyzed_Procedure_Warning
+            or else Subkind in External_Message_Subkind;
+   end Is_Warning;
+
+   function Is_Check (Subkind : Message_Subkind) return Boolean is
+   --  Returns True is messages is a check.
+   begin
+      return Subkind in Check_Kind_Enum
+            or else Subkind in Security_Check_Subkind;
+   end Is_Check;
+
+   function Is_Warning_Or_Check (Subkind : Message_Subkind) return Boolean is
+   --  Return True if message is to be counted in the count of
+   --  *all* messages.  This includes race condition messages,
+   --  dead stores, etc.
+   --  NOTE: This *also* includes "informational" messages as
+   --        well as GNAT warnings.
+   --  TBD: The name of this routine is somewhat misleading.
+   begin
+      return Is_Check (Subkind)
+        or else Is_Warning (Subkind);
+   end Is_Warning_Or_Check;
+
+   function Is_Informational (Subkind : Message_Subkind) return Boolean is
+   --  Return True if "Subkind" is an informational message.
+   --  An informational message is NOT counted in the error counts,
+   --  nor is it part of the next/prev chain in the message-window.
+   --  However, it is "printable", and if you click on it, in the
+   --  source window, an informational message will be printed in the
+   --  message window.
+   begin
+      return Subkind = Non_Analyzed_Call_Warning
+            or else Subkind = Unknown_Call_Warning
+            or else Subkind = Dead_Block_Continuation_Warning
+            or else Subkind = Analyzed_Module_Warning
+            or else Subkind = Non_Analyzed_Module_Warning
+            or else Subkind = Non_Analyzed_Procedure_Warning
+            or else Subkind = Incompletely_Analyzed_Procedure_Warning;
+   end Is_Informational;
+
+   function Is_Annotation (Subkind : Message_Subkind) return Boolean is
+   --  true if subkind is in annotation subkinds, or locally_unused_assignment
+   begin
+      return Subkind in Annotation_Subkind
+            or else Subkind = Locally_Unused_Store_Annotation
+            or else Subkind = Unknown_Call_Annotation
+            or else Subkind = Test_Vector_Annotation;
+   end Is_Annotation;
+
+   function Is_Method_Annotation (Subkind : Message_Subkind) return Boolean is
+      --  true if subkind is in annotation subkinds, or
+      --  locally_unused_assignment
+   begin
+      return Subkind in Method_Annotation_Subkind
+        or else Subkind = Locally_Unused_Store_Annotation
+        or else Subkind = Unknown_Call_Annotation
+        or else Subkind = Test_Vector_Annotation;
+   end Is_Method_Annotation;
+
+   function Is_Stored_In_DB_Method_Annotation
+     (Subkind : Message_Subkind)
+      return    Boolean
+   is
+   --  same as above, but only keep certain messages
+   begin
+      return Subkind = Procedure_Annotation
+        or else Subkind = End_Procedure_Annotation
+        or else Subkind in Pre_Post_Annotation_Subkind
+        or else Subkind in In_Out_Annotation_Subkind
+        or else Subkind = Locally_Unused_Store_Annotation
+        or else Subkind = Unknown_Call_Annotation
+        or else Subkind = Test_Vector_Annotation;
+   end Is_Stored_In_DB_Method_Annotation;
 
 end Message_Kinds;

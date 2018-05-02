@@ -40,7 +40,7 @@ package body BT.Xml.Reader is
    Debug_On : constant Boolean := False;
 
    Inspection_Output_Directory : Unbounded_String := Null_Unbounded_String;
-      --  save a copy for use with subsequent XML files.
+   --  Save a copy for use with subsequent XML files.
 
    function Hash (Key_Type : Natural) return Hash_Type
      is (Hash_Type (Key_Type));
@@ -124,6 +124,7 @@ package body BT.Xml.Reader is
       Callee_File_Name : Unbounded_String;
       Callee_Name      : Unbounded_String;
       Callee_Vn        : Natural;
+      Callee_Pre_Index : Natural;
       Callee_Srcpos    : Source_Position;
    end record;
 
@@ -271,14 +272,21 @@ package body BT.Xml.Reader is
       elsif Qname = Bt_Tag then
          declare
             BT : BT_Info;
-            type BT_Attribute_Enum is (Line, Col, Check, Event);
 
+            type BT_Attribute_Enum is (Line, Col, Check, Event, File_Name);
+
+            BT_File_Name : Unbounded_String := Null_Unbounded_String;
          begin
             Current_Bt_Id := Current_Bt_Id + 1;
             BT.Bt_Id := Current_Bt_Id;
             --  default
             BT.Event := Check_Event;
             BT.Kind := Module_Annotation;
+
+            if Debug_On then
+               Put ("BT--> " & Natural'Image (Current_Bt_Id) & ",");
+            end if;
+
             for J in 0 .. Get_Length (Attrs) - 1 loop
                declare
                   Attr_Value : constant String := Get_Value (Attrs, J);
@@ -286,24 +294,68 @@ package body BT.Xml.Reader is
                   case BT_Attribute_Enum'Value (Get_Qname (Attrs, J)) is
                   when Line =>
                      BT.Sloc.Line := Positive'Value (Attr_Value);
+
+                     if Debug_On then
+                        Put (" line:" & Attr_Value);
+                     end if;
                   when Col =>
                      BT.Sloc.Column := Positive'Value (Attr_Value);
+
+                     if Debug_On then
+                        Put (" col:" & Attr_Value);
+                     end if;
                   when Check =>
                      BT.Kind := Self.Check_Kind (Natural'Value (Attr_Value));
                      BT.Text := Self.Check_Text (Natural'Value (Attr_Value));
+
+                     if Debug_On then
+                        Put (" kind:" & Attr_Value);
+                     end if;
                   when Event =>
                      BT.Event := Self.Event_Kind (Natural'Value (Attr_Value));
                      BT.Text := Self.Event_Text (Natural'Value (Attr_Value));
+
+                     if Debug_On then
+                        Put (" event:" & Attr_Value);
+                     end if;
+
+                     if BT.Event = Precondition_Event then
+                        BT.Kind := Precondition_Check;
+                     end if;
+                  when File_Name =>
+                     --  A file name can be present in cases where the source
+                     --  file for check is different from the current unit's
+                     --  source file (such as for instantiations, where we want
+                     --  the generic unit's source file name).
+
+                     Set_Unbounded_String (BT_File_Name, Attr_Value);
+
+                     if Debug_On then
+                        Put_Line (" file:" & Attr_Value);
+                     end if;
                   end case;
                end;
             end loop;
+
+            if Debug_On then
+               Put_Line ("");
+            end if;
+
             BT_Info_Seqs.Append (Current_BT_Seq, BT);
-            BT_File_Mappings.Insert (BT_Files, BT.Bt_Id, Self.File_Name);
+            if BT_File_Name = Null_Unbounded_String then
+               BT_File_Mappings.Insert (BT_Files, BT.Bt_Id, Self.File_Name);
+            else
+               BT_File_Mappings.Insert (BT_Files, BT.Bt_Id, BT_File_Name);
+            end if;
          end;
       elsif Qname = Vn_Tag then
          Current_BT_Seq := BT_Info_Seqs.Empty_Vector;
          Self.Current_VN :=
            Natural'Value (Attrs.Get_Value (Id_Attribute));
+
+         if Debug_On then
+            Put_Line ("VN--> " & Natural'Image (Self.Current_VN));
+         end if;
 
       elsif Qname = Proc_Tag then
          declare
@@ -336,6 +388,8 @@ package body BT.Xml.Reader is
               (Info.Callee_File_Name, Attrs.Get_Value (File_Name_Attribute));
             Info.Callee_Vn   := Positive'Value
                (Attrs.Get_Value (Vn_Attribute));
+            Info.Callee_Pre_Index := Positive'Value
+               (Attrs.Get_Value (Pre_Index_Attribute));
             Info.Callee_Srcpos.Line := Positive'Value
                (Attrs.Get_Value (Line_Attribute));
             Info.Callee_Srcpos.Column := Positive'Value
@@ -516,9 +570,9 @@ package body BT.Xml.Reader is
       end if;
    end End_Element;
 
-   -----------------------------
-   -- Read_File_Backtrace_Xml --
-   -----------------------------
+   ------------------------------
+   -- Read_File_Backtraces_Xml --
+   ------------------------------
 
    procedure Read_File_Backtrace_Xml
      (Output_Dir  : String;
@@ -606,13 +660,15 @@ package body BT.Xml.Reader is
    -----------------------
 
    procedure Get_Vn_Backtraces
-     (Proc_Name  : String;
-      Vn_Id      : Natural;
-      Msg_Loc    : Source_Position;
-      Backtraces : in out BT.BT_Info_Seqs.Vector)
+     (Proc_Name     : String;
+      Vn_Id         : Natural;
+      Msg_Loc       : Source_Position;
+      Msg_Kind      : Message_Kinds.BE_Message_Subkind;
+      Precond_Index : Natural := 0;
+      Backtraces    : in out BT.BT_Info_Seqs.Vector)
    is
       Proc : constant Unbounded_String := To_Unbounded_String (Proc_Name);
-      All_Checks     : Check_Kinds_Array := Check_Kinds_Array_Default;
+      Top_Level : Boolean := True;
 
       Debug_On : constant Boolean := False;
 
@@ -620,7 +676,28 @@ package body BT.Xml.Reader is
          (Rec_Proc_Name  : String;
           Vn_Id          : Natural;
           Rec_Backtraces : out BT_Info_Seqs.Vector);
-      --  Recursive version.
+      --  Recursive version
+
+      function BT_Is_Important (Info : BT_Info) return Boolean;
+      --  Returns True if BT is a precondition event corresponding to
+      --  a precondition_check message at same source location, message kind,
+      --  with a matching precondition index, at the top level. Unconditionally
+      --  returns True for other cases.
+
+      ---------------------
+      -- BT_Is_Important --
+      ---------------------
+
+      function BT_Is_Important (Info : BT_Info) return Boolean is
+      begin
+         if Top_Level and then Msg_Kind = Precondition_Check then
+            return Info.Kind = Msg_Kind
+              and then Info.Sloc = Msg_Loc
+              and then Get_Precondition_Index (Info.Bt_Id) = Precond_Index;
+         end if;
+
+         return True;
+      end BT_Is_Important;
 
       procedure Display_BT (Info : BT_Info);
       --  Print out the backtrace for debugging.
@@ -631,123 +708,158 @@ package body BT.Xml.Reader is
 
       procedure Display_BT (Info : BT_Info) is
       begin
-         Put
-            ("     "
-               & Natural'Image (Info.Sloc.Line) & ":"
-               & Natural'Image (Info.Sloc.Column) & " - "
-               & To_String (Info.Text) & " - "
-               & BE_Message_Subkind'Image (Info.Kind));
+         Put ("     "
+              & Natural'Image (Info.Sloc.Line) & ":"
+              & Natural'Image (Info.Sloc.Column) & " - "
+              & To_String (Info.Text));
+
+         if Info.Kind = Precondition_Check then
+            Put (" - call to "
+                 & Get_Precondition_Callee_Name (Info.Bt_Id)
+                 & ", vn"
+                 & Natural'Image (Get_Precondition_VN (Info.Bt_Id)));
+         end if;
+
          New_Line;
       end Display_BT;
 
       procedure Get_Vn_Backtraces_Rec
-         (Rec_Proc_Name  : String;
-          Vn_Id          : Natural;
-          Rec_Backtraces : out BT_Info_Seqs.Vector) is
+        (Rec_Proc_Name  : String;
+         Vn_Id          : Natural;
+         Rec_Backtraces : out BT_Info_Seqs.Vector)
+      is
+         Proc           : constant Unbounded_String
+                            := To_Unbounded_String (Rec_Proc_Name);
+         All_VN_BTs     : BT_Info_Seqs.Vector;
+         VN_BTs         : BT_Info_Seqs.Vector := BT_Info_Seqs.Empty_Vector;
+         All_Checks     : Check_Kinds_Array := Check_Kinds_Array_Default;
+         Primary_Checks : Check_Kinds_Array;
 
-         Proc : constant Unbounded_String
-           := To_Unbounded_String (Rec_Proc_Name);
-         VN_BTs : VN_To_BT_Mappings.Cursor;
-
-         This_Level_BTs : BT_Info_Seqs.Vector := BT_Info_Seqs.Empty_Vector;
          use BT_Info_Seqs;
-
-         procedure Add_One_Backtrace (Info : BT_Info);
-         --  Add backtrace to the seq of relevant backtrace for this
-         --  VN. For precondition events, recursively import the backtraces
-         --  contributing to the corresponding precondition.
-
-         -----------------------
-         -- Add_One_Backtrace --
-         -----------------------
-
-         procedure Add_One_Backtrace (Info : BT_Info) is
-         begin
-            if BT.BT_Info_Seqs.Contains (Backtraces, Info) then
-               if Debug_On then
-                  Put ("not adding BT");
-                  Display_BT (Info);
-               end if;
-
-               return;
-            end if;
-            Append (This_Level_BTs, Info);
-
-            if Debug_On then
-               Put ("Adding BT");
-               Display_BT (Info);
-            end if;
-
-            if Info.Event = Check_Event then
-               All_Checks (Info.Kind) := True;
-            end if;
-         end Add_One_Backtrace;
 
          use VN_To_BT_Mappings;
 
       begin
-         if not Procs_To_Vns_Mappings.Contains (Proc_Vns, Proc) then
-            --  no known backtraces for this proc.
+         if not Procs_To_Vns_Mappings.Contains (Proc_Vns, Proc)
+           or else not Proc_Vns.Element (Proc).Contains (Vn_Id)
+         then
+            --  no known backtraces for this proc
             return;
          end if;
 
-         VN_BTs := Proc_Vns.Element (Proc).Find (Vn_Id);
+         --  backtraces associated with Vn_Id in proc
+         All_VN_BTs := VN_To_BT_Mappings.Element
+           (Proc_Vns.Element (Proc).Find (Vn_Id));
 
-         if VN_BTs /= VN_To_BT_Mappings.No_Element then
-            for BT of VN_To_BT_Mappings.Element (VN_BTs) loop
-               Add_One_Backtrace (BT);
-            end loop;
-         end if;
+         --  Delete unneeded backtraces if Msg_Check is a precondition_check.
+         --  We are only interested in the backtraces associated with the
+         --  precondition.
+         for Info of All_VN_BTs loop
+            if BT_Is_Important (Info) then
+               Append (VN_BTs, Info);
+            end if;
+         end loop;
+
+         Sort_Backtraces.Sort (VN_BTs);
 
          if Debug_On then
-            Put_Line ("before sort");
-            for Info of This_Level_BTs loop
+            Put_Line ("VN_BTs after sort");
+            for Info of VN_BTs loop
                Display_BT (Info);
             end loop;
          end if;
-         Sort_Backtraces.Sort (This_Level_BTs);
 
-         if Debug_On then
-            Put_Line ("after sort");
-            for Info of This_Level_BTs loop
-               Display_BT (Info);
-            end loop;
-         end if;
-
-         --  now import the precondition backtraces
-         for Info of This_Level_BTs loop
+         --  Now import the precondition backtraces
+         for Info of VN_BTs loop
             if not Contains (Rec_Backtraces, Info) then
                Append (Rec_Backtraces, Info);
             end if;
+
             if Info.Event = Precondition_Event then
+               Top_Level := False;
+
                declare
-                  Callee_BTs : BT.BT_Info_Seqs.Vector;
+                  Callee_BTs       : BT.BT_Info_Seqs.Vector;
                   Callee_File_Name : constant String :=
                     Get_Callee_File_Name (Info.Bt_Id);
                   Callee_Proc_Name : constant String :=
                     Get_Precondition_Callee_Name (Info.Bt_Id);
-                  File_Exists : Boolean;
+                  Precondition_VN  : Natural;
+                  File_Exists      : Boolean;
+
                begin
-                  if not Files_Read.Contains (
-                     BT.Xml.Xml_File_Name (
-                       To_String (Inspection_Output_Directory),
-                       Callee_File_Name,
-                       For_Backtraces => True))
+                  if not Files_Read.Contains
+                    (BT.Xml.Xml_File_Name
+                       (To_String (Inspection_Output_Directory),
+                        Callee_File_Name,
+                        For_Backtraces => True))
                   then
                      Read_File_Backtrace_Xml
-                        (To_String (Inspection_Output_Directory),
-                         Callee_File_Name,
-                         File_Exists);
+                       (To_String (Inspection_Output_Directory),
+                        Callee_File_Name,
+                        File_Exists);
                   end if;
-                  --  Import the backtraces contributing to that
-                  --  precondition.
+
+                  --  Import the backtraces contributing to that precondition
+
                   if Callee_Proc_Name /= Proc_Name
                     and then Callee_Proc_Name /= Rec_Proc_Name
                   then
+                     if Debug_On then
+                        Put_Line
+                          ("get precondition bts for " & Callee_Proc_Name);
+                     end if;
+
+                     Precondition_VN := Get_Precondition_VN (Info.Bt_Id);
                      Get_Vn_Backtraces_Rec
-                      (Get_Precondition_Callee_Name (Info.Bt_Id),
-                        Get_Precondition_VN (Info.Bt_Id),
+                       (Callee_Proc_Name,
+                        Precondition_VN,
                         Callee_BTs);
+
+                     if Debug_On then
+                        Put_Line ("Adding precondition bts for call to "
+                                    & Callee_Proc_Name);
+                        for Info of Callee_BTs loop
+                           Display_BT (Info);
+                        end loop;
+                     end if;
+
+                     --  Remove non-primary checks at this level.
+                     --  First, collect checks.
+
+                     for Info of Callee_BTs loop
+                        if Info.Event = Check_Event then
+                           All_Checks (Info.Kind) := True;
+                        end if;
+                     end loop;
+
+                     Primary_Checks := Primary_Original_Checks (All_Checks);
+
+                     declare
+                        Result_BTs : BT_Info_Seqs.Vector;
+                        Elem       : BT_Info_Seqs.Cursor := Callee_BTs.First;
+                     begin
+                        while BT_Info_Seqs.Has_Element (Elem) loop
+                           declare
+                              Info : constant BT_Info
+                                       := BT_Info_Seqs.Element (Elem);
+                           begin
+                              if Info.Event /= Check_Event
+                                or else Primary_Checks (Info.Kind)
+                              then
+                                 Append (Result_BTs, Info);
+                              end if;
+                           end;
+                           Elem := BT_Info_Seqs.Next (Elem);
+                        end loop;
+                        Callee_BTs := Result_BTs;
+                     end;
+                     if Debug_On then
+                        Put_Line ("after removing primary checks");
+                        for Info of Callee_BTs loop
+                           Display_BT (Info);
+                        end loop;
+                     end if;
                      --  Add to list if not already present
                      for Info of Callee_BTs loop
                         if not Contains (Rec_Backtraces, Info) then
@@ -757,10 +869,14 @@ package body BT.Xml.Reader is
                   end if;
                end;
             end if;
+            if Debug_On then
+               Put_Line ("Rec_Backtraces");
+               for Info of Rec_Backtraces loop
+                  Display_BT (Info);
+               end loop;
+            end if;
          end loop;
       end Get_Vn_Backtraces_Rec;
-
-      Primary_Checks : Check_Kinds_Array;
 
       use BT_Info_Seqs;
 
@@ -781,6 +897,7 @@ package body BT.Xml.Reader is
       --  Uniquify and sort (by increasing line numbers) before
       --  returning the sequence.
       if Debug_On then
+         New_Line;
          Put_Line ("get_backtraces for vn " & Natural'Image (Vn_Id)
             & " in " & Proc_Name & ":" & Integer'Image (Msg_Loc.Line)
             & ":" & Integer'Image (Msg_Loc.Column));
@@ -790,48 +907,17 @@ package body BT.Xml.Reader is
          declare
             New_BTs : BT_Info_Seqs.Vector;
          begin
-            Get_Vn_Backtraces_Rec  (Proc_Name, Vn_Id, New_BTs);
+            Get_Vn_Backtraces_Rec (Proc_Name, Vn_Id, New_BTs);
             BT_Info_Seqs.Append (Backtraces, New_BTs);
          end;
       else
-         Get_Vn_Backtraces_Rec  (Proc_Name, Vn_Id, Backtraces);
+         Get_Vn_Backtraces_Rec (Proc_Name, Vn_Id, Backtraces);
       end if;
-
-      --  Cleanup the new sequence by removing duplicates and
-      --  backtraces associated with non-primary checks
-      Primary_Checks := Primary_Original_Checks (All_Checks);
       if Debug_On then
-         Put_Line ("removing primary checks");
-         declare
-            procedure Display_Checks (Checks : Check_Kinds_Array);
-
-            --------------------
-            -- Display_Checks --
-            --------------------
-
-            procedure Display_Checks (Checks : Check_Kinds_Array) is
-               First : Boolean := True;
-            begin
-               Put ("(");
-               for Check in Check_Kind_Enum loop
-                  if Checks (Check) then
-                     if not First then
-                        Put (", ");
-                     else
-                        First := False;
-                     end if;
-                     Put (Check_Kind_Enum'Image (Check));
-                  end if;
-               end loop;
-               Put_Line (")");
-            end Display_Checks;
-         begin
-            Put_Line ("All_Checks => ");
-            Display_Checks (All_Checks);
-
-            Put_Line ("Primary_Checks => ");
-            Display_Checks (Primary_Checks);
-         end;
+         Put_Line ("Backtraces after recursion");
+         for Info of Backtraces loop
+            Display_BT (Info);
+         end loop;
       end if;
 
       declare
@@ -847,29 +933,29 @@ package body BT.Xml.Reader is
                   and then Info.Kind = Prev.Kind
                   and then Info.Sloc.Line = Prev.Sloc.Line)
                then
-                  --  we need to add this backtrace, but first check if
-                  --  there are multiple similar backtraces for the same
-                  --  line. If there are, only add the one corresponding
-                  --  to the message column
+                  --  We need to add this backtrace, but first check if there
+                  --  are multiple similar backtraces for the same line. If
+                  --  there are, only add the one corresponding to the message
+                  --  column.
                   if Info.Sloc.Line = Msg_Loc.Line and then
                      Info.Sloc.Column /= Msg_Loc.Column
                   then
-                     --  Is there another backtrace on the same line that
-                     --  would be more appropriate?
+                     --  Is there another backtrace on the same line that would
+                     --  be more appropriate?
                      declare
                         Next_Cursor : BT_Info_Seqs.Cursor :=
                            BT_Info_Seqs.Next (Elem);
                         Next_Info : BT_Info;
                      begin
                         while BT_Info_Seqs.Has_Element (Next_Cursor) loop
-                           Next_Info := BT_Info_Seqs.Element (Next_Cursor);
+                           Next_Info :=
+                             BT_Info_Seqs.Element (Next_Cursor);
                            if Next_Info.Event = Info.Event
-                              and then Next_Info.Kind = Info.Kind
-                              and then Next_Info.Sloc.Line = Info.Sloc.Line
+                             and then Next_Info.Kind = Info.Kind
+                             and then Next_Info.Sloc.Line = Info.Sloc.Line
                            then
                               if Next_Info.Sloc.Column = Msg_Loc.Column then
                                  Info := Next_Info;
-                                 Elem := Next_Cursor;
                               end if;
                               Elem := Next_Cursor;
                            else
@@ -881,11 +967,7 @@ package body BT.Xml.Reader is
                   end if;
                   Prev := Info;
 
-                  if Info.Event /= Check_Event
-                     or else Primary_Checks (Info.Kind)
-                  then
-                     Append (Result_BTs, Info);
-                  end if;
+                  Append (Result_BTs, Info);
                end if;
             end;
             Elem := BT_Info_Seqs.Next (Elem);
@@ -894,7 +976,7 @@ package body BT.Xml.Reader is
          Backtraces := Result_BTs;
       end;
       if Debug_On then
-         Put_Line ("after primary and sort");
+         Put_Line ("Final Backtraces:");
          for Info of Backtraces loop
             Display_BT (Info);
          end loop;
@@ -910,6 +992,16 @@ package body BT.Xml.Reader is
    begin
       return To_String (Info.Callee_Name);
    end Get_Precondition_Callee_Name;
+
+   ----------------------------
+   -- Get_Precondition_Index --
+   ----------------------------
+
+   function Get_Precondition_Index (Bt_Id : Natural) return Natural is
+      Info : constant Callee_Info_Record := Callee_Mapping.Element (Bt_Id);
+   begin
+      return Info.Callee_Pre_Index;
+   end Get_Precondition_Index;
 
    -------------------------
    -- Get_Precondition_VN --
