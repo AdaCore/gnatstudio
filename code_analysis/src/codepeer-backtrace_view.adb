@@ -156,10 +156,11 @@ package body CodePeer.Backtrace_View is
 
          Info.Clear;
          BT.Xml.Reader.Get_Vn_Backtraces
-           (Subprogram,
-            Vn,
-            (Message.Get_Line, Integer (Message.Get_Column)),
-            Info);
+           (Proc_Name  => Subprogram,
+            Vn_Id      => Vn,
+            Msg_Loc    => (Message.Get_Line, Integer (Message.Get_Column)),
+            Msg_Kind   => Precondition_Check,
+            Backtraces => Info);
 
          for Location of Info loop
             Src_File :=
