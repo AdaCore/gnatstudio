@@ -22,6 +22,9 @@
 --  so please do not add any dependency other than standard (Ada or GNAT) ones,
 --  in particular Utils.* should not be used.
 
+--  In particular, any change to bt.ads or bt.adb need to be mirrored in the
+--  GPS repository: code_analysis/src
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
