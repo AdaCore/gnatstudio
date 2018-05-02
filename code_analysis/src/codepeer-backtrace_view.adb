@@ -42,6 +42,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 
 with BT;                     use BT;
 with BT.Xml.Reader;
+with Message_Kinds;          use Message_Kinds;
 
 package body CodePeer.Backtrace_View is
 
