@@ -919,8 +919,8 @@ instead of opening GPS's own editor.
 Using the Clipboard
 ===================
 
-This section is of interest to X-Window users who are used to cutting and
-pasting with the middle mouse button. In the GPS text editor, as in many
+This section is of interest to X Window System users who are used to cutting
+and pasting with the middle mouse button. In the GPS text editor, as in many
 recent X applications, the :guilabel:`GPS clipboard` is set by explicit
 cut/copy/paste actions, either through menu items or keyboard shortcuts,
 and the :guilabel:`primary clipboard` (i.e. the 'middle button' clipboard)

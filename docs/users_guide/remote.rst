@@ -16,7 +16,7 @@ shared networked servers. These remote servers may be running an operating
 system different from the one on their desktop machine.
 
 One common way of operating in such an environment is to access the server
-through a remote windowing system such as X-Windows. GPS can be used in
+through a remote windowing system such as X Window System. GPS can be used in
 such way, but it is not necessarily the most efficient configuration because
 running GPS remotely on a shared server increases the workload of the
 server as well as traffic on the network. When the network is slow, user
