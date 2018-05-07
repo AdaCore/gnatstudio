@@ -54,8 +54,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -- Constants --
    ---------------
 
+   Prompt_Str                : constant String := "^~"">""|^\(gdb\) ";
    Prompt_Regexp             : constant Pattern_Matcher :=
-     Compile ("^~"">""|^\(gdb\) ", Multiple_Lines);
+     Compile (Prompt_Str, Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -133,9 +134,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("\b(on (exception ([-\w_:]+)|all|unhandled))" &
       "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
 
+   Error_Str                 : constant String := "^\^error,msg=";
    Error_Pattern             : constant Pattern_Matcher := Compile
-     ("^\^error,msg=", Multiple_Lines);
+     (Error_Str, Multiple_Lines);
    --  Pattern used to detect error
+
+   Error_Or_Prompt_Pattern   : constant Pattern_Matcher := Compile
+     (Prompt_Str & "|" & Error_Str, Multiple_Lines);
+   --  Pattern used to detect error or prompt
 
    procedure Breakpoint_Filter
      (Process : access Visual_Debugger_Record'Class;
@@ -1608,26 +1614,20 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Timeout  : Integer) return Boolean
    is
-      Error_Match  : Expect_Match := Expect_Timeout;
       Prompt_Match : Expect_Match;
    begin
       if not Debugger.Second_Wait then
-         --  Check if we have an error first: if it's the case, we should only
-         --  try to match the prompt once.
+         --  Wait for an error or first prompt.
          Debugger.Get_Process.Wait
-           (Error_Match, Error_Pattern, Timeout => Timeout);
-
-         Debugger.Get_Process.Wait
-           (Prompt_Match, Prompt_Regexp, Timeout => Timeout);
+           (Prompt_Match, Error_Or_Prompt_Pattern, Timeout => Timeout);
 
          if Prompt_Match = Expect_Timeout then
             return False;
          end if;
       end if;
 
-      --  Don't try to match a second prompt if we encountered an error
-      if Error_Match = Expect_Timeout
-        and then Debugger.Is_Running
+      --  Wait for first prompt after error or second prompt in other case
+      if Debugger.Is_Running
         and then Debugger.Current_Command_Kind = Execution_Command
       then
          --  We are running, wait for the second 'stopped' prompt
