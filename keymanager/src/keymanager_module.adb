@@ -24,7 +24,6 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
@@ -143,6 +142,11 @@ package body KeyManager_Module is
       Filename     : Virtual_File;
       User_Defined : Boolean := False);
    --  Load an XML file that contains key definitions
+
+   procedure Remove_In_Keymap
+     (Table  : in out Key_Htable.Instance;
+      Action : String);
+   --  Remove all bindings to Action in Table and its secondary keymaps
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
@@ -881,6 +885,66 @@ package body KeyManager_Module is
          First := Last + 1;
       end loop;
    end Bind_Default_Key_Internal;
+
+   ----------------------------
+   -- Unbind_Keys_For_Action --
+   ----------------------------
+
+   procedure Unbind_Keys_For_Action
+     (Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Table            : not null HTable_Access;
+      Action           : String;
+      Keys_To_Remove   : Unbounded_String_Array := Empty_Array;
+      Save_In_Keys_XML : Boolean := True)
+   is
+      use Ada.Strings.Unbounded;
+
+      function Contains
+        (List : Unbounded_String_Array;
+         S    : Unbounded_String) return Boolean
+      is
+        (for some Val of List => S = Val);
+      --  Return True if List contains S
+
+      Keys : constant Unbounded_String_Array :=
+                     Lookup_Keys_From_Action
+                       (Table       => Table,
+                        Action      => Action,
+                        For_Display => False);
+   begin
+      --  Remove all the key shortcuts associated to the action
+      Remove_In_Keymap (Table.all, Action);
+
+      --  If we are removing all the key shortcuts associated to the given
+      --  action, bind it explicitly to the empty key so that it gets saved
+      --  in the key shortcuts XML file.
+      --  Otherwise, bind the action to the key shortcuts that are not present
+      --  in Keys_To_Remove.
+
+      if Keys_To_Remove = Empty_Array or else Keys = Keys_To_Remove then
+         Bind_Default_Key_Internal
+           (Table                                => Table.all,
+            Kernel                               => Kernel,
+            Action                               => Action,
+            Key                                  => "",
+            Save_In_Keys_XML                     => Save_In_Keys_XML,
+            Remove_Existing_Shortcuts_For_Action => False,
+            Remove_Existing_Actions_For_Shortcut => False);
+      else
+         for Key of Keys loop
+            if not Contains (Keys_To_Remove, Key) then
+               Bind_Default_Key_Internal
+                 (Table                                => Table.all,
+                  Kernel                               => Kernel,
+                  Action                               => Action,
+                  Key                                  => To_String (Key),
+                  Save_In_Keys_XML                     => Save_In_Keys_XML,
+                  Remove_Existing_Shortcuts_For_Action => False,
+                  Remove_Existing_Actions_For_Shortcut => False);
+            end if;
+         end loop;
+      end if;
+   end Unbind_Keys_For_Action;
 
    ----------------------
    -- Remove_In_Keymap --
@@ -1711,6 +1775,7 @@ package body KeyManager_Module is
       if not Is_Regular_File (Filename) then
          Filename := Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
       end if;
+
       Load_XML_Keys (Kernel, Filename, User_Defined => True);
    end Load_Custom_Keys;
 
@@ -2564,20 +2629,22 @@ package body KeyManager_Module is
       Keymanager_Module.GUI_Running := Running;
    end Set_GUI_Running;
 
-   ----------------------------
-   -- Lookup_Action_From_Key --
-   ----------------------------
+   -----------------------------
+   -- Lookup_Actions_From_Key --
+   -----------------------------
 
-   function Lookup_Action_From_Key
+   function Lookup_Actions_From_Key
      (Key      : String;
-      Bindings : HTable_Access) return String
+      Bindings : HTable_Access) return GNATCOLL.Utils.Unbounded_String_Array
    is
+      use Ada.Strings.Unbounded;
+
       Partial_Key : Gdk_Key_Type;
       Modif       : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap      : Keymap_Access;
       List        : Key_Description_List;
-
+      Actions     : Unbounded_String := Null_Unbounded_String;
    begin
       First := Key'First;
       while First <= Key'Last loop
@@ -2598,22 +2665,18 @@ package body KeyManager_Module is
 
          while List /= null loop
             if List.Action /= null then
-               return List.Action.all;
+               Actions := Actions
+                 & To_Unbounded_String (List.Action.all) & ASCII.LF;
             end if;
 
             List := List.Next;
          end loop;
 
-         if Keymap = null then
-            --  No secondary keymap, and no action => the key is not bound yet
-            return "";
-         end if;
-
          First := Last + 1;
       end loop;
 
-      return "";
-   end Lookup_Action_From_Key;
+      return GNATCOLL.Utils.Split (To_String (Actions), On => ASCII.LF);
+   end Lookup_Actions_From_Key;
 
    -----------------------------
    -- Actions_With_Key_Prefix --

@@ -1166,10 +1166,20 @@ package body KeyManager_Module.GUI is
            and then Children (Ed.Model, Iter) = Null_Iter
          then
             declare
+               Table        : constant HTable_Access :=
+                                Get_Shortcuts (Ed.Kernel);
                Key          : constant String :=
                                 Grab_Multiple_Key (Ed, For_Filter => False);
-               Old_Action   : constant String := Lookup_Action_From_Key
-                 (Key, Get_Shortcuts (Ed.Kernel));
+               All_Old_Actions : constant Unbounded_String_Array :=
+                                   Lookup_Actions_From_Key (Key, Table);
+               Old_Action      : constant String :=
+                                   (if All_Old_Actions'Length > 0 then
+                                      To_String
+                                         (All_Old_Actions
+                                            (All_Old_Actions'First))
+                                    else
+                                       "");
+
                Old_Prefix   : constant String := Actions_With_Key_Prefix
                  (Key, Get_Shortcuts (Ed.Kernel));
                User_Changed : aliased Boolean := False;
@@ -1179,7 +1189,6 @@ package body KeyManager_Module.GUI is
                                    To_Set (String'(1 => ASCII.LF)));
                New_Action   : constant String :=
                                 Get_String (Ed.Model, Iter, Action_Column);
-
                type Key_Binding_Action_Type is
                  (Unbind_Old_Actions, Keep_Old_Bindings, Nothing);
 
@@ -1198,7 +1207,7 @@ package body KeyManager_Module.GUI is
                     --  and we want to map it to ctrl-x+b. So we do nothing
                     --  only if the if keys are fully equivelent.
                     and then Key = Lookup_Key_From_Action
-                      (Get_Shortcuts (Ed.Kernel),
+                      (Table,
                        Old_Action,
                        Is_User_Changed => User_Changed'Access)
                   then
@@ -1274,9 +1283,22 @@ package body KeyManager_Module.GUI is
                      return;
                   end if;
 
+                  if Binding_Action = Unbind_Old_Actions then
+                     for Action of All_Old_Actions loop
+                        Ed.Kernel.Insert ("Removing key: " & Key);
+                        Unbind_Keys_For_Action
+                          (Kernel           => Ed.Kernel,
+                           Table            => Table,
+                           Action           => To_String (Action),
+                           Keys_To_Remove   =>
+                             (1 => To_Unbounded_String (Key)),
+                           Save_In_Keys_XML => True);
+                     end loop;
+                  end if;
+
                   Bind_Default_Key_Internal
                     (Kernel           => Ed.Kernel,
-                     Table            => Get_Shortcuts (Ed.Kernel).all,
+                     Table            => Table.all,
                      Action           => New_Action,
                      Key              => Key,
                      Save_In_Keys_XML => True,
@@ -1388,13 +1410,6 @@ package body KeyManager_Module.GUI is
         (Keys : Unbounded_String_Array) return Unbounded_String_Array;
       --  Run a dialog asking which key bindings the user wants to remove.
       --  Return the list of the key bindings to remove.
-
-      function Contains
-        (List : Unbounded_String_Array;
-         S    : Unbounded_String) return Boolean
-      is
-        (for some Val of List => S = Val);
-      --  Return True if List contains S
 
       -----------------------
       -- Run_Remove_Dialog --
@@ -1563,24 +1578,12 @@ package body KeyManager_Module.GUI is
                      Keys_To_Remove : constant Unbounded_String_Array :=
                                         Run_Remove_Dialog (Keys);
                   begin
-                     Remove_In_Keymap (Table.all, Action);
-
-                     for Key of Keys loop
-                        if not Contains (Keys_To_Remove, Key) then
-                           Bind_Default_Key_Internal
-                             (Table                                =>
-                                Table.all,
-                              Kernel                               =>
-                                Ed.Kernel,
-                              Action                               =>
-                                Get_String (Ed.Model, Iter, Action_Column),
-                              Key                                  =>
-                                To_String (Key),
-                              Save_In_Keys_XML                     => True,
-                              Remove_Existing_Shortcuts_For_Action => False,
-                              Remove_Existing_Actions_For_Shortcut => False);
-                        end if;
-                     end loop;
+                     Unbind_Keys_For_Action
+                       (Kernel           => Ed.Kernel,
+                        Table            => Table,
+                        Action           => Action,
+                        Keys_To_Remove   => Keys_To_Remove,
+                        Save_In_Keys_XML => True);
                   end;
             end case;
 

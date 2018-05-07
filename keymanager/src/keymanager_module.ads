@@ -24,7 +24,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;
 with GNATCOLL.VFS;
-with GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 with Gdk.Event;
 with Gdk.Types;
@@ -57,7 +57,7 @@ package KeyManager_Module is
    --  Return the name of the given key theme
 
    function Is_User_Defined (Theme : Key_Theme_Type) return Boolean;
-   --  Return True if the given the is user defined, False otherwise
+   --  Return True if the given theme is user defined, False otherwise
 
    type Key_Theme_Type_List is private;
    type Key_Theme_Type_Cursor is private;
@@ -254,11 +254,11 @@ private
    --  If For_Display is true, the returned string is suitable for displaying
    --  the shortcut to the user, but not to parse it into its components.
 
-   function Lookup_Action_From_Key
+   function Lookup_Actions_From_Key
      (Key      : String;
-      Bindings : HTable_Access) return String;
-   --  Return the name of the action currently bound to Key (possibly a multi-
-   --  key binding). The empty string is returned if the key is not bound yet.
+      Bindings : HTable_Access) return GNATCOLL.Utils.Unbounded_String_Array;
+   --  Return the action names currently bound to Key (possibly a multi-
+   --  key binding). An empty array is returned if the key is not bound yet.
 
    function Actions_With_Key_Prefix
      (Key       : String;
@@ -302,10 +302,17 @@ private
    --  the editor is saved. If Update_Menus is True, then
    --  Remove_Existing_Actions_For_Shortcut also applies to menus.
 
-   procedure Remove_In_Keymap
-     (Table  : in out Key_Htable.Instance;
-      Action : String);
-      --  Remove all bindings to Action in Table and its secondary keymaps
+   procedure Unbind_Keys_For_Action
+     (Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Table            : not null HTable_Access;
+      Action           : String;
+      Keys_To_Remove   : Unbounded_String_Array := Empty_Array;
+      Save_In_Keys_XML : Boolean := True);
+   --  Unbind the keys listed in Key_To_Remove from the given Action.
+   --  When Keys_To_Remove is empty, all the keys associated to Action are
+   --  removed instead.
+   --  Set Save_In_Keys_XML to True to save the modifications in the user's
+   --  key shortcuts XML file.
 
    function Get_Shortcuts
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
