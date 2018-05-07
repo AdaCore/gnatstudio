@@ -1730,8 +1730,37 @@ package body KeyManager_Module is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
 
+      function Get_Key_Img
+        (Iter   : Key_Htable.Cursor;
+         Prefix : String) return String;
+      --  Return a string representation of the key shortcut associated to
+      --  Iter.
+      --  The string representation depends on the For_Display parameter: when
+      --  True, a label is returned. Otherwise, the string representation used
+      --  on the key shortcuts XML files is returned.
+
       procedure Process_Table (Table : Key_Htable.Instance; Prefix : String);
       --  Process a specific binding table
+
+      -----------------
+      -- Get_Key_Img --
+      -----------------
+
+      function Get_Key_Img
+        (Iter   : Key_Htable.Cursor;
+         Prefix : String) return String is
+      begin
+         if For_Display then
+            return Prefix
+              & Gtk.Accel_Group.Accelerator_Get_Label
+              (Get_Key (Iter).Key,
+               Get_Key (Iter).Modifier);
+         else
+            return Prefix
+              & Image (Get_Key (Iter).Key,
+                       Get_Key (Iter).Modifier);
+         end if;
+      end Get_Key_Img;
 
       -------------------
       -- Process_Table --
@@ -1757,9 +1786,7 @@ package body KeyManager_Module is
                   if Binding.Keymap /= null then
                      Process_Table
                        (Binding.Keymap.Table,
-                        Prefix
-                        & Gtk.Accel_Group.Accelerator_Get_Label
-                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
+                        Get_Key_Img (Iter, Prefix)
                         & ' ');
                   end if;
 
@@ -1781,15 +1808,8 @@ package body KeyManager_Module is
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.User_Defined;
                      declare
-                        Key_Img : constant String :=
-                                    (if For_Display then
-                                     Prefix
-                                     & Gtk.Accel_Group.Accelerator_Get_Label
-                                       (Get_Key (Iter).Key,
-                                        Get_Key (Iter).Modifier)
-                                     else
-                                        Image (Get_Key (Iter).Key,
-                                       Get_Key (Iter).Modifier));
+                        Key_Img : constant String := Get_Key_Img
+                          (Iter, Prefix);
                      begin
                         if Use_Markup then
                            Append (Result, Escape_Text (Key_Img));
@@ -1805,18 +1825,17 @@ package body KeyManager_Module is
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.User_Defined;
 
-                     if Use_Markup then
-                        Result := To_Unbounded_String
-                          (Escape_Text
-                             (Gtk.Accel_Group.Accelerator_Get_Label
-                                  (Get_Key (Iter).Key,
-                                   Get_Key (Iter).Modifier)));
-
-                     else
-                        Result := To_Unbounded_String
-                          (Gtk.Accel_Group.Accelerator_Get_Label
-                             (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
-                     end if;
+                     declare
+                        Key_Img : constant String := Get_Key_Img
+                          (Iter, Prefix);
+                     begin
+                        if Use_Markup then
+                           Result := To_Unbounded_String
+                             (Escape_Text (Key_Img));
+                        else
+                           Result := To_Unbounded_String (Key_Img);
+                        end if;
+                     end;
                   end if;
                end if;
 
@@ -1851,7 +1870,7 @@ package body KeyManager_Module is
       Keys            : constant String := Lookup_Key_From_Action
         (Table           => Table,
          Action          => Action,
-         Default         => "none",
+         Default         => "",
          Use_Markup      => False,
          Return_Multiple => True,
          For_Display     => For_Display,
