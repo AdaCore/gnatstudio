@@ -272,6 +272,31 @@
       <menu label='SPARK'>
       </menu>
 
+      <menu label='_CodePeer' optional='true'>
+         <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
+         <menu label='Analy_ze...'           action='codepeer analyze...' optional='true'/>
+         <separator/>
+         <menu label='Analyze _File'         action='codepeer analyze file' optional='true'/>
+         <menu label='Analyze File B_y File...' action='codepeer analyze file by file' optional='true'/>
+         <separator/>
+         <menu label='_Display Code Review'  action='codepeer display code review'
+               optional='true'/>
+         <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
+         <menu label='Generate CS_V Report...' action='codepeer generate csv' optional='true'/>
+         <menu label='Ad_vanced'>
+            <menu label='_Regenerate Report...' action='codepeer regenerate report' optional='true'/>
+            <menu label='_Generate SCIL...'  action='codepeer generate scil' optional='true'/>
+            <menu label='CodePeer _Log'  action='codepeer log'           optional='true'/>
+            <separator/>
+            <menu label='R_emove Lock'   action='codepeer remove lock'   optional='true'/>
+            <menu label='Remove _XML Code Review' action='codepeer remove xml review'
+                  optional='true'/>
+            <menu label='_Remove SCIL'   action='codepeer remove scil'   optional='true'/>
+            <menu label='Remove _SCIL &amp; DB' action='codepeer remove scil and db'
+                  optional='true'/>
+         </menu>
+      </menu>
+
       <menu label='_Analyze'>
 
          <menu label="GNAThub">
@@ -403,31 +428,6 @@
          <menu label="_Interrupt"                 action="interrupt"/>
       </menu>
 -->
-
-      <menu label='_CodePeer' optional='true'>
-         <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
-         <menu label='Analy_ze...'           action='codepeer analyze...' optional='true'/>
-         <separator/>
-         <menu label='Analyze _File'         action='codepeer analyze file' optional='true'/>
-         <menu label='Analyze File B_y File...' action='codepeer analyze file by file' optional='true'/>
-         <separator/>
-         <menu label='_Display Code Review'  action='codepeer display code review'
-               optional='true'/>
-         <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
-         <menu label='Generate CS_V Report...' action='codepeer generate csv' optional='true'/>
-         <menu label='Ad_vanced'>
-            <menu label='_Regenerate Report...' action='codepeer regenerate report' optional='true'/>
-            <menu label='_Generate SCIL...'  action='codepeer generate scil' optional='true'/>
-            <menu label='CodePeer _Log'  action='codepeer log'           optional='true'/>
-            <separator/>
-            <menu label='R_emove Lock'   action='codepeer remove lock'   optional='true'/>
-            <menu label='Remove _XML Code Review' action='codepeer remove xml review'
-                  optional='true'/>
-            <menu label='_Remove SCIL'   action='codepeer remove scil'   optional='true'/>
-            <menu label='Remove _SCIL &amp; DB' action='codepeer remove scil and db'
-                  optional='true'/>
-         </menu>
-      </menu>
 
       <menu label='_View'>
          <menu label="_Files"                     action="open files"/>
