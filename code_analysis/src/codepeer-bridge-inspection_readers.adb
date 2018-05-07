@@ -105,6 +105,8 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Self.Parse (Input);
 
+      Self.Reader.End_Document;
+
       Tree                  := Self.Reader.Get_Code_Analysis_Tree;
       Version               := Self.Version;
       Race_Category         := Self.Reader.Get_Race_Category;

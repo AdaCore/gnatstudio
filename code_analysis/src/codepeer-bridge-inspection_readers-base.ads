@@ -67,6 +67,11 @@ private package CodePeer.Bridge.Inspection_Readers.Base is
       return CodePeer.Subprogram_Data_Access;
    --  Returns analysis information for currently processed subprogram node
 
+   function Message
+     (Self : Base_Inspection_Reader'Class) return CodePeer.Message_Access;
+   --  Returns currently processed message. Null is return when called outside
+   --  of between of Start_Message/End_Message calls.
+
    procedure Start_Message
      (Self  : in out Base_Inspection_Reader;
       Attrs : Sax.Attributes.Attributes'Class);

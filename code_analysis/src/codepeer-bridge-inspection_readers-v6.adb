@@ -42,6 +42,46 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
       end return;
    end Create_Inspection_Reader_V6;
 
+   ------------------
+   -- End_Document --
+   ------------------
+
+   overriding procedure End_Document (Self : in out Inspection_Reader_V6) is
+
+      use type Code_Analysis.Subprogram_Access;
+
+   begin
+      for Pair of Self.Postponed loop
+         declare
+            Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
+              Self.Subprogram_Map (Pair.Subprogram);
+            Subprogram      : constant CodePeer.Subprogram_Data_Access :=
+              (if Subprogram_Node = null then null
+               else CodePeer.Subprogram_Data_Access
+                 (Subprogram_Node.Analysis_Data.CodePeer_Data));
+
+         begin
+            if Subprogram = null then
+               GPS.Kernel.Insert_UTF8
+                 (Self.Kernel,
+                  "Unable to resolve message to subprogram",
+                  Mode => GPS.Kernel.Error);
+
+            else
+               --  Update name of subprogram for the message and add message to
+               --  the set of subprogram's messages.
+
+               Pair.Message.Subprogram :=
+                 Ada.Strings.Unbounded.To_Unbounded_String
+                   (Subprogram_Node.Name.all);
+               Subprogram.Messages.Append (Pair.Message);
+            end if;
+         end;
+      end loop;
+
+      Self.Postponed.Clear;
+   end End_Document;
+
    -----------------
    -- End_Message --
    -----------------
@@ -52,19 +92,49 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
       Self.Subprogram_Node := null;
    end End_Message;
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Item : Message_Subprogram_Pair) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Containers.Hash_Type (Item.Message.Id);
+   end Hash;
+
    -------------------
    -- Start_Message --
    -------------------
 
    overriding procedure Start_Message
      (Self  : in out Inspection_Reader_V6;
-      Attrs : Sax.Attributes.Attributes'Class) is
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      use type Code_Analysis.Subprogram_Access;
+
+      Subprogram : constant Positive :=
+        Positive'Value (Attrs.Get_Value ("subp_id"));
+      Position   : constant Positive_Subprogram_Maps.Cursor :=
+        Self.Subprogram_Map.Find (Subprogram);
+
    begin
-      Self.Subprogram_Node :=
-        Self.Subprogram_Map.Element
-          (Positive'Value (Attrs.Get_Value ("subp_id")));
+      if Positive_Subprogram_Maps.Has_Element (Position) then
+         Self.Subprogram_Node :=
+           Positive_Subprogram_Maps.Element (Position);
+      end if;
 
       Base.Base_Inspection_Reader (Self).Start_Message (Attrs);
+
+      if Self.Subprogram_Node /= null then
+         --  Append message to the list of subprogram's messages
+
+         Self.Subprogram_Data.Messages.Append (Self.Message);
+
+      else
+         --  otherwise postpone this operation
+
+         Self.Postponed.Insert ((Self.Message, Subprogram));
+      end if;
    end Start_Message;
 
    ----------------------

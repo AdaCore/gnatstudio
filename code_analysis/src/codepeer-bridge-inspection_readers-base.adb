@@ -27,6 +27,8 @@ with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.Base is
 
+   use type Code_Analysis.Subprogram_Access;
+
    Annotation_Category_Tag : constant String := "annotation_category";
    CWE_Category_Tag        : constant String := "cwe_category";
    Entry_Point_Tag         : constant String := "entry_point";
@@ -54,6 +56,12 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    Rank_Attribute               : constant String := "rank";
    Vn_Id_Attribute              : constant String := "vn-id";
    Vn_Ids_Attribute             : constant String := "vn-ids";
+
+   function Subprogram_Name
+     (Self : Base_Inspection_Reader'Class)
+      return Ada.Strings.Unbounded.Unbounded_String;
+   --  Returns name of the currently processed subprogram when known or
+   --  Null_Unbounded_String otherwise.
 
    procedure Start_Annotation_Category
      (Self  : in out Base_Inspection_Reader'Class;
@@ -306,6 +314,16 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Column       => 0,
          Message      => null);
    end Initialize;
+
+   -------------
+   -- Message --
+   -------------
+
+   function Message
+     (Self : Base_Inspection_Reader'Class) return CodePeer.Message_Access is
+   begin
+      return Self.Current_Message;
+   end Message;
 
    -------------------------------
    -- Start_Annotation_Category --
@@ -735,9 +753,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
           (Id          =>
              Positive'Value (Attrs.Get_Value ("identifier")),
            File        => Self.File_Node,
-           Subprogram  =>
-             Ada.Strings.Unbounded.To_Unbounded_String
-               (Base_Inspection_Reader'Class (Self).Subprogram_Node.Name.all),
+           Subprogram  => Self.Subprogram_Name,
            Merged      => Merged,
            Lifeage     => Reader_Utilities.Get_Lifeage (Attrs),
            Line        => Positive'Value (Attrs.Get_Value ("line")),
@@ -767,11 +783,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Self.Messages.Insert
            (Self.Current_Message.Id, Self.Current_Message);
       end if;
-
-      --  Append message to the list of subprogram's messages
-
-      Base_Inspection_Reader'Class
-        (Self).Subprogram_Data.Messages.Append (Self.Current_Message);
 
       --  Append message's category to the list of corresponding
       --  categories.
@@ -927,9 +938,26 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       return CodePeer.Subprogram_Data_Access is
    begin
       return
-        CodePeer.Subprogram_Data_Access
-          (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
+        (if Self.Subprogram_Node /= null
+         then CodePeer.Subprogram_Data_Access
+           (Self.Subprogram_Node.Analysis_Data.CodePeer_Data)
+         else null);
    end Subprogram_Data;
+
+   ---------------------
+   -- Subprogram_Name --
+   ---------------------
+
+   function Subprogram_Name
+     (Self : Base_Inspection_Reader'Class)
+      return Ada.Strings.Unbounded.Unbounded_String is
+   begin
+      return
+        (if Self.Subprogram_Node /= null
+         then Ada.Strings.Unbounded.To_Unbounded_String
+           (Self.Subprogram_Node.Name.all)
+         else Ada.Strings.Unbounded.Null_Unbounded_String);
+   end Subprogram_Name;
 
    ----------------
    -- Update_CWE --

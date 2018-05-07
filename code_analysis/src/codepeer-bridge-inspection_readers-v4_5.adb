@@ -95,6 +95,22 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
       end if;
    end Start_Element;
 
+   -------------------
+   -- Start_Message --
+   -------------------
+
+   overriding procedure Start_Message
+     (Self  : in out Inspection_Reader_V4_5;
+      Attrs : Sax.Attributes.Attributes'Class) is
+   begin
+      Base.Base_Inspection_Reader (Self).Start_Message (Attrs);
+      --  Call base implementation.
+
+      --  Append message to the list of subprogram's messages
+
+      Self.Subprogram_Data.Messages.Append (Self.Message);
+   end Start_Message;
+
    ----------------------
    -- Start_Subprogram --
    ----------------------

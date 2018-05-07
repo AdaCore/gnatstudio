@@ -83,6 +83,10 @@ private
      (Self : Abstract_Inspection_Reader)
       return Annotation_Category_Maps.Map is abstract;
 
+   not overriding procedure End_Document
+     (Self : in out Abstract_Inspection_Reader) is null;
+   --  Called after processing of the XML data file.
+
    ------------
    -- Reader --
    ------------

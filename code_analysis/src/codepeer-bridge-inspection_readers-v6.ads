@@ -30,10 +30,28 @@ private package CodePeer.Bridge.Inspection_Readers.V6 is
 
 private
 
+   type Message_Subprogram_Pair is record
+      Message    : CodePeer.Message_Access;
+      Subprogram : Positive;
+   end record;
+
+   function Hash
+     (Item : Message_Subprogram_Pair) return Ada.Containers.Hash_Type;
+   --  Hash function to use Message_Subprogram_Pair in standard hashed
+   --  containers.
+
+   package Message_Subprogram_Sets is
+     new Ada.Containers.Hashed_Sets
+       (Message_Subprogram_Pair, Hash, "=", "=");
+
    type Inspection_Reader_V6 is
      limited new Base.Base_Inspection_Reader with record
       Subprogram_Map  : Positive_Subprogram_Maps.Map;
       Subprogram_Node : Code_Analysis.Subprogram_Access;
+
+      Postponed       : Message_Subprogram_Sets.Set;
+      --  Set of messages which is not associated to subprograms due to missing
+      --  of subprogram mapping at message processing time.
    end record;
 
    overriding procedure Start_Message
@@ -49,5 +67,7 @@ private
    overriding function Subprogram_Node
      (Self : Inspection_Reader_V6)
       return Code_Analysis.Subprogram_Access;
+
+   overriding procedure End_Document (Self : in out Inspection_Reader_V6);
 
 end CodePeer.Bridge.Inspection_Readers.V6;

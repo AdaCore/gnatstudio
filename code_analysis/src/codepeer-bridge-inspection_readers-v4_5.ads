@@ -53,4 +53,8 @@ private
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class);
 
+   overriding procedure Start_Message
+     (Self  : in out Inspection_Reader_V4_5;
+      Attrs : Sax.Attributes.Attributes'Class);
+
 end CodePeer.Bridge.Inspection_Readers.V4_5;
