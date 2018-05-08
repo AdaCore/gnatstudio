@@ -126,7 +126,7 @@ package body GVD.Call_Stack is
       View_Name          => -"Call Stack",
       Formal_View_Record => Call_Stack_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
+      Reuse_If_Exist     => True,
       Commands_Category  => "",
       Local_Config       => True,
       Local_Toolbar      => True,
