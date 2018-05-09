@@ -121,7 +121,7 @@ endif
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) -s gps/obj/gps.exe $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
@@ -143,7 +143,7 @@ endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
-	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
