@@ -60,8 +60,8 @@ package GNAThub.Module is
    --  Called when preferences or filter criterias for report have been changed
 
    function New_Severity
-     (Self       : in out GNAThub_Module_Id_Record'Class;
-      Severity   : Severity_Enum)
+     (Self    : in out GNAThub_Module_Id_Record'Class;
+      Ranking : Analysis_Message_Category)
       return Severity_Access;
    --  Creates new severity object
 

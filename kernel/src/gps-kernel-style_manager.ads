@@ -139,6 +139,12 @@ package GPS.Kernel.Style_Manager is
    --  Return the Foreground, Background, Variant for the given key.
    --  Raise Key_Not_Found if the key was not found in the manager.
 
+   function Get_Color_Preference
+     (Style      : Style_Access;
+      Background : Boolean := True) return Color_Preference;
+   --  Return the color preference associated with the given style or null
+   --  when the style is not associated to a color preference.
+
    -------------
    -- Setters --
    -------------

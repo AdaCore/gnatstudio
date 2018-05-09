@@ -218,6 +218,16 @@ package body GPS.Default_Styles is
       -- Analysis Tools --
       --------------------
 
+      Analysis_Styles (Unspecified) := Editor_Default_Style;
+
+      Init (Analysis_Styles (Annotation),
+            Name      => -"Annotation messages",
+            Bg        => Annotation_Messages_Highlight);
+
+      Init (Analysis_Styles (Informational),
+            Name      => -"Informational messages",
+            Bg        => Info_Messages_Highlight);
+
       Init (Analysis_Styles (High_Importance),
             Name      => -"High importance messages",
             Bg        => High_Messages_Highlight);

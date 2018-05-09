@@ -1193,32 +1193,50 @@ package body GPS.Kernel.Preferences is
          Default => "#ADFFC2",
          Path    => -"Messages:Build");
 
-      High_Messages_Highlight := Manager.Create
-          (Name    => "High-Importance-Messages-Highlight",
-           Label   => -"High importance messages",
+      Annotation_Messages_Highlight := Manager.Create
+        (Name    => "Annotation-Messages-Highlight",
+         Label   => -"Annotation messages",
            Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for high priority messages. This preference is "
-             & "also used by external tools integrated in GPS "
-             & "(e.g: CodePeer)."),
-           Default => "#F75D59");
+         Doc     => -("Color for annotation messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F75D59");
+
+      Info_Messages_Highlight := Manager.Create
+        (Name    => "Info-Messages-Highlight",
+         Label   => -"Informational messages",
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for informational messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F75D59");
+
+      High_Messages_Highlight := Manager.Create
+        (Name    => "High-Importance-Messages-Highlight",
+         Label   => -"High importance messages",
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for high priority messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F75D59");
 
       Medium_Messages_Highlight := Manager.Create
-          (Name    => "Medium-Importance-Messages-Highlight",
-           Label   => -"Medium importance messages",
-           Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for medium priority messages. This preference "
-             & "is also used by external tools integrated in GPS "
-             & "(e.g: CodePeer)."),
-           Default => "#F88017");
+        (Name    => "Medium-Importance-Messages-Highlight",
+         Label   => -"Medium importance messages",
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for medium priority messages. This preference "
+           & "is also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F88017");
 
       Low_Messages_Highlight := Manager.Create
-          (Name    => "Low-Importance-Messages-Highlight",
-           Label   => -"Low importance messages",
-           Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for low priority messages. This preference is "
-             & "also used by external tools integrated in GPS "
-             & "(e.g: CodePeer)."),
-           Default => "#FFE87C");
+        (Name    => "Low-Importance-Messages-Highlight",
+         Label   => -"Low importance messages",
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for low priority messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#FFE87C");
 
       File_Pattern := Manager.Create
         (Name    => "Messages-File-Regpat-1",

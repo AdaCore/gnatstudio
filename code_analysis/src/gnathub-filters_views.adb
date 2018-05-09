@@ -31,6 +31,7 @@ with Gtk.Widget;
 with Gtkada.Handlers;
 with Gtkada.MDI;
 
+with Default_Preferences;              use Default_Preferences;
 with Generic_Views;
 with GNAThub.Generic_Criteria_Editors;
 with GNAThub.Messages;
@@ -451,10 +452,15 @@ package body GNAThub.Filters_Views is
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (View);
+      Pref : Color_Preference;
    begin
       for Severety of GNAThub_Module.Severities loop
-         GPS.Kernel.Preferences.Append_Menu
-           (Menu, GNAThub_Module.Kernel, Severety.Color);
+         Pref := Get_Color_Preference (Severety.Style);
+
+         if Pref /= null then
+            GPS.Kernel.Preferences.Append_Menu
+              (Menu, GNAThub_Module.Kernel, Pref);
+         end if;
       end loop;
    end Create_Menu;
 

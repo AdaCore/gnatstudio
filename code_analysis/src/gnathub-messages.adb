@@ -25,7 +25,7 @@ package body GNAThub.Messages is
      (Self : not null access Message)
       return Gdk.RGBA.Gdk_RGBA is
    begin
-      return Self.Severity.Color.Get_Pref;
+      return Background (Self.Severity.Style);
    end Get_Background_Color;
 
    --------------

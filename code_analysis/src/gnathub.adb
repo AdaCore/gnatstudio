@@ -30,7 +30,7 @@ package body GNAThub is
       return
         Ada.Strings.Unbounded.To_Unbounded_String
           (Ada.Characters.Handling.To_Lower
-             (Severity_Enum'Image (Item.Ranking)));
+             (Analysis_Message_Category'Image (Item.Ranking)));
    end Get_Name;
 
    ----------
@@ -39,7 +39,7 @@ package body GNAThub is
 
    function Hash (Item : Severity_Access) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Strings.Hash (Severity_Enum'Image (Item.Ranking));
+      return Ada.Strings.Hash (Analysis_Message_Category'Image (Item.Ranking));
    end Hash;
 
    ----------

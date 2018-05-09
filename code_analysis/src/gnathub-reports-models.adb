@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Code_Analysis_GUI; use Code_Analysis_GUI;
+with Code_Analysis_GUI;   use Code_Analysis_GUI;
 with Gdk.RGBA;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
-with GPS.Intl;          use GPS.Intl;
-with GPS.Kernel;        use GPS.Kernel;
-with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
+with Default_Preferences; use Default_Preferences;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 
 package body GNAThub.Reports.Models is
 
@@ -79,7 +80,9 @@ package body GNAThub.Reports.Models is
          for Index in Self.Model.Total'Range loop
             if Self.Model.Total (Index).Severity /= null
               and then
-                Preference (Self.Model.Total (Index).Severity.Color) = Pref
+                Preference
+                  (Get_Color_Preference
+                     (Self.Model.Total (Index).Severity.Style)) = Pref
             then
                return True;
             end if;
@@ -231,7 +234,7 @@ package body GNAThub.Reports.Models is
          if Self.Total (Index).Severity /= null then
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value
-              (Value, Self.Total (Index).Severity.Color.Get_Pref);
+              (Value, Background (Self.Total (Index).Severity.Style));
          end if;
       end if;
    end Get_Value;

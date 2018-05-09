@@ -86,7 +86,12 @@ package GPS.Default_Styles is
    --------------------
 
    type Analysis_Message_Category is
-     (High_Importance, Medium_Importance, Low_Importance);
+     (Unspecified,
+      Annotation,
+      Informational,
+      High_Importance,
+      Medium_Importance,
+      Low_Importance);
    type Analysis_Message_Styles is
      array (Analysis_Message_Category) of Style_Access;
 

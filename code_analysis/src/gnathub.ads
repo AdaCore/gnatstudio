@@ -22,8 +22,9 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with Code_Analysis;                  use Code_Analysis;
+with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
-with Default_Preferences;            use Default_Preferences;
+with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
 package GNAThub is
 
@@ -34,16 +35,9 @@ package GNAThub is
    -- Severity --
    --------------
 
-   type Severity_Enum is (Annotation,
-                          Unspecified,
-                          Info,
-                          Low,
-                          Medium,
-                          High);
-
    type Severity_Record is limited record
-      Ranking : Severity_Enum;
-      Color   : Color_Preference;
+      Ranking : Analysis_Message_Category;
+      Style   : Style_Access;
    end record;
 
    type Severity_Access is access all Severity_Record;

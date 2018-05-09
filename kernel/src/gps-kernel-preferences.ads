@@ -183,6 +183,8 @@ package GPS.Kernel.Preferences is
    Style_Src_Highlight            : Color_Preference;
    Info_Src_Highlight             : Color_Preference;
    Search_Src_Highlight           : Color_Preference;
+   Annotation_Messages_Highlight  : Color_Preference;
+   Info_Messages_Highlight        : Color_Preference;
    High_Messages_Highlight        : Color_Preference;
    Medium_Messages_Highlight      : Color_Preference;
    Low_Messages_Highlight         : Color_Preference;

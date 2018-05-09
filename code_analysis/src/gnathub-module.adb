@@ -228,40 +228,14 @@ package body GNAThub.Module is
    ------------------
 
    function New_Severity
-     (Self     : in out GNAThub_Module_Id_Record'Class;
-      Severity : Severity_Enum)
-      return Severity_Access
-   is
-      N    : constant String           := Severity_Enum'Image (Severity);
-      Name : constant Unbounded_String := To_Unbounded_String (N);
-
-      function Get_Default_Color return String;
-
-      -----------------------
-      -- Get_Default_Color --
-      -----------------------
-
-      function Get_Default_Color return String is
-      begin
-         if Ada.Strings.Unbounded.Index (Name, "HIGH_") > 0 then
-            return GPS.Kernel.Preferences.High_Messages_Highlight.Get_Pref;
-         elsif Ada.Strings.Unbounded.Index (Name, "MEDIUM_") > 0 then
-            return GPS.Kernel.Preferences.Medium_Messages_Highlight.Get_Pref;
-         else
-            return GPS.Kernel.Preferences.Low_Messages_Highlight.Get_Pref;
-         end if;
-      end Get_Default_Color;
-
+     (Self    : in out GNAThub_Module_Id_Record'Class;
+      Ranking : Analysis_Message_Category)
+      return Severity_Access is
    begin
       return Sev : constant Severity_Access :=
         new Severity_Record'
-          (Ranking    => Severity,
-           Color      => Self.Kernel.Get_Preferences.Create
-             (Path    => ":Local Configuration",
-              Name    => Severity_History_Prefix & "-" & N & "-color",
-              Label   => "Color for " & N,
-              Doc     => "",
-              Default => Get_Default_Color))
+          (Ranking    => Ranking,
+           Style      => Analysis_Styles (Ranking))
       do
          Self.Severities.Insert (Sev);
       end return;

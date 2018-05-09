@@ -26,6 +26,7 @@ with GNATCOLL.SQL.Sqlite;
 with Basic_Types;
 with Commands;
 
+with GPS.Kernel.Messages;
 with GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;
 
@@ -403,6 +404,9 @@ package body GNAThub.Loader is
                File      => File,
                Line      => R.Line,
                Column    => Basic_Types.Visible_Column_Type (R.Col_Begin));
+            GPS.Kernel.Messages.Set_Highlighting
+              (Self   => Message,
+               Style  => Analysis_Styles (Severity.Ranking));
 
             --  Update module's tree
 
@@ -503,9 +507,9 @@ package body GNAThub.Loader is
    procedure Load_Severities (Self : in out Loader'Class) is
       Severity : Severity_Access;
    begin
-      for S in Severity_Enum loop
+      for S in Analysis_Message_Category loop
          Severity := Self.Module.New_Severity (S);
-         Self.Severities.Insert (Severity_Enum'Pos (S), Severity);
+         Self.Severities.Insert (Analysis_Message_Category'Pos (S), Severity);
       end loop;
    end Load_Severities;
 

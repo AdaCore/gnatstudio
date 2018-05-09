@@ -735,6 +735,27 @@ package body GPS.Kernel.Style_Manager is
       end if;
    end Get_Icon;
 
+   --------------------------
+   -- Get_Color_Preference --
+   --------------------------
+
+   function Get_Color_Preference
+     (Style      : Style_Access;
+      Background : Boolean := True) return Color_Preference is
+   begin
+      if Style.Source = null
+        or else Style.Source.all not in Source_From_Fg_Bg_Prefs'Class
+      then
+         return null;
+      end if;
+
+      if Background then
+         return Source_From_Fg_Bg_Prefs (Style.Source.all).Bg_Pref;
+      else
+         return Source_From_Fg_Bg_Prefs (Style.Source.all).Fg_Pref;
+      end if;
+   end Get_Color_Preference;
+
    --------------------
    -- Set_Foreground --
    --------------------

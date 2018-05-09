@@ -1676,16 +1676,9 @@ package body CodePeer.Module is
 
       Module.Message_Colors (CodePeer.Low) := Low_Messages_Highlight;
 
+      Module.Message_Colors (CodePeer.Info) := Info_Messages_Highlight;
+
       --  Create CodePeer own preferences for CodePeer specific messages
-      Module.Message_Colors (CodePeer.Info) :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "Messages-Informational-Background",
-           Label   => -"Color for 'informational' messages",
-           Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color to use for the background of informational"
-             & " messages"),
-           Default => "#DFDFDF");
 
       Module.Message_Colors (CodePeer.Suppressed) :=
         Default_Preferences.Create
