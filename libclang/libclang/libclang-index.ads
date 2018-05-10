@@ -724,16 +724,6 @@ package Libclang.Index is
 
    package Source_File_Indexer is
 
-      function Index_Source_File
-        (Index_Action      : Clang_Index_Action;
-         Client_Data       : Client_Data_T;
-         Index_Options     : Clang_Index_Options;
-         Source_Filename   : String;
-         Command_Line_Args : GNATCOLL.Utils.Unbounded_String_Array;
-         Unsaved_Files     : Unsaved_File_Array := No_Unsaved_Files;
-         Options           : Clang_Translation_Unit_Flags :=
-           No_Translation_Unit_Flags) return Clang_Translation_Unit;
-
       procedure Index_Translation_Unit
         (Index_Action : Clang_Index_Action;
          Client_Data : Client_Data_T;
