@@ -313,7 +313,7 @@ package body Libclang.Index is
         (CXIdxClientASTFile (System.Null_Address));
       pragma Convention (C, Imported_AST_File_Internal);
 
-      Indexer_Callbacks : aliased constant IndexerCallbacks :=
+      Indexer_Callbacks : aliased IndexerCallbacks :=
         (Abort_Query_Internal'Access,
          Diagnostic_Internal'Access,
          Entered_Main_File_Internal'Access,
@@ -961,7 +961,7 @@ package body Libclang.Index is
       F : aliased CXFile;
    begin
       clang_getFileLocation
-        (Location, F'Access, Line'Access,
+        (Location, F'Address, Line'Access,
          Column'Access, Offset'Access);
 
       return Clang_Raw_Location'
@@ -976,7 +976,7 @@ package body Libclang.Index is
       Offset : aliased unsigned;
    begin
       clang_getFileLocation
-        (Location, null, null, null, Offset'Access);
+        (Location, System.Null_Address, null, null, Offset'Access);
 
       return Offset;
    end Offset;

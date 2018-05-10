@@ -20,6 +20,7 @@ with Ada.Streams.Stream_IO;         use Ada.Streams.Stream_IO;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Real_Time;
+with Ada.Unchecked_Conversion;
 with Interfaces.C.Strings;
 with GNAT.Regpat;                   use GNAT.Regpat;
 with GNAT.Traceback.Symbolic;
@@ -1304,10 +1305,12 @@ package body Language.Libclang is
          File    => File,
          Project => Project);
 
+      function To_Address is new Ada.Unchecked_Conversion
+        (Clang_Translation_Unit, System.Address);
    begin
 
       Set_Return_Value_As_List (Data);
-      Set_Address_Return_Value (Data, System.Address (CTU));
+      Set_Address_Return_Value (Data, To_Address (CTU));
       Set_Address_Return_Value
         (Data, System.Address (Clang_Module_Id.Clang_Indexer));
    end Python_Get_TU;
