@@ -61,19 +61,6 @@ package GPS.Default_Styles is
    Debugger_Disabled_Breakpoint_Style    : Style_Access;
    --  Highlight line numbers when they have breakpoints
 
-   -----------
-   -- Build --
-   -----------
-
-   type Builder_Message_Category is (Errors, Warnings, Style, Info);
-   type Builder_Message_Styles is
-     array (Builder_Message_Category) of Style_Access;
-
-   Builder_Styles : Builder_Message_Styles;
-
-   Builder_Background_Style : Style_Access;
-   Builder_Shadow_Style     : Style_Access;
-
    ------------
    -- Search --
    ------------
@@ -81,20 +68,20 @@ package GPS.Default_Styles is
    Search_Results_Style     : Style_Access;
    --  Style used to highlight search results
 
-   --------------------
-   -- Analysis Tools --
-   --------------------
+   --------------
+   -- Messages --
+   --------------
 
-   type Analysis_Message_Category is
+   type Message_Importance_Type is
      (Unspecified,
       Annotation,
       Informational,
       High_Importance,
       Medium_Importance,
       Low_Importance);
-   type Analysis_Message_Styles is
-     array (Analysis_Message_Category) of Style_Access;
+   type Message_Styles_Array is
+     array (Message_Importance_Type) of Style_Access;
 
-   Analysis_Styles : Analysis_Message_Styles;
+   Messages_Styles : Message_Styles_Array;
 
 end GPS.Default_Styles;

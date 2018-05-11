@@ -37,7 +37,7 @@ package GNAThub is
    --------------
 
    type Severity_Record is limited record
-      Ranking : Analysis_Message_Category;
+      Ranking : Message_Importance_Type;
       Style   : Style_Access;
    end record;
 

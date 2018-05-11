@@ -92,7 +92,7 @@ package body Build_Command_Manager.Location_Parsers is
          Item,
          Category          => To_String (Self.Build.Category),
          Highlight         => True,
-         Styles            => GPS.Default_Styles.Builder_Styles,
+         Styles            => GPS.Default_Styles.Messages_Styles,
          Show_In_Locations => not Self.Build.Background);
 
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);

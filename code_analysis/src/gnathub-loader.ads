@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2016-2018, AdaCore                   --
+--                       Copyright (C) 2018, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,62 +14,77 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  This package contains loader code to load data from the database.
 
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with GNAThub.Module;
 
-private with GPS.Scripts.Commands;
-private with GNATCOLL.Projects;
-private with Ada.Containers.Ordered_Maps;
+with GNAThub.Messages;
+with GNAThub.Module;
+with GPS.Scripts.Commands;
 
 package GNAThub.Loader is
 
-   type Loader
-     (Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
-   is tagged limited private;
+   type Loader_Type is abstract tagged private;
 
-   procedure Load
-     (Self     : in out Loader'Class;
-      Database : GNATCOLL.VFS.Virtual_File);
-   --  Start loading of data from the database.
+   procedure Initialize
+     (Self   : in out Loader_Type;
+      Module : not null GNAThub.Module.GNAThub_Module_Id);
+
+   type Loader_Access is access all GNAThub.Loader.Loader_Type'Class;
+
+   function Load (Self : in out Loader_Type'Class) return Boolean;
+   --  Called to load the data used to create the GNAThub messages that will
+   --  be displayed in the GNAThub Report.
+   --  Should return True when data has been found, False otherwise.
+
+   procedure Remove_Messages (Self : in out Loader_Type);
+
+   procedure Cleanup (Self : in out Loader_Type);
+
+   procedure Prepare_Loading (Self : in out Loader_Type) is abstract;
+
+   function Has_Data_To_Load (Self : Loader_Type) return Boolean is abstract;
+
+   procedure Load_Data (Self : in out Loader_Type) is abstract;
 
 private
 
-   type Resource_Record is limited record
-      Name : Ada.Strings.Unbounded.Unbounded_String;
+   type Loader_Type is abstract tagged record
+      Module       : GNAThub.Module.GNAThub_Module_Id;
+      Source_Files : GNATCOLL.Projects.File_And_Project_Array_Access;
+      Messages     : Messages_Vectors.Vector;
+      Command      : GPS.Scripts.Commands.Scheduled_Command_Access;
    end record;
 
-   type Resource_Access is access all Resource_Record;
+   function Insert
+     (Self        : in out Loader_Type'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Severity_Id : Natural;
+      Visible     : Boolean)
+      return GNAThub_Project_Access;
 
-   package Resource_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Resource_Access);
+   function Insert
+     (Self        : in out Loader_Type'Class;
+      Project     : GNAThub_Project_Access;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Severity_Id : Natural;
+      Visible     : Boolean)
+      return GNAThub_File_Access;
 
-   package Severity_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Severity_Access);
+   procedure Insert_Message
+     (Self    : in out Loader_Type'Class;
+      Message : GNAThub.Messages.Message_Access);
 
-   package Rule_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Rule_Access);
+   procedure Insert_Metric
+     (Self   : in out Loader_Type'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Natural;
+      Metric : Metric_Access);
 
-   type Loader
-     (Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
-   is tagged limited record
-      Severities        : Severity_Maps.Map;
-      Rules             : Rule_Maps.Map;
-      --  Database's id to object mappings for the rules
-
-      Metrics           : Rule_Maps.Map;
-      --  Database's id to object mappings for the metrics
-
-      Project_Resources : Resource_Maps.Map;
-      Dir_Resources     : Resource_Maps.Map;
-      File_Resources    : Resource_Maps.Map;
-      Current           : Resource_Maps.Cursor;
-
-      Command           : GPS.Scripts.Commands.Scheduled_Command_Access;
-      --  Command that is used to load data from database
-
-      Source_Files      : GNATCOLL.Projects.File_And_Project_Array_Access;
-   end record;
+   function Find_Subprogram
+     (Self : in out Loader_Type'Class;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line : Integer)
+      return GNAThub_Subprogram_Access;
 
 end GNAThub.Loader;

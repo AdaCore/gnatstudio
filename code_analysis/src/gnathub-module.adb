@@ -229,13 +229,13 @@ package body GNAThub.Module is
 
    function New_Severity
      (Self    : in out GNAThub_Module_Id_Record'Class;
-      Ranking : Analysis_Message_Category)
+      Ranking : Message_Importance_Type)
       return Severity_Access is
    begin
       return Sev : constant Severity_Access :=
         new Severity_Record'
           (Ranking    => Ranking,
-           Style      => Analysis_Styles (Ranking))
+           Style      => Messages_Styles (Ranking))
       do
          Self.Severities.Insert (Sev);
       end return;

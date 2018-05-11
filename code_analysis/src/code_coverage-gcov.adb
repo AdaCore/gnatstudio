@@ -186,7 +186,7 @@ package body Code_Coverage.Gcov is
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Message.Set_Highlighting (Analysis_Styles (High_Importance));
+         Message.Set_Highlighting (Messages_Styles (High_Importance));
       end if;
    end Add_Location_If_Uncovered;
 

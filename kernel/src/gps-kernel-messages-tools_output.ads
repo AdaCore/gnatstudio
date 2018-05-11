@@ -29,7 +29,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Text              : UTF8_String;
       Category          : Glib.UTF8_String;
       Highlight         : Boolean := False;
-      Styles            : GPS.Default_Styles.Builder_Message_Styles :=
+      Styles            : GPS.Default_Styles.Message_Styles_Array :=
         (others => null);
       Show_In_Locations : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := True);
@@ -47,7 +47,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Styles                  : GPS.Default_Styles.Builder_Message_Styles :=
+      Styles                  : GPS.Default_Styles.Message_Styles_Array :=
         (others => null);
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
