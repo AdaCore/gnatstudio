@@ -699,8 +699,13 @@ package body LAL.Highlighters is
 
       Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Index : Token_Type := Lookup_Token (Unit, (From_Line, 1));
-      Node  : Ada_Node := Root.Lookup (Start_Sloc (Sloc_Range (Data (Index))));
+      Node  : Ada_Node;
    begin
+      if Root.Is_Null then
+         return;
+      end if;
+
+      Node := Root.Lookup (Start_Sloc (Sloc_Range (Data (Index))));
       Remove_Style (Buffer, From, To);
 
       if Node.Is_Null then
