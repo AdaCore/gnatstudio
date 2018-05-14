@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -38,42 +38,79 @@ package BT.Xml is
    --       source variable)
 
    --  XML format
-   --  2 separate files in the bts subdirectory of the output directory
-   --  backtraces (file_bts.xml)
-   --  <file   name="test.adb" >
-   --     <proc name="test.proc" >
-   --        <VN  vn_id = "4" >
-   --           <backtrace line="4" column="36" event="check">
-   --              if event = check, list the check_kind
-   --              <check kind="overflow" />
-   --           </backtrace>
-   --           <backtrace line="4" column="36" event="precondition">
-   --              if event is a precondition_check, give enough info
-   --              for the GUI to find the corresponding precondition in the
-   --              called procedure
-   --              <callee file="test.adb" proc="called_proc" vn_id="30" />
-   --           </backtrace>
-   --            ...
-   --        </VN>
-   --        ...  one per VN with corresponding backtraces
-   --     </proc>
-   --   </file>
+   --  There are two kinds of files in the bts subdirectory of the output
+   --  directory:
 
-   --  to make the xml more compact, we can have a table of check_kinds
-   --  event_kind, and set representation.
+   --  Backtraces (file_bts.xml)
+
+   --  <all_infos>
+   --  For xml compactness, we first have a table defining values for
+   --  check_kinds and event_kinds, referenced by the backtrace info:
+   --
+   --    <checks>
+   --      <check id="18" name="PRECONDITION_CHECK" text="precondition"/>
+   --      <check id="19" name="POSTCONDITION_CHECK" text="postcondition"/>
+   --      <check id="20" name="USER_PRECONDITION_CHECK"
+   --                                            text="user precondition"/>
+   --      <check id="21" name="INVALID_CHECK" text="validity check"/>
+   --      ...
+   --      <check id="39" name="TYPE_VARIANT_CHECK" text="discriminant check"/>
+   --      <check id="40" name="TAG_CHECK" text="tag check"/>
+   --    </checks>
+   --    <events>
+   --      <event id="0" name="POSTCONDITION_ASSUME_EVENT"
+   --                                      text="postcond_assume" />
+   --      <event id="1" name="INDUCTION_VAR_ASSUME_EVENT"
+   --                                      text="induction_var" />
+   --      <event id="2" name="OTHER_FROM_ASSUME_EVENT" text="other_assume" />
+   --      <event id="3" name="NON_INVALID_INPUT_ASSUME_EVENT"
+   --                                      text="non_invalid_input_values" />
+   --      <event id="4" name="PRECOND_ASSUME_EVENT" text="precond_assume" />
+   --      <event id="5" name="JUMP_EVENT" text="jump" />
+   --      <event id="6" name="CHECK_EVENT" text="check" />
+   --      <event id="7" name="PRECONDITION_EVENT" text="precondition check" />
+   --    </events>
+   --
+   --  <file name="test.adb">
+   --     <proc name="test.proc">
+   --        <vn id = "4">
+   --           <bt line="4" col="36" check="21" (Note: check # comes from
+   --                                             the check_kinds table)
+   --              if source file name for check message is not the same as
+   --              this module's file name, then check's file name is present:
+   --                 file_name="path-to-check-source-file"
+   --           />
+   --           <bt line="4" col="36" event="7"> (Note: event # comes from
+   --                                             the event_kinds table)
+   --              if event is a precondition_check, give enough info for the
+   --              GUI to find the corresponding precondition in the called
+   --              procedure:
+   --              <callee file="test.adb" name="called_proc" vn="30"
+   --               line="7" col="42" file_name="path-to-callee-source-file"/>
+   --           </bt>
+   --           ... more backtraces
+   --        </vn>
+   --        ... one per VN, with corresponding backtraces
+   --     </proc>
+   --     ... one per proc
+   --  </file>
+   --  </all_infos>
 
    --  Value_Sets (file_vals.xml)
-   --  <file   name="test.adb" >
-   --     <line num="4" >
-   --        <column num="34">
-   --           <VN name="this_variable" set="{-Inf .. 0}" />
-   --           <VN name="other_variable" set="{-10 .. 0}" />
+
+   --  <all_infos>
+   --  <file name="test.adb">
+   --     <proc name="test.proc">
+   --        <srcpos line="4" col="34">
+   --           <vn name="this_variable" vals="{-Inf .. 0}" />
+   --           <vn name="other_variable" vals="{-10 .. 0}" />
    --           ...
-   --        </column>
-   --        ...
-   --     </line>
-   --     ...
+   --        </srcpos>
+   --        ... one per line with VNs
+   --     </proc>
+   --     ... one per proc
    --  </file>
+   --  </all_infos>
 
    --  Examples of queries:
    --     Given a precondition_message for a procedure,
@@ -110,6 +147,7 @@ package BT.Xml is
    File_Name_Attribute  : constant String := "file_name";
    Id_Attribute         : constant String := "id";
    Vn_Attribute         : constant String := "vn";
+   Pre_Index_Attribute  : constant String := "precond_index";
    Line_Attribute       : constant String := "line";
    Col_Attribute        : constant String := "col";
    Check_Attribute      : constant String := "check";

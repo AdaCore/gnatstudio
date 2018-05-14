@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -33,7 +33,8 @@ package BT is
    type Event_Enum is
      (Postcondition_Assume_Event, Induction_Var_Assume_Event,
       Other_From_Assume_Event, Non_Invalid_Input_Assume_Event,
-      Precond_Assume_Event, Jump_Event, Check_Event, Precondition_Event);
+      Precond_Assume_Event, Jump_Event, Check_Event, Precondition_Event,
+      Conditional_Precond_Checks_Event);
    --  Events that may trigger a backtrace.
 
    subtype Line_Number is Integer range 0 .. 2 ** 21 - 1;

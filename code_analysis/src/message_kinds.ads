@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,16 +18,24 @@
 ------------------------------------------------------------------------------
 
 --  This package isolates the enumeration of message_kinds produced by the
---  the backend.
+--  the backend and potential other checkers.
 
 --  IMPORTANT Note: do NOT add any with clause in this package, so that
 --  Message_Kinds can be used as a standalone package, with no dependencies.
 
 package Message_Kinds is
 
-   type BE_Message_Subkind is
-   --  Each BE_Message_Kind has a Subkind field, which tells whether it's an
-   --  annotation or an error, and which kind of annotation or error.
+   --  Each new checker needs to add a value in the Checker type; complete
+   --  Message_Subkind with new corresponding subkinds; define a subtype of
+   --  Message_Subkind with these new values; define a new instance of
+   --  Checker_Message_Kind with discriminant type the new subtype of
+   --  Message_Sukbind; define and register a reader function though
+   --  DBIO.Xml_Readers.Register_Reader
+   type Checker is (Backend, GNAT);
+
+   type Message_Subkind is
+   --  Each Checker_Message_Kind has a Subkind field, which tells whether it's
+   --  an annotation or an error, and which kind of annotation or error.
    --  There is exactly one Module_Annotation/Procedure_Annotation per SCIL
    --  module/procedure; these aren't really "messages", but just
    --  placeholders to hold the name and source position.
@@ -54,6 +62,12 @@ package Message_Kinds is
       Precondition_Annotation,
       Presumption_Annotation,
       Postcondition_Annotation,
+
+      --  another annotation:
+      Unknown_Call_Annotation,
+
+      --  another annotation:
+      Test_Vector_Annotation,
 
    --  Implicit warnings
       Non_Analyzed_Call_Warning,    --  We are making a call that is
@@ -132,9 +146,6 @@ package Message_Kinds is
    --  its predecessors are dead.
       Local_Lock_Of_Global_Object,  --  message detected during race_condition
 
-   --  another annotation:
-      Unknown_Call_Annotation,
-
    --  limitation warnings
       Analyzed_Module_Warning,           --  info
       Non_Analyzed_Module_Warning,       --  module was poisoned
@@ -145,8 +156,57 @@ package Message_Kinds is
       SQL_Injection_Check,  --  using tainted data in an SQL command
       XSS_Check,  --  Cross-site scripting; using tainted data in HTML output
 
-   --  another annotation:
-      Test_Vector_Annotation);
+   --  GNAT Warning messages:
+      GW_Default, --  Default GNAT Warnings
+
+      --  -gnatw...
+      GW_B,       --  Warn_On_Bad_Fixed_Value
+      GW_C,       --  Constant_Condition_Warnings
+      GW_D,       --  Warn_On_Dereference
+      GW_F,       --  Check_Unreferenced_Formals
+      GW_G,       --  Warn_On_Unrecognized_Pragma
+      GW_H,       --  Warn_On_Hiding
+      GW_I,       --  Implementation_Unit_Warnings
+      GW_J,       --  Warn_On_Obsolescent_Feature
+      GW_K,       --  Warn_On_Constant
+      GW_L,       --  Elab_Warnings
+      GW_M,       --  Warn_On_Modified_Unread
+      GW_O,       --  Address_Clause_Overlay_Warnings
+      GW_P,       --  Ineffective_Inline_Warnings
+      GW_Q,       --  Warn_On_Questionable_Missing_Parens
+      GW_R,       --  Warn_On_Redundant_Constructs
+      GW_T,       --  Warn_On_Deleted_Code
+      GW_U,       --  Check_Unreferenced/Withs/Unreferenced_Formals
+      GW_V,       --  Warn_On_No_Value_Assigned
+      GW_W,       --  Warn_On_Assumed_Low_Bound
+      GW_X,       --  Warn_On_Export_Import
+      GW_Y,       --  Warn_On_Ada_2005/2012_Compatibility
+      GW_Z,       --  Warn_On_Unchecked_Conversion
+      GW_Dot_A,   --  Warn_On_Assertion_Failure
+      GW_Dot_B,   --  Warn_On_Biased_Representation
+      GW_Dot_C,   --  Warn_On_Unrepped_Components
+      GW_Dot_F,   --  Warn_On_Elab_Access  # not in .e
+      GW_Dot_H,   --  Warn_On_Record_Holes
+      GW_Dot_I,   --  Warn_On_Overlap
+      GW_Dot_J,   --  Warn_On_Late_Primitives
+      GW_Dot_K,   --  Warn_On_Standard_Redefinition
+      GW_Dot_M,   --  Warn_On_Suspicious_Modulus_Value
+      GW_Dot_O,   --  Warn_On_All_Unread_Out_Parameters
+      GW_Dot_P,   --  Warn_On_Parameter_Order
+      GW_Dot_Q,   --  Warn_On_Questionable_Layout
+      GW_Dot_R,   --  Warn_On_Object_Renames_Function
+      GW_Dot_S,   --  Warn_On_Overridden_Size
+      GW_Dot_T,   --  Warn_On_Suspicious_Contract
+      GW_Dot_U,   --  Warn_On_Unordered_Enumeration_Type
+      GW_Dot_W,   --  Warn_On_Warnings_Off
+      GW_Dot_X,   --  Warn_On_Non_Local_Exception
+      GW_Dot_Z    --  Warn_On_Size_Alignment
+      );
+
+   subtype BE_Message_Subkind is Message_Subkind range
+     Module_Annotation .. XSS_Check;
+   subtype GW_Message_Subkind is Message_Subkind range
+     GW_Default .. GW_Dot_Z;
 
    --  NOTE: These subranges are generally *not* to be used
    --       to distinguish, e.g., "informational" from "warning" messages,
@@ -157,12 +217,16 @@ package Message_Kinds is
    --       Is_Informational, etc.  for that purpose (see functions below).
    --       Those functions will make use of these subranges as appropriate.
 
+   subtype Place_Holder_Subkind is BE_Message_Subkind range
+     Module_Annotation .. End_Procedure_Annotation;
    subtype Annotation_Subkind is BE_Message_Subkind range
       Module_Annotation .. Postcondition_Annotation;
    subtype Method_Annotation_Subkind is BE_Message_Subkind range
      Input_Annotation .. Postcondition_Annotation;
    subtype Pre_Post_Annotation_Subkind is BE_Message_Subkind range
      Precondition_Annotation .. Postcondition_Annotation;
+   subtype In_Out_Annotation_Subkind is BE_Message_Subkind range
+     Input_Annotation .. Output_Annotation;
    --  cannot have this subtype as the range is no longer contiguous
    --  subtype Warning_Subkind is BE_Message_Subkind
    --  range Unknown_Call_Warning .. Suspicious_Precondition_Warning;
@@ -207,6 +271,9 @@ package Message_Kinds is
       All_Checks_Subkind'Pred (Security_Check_Subkind'First);
    --  This subrange covers the "hole" in All_Checks_Subkind
 
+   subtype All_Checks_With_External_Subkinds is Message_Subkind range
+     All_Checks_Subkind'First .. Message_Subkind'Last;
+
    type Check_Kinds_Array is array (Check_Kind_Enum) of Boolean;
    pragma Pack (Check_Kinds_Array);
    Check_Kinds_Array_Default : constant Check_Kinds_Array :=
@@ -214,7 +281,7 @@ package Message_Kinds is
    Check_Kinds_String_Default : constant String := "";
 
    function CWE_Ids
-     (Kind : BE_Message_Subkind;
+     (Kind : Message_Subkind;
       Msg  : String := "") return String;
    --  Return the set of applicate CWE ids for Kind, or """ if none.
    --  Msg if not null is the message string associated with the message
@@ -238,6 +305,46 @@ package Message_Kinds is
       For_HTML_Output : Boolean := True)
       return   String;
    --  Make various improvements to numbers, such as
-   --  replacing near powers-of-2 by 2<sup>X +/- n
-   --  Depending on format, will use HTML or Text formats.
+   --  replacing near powers-of-2 by 2<sup>X +/- n, or
+   --  Integer_xx'First/Last +/- n.
+   --  If For_HTML_Output is True, will use HTML (e.g. "2<sup>X"), otherwise
+   --  Text (e.g. "2**X").
+
+   function Is_Annotation (Subkind : Message_Subkind) return Boolean;
+   function Is_Method_Annotation (Subkind : Message_Subkind) return Boolean;
+   --  true if subkind is in annotation subkinds, or locally_unused_assignment
+
+   function Is_Stored_In_DB_Method_Annotation
+     (Subkind : Message_Subkind)
+      return    Boolean;
+   --  same as above, but only keep certain messages (no input/output)
+
+   function Is_Warning (Subkind : Message_Subkind) return Boolean;
+   --  Return True if message is not considered a check, which
+   --  means there is no reason to add "check that ..." in front
+   --  of the text of the message.  Also, these messages are
+   --  *not* counted as one of the "check-related" messages.
+
+   function Is_Check (Subkind : Message_Subkind) return Boolean;
+   --  Returns True if message is a check.
+
+   function Is_Warning_Or_Check (Subkind : Message_Subkind) return Boolean;
+   --  Return True if message is to be counted in the count of
+   --  all messages.  This includes race condition messages,
+   --  dead stores, external checkers, GNAT warnings etc.
+
+   function Is_Informational (Subkind : Message_Subkind) return Boolean;
+   --  Return True if "Subkind" is an informational message.
+   --  An informational message is NOT counted in the error counts,
+   --  nor is it part of the next/prev chain in the message-window.
+   --  However, it is "printable", and if you click on it, in the
+   --  source window, an informational message will be printed in the
+   --  message window.
+
+   function Subkind_To_Checker (Subkind : Message_Subkind) return Checker is
+     (case Subkind is
+         when BE_Message_Subkind  => Backend,
+         when GW_Message_Subkind  => GNAT);
+   --  Returns the Checker that issue the given Message_Subkind
+
 end Message_Kinds;

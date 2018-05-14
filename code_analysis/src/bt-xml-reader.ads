@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2017, AdaCore                     --
+--                     Copyright (C) 2008-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -39,15 +39,25 @@ package BT.Xml.Reader is
    --  Store the results in mappings used for queries
 
    procedure Get_Vn_Backtraces
-     (Proc_Name  : String;
-      Vn_Id      : Natural;
-      Msg_Loc    : Source_Position;
-      Backtraces : in out BT.BT_Info_Seqs.Vector);
+     (Proc_Name     : String;
+      Vn_Id         : Natural;
+      Msg_Loc       : Source_Position;
+      Msg_Kind      : Message_Kinds.BE_Message_Subkind;
+      Precond_Index : Natural := 0;
+      Backtraces    : in out BT.BT_Info_Seqs.Vector);
    --  Returns a sequence of backtrace_info that contributed to this
    --  VN (associated with either precondition or error_message).
+   --  For precondition messages, only returns the backtraces that are
+   --  associated with the precondition_check. When Precond_Index > 0,
+   --  it indicates the precondition index associated with the precondition
+   --  check that led to the message, and is used for matching the appropriate
+   --  backtrace info in the callee.
 
    function Get_Precondition_Callee_Name (Bt_Id : Natural) return String;
    --  Given a Precondition_Check backtrace, returns the callee name
+
+   function Get_Precondition_Index (Bt_Id : Natural) return Natural;
+   --  Given a Precondition_Check backtrace, returns the precondition index
 
    function Get_Precondition_VN (Bt_Id : Natural) return Natural;
    --  Given a Precondition_Check backtrace, returns the precondition_vn
