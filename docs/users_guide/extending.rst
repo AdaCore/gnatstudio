@@ -296,6 +296,21 @@ versions of GPS you should not have keep other files in these directories.
   before you make them available to all GPS users by copying them to one of
   the other directories.
 
+* Automatically loaded together with the project
+
+  When GPS loads the project file called :file:`<your_project>.gpr`, it will
+  automatically look for a python file called :file:`<your_project>.ide.py`. In
+  this file, you are expected to define two parameterless subprograms, called
+  :guilabel:`initialize_project_plugin` and :guilabel:`finalize_project_plugin`;
+  GPS will call the first one when the project is loaded, and call the second
+  one if/when another project is loaded.
+
+  This method is convenient for providing project-specific behaviors, and means
+  that the GPS plugin can be checked under version control together with the
+  project file.
+
+  This feature is implemented via a the GPS plugin :file:`auto_load.py`.
+
 Any script loaded by GPS can contain customization for various aspects of
 GPS, such as aliases, new languages or menus, in a single file.
 
