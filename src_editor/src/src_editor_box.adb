@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1407,15 +1407,7 @@ package body Src_Editor_Box is
          else
             if not Force
               and then Check_Monitored_Files
-                (Editor.Kernel, Interactive => False)
-              and then Message_Dialog
-                (Msg => Display_Base_Name (File)
-                        & (-" changed on disk. Do you want to overwrite ?"),
-                 Dialog_Type => Confirmation,
-                 Buttons     => Button_OK or Button_Cancel,
-                 Title       => -"File changed on disk",
-                 Parent      =>
-                   Get_Current_Window (Editor.Kernel)) /= Button_OK
+                (Editor.Kernel, Interactive => True, Only_On_File => File)
             then
                Success := False;
             else

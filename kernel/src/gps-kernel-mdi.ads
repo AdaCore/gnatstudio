@@ -390,8 +390,9 @@ package GPS.Kernel.MDI is
    --  disk (for instance temporary files for source editors).
 
    function Check_Monitored_Files
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Interactive : Boolean := True)
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      Interactive  : Boolean := True;
+      Only_On_File : Virtual_File := No_File)
      return Boolean;
    procedure Check_Monitored_Files_In_Background
      (Kernel      : not null access Kernel_Handle_Record'Class);
@@ -400,8 +401,10 @@ package GPS.Kernel.MDI is
    --  timestamp changes do not impact GPS), and either automatically reload
    --  them or display an interactive dialog to the user.
    --  A single dialog is displayed for all modified files.
-   --  Returns True if some files were modified but the user chose not to
-   --  synchronize.
+   --  If Only_On_File is not No_File, check only for that given file.
+   --  Returns True if some files were modified and either Interactive was
+   --  False, or Interactive was True and the user chose not to reload at
+   --  least one file.
    --  Automatic reloading is performed if Interactive is False.
 
    --------------------------
