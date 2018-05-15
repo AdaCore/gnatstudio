@@ -351,6 +351,7 @@ package body LAL.Highlighters is
       case Token is
          when Ada_Termination |
               Ada_Lexing_Failure |
+              Ada_Whitespace |
               Ada_Identifier =>
             return Aspect_Prefix ("", In_Aspect);
          when
