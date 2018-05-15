@@ -747,7 +747,25 @@ package body Python_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
+      Script  : constant Scripting_Language :=
+        Get_Kernel (Module).Scripts.Lookup_Scripting_Language (Python_Name);
+      Errors  : aliased Boolean;
+      Result  : PyObject;
    begin
+      --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
+      --  in console if future 0.16 is installed because of some exception
+      --  when python is finalizing. Following code prevent this.
+
+      Result := Run_Command
+        (Python_Scripting (Script),
+         "import atexit ; atexit._run_exitfuncs()",
+         Need_Output     => False,
+         Show_Command    => False,
+         Hide_Output     => True,
+         Hide_Exceptions => True,
+         Errors          => Errors'Unchecked_Access);
+      Py_XDECREF (Result);
+
       Unregister_Python_Scripting (Get_Kernel (Module).Scripts);
    end Destroy;
 
