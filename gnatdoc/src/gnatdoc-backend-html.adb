@@ -1146,52 +1146,102 @@ package body GNATdoc.Backend.HTML is
             elsif Is_Subprogram_Or_Entry (E)
               and then Present (Get_Comment (E))
             then
-               --  Extract parameters
+               if Self.Context.Options.Extensions_Enabled then
+                  declare
+                     Parameters : JSON_Array;
 
-               declare
-                  Cursor     : Tag_Cursor := New_Cursor (Get_Comment (E));
-                  Tag        : Tag_Info_Ptr;
-                  Parameters : JSON_Array;
+                     function Process_Parameters_And_Return
+                       (Entity      : Entity_Id;
+                        Scope_Level : Natural) return Traverse_Result;
+                     --  Extracts information about parameters (for all kinds
+                     --  of subprograms) and return value (for functions).
 
-               begin
-                  while not At_End (Cursor) loop
-                     Tag := Get (Cursor);
+                     -----------------------------------
+                     -- Process_Parameters_And_Return --
+                     -----------------------------------
 
-                     if Tag.Tag = "param" then
-                        Append
-                          (Parameters,
-                           Entity_Data
-                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                     function Process_Parameters_And_Return
+                       (Entity      : Entity_Id;
+                        Scope_Level : Natural) return Traverse_Result is
+                     begin
+                        if Get_Kind (Entity) = E_Formal then
+                           Append
+                             (Parameters,
+                              Entity_Data
+                                (To_Unbounded_String ("param"),
+                                 LL.Get_Entity (Entity),
+                                 Utils.To_Unbounded_String
+                                   (Get_Doc (Entity).Text)));
+
+                        elsif Get_Kind (Entity) = E_Return then
+                           Entity_Entry.Set_Field
+                             ("returns",
+                              Entity_Data
+                                (To_Unbounded_String ("return"),
+                                 LL.Get_Entity (Entity),
+                                 Utils.To_Unbounded_String
+                                   (Get_Doc (Entity).Text)));
+                        end if;
+
+                        return (if Scope_Level > 1 then Skip else OK);
+                     end Process_Parameters_And_Return;
+
+                  begin
+                     Traverse_Tree (E, Process_Parameters_And_Return'Access);
+
+                     if Length (Parameters) /= 0 then
+                        Entity_Entry.Set_Field ("parameters", Parameters);
                      end if;
+                  end;
 
-                     Next (Cursor);
-                  end loop;
+               else
+                  --  Extract parameters
 
-                  if Length (Parameters) /= 0 then
-                     Entity_Entry.Set_Field ("parameters", Parameters);
-                  end if;
-               end;
+                  declare
+                     Cursor     : Tag_Cursor := New_Cursor (Get_Comment (E));
+                     Tag        : Tag_Info_Ptr;
+                     Parameters : JSON_Array;
 
-               --  Extract return value
+                  begin
+                     while not At_End (Cursor) loop
+                        Tag := Get (Cursor);
 
-               declare
-                  Cursor : Tag_Cursor := New_Cursor (Get_Comment (E));
-                  Tag    : Tag_Info_Ptr;
+                        if Tag.Tag = "param" then
+                           Append
+                             (Parameters,
+                              Entity_Data
+                                (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                        end if;
 
-               begin
-                  while not At_End (Cursor) loop
-                     Tag := Get (Cursor);
+                        Next (Cursor);
+                     end loop;
 
-                     if Tag.Tag = "return" then
-                        Entity_Entry.Set_Field
-                          ("returns",
-                           Entity_Data
-                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                     if Length (Parameters) /= 0 then
+                        Entity_Entry.Set_Field ("parameters", Parameters);
                      end if;
+                  end;
 
-                     Next (Cursor);
-                  end loop;
-               end;
+                  --  Extract return value
+
+                  declare
+                     Cursor : Tag_Cursor := New_Cursor (Get_Comment (E));
+                     Tag    : Tag_Info_Ptr;
+
+                  begin
+                     while not At_End (Cursor) loop
+                        Tag := Get (Cursor);
+
+                        if Tag.Tag = "return" then
+                           Entity_Entry.Set_Field
+                             ("returns",
+                              Entity_Data
+                                (Tag.Tag, Tag.Entity.Element, Tag.Text));
+                        end if;
+
+                        Next (Cursor);
+                     end loop;
+                  end;
+               end if;
 
                --  Extract exceptions
 
