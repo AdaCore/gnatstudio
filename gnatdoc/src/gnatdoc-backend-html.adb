@@ -1017,14 +1017,23 @@ package body GNATdoc.Backend.HTML is
          Label          : String;
          Entities       : EInfo_List.Vector)
       is
-         function Entity_Data (Tag : Tag_Info_Ptr) return JSON_Value;
+
+         function Entity_Data
+           (Tag_Name : Unbounded_String;
+            Entity   : Root_Entity'Class;
+            Text     : Unbounded_String) return JSON_Value;
+
          --  Constructs description data for given tag
 
          -----------------
          -- Entity_Data --
          -----------------
 
-         function Entity_Data (Tag : Tag_Info_Ptr) return JSON_Value is
+         function Entity_Data
+           (Tag_Name : Unbounded_String;
+            Entity   : Root_Entity'Class;
+            Text     : Unbounded_String) return JSON_Value
+         is
             Result      : JSON_Value;
             Declaration : Xref.General_Entity_Declaration;
             Type_Data   : JSON_Value;
@@ -1033,17 +1042,17 @@ package body GNATdoc.Backend.HTML is
          begin
             Result := Create_Object;
 
-            if Tag.Tag /= "return" then
-               Declaration := Xref.Get_Declaration (Tag.Entity.Element);
+            if Tag_Name /= "return" then
+               Declaration := Xref.Get_Declaration (Entity);
                Result.Set_Field ("label", Declaration.Name);
                Result.Set_Field ("line", Declaration.Loc.Line);
                Result.Set_Field ("column", Natural (Declaration.Loc.Column));
 
-               if Tag.Tag /= "value" then
+               if Tag_Name /= "value" then
                   --  Construct reference information to entity's type
 
-                  Declaration := Xref.Get_Declaration
-                    (Xref.Get_Type_Of (Tag.Entity.Element));
+                  Declaration :=
+                    Xref.Get_Declaration (Xref.Get_Type_Of (Entity));
                   Entity_Type := Find_Unique_Entity (Declaration.Loc);
 
                   Type_Data := Create_Object;
@@ -1064,7 +1073,7 @@ package body GNATdoc.Backend.HTML is
 
             Result.Set_Field
               ("description",
-               To_JSON_Representation (Tag.Text, Self.Context.all));
+               To_JSON_Representation (Text, Self.Context.all));
 
             return Result;
          end Entity_Data;
@@ -1149,7 +1158,10 @@ package body GNATdoc.Backend.HTML is
                      Tag := Get (Cursor);
 
                      if Tag.Tag = "param" then
-                        Append (Parameters, Entity_Data (Tag));
+                        Append
+                          (Parameters,
+                           Entity_Data
+                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
                      end if;
 
                      Next (Cursor);
@@ -1171,7 +1183,10 @@ package body GNATdoc.Backend.HTML is
                      Tag := Get (Cursor);
 
                      if Tag.Tag = "return" then
-                        Entity_Entry.Set_Field ("returns", Entity_Data (Tag));
+                        Entity_Entry.Set_Field
+                          ("returns",
+                           Entity_Data
+                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
                      end if;
 
                      Next (Cursor);
@@ -1259,7 +1274,10 @@ package body GNATdoc.Backend.HTML is
                      Tag := Get (Cursor);
 
                      if Tag.Tag = "field" then
-                        Append (Fields, Entity_Data (Tag));
+                        Append
+                          (Fields,
+                           Entity_Data
+                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
                      end if;
 
                      Next (Cursor);
@@ -1286,7 +1304,10 @@ package body GNATdoc.Backend.HTML is
                      Tag := Get (Cursor);
 
                      if Tag.Tag = "value" then
-                        Append (Literals, Entity_Data (Tag));
+                        Append
+                          (Literals,
+                           Entity_Data
+                             (Tag.Tag, Tag.Entity.Element, Tag.Text));
                      end if;
 
                      Next (Cursor);
