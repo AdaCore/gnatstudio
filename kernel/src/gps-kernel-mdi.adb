@@ -85,6 +85,10 @@ package body GPS.Kernel.MDI is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.MDI");
 
+   Test_Timestamps : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("TESTSUITE_TIMESTAMP_CHECKS",
+                             Default => GNATCOLL.Traces.Off);
+
    Me_Perspectives : constant Trace_Handle :=
      Create ("GPS.INTERNAL.KERNEL_MDI_PERSPECTIVES");
    --  for testing purposes, do not copy predifined perspectives if inactive
@@ -2058,9 +2062,9 @@ package body GPS.Kernel.MDI is
    ---------------------------
 
    function Check_Monitored_Files
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Interactive : Boolean := True)
-      return Boolean
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      Interactive  : Boolean := True;
+      Only_On_File : Virtual_File := No_File) return Boolean
    is
       function Is_File_Modified
          (Child : not null access GPS_MDI_Child_Record'Class;
@@ -2076,6 +2080,13 @@ package body GPS.Kernel.MDI is
          Str  : GNAT.Strings.String_Access;
          Exists : Boolean;
       begin
+         if Only_On_File /= No_File
+           --  We are interested in monitoring only this one file
+           and then Info.File /= Only_On_File
+         then
+            return False;
+         end if;
+
          if Info.File = No_File then
             --  No file to monitor
             return False;
@@ -2132,6 +2143,8 @@ package body GPS.Kernel.MDI is
       Label    : Gtk_Label;
       Ignore   : Gtk_Widget;
       Response : Gtk_Response_Type;
+      Files_Were_Modified : Boolean := False;
+      User_Chose_To_Ignore : Boolean := False;
    begin
       if Kernel.Check_Monitored_Files_Dialog /= null then
          --  Let the current dialog complete before we display another one.
@@ -2162,18 +2175,21 @@ package body GPS.Kernel.MDI is
       end loop;
 
       if not Modified.Is_Empty then
-         if Active (Testsuite_Handle)    --  no dialog in testsuite
+         Files_Were_Modified := True;
+
+         if (Active (Testsuite_Handle)               --  no dialog in testsuite
+             and then not Active (Test_Timestamps))  --  unless explicitely on
            or else Auto_Reload_Files.Get_Pref
            or else not Interactive
          then
             Response := Gtk_Response_Yes;
+            User_Chose_To_Ignore := True;
 
             F := Modified.First;
             while Has_Element (F) loop
                To_Update.Include (Element (F).File);
                Next (F);
             end loop;
-
          else
             Gtk_New (Dialog,
                      Title  => -"Files changed on disk",
@@ -2262,6 +2278,7 @@ package body GPS.Kernel.MDI is
             if To_Update.Contains (Element (F).File) then
                Element (F).Child.Reload;
             else
+               User_Chose_To_Ignore := True;
                Element (F).Child.Update_File_Info;
             end if;
             Next (F);
@@ -2272,7 +2289,7 @@ package body GPS.Kernel.MDI is
          After_File_Changed_Detected_Hook.Run (Kernel);
       end if;
 
-      return False;
+      return Files_Were_Modified and then User_Chose_To_Ignore;
    end Check_Monitored_Files;
 
    ------------------------------------------
