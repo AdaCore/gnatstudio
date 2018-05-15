@@ -271,7 +271,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         # No entity found, highlight the current text
 
-        if not entity and not word and location and buffer:
+        if not entity and (not word and location and
+                           buffer and self.highlight_word):
             location = GPS.EditorLocation(
                 buffer, location.line(), location.column())
             word, _, _ = location.get_word()

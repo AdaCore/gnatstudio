@@ -2265,6 +2265,46 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
          end loop;
 
+         --  FIXME: A message is associated to a mark, thus adding lines
+         --  can move the marks. If a mark is not moved to Position + Number
+         --  then GPS will loose track of its message. It's better to delete
+         --  these messages than losing them
+
+         if Buffer.Inserting_Position = Other
+           and then Buffer_Lines (Start).Side_Info_Data /= null
+         then
+            declare
+               use Message_Reference_List;
+
+               EL        : constant Editable_Line_Type :=
+                 Buffer_Lines (Position + Number).Editable_Line;
+               Src       : Line_Info_Width_Array_Access renames
+                 Buffer_Lines (Position).Side_Info_Data;
+               Msg       : Message_Access;
+               To_Delete : Message_Reference_List.List;
+            begin
+               --  Gather the lost messages in a list ...
+               for Index in Src'Range loop
+                  for M of Src (Index).Messages loop
+                     Msg := Message (M);
+
+                     if Msg /= null
+                       and then Editable_Line_Type
+                         (Msg.Get_Editor_Mark.Line) /= EL
+                     then
+                        To_Delete.Append (M);
+                     end if;
+                  end loop;
+               end loop;
+
+               --  ... and clean them
+               for M of To_Delete loop
+                  Remove (Message (M));
+               end loop;
+               To_Delete.Clear;
+            end;
+         end if;
+
          --  Reset the newly inserted lines
 
          for J in 0 .. Number - 1 loop
@@ -2272,45 +2312,6 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_Lines (Position + J).Editable_Line := Ref_Editable_Line
               + Editable_Line_Type (J);
          end loop;
-
-         if Buffer.Inserting_Position = Other
-           and then Buffer_Lines (Position).Side_Info_Data /= null
-         then
-            declare
-               use Message_Reference_List;
-
-               EL   : constant Editable_Line_Type :=
-                 Buffer_Lines (Position + 1).Editable_Line;
-               Src  : Line_Info_Width_Array_Access renames
-                 Buffer_Lines (Position).Side_Info_Data;
-               Dst  : Line_Info_Width_Array_Access renames
-                 Buffer_Lines (Position + 1).Side_Info_Data;
-               C, N : Message_Reference_List.Cursor;
-               Msg  : Message_Access;
-            begin
-               for Index in Src'Range loop
-                  C := Src (Index).Messages.First;
-                  while Has_Element (C) loop
-                     Msg := Message (Element (C));
-                     if Msg = null
-                       or else Editable_Line_Type
-                         (Msg.Get_Editor_Mark.Line) = EL
-                     then
-                        if Msg /= null then
-                           Buffer.Create_Side_Info (Position + 1);
-                           Dst (Index).Messages.Append (Element (C));
-                        end if;
-
-                        N := C;
-                        Next (C);
-                        Src (Index).Messages.Delete (N);
-                     else
-                        Next (C);
-                     end if;
-                  end loop;
-               end loop;
-            end;
-         end if;
 
          if Buffer.Modifying_Editable_Lines then
             for J in 0 .. EN - 1 loop
