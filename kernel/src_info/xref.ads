@@ -145,6 +145,15 @@ package Xref is
       Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
    end record;
+
+   overriding function "=" (Left, Right : General_Location) return Boolean is
+     (Left.File = Right.File
+      and then Left.Line = Right.Line
+      and then Left.Column = Right.Column
+      and then (Left.Project_Path = Right.Project_Path
+                or else No_File in Left.Project_Path | Right.Project_Path));
+   --  Compare locations taking unknown project into account
+
    No_Location : aliased constant General_Location :=
      (No_File, No_File, 0, 0);
    --  ??? Should we also cache the Old_Entities.Source_File ?
