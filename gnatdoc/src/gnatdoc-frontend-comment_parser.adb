@@ -478,7 +478,10 @@ package body GNATdoc.Frontend.Comment_Parser is
                                     Append_Text (Current, (1 => ASCII.LF));
 
                                  else
-                                    Append_Text (Current, Text);
+                                    Append_Text
+                                      (Current,
+                                       Ada.Strings.Fixed.Trim
+                                         (Text, Ada.Strings.Left));
                                  end if;
                               end;
 
