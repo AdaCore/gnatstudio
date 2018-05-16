@@ -418,8 +418,30 @@ function buildDocumentationPage() {
 
                 buildInstantiationInformation(pane, entity);
 
-                if (entity.parameters !== undefined) {
+                if (entity.generic_parameters !== undefined) {
                     list = document.createElement('dl');
+
+                    for (var pindex = 0;
+                         pindex < entity.generic_parameters.length;
+                         pindex++)
+                    {
+                        var parameter = entity.generic_parameters[pindex];
+                        var term = document.createElement('dt');
+                        term.id = 'L' + parameter.line.toString() +
+                            'C' + parameter.column.toString();
+                        term.appendChild(
+                          document.createTextNode(parameter.label));
+
+                        var description = document.createElement('dd');
+                        buildText(description, parameter.description);
+
+                        list.appendChild(term);
+                        list.appendChild(description);
+                    }
+                }
+
+                if (entity.parameters !== undefined) {
+                    list = list || document.createElement('dl');
 
                     for (var pindex = 0;
                          pindex < entity.parameters.length;

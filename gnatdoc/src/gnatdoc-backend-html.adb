@@ -1048,7 +1048,7 @@ package body GNATdoc.Backend.HTML is
                Result.Set_Field ("line", Declaration.Loc.Line);
                Result.Set_Field ("column", Natural (Declaration.Loc.Column));
 
-               if Tag_Name /= "value" then
+               if Tag_Name /= "value" and Tag_Name /= "gen_param" then
                   --  Construct reference information to entity's type
 
                   Declaration :=
@@ -1148,7 +1148,8 @@ package body GNATdoc.Backend.HTML is
             then
                if Self.Context.Options.Extensions_Enabled then
                   declare
-                     Parameters : JSON_Array;
+                     Parameters         : JSON_Array;
+                     Generic_Parameters : JSON_Array;
 
                      function Process_Parameters_And_Return
                        (Entity      : Entity_Id;
@@ -1181,6 +1182,15 @@ package body GNATdoc.Backend.HTML is
                                  LL.Get_Entity (Entity),
                                  Utils.To_Unbounded_String
                                    (Get_Doc (Entity).Text)));
+
+                        elsif Get_Kind (Entity) = E_Generic_Formal then
+                           Append
+                             (Generic_Parameters,
+                              Entity_Data
+                                (To_Unbounded_String ("gen_param"),
+                                 LL.Get_Entity (Entity),
+                                 Utils.To_Unbounded_String
+                                   (Get_Doc (Entity).Text)));
                         end if;
 
                         return (if Scope_Level > 1 then Skip else OK);
@@ -1189,8 +1199,13 @@ package body GNATdoc.Backend.HTML is
                   begin
                      Traverse_Tree (E, Process_Parameters_And_Return'Access);
 
-                     if Length (Parameters) /= 0 then
+                     if not Is_Empty (Parameters) then
                         Entity_Entry.Set_Field ("parameters", Parameters);
+                     end if;
+
+                     if not Is_Empty (Generic_Parameters) then
+                        Entity_Entry.Set_Field
+                          ("generic_parameters", Generic_Parameters);
                      end if;
                   end;
 
