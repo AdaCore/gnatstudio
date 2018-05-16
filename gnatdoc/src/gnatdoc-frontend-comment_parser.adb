@@ -1425,26 +1425,49 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Report warning on undocumented parameters
 
          if Has_Params then
-            declare
-               C        : Tag_Cursor := First_Param (Get_Comment (Subp));
-               Tag_Info : Tag_Info_Ptr;
-            begin
-               loop
-                  Tag_Info := Get (C);
+            if Context.Options.Extensions_Enabled then
+               if Is_Generic (Subp) then
+                  for Param of Get_Generic_Formals (Subp).all loop
+                     if No (Get_Doc (Param)) then
+                        Warning (Context, LL.Get_Entity (Param),
+                          "undocumented generic formal ("
+                          & Get_Short_Name (Param)
+                          & ")");
+                     end if;
+                  end loop;
+               end if;
 
-                  if No (Tag_Info.Text) then
-                     Warning
-                       (Context,
-                        Tag_Info.Entity.Element,
-                        "undocumented parameter ("
-                        & To_String (Tag_Info.Attr)
-                        & ")");
+               for Param of Get_Entities (Subp).all loop
+                  if No (Get_Doc (Param)) then
+                     Warning (Context, LL.Get_Entity (Param),
+                       "undocumented parameter ("
+                       & Get_Short_Name (Param)
+                       & ")");
                   end if;
-
-                  exit when C = Last_Param (Get_Comment (Subp));
-                  Next (C);
                end loop;
-            end;
+
+            else
+               declare
+                  C        : Tag_Cursor := First_Param (Get_Comment (Subp));
+                  Tag_Info : Tag_Info_Ptr;
+               begin
+                  loop
+                     Tag_Info := Get (C);
+
+                     if No (Tag_Info.Text) then
+                        Warning
+                          (Context,
+                           Tag_Info.Entity.Element,
+                           "undocumented parameter ("
+                           & To_String (Tag_Info.Attr)
+                           & ")");
+                     end if;
+
+                     exit when C = Last_Param (Get_Comment (Subp));
+                     Next (C);
+                  end loop;
+               end;
+            end if;
          end if;
       end Parse_Subprogram_Comments;
 
