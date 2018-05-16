@@ -1443,10 +1443,23 @@ package body GNATdoc.Backend.HTML is
 
       --  Process entities
 
-      if not Entities.Generic_Formals.Is_Empty then
-         Build_Entity_Entries
-           (Entity_Entries, "Generic formals", Entities.Generic_Formals);
-      end if;
+      declare
+         Generic_Formals : EInfo_List.Vector;
+
+      begin
+         --  Extract generic formals for generic compilation unit itself
+
+         for Parameter of Entities.Generic_Formals loop
+            if Get_Parent (Parameter) = Entity then
+               Generic_Formals.Append (Parameter);
+            end if;
+         end loop;
+
+         if not Generic_Formals.Is_Empty then
+            Build_Entity_Entries
+              (Entity_Entries, "Generic formals", Generic_Formals);
+         end if;
+      end;
 
       if not Entities.Variables.Is_Empty then
          Build_Entity_Entries
