@@ -302,7 +302,6 @@ package body GNAThub.Module is
       Module.Register_Module (Kernel, "GNAThub");
       GNAThub.Actions.Register_Actions (Module);
       Module.Loader := new GNAThub.Loader.Loader (Module);
-      Module.Loader.Initialize;
       Module.Filter := new GNAThub.Filters.Message_Filter;
 
       Kernel.Get_Messages_Container.Register_Filter

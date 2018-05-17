@@ -34,9 +34,6 @@ package GNAThub.Loader is
       Database : GNATCOLL.VFS.Virtual_File);
    --  Start loading of data from the database.
 
-   procedure Initialize (Self : in out Loader'Class);
-   --  Initialize loader.
-
 private
 
    type Resource_Record is limited record
@@ -57,20 +54,22 @@ private
    type Loader
      (Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
    is tagged limited record
-      Severities   : Severity_Maps.Map;
-      Rules        : Rule_Maps.Map;
+      Severities        : Severity_Maps.Map;
+      Rules             : Rule_Maps.Map;
       --  Database's id to object mappings for the rules
 
-      Metrics      : Rule_Maps.Map;
+      Metrics           : Rule_Maps.Map;
       --  Database's id to object mappings for the metrics
 
-      Resources    : Resource_Maps.Map;
-      Current      : Resource_Maps.Cursor;
+      Project_Resources : Resource_Maps.Map;
+      Dir_Resources     : Resource_Maps.Map;
+      File_Resources    : Resource_Maps.Map;
+      Current           : Resource_Maps.Cursor;
 
-      Command      : GPS.Scripts.Commands.Scheduled_Command_Access;
+      Command           : GPS.Scripts.Commands.Scheduled_Command_Access;
       --  Command that is used to load data from database
 
-      Source_Files : GNATCOLL.Projects.File_And_Project_Array_Access;
+      Source_Files      : GNATCOLL.Projects.File_And_Project_Array_Access;
    end record;
 
 end GNAThub.Loader;
