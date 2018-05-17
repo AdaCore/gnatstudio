@@ -632,6 +632,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_stopwatch" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/stopwatch/test.gpr"</shell>
+      <shell>Editor.edit "timer.ads"</shell>
+      <shell>Editor.edit "display.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_stopwatch">
+        <title>stopwatch</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_tagged_stacks" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/tagged_stacks/test.gpr"</shell>
