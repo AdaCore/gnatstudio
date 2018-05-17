@@ -18,6 +18,8 @@
 with Ada.Command_Line;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+with GNAT.OS_Lib;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
@@ -1066,6 +1068,16 @@ package body GPS.Main_Window is
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("getenv",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("setenv",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Default_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -1333,6 +1345,22 @@ package body GPS.Main_Window is
    begin
       if Command = "present_main_window" then
          Get_Main_Window (Kernel).Present;
+
+      elsif Command = "getenv" then
+         declare
+            Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv
+               (Nth_Arg (Data, 1));
+         begin
+            if Str = null then
+               Set_Return_Value (Data, String'(""));
+            else
+               Set_Return_Value (Data, Str.all);
+               GNAT.OS_Lib.Free (Str);
+            end if;
+         end;
+
+      elsif Command = "setenv" then
+         GNAT.OS_Lib.Setenv (Nth_Arg (Data, 1), Nth_Arg (Data, 2));
 
       elsif Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);

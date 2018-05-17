@@ -10772,6 +10772,26 @@ def freeze_prefs():
     pass  # implemented in Ada
 
 
+def getenv(key):
+    """
+    Gets the value of the given environment variable.
+
+    :param key: A string
+    :return: a string
+    """
+    pass
+
+
+def setenv(key, value):
+    """
+    Sets the value of the given environment variable to the given value.
+
+    :param key: A string
+    :param value: A string
+    """
+    pass
+
+
 def thaw_prefs():
     """
     Re-enables calling the "preferences_changed" hook.

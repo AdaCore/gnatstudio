@@ -35,6 +35,7 @@ Functions
 .. autofunction:: get_system_dir
 .. autofunction:: get_target
 .. autofunction:: get_tmp_dir
+.. autofunction:: getenv
 .. autofunction:: insmod
 .. autofunction:: is_server_local
 .. autofunction:: last_command
@@ -53,6 +54,7 @@ Functions
 .. autofunction:: send_key_event
 .. autofunction:: set_build_mode
 .. autofunction:: set_last_command
+.. autofunction:: setenv
 .. autofunction:: supported_languages
 .. autofunction:: thaw_prefs
 .. autofunction:: version
