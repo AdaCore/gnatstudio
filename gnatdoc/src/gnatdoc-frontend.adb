@@ -1957,6 +1957,15 @@ package body GNATdoc.Frontend is
                begin
                   Decorate_Scope (E);
 
+                  --  Fix wrong low level decoration of generic functions
+
+                  if Is_Generic (E)
+                    and then Prev_Token = Tok_Function
+                    and then Get_Kind (E) = E_Generic_Procedure
+                  then
+                     Set_Kind (E, E_Generic_Function);
+                  end if;
+
                   if Context.Options.Extensions_Enabled then
                      if Kind_In (Get_Kind (E),
                           E_Function,

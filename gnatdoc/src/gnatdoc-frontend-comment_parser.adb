@@ -1440,6 +1440,15 @@ package body GNATdoc.Frontend.Comment_Parser is
                   end loop;
                end if;
 
+               if Kind_In (Get_Kind (Subp),
+                    E_Function,
+                    E_Generic_Function)
+                 and then No (Get_Doc (Get_Internal_Return (Subp)))
+               then
+                  Warning (Context, LL.Get_Entity (Subp),
+                    "undocumented return value");
+               end if;
+
                for Param of Get_Entities (Subp).all loop
                   if No (Get_Doc (Param)) then
                      Warning (Context, LL.Get_Entity (Param),
