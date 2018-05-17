@@ -32,6 +32,7 @@ with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Label;                    use Gtk.Label;
+with Gtk.Text_Iter;                use Gtk.Text_Iter;
 with Gtk.Widget;                   use Gtk.Widget;
 with Gtk.Window;                   use Gtk.Window;
 
@@ -1305,6 +1306,9 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+
+      Start_Iter, End_Iter     : Gtk_Text_Iter;
+      Entity_Start, Entity_End : Gtk_Text_Iter;
    begin
       if Has_Entity_Name_Information (Context) then
          declare
@@ -1316,6 +1320,91 @@ package body GVD_Module is
 
       elsif Has_Debugging_Variable (Context) then
          return True;
+
+      elsif Has_Area_Information (Context) then
+         --  check whether the selection contains only a set
+         --  of printable entities
+
+         Get_Area (Context, Start_Iter, End_Iter);
+         if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
+            return False;
+         end if;
+
+         Copy (Source => End_Iter, Dest => Entity_Start);
+         declare
+            Db     : constant General_Xref_Database :=
+              Get_Kernel (Context).Databases;
+            Result : Boolean;
+         begin
+            loop
+               --  iterate over selected entities from the last one
+
+               Search_Entity_Bounds
+                 (Entity_Start, Entity_End, Maybe_File => False);
+
+               if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
+                 or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
+               then
+                  --  the selection contains only a part of an entity
+                  return False;
+               end if;
+
+               declare
+                  Entity      : Xref.Root_Entity_Ref;
+                  Closest_Ref : Root_Entity_Reference_Ref;
+               begin
+                  --  getting an entity
+                  Entity.Replace_Element
+                    (Db.Get_Entity
+                       (Loc  =>
+                            (File         => File_Information (Context),
+                             Project_Path =>
+                               Project_Information (Context).Project_Path,
+                             Line         => Integer
+                               (Get_Line (Entity_Start)) + 1,
+                             Column       => Visible_Column_Type
+                               (Get_Line_Offset (Entity_Start) + 1)),
+                        Name => Get_Text (Entity_Start, Entity_End),
+                        Closest_Ref => Closest_Ref,
+                        Approximate_Search_Fallback => True));
+
+                  if Entity.Is_Empty then
+                     --  corresponding entity is not found
+                     return False;
+                  else
+                     if not Is_Fuzzy (Entity.Element)
+                       and then not Is_Printable_In_Debugger (Entity.Element)
+                     then
+                        --  inappropriate entity
+                        return False;
+                     end if;
+                  end if;
+               end;
+
+               if Get_Offset (Entity_Start) <= Get_Offset (Start_Iter) then
+                  --  no more elements in the selection, so the set contains
+                  --  only printable entities
+
+                  return True;
+               end if;
+
+               --  prepare checking previous entity in the selection
+
+               Backward_Char (Entity_Start, Result);
+               if Get_Char (Entity_Start) /= '.' then
+                  --  only dot can be used between printable entities
+                  return False;
+               end if;
+
+               Copy (Source => Entity_Start, Dest => End_Iter);
+
+               Backward_Char (Entity_Start, Result);
+               if not Result then
+                  --  previous char cannot be selected
+                  return False;
+               end if;
+            end loop;
+         end;
       end if;
 
       return False;

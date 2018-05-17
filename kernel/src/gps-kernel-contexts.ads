@@ -167,7 +167,10 @@ package GPS.Kernel.Contexts is
      (Context    : in out Selection_Context;
       Text       : String;
       Start_Line : Integer := 0;
-      End_Line   : Integer := 0);
+      End_Line   : Integer := 0;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter := Gtk.Text_Iter.Null_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter :=
+        Gtk.Text_Iter.Null_Text_Iter);
    --  Set the area information in Context
 
    function Has_Area_Information (Context : Selection_Context) return Boolean;
@@ -177,6 +180,11 @@ package GPS.Kernel.Contexts is
      (Context    : Selection_Context;
       Start_Line : out Integer;
       End_Line   : out Integer);
+
+   procedure Get_Area
+     (Context    : Selection_Context;
+      Start_Iter : out Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the area information in Context
 
    function Text_Information

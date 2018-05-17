@@ -44,6 +44,7 @@ with Glib.Object;
 with Gdk.Types;
 with Gtk.Application;                 use Gtk.Application;
 with Gtk.Dialog;
+with Gtk.Text_Iter;
 with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.Canvas_View;
@@ -918,6 +919,8 @@ private
       End_Line   : Integer := 0;
       --  A start and end line set to 0 means that the context does not have
       --  area information.
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
 
       Text       : Unbounded_String;
       --  When several lines are selected in a file. The selection starts

@@ -3013,7 +3013,7 @@ package body Src_Editor_View is
          Set_Area_Information
            (Context,
             Get_Text (Start_Iter, End_Iter),
-            Start_Line, End_Line);
+            Start_Line, End_Line, Start_Iter, End_Iter);
 
          Free (Str);
          return Context;

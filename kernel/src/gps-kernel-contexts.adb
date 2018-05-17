@@ -736,13 +736,18 @@ package body GPS.Kernel.Contexts is
      (Context    : in out Selection_Context;
       Text       : String;
       Start_Line : Integer := 0;
-      End_Line   : Integer := 0)
+      End_Line   : Integer := 0;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter := Gtk.Text_Iter.Null_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter :=
+        Gtk.Text_Iter.Null_Text_Iter)
    is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
    begin
       Data.Text       := To_Unbounded_String (Text);
       Data.Start_Line := Start_Line;
       Data.End_Line   := End_Line;
+      Data.Start_Iter := Start_Iter;
+      Data.End_Iter   := End_Iter;
    end Set_Area_Information;
 
    --------------------------
@@ -771,6 +776,20 @@ package body GPS.Kernel.Contexts is
    begin
       Start_Line := Context.Ref.Get.Start_Line;
       End_Line   := Context.Ref.Get.End_Line;
+   end Get_Area;
+
+   --------------
+   -- Get_Area --
+   --------------
+
+   procedure Get_Area
+     (Context    : Selection_Context;
+      Start_Iter : out Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+   begin
+      Start_Iter := Context.Ref.Get.Start_Iter;
+      End_Iter   := Context.Ref.Get.End_Iter;
    end Get_Area;
 
    ----------------
