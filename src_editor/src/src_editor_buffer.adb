@@ -3755,7 +3755,7 @@ package body Src_Editor_Buffer is
             Set_Strip_Trailing_Blanks (Buffer, False);
          when Autodetect =>
             Set_Strip_Trailing_Blanks
-              (Buffer, not Trailing_Spaces_Found);
+              (Buffer, Trailing_Spaces_Found);
       end case;
    end Set_Trailing_Space_Policy;
 
@@ -3790,7 +3790,7 @@ package body Src_Editor_Buffer is
             Set_Strip_Trailing_Lines (Buffer, False);
          when Autodetect =>
             Set_Strip_Trailing_Lines
-              (Buffer, not Trailing_Lines_Found);
+              (Buffer, Trailing_Lines_Found);
       end case;
    end Set_Trailing_Lines_Policy;
 
