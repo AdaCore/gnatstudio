@@ -70,6 +70,7 @@ with GVD.Scripts;
 with GVD.Types;                    use GVD.Types;
 with Histories;                    use Histories;
 with Language;                     use Language;
+with Language_Handlers;            use Language_Handlers;
 with Process_Proxies;              use Process_Proxies;
 with GPS.Dialogs;                  use GPS.Dialogs;
 with Remote;                       use Remote;
@@ -1334,76 +1335,69 @@ package body GVD_Module is
          declare
             Db     : constant General_Xref_Database :=
               Get_Kernel (Context).Databases;
-            Result : Boolean;
          begin
-            loop
-               --  iterate over selected entities from the last one
+            Search_Entity_Bounds
+              (Entity_Start, Entity_End, Maybe_File => False);
 
-               Search_Entity_Bounds
-                 (Entity_Start, Entity_End, Maybe_File => False);
+            if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
+              or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
+            then
+               --  the selection contains only a part of an entity
+               return False;
+            end if;
 
-               if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
-                 or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
-               then
-                  --  the selection contains only a part of an entity
+            declare
+               Entity      : Xref.Root_Entity_Ref;
+               Closest_Ref : Root_Entity_Reference_Ref;
+            begin
+               --  getting an entity
+               Entity.Replace_Element
+                 (Db.Get_Entity
+                    (Loc  =>
+                         (File         => File_Information (Context),
+                          Project_Path =>
+                            Project_Information (Context).Project_Path,
+                          Line         => Integer
+                            (Get_Line (Entity_Start)) + 1,
+                          Column       => Visible_Column_Type
+                            (Get_Line_Offset (Entity_Start) + 1)),
+                     Name => Get_Text (Entity_Start, Entity_End),
+                     Closest_Ref => Closest_Ref,
+                     Approximate_Search_Fallback => True));
+
+               if Entity.Is_Empty then
+                  --  corresponding entity is not found
                   return False;
-               end if;
-
-               declare
-                  Entity      : Xref.Root_Entity_Ref;
-                  Closest_Ref : Root_Entity_Reference_Ref;
-               begin
-                  --  getting an entity
-                  Entity.Replace_Element
-                    (Db.Get_Entity
-                       (Loc  =>
-                            (File         => File_Information (Context),
-                             Project_Path =>
-                               Project_Information (Context).Project_Path,
-                             Line         => Integer
-                               (Get_Line (Entity_Start)) + 1,
-                             Column       => Visible_Column_Type
-                               (Get_Line_Offset (Entity_Start) + 1)),
-                        Name => Get_Text (Entity_Start, Entity_End),
-                        Closest_Ref => Closest_Ref,
-                        Approximate_Search_Fallback => True));
-
-                  if Entity.Is_Empty then
-                     --  corresponding entity is not found
+               else
+                  if not Is_Fuzzy (Entity.Element)
+                    and then not Is_Printable_In_Debugger (Entity.Element)
+                  then
+                     --  inappropriate entity
                      return False;
-                  else
-                     if not Is_Fuzzy (Entity.Element)
-                       and then not Is_Printable_In_Debugger (Entity.Element)
-                     then
-                        --  inappropriate entity
-                        return False;
-                     end if;
                   end if;
-               end;
-
-               if Get_Offset (Entity_Start) <= Get_Offset (Start_Iter) then
-                  --  no more elements in the selection, so the set contains
-                  --  only printable entities
-
-                  return True;
                end if;
+            end;
 
-               --  prepare checking previous entity in the selection
+            --  check whether an entity is selected from its beginning
+            declare
+               Lang : constant Language.Language_Access :=
+                 Get_Language_From_File
+                   (Get_Language_Handler (Get_Kernel (Context)),
+                    File_Information (Context));
+               Begin_Of_Line, End_Of_Line : Gtk_Text_Iter;
+               Success                    : Boolean;
+            begin
+               Copy (Source => End_Iter, Dest => End_Of_Line);
+               Copy (Source => Start_Iter, Dest => Begin_Of_Line);
+               Forward_To_Line_End (End_Of_Line, Success);
+               Set_Line (Begin_Of_Line, Get_Line (Start_Iter));
 
-               Backward_Char (Entity_Start, Result);
-               if Get_Char (Entity_Start) /= '.' then
-                  --  only dot can be used between printable entities
-                  return False;
-               end if;
-
-               Copy (Source => Entity_Start, Dest => End_Iter);
-
-               Backward_Char (Entity_Start, Result);
-               if not Result then
-                  --  previous char cannot be selected
-                  return False;
-               end if;
-            end loop;
+               return Text_Information (Context) = Parse_Reference_Backwards
+                 (Lang,
+                  Buffer       => Get_Text (Begin_Of_Line, End_Of_Line),
+                  Start_Offset =>
+                    String_Index_Type (Get_Line_Index (Entity_End)));
+            end;
          end;
       end if;
 
