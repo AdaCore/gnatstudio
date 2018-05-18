@@ -225,11 +225,9 @@ class JSON_Diagram_File():
         for id, t in data.get('templates', {}).iteritems():
             self.templates[id] = t
 
-        for entry in data.get('index', []):
-            self.index.append((entry['name'], entry['children']))
-
         for d in data.get('diagrams', []):
             # ??? should build diagrams only when they are displayed
+            self.index.append((d.get('id'), d.get('children', [])))
 
             if self.factory is None:
                 diag = JSON_Diagram(file=self, json=d)   # A new diagram

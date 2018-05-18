@@ -79,10 +79,14 @@ class MDL_Language(GPS.Language):
             MDL_Language(),
             name="Simulink",
             body_suffix=".mdl",
-            spec_suffix=".slx",
-            obj_suffix="-")
+            spec_suffix=".slx")
 
+        GPS.Language.register(
+             MDL_Language(),
+             name="QGen",
+             body_suffix=".xmi")
     # @overriding
+
     def should_refresh_constructs(self, file):
         """
         If we did not generate constructs for the model yet, parse the
@@ -338,11 +342,14 @@ class CLI(GPS.Process):
         filepath = file.path
 
         switches = CLI.get_qgenc_switches(
-            file, extra=['--with-gui-only', '--incremental'],
+            file, extra=['--with-gui-only', '--incremental', "--no-misra"],
             remove_list=[('-c', False), ('--clean', False)])
+        if os.path.splitext(filepath)[1] == ".xmi":
+            switches += " --pre-process-xmi"
         outdir = Project_Support.get_output_dir(file)
         result_path = os.path.join(
-            outdir, '.' + os.path.basename(filepath) + '_mdl2json')
+            outdir, '.qgeninfo',
+            os.path.splitext(os.path.basename(filepath))[0] + '.qmdl')
 
         if os.path.isfile(result_path):
             # If the mdl file is older than the previous json file no need
@@ -382,7 +389,7 @@ class CLI(GPS.Process):
                 f = ctx_or_file.file()
             else:
                 f = ctx_or_file
-            return f.language() == 'simulink'
+            return f.language() == 'simulink' or f.language() == 'qgen'
         except Exception:
             return False
 
@@ -658,7 +665,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         v = QGEN_Diagram_Viewer()
         v.file = file
-        v.diags = None   # a gpsbrowsers.JSON_Diagram_File
+        v.diags = None  # A JSON_Diagram_File acting as the container of
+        # diagrams and index
         v.create(
             diagram=GPS.Browsers.Diagram(),  # a temporary diagram
             title=os.path.basename(file.path),
@@ -671,6 +679,23 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         GPS.Hook('file_edited').run(file)
         return (v, True)
+
+    def load_contained_diagrams(self, jsonfile):
+        json_dir = os.path.dirname(jsonfile)
+
+        for _, children in self.diags.index:
+            for child in children:
+                diag_to_load = child["diagram"]
+                diag_object = self.get_existing_diagram(child["diagram"])
+                # We loaded the first diagram as the one requested was not
+                # found so we need to retrieve it from the directory
+                if diag_object is None:
+                    f = os.path.join(json_dir, diag_to_load + '.qmdl')
+                    if os.path.exists(f):
+                        loaded_diag = GPS.Browsers.Diagram.load_json(
+                            open(f), diagramFactory=QGEN_Diagram)
+                        self.diags.index.extend(loaded_diag.index)
+                        self.diags.diagrams.extend(loaded_diag.diagrams)
 
     @staticmethod
     def get_or_create(file, on_loaded=None):
@@ -696,6 +721,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json(
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
+                    v.load_contained_diagrams(jsonfile)
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
@@ -875,6 +901,16 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 return parent
             return None
 
+    def get_existing_diagram(self, diag_id, showerror=False):
+        res = self.diags.get(diag_id)
+        if res.id != diag_id:
+            if showerror:
+                GPS.Console().write(
+                    "%s was not found, it might not be supported by" % diag_id
+                    + " the debugger.\n")
+            return None
+        return res
+
     def save_desktop(self, child):
         """Save the contents of the viewer in the desktop"""
         info = {'file': self.file.path}
@@ -907,7 +943,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 return
 
         if name == 'showdiagram':
-            self.set_diagram(self.diags.get(args[0]), is_dblclick=True)
+            diag = self.get_existing_diagram(args[0], showerror=True)
+            if diag is not None:
+                self.set_diagram(diag, is_dblclick=True)
 
     def set_diagram(self, diag, is_dblclick=False):
         """
@@ -1649,7 +1687,7 @@ else:
             When an ".mdl" file is opened, use a diagram viewer instead of a
             text file to view it.
             """
-            if file.language() == 'simulink':
+            if file.language() == 'simulink' or file.language() == 'qgen':
                 logger.log('Open %s' % file)
                 QGEN_Diagram_Viewer.get_or_create(file)
                 return True
@@ -1659,7 +1697,9 @@ else:
             """Restore the contents from the desktop"""
             info = json.loads(data)
             f = GPS.File(info['file'])
-            if f.path.endswith('.mdl') or f.path.endswith('.slx'):
+            if f.path.endswith(
+                    '.mdl') or f.path.endswith(
+                        '.slx') or f.path.endswith('.xmi'):
                 viewer = QGEN_Diagram_Viewer.get_or_create(f)
                 MDL_Language().should_refresh_constructs(f)
             else:
