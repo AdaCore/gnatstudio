@@ -28,9 +28,11 @@ with Gtk.Tree_View_Column;
 with Gtk.Tree_Sortable;
 
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Location_View;
 
-with GNAThub.Messages;
+with GNATCOLL.Xref;
+with GNAThub.Messages;          use GNAThub.Messages;
 
 package body GNAThub.Reports.Messages is
 
@@ -235,49 +237,138 @@ package body GNAThub.Reports.Messages is
       N_Press : Glib.Gint;
       X, Y    : Glib.Gdouble)
    is
+      pragma Unreferenced (X, Y);
       use Glib;
 
-      View           : constant Messages_Report := Messages_Report (Self);
-      Column         : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Path           : Gtk_Tree_Path;
-      Iter           : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Sort_Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Cell_X, Cell_Y : Gint;
-      Success        : Boolean;
+      View      : constant Messages_Report := Messages_Report (Self);
+      Path      : Gtk_Tree_Path;
+      Model     : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+
+      procedure Show_Message_Location (Message : Message_Access);
+      --  Raise the location view and and show the message
+      function Get_First_Message
+        (File_Node : GNAThub_File_Access)
+         return Message_Access;
+      function Get_First_Message
+        (Subprogram_Node : GNAThub_Subprogram_Access)
+         return Message_Access;
+
+      ---------------------------
+      -- Show_Message_Location --
+      ---------------------------
+
+      procedure Show_Message_Location (Message : Message_Access) is
+      begin
+         GPS.Location_View.Expand_File
+           (GPS.Location_View.Get_Or_Create_Location_View (View.Kernel),
+            GNAThub.Messages.Category,
+            Message.Get_File,
+            Goto_First => False);
+         GPS.Location_View.Raise_Locations_Window (View.Kernel);
+
+         Open_File_Action_Hook.Run
+           (View.Kernel,
+            Message.Get_File,
+            Project => View.Kernel.Get_Project_Tree.Root_Project,
+            Line    => Message.Get_Line,
+            Column  => Message.Get_Column);
+      end Show_Message_Location;
+
+      -----------------------
+      -- Get_First_Message --
+      -----------------------
+
+      function Get_First_Message
+        (File_Node : GNAThub_File_Access)
+         return Message_Access
+      is
+         Msg : Message_Access;
+      begin
+         if File_Node.Messages.Is_Empty then
+            for Subprogram_Node of File_Node.Subprograms loop
+               Msg :=
+                 Get_First_Message
+                   (GNAThub_Subprogram_Access (Subprogram_Node));
+               if Msg /= null then
+                  return Msg;
+               end if;
+            end loop;
+            return null;
+         end if;
+
+         return
+           GNAThub.Messages.Message_Access
+             (File_Node.Messages.Last_Element.Message);
+      end Get_First_Message;
+
+      -----------------------
+      -- Get_First_Message --
+      -----------------------
+
+      function Get_First_Message
+        (Subprogram_Node : GNAThub_Subprogram_Access)
+         return Message_Access is
+      begin
+         if Subprogram_Node.Messages.Is_Empty then
+            return null;
+         end if;
+
+         return
+           GNAThub.Messages.Message_Access
+           (Subprogram_Node.Messages.First_Element.Message);
+      end Get_First_Message;
+
    begin
       if N_Press /= 2 then
          return;
       end if;
-
       View.Multipress.Set_State (Gtk.Enums.Event_Sequence_Claimed);
 
-      View.Analysis_View.Get_Path_At_Pos
-        (Gint (X), Gint (Y), Path,
-         Column, Cell_X, Cell_Y, Success);
+      View.Analysis_View.Get_Selection.Get_Selected (Model, Sort_Iter);
 
-      if not Success then
+      if Sort_Iter = Null_Iter then
          return;
       end if;
 
-      --  Select the row that was clicked
-      Sort_Iter := View.Analysis_Sort_Model.Get_Iter (Path);
       View.Analysis_Sort_Model.Convert_Iter_To_Child_Iter
         (Iter, Sort_Iter);
 
       declare
-         File_Node : constant Code_Analysis.File_Access :=
-           View.Analysis_Model.File_At (Iter);
-
+         File_Node       : constant GNAThub_File_Access :=
+           GNAThub_File_Access
+             (View.Get_Analysis_Model.File_At (Iter));
+         Subprogram_Node : constant GNAThub_Subprogram_Access :=
+           GNAThub_Subprogram_Access
+             (View.Get_Analysis_Model.Subprogram_At (Iter));
+         Msg             : Message_Access;
       begin
-         --  Request Locations View to expand corresponding file
-         --  and open source
-         if File_Node /= null then
-            GPS.Location_View.Expand_File
-              (GPS.Location_View.Get_Or_Create_Location_View (View.Kernel),
-               GNAThub.Messages.Category,
-               File_Node.Name,
-               Goto_First => True);
-            GPS.Location_View.Raise_Locations_Window (View.Kernel);
+         if Subprogram_Node /= null then
+            Msg := Get_First_Message (Subprogram_Node);
+            if Msg /= null then
+               Show_Message_Location (Msg);
+            else
+               Open_File_Action_Hook.Run
+                 (View.Kernel,
+                  File_Node.Name,
+                  Project => View.Kernel.Get_Project_Tree.Root_Project,
+                  Line    => Subprogram_Node.Line,
+                  Column  =>
+                    GNATCOLL.Xref.Visible_Column (Subprogram_Node.Column));
+            end if;
+         elsif File_Node /= null then
+            Msg := Get_First_Message (File_Node);
+            if Msg /= null then
+               Show_Message_Location (Msg);
+            else
+               Open_File_Action_Hook.Run
+                 (View.Kernel,
+                  File_Node.Name,
+                  Project => View.Kernel.Get_Project_Tree.Root_Project,
+                  Line    => 0,
+                  Column  => 0);
+            end if;
          end if;
       end;
 
