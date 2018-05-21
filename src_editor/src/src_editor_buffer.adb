@@ -2086,6 +2086,10 @@ package body Src_Editor_Buffer is
 
    begin
       if Buffer.Inserting_Count > 0 then
+         --  Setting Insertion_Position by default (old behavior),
+         --  in other words do not use settings from previous
+         --  (non internal) insert.
+         Buffer.Inserting_Position := At_Begin;
          return;
       end if;
 
