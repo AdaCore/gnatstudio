@@ -60,13 +60,15 @@ template = r"""<check line="1" column="1"
  label="{}" switch="--plugins={}" tip="Run {} plugin"/>
 """
 
-
 # Check for gnathub executable and GNAThub module active status:
 
 logger = GPS.Logger("GPS.INTERNAL.MODULE_GNAThub")
 
 if os_utils.locate_exec_on_path("gnathub") and logger.active:
-    checkboxes = reduce(lambda x, y: x+template.format(y, y, y), tools, "")
+    checkboxes = ""
+    for tool in tools:
+        if os_utils.locate_exec_on_path(tool):
+            checkboxes += template.format(tool, tool, tool)
 
     GPS.parse_xml(XML.format(checkboxes))
 
