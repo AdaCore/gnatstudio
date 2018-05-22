@@ -17,7 +17,6 @@
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -125,7 +124,7 @@ package body Completion_Utils is
          Modify_Font (Doc_Label, Fixed_Width_Font);
 
          if Doc /= "" then
-            Set_Markup (Doc_Label, Escape_Text (Doc));
+            Set_Markup (Doc_Label, Doc);
          else
             Set_Markup
               (Doc_Label,
