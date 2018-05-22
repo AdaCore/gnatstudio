@@ -110,6 +110,11 @@ package body GNAThub.Reports.Collector is
    is
       Self : constant Report := Report (View);
    begin
+      GPS.Kernel.Messages.Remove_Category
+        (Self.Kernel.Get_Messages_Container,
+         GNAThub.Messages.Category,
+         GPS.Kernel.Messages.Empty_Message_Flags);
+
       GPS.Kernel.Messages.Unregister_Listener
         (Self.Kernel.Get_Messages_Container,
          GPS.Kernel.Messages.Listener_Access (Self.Listener));
@@ -156,6 +161,8 @@ package body GNAThub.Reports.Collector is
             if Project_Node /= null then
                GNAThub.Reports.Metrics.Display_Metrics_Report
                  (View.Metric_Report, Project_Node.Metrics);
+            else
+               GNAThub.Reports.Metrics.Clear (View.Metric_Report);
             end if;
          end if;
       end if;

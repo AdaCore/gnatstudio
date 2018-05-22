@@ -34,6 +34,8 @@ package GNAThub.Reports.Metrics is
      (Self    : not null access GNAThub_Report_Metrics'Class;
       Metrics : Metric_Tool_Maps.Map);
 
+   procedure Clear (Self : not null access GNAThub_Report_Metrics'Class);
+
 private
 
    type GNAThub_Report_Metrics is

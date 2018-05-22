@@ -37,17 +37,19 @@ package GNAThub.Module is
 
    type GNAThub_Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Kernel        : GPS.Kernel.Kernel_Handle;
-      Tools         : Tools_Ordered_Sets.Set;
-      Severities    : Severities_Ordered_Sets.Set;
-      Severities_Id : Severity_Natural_Maps.Map;
-      Rules         : Rule_Sets.Set;
-      Filter        : Filter_Access;
-      Loader        : Loader_Access;
+      Kernel         : GPS.Kernel.Kernel_Handle;
+      Tools          : Tools_Ordered_Sets.Set;
+      Severities     : Severities_Ordered_Sets.Set;
+      Severities_Id  : Severity_Natural_Maps.Map;
+      Rules          : Rule_Sets.Set;
+      Filter         : Filter_Access;
+      Loader         : Loader_Access;
 
-      Tree          : Code_Analysis.Code_Analysis_Tree;
-      Collector     : GNAThub.Reports.Collector.Report;
-      Report        : GNAThub_Child;
+      Tree           : Code_Analysis.Code_Analysis_Tree;
+      Collector      : GNAThub.Reports.Collector.Report;
+      Report         : GNAThub_Child;
+
+      Clean_Messages : Boolean := False;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;

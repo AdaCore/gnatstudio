@@ -138,6 +138,11 @@ package body GNAThub.Filters_Views is
      (Self    : not null access Message_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
 
+   overriding function Message_Can_Be_Destroyed
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
+      return Boolean;
+
    procedure Free is new Ada.Unchecked_Deallocation
      (Message_Listener'Class, Message_Listener_Access);
 
@@ -682,6 +687,8 @@ package body GNAThub.Filters_Views is
       Gtkada.Handlers.Widget_Callback.Connect
         (Self, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
 
+      GNAThub_Module.Clean_Messages := False;
+
       return Gtk.Widget.Gtk_Widget (Self.Flow_Box);
    end Initialize;
 
@@ -794,6 +801,25 @@ package body GNAThub.Filters_Views is
          View.Severities_Editor.Update;
       end if;
    end Message_Added;
+
+   ------------------------------
+   -- Message_Can_Be_Destroyed --
+   ------------------------------
+
+   overriding function Message_Can_Be_Destroyed
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+      Category : constant String := Message.Get_Category;
+   begin
+      if Category = GNAThub.Messages.Category then
+         return GNAThub_Module.Clean_Messages;
+      else
+         return True;
+      end if;
+   end Message_Can_Be_Destroyed;
 
    ----------------
    -- On_Destroy --

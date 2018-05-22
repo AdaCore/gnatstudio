@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-with Ada.Strings.Maps;                      use Ada.Strings.Maps;
 with GNAT.Directory_Operations;             use GNAT.Directory_Operations;
 with GNATCOLL.Projects;
 with GNATCOLL.Utils;                        use GNATCOLL.Utils;
@@ -47,7 +45,6 @@ with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
 with Gtk.Widget;                            use Gtk.Widget;
 with Gtkada.Handlers;                       use Gtkada.Handlers;
 
-with Case_Handling;                         use Case_Handling;
 with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel;                            use GPS.Kernel;
 with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
@@ -559,12 +556,7 @@ package body GPS.Kernel.Custom.GUI is
                               Base_Name (Name, File_Extension (Name));
          Page_Name        : constant String :=
                               Root_Page.Get_Name & Name_Without_Ext & '/';
-         Label            : constant String := Mixed_Case
-           (Ada.Strings.Fixed.Translate
-              (Source  => Name_Without_Ext,
-               Mapping => To_Mapping
-                 (From => To_Sequence (To_Set (('_'))),
-                  To   => To_Sequence (To_Set ((' '))))));
+         Label            : constant String := Format_Title (Name_Without_Ext);
       begin
          --  Set the plugin page attributes
          Plugin_Page.Plugin_Name := new String'(Name);

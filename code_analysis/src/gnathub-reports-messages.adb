@@ -34,6 +34,8 @@ with GPS.Location_View;
 with GNATCOLL.Xref;
 with GNAThub.Messages;          use GNAThub.Messages;
 
+with String_Utils;              use String_Utils;
+
 package body GNAThub.Reports.Messages is
 
    use Gtk.Gesture_Multi_Press;
@@ -208,7 +210,8 @@ package body GNAThub.Reports.Messages is
       for Severity of Severities loop
          Gtk.Tree_View_Column.Gtk_New (Column);
          Column.Set_Title
-           (Ada.Strings.Unbounded.To_String (Get_Name (Severity.all)));
+           (Format_Title
+              (Ada.Strings.Unbounded.To_String (Get_Name (Severity.all))));
          Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
 
          Column.Pack_Start (Text_Renderer, False);

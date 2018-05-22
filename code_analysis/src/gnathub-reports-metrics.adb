@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
 with Ada.Float_Text_IO;
-with Ada.Strings.Maps;
 
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Scrolled_Window;
@@ -28,7 +26,33 @@ with Glib;                     use Glib;
 with Glib_Values_Utils;        use Glib_Values_Utils;
 with GNATCOLL.Utils;
 
+with String_Utils;             use String_Utils;
+
 package body GNAThub.Reports.Metrics is
+
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+
+   ---------------
+   -- Sort_Func --
+   ---------------
+
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      Val_A : constant Float := Float'Value (Get_String (Model, A, 1));
+      Val_B : constant Float := Float'Value (Get_String (Model, B, 1));
+   begin
+      if Val_A < Val_B then
+         return 1;
+      else
+         return -1;
+      end if;
+   end Sort_Func;
 
    -------------
    -- Gtk_New --
@@ -85,6 +109,7 @@ package body GNAThub.Reports.Metrics is
       Dummy := Self.Metrics_View.Append_Column (New_Column ("Metric", 0));
       Dummy := Self.Metrics_View.Append_Column (New_Column ("Value", 1));
       Self.Metrics_View.Set_Search_Column (0);
+      Set_Sort_Func (Self.Metrics_View.Model, 1, Sort_Func'Access);
 
       Scrolled.Add (Self.Metrics_View);
    end Initialize;
@@ -104,25 +129,7 @@ package body GNAThub.Reports.Metrics is
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
 
-      function Pretty_Print_Name (Name : Unbounded_String) return String;
       function Pretty_Print_Value (Value : Float) return String;
-
-      -----------------------
-      -- Pretty_Print_Name --
-      -----------------------
-
-      function Pretty_Print_Name (Name : Unbounded_String) return String
-      is
-         use Ada.Strings.Maps;
-         Tmp         : Unbounded_String           := Name;
-         Translation : constant Character_Mapping := To_Mapping ("_", " ");
-      begin
-         Replace_Element
-           (Tmp, 1, Ada.Characters.Handling.To_Upper (Element (Tmp, 1)));
-
-         Ada.Strings.Unbounded.Translate (Tmp, Translation);
-         return To_String (Tmp);
-      end Pretty_Print_Name;
 
       ------------------------
       -- Pretty_Print_Value --
@@ -161,17 +168,30 @@ package body GNAThub.Reports.Metrics is
          Model.Append (Tool_Iter, Null_Iter);
          Set_And_Clear (Model,
                         Tool_Iter,
-                        (0 => As_String (Pretty_Print_Name (Key (Cursor)))));
+                        (0 =>
+                           As_String
+                             (Format_Title (To_String (Key (Cursor))))));
          for M of Element (Cursor) loop
             Model.Append (Metric_Iter, Tool_Iter);
             Set_And_Clear (Model,
                            Metric_Iter,
-                           (0 => As_String (Pretty_Print_Name (M.Rule.Name)),
+                           (0 =>
+                              As_String
+                                (Format_Title (To_String (M.Rule.Name))),
                             1 => As_String (Pretty_Print_Value (M.Value))));
          end loop;
          Dummy :=
            Self.Metrics_View.Expand_Row (Model.Get_Path (Tool_Iter), False);
       end loop;
    end Display_Metrics_Report;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : not null access GNAThub_Report_Metrics'Class) is
+   begin
+      Self.Metrics_View.Model.Clear;
+   end Clear;
 
 end GNAThub.Reports.Metrics;

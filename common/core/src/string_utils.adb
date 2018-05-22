@@ -15,23 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Containers;             use Ada.Containers;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Containers;                    use Ada.Containers;
 with Ada.Float_Text_IO;
 with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Fixed;
+with Ada.Strings.Maps;                  use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
-with GNAT.Strings;               use GNAT.Strings;
+with Case_Handling;                     use Case_Handling;
+
+with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
-with UTF8_Utils;                 use UTF8_Utils;
+with UTF8_Utils;                        use UTF8_Utils;
 
 package body String_Utils is
    use type GNATCOLL.Xref.Visible_Column;
@@ -160,6 +163,17 @@ package body String_Utils is
          return Bytes_S (First .. Bytes_S'Last) & ' ' & To_String (Unit);
       end if;
    end Format_Bytes;
+
+   ------------------
+   -- Format_Title --
+   ------------------
+
+   function Format_Title (Title : String) return String
+   is
+      Translation : constant Character_Mapping := To_Mapping ("_", " ");
+   begin
+      return Ada.Strings.Fixed.Translate (Mixed_Case (Title), Translation);
+   end Format_Title;
 
    --------------------------
    -- Get_Surrounding_Line --

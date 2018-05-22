@@ -45,6 +45,10 @@ package String_Utils is
    --    . Format_Bytes (1024 ** 3) = "1 GB"
    --    . Format_Bytes (1056) = "1.03 KB" --  For non-round numbers
 
+   function Format_Title (Title : String) return String;
+   --  Replace the '_' by ' ' and transform the first character of each word
+   --  on its uppercase equivalent
+
    function Get_Surrounding_Line
      (Str    : String;
       Start  : Natural;
