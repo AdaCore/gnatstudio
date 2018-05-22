@@ -322,7 +322,9 @@ class CLI(GPS.Process):
             for arg, has_param in remove_list:
                 switches = remove_arg(switches, arg, has_param)
 
-            if '--typing' not in switches and '-t' not in switches:
+            if os.path.splitext(file.path)[1] == ".xmi":
+                extra.extend(['--pre-process-xmi'])
+            elif '--typing' not in switches and '-t' not in switches:
                 typing_file = os.path.splitext(file.path)[0] + '_types.txt'
                 extra.extend(['-t', typing_file])
             extra.extend(['-o', outdir])
