@@ -124,6 +124,9 @@ package body GPS.Location_View is
    overriding procedure Filter_Changed
      (Self    : not null access Location_View_Record;
       Pattern : in out Search_Pattern_Access);
+   overriding procedure On_Create
+     (Self  : not null access Location_View_Record;
+      Child : not null access GPS_MDI_Child_Record'Class);
 
    function Initialize
      (Self   : access Location_View_Record'Class)
@@ -477,6 +480,19 @@ package body GPS.Location_View is
             & To_String (Messages (K).Get_Text));
       end loop;
    end Export_Messages;
+
+   ---------------
+   -- On_Create --
+   ---------------
+
+   overriding procedure On_Create
+     (Self  : not null access Location_View_Record;
+      Child : not null access GPS_MDI_Child_Record'Class)
+   is
+      pragma Unreferenced (Child);
+   begin
+      Self.Kernel.Get_Messages_Container.Refilter;
+   end On_Create;
 
    -----------------
    -- Idle_Expand --

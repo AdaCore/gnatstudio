@@ -1161,10 +1161,6 @@ package body GPS.Location_View.Listener is
          end if;
       end loop;
 
-      Container.Refilter;
-      --  Some messages can be hidden by closing of Locations view, so refilter
-      --  messages to make them visible.
-
       return Self;
    end Register;
 
