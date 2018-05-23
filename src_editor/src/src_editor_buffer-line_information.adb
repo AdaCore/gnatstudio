@@ -205,7 +205,6 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Data : constant Line_Info_Width_Array_Access :=
         Get_Side_Information (Buffer, Line);
-      use Message_Reference_List;
    begin
       if Data = null then
          --  Defensive code, this should not happen
@@ -2559,9 +2558,8 @@ package body Src_Editor_Buffer.Line_Information is
       EL                   : Editable_Line_Type;
       Buffer_Line          : Buffer_Line_Type;
 
-      Iter                 : Gtk_Text_Iter;
+      Command              : Unhide_Editable_Lines_Command;
 
-      Command    : Unhide_Editable_Lines_Command;
       Number_Of_Lines_Folded  : Natural := 0;
       Number_Of_Lines_Removed : Natural := 0;
 
@@ -2590,9 +2588,7 @@ package body Src_Editor_Buffer.Line_Information is
          Forward_To_Line_End (Start_Iter, Result);
       end if;
 
-      Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
-
-      if Is_End (Start_Iter) and then Get_Char (Iter) /= ASCII.LF then
+      if Is_End (Start_Iter) and then Get_Char (Start_Iter) /= ASCII.LF then
          Insert (Buffer, Start_Iter, "" & ASCII.LF);
       end if;
 
