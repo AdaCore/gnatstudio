@@ -1,0 +1,14 @@
+# Header
+Name: Scrolling text
+Category: BBC micro:bit
+Project: microbit_example.gpr
+
+# Variables
+
+# Description
+[Description]
+A program that demonstrates scrolling text on
+the BBC micro:bit board.
+
+This supports flashing and debugging the board
+using the pyOCD library embedded in GPS.

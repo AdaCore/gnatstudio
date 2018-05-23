@@ -33,3 +33,6 @@ share/support/core/runtime.py no-precommit-check
 
 # Temporary, while P728-041 is being investigated
 distrib/known-problems-62     no-precommit-check
+
+# Some non-AdaCore code
+share/templates/microbit_example/src/*	no-precommit-check
