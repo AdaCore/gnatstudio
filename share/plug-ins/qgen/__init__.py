@@ -576,6 +576,16 @@ class CLI(GPS.Process):
                 new_diag = viewer.diags.get(diag_name)
                 viewer.set_diagram(new_diag)
 
+    @staticmethod
+    def action_scale_to_fit():
+        """
+        Retrieves the focused QGen Diagram viewer and scales the view
+        to the window size.
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            viewer.scale_to_fit()
+
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
 
@@ -2071,14 +2081,24 @@ else:
                 name='MDL goto parent subsystem',
                 category='Browsers',
                 filter=self.__contextual_filter_viewer_active_history_parent,
-                icon='gps-upward-symbolic')
+                icon='gps-upward-symbolic',
+                key='Escape')
 
             gps_utils.make_interactive(
                 callback=CLI.action_goto_previous_subsystem,
                 name='MDL goto previous subsystem',
                 category='Browsers',
                 filter=self.__contextual_filter_viewer_active_history,
-                icon='gps-backward-symbolic')
+                icon='gps-backward-symbolic',
+                key='Left')
+
+            gps_utils.make_interactive(
+                callback=CLI.action_scale_to_fit,
+                name='MDL fit window',
+                category='Browsers',
+                filter=self.__contextual_filter_viewer_active,
+                icon='gps-zoom-100-symbolic',
+                key='space')
 
             gps_utils.make_interactive(
                 callback=CLI.stop_logging_subsystem_values,
