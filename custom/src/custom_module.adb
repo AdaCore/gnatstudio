@@ -1421,11 +1421,19 @@ package body Custom_Module is
       elsif Command = "key" then
          Name_Parameters (Data, (1 => Key_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
-         Bind_Default_Key
+         Set_Default_Key
            (Kernel      => Kernel,
             Action      => String'(Get_Data (Inst, Action_Class)),
             Default_Key => Nth_Arg (Data, 2),
             Exclusive   => Data.Nth_Arg (3, True));
+
+      elsif Command = "get_keys" then
+         Inst := Nth_Arg (Data, 1, Action_Class);
+         Data.Set_Return_Value
+           (Kernel.Get_Shortcut
+              (Action          => String'(Get_Data (Inst, Action_Class)),
+               Use_Markup      => False,
+               Return_Multiple => True));
 
       elsif Command = "can_execute" then
          Inst := Data.Nth_Arg (1, Action_Class);
@@ -1638,6 +1646,10 @@ package body Custom_Module is
          Params        => (2 => Param ("key"),
                            3 => Param ("exclusive", Optional => True)),
          Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_keys",
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
       Register_Command
         (Kernel, "menu",
          Class         => Action_Class,

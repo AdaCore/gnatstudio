@@ -58,7 +58,6 @@ with GPS.Default_Styles;        use GPS.Default_Styles;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -1084,26 +1083,6 @@ package body GPS.Kernel is
       Add_To_History (Handle.History.all, Key, New_Entry);
    end Add_To_History;
 
-   ----------------------
-   -- Bind_Default_Key --
-   ----------------------
-
-   procedure Bind_Default_Key
-     (Kernel      : access Kernel_Handle_Record;
-      Action      : String;
-      Default_Key : String;
-      Exclusive   : Boolean := True)
-   is
-      Err : constant String := Add_Customization_String
-        (Kernel,
-         "<key action=""" & Action & """ exclusive='"
-         & Boolean'Image (Exclusive) & "'>" & Default_Key & "</key>",
-         From_File => "<gps_internal>");
-      pragma Unreferenced (Err);
-   begin
-      null;
-   end Bind_Default_Key;
-
    -------------------
    -- Lookup_Filter --
    -------------------
@@ -1781,13 +1760,13 @@ package body GPS.Kernel is
    ---------------------
 
    procedure Set_Default_Key
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Accel_Key  : Gdk.Types.Gdk_Key_Type;
-      Accel_Mods : Gdk.Types.Gdk_Modifier_Type) is
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String;
+      Default_Key : String;
+      Exclusive   : Boolean := False) is
    begin
       if Kernel.Key_Setter_Function /= null then
-         Kernel.Key_Setter_Function (Kernel, Action, Accel_Key, Accel_Mods);
+         Kernel.Key_Setter_Function (Kernel, Action, Default_Key, Exclusive);
       end if;
    end Set_Default_Key;
 

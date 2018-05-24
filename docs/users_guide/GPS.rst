@@ -89,6 +89,8 @@ Classes
 
    .. automethod:: GPS.Action.exists
 
+   .. automethod:: GPS.Action.get_keys
+
    .. automethod:: GPS.Action.key
 
    .. automethod:: GPS.Action.menu

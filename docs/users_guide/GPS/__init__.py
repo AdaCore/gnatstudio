@@ -386,6 +386,15 @@ class Action(object):
         """
         pass  # implemented in Ada
 
+    def get_keys(self):
+        """
+        Return the key shortcuts associated to the given action.
+        The returned string should only be used for displaying purposes.
+
+        :rtype: a string
+        """
+        pass  # implemented in Ada
+
     def menu(self, path, ref='', add_before=True):
         """
         Create a new menu associated with the command. This function is

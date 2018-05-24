@@ -248,10 +248,10 @@ package GPS.Kernel is
    ------------------
 
    type Key_Setter is access procedure
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Accel_Key  : Gdk.Types.Gdk_Key_Type;
-      Accel_Mods : Gdk.Types.Gdk_Modifier_Type);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String;
+      Default_Key : String;
+      Exclusive   : Boolean := False);
    type Key_Getter is access function
      (Kernel          : access Kernel_Handle_Record'Class;
       Action          : String;
@@ -289,11 +289,13 @@ package GPS.Kernel is
    --  Otherwise, set Key to 0 to indicate there is no simple shortcut.
 
    procedure Set_Default_Key
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Accel_Key  : Gdk.Types.Gdk_Key_Type;
-      Accel_Mods : Gdk.Types.Gdk_Modifier_Type);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String;
+      Default_Key : String;
+      Exclusive   : Boolean := False);
    --  Set a default key for the registered action.
+   --  If Exclusive is True, shortuts already bound to this action are
+   --  removed.
 
    -----------
    -- Files --
@@ -648,25 +650,6 @@ package GPS.Kernel is
    function Get_All_Tools
      (Kernel : access Kernel_Handle_Record) return Tool_Properties_Array;
    --  Return all registered tools
-
-   ------------------
-   -- Key handlers --
-   ------------------
-
-   procedure Bind_Default_Key
-     (Kernel      : access Kernel_Handle_Record;
-      Action      : String;
-      Default_Key : String;
-      Exclusive   : Boolean := True);
-   --  Associate a default key binding with an action.
-   --  Default_Key is ignored if the key was previously overridden by the user.
-   --  Its format is something like "control-o" or "control-x control-k", the
-   --  second form specifies that it uses a secondary keymap.
-   --  Action need not exist when the key is bound. This is why we require
-   --  a string instead of an Action_Record.
-   --
-   --  If Exclusive is True, the shortcut will no longer apply for any action
-   --  that it might currently be associated with.
 
    ---------------------
    --  Editor_Factory --

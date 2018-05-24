@@ -263,12 +263,14 @@ package body KeyManager_Module is
    --  it to the key manager GUI if present, and to the Messages window if not.
 
    procedure Set_Default_Key
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Accel_Key  : Gdk_Key_Type;
-      Accel_Mods : Gdk_Modifier_Type);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String;
+      Default_Key : String;
+      Exclusive   : Boolean := False);
    --  If the Action doesn't already have a key binding, then bind it to
    --  Accel_Key/Accel_Mods.
+   --  If Exclusive is True, shortuts already bound to this action are
+   --  removed.
 
    function Get_Shortcut
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -2032,9 +2034,11 @@ package body KeyManager_Module is
    begin
       if Node.Tag.all = "key" then
          declare
-            Action : constant String := Get_Attribute (Node, "action");
+            Action    : constant String := Get_Attribute (Node, "action");
             Exclusive : constant Boolean :=
-               To_Lower (Get_Attribute (Node, "exclusive", "true")) = "true";
+                          To_Lower
+                            (Get_Attribute
+                               (Node, "exclusive", "true")) = "true";
          begin
             if Action = "" then
                if Node.Value /= null and then Node.Value.all /= "" then
@@ -2782,13 +2786,11 @@ package body KeyManager_Module is
    ---------------------
 
    procedure Set_Default_Key
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Accel_Key  : Gdk_Key_Type;
-      Accel_Mods : Gdk_Modifier_Type)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String;
+      Default_Key : String;
+      Exclusive   : Boolean := False)
    is
-      pragma Unreferenced (Kernel);
-      Keys  : Key_Description_List;
       Dummy : aliased Boolean;
    begin
       if Lookup_Key_From_Action
@@ -2800,15 +2802,15 @@ package body KeyManager_Module is
          Is_User_Changed => Dummy'Access) = ""
       then
          --  No key is already defined for this action: set it now.
-         Keys := new Key_Description'
-           (Action  => new String'(Action),
-            User_Defined => False,
-            Keymap  => null,
-            Next    => null);
-         Set
-           (Keymanager_Module.Table.all,
-            Key_Binding'(Accel_Key, Accel_Mods),
-            Keys);
+         Bind_Default_Key_Internal
+           (Kernel                               => Kernel,
+            Table                                =>
+              Keymanager_Module.Table.all,
+            Action                               => Action,
+            Key                                  => Default_Key,
+            Save_In_Keys_XML                     => False,
+            Remove_Existing_Shortcuts_For_Action => Exclusive,
+            Remove_Existing_Actions_For_Shortcut => False);
       end if;
    end Set_Default_Key;
 
