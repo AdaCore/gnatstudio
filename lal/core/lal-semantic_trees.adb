@@ -28,6 +28,7 @@ with Langkit_Support.Tree_Traversal_Iterator;
 with Libadalang.Iterators;
 
 with GPS.Editors;
+with Libadalang.Lexer;
 
 package body LAL.Semantic_Trees is
 
@@ -434,6 +435,13 @@ package body LAL.Semantic_Trees is
 
    package body Nodes is
 
+      function Line
+        (Token : Libadalang.Analysis.Token_Type)
+         return Langkit_Support.Slocs.Line_Number is
+           (Langkit_Support.Slocs.Start_Sloc
+              (Libadalang.Analysis.Sloc_Range
+                   (Libadalang.Analysis.Data (Token))).Line);
+
       --------------
       -- Is_Valid --
       --------------
@@ -788,10 +796,25 @@ package body LAL.Semantic_Trees is
       ----------------
 
       overriding function Sloc_Start (Self : Node) return Language.Sloc_T is
+         use type Langkit_Support.Slocs.Line_Number;
+
          S : constant Langkit_Support.Slocs.Source_Location_Range :=
            Self.Ada_Node.Sloc_Range;
+
+         Step : constant Libadalang.Analysis.Token_Type :=
+           Libadalang.Analysis.Previous
+             (Self.Ada_Node.Token_Start, Exclude_Trivia => True);
+
+         Result : Language.Sloc_T :=
+           (Natural (S.Start_Line), Visible_Column (S.Start_Column), 0);
       begin
-         return (Natural (S.Start_Line), Visible_Column (S.Start_Column), 0);
+         if Step = Libadalang.Analysis.No_Token
+           or else Line (Step) /= Line (Self.Ada_Node.Token_Start)
+         then
+            Result.Column := 1;
+         end if;
+
+         return Result;
       end Sloc_Start;
 
       --------------
@@ -810,10 +833,52 @@ package body LAL.Semantic_Trees is
       --------------
 
       overriding function Sloc_End (Self : Node) return Language.Sloc_T is
+         use type Langkit_Support.Slocs.Line_Number;
+
+         function Last_Column_In_Line
+           (Token : Libadalang.Analysis.Token_Type) return Visible_Column;
+
+         function Last_Column_In_Line
+           (Token : Libadalang.Analysis.Token_Type) return Visible_Column
+         is
+            Next  : Token_Type := Token;
+         begin
+            while Next /= Libadalang.Analysis.No_Token loop
+               declare
+                  Value : constant Token_Data_Type := Data (Next);
+                  Span  : constant Langkit_Support.Slocs.Source_Location_Range
+                    := Sloc_Range (Value);
+               begin
+                  if Kind (Value) in Libadalang.Lexer.Ada_Whitespace
+                    and then Span.Start_Line /= Span.End_Line
+                  then
+                     return Visible_Column (Span.Start_Column);
+                  end if;
+
+                  Next := Libadalang.Analysis.Next (Next);
+               end;
+            end loop;
+
+            return 0;
+         end Last_Column_In_Line;
+
          S : constant Langkit_Support.Slocs.Source_Location_Range :=
            Self.Ada_Node.Sloc_Range;
+
+         Step : constant Libadalang.Analysis.Token_Type :=
+           Libadalang.Analysis.Next
+             (Self.Ada_Node.Token_End, Exclude_Trivia => True);
+
+         Result : Language.Sloc_T :=
+           (Natural (S.End_Line), Visible_Column (S.End_Column), 0);
       begin
-         return (Natural (S.End_Line), Visible_Column (S.End_Column), 0);
+         if Step = Libadalang.Analysis.No_Token
+           or else Line (Step) /= Line (Self.Ada_Node.Token_Start)
+         then
+            Result.Column := Last_Column_In_Line (Self.Ada_Node.Token_End);
+         end if;
+
+         return Result;
       end Sloc_End;
 
       -------------
@@ -987,44 +1052,67 @@ package body LAL.Semantic_Trees is
          use type Language.Language_Category;
          use Langkit_Support.Slocs;
 
-         Root : constant Ada_Node :=
-           Libadalang.Analysis.Root (Self.Unit.all);
+         function Adjust_Source_Location
+           (Loc : Source_Location) return Source_Location;
+         --  All spaces on the starting line of some compound node
+         --  are considered to be part of the node itself.
+         --  So we make Loc correction here to find correct node:
+         --  When Loc is not inside a token then shift Loc to next token
+         --  if the token is on the same line.
+         --  The same is for trailing spaces.
 
+         ----------------------------
+         -- Adjust_Source_Location --
+         ----------------------------
+
+         function Adjust_Source_Location
+           (Loc : Source_Location) return Source_Location
+         is
+            Step   : Libadalang.Analysis.Token_Type;
+            Result : Source_Location;
+            Token  : constant Libadalang.Analysis.Token_Type :=
+              Libadalang.Analysis.Lookup_Token (Self.Unit.all, Loc);
+         begin
+            if Token = Libadalang.Analysis.No_Token then
+               return No_Source_Location;
+            end if;
+
+            Step := Libadalang.Analysis.Next (Token, Exclude_Trivia => True);
+
+            if Step /= Libadalang.Analysis.No_Token then
+               Result := Start_Sloc (Libadalang.Analysis.Sloc_Range
+                                       (Libadalang.Analysis.Data (Step)));
+
+               if Result.Line = Loc.Line then
+                  return Result;
+               end if;
+            end if;
+
+            Step := Libadalang.Analysis.Previous
+              (Token, Exclude_Trivia => True);
+
+            if Step /= Libadalang.Analysis.No_Token then
+               Result := Start_Sloc (Libadalang.Analysis.Sloc_Range
+                                       (Libadalang.Analysis.Data (Step)));
+
+               if Result.Line = Loc.Line then
+                  return Result;
+               end if;
+            end if;
+
+            return Loc;
+         end Adjust_Source_Location;
+
+         Root : constant Ada_Node := Libadalang.Analysis.Root (Self.Unit.all);
          Loc  : Source_Location :=
            (Line_Number (Sloc.Line), Column_Number (Sloc.Column));
 
          Node     : Libadalang.Analysis.Ada_Node := No_Ada_Node;
-         Token    : Libadalang.Analysis.Token_Type :=
-            Libadalang.Analysis.Lookup_Token (Self.Unit.all, Loc);
          Result   : Nodes.Node;
          Category : Language.Language_Category;
       begin
          if Root /= No_Ada_Node then
-            --  All spaces on the starting line of some compound node
-            --  are considered to be part of the node itself.
-            --  So we make Loc correction here to find correct node:
-            --  When Loc is not inside a token then shift Loc to next token
-            --  if the token is on the same line.
-
-            if Token /= Libadalang.Analysis.No_Token
-              and then End_Sloc (Libadalang.Analysis.Sloc_Range
-                                 (Libadalang.Analysis.Data (Token))) < Loc
-            then
-               Token := Libadalang.Analysis.Next (Token);
-
-               if Token /= Libadalang.Analysis.No_Token then
-                  declare
-                     Token_Loc : constant Source_Location :=
-                       Start_Sloc (Libadalang.Analysis.Sloc_Range
-                                   (Libadalang.Analysis.Data (Token)));
-                  begin
-                     if Token_Loc.Line = Loc.Line then
-                        Loc := Token_Loc;
-                     end if;
-                  end;
-               end if;
-            end if;
-
+            Loc := Adjust_Source_Location (Loc);
             Node := Libadalang.Analysis.Lookup (Root, Loc);
          end if;
 
