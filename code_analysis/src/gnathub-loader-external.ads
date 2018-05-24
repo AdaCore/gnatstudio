@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2016-2018, AdaCore                   --
+--                     Copyright (C) 2018, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,37 +14,37 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Filter to be used by messages container to manage visibility of GNAThub
---  messages.
 
-with GPS.Kernel.Messages;
+with GPS.Kernel; use GPS.Kernel;
 
-package GNAThub.Filters is
+package GNAThub.Loader.External is
 
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with private;
-   type Filter_Access is access all GNAThub.Filters.Message_Filter'Class;
+   type External_Loader_Type is new Loader_Type with private;
+   type External_Loader_Access is access all External_Loader_Type'Class;
 
-   procedure Fill
-     (Self       : in out Message_Filter;
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set);
+   overriding procedure Prepare_Loading
+     (Self : in out External_Loader_Type);
 
-   procedure Clear (Self : in out Message_Filter);
+   overriding function Has_Data_To_Load
+     (Self : External_Loader_Type) return Boolean;
 
-   overriding function Apply
-     (Self    : in out Message_Filter;
-      Message : GPS.Kernel.Messages.Abstract_Message'Class)
-      return GPS.Kernel.Messages.Filter_Result;
+   overriding procedure Load_Data
+     (Self : in out External_Loader_Type);
+
+   overriding procedure Cleanup
+     (Self : in out External_Loader_Type);
+
+   procedure Add_External_Message
+     (Self    : in out External_Loader_Type'Class;
+      Message : GNAThub.Messages.Message_Access);
+   --  Add an external message to the list of messages that will be displayed
+   --  in the GNAThub report.
 
 private
 
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with record
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set;
+   type External_Loader_Type is new Loader_Type with record
+      Messages_To_Process : Messages_Vectors.Vector;
+      Current_Message     : Positive;
    end record;
 
-end GNAThub.Filters;
+end GNAThub.Loader.External;

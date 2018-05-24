@@ -457,6 +457,76 @@ class Action(object):
                toolbar='Messages', label='Copy')
         """
 
+###########################################################
+# Analysis
+###########################################################
+
+
+class Analysis(object):
+    """
+    Used to interface external analysis tools and display their messages
+    in a global analysis report.
+
+    See :class:`GPS.AnalysisTool` for more  information.
+    """
+
+    @staticmethod
+    def display_report():
+        """
+        Display the GPS analysis report.
+        Make sure to add your messages before calling this function in order
+        to display them.
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
+# AnalysisTool
+###########################################################
+
+
+class AnalysisTool(object):
+    """
+    This class is used to interface external analysis tools with GPS.
+    A :class:`GPS.AnalysisTool` should define some rules that will be later
+    associated to the messages retrieved from the analysis tool's output.
+    The messages added via this class will then be displated in the GPS
+    Analysis Report.
+
+    See :func:`GPS.Analysis.display_report` to display the messages added
+    for this analysis tool.
+    """
+
+    def __init__(self, name):
+        """
+        Creates a :class:`GPS.AnalysisTool` object, associating it to a name.
+
+        :param string name: The name of the analysis tool.
+        """
+        pass  # implemented in Ada
+
+    def add_rule(self, name, id):
+        """
+        Adds a rule for the :class:`GPS.AnalysisTool`.
+        A rule is defined by a name and a unique ID. Rules will then be used
+        to filter the analysys tool's messages in the GPS Analysis Report.
+
+        :param string name: The rule's name.
+        :param string id: The rule's id.
+        """
+        pass  # implemented in Ada
+
+    def add_message(self, msg, rule_id):
+        """
+        Adds the given message to the list of messages that will be displayed
+        in the GPS Analysis Report. The message will be associated to this tool
+        and to the rule identified by ``rule_id``.
+
+        :param :class:`GPS.Message` msg: The message.
+        :param string rule_id: The id of the rule associated to the message.
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # Context

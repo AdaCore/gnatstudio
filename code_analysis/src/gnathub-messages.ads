@@ -34,8 +34,8 @@ package GNAThub.Messages is
    procedure Initialize
      (Self      : not null access Message'Class;
       Container : not null GPS.Kernel.Messages_Container_Access;
-      Severity  : Severity_Access;
-      Rule      : Rule_Access;
+      Severity  : not null Severity_Access;
+      Rule      : not null Rule_Access;
       Text      : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;

@@ -146,6 +146,7 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with GNAThub.Module;
+with GNAThub.Module.Shell;
 with External_Editor_Module;
 with GNATStack.Module;
 with GNATTest_Module;
@@ -2311,6 +2312,7 @@ procedure GPS.Main is
 
       if Active (GNAThub_Trace) then
          GNAThub.Module.Register_Module (GPS_Main.Kernel);
+         GNAThub.Module.Shell.Register_Commands (GPS_Main.Kernel);
       end if;
 
       if Active (CodePeer_Trace) then

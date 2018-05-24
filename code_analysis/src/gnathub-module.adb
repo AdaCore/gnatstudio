@@ -16,9 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
-
-with GNATCOLL.VFS;
 
 with Gtk.Widget;
 with Gtkada.Handlers;
@@ -31,12 +28,10 @@ with GPS.Kernel.Preferences;
 
 with GNAThub.Actions;
 with GNAThub.Filters_Views;
-with GNAThub.Loader;
-with GNAThub.Messages;
+with GNAThub.Loader.External;
+with GNAThub.Loader.Databases;
 
 package body GNAThub.Module is
-
-   Module : GNAThub_Module_Id;
 
    type On_Before_Exit is
      new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
@@ -62,41 +57,6 @@ package body GNAThub.Module is
    -----------
 
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
-
-      generic
-         type Element is limited private;
-         type Element_Access is access all Element;
-         with package Sets is new Ada.Containers.Ordered_Sets
-           (Element_Access, others => <>);
-      procedure Clean_Set (Set : in out Sets.Set);
-
-      ---------------
-      -- Clean_Set --
-      ---------------
-
-      procedure Clean_Set (Set : in out Sets.Set) is
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Element, Element_Access);
-      begin
-         while not Set.Is_Empty loop
-            declare
-               Item : Element_Access := Set.First_Element;
-            begin
-               Set.Delete_First;
-               Free (Item);
-            end;
-         end loop;
-      end Clean_Set;
-
-      procedure Clean_Severity_Set is new Clean_Set
-        (Severity_Record, Severity_Access, Severities_Ordered_Sets);
-
-      procedure Clean_Tool_Set is new Clean_Set
-        (Tool_Record, Tool_Access, Tools_Ordered_Sets);
-
-      procedure Clean_Rule_Set is new Clean_Set
-        (Rule_Record, Rule_Access, Rule_Sets);
-
    begin
       if Self.Report /= null then
          Self.Report.Destroy;
@@ -106,15 +66,15 @@ package body GNAThub.Module is
 
       Self.Filter.Clear;
 
-      Clean_Severity_Set (Self.Severities);
-      Clean_Tool_Set (Self.Tools);
-      Clean_Rule_Set (Self.Rules);
-      Self.Severities_Id.Clear;
+      --  Reset rules counters
+      for Rule of Self.Rules loop
+         Rule.Count.Clear;
+      end loop;
 
-      GPS.Kernel.Messages.Remove_Category
-        (Self.Kernel.Get_Messages_Container,
-         GNAThub.Messages.Category,
-         GPS.Kernel.Messages.Empty_Message_Flags);
+      Clear_Code_Analysis (Self.Tree);
+
+      Self.Db_Loader.Remove_Messages;
+      Self.Ext_Loader.Remove_Messages;
    end Clean;
 
    ------------------
@@ -123,18 +83,14 @@ package body GNAThub.Module is
 
    procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class)
    is
-      Database : constant GNATCOLL.VFS.Virtual_File :=
-                   Self.Get_Kernel.Get_Project_Tree.Root_Project.Object_Dir
-                     .Create_From_Dir ("gnathub")
-                     .Create_From_Dir ("gnathub.db");
-
-      Ignore : Boolean;
+      Has_Data : Boolean;
    begin
       Self.Clean;
 
-      if Database.Is_Regular_File then
-         Self.Loader.Load (Database);
+      Has_Data := Self.Db_Loader.Load;
+      Has_Data := Has_Data or Self.Ext_Loader.Load;
 
+      if Has_Data then
          --  Switch to GNATHub perspective.
          Load_Perspective (Self.Kernel, "Analyze");
 
@@ -159,9 +115,7 @@ package body GNAThub.Module is
 
       else
          Self.Get_Kernel.Insert
-           (Database.Display_Full_Name &
-            (-" does not exist. Analysis information is absent."),
-            Mode => GPS.Kernel.Error);
+           ("No analysis data available.");
       end if;
    end Display_Data;
 
@@ -202,17 +156,23 @@ package body GNAThub.Module is
       return True;
    end Execute;
 
-   --------------
-   -- New_Rule --
-   --------------
+   ------------------------
+   -- Get_Or_Create_Rule --
+   ------------------------
 
-   function New_Rule
+   function Get_Or_Create_Rule
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Tool       : not null Tool_Access;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
       Identifier : Ada.Strings.Unbounded.Unbounded_String)
       return Rule_Access is
    begin
+      for Rule of Self.Rules loop
+         if Rule.Identifier = Identifier then
+            return Rule;
+         end if;
+      end loop;
+
       return Rule : constant Rule_Access :=
         new Rule_Record'
           (Name       => Name,
@@ -223,40 +183,46 @@ package body GNAThub.Module is
          Tool.Rules.Insert (Rule);
          Self.Rules.Insert (Rule);
       end return;
-   end New_Rule;
+   end Get_Or_Create_Rule;
 
    ------------------
-   -- New_Severity --
+   -- Get_Severity --
    ------------------
 
-   function New_Severity
-     (Self    : in out GNAThub_Module_Id_Record'Class;
-      Ranking : Analysis_Message_Category)
+   function Get_Severity
+     (Self    : GNAThub_Module_Id_Record'Class;
+      Ranking : Message_Importance_Type)
       return Severity_Access is
    begin
-      return Sev : constant Severity_Access :=
-        new Severity_Record'
-          (Ranking    => Ranking,
-           Style      => Analysis_Styles (Ranking))
-      do
-         Self.Severities.Insert (Sev);
-      end return;
-   end New_Severity;
+      for Severity of Self.Severities loop
+         if Severity.Ranking = Ranking then
+            return Severity;
+         end if;
+      end loop;
 
-   --------------
-   -- New_Tool --
-   --------------
+      return null;
+   end Get_Severity;
 
-   function New_Tool
+   ------------------------
+   -- Get_Or_Create_Tool --
+   ------------------------
+
+   function Get_Or_Create_Tool
      (Self : in out GNAThub_Module_Id_Record'Class;
       Name : Ada.Strings.Unbounded.Unbounded_String) return Tool_Access is
    begin
+      for Tool of Self.Tools loop
+         if Tool.Name = Name then
+            return Tool;
+         end if;
+      end loop;
+
       return Tool : constant Tool_Access :=
         new Tool_Record'(Name => Name, Rules => <>)
       do
          Self.Tools.Insert (Tool);
       end return;
-   end New_Tool;
+   end Get_Or_Create_Tool;
 
    -----------------------
    -- On_Report_Destroy --
@@ -296,15 +262,49 @@ package body GNAThub.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      procedure Load_Severities;
+
+      ---------------------
+      -- Load_Severities --
+      ---------------------
+
+      procedure Load_Severities is
+         Id : Natural := 1;
+      begin
+         --  Load the severities
+         for Ranking in Message_Importance_Type loop
+            Module.Severities.Insert
+              (new Severity_Record'
+                 (Ranking => Ranking,
+                  Style   => Messages_Styles (Ranking)));
+         end loop;
+
+         --  Associate them with unique IDs
+         for Severity of Module.Severities loop
+            Module.Severities_Id.Insert (Severity, Id);
+            Id := Id + 1;
+         end loop;
+      end Load_Severities;
+
    begin
+
       Module        := new GNAThub_Module_Id_Record;
       Module.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
       Module.Tree   := new Project_Maps.Map;
 
       Module.Register_Module (Kernel, "GNAThub");
       GNAThub.Actions.Register_Actions (Module);
-      Module.Loader := new GNAThub.Loader.Loader (Module);
+
+      Module.Db_Loader := new GNAThub.Loader.Databases.Database_Loader_Type;
+      Module.Db_Loader.Initialize (Module);
+
+      Module.Ext_Loader := new GNAThub.Loader.External.External_Loader_Type;
+      Module.Ext_Loader.Initialize (Module);
+
+      Load_Severities;
+
       Module.Filter := new GNAThub.Filters.Message_Filter;
 
       Kernel.Get_Messages_Container.Register_Filter

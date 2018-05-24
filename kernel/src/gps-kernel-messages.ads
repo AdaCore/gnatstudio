@@ -37,8 +37,9 @@ with Ada.Unchecked_Conversion;
 with Ada.Tags;
 
 with Gdk.RGBA;
-with Default_Preferences;           use Default_Preferences;
+with Default_Preferences;                  use Default_Preferences;
 with GNATCOLL.VFS;
+with GPS.Default_Styles;                   use GPS.Default_Styles;
 limited with GPS.Editors.Line_Information;
 with GPS.Kernel.Style_Manager;
 
@@ -182,6 +183,16 @@ package GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return Action_Item;
    --  Returns action associated with the message.
+
+   procedure Set_Importance
+     (Self       : not null access Abstract_Message'Class;
+      Importance : Message_Importance_Type);
+   --  TODO: doc
+
+   function Get_Importance
+     (Self : not null access Abstract_Message'Class)
+      return Message_Importance_Type;
+   --  TODO: doc
 
    type Highlight_Length is new Natural;
    Highlight_Whole_Line : constant Highlight_Length := Highlight_Length'Last;
@@ -596,14 +607,15 @@ private
             end case;
 
          when Node_Message =>
-            Line   : Natural;
-            Column : Basic_Types.Visible_Column_Type;
-            Mark   : GPS.Editors.Editor_Mark_Holders.Holder;
-            Action : Action_Item;
-            Style  : GPS.Kernel.Style_Manager.Style_Access;
-            Length : Highlight_Length := Highlight_Whole_Line;
-            Notes  : Note_Maps.Map;
-            Flags  : Message_Flags;
+            Line       : Natural;
+            Column     : Basic_Types.Visible_Column_Type;
+            Mark       : GPS.Editors.Editor_Mark_Holders.Holder;
+            Action     : Action_Item;
+            Importance : Message_Importance_Type := Unspecified;
+            Style      : GPS.Kernel.Style_Manager.Style_Access;
+            Length     : Highlight_Length := Highlight_Whole_Line;
+            Notes      : Note_Maps.Map;
+            Flags      : Message_Flags;
       end case;
    end record;
 
@@ -665,7 +677,7 @@ private
 
       case Level is
          when Primary =>
-            Weight : Natural;
+            Weight : Natural := 0;
 
          when Secondary =>
             Corresponding_File : GNATCOLL.VFS.Virtual_File;

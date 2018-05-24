@@ -104,6 +104,28 @@ Classes
 
    .. automethod:: GPS.Alias.get
 
+:class:`GPS.Analysis`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Analysis()
+
+
+
+   .. automethod:: GPS.Analysis.display_report
+
+:class:`GPS.AnalysisTool`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: AnalysisTool()
+
+
+
+   .. automethod:: GPS.AnalysisTool.__init__
+
+   .. automethod:: GPS.AnalysisTool.add_message
+
+   .. automethod:: GPS.AnalysisTool.add_rule
+
 :class:`GPS.Bookmark`
 ^^^^^^^^^^^^^^^^^^^^^
 

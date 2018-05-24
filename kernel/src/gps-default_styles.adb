@@ -218,7 +218,7 @@ package body GPS.Default_Styles is
       -- Analysis Tools --
       --------------------
 
-      Analysis_Styles (Unspecified) := Editor_Default_Style;
+      Analysis_Styles (Unspecified) := null;
 
       Init (Analysis_Styles (Annotation),
             Name      => -"Annotation messages",
@@ -241,5 +241,23 @@ package body GPS.Default_Styles is
             Bg        => Low_Messages_Highlight);
 
    end Initialize_Default_Styles;
+
+   ----------------
+   -- Get_Weight --
+   ----------------
+
+   function Get_Weight (Importance : Message_Importance_Type) return Natural is
+   begin
+      case Importance is
+         when Unspecified | Informational | Annotation =>
+            return 0;
+         when Low_Importance =>
+            return 1;
+         when Medium_Importance =>
+            return 2;
+         when High_Importance =>
+            return 3;
+      end case;
+   end Get_Weight;
 
 end GPS.Default_Styles;

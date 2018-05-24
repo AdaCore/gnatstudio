@@ -364,7 +364,7 @@ package body GNAThub.Filters_Views is
                if not Filter_Result.Non_Applicable
                  and then Filter_Result.Flags (GPS.Kernel.Messages.Locations)
                then
-                  Severity_Id := GNAThub_Module.Severities_Id.Element
+                  Severity_Id := GNAThub_Module.Severities_Id
                     (Message.Get_Severity);
                   Counts (Severity_Id) := Counts (Severity_Id) + 1;
                   Counts (Counts'Last) := Counts (Counts'Last) + 1;

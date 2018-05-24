@@ -75,8 +75,8 @@ package body GNAThub.Messages is
    procedure Initialize
      (Self      : not null access Message'Class;
       Container : not null GPS.Kernel.Messages_Container_Access;
-      Severity  : Severity_Access;
-      Rule      : Rule_Access;
+      Severity  : not null Severity_Access;
+      Rule      : not null Rule_Access;
       Text      : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
@@ -93,11 +93,11 @@ package body GNAThub.Messages is
          File          => File,
          Line          => Line,
          Column        => Column,
-         Weight        => 0,  --  ??? It is possible to set different weight
-                              --  for different severities of the message.
-                              --  It allows to group message in Locations view
+         Weight        => Get_Weight (Severity.Ranking),
          Actual_Line   => Line,
          Actual_Column => Integer (Column));
+      GPS.Kernel.Messages.Set_Importance
+        (Self, Severity.Ranking);
    end Initialize;
 
 end GNAThub.Messages;

@@ -455,6 +455,34 @@ package body GPS.Kernel.Messages is
       return Self.Action;
    end Get_Action;
 
+   --------------------
+   -- Set_Importance --
+   --------------------
+
+   procedure Set_Importance
+     (Self       : not null access Abstract_Message'Class;
+      Importance : Message_Importance_Type) is
+   begin
+      Self.Importance := Importance;
+
+      if Self.Style = null then
+         Self.Style := Messages_Styles (Importance);
+      end if;
+
+      Self.Weight := Get_Weight (Importance);
+   end Set_Importance;
+
+   --------------------
+   -- Get_Importance --
+   --------------------
+
+   function Get_Importance
+     (Self : not null access Abstract_Message'Class)
+      return Message_Importance_Type is
+   begin
+      return Self.Importance;
+   end Get_Importance;
+
    --------------------------
    -- Get_Background_Color --
    --------------------------

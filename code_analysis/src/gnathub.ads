@@ -103,13 +103,13 @@ package GNAThub is
       Rule     : Rule_Access;
       Value    : Float;
    end record;
-   type Metric is access Metric_Record;
+   type Metric_Access is access Metric_Record;
 
-   function Less (L, R : Metric) return Boolean is
+   function Less (L, R : Metric_Access) return Boolean is
      (Ada.Strings.Unbounded."<" (L.Rule.Name, R.Rule.Name));
 
    package Metrics_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (Metric, Less, "=");
+     (Metric_Access, Less, "=");
 
    package Metric_Tool_Maps is
      new Ada.Containers.Hashed_Maps
