@@ -632,7 +632,7 @@ package body Gtkada.Entry_Completion is
 
       if Completion_In_Popup then
          Gtk_New (Self.Popup, Window_Popup);
-         Self.Popup.Set_Name ("completion-list");
+         Self.Popup.Set_Name (String (Name) & "-results-list");
          Self.Popup.Set_Type_Hint (Window_Type_Hint_Combo);
          Self.Popup.Set_Resizable (False);
          Self.Popup.Set_Skip_Taskbar_Hint (True);
@@ -647,7 +647,7 @@ package body Gtkada.Entry_Completion is
 
          Gtk_New (Popup, Window_Popup);
          Self.Notes_Popup := Gtk_Widget (Popup);
-         Popup.Set_Name ("completion-preview");
+         Popup.Set_Name (String (Name) & "-results-preview");
          Popup.Set_Type_Hint (Window_Type_Hint_Combo);
          Popup.Set_Resizable (False);
          Popup.Set_Skip_Taskbar_Hint (True);

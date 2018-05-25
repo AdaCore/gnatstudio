@@ -118,7 +118,15 @@ def should_escape(context):
     current_view = GPS.MDI.current()
 
     if current_view and current_view.is_floating():
-        return True
+        try:
+            window = current_view.get_child().pywidget().get_toplevel()
+            focus_widget = window.get_focus()
+
+            # Don't perform smart escape when the focus is on the preferences
+            # editor's search bar.
+            return focus_widget.get_name() != "preferences_editor_search"
+        except Exception:
+            return False
 
     return False
 
