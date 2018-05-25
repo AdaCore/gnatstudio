@@ -132,17 +132,29 @@ class JSON_Diagram_File():
     A JSON file that contains the definition of multiple diagrams.
     """
 
-    def __init__(self, data, factory=None):
+    def __init__(self, data, factory=None, load_styles=None):
         """
         :param str data: the JSON data
         :param factory: a function that creates a new empty diagram
         """
-        self.styles = Styles()
+        self.load_styles = load_styles is None
+        self.styles = Styles() if self.load_styles else load_styles
         self.templates = {}  # id -> template (JSON data)
         self.diagrams = []
         self.index = []  # (id, children (JSON Array))
         self.factory = factory
         self.__load(data)
+
+    def contains(self, id):
+        """
+        Tells whether a diagram is contained within this file
+        without loading it.
+        :return boolean: Existence of diagram with name id within self
+        """
+        for d in self.diagrams:
+            if d.id == id:
+                return True
+        return False
 
     def get(self, id=None):
         """
@@ -218,9 +230,9 @@ class JSON_Diagram_File():
                 GPS.Console().write("Error when parsing JSON: %s\n" % (
                     e, ))
                 return
-
-        for id, s in data.get('styles', {}).iteritems():
-            self.styles.parse(s, None, id=id)
+        if self.load_styles:
+            for id, s in data.get('styles', {}).iteritems():
+                self.styles.parse(s, None, id=id)
 
         for id, t in data.get('templates', {}).iteritems():
             self.templates[id] = t
@@ -523,7 +535,7 @@ class Link:
 class Diagram:
 
     @staticmethod
-    def load_json(file, diagramFactory=None):
+    def load_json(file, diagramFactory=None, load_styles=None):
         """
         Load the contents of the JSON file into the specified diagram. See the
         GPS.Browsers documentation for more information on the format.
@@ -537,14 +549,14 @@ class Diagram:
                 file = open(file)
 
             return GPS.Browsers.Diagram.load_json_data(
-                json.load(file), diagramFactory)
+                json.load(file), diagramFactory, load_styles)
         except Exception as e:
             GPS.Console().write("Unexpected exception %s\n%s\n" % (
                 e, traceback.format_exc()))
 
     @staticmethod
-    def load_json_data(data, diagramFactory=None):
+    def load_json_data(data, diagramFactory=None, load_styles=None):
         """
         :return: an instance of JSON_Diagram_File
         """
-        return JSON_Diagram_File(data, diagramFactory)
+        return JSON_Diagram_File(data, diagramFactory, load_styles)
