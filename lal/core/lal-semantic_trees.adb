@@ -716,7 +716,9 @@ package body LAL.Semantic_Trees is
                   begin
                      for Token of Node.Token_Range loop
                         --  FIXME: avoid Python-style escaped from Text
-                        Append (Image, Text (Token));
+                        if not Is_Trivia (Token) then
+                           Append (Image, Text (Token));
+                        end if;
                      end loop;
 
                      return Self.Kernel.Symbols.Find (To_String (Image));
@@ -888,11 +890,94 @@ package body LAL.Semantic_Trees is
       overriding function Profile
         (Self             : Node;
          Show_Param_Names : Boolean := True)
-         return GNATCOLL.Symbols.Symbol is
-         pragma Unreferenced (Self, Show_Param_Names);
+         return GNATCOLL.Symbols.Symbol
+      is
+
+         function To_Profile (Node : Subp_Spec'Class) return String;
+
+         function To_Profile (Node : Subp_Spec'Class) return String is
+            use Ada.Strings.Unbounded;
+            Result  : Unbounded_String;
+            Params  : constant Param_Spec_Array := Node.P_Params;
+            Returns : constant Type_Expr := Node.F_Subp_Returns;
+         begin
+            if Params'Length > 0 then
+               Append (Result, "(");
+            end if;
+
+            for Param of Params loop
+               declare
+                  Names : constant Defining_Name_List := Param.F_Ids;
+                  Init  : constant Expr := Param.F_Default_Expr;
+                  Item  : Unbounded_String;
+               begin
+                  Append (Item, " :");
+
+                  if Show_Param_Names then
+                     case Param.F_Mode is
+                        when Ada_Mode_Default | Ada_Mode_In =>
+                           Append (Item, " in ");
+                        when Ada_Mode_In_Out =>
+                           Append (Item, " in out ");
+                        when Ada_Mode_Out =>
+                           Append (Item, " out ");
+                     end case;
+                  end if;
+
+                  Append (Item, Param.F_Type_Expr.Text);
+
+                  if not Init.Is_Null then
+                     Append (Result, " := ");
+                     Append (Item, Init.Text);
+                  end if;
+
+                  for J in
+                    Names.First_Child_Index .. Names.Last_Child_Index
+                  loop
+                     if Length (Result) /= 1 then
+                        Append (Result, "; ");
+                     end if;
+
+                     Append (Result, Names.Child (J).Text);
+                     Append (Result, Item);
+                     Item := Null_Unbounded_String;
+                  end loop;
+
+               end;
+            end loop;
+
+            if Params'Length > 0 then
+               Append (Result, ")");
+            end if;
+
+            if not Returns.Is_Null then
+               Append (Result, " return ");
+               Append (Result, Returns.Text);
+            end if;
+
+            return To_String (Result);
+         end To_Profile;
+
+         pragma Unreferenced (Show_Param_Names);
       begin
-         --  TODO: implement Profile
-         return Result : GNATCOLL.Symbols.Symbol;
+         case Self.Ada_Node.Kind is
+            when Ada_Classic_Subp_Decl =>
+               return Self.Kernel.Symbols.Find
+                 (To_Profile
+                    (Self.Ada_Node.As_Classic_Subp_Decl.F_Subp_Spec));
+            when Ada_Base_Subp_Body =>
+               return Self.Kernel.Symbols.Find
+                 (To_Profile
+                    (Self.Ada_Node.As_Base_Subp_Body.F_Subp_Spec));
+            when Ada_Generic_Subp_Decl  =>
+               return Self.Kernel.Symbols.Find
+                 (To_Profile
+                    (Self.Ada_Node.As_Generic_Subp_Decl.
+                         F_Subp_Decl.F_Subp_Spec));
+            when others =>
+               return GNATCOLL.Symbols.No_Symbol;
+         end case;
+
       end Profile;
 
       ----------------
