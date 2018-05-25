@@ -36,10 +36,11 @@ private with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Conversion;
 with Ada.Tags;
 
+with GNATCOLL.Utils;                       use GNATCOLL.Utils;
+
 with Gdk.RGBA;
 with Default_Preferences;                  use Default_Preferences;
 with GNATCOLL.VFS;
-with GPS.Default_Styles;                   use GPS.Default_Styles;
 limited with GPS.Editors.Line_Information;
 with GPS.Kernel.Style_Manager;
 
@@ -61,6 +62,16 @@ package GPS.Kernel.Messages is
       Editor_Line
       --  Whether to highlight the line number on the side of editors
      );
+
+   type Message_Importance_Type is
+     (Annotation,
+      Unspecified,
+      Informational,
+      Low_Importance,
+      Medium_Importance,
+      High_Importance);
+   --  Used to represent the messages importance (e.g: High_Importance should
+   --  be used for errors).
 
    type Message_Flags is array (Message_Visibility_Kind) of Boolean;
    Empty_Message_Flags : constant Message_Flags := (others => False);
@@ -89,9 +100,6 @@ package GPS.Kernel.Messages is
 
    procedure Free (X : in out Action_Item);
    --  Free memory associated to X
-
-   type Unbounded_String_Array is
-     array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;
 
    type Virtual_File_Array is
      array (Positive range <>) of GNATCOLL.VFS.Virtual_File;
@@ -144,12 +152,6 @@ package GPS.Kernel.Messages is
       return Basic_Types.Visible_Column_Type;
    --  Returns the column number of the original location of the message
 
-   function Get_Weight
-     (Self : not null access constant Abstract_Message'Class)
-      return Natural;
-   --  Return the weight of the message
-   --  ??? What is message weight?
-
    function Get_Text
      (Self : not null access constant Abstract_Message)
       return Ada.Strings.Unbounded.Unbounded_String is abstract;
@@ -184,15 +186,10 @@ package GPS.Kernel.Messages is
       return Action_Item;
    --  Returns action associated with the message.
 
-   procedure Set_Importance
-     (Self       : not null access Abstract_Message'Class;
-      Importance : Message_Importance_Type);
-   --  TODO: doc
-
    function Get_Importance
      (Self : not null access Abstract_Message'Class)
       return Message_Importance_Type;
-   --  TODO: doc
+   --  Return the message's importance.
 
    type Highlight_Length is new Natural;
    Highlight_Whole_Line : constant Highlight_Length := Highlight_Length'Last;
@@ -271,14 +268,16 @@ package GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer);
    --  Initialize message and connect it to container. Visibility of the
    --  message will be computed later by applying filter.
-   --  Weight is used for sorting in Locations view (when corresponding sorting
-   --  mode is active). Actual_Line and Actual_Column is used to create
-   --  editor's mark to goto location of the message.
+   --  Importance is used to define the message's style (i.e: the background
+   --  color used in editors and in the Locations view ) and for sorting in the
+   --  Locations View (when corresponding sorting mode is active). Actual_Line
+   --  and Actual_Column is used to create editor's mark to goto location of
+   --  the message.
 
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
@@ -287,7 +286,7 @@ package GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -296,9 +295,11 @@ package GPS.Kernel.Messages is
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message
    --  when the category is created.
-   --  Weight is used for sorting in Locations view (when corresponding sorting
-   --  mode is active). Actual_Line and Actual_Column is used to create
-   --  editor's mark to goto location of the message.
+   --  Importance is used to define the message's style (i.e: the background
+   --  color used in editors and in the Locations view ) and for sorting in the
+   --  Locations View (when corresponding sorting mode is active). Actual_Line
+   --  and Actual_Column is used to create editor's mark to goto location of
+   --  the message.
 
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
@@ -677,7 +678,7 @@ private
 
       case Level is
          when Primary =>
-            Weight : Natural := 0;
+            null;
 
          when Secondary =>
             Corresponding_File : GNATCOLL.VFS.Virtual_File;
@@ -697,7 +698,7 @@ private
         File          : GNATCOLL.VFS.Virtual_File;
         Line          : Natural;
         Column        : Basic_Types.Visible_Column_Type;
-        Weight        : Natural;
+        Importance    : Message_Importance_Type;
         Actual_Line   : Integer;
         Actual_Column : Integer;
         Flags         : Message_Flags;

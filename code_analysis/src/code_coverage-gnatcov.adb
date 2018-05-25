@@ -24,9 +24,9 @@ with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with Coverage_GUI;                 use Coverage_GUI;
+with GPS.Default_Styles;           use GPS.Default_Styles;
 
 package body Code_Coverage.GNATcov is
 
@@ -345,23 +345,18 @@ package body Code_Coverage.GNATcov is
       procedure Process (Item : GNATcov_Item_Coverage);
       --  Helper to add a message in the location window for the current line
 
-      procedure Process (Item : GNATcov_Item_Coverage)
-      is
-         Msg : Simple_Message_Access;
+      procedure Process (Item : GNATcov_Item_Coverage) is
       begin
-         Msg :=
-           Create_Simple_Message
-             (Kernel.Get_Messages_Container,
-              Coverage_Category.all,
-              File,
-              Line_Number,
-              Item.Column,
-              To_String (Item.Message),
-              0,
-              Coverage_Message_Flags,
-              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Msg.Set_Highlighting
-           (Analysis_Styles (GNATcov_Style_Categories (Coverage.Status)));
+         Create_Simple_Message
+           (Kernel.Get_Messages_Container,
+            Coverage_Category.all,
+            File,
+            Line_Number,
+            Item.Column,
+            To_String (Item.Message),
+            GNATcov_Msg_Importances (Coverage.Status),
+            Coverage_Message_Flags,
+            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       end Process;
 
    begin

@@ -32,7 +32,7 @@ package body GPS.Kernel.Messages.Markup is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -46,7 +46,7 @@ package body GPS.Kernel.Messages.Markup is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -66,14 +66,14 @@ package body GPS.Kernel.Messages.Markup is
    ---------------------------
 
    function Create_Markup_Message
-     (Container : not null Messages_Container_Access;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type;
-      Text      : String;
-      Weight    : Natural;
-      Flags     : Message_Flags;
+     (Container  : not null Messages_Container_Access;
+      Category   : String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Line       : Natural;
+      Column     : Basic_Types.Visible_Column_Type;
+      Text       : String;
+      Importance : Message_Importance_Type;
+      Flags      : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Markup_Message_Access is
    begin
@@ -85,7 +85,7 @@ package body GPS.Kernel.Messages.Markup is
            Line,
            Column,
            Text,
-           Weight,
+           Importance,
            Line,
            Integer (Column),
            Flags,
@@ -103,7 +103,7 @@ package body GPS.Kernel.Messages.Markup is
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
       Text          : String;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -122,7 +122,7 @@ package body GPS.Kernel.Messages.Markup is
          File,
          Line,
          Column,
-         Weight,
+         Importance,
          Actual_Line,
          Actual_Column,
          Flags,
@@ -241,7 +241,7 @@ package body GPS.Kernel.Messages.Markup is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -260,7 +260,7 @@ package body GPS.Kernel.Messages.Markup is
                 Line,
                 Column,
                 Text,
-                Weight,
+                Importance,
                 Actual_Line,
                 Actual_Column,
                 Flags,

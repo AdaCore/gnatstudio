@@ -4304,7 +4304,7 @@ package body Src_Editor_Buffer is
                            Positive (Line),
                            1,
                            Get_Message (Error.all),
-                           0,
+                           High_Importance,
                            Src_Editor_Message_Flags);
 
                         Error_Free (Error.all);

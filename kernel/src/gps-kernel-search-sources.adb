@@ -631,7 +631,7 @@ package body GPS.Kernel.Search.Sources is
          Line                     => Self.Line,
          Column                   => Visible_Column_Type (Self.Column),
          Text                     => Self.Short.all,
-         Weight                   => 1,
+         Importance               => Informational,
          Flags                    => Side_And_Locations,
          Allow_Auto_Jump_To_First => True);
    end To_Message;

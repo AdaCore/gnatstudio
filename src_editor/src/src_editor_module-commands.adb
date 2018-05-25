@@ -459,7 +459,7 @@ package body Src_Editor_Module.Commands is
             Loc.Line,
             Loc.Column,
             Get_Name (Entity) & " (" & Kind & ')',
-            0,
+            Unspecified,
             Side_And_Locations);
       end Insert;
 

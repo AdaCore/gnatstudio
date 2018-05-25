@@ -358,7 +358,7 @@ package body GNATStack.Module is
                  0,
                  To_String (Entry_Subprogram.Identifier.Prefix_Name)
                    & " : total " & Image (Entry_Subprogram.Entry_Usage),
-                 0,
+                 GPS.Kernel.Messages.Informational,
                  Stack_Message_Flags);
 
          else
@@ -378,7 +378,7 @@ package body GNATStack.Module is
                       (Entry_Subprogram.Identifier.Locations.First).Column),
                  To_String (Entry_Subprogram.Identifier.Prefix_Name)
                    & " : total " & Image (Entry_Subprogram.Entry_Usage),
-                 0,
+                 GPS.Kernel.Messages.Informational,
                  Stack_Message_Flags);
          end if;
 

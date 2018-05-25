@@ -125,9 +125,22 @@ package body GNAThub.Loader.Databases is
       Severity        : GNAThub.Severity_Access;
       Position        : GNAThub.Severity_Natural_Maps.Cursor;
 
+      function Get_Importance_From_Ranking return Message_Importance_Type;
+
       procedure Load_Message;
 
       procedure Load_Metric (Kind : Resource_Kind_Type);
+
+      ---------------------------------
+      -- Get_Importance_From_Ranking --
+      ---------------------------------
+
+      function Get_Importance_From_Ranking return Message_Importance_Type is
+      begin
+         --  Needs to be synchronized with the Message_Importance_Type
+         --  enumeration values' position.
+         return Message_Importance_Type'Val (Ranking);
+      end Get_Importance_From_Ranking;
 
       ------------------
       -- Load_Message --
@@ -136,11 +149,7 @@ package body GNAThub.Loader.Databases is
       procedure Load_Message is
       begin
          Ranking := M.Ranking;
-         Severity := (if Ranking = 1 then
-                         null
-                      else
-                         Self.Module.Get_Severity
-                        (Message_Importance_Type'Val (Ranking)));
+         Severity := Self.Module.Get_Severity (Get_Importance_From_Ranking);
          Rule     := Self.Rules (M.Rule_Id);
          Position := Rule.Count.Find (Severity);
 

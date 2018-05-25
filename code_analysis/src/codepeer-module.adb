@@ -393,6 +393,32 @@ package body CodePeer.Module is
          Removed_Color   => Module.Removed_Message_Color);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
 
+      function Get_Message_Importance_From_Ranking
+        (Ranking : Message_Ranking_Level)
+         return Message_Importance_Type;
+      --  Used to map CodePeer messages ranking with the global GPS one
+      --  ??? We should remove this at some point
+
+      -----------------------------------------
+      -- Get_Message_Importance_From_Ranking --
+      -----------------------------------------
+
+      function Get_Message_Importance_From_Ranking
+        (Ranking : Message_Ranking_Level)
+         return Message_Importance_Type is
+      begin
+         case Ranking is
+            when Not_An_Error .. Info =>
+               return Informational;
+            when Low =>
+               return Low_Importance;
+            when Medium =>
+               return Medium_Importance;
+            when High =>
+               return High_Importance;
+         end case;
+      end Get_Message_Importance_From_Ranking;
+
    begin
       GPS.Kernel.Messages.Initialize
         (Self          => Message,
@@ -401,7 +427,7 @@ package body CodePeer.Module is
          File          => File.Name,
          Line          => Line,
          Column        => Basic_Types.Visible_Column_Type (Column),
-         Weight        => Message_Ranking_Level'Pos (Ranking),
+         Importance    => Get_Message_Importance_From_Ranking (Ranking),
          Actual_Line   => Line,
          Actual_Column => Column);
 
@@ -486,7 +512,7 @@ package body CodePeer.Module is
                     Object.Line,
                     GNATCOLL.Xref.Visible_Column (Object.Column),
                     To_String (Object.Name) & " race condition",
-                    0,
+                    Unspecified,
                     Race_Message_Flags,
                     True));
 

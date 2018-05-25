@@ -43,6 +43,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 

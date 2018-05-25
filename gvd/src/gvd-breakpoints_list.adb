@@ -1194,7 +1194,7 @@ package body GVD.Breakpoints_List is
             elsif B.Condition /= ""
             then "A conditional breakpoint has been set on this line"
             else "An active breakpoint has been set on this line"),
-         Weight                   => 0,
+         Importance               => Unspecified,
          Flags                    => Breakpoints_Message_Flags,
          Allow_Auto_Jump_To_First => False);
 

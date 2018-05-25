@@ -101,7 +101,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
-      Weight             : Natural;
+      Importance         : Message_Importance_Type;
       Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
       Length             : Highlight_Length;
       Look_For_Secondary : Boolean;

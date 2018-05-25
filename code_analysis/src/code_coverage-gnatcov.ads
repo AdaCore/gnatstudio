@@ -23,9 +23,9 @@ with Basic_Types;
 with Commands;
 with GNATCOLL.VFS;
 
-with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 
 package Code_Coverage.GNATcov is
 
@@ -52,7 +52,7 @@ package Code_Coverage.GNATcov is
    type GNATcov_Message_Style_Categories is
      array (GNATcov_Line_Coverage_Status) of Message_Importance_Type;
 
-   GNATcov_Style_Categories : constant GNATcov_Message_Style_Categories :=
+   GNATcov_Msg_Importances : constant GNATcov_Message_Style_Categories :=
                                 (Not_Covered                     =>
                                     High_Importance,
                                  GNATcov_Partially_Covered'Range =>

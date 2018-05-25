@@ -797,7 +797,9 @@ package body GPS.Location_View.Listener is
       case Message.Level is
          when Primary =>
             Glib.Values.Init_Set_Int
-              (Values (2), Glib.Gint (Message.Get_Weight));
+              (Values (2),
+               Glib.Gint
+                 (Message_Importance_Type'Pos (Message.Get_Importance)));
 
             File_Last := 1;
             File_Columns (1) := -Weight_Column;
@@ -805,7 +807,8 @@ package body GPS.Location_View.Listener is
               (File_Values (1),
                Glib.Gint'Max
                  (Self.Model.Get_Int (File_Iter, -Weight_Column),
-                  Glib.Gint (Message.Get_Weight)));
+                  Glib.Gint
+                    (Message_Importance_Type'Pos (Message.Get_Importance))));
 
          when Secondary =>
             Glib.Values.Init_Set_Int (Values (2), 0);

@@ -87,7 +87,7 @@ package body GVD.Code_Editors is
                   Line                     => Line,
                   Column                   => 1,
                   Text                     => "Current line in debugger",
-                  Weight                   => 0,
+                  Importance               => Unspecified,
                   Flags                    => Breakpoints_Current_Line_Flags,
                   Allow_Auto_Jump_To_First => False);
 

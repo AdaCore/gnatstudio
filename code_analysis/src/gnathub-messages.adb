@@ -93,11 +93,9 @@ package body GNAThub.Messages is
          File          => File,
          Line          => Line,
          Column        => Column,
-         Weight        => Get_Weight (Severity.Ranking),
+         Importance    => Severity.Ranking,
          Actual_Line   => Line,
          Actual_Column => Integer (Column));
-      GPS.Kernel.Messages.Set_Importance
-        (Self, Severity.Ranking);
    end Initialize;
 
 end GNAThub.Messages;

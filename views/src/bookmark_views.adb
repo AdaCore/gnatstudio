@@ -1076,7 +1076,7 @@ package body Bookmark_Views is
             Line                     => Integer (Get_Line (Mark)),
             Column                   => Get_Column (Mark),
             Text                     => To_String (Mark),
-            Weight                   => 0,
+            Importance               => Unspecified,
             Flags                    => Message_Flags_For_Bookmarks,
             Allow_Auto_Jump_To_First => False);
          Msg.Set_Highlighting

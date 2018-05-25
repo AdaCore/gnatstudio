@@ -21,6 +21,7 @@ with Gtk.Widget;
 with Gtkada.Handlers;
 with Gtkada.MDI;
 
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;

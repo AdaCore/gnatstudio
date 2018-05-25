@@ -474,16 +474,16 @@ package body GNATTest_Module is
          begin
             if Test.File_Time_Stamp = Item.Stamp then
                GPS.Kernel.Messages.Simple.Create_Simple_Message
-                 (Container => Messages,
-                  Category  => Category,
-                  File      => File,
-                  Line      => Key.Line,
-                  Column    => Basic_Types.Visible_Column_Type (Key.Column),
-                  Text      => "Unimplemented " &
+                 (Container  => Messages,
+                  Category   => Category,
+                  File       => File,
+                  Line       => Key.Line,
+                  Column     => Basic_Types.Visible_Column_Type (Key.Column),
+                  Text       => "Unimplemented " &
                     To_String (Key.Test_Case_Name) & " " &
                     To_String (Key.Subprogram_Name),
-                  Weight    => 1,
-                  Flags     => Flags);
+                  Importance => GPS.Kernel.Messages.Low_Importance,
+                  Flags      => Flags);
             end if;
 
             Source_Entity_Maps.Next (Cursor);

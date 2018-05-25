@@ -218,22 +218,4 @@ package body GPS.Default_Styles is
 
    end Initialize_Default_Styles;
 
-   ----------------
-   -- Get_Weight --
-   ----------------
-
-   function Get_Weight (Importance : Message_Importance_Type) return Natural is
-   begin
-      case Importance is
-         when Unspecified | Informational | Annotation =>
-            return 0;
-         when Low_Importance =>
-            return 1;
-         when Medium_Importance =>
-            return 2;
-         when High_Importance =>
-            return 3;
-      end case;
-   end Get_Weight;
-
 end GPS.Default_Styles;

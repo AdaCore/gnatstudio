@@ -810,14 +810,14 @@ package body Src_Contexts is
             declare
                Message : constant Markup_Message_Access :=
                  Create_Markup_Message
-                   (Container => Get_Messages_Container (Kernel),
-                    Category  => Locations_Category_Name (Look_For),
-                    File      => File_Name,
-                    Line      => To_Positive (Match.Start.Line),
-                    Column    => Match.Start.Visible_Column,
-                    Text      => Text,
-                    Weight    => 0,
-                    Flags     => Side_And_Locations);
+                   (Container  => Get_Messages_Container (Kernel),
+                    Category   => Locations_Category_Name (Look_For),
+                    File       => File_Name,
+                    Line       => To_Positive (Match.Start.Line),
+                    Column     => Match.Start.Visible_Column,
+                    Text       => Text,
+                    Importance => Unspecified,
+                    Flags      => Side_And_Locations);
             begin
                Message.Set_Highlighting (Search_Results_Style, Length);
             end;

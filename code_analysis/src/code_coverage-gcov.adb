@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Regpat;                use GNAT.Regpat;
 
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with Code_Analysis_GUI;
@@ -168,25 +167,20 @@ package body Code_Coverage.Gcov is
       Line_Number : Positive;
       Line_Text   : GNAT.Strings.String_Access;
       Added       : in out Boolean;
-      Allow_Auto_Jump_To_First : Boolean)
-   is
-      Message : Simple_Message_Access;
-
+      Allow_Auto_Jump_To_First : Boolean) is
    begin
       if Coverage.Coverage = 0 then
          Added := True;
-         Message :=
-           Create_Simple_Message
+         Create_Simple_Message
              (Kernel.Get_Messages_Container,
               Uncovered_Category,
               File,
               Line_Number,
               1,
               Line_Text.all,
-              0,
+              High_Importance,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Message.Set_Highlighting (Analysis_Styles (High_Importance));
       end if;
    end Add_Location_If_Uncovered;
 

@@ -780,7 +780,7 @@ package body Vdiff2_Module.Utils is
                Line,
                1,
                "1 line " & Modification,
-               0,
+               Unspecified,
                Side_And_Locations);
 
          else
@@ -791,7 +791,7 @@ package body Vdiff2_Module.Utils is
                Line,
                1,
                Image (The_Range) & " lines " & Modification,
-               0,
+               Unspecified,
                Side_And_Locations);
          end if;
 
@@ -887,7 +887,7 @@ package body Vdiff2_Module.Utils is
             (if Arr'Length = 1
              then "1 line removed"
              else Image (Arr'Length) & " lines removed"),
-            0,
+            Informational,
             Side_And_Locations);
 
          Unchecked_Free (Arr);
@@ -924,7 +924,7 @@ package body Vdiff2_Module.Utils is
             (if Arr'Length = 1
              then "1 line added"
              else Image (Arr'Length) & " lines added"),
-            0,
+            Informational,
             Side_And_Locations);
 
          Unchecked_Free (Arr);

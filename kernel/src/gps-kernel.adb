@@ -236,7 +236,8 @@ package body GPS.Kernel is
       Create_Simple_Message
         (Get_Messages_Container (Self.Kernel),
          Category, File, Line, Column, Text,
-         0, (Editor_Side => True, Locations => True, Editor_Line => False));
+         Informational,
+         (Editor_Side => True, Locations => True, Editor_Line => False));
    end Report_Location;
 
    --------------------------

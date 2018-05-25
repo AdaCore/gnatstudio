@@ -66,7 +66,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
-      Weight             : Natural;
+      Importance         : Message_Importance_Type;
       Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
       Length             : Highlight_Length;
       Look_For_Secondary : Boolean;
@@ -168,7 +168,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                       Line,
                       Column,
                       Text,
-                      Weight,
+                      Importance,
                       (Editor_Side => True,
                        Editor_Line => False,
                        Locations   => Show_In_Locations),
@@ -452,7 +452,6 @@ package body GPS.Kernel.Messages.Tools_Output is
       Real_Last     : Natural;
       Line          : Natural := 1;
       Column        : Basic_Types.Visible_Column_Type := 1;
-      Weight        : Natural := 0;
       Importance    : Message_Importance_Type := Unspecified;
       Style         : Style_Access;
       Length        : Highlight_Length;
@@ -544,8 +543,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                Action := new Line_Information_Record;
 
                Style := Styles (Importance);
-               Weight := Get_Weight (Importance);
 
+               --  TODO: what is that?
                if Style /= null and then Get_Icon (Style) /= "" then
                   Action.Image := To_Unbounded_String (Get_Icon (Style));
                end if;
@@ -560,14 +559,12 @@ package body GPS.Kernel.Messages.Tools_Output is
                   Positive (Line),
                   Column,
                   Get_Message (Last),
-                  Weight,
+                  Importance,
                   Style,
                   Length,
                   True,
                   Show_In_Locations,
                   Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-
-               Message.Set_Importance (Importance);
 
                if Message /= null then
                   Action.Tooltip_Text := To_Unbounded_String (Msg);

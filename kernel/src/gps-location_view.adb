@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;              use GNATCOLL.VFS.GtkAda;
 
@@ -1649,7 +1650,7 @@ package body GPS.Location_View is
                     Nth_Arg (Data, 3),
                     Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
                     Nth_Arg (Data, 5),
-                    0,
+                    Unspecified,
                     Get_Style_Manager
                       (Get_Kernel (Data)).Get
                     (Nth_Arg (Data, 6, ""), Allow_Null => True),

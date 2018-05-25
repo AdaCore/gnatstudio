@@ -628,7 +628,7 @@ package body GPS.Kernel.Entities is
               "<b>" & Name & "</b> ["
               & Get_Display_Kind (Ref) & "] in: "
               & Glib.Convert.Escape_Text (Qualified_Name (Get_Caller (Ref))),
-              0,
+              Unspecified,
               Call_Graph_Message_Flags);
 
       else
@@ -640,7 +640,7 @@ package body GPS.Kernel.Entities is
               Line,
               Col,
               "<b>" & Name & "</b> [" & Get_Display_Kind (Ref) & "]",
-              0,
+              Unspecified,
               Call_Graph_Message_Flags);
       end if;
 
@@ -1198,7 +1198,7 @@ package body GPS.Kernel.Entities is
                              Decl2.Line,
                              Decl2.Column,
                              Name2,
-                             0,
+                             Unspecified,
                              Call_Graph_Message_Flags);
                         Message.Set_Highlighting
                           (Search_Results_Style, Name2'Length);

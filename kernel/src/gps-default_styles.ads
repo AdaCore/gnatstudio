@@ -19,6 +19,7 @@
 
 with Language;                 use Language;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Messages;      use GPS.Kernel.Messages;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
 package GPS.Default_Styles is
@@ -72,18 +73,8 @@ package GPS.Default_Styles is
    -- Messages --
    --------------
 
-   type Message_Importance_Type is
-     (Unspecified,
-      Annotation,
-      Informational,
-      High_Importance,
-      Medium_Importance,
-      Low_Importance);
    type Message_Styles_Array is
      array (Message_Importance_Type) of Style_Access;
-
-   function Get_Weight (Importance : Message_Importance_Type) return Natural;
-   --  TODO: doc
 
    Messages_Styles : Message_Styles_Array;
 

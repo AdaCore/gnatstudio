@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;
+with Ada.Characters.Handling;
 with Ada.Containers;                use Ada.Containers;
 with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
@@ -30,6 +31,7 @@ with Glib.Convert;
 with Basic_Types;                   use Basic_Types;
 with Commands;                      use Commands;
 
+with GPS.Default_Styles;            use GPS.Default_Styles;
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
@@ -113,7 +115,7 @@ package body GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer);
    --  Common code to initialize message
@@ -456,23 +458,6 @@ package body GPS.Kernel.Messages is
    end Get_Action;
 
    --------------------
-   -- Set_Importance --
-   --------------------
-
-   procedure Set_Importance
-     (Self       : not null access Abstract_Message'Class;
-      Importance : Message_Importance_Type) is
-   begin
-      Self.Importance := Importance;
-
-      if Self.Style = null then
-         Self.Style := Messages_Styles (Importance);
-      end if;
-
-      Self.Weight := Get_Weight (Importance);
-   end Set_Importance;
-
-   --------------------
    -- Get_Importance --
    --------------------
 
@@ -623,22 +608,6 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Column;
    end Get_Column;
-
-   ----------------
-   -- Get_Weight --
-   ----------------
-
-   function Get_Weight
-     (Self : not null access constant Abstract_Message'Class)
-      return Natural is
-   begin
-      case Self.Level is
-         when Primary =>
-            return Self.Weight;
-         when Secondary =>
-            return 0;
-      end case;
-   end Get_Weight;
 
    -------------------
    -- Get_Container --
@@ -962,7 +931,7 @@ package body GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer)
    is
@@ -975,7 +944,7 @@ package body GPS.Kernel.Messages is
          File          => File,
          Line          => Line,
          Column        => Column,
-         Weight        => Weight,
+         Importance    => Importance,
          Actual_Line   => Actual_Line,
          Actual_Column => Actual_Column);
       Self.Flags := Empty_Message_Flags;
@@ -1010,7 +979,7 @@ package body GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance     : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
@@ -1023,7 +992,7 @@ package body GPS.Kernel.Messages is
          File          => File,
          Line          => Line,
          Column        => Column,
-         Weight        => Weight,
+         Importance    => Importance,
          Actual_Line   => Actual_Line,
          Actual_Column => Actual_Column);
       Self.Flags := Empty_Message_Flags;
@@ -1076,7 +1045,7 @@ package body GPS.Kernel.Messages is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Weight        : Natural;
+      Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer)
    is
@@ -1095,7 +1064,11 @@ package body GPS.Kernel.Messages is
    begin
       Self.Line   := Line;
       Self.Column := Column;
-      Self.Weight := Weight;
+      Self.Importance := Importance;
+
+      if Self.Style = null then
+         Self.Style := Messages_Styles (Importance);
+      end if;
 
       if File /= No_File then
          Self.Mark.Replace_Element
@@ -1185,6 +1158,48 @@ package body GPS.Kernel.Messages is
          Category : String;
          File     : Virtual_File)
       is
+         function Get_Message_Importance return Message_Importance_Type;
+         --  Used for backward compatibility: if the XML contains the
+         --  'importance' attribute, retrieve the messages's importance from
+         --  it. Otherwise, try to decuce the message's importance from the
+         --  previous 'weight' attribute.
+
+         ----------------------------
+         -- Get_Message_Importance --
+         ----------------------------
+
+         function Get_Message_Importance return Message_Importance_Type is
+            Importance_Val : constant String := Get_Attribute
+              (XML_Node, "importance", "");
+         begin
+            if Importance_Val /= "" then
+               return Message_Importance_Type'Value (Importance_Val);
+            else
+               declare
+                  Weight_Val : constant String := Get_Attribute
+                    (XML_Node, "weight", "");
+                  Weight     : constant Integer :=
+                                 (if Weight_Val = "" then
+                                     -1
+                                  else
+                                     Natural'Value (Weight_Val));
+
+               begin
+                  case Weight is
+                     when -1 =>
+                        return Unspecified;
+                     when 0 =>
+                        return Low_Importance;
+                     when 1 =>
+                        return Medium_Importance;
+                     when others =>
+                        return High_Importance;
+                  end case;
+               end;
+            end if;
+
+         end Get_Message_Importance;
+
          Class         : constant Tag :=
                            Internal_Tag
                              (Get_Attribute (XML_Node, "class", ""));
@@ -1194,11 +1209,9 @@ package body GPS.Kernel.Messages is
          Column        : constant Visible_Column_Type :=
                            Visible_Column_Type'Value
                              (Get_Attribute (XML_Node, "column", ""));
-         Weight        : constant Natural :=
-                           Natural'Value
-                             (Get_Attribute (XML_Node, "weight", "0"));
-
-         Flags : constant Message_Flags :=
+         Importance    : constant Message_Importance_Type :=
+                           Get_Message_Importance;
+         Flags         : constant Message_Flags :=
            From_Int (Integer'Value (Get_Attribute (XML_Node, "flags", "0")));
 
          Actual_Line   : constant Integer :=
@@ -1233,7 +1246,7 @@ package body GPS.Kernel.Messages is
             File,
             Line,
             Column,
-            Weight,
+            Importance,
             Actual_Line,
             Actual_Column,
             Flags,
@@ -2499,17 +2512,17 @@ package body GPS.Kernel.Messages is
                   end if;
                end if;
 
+               Set_Attribute
+                 (XML_Node,
+                  "importance",
+                  Trim
+                    (Ada.Characters.Handling.To_Lower
+                         (Message_Importance_Type'Image
+                              (Current_Node.Importance)), Both));
+
                case Message_Access (Current_Node).Level is
                   when Primary =>
-                     if Message_Access (Current_Node).Weight /= 0 then
-                        Set_Attribute
-                          (XML_Node,
-                           "weight",
-                           Trim
-                             (Natural'Image
-                                (Message_Access (Current_Node).Weight),
-                              Both));
-                     end if;
+                     null;
 
                   when Secondary =>
                      Add_File_Child

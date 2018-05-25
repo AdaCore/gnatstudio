@@ -255,7 +255,7 @@ package body Refactoring.Rename is
                   Loc.Line,
                   Loc.Column,
                   -"error, failed to rename entity",
-                  0,
+                  Unspecified,
                   Side_And_Locations);
 
                Errors.Include (Loc.File);
@@ -271,7 +271,7 @@ package body Refactoring.Rename is
                   Loc.Line,
                   Loc.Column,
                   -"entity renamed",
-                  0,
+                  Unspecified,
                   Side_And_Locations);
             end if;
          end loop;
@@ -457,7 +457,7 @@ package body Refactoring.Rename is
                0,
                -"The navigation information for this file is not up-to-date"
                & " (recompile to regenerate it)",
-               0,
+               Medium_Importance,
                Side_And_Locations);
          end if;
       end if;

@@ -1869,7 +1869,7 @@ package body GVD_Module is
                Line                     => Line,
                Column                   => 1,
                Text                     => Help_Text,
-               Weight                   => 0,
+               Importance               => Unspecified,
                Flags                    => Continue_To_Line_Messages_Flags,
                Allow_Auto_Jump_To_First => False);
 

@@ -290,7 +290,7 @@ package body GPS.Kernel.Messages.Shell is
                  Line                     => Line,
                  Column                   => Visible_Column_Type (Column),
                  Text                     => Text,
-                 Weight                   => 0, --  ??? what is Weight?
+                 Importance               => Unspecified,
                  Flags                    => Flags,
                  Allow_Auto_Jump_To_First => Auto_First);
 

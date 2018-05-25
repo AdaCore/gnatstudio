@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
 with Code_Analysis;                  use Code_Analysis;
-with GPS.Default_Styles;             use GPS.Default_Styles;
+with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
