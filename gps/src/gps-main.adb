@@ -195,6 +195,7 @@ with Language.Libclang;
 with Ada_Semantic_Tree.Lang;
 with GPS.Traces;
 with GPS.Valgrind;
+with Serial_Ports_Views;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
@@ -2175,6 +2176,8 @@ procedure GPS.Main is
       if Active (Clipboard_View_Trace) then
          Clipboard_Views.Register_Module (GPS_Main.Kernel);
       end if;
+
+      Serial_Ports_Views.Register_Module (GPS_Main.Kernel);
 
       if Active (Dependency_Trace) then
          Browsers.Dependency_Items.Register_Module (GPS_Main.Kernel);
