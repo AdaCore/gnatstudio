@@ -82,9 +82,9 @@ class MDL_Language(GPS.Language):
             spec_suffix=".slx")
 
         GPS.Language.register(
-             MDL_Language(),
-             name="QGen",
-             body_suffix=".xmi")
+            MDL_Language(),
+            name="QGen",
+            body_suffix=".xmi")
     # @overriding
 
     def should_refresh_constructs(self, file):
@@ -218,7 +218,7 @@ class MDL_Language(GPS.Language):
                     view.set_diagram(diagram)
                     view.scroll_into_view(item)
 
-        QGEN_Diagram_Viewer.get_or_create(
+        QGEN_Diagram_Viewer.get_or_create_from_model(
             construct.file, on_loaded=__on_loaded)
 
     # @overriding
@@ -692,25 +692,50 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         GPS.Hook('file_edited').run(file)
         return (v, True)
 
-    def load_contained_diagrams(self, jsonfile):
+    def load_referenced_diagrams(self, jsonfile, style):
         json_dir = os.path.dirname(jsonfile)
-
+        logger.log("Loading referenced diagrams from %s" % jsonfile)
         for _, children in self.diags.index:
             for child in children:
                 diag_to_load = child["diagram"]
-                diag_object = self.get_existing_diagram(child["diagram"])
+                logger.log("Searching diagram %s" % diag_to_load)
                 # We loaded the first diagram as the one requested was not
                 # found so we need to retrieve it from the directory
-                if diag_object is None:
+                if not self.diags.contains(diag_to_load):
                     f = os.path.join(json_dir, diag_to_load + '.qmdl')
                     if os.path.exists(f):
+                        logger.log("Loading contained %s" % f)
                         loaded_diag = GPS.Browsers.Diagram.load_json(
-                            open(f), diagramFactory=QGEN_Diagram)
+                            open(f), diagramFactory=QGEN_Diagram,
+                            load_styles=style)
+                        logger.log("Done loading")
                         self.diags.index.extend(loaded_diag.index)
                         self.diags.diagrams.extend(loaded_diag.diagrams)
 
     @staticmethod
-    def get_or_create(file, on_loaded=None):
+    def get_or_create_from_model(model, on_loaded=None):
+        """
+        Find an existing viewer that can display the model
+        requested or create a new viewer for it.
+        :param string diag: The id of the diagram to display
+        :param callable on_loaded: called when the diagram is loaded, or
+           immediately if the diagram was already loaded. The function
+           receives one parameter:
+               - the viewer itself
+        """
+        model_id = os.path.basename(os.path.splitext(model.path)[0])
+        logger.log("Searching viewer containing diagram %s" % model_id)
+        for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
+            if viewer.diags.contains(model_id):
+                on_loaded(viewer)
+                logger.log("Found viewer of %s" % viewer.file)
+                return viewer
+
+        logger.log("Creating a new viewer")
+        return QGEN_Diagram_Viewer.get_or_create_as_root(model, on_loaded)
+
+    @staticmethod
+    def get_or_create_as_root(file, on_loaded=None):
         """
         Get an existing diagram for the file, or create a new one.
         The actual diagrams are loaded asynchronously, so might not be
@@ -733,7 +758,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json(
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
-                    v.load_contained_diagrams(jsonfile)
+                    v.load_referenced_diagrams(jsonfile, v.diags.styles)
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
@@ -1117,12 +1142,37 @@ else:
 
         display_tasks = []
         modeling_map = None   # a Mapping_File instance
-
+        models = []  # List of model files in the project
         # id => Signal object
         signal_attributes = {}
 
         previous_breakpoints = []
         debugger = None
+
+        @staticmethod
+        def load_debug_info_for(f, d=None):
+            if QGEN_Module.modeling_map is None:
+                QGEN_Module.modeling_map = mapping.Mapping_File()
+
+            if f is not None:
+                logger.log("Loading debug information for %s" % f.path)
+            else:
+                logger.log("Loading debug information from %s" % d)
+            QGEN_Module.modeling_map.load(
+                f, d if d is not None else Project_Support.get_output_dir(f))
+
+        @staticmethod
+        def get_model_for_source(file):
+            """
+            Looks into the models loaded for the project and retrieves
+            the model file that generated the file given as a parameter.
+            Returns None if no such file was found.
+            """
+            m_id = QGEN_Module.modeling_map.get_mdl_id(file)
+            for m in QGEN_Module.models:
+                if os.path.splitext(os.path.basename(m.path))[0] == m_id:
+                    return m
+            return None
 
         @staticmethod
         def cancel_workflows():
@@ -1141,12 +1191,14 @@ else:
             when interacting with the diagram, for instance to show the
             source associated with a block.
             """
-
-            QGEN_Module.modeling_map = mapping.Mapping_File()
+            out_dirs = set()
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
-                    QGEN_Module.modeling_map.load(
-                        f, Project_Support.get_output_dir(f))
+                    QGEN_Module.models.append(f)
+                    out_dirs.add(Project_Support.get_output_dir(f))
+
+            for d in out_dirs:
+                QGEN_Module.load_debug_info_for(None, d)
 
         @staticmethod
         def __clear(debugger):
@@ -1632,9 +1684,12 @@ else:
                     viewer.scroll_into_view(scroll_to)
 
             if filename:
-                mdl = QGEN_Module.modeling_map.get_mdl_file(filename)
+                mdl = QGEN_Module.get_model_for_source(filename)
+                logger.log("Mdl file for current file {0} is {1}".format(
+                    filename, mdl))
+
                 if mdl:
-                    QGEN_Diagram_Viewer.get_or_create(
+                    QGEN_Diagram_Viewer.get_or_create_from_model(
                         mdl, on_loaded=__on_viewer_loaded)
                 else:
                     for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
@@ -1696,12 +1751,13 @@ else:
         @gps_utils.hook('open_file_action_hook', last=False)
         def __on_open_file_action(file, *args):
             """
-            When an ".mdl" file is opened, use a diagram viewer instead of a
+            When a model file is opened, use a diagram viewer instead of a
             text file to view it.
             """
             if file.language() == 'simulink' or file.language() == 'qgen':
                 logger.log('Open %s' % file)
-                QGEN_Diagram_Viewer.get_or_create(file)
+                QGEN_Diagram_Viewer.get_or_create_as_root(file)
+                QGEN_Module.load_debug_info_for(file)
                 return True
             return False
 
@@ -1712,7 +1768,7 @@ else:
             if f.path.endswith(
                     '.mdl') or f.path.endswith(
                         '.slx') or f.path.endswith('.xmi'):
-                viewer = QGEN_Diagram_Viewer.get_or_create(f)
+                viewer = QGEN_Diagram_Viewer.get_or_create_as_root(f)
                 MDL_Language().should_refresh_constructs(f)
             else:
                 viewer = QGEN_Diagram_Viewer.open_json(
@@ -1814,8 +1870,8 @@ else:
             ctxt = GPS.contextual_context() or GPS.current_context()
             b = QGEN_Module.modeling_map.get_block(
                 ctxt.file(), ctxt.location().line())
-            mdl_file = QGEN_Module.modeling_map.get_mdl_file(ctxt.file())
-            QGEN_Diagram_Viewer.get_or_create(
+            mdl_file = QGEN_Module.get_model_for_source(ctxt.file())
+            QGEN_Diagram_Viewer.get_or_create_from_model(
                 mdl_file, on_loaded=__on_viewer_loaded)
 
         def __contextual_filter_qgen_code(self, context):
