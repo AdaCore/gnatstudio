@@ -146,6 +146,8 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="powerpc-xcoff-lynxos"/>
   <toolchain name="powerpc-xcoff-lynxos178"/>
 
+  <toolchain name="i586-elf-lynxos178e"/>
+
   <toolchain name="x86_64-wrs-vxworks7">
     <debugger/>
   </toolchain>
