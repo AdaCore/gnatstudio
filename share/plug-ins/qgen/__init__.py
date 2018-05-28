@@ -96,28 +96,41 @@ class MDL_Language(GPS.Language):
         flat = GPS.Preference('outline-flat-view').get()
         logger.log("Asking if refreshing constructs")
 
-        def parse_model_tree(viewer):
-            offset = 1
+        @workflows.run_as_workflow
+        def workflow_gen_constructs(viewer):
+            logger.log("Starting constructs parsing")
+            workflows.task_workflow(
+                "Creating outline for %s" % viewer.file.name,
+                parse_model_tree, viewer=viewer)
+
+        @workflows.run_as_workflow
+        def fill_tree(task, viewer, it_name, it_id,
+                      sloc_start, sloc_end, type, idx, offset, task_max):
+            c_id = "{0}{1}{2}#{3}".format(
+                it_name, MDL_Language.const_id, sloc_end[-1], it_id)
+            c_name = it_name if flat else Diagram_Utils.block_split(
+                it_name, count=1, backward=True)[-1]
+            viewer.constructs.append(
+                (c_name, c_id, sloc_start, sloc_end, type, it_id))
+            viewer.constructs_map[c_id] = (c_name, sloc_start,
+                                           sloc_end, type, it_id)
+            task.set_progress(idx, task_max)
+
+        def parse_model_tree(task, viewer):
             GPS.Console().write(
                 "Generating outline view for the model %s...\n" % viewer.file)
             id, val = viewer.diags.index[0]
             idx = 0
-
-            for it_name, it_id, sloc_start, sloc_end, type in process_item(
-                    viewer):
-                idx = idx + 1
+            offset = 1
+            for it_name, it_id, sloc_start, sloc_end, type, task_max in\
+                    process_item(viewer):
+                idx += 1
                 offset = max(offset, sloc_end[2]) + 1
-                c_id = "{0}{1}{2}#{3}".format(
-                    it_name, MDL_Language.const_id, sloc_end[-1], it_id)
-                c_name = it_name if flat else Diagram_Utils.block_split(
-                    it_name, count=1, backward=True)[-1]
-                viewer.constructs.append(
-                    (c_name, c_id, sloc_start, sloc_end, type, it_id))
-                viewer.constructs_map[c_id] = (c_name, sloc_start,
-                                               sloc_end, type, it_id)
+                yield fill_tree(task, viewer, it_name, it_id, sloc_start,
+                                sloc_end, type, idx, offset, task_max)
             viewer.parsing_done()
-            GPS.Hook('semantic_tree_updated').run(file)
             GPS.Console().write("Outline view generated\n")
+            GPS.Hook('file_edited').run(file)
 
         def process_item(viewer):
             """
@@ -126,13 +139,13 @@ class MDL_Language(GPS.Language):
             automatically by GPS based on the line/column info. GPS uses
             indexes when they are positive.
 
-            :return: (item, sloc_start, sloc_end, constructs_CAT)
+            :return: (item, sloc_start, sloc_end, constructs_CAT, items_len)
             """
             offset = 0
             item, children = viewer.diags.index[0]
+            items_len = len(children)
             item_stack = [(item, item, children, 0)]
             item, item_id, children, start_offset = item_stack[-1]
-
             # The index entry contains a JSON_Array of entries with
             # a 'name' and 'diagram' fields. They respectively correspond
             # to the simulink name of the item and its corresponding JSON id
@@ -145,6 +158,7 @@ class MDL_Language(GPS.Language):
                         # Look for the child diagram in the index table
                         if child_entry_name == child_id:
                             offset = offset + 1
+                            items_len += len(child_children)
                             item_stack.append((child_name, child_id,
                                                list(child_children), offset))
                             break
@@ -155,7 +169,7 @@ class MDL_Language(GPS.Language):
                         it, it_id, _, start_offset = item_stack.pop()
                         offset = offset + 1
                         yield (it, it_id, (0, 0, start_offset),
-                               (0, 0, offset), constructs.CAT_CLASS)
+                               (0, 0, offset), constructs.CAT_CLASS, items_len)
                     else:
                         break
 
@@ -166,7 +180,7 @@ class MDL_Language(GPS.Language):
                 while not children:
                     offset = offset + 1
                     yield (item, item_id, (0, 0, start_offset),
-                           (0, 0, offset), constructs.CAT_CLASS)
+                           (0, 0, offset), constructs.CAT_CLASS, items_len)
                     item_stack.pop()
 
                     if item_stack:
@@ -179,7 +193,7 @@ class MDL_Language(GPS.Language):
         if viewer and viewer.loading_complete and not viewer.parsing_complete\
            and viewer.diags and not viewer.constructs:
             logger.log("Creating constructs for outline of %s" % file.name)
-            parse_model_tree(viewer)
+            workflow_gen_constructs(viewer)
         return True
 
     # @overriding
@@ -253,6 +267,7 @@ class MDL_Language(GPS.Language):
         for c_name, c_id, sloc_start, sloc_end, type, _ in viewer.constructs:
             add_construct(c_name, c_id, sloc_start, sloc_end, type)
         GPS.Hook('semantic_tree_updated').run(file)
+
 
 class CLI(GPS.Process):
     """
@@ -708,7 +723,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
     def launch_diagram_loading_task(viewer, jsonfile, style):
         logger.log("Lauching background diagram loading")
         workflows.task_workflow(
-            'Loading referenced diagram',
+            'Loading referenced diagrams',
             QGEN_Diagram_Viewer.load_all_referenced_diagrams,
             viewer=viewer, jsonfile=jsonfile, style=style)
 
@@ -866,7 +881,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.nav_index, str(self.nav_status)))
         if self.nav_index >= 0:
             return self.nav_status[self.nav_index]
-        return ""
+        return None
 
     def get_prev_diag(self):
         """
@@ -947,7 +962,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         if self.nav_index >= 0:
             construct_id = self.nav_status[self.nav_index]
-            if not construct_id in self.constructs_map:
+            if construct_id not in self.constructs_map:
                 GPS.Console().write("Outline not loaded, please wait...")
                 return None
             _, _, sloc, _, diag_name = self.constructs_map[construct_id]
