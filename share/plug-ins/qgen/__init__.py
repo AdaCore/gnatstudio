@@ -99,7 +99,7 @@ class MDL_Language(GPS.Language):
         def parse_model_tree(viewer):
             offset = 1
             GPS.Console().write(
-                "Generating outline view for the model in the background...\n")
+                "Generating outline view for the model %s...\n" % viewer.file)
             id, val = viewer.diags.index[0]
             idx = 0
 
@@ -176,12 +176,11 @@ class MDL_Language(GPS.Language):
 
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
 
-        if viewer and not viewer.parsing_complete \
+        if viewer and viewer.loading_complete and not viewer.parsing_complete\
            and viewer.diags and not viewer.constructs:
+            logger.log("Creating constructs for outline of %s" % file.name)
             parse_model_tree(viewer)
-            return True
-        else:
-            return False
+        return True
 
     # @overriding
     def get_last_selected_construct_id(self, file):
@@ -203,11 +202,11 @@ class MDL_Language(GPS.Language):
                     view.update_nav_status(construct.id)
                 except ValueError:
                     logger.log(
-                        "Malformed construct id : %s, not added to history\n" %
+                        "Malformed construct id : %s, not added to history" %
                         construct.id)
                 finally:
                     view.set_diagram(diag)
-                    logger.log('Set diagram for construct : %s\n' % diag.id)
+                    logger.log('Set diagram for construct : %s' % diag.id)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
                     view.diags, construct_id)
@@ -248,9 +247,12 @@ class MDL_Language(GPS.Language):
                 sloc_end=sloc_end,
                 sloc_entity=sloc_start)
 
+        if viewer.constructs and not viewer.loading_complete:
+            clist.clear
+            logger.log("Adding constructs to outline")
         for c_name, c_id, sloc_start, sloc_end, type, _ in viewer.constructs:
             add_construct(c_name, c_id, sloc_start, sloc_end, type)
-
+        GPS.Hook('semantic_tree_updated').run(file)
 
 class CLI(GPS.Process):
     """
@@ -353,12 +355,20 @@ class CLI(GPS.Process):
             outdir, '.qgeninfo',
             os.path.splitext(os.path.basename(filepath))[0] + '.qmdl')
 
+        logger.log("Looking for diagram %s" % result_path)
+
         if os.path.isfile(result_path):
+            logger.log("Diagram %s exists" % result_path)
             # If the mdl file is older than the previous json file no need
             # to recompute
-            if os.path.getmtime(result_path) >= os.path.getmtime(filepath):
+            diagram_dt = os.path.getmtime(result_path)
+            mdl_dt = os.path.getmtime(filepath)
+            if diagram_dt >= mdl_dt:
                 promise.resolve(result_path)
                 return promise
+            logger.log("Model file has been modified recently,"
+                       "{0} >= {1}  recomputing diagram info".format(
+                           mdl_dt, diagram_dt))
 
         cmd = ' '.join(
             [CLI.qgenc, filepath, switches])
@@ -613,6 +623,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # construct_id => (c_name, sloc_start, sloc_end, type, it_id)
         # it_id is a diagram name, c_name is the instance name for the diagram
         self.constructs_map = {}
+        self.loading_complete = False
         self.parsing_complete = False
 
         self.root_diag_id = ""
@@ -692,25 +703,49 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         GPS.Hook('file_edited').run(file)
         return (v, True)
 
-    def load_referenced_diagrams(self, jsonfile, style):
+    @staticmethod
+    @workflows.run_as_workflow
+    def launch_diagram_loading_task(viewer, jsonfile, style):
+        logger.log("Lauching background diagram loading")
+        workflows.task_workflow(
+            'Loading referenced diagram',
+            QGEN_Diagram_Viewer.load_all_referenced_diagrams,
+            viewer=viewer, jsonfile=jsonfile, style=style)
+
+    @staticmethod
+    def load_all_referenced_diagrams(task, viewer, jsonfile, style):
         json_dir = os.path.dirname(jsonfile)
-        logger.log("Loading referenced diagrams from %s" % jsonfile)
-        for _, children in self.diags.index:
+        logger.log("Loading referenced diagrams from %s" % (jsonfile))
+        idx = 0
+        task_max = 0
+        for _, children in viewer.diags.index:
+            task_max += len(children)
             for child in children:
                 diag_to_load = child["diagram"]
                 logger.log("Searching diagram %s" % diag_to_load)
-                # We loaded the first diagram as the one requested was not
-                # found so we need to retrieve it from the directory
-                if not self.diags.contains(diag_to_load):
-                    f = os.path.join(json_dir, diag_to_load + '.qmdl')
-                    if os.path.exists(f):
-                        logger.log("Loading contained %s" % f)
-                        loaded_diag = GPS.Browsers.Diagram.load_json(
-                            open(f), diagramFactory=QGEN_Diagram,
-                            load_styles=style)
-                        logger.log("Done loading")
-                        self.diags.index.extend(loaded_diag.index)
-                        self.diags.diagrams.extend(loaded_diag.diagrams)
+                yield QGEN_Diagram_Viewer.load_referenced_diagram(
+                    viewer, diag_to_load, json_dir, style)
+                idx += 1
+                task.set_progress(idx, task_max)
+        viewer.loading_complete = True
+        MDL_Language().should_refresh_constructs(viewer.file)
+        GPS.Hook('file_edited').run(viewer.file)
+
+    @staticmethod
+    @workflows.run_as_workflow
+    def load_referenced_diagram(viewer, diag_to_load, json_dir, style):
+        # We loaded the first diagram as the one requested was not
+        # found so we need to retrieve it from the directory
+        if not viewer.diags.contains(diag_to_load):
+            f = os.path.join(json_dir, diag_to_load + '.qmdl')
+            if os.path.exists(f):
+                logger.log("Loading contained %s" % f)
+                loaded_diag = GPS.Browsers.Diagram.load_json(
+                    open(f), diagramFactory=QGEN_Diagram,
+                    load_styles=style)
+                logger.log("Done loading")
+                viewer.diags.index.extend(loaded_diag.index)
+                viewer.diags.diagrams.extend(loaded_diag.diagrams)
 
     @staticmethod
     def get_or_create_from_model(model, on_loaded=None):
@@ -758,7 +793,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json(
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
-                    v.load_referenced_diagrams(jsonfile, v.diags.styles)
+                    QGEN_Diagram_Viewer.launch_diagram_loading_task(
+                        v, jsonfile, v.diags.styles)
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
@@ -911,6 +947,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         if self.nav_index >= 0:
             construct_id = self.nav_status[self.nav_index]
+            if not construct_id in self.constructs_map:
+                GPS.Console().write("Outline not loaded, please wait...")
+                return None
             _, _, sloc, _, diag_name = self.constructs_map[construct_id]
             parent = diag_name
             sloc = sloc[-1]
@@ -997,8 +1036,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if diag and diag != self.diagram:
             if is_dblclick:
                 c_id = self.get_construct_for_dblclick()
-                self.highlight_gps_construct(c_id)
-                self.update_nav_status(c_id)
+                if c_id is not None:
+                    self.highlight_gps_construct(c_id)
+                    self.update_nav_status(c_id)
             self.diagram = diag
             self.scale_to_fit(2)
 
