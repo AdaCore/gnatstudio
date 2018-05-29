@@ -647,6 +647,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # A construct or None list, used for parent browsing
         self.nav_status = []
         self.nav_index = -1
+        # A list keeping track of the diagram browsed before
+        # outline was loaded
+        self.pre_load_browsing = []
 
     @staticmethod
     def retrieve_qgen_viewers():
@@ -814,6 +817,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
+                    v.update_preloading_nav(root_diag)
                 if on_loaded:
                     on_loaded(v)
 
@@ -854,6 +858,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             self.nav_index += 1
             self.nav_status.insert(self.nav_index, construct_id)
 
+    def update_preloading_nav(self, diag):
+        self.nav_index += 1
+        self.pre_load_browsing.insert(self.nav_index, diag.id)
+
     def highlight_gps_construct(self, c):
         """
         Highlight the construct in the outline view.
@@ -871,8 +879,18 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         in the history.
         """
         self.parsing_complete = True
-        self.nav_index += 1
-        self.nav_status.insert(0, self.constructs[-1][1])
+        if self.nav_index > -1:
+            for i in range(0, self.nav_index + 1):
+                # The user browsed diagrams using double click and
+                # previous/parent, we need to recreate this history.
+                # First we create a reverse list for each path to
+                # a diagram
+                rev_l = self.pre_load_browsing[:i+1][::-1]
+                c_id = self.get_construct_from_list(rev_l, (-1, None))
+                self.nav_status.insert(i, c_id)
+        else:
+            self.nav_index += 1
+            self.nav_status.insert(0, self.constructs[-1][1])
 
     def selected_construct_id(self):
         """
@@ -880,7 +898,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         logger.log("Last construct index is %d from %s\n" % (
             self.nav_index, str(self.nav_status)))
-        if self.nav_index >= 0:
+        if self.parsing_complete and self.nav_index >= 0:
             return self.nav_status[self.nav_index]
         return None
 
@@ -893,9 +911,12 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             return None
 
         self.nav_index -= 1
-        construct = self.nav_status[self.nav_index]
-        self.highlight_gps_construct(construct)
-        return self.constructs_map[construct][-1]
+        if self.parsing_complete:
+            construct = self.nav_status[self.nav_index]
+            self.highlight_gps_construct(construct)
+            return self.constructs_map[construct][-1]
+        else:
+            return self.pre_load_browsing[self.nav_index]
 
     def get_construct_from_list(self, l, sloc_range=(0, None), res=""):
         """
@@ -934,7 +955,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         logger.log("Looking for construct %d from %s\n" % (
             self.nav_index, str(self.nav_status)))
-        if self.nav_index >= 0:
+        if self.parsing_complete and self.nav_index >= 0:
             current_construct = self.constructs_map[
                 self.nav_status[self.nav_index]]
             start_sloc = current_construct[1][-1]
@@ -962,6 +983,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         when returning the parent diagram.
         """
         if self.nav_index >= 0:
+            if not self.parsing_complete:
+                self.nav_index -= 1
+                return self.pre_load_browsing[self.nav_index]
             construct_id = self.nav_status[self.nav_index]
             if construct_id not in self.constructs_map:
                 GPS.Console().write("Outline not loaded, please wait...\n")
@@ -1060,6 +1084,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 if c_id is not None:
                     self.highlight_gps_construct(c_id)
                     self.update_nav_status(c_id)
+                elif not self.parsing_complete:
+                    self.update_preloading_nav(diag)
             self.diagram = diag
             self.scale_to_fit(2)
 
