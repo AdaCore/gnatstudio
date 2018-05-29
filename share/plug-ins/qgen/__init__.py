@@ -100,7 +100,7 @@ class MDL_Language(GPS.Language):
         def workflow_gen_constructs(viewer):
             logger.log("Starting constructs parsing")
             workflows.task_workflow(
-                "Creating outline for %s" % viewer.file.name,
+                "Creating outline for %s" % file.name(),
                 parse_model_tree, viewer=viewer)
 
         @workflows.run_as_workflow
@@ -398,6 +398,7 @@ class CLI(GPS.Process):
 
         # qgenc is relatively fast, and since the user is waiting for
         # its output to see the diagram, we run in active mode below.
+        GPS.Console().write("Generating diagram file, please wait...\n")
         GPS.Process(command=cmd, on_exit=__on_exit, active=True)
         return promise
 
@@ -963,7 +964,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if self.nav_index >= 0:
             construct_id = self.nav_status[self.nav_index]
             if construct_id not in self.constructs_map:
-                GPS.Console().write("Outline not loaded, please wait...")
+                GPS.Console().write("Outline not loaded, please wait...\n")
                 return None
             _, _, sloc, _, diag_name = self.constructs_map[construct_id]
             parent = diag_name
@@ -997,8 +998,13 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if res.id != diag_id:
             if showerror:
                 GPS.Console().write(
-                    "%s was not found, it might not be supported by" % diag_id
-                    + " the debugger.\n")
+                    "%s was not found, " % diag_id)
+                if not self.parsing_complete:
+                    GPS.Console().write(
+                        "wait for the loading to complete...\n")
+                else:
+                    GPS.Console().write(
+                        " it might not be supported by the debugger.\n")
             return None
         return res
 
