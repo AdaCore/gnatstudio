@@ -66,6 +66,13 @@ def is_in_alias_expansion(editor):
     return bool(getattr(editor, "current_alias_mark_index", None))
 
 
+def move_expected_while_in_alias(editor):
+    """
+    Returns true if cursor moves are expected and should not cancel alias mode
+    """
+    return bool(getattr(editor, "alias_move_expected", None))
+
+
 def exit_alias_expand(editor):
     """
     Exit alias expansion.
@@ -154,30 +161,34 @@ def toggle_next_field(editor=None):
                 exit_alias_expand(editor)
             return
 
-        editor.remove_all_slave_cursors()
-        marks = editor.alias_marks[i]
-
-        # Delete the placeholder text
-        for mark_start, mark_end in marks:
-            lstart = mark_start.location()
-            lend = mark_end.location().forward_char(-1)
-            if lend >= lstart:
-                editor.delete(lstart, lend)
-
-        editor.current_view().goto(marks[0][0].location())
+        editor.alias_move_expected = True
         try:
-            execute_action("autoindent selection")
-        except Exception:
-            pass
+            editor.remove_all_slave_cursors()
+            marks = editor.alias_marks[i]
 
-        reset_overlay(editor)
+            # Delete the placeholder text
+            for mark_start, mark_end in marks:
+                lstart = mark_start.location()
+                lend = mark_end.location().forward_char(-1)
+                if lend >= lstart:
+                    editor.delete(lstart, lend)
 
-        # Add multi cursors for every other mark
-        if len(marks) > 1:
-            for mark_begin, mark_end in marks[1:]:
-                editor.add_cursor(mark_begin.location())
+            editor.current_view().goto(marks[0][0].location())
+            try:
+                execute_action("autoindent selection")
+            except Exception:
+                pass
 
-        editor.current_alias_mark_index += 1
+            reset_overlay(editor)
+
+            # Add multi cursors for every other mark
+            if len(marks) > 1:
+                for mark_begin, mark_end in marks[1:]:
+                    editor.add_cursor(mark_begin.location())
+
+            editor.current_alias_mark_index += 1
+        finally:
+            editor.alias_move_expected = False
 
     except AttributeError:
         return
@@ -227,7 +238,10 @@ def on_move(hook_name, file_name, line, column):
     # This hook is global: it could happen that we are calling it on another
     # editor than the one where the alias expansion is occurring: simply
     # return in this case.
-    if not is_in_alias_expansion(editor):
+    # Similarly, if we are expecting a cursor move at this point, do not
+    # exit the alias expansion mode.
+    if not is_in_alias_expansion(editor) \
+            or move_expected_while_in_alias(editor):
         return
 
     index = editor.current_alias_mark_index - 1
