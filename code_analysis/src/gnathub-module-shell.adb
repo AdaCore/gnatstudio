@@ -137,7 +137,7 @@ package body GNAThub.Module.Shell is
                            GNAThub_Module.Kernel.Get_Messages_Container;
             Message_Inst : constant Class_Instance := Data.Nth_Arg (2);
             Rule_ID      : constant Unbounded_String := Data.Nth_Arg (3);
-            Message      : Message_Access := Get_Data (Message_Inst);
+            Message      : constant Message_Access := Get_Data (Message_Inst);
             Rule         : constant Rule_Access :=
                              GNAThub_Module.Get_Or_Create_Rule
                                (Tool       => Tool,

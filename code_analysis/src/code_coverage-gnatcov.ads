@@ -50,7 +50,7 @@ package Code_Coverage.GNATcov is
      range Covered_No_Branch .. Covered_No_Branch;
 
    type GNATcov_Message_Style_Categories is
-     array (GNATcov_Line_Coverage_Status) of Analysis_Message_Category;
+     array (GNATcov_Line_Coverage_Status) of Message_Importance_Type;
 
    GNATcov_Style_Categories : constant GNATcov_Message_Style_Categories :=
                                 (Not_Covered                     =>

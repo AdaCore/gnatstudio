@@ -23,11 +23,12 @@ logger = GPS.Logger("COLORSCHEMES")
 
 STYLE_WARNING = GPS.Style("editor-warnings")
 STYLE_WARNING.set_background(
-    GPS.Preference("Warnings-Src-Highlight-Color").get())
+    GPS.Preference("Medium-Importance-Messages-Highlight").get())
 
 STYLE_ERROR = GPS.Style("editor-errors")
 STYLE_ERROR.set_background(
-    GPS.Preference("Errors-Src-Highlight-Color").get())
+    GPS.Preference("High-Importance-Messages-Highlight").get())
+
 
 _VIEW_TITLE = "Color Theme"
 

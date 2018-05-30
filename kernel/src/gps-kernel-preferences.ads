@@ -178,10 +178,6 @@ package GPS.Kernel.Preferences is
 
    -- Messages --
    Message_Highlight              : Color_Preference;
-   Error_Src_Highlight            : Color_Preference;
-   Warning_Src_Highlight          : Color_Preference;
-   Style_Src_Highlight            : Color_Preference;
-   Info_Src_Highlight             : Color_Preference;
    Search_Src_Highlight           : Color_Preference;
    Annotation_Messages_Highlight  : Color_Preference;
    Info_Messages_Highlight        : Color_Preference;

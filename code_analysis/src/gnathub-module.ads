@@ -63,7 +63,7 @@ package GNAThub.Module is
    --  Called when preferences or filter criterias for report have been changed
 
    function Get_Severity
-     (Self    : GNAThub_Module_Id_Record'Class;
+     (Self : GNAThub_Module_Id_Record'Class;
       Ranking : Message_Importance_Type)
       return Severity_Access;
    --  Return the severity object corresponding to the given ranking or null

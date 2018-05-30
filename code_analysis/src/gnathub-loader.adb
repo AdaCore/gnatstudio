@@ -141,10 +141,7 @@ package body GNAThub.Loader is
 
          if not M_Ref.Is_Empty then
             Message := M_Ref.Message;
-            Self.Module.Kernel.Get_Messages_Container.Remove_Message
-              (Message   => Message,
-               Flags     => Message.Get_Flags,
-               Recursive => True);
+            Message.Remove;
          end if;
 
          Self.Messages.Delete_First;
