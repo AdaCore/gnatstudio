@@ -86,6 +86,7 @@ package body Refactoring.Services is
       Buffer      : constant GNAT.Strings.String_Access :=
                       Get_Buffer (Get_File (Loc'Access));
       Paren_Depth : Integer := 0;
+      Skip_Private : Boolean := False;
 
       procedure Backwards_Callback
         (Token : Token_Record;
@@ -129,16 +130,22 @@ package body Refactoring.Services is
                | Tok_Else
                | Tok_Do
                | Tok_Select
-               | Tok_Private
                | Tok_Exception =>
 
                --  ??? This does not take into account "or else" and
                --  "and then" operators. Cursor place after won't come
                --  back enough.
-               --  "is private; may not be correctly analyzed either.
 
                Stop := True;
                return;
+
+            when Tok_Private =>
+               if Skip_Private then
+                  Skip_Private := False;
+               else
+                  Stop := True;
+                  return;
+               end if;
 
             when others =>
                null;
@@ -146,6 +153,9 @@ package body Refactoring.Services is
 
          if Token.Tok_Type /= Tok_Blank then
             Start_Index := Integer (Token.Token_First);
+            Skip_Private := Token.Tok_Type = Tok_With;
+            --  skip "private with" as part of with_clause and
+            --  private type/extension with aspect.
          end if;
       end Backwards_Callback;
 
