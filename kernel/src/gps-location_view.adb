@@ -412,7 +412,7 @@ package body GPS.Location_View is
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
-           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc, Priority_Low);
       end if;
    end Expand_Category;
 
@@ -436,7 +436,7 @@ package body GPS.Location_View is
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
-           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc, Priority_Low);
       end if;
    end Expand_File;
 
