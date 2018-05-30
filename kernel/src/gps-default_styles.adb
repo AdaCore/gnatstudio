@@ -165,6 +165,35 @@ package body GPS.Default_Styles is
             "",
             Bg => Search_Src_Highlight, Speedbar => True);
 
+      -----------
+      -- Build --
+      -----------
+
+      Init (Builder_Styles (Errors),
+            -"Builder results",
+            "gps-emblem-build-error",
+            Bg => Error_Src_Highlight, Speedbar => True);
+
+      Init (Builder_Styles (Warnings),
+            -"Builder warnings",
+            "gps-emblem-build-warning",
+            Bg => Warning_Src_Highlight, Speedbar => True);
+
+      Init (Builder_Styles (Style),
+            -"Style errors",
+            "gps-emblem-build-style",
+            Bg => Style_Src_Highlight, Speedbar => True);
+
+      Init (Builder_Styles (Info),
+            -"Compiler info",
+            "gps-emblem-build-info-symbolic",
+            Bg => Info_Src_Highlight, Speedbar => True);
+
+      Init (Builder_Background_Style,
+            -"Background compilation",
+            "",
+            Bg => null, Speedbar => True);
+
       --------------
       -- Debugger --
       --------------
@@ -189,32 +218,27 @@ package body GPS.Default_Styles is
       -- Analysis Tools --
       --------------------
 
-      Messages_Styles (Unspecified) := Editor_Default_Style;
+      Analysis_Styles (Unspecified) := Editor_Default_Style;
 
-      Init (Messages_Styles (Annotation),
+      Init (Analysis_Styles (Annotation),
             Name      => -"Annotation messages",
-            Bg        => Annotation_Messages_Highlight,
-            Speedbar  => True);
+            Bg        => Annotation_Messages_Highlight);
 
-      Init (Messages_Styles (Informational),
-            Name      => -"Compiler info",
-            Bg        => Info_Messages_Highlight,
-            Speedbar  => True);
+      Init (Analysis_Styles (Informational),
+            Name      => -"Informational messages",
+            Bg        => Info_Messages_Highlight);
 
-      Init (Messages_Styles (High_Importance),
-            Name      => -"Builder results",
-            Bg        => High_Messages_Highlight,
-            Speedbar  => True);
+      Init (Analysis_Styles (High_Importance),
+            Name      => -"High importance messages",
+            Bg        => High_Messages_Highlight);
 
-      Init (Messages_Styles (Medium_Importance),
-            Name      => -"Builder warnings",
-            Bg        => Medium_Messages_Highlight,
-            Speedbar  => True);
+      Init (Analysis_Styles (Medium_Importance),
+            Name      => -"Medium importance messages",
+            Bg        => Medium_Messages_Highlight);
 
-      Init (Messages_Styles (Low_Importance),
-            Name      => -"Style errors",
-            Bg        => Low_Messages_Highlight,
-            Speedbar  => True);
+      Init (Analysis_Styles (Low_Importance),
+            Name      => -"Low importance messages",
+            Bg        => Low_Messages_Highlight);
 
    end Initialize_Default_Styles;
 

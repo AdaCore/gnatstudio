@@ -361,7 +361,7 @@ package body Code_Coverage.GNATcov is
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
          Msg.Set_Highlighting
-           (Messages_Styles (GNATcov_Style_Categories (Coverage.Status)));
+           (Analysis_Styles (GNATcov_Style_Categories (Coverage.Status)));
       end Process;
 
    begin

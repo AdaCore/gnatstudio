@@ -1678,18 +1678,6 @@ package body CodePeer.Module is
 
       Module.Message_Colors (CodePeer.Info) := Info_Messages_Highlight;
 
-      --  Create a preference for importing annotations
-
-      Module.Import_Annotations :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Import-Annotations",
-           Label   => -"Import CodePeer annotations",
-           Path    => -"CodePeer:General",
-           Doc     => -("Import and display CodePeer annotations in source"
-             & " editor"),
-           Default => True);
-
       --  Create CodePeer own preferences for CodePeer specific messages
 
       Module.Message_Colors (CodePeer.Suppressed) :=
@@ -1697,7 +1685,7 @@ package body CodePeer.Module is
           (Kernel.Get_Preferences,
            Name    => "Messages-Suppressed-Background",
            Label   => -"Color for 'suppressed' messages",
-           Path    => -"CodePeer:Colors",
+           Path    => -"Messages:Analysis Tools",
            Doc     => -("Color to use for the background of suppressed"
              & " messages"),
            Default => "#EFEFEF");
@@ -1707,23 +1695,33 @@ package body CodePeer.Module is
           (Kernel.Get_Preferences,
            Name    => "Messages-Removed-Foreground",
            Label   => -"Color for 'removed' messages",
-           Path    => -"CodePeer:Colors",
+           Path    => -"Messages:Analysis Tools",
            Doc     => -("Color to use for the foreground of removed messages"
-             & " in the Locations view."),
+             & " in Locations view"),
            Default => "#5A5A5A");
+
+      Module.Import_Annotations :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "CodePeer-Import-Annotations",
+           Label   => -"Import CodePeer annotations",
+           Path    => -"CodePeer",
+           Doc     => -("Import and display CodePeer annotations in source"
+             & " editor"),
+           Default => True);
 
       --  CodePeer styles initialization
 
       Module.Annotations_Style := Editor_Code_Annotations_Style;
 
       Module.Message_Styles (CodePeer.High) :=
-        Messages_Styles (High_Importance);
+        Analysis_Styles (High_Importance);
 
       Module.Message_Styles (CodePeer.Medium) :=
-        Messages_Styles (Medium_Importance);
+        Analysis_Styles (Medium_Importance);
 
       Module.Message_Styles (CodePeer.Low) :=
-        Messages_Styles (Low_Importance);
+        Analysis_Styles (Low_Importance);
 
       Initialize_Style
         (Module.Message_Styles (CodePeer.Info),

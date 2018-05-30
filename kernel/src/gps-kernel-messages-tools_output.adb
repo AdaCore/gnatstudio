@@ -20,7 +20,6 @@ with GNAT.Strings;                    use GNAT.Strings;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
-with GPS.Default_Styles;              use GPS.Default_Styles;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Simple;      use GPS.Kernel.Messages.Simple;
@@ -39,6 +38,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    use GNAT.Regpat;
    use Node_Vectors;
    use GPS.Kernel.Style_Manager;
+   use GPS.Default_Styles;
 
    type Location is record
       File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -319,7 +319,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text              : Basic_Types.UTF8_String;
       Category          : Basic_Types.UTF8_String;
       Highlight         : Boolean := False;
-      Styles            : Message_Styles_Array :=
+      Styles            : Builder_Message_Styles :=
         (others => null);
       Show_In_Locations : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := True)
@@ -352,7 +352,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text                    : Basic_Types.UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
-      Styles                  : Message_Styles_Array := (others => null);
+      Styles                  : Builder_Message_Styles := (others => null);
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
       Line_Index_In_Regexp    : Integer;
@@ -529,16 +529,16 @@ package body GPS.Kernel.Messages.Tools_Output is
             if Highlight then
                if Matched (Warning_Index) /= GNAT.Regpat.No_Match then
                   Weight := 1;
-                  C := Styles (Medium_Importance);
+                  C := Styles (Warnings);
                elsif  Matched (Style_Index) /= GNAT.Regpat.No_Match then
                   Weight := 0;
-                  C := Styles (Low_Importance);
+                  C := Styles (Style);
                elsif  Matched (Info_Index) /= GNAT.Regpat.No_Match then
                   Weight := 0;
-                  C := Styles (Informational);
+                  C := Styles (Info);
                else
                   Weight := 2;
-                  C := Styles (High_Importance);
+                  C := Styles (Errors);
                end if;
             else
                Weight := 0;
@@ -551,6 +551,10 @@ package body GPS.Kernel.Messages.Tools_Output is
 
                if C /= null and then Get_Icon (C) /= "" then
                   Action.Image := To_Unbounded_String (Get_Icon (C));
+               end if;
+
+               if not Show_In_Locations then
+                  C := Builder_Background_Style;
                end if;
 
                Message := Add_Tool_Message
@@ -611,7 +615,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
       Output : GNAT.Strings.String_Access;
       Valid  : Boolean;
-      Styles : Message_Styles_Array;
+      Styles : Builder_Message_Styles;
    begin
       Unknown_To_UTF8 (Text, Output, Valid);
       if not Valid then
@@ -621,19 +625,19 @@ package body GPS.Kernel.Messages.Tools_Output is
 
       else
          --   ??? reuse existing styles defined in Style_Manager?
-         Styles (High_Importance) :=
+         Styles (Errors) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Highlight_Category);
 
-         Styles (Medium_Importance) :=
+         Styles (Warnings) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Warning_Category);
 
-         Styles (Low_Importance) :=
+         Styles (Style) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Style_Category);
 
-         Styles (Informational) :=
+         Styles (Info) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Info_Category);
 

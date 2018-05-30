@@ -1153,9 +1153,8 @@ package body GPS.Kernel.Preferences is
 
       Message_Highlight := Manager.Create
         (Name    => "Messages-Highlight-Color",
-         Label   => -"GPS error messages",
-         Doc     => -"Color for the GPS error messages displayed in the "
-         & "Messages view.",
+         Label   => -"Error messages",
+         Doc     => -"Color for GPS error messages.",
          Default => "#FF0000",
          Path    => -"Messages:GPS & Editors");
 
@@ -1166,50 +1165,78 @@ package body GPS.Kernel.Preferences is
          Default => "#BDD7FF",
          Path    => -"Messages:GPS & Editors");
 
+      Error_Src_Highlight := Manager.Create
+        (Name    => "Errors-Src-Highlight-Color",
+         Label   => -"Errors highlighting",
+         Doc     => -"Color for build error messages.",
+         Default => "#FFB7B7",
+         Path    => -"Messages:Build");
+
+      Warning_Src_Highlight := Manager.Create
+        (Name    => "Warnings-Src-Highlight-Color",
+         Label   => -"Warnings highlighting",
+         Doc     => -"Color for build warnings.",
+         Default => "#FFCC9C",
+         Path    => -"Messages:Build");
+
+      Style_Src_Highlight := Manager.Create
+        (Name    => "Style-Src-Highlight-Color",
+         Label   => -"Style errors highlighting",
+         Doc     => -"Color for style errors.",
+         Default => "#FFFFAD",
+         Path    => -"Messages:Build");
+
+      Info_Src_Highlight := Manager.Create
+        (Name    => "Info-Src-Highlight-Color",
+         Label   => -"Compiler info highlighting",
+         Doc     => -"Color for compiler info messages.",
+         Default => "#ADFFC2",
+         Path    => -"Messages:Build");
+
+      Annotation_Messages_Highlight := Manager.Create
+        (Name    => "Annotation-Messages-Highlight",
+         Label   => -"Annotation messages",
+           Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for annotation messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F75D59");
+
+      Info_Messages_Highlight := Manager.Create
+        (Name    => "Info-Messages-Highlight",
+         Label   => -"Informational messages",
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for informational messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
+         Default => "#F75D59");
+
       High_Messages_Highlight := Manager.Create
         (Name    => "High-Importance-Messages-Highlight",
          Label   => -"High importance messages",
-         Path    => -"Messages:GPS & Editors",
-         Doc     => -("Color for high priority messages "
-           & "(e.g: compiler errors). This preference is also used by "
-           & " external tools integrated in GPS (e.g: CodePeer)."),
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for high priority messages. This preference is "
+           & "also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
          Default => "#F75D59");
 
       Medium_Messages_Highlight := Manager.Create
         (Name    => "Medium-Importance-Messages-Highlight",
          Label   => -"Medium importance messages",
-         Path    => -"Messages:GPS & Editors",
-         Doc     => -("Color for medium priority messages (e.g: compiler "
-           & "warnings). This preference is also used by external tools "
-           & "integrated in GPS (e.g: CodePeer)."),
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for medium priority messages. This preference "
+           & "is also used by external tools integrated in GPS "
+           & "(e.g: CodePeer)."),
          Default => "#F88017");
 
       Low_Messages_Highlight := Manager.Create
         (Name    => "Low-Importance-Messages-Highlight",
          Label   => -"Low importance messages",
-         Path    => -"Messages:GPS & Editors",
-         Doc     => -("Color for low priority messages (e.g: style errors). "
-           & "This preference is also used by external tools integrated in "
-           & "GPS (e.g: CodePeer)."),
-         Default => "#FFE87C");
-
-      Info_Messages_Highlight := Manager.Create
-        (Name    => "Info-Messages-Highlight",
-         Label   => -"Informational messages",
-         Path    => -"Messages:GPS & Editors",
-         Doc     => -("Color for informational messages (e.g: compiler "
-           & "infos). This preference is also used by external tools "
-           & "integrated in GPS (e.g: CodePeer)."),
-         Default => "#F75D59");
-
-      Annotation_Messages_Highlight := Manager.Create
-        (Name    => "Annotation-Messages-Highlight",
-         Label   => -"Annotation messages",
-           Path    => -"Messages:GPS & Editors",
-         Doc     => -("Color for annotation messages. This preference is "
+         Path    => -"Messages:Analysis Tools",
+         Doc     => -("Color for low priority messages. This preference is "
            & "also used by external tools integrated in GPS "
            & "(e.g: CodePeer)."),
-         Default => "#F75D59");
+         Default => "#FFE87C");
 
       File_Pattern := Manager.Create
         (Name    => "Messages-File-Regpat-1",

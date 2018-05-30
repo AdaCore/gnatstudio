@@ -2581,10 +2581,10 @@ package body Src_Editor_Module is
       --  Create highlighting categories preemptively for builder styles, so
       --  that errors always have higher priority than warnings, etc..
 
-      Line_Highlighting.Add_Category (Messages_Styles (High_Importance));
-      Line_Highlighting.Add_Category (Messages_Styles (Medium_Importance));
-      Line_Highlighting.Add_Category (Messages_Styles (Low_Importance));
-      Line_Highlighting.Add_Category (Messages_Styles (Informational));
+      Line_Highlighting.Add_Category (Builder_Styles (Errors));
+      Line_Highlighting.Add_Category (Builder_Styles (Warnings));
+      Line_Highlighting.Add_Category (Builder_Styles (Style));
+      Line_Highlighting.Add_Category (Builder_Styles (Info));
 
       Regenerate_Recent_Files_Menu (Kernel);
    end Register_Module;

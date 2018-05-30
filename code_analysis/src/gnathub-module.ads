@@ -64,7 +64,7 @@ package GNAThub.Module is
 
    function New_Severity
      (Self    : in out GNAThub_Module_Id_Record'Class;
-      Ranking : Message_Importance_Type)
+      Ranking : Analysis_Message_Category)
       return Severity_Access;
    --  Creates new severity object
 

@@ -70,7 +70,7 @@ Preference('Plugins/isearch/highlightnext').create(
 
 bg_next_match_pref = Preference('Search-Src-Highlight-Color')
 bg_color_pref = Preference('Command-Windows-Background-Color')
-bg_error_pref = Preference('High-Importance-Messages-Highlight')
+bg_error_pref = Preference('Errors-Src-Highlight-Color')
 
 isearch_action_name = 'isearch'
 isearch_backward_action_name = 'isearch backward'
@@ -81,7 +81,7 @@ try:
     # matches in the background, which makes the interface more responsive
     from gi.repository import GLib
     has_pygtk = 1
-except Exception:
+except:
     has_pygtk = 0
 
 
@@ -118,7 +118,7 @@ class Isearch(CommandWindow):
                 on_key=self.on_key,
                 on_activate=self.on_activate)
 
-        except Exception:
+        except:
             pass
 
     def prompt(self):
