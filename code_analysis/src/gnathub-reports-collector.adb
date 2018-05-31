@@ -18,14 +18,17 @@
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with Default_Preferences;        use Default_Preferences;
+
 with Gtk.Widget;
-with Gtk.Tree_Model;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_View;
 
 with Gtkada.Handlers;
 with GNAThub.Messages;
+with GNAThub.Module;
 with GNAThub.Reports.Models;
-with GPS.Kernel;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with Glib.Object;                use Glib.Object;
@@ -34,6 +37,15 @@ package body GNAThub.Reports.Collector is
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Message_Listener'Class, Message_Listener_Access);
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      View : Report;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+   --  Trigger On_Selection_Changed if a preference affect the selection
 
    procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class);
 
@@ -62,7 +74,9 @@ package body GNAThub.Reports.Collector is
      (Self       : not null access GNAThub_Report_Collector'Class;
       Kernel     : GPS.Kernel.Kernel_Handle;
       Tree       : Code_Analysis.Code_Analysis_Tree;
-      Severities : GNAThub.Severities_Ordered_Sets.Set) is
+      Severities : GNAThub.Severities_Ordered_Sets.Set)
+   is
+      Hook : access On_Pref_Changed;
    begin
       Gtk.Box.Initialize_Vbox (Self);
       Self.Kernel := Kernel;
@@ -85,6 +99,10 @@ package body GNAThub.Reports.Collector is
            (On_Selection_Changed'Access, Self);
       Gtkada.Handlers.Widget_Callback.Connect
         (Self, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
+
+      Hook := new On_Pref_Changed;
+      Hook.View := Report (Self.Listener.View);
+      Preferences_Changed_Hook.Add (Hook, Watch => Self);
    end Initialize;
 
    -------------------
@@ -101,6 +119,24 @@ package body GNAThub.Reports.Collector is
          View.Update;
       end if;
    end Message_Added;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Pref = null
+        or else Pref = Preference (GNAThub.Module.Hide_Node_Without_Messages)
+      then
+         On_Selection_Changed (Self.View);
+      end if;
+   end Execute;
 
    ----------------
    -- On_Destroy --
@@ -142,6 +178,12 @@ package body GNAThub.Reports.Collector is
       Subprogram_Node : GNAThub_Subprogram_Access;
    begin
       Tree.Get_Selection.Get_Selected (Model, Sort_Iter);
+
+      if Sort_Iter = Null_Iter then
+         GNAThub.Reports.Metrics.Clear (View.Metric_Report);
+         return;
+      end if;
+
       View.Messages_Report.Get_Sort_Model.Convert_Iter_To_Child_Iter
         (Iter, Sort_Iter);
 
