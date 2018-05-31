@@ -26,13 +26,13 @@ with GPS.Kernel.Messages;
 
 package GNAThub.Messages is
 
-   type Message is
+   type GNAThub_Message is
      new GPS.Kernel.Messages.Primary_Abstract_Message with private;
 
-   type Message_Access is access all Message'Class;
+   type GNAThub_Message_Access is access all GNAThub_Message'Class;
 
    procedure Initialize
-     (Self      : not null access Message'Class;
+     (Self      : not null access GNAThub_Message'Class;
       Container : not null GPS.Kernel.Messages_Container_Access;
       Severity  : not null Severity_Access;
       Rule      : not null Rule_Access;
@@ -42,17 +42,17 @@ package GNAThub.Messages is
       Column    : Basic_Types.Visible_Column_Type);
    --  Initialize instance of GNAThub's message.
 
-   function Get_Severity (Self : Message) return Severity_Access;
+   function Get_Severity (Self : GNAThub_Message) return Severity_Access;
    --  Returns severity of the message
 
-   function Get_Tool (Self : Message) return Tool_Access;
+   function Get_Tool (Self : GNAThub_Message) return Tool_Access;
    --  Returns tool that generates message
 
-   function Get_Rule (Self : Message) return Rule_Access;
+   function Get_Rule (Self : GNAThub_Message) return Rule_Access;
    --  Returns rule of the message
 
    overriding function Get_Background_Color
-     (Self : not null access Message)
+     (Self : not null access GNAThub_Message)
       return Gdk.RGBA.Gdk_RGBA;
 
    Category : constant String := "GNAThub Analysis Data";
@@ -60,7 +60,7 @@ package GNAThub.Messages is
 
 private
 
-   type Message is
+   type GNAThub_Message is
      new GPS.Kernel.Messages.Primary_Abstract_Message with record
       Severity : Severity_Access;
       Rule     : Rule_Access;
@@ -68,7 +68,7 @@ private
    end record;
 
    overriding function Get_Text
-     (Self : not null access constant Message)
+     (Self : not null access constant GNAThub_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
 end GNAThub.Messages;

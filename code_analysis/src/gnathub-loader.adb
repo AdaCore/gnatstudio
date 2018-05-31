@@ -384,7 +384,7 @@ package body GNAThub.Loader is
    procedure Insert_Message
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
-      Message : GNAThub.Messages.Message_Access)
+      Message : GNAThub_Message_Access)
    is
       use type GNATCOLL.VFS.Virtual_File;
 

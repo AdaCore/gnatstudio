@@ -23,9 +23,9 @@ with Default_Preferences;        use Default_Preferences;
 with Gtk.Widget;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_View;
-
 with Gtkada.Handlers;
-with GNAThub.Messages;
+
+with GNAThub.Messages;           use GNAThub.Messages;
 with GNAThub.Module;
 with GNAThub.Reports.Models;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -115,7 +115,7 @@ package body GNAThub.Reports.Collector is
    is
       View : constant Report := Report (Self.View);
    begin
-      if Message.all in GNAThub.Messages.Message'Class then
+      if Message.all in GNAThub_Message'Class then
          View.Update;
       end if;
    end Message_Added;

@@ -34,7 +34,7 @@ with Gtkada.MDI;
 with Default_Preferences;              use Default_Preferences;
 with Generic_Views;
 with GNAThub.Generic_Criteria_Editors;
-with GNAThub.Messages;
+with GNAThub.Messages;                 use GNAThub.Messages;
 with GNAThub.Module;                   use GNAThub.Module;
 
 with GPS.Kernel.MDI;
@@ -351,14 +351,12 @@ package body GNAThub.Filters_Views is
         (Messages : Messages_Vectors.Vector;
          Counts   : in out Counts_Array)
       is
-         use type GNAThub.Messages.Message_Access;
-
          Severity_Id   : Positive;
-         Message       : GNAThub.Messages.Message_Access;
+         Message       : GNAThub_Message_Access;
          Filter_Result : GPS.Kernel.Messages.Filter_Result;
       begin
          for Item of Messages loop
-            Message := GNAThub.Messages.Message_Access (Item.Message);
+            Message := GNAThub_Message_Access (Item.Message);
             if Message /= null then
                Filter_Result := GNAThub_Module.Filter.Apply (Message.all);
                if not Filter_Result.Non_Applicable
@@ -795,7 +793,7 @@ package body GNAThub.Filters_Views is
    is
       View : constant Filters_View_Access := Filters_View_Access (Self.View);
    begin
-      if Message.all in GNAThub.Messages.Message'Class then
+      if Message.all in GNAThub_Message'Class then
          View.Tools_Editor.Update;
          View.Rules_Editor.Update;
          View.Severities_Editor.Update;

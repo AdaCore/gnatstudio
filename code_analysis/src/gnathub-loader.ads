@@ -18,7 +18,7 @@
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
-with GNAThub.Messages;
+with GNAThub.Messages;     use GNAThub.Messages;
 with GNAThub.Module;
 with GPS.Scripts.Commands;
 
@@ -58,7 +58,7 @@ private
    procedure Insert_Message
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
-      Message : GNAThub.Messages.Message_Access);
+      Message : GNAThub_Message_Access);
 
    procedure Insert_Metric
      (Self    : in out Loader_Type'Class;

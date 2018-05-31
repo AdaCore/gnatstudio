@@ -22,7 +22,7 @@ package body GNAThub.Messages is
    --------------------------
 
    overriding function Get_Background_Color
-     (Self : not null access Message)
+     (Self : not null access GNAThub_Message)
       return Gdk.RGBA.Gdk_RGBA is
    begin
       return Background (Self.Severity.Style);
@@ -32,7 +32,7 @@ package body GNAThub.Messages is
    -- Get_Rule --
    --------------
 
-   function Get_Rule (Self : Message) return Rule_Access is
+   function Get_Rule (Self : GNAThub_Message) return Rule_Access is
    begin
       return Self.Rule;
    end Get_Rule;
@@ -41,7 +41,7 @@ package body GNAThub.Messages is
    -- Get_Severity --
    ------------------
 
-   function Get_Severity (Self : Message) return Severity_Access is
+   function Get_Severity (Self : GNAThub_Message) return Severity_Access is
    begin
       return Self.Severity;
    end Get_Severity;
@@ -51,7 +51,7 @@ package body GNAThub.Messages is
    --------------
 
    overriding function Get_Text
-     (Self : not null access constant Message)
+     (Self : not null access constant GNAThub_Message)
       return Ada.Strings.Unbounded.Unbounded_String
    is
       use Ada.Strings.Unbounded;
@@ -63,7 +63,7 @@ package body GNAThub.Messages is
    -- Get_Tool --
    --------------
 
-   function Get_Tool (Self : Message) return Tool_Access is
+   function Get_Tool (Self : GNAThub_Message) return Tool_Access is
    begin
       return Self.Rule.Tool;
    end Get_Tool;
@@ -73,7 +73,7 @@ package body GNAThub.Messages is
    ----------------
 
    procedure Initialize
-     (Self      : not null access Message'Class;
+     (Self      : not null access GNAThub_Message'Class;
       Container : not null GPS.Kernel.Messages_Container_Access;
       Severity  : not null Severity_Access;
       Rule      : not null Rule_Access;

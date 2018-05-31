@@ -14,7 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with GNAThub.Messages;
+with GNAThub.Messages; use GNAThub.Messages;
 
 package body GNAThub.Filters is
 
@@ -30,13 +30,13 @@ package body GNAThub.Filters is
       use all type GPS.Kernel.Messages.Message_Visibility_Kind;
 
    begin
-      if Message not in GNAThub.Messages.Message'Class then
+      if Message not in GNAThub_Message'Class then
          return (Non_Applicable => True);
       end if;
 
       declare
-         M : GNAThub.Messages.Message'Class
-           renames GNAThub.Messages.Message'Class (Message);
+         M : GNAThub_Message'Class
+           renames GNAThub_Message'Class (Message);
 
       begin
          if Self.Tools.Contains (M.Get_Tool)

@@ -119,7 +119,7 @@ package body GNAThub.Loader.Databases is
       R               : Database.Orm.Resource_Message;
       M               : Database.Orm.Message;
       Ranking         : Integer;
-      Message         : GNAThub.Messages.Message_Access;
+      Message         : GNAThub_Message_Access;
       Metric          : Metric_Access;
       Rule            : GNAThub.Rule_Access;
       Severity        : GNAThub.Severity_Access;
@@ -160,7 +160,7 @@ package body GNAThub.Loader.Databases is
             Rule.Count.Insert (Severity, 1);
          end if;
 
-         Message := new GNAThub.Messages.Message;
+         Message := new GNAThub_Message;
          GNAThub.Messages.Initialize
            (Self      => Message,
             Container =>

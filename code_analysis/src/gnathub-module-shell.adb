@@ -22,7 +22,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
 with GNAThub.Module;            use GNAThub.Module;
-with GNAThub.Messages;
+with GNAThub.Messages;          use GNAThub.Messages;
 with GNAThub.Loader.External;
 
 package body GNAThub.Module.Shell is
@@ -143,8 +143,8 @@ package body GNAThub.Module.Shell is
                                (Tool       => Tool,
                                 Name       => Null_Unbounded_String,
                                 Identifier => Rule_ID);
-            New_Message  : constant GNAThub.Messages.Message_Access :=
-                             new GNAThub.Messages.Message;
+            New_Message  : constant GNAThub_Message_Access :=
+                             new GNAThub_Message;
          begin
             GNAThub.Messages.Initialize
               (Self          => New_Message,

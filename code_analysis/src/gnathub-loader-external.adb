@@ -63,7 +63,7 @@ package body GNAThub.Loader.External is
      (Self : in out External_Loader_Type)
    is
       M_Ref    : Message_Reference;
-      Message  : GNAThub.Messages.Message_Access;
+      Message  : GNAThub_Message_Access;
       Rule     : GNAThub.Rule_Access;
       Severity : GNAThub.Severity_Access;
       Position : GNAThub.Severity_Natural_Maps.Cursor;
@@ -73,7 +73,7 @@ package body GNAThub.Loader.External is
          M_Ref := Self.Messages_To_Process (Self.Current_Message);
 
          if not M_Ref.Is_Empty then
-            Message := GNAThub.Messages.Message_Access (M_Ref.Message);
+            Message := GNAThub_Message_Access (M_Ref.Message);
 
             --  Insert the message in the module's tree
 
@@ -110,7 +110,7 @@ package body GNAThub.Loader.External is
 
    procedure Add_External_Message
      (Self    : in out External_Loader_Type'Class;
-      Message : GNAThub.Messages.Message_Access) is
+      Message : GNAThub_Message_Access) is
    begin
       Self.Messages_To_Process.Append
         (GPS.Kernel.Messages.References.Create

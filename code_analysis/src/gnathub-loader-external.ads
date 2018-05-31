@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;       use GPS.Kernel;
+with GNAThub.Messages; use GNAThub.Messages;
 
 package GNAThub.Loader.External is
 
@@ -36,7 +37,7 @@ package GNAThub.Loader.External is
 
    procedure Add_External_Message
      (Self    : in out External_Loader_Type'Class;
-      Message : GNAThub.Messages.Message_Access);
+      Message : GNAThub_Message_Access);
    --  Add an external message to the list of messages that will be displayed
    --  in the GNAThub report.
 

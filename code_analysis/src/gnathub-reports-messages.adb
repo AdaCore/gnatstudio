@@ -249,20 +249,20 @@ package body GNAThub.Reports.Messages is
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
-      procedure Show_Message_Location (Message : Message_Access);
+      procedure Show_Message_Location (Message : GNAThub_Message_Access);
       --  Raise the location view and and show the message
       function Get_First_Message
         (File_Node : GNAThub_File_Access)
-         return Message_Access;
+         return GNAThub_Message_Access;
       function Get_First_Message
         (Subprogram_Node : GNAThub_Subprogram_Access)
-         return Message_Access;
+         return GNAThub_Message_Access;
 
       ---------------------------
       -- Show_Message_Location --
       ---------------------------
 
-      procedure Show_Message_Location (Message : Message_Access) is
+      procedure Show_Message_Location (Message : GNAThub_Message_Access) is
       begin
          GPS.Location_View.Expand_File
            (GPS.Location_View.Get_Or_Create_Location_View (View.Kernel),
@@ -285,9 +285,9 @@ package body GNAThub.Reports.Messages is
 
       function Get_First_Message
         (File_Node : GNAThub_File_Access)
-         return Message_Access
+         return GNAThub_Message_Access
       is
-         Msg : Message_Access;
+         Msg : GNAThub_Message_Access;
       begin
          if File_Node.Messages.Is_Empty then
             for Subprogram_Node of File_Node.Subprograms loop
@@ -302,7 +302,7 @@ package body GNAThub.Reports.Messages is
          end if;
 
          return
-           GNAThub.Messages.Message_Access
+           GNAThub_Message_Access
              (File_Node.Messages.Last_Element.Message);
       end Get_First_Message;
 
@@ -312,14 +312,14 @@ package body GNAThub.Reports.Messages is
 
       function Get_First_Message
         (Subprogram_Node : GNAThub_Subprogram_Access)
-         return Message_Access is
+         return GNAThub_Message_Access is
       begin
          if Subprogram_Node.Messages.Is_Empty then
             return null;
          end if;
 
          return
-           GNAThub.Messages.Message_Access
+           GNAThub_Message_Access
            (Subprogram_Node.Messages.First_Element.Message);
       end Get_First_Message;
 
@@ -345,7 +345,7 @@ package body GNAThub.Reports.Messages is
          Subprogram_Node : constant GNAThub_Subprogram_Access :=
            GNAThub_Subprogram_Access
              (View.Get_Analysis_Model.Subprogram_At (Iter));
-         Msg             : Message_Access;
+         Msg             : GNAThub_Message_Access;
       begin
          if Subprogram_Node /= null then
             Msg := Get_First_Message (Subprogram_Node);
