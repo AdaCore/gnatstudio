@@ -133,7 +133,9 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      if not Is_Directory (Output_Directory) then
+      if not Is_Directory (Output_Directory)
+        and Codepeer_Server_URL (Project) = ""
+      then
          Module.Kernel.Insert
            (-"cannot find CodePeer output directory: " &
             Output_Directory.Display_Full_Name,
@@ -166,6 +168,7 @@ package body CodePeer.Module.Bridge is
 
          CodePeer.Bridge.Commands.Inspection
            (Command_File_Name    => Command_File_Name,
+            Server_URL           => Codepeer_Server_URL (Project),
             Output_Directory     => Output_Directory,
             DB_Directory         => Codepeer_Database_Directory (Project),
             Message_Patterns     => Codepeer_Message_Patterns (Project),

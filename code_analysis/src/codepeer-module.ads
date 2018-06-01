@@ -212,6 +212,11 @@ private
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Return object directory in 'codepeer' mode.
 
+   function Codepeer_Server_URL
+     (Project : Project_Type) return String;
+   --  Returns CodePeer server URL if specified in the project, otherwise
+   --  returns empty string.
+
    function Codepeer_Output_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;

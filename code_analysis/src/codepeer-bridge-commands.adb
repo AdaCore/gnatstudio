@@ -200,6 +200,7 @@ package body CodePeer.Bridge.Commands is
 
    procedure Inspection
      (Command_File_Name    : Virtual_File;
+      Server_URL           : String;
       Output_Directory     : Virtual_File;
       DB_Directory         : Virtual_File;
       Message_Patterns     : Virtual_File;
@@ -223,10 +224,16 @@ package body CodePeer.Bridge.Commands is
         (Database_Node,
          "maximum_format",
          Format_Version'Image (Maximum_Version));
-      XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory.Full_Name);
-      XML_Utils.Set_Attribute
-        (Database_Node, "db_directory", +DB_Directory.Full_Name);
+
+      if Server_URL /= "" then
+         XML_Utils.Set_Attribute (Database_Node, "server_url", Server_URL);
+
+      else
+         XML_Utils.Set_Attribute
+           (Database_Node, "output_directory", +Output_Directory.Full_Name);
+         XML_Utils.Set_Attribute
+           (Database_Node, "db_directory", +DB_Directory.Full_Name);
+      end if;
 
       if Message_Patterns /= No_File then
          XML_Utils.Set_Attribute

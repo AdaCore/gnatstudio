@@ -25,6 +25,7 @@ package CodePeer.Bridge.Commands is
 
    procedure Inspection
      (Command_File_Name    : Virtual_File;
+      Server_URL           : String;
       Output_Directory     : Virtual_File;
       DB_Directory         : Virtual_File;
       Message_Patterns     : Virtual_File;

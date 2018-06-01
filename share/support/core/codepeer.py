@@ -251,6 +251,18 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <project_attribute
       package="CodePeer"
+      name="Server_URL"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="CodePeer Server URL"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="URL used to connect to the CodePeer server to access
+the CodePeer database remotely.">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
       name="CWE"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"

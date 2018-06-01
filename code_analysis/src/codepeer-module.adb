@@ -197,6 +197,9 @@ package body CodePeer.Module is
    Database_Directory_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
        GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
+   Server_URL_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+       GNATCOLL.Projects.Build ("CodePeer", "Server_URL");
    Message_Patterns_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
        GNATCOLL.Projects.Build ("CodePeer", "Message_Patterns");
@@ -745,6 +748,21 @@ package body CodePeer.Module is
          return GNATCOLL.VFS.No_File;
       end if;
    end Codepeer_Message_Patterns;
+
+   -------------------------
+   -- Codepeer_Server_URL --
+   -------------------------
+
+   function Codepeer_Server_URL
+     (Project : Project_Type) return String is
+   begin
+      if Project.Has_Attribute (Server_URL_Attribute) then
+         return Project.Attribute_Value (Server_URL_Attribute);
+
+      else
+         return "";
+      end if;
+   end Codepeer_Server_URL;
 
    ----------------------------------
    -- Codepeer_Additional_Patterns --
