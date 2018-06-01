@@ -1590,7 +1590,7 @@ package body GVD_Module is
    begin
       Ignore := Spawn
          (Kernel          => Kernel,
-          Kind            => Debugger_Kind.Get_Pref,
+          Prefered_Kind   => Debugger_Kind.Get_Pref,
           File            => File,
           Project         => Project,
           Args            => Args,

@@ -166,7 +166,7 @@ package GVD.Process is
 
    function Spawn
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Kind            : GVD.Types.Debugger_Type;
+      Prefered_Kind   : GVD.Types.Debugger_Type;
       File            : GNATCOLL.VFS.Virtual_File;
       Project         : Project_Type;
       Args            : String;
@@ -182,6 +182,7 @@ package GVD.Process is
    --  IDE'Communication_Protocol). Load_Executable is then used to know
    --  whether GPS should automatically load the debugged executable on the
    --  remote target.
+   --  Prefer given debugger kind if it's supported by chosen debugger.
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record);
    --  Close the given debugger and terminate the debugging session if this

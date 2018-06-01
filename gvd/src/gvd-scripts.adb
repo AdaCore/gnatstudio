@@ -398,7 +398,7 @@ package body GVD.Scripts is
          begin
             Process := Spawn
               (Kernel          => Kernel,
-               Kind            => Debugger_Kind.Get_Pref,
+               Prefered_Kind   => Debugger_Kind.Get_Pref,
                File            => File,
                Project         => Get_Project (Kernel),
                Args            => Nth_Arg (Data, 2, ""),

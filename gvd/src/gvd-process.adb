@@ -920,7 +920,7 @@ package body GVD.Process is
 
    function Spawn
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Kind            : GVD.Types.Debugger_Type;
+      Prefered_Kind   : GVD.Types.Debugger_Type;
       File            : GNATCOLL.VFS.Virtual_File;
       Project         : Project_Type;
       Args            : String;
@@ -940,11 +940,17 @@ package body GVD.Process is
       function Get_Main return Virtual_File;
       --  Return the file to debug
 
-      function Is_MI_Protocol_Allowed return Boolean;
+      function Is_MI_Protocol_Allowed
+        (Args : GNAT.OS_Lib.Argument_List) return Boolean;
       --  check whether GDB version is correct for using MI protocol
 
       function Get_Debugger_Executable return String;
       --  Returns name of debugger and parameters for it
+
+      function Get_Debugger_Kind
+        (CL : GNAT.OS_Lib.Argument_List)
+          return GVD.Types.Debugger_Type;
+      --  Get debugger kind according to executable and prefered kind
 
       --------------
       -- Get_Main --
@@ -1028,6 +1034,50 @@ package body GVD.Process is
          return Exec;
       end Get_Main;
 
+      -----------------------
+      -- Get_Debugger_Kind --
+      -----------------------
+
+      function Get_Debugger_Kind
+        (CL : GNAT.OS_Lib.Argument_List)
+         return GVD.Types.Debugger_Type
+      is
+         Is_LLDB : constant Boolean :=
+           (for some Arg of CL => Starts_With (Arg.all, "lldb"));
+      begin
+         if Is_LLDB then
+            --  Executable is LLDB supports only LLDB debugger kind
+            if Prefered_Kind /= GVD.Types.LLDB then
+               Process.Kernel.Insert
+                 ("Can't use GDB protocol with given LLDB debugger, switching"
+                  & " to LLDB mode", True, Error);
+            end if;
+
+            return GVD.Types.LLDB;
+         end if;
+
+         case Prefered_Kind is
+            when GVD.Types.Gdb =>
+               return GVD.Types.Gdb;
+            when GVD.Types.Gdb_MI =>
+               if Is_MI_Protocol_Allowed (CL) then
+                  return GVD.Types.Gdb_MI;
+               else
+                  Process.Kernel.Insert
+                    ("MI protocol is not supported by GDB, switching to"
+                       & " CI mode", True, Error);
+
+                  return GVD.Types.Gdb;
+               end if;
+            when GVD.Types.LLDB =>
+               Process.Kernel.Insert
+                 ("Can't use LLDB protocol with given GDB debugger, switching"
+                  & " to GDB CI mode", True, Error);
+
+               return GVD.Types.Gdb;
+         end case;
+      end Get_Debugger_Kind;
+
       Target       : constant String := Kernel.Get_Target;
       Args2        : GNAT.OS_Lib.Argument_List_Access;
       Actual_Remote_Target   : constant String :=
@@ -1040,22 +1090,27 @@ package body GVD.Process is
          else Project.Attribute_Value (Protocol_Attribute));
 
       Executable    : GNATCOLL.VFS.Virtual_File;
-      Debugger_Kind : GVD.Types.Debugger_Type := Kind;
 
       ----------------------------
       -- Is_MI_Protocol_Allowed --
       ----------------------------
 
-      function Is_MI_Protocol_Allowed return Boolean
+      function Is_MI_Protocol_Allowed
+        (Args : GNAT.OS_Lib.Argument_List) return Boolean
       is
          use Debugger.Base_Gdb;
 
-         CL      : Arg_List := Create (Process.Descriptor.Debugger_Name.all);
+         CL      : Arg_List;
          Fd      : GNAT.Expect.Process_Descriptor_Access := null;
          Version : Version_Number := Unknown_Version;
          Success : Boolean := False;
       begin
+         for Arg of Args loop
+            Append_Argument (CL, Arg.all, One_Arg);
+         end loop;
+
          Append_Argument (CL, "--version", One_Arg);
+
          GPS.Kernel.Remote.Spawn
            (Kernel            => Kernel_Handle (Kernel),
             Arguments         => CL,
@@ -1093,10 +1148,7 @@ package body GVD.Process is
       -- Get_Debugger_Executable --
       -----------------------------
 
-      function Get_Debugger_Executable return String
-      is
-         Default_Gdb : constant String :=
-           (if Target = "" then "gdb" else Target & "-gdb");
+      function Get_Debugger_Executable return String is
       begin
          if Project.Has_Attribute (Debugger_Command_Attribute) then
             --  return debuger from project
@@ -1104,11 +1156,6 @@ package body GVD.Process is
                Name : constant String := Project.Attribute_Value
                  (Debugger_Command_Attribute);
             begin
-               if Starts_With (Name, "lldb") then
-                  Debugger_Kind := GVD.Types.LLDB;
-               else
-                  Debugger_Kind := GVD.Types.Gdb_MI;
-               end if;
 
                return Name;
             end;
@@ -1125,11 +1172,6 @@ package body GVD.Process is
                  and then Command /= ""
                then
                   --  return debuger from toolchain
-                  if Starts_With (Command, "lldb") then
-                     Debugger_Kind := GVD.Types.LLDB;
-                  else
-                     Debugger_Kind := GVD.Types.Gdb_MI;
-                  end if;
 
                   return Command;
                end if;
@@ -1137,10 +1179,12 @@ package body GVD.Process is
          end if;
 
          --  return default debugger for target
-         if Debugger_Kind = GVD.Types.LLDB then
+         if Prefered_Kind = GVD.Types.LLDB then
             return "lldb";
+         elsif Target = "" then
+            return "gdb";
          else
-            return Default_Gdb;
+            return Target & "-gdb";
          end if;
       end Get_Debugger_Executable;
 
@@ -1157,25 +1201,15 @@ package body GVD.Process is
 
       Args2 := GNAT.OS_Lib.Argument_String_To_List (Get_Debugger_Executable);
 
-      Process.Descriptor.Debugger      := Debugger_Kind;
+      Process.Descriptor.Debugger      := Get_Debugger_Kind (Args2.all);
       Process.Descriptor.Program       := Executable;
       Process.Descriptor.Debugger_Name := new String'(Args2 (1).all);
 
-      case Debugger_Kind is
+      case Process.Descriptor.Debugger is
          when GVD.Types.Gdb =>
             Process.Debugger := new Gdb_Debugger;
-
          when GVD.Types.Gdb_MI =>
-            if Is_MI_Protocol_Allowed then
-               Process.Debugger := new Gdb_MI_Debugger;
-
-            else
-               Process.Kernel.Insert
-                 ("MI protocol is not supported by GDB, switching to CI mode",
-                  True, Error);
-               Process.Debugger := new Gdb_Debugger;
-            end if;
-
+            Process.Debugger := new Gdb_MI_Debugger;
          when GVD.Types.LLDB =>
             Process.Debugger := new LLDB_Debugger;
       end case;

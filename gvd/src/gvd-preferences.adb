@@ -104,7 +104,8 @@ package body GVD.Preferences is
          Name    => "GPS6-Debugger-Debugger-Kind",
          Label   => -"Debugger kind",
          Path    => "Debugger:General",
-         Doc     => -"Kind of debugger spawned by GPS",
+         Doc     => -("Prefered kind of debugger spawned by GPS. Project file"
+                        & " settings may override this."),
          Default => GVD.Types.Gdb);
 
       if Config.Host /= Config.Unknown then
