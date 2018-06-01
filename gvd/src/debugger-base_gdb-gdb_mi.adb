@@ -4669,8 +4669,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Result   : out Unbounded_String)
    is
       pragma Unreferenced (Debugger);
-      J        : Integer := Str'First;
-      New_Line : Boolean := True;
+      J         : Integer := Str'First;
+      New_Line  : Boolean := True;
+      Ret_Value : Boolean := False;
 
    begin
       while J <= Str'Last loop
@@ -4779,6 +4780,41 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      end if;
 
                      Append (Result, "]" & ASCII.LF);
+
+                     loop
+                        --  looking for a return value
+                        if not Ret_Value
+                          and then J + 16 < Str'Last
+                          and then Str (J .. J + 14) = "gdb-result-var="
+                        then
+                           Append (Result, "Return value: ");
+                           J := J + 16;
+                           while J <= Str'Last and then Str (J) /= '"' loop
+                              Append (Result, Str (J));
+                              J := J + 1;
+                           end loop;
+
+                           Append (Result, "=");
+                           Ret_Value := True;
+                        end if;
+
+                        if Ret_Value
+                          and then J + 14 < Str'Last
+                          and then Str (J .. J + 12) = "return-value="
+                        then
+                           J := J + 14;
+                           while J <= Str'Last and then Str (J) /= '"' loop
+                              Append (Result, Str (J));
+                              J := J + 1;
+                           end loop;
+
+                           Append (Result, "" & ASCII.LF);
+                           exit;
+                        end if;
+
+                        exit when J > Str'Last or else Str (J) = ASCII.LF;
+                        J := J + 1;
+                     end loop;
 
                   elsif J + 6 < Str'Last
                     and then Str (J - 1) = '*'
