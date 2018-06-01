@@ -636,7 +636,7 @@ package body GVD.Memory_View is
       Gtk_New (View.Modified_Tag);
       Set_Property (View.Modified_Tag, Background_Rgba_Property, Null_RGBA);
       Set_Property (View.Modified_Tag, Foreground_Rgba_Property,
-                    Change_Color.Get_Pref);
+                    Blocks_Style.Get_Pref_Fg);
       Set_Property (View.Modified_Tag, Font_Desc_Property, Font);
       Add (Tag_Table, View.Modified_Tag);
 

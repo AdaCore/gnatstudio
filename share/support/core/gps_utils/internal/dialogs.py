@@ -870,9 +870,15 @@ class Variables_View(Dialog):
         def internal(iter):
             result = []
             while iter is not None:
-                v = str(m[iter][0])
-                v = r.sub("0xfff", v)
-                result.append(v)
+                name = str(m[iter][0])
+                val = str(m[iter][1])
+                var_type = str(m[iter][2])
+                val = r.sub("0xfff", val)
+
+                if name == 'None':
+                    result.append(name)
+                else:
+                    result.append(name + var_type + val)
 
                 if m.iter_has_child(iter):
                     result.append(internal(m.iter_children(iter)))

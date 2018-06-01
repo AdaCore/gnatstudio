@@ -109,9 +109,10 @@ package body GVD.Variables.View is
 
    type Variable_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
-         Process : Visual_Debugger;
-         Pattern : Search_Pattern_Access;
-         Items   : Item_Vectors.Vector;
+         Process      : Visual_Debugger;
+         Pattern      : Search_Pattern_Access;
+         Items        : Item_Vectors.Vector;
+         Types_Column : Gtk_Tree_View_Column;
       end record;
    type Variable_Tree_View is access all Variable_Tree_View_Record'Class;
    overriding function Is_Visible
@@ -275,12 +276,16 @@ package body GVD.Variables.View is
    Tree_Cmd_Varname      : constant := 5;
    Tree_Cmd_Max_Paren    : constant := 5;   --  number of parenthesis
 
-   Column_Descr          : constant := 0;
-   Column_Icon           : constant := 1;
-   Column_Id             : constant := 2;   --  integer id for the variable
-   Column_Fg             : constant := 3;
-   Column_Generic_Type   : constant := 4;   --  address of Generic_Type'Class
-   Column_Full_Name      : constant := 5;
+   Column_Name           : constant := 0;
+   Column_Value          : constant := 1;
+   Column_Type           : constant := 2;
+   Column_Icon           : constant := 3;
+   Column_Id             : constant := 4;   --  integer id for the variable
+   Column_Name_Fg        : constant := 5;
+   Column_Value_Fg       : constant := 6;
+   Column_Type_Fg        : constant := 7;
+   Column_Generic_Type   : constant := 8;   --  address of Generic_Type'Class
+   Column_Full_Name      : constant := 9;
 
    procedure Item_From_Iter
      (Self        : not null access GVD_Variable_View_Record'Class;
@@ -1054,7 +1059,7 @@ package body GVD.Variables.View is
       Ent   : GVD_Type_Holder;
       Dummy : Boolean;
 
-      Fg    : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Fg       : constant String := To_String (Default_Style.Get_Pref_Fg);
       Contrast : constant String :=
         To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
 
@@ -1089,7 +1094,7 @@ package body GVD.Variables.View is
             then ""
             else Entity.Get_Type.Get_Type_Name (Lang));
       begin
-         if T'Length = 0 or else not Show_Types.Get_Pref then
+         if T'Length = 0 then
             return "";
          else
             return "<span foreground=""" & Contrast & """>("
@@ -1118,20 +1123,22 @@ package body GVD.Variables.View is
          return S (S'First .. Ptr - 1);
       end Validate_UTF_8;
 
-      Descr : constant String :=
-        Display_Name & Display_Type_Name
-        & (if Entity = Empty_GVD_Type_Holder
-           then ""
-           else XML_Utils.Protect
-             (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
-
+      Var_Name  : constant String := Display_Name;
+      Value     : constant String :=
+                    (if Entity = Empty_GVD_Type_Holder
+                     then ""
+                     else XML_Utils.Protect
+                       (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
+      Type_Name : constant String := Display_Type_Name;
    begin
       Self.Model.Append (Iter => Row, Parent => Parent);
       Set_And_Clear
         (Self.Model,
          Iter   => Row,
          Values =>
-           (Column_Descr        => As_String (Descr),
+           (Column_Name         => As_String (Var_Name),
+            Column_Value        => As_String (Value),
+            Column_Type         => As_String (Type_Name),
             Column_Icon         => As_String
               (if Parent = Null_Iter
                then Stock_From_Category
@@ -1141,12 +1148,14 @@ package body GVD.Variables.View is
                else ""),
             Column_Id           => As_Int (Gint (Id)),
             Column_Generic_Type => As_GVD_Type_Holder (Entity),
-            Column_Fg           => As_String
+            Column_Name_Fg      => As_String (Fg),
+            Column_Value_Fg     => As_String
               (if Entity /= Empty_GVD_Type_Holder
                and then Entity.Get_Type.Is_Changed
-               then Change_Color.Get_Pref else Fg),
-            Column_Full_Name    => As_String (Full_Name)
-           ));
+               then To_String (Blocks_Style.Get_Pref_Fg) else Fg),
+            Column_Type_Fg      => As_String
+              (To_String (Types_Style.Get_Pref_Fg)),
+            Column_Full_Name    => As_String (Full_Name)));
 
       if Entity /= Empty_GVD_Type_Holder then
          declare
@@ -1187,6 +1196,8 @@ package body GVD.Variables.View is
       Lang      : Language.Language_Access;
       Expansion : Expansions.Expansion_Status;
    begin
+      Self.Tree.Types_Column.Set_Visible (Show_Types.Get_Pref);
+
       if Process = null then
          return;
       end if;
@@ -1253,10 +1264,14 @@ package body GVD.Variables.View is
       Self.Tree := new Variable_Tree_View_Record;
       Initialize
         (Self.Tree,
-         Column_Types     => (Column_Descr        => GType_String,
+         Column_Types     => (Column_Name         => GType_String,
+                              Column_Value        => GType_String,
+                              Column_Type         => GType_String,
                               Column_Icon         => GType_String,
                               Column_Id           => GType_Int,
-                              Column_Fg           => GType_String,
+                              Column_Name_Fg      => GType_String,
+                              Column_Value_Fg     => GType_String,
+                              Column_Type_Fg      => GType_String,
                               Column_Generic_Type => Get_GVD_Type_Holder_GType,
                               Column_Full_Name    => GType_String),
          Capability_Type  => Filtered,
@@ -1264,12 +1279,16 @@ package body GVD.Variables.View is
       Set_Name (Self.Tree, "Variables Tree");  --  For testsuite
       Self.Tree.Set_Search_Column (Column_Full_Name);
       Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      Set_Font_And_Colors (Self.Tree, Fixed_Font => True);
 
       Scrolled.Add (Self.Tree);
 
-      Self.Tree.Set_Headers_Visible (False);
+      Self.Tree.Set_Headers_Visible (True);
       Self.Tree.Set_Enable_Search (True);
+      Self.Tree.Set_Grid_Lines (Grid_Lines_Vertical);
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
+
+      --  Create the column that displays the variables' icons
 
       Gtk_New (Col);
       Col.Set_Resizable (True);
@@ -1280,10 +1299,40 @@ package body GVD.Variables.View is
       Col.Pack_Start (Pixbuf, False);
       Col.Add_Attribute (Pixbuf, "icon-name", Column_Icon);
 
+      --  Create the column that displays the variables' names
+
       Gtk_New (Text);
       Col.Pack_Start (Text, False);
-      Col.Add_Attribute (Text, "markup", Column_Descr);
-      Col.Add_Attribute (Text, "foreground", Column_Fg);
+      Col.Add_Attribute (Text, "markup", Column_Name);
+      Col.Add_Attribute (Text, "foreground", Column_Name_Fg);
+      Col.Set_Title ("Name");
+
+      Gtk_New (Col);
+      Col.Set_Resizable (True);
+      Col.Set_Reorderable (True);
+      Dummy := Self.Tree.Append_Column (Col);
+
+      --  Create the column that displays the variables' values
+
+      Gtk_New (Text);
+      Col.Pack_Start (Text, False);
+      Col.Add_Attribute (Text, "markup", Column_Value);
+      Col.Add_Attribute (Text, "foreground", Column_Value_Fg);
+      Col.Set_Title ("Value");
+
+      Gtk_New (Self.Tree.Types_Column);
+      Self.Tree.Types_Column.Set_Resizable (True);
+      Self.Tree.Types_Column.Set_Reorderable (True);
+      Dummy := Self.Tree.Append_Column (Self.Tree.Types_Column);
+
+      --  Create the column that displays the variables' type
+
+      Gtk_New (Text);
+      Self.Tree.Types_Column.Pack_Start (Text, False);
+      Self.Tree.Types_Column.Add_Attribute (Text, "markup", Column_Type);
+      Self.Tree.Types_Column.Add_Attribute
+        (Text, "foreground", Column_Type_Fg);
+      Self.Tree.Types_Column.Set_Title ("Type");
 
       Pref := new On_Pref_Changed;
       Pref.Execute (Self.Kernel, null);
@@ -1443,7 +1492,7 @@ package body GVD.Variables.View is
         Variable_MDI_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Set_Font_And_Colors (View.Tree, Fixed_Font => False, Pref => Pref);
+         Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
          if Pref = null
            or else Pref = Preference (Show_Types)
          then
@@ -1566,7 +1615,14 @@ package body GVD.Variables.View is
    begin
       return Self.Pattern = null
         or else Self.Pattern.Start
-          (Self.Model.Get_String (Iter, Column_Descr)) /= GPS.Search.No_Match;
+          (Self.Model.Get_String
+             (Iter, Column_Name)) /= GPS.Search.No_Match
+          or else Self.Pattern.Start
+            (Self.Model.Get_String
+               (Iter, Column_Value)) /= GPS.Search.No_Match
+            or else Self.Pattern.Start
+              (Self.Model.Get_String
+                 (Iter, Column_Type)) /= GPS.Search.No_Match;
    end Is_Visible;
 
    --------------------

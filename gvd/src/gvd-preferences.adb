@@ -165,32 +165,6 @@ package body GVD.Preferences is
          Label    => -"Highlight instructions",
          Default  => True);
 
-      Change_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Change-Color",
-         Path     => -"Debugger:Data View",
-         Label    => -"Changed data",
-         Doc      => -"Color to highlight modified fields in Data view.",
-         Default  => "#FF0000");
-
-      Thaw_Bg_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Thaw-Bg-Color",
-         Path     => ":Debugger",
-         Label    => -"Auto-Refreshed",
-         Doc      =>
-            -"Background color for auto-refreshed items in Data view",
-         Default  => "#FFFFFF");
-
-      Freeze_Bg_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Freeze-Bg-Color",
-         Label    => -"Frozen",
-         Doc      =>
-            -"Background color for Data view items that are not refreshed.",
-         Path     => ":Debugger",
-         Default  => "#AAAAAA");
-
       Memory_View_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Memory-View-Color",

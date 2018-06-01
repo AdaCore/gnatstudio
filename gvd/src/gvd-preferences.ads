@@ -63,9 +63,6 @@ package GVD.Preferences is
    Registers_Natural             : Boolean_Preference;
 
    -- Data Window --
-   Change_Color                  : Color_Preference;
-   Thaw_Bg_Color                 : Color_Preference;
-   Freeze_Bg_Color               : Color_Preference;
    Title_Font                    : Font_Preference;
    Type_Font                     : Font_Preference;
    Max_Item_Width                : Integer_Preference;
