@@ -86,6 +86,7 @@ package body GVD.Variables.Items is
       Process : not null access Visual_Debugger_Record'Class)
    is
       Value_Found : Boolean;
+      Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder
@@ -97,11 +98,15 @@ package body GVD.Variables.Items is
          --  Parse the value
 
          if Self.Entity.Get_Type.all in GVD_Debugger_Output_Type'Class then
-            GVD_Debugger_Output_Type_Access (Self.Entity.Get_Type).Set_Value
-              (Process.Debugger.Send_And_Get_Clean_Output
+            Process.Debugger.Filter_Output
+              (Visible,
+               Process.Debugger.Send_And_Get_Clean_Output
                  (GVD_Debugger_Output_Type_Access
                       (Self.Entity.Get_Type).Refresh_Command,
-                  Mode => GVD.Types.Internal));
+                  Mode => GVD.Types.Internal),
+               Result);
+            GVD_Debugger_Output_Type_Access (Self.Entity.Get_Type).Set_Value
+              (Ada.Strings.Unbounded.To_String (Result));
 
          elsif Self.Varname /= "" then
             begin

@@ -68,12 +68,6 @@ package GVD.Variables.Types.Classes is
       return Natural;
    --  Return the number of ancestors.
 
-   procedure Draw_Border
-     (Self : not null access GVD_Class_Type;
-      Draw : Boolean := True);
-   --  If Draw is True (the default for new items), a border is drawn around
-   --  the item when it is displayed on the screen.
-
 private
 
    type Class_Type_Array is array (Positive range <>) of GVD_Type_Holder;
@@ -81,7 +75,6 @@ private
    type GVD_Class_Type (Num_Ancestors : Natural) is
      new GVD_Generic_Type with record
       Child          : GVD_Type_Holder;
-      Border_Spacing : Glib.Gint := Types.Border_Spacing;
       Ancestors      : Class_Type_Array (1 .. Num_Ancestors) :=
         (others => Empty_GVD_Type_Holder);
    end record;
@@ -106,6 +99,11 @@ private
    overriding procedure Set_Type_Name
      (Self : not null access GVD_Class_Type;
       Name : String);
+
+   overriding function Get_Type_Name
+     (Self : not null access GVD_Class_Type;
+      Lang : Language.Language_Access)
+      return String;
 
    overriding function Structurally_Equivalent
      (Self : not null access GVD_Class_Type;

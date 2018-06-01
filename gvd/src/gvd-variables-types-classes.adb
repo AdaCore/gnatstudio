@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                        use Glib;
 with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
 
 package body GVD.Variables.Types.Classes is
@@ -46,7 +45,6 @@ package body GVD.Variables.Types.Classes is
       pragma Assert (Num <= Self.Num_Ancestors);
 
       Self.Ancestors (Num) := Ancestor;
-      GVD_Class_Type_Access (Ancestor.Get_Type).Draw_Border (False);
       Self.Valid := True;
       Self.Ancestors (Num).Get_Type.Valid := True;
    end Add_Ancestor;
@@ -107,21 +105,6 @@ package body GVD.Variables.Types.Classes is
          return Iter.Item.Child;
       end if;
    end Data;
-
-   -----------------
-   -- Draw_Border --
-   -----------------
-
-   procedure Draw_Border
-     (Self : not null access GVD_Class_Type;
-      Draw : Boolean := True) is
-   begin
-      if Draw then
-         Self.Border_Spacing := Border_Spacing;
-      else
-         Self.Border_Spacing := 0;
-      end if;
-   end Draw_Border;
 
    ----------------
    -- Field_Name --
@@ -194,6 +177,23 @@ package body GVD.Variables.Types.Classes is
       return Self.Num_Ancestors;
    end Get_Num_Ancestors;
 
+   -------------------
+   -- Get_Type_Name --
+   -------------------
+
+   overriding function Get_Type_Name
+     (Self : not null access GVD_Class_Type;
+      Lang : Language.Language_Access)
+      return String is
+   begin
+      if Self.Child.Data /= null then
+         return Self.Child.Get_Type.Get_Type_Name (Lang);
+      else
+         return GVD.Variables.Types.Get_Type_Name
+           (GVD_Generic_Type_Access (Self), Lang);
+      end if;
+   end Get_Type_Name;
+
    --------------------
    -- New_Class_Type --
    --------------------
@@ -225,7 +225,8 @@ package body GVD.Variables.Types.Classes is
    overriding function Replace
      (Self         : not null access GVD_Class_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class is
+      Replace_With : GVD_Type_Holder'Class)
+      return GVD_Type_Holder'Class is
    begin
       for A in Self.Ancestors'Range loop
          if Self.Ancestors (A).Data = Current.Data then
@@ -262,8 +263,7 @@ package body GVD.Variables.Types.Classes is
 
    overriding procedure Set_Type_Name
      (Self : not null access GVD_Class_Type;
-      Name : String)
-   is
+      Name : String) is
    begin
       if Self.Child.Data /= null then
          Self.Child.Get_Type.Set_Type_Name (Name);
