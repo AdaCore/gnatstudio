@@ -310,6 +310,9 @@ package GPS.Editors is
      (This : Editor_Mark; Location : Editor_Location'Class) is abstract;
    --  Move the mark to a different location
 
+   procedure Forward_Chars (This : Editor_Mark; Offset : Integer) is abstract;
+   --  Move the mark forward by offset characters
+
    function Create_Instance
      (This   : Editor_Mark;
       Script : access Scripting_Language_Record'Class)
@@ -1046,6 +1049,9 @@ private
 
    overriding procedure Move
      (This : Dummy_Editor_Mark; Location : Editor_Location'Class) is null;
+
+   overriding procedure Forward_Chars
+     (This : Dummy_Editor_Mark; Offset : Integer) is null;
 
    overriding function Name (This : Dummy_Editor_Mark) return String;
 

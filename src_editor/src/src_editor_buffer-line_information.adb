@@ -1608,10 +1608,10 @@ package body Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter   : Gtk_Text_Iter;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number : Positive := 1;
-
+      Iter     : Gtk_Text_Iter;
+      Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number   : Positive := 1;
+      New_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
          return null;
@@ -1634,6 +1634,29 @@ package body Src_Editor_Buffer.Line_Information is
       Insert (Buffer, Iter, Text & ASCII.LF);
       Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
+
+      --  The marks of the messages of *Line* have left gravity
+      --  so the marks at column 1 will be located in the added special lines
+      New_Line := Buffer_Line_Type (Positive (Line) + Number);
+      if Buffer.Line_Data (New_Line).Side_Info_Data /= null then
+         for J in Buffer.Line_Data (New_Line).Side_Info_Data'Range loop
+            declare
+               Message_List : Message_Reference_List.List renames
+                 Buffer.Line_Data (New_Line).Side_Info_Data (J).Messages;
+            begin
+               if not Message_List.Is_Empty then
+                  for Ref of Message_List loop
+                     if not Ref.Is_Empty
+                       and then Message (Ref).Get_Column = 1
+                     then
+                        Forward_Chars (This   => Message (Ref).Get_Editor_Mark,
+                                       Offset => Text'Length + 1);
+                     end if;
+                  end loop;
+               end if;
+            end;
+         end loop;
+      end if;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Line - 1), 0);
 

@@ -316,6 +316,9 @@ package body Src_Editor_Module.Editors is
    overriding procedure Move
      (This : Src_Editor_Mark; Location : Editor_Location'Class);
 
+   overriding procedure Forward_Chars
+     (This : Src_Editor_Mark; Offset : Integer);
+
    -----------------------
    -- Src_Editor_Buffer --
    -----------------------
@@ -1588,6 +1591,7 @@ package body Src_Editor_Module.Editors is
    begin
       if not This.Mark.Is_Null then
          Get_Location (Iter, Location, Iter, Success);
+
          if Success then
             M := File_Marker (This.Mark.Unchecked_Get);
             Mark := Get_Mark (M);
@@ -1608,6 +1612,41 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Move;
+
+   -------------------
+   -- Forward_Chars --
+   -------------------
+
+   overriding procedure Forward_Chars
+     (This : Src_Editor_Mark; Offset : Integer)
+   is
+      Mark  : Gtk_Text_Mark;
+      Iter  : Gtk_Text_Iter;
+      M     : File_Marker;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
+   begin
+      if not This.Mark.Is_Null then
+
+         M := File_Marker (This.Mark.Unchecked_Get);
+         Mark := Get_Mark (M);
+
+         Get_Iter_At_Mark (Get_Buffer (Mark), Iter, Mark);
+         Forward_Chars (Iter, Gint (Offset), Dummy);
+
+         if Mark /= null and then not Get_Deleted (Mark) then
+            --  Do we need to update the coordinates stored in This.Mark ?
+            Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
+
+         else
+            --  Mark is not set in an existing buffer, we just change our
+            --  internal coordinates
+            Mark := Create_Mark (Get_Buffer (Iter), Where => Iter);
+            Move (M, Mark);
+         end if;
+
+      end if;
+   end Forward_Chars;
 
    ------------------
    -- New_Location --
