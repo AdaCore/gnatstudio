@@ -10,7 +10,7 @@ import GPS.Browsers
 # The autodoc may not have visibility on gi.repository
 try:
     from gi.repository import Gtk
-except:
+except Exception:
     pass
 
 
@@ -19,6 +19,7 @@ def enum(**enums):
     name = 'Enum %s' % ', '.join(
         "%s=%s" % (k, v) for k, v in enums.iteritems())
     return type(name, (), enums)
+
 
 GPS.MDI.GROUP_DEFAULT = 0
 GPS.MDI.GROUP_GRAPHS = 101
@@ -87,6 +88,11 @@ def get_focused_widget():
         else:
             return None
     else:
+        windows = Gtk.Window.list_toplevels()
+        for window in windows:
+            focus_widget = window.get_focus()
+            if focus_widget and focus_widget.has_focus():
+                return focus_widget
         return None
 
 
@@ -218,7 +224,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
             # View might have been destroyed
             mdi.raise_window()
             view.goto(cursor)
-        except:
+        except Exception:
             # In this case use the next view available if any
             view = buffer.current_view()
             if not view:
@@ -482,6 +488,7 @@ def cursors(ed):
         yield c
     ed.update_cursors_selection()
     ed.set_cursors_auto_sync()
+
 
 GPS.EditorBuffer.cursors = cursors
 
