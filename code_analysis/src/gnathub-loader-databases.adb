@@ -127,9 +127,11 @@ package body GNAThub.Loader.Databases is
 
       function Get_Importance_From_Ranking return Message_Importance_Type;
 
+      procedure Load_Entities;
+
       procedure Load_Message;
 
-      procedure Load_Metric (Kind : Resource_Kind_Type);
+      procedure Load_Metric (Kind : Resource_Kind_Type;  Line : Integer);
 
       ---------------------------------
       -- Get_Importance_From_Ranking --
@@ -141,6 +143,51 @@ package body GNAThub.Loader.Databases is
          --  enumeration values' position.
          return Message_Importance_Type'Val (Ranking);
       end Get_Importance_From_Ranking;
+
+      -------------------
+      -- Load_Entities --
+      -------------------
+
+      procedure Load_Entities
+      is
+         Messages         : Database.Orm.Message_List;
+         Entities         : Database.Orm.Entity_List :=
+                             Database.Orm.Filter
+                              (Database.Orm.All_Entities,
+                               Resource_Id => Resource_Id).Get (Session);
+         Entity           : Database.Orm.Entity;
+         Sub_Message      : Database.Orm.Entity_Message;
+         Sub_Message_List : Database.Orm.Entity_Message_List;
+      begin
+         --  The entities of the file
+         while Entities.Has_Row loop
+            Entity := Entities.Element;
+            Sub_Message_List := Database.Orm.Filter
+              (Database.Orm.All_Entities_Messages, Entity_Id => Entity.Id)
+              .Get (Session);
+
+            --  The messages/metrics of the current entity
+            while Sub_Message_List.Has_Row loop
+               Sub_Message := Sub_Message_List.Element;
+               Messages := Database.Orm.Filter
+                 (Database.Orm.All_Messages, Id => Sub_Message.Message_Id)
+                 .Get (Session);
+
+               while Messages.Has_Row loop
+                  M := Messages.Element;
+                  if Self.Rules.Contains (M.Rule_Id) then
+                     Load_Message;
+                  elsif Self.Metrics.Contains (M.Rule_Id) then
+                     Load_Metric (Resource.Kind, Entity.Line);
+                  end if;
+                  Messages.Next;
+               end loop;
+               Sub_Message_List.Next;
+            end loop;
+
+            Entities.Next;
+         end loop;
+      end Load_Entities;
 
       ------------------
       -- Load_Message --
@@ -190,7 +237,7 @@ package body GNAThub.Loader.Databases is
       -- Load_Metric --
       -----------------
 
-      procedure Load_Metric (Kind : Resource_Kind_Type) is
+      procedure Load_Metric (Kind : Resource_Kind_Type; Line : Integer) is
          Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File;
       begin
@@ -218,7 +265,7 @@ package body GNAThub.Loader.Databases is
            (Self    => Self,
             Project => Project,
             File    => File,
-            Line    => R.Line,
+            Line    => Line,
             Metric  => Metric);
       end Load_Metric;
 
@@ -229,24 +276,18 @@ package body GNAThub.Loader.Databases is
            (Database.Orm.All_Messages, Id => R.Message_Id)
            .Get (Session).Element;
 
-         case Resource.Kind is
-            when From_Project =>
-               --  Only metrics can be associated to projects.
-               Load_Metric (Resource.Kind);
-
-            when others =>
-               --  If it's associated to a rule, this a message. Otherwise,
-               --  it's a metric.
-               if Self.Rules.Contains (M.Rule_Id) then
-                  Load_Message;
-               elsif Self.Metrics.Contains (M.Rule_Id) then
-                  Load_Metric (Resource.Kind);
-               end if;
-         end case;
+         if Self.Rules.Contains (M.Rule_Id) then
+            Load_Message;
+         elsif Self.Metrics.Contains (M.Rule_Id) then
+            Load_Metric (Resource.Kind, R.Line);
+         end if;
 
          List.Next;
       end loop;
 
+      if Resource.Kind = From_File then
+         Load_Entities;
+      end if;
       Self.Resources.Delete_First;
       Free_Resource (Resource);
    end Load_Data;
