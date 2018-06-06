@@ -19,7 +19,8 @@ def get_compiler_search_paths(project_name, language,
     def is_known_compiler(compiler):
         """Return True is we can assume that this is a compiler of the gcc/g++
            family, from which we can extract predefined paths"""
-        return any(name in compiler for name in ['gcc', 'c++', 'g++'])
+        return any(name in compiler
+                   for name in ['gcc', 'clang', 'clang++', 'c++', 'g++'])
 
     logger = logger or GPS.Logger("LIBCLANG.SEARCH_PATHS")
 
