@@ -97,7 +97,7 @@ package body Log_File_Views is
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Log_View",
-      View_Name          => "Log View",
+      View_Name          => "Log",
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Log_View_Record,
       Reuse_If_Exist     => True,
@@ -741,8 +741,7 @@ package body Log_File_Views is
    -- Refresh --
    -------------
 
-   procedure Refresh (View : access Log_View_Record'Class)
-   is
+   procedure Refresh (View : access Log_View_Record'Class) is
    begin
       View.Clear;
 

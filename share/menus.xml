@@ -477,7 +477,7 @@
          <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
          <menu label="_Background Builds"         action="open background builds"/>
          <menu label="Serial ports"               action="open serial ports view"/>
-         <menu label="_Log"                       action="open log view"/>
+         <menu label="_Log"                       action="open log"/>
       </menu>
 
       <menu label='_Window'> <!-- TODO: add the ability for GPS to add here-->
