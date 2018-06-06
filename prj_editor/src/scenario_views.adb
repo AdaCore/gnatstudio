@@ -295,6 +295,10 @@ package body Scenario_Views is
       if View /= null then
          Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);
 
+         for Combo of View.Variable_Combo_List loop
+            Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
+         end loop;
+
          if Pref = null
            or else Pref = Preference (Show_Build_Modes)
          then
@@ -924,6 +928,8 @@ package body Scenario_Views is
          Gtk.Combo_Box_Text.Initialize_With_Entry (Combo);
          Flow_Child := Create_Child
            (Group, Combo, Label => Name, Child_Key => Name);
+
+         Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
 
          --  Set the name to variable name needed by Selected_Variable
          Flow_Child.Set_Name (Name);
