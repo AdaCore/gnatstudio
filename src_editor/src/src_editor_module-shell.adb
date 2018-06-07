@@ -112,6 +112,7 @@ package body Src_Editor_Module.Shell is
    Whole_Word_Cst        : aliased constant String := "whole_word";
    Dialog_On_Failure_Cst : aliased constant String := "dialog_on_failure";
    Open_Cst              : aliased constant String := "open";
+   Only_If_Focused_Cst   : aliased constant String := "only_if_focused";
    Title_Cst             : aliased constant String := "title";
    Short_Cst             : aliased constant String := "short";
 
@@ -1752,7 +1753,8 @@ package body Src_Editor_Module.Shell is
       elsif Command = "get" then
          Name_Parameters (Data, (1 => File_Cst'Access,
                                  2 => Force_Cst'Access,
-                                 3 => Open_Cst'Access));
+                                 3 => Open_Cst'Access,
+                                 4 => Only_If_Focused_Cst'Access));
          File_Inst := Nth_Arg
            (Data, 1, Get_File_Class (Kernel),
             Default => No_Class_Instance, Allow_Null => True);
@@ -1769,10 +1771,11 @@ package body Src_Editor_Module.Shell is
            (Data, Create_Editor_Buffer
               (Get_Script (Data),
                Get_Buffer_Factory (Kernel).Get
-                 (File        => File,
-                  Force       => Nth_Arg (Data, 2, Default => False),
-                  Open_View   => Nth_Arg (Data, 3, Default => True),
-                  Open_Buffer => False)));
+               (File            => File,
+                Force           => Nth_Arg (Data, 2, Default => False),
+                Open_View       => Nth_Arg (Data, 3, Default => True),
+                Open_Buffer     => False,
+                Only_If_Focused => Nth_Arg (Data, 4, Default => False))));
 
       elsif Command = "get_new" then
          Set_Return_Value
@@ -2809,7 +2812,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get", 0, 3, Buffer_Cmds'Access, EditorBuffer, True);
+        (Kernel, "get", 0, 4, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
         (Kernel, "get_new", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command

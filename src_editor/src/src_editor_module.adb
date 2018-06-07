@@ -1036,7 +1036,8 @@ package body Src_Editor_Module is
    -------------------------
 
    function Find_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Only_If_Focused : Boolean := False) return MDI_Child
    is
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -1044,6 +1045,8 @@ package body Src_Editor_Module is
    begin
       if Is_Source_Box (Child) then
          return Child;
+      elsif Only_If_Focused then
+         return null;
       elsif Id /= null and then Id.Last_Focused_Editor /= null then
          return Id.Last_Focused_Editor;
       end if;

@@ -780,12 +780,14 @@ package GPS.Editors is
    ---------------------------
 
    function Get
-     (This        : Editor_Buffer_Factory;
-      File        : Virtual_File := No_File;
-      Force       : Boolean := False;
-      Open_Buffer : Boolean := False;
-      Open_View   : Boolean := True;
-      Focus       : Boolean := True) return Editor_Buffer'Class is abstract;
+     (This            : Editor_Buffer_Factory;
+      File            : Virtual_File := No_File;
+      Force           : Boolean := False;
+      Open_Buffer     : Boolean := False;
+      Open_View       : Boolean := True;
+      Focus           : Boolean := True;
+      Only_If_Focused : Boolean := False)
+      return Editor_Buffer'Class is abstract;
    --  If file is not specified, the current editor is returned, ie the last
    --  one that had the keyboard focus.
    --
@@ -801,6 +803,9 @@ package GPS.Editors is
    --
    --  If force is set to true, a reload is forced in case the file is already
    --  open.
+   --
+   --  If Only_If_Focused is True, Nil_Editor_Buffer is returned if the
+   --  corresponding editor does not have the focused.
 
    function Get_New
      (This : Editor_Buffer_Factory) return Editor_Buffer'Class is abstract;

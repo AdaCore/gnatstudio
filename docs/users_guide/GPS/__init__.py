@@ -3588,7 +3588,8 @@ class EditorBuffer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get(file='current editor', force=False, open=True):
+    def get(file='current editor', force=False, open=True,
+            only_if_focused=False):
         """
         If ``file`` is already opened in an editor, get a handle on its
         buffer. This instance is then shared with all other buffers
@@ -3612,9 +3613,13 @@ class EditorBuffer(object):
         If ``force`` is true, a reload is forced in case the file is already
         open.
 
+        If ``only_if_focused`` is true, None is returned if the
+        corresponding editor does not have the focus.
+
         :param File file: An instance of :class:`GPS.File`
         :param bool force: A boolean
         :param bool open: A boolean
+        :param bool only_if_focused: A boolean
         :rtype: :class:`EditorBuffer`
 
         .. code-block:: python

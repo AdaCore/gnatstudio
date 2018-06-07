@@ -72,11 +72,12 @@ package Src_Editor_Module is
    --  Register the module in the list
 
    function Find_Current_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Only_If_Focused : Boolean := False)
       return Gtkada.MDI.MDI_Child;
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
-   --  editor is returned.
+   --  editor is returned if Only_If_Focused is False, or null when it's True.
 
    procedure For_All_Views
      (Kernel   : not null access Kernel_Handle_Record'Class;

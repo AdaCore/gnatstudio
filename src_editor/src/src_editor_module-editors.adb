@@ -794,12 +794,13 @@ package body Src_Editor_Module.Editors is
    ---------
 
    overriding function Get
-     (This        : Src_Editor_Buffer_Factory;
-      File        : Virtual_File;
-      Force       : Boolean := False;
-      Open_Buffer : Boolean := False;
-      Open_View   : Boolean := True;
-      Focus       : Boolean := True) return Editor_Buffer'Class
+     (This            : Src_Editor_Buffer_Factory;
+      File            : Virtual_File;
+      Force           : Boolean := False;
+      Open_Buffer     : Boolean := False;
+      Open_View       : Boolean := True;
+      Focus           : Boolean := True;
+      Only_If_Focused : Boolean := False) return Editor_Buffer'Class
    is
       --  Search the view from any project, we do not have more information
       Project : constant Project_Type := No_Project;
@@ -812,10 +813,16 @@ package body Src_Editor_Module.Editors is
       if File /= GNATCOLL.VFS.No_File then
          Child := Find_Editor (This.Kernel, File, Project);
       else
-         Child := Find_Current_Editor (This.Kernel);
+         Child := Find_Current_Editor
+           (This.Kernel,
+            Only_If_Focused => Only_If_Focused);
       end if;
 
       if Child = null then
+         if Only_If_Focused then
+            return Nil_Editor_Buffer;
+         end if;
+
          if Open_View then
             Box := Open_File
               (This.Kernel, File, Project,
