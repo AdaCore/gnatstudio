@@ -850,7 +850,7 @@ class Variables_View(Dialog):
         """
         yield self._open_and_yield("open debugger variables window")
         GPS.execute_action("open debugger variables window")
-        self.view = GPS.MDI.get("Debugger Variables")
+        self.view = GPS.MDI.get("Variables")
         gps_not_null(self.view, "Variables view not found")
         self.tree = get_widgets_by_type(Gtk.TreeView, self.view.pywidget())
         self.tree = self.tree[0]

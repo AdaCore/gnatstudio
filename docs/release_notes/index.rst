@@ -78,7 +78,7 @@ Debugger
 The :guilabel:`Assembler` view highlights assembler instructions, registers and
 addresses. It has a local toolbar for quick access to disassembly operations.
 
-The :guilabel:`Debugger Variables` view allows to control format (display base) of
+The :guilabel:`Variables` view allows to control format (display base) of
 variables via the contextual menu.
 
 The :menuselection:`Debug --> Print` contextual menus have been reintroduced in

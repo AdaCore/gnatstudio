@@ -1384,7 +1384,7 @@ else:
         @staticmethod
         def display_variable_in_view(item):
             """
-            Adds a variable to the Debugger Variables view corresponding
+            Adds a variable to the Variables view corresponding
             to the given item if possible.
             """
             try:

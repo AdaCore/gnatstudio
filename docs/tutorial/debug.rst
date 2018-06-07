@@ -9,7 +9,7 @@ raised. Click on `Close` to close dialog.
 
 Now select the menu `Debug->Initialize->Sdc->sdc`: GPS automatically switches
 to the *Debug* perspective as shown in the menu `Window->Perspectives`, and new
-windows have appeared: the debugger variables window, the breakpoints view and
+windows have appeared: the variables window, the breakpoints view and
 the debugger console at the bottom, and the call stack window on the right.
 
 You can also look at the various debug menu item and tool bar buttons which are
@@ -68,4 +68,3 @@ Fix the line to `Last := Last + 1;`
 Save the file (:kbd:`Ctrl-S`); End the debug session: menu `Debug->Terminate`;
 Rebuild (press :kbd:`F4` key); Rerun (menu `Build->Run->sdc`, click on
 `Execute`): the program now completes as expected. Close the execution window.
-

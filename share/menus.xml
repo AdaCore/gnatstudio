@@ -625,7 +625,7 @@
       <button action='debug callstack fetch'/>
    </toolbar>
 
-   <toolbar id="Debugger Variables">
+   <toolbar id="Variables">
       <button action="debug tree clear"/>
       <button action="debug tree display expression"/>
       <button action="debug tree undisplay"/>
