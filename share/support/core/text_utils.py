@@ -580,31 +580,95 @@ def kill_line(location=None, count=1):
     the number of lines to delete. If greater than 1, then the whole lines are
     deleted, including newline characters.
     """
-
-    if not location:
-        location = GPS.EditorBuffer.get().current_view().cursor()
-
-    buffer = location.buffer()
-    start = location
-
     append = GPS.last_command() == "kill line"
 
-    # In case the current location points to a line terminator we just cut it
-    if count == 1 and start.get_char() == "\n":
-        buffer.cut(start, start, append)
-    else:
-        bol = start
-        for line in range(1, count + 1):
-            end = bol.end_of_line()
-            str = buffer.get_chars(start, end)
-            strip_str = str.rstrip()
-            if (count == 1 and
-               len(str) > 0 and
-               str[len(str) - 1] == '\n' and strip_str != ""):
-                end = end.forward_char(-1)
-            bol = end + 1
+    def kill_line_in_entry(entry):
+        """
+        Kills lines in a Gtk.Entry widget.
+        """
+        start = entry.get_position()
 
-        buffer.cut(start, end, append)
+        if count == 1 and entry.get_chars(start, start) == "\n":
+            entry.select_region(start, start)
+            entry.cut_clipboard()
+        else:
+            text = entry.get_chars(start, -1)
+            end = text.find('\n')
+            text = entry.get_chars(start, end)
+            GPS.Clipboard.copy(text, append=append)
+            entry.delete_text(start, end)
+
+    def kill_line_in_text_view(text_view):
+        """
+        Kills lines in a Gtk.TextView widget.
+        """
+        text_buffer = text_view.get_buffer()
+        start = text_buffer.get_iter_at_mark(text_buffer.get_insert())
+        eol = start.copy()
+
+        if count == 1 and text_buffer.get_text(start, eol, False) == "\n":
+            text_buffer.cut(start, start, append)
+        else:
+            for line in range(1, count + 1):
+                eol.forward_to_line_end()
+                text = text_buffer.get_text(start, eol, False)
+                strip_text = text.rstrip()
+                if (count == 1 and
+                   len(text) > 0 and
+                   text[len(text) - 1] == '\n' and strip_text != ""):
+                        eol = eol.backward_char()
+            eol.forward_char()
+
+        text = text_buffer.get_text(start, eol, include_hidden_chars=False)
+        GPS.Clipboard.copy(text, append=append)
+        text_buffer.delete(start, eol)
+
+    def kill_line_in_editor_buffer(location):
+        """
+        Kills lines in a GPS.EditorBuffer, starting from the given location.
+        """
+
+        buffer = location.buffer()
+        start = location
+
+        # In case the current location points to a line terminator we just
+        # cut it.
+        if count == 1 and start.get_char() == "\n":
+            buffer.cut(start, start, append)
+        else:
+            bol = start
+            for line in range(1, count + 1):
+                end = bol.end_of_line()
+                str = buffer.get_chars(start, end)
+                strip_str = str.rstrip()
+                if (count == 1 and
+                   len(str) > 0 and
+                   str[len(str) - 1] == '\n' and strip_str != ""):
+                        end = end.forward_char(-1)
+                bol = end + 1
+
+            buffer.cut(start, end, append)
+
+    if not location:
+        buffer = GPS.EditorBuffer.get(only_if_focused=True)
+
+        # Check if an editor is focused when no location is given.
+        # If it's the case, kill the lines this editor.
+        # Otherwise, check if the currently focused widget is a Gtk.Entry
+        # or a Gtk.TextView.
+        if buffer:
+            location = buffer.current_view().cursor()
+            kill_line_in_editor_buffer(location)
+        else:
+            focused_widget = get_focused_widget()
+
+            if isinstance(focused_widget, Gtk.Entry):
+                kill_line_in_entry(focused_widget)
+            elif isinstance(focused_widget, Gtk.TextView):
+                kill_line_in_text_view(focused_widget)
+    else:
+        kill_line_in_editor_buffer(location)
+
 
 ################################################
 # Moving the cursor
@@ -1461,7 +1525,7 @@ GPS.parse_xml("""
       this command is executed after a repeat_next command, the whole
       line is deleted to provide a more intuitive behavior.
       </description>
-      <filter id="Source editor" />
+      <filter id="is_text_widget" />
       <shell lang="python">
 if $repeat == 1: text_utils.kill_line(None, $remaining+1)
       </shell>

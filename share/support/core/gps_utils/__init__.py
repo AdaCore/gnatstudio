@@ -546,3 +546,8 @@ def get_gnat_driver_cmd():
     """
     target = GPS.get_target()
     return '{}-gnat'.format(target) if target else 'gnat'
+
+
+GPS.parse_xml("""
+<filter name="is_text_widget" shell_lang="python"
+        shell_cmd="gps_utils.filter_text_actions(GPS.current_context())" />""")
