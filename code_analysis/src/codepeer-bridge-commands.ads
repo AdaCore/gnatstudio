@@ -39,6 +39,7 @@ package CodePeer.Bridge.Commands is
 
    procedure Audit_Trail
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
@@ -51,6 +52,7 @@ package CodePeer.Bridge.Commands is
 
    procedure Add_Audit_Record_V4_5_6
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;

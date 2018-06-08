@@ -23,6 +23,7 @@ package body CodePeer.Bridge.Commands is
 
    procedure Audit_Trail_V4_5_6
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
@@ -46,6 +47,7 @@ package body CodePeer.Bridge.Commands is
 
    procedure Add_Audit_Record_V4_5_6
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
@@ -55,7 +57,7 @@ package body CodePeer.Bridge.Commands is
    is
       Database_Node  : XML_Utils.Node_Ptr :=
                          Create_Database_Node
-                           (Server_URL          => "",
+                           (Server_URL          => Server_URL,
                             Output_Directory    => Output_Directory,
                             DB_Directory        => DB_Directory,
                             Message_Patterns    => Message_Patterns,
@@ -104,6 +106,7 @@ package body CodePeer.Bridge.Commands is
 
    procedure Audit_Trail
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
@@ -116,6 +119,7 @@ package body CodePeer.Bridge.Commands is
          when 4 | 5 | 6 =>
             Audit_Trail_V4_5_6
               (Command_File_Name,
+               Server_URL,
                Output_Directory,
                DB_Directory,
                Message_Patterns,
@@ -132,6 +136,7 @@ package body CodePeer.Bridge.Commands is
 
    procedure Audit_Trail_V4_5_6
      (Command_File_Name   : Virtual_File;
+      Server_URL          : String;
       Output_Directory    : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
@@ -142,7 +147,7 @@ package body CodePeer.Bridge.Commands is
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            Create_Database_Node
-                             (Server_URL          => "",
+                             (Server_URL          => Server_URL,
                               Output_Directory    => Output_Directory,
                               DB_Directory        => DB_Directory,
                               Message_Patterns    => Message_Patterns,
