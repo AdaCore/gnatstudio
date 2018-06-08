@@ -30,6 +30,7 @@ with Glib;
 private with Glib.Main;
 private with Gdk.RGBA;
 with Gtk.Tree_Model;
+with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_Row_Reference;
 
 package GPS.Location_View.Listener is
@@ -154,6 +155,9 @@ private
       --  List of message rows was requested to be removed. It is used to don't
       --  emit 'row_removed' signal for individual messages when file row is
       --  removed too.
+
+      Sorted_Model   : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
+      --  The model sorted by the Importance column
    end record;
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class);
