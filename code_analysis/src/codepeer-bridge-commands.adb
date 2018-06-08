@@ -32,6 +32,14 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version);
    --  Generates request of messages' audit trail in format version 4 and 5.
 
+   function Create_Database_Node
+     (Server_URL          : String;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr;
+   --  Creates "database" node for command file and fill common attributes.
+
    -----------------------------
    -- Add_Audit_Record_V4_5_6 --
    -----------------------------
@@ -46,9 +54,12 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version)
    is
       Database_Node  : XML_Utils.Node_Ptr :=
-                         new XML_Utils.Node'
-                               (Tag    => new String'("database"),
-                                others => <>);
+                         Create_Database_Node
+                           (Server_URL          => "",
+                            Output_Directory    => Output_Directory,
+                            DB_Directory        => DB_Directory,
+                            Message_Patterns    => Message_Patterns,
+                            Additional_Patterns => Additional_Patterns);
       Add_Audit_Node : constant XML_Utils.Node_Ptr :=
                          new XML_Utils.Node'
                                (Tag    => new String'("add_audit_record"),
@@ -58,21 +69,6 @@ package body CodePeer.Bridge.Commands is
    begin
       XML_Utils.Set_Attribute
         (Database_Node, "format", Supported_Format_Version'Image (Version));
-      XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory.Full_Name);
-      XML_Utils.Set_Attribute
-        (Database_Node, "db_directory", +DB_Directory.Full_Name);
-
-      if Message_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
-      end if;
-
-      if Additional_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node,
-            "additional_patterns", +Additional_Patterns.Full_Name);
-      end if;
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
@@ -145,9 +141,12 @@ package body CodePeer.Bridge.Commands is
       Version             : Supported_Format_Version)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
-                           new XML_Utils.Node'
-                             (Tag    => new String'("database"),
-                              others => <>);
+                           Create_Database_Node
+                             (Server_URL          => "",
+                              Output_Directory    => Output_Directory,
+                              DB_Directory        => DB_Directory,
+                              Message_Patterns    => Message_Patterns,
+                              Additional_Patterns => Additional_Patterns);
       Audit_Trail_Node : constant XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
                              (Tag    => new String'("audit_trail"),
@@ -166,21 +165,6 @@ package body CodePeer.Bridge.Commands is
 
       XML_Utils.Set_Attribute
         (Database_Node, "format", Supported_Format_Version'Image (Version));
-      XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory.Full_Name);
-      XML_Utils.Set_Attribute
-        (Database_Node, "db_directory", +DB_Directory.Full_Name);
-
-      if Message_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
-      end if;
-
-      if Additional_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node,
-            "additional_patterns", +Additional_Patterns.Full_Name);
-      end if;
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
@@ -193,6 +177,45 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
    end Audit_Trail_V4_5_6;
+
+   --------------------------
+   -- Create_Database_Node --
+   --------------------------
+
+   function Create_Database_Node
+     (Server_URL          : String;
+      Output_Directory    : Virtual_File;
+      DB_Directory        : Virtual_File;
+      Message_Patterns    : Virtual_File;
+      Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr is
+   begin
+      return Database_Node : constant XML_Utils.Node_Ptr
+        := new XML_Utils.Node'
+          (Tag    => new String'("database"),
+           others => <>)
+      do
+         if Server_URL /= "" then
+            XML_Utils.Set_Attribute (Database_Node, "server_url", Server_URL);
+
+         else
+            XML_Utils.Set_Attribute
+              (Database_Node, "output_directory", +Output_Directory.Full_Name);
+            XML_Utils.Set_Attribute
+              (Database_Node, "db_directory", +DB_Directory.Full_Name);
+         end if;
+
+         if Message_Patterns /= No_File then
+            XML_Utils.Set_Attribute
+              (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
+         end if;
+
+         if Additional_Patterns /= No_File then
+            XML_Utils.Set_Attribute
+              (Database_Node,
+               "additional_patterns", +Additional_Patterns.Full_Name);
+         end if;
+      end return;
+   end Create_Database_Node;
 
    ----------------
    -- Inspection --
@@ -211,9 +234,12 @@ package body CodePeer.Bridge.Commands is
       Maximum_Version      : Format_Version)
    is
       Database_Node   : XML_Utils.Node_Ptr :=
-                          new XML_Utils.Node'
-                            (Tag    => new String'("database"),
-                             others => <>);
+                         Create_Database_Node
+                           (Server_URL          => Server_URL,
+                            Output_Directory    => Output_Directory,
+                            DB_Directory        => DB_Directory,
+                            Message_Patterns    => Message_Patterns,
+                            Additional_Patterns => Additional_Patterns);
       Inspection_Node : constant XML_Utils.Node_Ptr :=
                           new XML_Utils.Node'
                             (Tag    => new String'("inspection"),
@@ -224,27 +250,6 @@ package body CodePeer.Bridge.Commands is
         (Database_Node,
          "maximum_format",
          Format_Version'Image (Maximum_Version));
-
-      if Server_URL /= "" then
-         XML_Utils.Set_Attribute (Database_Node, "server_url", Server_URL);
-
-      else
-         XML_Utils.Set_Attribute
-           (Database_Node, "output_directory", +Output_Directory.Full_Name);
-         XML_Utils.Set_Attribute
-           (Database_Node, "db_directory", +DB_Directory.Full_Name);
-      end if;
-
-      if Message_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
-      end if;
-
-      if Additional_Patterns /= No_File then
-         XML_Utils.Set_Attribute
-           (Database_Node,
-            "additional_patterns", +Additional_Patterns.Full_Name);
-      end if;
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
