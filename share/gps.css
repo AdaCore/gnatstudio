@@ -20,9 +20,18 @@
 @define-color error-color mix(@theme_base_color, red, 0.5);
 @define-color warning-color mix(@theme_base_color, darkorange, 0.9);
 
+@define-color entry_color_two @editor_bg_color;
+
 /*********************
  * General
  *********************/
+
+* {
+   /* Reduce the size of the scroll arrows in notebooks */
+   -GtkWidget-scroll-arrow-hlength: 8;
+   -GtkWidget-scroll-arrow-vlength: 8;
+   -GtkNotebook-arrow-spacing: 0;
+}
 
 .view, .menu, column-header .button, GtkListBox, GtkFlowBox {
    background-color: @theme_base_color;
@@ -32,15 +41,19 @@
    background-color: @editor_bg_color;
 }
 
-* {
-   /* Reduce the size of the scroll arrows in notebooks */
-   -GtkWidget-scroll-arrow-hlength: 8;
-   -GtkWidget-scroll-arrow-vlength: 8;
-   -GtkNotebook-arrow-spacing: 0;
-}
+/*********************
+ * Entries
+ *********************/
 
-GtkComboBox .button {
-   border-width: 0px;
+.entry, .entry.multiline GtkTextView.view {
+   background-image: -gtk-gradient (linear,
+                                   0 0, 0 0.5,
+                                   from(@entry_color_one),
+                                   to(@entry_color_two));
+   border-color: @popup_border_color;
+   border-radius: 0px;
+   border-width: 1px;
+
 }
 
 /*********************
@@ -396,7 +409,7 @@ GtkDialog {
    background: @notebook_background;
 }
 
-.toolbar GtkButton {
+.toolbar .button {
   padding: 4px;
 }
 

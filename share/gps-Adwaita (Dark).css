@@ -17,3 +17,5 @@
 @define-color popup_border_color shade (@theme_base_color, 0.7);
 
 @define-color learn-items-color shade(@theme_base_color, 1.1);
+
+@define-color entry_color_one shade(@editor_bg_color, 0.9);
