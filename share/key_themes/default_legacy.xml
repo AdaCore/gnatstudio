@@ -53,8 +53,5 @@
   <key action="Global Search" >primary-u</key>
   <key action="Global Search in context: Entities">primary-t</key>
 
-  <key action="Complete identifier">primary-slash</key>
-  <key action="Complete identifier (advanced)">primary-space</key>
-
   <key action="exit">primary-q</key>
 </GPS>
