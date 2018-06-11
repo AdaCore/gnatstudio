@@ -22,6 +22,10 @@
 
 @define-color entry_color_two @editor_bg_color;
 
+@define-color button_bg_color @editor_bg_color;
+@define-color active_button_bg_color_one shade(@button_bg_color, 0.85);
+@define-color active_button_bg_color_two shade(@button_bg_color, 0.9);
+
 /*********************
  * General
  *********************/
@@ -31,6 +35,9 @@
    -GtkWidget-scroll-arrow-hlength: 8;
    -GtkWidget-scroll-arrow-vlength: 8;
    -GtkNotebook-arrow-spacing: 0;
+   icon-shadow: none;
+   text-shadow: none;
+   box-shadow: none;
 }
 
 .view, .menu, column-header .button, GtkListBox, GtkFlowBox {
@@ -51,9 +58,48 @@
                                    from(@entry_color_one),
                                    to(@entry_color_two));
    border-color: @popup_border_color;
-   border-radius: 0px;
-   border-width: 1px;
+}
 
+/*********************
+ * Buttons and Combos
+ *********************/
+
+.button
+{
+   background: @button_bg_color;
+   border-width: 1px;
+   border-color: @popup_border_color;
+}
+
+.toolbar .button {
+  padding: 4px;
+  border-width: 0px;
+  background: transparent;
+}
+
+.gps-local-toolbar .button, .dialog-views-button-boxes .button,
+.completion.search .button
+ {
+   background: transparent;
+   border-radius: 2px;
+   border-color: transparent;
+}
+
+.button:link {
+   background-color: transparent;
+}
+
+.button:link:hover {
+   color: @theme_selected_bg_color;
+}
+
+.button:active, .button:checked,
+.completion.search .button:active, .completion.search .button:checked{
+   background-image: -gtk-gradient (linear,
+                                   0 0, 0 0.5,
+                                   from(@active_button_bg_color_one),
+                                   to(@active_button_bg_color_two));
+   border-color: @popup_border_color;
 }
 
 /*********************
@@ -75,12 +121,14 @@ GtkDialog > GtkBox {
 GtkDialog {
    -GtkDialog-content-area-border: 0px;
    -GtkDialog-content-area-spacing: 0px;
-   -GtkDialog-action-area-border: 0px;
+   -GtkDialog-action-area-border: 3px;
    border-width: 0px;
 }
 
 .dialog-action-box, .dialog .buttonbox {
    background-color: @notebook_background;
+   border-width: 0px;
+   padding: 3px;
 }
 
 /*************
@@ -401,16 +449,12 @@ GtkDialog {
    background-color: @scrollbar_slider_color;
 }
 
-/**********************
- * Toolbars
- **********************/
+/***************************
+ * Toolbars and Button Boxes
+ ***************************/
 
 .toolbar {
    background: @notebook_background;
-}
-
-.toolbar .button {
-  padding: 4px;
 }
 
 /* Let's condense things in the local toolbars of the views */

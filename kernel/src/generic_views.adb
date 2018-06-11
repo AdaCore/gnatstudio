@@ -26,6 +26,7 @@ with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
@@ -739,9 +740,10 @@ package body Generic_Views is
       is
          use Filter_Panels;
 
-         Focus_Widget   : Gtk_Widget;
-         Finalized_View : Gtk_Widget;
-         Abstract_View  : Abstract_View_Access;
+         Focus_Widget     : Gtk_Widget;
+         Finalized_View   : Gtk_Widget;
+         Abstract_View    : Abstract_View_Access;
+         Button_Box_Frame : Gtk_Frame;
       begin
          if Reuse_If_Exist then
             Find (Kernel, Child, View);
@@ -810,13 +812,16 @@ package body Generic_Views is
 
          --  Create the button box area at the bottom
 
+         Gtk_New (Button_Box_Frame);
+         View.Pack_End (Button_Box_Frame, Expand => False);
+         Get_Style_Context (Button_Box_Frame).Add_Class
+           ("dialog-action-box");
+
          Gtk_New
            (Abstract_View.Button_Box,
             Orientation_Horizontal);
-         Get_Style_Context (Abstract_View.Button_Box).Add_Class
-           ("dialog-action-box");
          Abstract_View.Button_Box.Set_Layout (Buttonbox_End);
-         View.Pack_End (Abstract_View.Button_Box, Expand => False);
+         Button_Box_Frame.Add (Abstract_View.Button_Box);
 
          --  Let the view create its own buttons if needed
          View.Create_Buttons_Area (Abstract_View.Button_Box);
