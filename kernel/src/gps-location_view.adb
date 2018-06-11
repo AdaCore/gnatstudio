@@ -1780,6 +1780,7 @@ package body GPS.Location_View is
 
       Selection := View.View.Get_Selection;
       Selection.Get_Selected_Rows (Model, List);
+      Selection.Unselect_All;
 
       if Model = Null_Gtk_Tree_Model
         or else List = Gtk_Tree_Path_List.Null_List
