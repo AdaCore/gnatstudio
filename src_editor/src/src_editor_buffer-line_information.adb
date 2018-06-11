@@ -1462,8 +1462,7 @@ package body Src_Editor_Buffer.Line_Information is
             --  Update selection context when message
             --  information was associated with Line_Info.
 
-            Context := Buffer.Kernel.New_Context
-              (Src_Editor_Module_Id);
+            Context := Buffer.Kernel.Get_Current_Context;
             Set_Messages_Information
               (Context, (1 => Line_Info.Message.Message));
             Buffer.Kernel.Context_Changed (Context);
@@ -1496,8 +1495,6 @@ package body Src_Editor_Buffer.Line_Information is
                      Find_Line_Info_With_Type
                        (Line_Infos => Line_Infos,
                         Info_Type  => On_Line_Number);
-      Context    : Selection_Context;
-      Ignore     : Command_Return_Type;
    begin
       --  Execute the first line information's action that is related with
       --  editor line numbers.
@@ -1515,14 +1512,8 @@ package body Src_Editor_Buffer.Line_Information is
       --  numbers, execute the default one.
 
       Trace (Me, "Execute default action for click on line number");
-      Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
-      Set_File_Information
-        (Context,
-         Files     => (1 => Buffer.Filename),
-         Line      => Integer (Line),
-         File_Line => Natural (Buffer.Line_Data (Line).File_Line),
-         Column    => 0);
-      Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
+      Execute_Default_Line_Number_Click
+        (Buffer.Kernel, Buffer.Kernel.Get_Current_Context);
    end On_Click_On_Line_Number;
 
    -----------------------------

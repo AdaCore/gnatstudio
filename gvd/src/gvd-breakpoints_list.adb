@@ -126,19 +126,15 @@ package body GVD.Breakpoints_List is
 
    type Breakpoint_Command_Mode is (Set, Unset);
    type Set_Breakpoint_Command_At_Line is new Root_Command with record
-      File     : GNATCOLL.VFS.Virtual_File;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Line     : Editable_Line_Type;
-      Mode     : Breakpoint_Command_Mode;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : Breakpoint_Command_Mode;
    end record;
    overriding function Execute
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type;
 
    function Create_Set_Breakpoint_Command
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Mode   : Breakpoint_Command_Mode;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Editable_Line_Type) return Command_Access;
+      Mode   : Breakpoint_Command_Mode) return Command_Access;
    --  Create a new instance of the command that sets or removes a breakpoint
    --  at a specific location.
 
@@ -282,13 +278,11 @@ package body GVD.Breakpoints_List is
 
    function Create_Set_Breakpoint_Command
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Mode   : Breakpoint_Command_Mode;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Editable_Line_Type) return Command_Access is
+      Mode   : Breakpoint_Command_Mode) return Command_Access is
    begin
       return new Set_Breakpoint_Command_At_Line'
         (Root_Command with
-         Kernel => Kernel, Mode => Mode, File => File, Line => Line);
+         Kernel => Kernel, Mode => Mode);
    end Create_Set_Breakpoint_Command;
 
    ------------------
@@ -580,15 +574,22 @@ package body GVD.Breakpoints_List is
    overriding function Execute
      (Self : access Set_Breakpoint_Command_At_Line) return Command_Return_Type
    is
+      Context : constant Selection_Context := Self.Kernel.Get_Current_Context;
    begin
       case Self.Mode is
          when Set =>
             Break_Source
-              (Self.Kernel, File => Self.File, Line => Self.Line);
+              (Self.Kernel,
+               File => GPS.Kernel.Contexts.File_Information (Context),
+               Line => Editable_Line_Type
+                 (GPS.Kernel.Contexts.Line_Information (Context)));
 
          when Unset =>
             Unbreak_Source
-              (Self.Kernel, File => Self.File, Line => Self.Line);
+              (Self.Kernel,
+               File => GPS.Kernel.Contexts.File_Information (Context),
+               Line => Editable_Line_Type
+                 (GPS.Kernel.Contexts.Line_Information (Context)));
       end case;
 
       return Success;
@@ -1215,9 +1216,7 @@ package body GVD.Breakpoints_List is
             Message            => Create (Message_Access (Msg)),
             Associated_Command => Create_Set_Breakpoint_Command
               (Kernel,
-               Mode => Unset,
-               File => File,
-               Line => Line)));
+               Mode => Unset)));
 
       if not B.Enabled then
          Msg.Set_Highlighting
