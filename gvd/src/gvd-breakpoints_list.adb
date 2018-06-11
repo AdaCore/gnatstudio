@@ -679,6 +679,9 @@ package body GVD.Breakpoints_List is
             Value : constant JSON_Value := Create_Object;
          begin
             Value.Set_Field ("type", Breakpoint_Type'Image (B.The_Type));
+            if B.The_Type = Other then
+               Value.Set_Field ("type_name", To_String (B.The_Type_Name));
+            end if;
             Value.Set_Field
               ("disposition",
                Breakpoint_Disposition'Image (B.Disposition));
@@ -732,8 +735,9 @@ package body GVD.Breakpoints_List is
 
       for Index in 1 .. Length (Values) loop
          declare
-            Item : constant JSON_Value := Get (Values, Index);
-            Loc  : Location_Marker     := No_Marker;
+            Item     : constant JSON_Value := Get (Values, Index);
+            Loc      : Location_Marker     := No_Marker;
+            The_Type : Breakpoint_Type;
          begin
             if String'(Item.Get ("line")) /= ""
               and then JSON_Value'(Item.Get ("file")) /= JSON_Null
@@ -744,23 +748,28 @@ package body GVD.Breakpoints_List is
                   Column => 1);
             end if;
 
+            The_Type := Breakpoint_Type'Value (Item.Get ("type"));
             B :=
-              (Num         => Module.Breakpoints.Dummy_Id,
-               Trigger     => Write,
-               The_Type    => Breakpoint_Type'Value (Item.Get ("type")),
-               Disposition => Breakpoint_Disposition'Value
+              (Num           => Module.Breakpoints.Dummy_Id,
+               Trigger       => Write,
+               The_Type      => The_Type,
+               The_Type_Name => (if The_Type = Other
+                                 then To_Unbounded_String
+                                   (String'(Item.Get ("type_name")))
+                                else Null_Unbounded_String),
+               Disposition   => Breakpoint_Disposition'Value
                  (Item.Get ("disposition")),
-               Enabled     => Item.Get ("enabled"),
-               Expression  => Item.Get ("expression"),
-               Except      => Item.Get ("exception"),
-               Subprogram  => Item.Get ("subprogram"),
-               Location    => Loc,
-               Address     => String_To_Address (Item.Get ("address")),
-               Ignore      => Item.Get ("ignore"),
-               Condition   => Item.Get ("condition"),
-               Commands    => Item.Get ("command"),
-               Scope       => Scope_Type'Value (Item.Get ("scope")),
-               Action      => Action_Type'Value (Item.Get ("action")));
+               Enabled       => Item.Get ("enabled"),
+               Expression    => Item.Get ("expression"),
+               Except        => Item.Get ("exception"),
+               Subprogram    => Item.Get ("subprogram"),
+               Location      => Loc,
+               Address       => String_To_Address (Item.Get ("address")),
+               Ignore        => Item.Get ("ignore"),
+               Condition     => Item.Get ("condition"),
+               Commands      => Item.Get ("command"),
+               Scope         => Scope_Type'Value (Item.Get ("scope")),
+               Action        => Action_Type'Value (Item.Get ("action")));
 
             Module.Breakpoints.Dummy_Id := Module.Breakpoints.Dummy_Id + 1;
             Property.Breakpoints.Append (B);

@@ -86,6 +86,11 @@ package body GVD.Scripts is
                Data.Set_Return_Value (String'("breakpoint"));
             when Watchpoint =>
                Data.Set_Return_Value (String'("watchpoint"));
+            when Catchpoint =>
+               Data.Set_Return_Value (String'("catchpoint"));
+            when Other =>
+               Data.Set_Return_Value
+                 (To_String (Get_Breakpoint (Data.Nth_Arg (1)).The_Type_Name));
          end case;
 
       elsif Command = "enabled" then

@@ -3474,6 +3474,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       use Token_Lists;
       Tokens : Token_List_Controller;
       C      : Token_Lists.Cursor;
+      Tmp    : Token_Lists.Cursor;
 
       procedure Read_Bkpt;
 
@@ -3625,7 +3626,25 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          C := Find_Identifier (C, "type");
          Next (C, 2);
-         B.The_Type := Breakpoint_Type'Value (Element (C).Text.all);
+         if Index (Element (C).Text.all, "breakpoint") in
+           Element (C).Text.all'Range
+         then
+            B.The_Type := Breakpoint;
+
+         elsif Index (Element (C).Text.all, "watchpoint") in
+           Element (C).Text.all'Range
+         then
+            B.The_Type := Watchpoint;
+
+         elsif Index
+           (Element (C).Text.all, "catchpoint") in Element (C).Text.all'Range
+         then
+            B.The_Type := Catchpoint;
+
+         else
+            B.The_Type := Other;
+            B.The_Type_Name := To_Unbounded_String (Element (C).Text.all);
+         end if;
 
          C := Find_Identifier (C, "disp");
          Next (C, 2);
@@ -3644,21 +3663,24 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Next (C, 2);
          B.Enabled := Element (C).Text.all = "y";
 
-         C := Find_Identifier (C, "addr");
-         Next (C, 2);
-         if Element (C).Text.all = "<MULTIPLE>" then
-            Multiple := True;
-         else
-            B.Address := String_To_Address (Element (C).Text.all);
-         end if;
+         Tmp := Find_Identifier (C, "addr");
+         if Tmp /= No_Element then
+            C := Tmp;
+            Next (C, 2);
+            if Element (C).Text.all = "<MULTIPLE>" then
+               Multiple := True;
+            else
+               B.Address := String_To_Address (Element (C).Text.all);
+            end if;
 
-         --  ??? missing Trigger & Expression for watchpoints
+            --  ??? missing Trigger & Expression for watchpoints
 
-         Next (C, 2);
-         if not Multiple
-           and then B.The_Type = Breakpoint
-         then
-            Read_Breakpoint_File;
+            Next (C, 2);
+            if not Multiple
+              and then B.The_Type = Breakpoint
+            then
+               Read_Breakpoint_File;
+            end if;
          end if;
 
          loop

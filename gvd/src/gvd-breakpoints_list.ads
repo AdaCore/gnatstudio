@@ -27,7 +27,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 package GVD.Breakpoints_List is
 
-   type Breakpoint_Type is (Breakpoint, Watchpoint);
+   type Breakpoint_Type is (Breakpoint, Watchpoint, Catchpoint, Other);
    --  Types of breakpoints
 
    type Breakpoint_Disposition is (Delete, Disable, Keep);
@@ -97,8 +97,10 @@ package GVD.Breakpoints_List is
       Num         : Breakpoint_Identifier := GVD.Types.No_Breakpoint;
       --  breakpoint number (internal to the debugger)
 
-      The_Type    : Breakpoint_Type := Breakpoint;
+      The_Type      : Breakpoint_Type := Breakpoint;
       --  The type of breakpoint
+      The_Type_Name : Ada.Strings.Unbounded.Unbounded_String;
+      --  The name of the breakpoint's type if the type is Other
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached

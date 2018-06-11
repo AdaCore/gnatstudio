@@ -471,6 +471,11 @@ package body GVD.Breakpoints is
                Glib.Values.Init_Set_String (Values (4), "break");
             when Watchpoint =>
                Glib.Values.Init_Set_String (Values (4), "watch");
+            when Catchpoint =>
+               Glib.Values.Init_Set_String (Values (4), "catch");
+            when Other =>
+               Glib.Values.Init_Set_String
+                 (Values (4), To_String (Br.The_Type_Name));
          end case;
          Glib.Values.Init_Set_String
            (Values (5), To_Lower (Br.Disposition'Img));
