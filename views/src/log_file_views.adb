@@ -17,6 +17,7 @@
 
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Fixed;
 
 with Glib;                      use Glib;
@@ -58,6 +59,7 @@ with GPS.Search;                use GPS.Search;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
+with Default_Preferences.Enums;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Generic_Views;
 with Glib_Values_Utils;         use Glib_Values_Utils;
@@ -76,8 +78,16 @@ package body Log_File_Views is
       Handle : not null Logger;
       Msg    : in out Msg_Strings.XString);
 
-   type Log_View_Record is new Interactive_Console_Record with null record;
-   type Log_View is access all Interactive_Console_Record'Class;
+   package Preferences_Map is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, Boolean_Preference);
+
+   type Log_View_Record is new Interactive_Console_Record with record
+      Is_Filtering : Boolean := False;
+      --  Do we need a filtration of messages
+      Preferences  : Preferences_Map.Map;
+      --  Map of preferences which control filtration
+   end record;
+   type Log_View is access all Log_View_Record'Class;
 
    function Initialize (View : access Log_View_Record'Class) return Gtk_Widget;
    --  Create a new log view
@@ -109,7 +119,9 @@ package body Log_File_Views is
 
    package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
-   procedure Register_Preferences (Kernel : Kernel_Handle);
+   procedure Register_Preferences
+     (Kernel : Kernel_Handle;
+      View   : access Log_View_Record'Class);
    --  Creates preference for each trace
 
    type Save_Command is new Interactive_Command with null record;
@@ -194,9 +206,16 @@ package body Log_File_Views is
 
    Registered             : Boolean := False;
    Preferences_Registered : Boolean := False;
-   Enable_Log_View        : Boolean_Preference := null;
    Lines                  : Strings.Vector;
    Kernel                 : Kernel_Handle;
+
+   type Log_View_Type is (Off, Only_When_Opened, Always);
+
+   package Log_View_Kind_Preferences is new
+     Default_Preferences.Enums.Generics (Log_View_Type);
+   use Log_View_Kind_Preferences;
+
+   Log_View_Preference : Log_View_Kind_Preferences.Preference;
 
    -------------------
    -- After_Message --
@@ -214,12 +233,25 @@ package body Log_File_Views is
       --  Do nothing if GPS is exiting or if the Enable_Log_View
       --  preference is set to False.
 
-      if (Kernel /= null and then Kernel.Is_In_Destruction)
-        or else
-        (Enable_Log_View = null
-           or else not Enable_Log_View.Get_Pref)
-      then
+      if Kernel /= null and then Kernel.Is_In_Destruction then
          return;
+      end if;
+
+      if Log_View_Preference /= null then
+         case Log_View_Type'(Log_View_Preference.Get_Pref) is
+            when Off =>
+               return;
+
+            when Only_When_Opened =>
+               if Generic_View.Retrieve_View
+                 (Log_File_Views.Kernel, False) = null
+               then
+                  return;
+               end if;
+
+            when Always =>
+               null;
+         end case;
       end if;
 
       declare
@@ -245,8 +277,10 @@ package body Log_File_Views is
      (View : access Log_View_Record'Class;
       Str  : String) is
    begin
-      if View.Is_Allowed (Str) then
-         View.Insert_UTF8 (Str);
+      if not View.Is_Filtering
+        or else View.Is_Allowed (Str)
+      then
+         View.Insert_UTF8 (Str, Show_Prompt => False);
       end if;
    end Append;
 
@@ -308,6 +342,15 @@ package body Log_File_Views is
       Initialize (Props, View.Kernel);
 
       Dummy := Props.Run;
+
+      View.Is_Filtering := False;
+      for Pref of View.Preferences loop
+         if not Pref.Get_Pref then
+            View.Is_Filtering := True;
+            exit;
+         end if;
+      end loop;
+
       View.Refresh;
       GPS.Search.Free (Props.Filter_Pattern);
       Props.Destroy;
@@ -331,7 +374,7 @@ package body Log_File_Views is
         Self.Kernel.Get_Preferences;
       C       : Preference_Cursor := Manager.Get_First_Reference;
       Set     : Sets.Set;
-      P       : Preference;
+      P       : Default_Preferences.Preference;
 
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
@@ -422,7 +465,7 @@ package body Log_File_Views is
    is
       Hook : access On_Pref_Changed;
    begin
-      Register_Preferences (View.Kernel);
+      Register_Preferences (View.Kernel, View);
 
       Initialize
         (View,
@@ -430,11 +473,12 @@ package body Log_File_Views is
          "",
          null,
          View.Kernel.all'Address,
-         Highlight    => null,
-         History_List => null,
-         ANSI_Support => True,
-         Key          => "",
-         Wrap_Mode    => Wrap_Char);
+         Highlight     => null,
+         History_List  => null,
+         ANSI_Support  => True,
+         Key           => "",
+         Wrap_Mode     => Wrap_Char,
+         Manage_Prompt => False);
 
       View.Enable_Prompt_Display (False);
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
@@ -444,7 +488,11 @@ package body Log_File_Views is
       Preferences_Changed_Hook.Add (Hook, Watch => View);
       Hook.Execute (View.Kernel, Pref => null);
 
-      Refresh (View);
+      if Log_View_Preference.Get_Pref /= Always then
+         Strings.Clear (Lines);
+      else
+         Refresh (View);
+      end if;
 
       return Gtk_Widget (View.Get_View);
    end Initialize;
@@ -572,7 +620,8 @@ package body Log_File_Views is
       return Boolean
    is
       S, E : Natural;
-      P    : Default_Preferences.Preference;
+      P    : Boolean_Preference;
+      C    : Preferences_Map.Cursor;
    begin
       S := Ada.Strings.Fixed.Index (Str, "[");
       if S < Str'First then
@@ -584,16 +633,12 @@ package body Log_File_Views is
          return True;
       end if;
 
-      P := View.Kernel.Get_Preferences.Get_Pref_From_Name
-        ("trace-log-" & Str (S + 1 .. E - 1));
-
-      if P = null
-        or else P.all not in Boolean_Preference_Record'Class
-      then
-         return True;
+      C := View.Preferences.Find (Str (S + 1 .. E - 1));
+      if Preferences_Map.Has_Element (C) then
+         P := Preferences_Map.Element (C);
       end if;
 
-      return Boolean_Preference (P).Get_Pref;
+      return P = null or else P.Get_Pref;
    end Is_Allowed;
 
    ----------------
@@ -707,7 +752,7 @@ package body Log_File_Views is
 
       Manager : constant Default_Preferences.Preferences_Manager :=
         Self.Kernel.Get_Preferences;
-      P       : Preference;
+      P       : Default_Preferences.Preference;
 
       Sort_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
@@ -746,9 +791,7 @@ package body Log_File_Views is
       View.Clear;
 
       for Str of Lines loop
-         if View.Is_Allowed (Str) then
-            View.Insert_UTF8 (Str);
-         end if;
+         View.Append (Str);
       end loop;
    end Refresh;
 
@@ -764,13 +807,20 @@ package body Log_File_Views is
       pragma Unreferenced (Kernel);
    begin
       if Pref = null
-        or else Pref = Preference (GPS.Kernel.Preferences.Default_Style)
-        or else Pref = Preference (GPS.Kernel.Preferences.Numbers_Style)
-        or else Pref = Preference (GPS.Kernel.Preferences.Types_Style)
-        or else Pref = Preference (GPS.Kernel.Preferences.Strings_Style)
-        or else Pref = Preference (GPS.Kernel.Preferences.Keywords_Style)
-        or else Pref = Preference (GPS.Kernel.Preferences.Bookmark_Color)
-        or else Pref = Preference (GPS.Kernel.Preferences.Comments_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Default_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Numbers_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Types_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Strings_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Keywords_Style)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Bookmark_Color)
+        or else Pref = Default_Preferences.Preference
+          (GPS.Kernel.Preferences.Comments_Style)
       then
          Self.View.Set_Foreground
            (Gtkada.Terminal.Black,
@@ -821,15 +871,16 @@ package body Log_File_Views is
    begin
       Log_File_Views.Kernel := Kernel_Handle (Kernel);
 
-      Enable_Log_View := Create
+      Log_View_Preference := Log_View_Kind_Preferences.Create
         (Get_Preferences (Kernel),
-         Path    => "Browsers:Display",
-         Name    => "Enable-Log-View",
-         Label   => "Enable the Log view",
-         Doc     => "Make the Log view available",
-         Default => True);
+         Path    => "Traces",
+         Name    => "Log-View-Type",
+         Label   => "Log collecting policy",
+         Doc     => "When the Log view collects messages",
+         Default => Only_When_Opened);
 
-      if not Enable_Log_View.Get_Pref then
+      if Log_View_Preference.Get_Pref = Off then
+         Strings.Clear (Lines);
          return;
       end if;
 
@@ -852,7 +903,9 @@ package body Log_File_Views is
    -- Register_Preferences --
    --------------------------
 
-   procedure Register_Preferences (Kernel : Kernel_Handle)
+   procedure Register_Preferences
+     (Kernel : Kernel_Handle;
+      View   : access Log_View_Record'Class)
    is
       Set : Sets.Set;
 
@@ -880,7 +933,7 @@ package body Log_File_Views is
          end if;
       end Process;
 
-      Dummy : Boolean_Preference;
+      Pref : Boolean_Preference;
    begin
       if Preferences_Registered then
          return;
@@ -891,8 +944,14 @@ package body Log_File_Views is
       GNATCOLL.Traces.For_Each_Handle (Process'Unrestricted_Access);
 
       for Item of Set loop
-         Dummy := Kernel.Get_Preferences.Create_Invisible_Pref
+         Pref := Kernel.Get_Preferences.Create_Invisible_Pref
            ("trace-log-" & Item, True, Label => Item);
+
+         View.Preferences.Insert (Item, Pref);
+
+         if not Pref.Get_Pref then
+            View.Is_Filtering := True;
+         end if;
       end loop;
    end Register_Preferences;
 

@@ -691,7 +691,7 @@
       <button action='MDL goto previous subsystem'/>
    </toolbar>
 
-   <toolbar id='Log View'>
+   <toolbar id='Log'>
       <button action='log save'/>
       <button action='log configure'/>
    </toolbar>

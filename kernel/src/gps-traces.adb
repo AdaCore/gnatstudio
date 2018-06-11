@@ -213,7 +213,10 @@ package body GPS.Traces is
       Focus_Widget  : Gtk_Widget;
       Group_Widget  : Dialog_Group_Widget;
       Doc_Label     : Gtk_Label;
-      pragma Unreferenced (Manager, Focus_Widget);
+      pragma Unreferenced (Focus_Widget);
+
+      Pref : constant access Preference_Record'Class :=
+        Get_Pref_From_Name (Manager, "Log-View-Type", False);
    begin
       Page_View := new Traces_Editor_Preferences_Page_View_Record;
       Dialog_Utils.Initialize (Page_View);
@@ -234,10 +237,27 @@ package body GPS.Traces is
          & "different categories."
          & ASCII.LF
          & "Don't hesitate to enable all the traces of a given category when "
-         & "you encounter bugs in a specific area of GPS (e.g: DEBUG).");
+         & "you encounter bugs in a specific area of GPS (e.g: DEBUG)."
+         & ASCII.LF
+         & "Also you can choose when the log view will collect messages.");
       Doc_Label.Set_Line_Wrap (True);
       Doc_Label.Set_Alignment (0.0, 0.5);
       Group_Widget.Append_Child (Doc_Label, Expand => False);
+
+      --  Add the Log view preference
+
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Group_Widget.Initialize
+        (Parent_View         => Page_View,
+         Group_Name          => "Log view",
+         Allow_Multi_Columns => False);
+
+      Group_Widget.Create_Child
+        (Widget    => Pref.Edit (Manager),
+         Label     => Pref.Get_Label,
+         Doc       => Pref.Get_Doc,
+         Child_Key => Pref.Get_Name,
+         Expand    => False);
 
       --  Add the 'Traces' editor group widget
 
