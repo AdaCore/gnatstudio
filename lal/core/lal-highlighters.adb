@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded;
 
 with Basic_Types;                      use Basic_Types;
 with GNATCOLL.VFS;
@@ -483,14 +484,17 @@ package body LAL.Highlighters is
       Last : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (To).End_Of_Line;
       Index : Libadalang.Lexer.Token_Data_Handlers.Token_Or_Trivia_Index;
-      Text : constant String := Buffer.Get_Chars (First, Last);
+      Text : aliased String := Buffer.Get_Chars (First, Last);
+      Input : constant Libadalang.Lexer.Lexer_Input :=
+        (Kind     => Libadalang.Lexer.Bytes_Buffer,
+         Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
+         Read_BOM => False,
+         Bytes    => Text'Unchecked_Access);
    begin
       Remove_Style (Buffer, From, To);
 
-      Libadalang.Lexer.Lex_From_Buffer
-        (Buffer      => Text,
-         Charset     => "utf-8",
-         Read_BOM    => False,
+      Libadalang.Lexer.Extract_Tokens
+        (Input,
          TDH         => Self.TDH,
          Diagnostics => Self.Diags,
          With_Trivia => True);
