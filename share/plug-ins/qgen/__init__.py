@@ -1255,10 +1255,11 @@ else:
             the model file that generated the file given as a parameter.
             Returns None if no such file was found.
             """
-            m_id = QGEN_Module.modeling_map.get_mdl_id(file)
-            for m in QGEN_Module.models:
-                if os.path.splitext(os.path.basename(m.path))[0] == m_id:
-                    return m
+            if QGEN_Module.modeling_map is not None:
+                m_id = QGEN_Module.modeling_map.get_mdl_id(file)
+                for m in QGEN_Module.models:
+                    if os.path.splitext(os.path.basename(m.path))[0] == m_id:
+                        return m
             return None
 
         @staticmethod
