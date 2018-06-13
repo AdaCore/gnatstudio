@@ -21,7 +21,6 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 

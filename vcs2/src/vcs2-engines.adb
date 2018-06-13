@@ -1577,6 +1577,21 @@ package body VCS2.Engines is
       end if;
    end Get_Tooltip_For_File;
 
+   -------------------------
+   -- Get_VCS_File_Status --
+   -------------------------
+
+   overriding function Get_VCS_File_Status
+     (VCS  : not null access VCS_Engine;
+      File : GNATCOLL.VFS.Virtual_File)
+      return VCS_File_Status
+   is
+      Props : constant VCS_File_Properties :=
+        VCS.File_Properties_From_Cache (File);
+   begin
+      return Props.Status;
+   end Get_VCS_File_Status;
+
    ----------------------------
    -- For_Each_File_In_Cache --
    ----------------------------

@@ -181,15 +181,21 @@ package GPS.VCS is
    function Get_Tooltip_For_File
      (VCS        : not null access Abstract_VCS_Engine;
       Dummy_File : GNATCOLL.VFS.Virtual_File)
-     return String is ("");
+      return String is ("");
    --  Return a description of the file's properties, suitable for display
    --  in tooltips.
+
+   function Get_VCS_File_Status
+     (VCS  : not null access Abstract_VCS_Engine;
+      File : GNATCOLL.VFS.Virtual_File)
+      return VCS_File_Status is (Status_Untracked);
+   --  A convenient getter
 
    function File_Properties_From_Cache
      (Self       : not null access Abstract_VCS_Engine;
       Dummy_File : Virtual_File)
-     return VCS_File_Properties
-     is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+      return VCS_File_Properties
+   is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
    --  Return the current known status of the file.
    --  By default, files are assumed to be "unmodified". Calling one of the
    --  Async_Fetch_Status_* procedures above will ensure that the proper status

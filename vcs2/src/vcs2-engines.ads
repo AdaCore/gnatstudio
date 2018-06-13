@@ -101,6 +101,7 @@ package VCS2.Engines is
      (Self      : not null access VCS_Repository;
       Project   : Project_Type)
       return not null Abstract_VCS_Engine_Access;
+
    overriding function Guess_VCS_For_Directory
      (Self      : not null access VCS_Repository;
       Directory : Virtual_File) return not null Abstract_VCS_Engine_Access;
@@ -314,7 +315,7 @@ package VCS2.Engines is
    overriding function File_Properties_From_Cache
      (Self    : not null access VCS_Engine;
       File    : Virtual_File)
-     return VCS_File_Properties;
+      return VCS_File_Properties;
    overriding procedure Set_Files_Status_In_Cache
      (Self    : not null access VCS_Engine;
       Files   : GNATCOLL.VFS.File_Array;
@@ -322,7 +323,11 @@ package VCS2.Engines is
    overriding function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine;
       File    : GNATCOLL.VFS.Virtual_File)
-     return String;
+      return String;
+   overriding function Get_VCS_File_Status
+     (VCS  : not null access VCS_Engine;
+      File : GNATCOLL.VFS.Virtual_File)
+      return VCS_File_Status;
 
    function Default_File_Status
      (Self    : not null access VCS_Engine)

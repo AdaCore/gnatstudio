@@ -57,6 +57,7 @@ with GPS.Kernel.Search;        use GPS.Kernel.Search;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Search;               use GPS.Search;
 with GPS.Search.GUI;           use GPS.Search.GUI;
+with GPS.VCS;                  use GPS.VCS;
 with GUI_Utils;                use GUI_Utils;
 with Src_Editor_Module;        use Src_Editor_Module;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -68,14 +69,16 @@ with Filter_Panels;            use Filter_Panels;
 package body Buffer_Views is
    Me : constant Trace_Handle := Create ("GPS.VIEWS.BUFFERS");
 
-   Icon_Name_Column : constant := 0;
+   File_Icon_Column : constant := 0;
    Name_Column      : constant := 1;
    Data_Column      : constant := 2;
+   VCS_Icon_Column  : constant := 3;
 
    Column_Types : constant GType_Array :=
-     (Icon_Name_Column => GType_String,
+     (File_Icon_Column => GType_String,
       Name_Column      => GType_String,
-      Data_Column      => GType_String);
+      Data_Column      => GType_String,
+      VCS_Icon_Column  => GType_String);
 
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
@@ -84,6 +87,7 @@ package body Buffer_Views is
    Show_Notebooks       : Boolean_Preference;
    Sort_Alphabetical    : Boolean_Preference;
    Hide_Empty_Notebooks : Boolean_Preference;
+   Show_Vcs_Status      : Boolean_Preference;
 
    type BV_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -103,7 +107,6 @@ package body Buffer_Views is
 
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Buffer_Tree_View;
-      File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
    overriding procedure Create_Menu
@@ -143,6 +146,17 @@ package body Buffer_Views is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences change
+
+   type On_VCS_Status_Changed is new Vcs_File_Status_Hooks_Function with record
+      View : access Buffer_View_Record'Class;
+   end record;
+   overriding procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : File_Sets.Set;
+      Props  : VCS_File_Properties);
+   --  Called when the vcs status of a file changed
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Refresh the contents of the Buffer view
@@ -497,6 +511,7 @@ package body Buffer_Views is
       P_Editors_Only   : constant Boolean := Editors_Only.Get_Pref;
       P_Show_Notebooks : constant Boolean := Show_Notebooks.Get_Pref;
       P_Hide_Empty     : constant Boolean := Hide_Empty_Notebooks.Get_Pref;
+      P_Show_VCS       : constant Boolean := Show_Vcs_Status.Get_Pref;
 
       Notebook_Index      : Integer := -1;
       Notebook_Store_Iter : Gtk_Tree_Iter := Null_Iter;
@@ -531,13 +546,16 @@ package body Buffer_Views is
                   --  Single child ?
                   Set_And_Clear
                     (V.Tree.Model, Notebook_Store_Iter,
-                     (Icon_Name_Column, Name_Column, Data_Column),
+                     (File_Icon_Column, Name_Column,
+                      Data_Column, VCS_Icon_Column),
                      (1 => As_String
-                          (V.Tree.Model.Get_String (Iter2, Icon_Name_Column)),
+                        (V.Tree.Model.Get_String (Iter2, File_Icon_Column)),
                       2 => As_String
                         (V.Tree.Model.Get_String (Iter2, Name_Column)),
                       3 => As_String
-                        (V.Tree.Model.Get_String (Iter2, Data_Column))));
+                        (V.Tree.Model.Get_String (Iter2, Data_Column)),
+                      4 => As_String
+                        (V.Tree.Model.Get_String (Iter2, VCS_Icon_Column))));
 
                   V.Tree.Model.Remove (Iter2);
                else
@@ -557,8 +575,11 @@ package body Buffer_Views is
       ----------------
 
       procedure Show_Child (Parent : Gtk_Tree_Iter; Child : MDI_Child) is
-         Name : constant String := Get_Short_Title (Child);
-         Iter : Gtk_Tree_Iter;
+         Name     : constant String := Get_Short_Title (Child);
+         Iter     : Gtk_Tree_Iter;
+         File     : Virtual_File;
+         VCS      : Abstract_VCS_Engine_Access;
+         VCS_Icon : Unbounded_String;
       begin
          if not P_Editors_Only
            or else Is_Source_Box (Child)
@@ -570,12 +591,22 @@ package body Buffer_Views is
                   (As_String (Untitled), As_String (Untitled)));
 
             else
+               if P_Show_VCS then
+                  File :=
+                    Create_From_Base (Filesystem_String (Get_Title (Child)));
+                  VCS := Guess_VCS_For_Directory (V.Kernel.VCS, Dir (File));
+                  VCS_Icon :=
+                    VCS.Get_Display (VCS.Get_VCS_File_Status (File)).Icon_Name;
+               end if;
+
                Set_And_Clear
                  (V.Tree.Model, Iter,
-                  (Icon_Name_Column, Name_Column, Data_Column),
+                  (File_Icon_Column, Name_Column,
+                   Data_Column, VCS_Icon_Column),
                   (1 => As_String (Get_Icon_Name (Child)),
                    2 => As_String (Name),
-                   3 => As_String (Get_Title (Child))));
+                   3 => As_String (Get_Title (Child)),
+                   4 => As_String (To_String (VCS_Icon))));
             end if;
 
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
@@ -660,6 +691,7 @@ package body Buffer_Views is
       Append_Menu (Menu, View.Kernel, Sort_Alphabetical);
       Append_Menu (Menu, View.Kernel, Show_Notebooks);
       Append_Menu (Menu, View.Kernel, Hide_Empty_Notebooks);
+      Append_Menu (Menu, View.Kernel, Show_Vcs_Status);
    end Create_Menu;
 
    --------------------
@@ -724,12 +756,12 @@ package body Buffer_Views is
    function Initialize
      (View   : access Buffer_View_Record'Class) return Gtk_Widget
    is
-      Tooltip   : Tooltips.Tooltips_Access;
-      Scrolled  : Gtk_Scrolled_Window;
-      Col       : Gtk_Tree_View_Column;
-      Text      : Gtk_Cell_Renderer_Text;
-      Icon      : Gtk_Cell_Renderer_Pixbuf;
-      Dummy     : Gint;
+      Tooltip  : Tooltips.Tooltips_Access;
+      Scrolled : Gtk_Scrolled_Window;
+      Col      : Gtk_Tree_View_Column;
+      Text     : Gtk_Cell_Renderer_Text;
+      Icon     : Gtk_Cell_Renderer_Pixbuf;
+      Dummy    : Gint;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -753,9 +785,15 @@ package body Buffer_Views is
       Dummy := View.Tree.Append_Column (Col);
       Col.Set_Sort_Column_Id (Name_Column);
 
+      --  VCS status icon
       Gtk_New (Icon);
       Col.Pack_Start (Icon, False);
-      Col.Add_Attribute (Icon, "icon-name", Icon_Name_Column);
+      Col.Add_Attribute (Icon, "icon-name", VCS_Icon_Column);
+
+      --  File status icon
+      Gtk_New (Icon);
+      Col.Pack_Start (Icon, False);
+      Col.Add_Attribute (Icon, "icon-name", File_Icon_Column);
 
       Gtk_New (Text);
       Col.Pack_Start (Text, True);
@@ -792,6 +830,10 @@ package body Buffer_Views is
 
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
+      Vcs_File_Status_Changed_Hook.Add
+        (new On_VCS_Status_Changed'
+           (Vcs_File_Status_Hooks_Function with View => View),
+         Watch => View);
 
       --  Initialize tooltips
 
@@ -960,10 +1002,51 @@ package body Buffer_Views is
            or else Pref = Preference (Show_Notebooks)
            or else Pref = Preference (Sort_Alphabetical)
            or else Pref = Preference (Hide_Empty_Notebooks)
+           or else Pref = Preference (Show_Vcs_Status)
          then
             Refresh (V);
          end if;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_VCS_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs    : not null access Abstract_VCS_Engine'Class;
+      Files  : File_Sets.Set;
+      Props  : VCS_File_Properties)
+   is
+      pragma Unreferenced (Kernel);
+      Tree   : constant Buffer_Tree_View := Self.View.Tree;
+      Model  : constant Gtk_Tree_Store   := Tree.Model;
+      Iter   : Gtk_Tree_Iter             := Get_Iter_First (Model);
+      Status : constant Status_Display   := Vcs.Get_Display (Props.Status);
+      File   : Virtual_File;
+   begin
+      if not Show_Vcs_Status.Get_Pref then
+         return;
+      end if;
+
+      while Iter /= Null_Iter loop
+         --  The files visible in the Windows view are already created
+         --  thus the following statement only retrieved a Virtual_File
+
+         File :=
+           Create_From_Base
+             (Filesystem_String (Get_String (Model, Iter, Data_Column)));
+
+         if Files.Contains (File) then
+            Self.View.Tree.Model.Set
+              (Iter, VCS_Icon_Column,
+               UTF8_String'(To_String (Status.Icon_Name)));
+         end if;
+
+         Next (Model, Iter);
+      end loop;
    end Execute;
 
    ---------------------
@@ -994,6 +1077,10 @@ package body Buffer_Views is
         ("windows-view-hide-empty-notebooks", True,
          Label => "Hide empty notebooks",
          Doc   => -"Hide notebook nodes with one window or less");
+      Show_Vcs_Status := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-show-vcs-status", True,
+         Label => "Show VCS status",
+         Doc   => -"Show VCS status in the Windows View.");
 
       Register_Action
         (Kernel, "Windows view close selected",
