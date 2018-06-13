@@ -87,6 +87,7 @@ package Debugger.Base_Gdb.C is
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_C_Language;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;

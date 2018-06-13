@@ -480,6 +480,7 @@ package Debugger.LLDB is
 
    procedure Internal_Parse_Value
      (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;

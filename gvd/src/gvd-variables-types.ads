@@ -179,7 +179,8 @@ package GVD.Variables.Types is
    -- Iterators --
    ---------------
 
-   type Generic_Iterator is abstract tagged null record;
+   type Generic_Iterator is
+     abstract new Ada.Finalization.Controlled with null record;
    --  Iterator used to traverse all the children of an item. For a record
    --  type, this would point to each of the fields.
 

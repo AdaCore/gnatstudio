@@ -63,7 +63,7 @@ procedure Test_Parse is
          Get_Line (File, Type_Str, Last);
          Close (File);
          Index := 1;
-         Lang.Parse_Value (Type_Str (1 .. Last), Index, V, Repeat_Num);
+         Lang.Parse_Value ("", Type_Str (1 .. Last), Index, V, Repeat_Num);
          Print (V, Lang, Var);
       else
          Put_Line (Var & ": Unknown variable");

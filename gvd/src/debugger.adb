@@ -195,7 +195,7 @@ package body Debugger is
 
       if Value_Found then
          Language_Debugger_Access (Debugger.Get_Language).Parse_Value
-           (Type_Str, Index, Value, Repeat_Num);
+           (Entity, Type_Str, Index, Value, Repeat_Num);
       end if;
    end Parse_Value;
 

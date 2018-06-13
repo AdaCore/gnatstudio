@@ -15,14 +15,25 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
 
 package body GVD.Variables.Types.Classes is
 
+   type Generic_Iterator_Access is access all Generic_Iterator'Class;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Generic_Iterator'Class, Generic_Iterator_Access);
+
    type Class_Iterator is new Generic_Iterator with record
       Item     : GVD_Class_Type_Access;
       Ancestor : Natural;
+      Child    : Generic_Iterator_Access;
    end record;
+
+   overriding procedure Adjust   (Self : in out Class_Iterator);
+   overriding procedure Finalize (Self : in out Class_Iterator);
+
    overriding procedure Next (Iter : in out Class_Iterator);
    overriding function At_End (Iter : Class_Iterator) return Boolean;
    overriding function Data
@@ -50,14 +61,35 @@ package body GVD.Variables.Types.Classes is
    end Add_Ancestor;
 
    ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (Self : in out Class_Iterator) is
+   begin
+      if Self.Child /= null then
+         Self.Child := new Generic_Iterator'Class'(Self.Child.all);
+      end if;
+   end Adjust;
+
+   ------------
    -- At_End --
    ------------
 
    overriding function At_End (Iter : Class_Iterator) return Boolean is
    begin
-      return Iter.Ancestor > Iter.Item.Ancestors'Last + 1
-        or else (Iter.Ancestor = Iter.Item.Ancestors'Last + 1
-                 and then Iter.Item.Child.Data = null);
+      if Iter.Ancestor <= Iter.Item.Ancestors'Last then
+         return False;
+      end if;
+
+      if Iter.Child /= null then
+         return At_End (Iter.Child.all);
+      end if;
+
+      if Iter.Ancestor = Iter.Item.Ancestors'Last + 1 then
+         return Iter.Item.Child.Data /= null;
+      else
+         return True;
+      end if;
    end At_End;
 
    -----------
@@ -65,12 +97,19 @@ package body GVD.Variables.Types.Classes is
    -----------
 
    overriding procedure Clear (Self : not null access GVD_Class_Type) is
+      T : GVD_Generic_Type_Access;
    begin
       for A in Self.Ancestors'Range loop
-         Self.Ancestors (A).Get_Type.Clear;
+         T := Self.Ancestors (A).Get_Type;
+         if T /= null then
+            T.Clear;
+         end if;
       end loop;
 
-      Self.Child.Get_Type.Clear;
+      T := Self.Child.Get_Type;
+      if T /= null then
+         T.Clear;
+      end if;
    end Clear;
 
    -----------
@@ -101,6 +140,10 @@ package body GVD.Variables.Types.Classes is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          return Iter.Item.Ancestors (Iter.Ancestor);
+
+      elsif Iter.Child /= null then
+         return Data (Iter.Child.all);
+
       else
          return Iter.Item.Child;
       end if;
@@ -113,20 +156,31 @@ package body GVD.Variables.Types.Classes is
    overriding function Field_Name
      (Iter : Class_Iterator;
       Lang : not null access Language_Root'Class;
-      Base : String := "") return String
-   is
-      pragma Unreferenced (Lang);
+      Base : String := "") return String is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
-         return "<parent class>";
+         if Base /= "" then
+            return Base;
+         else
+            return "<parent class>";
+         end if;
 
-      elsif Base = "" then
-         return "<record>";
+      elsif Iter.Child /= null then
+         return Field_Name (Iter.Child.all, Lang, Base);
 
       else
          return Base;
       end if;
    end Field_Name;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Class_Iterator) is
+   begin
+      Free (Self.Child);
+   end Finalize;
 
    ----------
    -- Free --
@@ -215,7 +269,16 @@ package body GVD.Variables.Types.Classes is
 
    overriding procedure Next (Iter : in out Class_Iterator) is
    begin
-      Iter.Ancestor := Iter.Ancestor + 1;
+      if Iter.Ancestor <= Iter.Item.Ancestors'Last then
+         Iter.Ancestor := Iter.Ancestor + 1;
+
+      else
+         if Iter.Child /= null then
+            Iter.Child.Next;
+         else
+            Iter.Ancestor := Iter.Ancestor + 1;
+         end if;
+      end if;
    end Next;
 
    -------------
@@ -280,10 +343,20 @@ package body GVD.Variables.Types.Classes is
       Iter : Class_Iterator;
    begin
       Iter.Item := GVD_Class_Type_Access (Self);
+
       if Self.Ancestors'Length = 0 then
          Iter.Ancestor := Self.Ancestors'Last + 1;
       else
          Iter.Ancestor := Self.Ancestors'First;
+      end if;
+
+      if Self.Child.Data /= null then
+         Iter.Child := new Generic_Iterator'Class'
+           (Start (Self.Child.Get_Type));
+
+         if At_End (Iter.Child.all) then
+            Free (Iter.Child);
+         end if;
       end if;
 
       return Iter;

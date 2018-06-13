@@ -49,11 +49,13 @@ package Language.Debugger is
 
    procedure Parse_Value
      (Lang       : access Language_Debugger;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive) is abstract;
    --  Parse the value of an entity, for a given language.
+   --  Entity contains entity name.
    --  Type_Str should contain the value, as returned by the debugger itself.
    --  Repeat_Num is the number of times the item is repeated in the output.
 

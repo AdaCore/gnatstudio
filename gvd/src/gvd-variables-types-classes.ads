@@ -68,6 +68,17 @@ package GVD.Variables.Types.Classes is
       return Natural;
    --  Return the number of ancestors.
 
+   function Get_Value_Command
+     (Self   : not null access GVD_Class_Type;
+      Entity : String)
+      return String is ("");
+   --  Returns command for retriving value
+
+   procedure Set_Value
+     (Self  : not null access GVD_Class_Type;
+      Value : String) is null;
+   --  Parse and set value
+
 private
 
    type Class_Type_Array is array (Positive range <>) of GVD_Type_Holder;

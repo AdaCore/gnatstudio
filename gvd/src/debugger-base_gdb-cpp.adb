@@ -237,6 +237,7 @@ package body Debugger.Base_Gdb.Cpp is
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_Cpp_Language;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
@@ -276,7 +277,7 @@ package body Debugger.Base_Gdb.Cpp is
             Index := Index + 5;  --  skips "> = "
             V := GVD_Class_Type_Access
               (Result.Get_Type).Get_Ancestor (Ancestor);
-            Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
+            Parse_Value (Lang, Entity, Type_Str, Index, V, Repeat_Num);
             pragma Assert (Looking_At (Type_Str, Index, ", "));
             Index := Index + 2; --  skips ", "
             Ancestor := Ancestor + 1;
@@ -300,7 +301,7 @@ package body Debugger.Base_Gdb.Cpp is
          end if;
 
          Internal_Parse_Value
-           (Lang, Type_Str, Index, V, Repeat_Num,
+           (Lang, Entity, Type_Str, Index, V, Repeat_Num,
             Parent => Result);
 
          --  If the class uses virtual methods, there is an extra field
@@ -327,7 +328,7 @@ package body Debugger.Base_Gdb.Cpp is
 
       else
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Result, Repeat_Num,
+           (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
             Parent => Empty_GVD_Type_Holder);
       end if;
    end Parse_Value;

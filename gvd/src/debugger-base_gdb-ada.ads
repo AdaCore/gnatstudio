@@ -20,6 +20,8 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
+with Ada.Containers.Indefinite_Ordered_Maps;
+
 with GVD.Variables.Types;
 with Language; use Language;
 with Language.Debugger;
@@ -88,6 +90,7 @@ package Debugger.Base_Gdb.Ada is
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_Ada_Language;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
@@ -128,6 +131,15 @@ package Debugger.Base_Gdb.Ada is
    overriding function Can_Tooltip_On_Entity
      (Lang   : access Gdb_Ada_Language;
       Entity : String) return Boolean;
+
+   type Predefined_Type_Constructor is access
+     function return GVD.Variables.Types.GVD_Type_Holder;
+
+   package Predefined_Type_Maps is
+     new Standard.Ada.Containers.Indefinite_Ordered_Maps
+       (String, Predefined_Type_Constructor);
+
+   Predefined_Type_Reestr : Predefined_Type_Maps.Map;
 
 private
 

@@ -28,6 +28,11 @@ with Language.Ada;                use Language.Ada;
 with Language.Debugger;           use Language.Debugger;
 with String_Utils;                use String_Utils;
 
+pragma Warnings (Off);
+with GVD.Variables.Types.Classes.Ada.Finalization;
+with GVD.Variables.Types.Classes.Ada.Strings.Unbounded;
+pragma Warnings (On);
+
 package body Debugger.Base_Gdb.Ada is
 
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GDB.ADA", Off);
@@ -271,9 +276,21 @@ package body Debugger.Base_Gdb.Ada is
                   Child  : GVD.Variables.Types.GVD_Type_Holder;
                   Parent : GVD.Variables.Types.GVD_Type_Holder;
                   Last   : Natural;
+                  C      : Predefined_Type_Maps.Cursor;
                begin
                   Index := Index + 4;
-                  Result := New_Class_Type (Num_Ancestors => 1);
+
+                  declare
+                     Type_Name : constant String :=
+                       Lang.Get_Debugger.Get_Type_Info (Entity, "");
+                  begin
+                     C := Predefined_Type_Reestr.Find (Type_Name);
+                     if Predefined_Type_Maps.Has_Element (C) then
+                        Result := Predefined_Type_Maps.Element (C).all;
+                     else
+                        Result := New_Class_Type (Num_Ancestors => 1);
+                     end if;
+                  end;
 
                   --  What is the ancestor ?
 
@@ -283,21 +300,29 @@ package body Debugger.Base_Gdb.Ada is
                      Last := Last + 1;
                   end loop;
 
-                  declare
-                     Ancestor_Type : constant String :=
-                       Type_Of (Get_Debugger (Lang),
-                                Type_Str (Index .. Last - 1));
-                     Tmp : Natural := Ancestor_Type'First;
+                  C := Predefined_Type_Reestr.Find
+                    (Type_Str (Index .. Last - 1));
+                  if Predefined_Type_Maps.Has_Element (C) then
+                     Parent := Predefined_Type_Maps.Element (C).all;
+                  else
+                     declare
+                        Ancestor_Type : constant String :=
+                          Type_Of (Get_Debugger (Lang),
+                                   Type_Str (Index .. Last - 1));
+                        Tmp : Natural := Ancestor_Type'First;
 
-                  begin
-                     Parse_Type (Lang, Ancestor_Type,
-                                 Type_Str (Index .. Last - 1),
-                                 Tmp, Parent);
-                  end;
+                     begin
+                        Parse_Type (Lang, Ancestor_Type,
+                                    Type_Str (Index .. Last - 1),
+                                    Tmp, Parent);
+                     end;
+
+                     Parent.Get_Type.Set_Type_Name
+                       (Type_Str (Index .. Last - 1));
+                  end if;
 
                   GVD_Class_Type_Access
                     (Result.Get_Type).Add_Ancestor (1, Parent);
-                  Parent.Get_Type.Set_Type_Name (Type_Str (Index .. Last - 1));
 
                   --  Get the child (skip "with record")
 
@@ -402,13 +427,14 @@ package body Debugger.Base_Gdb.Ada is
 
    overriding procedure Parse_Value
      (Lang       : access Gdb_Ada_Language;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Type_Str, Index, Result, Repeat_Num,
+        (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
          Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
@@ -1007,7 +1033,7 @@ package body Debugger.Base_Gdb.Ada is
          end if;
 
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
+           (Lang, "", Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
          GVD_Array_Type_Access (Result.Get_Type).Set_Value
            (Elem_Value => Tmp,
             Elem_Index => Current_Index,

@@ -3309,6 +3309,7 @@ package body Debugger.LLDB is
 
    procedure Internal_Parse_Value
      (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
@@ -3564,7 +3565,7 @@ package body Debugger.LLDB is
             Skip_To_Char (Type_Str, Index, ':');
             Index := Index + 2;
             Internal_Parse_Value
-              (Lang, Type_Str, Index, Result, Repeat_Num, Parent);
+              (Lang, Entity, Type_Str, Index, Result, Repeat_Num, Parent);
 
          elsif Type_Str (Index) /= Context.Array_Start
            or else (Index + 5 <= Type_Str'Last
@@ -3599,7 +3600,8 @@ package body Debugger.LLDB is
             end if;
 
             Internal_Parse_Value
-           (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
+              (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+               Parent => Parent);
 
          else
             Parse_Array_Value (Lang, Type_Str, Index, Result);
@@ -3651,7 +3653,7 @@ package body Debugger.LLDB is
                      Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
                      Internal_Parse_Value
-                       (Lang, Type_Str, Index, V, Repeat_Num,
+                       (Lang, Entity, Type_Str, Index, V, Repeat_Num,
                         Parent => Result);
                   end;
 
@@ -3707,7 +3709,7 @@ package body Debugger.LLDB is
 
                      if V /= Empty_GVD_Type_Holder then
                         Internal_Parse_Value
-                          (Lang, Type_Str, Index, V, Repeat_Num,
+                          (Lang, Entity, Type_Str, Index, V, Repeat_Num,
                            Parent => Result);
                      end if;
                   end;
@@ -3748,13 +3750,15 @@ package body Debugger.LLDB is
             loop
                R := GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (A);
                Internal_Parse_Value
-                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                  Parent => Result);
             end loop;
             R := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
 
             if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
                Internal_Parse_Value
-                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                  Parent => Result);
             end if;
 
             Skip_Blanks (Type_Str, Index);

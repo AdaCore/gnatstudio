@@ -77,6 +77,7 @@ package body Debugger.Base_Gdb is
 
    procedure Internal_Parse_Value
      (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
@@ -332,7 +333,7 @@ package body Debugger.Base_Gdb is
             Skip_To_Char (Type_Str, Index, ':');
             Index := Index + 2;
             Internal_Parse_Value
-              (Lang, Type_Str, Index, Result, Repeat_Num, Parent);
+              (Lang, Entity, Type_Str, Index, Result, Repeat_Num, Parent);
 
          elsif Type_Str (Index) /= Context.Array_Start
            or else (Index + 5 <= Type_Str'Last
@@ -367,7 +368,8 @@ package body Debugger.Base_Gdb is
             end if;
 
             Internal_Parse_Value
-              (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
+              (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+               Parent => Parent);
 
          else
             Parse_Array_Value (Lang, Type_Str, Index, Result);
@@ -419,7 +421,7 @@ package body Debugger.Base_Gdb is
                      Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
                      Internal_Parse_Value
-                       (Lang, Type_Str, Index, V, Repeat_Num,
+                       (Lang, Entity, Type_Str, Index, V, Repeat_Num,
                         Parent => Result);
                   end;
 
@@ -475,7 +477,7 @@ package body Debugger.Base_Gdb is
 
                      if V /= Empty_GVD_Type_Holder then
                         Internal_Parse_Value
-                          (Lang, Type_Str, Index, V, Repeat_Num,
+                          (Lang, Entity, Type_Str, Index, V, Repeat_Num,
                            Parent => Result);
                      end if;
                   end;
@@ -496,7 +498,7 @@ package body Debugger.Base_Gdb is
       -- Class values --
       ------------------
 
-      elsif Result.Get_Type'Tag = GVD_Class_Type'Tag then
+      elsif Result.Get_Type.all in GVD_Class_Type'Class then
          declare
             R : GVD_Type_Holder;
             Close_Parentheses : Boolean := False;
@@ -516,13 +518,17 @@ package body Debugger.Base_Gdb is
             loop
                R := GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (A);
                Internal_Parse_Value
-                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                  Parent => Result);
             end loop;
-            R := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
 
-            if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
-               Internal_Parse_Value
-                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+            R := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
+            if R /= Empty_GVD_Type_Holder then
+               if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
+                  Internal_Parse_Value
+                    (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                     Parent => Result);
+               end if;
             end if;
 
             Skip_Blanks (Type_Str, Index);
@@ -534,6 +540,18 @@ package body Debugger.Base_Gdb is
                Index := Index + 1;
             end if;
          end;
+
+         if Entity /= "" then
+            declare
+               Cmd : constant String := GVD_Class_Type_Access
+                 (Result.Get_Type).Get_Value_Command (Entity);
+            begin
+               if Cmd /= "" then
+                  GVD_Class_Type_Access (Result.Get_Type).Set_Value
+                    (Lang.Get_Debugger.Value_Of (Cmd));
+               end if;
+            end;
+         end if;
       end if;
 
       -------------------

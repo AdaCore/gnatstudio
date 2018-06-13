@@ -1070,6 +1070,9 @@ package body GVD.Variables.View is
       function Validate_UTF_8 (S : String) return String;
       --  This function cuts S up to it's last valid UTF8 symbol
 
+      function Remove_Dot (Value : String) return String;
+      --  Removes dot if it is the first symbol in Value
+
       function Display_Name return String is
       begin
          if Name = "" then
@@ -1078,12 +1081,12 @@ package body GVD.Variables.View is
             declare
                Info : constant Item_Info := Get_Item_Info (Self, Name);
             begin
-               return "<b>" & XML_Utils.Protect (Name) & "</b>"
+               return "<b>" & XML_Utils.Protect (Remove_Dot (Name)) & "</b>"
                  & (if Info = No_Item_Info
                     then ""
                     else (if Info.Format = Default_Format
                       then ""
-                      else " (" & Info.Format'Img & ")")) & " = ";
+                      else " (" & Info.Format'Img & ")"));
             end;
          end if;
       end Display_Name;
@@ -1097,10 +1100,25 @@ package body GVD.Variables.View is
          if T'Length = 0 then
             return "";
          else
-            return "<span foreground=""" & Contrast & """>("
-              & XML_Utils.Protect (T) & ")</span> ";
+            return "<span foreground=""" & Contrast & """>"
+              & XML_Utils.Protect (T) & "</span> ";
          end if;
       end Display_Type_Name;
+
+      ----------------
+      -- Remove_Dot --
+      ----------------
+
+      function Remove_Dot (Value : String) return String is
+      begin
+         if Value /= ""
+           and then Value (Value'First) = '.'
+         then
+            return Value (Value'First + 1 .. Value'Last);
+         else
+            return Value;
+         end if;
+      end Remove_Dot;
 
       --------------------
       -- Validate_UTF_8 --

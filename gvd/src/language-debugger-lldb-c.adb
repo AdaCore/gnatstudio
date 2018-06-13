@@ -382,13 +382,14 @@ package body Language.Debugger.Lldb.C is
 
    overriding procedure Parse_Value
      (Lang       : access LLDB_C_Language;
+      Entity     : String;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Type_Str, Index, Result, Repeat_Num,
+        (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
          Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
@@ -625,7 +626,7 @@ package body Language.Debugger.Lldb.C is
          end if;
 
          Internal_Parse_Value
-           (Lang, Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
+           (Lang, "", Type_Str, Index, Tmp, Repeat_Num, Parent => Result);
          GVD_Array_Type_Access (Result.Get_Type).Set_Value
            (Elem_Value => Tmp,
             Elem_Index => Current_Index,
