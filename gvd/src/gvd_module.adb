@@ -2079,6 +2079,7 @@ package body GVD_Module is
       Subprogram_Filter         : Action_Filter;
       Is_Not_Command_Filter     : Action_Filter;
       Continue_Until_Filter     : Action_Filter;
+      Set_Value_Filter          : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -2114,6 +2115,11 @@ package body GVD_Module is
       Register_Filter
         (Kernel, Continue_Until_Filter, "Can continue until");
 
+      Set_Value_Filter := Debugger_Filter and Is_Not_Command_Filter and
+        Printable_Filter;
+      Register_Filter
+        (Kernel, Set_Value_Filter, "Debugger set value");
+
       Register_Contextual_Submenu
         (Kernel, "Debug", Ref_Item => "References");
 
@@ -2121,8 +2127,7 @@ package body GVD_Module is
         (Kernel, "debug set value",
          Command     => new Set_Value_Command,
          Description => "Modify the value of the variable",
-         Filter      => Debugger_Filter and Is_Not_Command_Filter and
-           Printable_Filter,
+         Filter      => Set_Value_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,

@@ -629,6 +629,7 @@
       <button action="debug tree clear"/>
       <button action="debug tree display expression"/>
       <button action="debug tree undisplay"/>
+      <button action="debug tree set value"/>
       <separator/>
       <button action="debug tree display local variables"/>
       <button action="debug tree display arguments"/>

@@ -113,6 +113,7 @@ package body GVD.Variables.View is
          Pattern      : Search_Pattern_Access;
          Items        : Item_Vectors.Vector;
          Types_Column : Gtk_Tree_View_Column;
+         Text         : Gtk_Cell_Renderer_Text;
       end record;
    type Variable_Tree_View is access all Variable_Tree_View_Record'Class;
    overriding function Is_Visible
@@ -121,6 +122,11 @@ package body GVD.Variables.View is
    overriding procedure Add_Children
      (Self       : not null access Variable_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter);
+   overriding procedure On_Edited
+     (Self        : not null access Variable_Tree_View_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String);
 
    function Get_Id
      (Self : not null access Variable_Tree_View_Record'Class;
@@ -288,7 +294,7 @@ package body GVD.Variables.View is
    Column_Full_Name      : constant := 9;
 
    procedure Item_From_Iter
-     (Self        : not null access GVD_Variable_View_Record'Class;
+     (Self        : not null access Variable_Tree_View_Record'Class;
       Filter_Iter : in out Gtk_Tree_Iter;
       It          : out Item);
    --  Convert from a row in the variables view to an item.
@@ -296,7 +302,7 @@ package body GVD.Variables.View is
    --  Filter_Iter is updated accordingly)
 
    function Item_From_Iter
-     (Self       : not null access GVD_Variable_View_Record'Class;
+     (Self       : not null access Variable_Tree_View_Record'Class;
       Store_Iter : Gtk_Tree_Iter)
       return Item;
    --  Return a row in the variables view converted into an item
@@ -347,6 +353,11 @@ package body GVD.Variables.View is
    end record;
    overriding function Execute
      (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Set_Value_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    function Print_Access_Label_Expansion
@@ -709,7 +720,7 @@ package body GVD.Variables.View is
                if Path /= Null_Gtk_Tree_Path then
                   Store_Iter :=
                     View.Tree.Convert_To_Store_Iter (Get_Iter (Model, Path));
-                  It := Item_From_Iter (View, Store_Iter);
+                  It := Item_From_Iter (View.Tree, Store_Iter);
 
                   if It.Info.Cmd /= Null_Unbounded_String then
                      Execute_In_Debugger
@@ -1043,6 +1054,30 @@ package body GVD.Variables.View is
       Add (It);
    end Add_Children;
 
+   ---------------
+   -- On_Edited --
+   ---------------
+
+   overriding procedure On_Edited
+     (Self        : not null access Variable_Tree_View_Record;
+      Store_Iter  : Gtk_Tree_Iter;
+      View_Column : Edited_Column_Id;
+      Text        : String)
+
+   is
+      It : Item;
+   begin
+      if Store_Iter /= Null_Iter and then View_Column = Column_Value then
+         It := Item_From_Iter (Self, Store_Iter);
+
+         if Self.Process /= null and then Self.Process.Debugger /= null then
+            Self.Process.Debugger.Set_Variable
+              (Var_Name => To_String (It.Info.Varname),
+               Value    => Text);
+         end if;
+      end if;
+   end On_Edited;
+
    -------------
    -- Add_Row --
    -------------
@@ -1334,6 +1369,7 @@ package body GVD.Variables.View is
       --  Create the column that displays the variables' values
 
       Gtk_New (Text);
+      Self.Tree.Text := Text;
       Col.Pack_Start (Text, False);
       Col.Add_Attribute (Text, "markup", Column_Value);
       Col.Add_Attribute (Text, "foreground", Column_Value_Fg);
@@ -1407,7 +1443,7 @@ package body GVD.Variables.View is
    --------------------
 
    procedure Item_From_Iter
-     (Self        : not null access GVD_Variable_View_Record'Class;
+     (Self        : not null access Variable_Tree_View_Record'Class;
       Filter_Iter : in out Gtk_Tree_Iter;
       It          : out Item)
    is
@@ -1415,10 +1451,10 @@ package body GVD.Variables.View is
       M          : Gtk_Tree_Model;
    begin
       if Filter_Iter = Null_Iter then
-         Self.Tree.Get_First_Selected (M, Filter_Iter);
-         Store_Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
+         Self.Get_First_Selected (M, Filter_Iter);
+         Store_Iter := Self.Convert_To_Store_Iter (Filter_Iter);
       else
-         Store_Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
+         Store_Iter := Self.Convert_To_Store_Iter (Filter_Iter);
       end if;
 
       It := Item_From_Iter (Self, Store_Iter);
@@ -1429,7 +1465,7 @@ package body GVD.Variables.View is
    --------------------
 
    function Item_From_Iter
-     (Self       : not null access GVD_Variable_View_Record'Class;
+     (Self       : not null access Variable_Tree_View_Record'Class;
       Store_Iter : Gtk_Tree_Iter)
       return Item
    is
@@ -1438,11 +1474,11 @@ package body GVD.Variables.View is
       Cur_Iter : Gtk_Tree_Iter := Store_Iter;
    begin
       while Cur_Iter /= Null_Iter loop
-         Parent := Self.Tree.Model.Parent (Cur_Iter);
+         Parent := Self.Model.Parent (Cur_Iter);
          if Parent = Null_Iter then
-            Id := Item_ID (Self.Tree.Model.Get_Int (Cur_Iter, Column_Id));
+            Id := Item_ID (Self.Model.Get_Int (Cur_Iter, Column_Id));
 
-            for It of Self.Tree.Items loop
+            for It of Self.Items loop
                if It.Id = Id then
                   return It;
                end if;
@@ -1474,12 +1510,12 @@ package body GVD.Variables.View is
 
       if Event /= null then
          Filter_Iter := Find_Iter_For_Event (View.Tree, Event);
-         Item_From_Iter (View, Filter_Iter => Filter_Iter, It => It);
+         Item_From_Iter (View.Tree, Filter_Iter => Filter_Iter, It => It);
          View.Tree.Get_Selection.Unselect_All;
          View.Tree.Get_Selection.Select_Iter (Filter_Iter);
       else
          Filter_Iter := Null_Iter;
-         Item_From_Iter (View, Filter_Iter => Filter_Iter, It => It);
+         Item_From_Iter (View.Tree, Filter_Iter => Filter_Iter, It => It);
       end if;
 
       if It /= No_Item then
@@ -1552,6 +1588,26 @@ package body GVD.Variables.View is
            (Debugger.Print_Value_Cmd (Name), Mode => GVD.Types.Visible);
       end if;
 
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Set_Value_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         View.Tree.Start_Editing
+           (Render      => View.Tree.Text,
+            View_Column => Column_Value);
+      end if;
       return Commands.Success;
    end Execute;
 
@@ -1821,6 +1877,15 @@ package body GVD.Variables.View is
          Custom => Print_Access_Label_Expansion'Access,
          Action => "debug print dereferenced variable",
          Group  => GVD_Variables_Contextual_Group);
+
+      Command := new Set_Value_Command;
+      Register_Action
+        (Kernel, "debug tree set value",
+         Command     => Command,
+         Description =>
+           "Set a new value for the selected variable.",
+         Icon_Name   => "gps-rename-symbolic",
+         Category    => "Debug");
 
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => -"Show types");
