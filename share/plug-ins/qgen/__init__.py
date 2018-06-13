@@ -879,14 +879,16 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         in the history.
         """
         self.parsing_complete = True
+        logger.log("Parsing done, status is %d %s" % (self.nav_index,
+                                                      self.nav_status))
         if self.nav_index > -1:
             for i in range(0, self.nav_index + 1):
                 # The user browsed diagrams using double click and
                 # previous/parent, we need to recreate this history.
                 # First we create a reverse list for each path to
                 # a diagram
-                rev_l = self.pre_load_browsing[:i+1][::-1]
-                c_id = self.get_construct_from_list(rev_l, (-1, None))
+                path_l = self.pre_load_browsing[:i+1]
+                c_id = self.get_construct_from_list(path_l, (-1, None))
                 self.nav_status.insert(i, c_id)
         else:
             self.nav_index += 1
@@ -918,7 +920,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         else:
             return self.pre_load_browsing[self.nav_index]
 
-    def get_construct_from_list(self, l, sloc_range=(0, None), res=""):
+    def get_construct_from_list(self, l, sloc_range=(-1, None), res=""):
         """
         Given a list of diagram ids representing a path in the model, find
         the closest related construct.
@@ -932,19 +934,20 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         start_sloc = sloc_range[0]
         end_sloc = sloc_range[1]
         last_child_sloc = start_sloc
-        name = l.pop()
+        name = l[0]
 
         for _, cons_id, sloc_start, sloc_end, _, d_id in self.constructs:
             if sloc_start[-1] > start_sloc and (
                     end_sloc is None or sloc_end[-1] < end_sloc):
+
                 if sloc_start[-1] == last_child_sloc + 1:
                     last_child_sloc = sloc_end[-1]
                     if name == d_id:
-                        if not l:
+                        if len(l) == 1:
                             return cons_id
                         else:
                             return self.get_construct_from_list(
-                                l, (sloc_start[-1], sloc_end[-1]), cons_id)
+                                l[1:], (sloc_start[-1], sloc_end[-1]), cons_id)
 
         return res
 
@@ -969,6 +972,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     last_child_sloc = sloc_end[-1]
                     if self.last_dblclicked.endswith(d_name):
                         n_idx = item_len - len(d_name)
+                        logger.log("Supposing construct %s for %s" % (
+                            d_name, self.last_dblclicked))
                         if n_idx < idx and self.last_dblclicked[
                                 n_idx - 1] == '/':
                             res = cons_id
@@ -1439,8 +1444,9 @@ else:
             # parent will be set to None, so we default to toplevel (the link,
             # in that case)
             parent = item.get_parent_with_id() or toplevel
-
+            logger.log("Computing value from link for %s " % parent.id)
             ss = QGEN_Module.get_var_from_item(debugger, parent)
+            logger.log("Associating it to variable %s " % str(ss))
             if ss is not None:
                 async_debugger = AsyncDebugger(debugger)
                 yield async_debugger.async_print_value(ss).then(
@@ -1694,15 +1700,49 @@ else:
                 for block in blocks:
                     diag = QGEN_Module.modeling_map.get_diagram_for_item(
                         viewer.diags, block)[0]
-                    if diag.id not in frame_infos:
-                        frame_infos.append(diag.id)
+                    insert = True
+                    for id, _ in frame_infos:
+                        if diag.id == id:
+                            insert = False
+                            break
+                    if insert:
+                        frame_infos.insert(0, (diag.id, block))
 
             logger.log("Frames info is %s" % str(frame_infos))
+            frames_len = len(frame_infos)
+            for i in range(0, frames_len):
+                # Resolve Frames info is [(u'modelwithsub_Gain_Sub_Inner_gain',
+                # u'modelwithsub/Gain Sub /Inner gain/Gain'), (u'modelwithsub',
+                # u'modelwithsub')] case
+                # by looking into the previous model and generating correct
+                # frameinfo for subsystem.
+                model = Diagram_Utils.block_split(frame_infos[i][1], 1)[0]
+                k = i + 1
+                if k < frames_len:
+                    next_model_path = frame_infos[k][1]
+                    next_model_split = Diagram_Utils.block_split(
+                        next_model_path)
+                    ran = range(
+                        2 if next_model_split[0] == model else 1, len(
+                            next_model_split))
+                    for j in ran:
+                        subsys_path = '/'.join(next_model_split[0:j])
+                        subsys_diag_name = Diagram_Utils.mangle_block_name(
+                            subsys_path)
+                        if frame_infos[k][0] != subsys_diag_name:
+                            frame_infos.insert(k, (
+                                subsys_diag_name, subsys_path))
+                            k += 1
+                    i = k - 1
+
+            frame_infos = [it[0] for it in frame_infos]
+            logger.log("Frames info after adding subsystems is %s" % str(
+                frame_infos))
             # Try to find a construct starting with the longest model path
             # and narrowing it down until a construct is found or
             # the path is empty
             while frame_infos:
-                cons_id = viewer.get_construct_from_list(list(frame_infos))
+                cons_id = viewer.get_construct_from_list(frame_infos)
                 if cons_id != "":
                     logger.log('Got construct %s from %s' % (
                         cons_id, str(frame_infos)))
