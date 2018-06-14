@@ -189,7 +189,9 @@ package body GPS.Default_Styles is
       -- Analysis Tools --
       --------------------
 
-      Messages_Styles (Unspecified) := Editor_Default_Style;
+      --  Use a transparent style for messages that have their importance
+      --  set to Unspecified since it's the default.
+      Messages_Styles (Unspecified) := No_Style;
 
       Init (Messages_Styles (Annotation),
             Name      => -"Annotation messages",

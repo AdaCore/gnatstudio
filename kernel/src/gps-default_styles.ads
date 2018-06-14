@@ -66,7 +66,7 @@ package GPS.Default_Styles is
    -- Search --
    ------------
 
-   Search_Results_Style     : Style_Access;
+   Search_Results_Style : Style_Access;
    --  Style used to highlight search results
 
    --------------

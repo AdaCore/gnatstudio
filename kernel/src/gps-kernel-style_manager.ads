@@ -69,6 +69,8 @@ package GPS.Kernel.Style_Manager is
      (Index_Type   => Positive,
       Element_Type => Style_Access);
 
+   No_Style : constant Style_Access;
+
    --  Accessors.
    --  These are guaranteed to be fast.
 
@@ -312,5 +314,17 @@ private
    type Style_Manager_Record is tagged record
       Variants : Map_Access := new Style_Map.Map;
    end record;
+
+   No_Style : constant Style_Access := new Style_Record'
+     (Name        => new String'(""),
+      Source      => null,
+      Tags        => <>,
+      Children    => <>,
+      Foreground  => Null_RGBA,
+      Background  => Null_RGBA,
+      Variant     => Default,
+      Priority    => Priority_None,
+      Icon        => null,
+      In_Speedbar => False);
 
 end GPS.Kernel.Style_Manager;
