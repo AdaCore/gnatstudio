@@ -2110,6 +2110,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
         or else Starts_With (Command, "task")
         or else Starts_With (Command, "core")
         or else Starts_With (Command, "attach")
+        or else Starts_With (Command, "set variable")
       then
          Debugger.Current_Command_Kind := Context_Command;
 
@@ -2136,7 +2137,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
            or else Starts_With (Command, "target")
            or else Starts_With (Command, "begin")
            or else Starts_With (Command, "start")
-           or else Starts_With (Command, "set variable")
          then
             Debugger.Current_Command_Kind := Execution_Command;
 

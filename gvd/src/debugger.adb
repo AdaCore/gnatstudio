@@ -991,6 +991,9 @@ package body Debugger is
       Var_Name : String;
       Value    : String)
    is
+      Block : Process_Proxies.Parse_File_Switch
+        (Debugger.Process) with Unreferenced;
+
       S : constant String :=
         Language_Debugger_Access (Debugger.Get_Language).Set_Variable
         (Var_Name, Value);
