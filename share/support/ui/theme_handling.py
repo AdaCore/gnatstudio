@@ -18,6 +18,7 @@ gtk_css_pref_name = "Gtk-Theme-Custom-CSS"
 css_template = """
 @define-color editor_bg_color {editor_bg};
 @define-color editor_fg_color {editor_fg};
+@define-color editor_readonly_bg_color {readonly};
 @define-color gutter_color {gutter_fg};
 @define-color browser_decoration_background  {browser_decoration_bg};
 @define-color browser_decoration_color {browser_decoration_fg};
@@ -30,6 +31,7 @@ GtkTextView [ -GtkWidget-cursor-color: {caret}; ]
 
 css_colors = ['editor_bg',
               'editor_fg',
+              'readonly',
               'theme_selected_bg',
               'theme_selected_fg',
               'gutter_fg',

@@ -85,12 +85,14 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 name="{}simple".format(MSG_PREFIX),
                 speedbar=True,
                 style=GPS.Style(
-                    "Editor ephemeral highlighting simple", False)),
+                    "Editor ephemeral highlighting simple", False),
+                whole_line=False),
             "entity": OverlayStyle(
                 name="{}smart".format(MSG_PREFIX),
                 speedbar=True,
                 style=GPS.Style(
-                    "Editor ephemeral highlighting smart", False))}
+                    "Editor ephemeral highlighting smart", False),
+                whole_line=False)}
         self.pref_cache = {}
 
         self.current_buffer = None

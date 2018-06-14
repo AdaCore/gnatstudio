@@ -498,11 +498,15 @@ GtkTextView.view.editor {
   color: @editor_fg_color;
 }
 
+GtkTextView.view.editor.readonly {
+  background-color: @editor_readonly_bg_color;
+}
+
 /**********************************
  * Selection
  **********************************/
 
-*:selected, GtkTextView.view:selected {
+*:selected, GtkTextView.view:selected, GtkTextView.view.editor:selected {
   background-color: @theme_selected_bg_color;
   color: @theme_selected_fg_color;
 }
