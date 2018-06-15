@@ -44,14 +44,25 @@ package body GNAThub.Reports.Metrics is
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
-      Val_A : constant Float := Float'Value (Get_String (Model, A, 1));
-      Val_B : constant Float := Float'Value (Get_String (Model, B, 1));
+      S_A : constant String := Get_String (Model, A, 1);
+      S_B : constant String := Get_String (Model, B, 1);
    begin
-      if Val_A < Val_B then
+      if S_A = "" then
          return 1;
-      else
+      elsif S_B = "" then
          return -1;
       end if;
+
+      declare
+         Val_A : constant Float := Float'Value (S_A);
+         Val_B : constant Float := Float'Value (S_B);
+      begin
+         if Val_A < Val_B then
+            return 1;
+         else
+            return -1;
+         end if;
+      end;
    end Sort_Func;
 
    -------------
