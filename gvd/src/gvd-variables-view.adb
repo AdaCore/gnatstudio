@@ -62,7 +62,6 @@ with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Style;                use Gtkada.Style;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
 with GVD.Contexts;                use GVD.Contexts;
@@ -1095,8 +1094,6 @@ package body GVD.Variables.View is
       Dummy : Boolean;
 
       Fg       : constant String := To_String (Default_Style.Get_Pref_Fg);
-      Contrast : constant String :=
-        To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
 
       function Display_Type_Name return String with Inline;
       function Display_Name return String with Inline;
@@ -1135,8 +1132,7 @@ package body GVD.Variables.View is
          if T'Length = 0 then
             return "";
          else
-            return "<span foreground=""" & Contrast & """>"
-              & XML_Utils.Protect (T) & "</span> ";
+            return XML_Utils.Protect (T);
          end if;
       end Display_Type_Name;
 

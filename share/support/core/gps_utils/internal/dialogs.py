@@ -878,7 +878,7 @@ class Variables_View(Dialog):
                 if name == 'None':
                     result.append(name)
                 else:
-                    result.append(name + ' = ' + var_type + val)
+                    result.append(name + ' = ' + var_type + ' ' + val)
 
                 if m.iter_has_child(iter):
                     result.append(internal(m.iter_children(iter)))
