@@ -108,12 +108,13 @@ package body CodePeer.Bridge.Status_Readers is
             Message.Status :=
               CodePeer.Audit_Status_Kinds'Value
                 (Attrs.Get_Value (Status_Attribute));
+
          exception
             when Constraint_Error =>
                --  In case we have an unexpected value (e.g. new status kind),
-               --  revert to Unclassified instead of crashing
+               --  revert to Uncategorized instead of crashing
 
-               Message.Status := Unclassified;
+               Message.Status := Uncategorized;
          end;
 
       else

@@ -71,7 +71,7 @@ package body CodePeer.Message_Review_Dialogs.Utils is
          "text",
          0);
 
-      Set_Status ("Unclassified",   Unclassified);
+      Set_Status ("Uncategorized",  Uncategorized);
       Set_Status ("Pending",        Pending);
       Set_Status ("Not a bug",      Not_A_Bug);
       Set_Status ("False positive", False_Positive);

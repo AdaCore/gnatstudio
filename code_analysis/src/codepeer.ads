@@ -52,7 +52,7 @@ package CodePeer is
    function Image (Level : CodePeer.Message_Ranking_Level) return String;
 
    type Audit_Status_Kinds is
-     (Unclassified,
+     (Uncategorized,
       Pending,
       Not_A_Bug,
       False_Positive,

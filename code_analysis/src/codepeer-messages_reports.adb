@@ -107,7 +107,7 @@ package body CodePeer.Messages_Reports is
       Self   : Messages_Report);
    --  Handles change of state of items of ranking filter
 
-   procedure On_Show_Unclassified_Messages_Toggled
+   procedure On_Show_Uncategorized_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
    procedure On_Show_Pending_Messages_Toggled
@@ -175,8 +175,8 @@ package body CodePeer.Messages_Reports is
    Ranking_High_History          : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-high";
 
-   Status_Unclassified_History   : constant Histories.History_Key :=
-     "codepeer-summary_report-status-unclassified";
+   Status_Uncategorized_History   : constant Histories.History_Key :=
+     "codepeer-summary_report-status-uncategorized";
    Status_Pending_History        : constant Histories.History_Key :=
      "codepeer-summary_report-status-pending";
    Status_Not_A_Bug_History      : constant Histories.History_Key :=
@@ -525,7 +525,7 @@ package body CodePeer.Messages_Reports is
              (Kernel.Get_History.all, Ranking_High_History));
 
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Unclassified_History, True);
+        (Kernel.Get_History.all, Status_Uncategorized_History, True);
       Histories.Create_New_Boolean_Key_If_Necessary
         (Kernel.Get_History.all, Status_Pending_History, True);
       Histories.Create_New_Boolean_Key_If_Necessary
@@ -538,9 +538,9 @@ package body CodePeer.Messages_Reports is
         (Kernel.Get_History.all, Status_Bug_History, True);
 
       Self.Show_Status :=
-        (Unclassified   =>
+        (Uncategorized  =>
            Histories.Get_History
-             (Kernel.Get_History.all, Status_Unclassified_History),
+             (Kernel.Get_History.all, Status_Uncategorized_History),
          Pending        =>
            Histories.Get_History
              (Kernel.Get_History.all, Status_Pending_History),
@@ -850,14 +850,14 @@ package body CodePeer.Messages_Reports is
       Gtk.Box.Gtk_New_Vbox (Box);
       Scrolled.Add (Box);
 
-      Gtk.Check_Button.Gtk_New (Check, -"unclassified");
-      Check.Set_Active (Self.Show_Status (Unclassified));
+      Gtk.Check_Button.Gtk_New (Check, -"uncategorized");
+      Check.Set_Active (Self.Show_Status (Uncategorized));
       Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Unclassified_Messages_Toggled'Access),
+           (On_Show_Uncategorized_Messages_Toggled'Access),
          Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"pending");
@@ -1225,22 +1225,22 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Pending_Messages_Toggled;
 
-   -------------------------------------------
-   -- On_Show_Unclassified_Messages_Toggled --
-   -------------------------------------------
+   --------------------------------------------
+   -- On_Show_Uncategorized_Messages_Toggled --
+   --------------------------------------------
 
-   procedure On_Show_Unclassified_Messages_Toggled
+   procedure On_Show_Uncategorized_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report) is
    begin
-      Self.Show_Status (Unclassified) := Object.Get_Active;
+      Self.Show_Status (Uncategorized) := Object.Get_Active;
       Histories.Set_History
         (Self.Kernel.Get_History.all,
-         Status_Unclassified_History,
-         Self.Show_Status (Unclassified));
+         Status_Uncategorized_History,
+         Self.Show_Status (Uncategorized));
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Unclassified_Messages_Toggled;
+   end On_Show_Uncategorized_Messages_Toggled;
 
    ---------------------------------
    -- On_Lifeage_Criteria_Changed --

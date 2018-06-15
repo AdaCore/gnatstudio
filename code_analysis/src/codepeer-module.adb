@@ -381,7 +381,7 @@ package body CodePeer.Module is
          Category        => Category,
          Is_Check        => Is_Check,
          Ranking         => Ranking,
-         Status          => Unclassified,
+         Status          => Uncategorized,
          Status_Editable => True,
          Text            => To_Unbounded_String (Text),
          Audit_Loaded    => False,

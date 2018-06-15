@@ -242,7 +242,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 0, 1);
 
-         Self.New_Status := Create_Status_Combo_Box (Unclassified);
+         Self.New_Status := Create_Status_Combo_Box (Uncategorized);
          Table.Attach (Self.New_Status, 1, 2, 0, 1);
 
          --  "Approved by" entry

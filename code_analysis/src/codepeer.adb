@@ -445,8 +445,8 @@ package body CodePeer is
    function Image (Status : Audit_Status_Kinds) return String is
    begin
       case Status is
-         when Unclassified =>
-            return "Unclassified";
+         when Uncategorized =>
+            return "Uncategorized";
 
          when Pending =>
             return "Pending";
