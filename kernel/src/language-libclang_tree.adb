@@ -322,7 +322,9 @@ package body Language.Libclang_Tree is
       end loop;
 
       --  Semantic parent did jump to a non lexical containing cursor
-      if not In_Range (Cursor, Top_Cursor) then
+      if not In_Range (Sought     => Top_Cursor,
+                       Containing => Cursor)
+      then
          Cursor := Root_Cursor (Self.Tu);
       end if;
 
