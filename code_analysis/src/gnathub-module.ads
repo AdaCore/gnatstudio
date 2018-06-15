@@ -28,6 +28,7 @@ limited with GNAThub.Loader.External;
 package GNAThub.Module is
 
    Hide_Node_Without_Messages : Boolean_Preference;
+   Always_Display_The_Rules   : Boolean_Preference;
 
    type GNAThub_Child_Record is new GPS_MDI_Child_Record with null record;
    type GNAThub_Child is access all GNAThub_Child_Record'Class;

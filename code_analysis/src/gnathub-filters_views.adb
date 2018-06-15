@@ -37,6 +37,8 @@ with GNAThub.Generic_Criteria_Editors;
 with GNAThub.Messages;                 use GNAThub.Messages;
 with GNAThub.Module;                   use GNAThub.Module;
 
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Search;
@@ -218,6 +220,15 @@ package body GNAThub.Filters_Views is
    procedure On_Rules_Changed
      (View : access Filters_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path);
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      View : Filters_View_Access;
+   end record;
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
 
    function Img (Item : Natural) return String;
    function Img (Total, Selected : Natural) return String;
@@ -468,6 +479,9 @@ package body GNAThub.Filters_Views is
       GPS.Kernel.Preferences.Append_Menu
         (Menu, GNAThub_Module.Kernel,
          GNAThub.Module.Hide_Node_Without_Messages);
+      GPS.Kernel.Preferences.Append_Menu
+        (Menu, GNAThub_Module.Kernel,
+         GNAThub.Module.Always_Display_The_Rules);
    end Create_Menu;
 
    --------------------
@@ -600,7 +614,7 @@ package body GNAThub.Filters_Views is
       if Selected = Total then
          return Img (Total);
       else
-         return Img (Selected) & "(" & Img (Total) & ")";
+         return Img (Selected) & " (" & Img (Total) & ")";
       end if;
    end Img;
 
@@ -687,6 +701,11 @@ package body GNAThub.Filters_Views is
 
       GNAThub_Module.Clean_Messages := False;
 
+      Preferences_Changed_Hook.Add
+        (new On_Pref_Changed'(Preferences_Hooks_Function
+         with View => Filters_View_Access (Self)),
+         Watch => Self);
+
       return Gtk.Widget.Gtk_Widget (Self.Flow_Box);
    end Initialize;
 
@@ -702,6 +721,10 @@ package body GNAThub.Filters_Views is
       C       : Severity_Natural_Maps.Cursor := Item.Count.First;
       Filters : constant Views.View_Access   := Views.View_Access (View);
    begin
+      if GNAThub.Module.Always_Display_The_Rules.Get_Pref then
+         return True;
+      end if;
+
       if Is_Selected (Item.Tool, Filters) then
          while Severity_Natural_Maps.Has_Element (C) loop
             if Severity_Natural_Maps.Element (C) > 0
@@ -833,6 +856,24 @@ package body GNAThub.Filters_Views is
 
       Free (Self.Listener);
    end On_Destroy;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Pref /= null
+        and then Pref = Preference (GNAThub.Module.Always_Display_The_Rules)
+      then
+         Self.View.Rules_Editor.Update;
+      end if;
+   end Execute;
 
    --------------------------------
    -- On_Flow_Box_Size_Allocated --

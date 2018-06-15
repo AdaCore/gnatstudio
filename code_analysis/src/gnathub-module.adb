@@ -318,8 +318,16 @@ package body GNAThub.Module is
            Name    => "hide_node_without_messages",
            Default => False,
            Label   => -"Hide nodes without messages.",
-           Doc     => "");
+           Doc     => -"Hide the nodes with metrics but no messages.");
 
+      Always_Display_The_Rules :=
+        Kernel.Get_Preferences.Create
+          (Path    => ":Local Configuration",
+           Name    => "always_display_the_rules",
+           Default => False,
+           Label   => -"Always display rules",
+           Doc     =>
+             -"If enabled, the rules without messages will be displayed.");
       GNAThub.Filters_Views.Register_Module (Kernel);
    end Register_Module;
 
