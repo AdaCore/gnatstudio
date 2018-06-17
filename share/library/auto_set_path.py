@@ -57,6 +57,9 @@ def add_to_paths(paths):
             path += os.pathsep + j
 
     GPS.setenv('PATH', path)
+    # Set the PATH in the Python environment as well, so that plugins can
+    # see the same path.
+    os.environ['PATH'] = path
 
 
 # Note: as a special exception, we do not run this plugin in reaction to
