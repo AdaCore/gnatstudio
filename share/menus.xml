@@ -281,7 +281,7 @@
          <separator/>
          <menu label='_Display Code Review'  action='codepeer display code review'
                optional='true'/>
-         <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
+         <menu label='Generate _HTML Report...' action='codepeer generate html' optional='true'/>
          <menu label='Generate CS_V Report...' action='codepeer generate csv' optional='true'/>
          <menu label='Ad_vanced'>
             <menu label='_Regenerate Report...' action='codepeer regenerate report' optional='true'/>

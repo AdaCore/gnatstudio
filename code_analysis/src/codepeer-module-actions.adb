@@ -143,8 +143,8 @@ package body CodePeer.Module.Actions is
 
       Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       HTML_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Kernel).Create_From_Dir
-          ("/html/index.html");
+        Get_Project (Kernel).Object_Dir.Create_From_Dir
+          ("gnathub/html-report/index.html");
 
    begin
       if not HTML_File.Is_Regular_File then
@@ -154,8 +154,16 @@ package body CodePeer.Module.Actions is
             Mode => GPS.Kernel.Error);
 
       else
-         Html_Action_Hook.Run
-           (Kernel, String (Full_Name (HTML_File).all));
+         --  ??? In the future, would be nice to provide a menu to launch
+         --  the codepeer/gnathub web server and then a browser. This is
+         --  more general than CodePeer since part of the gnathub integration
+         --  so leave this aside for now.
+         --  Html_Action_Hook.Run
+         --    (Kernel, String (Full_Name (HTML_File).all));
+
+         Kernel.Insert
+           (Text => -("Please launch the codepeer web server and connect to it"
+                      & " with your browser."));
       end if;
 
       return Success;
@@ -200,6 +208,44 @@ package body CodePeer.Module.Actions is
          Synchronous => False,
          Dir         => Object_Dir);
 
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Generate_HTML_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project : constant Project_Type  := Get_Project (Kernel);
+
+      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
+      Info_File  : constant Virtual_File := Inspection_Info_File (Kernel);
+      Object_Dir : constant Virtual_File :=
+        CodePeer_Object_Directory (Project);
+
+   begin
+      if not Info_File.Is_Regular_File then
+         Kernel.Insert
+           (Text => Info_File.Display_Full_Name
+            & (-" does not exist. Please perform a full analysis first"),
+            Mode => GPS.Kernel.Error);
+
+         return Failure;
+      end if;
+
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel      => Kernel_Handle (Self.Module.Kernel),
+         Target_ID   => CodePeer.Shell_Commands.Build_Target
+           (Kernel, "Generate HTML Report"),
+         Build_Mode  => "codepeer",
+         Synchronous => False,
+         Dir         => Object_Dir);
       return Success;
    end Execute;
 
@@ -510,6 +556,10 @@ package body CodePeer.Module.Actions is
         (Module.Kernel,
          "codepeer generate csv",
          new Generate_CSV_Command (Module));
+      Register_Action
+        (Module.Kernel,
+         "codepeer generate html",
+         new Generate_HTML_Command (Module));
       Register_Action
         (Module.Kernel, "codepeer generate scil", new Generate_SCIL_Command);
       Register_Action (Module.Kernel, "codepeer log", new Log_Command);

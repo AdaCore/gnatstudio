@@ -77,6 +77,13 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Generate CSV Report" menu item is activated
 
+   type Generate_HTML_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Generate_HTML_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Generate HTML Report" menu item is activated
+
    type Generate_SCIL_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Generate_SCIL_Command;

@@ -495,20 +495,38 @@ Also force the generation of all SCIL files."
     </target-model>
 
     <target-model name="codepeer_msg_reader" category="">
-       <description>Generate messages with codepeer</description>
+       <description>Generate HTML with codepeer</description>
        <command-line>
           <arg>codepeer</arg>
+          <arg>-d</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>-output-msg-only</arg>
-          <arg>-out</arg>
-          <arg>codepeer.out</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="2">
-         <check label="CSV output" switch="-csv"
+       <switches command="%(tool_name)s" columns="2" lines="5">
+         <check label="Show annotations" switch="-show-annotations"
                column="1"
-               tip="generate output in CSV format, suitable for spreadsheets"/>
+               tip="Show CodePeer annotations in addition to messages"/>
+         <check label="Show informationals" switch="-show-info"
+               column="1"
+               tip="Show CodePeer informational messages"/>
+         <check label="Show removed" switch="-show-removed"
+               column="1"
+               tip="Show messages removed from baseline run"/>
+         <check label="Hide low messages" switch="-hide-low"
+               column="1"
+               tip="Do not generate messages ranked low"/>
+         <check label="CWE" switch="-cwe"
+               column="1"
+               tip="Include CWE ids in message output"/>
+
+         <spin label="Current" switch="-current" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="Override current run id"/>
+         <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="Override baseline run id"/>
          <combo label="Security" switch="-security" noswitch="disabled"
                separator=" " column="1" column-span="2"
                tip="Enable security filter on messages. Disabled: no security
@@ -518,6 +536,13 @@ messages. Full: same as normal, plus run-time checks related messages">
             <combo-entry label="Normal" value="normal" />
             <combo-entry label="Full" value="full" />
          </combo>
+
+         <check label="CSV output" switch="-csv"
+               column="2"
+               tip="generate output in CSV format, suitable for spreadsheets"/>
+         <check label="HTML output" switch="-html"
+               column="2"
+               tip="generate output in HTML format"/>
        </switches>
     </target-model>
 
@@ -645,6 +670,23 @@ messages. Full: same as normal, plus run-time checks related messages">
     </target>
 
     <target model="codepeer_msg_reader" category="CodePeer"
+            name="Generate HTML Report" messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-compile-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-d</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>-output-msg-only</arg>
+          <arg>-html</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer_msg_reader" category="CodePeer"
             name="Generate CSV Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -653,6 +695,7 @@ messages. Full: same as normal, plus run-time checks related messages">
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
+          <arg>-d</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>-output-msg-only</arg>
