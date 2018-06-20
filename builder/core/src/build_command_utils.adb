@@ -15,14 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations;
 with GNAT.Strings;
 
 with GNATCOLL.Scripts.Projects;
-with GNATCOLL.Templates;         use GNATCOLL.Templates;
+with GNATCOLL.Templates;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 

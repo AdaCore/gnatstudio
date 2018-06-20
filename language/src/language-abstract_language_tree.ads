@@ -365,8 +365,8 @@ private
    type Dummy_Semantic_Node_Array is new Semantic_Node_Array with null record;
 
    overriding function Get
-     (Self : Dummy_Semantic_Node_Array;
-      Index : Positive) return Semantic_Node'Class
+     (Self        : Dummy_Semantic_Node_Array;
+      Dummy_Index : Positive) return Semantic_Node'Class
    is (No_Semantic_Node);
 
    overriding function Length
@@ -431,8 +431,8 @@ private
    is (Sloc_T'(others => <>));
 
    overriding function Profile
-     (Self             : Dummy_Semantic_Node;
-      Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
+     (Self                   : Dummy_Semantic_Node;
+      Dummy_Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
      is (GNATCOLL.Symbols.Empty_String);
 
    overriding function Definition
@@ -482,8 +482,9 @@ private
       is (No_Semantic_Node_Array);
 
    overriding function Node_At
-     (Self : Dummy_Semantic_Tree; Sloc : Sloc_T;
-      Category_Filter : Category_Array := Null_Category_Array)
+     (Self                  : Dummy_Semantic_Tree;
+      Dummy_Sloc            : Sloc_T;
+      Dummy_Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class is (No_Semantic_Node);
 
    overriding function File

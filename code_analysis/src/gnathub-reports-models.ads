@@ -84,23 +84,25 @@ private
    --  Returns True if specified subprogram must be visible in the tree
 
    overriding function Is_Changed
-     (Self    : access Messages_Model_Record;
-      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
+     (Self          : access Messages_Model_Record;
+      Dummy_Project : Code_Analysis.Tree_Models.Project_Item_Access)
+      return Boolean
      is (True);
    --  Returns True if specified project data has been changed
 
    overriding function Is_Changed
-     (Self    : access Messages_Model_Record;
-      Project : Code_Analysis.Tree_Models.Project_Item_Access;
-      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
+     (Self          : access Messages_Model_Record;
+      Dummy_Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      Dummy_File    : Code_Analysis.Tree_Models.File_Item_Access)
+      return Boolean
      is (True);
    --  Returns True if specified file data has been changed
 
    overriding function Is_Changed
-     (Self       : access Messages_Model_Record;
-      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
-      File       : Code_Analysis.Tree_Models.File_Item_Access;
-      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+     (Self             : access Messages_Model_Record;
+      Dummy_Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      Dummy_File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Dummy_Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
       return Boolean is (True);
    --  Returns True if specified subprogram data has been changed
 

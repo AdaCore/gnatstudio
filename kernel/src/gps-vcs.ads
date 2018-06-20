@@ -179,15 +179,15 @@ package GPS.VCS is
    --  Free the memory used by Self
 
    function Get_Tooltip_For_File
-     (VCS     : not null access Abstract_VCS_Engine;
-      File    : GNATCOLL.VFS.Virtual_File)
+     (VCS        : not null access Abstract_VCS_Engine;
+      Dummy_File : GNATCOLL.VFS.Virtual_File)
      return String is ("");
    --  Return a description of the file's properties, suitable for display
    --  in tooltips.
 
    function File_Properties_From_Cache
-     (Self    : not null access Abstract_VCS_Engine;
-      File    : Virtual_File)
+     (Self       : not null access Abstract_VCS_Engine;
+      Dummy_File : Virtual_File)
      return VCS_File_Properties
      is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
    --  Return the current known status of the file.
@@ -222,8 +222,8 @@ package GPS.VCS is
    --  The name of the engine
 
    function Get_Display
-     (Self   : not null access Abstract_VCS_Engine;
-      Status : VCS_File_Status) return Status_Display
+     (Self         : not null access Abstract_VCS_Engine;
+      Dummy_Status : VCS_File_Status) return Status_Display
      is ((Null_Unbounded_String, Null_Unbounded_String));
    --  How to display the status
 

@@ -1650,7 +1650,7 @@ package body Clang_Xref is
      (Client_Data : in out Indexer_Data; Info : Clang_Ref_Info);
 
    function Abort_Query
-     (Client_Data : in out Indexer_Data) return Boolean is (False);
+     (Dummy_Client_Data : in out Indexer_Data) return Boolean is (False);
    procedure Diagnostic
      (Client_Data : in out Indexer_Data;
       Diagnostics : Clang_Diagnostic_Set) is null;

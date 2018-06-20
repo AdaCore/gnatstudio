@@ -260,8 +260,8 @@ package GPS.Kernel.MDI is
    --  Whether to add a menubar when the child is made floating
 
    function Build_Context
-     (Self  : not null access GPS_MDI_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
+     (Self        : not null access GPS_MDI_Child_Record;
+      Dummy_Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
      is (New_Context (Self.Kernel, Get_Module_From_Child (Self)));
    --  Return the current context for Self.

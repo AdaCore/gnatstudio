@@ -133,9 +133,9 @@ private
    type GVD_Base_Simple_Type is abstract new GVD_Generic_Type with null record;
 
    overriding function Replace
-     (Parent       : not null access GVD_Base_Simple_Type;
-      Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
+     (Parent             : not null access GVD_Base_Simple_Type;
+      Dummy_Current      : GVD_Type_Holder'Class;
+      Dummy_Replace_With : GVD_Type_Holder'Class)
       return GVD_Type_Holder'Class
    is (Empty_GVD_Type_Holder);
 

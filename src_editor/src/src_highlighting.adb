@@ -20,8 +20,6 @@ with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Pango.Font;   use Pango.Font;
 
-with Language;     use Language;
-
 package body Src_Highlighting is
 
    -----------

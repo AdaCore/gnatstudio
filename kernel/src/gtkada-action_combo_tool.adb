@@ -127,7 +127,8 @@ package body Gtkada.Action_Combo_Tool is
      (Self    : not null access Action_Combo_Tool_Record'Class;
       Action  : String)
    is
-      function Predicate (Item : String; Data : User_Data) return Boolean
+      function Predicate
+        (Dummy_Item : String; Data : User_Data) return Boolean
          is (Action_User_Data_Access (Data).Action = Action);
    begin
       Self.Remove_If (Predicate'Access);

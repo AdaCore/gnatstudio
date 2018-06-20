@@ -50,16 +50,16 @@ package GPS.Markers is
    --  possibly in a different GPS session.
 
    function Similar
-     (Left  : not null access Location_Marker_Data;
-      Right : not null access Location_Marker_Data'Class)
+     (Left        : not null access Location_Marker_Data;
+      Dummy_Right : not null access Location_Marker_Data'Class)
       return Boolean is (False);
    --  Return True if Left and Right point to the same location in the sense
    --  that GPS should not add a new marker in history for two locations that
    --  are the same.
 
    function Distance
-     (Left  : not null access Location_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Integer
+     (Left        : not null access Location_Marker_Data;
+      Dummy_Right : not null access Location_Marker_Data'Class) return Integer
       is (Integer'Last);
    --  Return a value represented distance between two locations.
    --  Return Integer'Last if locations are not comparable, for example marks

@@ -306,8 +306,8 @@ package body Libclang.Index is
       end Index_Reference_Internal;
 
       function Imported_AST_File_Internal
-        (arg1 : CXClientData;
-         arg2 : access constant CXIdxImportedASTFileInfo)
+        (Dummy_arg1 : CXClientData;
+         Dummy_arg2 : access constant CXIdxImportedASTFileInfo)
          return CXIdxClientASTFile
       is
         (CXIdxClientASTFile (System.Null_Address));

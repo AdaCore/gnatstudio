@@ -278,9 +278,9 @@ private
 
    type Empty_Iterator is new Generic_Iterator with null record;
    overriding function Field_Name
-     (Self : Empty_Iterator;
-      Lang : not null access Language_Root'Class;
-      Base : String := "") return String is ("");
+     (Self       : Empty_Iterator;
+      Dummy_Lang : not null access Language_Root'Class;
+      Dummy_Base : String := "") return String is ("");
 
    function Create_Empty_Iterator return Generic_Iterator'Class;
    --  Return an iterator that will return no element

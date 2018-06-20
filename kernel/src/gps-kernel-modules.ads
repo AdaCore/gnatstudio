@@ -141,8 +141,8 @@ package GPS.Kernel.Modules is
    --  create a tooltip that only contains text
 
    function Bookmark_Handler
-     (Module : access Module_ID_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
+     (Module     : access Module_ID_Record;
+      Dummy_Load : XML_Utils.Node_Ptr := null) return Location_Marker
      is (No_Marker);
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the

@@ -145,8 +145,9 @@ package Browsers.Canvas is
    --  Set the context from the topmost selected item
 
    function Load_From_XML
-     (Self : not null access General_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class is (null);
+     (Self       : not null access General_Browser_Record;
+      Dummy_Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class is (null);
    procedure Load_From_XML
      (Self     : not null access General_Browser_Record;
       Node     : XML_Utils.Node_Ptr;

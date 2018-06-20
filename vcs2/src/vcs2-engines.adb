@@ -112,8 +112,8 @@ package body VCS2.Engines is
       Visitor   : access Task_Visitor'Class := null;
       From_User : Boolean) is null;
    overriding function File_Properties_From_Cache
-     (Self    : not null access Dummy_VCS_Engine;
-      File    : Virtual_File) return VCS_File_Properties
+     (Self       : not null access Dummy_VCS_Engine;
+      Dummy_File : Virtual_File) return VCS_File_Properties
      is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
    overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Dummy_VCS_Engine;

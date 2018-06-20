@@ -74,7 +74,7 @@ private
 
    overriding function To_Completion_Id
      (Proposal : Alias_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db : access Xref.General_Xref_Database_Record'Class)
    return Completion_Id is (Proposal.Name'Length,
                             "ALIAS   ",
                             Proposal.Name.all,

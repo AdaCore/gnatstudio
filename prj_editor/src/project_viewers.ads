@@ -71,8 +71,8 @@ package Project_Viewers is
    --  directories.
 
    function Is_Visible
-     (Self         : not null access Project_Editor_Page_Record;
-      Languages    : GNAT.Strings.String_List) return Boolean is (True);
+     (Self            : not null access Project_Editor_Page_Record;
+      Dummy_Languages : GNAT.Strings.String_List) return Boolean is (True);
    --  Called to check whether a page should be visible, given the current
    --  list of languages.
    --  This function should also take care of hidding nested pages, when they

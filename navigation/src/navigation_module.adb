@@ -122,12 +122,12 @@ package body Navigation_Module is
    overriding function Save
      (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr;
    overriding function Similar
-     (Left  : not null access Shell_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Boolean
+     (Left        : not null access Shell_Marker_Data;
+      Dummy_Right : not null access Location_Marker_Data'Class) return Boolean
      is (False);
    overriding function Distance
-     (Left  : not null access Shell_Marker_Data;
-      Right : not null access Location_Marker_Data'Class) return Integer
+     (Left        : not null access Shell_Marker_Data;
+      Dummy_Right : not null access Location_Marker_Data'Class) return Integer
      is (Integer'Last);
 
    function Create_Shell_Marker

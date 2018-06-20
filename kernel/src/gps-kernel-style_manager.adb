@@ -102,8 +102,8 @@ package body GPS.Kernel.Style_Manager is
       --  The amount of shading to do
    end record;
    overriding function Depends_On_Pref
-     (Source : Source_Shade_Or_Lighten;
-      Pref   : access Preference_Record'Class) return Boolean is (False);
+     (Source     : Source_Shade_Or_Lighten;
+      Dummy_Pref : access Preference_Record'Class) return Boolean is (False);
    overriding procedure Apply
      (Source : Source_Shade_Or_Lighten;
       Style  : in out Style_Record);
@@ -112,8 +112,8 @@ package body GPS.Kernel.Style_Manager is
 
    type Source_Override is new Root_Source with null record;
    overriding function Depends_On_Pref
-     (Source : Source_Override;
-      Pref   : access Preference_Record'Class) return Boolean is (False);
+     (Source     : Source_Override;
+      Dummy_Pref : access Preference_Record'Class) return Boolean is (False);
    overriding procedure Apply
      (Source : Source_Override;
       Style  : in out Style_Record) is null;

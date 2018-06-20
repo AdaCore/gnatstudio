@@ -211,9 +211,9 @@ package Debugger.LLDB is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Line_Contains_Code
-     (Debugger : not null access LLDB_Debugger;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Editable_Line_Type)
+     (Debugger   : not null access LLDB_Debugger;
+      Dummy_File : GNATCOLL.VFS.Virtual_File;
+      Dummy_Line : Editable_Line_Type)
       return Boolean
    is
      (True);

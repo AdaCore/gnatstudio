@@ -78,7 +78,8 @@ package body Ada_Module is
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
-     (Kernel : not null access Kernel_Handle_Record'Class; Lang : String)
+     (Dummy_Kernel : not null access Kernel_Handle_Record'Class;
+      Dummy_Lang   : String)
       return not null access Project_Editor_Page_Record'Class is
       (new Ada_Naming_Editor_Record);
    --  Create the naming scheme editor page

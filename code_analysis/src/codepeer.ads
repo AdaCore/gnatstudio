@@ -88,7 +88,7 @@ package CodePeer is
 
    function Get_Name (Self : Message_Category) return String;
 
-   function Get_Tooltip (Item : Message_Category) return String is ("");
+   function Get_Tooltip (Dummy_Self : Message_Category) return String is ("");
    --  Returns tooltip's text to be displayed for given message category.
 
    type Message_Category_Access is access all Message_Category;

@@ -483,8 +483,8 @@ package GPS.Search is
    --  later on.
 
    function Complete_Suffix
-     (Self      : not null access Search_Provider;
-      Pattern   : not null access Search_Pattern'Class)
+     (Self          : not null access Search_Provider;
+      Dummy_Pattern : not null access Search_Pattern'Class)
       return String is ("");
    --  Used to implement completion through <tab>.
    --  Returns the possible completion for pattern.

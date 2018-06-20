@@ -348,7 +348,7 @@ package body Language.Libclang is
    -----------------
 
    function Abort_Query
-     (Client_Data : in out Indexer_Data) return Boolean is (False);
+     (Dummy_Client_Data : in out Indexer_Data) return Boolean is (False);
 
    ----------------
    -- Diagnostic --

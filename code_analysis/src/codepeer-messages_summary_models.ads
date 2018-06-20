@@ -142,10 +142,10 @@ private
    --  Returns True if specified file must be visible in the tree
 
    overriding function Is_Visible
-     (Self       : access Messages_Summary_Model_Record;
-      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
-      File       : Code_Analysis.Tree_Models.File_Item_Access;
-      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+     (Self             : access Messages_Summary_Model_Record;
+      Dummy_Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      Dummy_File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Dummy_Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
       return Boolean is (False);
    --  There are no subprogram nodes in this view, nothing to display.
 

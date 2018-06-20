@@ -215,8 +215,8 @@ package GPS.Core_Kernels is
      access all Editor_Listener_Factory'Class;
 
    function Get_Scheduled_Command
-     (Kernel  : not null access Core_Kernel_Record;
-      Command : access Commands.Root_Command'Class)
+     (Kernel        : not null access Core_Kernel_Record;
+      Dummy_Command : access Commands.Root_Command'Class)
       return Commands.Command_Access
      is (null);
    --  Return the command that wraps Command in the task manager. Such a

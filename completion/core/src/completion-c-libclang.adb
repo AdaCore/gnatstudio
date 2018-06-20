@@ -66,9 +66,9 @@ package body Completion.C.Libclang is
       return Completion_Proposal'Class is (Libclang_Completion'(Proposal));
 
    overriding function Match
-     (Proposal   : Libclang_Completion;
-      Context    : Completion_Context;
-      Offset     : String_Index_Type) return Boolean is (True);
+     (Proposal      : Libclang_Completion;
+      Dummy_Context : Completion_Context;
+      Dummy_Offset  : String_Index_Type) return Boolean is (True);
    --  This function is not actually used, need to be clarified some day ???
 
    overriding function Get_Action_Name
@@ -84,7 +84,7 @@ package body Completion.C.Libclang is
 
    overriding function Get_Completion
      (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.UTF8_String is (+Proposal.Completion);
    --  Return stored completion string
 
@@ -104,7 +104,7 @@ package body Completion.C.Libclang is
 
    overriding function Get_Label
      (Proposal : Libclang_Completion;
-      Db       : access Xref.General_Xref_Database_Record'Class)
+      Dummy_Db : access Xref.General_Xref_Database_Record'Class)
       return String is (To_String (Proposal.Label));
    --  Return stored label directly
 

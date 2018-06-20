@@ -55,7 +55,7 @@ package body GNAThub.Filters_Views is
       Value  : out Glib.Values.GValue);
 
    function Get_History_Name
-     (Item : GNAThub.Tool_Record; View : Gtk.Widget.Gtk_Widget)
+     (Item : GNAThub.Tool_Record; Dummy_View : Gtk.Widget.Gtk_Widget)
       return String is (Ada.Strings.Unbounded.To_String (Item.Name));
 
    package Tools_Editors is
@@ -78,7 +78,7 @@ package body GNAThub.Filters_Views is
       Value  : out Glib.Values.GValue);
 
    function Get_History_Name
-     (Item : GNAThub.Severity_Record; View : Gtk.Widget.Gtk_Widget)
+     (Item : GNAThub.Severity_Record; Dummy_View : Gtk.Widget.Gtk_Widget)
       return String is (Ada.Strings.Unbounded.To_String (Get_Name (Item)));
 
    function Is_Severity_Visible
@@ -107,7 +107,7 @@ package body GNAThub.Filters_Views is
       Value  : out Glib.Values.GValue);
 
    function Get_History_Name
-     (Item : GNAThub.Rule_Record; View : Gtk.Widget.Gtk_Widget)
+     (Item : GNAThub.Rule_Record; Dummy_View : Gtk.Widget.Gtk_Widget)
       return String is (Ada.Strings.Unbounded.To_String (Item.Name));
 
    function Is_Rule_Visible
