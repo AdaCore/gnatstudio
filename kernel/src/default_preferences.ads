@@ -485,7 +485,7 @@ package Default_Preferences is
       Name, Label, Doc          : String;
       Default_Font              : String;
       Default_Fg                : String;
-      Default_Bg                : String;
+      Default_Bg                : String := "transparent";
       Priority                  : Integer := -1)
       return Style_Preference;
    function Create
@@ -495,7 +495,7 @@ package Default_Preferences is
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
-      Default_Bg                : String;
+      Default_Bg                : String := "transparent";
       Priority                  : Integer := -1)
       return Variant_Preference;
    function Create

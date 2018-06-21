@@ -7547,7 +7547,8 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
-    def create_style(self, label, doc='', default_fg="", default_bg="white",
+    def create_style(self, label, doc='', default_fg="",
+                     default_bg="transparent",
                      default_font_style="default"):
         """
         Creates a new text style preference, which enables the user to choose

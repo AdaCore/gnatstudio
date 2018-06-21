@@ -147,16 +147,12 @@ def propagate_change(pref):
     fg_color = Gdk.RGBA()
     style_string = pref.get()
     font_style, fg_style, bg_style = style_string.split("@")
-    has_bg = bg_style != "rgba(0,0,0,0)"
     fg_color.parse(fg_style)
     pref.tag.set_property("foreground_rgba", fg_color)
 
-    if has_bg:
-        bg_color = Gdk.RGBA()
-        bg_color.parse(bg_style)
-        is_white = bg_color.red == bg_color.blue == bg_color.green == 1
-        if not is_white:
-            pref.tag.set_property("background_rgba", bg_color)
+    bg_color = Gdk.RGBA()
+    bg_color.parse(bg_style)
+    pref.tag.set_property("background_rgba", bg_color)
 
     if font_style in ["BOLD", "BOLD_ITALIC"]:
         pref.tag.set_property("weight", Pango.Weight.BOLD)

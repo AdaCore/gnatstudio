@@ -1035,7 +1035,7 @@ package body Default_Preferences is
       Name, Label, Doc          : String;
       Default_Font              : String;
       Default_Fg                : String;
-      Default_Bg                : String;
+      Default_Bg                : String := "transparent";
       Priority                  : Integer := -1)
       return Style_Preference
    is
@@ -1065,7 +1065,7 @@ package body Default_Preferences is
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
-      Default_Bg                : String;
+      Default_Bg                : String := "transparent";
       Priority                  : Integer := -1)
       return Variant_Preference
    is

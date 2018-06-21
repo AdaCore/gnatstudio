@@ -267,7 +267,7 @@ def region_ref(name):
 
 
 def new_style(lang, name, label, doc, foreground_colors,
-              background_colors=("#ffffff",  "#ffffff"),
+              background_colors=("transparent", "transparent"),
               font_style="default", prio=-1):
     """
     Creates a new style to apply when a matcher successfully matches a
@@ -309,7 +309,7 @@ def new_style(lang, name, label, doc, foreground_colors,
     try:
         from highlighter.engine import Style, HighlighterModule
         import theme_handling
-        from theme_handling import Color
+        from theme_handling import Color, transparent
 
         style_id = "{0}_{1}".format(lang, name)
         pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
@@ -318,14 +318,27 @@ def new_style(lang, name, label, doc, foreground_colors,
                           foreground_colors[0], background_colors[0],
                           font_style)
 
+        dark_bg_color = None
+        light_bg_color = None
+
+        if background_colors[0] == "transparent":
+            light_bg_color = transparent
+        else:
+            light_bg_color = Color(background_colors[0])
+
+        if background_colors[1] == "transparent":
+            dark_bg_color = transparent
+        else:
+            dark_bg_color = Color(background_colors[1])
+
         theme_handling.variant_prefs[style_id] = pref_name
         theme_handling.common_dark[style_id] = (font_style.upper(),
                                                 Color(foreground_colors[1]),
-                                                Color(background_colors[1]))
+                                                dark_bg_color)
 
         theme_handling.common_light[style_id] = (font_style.upper(),
                                                  Color(foreground_colors[0]),
-                                                 Color(background_colors[0]))
+                                                 light_bg_color)
         pref.tag = None
         HighlighterModule.preferences[style_id] = pref
         return Style(style_id, prio, pref)

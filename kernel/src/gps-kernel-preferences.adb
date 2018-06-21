@@ -308,7 +308,8 @@ package body GPS.Kernel.Preferences is
             Label              : constant String := Nth_Arg (Data, 2);
             Doc                : constant String := Nth_Arg (Data, 3, "");
             Default_Fg         : constant String := Nth_Arg (Data, 4, "");
-            Default_Bg         : constant String := Nth_Arg (Data, 5, "white");
+            Default_Bg         : constant String := Nth_Arg
+              (Data, 5, "transparent");
             Default_Font_Style : constant String :=
               To_Lower (Nth_Arg (Data, 6, "default"));
             Default_Variant    : Variant_Enum;
@@ -817,7 +818,6 @@ package body GPS.Kernel.Preferences is
          Doc          => -"Default font and background color for editors.",
          Default_Font => Defaults.Default_Fixed_Font,
          Default_Fg   => "black",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:General");
 
       Blocks_Style := Manager.Create
@@ -827,7 +827,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg      => "#60615F",
-         Default_Bg      => "white",
          Path            => -"Editor/Fonts & Colors:General");
 
       Types_Style := Manager.Create
@@ -837,7 +836,6 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Doc             => "",
          Default_Fg   => "#009900",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:General");
 
       Keywords_Style := Manager.Create
@@ -847,7 +845,6 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Doc             => "",
          Default_Fg      => "#0000E6",
-         Default_Bg      => "white",
          Path            => -"Editor/Fonts & Colors:General");
 
       Comments_Style := Manager.Create
@@ -857,7 +854,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#969696",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:General");
 
       Strings_Style := Manager.Create
@@ -867,7 +863,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#CE7B00",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:General");
 
       Numbers_Style := Manager.Create
@@ -877,7 +872,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#FF3333",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:General");
 
       Hyper_Links_Style := Manager.Create
@@ -887,7 +881,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "blue",
-         Default_Bg   => "white",
          Path            => -"Editor/Fonts & Colors:General");
 
       Code_Annotations_Style := Manager.Create
@@ -922,7 +915,6 @@ package body GPS.Kernel.Preferences is
          Base            => Default_Style,
          Default_Variant => Default,
          Default_Fg   => "#60615F",
-         Default_Bg   => "white",
          Doc          => "",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
@@ -932,7 +924,6 @@ package body GPS.Kernel.Preferences is
          Base            => Default_Style,
          Default_Variant => Default,
          Default_Fg   => "#60615F",
-         Default_Bg   => "white",
          Doc          => "",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
@@ -943,7 +934,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg      => "#60615F",
-         Default_Bg      => "white",
          Path            => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Types_Style := Manager.Create
@@ -953,7 +943,6 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Doc             => "",
          Default_Fg   => "#009900",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Keywords_Style := Manager.Create
@@ -963,7 +952,6 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Doc             => "",
          Default_Fg      => "#0000E6",
-         Default_Bg      => "white",
          Path            => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Comments_Style := Manager.Create
@@ -973,7 +961,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#969696",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Strings_Style := Manager.Create
@@ -983,7 +970,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#CE7B00",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Numbers_Style := Manager.Create
@@ -993,7 +979,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Variant => Default,
          Default_Fg   => "#FF3333",
-         Default_Bg   => "white",
          Path         => -"Editor/Fonts & Colors:SPARK");
 
       Ephemeral_Highlighting_Simple := Manager.Create

@@ -268,7 +268,7 @@ common_light = {
     'current_block': Rgba(226, 226, 226),
     'browsers_bg': Rgba(255, 255, 255),
 
-    'preprocessor': ("DEFAULT", Color("#606090"), Color("#A0A0F0"))
+    'preprocessor': ("DEFAULT", Color("#606090"), transparent)
 }
 
 common_dark = {
@@ -328,7 +328,7 @@ common_dark = {
     'current_block':  Rgba(48, 51, 51),
     'browsers_bg': Rgba(255, 255, 255),
 
-    'preprocessor': ("DEFAULT", Color("#606090"), Color("#2E3436"))
+    'preprocessor': ("DEFAULT", Color("#606090"), transparent)
 }
 
 
