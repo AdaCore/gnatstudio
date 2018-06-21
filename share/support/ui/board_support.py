@@ -251,7 +251,7 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
         elif self.__flashing_tool == "pyocd-flashtool":
-            return "^INFO:root:Programmed \d+ bytes \(\d+ pages\) " \
+            return "INFO:root:Programmed \d+ bytes \(\d+ pages\) " \
               "at [\d\.]+ kB\/s|^No operation performed"
         else:
             return ""
