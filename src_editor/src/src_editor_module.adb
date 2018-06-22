@@ -545,7 +545,8 @@ package body Src_Editor_Module is
             Success         => Success);
 
          if Is_Valid_Position (Buffer, Line) then
-            Set_Cursor_Location (Editor, Line, Column, False);
+            Set_Cursor_Location
+              (Editor, Line, Column, False, Centering => Center);
          end if;
       end if;
    end Reload;
