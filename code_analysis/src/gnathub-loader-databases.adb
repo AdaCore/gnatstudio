@@ -129,7 +129,7 @@ package body GNAThub.Loader.Databases is
 
       procedure Load_Entities;
 
-      procedure Load_Message;
+      procedure Load_Message (Line : Integer; Column : Integer);
 
       procedure Load_Metric (Kind : Resource_Kind_Type;  Line : Integer);
 
@@ -176,7 +176,7 @@ package body GNAThub.Loader.Databases is
                while Messages.Has_Row loop
                   M := Messages.Element;
                   if Self.Rules.Contains (M.Rule_Id) then
-                     Load_Message;
+                     Load_Message (Entity.Line, Entity.Col_Begin);
                   elsif Self.Metrics.Contains (M.Rule_Id) then
                      Load_Metric (Resource.Kind, Entity.Line);
                   end if;
@@ -193,7 +193,7 @@ package body GNAThub.Loader.Databases is
       -- Load_Message --
       ------------------
 
-      procedure Load_Message is
+      procedure Load_Message (Line : Integer; Column : Integer) is
       begin
          Ranking := M.Ranking;
          Severity := Self.Module.Get_Severity (Get_Importance_From_Ranking);
@@ -216,8 +216,8 @@ package body GNAThub.Loader.Databases is
             Rule      => Rule,
             Text      => To_Unbounded_String (Database.Orm.Data (M)),
             File      => Resource_File,
-            Line      => R.Line,
-            Column    => Basic_Types.Visible_Column_Type (R.Col_Begin));
+            Line      => Line,
+            Column    => Basic_Types.Visible_Column_Type (Column));
 
          --  Insert the message in the module's tree
 
@@ -277,7 +277,7 @@ package body GNAThub.Loader.Databases is
            .Get (Session).Element;
 
          if Self.Rules.Contains (M.Rule_Id) then
-            Load_Message;
+            Load_Message (R.Line, R.Col_Begin);
          elsif Self.Metrics.Contains (M.Rule_Id) then
             Load_Metric (Resource.Kind, R.Line);
          end if;

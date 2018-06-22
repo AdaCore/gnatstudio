@@ -7,8 +7,8 @@ import gps_utils
 import os_utils
 
 gnathub_menu = "/Analyze/GNAThub/"
-tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatmetric',
-         'spark2014']
+tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatstack',
+         'gnatmetric', 'spark2014']
 
 
 XML = r"""<?xml version="1.0" ?>
