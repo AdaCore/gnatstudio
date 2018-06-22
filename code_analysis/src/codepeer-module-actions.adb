@@ -239,6 +239,7 @@ package body CodePeer.Module.Actions is
          return Failure;
       end if;
 
+      Self.Module.Action := None;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
