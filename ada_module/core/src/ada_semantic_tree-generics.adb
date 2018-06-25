@@ -432,9 +432,15 @@ package body Ada_Semantic_Tree.Generics is
                  To_Persistent
                    (Declaration_View_Record (Result.all).Generic_Context);
             end if;
-
-            Set_Cache (Info, Cached);
+         else
+            --  If the result is null, we still cache it, so we don't have
+            --  to redo the potentially expensive calculations above.
+            Cached := new Instanciated_Package'
+              (Cached_Information with
+               Generic_Package => Null_Entity_Persistent_Access,
+               Generic_Context => Null_Persistent_Instance_Info);
          end if;
+         Set_Cache (Info, Cached);
 
          return Result;
       end;
