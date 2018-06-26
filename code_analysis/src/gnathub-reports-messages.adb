@@ -303,7 +303,7 @@ package body GNAThub.Reports.Messages is
 
          return
            GNAThub_Message_Access
-             (File_Node.Messages.Last_Element.Message);
+             (File_Node.Messages.First_Element.Message);
       end Get_First_Message;
 
       -----------------------

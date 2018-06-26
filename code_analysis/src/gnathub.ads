@@ -135,8 +135,9 @@ package GNAThub is
 
    type GNAThub_Project (Counts_Size : Natural) is
      new Code_Analysis.Project with record
-      Counts  : Counts_Array (1 .. Counts_Size);
-      Metrics : Metric_Tool_Maps.Map;
+      Counts   : Counts_Array (1 .. Counts_Size);
+      Messages : Messages_Vectors.Vector;
+      Metrics  : Metric_Tool_Maps.Map;
    end record;
    type GNAThub_Project_Access is access all GNAThub_Project;
 

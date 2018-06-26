@@ -14,11 +14,12 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
-with GNAThub.Messages;     use GNAThub.Messages;
+with GNAThub.Messages;      use GNAThub.Messages;
 with GNAThub.Module;
 with GPS.Scripts.Commands;
 
@@ -55,16 +56,25 @@ private
       Command      : GPS.Scripts.Commands.Scheduled_Command_Access;
    end record;
 
+   type Entity_Data is record
+      Name   : Unbounded_String;
+      Line   : Natural;
+      Column : Natural;
+   end record;
+
+   No_Entity_Data : constant Entity_Data := (To_Unbounded_String (""), 1, 1);
+
    procedure Insert_Message
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
+      Entity  : Entity_Data;
       Message : GNAThub_Message_Access);
 
    procedure Insert_Metric
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Natural;
+      Entity  : Entity_Data;
       Metric  : Metric_Access);
 
 end GNAThub.Loader;

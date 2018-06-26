@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with GNATCOLL.Symbols;
@@ -35,10 +34,9 @@ package body GNAThub.Loader is
 
    function Mangle_Entity_Name
      (Name   : String;
-      Line   : Natural;
-      Column : Natural)
+      Line   : Natural)
       return String;
-   --  Mangle the given name using the line and column so we can add multiple
+   --  Mangle the given name using the line so we can add multiple
    --  entities with the same name in the analysis tree.
 
    function Get_Or_Create
@@ -65,14 +63,25 @@ package body GNAThub.Loader is
    function Get_Or_Create
      (Self        : in out Loader_Type'Class;
       File_Node   : GNAThub_File_Access;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Line        : Integer;
+      Subprogram  : String;
+      Line        : Natural;
+      Column      : Natural;
       Severity_Id : Natural;
       Visible     : Boolean)
       return GNAThub_Subprogram_Access;
-   --  Get or create the node for the subprogram that surrounds the given Line
-   --  in the given file.
+   --  Get or create the node for the subprogram data in the given file.
    --  If Visible is True, the node's internal counters is also updated.
+
+   function Entity_From_Semantic_Tree
+     (Self        : in out Loader_Type'Class;
+      File_Node   : GNAThub_File_Access;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line        : Natural;
+      Severity_Id : Natural;
+      Visible     : Boolean)
+      return GNAThub_Subprogram_Access;
+   --  Check the Semantic Tree to find the enclosing entity containing Line
+   --  Return null if no entity is found
 
    ------------------------
    -- Mangle_Entity_Name --
@@ -80,13 +89,10 @@ package body GNAThub.Loader is
 
    function Mangle_Entity_Name
      (Name   : String;
-      Line   : Natural;
-      Column : Natural)
+      Line   : Natural)
       return String is
    begin
       return (Integer'Image (Line)
-              & "_"
-              & Integer'Image (Column)
               & "_"
               & Name);
    end Mangle_Entity_Name;
@@ -185,15 +191,15 @@ package body GNAThub.Loader is
       end if;
    end Execute;
 
-   -------------------
-   -- Get_Or_Create --
-   -------------------
+   -------------------------------
+   -- Entity_From_Semantic_Tree --
+   -------------------------------
 
-   function Get_Or_Create
+   function Entity_From_Semantic_Tree
      (Self        : in out Loader_Type'Class;
       File_Node   : GNAThub_File_Access;
       File        : GNATCOLL.VFS.Virtual_File;
-      Line        : Integer;
+      Line        : Natural;
       Severity_Id : Natural;
       Visible     : Boolean)
       return GNAThub_Subprogram_Access
@@ -210,10 +216,6 @@ package body GNAThub.Loader is
                    ("GNATHUB", File);
       Result : GNAThub_Subprogram_Access := null;
    begin
-      --  TODO: we might want to rely on the entity-related information
-      --  stored in the GNAThub database instead of performing our own search
-      --  to associated messages/metrics to entities.
-
       if Tree = No_Semantic_Tree then
          return Result;
       end if;
@@ -265,8 +267,7 @@ package body GNAThub.Loader is
          declare
             Mangled_Name : constant String := Mangle_Entity_Name
                 (Result.Name.all,
-                 Line   => Result.Line,
-                 Column => Result.Column);
+                 Line => Result.Line);
             Cursor       : Subprogram_Maps.Cursor;
          begin
             Cursor := File_Node.Subprograms.Find (Mangled_Name);
@@ -288,6 +289,55 @@ package body GNAThub.Loader is
             Result.Counts (Result.Counts'Last) :=
               Result.Counts (Result.Counts'Last) + 1;
          end if;
+      end if;
+
+      return Result;
+   end Entity_From_Semantic_Tree;
+
+   -------------------
+   -- Get_Or_Create --
+   -------------------
+
+   function Get_Or_Create
+     (Self        : in out Loader_Type'Class;
+      File_Node   : GNAThub_File_Access;
+      Subprogram  : String;
+      Line        : Natural;
+      Column      : Natural;
+      Severity_Id : Natural;
+      Visible     : Boolean)
+      return GNAThub_Subprogram_Access
+   is
+      use Code_Analysis.Subprogram_Maps;
+
+      Cursor       : Code_Analysis.Subprogram_Maps.Cursor;
+      Result       : GNAThub_Subprogram_Access;
+      Mangled_Name : constant String := Mangle_Entity_Name
+        (Subprogram, Line => Line);
+   begin
+      Cursor := File_Node.Subprograms.Find (Mangled_Name);
+      if Has_Element (Cursor) then
+         Result := GNAThub_Subprogram_Access (Element (Cursor));
+      else
+         Result := new GNAThub_Subprogram'
+           (Analysis_Data => (null, null),
+            Name          => new String'(Subprogram),
+            Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
+            Counts        => (others => 0),
+            Messages      => Messages_Vectors.Empty_Vector,
+            Metrics       => Metric_Tool_Maps.Empty_Map,
+            Line          => Line,
+            Column        => Column,
+            others        => 0);
+
+         File_Node.Subprograms.Include
+           (Mangled_Name, Code_Analysis.Subprogram_Access (Result));
+      end if;
+
+      if Visible then
+         Result.Counts (Severity_Id) := Result.Counts (Severity_Id) + 1;
+         Result.Counts (Result.Counts'Last) :=
+           Result.Counts (Result.Counts'Last) + 1;
       end if;
 
       return Result;
@@ -317,6 +367,7 @@ package body GNAThub.Loader is
            (Analysis_Data => (null, null),
             Name          => Project,
             Files         => Code_Analysis.File_Maps.Empty_Map,
+            Messages      => Messages_Vectors.Empty_Vector,
             Metrics       => Metric_Tool_Maps.Empty_Map,
             Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
             Counts        => (others => 0));
@@ -384,6 +435,7 @@ package body GNAThub.Loader is
    procedure Insert_Message
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
+      Entity  : Entity_Data;
       Message : GNAThub_Message_Access)
    is
       use type GNATCOLL.VFS.Virtual_File;
@@ -403,11 +455,20 @@ package body GNAThub.Loader is
       Visible := not Filter_Result.Non_Applicable
         and then Filter_Result.Flags (GPS.Kernel.Messages.Locations);
 
+      M_Ref := GPS.Kernel.Messages.References.Create
+        (GPS.Kernel.Messages.Message_Access (Message));
+      Self.Messages.Append (M_Ref);
+
       Project_Node := Get_Or_Create
         (Self        => Self,
          Project     => Project,
          Severity_Id => Severity_Id,
          Visible     => Visible);
+
+      if File = GNATCOLL.VFS.No_File then
+         Project_Node.Messages.Append (M_Ref);
+         return;
+      end if;
 
       File_Node    := Get_Or_Create
         (Self        => Self,
@@ -416,26 +477,29 @@ package body GNAThub.Loader is
          Severity_Id => Severity_Id,
          Visible     => Visible);
 
-      Subprogram_Node := Get_Or_Create
-        (Self        => Self,
-         File_Node   => File_Node,
-         File        => File,
-         Line        => Message.Get_Line,
-         Severity_Id => Severity_Id,
-         Visible     => Visible);
-
-      M_Ref := GPS.Kernel.Messages.References.Create
-        (GPS.Kernel.Messages.Message_Access (Message));
-      Self.Messages.Append (M_Ref);
-
-      --  If a subprogram has been found for the message, associate it to
-      --  the corresponding subprogram's node in the analysis tree.
-      --  Otherwise, associate it with the file's node.
-
-      if Subprogram_Node /= null then
+      if Entity /= No_Entity_Data then
+         Subprogram_Node := Get_Or_Create
+           (Self => Self,
+            File_Node   => File_Node,
+            Subprogram  => To_String (Entity.Name),
+            Line        => Entity.Line,
+            Column      => Entity.Column,
+            Severity_Id => Severity_Id,
+            Visible     => Visible);
          Subprogram_Node.Messages.Append (M_Ref);
       else
-         File_Node.Messages.Append (M_Ref);
+         Subprogram_Node := Entity_From_Semantic_Tree
+           (Self        => Self,
+            File_Node   => File_Node,
+            File        => File,
+            Line        => Message.Get_Line,
+            Severity_Id => Severity_Id,
+            Visible     => Visible);
+         if Subprogram_Node /= null then
+            Subprogram_Node.Messages.Append (M_Ref);
+         else
+            File_Node.Messages.Append (M_Ref);
+         end if;
       end if;
    end Insert_Message;
 
@@ -447,10 +511,9 @@ package body GNAThub.Loader is
      (Self    : in out Loader_Type'Class;
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Natural;
+      Entity  : Entity_Data;
       Metric  : Metric_Access)
    is
-      use GNATCOLL.Projects;
       use type GNATCOLL.VFS.Virtual_File;
 
       Project_Node    : GNAThub_Project_Access;
@@ -482,21 +545,15 @@ package body GNAThub.Loader is
          Severity_Id => 0,
          Visible     => False);
 
-      if Project /= No_Project then
+      if Entity /= No_Entity_Data then
          Subprogram_Node := Get_Or_Create
-           (Self        => Self,
+           (Self => Self,
             File_Node   => File_Node,
-            File        => File,
-            Line        => Line,
+            Subprogram  => To_String (Entity.Name),
+            Line        => Entity.Line,
+            Column      => Entity.Column,
             Severity_Id => 0,
             Visible     => False);
-      end if;
-
-      --  If a subprogram has been found for the metric, associate it to
-      --  the corresponding subprogram's node in the analysis tree.
-      --  Otherwise, associate it with the file's node.
-
-      if Subprogram_Node /= null then
          if not Subprogram_Node.Metrics.Contains (Metric.Rule.Tool.Name) then
             Subprogram_Node.Metrics.Include
               (Metric.Rule.Tool.Name,
@@ -515,6 +572,7 @@ package body GNAThub.Loader is
          File_Node.Metrics
            (Metric.Rule.Tool.Name).Insert (Metric);
       end if;
+
    end Insert_Metric;
 
 end GNAThub.Loader;

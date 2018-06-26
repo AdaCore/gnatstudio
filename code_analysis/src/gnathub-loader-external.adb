@@ -75,6 +75,7 @@ package body GNAThub.Loader.External is
               (Self    => Self,
                Project => Get_Registry
                  (Self.Module.Kernel).Tree.Info (Message.Get_File).Project,
+               Entity  => No_Entity_Data,
                Message => Message);
 
             --  Update the severities counter

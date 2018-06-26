@@ -130,9 +130,14 @@ package body GNAThub.Loader.Databases is
       procedure Load_Entities;
 
       procedure Load_Message
-        (Kind : Resource_Kind_Type; Line : Integer; Column : Integer);
+        (Kind   : Resource_Kind_Type;
+         Line   : Integer;
+         Column : Integer;
+         Entity : Database.Orm.Entity := Database.Orm.No_Entity);
 
-      procedure Load_Metric (Kind : Resource_Kind_Type;  Line : Integer);
+      procedure Load_Metric
+        (Kind   : Resource_Kind_Type;
+         Entity : Database.Orm.Entity := Database.Orm.No_Entity);
 
       ---------------------------------
       -- Get_Importance_From_Ranking --
@@ -178,9 +183,9 @@ package body GNAThub.Loader.Databases is
                   M := Messages.Element;
                   if Self.Rules.Contains (M.Rule_Id) then
                      Load_Message
-                       (Resource.Kind, Entity.Line, Entity.Col_Begin);
+                       (Resource.Kind, Entity.Line, Entity.Col_Begin, Entity);
                   elsif Self.Metrics.Contains (M.Rule_Id) then
-                     Load_Metric (Resource.Kind, Entity.Line);
+                     Load_Metric (Resource.Kind, Entity);
                   end if;
                   Messages.Next;
                end loop;
@@ -196,7 +201,10 @@ package body GNAThub.Loader.Databases is
       ------------------
 
       procedure Load_Message
-        (Kind : Resource_Kind_Type; Line : Integer; Column : Integer)
+        (Kind   : Resource_Kind_Type;
+         Line   : Integer;
+         Column : Integer;
+         Entity : Database.Orm.Entity := Database.Orm.No_Entity)
       is
          Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File;
@@ -240,11 +248,22 @@ package body GNAThub.Loader.Databases is
             Column    => Basic_Types.Visible_Column_Type (Column));
 
          --  Insert the message in the module's tree
-
-         Insert_Message
-           (Self    => Self,
-            Project => Project,
-            Message => Message);
+         if Entity.Is_Null then
+            Insert_Message
+              (Self    => Self,
+               Project => Project,
+               Entity  => No_Entity_Data,
+               Message => Message);
+         else
+            Insert_Message
+              (Self    => Self,
+               Project => Project,
+               Entity  =>
+                 (To_Unbounded_String (Entity.Name),
+                  Entity.Line,
+                  Integer (Entity.Column)),
+               Message => Message);
+         end if;
 
          Messages_Vectors.Append
            (Self.Messages,
@@ -256,7 +275,9 @@ package body GNAThub.Loader.Databases is
       -- Load_Metric --
       -----------------
 
-      procedure Load_Metric (Kind : Resource_Kind_Type; Line : Integer)
+      procedure Load_Metric
+        (Kind   : Resource_Kind_Type;
+         Entity : Database.Orm.Entity := Database.Orm.No_Entity)
       is
          Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File;
@@ -281,12 +302,24 @@ package body GNAThub.Loader.Databases is
                                       Value    =>
                                         Float'Value
                                           (Database.Orm.Data (M)));
-         Insert_Metric
-           (Self    => Self,
-            Project => Project,
-            File    => File,
-            Line    => Line,
-            Metric  => Metric);
+         if Entity.Is_Null then
+            Insert_Metric
+              (Self    => Self,
+               Project => Project,
+               File    => File,
+               Entity  => No_Entity_Data,
+               Metric  => Metric);
+         else
+            Insert_Metric
+              (Self    => Self,
+               Project => Project,
+               File    => File,
+               Entity  =>
+                (To_Unbounded_String (Entity.Name),
+                 Entity.Line,
+                 Integer (Entity.Column)),
+               Metric  => Metric);
+         end if;
       end Load_Metric;
 
    begin
@@ -299,7 +332,7 @@ package body GNAThub.Loader.Databases is
          if Self.Rules.Contains (M.Rule_Id) then
             Load_Message (Resource.Kind, R.Line, R.Col_Begin);
          elsif Self.Metrics.Contains (M.Rule_Id) then
-            Load_Metric (Resource.Kind, R.Line);
+            Load_Metric (Resource.Kind);
          end if;
 
          List.Next;
