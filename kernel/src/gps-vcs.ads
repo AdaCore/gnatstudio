@@ -186,8 +186,8 @@ package GPS.VCS is
    --  in tooltips.
 
    function Get_VCS_File_Status
-     (VCS  : not null access Abstract_VCS_Engine;
-      File : GNATCOLL.VFS.Virtual_File)
+     (VCS        : not null access Abstract_VCS_Engine;
+      Dummy_File : GNATCOLL.VFS.Virtual_File)
       return VCS_File_Status is (Status_Untracked);
    --  A convenient getter
 
