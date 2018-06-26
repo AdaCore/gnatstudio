@@ -25,7 +25,6 @@ with Default_Preferences;        use Default_Preferences;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
-with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gdk.Window;                 use Gdk.Window;
@@ -62,7 +61,6 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
-with Gtkada.Style;               use Gtkada.Style;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -418,13 +416,11 @@ package body Gtkada.Entry_Completion is
             when Role_To_Locations =>
                Set_String (Value,
                            --  encoding for U+21D2 (right arrow)
-                           "<span foreground='"
-                           & To_Hex (Filter.View.Color_To_Locations)
-                           & "'><small>"
+                           "<small>"
                            & Character'Val (16#E2#)
                            & Character'Val (16#87#)
                            & Character'Val (16#92#)
-                           & " Locations</small></span>");
+                           & " Locations</small>");
             when Role_Unknown =>
                null;
          end case;
@@ -495,7 +491,6 @@ package body Gtkada.Entry_Completion is
       Sep  : Gtk_Separator;
       Render : Gtk_Cell_Renderer_Text;
       Dummy  : Boolean;
-      Color  : Gdk_RGBA;
       Filter : Comp_Filter_Model;
       Frame  : Gtk_Frame;
       Popup    : Gtk_Window;
@@ -718,9 +713,6 @@ package body Gtkada.Entry_Completion is
       Self.Column_Provider.Pack_Start (Render, False);
       Self.Column_Provider.Add_Attribute
         (Render, "markup", Column_Provider);
-
-      Color := Default_Style.Get_Pref_Bg;
-      Self.Color_To_Locations := Shade_Or_Lighten (Color, 0.3);
 
       Gtk_New (Self.Column_Match);
       Self.Column_Match.Set_Sort_Column_Id (Column_Score);

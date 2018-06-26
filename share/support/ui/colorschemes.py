@@ -396,12 +396,7 @@ class ColorSchemePicker(object):
                 the_theme_switcher.apply_theme(fallback_theme)
             else:
                 logger.log("No fallback theme found: applying default CSS")
-                css = ("""
-@define-color editor_bg_color %s;
-@define-color editor_fg_color %s;""" % (editor_bg_color.to_rgba_string(),
-                                        editor_fg_color.to_rgba_string()))
-                the_theme_switcher.provider.load_from_data(css)
-                GPS.Preference(gtk_css_pref_name).set(css)
+                the_theme_switcher.apply_theme(default)
 
 
 picker = ColorSchemePicker()
