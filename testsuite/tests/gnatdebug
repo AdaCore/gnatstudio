@@ -1,0 +1,29 @@
+>&2:buffer_size=0
+DEBUG.COLORS=no
+UNEXPECTED_EXCEPTIONS=yes
+*.EXCEPTIONS=yes
+TESTSUITE=yes
+GPS.KERNEL.SHELL_DOC=yes
+CHECK_COLOR_DEPTH=no
+
+--  Keep traces till the end, in case we get unexpected exceptions in the
+--  finalization of GPS
+DEBUG.FINALIZE_TRACES=no
+
+--  This trace generates errors in any case where
+--  a SQL request is being made (for instance whenever querying
+--  a contextual menu) when gnatinspect has not yet had a chance to run.
+SQL.ERROR=no
+
+PYTHON.TB=no
+
+ENTITIES.SQLITE=yes
+ENTITIES.PARSING=no
+
+GPS.LANGUAGE.LIBCLANG=no
+GPS.LIBCLANG.LIBCLANG=no
+GPS.COMPLETION.LIBCLANG_COMPLETION=no
+GPS.KERNEL.LIBCLANG=no
+GPS.LIBCLANG.POOL=no
+
+GPS.INTERNAL.MODULE_GNAThub=yes

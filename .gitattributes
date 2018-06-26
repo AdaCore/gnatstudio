@@ -28,6 +28,9 @@ share/support/core/spark.py           no-precommit-check
 share/library/parasail.py             no-precommit-check
 kernel/src/hooks.py                   no-precommit-check
 
+# This one does some imports that are unused but needed for tests
+share/support/core/gps_utils/internal/driver.py	no-precommit-check
+
 # Automatically generated
 share/support/core/runtime.py no-precommit-check
 
@@ -36,3 +39,6 @@ distrib/known-problems-62     no-precommit-check
 
 # Some non-AdaCore code
 share/templates/microbit_example/src/*	no-precommit-check
+
+# "GPS" not defined in these
+testsuite/tests/*/*.py	no-precommit-check

@@ -12,6 +12,8 @@ from gps_utils.internal.utils import simple_error
 # Some of the imports here are necessary for some of the tests
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
 
+XFAIL = 100  # return code for XFAIL tests
+
 
 def do_exit(timeout):
     """ Force an exit of GPS right now, logging as an error the contents
@@ -47,18 +49,22 @@ def run_test_driver(action_fn):
         if not gps_assert(...):
             return    # if you want to stop the test
 
+        return XFAIL  # if you want the testsuite to mark the test as XFAIL
+
     """
 
     def workflow():
         _ = yield hook("gps_started")
         yield timeout(10)
 
+        last_result = None
+
         try:
             action_gen = action_fn()
             if action_gen is not None:
-                yield action_gen
+                last_result = yield action_gen
 
-        except:
+        except Exception:
             import traceback
             GPS.Logger('TESTSUITE').log(
                 "Driver workflow received an exception %s %s\n%s"
@@ -68,7 +74,7 @@ def run_test_driver(action_fn):
 
         finally:
             if "GPS_PREVENT_EXIT" not in os.environ:
-                GPS.exit(force=True)
+                GPS.exit(force=True, status=last_result if last_result else 0)
 
     # Install a timeout to catch the errors in GPS, if any, before rlimit
     # kills everything.
