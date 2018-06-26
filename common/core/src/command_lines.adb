@@ -1267,38 +1267,35 @@ package body Command_Lines is
             end if;
          end if;
 
-         if Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
-            Prefixed_Switch_Maps.Next (Iter.Prefixed);
-
-            if Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
-               if Iter.Expanded then
-                  declare
-                     Section : Command_Lines.Section renames
-                       Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
-                  begin
-                     Iter.Argument := Section.Prefixes (Iter.Prefixed).First;
-                  end;
-               end if;
-
-               return;
-            else
-               declare
-                  Section : Command_Lines.Section renames
-                    Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
-               begin
-                  Iter.Switch := Section.Switches.First;
-
-                  if Switch_Vectors.Has_Element (Iter.Switch) then
-                     return;
-                  end if;
-               end;
-            end if;
-         elsif Switch_Vectors.Has_Element (Iter.Switch) then
+         if Switch_Vectors.Has_Element (Iter.Switch) then
             Switch_Vectors.Next (Iter.Switch);
 
             if Switch_Vectors.Has_Element (Iter.Switch) then
                return;
             end if;
+
+            declare
+               Section : Command_Lines.Section renames
+                 Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
+            begin
+               Iter.Prefixed := Section.Prefixes.First;
+            end;
+
+         elsif Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
+            Prefixed_Switch_Maps.Next (Iter.Prefixed);
+         end if;
+
+         if Prefixed_Switch_Maps.Has_Element (Iter.Prefixed) then
+            if Iter.Expanded then
+               declare
+                  Section : Command_Lines.Section renames
+                    Iter.Line.Sections.Unchecked_Get.all (Iter.Section);
+               begin
+                  Iter.Argument := Section.Prefixes (Iter.Prefixed).First;
+               end;
+            end if;
+
+            return;
          end if;
 
          Iter.Is_New_Section := True;
@@ -1387,7 +1384,13 @@ package body Command_Lines is
       Section : Command_Lines.Section renames
         Self.Line.Sections.Unchecked_Get.all (Self.Section);
    begin
-      Self.Switch := Switch_Vectors.No_Element;
+      Self.Prefixed := Prefixed_Switch_Maps.No_Element;
+      Self.Switch := Section.Switches.First;
+
+      if Switch_Vectors.Has_Element (Self.Switch) then
+         return;
+      end if;
+
       Self.Prefixed := Section.Prefixes.First;
 
       while Prefixed_Switch_Maps.Has_Element (Self.Prefixed) loop
@@ -1401,12 +1404,6 @@ package body Command_Lines is
 
          Prefixed_Switch_Maps.Next (Self.Prefixed);
       end loop;
-
-      Self.Switch := Section.Switches.First;
-
-      if Switch_Vectors.Has_Element (Self.Switch) then
-         return;
-      end if;
 
       Section_Maps.Next (Self.Section);
 

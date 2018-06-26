@@ -465,8 +465,8 @@ private
    type Command_Line_Iterator (Expanded : Boolean := False) is record
       Line           : Command_Line;
       Section        : Section_Maps.Cursor;  --  Iterate over sections
+      Switch         : Switch_Vectors.Cursor;  -- Iterate over switches
       Prefixed       : Prefixed_Switch_Maps.Cursor;  --  then over prefixes
-      Switch         : Switch_Vectors.Cursor;  --  otherwise over switches
       Is_New_Section : Boolean;  --  We've stepped into a new section
 
       case Expanded is
