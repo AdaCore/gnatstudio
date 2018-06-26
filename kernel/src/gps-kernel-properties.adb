@@ -15,17 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
+
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.SQL;               use GNATCOLL.SQL;
 with GNATCOLL.SQL.Exec;          use GNATCOLL.SQL.Exec;
 with GNATCOLL.SQL.Sqlite;
+
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with Default_Preferences;        use Default_Preferences;
+
 with GPS.Kernel.Properties.Database;
 
 package body GPS.Kernel.Properties is
@@ -35,6 +42,8 @@ package body GPS.Kernel.Properties is
    Me   : constant Trace_Handle := Create ("GPS.KERNEL.PROPERTIES");
    Dump : constant Trace_Handle := Create
      ("TESTSUITE.DUMP_PROPERTIES", Off);
+
+   Store_Properties_On_The_Fly : Boolean_Preference;
 
    function Get_Properties_Filename
      (Kernel : access Kernel_Handle_Record'Class;
@@ -107,6 +116,21 @@ package body GPS.Kernel.Properties is
    overriding procedure Dump_Database
      (Self : not null access Dummy_Writer_Record) is null;
 
+   procedure Store_Properties;
+   --  Stores properties in DB
+
+   procedure Split
+     (Value : String;
+      Key   : out Unbounded_String;
+      Name  : out Unbounded_String);
+   --  Splits Value into Key and Name
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+
    -------------------
    -- SQLite_Writer --
    -------------------
@@ -178,18 +202,18 @@ package body GPS.Kernel.Properties is
       --  Create the database tables and initial contents.
 
       procedure Create_If_Needed
-        (Self         : not null access SQLite_Writer_Record;
-         Key          : String;
-         Name         : String;
-         Resource_Id  : out Integer;
-         Property_Id  : out Integer);
+        (Self        : not null access SQLite_Writer_Record;
+         Key         : String;
+         Name        : String;
+         Resource_Id : out Integer;
+         Property_Id : out Integer);
       --  Insert new value of Property and Resource if not exsist in DB
       --  and return Primary keys
 
       procedure Delete_If_No_Used
-        (Self         : not null access SQLite_Writer_Record;
-         Resource_Id  : Integer;
-         Property_Id  : Integer);
+        (Self        : not null access SQLite_Writer_Record;
+         Resource_Id : Integer;
+         Property_Id : Integer);
       --  Delete unused Property and Resource
 
       function Get_Id
@@ -199,19 +223,18 @@ package body GPS.Kernel.Properties is
          return Integer;
 
       procedure Get_Ids
-        (Self         : not null access SQLite_Writer_Record;
-         Key          : String;
-         Name         : String;
-         Resource_Id  : out Integer;
-         Property_Id  : out Integer);
+        (Self        : not null access SQLite_Writer_Record;
+         Key         : String;
+         Name        : String;
+         Resource_Id : out Integer;
+         Property_Id : out Integer);
       --  Retrive Ids of Property and Resource
 
       procedure Insert_Or_Update
-        (Self         : not null access SQLite_Writer_Record;
-         Query        : Prepared_Statement;
-         Key          : String;
-         Name         : String;
-         Property     : Property_Description);
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description);
       --  Insert or Update Value. Behavior depends on Query.
 
    end SQLite_Writer;
@@ -231,6 +254,16 @@ package body GPS.Kernel.Properties is
    is
       Object : constant Writer := SQLite_Writer.Constructor (Kernel);
    begin
+      Store_Properties_On_The_Fly :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "Store_Properties_On_The_Fly",
+           Label   => "Store properties on the fly",
+           Doc     => -"Whether to store the properties database on disk " &
+             " after each change.",
+           Default => False);
+
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+
       if Object /= null then
          Free (Current_Writer);
          Current_Writer := Object;
@@ -243,6 +276,40 @@ package body GPS.Kernel.Properties is
       return GPS.Properties.Writer (Current_Writer);
    end Open_Persistent_Properties_DB;
 
+   ----------------------
+   -- Store_Properties --
+   ----------------------
+
+   procedure Store_Properties
+   is
+      C         : Cursor;
+      Key, Name : Unbounded_String;
+
+   begin
+      C := First (All_Properties);
+      while Has_Element (C) loop
+         if Element (C).Persistent
+           and then Element (C).Modified
+         then
+            Split (Properties_Indefinite_Hashed_Maps.Key (C), Key, Name);
+            if Key /= Null_Unbounded_String
+              and then Name /= Null_Unbounded_String
+            then
+               if Element (C).Value /= null then
+                  Current_Writer.Update
+                    (To_String (Key), To_String (Name), Element (C).all);
+               else
+                  Current_Writer.Remove (To_String (Key), To_String (Name));
+               end if;
+            end if;
+
+            Element (C).Modified := False;
+         end if;
+
+         Next (C);
+      end loop;
+   end Store_Properties;
+
    ------------------------------------
    -- Close_Persistent_Properties_DB --
    ------------------------------------
@@ -251,7 +318,12 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
+
    begin
+      if not Store_Properties_On_The_Fly.Get_Pref then
+         Store_Properties;
+      end if;
+
       Free (Current_Writer);
    end Close_Persistent_Properties_DB;
 
@@ -268,29 +340,38 @@ package body GPS.Kernel.Properties is
       pragma Unreferenced (Kernel);
 
       Descr     : Property_Description_Access;
+      Prop      : Property_Description_Access;
       New_Value : Boolean := True;
       C         : Cursor;
    begin
+      Prop := new Property_Description'(Property);
+      Prop.Modified := True;
+
       C := Find (All_Properties, Key & Sep & Name);
       if Has_Element (C) then
          Descr     := Element (C);
          New_Value := Descr.Value = null;
-         Replace_Element (All_Properties,
-                          C, new Property_Description'(Property));
+         Replace_Element (All_Properties, C, Prop);
          Free (Descr);
 
       else
-         Insert (All_Properties,
-                 Key & Sep & Name, new Property_Description'(Property));
+         Insert (All_Properties, Key & Sep & Name, Prop);
       end if;
 
-      if Property.Value /= null
-        and then Property.Persistent
+      if Property.Persistent
+        and then Store_Properties_On_The_Fly.Get_Pref
       then
-         if New_Value then
-            Current_Writer.Insert (Key, Name, Property);
-         else
-            Current_Writer.Update (Key, Name, Property);
+         if Property.Value /= null then
+            if New_Value then
+               Current_Writer.Insert (Key, Name, Property);
+            else
+               Current_Writer.Update (Key, Name, Property);
+            end if;
+
+         elsif not New_Value then
+            --  The property had a value but it is deleted now,
+            --  so property is deleted also
+            Current_Writer.Remove (Key, Name);
          end if;
       end if;
    end Set_Resource_Property;
@@ -318,11 +399,16 @@ package body GPS.Kernel.Properties is
       if Descr.Value /= null
         and then Descr.Persistent
       then
-         Current_Writer.Remove (Key, Name);
-      end if;
+         if Store_Properties_On_The_Fly.Get_Pref then
+            Current_Writer.Remove (Key, Name);
+            Delete (All_Properties, C);
+            Free (Descr);
 
-      Delete (All_Properties, C);
-      Free (Descr);
+         else
+            Clear (Descr);
+            Descr.Modified := True;
+         end if;
+      end if;
    end Remove_Resource_Property;
 
    ------------------
@@ -340,7 +426,8 @@ package body GPS.Kernel.Properties is
         (Kernel,
          Key, Name,
          Property_Description'(Value      => Property_Access (Property),
-                               Persistent => Persistent));
+                               Persistent => Persistent,
+                               Modified   => True));
    end Set_Property;
 
    ---------------------
@@ -390,9 +477,9 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Name     : String) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Name   : String) is
    begin
       Remove_Property (Kernel, To_String (File), Name);
    end Remove_Property;
@@ -402,9 +489,9 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : Project_Type;
-      Name     : String) is
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project : Project_Type;
+      Name    : String) is
    begin
       Remove_Property (Kernel, To_String (Project), Name);
    end Remove_Property;
@@ -436,16 +523,27 @@ package body GPS.Kernel.Properties is
    is
       pragma Unreferenced (Kernel);
 
-      C     : Cursor := First (All_Properties);
-      Descr : Property_Description_Access;
+      C         : Cursor := First (All_Properties);
+      Descr     : Property_Description_Access;
+      Key, Name : Unbounded_String;
    begin
       while Has_Element (C) loop
          Descr := Element (C);
-         Free (Descr);
+         if Store_Properties_On_The_Fly.Get_Pref then
+            Split (Properties_Indefinite_Hashed_Maps.Key (C), Key, Name);
+            Current_Writer.Remove (To_String (Key), To_String (Name));
+            Free (Descr);
+         else
+            Clear (Descr);
+            Descr.Modified := True;
+         end if;
+
          Next (C);
       end loop;
 
-      Clear (All_Properties);
+      if Store_Properties_On_The_Fly.Get_Pref then
+         Clear (All_Properties);
+      end if;
    end Reset_Properties;
 
    ----------------------------
@@ -601,6 +699,10 @@ package body GPS.Kernel.Properties is
 
       if Command = "save_persistent_properties" then
          if Active (Dump) then
+            if not Store_Properties_On_The_Fly.Get_Pref then
+               Store_Properties;
+            end if;
+
             Current_Writer.Dump_Database;
          end if;
       end if;
@@ -674,6 +776,45 @@ package body GPS.Kernel.Properties is
    begin
       Found := False;
    end Get_Value;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
+   is
+      pragma Unreferenced (Self, Kernel);
+   begin
+      if Pref = Preference (Store_Properties_On_The_Fly)
+        and then Store_Properties_On_The_Fly.Get_Pref
+      then
+         Store_Properties;
+      end if;
+   end Execute;
+
+   -----------
+   -- Split --
+   -----------
+
+   procedure Split
+     (Value : String;
+      Key   : out Unbounded_String;
+      Name  : out Unbounded_String)
+   is
+      Idx : Integer;
+   begin
+      Key  := Null_Unbounded_String;
+      Name := Null_Unbounded_String;
+      Idx  := Ada.Strings.Fixed.Index (Value, Sep);
+
+      if Idx in Value'Range then
+         Key  := To_Unbounded_String (Value (Value'First .. Idx - 1));
+         Name := To_Unbounded_String (Value (Idx + Sep'Length .. Value'Last));
+      end if;
+   end Split;
 
    -------------------
    -- SQLite_Writer --
@@ -862,11 +1003,11 @@ package body GPS.Kernel.Properties is
       ----------------------
 
       procedure Create_If_Needed
-        (Self         : not null access SQLite_Writer_Record;
-         Key          : String;
-         Name         : String;
-         Resource_Id  : out Integer;
-         Property_Id  : out Integer)
+        (Self        : not null access SQLite_Writer_Record;
+         Key         : String;
+         Name        : String;
+         Resource_Id : out Integer;
+         Property_Id : out Integer)
       is
          procedure Create
            (Query : Prepared_Statement;
@@ -903,9 +1044,9 @@ package body GPS.Kernel.Properties is
       -----------------------
 
       procedure Delete_If_No_Used
-        (Self         : not null access SQLite_Writer_Record;
-         Resource_Id  : Integer;
-         Property_Id  : Integer)
+        (Self        : not null access SQLite_Writer_Record;
+         Resource_Id : Integer;
+         Property_Id : Integer)
       is
          procedure Delete
            (In_Use_Query : Prepared_Statement;
@@ -931,10 +1072,15 @@ package body GPS.Kernel.Properties is
          end Delete;
 
       begin
-         Delete
-           (Query_Is_Resource_In_Use, Query_Delete_Resource, Resource_Id);
-         Delete
-           (Query_Is_Property_In_Use, Query_Delete_Property, Property_Id);
+         if Resource_Id /= -1 then
+            Delete
+              (Query_Is_Resource_In_Use, Query_Delete_Resource, Resource_Id);
+         end if;
+
+         if Property_Id /= -1 then
+            Delete
+              (Query_Is_Property_In_Use, Query_Delete_Property, Property_Id);
+         end if;
       end Delete_If_No_Used;
 
       -------------------
@@ -1052,7 +1198,7 @@ package body GPS.Kernel.Properties is
          Name     : String;
          Property : Property_Description) is
       begin
-         Self.Insert_Or_Update (Query_Insert_Value, Key, Name, Property);
+         Self.Insert_Or_Update (Key, Name, Property);
       end Insert;
 
       ----------------------
@@ -1061,7 +1207,6 @@ package body GPS.Kernel.Properties is
 
       procedure Insert_Or_Update
         (Self     : not null access SQLite_Writer_Record;
-         Query    : Prepared_Statement;
          Key      : String;
          Name     : String;
          Property : Property_Description)
@@ -1069,10 +1214,11 @@ package body GPS.Kernel.Properties is
          use GNATCOLL.JSON;
 
          Transaction : Transaction_Controller (Self.Connection);
-         Resource_Id : Natural;
-         Property_Id : Natural;
+         Resource_Id : Integer;
+         Property_Id : Integer;
          Value       : constant GNATCOLL.JSON.JSON_Value :=
            Property.Value.Store;
+         Exist       : Boolean;
       begin
          if Value = JSON_Null then
             return;
@@ -1080,11 +1226,33 @@ package body GPS.Kernel.Properties is
 
          Self.Create_If_Needed (Key, Name, Resource_Id, Property_Id);
 
-         Self.Connection.Execute
-           (Query,
-            Params => (1 => +String'(GNATCOLL.JSON.Write (Value)),
-                       2 => +Resource_Id,
-                       3 => +Property_Id));
+         declare
+            Cursor : Forward_Cursor;
+         begin
+            Cursor.Fetch
+              (Self.Connection,
+               Query_Get_Value,
+               Params =>
+                 (1 => +Resource_Id,
+                  2 => +Property_Id));
+
+            Exist := Cursor.Has_Row;
+         end;
+
+         if Exist then
+            Self.Connection.Execute
+              (Query_Update_Value,
+               Params => (1 => +String'(GNATCOLL.JSON.Write (Value)),
+                          2 => +Resource_Id,
+                          3 => +Property_Id));
+
+         else
+            Self.Connection.Execute
+              (Query_Insert_Value,
+               Params => (1 => +String'(GNATCOLL.JSON.Write (Value)),
+                          2 => +Resource_Id,
+                          3 => +Property_Id));
+         end if;
       end Insert_Or_Update;
 
       --------------
@@ -1130,11 +1298,11 @@ package body GPS.Kernel.Properties is
       -------------
 
       procedure Get_Ids
-        (Self         : not null access SQLite_Writer_Record;
-         Key          : String;
-         Name         : String;
-         Resource_Id  : out Integer;
-         Property_Id  : out Integer) is
+        (Self        : not null access SQLite_Writer_Record;
+         Key         : String;
+         Name        : String;
+         Resource_Id : out Integer;
+         Property_Id : out Integer) is
       begin
          Resource_Id := Self.Get_Id (Query_Get_Resource_Id, Key);
          Property_Id := Self.Get_Id (Query_Get_Property_Id, Name);
@@ -1228,11 +1396,19 @@ package body GPS.Kernel.Properties is
       begin
          Self.Get_Ids (Key, Name, Resource_Id, Property_Id);
 
-         Self.Connection.Execute
-           (Query_Delete_Value,
-            Params => (1 => +Resource_Id, 2 => +Property_Id));
+         if Resource_Id /= -1
+           and then Property_Id /= -1
+         then
+            Self.Connection.Execute
+              (Query_Delete_Value,
+               Params => (1 => +Resource_Id, 2 => +Property_Id));
+         end if;
 
-         Self.Delete_If_No_Used (Resource_Id, Property_Id);
+         if Resource_Id /= -1
+           or else Property_Id /= -1
+         then
+            Self.Delete_If_No_Used (Resource_Id, Property_Id);
+         end if;
       end Remove;
 
       ------------
@@ -1245,7 +1421,7 @@ package body GPS.Kernel.Properties is
          Name     : String;
          Property : Property_Description) is
       begin
-         Self.Insert_Or_Update (Query_Update_Value, Key, Name, Property);
+         Self.Insert_Or_Update (Key, Name, Property);
       end Update;
 
    end SQLite_Writer;

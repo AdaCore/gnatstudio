@@ -183,11 +183,14 @@ package GPS.Properties is
       --  represent not existing property.
 
       Persistent : Boolean;
+      Modified   : Boolean := False;
    end record;
    type Property_Description_Access is access Property_Description;
    --  The description of a property
 
    procedure Free (Description : in out Property_Description_Access);
+
+   procedure Clear (Description : Property_Description_Access);
 
    package Properties_Indefinite_Hashed_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps

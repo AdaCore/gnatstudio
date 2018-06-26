@@ -48,17 +48,25 @@ package body GPS.Properties is
 
    procedure Free (Description : in out Property_Description_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Property_Record'Class, Property_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Property_Description, Property_Description_Access);
+   begin
+      Clear (Description);
+      Unchecked_Free (Description);
+   end Free;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Description : Property_Description_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Property_Record'Class, Property_Access);
    begin
       if Description.Value /= null then
          Destroy (Description.Value.all);
          Unchecked_Free (Description.Value);
       end if;
-
-      Unchecked_Free (Description);
-   end Free;
+   end Clear;
 
    -------------
    -- Destroy --
