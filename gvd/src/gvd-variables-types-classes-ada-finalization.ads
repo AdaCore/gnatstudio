@@ -43,8 +43,8 @@ package GVD.Variables.Types.Classes.Ada.Finalization is
       return GVD_Type_Holder is (Empty_GVD_Type_Holder);
 
    overriding function Get_Ancestor
-     (Self : not null access GVD_Ada_Finalization_Type;
-      Num  : Positive)
+     (Self       : not null access GVD_Ada_Finalization_Type;
+      Unused_Num : Positive)
       return GVD_Type_Holder is (Empty_GVD_Type_Holder);
 
    overriding function Get_Num_Ancestors
@@ -69,8 +69,8 @@ private
       Name : String) is null;
 
    overriding function Get_Type_Name
-     (Self : not null access GVD_Ada_Finalization_Type;
-      Lang : Language.Language_Access)
+     (Self        : not null access GVD_Ada_Finalization_Type;
+      Unused_Lang : Language.Language_Access)
       return String is (To_String (Self.Name));
 
    function Create_Controlled return GVD_Type_Holder;

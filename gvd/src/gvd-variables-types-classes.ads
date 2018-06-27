@@ -69,8 +69,8 @@ package GVD.Variables.Types.Classes is
    --  Return the number of ancestors.
 
    function Get_Value_Command
-     (Self   : not null access GVD_Class_Type;
-      Entity : String)
+     (Self          : not null access GVD_Class_Type;
+      Unused_Entity : String)
       return String is ("");
    --  Returns command for retriving value
 

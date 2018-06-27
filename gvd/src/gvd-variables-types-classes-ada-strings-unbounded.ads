@@ -56,8 +56,8 @@ private
       Name : String) is null;
 
    overriding function Get_Type_Name
-     (Self : not null access GVD_Ada_Unbounded_String_Type;
-      Lang : Language.Language_Access)
+     (Self        : not null access GVD_Ada_Unbounded_String_Type;
+      Unused_Lang : Language.Language_Access)
       return String is ("Ada.Strings.Unbounded.Unbounded_String");
 
    overriding procedure Clear
