@@ -44,6 +44,7 @@ with GNATCOLL.Xref;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
+with GPS.Main_Window;
 
 with CodePeer.Message_Review_Dialogs.Utils;
 use CodePeer.Message_Review_Dialogs.Utils;
@@ -183,13 +184,14 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Title  => -"CodePeer message review",
          Kernel => Kernel,
          Typ    => Class_Record.The_Type);
+      GPS.Main_Window.Set_Default_Size_From_History
+        (Self, "CodePeer message review", Kernel, 400, 400);
 
       Self.Message := Message;
 
       --  Messages view and underling model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Size_Request (Height => 70, Width => 700);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
@@ -284,7 +286,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Self.Get_Content_Area.Pack_Start (Label, False, False);
 
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
-         Scrolled.Set_Size_Request (Height => 200);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
          Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
@@ -299,7 +300,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
       --  History view and underling model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Size_Request (Height => 300, Width => 700);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Self.Get_Content_Area.Pack_End (Scrolled, True, True);

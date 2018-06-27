@@ -42,6 +42,7 @@ with GNATCOLL.Xref;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
+with GPS.Main_Window;
 
 with Glib_Values_Utils;        use Glib_Values_Utils;
 
@@ -149,6 +150,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Title  => -"CodePeer message review",
          Kernel => Kernel,
          Typ    => Class_Record.The_Type);
+      GPS.Main_Window.Set_Default_Size_From_History
+        (Self, "CodePeer message review", Kernel, 400, 400);
 
       --  Filter messages with non-editable audit trail.
 
@@ -161,7 +164,6 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       --  Messages view and underling model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Size_Request (Height => 200, Width => 700);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
@@ -260,7 +262,6 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Self.Get_Content_Area.Pack_Start (Label, False, False);
 
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
-         Scrolled.Set_Size_Request (Height => 200);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
          Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
