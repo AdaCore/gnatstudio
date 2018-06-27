@@ -1214,6 +1214,9 @@ package body GVD.Process is
             Process.Debugger := new LLDB_Debugger;
       end case;
 
+      --  Switch to the "Debug" perspective if available
+      Load_Perspective (Kernel, "Debug");
+
       --  Spawn the debugger
 
       Process.Debugger.Spawn
@@ -1227,9 +1230,6 @@ package body GVD.Process is
          Debugger_Name   => Process.Descriptor.Debugger_Name.all,
          Debugger_Num    => Process.Debugger_Num);
       GNAT.OS_Lib.Free (Args2);
-
-      --  Switch to the "Debug" perspective if available
-      Load_Perspective (Kernel, "Debug");
 
       --  Destroying the console should kill the debugger
       --  ??? Signal should be handled in GVD.Console directly
