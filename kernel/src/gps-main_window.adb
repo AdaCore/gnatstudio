@@ -87,8 +87,11 @@ with User_Interface_Tools;
 
 package body GPS.Main_Window is
    Me : constant Trace_Handle := Create ("GPS.MAIN.WINDOW");
+
+   --  This trace doesn't use the naming convention for backward compatibility:
+   --  most customers add this trace in traces.cfg
    Store_Window_Positions : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.STORE_WINDOW_POSITIONS", On);
+     Create ("STORE_WINDOW_POSITIONS", On);
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
