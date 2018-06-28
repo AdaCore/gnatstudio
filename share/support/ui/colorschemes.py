@@ -11,7 +11,7 @@ import GPS
 from gps_utils import hook
 from theme_handling import (
     Theme, Rgba, transparent, Color,
-    gtk_css_pref_name)
+    gtk_css_pref_name, prefs_to_css_colors)
 import textmate
 
 try:
@@ -144,28 +144,6 @@ class ColorThemeSwitcher(object):
             GPS.Console().write(
                 "resetting theme preference %s\n" % gtk_css_pref_name)
             GPS.Preference(gtk_css_pref_name).set('')
-
-    def __for_each_pref(self, theme, cb):
-        """For each preference defined in the theme, calls cb with:
-               cb(name, value)
-           where value is the string value.
-        """
-
-        default = GPS.Preference("General-Default-Font").get()
-        font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
-
-        def subst(s):
-            return s.replace("${font}", default) \
-                    .replace("${editorfont}", font) \
-                    .replace("transparent", "rgba(0,0,0,0)")
-
-        for key, v in theme.iteritems():
-            if key in ("name", ) or key[0] == '@':
-                pass
-            elif isinstance(v, str):
-                cb(key, subst(v))
-            elif isinstance(v, tuple):
-                cb(key, "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
 
     def apply_theme(self, theme):
         """ Apply the theme to GPS.
@@ -398,6 +376,33 @@ class ColorSchemePicker(object):
                 logger.log("No fallback theme found: applying default CSS")
                 the_theme_switcher.apply_theme(default)
 
+    def on_pref_changed(self):
+        """
+        Update the CSS colors using the new values set for their corresponding
+        preferences.
+        """
+
+        css_template = "@define-color {} {};"
+        css = ""
+
+        for pref_name in prefs_to_css_colors:
+            pref = GPS.Preference(pref_name)
+            color_names = prefs_to_css_colors[pref_name]
+
+            if len(color_names) == 2:
+                pref_val = pref.get().split('@')
+                fg = pref_val[1]
+                bg = pref_val[2]
+
+                css += '\n' + css_template.format(color_names[0], fg)
+                css += '\n' + css_template.format(color_names[1], bg)
+            else:
+                pref_val = pref.get()
+                css += '\n' + css_template.format(color_names[0], pref_val)
+
+        if css:
+            the_theme_switcher.provider.load_from_data(css)
+
 
 picker = ColorSchemePicker()
 
@@ -421,3 +426,8 @@ GPS.PreferencesPage.create(
 @hook("gps_started")
 def on_started():
     picker.no_theme_fallback()
+
+
+@hook("preferences_changed")
+def on_pref_changed():
+    picker.on_pref_changed()

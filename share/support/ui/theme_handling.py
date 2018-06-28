@@ -36,6 +36,14 @@ css_colors = ['editor_bg',
               'caret']
 # These are the colors that are interpreted by the CSS template
 
+prefs_to_css_colors = {
+    "Src-Editor-Reference-Style":
+    ['editor_fg_color', 'editor_bg_color'],
+    "Editor/Fonts & Colors:General/read_only_color":
+    ['editor_readonly_bg_color']}
+# The map that associates preferences with their corresponding
+# CSS colors.
+
 variant_prefs = {
     'aspects': "Src-Editor-Aspects-Variant",
     'annotations': "Src-Editor-Code-Annotations-Variant-18",
