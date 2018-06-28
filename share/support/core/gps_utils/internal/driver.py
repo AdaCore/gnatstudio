@@ -8,11 +8,10 @@ from workflows import driver
 from editor import click_in_text
 from gi.repository import Gtk
 from gps_utils.internal.utils import simple_error
+from gps_utils.internal.asserts import SUCCESS, FAILURE, NOT_RUN, XFAIL
 
 # Some of the imports here are necessary for some of the tests
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
-
-XFAIL = 100  # return code for XFAIL tests
 
 
 def do_exit(timeout):
@@ -74,7 +73,11 @@ def run_test_driver(action_fn):
 
         finally:
             if "GPS_PREVENT_EXIT" not in os.environ:
-                GPS.exit(force=True, status=last_result if last_result else 0)
+                if last_result in (SUCCESS, FAILURE, NOT_RUN, XFAIL):
+                    status = last_result
+                else:
+                    status = 0
+                GPS.exit(force=True, status=status)
 
     # Install a timeout to catch the errors in GPS, if any, before rlimit
     # kills everything.
