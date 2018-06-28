@@ -152,11 +152,6 @@ class TextmateTheme(object):
         d['theme_selected_bg'] = fg_color
         d['theme_selected_fg'] = bg_color
 
-        # Compute nice gutter settings
-
-        d['gutter_fg'] = fg_color.mix(bg_color, 0.6)
-        d['gutter_bg'] = bg_color.lighten(-0.03 * light_val)
-
         # Compute nice browser settings
 
         d["browsers_bg"] = bg_color

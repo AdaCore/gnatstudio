@@ -19,9 +19,6 @@ css_template = """
 @define-color editor_bg_color {editor_bg};
 @define-color editor_fg_color {editor_fg};
 @define-color editor_readonly_bg_color {readonly};
-@define-color gutter_color {gutter_fg};
-@define-color browser_decoration_background  {browser_decoration_bg};
-@define-color browser_decoration_color {browser_decoration_fg};
 @define-color theme_selected_bg_color {theme_selected_bg};
 @define-color theme_selected_fg_color {theme_selected_fg};
 
@@ -34,7 +31,6 @@ css_colors = ['editor_bg',
               'readonly',
               'theme_selected_bg',
               'theme_selected_fg',
-              'gutter_fg',
               'browser_decoration_bg',
               'browser_decoration_fg',
               'caret']
@@ -221,8 +217,6 @@ common_light = {
     "base_theme": "Adwaita",
     "editor_fg": black,
     "editor_bg": white,
-    "gutter_fg": Color("#0e0e0e"),
-    "gutter_bg": Color("#f8f8f8"),
     "browser_decoration_fg": Color("#0e0e0e"),
     "browser_decoration_bg": Color("#f8f8f8"),
     "theme_selected_bg": Color("#B5D6FE"),
@@ -275,8 +269,6 @@ common_dark = {
     "base_theme": "Adwaita (Dark)",
     "editor_fg": Rgba(186, 186, 186),
     "editor_bg": Rgba(34, 35, 36),
-    "gutter_fg": Color("#e0e0e0"),
-    "gutter_bg": Color("#343434"),
     "browser_decoration_fg": Color("#e0e0e0"),
     "browser_decoration_bg": Color("#343434"),
     "theme_bg": Color("#2280d2"),
@@ -448,10 +440,17 @@ class Theme(object):
         # Add line numbers
         num = 1
         prefixed = []
+
+        # Compute the preview's gutter foreground color by mixing the editor's
+        # foreground and background color.
+        # This formula needs to be synchronized with the formula that computes
+        # the 'gutter_color' in gps.css.
+        gutter_fg_color = self.d['editor_fg'].mix(self.d['editor_bg'], 0.6)
+
         for line in label_markup.splitlines():
             prefixed.append(
                 '<span color="{}">{:4d} </span> {}'.format(
-                    self.d['gutter_fg'].to_hex6_string(),
+                    gutter_fg_color.to_hex6_string(),
                     num,
                     line))
             num = num + 1

@@ -26,6 +26,9 @@
 @define-color active_button_bg_color_one shade(@button_bg_color, 0.85);
 @define-color active_button_bg_color_two shade(@button_bg_color, 0.9);
 
+@define-color gutter_color mix(@editor_fg_color, @editor_bg_color, 0.6);
+
+
 /*********************
  * General
  *********************/
@@ -564,11 +567,6 @@ GtkDialog {
  * Editors
  **********************************/
 
-.gps_gutter {
-  background-color: @editor_bg_color;
-  color: @gutter_color;
-}
-
 GtkTextView.view.editor {
   background-color: @editor_bg_color;
   color: @editor_fg_color;
@@ -576,6 +574,11 @@ GtkTextView.view.editor {
 
 GtkTextView.view.editor.readonly {
   background-color: @editor_readonly_bg_color;
+}
+
+.gps_gutter {
+  background-color: @editor_bg_color;
+  color: @gutter_color;
 }
 
 /**********************************
