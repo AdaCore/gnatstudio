@@ -26,8 +26,9 @@ begin
    Gtk_New (Label, "Hello world.");
    Box.Add (Label);
 
-   --  Show the window
+   --  Show the window and present it
    Win.Show_All;
+   Win.Present;
 
    --  Start the Gtk+ main loop
    Gtk.Main.Main;
