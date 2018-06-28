@@ -39,6 +39,7 @@ with Dialog_Utils;        use Dialog_Utils;
 with Histories;           use Histories;
 with GPS.Dialogs;         use GPS.Dialogs;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with GPS.Main_Window;     use GPS.Main_Window;
 with GUI_Utils;           use GUI_Utils;
 
 package body Welcome_Dialogs is
@@ -268,8 +269,11 @@ package body Welcome_Dialogs is
          Title  => "Welcome to GNAT Programming Studio",
          Kernel => Kernel);
       Dialog.Set_Position (Win_Pos_Center);
-      Dialog.Set_Default_Size
-        (Width  => 700,
+      Set_Default_Size_From_History
+        (Win    => Dialog,
+         Name   => "welcome-dialog",
+         Kernel => Kernel,
+         Width  => 760,
          Height => 350);
       Dialog.On_Delete_Event (On_Delete'Access);
       Get_Style_Context (Dialog).Add_Class ("gps-welcome-dialog");
@@ -278,6 +282,7 @@ package body Welcome_Dialogs is
 
       Main_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Main_View);
+      Get_Style_Context (Main_View).Add_Class ("gps-welcome-dialog-main-view");
 
       Main_View.Append (Create_Logo_And_Title_Area, Expand => False);
       Create_Welcome_Dialog_Options;

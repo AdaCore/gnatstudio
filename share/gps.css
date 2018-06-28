@@ -271,11 +271,26 @@ GtkDialog {
    box-shadow: none;
    border-width: 0;
    padding-top: 20px;
+   padding-left: 20px;
+   padding-right: 20px;
    padding-bottom: 60px;
 }
 
+.gps-welcome-dialog GtkListBox {
+    background-color: @editor_bg_color;
+}
+
 .gps-welcome-dialog GtkListBoxRow {
-   padding-left: 12px;
+    padding-left: 12px;
+}
+
+.gps-welcome-dialog-main-view .button {
+    background: transparent;
+    border-color: transparent;
+}
+
+.gps-welcome-dialog-main-view .button:hover {
+    color: @theme_selected_bg_color;
 }
 
 .gps-welcome-dialog-title {
