@@ -605,13 +605,30 @@ package body Browsers.Call_Graph is
       Details : Gtkada.Canvas_View.Event_Details_Access)
    is
       pragma Unreferenced (Self);
-      It : constant Entity_Item := Entity_Item (Details.Toplevel_Item);
+      It    : constant Entity_Item  := Entity_Item (Details.Toplevel_Item);
+      Model : constant Canvas_Model := View.Model;
+      Set   : Item_Sets.Set;
    begin
-      Examine_Ancestors_Call_Graph
-        (Get_Kernel (It.Browser), It.Entity.Element);
-      Highlight_Related_Items (View, It);
-      It.Hide_Left_Arrow;
-      View.Model.Item_Contents_Changed (It);
+      Model.To (It, Set);
+      if Set.Is_Empty then
+         Examine_Ancestors_Call_Graph
+           (Get_Kernel (It.Browser), It.Entity.Element);
+         Model.To (It, Set);
+
+         --  The action does nothing for this node so hide the button
+         if Set.Is_Empty then
+            It.Hide_Left_Arrow;
+         end if;
+         Highlight_Related_Items (View, It);
+         View.Model.Item_Contents_Changed (It);
+      else
+         --  In case of circular dependency keep the clicked node
+         if Set.Contains (Abstract_Item (It)) then
+            Set.Delete (Abstract_Item (It));
+         end if;
+         Model.Remove (Set);
+         Model.Refresh_Layout;
+      end if;
    end On_Click;
 
    --------------
@@ -624,13 +641,30 @@ package body Browsers.Call_Graph is
       Details : Gtkada.Canvas_View.Event_Details_Access)
    is
       pragma Unreferenced (Self);
-      It : constant Entity_Item := Entity_Item (Details.Toplevel_Item);
+      It    : constant Entity_Item  := Entity_Item (Details.Toplevel_Item);
+      Model : constant Canvas_Model := View.Model;
+      Set   : Item_Sets.Set;
    begin
-      Examine_Entity_Call_Graph
-        (Get_Kernel (It.Browser), It.Entity.Element, Recursive => False);
-      Highlight_Related_Items (View, It);
-      It.Hide_Right_Arrow;
-      View.Model.Item_Contents_Changed (It);
+      Model.From (It, Set);
+      if Set.Is_Empty then
+         Examine_Entity_Call_Graph
+           (Get_Kernel (It.Browser), It.Entity.Element, Recursive => False);
+         Model.From (It, Set);
+
+         --  The action does nothing for this node so hide the button
+         if Set.Is_Empty then
+            It.Hide_Right_Arrow;
+         end if;
+         Highlight_Related_Items (View, It);
+         View.Model.Item_Contents_Changed (It);
+      else
+         --  In case of circular dependency keep the clicked node
+         if Set.Contains (Abstract_Item (It)) then
+            Set.Delete (Abstract_Item (It));
+         end if;
+         Model.Remove (Set);
+         Model.Refresh_Layout;
+      end if;
    end On_Click;
 
    -----------------
