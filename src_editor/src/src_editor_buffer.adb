@@ -4373,6 +4373,9 @@ package body Src_Editor_Buffer is
               (-"Could not open file for writing: "
                & Display_Full_Name (Filename),
                Mode => GPS.Kernel.Error);
+            Buffer.Kernel.Insert
+              (To_String (Error_String (FD)),
+               Mode => GPS.Kernel.Error);
             Success := False;
             return;
          end if;
