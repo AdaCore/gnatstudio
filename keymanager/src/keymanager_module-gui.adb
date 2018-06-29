@@ -1285,7 +1285,6 @@ package body KeyManager_Module.GUI is
 
                   if Binding_Action = Unbind_Old_Actions then
                      for Action of All_Old_Actions loop
-                        Ed.Kernel.Insert ("Removing key: " & Key);
                         Unbind_Keys_For_Action
                           (Kernel           => Ed.Kernel,
                            Table            => Table,
