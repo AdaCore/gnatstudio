@@ -524,9 +524,13 @@ GtkDialog {
    padding: 12px;
 }
 
-.completion.notes * {
-  padding: 3px;
-  border-width: 0px;
+.completion.notes > .frame {
+   border: 1px solid @popup_border_color;
+}
+
+.completion.notes > .frame * {
+   padding: 3px;
+   border-width: 0px;
 }
 
 .completion.search GtkFrame {

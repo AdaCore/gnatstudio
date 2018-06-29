@@ -1858,7 +1858,6 @@ package body Completion_Window is
       --  Create the window's main frame
       Gtk_New (Frame);
       Add (Window, Frame);
-      Frame.Set_Name ("notes-frame");
 
       --  Create a scrolled window inside the window's main frame
       Gtk_New (Window.Notes_Scroll);
