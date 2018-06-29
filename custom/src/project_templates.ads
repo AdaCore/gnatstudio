@@ -19,15 +19,15 @@
 --  NOTE: this should remain independent from the GPS Kernel, so that
 --  it can be reused in GNATbench or in a stand-alone executable.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 
 with Ada.Strings.Unbounded.Hash;
 
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
 package Project_Templates is
 
@@ -73,8 +73,10 @@ package Project_Templates is
       --  The original name of the project file to load after installing
       --  the template.
 
-      Post_Hook : Virtual_File;
-      --  The source file containing the hook to run after deployment
+      Python_Script : Virtual_File;
+      --  The source file containing the hooks
+      --  to run during and after deployment.
+
    end record;
 
    Null_Project_Template : constant Project_Template :=
@@ -138,5 +140,4 @@ package Project_Templates is
      (Variables : Variables_List.List) return Variable_Assignments.Map;
    --  Convenience function, return the default assignment map for the given
    --  variables list
-
 end Project_Templates;

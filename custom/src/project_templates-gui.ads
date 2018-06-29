@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2010-2018, AdaCore                     --
+--                     Copyright (C) 2018-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,14 +19,25 @@
 --  NOTE: this should remain independent from the GPS Kernel, so that
 --  it can be reused in a stand-alone executable.
 
-with Gtk.Window; use Gtk.Window;
+with Gtk.Window;                       use Gtk.Window;
+
+with Project_Templates;                use Project_Templates;
+with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 
 package Project_Templates.GUI is
 
+   type Template_Script_Object is record
+      Project  : Project_Template;
+      Object   : Script_Object;
+   end record;
+
+   package Templates_Script_Objects_List is
+      new Ada.Containers.Doubly_Linked_Lists (Template_Script_Object);
+
    procedure Install_Template
-     (Templates     : Project_Templates_List.List;
+     (Templates     : Templates_Script_Objects_List.List;
       Parent        : not null access Gtk_Window_Record'Class;
-      Chosen        : out Project_Template;
+      Chosen        : out Template_Script_Object;
       Installed     : out Boolean;
       Dir           : out Virtual_File;
       Project       : out Virtual_File;

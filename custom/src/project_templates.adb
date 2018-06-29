@@ -17,10 +17,10 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
-with String_Utils;   use String_Utils;
-with GNAT.Strings;   use GNAT.Strings;
+with String_Utils;            use String_Utils;
+with GNAT.Strings;            use GNAT.Strings;
 
 package body Project_Templates is
 
@@ -153,10 +153,17 @@ package body Project_Templates is
                Current.Project := To_Unbounded_String
                  (Strip_Quotes (Line (Line'First + 8 .. Line'Last)));
 
-            elsif CISW (Line, "post_hook:") then
-               Current.Post_Hook := Create_From_Dir
-                 (File.Dir,
-                  +Strip_Quotes (Line (Line'First + 10 .. Line'Last)));
+            --  We get the python script used during the creation of the pages
+            --  or during the post installation step.
+            elsif CISW (Line, "script:") then
+               declare
+                  Python_Script : constant Virtual_File
+                     := Create_From_Dir
+                        (File.Dir,
+                        +Strip_Quotes (Line (Line'First + 7 .. Line'Last)));
+               begin
+                  Current.Python_Script := Python_Script;
+               end;
 
             elsif CISW (Line, "description:") then
                Current.Description := To_Unbounded_String
@@ -401,7 +408,7 @@ package body Project_Templates is
          if Files /= null then
             for J in Files'Range loop
                if File_Extension (Files (J)) /= Template_File_Extension
-                 and then Files (J) /= Template.Post_Hook
+                 and then Files (J) /= Template.Python_Script
                then
                   Copy_File (Files (J), Target_Dir);
                end if;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2010-2018, AdaCore                     --
+--                     Copyright (C) 2018-2018, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,18 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Enums;             use Gtk.Enums;
-with Glib.Object;           use Glib.Object;
+with Gtk.Enums;                        use Gtk.Enums;
+with Glib.Object;                      use Glib.Object;
 
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
-with Commands.Interactive;  use Commands, Commands.Interactive;
-with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.Intl;              use GPS.Intl;
-with Project_Templates;     use Project_Templates;
-with Project_Templates.GUI; use Project_Templates.GUI;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with Commands.Interactive;             use Commands, Commands.Interactive;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
+with GPS.Intl;                         use GPS.Intl;
+with Project_Templates;                use Project_Templates;
+with Project_Templates.GUI;            use Project_Templates.GUI;
+with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 
 package body Project_Templates.GPS is
 
@@ -79,24 +80,67 @@ package body Project_Templates.GPS is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Parent : not null access Gtk_Window_Record'Class) return Boolean
    is
+       --  Builds the `Destination` list by copying the project template and
+       --  building the internal PyObject of each script object.
+      procedure Build_Python_Objects
+         (Source      : Project_Templates_List.List;
+          Kernel      : not null access Kernel_Handle_Record'Class;
+          Destination : out Templates_Script_Objects_List.List);
+
+      --------------------------
+      -- Build_Python_Objects --
+      --------------------------
+
+      procedure Build_Python_Objects
+         (Source      : Project_Templates_List.List;
+          Kernel      : not null access Kernel_Handle_Record'Class;
+          Destination : out Templates_Script_Objects_List.List)
+      is
+         TC : Project_Templates_List.Cursor :=
+            Project_Templates_List.First (Source);
+      begin
+         while Project_Templates_List.Has_Element (TC) loop
+            declare
+               Template : constant Project_Template :=
+                  Project_Templates_List.Element (TC);
+
+               Template_Script : Template_Script_Object :=
+                  (Project  => Template,
+                   Object   => Null_Script_Object);
+            begin
+               if Template.Python_Script /= No_File then
+                  Template_Script.Object.Build_Python_Object
+                     (Python_Script => Template.Python_Script,
+                      Kernel        => Kernel);
+               end if;
+
+               Templates_Script_Objects_List.Append
+                  (Container => Destination,
+                   New_Item  => Template_Script);
+            end;
+            Project_Templates_List.Next (TC);
+         end loop;
+
+      end Build_Python_Objects;
+
       use Virtual_File_List;
       C : Cursor;
       E : Unbounded_String;
 
-      Project   : Virtual_File;
-      Dir       : Virtual_File;
-      Installed : Boolean;
+      Project           : Virtual_File;
+      Dir               : Virtual_File;
+      Installed         : Boolean;
 
-      Chosen    : Project_Template;
-      Templates : Project_Templates_List.List;
-      Success   : Boolean := False;
+      Chosen            : Template_Script_Object;
+      Templates_Scripts : Templates_Script_Objects_List.List;
+      Templates         : Project_Templates_List.List;
+      Success           : Boolean := False;
    begin
       --  Read all available templates
       C := First (Module_Id.Dirs);
 
       while Has_Element (C) loop
          Read_Templates_Dir (Element (C), E, Templates);
-
          if E /= Null_Unbounded_String then
             Insert (Kernel, To_String (E), Mode => Error);
          end if;
@@ -112,10 +156,14 @@ package body Project_Templates.GPS is
          return False;
       end if;
 
+      Build_Python_Objects (Source      => Templates,
+                            Kernel      => Kernel,
+                            Destination => Templates_Scripts);
+
       --  Launch the GUI
 
       Install_Template
-        (Templates     => Templates,
+        (Templates     => Templates_Scripts,
          Parent        => Parent,
          Chosen        => Chosen,
          Installed     => Installed,
@@ -149,23 +197,8 @@ package body Project_Templates.GPS is
          end if;
 
          --  Execute the post-hook
-
-         if Chosen.Post_Hook /= No_File then
-            declare
-               Python : constant Scripting_Language :=
-                 Kernel.Scripts.Lookup_Scripting_Language ("python");
-               Errors : Boolean;
-            begin
-               Execute_File
-                 (Python, +Chosen.Post_Hook.Full_Name, Errors => Errors);
-
-               if Errors then
-                  Insert
-                    (Kernel,
-                     -"Errors occurred when running the post-deployment hook.",
-                     Mode => Error);
-               end if;
-            end;
+         if Chosen.Project.Python_Script /= No_File then
+               Chosen.Object.Apply;
          end if;
       end if;
 

@@ -2,7 +2,7 @@
 Name: Web Server with Ajax
 Category: AWS
 Project: @_project_name_@.gpr
-post_hook: open_readme.py
+script: open_readme.py
 
 # Variables
 Project_Name: default: The name of the project.
