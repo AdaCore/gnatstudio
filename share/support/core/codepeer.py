@@ -14,6 +14,31 @@ See menu CodePeer.
 import GPS
 import os_utils
 import os.path
+import re
+import gps_utils.gnat_rules
+
+
+def get_supported_warnings():
+    # Then retrieve warnings checks from gnatmake
+    xml = """
+       <popup label="Warnings">
+       <expansion switch="--gnat-warnings="/>
+    """
+    gps_utils.gnat_rules.EnsureInitialized()
+    rules = gps_utils.gnat_rules.gnatmakeproc.get_warnings_list()
+    for r in rules:
+        r.switch = re.sub("-gnatw", "--gnat-warnings=", r.switch)
+        r.switchoff = re.sub("-gnatw", "--gnat-warnings=", r.switchoff)
+        r.label = re.sub("-gnatw", "--gnat-warnings=", r.label)
+        r.tip = re.sub("-gnatw", "--gnat-warnings=", r.tip)
+        r.before = False
+        for dep in r.dependencies:
+            dep[0] = re.sub("-gnatw", "--gnat-warnings=", dep[0])
+        xml += r.Xml(1, 1)
+
+    xml += "</popup>"
+    return xml
+
 
 xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
@@ -449,9 +474,8 @@ many cores as available on the machine)." />
 Also force the generation of all SCIL files." />
          <check label="GNATcheck" switch="--gnatcheck"
                 column="2" tip="Launch GNATcheck and collect its messages" />
-         <check label="GNAT warnings" switch="--gnat-warnings"
-                column="2"
-                tip="Launch GNAT front-end and collect its warnings" />
+
+""" + get_supported_warnings() + """
 
          <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
                default="0" separator=" " column="3"
