@@ -1,8 +1,19 @@
-from e3.fs import mkdir, sync_tree
+from e3.fs import mkdir, sync_tree, echo_to_file
 from e3.testsuite.driver import TestDriver
 from e3.testsuite.process import Run
 from e3.testsuite.result import TestStatus
 import os
+
+PREFS = """<?xml version="1.0"?>
+<GPS>
+  <pref name="General-Splash-Screen">False</pref>
+  <pref name="Smart-Completion-Mode" > 0</pref>
+  <pref name="Default-VCS"></pref>
+  <pref name="General/Display-Tip-Of-The-Day">FALSE</pref>
+  <pref name="Documentation:GNATdoc/Doc-Spawn-Browser" >FALSE</pref>
+  <pref name=":VCS/Traverse-Limit" > 1</pref>
+</GPS>
+"""
 
 
 class BasicTestDriver(TestDriver):
@@ -24,6 +35,15 @@ class BasicTestDriver(TestDriver):
         sync_tree(self.test_env['test_dir'],
                   self.test_env['working_dir'])
 
+        # Create .gps
+        self.gps_home = os.path.join(self.test_env['working_dir'], '.gps')
+        mkdir(self.gps_home)
+        mkdir(os.path.join(self.gps_home, 'plug-ins'))
+        mkdir(os.path.join(self.gps_home, 'log_files'))
+        echo_to_file(os.path.join(self.gps_home, 'preferences.xml'), PREFS)
+        echo_to_file(os.path.join(self.gps_home, "gnatinspect_traces.cfg"),
+                     ">gnatinspect.log\n")
+
     def run(self, previous_values):
         # If there's a test.cmd, execute it with the shell;
         # otherwise execute test.py.
@@ -42,7 +62,9 @@ class BasicTestDriver(TestDriver):
         # TODO: add support for valgrind
         process = Run([the_gps,
                        "--load={}".format(os.path.join(wd, 'test.py'))],
-                      cwd=wd)
+                      cwd=wd,
+                      env={'GPS_HOME': self.gps_home},
+                      ignore_environ=False)
         output = process.out
 
         if output:
