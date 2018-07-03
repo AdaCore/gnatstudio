@@ -50,7 +50,11 @@ package body GNAThub is
       use type Ada.Strings.Unbounded.Unbounded_String;
 
    begin
-      return Left.Name < Right.Name;
+      if Left.Name /= Right.Name then
+         return Left.Name < Right.Name;
+      else
+         return Left.Identifier < Right.Identifier;
+      end if;
    end Less;
 
    ----------
