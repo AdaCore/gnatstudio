@@ -55,6 +55,11 @@ class MyTestsuite(Testsuite):
             default=False,
             action="store_true",
             help="disable Xvfb")
+        self.main.argument_parser.add_argument(
+            "--build",
+            default="",
+            action="store",
+            help="Ignored, here for compatibility purposes")
 
     def tear_up(self):
         # Set a gnatdebug common to all tests
