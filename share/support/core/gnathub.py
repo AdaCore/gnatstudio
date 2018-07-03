@@ -57,7 +57,7 @@ XML = r"""<?xml version="1.0" ?>
 
 # Template to insert into target-model for each gnathub plugin
 template = r"""<check line="1" column="1"
- label="{}" switch="--plugins={}" tip="Run {} plugin"/>
+ label="{}" switch="--plugins={}" tip="Run {} plugin" active="{}"/>
 """
 
 # Check for gnathub executable and GNAThub module active status:
@@ -68,7 +68,9 @@ if os_utils.locate_exec_on_path("gnathub") and logger.active:
     checkboxes = ""
     for tool in tools:
         if os_utils.locate_exec_on_path(tool):
-            checkboxes += template.format(tool, tool, tool)
+            checkboxes += template.format(tool, tool, tool, "on")
+        else:
+            checkboxes += template.format(tool, tool, tool, "off")
 
     GPS.parse_xml(XML.format(checkboxes))
 

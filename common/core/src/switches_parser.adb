@@ -554,11 +554,14 @@ package body Switches_Parser is
          Label         : constant String := Get_Attribute (N, "label");
          Switch        : constant String := Get_Attribute (N, "switch");
          Filter        : constant String := Get_Attribute (N, "filter");
+         Active_State  : constant String :=
+                           Get_Attribute (N, "active", "on");
          Switch_Unset  : constant String :=
                            Get_Attribute (N, "switch-off");
          Default       : constant String :=
                            To_Lower (Get_Attribute (N, "default", "off"));
          Default_State : Boolean;
+         Active        : Boolean;
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -590,12 +593,26 @@ package body Switches_Parser is
             return;
          end if;
 
+         if Active_State = "off" then
+            Active := False;
+         elsif Active_State = "on" then
+            Active := True;
+         else
+            Log_Error
+              (-("Invalid <switch> node in custom file: the " &
+               """active"" attribute can only take the values " &
+               "'on', 'off'. " &
+               "The value found is: ") & Default);
+            return;
+         end if;
+
          Add_Check
            (Config        => Current_Tool_Config,
             Label         => Label,
             Switch_Set    => Switch,
             Switch_Unset  => Switch_Unset,
             Default_State => Default_State,
+            Active        => Active,
             Section       => Get_Attribute (N, "section"),
             Tip           => Get_Tip_Value (N),
             Line          => Line,

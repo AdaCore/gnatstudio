@@ -102,6 +102,7 @@ package Switches_Chooser is
       Switch_Set    : String;
       Switch_Unset  : String;
       Default_State : Boolean;
+      Active        : Boolean;
       Section       : String := "";
       Tip           : String := "";
       Line          : Positive := 1;

@@ -484,7 +484,7 @@ package body Switches_Chooser.Gtkada is
 
       case S.Typ is
          when Switch_Check =>
-            Gtk_New    (Check, To_String (S.Label), S.Default_State);
+            Gtk_New (Check, To_String (S.Label), S.Default_State);
             Check.Set_Sensitive (not Editor.Read_Only and then S.Active);
             Pack_Start (Box, Check, Expand => False, Padding => 0);
             Set_Tooltip (Editor, Check, Switch, S);

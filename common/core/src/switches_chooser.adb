@@ -287,6 +287,7 @@ package body Switches_Chooser is
       Switch_Set    : String;
       Switch_Unset  : String;
       Default_State : Boolean;
+      Active        : Boolean;
       Section       : String := "";
       Tip           : String := "";
       Line          : Positive := 1;
@@ -313,7 +314,7 @@ package body Switches_Chooser is
             Line          => Line,
             Column        => Column,
             Add_First     => Add_Before,
-            Active        => True));
+            Active        => Active));
 
       if Switch_Set /= "" then
          Add_To_Getopt
