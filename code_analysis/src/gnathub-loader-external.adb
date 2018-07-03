@@ -30,10 +30,7 @@ package body GNAThub.Loader.External is
    ---------------------
 
    overriding procedure Prepare_Loading
-     (Self : in out External_Loader_Type) is
-   begin
-      Self.Current_Message := Self.Messages.First_Index;
-   end Prepare_Loading;
+     (Self : in out External_Loader_Type) is null;
 
    ----------------------
    -- Has_Data_To_Load --
@@ -42,7 +39,7 @@ package body GNAThub.Loader.External is
    overriding function Has_Data_To_Load
      (Self : External_Loader_Type) return Boolean is
    begin
-      return Self.Current_Message <= Self.Messages_To_Process.Last_Index;
+      return not Self.Messages_To_Process.Is_Empty;
    end Has_Data_To_Load;
 
    -------------
@@ -50,10 +47,7 @@ package body GNAThub.Loader.External is
    -------------
 
    overriding procedure Cleanup
-     (Self : in out External_Loader_Type) is
-   begin
-      Self.Current_Message := Self.Messages_To_Process.First_Index;
-   end Cleanup;
+     (Self : in out External_Loader_Type) is null;
 
    ---------------
    -- Load_Data --
@@ -69,8 +63,8 @@ package body GNAThub.Loader.External is
       Position : GNAThub.Severity_Natural_Maps.Cursor;
       Count    : Natural := 0;
    begin
-      while Self.Current_Message <= Self.Messages_To_Process.Last_Index loop
-         M_Ref := Self.Messages_To_Process (Self.Current_Message);
+      while not Self.Messages_To_Process.Is_Empty loop
+         M_Ref := Self.Messages_To_Process.First_Element;
 
          if not M_Ref.Is_Empty then
             Message := GNAThub_Message_Access (M_Ref.Message);
@@ -98,7 +92,8 @@ package body GNAThub.Loader.External is
          end if;
 
          Count := Count + 1;
-         Self.Current_Message := Self.Current_Message + 1;
+
+         Self.Messages_To_Process.Delete_First;
 
          exit when Count >= Load_Messages_Limit;
       end loop;

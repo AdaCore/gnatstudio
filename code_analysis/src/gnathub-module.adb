@@ -88,8 +88,14 @@ package body GNAThub.Module is
    begin
       Self.Clean;
 
-      Has_Data := Self.Db_Loader.Load;
-      Has_Data := Has_Data or Self.Ext_Loader.Load;
+      --  Try to load the data collected by the external loader first.
+      Has_Data := Self.Ext_Loader.Load;
+
+      --  If there is no data to load in the external loader, try to load the
+      --  data from the database loader.
+      if not Has_Data then
+         Has_Data := Self.Db_Loader.Load;
+      end if;
 
       if Has_Data then
          --  Switch to GNATHub perspective.

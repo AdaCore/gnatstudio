@@ -45,7 +45,6 @@ private
 
    type External_Loader_Type is new Loader_Type with record
       Messages_To_Process : Messages_Vectors.Vector;
-      Current_Message     : Positive;
    end record;
 
 end GNAThub.Loader.External;
