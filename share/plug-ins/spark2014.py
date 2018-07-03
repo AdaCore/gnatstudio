@@ -157,6 +157,13 @@ Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
 Ce_Highlighting = "Editor code annotations"
 
 User_Profile_Pref_Name = 'SPARK/user_profile'
+Display_Analysis_Report = "SPARK:General/display_analysis_report"
+
+GPS.Preference(Display_Analysis_Report).create(
+    'Display analysis report',
+    'boolean',
+    'Display an analysis report after running GNATprove.',
+    False)
 
 GPS.Preference(User_Profile_Pref_Name).create(
     'User profile',
@@ -513,6 +520,25 @@ class GNATprove_Parser(tool_output.OutputParser):
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
 
+        # if the display_analysis_report preference is enabled, create
+        # a GPS.AnalysisTool instance to collect the messages that will
+        # be shown in the report.
+        if GPS.Preference(Display_Analysis_Report).get():
+            self.analysis_tool = GPS.AnalysisTool('SPARK')
+
+            # create a rule for all the messages not related with SPARK itself
+            # (e.g: GNAT warnings etc.).
+            self.analysis_tool.add_rule('errors', 'ERRORS')
+
+            # create the SPARK rules from the '--list-categories' switch
+            process = GPS.Process("gnatprove --list-categories")
+            output = process.get_result()
+            for line in output.split('\n'):
+                splitted_line = line.split(' - ')
+                if len(splitted_line) == 3:
+                    self.analysis_tool.add_rule(splitted_line[1],
+                                                splitted_line[0])
+
     def pass_output(self, text, command):
         """pass the text on to the next output parser"""
         if self.child:
@@ -568,6 +594,16 @@ class GNATprove_Parser(tool_output.OutputParser):
                         self.handle_entry(unit, dict['proof'])
                 except ValueError:
                     pass
+
+    def get_rule_id_for_msg(self, m, extra):
+        """return the rule ID associated to the message m.
+           The rule ID is retrieved from "extra" when it exists: otherwise,
+           the rule ID defined for all non-SPARK messages is returned.
+        """
+        if 'rule' in extra:
+            return extra['rule']
+        else:
+            return 'ERRORS'
 
     def act_on_extra_info(self, m, extra, objdir, command):
         """act on extra info for the message m. More precisely, if the message
@@ -654,7 +690,9 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         map_msg = {}
         imported_units = set()
-        for m in GPS.Message.list():
+        extra = {}
+
+        for m in GPS.Message.list("Builder results"):
             text = get_comp_text(m)
             if text in self.msg_id:
                 id = self.msg_id[text]
@@ -668,6 +706,12 @@ class GNATprove_Parser(tool_output.OutputParser):
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
                     self.act_on_extra_info(m, extra, artifact_dir, command)
+
+            if GPS.Preference(Display_Analysis_Report).get():
+                self.analysis_tool.add_message(
+                    m, self.get_rule_id_for_msg(m, extra))
+
+        GPS.Analysis.display_report()
 
         if self.child is not None:
             self.child.on_exit(status, command)
