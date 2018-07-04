@@ -129,7 +129,8 @@ package body GNAThub.Loader.Databases is
 
       procedure Load_Entities;
 
-      procedure Load_Message (Line : Integer; Column : Integer);
+      procedure Load_Message
+        (Kind : Resource_Kind_Type; Line : Integer; Column : Integer);
 
       procedure Load_Metric (Kind : Resource_Kind_Type;  Line : Integer);
 
@@ -176,7 +177,8 @@ package body GNAThub.Loader.Databases is
                while Messages.Has_Row loop
                   M := Messages.Element;
                   if Self.Rules.Contains (M.Rule_Id) then
-                     Load_Message (Entity.Line, Entity.Col_Begin);
+                     Load_Message
+                       (Resource.Kind, Entity.Line, Entity.Col_Begin);
                   elsif Self.Metrics.Contains (M.Rule_Id) then
                      Load_Metric (Resource.Kind, Entity.Line);
                   end if;
@@ -193,8 +195,26 @@ package body GNAThub.Loader.Databases is
       -- Load_Message --
       ------------------
 
-      procedure Load_Message (Line : Integer; Column : Integer) is
+      procedure Load_Message
+        (Kind : Resource_Kind_Type; Line : Integer; Column : Integer)
+      is
+         Project : GNATCOLL.Projects.Project_Type;
+         File    : GNATCOLL.VFS.Virtual_File;
       begin
+         --  Depending on the resource kind, retrieve the project directly
+         --  from the resource filename.
+         case Kind is
+            when From_Project =>
+               Project :=
+                 GPS.Kernel.Project.Get_Project_Tree
+                   (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
+               File := GNATCOLL.VFS.No_File;
+            when others =>
+               Project :=
+                 GPS.Kernel.Project.Get_Project (Self.Module.Get_Kernel);
+               File := Resource_File;
+         end case;
+
          Ranking := M.Ranking;
          Severity := Self.Module.Get_Severity (Get_Importance_From_Ranking);
          Rule     := Self.Rules (M.Rule_Id);
@@ -215,7 +235,7 @@ package body GNAThub.Loader.Databases is
             Severity  => Severity,
             Rule      => Rule,
             Text      => To_Unbounded_String (Database.Orm.Data (M)),
-            File      => Resource_File,
+            File      => File,
             Line      => Line,
             Column    => Basic_Types.Visible_Column_Type (Column));
 
@@ -223,8 +243,7 @@ package body GNAThub.Loader.Databases is
 
          Insert_Message
            (Self    => Self,
-            Project => Get_Registry
-              (Self.Module.Kernel).Tree.Info (Resource_File).Project,
+            Project => Project,
             Message => Message);
 
          Messages_Vectors.Append
@@ -237,7 +256,8 @@ package body GNAThub.Loader.Databases is
       -- Load_Metric --
       -----------------
 
-      procedure Load_Metric (Kind : Resource_Kind_Type; Line : Integer) is
+      procedure Load_Metric (Kind : Resource_Kind_Type; Line : Integer)
+      is
          Project : GNATCOLL.Projects.Project_Type;
          File    : GNATCOLL.VFS.Virtual_File;
       begin
@@ -277,7 +297,7 @@ package body GNAThub.Loader.Databases is
            .Get (Session).Element;
 
          if Self.Rules.Contains (M.Rule_Id) then
-            Load_Message (R.Line, R.Col_Begin);
+            Load_Message (Resource.Kind, R.Line, R.Col_Begin);
          elsif Self.Metrics.Contains (M.Rule_Id) then
             Load_Metric (Resource.Kind, R.Line);
          end if;
