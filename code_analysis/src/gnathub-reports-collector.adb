@@ -20,9 +20,11 @@ with Ada.Unchecked_Deallocation;
 
 with Default_Preferences;        use Default_Preferences;
 
-with Gtk.Widget;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_View;
+with Gtk.Widget;
 with Gtkada.Handlers;
 
 with GNAThub.Messages;           use GNAThub.Messages;
@@ -76,17 +78,21 @@ package body GNAThub.Reports.Collector is
       Tree       : Code_Analysis.Code_Analysis_Tree;
       Severities : GNAThub.Severities_Ordered_Sets.Set)
    is
-      Hook : access On_Pref_Changed;
+      Hook  : access On_Pref_Changed;
+      Paned : Gtk_Paned;
    begin
       Gtk.Box.Initialize_Vbox (Self);
       Self.Kernel := Kernel;
 
+      Gtk_New_Vpaned (Paned);
+      Self.Pack_Start (Paned);
+
       GNAThub.Reports.Messages.Gtk_New
         (Self.Messages_Report, Kernel, Tree, Severities);
-      Self.Pack_Start (Self.Messages_Report);
+      Paned.Pack1 (Self.Messages_Report, True, True);
 
       GNAThub.Reports.Metrics.Gtk_New (Self.Metric_Report);
-      Self.Pack_Start (Self.Metric_Report);
+      Paned.Pack2 (Self.Metric_Report, True, True);
 
       Self.Listener := new Message_Listener (Gtk.Box.Gtk_Vbox (Self));
 
