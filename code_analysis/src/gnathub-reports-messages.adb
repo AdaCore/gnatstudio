@@ -266,7 +266,7 @@ package body GNAThub.Reports.Messages is
       begin
          GPS.Location_View.Expand_File
            (GPS.Location_View.Get_Or_Create_Location_View (View.Kernel),
-            GNAThub.Messages.Category,
+            To_String (Message.Get_Tool.Name),
             Message.Get_File,
             Goto_First => False);
          GPS.Location_View.Raise_Locations_Window (View.Kernel);

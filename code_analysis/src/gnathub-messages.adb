@@ -52,11 +52,9 @@ package body GNAThub.Messages is
 
    overriding function Get_Text
      (Self : not null access constant GNAThub_Message)
-      return Ada.Strings.Unbounded.Unbounded_String
-   is
-      use Ada.Strings.Unbounded;
+      return Ada.Strings.Unbounded.Unbounded_String is
    begin
-      return Self.Rule.Tool.Name & ": " & Self.Text;
+      return Self.Text;
    end Get_Text;
 
    --------------
@@ -89,7 +87,7 @@ package body GNAThub.Messages is
       GPS.Kernel.Messages.Initialize
         (Self          => Self,
          Container     => Container,
-         Category      => Category,
+         Category      => To_String (Self.Rule.Tool.Name),
          File          => File,
          Line          => Line,
          Column        => Column,

@@ -833,9 +833,8 @@ package body GNAThub.Filters_Views is
       return Boolean
    is
       pragma Unreferenced (Self);
-      Category : constant String := Message.Get_Category;
    begin
-      if Category = GNAThub.Messages.Category then
+      if Message.all in GNAThub_Message'Class then
          return GNAThub_Module.Clean_Messages;
       else
          return True;

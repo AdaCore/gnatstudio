@@ -109,7 +109,7 @@ package body GNAThub.Module is
          Self.Report := new GNAThub_Child_Record;
          GPS.Kernel.MDI.Initialize
            (Self.Report, Self.Collector, Self.Kernel, Module => Module);
-         Self.Report.Set_Title (-"GNAThub report");
+         Self.Report.Set_Title (-"Analysis Report");
 
          GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
            (new On_Before_Exit, Watch => Self.Collector);
