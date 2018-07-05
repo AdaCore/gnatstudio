@@ -1158,7 +1158,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color for high priority messages "
            & "(e.g: compiler errors). This preference is also used by "
            & " external tools integrated in GPS (e.g: CodePeer)."),
-         Default => "#F75D59");
+         Default => "#FFB7B7");
 
       Medium_Messages_Highlight := Manager.Create
         (Name    => "Medium-Importance-Messages-Highlight",
@@ -1167,7 +1167,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color for medium priority messages (e.g: compiler "
            & "warnings). This preference is also used by external tools "
            & "integrated in GPS (e.g: CodePeer)."),
-         Default => "#F88017");
+         Default => "#FFCC9C");
 
       Low_Messages_Highlight := Manager.Create
         (Name    => "Low-Importance-Messages-Highlight",
@@ -1176,7 +1176,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color for low priority messages (e.g: style errors). "
            & "This preference is also used by external tools integrated in "
            & "GPS (e.g: CodePeer)."),
-         Default => "#FFE87C");
+         Default => "#FFFFF0");
 
       Info_Messages_Highlight := Manager.Create
         (Name    => "Info-Messages-Highlight",
@@ -1185,7 +1185,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color for informational messages (e.g: compiler "
            & "infos). This preference is also used by external tools "
            & "integrated in GPS (e.g: CodePeer)."),
-         Default => "#F75D59");
+         Default => "#BDE5F8");
 
       Annotation_Messages_Highlight := Manager.Create
         (Name    => "Annotation-Messages-Highlight",
@@ -1194,7 +1194,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color for annotation messages. This preference is "
            & "also used by external tools integrated in GPS "
            & "(e.g: CodePeer)."),
-         Default => "#F75D59");
+         Default => "#E0E0E0");
 
       File_Pattern := Manager.Create
         (Name    => "Messages-File-Regpat-1",
