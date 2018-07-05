@@ -63,6 +63,7 @@ class BasicTestDriver(TestDriver):
         process = Run([the_gps,
                        "--load={}".format(os.path.join(wd, 'test.py'))],
                       cwd=wd,
+                      timeout=120,
                       env={'GPS_HOME': self.gps_home},
                       ignore_environ=False)
         output = process.out
