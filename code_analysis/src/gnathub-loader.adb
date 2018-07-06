@@ -227,7 +227,7 @@ package body GNAThub.Loader is
             begin
                if Node.Is_Valid
                  and then Node.Category in
-                   Language.Cat_Procedure .. Language.Cat_Destructor
+                   Language.Cat_Package .. Language.Cat_Destructor
                    and then Node.Sloc_Start.Line <= Line
                    and then Node.Sloc_End.Line >= Line
                    and then
