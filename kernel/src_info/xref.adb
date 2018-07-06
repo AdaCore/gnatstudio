@@ -2006,9 +2006,11 @@ package body Xref is
               (Database => +Working_Xref_File.Full_Name.all,
                Errors   => Self.Errors);
             Self.Xref.Setup_DB
-              (DB    => Self.DB,
-               Tree  => Tree,
-               Error => Error);
+              (DB                 => Self.DB,
+               Tree               => Tree,
+               Error              => Error,
+               Delete_If_Mismatch => True);
+
          exception
             when E : others =>
                --  Catch a corrupted database here and stop propagating
