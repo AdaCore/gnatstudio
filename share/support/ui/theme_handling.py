@@ -126,7 +126,7 @@ class Color:
             rgba_values = re.findall('\d+', from_pref)
             self.r, self.g, self.b = (int(x) / 255.0 for x in rgba_values[0:3])
             if len(rgba_values) == 4:
-                self.a = int(from_rgba[3]) / 255.0
+                self.a = int(rgba_values[3]) / 255.0
 
     def __eq__(self, other):
         """Return True if the Colors RGBA components match"""
