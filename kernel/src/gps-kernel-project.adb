@@ -61,7 +61,8 @@ package body GPS.Kernel.Project is
       Locations   => True);
 
    type GPS_Project_Tree is new Project_Tree with record
-      Handle : Kernel_Handle;
+      Handle    : Kernel_Handle;
+      Propagate : Boolean := True;
    end record;
    type GPS_Project_Tree_Access is access all GPS_Project_Tree'Class;
    overriding function Data_Factory
@@ -352,7 +353,9 @@ package body GPS.Kernel.Project is
       --  refresh it immediately.
       Self.Handle.Refresh_Context;
 
-      Project_View_Changed_Hook.Run (Self.Handle);
+      if Self.Propagate then
+         Project_View_Changed_Hook.Run (Self.Handle);
+      end if;
    end Recompute_View;
 
    --------------------
@@ -681,6 +684,11 @@ package body GPS.Kernel.Project is
          Kernel.Registry.Environment.Invalidate_Gnatls_Cache;
 
          begin
+            GPS_Project_Tree_Access (Kernel.Registry.Tree).Propagate := False;
+            Kernel.Registry.Tree.Load_Empty_Project
+              (Env            => Kernel.Registry.Environment,
+               Recompute_View => True);  -- Needed to reset the subprojects
+            GPS_Project_Tree_Access (Kernel.Registry.Tree).Propagate := True;
             New_Project_Loaded := True;
             Kernel.Registry.Tree.Load
               (Root_Project_Path => Local_Project,
