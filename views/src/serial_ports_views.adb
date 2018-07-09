@@ -15,54 +15,49 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Serial_Communications;
+with GNAT.Serial_Communications; use GNAT.Serial_Communications;
 
-with Glib;                      use Glib;
-with Glib.Values;               use Glib.Values;
+with Glib;                       use Glib;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Toolbar;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with Gdk.RGBA;                  use Gdk.RGBA;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Combo_Tool_Button;   use Gtkada.Combo_Tool_Button;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Style;              use Gtkada.Style;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with Generic_Views;
-with Glib_Values_Utils;         use Glib_Values_Utils;
 
 package body Serial_Ports_Views is
 
+   Me : constant Trace_Handle := Create ("GPS.VIEWS.SERIAL_PORTS");
+
    type Serial_Ports_View_Record is new Generic_Views.View_Record with record
-      Tree  : Gtk_Tree_View;
-      Model : Gtk_Tree_Store;
+      Combo : Gtkada_Combo_Tool_Button;
    end record;
 
---     type View_Access is access all Serial_Ports_View_Record'Class;
+   overriding procedure Create_Toolbar
+     (View    : not null access Serial_Ports_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
      (View : access Serial_Ports_View_Record'Class)
       return Gtk_Widget;
-   --  Create a new log view
+   --  Create a new ports view
 
    procedure Refresh (View : access Serial_Ports_View_Record'Class);
-   --  Refresh the contents of the log view
+   --  Refresh the list of available serial ports and fill toolbar combo
 
    package Serial_Port_View is new Generic_Views.Simple_Views
      (Module_Name        => "Serial_Ports_View",
-      View_Name          => "Serial Ports View",
+      View_Name          => "Serial Ports",
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Serial_Ports_View_Record,
       Reuse_If_Exist     => True,
@@ -78,10 +73,10 @@ package body Serial_Ports_Views is
    overriding function Execute
      (Self    : access Refresh_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Refresh view
+   --  Refresh command
 
-   Column_Value          : constant := 0;
-   Column_Color          : constant := 1;
+   function Name (Prefix : String; Number : Positive) return Port_Name;
+   --  Returns port name based on prefix and number
 
    ----------------
    -- Initialize --
@@ -90,52 +85,50 @@ package body Serial_Ports_Views is
    function Initialize
      (View : access Serial_Ports_View_Record'Class) return Gtk_Widget
    is
-      Scroll       : Gtk_Scrolled_Window;
-      Column_Types : constant GType_Array :=
-        (Column_Value => GType_String,
-         Column_Color => Gdk.RGBA.Get_Type);
-      Col          : Gtk_Tree_View_Column;
-      Text         : Gtk_Cell_Renderer_Text;
-      Dummy        : Gint;
 
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      View.Pack_Start (Scroll, Expand => True, Fill => True);
+      return Gtk_Widget (View);
+   end Initialize;
 
-      Gtk_New (View.Model, Column_Types);
-      Gtk_New (View.Tree, View.Model);
-
-      Gtk_New (Col);
-      Dummy := Append_Column (View.Tree, Col);
-      View.Tree.Set_Headers_Visible (False);
-
-      Gtk_New (Text);
-      Col.Pack_Start (Text, False);
-      Col.Set_Sort_Column_Id (Column_Value);
-      Col.Add_Attribute (Text, "text", Column_Value);
-      Col.Add_Attribute (Text, "foreground-rgba", Column_Color);
-
-      Scroll.Add (View.Tree);
+   overriding procedure Create_Toolbar
+     (View    : not null access Serial_Ports_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      Gtk_New (View.Combo, "", Click_Pops_Up => True);
 
       View.Refresh;
 
-      return Gtk_Widget (View.Tree);
-   end Initialize;
+      View.Append_Toolbar
+        (Toolbar     => Toolbar,
+         Item        => View.Combo,
+         Right_Align => True,
+         Homogeneous => False);
+   end Create_Toolbar;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Prefix : String; Number : Positive) return Port_Name is
+      N     : constant Natural := Number - 1;
+      N_Img : constant String  := Natural'Image (N);
+   begin
+      return Port_Name (Prefix & N_Img (N_Img'First + 1 .. N_Img'Last));
+   end Name;
 
    -------------
    -- Refresh --
    -------------
 
    procedure Refresh (View : access Serial_Ports_View_Record'Class) is
-      use GNAT.Serial_Communications;
+      Empty : Boolean := True;
 
-      Row   : Gtk_Tree_Iter;
-      Color : Glib.Values.GValue;
    begin
-      View.Model.Clear;
+      Trace (Me, "Refresh");
+
+      View.Combo.Clear_Items;
 
       for K in 1 .. 255 loop
          declare
@@ -143,37 +136,43 @@ package body Serial_Ports_Views is
             Name : constant Port_Name := GNAT.Serial_Communications.Name (K);
          begin
             --  Test if serial port exists
-            Open (Port, Port_Name (Name));
+            Open (Port, Name);
             Close (Port);
 
             --  This is a valid serial port
-            View.Model.Append (Row, Null_Iter);
-            Set_And_Clear
-              (View.Model,
-               Iter   => Row,
-               Values =>
-                 (Column_Value => As_String (String (Name))));
+            View.Combo.Add_Item (String (Name));
+            Empty := False;
 
          exception
-            when Serial_Error =>
+            when others =>
                --  Not a valid serial port
                null;
          end;
       end loop;
 
-      if View.Model.Get_Iter_First = Null_Iter then
-         View.Model.Append (Row, Null_Iter);
-         Init (Color, Gdk.RGBA.Get_Type);
-         Gdk.RGBA.Set_Value
-           (Color,
-            Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.6));
+      -- ttyACM --
+      for K in 1 .. 255 loop
+         declare
+            Port : Serial_Port;
+            ACM_Name : constant Port_Name := Name ("/dev/ttyACM", K);
+         begin
+            --  Test if serial port exists
+            Open (Port, ACM_Name);
+            Close (Port);
 
-         Set_And_Clear
-           (View.Model,
-            Iter   => Row,
-            Values =>
-              (Column_Value => As_String ("not found"),
-              Column_Color  => Color));
+            --  This is a valid serial port
+            View.Combo.Add_Item (String (ACM_Name));
+            Empty := False;
+
+         exception
+            when others =>
+               --  Not a valid serial port
+               null;
+         end;
+      end loop;
+
+      if Empty then
+         View.Combo.Add_Item ("null");
       end if;
    end Refresh;
 
@@ -195,6 +194,7 @@ package body Serial_Ports_Views is
       end if;
 
       View.Refresh;
+
       return Commands.Success;
    end Execute;
 

@@ -476,7 +476,7 @@
          <menu label="OS Shell"                   action="open os shell"/>
          <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
          <menu label="_Background Builds"         action="open background builds"/>
-         <menu label="Serial ports"               action="open serial ports view"/>
+         <menu label="Serial ports"               action="open serial ports"/>
          <menu label="_Log"                       action="open log"/>
       </menu>
 
@@ -697,7 +697,7 @@
       <button action='log configure'/>
    </toolbar>
 
-   <toolbar id='Serial Ports View'>
+   <toolbar id='Serial Ports'>
       <button action='refresh serial ports'/>
    </toolbar>
 
