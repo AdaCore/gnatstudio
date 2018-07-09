@@ -75,7 +75,6 @@ from extensions.private.xml import X
 import os_utils
 import workflows.promises as promises
 import workflows
-from workflow_buttons import WorkflowButtons
 
 
 def list_to_xml(items):
@@ -192,6 +191,37 @@ class GNATcovPlugin(object):
     ]
 
     BUILD_TARGETS = [
+        X('target-model', name='gnatcov-build-main', category='').children(
+            X('description').children('Build Main with the gnatcov switches'),
+            X('command-line').children(
+                X('arg').children('gprbuild')
+            ),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('switches', command='%(tool_name)s', columns='2', lines='2'),
+        ),
+
+        X('target', model='gnatcov-build-main', category='GNATcov',
+          name='GNATcov Build Main', menu=PLUGIN_MENU).children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('in-menu').children('TRUE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('%builder'),
+                X('arg').children('-P%PP'),
+                X('arg').children('%subdirsarg'),
+                X('arg').children('-s'),
+                X('arg').children('-cargs'),
+                X('arg').children('-g'),
+                X('arg').children('-fdump-scos'),
+                X('arg').children('-fpreserve-control-flow')
+            )
+        ),
+
         # Program execution under instrumented execution environment
         X('target-model', name='gnatcov-run', category='').children(
             X('description').children('Run under GNATcov for code coverage'),
@@ -200,14 +230,11 @@ class GNATcovPlugin(object):
                 X('arg').children('run'),
             ),
             X('iconname').children('gps-build-all-symbolic'),
-            X('switches', command='%(tool_name)s', columns='2', lines='2'),
+            X('switches', command='%(tool_name)s', columns='1', lines='1')
         ),
 
-        X(
-            'target',
-            model='gnatcov-run', category='GNATcov run',
-            name='Run under GNATcov', menu=PLUGIN_MENU
-        ).children(
+        X('target', model='gnatcov-run', category='GNATcov',
+          name='Run under GNATcov', menu=PLUGIN_MENU).children(
             X('target-type').children('executable'),
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
@@ -246,7 +273,7 @@ class GNATcovPlugin(object):
             X('switches', command='%(tool_name)s', columns='1', lines='4'),
         ),
 
-        X('target', model='gnatcov-coverage', category='GNATcov coverage',
+        X('target', model='gnatcov-coverage', category='GNATcov',
             name='Generate GNATcov Main Report',
             menu=PLUGIN_MENU).children(
             X('target-type').children('executable'),
@@ -323,17 +350,17 @@ class GNATcovPlugin(object):
             target_name="Run GNATcoverage",
             workflow_name="run-gnatcov",
             workflow=self.run_gnatcov_wf,
-            icon_name="gps-run-gnatcov-symbolic")
+            icon_name="gps-run-gnatcov-symbolic",
+            parent_menu="/Build/Workflow/GNATcov/")
 
     def run_gnatcov_wf(self, main_name):
-        # Set the build mode to 'gnatcov' if it's not set yet and force
-        # the rebuild of the selected main in that case.
-        if GPS.get_build_mode() != "gnatcov":
-            GPS.set_build_mode("gnatcov")
-            WorkflowButtons.force_rebuild_main(main_name)
-
-        # Build the selected main
-        yield WorkflowButtons.build_main(main_name)
+        # Build the project with GNATcov switches
+        p = promises.TargetWrapper("GNATcov Build Main")
+        r = yield p.wait_on_execute()
+        if r is not 0:
+            GPS.Console("Messages").write("Can't build the project with " +
+                                          "the GNATcov switches", mode="error")
+            return
 
         # Get the executable to analyze
         exe = str(GPS.File(main_name).executable_path)
@@ -342,6 +369,7 @@ class GNATcovPlugin(object):
         p = promises.TargetWrapper("Run under GNATcov")
         r = yield p.wait_on_execute(exe)
         if r is not 0:
+            GPS.Console("Messages").write("GNATcov run failed ", mode="error")
             return
 
         # Generate and display the GNATcov Coverage Report
