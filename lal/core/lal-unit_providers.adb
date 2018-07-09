@@ -56,7 +56,11 @@ package body LAL.Unit_Providers is
            Part      => Map (Kind),
            Language  => "Ada");
    begin
-      return File;
+      if File'Length = 0 then
+         return "";
+      end if;
+
+      return Self.Kernel.Get_Project_Tree.Create (File).Full_Name;
    end Get_Unit_Filename;
 
    -----------------------
@@ -95,7 +99,7 @@ package body LAL.Unit_Providers is
            Open_Buffer => False,
            Open_View   => False);
    begin
-      if Buffer = Nil_Editor_Buffer then
+      if File'Length = 0 or else Buffer = Nil_Editor_Buffer then
 
          return Libadalang.Analysis.Get_From_File
            (Context     => Context,
