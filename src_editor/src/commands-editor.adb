@@ -661,8 +661,8 @@ package body Commands.Editor is
      (Command : access Update_Async_Record)
       return Commands.Command_Return_Type is
    begin
-      Command.Buffer.Get_Kernel.Get_Abstract_Tree_For_File
-        ("EDIT", Command.Buffer.Get_Filename).Update_Async;
+      Command.Kernel.Get_Abstract_Tree_For_File
+        ("EDIT", Command.Filename).Update_Async;
 
       return Success;
    end Execute;

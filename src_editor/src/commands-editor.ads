@@ -24,6 +24,9 @@ with GNAT.Strings;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Kernel;   use GPS.Kernel;
+
 package Commands.Editor is
 
    type Base_Editor_Command_Type is abstract new Root_Command with record
@@ -194,7 +197,8 @@ package Commands.Editor is
      (C : Unhide_Editable_Lines_Type) return String;
 
    type Update_Async_Record is new Root_Command with record
-      Buffer : Source_Buffer;
+      Kernel   : Kernel_Handle;
+      Filename : Virtual_File;
    end record;
    --  This action is used to update a tree asynchronously
 

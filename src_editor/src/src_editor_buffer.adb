@@ -1145,7 +1145,9 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= No_File then
          declare
             Command : constant Update_Async_Access := new Update_Async_Record'
-              (Root_Command with Buffer => Buffer);
+              (Root_Command with
+               Kernel => Buffer.Kernel,
+               Filename => Buffer.Filename);
          begin
             GPS.Kernel.Task_Manager.Launch_Background_Command
               (Buffer.Kernel,
