@@ -60,8 +60,7 @@ class BasicTestDriver(TestDriver):
             the_gps = "gps"
 
         # TODO: add support for valgrind
-        process = Run([the_gps,
-                       "--load={}".format(os.path.join(wd, 'test.py'))],
+        process = Run([the_gps, "--load={}".format('test.py')],
                       cwd=wd,
                       timeout=120,
                       env={'GPS_HOME': self.gps_home},
