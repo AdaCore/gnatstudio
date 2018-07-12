@@ -268,6 +268,7 @@ package body VCS2.Module is
       pragma Unreferenced (Self);
    begin
       Kernel.VCS.Invalidate_All_Caches;
+      Ensure_Status_For_All_Files_In_All_Engines (Kernel, From_User => False);
       Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
    end Execute;
 

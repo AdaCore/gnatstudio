@@ -23,7 +23,7 @@ _version = None
 # Git version
 
 
-@core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
+@core.register_vcs(default_status=GPS.VCS2.Status.NO_VCS)
 class Git(core.VCS):
 
     @staticmethod
@@ -139,7 +139,6 @@ class Git(core.VCS):
         """
 
         s = self.set_status_for_all_files()
-        files = set(extra_files)
 
         # Do we need to reset the "ls-tree" cache ? After the initial
         # loading, this list no longer changes without also impacting the
@@ -148,8 +147,7 @@ class Git(core.VCS):
             all_files = []   # faster to update than a set
             yield join(self.__git_ls_tree(all_files), self.__git_status(s))
             self._non_default_files = s.files_with_explicit_status
-            files.update(all_files)
-
+            now_default = set(all_files).difference(self._non_default_files)
         else:
             # Reuse caches: we do not need to recompute the full list of files
             # for git, since this will not change without also changing the
@@ -164,10 +162,11 @@ class Git(core.VCS):
             nondefault = s.files_with_explicit_status
             now_default = self._non_default_files.difference(nondefault)
             self._non_default_files = nondefault
-            for f in now_default:
-                s.set_status(f, self.default_status)
 
-        s.set_status_for_remaining_files(files)
+        for f in now_default:
+            s.set_status(f, GPS.VCS2.Status.UNMODIFIED)
+
+        s.set_status_for_remaining_files()
 
     @core.run_in_background
     def stage_or_unstage_files(self, files, stage):

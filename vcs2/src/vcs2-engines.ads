@@ -331,7 +331,7 @@ package VCS2.Engines is
 
    function Default_File_Status
      (Self    : not null access VCS_Engine)
-     return VCS_File_Status is (Status_Untracked);
+     return VCS_File_Status is (Status_No_VCS);
    --  The default status to use for files not in the cache yet.  This can make
    --  a large difference on startup: if set to untracked, the GPS project
    --  (git) needs 1.3s to set the initial cache. If set to Unmodified, it
@@ -607,6 +607,9 @@ package VCS2.Engines is
    --  This function can be called multiple times with a True parameter, and
    --  will then need to be called an equal number of times with False.
 
+   overriding function Get_Active_VCS
+     (Self : not null access VCS_Repository)
+      return Abstract_VCS_Engine_Access;
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       VCS    : not null access VCS_Engine'Class);

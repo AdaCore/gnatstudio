@@ -157,7 +157,7 @@ package VCS is
    ---------------------
 
    Unknown_Label : aliased String := "Unknown";
-   Unknown_Stock : aliased String := "vcs-unknown";
+   Unknown_Stock : aliased String := "";
 
    Unknown : constant VCS_File_Status :=
      (Unknown_Label'Access, Unknown_Stock'Access);

@@ -60,6 +60,11 @@ package GPS.VCS is
    --  project sources, or is beneath the directory that contains the VCS
    --  repo (root/.git for instance).
 
+   function Get_Active_VCS
+     (Self : not null access Abstract_VCS_Repository)
+      return Abstract_VCS_Engine_Access is abstract;
+   --  Return the currently active VCS repository or null
+
    procedure Invalidate_All_Caches
      (Self    : not null access Abstract_VCS_Repository) is abstract;
    --  Invalid all caches for all VCS, so that the next Ensure_* calls
@@ -98,6 +103,8 @@ package GPS.VCS is
    --      the file was staged for commit, and removed from work tree. The
    --      next commit should include whatever was staged when using git, but
    --      not necessarily when using other engines.
+
+   Status_No_VCS          : constant VCS_File_Status := 0;
 
    Status_Unmodified      : constant VCS_File_Status := 2 ** 0;
 
@@ -188,14 +195,14 @@ package GPS.VCS is
    function Get_VCS_File_Status
      (VCS        : not null access Abstract_VCS_Engine;
       Dummy_File : GNATCOLL.VFS.Virtual_File)
-      return VCS_File_Status is (Status_Untracked);
+      return VCS_File_Status is (Status_No_VCS);
    --  A convenient getter
 
    function File_Properties_From_Cache
      (Self       : not null access Abstract_VCS_Engine;
       Dummy_File : Virtual_File)
       return VCS_File_Properties
-   is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+   is ((Status_No_VCS, Null_Unbounded_String, Null_Unbounded_String));
    --  Return the current known status of the file.
    --  By default, files are assumed to be "unmodified". Calling one of the
    --  Async_Fetch_Status_* procedures above will ensure that the proper status

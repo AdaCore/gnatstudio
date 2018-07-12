@@ -27,6 +27,9 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 package body VCS2.Engines is
    Me : constant Trace_Handle := Create ("GPS.VCS.VCS2");
 
+   Default_Display_No_VCS : constant Status_Display :=
+     (Label     => To_Unbounded_String ("No VCS"),
+      Icon_Name => To_Unbounded_String (""));
    Default_Display_Unmodified : constant Status_Display :=
      (Label     => To_Unbounded_String ("Up to date"),
       Icon_Name => To_Unbounded_String ("vcs-up-to-date"));
@@ -41,10 +44,10 @@ package body VCS2.Engines is
       Icon_Name => To_Unbounded_String ("vcs-removed-staged"));
    Default_Display_Ignored : constant Status_Display :=
      (Label     => To_Unbounded_String ("Ignored"),
-      Icon_Name => To_Unbounded_String ("vcs-not-registered"));
+      Icon_Name => To_Unbounded_String ("vcs-ignored"));
    Default_Display_Untracked : constant Status_Display :=
      (Label     => To_Unbounded_String ("Untracked"),
-      Icon_Name => To_Unbounded_String ("vcs-unknown"));
+      Icon_Name => To_Unbounded_String ("vcs-untracked"));
    Default_Display_Added : constant Status_Display :=
      (Label     => To_Unbounded_String ("Added"),
       Icon_Name => To_Unbounded_String ("vcs-added"));
@@ -114,7 +117,7 @@ package body VCS2.Engines is
    overriding function File_Properties_From_Cache
      (Self       : not null access Dummy_VCS_Engine;
       Dummy_File : Virtual_File) return VCS_File_Properties
-     is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+     is ((Status_No_VCS, Null_Unbounded_String, Null_Unbounded_String));
    overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Dummy_VCS_Engine;
       Files   : GNATCOLL.VFS.File_Array;
@@ -1511,8 +1514,10 @@ package body VCS2.Engines is
             return Default_Display_Conflict;
          elsif (Status and Status_Needs_Update) /= 0 then
             return Default_Display_Needs_Update;
-         else
+         elsif (Status and Status_Unmodified) /= 0 then
             return Default_Display_Unmodified;
+         else
+            return Default_Display_No_VCS;
          end if;
       end if;
    end Get_Display;
@@ -1561,7 +1566,9 @@ package body VCS2.Engines is
       Props : constant VCS_File_Properties :=
          VCS.File_Properties_From_Cache (File);
    begin
-      if Props.Status /= Status_Untracked then
+      if Props.Status /= Status_Untracked
+        and then Props.Status /= Status_No_VCS
+      then
          return "<b>" & V.Name & " status</b>: "
            & To_String (V.Get_Display (Props.Status).Label)
            & (if Props.Version /= ""
@@ -1628,6 +1635,19 @@ package body VCS2.Engines is
    begin
       Self.Working_Dir := Working_Dir;
    end Set_Working_Directory;
+
+   --------------------
+   -- Get_Active_VCS --
+   --------------------
+
+   overriding function Get_Active_VCS
+     (Self : not null access VCS_Repository)
+      return Abstract_VCS_Engine_Access
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Abstract_VCS_Engine_Access (Global_Data.Active_VCS);
+   end Get_Active_VCS;
 
    ----------------
    -- Active_VCS --

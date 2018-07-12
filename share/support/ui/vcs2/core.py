@@ -15,6 +15,7 @@ import platform
 
 
 GPS.VCS2.Status = gps_utils.enum(
+        NO_VCS=0,
         UNMODIFIED=2**0,
         MODIFIED=2**1,
         STAGED_MODIFIED=2**2,

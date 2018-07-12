@@ -51,7 +51,7 @@ package body VCS_Utils is
    begin
       if Ref /= null then
          if Status.Status.Icon_Name.all = Unknown_Stock then
-            Stat := 0;
+            Stat := GPS.VCS.Status_No_VCS;
          elsif Status.Status.Icon_Name.all = Added_Stock then
             Stat := GPS.VCS.Status_Staged_Added;
          elsif Status.Status.Icon_Name.all = Removed_Stock then
