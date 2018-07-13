@@ -158,6 +158,9 @@ private
 
       Sorted_Model   : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
       --  The model sorted by the Importance column
+
+      Need_Refresh   : Boolean := True;
+      --  Does the tree need to refresh its background colors
    end record;
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class);
