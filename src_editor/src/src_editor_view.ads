@@ -372,6 +372,10 @@ private
       --  to be changed.
 
       Source_Buffer_Handlers       : Handlers_Array (1 .. 6);
+
+      Scrolling_Is_Done_By_User : Boolean := True;
+      --  Whether the scrolling is done by an user. Assumed to be the
+      --  case by default.
    end record;
 
 end Src_Editor_View;

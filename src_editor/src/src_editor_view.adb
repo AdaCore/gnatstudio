@@ -819,20 +819,27 @@ package body Src_Editor_View is
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
       V      : constant Source_View := Source_View (View);
+      Prev   : Boolean;
    begin
       --  Recompute the lines currently displayed
       Recompute_Visible_Area (V);
 
-      --  Keep the cursor on screen when the editor is resized.
-      --  Do not do this if the editor is synchronized with another editor.
+      --  During the creation of the editor, the size gets allocated
+      --  progressively as the editor is filled. This code makes sure
+      --  that, if the user requested a particular location in the text,
+      --  then the editor remains scrolled to that location while it is
+      --  being sized.
 
       if V.Synchronized_Editor = null
-        and then V.Cursor_Position >= 0.0
-        and then V.Cursor_Position <= 1.0
+        and then V.Position_Set_Explicitely (False)
+        and then (not V.Initial_Scroll_Has_Occurred
+                  or else (V.Cursor_Position >= 0.0
+                           and then V.Cursor_Position <= 1.0))
       then
-         if V.Position_Set_Explicitely (False) then
-            Scroll_To_Cursor_Location (V, Center);
-         end if;
+         Prev := V.Scrolling_Is_Done_By_User;
+         V.Scrolling_Is_Done_By_User := False;
+         Scroll_To_Cursor_Location (V, Center);
+         V.Scrolling_Is_Done_By_User := Prev;
       end if;
    end Size_Allocated;
 
@@ -1663,6 +1670,20 @@ package body Src_Editor_View is
              (File_Hooks_Function with View => Source_View (View)),
           Watch => View);
 
+      Widget_Callback.Object_Connect
+        (Get_Vadjustment (View.Scroll),
+         Signal_Value_Changed,
+         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
+         After       => True,
+         Slot_Object => View);
+
+      Widget_Callback.Object_Connect
+        (Get_Hadjustment (View.Scroll),
+         Signal_Value_Changed,
+         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
+         After       => True,
+         Slot_Object => View);
+
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).
 
@@ -1687,20 +1708,6 @@ package body Src_Editor_View is
 
    function Connect_Expose (View : Source_View) return Boolean is
    begin
-      Widget_Callback.Object_Connect
-        (Get_Vadjustment (View.Scroll),
-         Signal_Value_Changed,
-         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
-         After       => True,
-         Slot_Object => View);
-
-      Widget_Callback.Object_Connect
-        (Get_Hadjustment (View.Scroll),
-         Signal_Value_Changed,
-         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
-         After       => True,
-         Slot_Object => View);
-
       Invalidate_Window (View);
 
       View.Connect_Expose_Registered := False;
@@ -2645,6 +2652,13 @@ package body Src_Editor_View is
       --  ??? We use to force a refresh of the window, but not sure why this
       --  would be needed.
       Invalidate_Window (Src_View);
+
+      --  If the user is scrolling explicitly, remove the flag
+      --  "Position_Set_Explicitely", so that the editor doesn't
+      --  scroll after the user has scrolled manually.
+      if Src_View.Scrolling_Is_Done_By_User then
+         Src_View.Cursor_Set_Explicitely := False;
+      end if;
 
       --  Ensure that synchronized editors are also scrolled
 
