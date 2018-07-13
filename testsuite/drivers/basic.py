@@ -68,8 +68,8 @@ class BasicTestDriver(TestDriver):
         output = process.out
 
         if output:
-            # If there's an output, log it
-            self.result.log.log = output
+            # If there's an output, capture it
+            self.result.out = output
 
         if process.status:
             # Nonzero status?
