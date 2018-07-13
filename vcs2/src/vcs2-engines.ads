@@ -576,6 +576,30 @@ package VCS2.Engines is
    --  Files is freed automatically.
    --  Calls Visitor.On_Terminate when done.
 
+   procedure Async_Checkout
+     (Self    : not null access VCS_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String) is null;
+
+   procedure Queue_Checkout
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String);
+   --  Checkout to the commit
+
+   procedure Async_Checkout_File
+     (Self    : not null access VCS_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String;
+      File    : Virtual_File) is null;
+
+   procedure Queue_Checkout_File
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String;
+      File    : Virtual_File);
+   --  Checkout specific file to the commit
+
    ----------
    -- Misc --
    ----------

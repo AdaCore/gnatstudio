@@ -323,3 +323,17 @@ class SVN(core_staging.Emulate_Staging,
     def async_discard_local_changes(self, files):
         n = [self._relpath(f.path) for f in files]
         yield self._svn(['revert'] + n).wait_until_terminate()
+
+    @core.run_in_background
+    def async_checkout(self, visitor, commit):
+        p = self._svn(['merge', '-r HEAD:%s' % commit, '.'])
+        status, output = yield p.wait_until_terminate()
+        if status == 0:
+            visitor.success('Reverting successful')
+
+    @core.run_in_background
+    def async_checkout_file(self, visitor, commit, file):
+        p = self._svn(['up', '-r', commit, self._relpath(file.path)])
+        status, output = yield p.wait_until_terminate()
+        if status == 0:
+            visitor.success('Reverting successful')

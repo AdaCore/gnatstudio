@@ -811,3 +811,17 @@ class Git(core.VCS):
         yield self._git(['checkout'] + n).wait_until_terminate()
         GPS.MDI.information_popup(
             'Local changes discarded', 'github-commit-symbolic')
+
+    @core.run_in_background
+    def async_checkout(self, visitor, commit):
+        p = self._git(['checkout', commit], block_exit=True)
+        status, _ = yield p.wait_until_terminate(show_if_error=True)
+        if status == 0:
+            visitor.success('Checkout successful')
+
+    @core.run_in_background
+    def async_checkout_file(self, visitor, commit, file):
+        p = self._git(['checkout', commit, '--', file.path], block_exit=True)
+        status, _ = yield p.wait_until_terminate(show_if_error=True)
+        if status == 0:
+            visitor.success('Checkout successful')

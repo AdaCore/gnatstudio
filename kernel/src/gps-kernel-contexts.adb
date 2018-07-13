@@ -456,6 +456,40 @@ package body GPS.Kernel.Contexts is
       return To_String (Context.Ref.Get.Other_Revision);
    end Other_Revision_Information;
 
+   -------------------------------
+   -- Set_Commit_Id_Information --
+   -------------------------------
+
+   procedure Set_Commit_Id_Information
+     (Context : in out Selection_Context;
+      Commit  : String)
+   is
+      Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
+   begin
+      Data.Commit_Id := To_Unbounded_String (Commit);
+   end Set_Commit_Id_Information;
+
+   -------------------------------
+   -- Has_Commit_Id_Information --
+   -------------------------------
+
+   function Has_Commit_Id_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return not Context.Ref.Is_Null
+        and then Context.Ref.Get.Commit_Id /= Null_Unbounded_String;
+   end Has_Commit_Id_Information;
+
+   ---------------------------
+   -- Commit_Id_Information --
+   ---------------------------
+
+   function Commit_Id_Information
+     (Context : Selection_Context) return String is
+   begin
+      return To_String (Context.Ref.Get.Commit_Id);
+   end Commit_Id_Information;
+
    -------------------------
    -- Has_Tag_Information --
    -------------------------

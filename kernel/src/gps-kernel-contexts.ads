@@ -147,6 +147,15 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return String;
    --  Return the other revision information associated with the file
 
+   procedure Set_Commit_Id_Information
+     (Context : in out Selection_Context;
+      Commit  : String);
+   function Has_Commit_Id_Information
+     (Context : Selection_Context) return Boolean;
+   function Commit_Id_Information
+     (Context : Selection_Context) return String;
+   --  Return the commit id associated with the file
+
    function Has_Tag_Information
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has information about the tag/branch name

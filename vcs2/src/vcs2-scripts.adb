@@ -109,6 +109,15 @@ package body VCS2.Scripts is
    overriding procedure Async_Discard_Local_Changes
      (Self        : not null access Script_Engine;
       Files       : GNATCOLL.VFS.File_Array);
+   overriding procedure Async_Checkout
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String);
+   overriding procedure Async_Checkout_File
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String;
+      File    : Virtual_File);
    overriding procedure Make_File_Writable
      (Self       : not null access Script_Engine;
       File       : GNATCOLL.VFS.Virtual_File;
@@ -550,6 +559,40 @@ package body VCS2.Scripts is
       Set_Nth_Arg (Data, 2, Message);
       Call_Method (Self, "async_commit_staged_files", Data);
    end Async_Commit_Staged_Files;
+
+   --------------------
+   -- Async_Checkout --
+   --------------------
+
+   overriding procedure Async_Checkout
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String)
+   is
+      D : Callback_Data'Class := Self.Script.Create (2);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Commit);
+      Call_Method (Self, "async_checkout", D);
+   end Async_Checkout;
+
+   -------------------------
+   -- Async_Checkout_File --
+   -------------------------
+
+   overriding procedure Async_Checkout_File
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String;
+      File    : Virtual_File)
+   is
+      D : Callback_Data'Class := Self.Script.Create (3);
+   begin
+      Set_Nth_Arg (D, 1, Visitor);
+      D.Set_Nth_Arg (2, Commit);
+      D.Set_Nth_Arg (3, Create_File (Self.Script, File));
+      Call_Method (Self, "async_checkout_file", D);
+   end Async_Checkout_File;
 
    -----------------
    -- VCS_Handler --

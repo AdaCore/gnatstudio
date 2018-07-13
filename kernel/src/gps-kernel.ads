@@ -895,6 +895,7 @@ private
 
       Revision       : Unbounded_String;
       Other_Revision : Unbounded_String;
+      Commit_Id      : Unbounded_String;
       Tag            : Unbounded_String;
       --  In the location window
 

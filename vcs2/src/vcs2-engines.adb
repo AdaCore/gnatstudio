@@ -261,6 +261,21 @@ package body VCS2.Engines is
       VCS  : not null access VCS_Engine'Class);
    overriding procedure Free (Self : in out Cmd_Discard_Local_Changes);
 
+   type Cmd_Queue_Checkout is new VCS_Command with record
+      Commit : Unbounded_String;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Queue_Checkout;
+      VCS  : not null access VCS_Engine'Class);
+
+   type Cmd_Queue_Checkout_File is new VCS_Command with record
+      Commit : Unbounded_String;
+      File   : Virtual_File;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Queue_Checkout_File;
+      VCS  : not null access VCS_Engine'Class);
+
    procedure Unref (Self : in out Task_Visitor_Access);
    --  Decrease refcount of Self, and free if needed
 
@@ -1676,6 +1691,63 @@ package body VCS2.Engines is
          Vcs_Active_Changed_Hook.Run (Kernel);
       end if;
    end Set_Active_VCS;
+
+   --------------------
+   -- Queue_Checkout --
+   --------------------
+
+   procedure Queue_Checkout
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Queue_Checkout'(
+           Visitor   => Visitor.all'Unchecked_Access,
+           Commit    => To_Unbounded_String (Commit)));
+   end Queue_Checkout;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Queue_Checkout;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Checkout (Self.Visitor, To_String (Self.Commit));
+   end Execute;
+
+   -------------------------
+   -- Queue_Checkout_File --
+   -------------------------
+
+   procedure Queue_Checkout_File
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access Task_Visitor'Class;
+      Commit  : String;
+      File    : Virtual_File) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Queue_Checkout_File'(
+           Visitor   => Visitor.all'Unchecked_Access,
+           Commit    => To_Unbounded_String (Commit),
+           File      => File));
+   end Queue_Checkout_File;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Queue_Checkout_File;
+      VCS  : not null access VCS_Engine'Class) is
+   begin
+      VCS.Async_Checkout_File
+        (Self.Visitor, To_String (Self.Commit), Self.File);
+   end Execute;
 
    ----------
    -- Free --
