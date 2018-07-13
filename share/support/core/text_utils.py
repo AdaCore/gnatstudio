@@ -781,6 +781,7 @@ def goto_beginning_of_line_ext_sel():
       character of the line.
     This function extends the current selection while moving the cursor.
     """
+    GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=True, extend_selection=True)
 
 
@@ -793,18 +794,21 @@ def goto_beginning_of_line():
     * if the cursor is already on column 1, move to the first non-blank
       character of the line.
     """
+    GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=True, extend_selection=False)
 
 
 @interactive("Editor", filter_text_actions,
              name="goto end of line (extend selection)")
 def goto_end_of_line_ext_sel():
+    GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=False, extend_selection=True)
 
 
 @interactive("Editor", filter_text_actions, name="goto end of line",
              for_learning=True)
 def goto_end_of_line():
+    GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=False, extend_selection=False)
 
 
@@ -957,41 +961,6 @@ def goto_word_end(loc, underscore_is_word=True):
 def isword(a):
     # test if a (a char) is a word
     return (a.isalpha() or a.isdigit() or a == "_")
-
-
-@interactive("Editor", "", name="go to next word")
-def move_to_next_word():
-    """
-    Jump to beginning of the next word / the end of this word
-    [word)[word)jump_here[word)...
-    par"""
-    b = GPS.EditorBuffer.get()
-    loc = b.selection_end()
-    if isword(loc.get_char()):
-        loc = forward_until(loc, lambda x: not isword(x),
-                            True, True, False, False)
-    else:
-        loc = forward_until(loc, lambda x: isword(x) or x in ["\n", "\"", "'"],
-                            True, False, False, False)
-    if loc.get_char() not in ["\n", "\"", "'"]:
-        loc = forward_until(loc, lambda x: x != " ", False, True, False, False)
-    b.main_cursor().move(loc)
-
-
-@interactive("Editor", "", name="go to previous word")
-def move_to_previous_word():
-    b = GPS.EditorBuffer.get()
-    loc = b.selection_start().forward_char(-1)
-    loc = forward_until(loc, lambda x: x != " ", False, True, True)
-    if loc.get_char() not in ["\n", "\"", "'"]:
-        if isword(loc.get_char()):
-            loc = forward_until(loc, lambda x: not isword(x),
-                                True, True, True, False)
-        else:
-            loc = forward_until(loc, lambda x: isword(x) or x.isspace(),
-                                True, False, True, False)
-        loc = loc.forward_char() if loc != b.beginning_of_buffer() else loc
-    b.main_cursor().move(loc)
 
 
 def delete_spaces(backward=True, forward=True, leave_one=False):

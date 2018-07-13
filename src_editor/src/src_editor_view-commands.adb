@@ -22,6 +22,7 @@ with Gtkada.MDI;                      use Gtkada.MDI;
 
 with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
+with Completion_Module;               use Completion_Module;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
@@ -199,6 +200,7 @@ package body Src_Editor_View.Commands is
 
       pragma Unreferenced (Context, Moved);
    begin
+      Remove_Completion;
       Set_Manual_Sync (C);
 
       if Command.Kind = Page then
@@ -301,6 +303,7 @@ package body Src_Editor_View.Commands is
       Adj          : constant Gtk_Adjustment := View.Get_Hadjustment;
       Val          : constant Gdouble := Adj.Get_Value;
    begin
+      Remove_Completion;
       --  First center the mark onscreen
       Scroll_To_Mark
         (View,
@@ -341,6 +344,7 @@ package body Src_Editor_View.Commands is
       pragma Unreferenced (Context);
 
    begin
+      Remove_Completion;
       for Cursor of Get_Cursors (Buffer) loop
          declare
             Cursor_Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);

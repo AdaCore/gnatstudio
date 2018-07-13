@@ -924,6 +924,12 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information
 
+   type Completion_Context (Is_Line_Movement : Boolean) is new
+     GPS.Kernel.Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Completion_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
    type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
    overriding function Filter_Matches_Primitive

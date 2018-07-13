@@ -2108,11 +2108,13 @@ package body Src_Editor_Module is
          for Step of Steps loop
             for Extend_Selection in Boolean loop
                declare
-                  Step_Str : constant String :=
+                  Step_Str        : constant String :=
                     (if Step = 1 then "next" else "previous");
-                  Kind_Str : constant String := To_Lower (Kind'Img);
-                  ESel_Str : constant String :=
+                  Kind_Str        : constant String := To_Lower (Kind'Img);
+                  ESel_Str        : constant String :=
                     (if Extend_Selection then " (extend selection)" else "");
+                  When_Completion : constant Action_Filter :=
+                    new Completion_Context (Is_Line_Movement => Kind = Line);
                begin
                   Command := new Move_Command;
                   Move_Command (Command.all).Kind := Kind;
@@ -2126,7 +2128,7 @@ package body Src_Editor_Module is
                      -"Move to the " & Step_Str & " " & Kind_Str
                      & " in the current source editor" & ESel_Str,
                      Category => "Editor",
-                     Filter   => Src_Action_Context);
+                     Filter   => Src_Action_Context and When_Completion);
                end;
             end loop;
          end loop;

@@ -7869,9 +7869,7 @@ package body Src_Editor_Buffer is
       --  Do not check the current focus widget ourselves. Instead, we know
       --  it has been properly checked when the context was created, and we
       --  just check the current module from there.
-      if Completion_Module.In_Smart_Completion
-        or else Get_Kernel (Ctxt).Get_Contextual_Menu_Open
-      then
+      if Get_Kernel (Ctxt).Get_Contextual_Menu_Open then
          return False;
       else
          declare
@@ -7896,6 +7894,21 @@ package body Src_Editor_Buffer is
    end Filter_Matches_Primitive;
 
    ------------------------------
+   -- Filter_Matched_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Completion_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Ctxt);
+   begin
+      --  Disable Move to next/previous line when in completion
+      return not (Context.Is_Line_Movement
+        and then Completion_Module.In_Smart_Completion);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
@@ -7906,7 +7919,9 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Context);
       Box : Source_Editor_Box;
    begin
-      if not Is_Editor (Ctxt) then
+      if not Is_Editor (Ctxt)
+        or else Completion_Module.In_Smart_Completion
+      then
          return False;
       end if;
 
