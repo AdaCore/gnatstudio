@@ -518,9 +518,10 @@ many cores as available on the machine)." />
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files."
          />
-         <check label="Incremental output" switch="--no-complete-output"
+         <check label="Complete output" switch="--complete-output"
            column="2"
-           tip="Only output messages for files that have been reanalyzed." />
+           tip="Output messages for all files even the one that have not
+been reanalyzed." />
          <hidden switch="-dbg-on" separator=" "/>
          <hidden switch="-dbg-off" separator=" "/>
        </switches>
