@@ -17,6 +17,7 @@ import os.path
 import re
 import copy
 import gps_utils.gnat_rules
+from xml.sax.saxutils import escape
 
 prev_xml = ""
 
@@ -414,6 +415,7 @@ creating/updating the database" />
 
     <target-model name="codepeer-compiler" category="">
        <description>Review code with codepeer in compiler mode</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-d</arg>
@@ -452,6 +454,7 @@ been reanalyzed." />
 
     <target-model name="codepeer_msg_reader" category="">
        <description>Generate codepeer messages</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-d</arg>
@@ -622,6 +625,7 @@ xmlHead = """<?xml version="1.0"?>
   <CODEPEER>
     <target-model name="codepeer" category="">
        <description>Review code with codepeer</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-dbg-on</arg>
@@ -788,7 +792,16 @@ codepeer = os_utils.locate_exec_on_path("codepeer")
 if codepeer:
     root = os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')
     example_root = root + '/share/examples/codepeer'
-    xml_codepeer = xml_codepeer.format(example=example_root, root=root)
+    try:
+        with open(root + '/share/doc/codepeer/help.txt', 'r') as help_file:
+            help_msg = escape(help_file.read())
+    except Exception:
+        help_msg = ''
+
+    xml_codepeer = xml_codepeer.format(example=example_root,
+                                       root=root,
+                                       help=help_msg)
+    xmlHead = xmlHead.format(help=help_msg)
     GPS.parse_xml(xml_codepeer)
     GPS.Hook("project_changed").add(on_project_changed)
     GPS.Hook("project_view_changed").add(on_project_view_changed)
