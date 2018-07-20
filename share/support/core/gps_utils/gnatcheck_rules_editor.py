@@ -155,7 +155,7 @@ def get_supported_rules(gnatCmd):
         "gnatcheck: No existing file to process.*", "", process.get_result())
     try:
         dom = minidom.parseString(xmlstring)
-    except:
+    except Exception:
         GPS.Console("Messages").write(
             "Warning: the gnatcheck module could not retrieve the gnatcheck" +
             " rules. Using the default ones.\n")
@@ -174,8 +174,7 @@ def get_supported_rules(gnatCmd):
 
     # Then retrieve warnings/style/restriction checks from gnatmake
     warningsCat = Category("GNAT Warnings")
-    gps_utils.gnat_rules.EnsureInitialized()
-    rules = gps_utils.gnat_rules.gnatmakeproc.get_warnings_list()
+    rules = gps_utils.gnat_rules.get_warnings_list(gnatCmd)
     for r in rules:
         r.switch = re.sub("-gnatw", "+RWarnings:", r.switch)
         r.switchoff = re.sub("-gnatw", "+RWarnings:", r.switchoff)

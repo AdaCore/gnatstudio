@@ -28,6 +28,16 @@ def EnsureInitialized():
     gnatmakeproc.init_switches()
 
 
+def get_warnings_list(cmd="", args="make -h"):
+    #  Get list of GNAT warning options using given cmd if provided
+    global gnatmakeproc
+    if gnatmakeproc is None:
+        gnatmakeproc = gnatMakeProc()
+    gnatmakeproc.ensure_switches(cmd, args)
+
+    return gnatmakeproc.warnings_list
+
+
 def Label(switch, default):
     str = None
 
@@ -42,7 +52,7 @@ def Label(switch, default):
     try:
         str = str[0].upper() + str[1:]
         str = re.sub("[.] *$", "", str)
-    except:
+    except Exception:
         GPS.Logger("GNAT_SWITCHES").write(
             "Label could not be parsed for switch: %s" % (switch))
 
@@ -108,10 +118,10 @@ class gnatMakeProc:
         # ensure_switches returns true if the gnat command is not identical to
         # the previous one. In this case, we need to recreate the whole xml
         # tree and call GPS.parse_xml to update the switch editor.
-        if self.__ensure_switches():
+        if self.ensure_switches():
             try:
                 xmlCompiler = self.__get_xml()
-            except:
+            except Exception:
                 GPS.Console("Messages").write(
                     "Exception thrown in ada_support.py:\n")
                 name = sys.exc_info()[1]
@@ -137,9 +147,12 @@ class gnatMakeProc:
         self.init_switches()
         return self.style_checks_list
 
-    def __ensure_switches(self):
+    def ensure_switches(self, cmd="", args="make -h"):
         prev_cmd = self.gnatCmd
-        self.gnatCmd = gps_utils.get_gnat_driver_cmd()
+        if cmd == "":
+            self.gnatCmd = gps_utils.get_gnat_driver_cmd()
+        else:
+            self.gnatCmd = cmd
 
         if self.gnatCmd == "":
             self.gnatCmd = "gnat"
@@ -159,7 +172,7 @@ class gnatMakeProc:
 
         # gnat check command changed: we reinitialize the rules list
         if prev_cmd != self.gnatCmd:
-            self.__get_switches_from_help()
+            self.__get_switches_from_help(self.gnatCmd, args)
             return True
         else:
             return False
@@ -379,7 +392,7 @@ class gnatMakeProc:
 
         self.msg += matched
 
-    def __get_switches_from_help(self):
+    def __get_switches_from_help(self, gnatCmd, args):
         # Verify we have the correct gnatcheck executable
         self.warnings_list = []
         self.validity_checks_list = []
@@ -389,7 +402,7 @@ class gnatMakeProc:
         self.validity_checks_analysis = False
         self.style_checks_analysis = False
 
-        if self.gnatCmd != "":
+        if gnatCmd != "":
             # Then retrieve warnings/style/restriction checks from gnatmake
             self.msg = ""
             # ??? We don't spawn this process on the build server as this leads
@@ -401,7 +414,7 @@ class gnatMakeProc:
             # from the local machine, and fallback to the default switches if
             # not found.
             process = GPS.Process(
-                "\"\"\"" + self.gnatCmd + "\"\"\" make -h",
+                "\"\"\"" + gnatCmd + "\"\"\" " + args,
                 "^.+\r?$",
                 on_match=self.__add_switch_callback,
                 remote_server="Build_Server")
@@ -411,6 +424,7 @@ class gnatMakeProc:
 # Constant definitions: those are switches that we define for all versions of
 # GNAT. Those constants also contain the default values that we use when we
 # did not manage to correctly parse the gnatmake output.
+
 
 xmlCompilerHead = """
    <tool name="Builder" package="Builder" index="ada" override="True">
