@@ -439,13 +439,18 @@ def hook(hook_name):
         file = yield hook("buffer_edited")
 
     This will wait until the "buffer_edited" hook is triggered, and the file
-    will be stored in the file variable.
+    will be stored in the file variable. Result is a list if hook returns
+    several values.
     """
     p = Promise()
 
     def hook_handler(hook, *args):
         GPS.Hook(hook_name).remove(hook_handler)
-        p.resolve(*args)
+        # resolve accepts only one argument, so pass list of args if it longer
+        if len(args) <= 1:
+            p.resolve(*args)
+        else:
+            p.resolve(args)
 
     GPS.Hook(hook_name).add(hook_handler)
     return p
@@ -537,7 +542,7 @@ class ProcessWrapper(object):
                 block_exit=block_exit,
                 on_match=self.__on_match,
                 on_exit=self.__on_exit)
-        except:
+        except Exception:
             GPS.Logger("PROMISES").log(
                 "Failed to spawn %s" % (self.__command, ))
             self.__process = None
@@ -907,7 +912,7 @@ class DebuggerWrapper(object):
 
                 # Try to reconnect to the previous remote connection, if any
                 GPS.execute_action("debug connect to board")
-            except:
+            except Exception:
                 self.__debugger = GPS.Debugger.spawn(
                     executable=f,
                     remote_target=remote_target,
@@ -978,14 +983,14 @@ class DebuggerWrapper(object):
         if self.__deadline:
             try:
                 self.__deadline.remove()
-            except:
+            except Exception:
                 pass
             self.__deadline = None
 
         if self.__timer:
             try:
                 self.__timer.remove()
-            except:
+            except Exception:
                 pass
             self.__timer = None
 
