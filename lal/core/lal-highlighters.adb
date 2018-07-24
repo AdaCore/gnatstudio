@@ -24,6 +24,7 @@ with LAL.Core_Module;
 with Langkit_Support.Slocs;
 with Language;
 with Libadalang.Analysis;
+with Libadalang.Common;
 with Langkit_Support.Text;
 
 package body LAL.Highlighters is
@@ -46,7 +47,7 @@ package body LAL.Highlighters is
 
    function Kind_Of
      (Node  : Libadalang.Analysis.Ada_Node;
-      Value : Libadalang.Analysis.Ada_Node_Kind_Type) return Boolean is
+      Value : Libadalang.Common.Ada_Node_Kind_Type) return Boolean is
         (Node.Kind in Value);
    --  Check if given node has given kind
 
@@ -67,8 +68,8 @@ package body LAL.Highlighters is
       --  Field getter function, e.g. F_Name
 
       --  Node kind range for given Node_Type, e.g. Ada_Accept_Stmt_Range'Range
-      From : Libadalang.Analysis.Ada_Node_Kind_Type;
-      To   : Libadalang.Analysis.Ada_Node_Kind_Type;
+      From : Libadalang.Common.Ada_Node_Kind_Type;
+      To   : Libadalang.Common.Ada_Node_Kind_Type;
    function Generic_Match_Field
      (Node : Libadalang.Analysis.Ada_Node) return Boolean;
    --  Check if Node is stored in given Field of its parent.
@@ -99,184 +100,184 @@ package body LAL.Highlighters is
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Base_Type_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Base_Type_Decl'First,
-      To        => Libadalang.Analysis.Ada_Base_Type_Decl'Last);
+      From      => Libadalang.Common.Ada_Base_Type_Decl'First,
+      To        => Libadalang.Common.Ada_Base_Type_Decl'Last);
 
    function Single_Protected_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Single_Protected_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Single_Protected_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Single_Protected_Decl,
-      To        => Libadalang.Analysis.Ada_Single_Protected_Decl);
+      From      => Libadalang.Common.Ada_Single_Protected_Decl,
+      To        => Libadalang.Common.Ada_Single_Protected_Decl);
 
    function Accept_Stmt_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Accept_Stmt,
       Id_Type   => Libadalang.Analysis.Identifier,
       To_Node   => Libadalang.Analysis.As_Accept_Stmt,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Accept_Stmt_Range'First,
-      To        => Libadalang.Analysis.Ada_Accept_Stmt_Range'Last);
+      From      => Libadalang.Common.Ada_Accept_Stmt_Range'First,
+      To        => Libadalang.Common.Ada_Accept_Stmt_Range'Last);
 
    function Label_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Label_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Label_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Label_Decl,
-      To        => Libadalang.Analysis.Ada_Label_Decl);
+      From      => Libadalang.Common.Ada_Label_Decl,
+      To        => Libadalang.Common.Ada_Label_Decl);
 
    function Named_Stmt_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Named_Stmt_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Named_Stmt_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Named_Stmt_Decl,
-      To        => Libadalang.Analysis.Ada_Named_Stmt_Decl);
+      From      => Libadalang.Common.Ada_Named_Stmt_Decl,
+      To        => Libadalang.Common.Ada_Named_Stmt_Decl);
 
    function Generic_Package_Instantiation_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Package_Instantiation,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Package_Instantiation,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Generic_Package_Instantiation,
-      To        => Libadalang.Analysis.Ada_Generic_Package_Instantiation);
+      From      => Libadalang.Common.Ada_Generic_Package_Instantiation,
+      To        => Libadalang.Common.Ada_Generic_Package_Instantiation);
 
    function Generic_Subp_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Subp_Renaming_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Subp_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Generic_Subp_Renaming_Decl,
-      To        => Libadalang.Analysis.Ada_Generic_Subp_Renaming_Decl);
+      From      => Libadalang.Common.Ada_Generic_Subp_Renaming_Decl,
+      To        => Libadalang.Common.Ada_Generic_Subp_Renaming_Decl);
 
    function Package_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Body_Stub,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Package_Body_Stub,
-      To        => Libadalang.Analysis.Ada_Package_Body_Stub);
+      From      => Libadalang.Common.Ada_Package_Body_Stub,
+      To        => Libadalang.Common.Ada_Package_Body_Stub);
 
    function Package_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Renaming_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Package_Renaming_Decl,
-      To        => Libadalang.Analysis.Ada_Package_Renaming_Decl);
+      From      => Libadalang.Common.Ada_Package_Renaming_Decl,
+      To        => Libadalang.Common.Ada_Package_Renaming_Decl);
 
    function Protected_Body_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Protected_Body,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Protected_Body,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Protected_Body,
-      To        => Libadalang.Analysis.Ada_Protected_Body);
+      From      => Libadalang.Common.Ada_Protected_Body,
+      To        => Libadalang.Common.Ada_Protected_Body);
 
    function Protected_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Protected_Body_Stub,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Protected_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Protected_Body_Stub,
-      To        => Libadalang.Analysis.Ada_Protected_Body_Stub);
+      From      => Libadalang.Common.Ada_Protected_Body_Stub,
+      To        => Libadalang.Common.Ada_Protected_Body_Stub);
 
    function Subunit_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Subunit,
       Id_Type   => Libadalang.Analysis.Name,
       To_Node   => Libadalang.Analysis.As_Subunit,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Subunit,
-      To        => Libadalang.Analysis.Ada_Subunit);
+      From      => Libadalang.Common.Ada_Subunit,
+      To        => Libadalang.Common.Ada_Subunit);
 
    function Task_Body_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Task_Body,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Task_Body,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Task_Body,
-      To        => Libadalang.Analysis.Ada_Task_Body);
+      From      => Libadalang.Common.Ada_Task_Body,
+      To        => Libadalang.Common.Ada_Task_Body);
 
    function Task_Body_Stub_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Task_Body_Stub,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Task_Body_Stub,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Task_Body_Stub,
-      To        => Libadalang.Analysis.Ada_Task_Body_Stub);
+      From      => Libadalang.Common.Ada_Task_Body_Stub,
+      To        => Libadalang.Common.Ada_Task_Body_Stub);
 
    function Generic_Package_Renaming_Decl_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Package_Renaming_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Package_Renaming_Decl,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Generic_Package_Renaming_Decl,
-      To        => Libadalang.Analysis.Ada_Generic_Package_Renaming_Decl);
+      From      => Libadalang.Common.Ada_Generic_Package_Renaming_Decl,
+      To        => Libadalang.Common.Ada_Generic_Package_Renaming_Decl);
 
    function Entry_Body_Entry_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Entry_Body,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Entry_Body,
       Field     => Libadalang.Analysis.F_Entry_Name,
-      From      => Libadalang.Analysis.Ada_Entry_Body,
-      To        => Libadalang.Analysis.Ada_Entry_Body);
+      From      => Libadalang.Common.Ada_Entry_Body,
+      To        => Libadalang.Common.Ada_Entry_Body);
 
    function Entry_Spec_Entry_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Entry_Spec,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Entry_Spec,
       Field     => Libadalang.Analysis.F_Entry_Name,
-      From      => Libadalang.Analysis.Ada_Entry_Spec,
-      To        => Libadalang.Analysis.Ada_Entry_Spec);
+      From      => Libadalang.Common.Ada_Entry_Spec,
+      To        => Libadalang.Common.Ada_Entry_Spec);
 
    function Base_Package_Decl_Package_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Base_Package_Decl,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Base_Package_Decl,
       Field     => Libadalang.Analysis.F_Package_Name,
-      From      => Libadalang.Analysis.Ada_Base_Package_Decl'First,
-      To        => Libadalang.Analysis.Ada_Base_Package_Decl'Last);
+      From      => Libadalang.Common.Ada_Base_Package_Decl'First,
+      To        => Libadalang.Common.Ada_Base_Package_Decl'Last);
 
    function Subp_Spec_Subp_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Subp_Spec,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Subp_Spec,
       Field     => Libadalang.Analysis.F_Subp_Name,
-      From      => Libadalang.Analysis.Ada_Subp_Spec,
-      To        => Libadalang.Analysis.Ada_Subp_Spec);
+      From      => Libadalang.Common.Ada_Subp_Spec,
+      To        => Libadalang.Common.Ada_Subp_Spec);
 
    function Generic_Subp_Instantiation_Subp_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Generic_Subp_Instantiation,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Generic_Subp_Instantiation,
       Field     => Libadalang.Analysis.F_Subp_Name,
-      From      => Libadalang.Analysis.Ada_Generic_Subp_Instantiation,
-      To        => Libadalang.Analysis.Ada_Generic_Subp_Instantiation);
+      From      => Libadalang.Common.Ada_Generic_Subp_Instantiation,
+      To        => Libadalang.Common.Ada_Generic_Subp_Instantiation);
 
    function Package_Body_Package_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Package_Body,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Package_Body,
       Field     => Libadalang.Analysis.F_Package_Name,
-      From      => Libadalang.Analysis.Ada_Package_Body,
-      To        => Libadalang.Analysis.Ada_Package_Body);
+      From      => Libadalang.Common.Ada_Package_Body,
+      To        => Libadalang.Common.Ada_Package_Body);
 
    function Exception_Handler_Exception_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Exception_Handler,
       Id_Type   => Libadalang.Analysis.Defining_Name,
       To_Node   => Libadalang.Analysis.As_Exception_Handler,
       Field     => Libadalang.Analysis.F_Exception_Name,
-      From      => Libadalang.Analysis.Ada_Exception_Handler,
-      To        => Libadalang.Analysis.Ada_Exception_Handler);
+      From      => Libadalang.Common.Ada_Exception_Handler,
+      To        => Libadalang.Common.Ada_Exception_Handler);
 
    function Subtype_Indication_Name is new Generic_Match_Field
      (Node_Type => Libadalang.Analysis.Subtype_Indication,
       Id_Type   => Libadalang.Analysis.Name,
       To_Node   => Libadalang.Analysis.As_Subtype_Indication,
       Field     => Libadalang.Analysis.F_Name,
-      From      => Libadalang.Analysis.Ada_Subtype_Indication,
-      To        => Libadalang.Analysis.Ada_Subtype_Indication);
+      From      => Libadalang.Common.Ada_Subtype_Indication,
+      To        => Libadalang.Common.Ada_Subtype_Indication);
 
    type Check_List is array (Positive range <>) of access
      function (Node : Libadalang.Analysis.Ada_Node) return Boolean;
@@ -503,7 +504,7 @@ package body LAL.Highlighters is
 
       while Index /= No_Token_Or_Trivia_Index loop
          declare
-            Token : constant Libadalang.Lexer.Token_Data_Type :=
+            Token : constant Libadalang.Lexer.Stored_Token_Data :=
               Data (Index, Self.TDH);
             Style : constant String := To_Style (Token.Kind, False);
             Line  : constant Positive :=
@@ -535,6 +536,7 @@ package body LAL.Highlighters is
       To     : Integer)
    is
       use Libadalang.Analysis;
+      use Libadalang.Common;
       use Langkit_Support.Slocs;
       package L renames Libadalang.Lexer;
 
@@ -558,7 +560,7 @@ package body LAL.Highlighters is
       --  Modify enclosing context according to the node
 
       procedure Next_Token
-        (Index : in out Token_Type;
+        (Index : in out Token_Reference;
          Stack : in out Context_Lists.List;
          Node  : in out Ada_Node);
       --  Step to next token, find corresponding enclosing node and correct
@@ -578,25 +580,25 @@ package body LAL.Highlighters is
          if Node.Parent.Is_Null then
             null;
          --  check if node is an aspect
-         elsif Kind_Of (Node, Libadalang.Analysis.Ada_Aspect_Assoc) then
+         elsif Kind_Of (Node, Libadalang.Common.Ada_Aspect_Assoc) then
             Value.In_Aspect := True;
 
          --  Check if identifier itself should be highlighted
-         elsif (Kind_Of (Node, Libadalang.Analysis.Ada_Identifier)
+         elsif (Kind_Of (Node, Libadalang.Common.Ada_Identifier)
              and then Check (Id_List, Node))
            --  check if node is a dotted_name to be highlighted
            or else
-             (Kind_Of (Node, Libadalang.Analysis.Ada_Dotted_Name)
+             (Kind_Of (Node, Libadalang.Common.Ada_Dotted_Name)
               and then Check (Dotted_Name_List, Node))
            --  check if node is a defining_name to be highlighted
            or else
              (Kind_Of (Node,
-                       Libadalang.Analysis.Ada_Defining_Name)
+                       Libadalang.Common.Ada_Defining_Name)
               and then Check (Defining_Name_List, Node))
            --  check if node is part of any end_name
            or else
              Kind_Of (Node.Parent,
-                      Libadalang.Analysis.Ada_End_Name)
+                      Libadalang.Common.Ada_End_Name)
          then
             Value.In_Block_Name := True;
 
@@ -634,7 +636,7 @@ package body LAL.Highlighters is
       ----------------
 
       procedure Next_Token
-        (Index : in out Token_Type;
+        (Index : in out Token_Reference;
          Stack : in out Context_Lists.List;
          Node  : in out Ada_Node) is
       begin
@@ -703,7 +705,7 @@ package body LAL.Highlighters is
          Filename    => File.Display_Full_Name);
 
       Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
-      Index : Token_Type := Lookup_Token (Unit, (From_Line, 1));
+      Index : Token_Reference := Lookup_Token (Unit, (From_Line, 1));
       Node  : Ada_Node;
    begin
       if Root.Is_Null then
@@ -808,65 +810,65 @@ package body LAL.Highlighters is
 
    begin
       case Node.Kind is
-         when Libadalang.Analysis.Ada_Entry_Decl =>
+         when Libadalang.Common.Ada_Entry_Decl =>
             return Has_Ghost (Node.As_Entry_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Exception_Decl =>
+         when Libadalang.Common.Ada_Exception_Decl =>
             return Has_Ghost (Node.As_Exception_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Expr_Function =>
+         when Libadalang.Common.Ada_Expr_Function =>
             return Has_Ghost (Node.As_Expr_Function.F_Aspects);
-         when Libadalang.Analysis.Ada_Formal_Subp_Decl =>
+         when Libadalang.Common.Ada_Formal_Subp_Decl =>
             return Has_Ghost (Node.As_Formal_Subp_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Generic_Package_Instantiation =>
+         when Libadalang.Common.Ada_Generic_Package_Instantiation =>
             return Has_Ghost (Node.As_Generic_Package_Instantiation.F_Aspects);
-         when Libadalang.Analysis.Ada_Generic_Subp_Instantiation =>
+         when Libadalang.Common.Ada_Generic_Subp_Instantiation =>
             return Has_Ghost (Node.As_Generic_Subp_Instantiation.F_Aspects);
-         when Libadalang.Analysis.Ada_Generic_Subp_Internal =>
+         when Libadalang.Common.Ada_Generic_Subp_Internal =>
             return Has_Ghost (Node.As_Generic_Subp_Internal.F_Aspects);
-         when Libadalang.Analysis.Ada_Generic_Subp_Renaming_Decl =>
+         when Libadalang.Common.Ada_Generic_Subp_Renaming_Decl =>
             return Has_Ghost (Node.As_Generic_Subp_Renaming_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Null_Subp_Decl =>
+         when Libadalang.Common.Ada_Null_Subp_Decl =>
             return Has_Ghost (Node.As_Null_Subp_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Object_Decl =>
+         when Libadalang.Common.Ada_Object_Decl =>
             return Has_Ghost (Node.As_Object_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Package_Body =>
+         when Libadalang.Common.Ada_Package_Body =>
             return Has_Ghost (Node.As_Package_Body.F_Aspects);
-         when Libadalang.Analysis.Ada_Package_Body_Stub =>
+         when Libadalang.Common.Ada_Package_Body_Stub =>
             return Has_Ghost (Node.As_Package_Body_Stub.F_Aspects);
-         when Libadalang.Analysis.Ada_Package_Renaming_Decl =>
+         when Libadalang.Common.Ada_Package_Renaming_Decl =>
             return Has_Ghost (Node.As_Package_Renaming_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Protected_Body =>
+         when Libadalang.Common.Ada_Protected_Body =>
             return Has_Ghost (Node.As_Protected_Body.F_Aspects);
-         when Libadalang.Analysis.Ada_Protected_Body_Stub =>
+         when Libadalang.Common.Ada_Protected_Body_Stub =>
             return Has_Ghost (Node.As_Protected_Body_Stub.F_Aspects);
-         when Libadalang.Analysis.Ada_Single_Protected_Decl =>
+         when Libadalang.Common.Ada_Single_Protected_Decl =>
             return Has_Ghost (Node.As_Single_Protected_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Subp_Body =>
+         when Libadalang.Common.Ada_Subp_Body =>
             return Has_Ghost (Node.As_Subp_Body.F_Aspects);
-         when Libadalang.Analysis.Ada_Subp_Body_Stub =>
+         when Libadalang.Common.Ada_Subp_Body_Stub =>
             return Has_Ghost (Node.As_Subp_Body_Stub.F_Aspects);
-         when Libadalang.Analysis.Ada_Subp_Decl =>
+         when Libadalang.Common.Ada_Subp_Decl =>
             return Has_Ghost (Node.As_Subp_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Subp_Renaming_Decl =>
+         when Libadalang.Common.Ada_Subp_Renaming_Decl =>
             return Has_Ghost (Node.As_Subp_Renaming_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Task_Body =>
+         when Libadalang.Common.Ada_Task_Body =>
             return Has_Ghost (Node.As_Task_Body.F_Aspects);
-         when Libadalang.Analysis.Ada_Task_Body_Stub =>
+         when Libadalang.Common.Ada_Task_Body_Stub =>
             return Has_Ghost (Node.As_Task_Body_Stub.F_Aspects);
-         when Libadalang.Analysis.Ada_Abstract_Subp_Decl =>
+         when Libadalang.Common.Ada_Abstract_Subp_Decl =>
             return Has_Ghost (Node.As_Abstract_Subp_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Base_Package_Decl =>
+         when Libadalang.Common.Ada_Base_Package_Decl =>
             return Has_Ghost (Node.As_Base_Package_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Component_Decl =>
+         when Libadalang.Common.Ada_Component_Decl =>
             return Has_Ghost (Node.As_Component_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Generic_Package_Renaming_Decl =>
+         when Libadalang.Common.Ada_Generic_Package_Renaming_Decl =>
             return Has_Ghost (Node.As_Generic_Package_Renaming_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Protected_Type_Decl =>
+         when Libadalang.Common.Ada_Protected_Type_Decl =>
             return Has_Ghost (Node.As_Protected_Type_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Subtype_Decl =>
+         when Libadalang.Common.Ada_Subtype_Decl =>
             return Has_Ghost (Node.As_Subtype_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Task_Type_Decl =>
+         when Libadalang.Common.Ada_Task_Type_Decl =>
             return Has_Ghost (Node.As_Task_Type_Decl.F_Aspects);
-         when Libadalang.Analysis.Ada_Type_Decl =>
+         when Libadalang.Common.Ada_Type_Decl =>
             return Has_Ghost (Node.As_Type_Decl.F_Aspects);
          when others =>
             return False;

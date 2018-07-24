@@ -25,6 +25,7 @@ with Language.Tree;
 with Langkit_Support.Iterators;
 with Langkit_Support.Slocs;
 with Langkit_Support.Tree_Traversal_Iterator;
+with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Iterators;
 
 with GPS.Editors;
@@ -436,11 +437,11 @@ package body LAL.Semantic_Trees is
    package body Nodes is
 
       function Line
-        (Token : Libadalang.Analysis.Token_Type)
+        (Token : Libadalang.Common.Token_Reference)
          return Langkit_Support.Slocs.Line_Number is
            (Langkit_Support.Slocs.Start_Sloc
-              (Libadalang.Analysis.Sloc_Range
-                   (Libadalang.Analysis.Data (Token))).Line);
+              (Libadalang.Common.Sloc_Range
+                   (Libadalang.Common.Data (Token))).Line);
 
       --------------
       -- Is_Valid --
@@ -703,7 +704,7 @@ package body LAL.Semantic_Trees is
             case Node.Kind is
                when Ada_Identifier | Ada_String_Literal =>
                   declare
-                     Token : constant Token_Type := Node.Token_Start;
+                     Token : constant Token_Reference := Node.Token_Start;
                   begin
                      --  FIXME: avoid Python-style escaped from Text
                      return Self.Kernel.Symbols.Find (Text (Token));
@@ -803,14 +804,14 @@ package body LAL.Semantic_Trees is
          S : constant Langkit_Support.Slocs.Source_Location_Range :=
            Self.Ada_Node.Sloc_Range;
 
-         Step : constant Libadalang.Analysis.Token_Type :=
-           Libadalang.Analysis.Previous
+         Step : constant Libadalang.Common.Token_Reference :=
+           Libadalang.Common.Previous
              (Self.Ada_Node.Token_Start, Exclude_Trivia => True);
 
          Result : Language.Sloc_T :=
            (Natural (S.Start_Line), Visible_Column (S.Start_Column), 0);
       begin
-         if Step = Libadalang.Analysis.No_Token
+         if Step = Libadalang.Common.No_Token
            or else Line (Step) /= Line (Self.Ada_Node.Token_Start)
          then
             Result.Column := 1;
@@ -838,14 +839,14 @@ package body LAL.Semantic_Trees is
          use type Langkit_Support.Slocs.Line_Number;
 
          function Last_Column_In_Line
-           (Token : Libadalang.Analysis.Token_Type) return Visible_Column;
+           (Token : Libadalang.Common.Token_Reference) return Visible_Column;
 
          function Last_Column_In_Line
-           (Token : Libadalang.Analysis.Token_Type) return Visible_Column
+           (Token : Libadalang.Common.Token_Reference) return Visible_Column
          is
-            Next  : Token_Type := Token;
+            Next  : Token_Reference := Token;
          begin
-            while Next /= Libadalang.Analysis.No_Token loop
+            while Next /= Libadalang.Common.No_Token loop
                declare
                   Value : constant Token_Data_Type := Data (Next);
                   Span  : constant Langkit_Support.Slocs.Source_Location_Range
@@ -857,7 +858,7 @@ package body LAL.Semantic_Trees is
                      return Visible_Column (Span.Start_Column);
                   end if;
 
-                  Next := Libadalang.Analysis.Next (Next);
+                  Next := Libadalang.Common.Next (Next);
                end;
             end loop;
 
@@ -867,14 +868,14 @@ package body LAL.Semantic_Trees is
          S : constant Langkit_Support.Slocs.Source_Location_Range :=
            Self.Ada_Node.Sloc_Range;
 
-         Step : constant Libadalang.Analysis.Token_Type :=
-           Libadalang.Analysis.Next
+         Step : constant Libadalang.Common.Token_Reference :=
+           Libadalang.Common.Next
              (Self.Ada_Node.Token_End, Exclude_Trivia => True);
 
          Result : Language.Sloc_T :=
            (Natural (S.End_Line), Visible_Column (S.End_Column), 0);
       begin
-         if Step = Libadalang.Analysis.No_Token
+         if Step = Libadalang.Common.No_Token
            or else Line (Step) /= Line (Self.Ada_Node.Token_Start)
          then
             Result.Column := Last_Column_In_Line (Self.Ada_Node.Token_End);
@@ -1153,32 +1154,32 @@ package body LAL.Semantic_Trees is
          function Adjust_Source_Location
            (Loc : Source_Location) return Source_Location
          is
-            Step   : Libadalang.Analysis.Token_Type;
+            Step   : Libadalang.Common.Token_Reference;
             Result : Source_Location;
-            Token  : constant Libadalang.Analysis.Token_Type :=
+            Token  : constant Libadalang.Common.Token_Reference :=
               Libadalang.Analysis.Lookup_Token (Self.Unit.all, Loc);
          begin
-            if Token = Libadalang.Analysis.No_Token then
+            if Token = Libadalang.Common.No_Token then
                return No_Source_Location;
             end if;
 
-            Step := Libadalang.Analysis.Next (Token, Exclude_Trivia => True);
+            Step := Libadalang.Common.Next (Token, Exclude_Trivia => True);
 
-            if Step /= Libadalang.Analysis.No_Token then
-               Result := Start_Sloc (Libadalang.Analysis.Sloc_Range
-                                       (Libadalang.Analysis.Data (Step)));
+            if Step /= Libadalang.Common.No_Token then
+               Result := Start_Sloc (Libadalang.Common.Sloc_Range
+                                       (Libadalang.Common.Data (Step)));
 
                if Result.Line = Loc.Line then
                   return Result;
                end if;
             end if;
 
-            Step := Libadalang.Analysis.Previous
+            Step := Libadalang.Common.Previous
               (Token, Exclude_Trivia => True);
 
-            if Step /= Libadalang.Analysis.No_Token then
-               Result := Start_Sloc (Libadalang.Analysis.Sloc_Range
-                                       (Libadalang.Analysis.Data (Step)));
+            if Step /= Libadalang.Common.No_Token then
+               Result := Start_Sloc (Libadalang.Common.Sloc_Range
+                                       (Libadalang.Common.Data (Step)));
 
                if Result.Line = Loc.Line then
                   return Result;

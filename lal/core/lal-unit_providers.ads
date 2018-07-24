@@ -18,6 +18,7 @@
 
 with GPS.Core_Kernels;
 with Libadalang.Analysis;
+with Libadalang.Common;
 
 package LAL.Unit_Providers is
 
@@ -38,15 +39,16 @@ private
 
    overriding function Get_Unit
      (Self    : Unit_Provider;
-      Context : Libadalang.Analysis.Analysis_Context;
+      Context : Libadalang.Analysis.Analysis_Context'Class;
       Name    : Wide_Wide_String;
-      Kind    : Libadalang.Analysis.Unit_Kind;
+      Kind    : Libadalang.Common.Unit_Kind;
       Charset : String := "";
-      Reparse : Boolean := False) return Libadalang.Analysis.Analysis_Unit;
+      Reparse : Boolean := False)
+      return Libadalang.Analysis.Analysis_Unit'Class;
 
    overriding function Get_Unit_Filename
      (Self : Unit_Provider;
       Name : Wide_Wide_String;
-      Kind : Libadalang.Analysis.Unit_Kind) return String;
+      Kind : Libadalang.Common.Unit_Kind) return String;
 
 end LAL.Unit_Providers;
