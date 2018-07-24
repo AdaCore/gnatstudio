@@ -1147,6 +1147,24 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Close (Debugger_Root (Debugger.all)'Access);
    end Close;
 
+   -------------------------
+   -- Configure_Backtrace --
+   -------------------------
+
+   overriding procedure Configure_Backtrace
+     (Self                 : not null access Gdb_MI_Debugger;
+      Show_Id              : Boolean := True;
+      Show_PC              : Boolean := True;
+      Show_Subprogram_Name : Boolean := True;
+      Show_Parameters      : Boolean := True;
+      Show_Location        : Boolean := True)
+   is
+      pragma Unreferenced
+        (Show_Id, Show_PC, Show_Subprogram_Name, Show_Location);
+   begin
+      Self.Is_Bt_Parameters := Show_Parameters;
+   end Configure_Backtrace;
+
    -----------------------
    -- Connect_To_Target --
    -----------------------
@@ -2328,6 +2346,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Value.Append (Rec);
          end;
       end loop;
+
+      if not Debugger.Is_Bt_Parameters then
+         return;
+      end if;
 
       Clear_Token_List (Tokens.List);
 

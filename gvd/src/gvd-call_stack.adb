@@ -399,6 +399,7 @@ package body GVD.Call_Stack is
       then
          Stack := CS_MDI_Views.Retrieve_View (Kernel);
          Set_Column_Types (Stack);
+         Update (Stack);
       end if;
    end Execute;
 

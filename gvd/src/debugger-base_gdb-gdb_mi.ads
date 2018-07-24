@@ -336,7 +336,7 @@ package Debugger.Base_Gdb.Gdb_MI is
       Show_PC              : Boolean := True;
       Show_Subprogram_Name : Boolean := True;
       Show_Parameters      : Boolean := True;
-      Show_Location        : Boolean := True) is null;
+      Show_Location        : Boolean := True);
 
    overriding procedure Task_Switch
      (Debugger : access Gdb_MI_Debugger;
@@ -520,6 +520,7 @@ private
       Is_Running           : Boolean          := False;
       Register_Names       : GVD.Types.Strings_Vectors.Vector;
       Second_Wait          : Boolean := False;
+      Is_Bt_Parameters     : Boolean := True;
    end record;
 
    function Create_Var
