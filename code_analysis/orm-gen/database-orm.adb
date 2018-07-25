@@ -54,21 +54,25 @@ package body Database.Orm is
    F_Entities_Messages_Id         : constant := 0;
    F_Entities_Messages_Entity_Id  : constant := 1;
    F_Entities_Messages_Message_Id : constant := 2;
-   Upto_Entities_Messages_0 : constant Counts := ((3,3),(3,3),(3,3),(3,3));
-   Upto_Entities_Messages_1 : constant Counts := ((3,3),(9,9),(13,13),(13,13));
+   F_Entities_Messages_Line       : constant := 3;
+   F_Entities_Messages_Col_Begin  : constant := 4;
+   F_Entities_Messages_Col_End    : constant := 5;
+   Upto_Entities_Messages_0 : constant Counts := ((6,6),(6,6),(6,6),(6,6));
+   Upto_Entities_Messages_1 : constant Counts := ((6,6),(12,12),(16,16),(16,16));
    Alias_Entities_Messages : constant Alias_Array := (-1,3,6,-1,5,-1,-1,8,-1,10,-1);
-   F_Messages_Id      : constant := 0;
-   F_Messages_Rule_Id : constant := 1;
-   F_Messages_Data    : constant := 2;
-   F_Messages_Ranking : constant := 3;
-   Counts_Messages : constant Counts := ((4,4),(9,9),(11,11),(11,11));
-   Upto_Messages_0 : constant Counts := ((4,4),(4,4),(4,4),(4,4));
+   F_Messages_Id          : constant := 0;
+   F_Messages_Rule_Id     : constant := 1;
+   F_Messages_Data        : constant := 2;
+   F_Messages_Ranking     : constant := 3;
+   F_Messages_Tool_Msg_Id : constant := 4;
+   Counts_Messages : constant Counts := ((5,5),(10,10),(12,12),(12,12));
+   Upto_Messages_0 : constant Counts := ((5,5),(5,5),(5,5),(5,5));
    Alias_Messages : constant Alias_Array := (-1,2,-1,4,-1);
    F_Messages_Properties_Id          : constant := 0;
    F_Messages_Properties_Message_Id  : constant := 1;
    F_Messages_Properties_Property_Id : constant := 2;
    Upto_Messages_Properties_0 : constant Counts := ((3,3),(3,3),(3,3),(3,3));
-   Upto_Messages_Properties_1 : constant Counts := ((3,3),(7,7),(12,12),(14,14));
+   Upto_Messages_Properties_1 : constant Counts := ((3,3),(8,8),(13,13),(15,15));
    Alias_Messages_Properties : constant Alias_Array := (-1,3,8,-1,5,-1,7,-1,-1);
    F_Properties_Id         : constant := 0;
    F_Properties_Identifier : constant := 1;
@@ -94,7 +98,7 @@ package body Database.Orm is
    F_Resources_Messages_Col_Begin   : constant := 4;
    F_Resources_Messages_Col_End     : constant := 5;
    Upto_Resources_Messages_0 : constant Counts := ((6,6),(6,6),(6,6),(6,6));
-   Upto_Resources_Messages_1 : constant Counts := ((6,6),(10,10),(15,15),(17,17));
+   Upto_Resources_Messages_1 : constant Counts := ((6,6),(11,11),(16,16),(18,18));
    Alias_Resources_Messages : constant Alias_Array := (-1,3,8,-1,5,-1,7,-1,-1);
    F_Rules_Id         : constant := 0;
    F_Rules_Name       : constant := 1;
@@ -627,6 +631,24 @@ package body Database.Orm is
       return Entity_Data (Self.Unchecked_Get).ORM_Col_Begin;
    end Col_Begin;
 
+   ---------------
+   -- Col_Begin --
+   ---------------
+
+   function Col_Begin (Self : Entity_Message) return Integer is
+   begin
+      return Integer_Value (Self, F_Entities_Messages_Col_Begin);
+   end Col_Begin;
+
+   ---------------
+   -- Col_Begin --
+   ---------------
+
+   function Col_Begin (Self : Detached_Entity_Message) return Integer is
+   begin
+      return Entity_Message_Data (Self.Unchecked_Get).ORM_Col_Begin;
+   end Col_Begin;
+
    -------------
    -- Col_End --
    -------------
@@ -661,6 +683,24 @@ package body Database.Orm is
    function Col_End (Self : Detached_Entity) return Integer is
    begin
       return Entity_Data (Self.Unchecked_Get).ORM_Col_End;
+   end Col_End;
+
+   -------------
+   -- Col_End --
+   -------------
+
+   function Col_End (Self : Entity_Message) return Integer is
+   begin
+      return Integer_Value (Self, F_Entities_Messages_Col_End);
+   end Col_End;
+
+   -------------
+   -- Col_End --
+   -------------
+
+   function Col_End (Self : Detached_Entity_Message) return Integer is
+   begin
+      return Entity_Message_Data (Self.Unchecked_Get).ORM_Col_End;
    end Col_End;
 
    ----------
@@ -1143,6 +1183,24 @@ package body Database.Orm is
    function Line (Self : Detached_Entity) return Integer is
    begin
       return Entity_Data (Self.Unchecked_Get).ORM_Line;
+   end Line;
+
+   ----------
+   -- Line --
+   ----------
+
+   function Line (Self : Entity_Message) return Integer is
+   begin
+      return Integer_Value (Self, F_Entities_Messages_Line);
+   end Line;
+
+   ----------
+   -- Line --
+   ----------
+
+   function Line (Self : Detached_Entity_Message) return Integer is
+   begin
+      return Entity_Message_Data (Self.Unchecked_Get).ORM_Line;
    end Line;
 
    ----------------
@@ -1895,6 +1953,24 @@ package body Database.Orm is
       return D.ORM_FK_Tool_Id.all;
    end Tool_Id;
 
+   -----------------
+   -- Tool_Msg_Id --
+   -----------------
+
+   function Tool_Msg_Id (Self : Message) return Integer is
+   begin
+      return Integer_Value (Self, F_Messages_Tool_Msg_Id);
+   end Tool_Msg_Id;
+
+   -----------------
+   -- Tool_Msg_Id --
+   -----------------
+
+   function Tool_Msg_Id (Self : Detached_Message) return Integer is
+   begin
+      return Message_Data (Self.Unchecked_Get).ORM_Tool_Msg_Id;
+   end Tool_Msg_Id;
+
    ------------
    -- Detach --
    ------------
@@ -2109,7 +2185,7 @@ package body Database.Orm is
    begin
       if Result.Is_Null then
          Result.Set (Entity_Message_DDR'
-              (Detached_Data with Field_Count => 5, others => <>));
+              (Detached_Data with Field_Count => 8, others => <>));
       end if;
 
       Tmp := Entity_Message_Data (Result.Unchecked_Get);
@@ -2122,10 +2198,13 @@ package body Database.Orm is
               (Self, Upto_Entities_Messages_1 (Self.Depth, LJ)).Detach);
       end if;
 
+      Tmp.ORM_Col_Begin     := Integer_Value (Self, F_Entities_Messages_Col_Begin);
+      Tmp.ORM_Col_End       := Integer_Value (Self, F_Entities_Messages_Col_End);
       Tmp.ORM_Entity_Id     := Integer_Value (Self, F_Entities_Messages_Entity_Id);
       Tmp.ORM_FK_Entity_Id  := FK_Entity_Id;
       Tmp.ORM_FK_Message_Id := FK_Message_Id;
       Tmp.ORM_Id            := Integer_Value (Self, F_Entities_Messages_Id);
+      Tmp.ORM_Line          := Integer_Value (Self, F_Entities_Messages_Line);
       Tmp.ORM_Message_Id    := Integer_Value (Self, F_Entities_Messages_Message_Id);
       Session.Persist (Result);
       return Result;
@@ -2148,7 +2227,7 @@ package body Database.Orm is
    begin
       if Result.Is_Null then
          Result.Set (Message_DDR'
-              (Detached_Data with Field_Count => 5, others => <>));
+              (Detached_Data with Field_Count => 6, others => <>));
       end if;
 
       Tmp := Message_Data (Result.Unchecked_Get);
@@ -2158,11 +2237,12 @@ package body Database.Orm is
               (Self, Upto_Messages_0 (Self.Depth, LJ)).Detach);
       end if;
 
-      Tmp.ORM_Data       := To_Unbounded_String (String_Value (Self, F_Messages_Data));
-      Tmp.ORM_FK_Rule_Id := FK_Rule_Id;
-      Tmp.ORM_Id         := Integer_Value (Self, F_Messages_Id);
-      Tmp.ORM_Ranking    := Integer_Value (Self, F_Messages_Ranking);
-      Tmp.ORM_Rule_Id    := Integer_Value (Self, F_Messages_Rule_Id);
+      Tmp.ORM_Data           := To_Unbounded_String (String_Value (Self, F_Messages_Data));
+      Tmp.ORM_FK_Rule_Id     := FK_Rule_Id;
+      Tmp.ORM_Id             := Integer_Value (Self, F_Messages_Id);
+      Tmp.ORM_Ranking        := Integer_Value (Self, F_Messages_Ranking);
+      Tmp.ORM_Rule_Id        := Integer_Value (Self, F_Messages_Rule_Id);
+      Tmp.ORM_Tool_Msg_Id    := Integer_Value (Self, F_Messages_Tool_Msg_Id);
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -2484,7 +2564,10 @@ package body Database.Orm is
       else
          Fields := Fields & Table.Id
          & Table.Entity_Id
-         & Table.Message_Id;
+         & Table.Message_Id
+         & Table.Line
+         & Table.Col_Begin
+         & Table.Col_End;
       end if;
       From := Empty_Table_List;
       if Depth > 0 then
@@ -2539,7 +2622,8 @@ package body Database.Orm is
          Fields := Fields & Table.Id
          & Table.Rule_Id
          & Table.Data
-         & Table.Ranking;
+         & Table.Ranking
+         & Table.Tool_Msg_Id;
       end if;
       From := Empty_Table_List;
       if Depth > 0 then
@@ -2997,11 +3081,12 @@ package body Database.Orm is
    ------------
 
    function Filter
-     (Self    : Messages_Managers'Class;
-      Id      : Integer := -1;
-      Rule_Id : Integer := -1;
-      Data    : String := No_Update;
-      Ranking : Integer := -1)
+     (Self        : Messages_Managers'Class;
+      Id          : Integer := -1;
+      Rule_Id     : Integer := -1;
+      Data        : String := No_Update;
+      Ranking     : Integer := -1;
+      Tool_Msg_Id : Integer := -1)
      return Messages_Managers
    is
       C      : Sql_Criteria := No_Criteria;
@@ -3018,6 +3103,9 @@ package body Database.Orm is
       end if;
       if Ranking /= -1 then
          C := C and DBA.Messages.Ranking = Ranking;
+      end if;
+      if Tool_Msg_Id /= -1 then
+         C := C and DBA.Messages.Tool_Msg_Id = Tool_Msg_Id;
       end if;
       Copy(Self.Filter(C), Into => Result);
       return Result;
@@ -3097,7 +3185,10 @@ package body Database.Orm is
      (Self       : Entities_Messages_Managers'Class;
       Id         : Integer := -1;
       Entity_Id  : Integer := -1;
-      Message_Id : Integer := -1)
+      Message_Id : Integer := -1;
+      Line       : Integer := -1;
+      Col_Begin  : Integer := -1;
+      Col_End    : Integer := -1)
      return Entities_Messages_Managers
    is
       C      : Sql_Criteria := No_Criteria;
@@ -3111,6 +3202,15 @@ package body Database.Orm is
       end if;
       if Message_Id /= -1 then
          C := C and DBA.Entities_Messages.Message_Id = Message_Id;
+      end if;
+      if Line /= -1 then
+         C := C and DBA.Entities_Messages.Line = Line;
+      end if;
+      if Col_Begin /= -1 then
+         C := C and DBA.Entities_Messages.Col_Begin = Col_Begin;
+      end if;
+      if Col_End /= -1 then
+         C := C and DBA.Entities_Messages.Col_End = Col_End;
       end if;
       Copy(Self.Filter(C), Into => Result);
       return Result;
@@ -3974,6 +4074,15 @@ package body Database.Orm is
             end;
          end if;
       end if;
+      if Mask (4) then
+         A := A & (DBA.Entities_Messages.Line = D.ORM_Line);
+      end if;
+      if Mask (5) then
+         A := A & (DBA.Entities_Messages.Col_Begin = D.ORM_Col_Begin);
+      end if;
+      if Mask (6) then
+         A := A & (DBA.Entities_Messages.Col_End = D.ORM_Col_End);
+      end if;
       if Missing_PK then
          Q := SQL_Insert (A);
       else
@@ -4025,6 +4134,9 @@ package body Database.Orm is
       end if;
       if Mask (4) then
          A := A & (DBA.Messages.Ranking = D.ORM_Ranking);
+      end if;
+      if Mask (5) then
+         A := A & (DBA.Messages.Tool_Msg_Id = D.ORM_Tool_Msg_Id);
       end if;
       if Missing_PK then
          Q := SQL_Insert (A);
@@ -5314,6 +5426,18 @@ package body Database.Orm is
       Self.Set_Modified (4);
    end Set_Col_Begin;
 
+   -------------------
+   -- Set_Col_Begin --
+   -------------------
+
+   procedure Set_Col_Begin (Self : Detached_Entity_Message; Value : Integer)
+   is
+      D : constant Entity_Message_Data := Entity_Message_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Col_Begin := Value;
+      Self.Set_Modified (5);
+   end Set_Col_Begin;
+
    -----------------
    -- Set_Col_End --
    -----------------
@@ -5336,6 +5460,18 @@ package body Database.Orm is
    begin
       D.ORM_Col_End := Value;
       Self.Set_Modified (5);
+   end Set_Col_End;
+
+   -----------------
+   -- Set_Col_End --
+   -----------------
+
+   procedure Set_Col_End (Self : Detached_Entity_Message; Value : Integer)
+   is
+      D : constant Entity_Message_Data := Entity_Message_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Col_End := Value;
+      Self.Set_Modified (6);
    end Set_Col_End;
 
    --------------
@@ -5453,6 +5589,18 @@ package body Database.Orm is
    begin
       D.ORM_Line := Value;
       Self.Set_Modified (3);
+   end Set_Line;
+
+   --------------
+   -- Set_Line --
+   --------------
+
+   procedure Set_Line (Self : Detached_Entity_Message; Value : Integer)
+   is
+      D : constant Entity_Message_Data := Entity_Message_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Line := Value;
+      Self.Set_Modified (4);
    end Set_Line;
 
    --------------------
@@ -5831,6 +5979,18 @@ package body Database.Orm is
          Self.Session.Persist (D.ORM_FK_Tool_Id.all);
       end if;
    end Set_Tool_Id;
+
+   ---------------------
+   -- Set_Tool_Msg_Id --
+   ---------------------
+
+   procedure Set_Tool_Msg_Id (Self : Detached_Message; Value : Integer)
+   is
+      D : constant Message_Data := Message_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Tool_Msg_Id := Value;
+      Self.Set_Modified (5);
+   end Set_Tool_Msg_Id;
 
    ----------------
    -- Tool_Rules --

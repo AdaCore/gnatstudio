@@ -57,6 +57,15 @@ package Database is
       Message_Id : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Message_Id, Index);
       --  Message's id
 
+      Line : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Line, Index);
+      --  Corresponding line for message - zero means not associated to a line
+
+      Col_Begin : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Col_Begin, Index);
+      --  Line's column begin
+
+      Col_End : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Col_End, Index);
+      --  Line's column end
+
    end record;
 
    type T_Entities_Messages (Instance : Cst_String_Access)
@@ -86,6 +95,9 @@ package Database is
       Ranking : SQL_Field_Integer (Ta_Messages, Instance, N_Ranking, Index);
       --  Values : 0-Annotation, 1-Unspecified, 2-Info, 3-Low, 4-Medium,
       --  5-High
+
+      Tool_Msg_Id : SQL_Field_Integer (Ta_Messages, Instance, N_Tool_Msg_Id, Index);
+      --  Stores original message id value issued from tools
 
    end record;
 

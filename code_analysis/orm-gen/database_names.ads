@@ -58,4 +58,6 @@ package Database_Names is
    N_Timestamp : constant Cst_String_Access := NC_timestamp'Access;
    NC_Tool_Id : aliased constant String := "tool_id";
    N_Tool_Id : constant Cst_String_Access := NC_tool_id'Access;
+   NC_Tool_Msg_Id : aliased constant String := "tool_msg_id";
+   N_Tool_Msg_Id : constant Cst_String_Access := NC_tool_msg_id'Access;
 end Database_Names;

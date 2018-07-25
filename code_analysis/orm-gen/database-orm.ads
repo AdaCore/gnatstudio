@@ -45,7 +45,7 @@ package Database.Orm is
    No_Entity : constant Entity;
 
    type Entity_Message is new Orm_Element with null record;
-   type Entity_Message_DDR is new Detached_Data (5) with private;
+   type Entity_Message_DDR is new Detached_Data (8) with private;
    type Detached_Entity_Message is  --  Get() returns a Entity_Message_DDR
    new Sessions.Detached_Element with private;
    type Detached_Entity_Message_Access is access all Detached_Entity_Message'Class;
@@ -53,7 +53,7 @@ package Database.Orm is
    No_Entity_Message : constant Entity_Message;
 
    type Message is new Orm_Element with null record;
-   type Message_DDR is new Detached_Data (5) with private;
+   type Message_DDR is new Detached_Data (6) with private;
    type Detached_Message is  --  Get() returns a Message_DDR
    new Sessions.Detached_Element with private;
    type Detached_Message_Access is access all Detached_Message'Class;
@@ -315,6 +315,11 @@ package Database.Orm is
    procedure Set_Rule_Id (Self : Detached_Message; Value : Detached_Rule'Class);
    --  Messages' associated rule
 
+   function Tool_Msg_Id (Self : Message) return Integer;
+   function Tool_Msg_Id (Self : Detached_Message) return Integer;
+   procedure Set_Tool_Msg_Id (Self : Detached_Message; Value : Integer);
+   --  Stores original message id value issued from tools
+
    function Detach (Self : Message'Class) return Detached_Message'Class;
 
    function From_Cache
@@ -445,6 +450,16 @@ package Database.Orm is
    --  Compares two elements using only the primary keys. All other fields are
    --  ignored
 
+   function Col_Begin (Self : Entity_Message) return Integer;
+   function Col_Begin (Self : Detached_Entity_Message) return Integer;
+   procedure Set_Col_Begin (Self : Detached_Entity_Message; Value : Integer);
+   --  Line's column begin
+
+   function Col_End (Self : Entity_Message) return Integer;
+   function Col_End (Self : Detached_Entity_Message) return Integer;
+   procedure Set_Col_End (Self : Detached_Entity_Message; Value : Integer);
+   --  Line's column end
+
    function Entity_Id (Self : Entity_Message) return Integer;
    function Entity_Id (Self : Detached_Entity_Message) return Integer;
    procedure Set_Entity_Id (Self : Detached_Entity_Message; Value : Integer);
@@ -460,6 +475,11 @@ package Database.Orm is
    function Id (Self : Entity_Message) return Integer;
    function Id (Self : Detached_Entity_Message) return Integer;
    --  Auto-generated id
+
+   function Line (Self : Entity_Message) return Integer;
+   function Line (Self : Detached_Entity_Message) return Integer;
+   procedure Set_Line (Self : Detached_Entity_Message; Value : Integer);
+   --  Corresponding line for message - zero means not associated to a line
 
    function Message_Id (Self : Entity_Message) return Integer;
    function Message_Id (Self : Detached_Entity_Message) return Integer;
@@ -893,11 +913,12 @@ package Database.Orm is
      return Resources_Messages_Managers;
 
    function Filter
-     (Self    : Messages_Managers'Class;
-      Id      : Integer := -1;
-      Rule_Id : Integer := -1;
-      Data    : String := No_Update;
-      Ranking : Integer := -1)
+     (Self        : Messages_Managers'Class;
+      Id          : Integer := -1;
+      Rule_Id     : Integer := -1;
+      Data        : String := No_Update;
+      Ranking     : Integer := -1;
+      Tool_Msg_Id : Integer := -1)
      return Messages_Managers;
 
    function Get_Message
@@ -984,7 +1005,10 @@ package Database.Orm is
      (Self       : Entities_Messages_Managers'Class;
       Id         : Integer := -1;
       Entity_Id  : Integer := -1;
-      Message_Id : Integer := -1)
+      Message_Id : Integer := -1;
+      Line       : Integer := -1;
+      Col_Begin  : Integer := -1;
+      Col_End    : Integer := -1)
      return Entities_Messages_Managers;
 
    function Get_Entity_Message
@@ -1233,21 +1257,25 @@ private
     end record;
     type Entity_Data is access all Entity_DDR;
     
-    type Entity_Message_DDR is new Detached_Data (5) with record
+    type Entity_Message_DDR is new Detached_Data (8) with record
+       ORM_Col_Begin     : Integer := -1;
+       ORM_Col_End       : Integer := -1;
        ORM_Entity_Id     : Integer := -1;
        ORM_FK_Entity_Id  : Detached_Entity_Access := null;
        ORM_FK_Message_Id : Detached_Message_Access := null;
        ORM_Id            : Integer := -1;
+       ORM_Line          : Integer := -1;
        ORM_Message_Id    : Integer := -1;
     end record;
     type Entity_Message_Data is access all Entity_Message_DDR;
     
-    type Message_DDR is new Detached_Data (5) with record
-       ORM_Data       : Unbounded_String := Null_Unbounded_String;
-       ORM_FK_Rule_Id : Detached_Rule_Access := null;
-       ORM_Id         : Integer := -1;
-       ORM_Ranking    : Integer := 1;
-       ORM_Rule_Id    : Integer := -1;
+    type Message_DDR is new Detached_Data (6) with record
+       ORM_Data           : Unbounded_String := Null_Unbounded_String;
+       ORM_FK_Rule_Id     : Detached_Rule_Access := null;
+       ORM_Id             : Integer := -1;
+       ORM_Ranking        : Integer := 1;
+       ORM_Rule_Id        : Integer := -1;
+       ORM_Tool_Msg_Id    : Integer := 0;
     end record;
     type Message_Data is access all Message_DDR;
     

@@ -182,8 +182,15 @@ package body GNAThub.Loader.Databases is
                while Messages.Has_Row loop
                   M := Messages.Element;
                   if Self.Rules.Contains (M.Rule_Id) then
-                     Load_Message
-                       (Resource.Kind, Entity.Line, Entity.Col_Begin, Entity);
+                     if Sub_Message.Line > 0 then
+                        Load_Message
+                          (Resource.Kind, Sub_Message.Line,
+                           Sub_Message.Col_Begin, Entity);
+                     else
+                        Load_Message
+                          (Resource.Kind, Entity.Line,
+                           Entity.Col_Begin, Entity);
+                     end if;
                   elsif Self.Metrics.Contains (M.Rule_Id) then
                      Load_Metric (Resource.Kind, Entity);
                   end if;
