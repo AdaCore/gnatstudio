@@ -21,13 +21,15 @@ procedure Test_Cmd_Line is
    procedure Test_For_GNATY;
    procedure Test_For_GNATW;
    procedure Test_For_GNATPP;
+   procedure Test_Deletion;
 
    procedure Check
      (CL       : Command_Line;
       Expanded : Boolean;
       Switch_1 : String;
-      Switch_2 : String := "");
-   --  Check if given command line contains Switch_1, Switch_2
+      Switch_2 : String := "";
+      Switch_3 : String := "");
+   --  Check if given command line contains Switch_1, Switch_2, etc
 
    -----------
    -- Check --
@@ -37,7 +39,8 @@ procedure Test_Cmd_Line is
      (CL       : Command_Line;
       Expanded : Boolean;
       Switch_1 : String;
-      Switch_2 : String := "")
+      Switch_2 : String := "";
+      Switch_3 : String := "")
    is
       Iter : Command_Line_Iterator;
    begin
@@ -60,12 +63,72 @@ procedure Test_Cmd_Line is
          end if;
       end if;
 
+      if Switch_3 /= "" then
+         Next (Iter);
+
+         if not
+           (Has_More (Iter)
+            and then Current_Switch (Iter) = Switch_3)
+         then
+            raise Constraint_Error;
+         end if;
+      end if;
+
       Next (Iter);
 
       if Has_More (Iter) then
          raise Constraint_Error;
       end if;
    end Check;
+
+   procedure Test_Deletion is
+      --  Define
+      --  * -gw= as prefix
+      --  * -gw=a and -gw=b as switches
+      --  * -gw as alias for -gw=ab
+      --  * -v as unprefixed switch
+      --  Then check:
+      --  * add '-gw=a', '-gw=b' and '-v'
+      --  * remove '-gw=a' and '-gw=b'
+      --  * check resulting line is '-v' (not '-v -gw=')
+      --  Also check:
+      --  * add '-gw=a', '-gw=b' and '-v'
+      --  * remove '-gw'
+      --  * check resulting line is '-v' (not '-v -gw=')
+      Config : Command_Line_Configuration;
+   begin
+      Config.Define_Prefix ("-gw=");
+      Config.Define_Switch ("-gw=a");
+      Config.Define_Switch ("-gw=b");
+      Config.Define_Switch ("-v");
+      Config.Define_Alias ("-gw", "-gw=ab");
+
+      declare
+         CL : Command_Line;
+      begin
+         CL.Set_Configuration (Config);
+         CL.Append_Switch ("-v");
+         CL.Append_Switch ("-gw=a");
+         Check (CL, False, "-v", "-gw=a");
+         CL.Append_Switch ("-gw=b");
+         Check (CL, False, "-v", "-gw");
+         Check (CL, True, "-v", "-gw=a", "-gw=b");
+         CL.Remove_Switch ("-gw=a");
+         CL.Remove_Switch ("-gw=b");
+         Check (CL, False, "-v");
+      end;
+
+      declare
+         CL : Command_Line;
+      begin
+         CL.Set_Configuration (Config);
+         CL.Append_Switch ("-v");
+         CL.Append_Switch ("-gw=a");
+         CL.Append_Switch ("-gw=b");
+         CL.Remove_Switch ("-gw");
+         Check (CL, False, "-v");
+      end;
+   end Test_Deletion;
 
    procedure Test_For_GNATW is
       --  Define
@@ -169,4 +232,5 @@ begin
    Test_For_GNATY;
    Test_For_GNATW;
    Test_For_GNATPP;
+   Test_Deletion;
 end Test_Cmd_Line;

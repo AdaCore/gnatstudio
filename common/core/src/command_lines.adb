@@ -61,6 +61,20 @@ package body Command_Lines is
       Section : Unbounded_String) return Boolean;
    --  The same as Has_Switch but with Unbounded_String
 
+   generic
+      with procedure Process_Switch (Item : Switch);
+   procedure Parse_One_Switch
+     (Cmd     : Command_Line;
+      Item    : Switch;
+      Section : Unbounded_String;
+      Prefix  : out Unbounded_String);
+   --  If Item.Switch is an alias, expand it and call Process_Switch.
+   --  Otherwise if Item.Switch has a known prefix,
+   --  for each switch found after prefix call Process_Switch.
+   --  Otherwise do nothing (so Process_Switch won't be called as all).
+   --  Process_Switch won't be called neither if after prefix there is only
+   --  one switch.
+
    ---------
    -- "=" --
    ---------
@@ -602,25 +616,16 @@ package body Command_Lines is
       end return;
    end Append;
 
-   ------------
-   -- Append --
-   ------------
+   ----------------------
+   -- Parse_One_Switch --
+   ----------------------
 
-   procedure Append
-     (Cmd        : in out Command_Line;
-      Item       : Switch;
-      Section    : Unbounded_String;
-      Add_Before : Boolean := False)
+   procedure Parse_One_Switch
+     (Cmd     : Command_Line;
+      Item    : Switch;
+      Section : Unbounded_String;
+      Prefix  : out Unbounded_String)
    is
-      procedure Append_To_Section
-        (Section : in out Command_Lines.Section;
-         Prefix  : Unbounded_String;
-         Item    : Switch);
-      --  Append Item to Section taking switch Prefix into account
-
-      procedure Append_Recursive (Item : Switch);
-      --  Call Append for given Item. Set Appended to True
-
       function Find_Parameter
         (Switch : Unbounded_String;
          Prefix : Unbounded_String;
@@ -632,45 +637,8 @@ package body Command_Lines is
          Pos    : Positive) return Unbounded_String;
       --  Lookup for switch in Item.Switch starting from Pos
 
-      Appended : Boolean := False;
-
       Sect   : Section_Configuration renames
         Cmd.Configuration.Unchecked_Get.Sections (Section);
-
-      -----------------------
-      -- Append_To_Section --
-      -----------------------
-
-      procedure Append_To_Section
-        (Section : in out Command_Lines.Section;
-         Prefix  : Unbounded_String;
-         Item    : Switch) is
-      begin
-         if Prefix /= "" then
-            if not Section.Prefixes.Contains (Prefix) then
-               Section.Prefixes.Insert
-                 (Prefix, Argument_Maps.Empty_Map);
-            end if;
-
-            Section.Prefixes (Prefix).Include
-              (Item.Switch, Item.Parameter);
-
-         elsif Add_Before then
-            Section.Switches.Prepend (Item);
-         else
-            Section.Switches.Append (Item);
-         end if;
-      end Append_To_Section;
-
-      ----------------------
-      -- Append_Recursive --
-      ----------------------
-
-      procedure Append_Recursive (Item : Switch) is
-      begin
-         Append (Cmd, Item, Section, Add_Before);
-         Appended := True;
-      end Append_Recursive;
 
       --------------------
       -- Find_Parameter --
@@ -735,25 +703,18 @@ package body Command_Lines is
          end if;
       end Find_Switch;
 
-      Conf : constant Configuration_References.Element_Access :=
+      Arg    : Unbounded_String;
+      Switch : Unbounded_String;
+      From   : Positive;
+      Conf   : constant Configuration_References.Element_Access :=
         Cmd.Configuration.Unchecked_Get;
-
-      Prefix       : Unbounded_String;
-      Sections     : Section_Maps.Map renames Cmd.Sections.Unchecked_Get.all;
-      Switch       : Unbounded_String;
-      Arg          : Unbounded_String;
-      From         : Positive;
    begin
-      if not Sections.Contains (Section) then
-         --  Create section if don't have it yet
-         Sections.Insert (Section, Empty_Section);
-      end if;
-
-         --  Expand alias if found
+      --  Expand alias if found
       if not Item.Parameter.Is_Set
         and then Sect.Aliases.Contains (Item.Switch)
+        and then not Sect.Aliases.Contains (Sect.Aliases (Item.Switch))
       then
-         Append_Recursive
+         Process_Switch
            ((Switch    => Sect.Aliases (Item.Switch),
              Parameter => Item.Parameter));
 
@@ -780,7 +741,7 @@ package body Command_Lines is
             From := From + Length (Arg);  --  Skip argument
 
             if Arg /= "" then
-               Append_Recursive
+               Process_Switch
                  ((Switch    => Prefix,
                    Parameter => (Is_Set    => True,
                                  Separator => (Is_Set => False),
@@ -801,17 +762,86 @@ package body Command_Lines is
             From := From + Length (Arg);  --  Skip argument
 
             if Arg /= "" then
-               Append_Recursive
+               Process_Switch
                  ((Switch,
                   Parameter => (Is_Set    => True,
                                 Separator => (Is_Set => False),
                                 Value     => Arg)));
             elsif Switch /= Item.Switch then  --  Avoid infinite recursion
-               Append_Recursive
+               Process_Switch
                  ((Switch, Parameter => (Is_Set => False)));
             end if;
          end loop;
       end if;
+   end Parse_One_Switch;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Cmd        : in out Command_Line;
+      Item       : Switch;
+      Section    : Unbounded_String;
+      Add_Before : Boolean := False)
+   is
+      procedure Append_To_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String;
+         Item    : Switch);
+      --  Append Item to Section taking switch Prefix into account
+
+      procedure Append_Recursive (Item : Switch);
+      --  Call Append for given Item. Set Appended to True
+
+      Appended : Boolean := False;
+
+      -----------------------
+      -- Append_To_Section --
+      -----------------------
+
+      procedure Append_To_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String;
+         Item    : Switch) is
+      begin
+         if Prefix /= "" then
+            if not Section.Prefixes.Contains (Prefix) then
+               Section.Prefixes.Insert
+                 (Prefix, Argument_Maps.Empty_Map);
+            end if;
+
+            Section.Prefixes (Prefix).Include
+              (Item.Switch, Item.Parameter);
+
+         elsif Add_Before then
+            Section.Switches.Prepend (Item);
+         else
+            Section.Switches.Append (Item);
+         end if;
+      end Append_To_Section;
+
+      ----------------------
+      -- Append_Recursive --
+      ----------------------
+
+      procedure Append_Recursive (Item : Switch) is
+      begin
+         Append (Cmd, Item, Section, Add_Before);
+         Appended := True;
+      end Append_Recursive;
+
+      procedure Parse_Switch is new Parse_One_Switch (Append_Recursive);
+
+      Prefix   : Unbounded_String;
+      Sections : Section_Maps.Map renames Cmd.Sections.Unchecked_Get.all;
+   begin
+      if not Sections.Contains (Section) then
+         --  Create section if don't have it yet
+         Sections.Insert (Section, Empty_Section);
+      end if;
+
+      Parse_Switch (Cmd, Item, Section, Prefix);
 
       if not Appended then
          --  If we hadn't appended it before, do it now
@@ -915,36 +945,32 @@ package body Command_Lines is
       Section       : Unbounded_String;
       Success       : out Boolean)
    is
-      Pos      : Switch_Vectors.Cursor;
-      Conf     : Configuration_References.Element_Access;
-      Prefix   : Unbounded_String;
-      Sections : Section_Map_References.Element_Access;
-   begin
-      Check_Initialized (Cmd);
-      Conf := Cmd.Configuration.Unchecked_Get;
-      Prefix := Find_Prefix (Conf, Switch);
-      Sections := Cmd.Sections.Unchecked_Get;
+      procedure Remove_From_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String);
+      --  Remove Item from Section taking switch Prefix into account
 
-      if not Sections.Contains (Section) then
-         Success := False;
-         return;
-      end if;
+      procedure Remove_Recursive (Item : Command_Lines.Switch);
+      --  Call Remove_Switch for given Item. Set Removed to True
 
-      declare
-         Sect  : Command_Lines.Section renames Sections.all (Section);
+      Removed  : Boolean := False;
+
+      procedure Remove_From_Section
+        (Section : in out Command_Lines.Section;
+         Prefix  : Unbounded_String)
+      is
+         Pos : Switch_Vectors.Cursor := Section.Switches.First;
       begin
          if Prefix = "" then
-            Pos := Sect.Switches.First;
-
             while Switch_Vectors.Has_Element (Pos) loop
                declare
-                  Item : constant Command_Lines.Switch :=
+                  Next : constant Command_Lines.Switch :=
                     Switch_Vectors.Element (Pos);
                begin
-                  if Item.Switch = Switch
-                    and then Item.Parameter.Is_Set = Has_Parameter
+                  if Next.Switch = Switch
+                    and then Next.Parameter.Is_Set = Has_Parameter
                   then
-                     Sect.Switches.Delete (Pos);
+                     Section.Switches.Delete (Pos);
                      Success := True;
                      return;
                   end if;
@@ -952,21 +978,72 @@ package body Command_Lines is
                   Switch_Vectors.Next (Pos);
                end;
             end loop;
+         elsif Section.Prefixes.Contains (Prefix)
+           and then Section.Prefixes (Prefix).Contains (Switch)
+         then
+            Section.Prefixes (Prefix).Delete (Switch);
 
-            Success := False;
-
-         elsif Sect.Prefixes.Contains (Prefix) then
-
-            if Sect.Prefixes (Prefix).Contains (Switch) then
-               Sect.Prefixes (Prefix).Delete (Switch);
-               Success := True;
-            else
-               Success := False;
+            if Section.Prefixes (Prefix).Is_Empty then
+               --  Prefix becomes empty, drop it
+               Section.Prefixes.Delete (Prefix);
             end if;
-         else
-            Success := False;
+
+            Success := True;
          end if;
-      end;
+      end Remove_From_Section;
+
+      ----------------------
+      -- Remove_Recursive --
+      ----------------------
+
+      procedure Remove_Recursive (Item : Command_Lines.Switch) is
+      begin
+         Remove_Switch
+           (Cmd           => Cmd,
+            Switch        => Item.Switch,
+            Has_Parameter => Item.Parameter.Is_Set,
+            Section       => Section,
+            Success       => Success);
+         Removed := True;
+      end Remove_Recursive;
+
+      procedure Parse_Switch is new Parse_One_Switch (Remove_Recursive);
+
+      Prefix   : Unbounded_String;
+      Sections : Section_Map_References.Element_Access;
+   begin
+      Success := False;
+      Check_Initialized (Cmd);
+
+      Sections := Cmd.Sections.Unchecked_Get;
+
+      if not Sections.Contains (Section) then
+         return;
+      end if;
+
+      if Has_Parameter then
+         Parse_Switch
+           (Cmd,
+            (Switch    => Switch,
+             Parameter =>
+               (Is_Set    => True,
+                Separator => (Is_Set => False),
+                Value     => Null_Unbounded_String)),
+            Section,
+            Prefix);
+      else
+         Parse_Switch
+           (Cmd,
+            (Switch => Switch,
+             Parameter => (Is_Set => False)),
+            Section,
+            Prefix);
+      end if;
+
+      if not Removed then
+         --  If we hadn't appended it before, do it now
+         Remove_From_Section (Sections.all (Section), Prefix);
+      end if;
    end Remove_Switch;
 
    --------------
