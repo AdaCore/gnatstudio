@@ -161,6 +161,11 @@ def parse_notif(j, abs_tree, proof_task):
         notification on the proof tree. It makes the appropriate updates to the
         tree model.
     """
+
+    global itp_started
+
+    if not itp_started:
+        return
     print_debug(str(j))
     # Most of the changes concern only the tree part.
     tree = abs_tree.tree
@@ -397,9 +402,6 @@ class Tree:
         # find something that do exactly this in Gtk ??? (does not exist ?)
         self.node_id_to_row_ref = {}
 
-    def exit(self):
-        self.box.destroy()
-
     def clear(self):
         """ clear the content of the tree """
         self.node_id_to_row_ref = {}
@@ -578,6 +580,7 @@ class Tree_with_process:
         """ Kill everything created during interactive theorem proving """
 
         global itp_started
+        itp_started = False
 
         a = GPS.Console(ITP_CONSOLE)
         # Any closing destroying can fail so try are needed to avoid killing
@@ -587,11 +590,17 @@ class Tree_with_process:
         except Exception:
             print ("Cannot close console")
         try:
-            self.proof_task.close()  # TODO force ???
+            windows = GPS.MDI.children()
+            for a in windows:
+                if PROOF_TASK == a.name(short=True):
+                    a.close(force=True)
         except Exception:
             print ("Cannot close proof_task")
         try:
-            self.tree.exit()
+            windows = GPS.MDI.children()
+            for a in windows:
+                if PROOF_TREE_SHORT == a.name(short=True):
+                    a.close(force=True)
         except Exception:
             print ("Cannot close tree")
         try:
@@ -602,16 +611,19 @@ class Tree_with_process:
             self.timeout.remove()
         except Exception:
             print ("Cannot stop timeout")
-        itp_started = False
 
     def exit(self):
         """ exit itp """
 
-        if GPS.MDI.yes_no_dialog("Do you want to save session before exit?"):
-            self.send_request(0, SAVE)
-            self.save_and_exit = True
-        else:
-            self.kill()
+        global itp_started
+
+        if itp_started:
+            if GPS.MDI.yes_no_dialog(
+                    "Do you want to save session before exit?"):
+                self.send_request(0, SAVE)
+                self.save_and_exit = True
+            else:
+                self.kill()
 
     def check_notifications(self, unused, delimiter, notification):
         """ function used as an on_match by the GPS.Process used to launch
