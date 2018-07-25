@@ -180,7 +180,7 @@ package body GPS.Default_Styles is
             Bg        => Conditional_Breakpoint_Color,
             Speedbar  => True);
       Init (Debugger_Disabled_Breakpoint_Style,
-            -"Lines with conditional breakpoints",
+            -"Lines with disabled breakpoints",
             Icon_Name => "gps-emblem-debugger-disabled-breakpoint",
             Bg        => Disabled_Breakpoint_Color,
             Speedbar  => True);
