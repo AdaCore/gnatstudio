@@ -33,10 +33,7 @@ def current_tree():
              filter=lambda x: current_tree() is not None,
              key="Left")
 def move_cursor_up_or_collapse():
-    current = current_tree()
-    if current is None:
-        return
-    tree, path = current
+    tree, path = current_tree()
     if tree and path:
         if tree.row_expanded(path):
             # The current cursor is on an expanded row, so collapse
@@ -47,24 +44,21 @@ def move_cursor_up_or_collapse():
             # The current cursor is not on an expanded row so try to
             # to move up to the parent node.
             path.up()
-            if path:
-                # Check that path is valid as path.up on the root
-                # node might return an invalid path ?
-                tree.set_cursor(path, tree.get_column(0))
+        if path:
+            # Check that path is valid as path.up on the root
+            # node might return an invalid path ?
+            tree.set_cursor(path, tree.get_column(0))
 
 
 @interactive(category="General",
              filter=lambda x: current_tree() is not None,
              key="Right")
 def expand_and_move_cursor_down():
-    current = current_tree()
-    if current is None:
-        return
-    tree, path = current
+    tree, path = current_tree()
     if tree and path:
         logger.log("expand row %s" % path)
         if tree.row_expanded(path):
             path.down()
-            tree.set_cursor(path, tree.get_column(0))
         else:
             tree.expand_row(path, False)
+        tree.set_cursor(path, tree.get_column(0))
