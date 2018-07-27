@@ -41,4 +41,4 @@ distrib/known-problems-62     no-precommit-check
 share/templates/microbit_example/src/*	no-precommit-check
 
 # "GPS" not defined in these
-testsuite/tests/*/*.py	no-precommit-check
+testsuite/tests/*/*	no-precommit-check
