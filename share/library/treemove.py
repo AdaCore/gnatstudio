@@ -24,7 +24,11 @@ def current_tree():
         if widget.is_active():
             result = widget.get_focus()
             if isinstance(result, Gtk.TreeView):
-                return result, result.get_cursor()[0]
+                # Disable these actions for the call graph tree
+                if "Call Graph" in result.get_name():
+                    return None
+                else:
+                    return result, result.get_cursor()[0]
             return None
     return None
 
