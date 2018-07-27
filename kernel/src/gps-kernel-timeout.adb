@@ -551,6 +551,7 @@ package body GPS.Kernel.Timeout is
       Result   : Expect_Match;
       Str      : Unbounded_String;
       Status   : Expect_Status := Timed_Out;
+      Loop_Started : Time;
    begin
       Output := Null_Unbounded_String;
 
@@ -570,6 +571,7 @@ package body GPS.Kernel.Timeout is
 
       --  Process all the buffered output of the process (and exit as soon
       --  as that buffer is empty).
+      Loop_Started := Clock;
       loop
          Expect (Self.Descriptor.all, Result, Regexp, Timeout => Timeout);
 
@@ -582,13 +584,18 @@ package body GPS.Kernel.Timeout is
 
             exit when Stop_At_First_Match;
 
+            --  If we have waited too long in this loop, return.
+            --  This is to allow the GPS main loop not to be stuck
+            --  if Get_And_Process_Output above is too
+            exit when Clock - Loop_Started > 0.1;
+
          else
             --  Got a timeout: nothing available in the buffer.
             --  If we have been waiting too long already (more than the
             --  global timeout), we simply close the process and give up.
 
             if Monitor.Timeout /= -1
-              and then Ada.Calendar.Clock - Monitor.Start_Time >
+              and then Clock - Monitor.Start_Time >
                 Duration (Monitor.Timeout) /  1000.0
             then
                --  Make sure the process is killed. Just interrupting it is

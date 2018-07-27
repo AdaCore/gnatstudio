@@ -19,6 +19,9 @@
 
 with System;
 
+with Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
+
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
@@ -335,6 +338,16 @@ package Interactive_Consoles is
    --  hyper links registered with Create_Hyper_Link.
    --  Clicking on these links will call On_Click on the matching Callback.
 
+   procedure Insert_With_Links_Protected
+     (Console : access Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True);
+   --  Same as Insert_With_Links, but assume the Text is coming from an
+   --  unknown process and should be protected: the lines are inserted in
+   --  the console in the background to make sure the main loop remains
+   --  available even when the text is huge; lines that are too long are
+   --  also truncated.
+
    procedure Insert_Hyper_Link
      (Console  : not null access Interactive_Console_Record;
       Text     : String;
@@ -444,6 +457,9 @@ private
      array (Reserved_Tag_Kinds) of Gtk.Text_Tag.Gtk_Text_Tag;
    --  Array of tags reserved in console
 
+   package Lines_List is new Ada.Containers.Doubly_Linked_Lists
+     (Ada.Strings.Unbounded.Unbounded_String, Ada.Strings.Unbounded."=");
+
    type Interactive_Console_Record is new Generic_Views.View_Record with record
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
@@ -529,6 +545,19 @@ private
       --  List of hyper links that have been registered for this console
       --  Links_Count indicates the number of links that have been registered,
       --  for efficiency.
+
+      Process_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  The Id of the timeout processing the lines to process.
+      --  Set to No_Source_Id if there is no processing to do.
+
+      Lines_To_Process : Lines_List.List;
+      --  The text of output that remain to process. Note that this does
+      --  not necessarily correspond to one list entry per line: the contents
+      --  of the lines contains the line breaks.
+
+      Last_Line_Break : Natural := 0;
+      --  The number of characters stored since the last line break. This
+      --  is used to forcefully insert line breaks in lines that are too long.
    end record;
 
    overriding procedure Insert

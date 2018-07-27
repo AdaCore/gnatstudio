@@ -189,6 +189,8 @@ package GPS.Kernel.Timeout is
    --  available data from the external process. This is in general more
    --  efficient when the regexp is not relevant and we just want to get to
    --  the end of the process as fast as possible.
+   --  Return Not_Finished if the process is still running and this function
+   --  needs to be called again.
 
    procedure Suspend_Monitoring
      (Self    : not null access External_Process_Data'Class;

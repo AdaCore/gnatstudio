@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;                   use System;
 
@@ -75,9 +77,28 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Stock_Icons;          use GPS.Stock_Icons;
 
 package body Interactive_Consoles is
+
    Me : constant Trace_Handle := Create ("GPS.KERNEL.INTERACTIVE_CONSOLE");
 
+   Max_Lines_Displayed : constant := 2000;
+   --  Number of lines to display in the console - older lines are removed
+   --  when the text exceeds this.
+
+   Max_Line_Length : constant := 500;
+   --  The maximum character length to accept in outside output: lines
+   --  exceeding this lenth are split at that mark.
+
+   Process_Lines_Timeout : constant Duration := 0.1;
+   --  The number of seconds that is allowed for each loop of the function
+   --  that processes pending lines.
+
+   Line_Processing_Interval : constant := 200;
+   --  The timeout interval to process the pending lines
+
    package Console_Idle is new Glib.Main.Generic_Sources (Interactive_Console);
+
+   function Process_Lines (Self : Interactive_Console) return Boolean;
+   --  Process the lines that are left to process, if any
 
    ---------------------------------
    -- Interactive_Virtual_Console --
@@ -226,9 +247,14 @@ package body Interactive_Consoles is
    --  care of the prompt, making the text read-only,... Any highlighting of
    --  the text must be done separately.
 
-   procedure Replace_Zeros (S : in out String);
-   pragma Inline (Replace_Zeros);
-   --  Replace ASCII.NULs in S.
+   function Replace_Zeros_And_Count_Lines (S : in out String) return Natural;
+   pragma Inline (Replace_Zeros_And_Count_Lines);
+   --  Replace ASCII.NULs in S. Return the number of lines in S.
+
+   procedure Limit_Line_Count (B : Gtk_Text_Buffer; New_Lines : Natural);
+   --  Assume that we are about to add New_Lines new lines to B, and remove
+   --  the first lines in B to make sure we don't exceed the maximum line
+   --  count.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Console : access Interactive_Console_Record'Class;
@@ -580,8 +606,11 @@ package body Interactive_Consoles is
          Transliteration => True,
          Ignore          => True);
 
+      New_Lines : Natural;
    begin
-      Replace_Zeros (UTF8);
+      New_Lines := Replace_Zeros_And_Count_Lines (UTF8);
+      Limit_Line_Count (Console.Buffer, New_Lines);
+
       Insert_UTF8_With_Tag
         (Console, UTF8,
          Add_LF         => Add_LF,
@@ -615,6 +644,7 @@ package body Interactive_Consoles is
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
+      Limit_Line_Count (Console.Buffer, 0);
    end Insert_UTF8;
 
    -----------------
@@ -900,18 +930,39 @@ package body Interactive_Consoles is
       when E : others => Trace (Me, E);
    end Size_Allocate_Handler;
 
-   -------------------
-   -- Replace_Zeros --
-   -------------------
+   -----------------------------------
+   -- Replace_Zeros_And_Count_Lines --
+   -----------------------------------
 
-   procedure Replace_Zeros (S : in out String) is
+   function Replace_Zeros_And_Count_Lines (S : in out String) return Natural is
+      Lines : Natural := 0;
    begin
       for C in S'Range loop
+         if S (C) = ASCII.LF then
+            Lines := Lines + 1;
+         end if;
          if S (C) = ASCII.NUL then
             S (C) := '0';
          end if;
       end loop;
-   end Replace_Zeros;
+      return Lines;
+   end Replace_Zeros_And_Count_Lines;
+
+   ----------------------
+   -- Limit_Line_Count --
+   ----------------------
+
+   procedure Limit_Line_Count (B : Gtk_Text_Buffer; New_Lines : Natural) is
+      Count     : constant Natural := Natural (B.Get_Line_Count);
+      Start, Iter : Gtk_Text_Iter;
+   begin
+      if Count + New_Lines > Max_Lines_Displayed then
+         B.Get_Start_Iter (Start);
+         B.Get_Iter_At_Line
+           (Iter, Gint (Max_Lines_Displayed - Count - New_Lines + 1));
+         B.Delete (Start, Iter);
+      end if;
+   end Limit_Line_Count;
 
    --------------------------------
    -- Selection_Received_Handler --
@@ -2234,9 +2285,11 @@ package body Interactive_Consoles is
       Min_Pattern : Natural;
       Internal    : Boolean;
       Start_Iter, Last_Iter : Gtk_Text_Iter;
+      New_Lines   : Natural;
 
    begin
-      Replace_Zeros (Fixed);
+      New_Lines := Replace_Zeros_And_Count_Lines (Fixed);
+      Limit_Line_Count (Console.Buffer, New_Lines);
 
       --  Initialize the locations array, so that we try and match the regexps
       --  as few times as possible for efficiency.
@@ -2329,6 +2382,94 @@ package body Interactive_Consoles is
 
       Terminate_Output (Console, Internal, Show_Prompt => False);
    end Insert_With_Links;
+
+   -------------------
+   -- Process_Lines --
+   -------------------
+
+   function Process_Lines (Self : Interactive_Console) return Boolean is
+      Start : constant Time := Clock;
+      U     : Unbounded_String;
+   begin
+      while not Self.Lines_To_Process.Is_Empty loop
+         U := Self.Lines_To_Process.First_Element;
+         Self.Lines_To_Process.Delete_First;
+
+         Self.Insert_With_Links (To_String (U), Add_LF => False);
+
+         exit when Clock - Start > Process_Lines_Timeout;
+      end loop;
+
+      if Self.Lines_To_Process.Is_Empty then
+         Self.Process_Timeout := No_Source_Id;
+         return False;
+      else
+         --  Let's process the rest later!
+         return True;
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Self.Lines_To_Process.Clear;
+         Self.Process_Timeout := No_Source_Id;
+         return False;
+   end Process_Lines;
+
+   ---------------------------------
+   -- Insert_With_Links_Protected --
+   ---------------------------------
+
+   procedure Insert_With_Links_Protected
+     (Console : access Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True)
+   is
+      Last_Start : Natural := Text'First;
+   begin
+      --  If we are calling this, we do not want to blindly accept any amount
+      --  of incoming output and insert this in the text: this could lead to
+      --  infinite loop as GPS tries to consume any amount of output. What we
+      --  do instead is the following:
+      --     - limit the number of lines displayed
+      --     - store text to display in Lines_To_Process
+      --     - process the lines in a timeout
+
+      for J in Text'Range loop
+         Console.Last_Line_Break := Console.Last_Line_Break + 1;
+         if Text (J) = ASCII.LF then
+            Console.Last_Line_Break := 0;
+         end if;
+
+         if Console.Last_Line_Break > Max_Line_Length then
+            Console.Lines_To_Process.Append
+              (To_Unbounded_String (Text (Last_Start .. J) & ASCII.LF));
+            Console.Last_Line_Break := 0;
+            Last_Start := J + 1;
+         end if;
+      end loop;
+
+      if Add_LF then
+         Console.Lines_To_Process.Append
+           (To_Unbounded_String (Text (Last_Start .. Text'Last) & ASCII.LF));
+      else
+         Console.Lines_To_Process.Append
+           (To_Unbounded_String (Text (Last_Start .. Text'Last)));
+      end if;
+
+      if Console.Process_Timeout = No_Source_Id then
+         --  We are currently not processing lines: do one call to
+         --  Process_Lines immediately (useful to have output available
+         --  right away for trivial tests / for the testsuite) - if this
+         --  call returns True, it means we have more processing to do:
+         --  do this in a timeout.
+         if Process_Lines (Interactive_Console (Console)) then
+            Console.Process_Timeout := Console_Idle.Timeout_Add
+              (Interval => Line_Processing_Interval,
+               Func     => Process_Lines'Access,
+               Data     => Console);
+         end if;
+      end if;
+   end Insert_With_Links_Protected;
 
    -----------------------
    -- Insert_Hyper_Link --
