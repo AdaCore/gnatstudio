@@ -266,6 +266,12 @@ package body GPS.Kernel.Timeout is
          end if;
       end if;
 
+      --  If we interrupt the process, the "User_Data" passed to the
+      --  console during Spawn becomes invalid: reset it now.
+      if Self.D.Console /= null then
+         Self.D.Console.Set_Command_Handler (null, System.Null_Address);
+      end if;
+
       --  ??? This seems complex behavior while we free the process. Might
       --  be better to expect this to be run from Process_Cb already.
       Cleanup (Self'Unchecked_Access);
@@ -315,6 +321,7 @@ package body GPS.Kernel.Timeout is
               (Self.Console, Data_Handler'Access,
                Monitor.all'Address);
 
+            Self.Console.Set_Kernel (Self.Kernel);
             Monitor.Delete_Id := System_Callbacks.Connect
               (Self.Console, Gtk.Widget.Signal_Delete_Event,
                System_Callbacks.To_Marshaller (Delete_Handler'Access),
@@ -629,6 +636,12 @@ package body GPS.Kernel.Timeout is
       pragma Unreferenced (Console);
       Process : constant Monitor_Command_Access := Convert (User_Data);
    begin
+      if Process.D = null then
+         --  This can happen in an interactive console for a "Run", after the
+         --  run has ended.
+         return "";
+      end if;
+
       if not Process.D.Process_Died then
          --  ??? If Process.D.Descriptor is null then Process.Died should be
          --  True. This is being investigated under EC06-004.
