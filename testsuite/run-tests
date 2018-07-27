@@ -13,8 +13,8 @@ if __name__ == '__main__':
         if status not in ('PASS', 'XFAIL'):
             all_ok = False
             print "--- {} : {} ---".format(k, status)
-            with open(os.path.join('out',
-                                   'new', "{}.yaml".format(k)), 'rb') as f:
+            with open(os.path.join(suite.output_dir,
+                                   "{}.yaml".format(k)), 'rb') as f:
                 y = f.read()
                 print yaml.load(y).out
 
