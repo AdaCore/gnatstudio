@@ -1994,8 +1994,10 @@ else:
             def __on_viewer_loaded(viewer):
                 d, it = QGEN_Module.modeling_map.get_diagram_for_item(
                     viewer.diags, b[0])
-                d.select(it)
-                viewer.set_diagram(d)
+                if it is not None:
+                    d.select(it)
+                    viewer.set_diagram(d)
+                    GPS.MDI.get_by_child(viewer).raise_window()
 
             ctxt = GPS.contextual_context() or GPS.current_context()
             b = QGEN_Module.modeling_map.get_block(
