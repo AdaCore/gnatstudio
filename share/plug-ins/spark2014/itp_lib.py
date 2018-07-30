@@ -16,6 +16,10 @@ itp_started = False
 GREEN = Gdk.RGBA(0, 1, 0, 0.2)
 RED = Gdk.RGBA(1, 0, 0, 0.2)
 
+# By default the root node of the proof tree is 0. It does not correspond to
+# a visible node: it is used when no node can be found.
+ROOT_NODE = 0
+
 # Notification and requests corresponding constants. Basically any json
 # strings have the same name in upper case letters. Exception made for strings
 # that have to be disambigued like "Message" and "message" which are translated
@@ -668,11 +672,22 @@ class Tree_with_process:
         """ used as the on_input function of the itp Console. It parses and
             send request from the user to the itp server.
         """
+        self.called = False
+
+        def called_on_select(tree_model, tree_path, tree_iter):
+            try:
+                a = tree_model[tree_iter][0]
+                self.called = True
+                self.send_request(a, command)
+            except Exception:
+                pass
 
         tree_selection = self.tree.view.get_selection()
-        tree_selection.selected_foreach(
-            lambda tree_model, tree_path, tree_iter:
-            self.send_request(tree_model[tree_iter][0], command))
+        tree_selection.selected_foreach(called_on_select)
+        # When nothing is selected, still send the command with ROOT_NODE
+        # (case for help, list-transforms etc)
+        if not self.called:
+            self.send_request(ROOT_NODE, command)
 
     def actual_send(self, useless_timeout):
         """ This function actually send data. It is called in a timeout every x
