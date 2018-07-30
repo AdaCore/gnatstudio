@@ -145,12 +145,21 @@ package GPS.Kernel is
    --  Return the file used to save the history.
 
    procedure Set_VCS
-      (Self : not null access Kernel_Handle_Record;
-       Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class);
+     (Self : not null access Kernel_Handle_Record;
+      Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class);
    function VCS
-      (Self : not null access Kernel_Handle_Record)
+     (Self : not null access Kernel_Handle_Record)
       return access GPS.VCS.Abstract_VCS_Repository'Class;
    --  The VCS system
+
+   procedure Set_Ignore_Saved_Scenario_Values
+     (Self   : not null access Kernel_Handle_Record;
+      Status : Boolean);
+   function Get_Ignore_Saved_Scenario_Values
+     (Self : not null access Kernel_Handle_Record)
+      return Boolean;
+   --  Getter/Setter to ignore the saved values of the scenario variables in
+   --  .gps when loading a project.
 
    procedure Add_To_History
      (Handle    : access Kernel_Handle_Record;
@@ -1273,6 +1282,9 @@ private
       Construct_Tree : Semantic_Tree_Provider_Access;
       --  Handle to the default language tree in GPS kernel, which is a
       --  construct tree at the moment
+
+      Ignore_Saved_Scenario_Values : Boolean := False;
+      --  Should we ignore the scenario variables values saved in .gps
    end record;
 
    package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);

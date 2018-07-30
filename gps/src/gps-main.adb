@@ -1081,6 +1081,9 @@ procedure GPS.Main is
       elsif Switch = "--pwd" then
          GNAT.Directory_Operations.Change_Dir (ICS.Value (Value));
 
+      elsif Switch = "--ignore-saved-scenario-values" then
+         GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (True);
+
       elsif Switch = "--path" then
          declare
             Current : String_Access := Getenv ("PATH");
@@ -1366,6 +1369,16 @@ procedure GPS.Main is
                          Description     => New_String
                            ("Extra directories for gprconfig"),
                          Arg_Description => New_String ("dir"));
+      Opt_Ignore   : constant Glib.Option.GOption_Entry :=
+                       (Long_Name       =>
+                          New_String ("ignore-saved-scenario-values"),
+                        Short_Name      => To_Gchar (ASCII.NUL),
+                        Flags           => G_Option_Flag_No_Arg,
+                        Arg             => G_Option_Arg_Callback,
+                        Arg_Data        => On_Switch'Address,
+                        Description     => New_String
+                          ("Ignore the scenario values saved in .gps"),
+                        Arg_Description => Gtkada.Types.Null_Ptr);
 
       --  Option for remaining arguments
       Opt_Remaining : constant Glib.Option.GOption_Entry :=
@@ -1397,6 +1410,7 @@ procedure GPS.Main is
                          Opt_Tracelist,
                          Opt_Config,
                          Opt_Autoconf,
+                         Opt_Ignore,
                          Opt_Configdb,
                          Opt_Remaining,
                          Opt_Pwd,

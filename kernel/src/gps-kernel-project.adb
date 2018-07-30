@@ -671,7 +671,9 @@ package body GPS.Kernel.Project is
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
 
-         Restore_Scenario_Vars (Kernel, Local_Project);
+         if not Kernel.Get_Ignore_Saved_Scenario_Values then
+            Restore_Scenario_Vars (Kernel, Local_Project);
+         end if;
 
          --  Always force a call to gnatls.
          --  This is also used to get the value of ADA_PROJECT_PATH. and the

@@ -530,13 +530,35 @@ package body GPS.Kernel is
       return Handle.Preferences;
    end Get_Preferences;
 
+   --------------------------------------
+   -- Set_Ignore_Saved_Scenario_Values --
+   --------------------------------------
+
+   procedure Set_Ignore_Saved_Scenario_Values
+     (Self   : not null access Kernel_Handle_Record;
+      Status : Boolean) is
+   begin
+      Self.Ignore_Saved_Scenario_Values := Status;
+   end Set_Ignore_Saved_Scenario_Values;
+
+   --------------------------------------
+   -- Get_Ignore_Saved_Scenario_Values --
+   --------------------------------------
+
+   function Get_Ignore_Saved_Scenario_Values
+     (Self : not null access Kernel_Handle_Record)
+      return Boolean is
+   begin
+      return Self.Ignore_Saved_Scenario_Values;
+   end Get_Ignore_Saved_Scenario_Values;
+
    -------------
    -- Set_VCS --
    -------------
 
    procedure Set_VCS
-      (Self : not null access Kernel_Handle_Record;
-       Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class) is
+     (Self : not null access Kernel_Handle_Record;
+      Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class) is
    begin
       Self.VCS := GPS.VCS.Abstract_VCS_Repository_Access (Repo);
    end Set_VCS;
@@ -546,7 +568,7 @@ package body GPS.Kernel is
    ---------
 
    function VCS
-      (Self : not null access Kernel_Handle_Record)
+     (Self : not null access Kernel_Handle_Record)
       return access GPS.VCS.Abstract_VCS_Repository'Class is
    begin
       return Self.VCS;

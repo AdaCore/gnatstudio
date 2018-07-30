@@ -17,30 +17,33 @@ The command line options are::
   Usage:
      gps [options] [-Pproject-file] [[+line] source1] [[+line] source2] ...
   Options:
-     --help              Show this help message and exit
-     --version           Show the GPS version and exit
-     --debug[=program]   Start a debug session and optionally load the
-                         program with the given arguments
-     --debugger debugger Specify the debugger's command line
-     --hide              Hide GPS main window
-     --host=tools_host   Use tools_host to launch tools (e.g. gdb)
-     --target=TARG:PRO   Load program on machine TARG using protocol PRO
-     --load=lang:file    Execute an external file written in the
-                         language lang
-     --eval=lang:file    Execute an in-line script written in the
-                         language lang
-     -XVAR=VALUE         Specify a value for a scenario variable
-     --readonly          Open all files in read-only mode
-     --server=port       Start GPS in server mode, opening a socket on the
-                         given port
-     --tracelist         Output the current configuration for logs
-     --traceon=name      Activate the logs for a given module
-     --traceoff=name     Deactivate the logs for a given module
-     --tracefile=file    Parse an alternate configuration file for the logs
-
-     --config=file       Specify the configuration file (.cgpr) to load
-     --autoconf          Generate .cgpr automatically if needed
-     --configdb=dir      Extra directories for gprconfig
+     --help                         Show this help message and exit
+     --version                      Show the GPS version and exit
+     --debug[=program]              Start a debug session and optionally load
+                                    the program with the given arguments
+     --debugger debugger            Specify the debugger's command line
+     --hide                         Hide GPS main window
+     --host=tools_host              Use tools_host to launch tools (e.g. gdb)
+     --target=TARG:PRO              Load program on machine TARG using protocol
+                                    PRO
+     --load=lang:file               Execute an external file written in the
+                                    language lang
+     --eval=lang:file               Execute an in-line script written in the
+                                    language lang
+     -XVAR=VALUE                    Specify a value for a scenario variable
+     --readonly                     Open all files in read-only mode
+     --server=port                  Start GPS in server mode, opening a socket
+                                    on the given port
+     --tracelist                    Output the current configuration for logs
+     --traceon=name                 Activate the logs for a given module
+     --traceoff=name                Deactivate the logs for a given module
+     --tracefile=file               Parse an alternate configuration file for
+                                    the logs
+     --config=file                  Specify the configuration file (.cgpr) to
+                                    load
+     --autoconf                     Generate .cgpr automatically if needed
+     --configdb=dir                 Extra directories for gprconfig
+     --ignore-saved-scenario-values Ignore the scenario values saved in .gps
 
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
