@@ -99,3 +99,4 @@ testsuite/bin/test_parse_cpp
 testsuite/bin/test_strings
 testsuite/bin/test_trie
 testsuite/share/
+testsuite/out
