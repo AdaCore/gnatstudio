@@ -2059,34 +2059,39 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      UR                       : constant Undo_Redo :=
-                                   new Undo_Redo_Information;
-      Module                   : Search_Module;
-      Selector                 : Simple_Scope_Selector;
-      Extra                    : Files_Extra_Scope;
-      Default_Options_Mask     : constant Search_Options_Mask :=
-                                   All_Options
-                                       and not Search_Backward
-                                           and not Supports_Incremental;
-      Command                  : Interactive_Command_Access;
-      Label                    : Contextual_Menu_Label_Creator;
-      Line_Numbers_Area_Filter : Action_Filter;
-      Submenu                  : Submenu_Factory;
+      UR                          : constant Undo_Redo :=
+                                      new Undo_Redo_Information;
+      Module                      : Search_Module;
+      Selector                    : Simple_Scope_Selector;
+      Extra                       : Files_Extra_Scope;
+      Default_Options_Mask        : constant Search_Options_Mask :=
+                                      All_Options
+                                          and not Search_Backward
+                                              and not Supports_Incremental;
+      Command                     : Interactive_Command_Access;
+      Label                       : Contextual_Menu_Label_Creator;
+      Line_Numbers_Area_Filter    : Action_Filter;
+      Submenu                     : Submenu_Factory;
 
-      Has_Type          : constant Action_Filter := new Has_Type_Filter;
-      Has_Parent_Type   : constant Action_Filter := new Has_Parent_Type_Filter;
-      Is_Access                : constant Action_Filter :=
-                                   new Is_Access_Type_Filter;
-      Is_Dispatching           : constant Action_Filter :=
-                                   new Is_Dispatching_Filter;
-      Src_Action_Context       : constant Action_Filter :=
-                                   new Src_Editor_Action_Context;
-      Writable_Src_Action_Context  : constant Action_Filter :=
-                                       new Writable_Src_Editor_Action_Context;
-      Is_Not_Makefile          : constant Action_Filter :=
-                                   new Is_Not_Makefile_Context;
-      Last_Editor_Context      : constant Action_Filter :=
-                                   new Last_Editor_Action_Context;
+      Has_Type                    : constant Action_Filter :=
+                                      new Has_Type_Filter;
+      Has_Parent_Type             : constant Action_Filter :=
+                                      new Has_Parent_Type_Filter;
+      Is_Access                   : constant Action_Filter :=
+                                      new Is_Access_Type_Filter;
+      Is_Dispatching              : constant Action_Filter :=
+                                      new Is_Dispatching_Filter;
+      Src_Action_Context          : constant Action_Filter :=
+                                      new Src_Editor_Action_Context;
+      No_Completion               : constant Action_Filter :=
+                                      new Completion_Context
+                                         (Is_Line_Movement => True);
+      Writable_Src_Action_Context : constant Action_Filter :=
+                                      new Writable_Src_Editor_Action_Context;
+      Is_Not_Makefile             : constant Action_Filter :=
+                                      new Is_Not_Makefile_Context;
+      Last_Editor_Context         : constant Action_Filter :=
+                                      new Last_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
@@ -2097,7 +2102,9 @@ package body Src_Editor_Module is
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo := UR;
-      Register_Filter (Kernel, Src_Action_Context, "Source editor");
+      Register_Filter (Kernel,
+                       Src_Action_Context and No_Completion,
+                       "Source editor");
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
