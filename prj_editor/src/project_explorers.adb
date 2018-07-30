@@ -1526,9 +1526,8 @@ package body Project_Explorers is
             Trace (Me, "Refilter");
             if Filter /= null then
                Set_Pattern (T.Tree.User_Filter, T.Kernel, Filter);
-            else
-               T.Tree.Refilter;
             end if;
+            T.Tree.Refilter;
             Trace (Me, "Done Refilter");
          end if;
       end;
