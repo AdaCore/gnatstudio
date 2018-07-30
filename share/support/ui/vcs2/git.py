@@ -589,12 +589,19 @@ class Git(core.VCS):
                 visitor.branches(
                     'stashes', 'vcs-stash-symbolic', not CAN_RENAME, stashes)
                 break
-            name, branch, descr = line.split(':', 2)
+            # Line can contain either
+            #   stash@{0}: On master: bla
+            # or
+            #   stash@{0}: bla
+            splits = line.split(':', 2)
+            name = splits[0]
+            descr = splits[-1]
+            annotation = splits[1]
             stashes.append(
                 GPS.VCS2.Branch(
                     name='%s: %s' % (name, descr),
                     active=False,
-                    annotation=branch,
+                    annotation=annotation,
                     id=name))
 
     def _worktrees(self, visitor):
