@@ -725,15 +725,25 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
     @staticmethod
     @workflows.run_as_workflow
-    def launch_diagram_loading_task(viewer, jsonfile, style):
+    def launch_diagram_loading_task(viewer, jsonfile, style, on_loaded=None):
+        """
+        Loads diagrams from the root jsonfile into the QGen_Diagram_Viewer
+        viewer object.
+        The style object is a JSON data representing styles information
+        defined in GPS.Browsers.Styles object used to skip Styles parsing
+        when possible (i.e. styles are copied from an existing diagram).
+        The on_loaded callback is called after the loading is finished if it
+        exists.
+        """
+
         logger.log("Lauching background diagram loading")
         workflows.task_workflow(
             'Loading referenced diagrams',
             QGEN_Diagram_Viewer.load_all_referenced_diagrams,
-            viewer=viewer, jsonfile=jsonfile, style=style)
+            viewer=viewer, jsonfile=jsonfile, style=style, on_loaded=on_loaded)
 
     @staticmethod
-    def load_all_referenced_diagrams(task, viewer, jsonfile, style):
+    def load_all_referenced_diagrams(task, viewer, jsonfile, style, on_loaded):
         json_dir = os.path.dirname(jsonfile)
         logger.log("Loading referenced diagrams from %s" % (jsonfile))
         idx = 0
@@ -748,6 +758,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 idx += 1
                 task.set_progress(idx, task_max)
         viewer.loading_complete = True
+
+        if on_loaded:
+            on_loaded(viewer)
+
         MDL_Language().should_refresh_constructs(viewer.file)
         GPS.Hook('file_edited').run(viewer.file)
 
@@ -815,13 +829,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
                     QGEN_Diagram_Viewer.launch_diagram_loading_task(
-                        v, jsonfile, v.diags.styles)
+                        v, jsonfile, v.diags.styles, on_loaded)
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
                     v.update_preloading_nav(root_diag)
-                if on_loaded:
-                    on_loaded(v)
 
             def __on_fail(reason):
                 pass
