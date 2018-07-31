@@ -12,6 +12,9 @@ debug_file = ""
 # True iff manual proof is active
 itp_started = False
 
+# True iff the proof tree was initially sent
+is_init = False
+
 # Gdk colors constants
 GREEN = Gdk.RGBA(0, 1, 0, 0.2)
 RED = Gdk.RGBA(1, 0, 0, 0.2)
@@ -37,6 +40,7 @@ HELP = "Help"
 HIGHFAILURE = "HighFailure"
 LINFORMATION = "information"
 UINFORMATION = "Information"
+INITIALIZATION_MESSAGE = "Session initialized successfully"
 INITIALIZED = "Initialized"
 INVALID = "Invalid"
 
@@ -166,6 +170,7 @@ def parse_notif(j, abs_tree, proof_task):
         tree model.
     """
 
+    global is_init
     global itp_started
 
     if not itp_started:
@@ -190,6 +195,7 @@ def parse_notif(j, abs_tree, proof_task):
         print_debug(NEW_NODE)
     elif notif_type == RESET_WHOLE_TREE:
         # Initializes the tree again
+        is_init = False
         tree.clear()
     elif notif_type == NODE_CHANGE:
         node_id = j[NODE_ID]
@@ -275,6 +281,8 @@ def parse_message(j):
     """ Parses a message (json object) sent by the itp server. It analyses and
         print the message on the itp console.
     """
+    global is_init
+
     notif_type = j[NOTIFICATION]
     message = j[LMESSAGE]
     message_type = message[MESS_NOTIF]
@@ -305,6 +313,8 @@ def parse_message(j):
     elif message_type == HELP:
         print_message(message[QHELP])
     elif message_type == UINFORMATION:
+        if message[LINFORMATION] == INITIALIZATION_MESSAGE:
+            is_init = True
         print_message(message[LINFORMATION])
     elif message_type == TASK_MONITOR:
         print_debug(notif_type)
@@ -337,6 +347,7 @@ class Tree:
 
     def __init__(self):
         """ Initializes the tree """
+        global is_init
 
         # Create a tree that can be appended anywhere
         self.box = Gtk.VBox()
@@ -362,6 +373,7 @@ class Tree:
         # roots is a list of nodes that does not have parents. When they are
         # all proved, we know the check is proved.
         self.roots = []
+        is_init = False
 
         cell = Gtk.CellRendererText(xalign=0)
         col2 = Gtk.TreeViewColumn(COLUMN_NAME)
@@ -512,7 +524,7 @@ class Tree:
         """ Check if all the roots are proved. If so, the check is proved and
             we can exit.
         """
-        b = True
+        b = is_init
         for node_id in self.roots:
             row = self.node_id_to_row_ref[node_id]
             path = row.get_path()
