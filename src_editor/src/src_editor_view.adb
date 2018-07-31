@@ -819,7 +819,6 @@ package body Src_Editor_View is
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
       V      : constant Source_View := Source_View (View);
-      Prev   : Boolean;
    begin
       --  Recompute the lines currently displayed
       Recompute_Visible_Area (V);
@@ -836,10 +835,7 @@ package body Src_Editor_View is
                   or else (V.Cursor_Position >= 0.0
                            and then V.Cursor_Position <= 1.0))
       then
-         Prev := V.Scrolling_Is_Done_By_User;
-         V.Scrolling_Is_Done_By_User := False;
          Scroll_To_Cursor_Location (V, Center);
-         V.Scrolling_Is_Done_By_User := Prev;
       end if;
    end Size_Allocated;
 
@@ -2235,6 +2231,11 @@ package body Src_Editor_View is
 
       View.Acquire_Focus;
 
+      --  If the user interacts with the editor, remove the flag
+      --  "Position_Set_Explicitely", so that the editor doesn't
+      --  scroll after the user has scrolled manually.
+      View.Cursor_Set_Explicitely := False;
+
       case Get_Event_Type (Event) is
          when Button_Press =>
             if Get_Button (Event) = 1 then
@@ -2652,13 +2653,6 @@ package body Src_Editor_View is
       --  ??? We use to force a refresh of the window, but not sure why this
       --  would be needed.
       Invalidate_Window (Src_View);
-
-      --  If the user is scrolling explicitly, remove the flag
-      --  "Position_Set_Explicitely", so that the editor doesn't
-      --  scroll after the user has scrolled manually.
-      if Src_View.Scrolling_Is_Done_By_User then
-         Src_View.Cursor_Set_Explicitely := False;
-      end if;
 
       --  Ensure that synchronized editors are also scrolled
 
