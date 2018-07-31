@@ -106,11 +106,15 @@ def to_completion_point(ed_loc):
        Find the beginning of the word currently being completed.
        Word = [a-zA-Z0-9_]
     """
-    return text_utils.forward_until(
-        ed_loc.forward_char(-1),
-        lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
-        backwards=True
-    ).forward_char()
+    loc = text_utils.forward_until(
+            ed_loc.forward_char(-1),
+            lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
+            backwards=True,
+        ).forward_char()
+    # Special case for a word beginning at (1, 1)
+    if ed_loc.line() == 1 and loc.column() == ed_loc.column():
+        loc = loc.beginning_of_line()
+    return loc
 
 
 class CompletionProposal(object):
