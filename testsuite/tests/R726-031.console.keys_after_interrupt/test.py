@@ -17,7 +17,7 @@ def driver():
     while not window:
         yield timeout(100)
         window = GPS.MDI.get("Run: hello"
-                             + ".exe" if sys.platform == "win32" else "")
+                             + (".exe" if sys.platform == "win32" else ""))
 
     view = pygps.get_widgets_by_type(Gtk.TextView, window.pywidget())[0]
 

@@ -19,7 +19,7 @@ def driver():
     while not window:
         yield timeout(100)
         window = GPS.MDI.get("Run: hello"
-                             + ".exe" if sys.platform == "win32" else "")
+                             + (".exe" if sys.platform == "win32" else ""))
 
     # Wait one second...
     yield timeout(1000)
