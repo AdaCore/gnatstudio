@@ -15,6 +15,7 @@ import GPS
 import os_utils
 import os.path
 import re
+import copy
 import gps_utils.gnat_rules
 
 prev_xml = ""
@@ -744,14 +745,16 @@ xmlTrailer = """
 
 def get_supported_warnings():
     global prev_xml
+    default_on = ""
     # Then retrieve warnings checks from gnatmake
     xml = """
        <popup label="Warnings">
        <expansion switch="--gnat-warnings="/>
-       <expansion switch="--gnat-warnings" alias="--gnat-warnings=a"/>
     """
     rules = gps_utils.gnat_rules.get_warnings_list("codepeer-gnatmake", "-h")
-    for r in rules:
+    for rule in rules:
+        r = copy.deepcopy(rule)
+        default_on += r.switch[6:] if r.default else ""
         r.switch = re.sub("-gnatw", "--gnat-warnings=", r.switch)
         r.switchoff = re.sub("-gnatw", "--gnat-warnings=", r.switchoff)
         r.label = re.sub("-gnatw", "--gnat-warnings=", r.label)
@@ -761,6 +764,9 @@ def get_supported_warnings():
             dep[0] = re.sub("-gnatw", "--gnat-warnings=", dep[0])
         xml += r.Xml(1, 1)
 
+    xml += "<expansion switch='--gnat-warnings' alias='--gnat-warnings="
+    xml += default_on
+    xml += "'/>"
     xml += "</popup>"
 
     if prev_xml != xml:
