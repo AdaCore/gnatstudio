@@ -17,6 +17,7 @@
 
 with GNAT.OS_Lib;
 with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
+with Ada.Containers.Ordered_Sets;
 
 package body Command_Lines is
 
@@ -64,7 +65,7 @@ package body Command_Lines is
    generic
       with procedure Process_Switch (Item : Switch);
    procedure Parse_One_Switch
-     (Cmd     : Command_Line;
+     (Config  : Command_Line_Configuration;
       Item    : Switch;
       Section : Unbounded_String;
       Prefix  : out Unbounded_String);
@@ -137,8 +138,40 @@ package body Command_Lines is
       Expanded : String;
       Section  : String := "")
    is
-      Name  : constant Unbounded_String := To_Unbounded_String (Section);
-      Conf  : Configuration_References.Element_Access;
+      package Unbounded_String_Sets is new Ada.Containers.Ordered_Sets
+        (Element_Type => Unbounded_String,
+         "<"          => "<");
+
+      procedure Process_Switch (Item : Command_Lines.Switch);
+      --  Append prefixed switch to ordered set
+
+      Set   : Unbounded_String_Sets.Set;
+
+      --------------------
+      -- Process_Switch --
+      --------------------
+
+      procedure Process_Switch (Item : Command_Lines.Switch) is
+      begin
+         if not Item.Parameter.Is_Set then
+            Set.Include (Item.Switch);
+         elsif Item.Parameter.Separator.Is_Set then
+            Set.Include
+              (Item.Switch
+               & Item.Parameter.Separator.Value
+               & Item.Parameter.Value);
+         else
+            Set.Include (Item.Switch & Item.Parameter.Value);
+         end if;
+      end Process_Switch;
+
+      procedure Parse_Switch is new Parse_One_Switch (Process_Switch);
+
+      Name   : constant Unbounded_String := To_Unbounded_String (Section);
+      Conf   : Configuration_References.Element_Access;
+      Short  : constant Unbounded_String := To_Unbounded_String (Switch);
+      Long   : Unbounded_String := To_Unbounded_String (Expanded);
+      Prefix : Unbounded_String;
    begin
       if Expanded'Length < Switch'Length then
          Define_Alias
@@ -157,13 +190,25 @@ package body Command_Lines is
          raise Invalid_Section;
       end if;
 
+      --  Try to find prefix and reorder switches after prefix. If we keep
+      --  Expanded unordered we won't be able to match it
+      Parse_Switch
+        (Config  => Config,
+         Item    => (Switch => Long, Parameter => (Is_Set => False)),
+         Section => Name,
+         Prefix  => Prefix);
+
+      if not Set.Is_Empty then
+         Long := Prefix;
+
+         for Item of Set loop
+            Append (Long, Delete (Item, 1, Length (Prefix)));
+         end loop;
+      end if;
+
       declare
-         Short  : constant Unbounded_String := To_Unbounded_String (Switch);
-         Long   : constant Unbounded_String := To_Unbounded_String (Expanded);
          Value  : Section_Configuration renames Conf.Sections (Name);
       begin
-         --  TODO: Sort part of alias after prefix
-
          Value.Aliases.Include (Short, Long);
          Value.Expanded.Include (Long, Short);
       end;
@@ -621,7 +666,7 @@ package body Command_Lines is
    ----------------------
 
    procedure Parse_One_Switch
-     (Cmd     : Command_Line;
+     (Config  : Command_Line_Configuration;
       Item    : Switch;
       Section : Unbounded_String;
       Prefix  : out Unbounded_String)
@@ -637,8 +682,9 @@ package body Command_Lines is
          Pos    : Positive) return Unbounded_String;
       --  Lookup for switch in Item.Switch starting from Pos
 
-      Sect   : Section_Configuration renames
-        Cmd.Configuration.Unchecked_Get.Sections (Section);
+      Conf : constant Configuration_References.Element_Access :=
+        Config.Unchecked_Get;
+      Sect : Section_Configuration renames Conf.Sections (Section);
 
       --------------------
       -- Find_Parameter --
@@ -706,8 +752,6 @@ package body Command_Lines is
       Arg    : Unbounded_String;
       Switch : Unbounded_String;
       From   : Positive;
-      Conf   : constant Configuration_References.Element_Access :=
-        Cmd.Configuration.Unchecked_Get;
    begin
       --  Expand alias if found
       if not Item.Parameter.Is_Set
@@ -841,7 +885,7 @@ package body Command_Lines is
          Sections.Insert (Section, Empty_Section);
       end if;
 
-      Parse_Switch (Cmd, Item, Section, Prefix);
+      Parse_Switch (Cmd.Configuration, Item, Section, Prefix);
 
       if not Appended then
          --  If we hadn't appended it before, do it now
@@ -1023,7 +1067,7 @@ package body Command_Lines is
 
       if Has_Parameter then
          Parse_Switch
-           (Cmd,
+           (Cmd.Configuration,
             (Switch    => Switch,
              Parameter =>
                (Is_Set    => True,
@@ -1033,7 +1077,7 @@ package body Command_Lines is
             Prefix);
       else
          Parse_Switch
-           (Cmd,
+           (Cmd.Configuration,
             (Switch => Switch,
              Parameter => (Is_Set => False)),
             Section,
