@@ -67,7 +67,7 @@ ENTITIES.ASSERT                   = no
 --  Deactivate LAL/LANKIT trace
 
 LEXICAL_ENV = no
-MAIN_TRACE = no
+LAL_MAIN_TRACE = no
 
 --  Deactivate SQL traces by default
 SQL.*                             = no
