@@ -483,9 +483,20 @@ package Src_Editor_Buffer is
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
-   function Ends_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   function Starts_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   function Inside_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+   function Ends_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
+
+   function Starts_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
+
+   function Inside_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
    --  Whether the iterator ends or starts a word. This takes '_' properly
    --  into account
 

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;                        use Ada.Calendar;
-with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
@@ -5043,24 +5042,23 @@ package body Src_Editor_Buffer is
    -- Ends_Word --
    ---------------
 
-   function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
+   function Ends_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter : Gtk_Text_Iter)
+      return Boolean
+   is
       Next : Gtk_Text_Iter;
       Res  : Boolean;
-      N    : Character;
    begin
-      --  ??? This implementation should be fixed to take the language into
-      --  account
+      if not Inside_Word (Buffer, Iter) then
+         return False;
+      end if;
+
       Copy (Iter, Next);
       Forward_Char (Next, Res);
 
       if Res then
-         N := Get_Char (Next);
-
-         if N = '_' then
-            return False;
-         else
-            return not Is_Alphanumeric (N);
-         end if;
+         return not Inside_Word (Buffer, Next);
       else
          return True;
       end if;
@@ -5070,24 +5068,23 @@ package body Src_Editor_Buffer is
    -- Starts_Word --
    -----------------
 
-   function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
+   function Starts_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean
+   is
       Prev : Gtk_Text_Iter;
       Res  : Boolean;
-      P    : Character;
    begin
-      --  ??? This implementation should be fixed to take the language into
-      --  account
+      if not Inside_Word (Buffer, Iter) then
+         return False;
+      end if;
+
       Copy (Iter, Prev);
       Backward_Char (Prev, Res);
 
       if Res then
-         P := Get_Char (Prev);
-
-         if P = '_' then
-            return False;
-         else
-            return not Is_Alphanumeric (P);
-         end if;
+         return not Inside_Word (Buffer, Prev);
       else
          return True;
       end if;
@@ -5097,11 +5094,14 @@ package body Src_Editor_Buffer is
    -- Inside_Word --
    -----------------
 
-   function Inside_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean is
+   function Inside_Word
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean is
    begin
-      --  ??? This implementation should be fixed to take the language into
-      --  account
-      return Gtk.Text_Iter.Inside_Word (Iter) or else Get_Char (Iter) = '_';
+      return Buffer.Lang.Is_Word_Char
+        (Wide_Wide_Character'Val
+           (Gunichar'(Get_Char (Iter))));
    end Inside_Word;
 
    -------------------------

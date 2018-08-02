@@ -1405,7 +1405,9 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       Get_Location (Iter, This, Iter, Success);
-      return Success and then Standard.Src_Editor_Buffer.Starts_Word (Iter);
+      return Success
+        and then Standard.Src_Editor_Buffer.Starts_Word
+          (This.Buffer.Contents.Buffer, Iter);
    end Starts_Word;
 
    ---------------
@@ -1419,7 +1421,9 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       Get_Location (Iter, This, Iter, Success);
-      return Success and then Standard.Src_Editor_Buffer.Ends_Word (Iter);
+      return Success
+        and then Standard.Src_Editor_Buffer.Ends_Word
+          (This.Buffer.Contents.Buffer, Iter);
    end Ends_Word;
 
    -----------------
@@ -1433,7 +1437,9 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       Get_Location (Iter, This, Iter, Success);
-      return Success and then Standard.Src_Editor_Buffer.Inside_Word (Iter);
+      return Success
+        and then Standard.Src_Editor_Buffer.Inside_Word
+          (This.Buffer.Contents.Buffer, Iter);
    end Inside_Word;
 
    ------------
