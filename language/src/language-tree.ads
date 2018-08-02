@@ -137,7 +137,6 @@ package Language.Tree is
       Cat_Structure,
       Cat_Case_Inside_Record,
       Cat_Union,
-      Cat_Declare_Block,
       Cat_Loop_Statement,
       Cat_If_Statement,
       Cat_Case_Statement,
