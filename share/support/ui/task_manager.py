@@ -381,11 +381,11 @@ class Tasks_View(Module):
             flags=Gtk.DialogFlags.MODAL or Gtk.DialogFlags.DESTROY_WITH_PARENT,
             parent=GPS.MDI.current().pywidget().get_toplevel())
 
-        l = Gtk.Label(
-            "The following tasks are running, do you want to quit GPS?\n"
-            "Warning: Quitting will kill all running tasks")
-        l.set_alignment(0.0, 0.0)
-        d.get_content_area().pack_start(l, False, False, 10)
+        label = Gtk.Label(
+                 "The following tasks are running, do you want to quit GPS?\n"
+                 "Warning: Quitting will kill all running tasks")
+        label.set_alignment(0.0, 0.0)
+        d.get_content_area().pack_start(label, False, False, 10)
 
         t = Tasks_View_Widget(hide_nonblocking=True)
         d.get_content_area().pack_start(t.box, True, True, 3)
@@ -397,7 +397,7 @@ class Tasks_View(Module):
 
         quit_button = d.add_button("gtk-quit", Gtk.ResponseType.YES)
         quit_button.grab_default()
-        cancel_button = d.add_button("gtk-cancel", Gtk.ResponseType.CANCEL)
+        d.add_button("gtk-cancel", Gtk.ResponseType.CANCEL)
 
         d.set_default_size(400, 300)
         d.show_all()
@@ -433,6 +433,9 @@ class Tasks_View(Module):
             self.HUD.start_monitoring()
         if self.widget is not None:
             self.widget.start_monitoring()
+
+    def on_view_destroy(self):
+        self.widget = None
 
     def create_view(self):
         self.widget = Tasks_View_Widget()

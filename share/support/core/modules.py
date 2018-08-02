@@ -32,7 +32,12 @@ Here is an example of use for this package::
         box = Gtk.VBox()
         button = Gtk.Button("Button")
         box.pack_start(button, False, False, 0)
+
+        self.stored_something = box
         return box
+
+    def on_view_destroy(self):
+        self.stored_something = None
 
 Sometimes, the module is wrapping an GPS.GUI object that has been created
 by GPS itself (for instance a :class:`GPS.Browsers.View`). Since
@@ -139,6 +144,7 @@ class Module(object):
         "preferences_changed",
         "semantic_tree_updated",
         "file_edited",
+        "location_changed",
         "project_changed",   # not called for the initial project
         "compilation_finished",
         "task_started")
@@ -185,6 +191,12 @@ class Module(object):
         Creates a new widget to present information to the user graphically.
         The widget should be created with pygobject, i.e. using Gtk.Button,
         Gtk.Box,...
+        """
+        return None
+
+    def on_view_destroy(self):
+        """
+        Called when the view is destroyed.
         """
         return None
 
@@ -351,6 +363,9 @@ class Module(object):
             except Exception as e:
                 GPS.Logger('MODULES').log('While loading desktop: %s' % (e, ))
 
+    def _on_view_destroy(self, data):
+        self.on_view_destroy()
+
     def get_child(self, allow_create=True):
         """
         Retrieve an existing view. If none exists and allow_create is True,
@@ -378,6 +393,7 @@ class Module(object):
                         title=self.view_title,
                         save_desktop=self._save_desktop,
                         flags=self.mdi_flags)
+                    child.pywidget().connect("destroy", self._on_view_destroy)
                     return child
         return None
 
