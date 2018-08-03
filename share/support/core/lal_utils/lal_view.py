@@ -35,6 +35,7 @@ class LAL_View_Widget():
         self.node_col.add_attribute(cell, "markup", COL_LABEL)
         self.node_col.add_attribute(cell, "foreground-rgba", COL_FOREGROUND)
         self.view.append_column(self.node_col)
+        self.view.connect("button_press_event", self._on_view_button_press)
 
         # Pack things together
         self.box.pack_start(self.message_label, False, False, 3)
@@ -60,6 +61,32 @@ class LAL_View_Widget():
 
         # Initialize the contents
         self.refresh()
+
+    def _on_view_button_press(self, _, event):
+        """React to a button_press on the view.
+        """
+
+        if event.get_click_count() == (True, 2):
+            # On a double click, select the node in the editor
+            buf = GPS.EditorBuffer.get(open=False)
+            if not buf:
+                return False
+
+            _, paths = self.view.get_selection().get_selected_rows()
+            if not paths:
+                return False
+
+            it = self.store.get_iter(paths[0])
+            row = self.store[it]
+            begin_loc = buf.at(row[COL_START_LINE], row[COL_START_COLUMN])
+
+            # Scroll to the location
+            buf.current_view().goto(begin_loc)
+
+            # Select the current node
+            buf.select(begin_loc,
+                       buf.at(row[COL_END_LINE], row[COL_END_COLUMN]))
+            return False
 
     def preferences_changed(self):
         """Apply the contents of the preferences"""
