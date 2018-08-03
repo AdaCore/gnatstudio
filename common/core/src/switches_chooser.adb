@@ -1159,6 +1159,8 @@ package body Switches_Chooser is
                            null;
                      end case;
 
+                     On_Command_Line_Changed
+                       (Root_Switches_Editor'Class (Editor));
                      Update_Graphical_Command_Line
                        (Root_Switches_Editor'Class (Editor));
                      return;
@@ -1262,7 +1264,6 @@ package body Switches_Chooser is
       procedure On_Command_Line_Changed
         (Editor   : in out Root_Switches_Editor'Class)
       is
-         Iter                : Command_Line_Iterator;
          Switch              : Switch_Description_Vectors.Cursor :=
                                  First (Editor.Config.Switches);
          Current_Radio_Group : Radio_Switch := -1;
@@ -1272,27 +1273,15 @@ package body Switches_Chooser is
          --  the separator for S if needed
 
          function Get_Param (S : Switch_Description) return String is
+            Param : constant Argument := Editor.Cmd_Line.Get_Parameter
+              (Switch  => To_String (S.Switch),
+               Section => To_String (S.Section));
          begin
-            if not Has_More (Iter) then
+            if Param.Is_Set then
+               return To_String (Param.Value);
+            else
                return "";
             end if;
-
-            declare
-               Param : constant String := Current_Parameter (Iter);
-            begin
-               case S.Separator is
-                  when ASCII.NUL | ASCII.LF | '=' | ASCII.CR | ' ' =>
-                     return Param;
-                  when others =>
-                     if Param'Length > 0
-                       and then Param (Param'First) = S.Separator
-                     then
-                        return Param (Param'First + 1 .. Param'Last);
-                     else
-                        return Param;
-                     end if;
-               end case;
-            end;
          end Get_Param;
 
       begin
@@ -1305,33 +1294,24 @@ package body Switches_Chooser is
          while Has_Element (Switch) loop
             declare
                S : constant Switch_Description := Element (Switch);
+               Switch_Found : constant Boolean := Editor.Cmd_Line.Has_Switch
+                   (Switch  => To_String (S.Switch),
+                    Section => To_String (S.Section));
             begin
-               Start (Editor.Cmd_Line, Iter, Expanded => True);
-               while Has_More (Iter) loop
-                  exit when To_String (S.Switch) = Current_Switch (Iter)
-                    and then To_String (S.Section) = Current_Section (Iter);
-                  exit when S.Typ = Switch_Check
-                    and then To_String (S.Switch_Unset) = Current_Switch (Iter)
-                    and then To_String (S.Section) = Current_Section (Iter);
-
-                  Next (Iter);
-               end loop;
-
                case S.Typ is
                   when Switch_Check =>
                      declare
-                        State      : Boolean;
-                        Is_Default : Boolean;
+                        State       : Boolean;
+                        Is_Default  : Boolean;
+                        Unset_Found : constant Boolean :=
+                          Editor.Cmd_Line.Has_Switch
+                            (Switch  => To_String (S.Switch_Unset),
+                             Section => To_String (S.Section));
                      begin
-                        if not Has_More (Iter) then
-                           Is_Default := True;
-                        else
-                           Is_Default := False;
-                        end if;
+                        Is_Default := not (Switch_Found or Unset_Found);
 
                         if not Is_Default then
-                           State := To_String (S.Switch) =
-                             Current_Switch (Iter);
+                           State := Switch_Found;
                         else
                            State := S.Default_State;
 
@@ -1399,7 +1379,7 @@ package body Switches_Chooser is
                            S.Typ,
                            Boolean'Image
                              (S.Group /= Current_Radio_Group
-                              or else Has_More (Iter)));
+                              or else Switch_Found));
                         Current_Radio_Group := S.Group;
                      end if;
 
@@ -1411,7 +1391,7 @@ package body Switches_Chooser is
                            Param : constant String := Get_Param (S);
                         begin
                            while Has_Element (Combo) loop
-                              if not Has_More (Iter) then
+                              if not Switch_Found then
                                  exit when Element (Combo).Value = S.No_Switch;
                               else
                                  exit when

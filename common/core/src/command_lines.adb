@@ -56,12 +56,6 @@ package body Command_Lines is
       Success       : out Boolean);
    --  The same as Remove_Switch but with Unbounded_String
 
-   function Has_Switch
-     (Cmd     : Command_Line;
-      Switch  : Unbounded_String;
-      Section : Unbounded_String) return Boolean;
-   --  The same as Has_Switch but with Unbounded_String
-
    generic
       with procedure Process_Switch (Item : Switch);
    procedure Parse_One_Switch
@@ -1124,62 +1118,61 @@ package body Command_Lines is
       Switch  : String;
       Section : String  := "") return Boolean is
    begin
-      return Has_Switch
-        (Cmd, To_Unbounded_String (Switch), To_Unbounded_String (Section));
-   end Has_Switch;
+      for Expanded in Boolean loop
+         declare
+            Iter : Command_Line_Iterator;
+         begin
+            Start (Cmd, Iter, Expanded);
 
-   ----------------
-   -- Has_Switch --
-   ----------------
-
-   function Has_Switch
-     (Cmd     : Command_Line;
-      Switch  : Unbounded_String;
-      Section : Unbounded_String) return Boolean
-   is
-      Pos : Switch_Vectors.Cursor;
-      Conf     : Configuration_References.Element_Access;
-      Prefix   : Unbounded_String;
-      Sections : Section_Map_References.Element_Access;
-   begin
-      if Cmd.Sections.Is_Null then
-         return False;
-      end if;
-
-      Conf := Cmd.Configuration.Unchecked_Get;
-      Prefix := Find_Prefix (Conf, Switch);
-      Sections := Cmd.Sections.Unchecked_Get;
-
-      if not Sections.Contains (Section) then
-         return False;
-      end if;
-
-      declare
-         Sect  : Command_Lines.Section renames Sections.all (Section);
-      begin
-         if Prefix /= "" then
-            return Sect.Prefixes.Contains (Prefix) and then
-              Sect.Prefixes (Prefix).Contains (Switch);
-         end if;
-
-         Pos := Sect.Switches.First;
-
-         while Switch_Vectors.Has_Element (Pos) loop
-            declare
-               Item : constant Command_Lines.Switch :=
-                 Switch_Vectors.Element (Pos);
-            begin
-               if Item.Switch = Switch then
+            while Has_More (Iter) loop
+               if Current_Switch (Iter) = Switch
+                 and then Current_Section (Iter) = Section
+               then
                   return True;
                end if;
 
-               Switch_Vectors.Next (Pos);
-            end;
-         end loop;
+               Next (Iter);
+            end loop;
+         end;
+      end loop;
 
-         return False;
-      end;
+      return False;
    end Has_Switch;
+
+   -------------------
+   -- Get_Parameter --
+   -------------------
+
+   function Get_Parameter
+     (Cmd     : Command_Line;
+      Switch  : String;
+      Section : String  := "") return Argument is
+   begin
+      for Expanded in Boolean loop
+         declare
+            Iter : Command_Line_Iterator;
+         begin
+            Start (Cmd, Iter, Expanded);
+
+            while Has_More (Iter) loop
+               declare
+                  Current : constant Command_Lines.Switch :=
+                    Current_Switch (Iter);
+               begin
+                  if Current.Switch = Switch
+                    and then Current_Section (Iter) = Section
+                  then
+                     return Current.Parameter;
+                  end if;
+
+                  Next (Iter);
+               end;
+            end loop;
+         end;
+      end loop;
+
+      return (Is_Set => False);
+   end Get_Parameter;
 
    -----------
    -- Start --
@@ -1231,22 +1224,6 @@ package body Command_Lines is
          return (Argument_Maps.Key (Iter.Argument),
                  Argument_Maps.Element (Iter.Argument));
       else
-         raise Constraint_Error;
-      end if;
-   end Current_Switch;
-
-   --------------------
-   -- Current_Switch --
-   --------------------
-
-   function Current_Switch (Iter : Command_Line_Iterator) return String is
-      Result : Unbounded_String;
-   begin
-      if Switch_Vectors.Has_Element (Iter.Switch) then
-         Result := Switch_Vectors.Element (Iter.Switch).Switch;
-      elsif Iter.Expanded then
-         return To_String (Argument_Maps.Key (Iter.Argument));
-      else
          --  Collect all prefixed switches into one single switch
          declare
             Map    : constant Argument_Maps.Map :=
@@ -1254,10 +1231,10 @@ package body Command_Lines is
             Cursor : Argument_Maps.Cursor := Map.First;
             Arg    : Argument;
             Text   : Unbounded_String;
-            Strip   : Natural;
+            Result : Unbounded_String :=
+              Prefixed_Switch_Maps.Key (Iter.Prefixed);
+            Strip  : constant Natural := Length (Result);
          begin
-            Result := Prefixed_Switch_Maps.Key (Iter.Prefixed);
-            Strip := Length (Result);
             while Argument_Maps.Has_Element (Cursor) loop
                Text := Argument_Maps.Key (Cursor);
                Delete (Text, 1, Strip);  --  Drop prefix, we have it already
@@ -1271,9 +1248,18 @@ package body Command_Lines is
                Argument_Maps.Next (Cursor);
             end loop;
 
+            return (Result, (Is_Set => False));
          end;
       end if;
+   end Current_Switch;
 
+   --------------------
+   -- Current_Switch --
+   --------------------
+
+   function Current_Switch (Iter : Command_Line_Iterator) return String is
+      Result : Unbounded_String := Current_Switch (Iter).Switch;
+   begin
       if not Iter.Expanded then
          --  Try to shring aliases
          declare

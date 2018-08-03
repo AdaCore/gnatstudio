@@ -294,6 +294,12 @@ package Command_Lines is
       end case;
    end record;
 
+   function Get_Parameter
+     (Cmd     : Command_Line;
+      Switch  : String;
+      Section : String  := "") return Argument;
+   --  Return parameter of given Switch in given Section
+
    function Map
      (Cmd    : Command_Line;
       Update : access procedure
