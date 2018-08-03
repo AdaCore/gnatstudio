@@ -24,6 +24,7 @@ with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Messages.Legacy;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with UTF8_Utils;                   use UTF8_Utils;
 
 package body Build_Command_Manager.Console_Writers is
 
@@ -177,10 +178,19 @@ package body Build_Command_Manager.Console_Writers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Console_Writer;
       Item    : String;
-      Command : access Root_Command'Class) is
+      Command : access Root_Command'Class)
+   is
+      Success : aliased Boolean := True;
+      UTF8    : constant String := Unknown_To_UTF8 (Item, Success'Access);
    begin
-      Self.Console.Insert_With_Links_Protected (Item, Add_LF => False);
-      Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
+      if Success then
+         Self.Console.Insert_With_Links_Protected (UTF8, Add_LF => False);
+         Tools_Output_Parser (Self.all).Parse_Standard_Output (UTF8, Command);
+      else
+         Insert (Get_Console_Messages_Window (Self.Console),
+                 "Could not convert process output to UTF-8",
+                 Mode => Error);
+      end if;
    end Parse_Standard_Output;
 
    ---------
