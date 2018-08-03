@@ -44,6 +44,14 @@ class LAL_View_Widget():
         scroll.add(self.view)
         self.box.pack_start(scroll, True, True, 3)
 
+        # The contextual menu
+        self.menu = Gtk.Menu()
+        item = Gtk.MenuItem()
+        item.set_label("view in Python Console")
+        item.connect("activate", self._on_view_in_python_console)
+        self.menu.append(item)
+        self.menu.show_all()
+
         # This is the current location
         self.file = None
         self.line = 1
@@ -62,9 +70,36 @@ class LAL_View_Widget():
         # Initialize the contents
         self.refresh()
 
+    def _selected_row(self):
+        """Return the selected row in self, if any"""
+        _, paths = self.view.get_selection().get_selected_rows()
+        if not paths:
+            return None
+
+        it = self.store.get_iter(paths[0])
+        return self.store[it]
+
+    def _on_view_in_python_console(self, _):
+        """Contextual menu 'view in Python console'"""
+        row = self._selected_row()
+        if not row:
+            return False
+
+        GPS.execute_action("open Python")
+        GPS.Console("Python").add_input(
+            "node = lal_utils.node('{}', {}, {})".format(
+                row[COL_LABEL].split(" ")[0][3:-4],
+                row[COL_START_LINE],
+                row[COL_START_COLUMN]))
+
     def _on_view_button_press(self, _, event):
         """React to a button_press on the view.
         """
+
+        if event.button == 3:
+            # On this button, raise the contextual menu
+            self.menu.popup(None, None, None, None, 3, 0)
+            return False
 
         if event.get_click_count() == (True, 2):
             # On a double click, select the node in the editor
@@ -72,12 +107,9 @@ class LAL_View_Widget():
             if not buf:
                 return False
 
-            _, paths = self.view.get_selection().get_selected_rows()
-            if not paths:
+            row = self._selected_row()
+            if not row:
                 return False
-
-            it = self.store.get_iter(paths[0])
-            row = self.store[it]
             begin_loc = buf.at(row[COL_START_LINE], row[COL_START_COLUMN])
 
             # Scroll to the location
