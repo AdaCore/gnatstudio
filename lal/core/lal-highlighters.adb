@@ -17,11 +17,12 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
+with Ada.Wide_Wide_Characters.Handling;  use Ada.Wide_Wide_Characters.Handling;
 
-with Basic_Types;                      use Basic_Types;
+with Basic_Types;                        use Basic_Types;
 with GNATCOLL.VFS;
 with LAL.Core_Module;
-with Langkit_Support.Slocs;
+with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
 with Language;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -35,8 +36,15 @@ package body LAL.Highlighters is
       To     : Positive);
    --  Remove any highlight related styles from text span in the Buffer
 
+   function Check_Keyword
+     (Loc : Source_Location_Range) return Boolean is
+       (Loc.End_Column - Loc.Start_Column in 9 | 10 | 12);
+   --  We use this function to reduce number of "identifier is keyword" tests
+   --  Should be ib sync with To_Style implementation
+
    function To_Style
      (Token     : Libadalang.Lexer.Token_Kind;
+      Text      : Wide_Wide_String;
       In_Aspect : Boolean) return String;
    --  Get the name of a style name from a language token
 
@@ -346,15 +354,34 @@ package body LAL.Highlighters is
 
    function To_Style
      (Token     : Libadalang.Lexer.Token_Kind;
+      Text      : Wide_Wide_String;
       In_Aspect : Boolean) return String
    is
       use Libadalang.Lexer;
    begin
       case Token is
+         when Ada_Identifier =>
+            --  LAL doesn't treat some keywords as keywords, so let's check
+            if (Text'Length = 9
+                and then Text (Text'First) in 'i' | 'I'
+                and then To_Lower (Text) = "interface")
+              or else (Text'Length = 9
+                and then Text (Text'First) in 'p' | 'P'
+                and then To_Lower (Text) = "protected")
+              or else (Text'Length = 10
+                and then Text (Text'First) in 'p' | 'P'
+                and then To_Lower (Text) = "overriding")
+              or else (Text'Length = 12
+                and then Text (Text'First) in 's' | 'S'
+                and then To_Lower (Text) = "synchronized")
+            then
+               return Aspect_Prefix ("keyword", In_Aspect);
+            end if;
+
+            return Aspect_Prefix ("", In_Aspect);
          when Ada_Termination |
               Ada_Lexing_Failure |
-              Ada_Whitespace |
-              Ada_Identifier =>
+              Ada_Whitespace =>
             return Aspect_Prefix ("", In_Aspect);
          when
               Ada_Abort |
@@ -506,7 +533,13 @@ package body LAL.Highlighters is
          declare
             Token : constant Libadalang.Lexer.Stored_Token_Data :=
               Data (Index, Self.TDH);
-            Style : constant String := To_Style (Token.Kind, False);
+            Loc   : constant Source_Location_Range :=
+              Libadalang.Lexer.Sloc_Range (Token);
+            Image : constant Wide_Wide_String :=
+              (if Check_Keyword (Loc)
+               then Libadalang.Lexer.Text (Self.TDH, Token) else "");
+
+            Style : constant String := To_Style (Token.Kind, Image, False);
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
             Start : constant Visible_Column_Type :=
@@ -537,7 +570,6 @@ package body LAL.Highlighters is
    is
       use Libadalang.Analysis;
       use Libadalang.Common;
-      use Langkit_Support.Slocs;
       package L renames Libadalang.Lexer;
 
       type Context is record
@@ -727,8 +759,11 @@ package body LAL.Highlighters is
             Done  : Boolean := False;
             Top   : constant Context := Stack.Last_Element;
             Token : constant Token_Data_Type := Data (Index);
-            Style : constant String := To_Style (Kind (Token), Top.In_Aspect);
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
+            Image : constant Wide_Wide_String :=
+              (if Check_Keyword (Loc) then Text (Index) else "");
+            Style : constant String :=
+              To_Style (Kind (Token), Image, Top.In_Aspect);
             Line  : constant Positive := Positive (Loc.Start_Line);
             Start : constant Visible_Column_Type :=
               Visible_Column_Type (Loc.Start_Column);
