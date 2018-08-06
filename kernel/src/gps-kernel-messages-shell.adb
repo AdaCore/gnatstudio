@@ -63,11 +63,6 @@ package body GPS.Kernel.Messages.Shell is
    -- Local subprograms --
    -----------------------
 
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Message  : Message_Access);
-   --  Set data in Instance to Message
-
    function Get_Message (Instance : Class_Instance) return Message_Access;
    --  Return Message stored in Instance.
    --  Return null if the message is no longer valid.

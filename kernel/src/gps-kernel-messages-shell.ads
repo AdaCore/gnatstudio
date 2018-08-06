@@ -35,4 +35,9 @@ package GPS.Kernel.Messages.Shell is
       return GPS.Kernel.Messages.Message_Access;
    --  Returns message associated with instance.
 
+   procedure Set_Data
+     (Instance : GNATCOLL.Scripts.Class_Instance;
+      Message  : Message_Access);
+   --  Set data in Instance to Message
+
 end GPS.Kernel.Messages.Shell;

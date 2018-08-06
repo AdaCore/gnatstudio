@@ -705,11 +705,13 @@ class GNATprove_Parser(tool_output.OutputParser):
                 extra = {}
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
-                    self.act_on_extra_info(m, extra, artifact_dir, command)
 
             if GPS.Preference(Display_Analysis_Report).get():
                 self.analysis_tool.add_message(
                     m, self.get_rule_id_for_msg(m, extra))
+
+            if extra:
+                self.act_on_extra_info(m, extra, artifact_dir, command)
 
         GPS.Analysis.display_report()
 

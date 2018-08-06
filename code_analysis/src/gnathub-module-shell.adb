@@ -161,6 +161,8 @@ package body GNAThub.Module.Shell is
               (New_Message);
 
             Message.Remove;
+
+            Set_Data (Message_Inst, Message_Access (New_Message));
          end;
       end if;
    end Analysis_Tool_Commands_Handler;
