@@ -81,11 +81,12 @@ package body LAL.Semantic_Trees is
       --  Implementation of Semantic_Tree
 
       type Tree is new Semantic_Tree with record
-         Kernel  : GPS.Core_Kernels.Core_Kernel;
-         Context : Libadalang.Analysis.Analysis_Context;
-         File    : GNATCOLL.VFS.Virtual_File;
-         Unit    : access Libadalang.Analysis.Analysis_Unit :=
+         Kernel   : GPS.Core_Kernels.Core_Kernel;
+         Context  : Libadalang.Analysis.Analysis_Context;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Unit     : access Libadalang.Analysis.Analysis_Unit :=
            new Libadalang.Analysis.Analysis_Unit;
+         Provider : access constant LAL.Semantic_Trees.Provider;
       end record;
 
       overriding function Root_Iterator
@@ -113,7 +114,7 @@ package body LAL.Semantic_Trees is
       --  Implementation of Semantic_Node
 
       type Node is new Semantic_Node with record
-         Kernel   : GPS.Core_Kernels.Core_Kernel;
+         Provider : access constant LAL.Semantic_Trees.Provider;
          Ada_Node : Libadalang.Analysis.Ada_Node;
       end record;
 
@@ -640,7 +641,7 @@ package body LAL.Semantic_Trees is
       begin
          return Result : Node_Arrays.Node_Array (Vector'Length) do
             for J in Vector'Range loop
-               Result.Data (J) := (Kernel   => Self.Kernel,
+               Result.Data (J) := (Provider => Self.Provider,
                                    Ada_Node => Vector (J));
             end loop;
          end return;
@@ -659,7 +660,7 @@ package body LAL.Semantic_Trees is
          Result    : Libadalang.Analysis.Ada_Node;
       begin
          if Exposed.Next (Result) then
-            return Node'(Kernel => Self.Kernel, Ada_Node => Result);
+            return Node'(Provider => Self.Provider, Ada_Node => Result);
          else
             return No_Semantic_Node;
          end if;
@@ -679,7 +680,7 @@ package body LAL.Semantic_Trees is
          if Result = No_Ada_Node then
             return No_Semantic_Node;
          else
-            return Node'(Kernel => Self.Kernel, Ada_Node => Result);
+            return Node'(Provider => Self.Provider, Ada_Node => Result);
          end if;
       end Parent;
 
@@ -707,7 +708,7 @@ package body LAL.Semantic_Trees is
                   declare
                      Token : constant Token_Reference := Node.Token_Start;
                   begin
-                     return Self.Kernel.Symbols.Find
+                     return Self.Provider.Kernel.Symbols.Find
                        (Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode
                           (Text (Token)));
                   end;
@@ -726,7 +727,8 @@ package body LAL.Semantic_Trees is
                         end if;
                      end loop;
 
-                     return Self.Kernel.Symbols.Find (To_String (Image));
+                     return Self.Provider.Kernel.Symbols.Find
+                       (To_String (Image));
                   end;
 
                when Ada_Defining_Name =>
@@ -967,15 +969,15 @@ package body LAL.Semantic_Trees is
       begin
          case Self.Ada_Node.Kind is
             when Ada_Classic_Subp_Decl =>
-               return Self.Kernel.Symbols.Find
+               return Self.Provider.Kernel.Symbols.Find
                  (To_Profile
                     (Self.Ada_Node.As_Classic_Subp_Decl.F_Subp_Spec));
             when Ada_Base_Subp_Body =>
-               return Self.Kernel.Symbols.Find
+               return Self.Provider.Kernel.Symbols.Find
                  (To_Profile
                     (Self.Ada_Node.As_Base_Subp_Body.F_Subp_Spec));
             when Ada_Generic_Subp_Decl  =>
-               return Self.Kernel.Symbols.Find
+               return Self.Provider.Kernel.Symbols.Find
                  (To_Profile
                     (Self.Ada_Node.As_Generic_Subp_Decl.
                          F_Subp_Decl.F_Subp_Spec));
@@ -1043,7 +1045,7 @@ package body LAL.Semantic_Trees is
       begin
          Image (Image'First) := 'U';
 
-         return Self.Kernel.Symbols.Find (Image);
+         return Self.Provider.Kernel.Symbols.Find (Image);
       end Unique_Id;
 
       ----------------
@@ -1095,7 +1097,7 @@ package body LAL.Semantic_Trees is
             others => <>)
          do
             Result.Done := not Result.Cursor.Next (Result.Node.Ada_Node);
-            Result.Node.Kernel := Self.Kernel;
+            Result.Node.Provider := Self.Provider;
          end return;
       end Root_Iterator;
 
@@ -1122,7 +1124,7 @@ package body LAL.Semantic_Trees is
          begin
             return Result : Node_Arrays.Node_Array (Vector'Length) do
                for J in Vector'Range loop
-                  Result.Data (J) := (Kernel   => Self.Kernel,
+                  Result.Data (J) := (Provider => Self.Provider,
                                       Ada_Node => Vector (J));
                end loop;
             end return;
@@ -1198,8 +1200,6 @@ package body LAL.Semantic_Trees is
            (Line_Number (Sloc.Line), Column_Number (Sloc.Column));
 
          Node     : Libadalang.Analysis.Ada_Node := No_Ada_Node;
-         Result   : Nodes.Node;
-         Category : Language.Language_Category;
       begin
          if Root /= No_Ada_Node then
             Loc := Adjust_Source_Location (Loc);
@@ -1208,15 +1208,19 @@ package body LAL.Semantic_Trees is
 
          while Node /= No_Ada_Node loop
             if Is_Exposed (Node) then
-               Result := (Kernel => Self.Kernel, Ada_Node => Node);
-               Category := Result.Category;
-
-               --  Apply Category_Filter if present
-               if Category_Filter'Length = 0 or else
-                 (for some Element of Category_Filter => Element = Category)
-               then
-                  return Result;
-               end if;
+               declare
+                  Result : constant Nodes.Node :=
+                    (Provider => Self.Provider, Ada_Node => Node);
+                  Category : constant Language.Language_Category :=
+                    Result.Category;
+               begin
+                  --  Apply Category_Filter if present
+                  if Category_Filter'Length = 0 or else
+                    (for some Element of Category_Filter => Element = Category)
+                  then
+                     return Result;
+                  end if;
+               end;
             end if;
 
             Node := Node.Parent;
@@ -1291,10 +1295,13 @@ package body LAL.Semantic_Trees is
       Name   : constant GNATCOLL.VFS.Filesystem_String := File.Full_Name;
 
       Result : constant Trees.Tree :=
-        Trees.Tree'(Kernel  => Self.Kernel,
-                    Context => Self.Context,
-                    File    => File,
-                    Unit    => <>);
+        Trees.Tree'(Kernel   => Self.Kernel,
+                    Context  => Self.Context,
+                    File     => File,
+                    Unit     => <>,
+                    Provider => Self'Unchecked_Access);  --  We have only
+      --  one Provider and its lifespan is the same as GPS instance, so it's
+      --  save to get access to it.
    begin
       if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then
          Result.Unit.all :=
