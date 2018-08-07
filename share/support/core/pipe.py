@@ -28,11 +28,6 @@ commands:
 from GPS import Preference, EditorBuffer, Process, CommandWindow
 from gps_utils import interactive
 
-Preference("External Commands:Pipe/bgcolor").create(
-    "Background color", "color",
-    "Background color for the command window"
-    " where you enter the command to execute", "yellow")
-
 
 def sel_pipe(command, buffer=None):
     """Process the current selection in BUFFER through COMMAND,
@@ -91,7 +86,6 @@ class ShellProcess (CommandWindow):
         CommandWindow.__init__(self, global_window=True,
                                prompt="Shell command:",
                                on_activate=self.on_activate)
-        self.set_background(Preference("External Commands:Pipe/bgcolor").get())
 
     def on_activate(self, shell_command):
         sel_pipe(shell_command)

@@ -1080,7 +1080,7 @@ package body Bookmark_Views is
             Flags                    => Message_Flags_For_Bookmarks,
             Allow_Auto_Jump_To_First => False);
          Msg.Set_Highlighting
-           (Bookmark_Default_Style, Length => Highlight_None);
+           (Bookmark_Default_Style, Length => Highlight_Whole_Line);
          Msg.Set_Action
            (new Line_Information_Record'
               (Text         => Null_Unbounded_String,

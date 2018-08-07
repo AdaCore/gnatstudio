@@ -159,7 +159,6 @@ package GPS.Kernel.Preferences is
    View_Fixed_Font          : Font_Preference;
    Small_Font               : Font_Preference;
 
-   Tooltips_Background      : Color_Preference;
    Command_Windows_Bg_Color : Color_Preference;
 
    Use_Native_Dialogs       : Boolean_Preference;

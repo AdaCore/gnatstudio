@@ -31,7 +31,6 @@ with GNAT.Strings;              use GNAT.Strings;
 with Cairo;                     use Cairo;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Dnd;                   use Gdk.Dnd;
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 
 with Glib.Main;
@@ -149,9 +148,6 @@ package body GPS.Main_Window is
 
    Theme_Specific_Css_Provider : Gtk_Css_Provider;
    --  Provider for the gps-<theme>.css file
-
-   Tooltips_Background_Provider : Gtk.Css_Provider.Gtk_Css_Provider;
-   --  Global variable used to override the background color for tooltips
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -613,39 +609,6 @@ package body GPS.Main_Window is
             Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
                                Icon_Size_Large_Toolbar, Toolbar_Icons);
          end case;
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Tooltips_Background)
-      then
-         if Tooltips_Background.Get_Pref = White_RGBA then
-            --  Fallback to default color
-            if Tooltips_Background_Provider /= null then
-               Remove_Provider_For_Screen
-                 (Get_Default_Screen (Get_Default),
-                  +Tooltips_Background_Provider);
-               Tooltips_Background_Provider := null;
-            end if;
-
-         else
-            if Tooltips_Background_Provider = null then
-               Gtk_New (Tooltips_Background_Provider);
-               Add_Provider_For_Screen
-                 (Get_Default_Screen (Get_Default),
-                  +Tooltips_Background_Provider,
-                  Priority => Gtk.Style_Provider.Priority_Theme);
-               Unref (Tooltips_Background_Provider);
-            end if;
-
-            if not Tooltips_Background_Provider.Load_From_Data
-              ("@define-color tooltip-background-color "
-               & To_String (Tooltips_Background.Get_Pref) & ";",
-               Err'Access)
-            then
-               Trace (Me, "Error setting tooltip color: "
-                      & Get_Message (Err));
-            end if;
-         end if;
       end if;
 
       Configure_MDI (Kernel, Pref);

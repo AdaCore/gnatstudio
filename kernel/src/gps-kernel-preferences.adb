@@ -561,13 +561,6 @@ package body GPS.Kernel.Preferences is
                       & "(Outline, Locations, Messages, ...)."),
          Label   => -"Monospace font");
 
-      Tooltips_Background := Manager.Create
-        (Path    => -"General/Custom Styles:Other",
-         Name    => "Tooltips-Background-Color",
-         Label   => -"Tooltips background",
-         Doc     => -"Background color for tooltips, defaults to gtk+ theme.",
-         Default => "#FFFFFF");
-
       Command_Windows_Bg_Color := Manager.Create
         (Path    => -"General/Custom Styles:Other",
          Name    => "Command-Windows-Background-Color",
