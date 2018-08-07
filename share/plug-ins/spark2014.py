@@ -524,10 +524,12 @@ class GNATprove_Parser(tool_output.OutputParser):
         # a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
         if GPS.Preference(Display_Analysis_Report).get():
-            self.analysis_tool = GPS.AnalysisTool('SPARK')
+            self.analysis_tool = GPS.AnalysisTool('GNATprove')
 
-            # create a rule for all the messages not related with SPARK itself
+            # create rules for all the messages not related with SPARK itself
             # (e.g: GNAT warnings etc.).
+            self.analysis_tool.add_rule('warnings', 'WARNINGS')
+            self.analysis_tool.add_rule('informational', 'INFORMATIONAL')
             self.analysis_tool.add_rule('errors', 'ERRORS')
 
             # create the SPARK rules from the '--list-categories' switch
@@ -602,6 +604,10 @@ class GNATprove_Parser(tool_output.OutputParser):
         """
         if 'rule' in extra:
             return extra['rule']
+        elif 'warning:' in m.get_text():
+            return 'WARNINGS'
+        elif 'info:' in m.get_text():
+            return 'INFORMATIONAL'
         else:
             return 'ERRORS'
 
