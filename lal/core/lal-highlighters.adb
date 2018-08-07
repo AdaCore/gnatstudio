@@ -40,7 +40,7 @@ package body LAL.Highlighters is
      (Loc : Source_Location_Range) return Boolean is
        (Loc.End_Column - Loc.Start_Column in 9 | 10 | 12);
    --  We use this function to reduce number of "identifier is keyword" tests
-   --  Should be ib sync with To_Style implementation
+   --  Should be in sync with To_Style implementation
 
    function To_Style
      (Token     : Libadalang.Lexer.Token_Kind;
@@ -369,7 +369,7 @@ package body LAL.Highlighters is
                 and then Text (Text'First) in 'p' | 'P'
                 and then To_Lower (Text) = "protected")
               or else (Text'Length = 10
-                and then Text (Text'First) in 'p' | 'P'
+                and then Text (Text'First) in 'o' | 'O'
                 and then To_Lower (Text) = "overriding")
               or else (Text'Length = 12
                 and then Text (Text'First) in 's' | 'S'
