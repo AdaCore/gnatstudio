@@ -5,7 +5,7 @@
 --  however.
 
 --  Configure the traces format
-
+JEDI_PARSER=yes
 DEBUG.COLORS=yes
 DEBUG.ABSOLUTE_TIME=yes
 DEBUG.ABSOLUTE_DATE=no

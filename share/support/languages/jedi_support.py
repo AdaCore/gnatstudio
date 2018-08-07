@@ -4,18 +4,10 @@ Its aim is to integrate the jedi (python auto-completion API)
 into GPS.
 """
 
-import os
-import sys
 from itertools import chain
 
-try:
-    import jedi
-except ImportError:
-    # If import fails, add the manual install path of jedi to:
-    # sys.path list.
-    sys.path.append(os.path.join(os.path.dirname(__file__), "jedi"))
-    import jedi
-
+import jedi
+import sys
 import GPS
 from completion import CompletionResolver, CompletionProposal
 import completion
@@ -49,9 +41,10 @@ class PythonResolver(CompletionResolver):
            Overridden method.
            Returns a list of completion objects for GPS.
         """
+        buf = loc.buffer()
 
         # this works only on Python files
-        if loc.buffer().file().language() != "python":
+        if buf.file().language() != "python":
             return []
 
         # check if the current char can belong to an identifier
@@ -60,18 +53,18 @@ class PythonResolver(CompletionResolver):
                 (current_char in ['_', '.'] or current_char.isalnum())):
             return []
 
-        sys_path_backup = list(sys.path)
-        self.source_dirs.update([loc.buffer().file().directory()])
-        sys.path = sys.path + list(self.source_dirs)
+        self.source_dirs.update([buf.file().directory()])
 
         try:
             # filter out ^L in source text
-            text = loc.buffer().get_chars()
+            text = buf.get_chars(buf.at(1, 1), loc)
             # text = text.replace('\x0c', ' ')
+
             # Feed Jedi API
             script = jedi.Script(
                 source=text,
                 line=loc.line(),
+                sys_path=list(self.source_dirs) + sys.path,
                 column=loc.column() - 1,
             )
 
@@ -85,14 +78,12 @@ class PythonResolver(CompletionResolver):
                 for i in script.completions()
                 if i.name.startswith(self.__prefix)),
                 key=lambda d: d.name)
-        except:
+        except Exception:
             jedi_log = GPS.Logger("JEDI_PARSING")
             jedi_log.log("jedi fails to parse:" +
                          loc.buffer().file().path)
             result = []
 
-        # restore sys.path before exit
-        sys.path = sys_path_backup
         return result
 
     def get_completion_prefix(self, loc):
