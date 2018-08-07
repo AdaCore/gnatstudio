@@ -179,7 +179,7 @@ package body GNAThub.Filters_Views is
 
    package Views is new Generic_Views.Simple_Views
      (Module_Name        => "gnathub_filters",
-      View_Name          => "GNATHub Filters",
+      View_Name          => "Filters",
       Formal_View_Record => Filters_View_Record,
       Formal_MDI_Child   => Filters_Child_Record,
       Reuse_If_Exist     => True,
