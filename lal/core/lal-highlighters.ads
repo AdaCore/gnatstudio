@@ -18,6 +18,8 @@
 
 with GPS.Editors;
 limited with LAL.Core_Module;
+private with Ada.Containers.Hashed_Sets;
+private with GNATCOLL.VFS;
 private with Langkit_Support.Diagnostics;
 private with Libadalang.Lexer;
 
@@ -43,10 +45,17 @@ package LAL.Highlighters is
 
 private
 
+   package File_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => GNATCOLL.VFS.Virtual_File,
+      Hash                => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Elements => GNATCOLL.VFS."=",
+      "="                 => GNATCOLL.VFS."=");
+
    type Highlighter is tagged limited record
       Module : access LAL.Core_Module.LAL_Module_Id_Record'Class;
       TDH    : Libadalang.Lexer.Token_Data_Handlers.Token_Data_Handler;
       Diags  : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
+      Broken : File_Sets.Set;
    end record;
 
 end LAL.Highlighters;

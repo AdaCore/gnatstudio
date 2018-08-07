@@ -20,7 +20,6 @@ with Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Handling;  use Ada.Wide_Wide_Characters.Handling;
 
 with Basic_Types;                        use Basic_Types;
-with GNATCOLL.VFS;
 with LAL.Core_Module;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
 with Language;
@@ -741,6 +740,13 @@ package body LAL.Highlighters is
       Node  : Ada_Node;
    begin
       if Root.Is_Null then
+         --  LAL was unable to parse the file, remember it to rehighlight
+         --  whole file later
+         Self.Broken.Include (File);
+         return;
+      elsif Self.Broken.Contains (File) then
+         Self.Broken.Delete (File);
+         Self.Highlight_Using_Tree (Buffer, 1, Buffer.Lines_Count);
          return;
       end if;
 

@@ -8206,7 +8206,9 @@ package body Src_Editor_Buffer is
          From_Line => From,
          To_Line   => To);
 
-      Buffer.Highlight_Needed := False;
+      if Phase = 2 then
+         Buffer.Highlight_Needed := False;
+      end if;
    end Run_Highlight_Hook;
 
    -------------------------
