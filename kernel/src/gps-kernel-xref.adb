@@ -51,7 +51,9 @@ with Gtk.Tree_Store;                 use Gtk.Tree_Store;
 with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtkada.Handlers;                use Gtkada.Handlers;
+with Gtkada.Style;                   use Gtkada.Style;
 with System;                         use System;
+with Tooltips;
 
 package body GPS.Kernel.Xref is
 
@@ -939,6 +941,20 @@ package body GPS.Kernel.Xref is
 
       return To_String (Self.Text);
    end Get_Text;
+
+   -------------------------------
+   -- Get_HTML_Profile_Formater --
+   -------------------------------
+
+   function Get_HTML_Profile_Formater return Profile_Formater'Class is
+      Color_For_Optional_Param : constant String :=
+        To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color));
+   begin
+      return Result : HTML_Profile_Formater do
+         Result.Color_For_Optional_Param :=
+           To_Unbounded_String (Color_For_Optional_Param);
+      end return;
+   end Get_HTML_Profile_Formater;
 
    -------------------
    -- Documentation --

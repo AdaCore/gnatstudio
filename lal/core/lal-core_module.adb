@@ -86,11 +86,13 @@ package body LAL.Core_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel  : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config  : Use_LAL_Configuration;
-      Legacy  : Language.Tree.Database.Tree_Language_Access;
-      Charset : String;
-      Result  : out LAL_Module_Id)
+     (Kernel     : access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Config     : Use_LAL_Configuration;
+      Doc_Before : Boolean;
+      Legacy     : Language.Tree.Database.Tree_Language_Access;
+      Charset    : String;
+      Formater   : LAL.Semantic_Trees.Profile_Formater_Factory;
+      Result     : out LAL_Module_Id)
    is
       Editor_Buffer_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("EditorBuffer");
@@ -117,7 +119,11 @@ package body LAL.Core_Module is
 
       Kernel.Register_Tree_Provider
         (Language.Ada.Ada_Lang,
-         new Provider'(Config, (Module.Kernel, Module.Context)));
+         new Provider'(Config => Config,
+                       Nested => (Module.Kernel,
+                                  Module.Context,
+                                  Formater,
+                                  Doc_Before)));
 
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
       Result := Module;

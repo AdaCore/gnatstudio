@@ -21,14 +21,21 @@ with GNATCOLL.VFS;
 
 with GPS.Core_Kernels;
 
+with Language.Profile_Formaters;
 with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
 with Libadalang.Analysis;               use Libadalang.Analysis;
 
 package LAL.Semantic_Trees is
 
+   type Profile_Formater_Factory is access
+     function return Language.Profile_Formaters.Profile_Formater'Class;
+
    type Provider is new Semantic_Tree_Provider with record
-      Kernel  : GPS.Core_Kernels.Core_Kernel;
-      Context : Libadalang.Analysis.Analysis_Context;
+      Kernel   : GPS.Core_Kernels.Core_Kernel;
+      Context  : Libadalang.Analysis.Analysis_Context;
+      Formater : Profile_Formater_Factory;
+
+      Doc_Search_Before_First : Boolean;
    end record;
 
    overriding function Get_Tree_For_File

@@ -22,9 +22,10 @@ with Language.Tree.Database;
 package LAL.Module is
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access);
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Config     : Use_LAL_Configuration;
+      Doc_Before : Boolean;
+      Legacy     : Language.Tree.Database.Tree_Language_Access);
    --  Register module
 
 end LAL.Module;

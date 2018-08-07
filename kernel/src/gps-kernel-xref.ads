@@ -149,6 +149,8 @@ package GPS.Kernel.Xref is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Xref actions and hooks.
 
+   function Get_HTML_Profile_Formater return Profile_Formater'Class;
+
 private
 
    type GPS_General_Xref_Database_Record is new General_Xref_Database_Record

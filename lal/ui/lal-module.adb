@@ -20,6 +20,7 @@ with GPS.Editors;
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
+with GPS.Kernel.Xref;
 with LAL.Core_Module;
 
 package body LAL.Module is
@@ -79,9 +80,10 @@ package body LAL.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access)
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Config     : Use_LAL_Configuration;
+      Doc_Before : Boolean;
+      Legacy     : Language.Tree.Database.Tree_Language_Access)
    is
       Default_Charset : constant String := GPS.Kernel.Charsets.Get_File_Charset
         (GNATCOLL.VFS.No_File);
@@ -89,11 +91,13 @@ package body LAL.Module is
       Module := new LAL_UI_Module_Id_Record;
 
       LAL.Core_Module.Register_Module
-        (Kernel  => Kernel,
-         Config  => Config,
-         Legacy  => Legacy,
-         Charset => Default_Charset,
-         Result  => Module.Core);
+        (Kernel     => Kernel,
+         Config     => Config,
+         Doc_Before => Doc_Before,
+         Legacy     => Legacy,
+         Charset    => Default_Charset,
+         Formater   => GPS.Kernel.Xref.Get_HTML_Profile_Formater'Access,
+         Result     => Module.Core);
 
       Highlight_Range_Hook.Add (Module.Hook'Access);
    end Register_Module;

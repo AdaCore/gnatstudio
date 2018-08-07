@@ -26,8 +26,8 @@ with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
 package LAL.Switching_Tree_Providers is
 
    type Provider is new Semantic_Tree_Provider with record
-      Config : Use_LAL_Configuration;
-      Nested : LAL.Semantic_Trees.Provider;
+      Config   : Use_LAL_Configuration;
+      Nested   : LAL.Semantic_Trees.Provider;
    end record;
 
    overriding function Get_Tree_For_File

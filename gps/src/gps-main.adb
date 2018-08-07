@@ -2351,7 +2351,8 @@ procedure GPS.Main is
           LAL.Use_LAL_In_COV       => Use_LAL_In_COV.Get_Pref,
           LAL.Use_LAL_In_Indent    => Use_LAL_In_Indent.Get_Pref,
           LAL.Use_LAL_In_Highlight => Use_LAL_In_Highlight.Get_Pref),
-         Legacy => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
+         Doc_Before => Doc_Search_Before_First.Get_Pref,
+         Legacy     => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
 
       if Active (CPP_Trace) then
          Cpp_Module.Register_Module (GPS_Main.Kernel);
