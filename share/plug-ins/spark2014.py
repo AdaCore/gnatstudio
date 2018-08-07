@@ -692,6 +692,10 @@ class GNATprove_Parser(tool_output.OutputParser):
         imported_units = set()
         extra = {}
 
+        report_should_be_displayed = GPS.Preference(
+            Display_Analysis_Report).get()
+        report_displayed = False
+
         for m in GPS.Message.list("Builder results"):
             text = get_comp_text(m)
             if text in self.msg_id:
@@ -706,14 +710,16 @@ class GNATprove_Parser(tool_output.OutputParser):
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
 
-            if GPS.Preference(Display_Analysis_Report).get():
+            if report_should_be_displayed:
                 self.analysis_tool.add_message(
                     m, self.get_rule_id_for_msg(m, extra))
 
             if extra:
                 self.act_on_extra_info(m, extra, artifact_dir, command)
 
-        GPS.Analysis.display_report()
+            if not report_displayed and report_should_be_displayed:
+                GPS.Analysis.display_report()
+                report_displayed = True
 
         if self.child is not None:
             self.child.on_exit(status, command)
