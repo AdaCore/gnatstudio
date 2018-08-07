@@ -90,6 +90,7 @@ package body KeyManager_Module is
      (Event    : Gdk.Event.Gdk_Event;
       Msg      : String;
       Key      : out Gdk_Key_Type;
+      Button   : out Guint;
       Modifier : out Gdk_Modifier_Type);
    --  Read the key typed by the user. This procedure takes care of normalizing
    --  the shortcut, for instance when Caps Lock was pressed, or taking
@@ -222,6 +223,7 @@ package body KeyManager_Module is
    procedure Get_Secondary_Keymap
      (Table  : in out Key_Htable.Instance;
       Key    : Gdk_Key_Type;
+      Button : Guint;
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access);
    --  Get or create a secondary keymap in Table
@@ -278,10 +280,11 @@ package body KeyManager_Module is
       Use_Markup      : Boolean := True;
       Return_Multiple : Boolean := True) return String;
    procedure Get_Shortcut_Simple
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Key        : out Gdk.Types.Gdk_Key_Type;
-      Mods       : out Gdk.Types.Gdk_Modifier_Type);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type);
    --  Implement the kernel interface for retrieving key shortcuts
 
    ------------------------------
@@ -357,10 +360,14 @@ package body KeyManager_Module is
                   --  Key will be 0 if we have voluntarily saved an invalid
                   --  binding to indicate the binding should be disabled on the
                   --  next startup.
-                  if Get_Key (Iter).Key /= 0 then
+                  if Get_Key (Iter).Key /= 0
+                    or else Get_Key (Iter).Button /= 0
+                  then
                      Child.Value := new String'
                        (Prefix
-                        & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                        & Image (Get_Key (Iter).Key,
+                          Get_Key (Iter).Button,
+                          Get_Key (Iter).Modifier));
                   end if;
 
                   Add_Child (File, Child, Append => True);
@@ -372,6 +379,7 @@ package body KeyManager_Module is
                           (Binding.Keymap.Table,
                            Prefix & Image
                              (Get_Key (Iter).Key,
+                              Get_Key (Iter).Button,
                               Get_Key (Iter).Modifier) & ' ',
                            N + 1, Level, More_Levels);
                      else
@@ -503,7 +511,10 @@ package body KeyManager_Module is
          end loop;
       end Call_Handlers;
 
-      if Event_Type = Key_Press or else Event_Type = Key_Release then
+      if Event_Type = Key_Press
+        or else Event_Type = Key_Release
+        or else Event_Type = Button_Press
+      then
          --  Check that the current input window is not modal.
          --  In the case that we have a modal dialog, we do not want to
          --  interpret key shortcuts. For instance, if a "Continue Search?"
@@ -521,26 +532,6 @@ package body KeyManager_Module is
                end if;
             end if;
          end;
-
-      elsif Event_Type = Button_Release
-         and then Event.Button.Button = 4
-         and then Execute_Action
-            (Kernel, "backward locations history",
-             Context => Kernel.Get_Current_Context,
-             Event  => Event,
-             Error_Msg_In_Console => True)
-      then
-         return;
-
-      elsif Event_Type = Button_Release
-         and then Event.Button.Button = 5
-         and then Execute_Action
-            (Kernel, "forward locations history",
-             Context => Kernel.Get_Current_Context,
-             Event  => Event,
-             Error_Msg_In_Console => True)
-      then
-         return;
 
       elsif Event_Type = Button_Release then
          --  The command will be executed by gtk, we don't know exactly how
@@ -605,6 +596,7 @@ package body KeyManager_Module is
    begin
       return Keys_Header_Num
         ((Long_Integer (Key.Key)
+         + Long_Integer (if Key.Button /= 0 then 1000 + Key.Button else 0)
          + Long_Integer (Key.Modifier) * 16#FFFF#)
           mod Long_Integer (Keys_Header_Num'Last + 1));
    end Hash;
@@ -710,9 +702,10 @@ package body KeyManager_Module is
       Real_Action : constant String := Action_From_Menu (Kernel, Action);
 
       procedure Bind_Internal
-        (Table       : in out Key_Htable.Instance;
-         Default_Key : Gdk.Types.Gdk_Key_Type;
-         Default_Mod : Gdk.Types.Gdk_Modifier_Type);
+        (Table          : in out Key_Htable.Instance;
+         Default_Key    : Gdk.Types.Gdk_Key_Type;
+         Default_Button : Guint;
+         Default_Mod    : Gdk.Types.Gdk_Modifier_Type);
       --  Internal version that allows setting the Changed attribute
 
       -------------------
@@ -720,18 +713,22 @@ package body KeyManager_Module is
       -------------------
 
       procedure Bind_Internal
-        (Table       : in out Key_Htable.Instance;
-         Default_Key : Gdk.Types.Gdk_Key_Type;
-         Default_Mod : Gdk.Types.Gdk_Modifier_Type)
+        (Table          : in out Key_Htable.Instance;
+         Default_Key    : Gdk.Types.Gdk_Key_Type;
+         Default_Button : Guint;
+         Default_Mod    : Gdk.Types.Gdk_Modifier_Type)
       is
          Tmp, Binding3, Binding2 : Key_Description_List;
          Success : Boolean;
          pragma Unreferenced (Success);
       begin
          if not Remove_Existing_Actions_For_Shortcut
-           or else (Default_Key = 0 and then Default_Mod = 0)
+           or else (Default_Key = 0
+                    and then Default_Button = 0
+                    and then Default_Mod = 0)
          then
-            Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+            Binding3 := Get
+              (Table, Key_Binding'(Default_Key, Default_Button, Default_Mod));
 
             --  Check whether the same action is already attached to this key.
             --  ??? When we have a menu, we should check the underlying action
@@ -768,10 +765,12 @@ package body KeyManager_Module is
                User_Defined => Save_In_Keys_XML,
                Keymap  => null,
                Next    => Tmp);
-            Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
+            Set (Table, Key_Binding'
+                   (Default_Key, Default_Button, Default_Mod), Binding2);
             Update_Shortcuts_For_Action (Kernel, Real_Action);
          else
-            Binding2 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+            Binding2 := Get
+              (Table, Key_Binding'(Default_Key, Default_Button, Default_Mod));
             while Binding2 /= null loop
                if Binding2.Action /= null then
                   Update_Shortcuts_For_Action (Kernel, Binding2.Action.all);
@@ -779,11 +778,13 @@ package body KeyManager_Module is
                Binding2 := Binding2.Next;
             end loop;
 
-            Remove (Table, Key_Binding'(Default_Key, Default_Mod));
+            Remove
+              (Table, Key_Binding'(Default_Key, Default_Button, Default_Mod));
          end if;
       end Bind_Internal;
 
       Partial_Key           : Gdk_Key_Type;
+      Partial_Button        : Guint;
       Modif                 : Gdk_Modifier_Type;
       First, Last           : Integer;
       Keymap                : Keymap_Access;
@@ -816,7 +817,7 @@ package body KeyManager_Module is
       if Key = "" or else Key = -Disabled_String then
          --  Bind to an invalid key, so that when saving we know this should be
          --  removed
-         Bind_Internal (Table, 0, 0);
+         Bind_Internal (Table, 0, 0, 0);
          return;
       end if;
 
@@ -827,13 +828,14 @@ package body KeyManager_Module is
             Last := Last + 1;
          end loop;
 
-         Value (Key (First .. Last - 1), Partial_Key, Modif);
+         Value (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
          if Last > Key'Last then
             if Keymap = null then
-               Bind_Internal (Table, Partial_Key, Modif);
+               Bind_Internal (Table, Partial_Key, Partial_Button, Modif);
             else
-               Bind_Internal (Keymap.Table, Partial_Key, Modif);
+               Bind_Internal
+                 (Keymap.Table, Partial_Key, Partial_Button, Modif);
             end if;
 
          else
@@ -847,12 +849,16 @@ package body KeyManager_Module is
                B : Key_Description_List;
             begin
                if Keymap = null then
-                  B := Get (Table, Key_Binding'(Partial_Key, Modif));
-                  Get_Secondary_Keymap (Table, Partial_Key, Modif, Keymap);
-               else
-                  B := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
+                  B := Get
+                    (Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
                   Get_Secondary_Keymap
-                    (Keymap.Table, Partial_Key, Modif, Keymap);
+                    (Table, Partial_Key, Partial_Button, Modif, Keymap);
+               else
+                  B := Get
+                    (Keymap.Table, Key_Binding'
+                       (Partial_Key, Partial_Button, Modif));
+                  Get_Secondary_Keymap
+                    (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
                end if;
 
                while B /= null loop
@@ -1023,10 +1029,11 @@ package body KeyManager_Module is
    procedure Get_Secondary_Keymap
      (Table  : in out Key_Htable.Instance;
       Key    : Gdk_Key_Type;
+      Button : Guint;
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access)
    is
-      Binding  : Key_Description_List := Get (Table, (Key, Modif));
+      Binding  : Key_Description_List := Get (Table, (Key, Button, Modif));
       Binding2 : Key_Description_List;
    begin
       if Binding = null then
@@ -1036,7 +1043,7 @@ package body KeyManager_Module is
             User_Defined => False,
             Keymap  => Keymap,
             Next    => null);
-         Set (Table, (Key, Modif), Binding);
+         Set (Table, (Key, Button, Modif), Binding);
 
       else
          Binding2 := Binding;
@@ -1068,13 +1075,25 @@ package body KeyManager_Module is
      (Event    : Gdk.Event.Gdk_Event;
       Msg      : String;
       Key      : out Gdk_Key_Type;
+      Button   : out Guint;
       Modifier : out Gdk_Modifier_Type)
    is
-      State : constant Gdk_Modifier_Type := Event.Key.State;
+      State : Gdk_Modifier_Type;
    begin
+      Key    := 0;
+      Button := 0;
+
+      if Get_Event_Type (Event) = Key_Press then
+         State := Event.Key.State;
+         Key   := Get_Key_Val (Event);
+
+      elsif Get_Event_Type (Event) = Button_Press then
+         State  := Event.Button.State;
+         Button := Get_Button (Event);
+      end if;
+
       --  Remove any num-lock and caps-lock modifiers
       Modifier := State and Get_Default_Mod_Mask;
-      Key := Event.Key.Keyval;
 
       --  If Caps lock in on, and the key is an upper-case character,
       --  lower-case it.
@@ -1089,7 +1108,7 @@ package body KeyManager_Module is
       if Active (Me) then
          Trace (Me, Msg & " Key=" & Key'Img & " Modif=" & Modifier'Img
                 & " Code=" & Event.Key.Hardware_Keycode'Img
-                & " => " & Image (Key, Modifier)
+                & " => " & Image (Key, Button, Modifier)
                 & " / "
                 & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
                 & " / "
@@ -1116,7 +1135,8 @@ package body KeyManager_Module is
      (Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
-      Key              : Gdk_Key_Type;
+      Key              : Gdk_Key_Type := 0;
+      Button           : Guint := 0;
       Modif            : Gdk_Modifier_Type;
       Binding          : Key_Description_List;
       Has_Secondary    : constant Boolean :=
@@ -1147,9 +1167,11 @@ package body KeyManager_Module is
       --  key shortcuts to F1, F2, Home, PageUp,.. so is not desirable.
 
       if Keymanager_Module.Active
-        and then Get_Event_Type (Event) = Key_Press
+        and then
+          (Get_Event_Type (Event) = Key_Press
+           or else Get_Event_Type (Event) = Button_Press)
       then
-         Get_Normalized_Key (Event, "Press", Key, Modif);
+         Get_Normalized_Key (Event, "Press", Key, Button, Modif);
 
          --  If we are pressing down CTRL, enter Hyper Mode
 
@@ -1208,10 +1230,10 @@ package body KeyManager_Module is
          end if;
 
          if Keymanager_Module.Secondary_Keymap = null then
-            Binding := Get (Keymanager_Module.Table.all, (Key, Modif));
+            Binding := Get (Keymanager_Module.Table.all, (Key, Button, Modif));
          else
             Binding := Get
-              (Keymanager_Module.Secondary_Keymap.Table, (Key, Modif));
+              (Keymanager_Module.Secondary_Keymap.Table, (Key, Button, Modif));
          end if;
 
          --  If we didn't find anything in the first attempt but the
@@ -1239,11 +1261,11 @@ package body KeyManager_Module is
             if Keymanager_Module.Secondary_Keymap = null then
                Binding := Get
                  (Keymanager_Module.Table.all,
-                  (Key, Modif - Shift_Mask));
+                  (Key, Button, Modif - Shift_Mask));
             else
                Binding := Get
                  (Keymanager_Module.Secondary_Keymap.Table,
-                  (Key, Modif - Shift_Mask));
+                  (Key, Button, Modif - Shift_Mask));
             end if;
          end if;
 
@@ -1328,7 +1350,7 @@ package body KeyManager_Module is
          end if;
 
       elsif Get_Event_Type (Event) = Key_Release then
-         Get_Normalized_Key (Event, "Release", Key, Modif);
+         Get_Normalized_Key (Event, "Release", Key, Button, Modif);
 
          --  If we are releasing CTRL, enter Hyper Mode
 
@@ -1679,15 +1701,16 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null then
-                  Trace (Debug, P & ' ' & Image (Key.Key, Key.Modifier) & ' '
-                         & Binding.Action.all
-                         & " user=" & Binding.User_Defined'Img);
+                  Trace (Debug, P & ' ' &
+                           Image (Key.Key, Key.Button, Key.Modifier) & ' ' &
+                           Binding.Action.all &
+                           " user=" & Binding.User_Defined'Img);
                end if;
 
                if Binding.Keymap /= null then
                   Dump_Table
                     (Binding.Keymap.Table,
-                     Prefix & " " & Image (Key.Key, Key.Modifier));
+                     Prefix & " " & Image (Key.Key, Key.Button, Key.Modifier));
                end if;
 
                Binding := Binding.Next;
@@ -1817,15 +1840,18 @@ package body KeyManager_Module is
         (Iter   : Key_Htable.Cursor;
          Prefix : String) return String is
       begin
-         if For_Display then
-            return Prefix
-              & Gtk.Accel_Group.Accelerator_Get_Label
+         if For_Display
+           and then Get_Key (Iter).Key /= 0
+         then
+            return Prefix &
+              Gtk.Accel_Group.Accelerator_Get_Label
               (Get_Key (Iter).Key,
                Get_Key (Iter).Modifier);
          else
-            return Prefix
-              & Image (Get_Key (Iter).Key,
-                       Get_Key (Iter).Modifier);
+            return Prefix &
+              Image (Get_Key (Iter).Key,
+                     Get_Key (Iter).Button,
+                     Get_Key (Iter).Modifier);
          end if;
       end Get_Key_Img;
 
@@ -1844,7 +1870,9 @@ package body KeyManager_Module is
 
             --  If we have voluntarily assigned an invalid binding to indicate
             --  a key should be removed, ignore this here as well.
-            if Get_Key (Iter).Key = 0 then
+            if Get_Key (Iter).Key = 0
+              and then Get_Key (Iter).Button = 0
+            then
                Binding := null;
             end if;
 
@@ -1859,7 +1887,8 @@ package body KeyManager_Module is
 
                elsif Equal (Binding.Action.all, Action,
                             Case_Sensitive => False)
-                 and then Get_Key (Iter).Key /= 0
+                 and then (Get_Key (Iter).Key /= 0
+                           or else Get_Key (Iter).Button /= 0)
                then
                   if Return_Multiple
                     or else Result = Null_Unbounded_String
@@ -1979,10 +2008,11 @@ package body KeyManager_Module is
    -------------------------
 
    procedure Get_Shortcut_Simple
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Action     : String;
-      Key        : out Gdk.Types.Gdk_Key_Type;
-      Mods       : out Gdk.Types.Gdk_Modifier_Type)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type)
    is
       pragma Unreferenced (Kernel);
       Iter    : Key_Htable.Cursor;
@@ -1995,7 +2025,9 @@ package body KeyManager_Module is
 
          --  If we have voluntarily assigned an invalid binding to indicate
          --  a key should be removed, ignore this here as well.
-         if Get_Key (Iter).Key = 0 then
+         if Get_Key (Iter).Key = 0
+           and then Get_Key (Iter).Button = 0
+         then
             Binding := null;
          end if;
 
@@ -2003,10 +2035,12 @@ package body KeyManager_Module is
             if Binding.Action /= null
               and then Equal
                 (Binding.Action.all, Action, Case_Sensitive => False)
-              and then Get_Key (Iter).Key /= 0
+              and then (Get_Key (Iter).Key /= 0
+                        or else Get_Key (Iter).Button /= 0)
             then
-               Key := Get_Key (Iter).Key;
-               Mods := Get_Key (Iter).Modifier;
+               Key    := Get_Key (Iter).Key;
+               Button := Get_Key (Iter).Button;
+               Mods   := Get_Key (Iter).Modifier;
                return;
             end if;
 
@@ -2016,8 +2050,9 @@ package body KeyManager_Module is
          Get_Next (Keymanager_Module.Table.all, Iter);
       end loop;
 
-      Key := 0;
-      Mods := 0;
+      Key    := 0;
+      Button := 0;
+      Mods   := 0;
    end Get_Shortcut_Simple;
 
    ---------------
@@ -2166,12 +2201,13 @@ package body KeyManager_Module is
       elsif Command = "lookup_actions_from_key" then
          Name_Parameters (Data, (1 => Key_Cst'Access));
          declare
-            Key         : constant String := Nth_Arg (Data, 1);
-            Binding     : Key_Description_List;
-            Keymap      : Keymap_Access := null;
-            First, Last : Integer;
-            Partial_Key : Gdk_Key_Type;
-            Modif       : Gdk_Modifier_Type;
+            Key            : constant String := Nth_Arg (Data, 1);
+            Binding        : Key_Description_List;
+            Keymap         : Keymap_Access := null;
+            First, Last    : Integer;
+            Partial_Key    : Gdk_Key_Type;
+            Partial_Button : Guint;
+            Modif          : Gdk_Modifier_Type;
          begin
             Set_Return_Value_As_List (Data);
 
@@ -2182,14 +2218,16 @@ package body KeyManager_Module is
                   Last := Last + 1;
                end loop;
 
-               Value (Key (First .. Last - 1), Partial_Key, Modif);
+               Value (Key (First .. Last - 1),
+                      Partial_Key, Partial_Button, Modif);
 
                if Last > Key'Last then
                   if Keymap = null then
                      Binding := Get (Keymanager_Module.Table.all,
-                                     (Partial_Key, Modif));
+                                     (Partial_Key, Partial_Button, Modif));
                   else
-                     Binding := Get (Keymap.Table, (Partial_Key, Modif));
+                     Binding := Get
+                       (Keymap.Table, (Partial_Key, Partial_Button, Modif));
                   end if;
 
                   while Binding /= No_Key loop
@@ -2205,10 +2243,11 @@ package body KeyManager_Module is
                   if Keymap = null then
                      Get_Secondary_Keymap
                        (Keymanager_Module.Table.all,
-                        Partial_Key, Modif, Keymap);
+                        Partial_Key, Partial_Button, Modif, Keymap);
                   else
                      Get_Secondary_Keymap
-                       (Keymap.Table, Partial_Key, Modif, Keymap);
+                       (Keymap.Table, Partial_Key,
+                        Partial_Button, Modif, Keymap);
                      exit when Keymap = null;
                   end if;
                end if;
@@ -2643,12 +2682,13 @@ package body KeyManager_Module is
    is
       use Ada.Strings.Unbounded;
 
-      Partial_Key : Gdk_Key_Type;
-      Modif       : Gdk_Modifier_Type;
-      First, Last : Integer;
-      Keymap      : Keymap_Access;
-      List        : Key_Description_List;
-      Actions     : Unbounded_String := Null_Unbounded_String;
+      Partial_Key    : Gdk_Key_Type;
+      Partial_Button : Guint;
+      Modif          : Gdk_Modifier_Type;
+      First, Last    : Integer;
+      Keymap         : Keymap_Access;
+      List           : Key_Description_List;
+      Actions        : Unbounded_String := Null_Unbounded_String;
    begin
       First := Key'First;
       while First <= Key'Last loop
@@ -2657,14 +2697,18 @@ package body KeyManager_Module is
             Last := Last + 1;
          end loop;
 
-         Value (Key (First .. Last - 1), Partial_Key, Modif);
+         Value (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
          if Keymap = null then
-            List := Get (Bindings.all, Key_Binding'(Partial_Key, Modif));
-            Get_Secondary_Keymap (Bindings.all, Partial_Key, Modif, Keymap);
+            List := Get
+              (Bindings.all, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            Get_Secondary_Keymap
+              (Bindings.all, Partial_Key, Partial_Button, Modif, Keymap);
          else
-            List := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
-            Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
+            List := Get
+              (Keymap.Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            Get_Secondary_Keymap
+              (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
          end if;
 
          while List /= null loop
@@ -2692,12 +2736,13 @@ package body KeyManager_Module is
       Separator : Character := ASCII.LF) return String
    is
       use Ada.Strings.Unbounded;
-      Partial_Key : Gdk_Key_Type;
-      Modif       : Gdk_Modifier_Type;
-      First, Last : Integer;
-      Keymap      : Keymap_Access;
-      List        : Key_Description_List;
-      Result      : Unbounded_String;
+      Partial_Key    : Gdk_Key_Type;
+      Partial_Button : Guint;
+      Modif          : Gdk_Modifier_Type;
+      First, Last    : Integer;
+      Keymap         : Keymap_Access;
+      List           : Key_Description_List;
+      Result         : Unbounded_String;
 
       procedure Dump_Actions (Bindings : Key_Htable.Instance; Prefix : String);
       --  Dump all actions whose table is designated by Bindings
@@ -2724,11 +2769,13 @@ package body KeyManager_Module is
                     (Result,
                      List.Action.all
                      & " (" & Prefix & ' '
-                     & Image (Key.Key, Key.Modifier) & ')' & Separator);
+                     & Image
+                       (Key.Key, Key.Button, Key.Modifier) & ')' & Separator);
                   if List.Keymap /= null then
                      Dump_Actions
                        (List.Keymap.Table,
-                        Prefix & ' ' & Image (Key.Key, Key.Modifier));
+                        Prefix & ' ' & Image
+                          (Key.Key, Key.Button, Key.Modifier));
                   end if;
                end if;
                List := List.Next;
@@ -2747,14 +2794,18 @@ package body KeyManager_Module is
             Last := Last + 1;
          end loop;
 
-         Value (Key (First .. Last - 1), Partial_Key, Modif);
+         Value (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
          if Keymap = null then
-            List := Get (Bindings.all, Key_Binding'(Partial_Key, Modif));
-            Get_Secondary_Keymap (Bindings.all, Partial_Key, Modif, Keymap);
+            List := Get
+              (Bindings.all, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            Get_Secondary_Keymap
+              (Bindings.all, Partial_Key, Partial_Button, Modif, Keymap);
          else
-            List := Get (Keymap.Table, Key_Binding'(Partial_Key, Modif));
-            Get_Secondary_Keymap (Keymap.Table, Partial_Key, Modif, Keymap);
+            List := Get
+              (Keymap.Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            Get_Secondary_Keymap
+              (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
          end if;
 
             while List /= null loop

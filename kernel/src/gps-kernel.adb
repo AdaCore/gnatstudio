@@ -1820,13 +1820,15 @@ package body GPS.Kernel is
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
       Key        : out Gdk.Types.Gdk_Key_Type;
+      Button     : out Guint;
       Mods       : out Gdk.Types.Gdk_Modifier_Type) is
    begin
       if Kernel.Key_Getter_Simple_Function = null then
-         Key := 0;
-         Mods := 0;
+         Key    := 0;
+         Button := 0;
+         Mods   := 0;
       else
-         Kernel.Key_Getter_Simple_Function (Kernel, Action, Key, Mods);
+         Kernel.Key_Getter_Simple_Function (Kernel, Action, Key, Button, Mods);
       end if;
    end Get_Shortcut_Simple;
 

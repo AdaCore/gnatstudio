@@ -170,6 +170,12 @@ package body GUI_Utils is
       Event   : Gdk_Event_Focus) return Boolean;
    --  Handling of placeholders on text view
 
+   function Image
+     (Mods    : Gdk.Types.Gdk_Modifier_Type) return String;
+   --  Return a string suitable for display to show the Mods.
+
+   Button_Img : constant String := "Button_";
+
    ---------------------------
    -- Add_Unique_List_Entry --
    ---------------------------
@@ -995,20 +1001,47 @@ package body GUI_Utils is
    -----------
 
    function Image
-     (Key  : Gdk.Types.Gdk_Key_Type;
-      Mods : Gdk.Types.Gdk_Modifier_Type) return String
+     (Mods : Gdk.Types.Gdk_Modifier_Type) return String
    is
       Shift   : constant String := "shift-";
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
       Primary : constant String := "primary-";
-      Max : constant Natural := Shift'Length + Control'Length + Meta'Length
-       + Primary'Length;
-      Buffer   : String (1 .. Max);
-      Current : Natural := Buffer'First;
 
    begin
-      if Key = 0 then
+      if (Mods and Shift_Mask) /= 0 then
+         return Shift;
+      end if;
+
+      if (Mods and Primary_Mod_Mask) /= 0
+        and then Primary_Mod_Mask /= Control_Mask
+      then
+         return Primary;
+      end if;
+
+      if (Mods and Control_Mask) /= 0 then
+         return Control;
+      end if;
+
+      if (Mods and Mod1_Mask) /= 0 then
+         return Meta;
+      end if;
+
+      return "";
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image
+     (Key    : Gdk.Types.Gdk_Key_Type;
+      Button : Guint;
+      Mods   : Gdk.Types.Gdk_Modifier_Type) return String is
+   begin
+      if Key = 0
+        and then Button < 4
+      then
          return "";
       end if;
 
@@ -1027,30 +1060,17 @@ package body GUI_Utils is
             return Special_Key_Binding;
 
          when others =>
-            if (Mods and Shift_Mask) /= 0 then
-               Buffer (Current .. Current + Shift'Length - 1) := Shift;
-               Current := Current + Shift'Length;
-            end if;
+            if Key /= 0 then
+               return Image (Mods) & Gdk.Keyval.Name (Key);
 
-            if (Mods and Primary_Mod_Mask) /= 0
-               and then Primary_Mod_Mask /= Control_Mask
-            then
-               Buffer (Current .. Current + Primary'Length - 1) := Primary;
-               Current := Current + Primary'Length;
+            else
+               declare
+                  Key : constant String := Guint'Image (Button);
+               begin
+                  return Image (Mods) & Button_Img &
+                    Key (Key'First + 1 .. Key'Last);
+               end;
             end if;
-
-            if (Mods and Control_Mask) /= 0 then
-               Buffer (Current .. Current + Control'Length - 1) := Control;
-               Current := Current + Control'Length;
-            end if;
-
-            if (Mods and Mod1_Mask) /= 0 then
-               Buffer (Current .. Current + Meta'Length - 1) := Meta;
-               Current := Current + Meta'Length;
-            end if;
-
-            return
-              Buffer (Buffer'First .. Current - 1) & Gdk.Keyval.Name (Key);
       end case;
    end Image;
 
@@ -1059,9 +1079,10 @@ package body GUI_Utils is
    -----------
 
    procedure Value
-     (From : String;
-      Key  : out Gdk.Types.Gdk_Key_Type;
-      Mods : out Gdk.Types.Gdk_Modifier_Type)
+     (From   : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type)
    is
       Start : Natural := From'First;
    begin
@@ -1089,7 +1110,15 @@ package body GUI_Utils is
          end if;
       end loop;
 
-      Key := From_Name (From (Start .. From'Last));
+      if Start + Button_Img'Length <= From'Last
+        and then From (Start .. Start + Button_Img'Length - 1) = Button_Img
+      then
+         Key    := 0;
+         Button := Guint'Value (From (Start + Button_Img'Length .. From'Last));
+      else
+         Key    := From_Name (From (Start .. From'Last));
+         Button := 0;
+      end if;
    end Value;
 
    ------------------------------

@@ -185,9 +185,10 @@ package body Command_Window is
      (Window : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Boolean
    is
-      Win   : constant Command_Window := Command_Window (Window);
-      Key   : constant Gdk_Key_Type := Get_Key_Val (Event);
-      Modif : constant Gdk_Modifier_Type :=
+      Win    : constant Command_Window := Command_Window (Window);
+      Key    : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Button : constant Guint := Get_Button (Event);
+      Modif  : constant Gdk_Modifier_Type :=
                 Get_State (Event) and Get_Default_Mod_Mask;
    begin
       --  Ignore when the key is just one of the modifier. No binding can
@@ -247,7 +248,7 @@ package body Command_Window is
                               Get_Insert (Get_Buffer (Win.Line)));
 
             Set_Nth_Arg (C, 1, Get_Text (Win));
-            Set_Nth_Arg (C, 2, Image (Key, Modif));
+            Set_Nth_Arg (C, 2, Image (Key, Button, Modif));
             Set_Nth_Arg (C, 3, Integer (Get_Offset (Cursor)));
             Tmp := Execute (Win.On_Key, C);
             Free (C);

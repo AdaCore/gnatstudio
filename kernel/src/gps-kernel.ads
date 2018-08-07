@@ -270,6 +270,7 @@ package GPS.Kernel is
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
       Key        : out Gdk.Types.Gdk_Key_Type;
+      Button     : out Guint;
       Mods       : out Gdk.Types.Gdk_Modifier_Type);
 
    procedure Set_Key_Setter
@@ -293,6 +294,7 @@ package GPS.Kernel is
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
       Key        : out Gdk.Types.Gdk_Key_Type;
+      Button     : out Guint;
       Mods       : out Gdk.Types.Gdk_Modifier_Type);
    --  If the action has a simple keybinding associated with it, return it.
    --  Otherwise, set Key to 0 to indicate there is no simple shortcut.

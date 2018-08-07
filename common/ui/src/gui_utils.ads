@@ -430,15 +430,17 @@ package GUI_Utils is
    ------------
 
    function Image
-     (Key  : Gdk.Types.Gdk_Key_Type;
-      Mods : Gdk.Types.Gdk_Modifier_Type) return String;
+     (Key    : Gdk.Types.Gdk_Key_Type;
+      Button : Guint;
+      Mods   : Gdk.Types.Gdk_Modifier_Type) return String;
    --  Return a string suitable for display to show the key binding.
    --  Special_Key_Binding is returned if the key cannot be described
 
    procedure Value
-     (From : String;
-      Key  : out Gdk.Types.Gdk_Key_Type;
-      Mods : out Gdk.Types.Gdk_Modifier_Type);
+     (From   : String;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type);
    --  Revert of Image
 
    Special_Key_Binding    : constant String := "<special>";

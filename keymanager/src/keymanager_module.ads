@@ -26,6 +26,7 @@ with GNAT.Strings;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
+with Glib;
 with Gdk.Event;
 with Gdk.Types;
 
@@ -135,9 +136,10 @@ package KeyManager_Module is
    --  Add a new callback to be called when an event should be processed
 
 private
-   type Keys_Header_Num is range 0 .. 1000;
+   type Keys_Header_Num is range 0 .. 1050;
    type Key_Binding is record
       Key      : Gdk.Types.Gdk_Key_Type;
+      Button   : Glib.Guint;
       Modifier : Gdk.Types.Gdk_Modifier_Type;
    end record;
 

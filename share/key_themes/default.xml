@@ -51,4 +51,7 @@
   <key action="Global Search in context: Entities">primary-t</key>
 
   <key action="exit">primary-q</key>
+  <key action="backward locations history">Button_4</key>
+  <key action="forward locations history">Button_5</key>
+
 </GPS>

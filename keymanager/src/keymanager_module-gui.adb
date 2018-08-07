@@ -184,7 +184,7 @@ package body KeyManager_Module.GUI is
 
       Filter_Grab        : Gtk_Tool_Button;
 
-      In_Grab : Boolean := False;
+      In_Grab            : Boolean := False;
 
       Filter_Pattern     : Search_Pattern_Access;
       --  ??? Should be freed when the view is destroyed
@@ -266,20 +266,22 @@ package body KeyManager_Module.GUI is
    --  the button.
 
    type Event_Info is record
-      Key   : Gdk_Key_Type;
-      State : Gdk_Modifier_Type;
+      Key    : Gdk_Key_Type;
+      Button : Guint;
+      State  : Gdk_Modifier_Type;
    end record;
    type Event_Info_Access is access all Event_Info;
    package Event_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Event_Info_Access);
 
    procedure Key_Grab
-     (Self      : not null access Keys_Editor_Record'Class;
-      Key       : out Gdk.Types.Gdk_Key_Type;
-      Mods      : out Gdk.Types.Gdk_Modifier_Type);
+     (Self   : not null access Keys_Editor_Record'Class;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type);
    --  Temporarily grab the pointer and keyboards for In_Widget, and returns
-   --  the first fully defined key that the user has pressed. (Key, Mods) is
-   --  set to (0, 0) if no key could be grabbed.
+   --  the first fully defined key that the user has pressed.
+   --  (Key, Button, Mods) is set to (0, 0, 0) if no key could be grabbed.
    --  Nothing is done in In_Widget, it is only used as a target for the grab
    --  operations.
    --  In_Widget must be realized.
@@ -292,6 +294,12 @@ package body KeyManager_Module.GUI is
       Event     : Gdk_Event;
       Output    : Event_Info_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
+
+   function Button_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Info_Access) return Boolean;
+   --  Temporary event filter set when grabing the button for a key preference
 
    function Cancel_Grab (Self : Keys_Editor_View) return Boolean;
    --  Exit the current nest main loop, if any
@@ -934,11 +942,12 @@ package body KeyManager_Module.GUI is
    is
       pragma Unreferenced (In_Widget);
       Text  : constant String :=
-        Image (Get_Key_Val (Event), Get_State (Event));
+        Image (Get_Key_Val (Event), 0, Get_State (Event));
    begin
       if Text /= Special_Key_Binding then
-         Output.Key := Get_Key_Val (Event);
-         Output.State := Get_State (Event) and Get_Default_Mod_Mask;
+         Output.Key    := Get_Key_Val (Event);
+         Output.Button := 0;
+         Output.State  := Get_State (Event) and Get_Default_Mod_Mask;
          Main_Quit;
       end if;
       return True;
@@ -949,20 +958,50 @@ package body KeyManager_Module.GUI is
          return False;
    end Key_Press_In_Grab;
 
+   --------------------------
+   -- Button_Press_In_Grab --
+   --------------------------
+
+   function Button_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Info_Access) return Boolean
+   is
+      pragma Unreferenced (In_Widget);
+      Text  : constant String :=
+        Image (0, Get_Button (Event), Get_State (Event));
+   begin
+      if Text /= Special_Key_Binding then
+         Output.Key    := 0;
+         Output.Button := Get_Button (Event);
+         Output.State  := Get_State (Event) and Get_Default_Mod_Mask;
+         Main_Quit;
+      end if;
+      return True;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Button_Press_In_Grab;
+
    --------------
    -- Key_Grab --
    --------------
 
    procedure Key_Grab
-     (Self      : not null access Keys_Editor_Record'Class;
-      Key       : out Gdk.Types.Gdk_Key_Type;
-      Mods      : out Gdk.Types.Gdk_Modifier_Type)
+     (Self   : not null access Keys_Editor_Record'Class;
+      Key    : out Gdk.Types.Gdk_Key_Type;
+      Button : out Guint;
+      Mods   : out Gdk.Types.Gdk_Modifier_Type)
    is
       Top    : constant Gtk_Widget := Self.Get_Toplevel;
       Device : Gdk_Device := null;
-      Id     : Handler_Id;
-      Output : aliased Event_Info := (0, 0);
+      Output : aliased Event_Info := (0, 0, 0);
       Cursor : Gdk.Gdk_Cursor;
+
+      Id_Key, Id_Button : Handler_Id;
+
    begin
       Grab_Focus (Top);
 
@@ -974,22 +1013,27 @@ package body KeyManager_Module.GUI is
       --      Device := Gtk.Main.Get_Current_Event_Device;
 
       if Device /= null then   --  might be null in testsuite
-         if Device.Get_Source /= Source_Keyboard then
+         if Device.Get_Source /= Source_Keyboard
+           and then Device.Get_Source /= Source_Mouse
+         then
             Device := Device.Get_Associated_Device;
          end if;
 
          if Device = null
-           or else Device.Get_Source /= Source_Keyboard
+           or else (Device.Get_Source /= Source_Keyboard
+                    and then Device.Get_Source /= Source_Mouse)
            or else Device.Grab
              (Window         => Top.Get_Window,
               Grab_Ownership => Ownership_Application,
               Owner_Events   => True,
-              Event_Mask     => Key_Press_Mask,
+              Event_Mask     => Key_Press_Mask or Button_Press_Mask,
               Cursor         => null,
               Time           => Gdk.Types.Current_Time) /= Grab_Success
          then
-            Key := 0;
-            Mods := 0;
+            Key    := 0;
+            Button := 0;
+            Mods   := 0;
+
             return;
          end if;
       else
@@ -998,9 +1042,14 @@ package body KeyManager_Module.GUI is
 
       Self.In_Grab := True;
 
-      Id := Event_Callback.Connect
+      Id_Key := Event_Callback.Connect
         (Top, Signal_Key_Press_Event,
          Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
+         User_Data => Output'Unchecked_Access);
+
+      Id_Button := Event_Callback.Connect
+        (Top, Signal_Button_Press_Event,
+         Event_Callback.To_Marshaller (Button_Press_In_Grab'Access),
          User_Data => Output'Unchecked_Access);
 
       Gdk_New (Cursor, Watch);
@@ -1012,12 +1061,15 @@ package body KeyManager_Module.GUI is
       if Top.Get_Window /= null then
          Set_Cursor (Top.Get_Window, null);
          Unref (Cursor);
-         Gtk.Handlers.Disconnect (Top, Id);
-         Key  := Output.Key;
-         Mods := Output.State;
+         Gtk.Handlers.Disconnect (Top, Id_Key);
+         Gtk.Handlers.Disconnect (Top, Id_Button);
+         Key    := Output.Key;
+         Button := Output.Button;
+         Mods   := Output.State;
       else
-         Key  := GDK_Escape;
-         Mods := 0;
+         Key    := GDK_Escape;
+         Button := 0;
+         Mods   := 0;
       end if;
 
       if Device /= null then
@@ -1058,6 +1110,7 @@ package body KeyManager_Module.GUI is
    is
       Grabbed, Tmp : GNAT.Strings.String_Access;
       Key          : Gdk_Key_Type;
+      Button       : Guint;
       Modif        : Gdk_Modifier_Type;
       Id           : Glib.Main.G_Source_Id;
 
@@ -1085,17 +1138,20 @@ package body KeyManager_Module.GUI is
          View.Grab_Button.Set_Label ("press key");
       end if;
 
-      Key_Grab (View, Key, Modif);
+      Key_Grab (View, Key, Button, Modif);
 
       if View.Get_Toplevel.In_Destruction then
          Reset;
          return "";
       elsif Key /= GDK_Escape or else Modif /= 0 then
-         if For_Display then
+         if For_Display
+           and then Key /= 0
+         then
             Grabbed := new String'
               (Gtk.Accel_Group.Accelerator_Get_Label (Key, Modif));
+
          else
-            Grabbed := new String'(Image (Key, Modif));
+            Grabbed := new String'(Image (Key, Button, Modif));
          end if;
       else
          Reset;
@@ -1107,10 +1163,10 @@ package body KeyManager_Module.GUI is
       loop
          Id := Keys_Timeout.Timeout_Add
            (500, Cancel_Grab'Access, Keys_Editor_View (View));
-         Key_Grab (View, Key, Modif);
+         Key_Grab (View, Key, Button, Modif);
          Glib.Main.Remove (Id);
 
-         exit when Key = 0 and then Modif = 0;
+         exit when Key = 0 and then Button = 0 and then Modif = 0;
 
          if Key = GDK_Escape and then Modif = 0 then
             Free (Grabbed);
@@ -1118,12 +1174,16 @@ package body KeyManager_Module.GUI is
          end if;
 
          Tmp := Grabbed;
-         if For_Display then
+         if For_Display
+           and then Key /= 0
+         then
             Grabbed := new String'
               (Grabbed.all & ' '
                & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modif));
+
          else
-            Grabbed := new String'(Grabbed.all & ' ' & Image (Key, Modif));
+            Grabbed := new String'
+              (Grabbed.all & ' ' & Image (Key, Button, Modif));
          end if;
 
          Free (Tmp);

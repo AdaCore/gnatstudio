@@ -1041,10 +1041,11 @@ package body GPS.Kernel.Modules.UI is
             end if;
          end Label_Name;
 
-         Item  : Gtk_Menu_Item;
-         Child : Gtk_Widget;
-         Key   : Gdk_Key_Type;
-         Mods  : Gdk_Modifier_Type;
+         Item   : Gtk_Menu_Item;
+         Child  : Gtk_Widget;
+         Key    : Gdk_Key_Type;
+         Button : Guint;
+         Mods   : Gdk_Modifier_Type;
 
       begin
          if C.Filter_Matched then
@@ -1167,12 +1168,19 @@ package body GPS.Kernel.Modules.UI is
                     (Kernel,
                      Action => C.Action.all,
                      Key    => Key,
+                     Button => Button,
                      Mods   => Mods);
 
                   Child := Item.Get_Child;
 
                   if Child.all in Gtk_Accel_Label_Record'Class then
-                     Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                     if Button /= 0 then
+                        Gtk_Accel_Label
+                          (Child).Set_Label (Image (Key, Button, Mods));
+                     else
+                        Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                     end if;
+
                   end if;
                end if;
             end if;
@@ -1480,6 +1488,7 @@ package body GPS.Kernel.Modules.UI is
       Action : String)
    is
       Key    : Gdk_Key_Type;
+      Button : Guint;
       Mods   : Gdk_Modifier_Type;
       C      : constant Action_Elements.Cursor :=
         Globals.Actions_To_UI.Find (Action);
@@ -1520,7 +1529,12 @@ package body GPS.Kernel.Modules.UI is
                      if Item /= null then
                         Child := Item.Get_Child;
                         if Child.all in Gtk_Accel_Label_Record'Class then
-                           Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                           if Button /= 0 then
+                              Gtk_Accel_Label (Child).Set_Label
+                                (Image (Key, Button, Mods));
+                           else
+                              Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                           end if;
                         end if;
                      end if;
 
@@ -1539,6 +1553,7 @@ package body GPS.Kernel.Modules.UI is
          Kernel.Get_Shortcut_Simple
            (Action => Action,
             Key    => Key,
+            Button => Button,
             Mods   => Mods);
          For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
       end if;
@@ -1743,9 +1758,10 @@ package body GPS.Kernel.Modules.UI is
      (Self : not null access GObject_Record'Class)
      return access Action_Record
    is
-      Label : Gtk_Accel_Label;
-      Key   : Gdk_Key_Type;
-      Mods  : Gdk_Modifier_Type;
+      Label  : Gtk_Accel_Label;
+      Key    : Gdk_Key_Type;
+      Button : Guint;
+      Mods   : Gdk_Modifier_Type;
       Action : access Action_Record;
       Data   : constant access Action_Proxy'Class := Get_Data (Self);
 
@@ -1789,6 +1805,7 @@ package body GPS.Kernel.Modules.UI is
                Data.Kernel.Get_Shortcut_Simple
                  (Action => Data.Action.all,
                   Key    => Key,
+                  Button => Button,
                   Mods   => Mods);
                if Key /= 0 then
                   Label := Gtk_Accel_Label (Action_Menu_Item (Self).Get_Child);
