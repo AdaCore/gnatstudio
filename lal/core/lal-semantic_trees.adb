@@ -17,6 +17,7 @@
 with Ada.Containers;
 with Ada.Containers.Generic_Array_Sort;
 with Ada.Strings.Unbounded;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNATCOLL.Symbols;
 with GNATCOLL.Xref;              use GNATCOLL.Xref;
@@ -706,8 +707,9 @@ package body LAL.Semantic_Trees is
                   declare
                      Token : constant Token_Reference := Node.Token_Start;
                   begin
-                     --  FIXME: avoid Python-style escaped from Text
-                     return Self.Kernel.Symbols.Find (Text (Token));
+                     return Self.Kernel.Symbols.Find
+                       (Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode
+                          (Text (Token)));
                   end;
 
                when Ada_Dotted_Name =>
@@ -716,9 +718,11 @@ package body LAL.Semantic_Trees is
                      Image : Unbounded_String;
                   begin
                      for Token of Node.Token_Range loop
-                        --  FIXME: avoid Python-style escaped from Text
                         if not Is_Trivia (Token) then
-                           Append (Image, Text (Token));
+                           Append
+                             (Image,
+                              Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode
+                                (Text (Token)));
                         end if;
                      end loop;
 
