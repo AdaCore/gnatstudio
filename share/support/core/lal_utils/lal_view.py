@@ -3,8 +3,9 @@
 
 import GPS
 import os
+import libadalang
 from modules import Module
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pango
 from gps_utils import make_interactive
 
 COL_LABEL = 0
@@ -21,8 +22,10 @@ class LAL_View_Widget():
     def __init__(self):
         self.box = Gtk.VBox()
 
-        # A label to push diagnostics messages
+        # A label to push diagnostics messages and token info
         self.message_label = Gtk.Label()
+        self.message_label.set_halign(Gtk.Align.START)
+        self.message_label.set_ellipsize(Pango.EllipsizeMode.END)
 
         # The model: see COL_* constants above
         self.store = Gtk.TreeStore(str, Gdk.RGBA, int, int, int, int)
@@ -38,7 +41,9 @@ class LAL_View_Widget():
         self.view.connect("button_press_event", self._on_view_button_press)
 
         # Pack things together
-        self.box.pack_start(self.message_label, False, False, 3)
+        label_box = Gtk.HBox()
+        label_box.pack_start(self.message_label, True, True, 3)
+        self.box.pack_start(label_box, False, False, 3)
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scroll.add(self.view)
@@ -56,6 +61,7 @@ class LAL_View_Widget():
         self.file = None
         self.line = 1
         self.column = 1
+        self.unit = None  # The current successfully loaded AU, if any
 
         # The list of iters that are currently highlighted
         self.highlighted_iters = []
@@ -195,6 +201,10 @@ class LAL_View_Widget():
 
     def show_current_location(self, line, column):
         """Highlight the given location in the tree and scroll to it"""
+
+        if not self.unit:
+            return
+
         self.line = line
         self.column = column
 
@@ -210,6 +220,15 @@ class LAL_View_Widget():
             self.view.scroll_to_cell(
                 self.store.get_path(lowest_found),
                 self.node_col, True, 0.5, 0.5)
+
+        # Display the current token in the label
+        current_token = self.unit.lookup_token(libadalang.Sloc(line, column))
+        if current_token:
+            self.message_label.set_markup(
+                "Token: <b>{}</b> {}".format(current_token.kind,
+                                             current_token.text.strip()))
+        else:
+            self.message_label.set_text("")
 
     def refresh(self):
         """Refresh the contents of the view"""
@@ -232,8 +251,10 @@ class LAL_View_Widget():
         if unit.diagnostics:
             self.message_label.set_text(
                 "\n".join([str(d) for d in unit.diagnostics]))
+            self.unit = None
             return
         else:
+            self.unit = unit
             self.message_label.set_text("{} loaded ok".format(
                 os.path.basename(buf.file().name())))
 
