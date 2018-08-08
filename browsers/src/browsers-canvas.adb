@@ -1201,14 +1201,16 @@ package body Browsers.Canvas is
       Register_Action
         (Kernel, "browser zoom out", new Zoom_Out_Command,
          -"Zoom out",
-         Icon_Name => "gps-zoom-out-symbolic",
-         Category  => -"Browsers");
+         Icon_Name                => "gps-zoom-out-symbolic",
+         Category                 => -"Browsers",
+         Shortcut_Active_For_View => Browser_Child_Record'Tag);
 
       Register_Action
         (Kernel, "browser zoom in", new Zoom_In_Command,
          -"Zoom in",
-         Icon_Name => "gps-zoom-in-symbolic",
-         Category  => -"Browsers");
+         Icon_Name                => "gps-zoom-in-symbolic",
+         Category                 => -"Browsers",
+         Shortcut_Active_For_View => Browser_Child_Record'Tag);
 
       Register_Action
         (Kernel, "browser toggle links", new Toggle_Links,

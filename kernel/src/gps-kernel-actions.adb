@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Commands;                use Commands;
 with Gdk.Event;               use Gdk.Event;
@@ -34,7 +34,6 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Flow_Box_Child;      use Gtk.Flow_Box_Child;
 with Gtk.Size_Group;          use Gtk.Size_Group;
-with Gtkada.MDI;              use Gtkada.MDI;
 with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
@@ -317,7 +316,8 @@ package body GPS.Kernel.Actions is
       Filter       : Action_Filter := null;
       Category     : String := "General";
       Icon_Name    : String := "";
-      For_Learning : Boolean := False)
+      For_Learning : Boolean := False;
+      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag)
    is
       Old            : constant Action_Record_Access :=
         Lookup_Action (Kernel, Name);
@@ -379,12 +379,13 @@ package body GPS.Kernel.Actions is
         (Cmd,
          Filter,
          new String'(Description),
-         Name       => new String'(Name),
-         Modified   => False,
-         Category   => Cat,
-         Overridden  => Overridden,
-         Disabled   => False,
-         Icon_Name  => Stock);
+         Name                         => new String'(Name),
+         Modified                     => False,
+         Category                     => Cat,
+         Overridden                   => Overridden,
+         Disabled                     => False,
+         Icon_Name                    => Stock,
+         Shortcut_Active_For_View              => Shortcut_Active_For_View);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
@@ -786,6 +787,57 @@ package body GPS.Kernel.Actions is
          return Self.Icon_Name.all;
       end if;
    end Get_Icon_Name;
+
+   ----------------------------
+   -- Is_Key_Shortcut_Active --
+   ----------------------------
+
+   function Is_Key_Shortcut_Active
+     (Self  : not null access Action_Record;
+      Child : access MDI_Child_Record'Class;
+      Key   : Gdk_Key_Type;
+      Modif : Gdk_Modifier_Type)
+      return Boolean
+   is
+      pragma Unreferenced (Key);
+      use Ada.Tags;
+   begin
+      --  If no child if focused, if there is no key modifier, or if the key
+      --  shortcut is active from all the views, return True.
+
+      if Modif /= 0
+        or else Self.Shortcut_Active_For_View = Ada.Tags.No_Tag
+      then
+         return True;
+      end if;
+
+      --  Otherwise, check if the type of the view being focused is within
+      --  the Shortcut_Active_For_View tag's hierarchy.
+
+      declare
+         Child_Tag : constant Ada.Tags.Tag := (if Child /= null then
+                                                  Child.all'Tag
+                                               else
+                                                  Ada.Tags.No_Tag);
+         Parent_Tag : Ada.Tags.Tag;
+      begin
+         if Child_Tag = Ada.Tags.No_Tag then
+            return False;
+         end if;
+
+         Parent_Tag := Ada.Tags.Parent_Tag (Child_Tag);
+
+         while Parent_Tag /= Ada.Tags.No_Tag loop
+            if Parent_Tag = Self.Shortcut_Active_For_View then
+               return True;
+            end if;
+
+            Parent_Tag := Ada.Tags.Parent_Tag (Parent_Tag);
+         end loop;
+      end;
+
+      return False;
+   end Is_Key_Shortcut_Active;
 
    --------------------------
    -- Get_Full_Description --

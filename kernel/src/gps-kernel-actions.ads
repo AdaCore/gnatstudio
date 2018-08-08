@@ -20,9 +20,14 @@
 --  Actions are named commands (or list of commands) in GPS. These can
 --  be associated with menus, keys and toolbar buttons among other things.
 
-with Commands.Interactive;  use Commands.Interactive;
-with Gdk.Event;
+with Ada.Tags;
 with GNAT.Strings;
+
+with Gtkada.MDI;           use Gtkada.MDI;
+with Gdk.Event;
+with Gdk.Types;            use Gdk.Types;
+
+with Commands.Interactive; use Commands.Interactive;
 with String_Hash;
 
 package GPS.Kernel.Actions is
@@ -38,19 +43,33 @@ package GPS.Kernel.Actions is
       Filter       : Action_Filter := null;
       Category     : String := "General";
       Icon_Name    : String := "";
-      For_Learning : Boolean := False);
+      For_Learning : Boolean := False;
+      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag);
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
+   --
    --  Name must be unique in GPS.
+   --
    --  Action will be freed automatically by the kernel.
+   --
    --  Category is used in the key bindings editor to group actions and make
    --  them easier to find by the user. If it is the empty string, the action
    --  will not be shown in the keybinding editor.
+   --
    --  Command is then owned by the kernel, and will be freed when GPS exits.
    --  You must not call Unref withouth first calling Ref on that command.
+   --
    --  When For_Learning is True, this action will be displayed in the GPS
    --  Learn view when it's valid in the current context.
+   --
+   --  Shortcut_Active_For_View Used to enable the key shortcut associated
+   --  to this action only when the focus is within a view with a type
+   --  contained in this tag's hierarchy (e.g: a view descendant of the
+   --  Browser_Child_Record type). This is useful when the key shortcut does
+   --  not contain any key modifier (e.g: if we want to use '+' as a key
+   --  shortcut for a given action but still want to be able to write a '+'
+   --  in an editor).
 
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;
@@ -115,6 +134,15 @@ package GPS.Kernel.Actions is
 
    function Get_Icon_Name (Self : access Action_Record) return String;
    --  Return the icon to use when this action is made visible to the user.
+
+   function Is_Key_Shortcut_Active
+     (Self  : not null access Action_Record;
+      Child : access MDI_Child_Record'Class;
+      Key   : Gdk_Key_Type;
+      Modif : Gdk_Modifier_Type)
+      return Boolean;
+   --  Return True if the key shortcut should be active in the given MDI child,
+   --  False otherwise.
 
    function Execute_Action
      (Kernel      : not null access Kernel_Handle_Record'Class;
@@ -194,18 +222,26 @@ package GPS.Kernel.Actions is
 private
 
    type Action_Record is record
-      Command     : access Interactive_Command'Class;
-      Filter      : access Action_Filter_Record'Class;
-      Description : GNAT.Strings.String_Access;
-      Name        : GNAT.Strings.String_Access;
-      Modified    : Boolean;
-      Overridden  : Boolean;
-      Category    : GNAT.Strings.String_Access;
+      Command                  : access Interactive_Command'Class;
+      Filter                   : access Action_Filter_Record'Class;
+      Description              : GNAT.Strings.String_Access;
+      Name                     : GNAT.Strings.String_Access;
+      Modified                 : Boolean;
+      Overridden               : Boolean;
+      Category                 : GNAT.Strings.String_Access;
 
-      Disabled    : Boolean := False;
+      Disabled                 : Boolean := False;
       --  Whether this command was disabled explicitly.
 
-      Icon_Name   : GNAT.Strings.String_Access;
+      Icon_Name                : GNAT.Strings.String_Access;
+
+      Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
+      --  Used to enable the key shortcut associated to this action only when
+      --  the focus is within a view with a type contained in this tag's
+      --  hierarchy (e.g: a view descendant of the Browser_Child_Record type).
+      --  This is useful when the key shortcut does not contain any key
+      --  modifier (e.g: if we want to use '+' as a key shortcut for a given
+      --  action but still want to be able to write a '+' in an editor).
    end record;
    --  Command is freed automatically. We use an anonymous type so that calls
    --  to Register_Action can call "new ..." directly when passing a value to

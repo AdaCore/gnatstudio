@@ -15,45 +15,49 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
-with Commands.Interactive;    use Commands, Commands.Interactive;
-with Config;                  use Config;
-with Default_Preferences;     use Default_Preferences;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNAT.OS_Lib;                    use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
-with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GPS.Customizable_Modules; use GPS.Customizable_Modules;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Main_Window;          use GPS.Main_Window;
-with GUI_Utils;                use GUI_Utils;
-with Gdk.Device;               use Gdk.Device;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Gdk.Types;                use Gdk.Types;
-with Gtkada.Types;             use Gtkada.Types;
-with Gdk.Window;               use Gdk.Window;
-with Glib.Convert;             use Glib.Convert;
-with Glib;                     use Glib;
-with Gtk.Accel_Group;          use Gtk.Accel_Group;
-with Gtk.Main;                 use Gtk.Main;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+
+with Gdk.Device;                     use Gdk.Device;
+with Gdk.Event;                      use Gdk.Event;
+with Gdk.Types.Keysyms;              use Gdk.Types.Keysyms;
+with Gdk.Types;                      use Gdk.Types;
+with Gdk.Window;                     use Gdk.Window;
+with Glib.Convert;                   use Glib.Convert;
+with Glib;                           use Glib;
+with Gtk.Accel_Group;                use Gtk.Accel_Group;
+with Gtk.Main;                       use Gtk.Main;
+with Gtk.Widget;                     use Gtk.Widget;
+with Gtk.Window;                     use Gtk.Window;
+with Gtkada.Dialogs;                 use Gtkada.Dialogs;
+with Gtkada.MDI;                     use Gtkada.MDI;
 with Gtkada.Style;
-with Histories;                use Histories;
+with Gtkada.Types;                   use Gtkada.Types;
+
+with Commands.Interactive;           use Commands, Commands.Interactive;
+with Config;                         use Config;
+with Default_Preferences;            use Default_Preferences;
+with GPS.Customizable_Modules;       use GPS.Customizable_Modules;
+with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
+with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Main_Window;                use GPS.Main_Window;
+with GUI_Utils;                      use GUI_Utils;
+with Histories;                      use Histories;
 with KeyManager_Module.GUI;
-with System.Assertions;        use System.Assertions;
+with System.Assertions;              use System.Assertions;
 with XML_Parsers;
-with XML_Utils;                use XML_Utils;
+with XML_Utils;                      use XML_Utils;
 
 package body KeyManager_Module is
 
@@ -1300,24 +1304,40 @@ package body KeyManager_Module is
                Keymanager_Module.Current_Command    := null;
 
                if not GPS_Application
-                  (Kernel.Get_Application).Is_Any_Menu_Open
-                 and then Execute_Action
-                   (Kernel  => Kernel,
-                    Action  => Binding.Action.all,
-                    Context => Context,
-                    Event   => Event,
-                    Error_Msg_In_Console => False,
-                    Repeat  => Keymanager_Module.Repeat_Count)
+                 (Kernel.Get_Application).Is_Any_Menu_Open
                then
-                  if Keymanager_Module.Last_Command /=
-                    Cst_String_Access (Binding.Action)
-                  then
-                     Free (Keymanager_Module.Last_User_Command);
-                  end if;
-                  Keymanager_Module.Current_Command :=
-                    Cst_String_Access (Binding.Action);
-                  Found_Action                      := True;
-                  Keymanager_Module.Repeat_Count    := 1;
+                  declare
+                     Focus_Child : constant MDI_Child :=
+                                     Get_Focus_Child (Get_MDI (Kernel));
+                     Action      : constant Action_Record_Access :=
+                                     Lookup_Action
+                                       (Kernel, Binding.Action.all);
+                  begin
+                     if Is_Key_Shortcut_Active
+                       (Action,
+                        Child => Focus_Child,
+                        Key   => Key,
+                        Modif => Modif)
+                       and then Execute_Action
+                         (Kernel               => Kernel,
+                          Action               => Binding.Action.all,
+                          Context              => Context,
+                          Event                => Event,
+                          Error_Msg_In_Console => False,
+                          Repeat               =>
+                            Keymanager_Module.Repeat_Count)
+                     then
+                        if Keymanager_Module.Last_Command /=
+                          Cst_String_Access (Binding.Action)
+                        then
+                           Free (Keymanager_Module.Last_User_Command);
+                        end if;
+                        Keymanager_Module.Current_Command :=
+                          Cst_String_Access (Binding.Action);
+                        Found_Action                      := True;
+                        Keymanager_Module.Repeat_Count    := 1;
+                     end if;
+                  end;
                end if;
             end if;
 
