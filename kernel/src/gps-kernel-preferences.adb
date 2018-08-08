@@ -54,6 +54,12 @@ with Language;                   use Language;
 package body GPS.Kernel.Preferences is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.PREFERENCES");
 
+   Experimental_LAL : constant Trace_Handle := Create
+     ("GPS.INTERNAL.LAL_EXPERIMENTAL_FEATURES",
+      Default => Off);
+   --  This trace is used to activate LAL features that are ready
+   --  for experimentation by developers.
+
    use type Config.Host_Type;
 
    procedure Get_Command_Handler
@@ -485,39 +491,39 @@ package body GPS.Kernel.Preferences is
         (Name     => "use-lal-in-editor",
          Label    => -"Use LAL in editor",
          Doc      => -("Enable usage of libadalang in a source editor."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_Outline := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-outline",
          Label    => -"Use LAL in Outline",
          Doc      => -("Enable usage of libadalang in the Outline View."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_Shell := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-shell",
          Label    => -"Use LAL in Shell",
          Doc      => -("Enable usage of libadalang in GPS.SemanticTree " &
                         " shell commands."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_Info := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-info",
          Label    => -"Use LAL in menu",
          Doc      => -("Enable usage of libadalang to generate " &
                         " 'GNAT Runtime' menu."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_GNATHUB := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-gnathub",
          Label    => -"Use LAL in gnathub",
          Doc      => -("Enable usage of libadalang in gnathub module."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_COV := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-cov",
          Label    => -"Use LAL in cov",
          Doc      => -("Enable usage of libadalang in coverage module."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       Use_LAL_In_Indent := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-indent",
@@ -529,7 +535,7 @@ package body GPS.Kernel.Preferences is
         (Name     => "use-lal-in-highlight",
          Label    => -"Use LAL to highlight",
          Doc      => -("Enable usage of libadalang to highlight code."),
-         Default  => False);
+         Default  => Active (Experimental_LAL));
 
       -- General --
 
