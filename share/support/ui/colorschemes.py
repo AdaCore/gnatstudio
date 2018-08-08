@@ -9,6 +9,7 @@ These themes are inspired from:
 import os
 import GPS
 from gps_utils import hook
+from pygps import get_widget_by_name
 from theme_handling import (
     Theme, Rgba, transparent, Color,
     gtk_css_pref_name, prefs_to_css_colors)
@@ -37,6 +38,9 @@ default = Theme("Default", True, {
 })
 
 darkside = Theme("Darkside", False, {})
+
+color_theme_pref = GPS.Preference("/Color-Theme").create(
+    "Color theme", "string", "Default")
 
 monokai = Theme("Monokai", False, {
     "debugger_current": Rgba(58, 71, 54, 153),
@@ -151,6 +155,7 @@ class ColorThemeSwitcher(object):
             (with special-case support for CSS-defined values, see above.)
         """
         theme.apply_preferences(self.provider)
+        color_theme_pref.set(theme.name)
 
 
 the_theme_switcher = ColorThemeSwitcher()
@@ -312,12 +317,19 @@ class ColorSchemePicker(object):
         """
         Called when the theme's button or radio button has been clicked.
         """
+
         if widget == self.light_theme_radio:
             self.flow.select_child(
                 self.flow.get_children()[self.LIGHT_RADIO_CHILD_INDEX])
         elif widget == self.dark_theme_radio:
             self.flow.select_child(
                 self.flow.get_children()[self.DARK_RADIO_CHILD_INDEX])
+        else:
+            # Untoggle the previouly selected theme's button
+            previous_toggled_button = get_widget_by_name(
+                "theme-button-" + color_theme_pref.get(), self.flow)
+            if previous_toggled_button:
+                previous_toggled_button.set_active(False)
 
         the_theme_switcher.apply_theme(theme)
 
@@ -332,9 +344,17 @@ class ColorSchemePicker(object):
         hbox = Gtk.HBox()
         vbox.pack_start(hbox, False, False, 0)
 
-        b = Gtk.Button(theme.name)
-        b.connect('clicked', self.__on_chosen, theme)
+        b = Gtk.ToggleButton(theme.name)
+
+        # If the color theme preference is set to the given theme, toggle its
+        # associated button.
+        if theme.name == color_theme_pref.get():
+            b.set_active(True)
+
+        b.connect('toggled', self.__on_chosen, theme)
         hbox.pack_start(b, True, False, 0)
+
+        b.set_name("theme-button-" + theme.name)
 
         return vbox
 
@@ -347,7 +367,7 @@ class ColorSchemePicker(object):
         Needed for compatibility.
         """
 
-        if not GPS.Preference(gtk_css_pref_name).get():
+        if not color_theme_pref.get():
             logger.log("Searching for a fallback theme...")
 
             # Get the color values for the editor's style preferences and
@@ -381,7 +401,6 @@ class ColorSchemePicker(object):
         Update the CSS colors using the new values set for their corresponding
         preferences.
         """
-
         css_template = "@define-color {} {};"
         css = ""
 
