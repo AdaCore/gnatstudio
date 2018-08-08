@@ -867,8 +867,7 @@ if you want to open an HTML file and let GPS handle it in the usual
 manner.'''),
 
     Hook('location_changed', 'file_location_hooks', descr='''
-Emitted when the location in the current editor has changed, and the
-cursor has stopped moving.'''),
+Emitted when the location in the current editor has changed.'''),
 
     Hook('log_parsed_hook', 'simple_hooks',
          descr='Emitted when the last log has been parsed'),
