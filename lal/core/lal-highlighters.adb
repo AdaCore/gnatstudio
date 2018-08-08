@@ -44,8 +44,11 @@ package body LAL.Highlighters is
    function To_Style
      (Token     : Libadalang.Lexer.Token_Kind;
       Text      : Wide_Wide_String;
-      In_Aspect : Boolean) return String;
-   --  Get the name of a style name from a language token
+      In_Aspect : Boolean;
+      In_String : Boolean) return String;
+   --  Get the name of a style name from a language token. It takes into
+   --  account if the token is located in some aspect or Ghost code (In_Aspect)
+   --  or in some unfinished string literal (In_String).
 
    function Aspect_Prefix
      (Style     : String;
@@ -61,6 +64,15 @@ package body LAL.Highlighters is
    function Is_Ghost_Root_Node
      (Node  : Libadalang.Analysis.Ada_Node) return Boolean;
    --  Check if given node is a declaration and has ghost aspect
+
+   procedure Update_Wrong_Literal_State
+     (State      : in out Boolean;
+      Is_Error   : Boolean;
+      Error_Text : Wide_Wide_String;
+      Loc        : Source_Location_Range);
+   --  Set error State to True when unfinished string literal found (Is_Error).
+   --  Set it to False if new line found. Error_Text contains token text if
+   --  Is_Error.
 
    generic
       type Node_Type is new Libadalang.Analysis.Ada_Node with private;
@@ -354,10 +366,15 @@ package body LAL.Highlighters is
    function To_Style
      (Token     : Libadalang.Lexer.Token_Kind;
       Text      : Wide_Wide_String;
-      In_Aspect : Boolean) return String
+      In_Aspect : Boolean;
+      In_String : Boolean) return String
    is
       use Libadalang.Lexer;
    begin
+      if In_String then
+         return Aspect_Prefix ("string", In_Aspect);
+      end if;
+
       case Token is
          when Ada_Identifier =>
             --  LAL doesn't treat some keywords as keywords, so let's check
@@ -378,6 +395,7 @@ package body LAL.Highlighters is
             end if;
 
             return Aspect_Prefix ("", In_Aspect);
+
          when Ada_Termination |
               Ada_Lexing_Failure |
               Ada_Whitespace =>
@@ -495,6 +513,26 @@ package body LAL.Highlighters is
       end case;
    end To_Style;
 
+   --------------------------------
+   -- Update_Wrong_Literal_State --
+   --------------------------------
+
+   procedure Update_Wrong_Literal_State
+     (State      : in out Boolean;
+      Is_Error   : Boolean;
+      Error_Text : Wide_Wide_String;
+      Loc        : Source_Location_Range) is
+   begin
+      if Is_Error
+        and then Error_Text'Length > 0
+        and then Error_Text (Error_Text'First) = '"'
+      then
+         State := True;
+      elsif Loc.Start_Line /= Loc.End_Line then
+         State := False;
+      end if;
+   end Update_Wrong_Literal_State;
+
    --------------------
    -- Highlight_Fast --
    --------------------
@@ -517,6 +555,9 @@ package body LAL.Highlighters is
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
          Bytes    => Text'Unchecked_Access);
+
+      Wrong_Literal : Boolean := False;
+      --  We have found unfinished string literal somewhere in current line
    begin
       Remove_Style (Buffer, From, To);
 
@@ -534,11 +575,11 @@ package body LAL.Highlighters is
               Data (Index, Self.TDH);
             Loc   : constant Source_Location_Range :=
               Libadalang.Lexer.Sloc_Range (Token);
+            Error : constant Boolean :=
+              Token.Kind in Libadalang.Lexer.Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
-              (if Check_Keyword (Loc)
+              (if Check_Keyword (Loc) or Error
                then Libadalang.Lexer.Text (Self.TDH, Token) else "");
-
-            Style : constant String := To_Style (Token.Kind, Image, False);
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
             Start : constant Visible_Column_Type :=
@@ -546,9 +587,16 @@ package body LAL.Highlighters is
             Stop : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.End_Column);
          begin
-            if Style /= "" then
-               Buffer.Apply_Style (Style, Line, Start, Stop);
-            end if;
+            Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
+
+            declare
+               Style : constant String :=
+                 To_Style (Token.Kind, Image, False, Wrong_Literal);
+            begin
+               if Style /= "" then
+                  Buffer.Apply_Style (Style, Line, Start, Stop);
+               end if;
+            end;
          end;
 
          Index := Next (Index, Self.TDH);
@@ -738,6 +786,9 @@ package body LAL.Highlighters is
       Root  : constant Ada_Node := Libadalang.Analysis.Root (Unit);
       Index : Token_Reference := Lookup_Token (Unit, (From_Line, 1));
       Node  : Ada_Node;
+
+      Wrong_Literal : Boolean := False;
+      --  We have found unfinished string literal somewhere in current line
    begin
       if Root.Is_Null then
          --  LAL was unable to parse the file, remember it to rehighlight
@@ -766,10 +817,10 @@ package body LAL.Highlighters is
             Top   : constant Context := Stack.Last_Element;
             Token : constant Token_Data_Type := Data (Index);
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
+            Error : constant Boolean :=
+              Kind (Token) in Libadalang.Lexer.Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
-              (if Check_Keyword (Loc) then Text (Index) else "");
-            Style : constant String :=
-              To_Style (Kind (Token), Image, Top.In_Aspect);
+              (if Check_Keyword (Loc) or Error then Text (Index) else "");
             Line  : constant Positive := Positive (Loc.Start_Line);
             Start : constant Visible_Column_Type :=
               Visible_Column_Type (Loc.Start_Column);
@@ -778,7 +829,11 @@ package body LAL.Highlighters is
          begin
             exit when Line > To;
 
-            if Kind (Token) in L.Ada_Identifier | L.Ada_Dot then
+            Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
+
+            if not Wrong_Literal
+              and Kind (Token) in L.Ada_Identifier | L.Ada_Dot
+            then
                if Top.In_Block_Name then
                   Buffer.Apply_Style
                     (Aspect_Prefix ("block", Top.In_Aspect),
@@ -796,8 +851,15 @@ package body LAL.Highlighters is
                end if;
             end if;
 
-            if not Done and then Style /= "" then
-               Buffer.Apply_Style (Style, Line, Start, Stop);
+            if not Done then
+               declare
+                  Style : constant String := To_Style
+                    (Kind (Token), Image, Top.In_Aspect, Wrong_Literal);
+               begin
+                  if Style /= "" then
+                     Buffer.Apply_Style (Style, Line, Start, Stop);
+                  end if;
+               end;
             end if;
 
             Next_Token (Index, Stack, Node);
