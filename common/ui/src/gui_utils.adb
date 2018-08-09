@@ -1007,27 +1007,28 @@ package body GUI_Utils is
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
       Primary : constant String := "primary-";
+      Result  : Unbounded_String;
 
    begin
       if (Mods and Shift_Mask) /= 0 then
-         return Shift;
+         Append (Result, Shift);
       end if;
 
       if (Mods and Primary_Mod_Mask) /= 0
         and then Primary_Mod_Mask /= Control_Mask
       then
-         return Primary;
+         Append (Result, Primary);
       end if;
 
       if (Mods and Control_Mask) /= 0 then
-         return Control;
+         Append (Result, Control);
       end if;
 
       if (Mods and Mod1_Mask) /= 0 then
-         return Meta;
+         Append (Result, Meta);
       end if;
 
-      return "";
+      return To_String (Result);
    end Image;
 
    -----------
