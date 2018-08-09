@@ -671,6 +671,10 @@ package body GPS.Kernel.Project is
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
 
+         --  Doing backup saves while loading a project has no effect, so for
+         --  performance's sake disables them.
+         Set_Is_Loading (True);
+
          if not Kernel.Get_Ignore_Saved_Scenario_Values then
             Restore_Scenario_Vars (Kernel, Local_Project);
          end if;
@@ -768,6 +772,8 @@ package body GPS.Kernel.Project is
             Ignore := Load_Desktop
               (Kernel, For_Project => Local_Project);
          end if;
+         --  Reallow the backup save
+         Set_Is_Loading (False);
 
       elsif not Same_Project then
          Kernel.Insert (-"Cannot find project file "

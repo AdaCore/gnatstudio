@@ -394,12 +394,13 @@ package body Generic_Views is
       --  that we can more easily find the child in the desktop by tag.
 
       procedure Create_If_Needed
-        (Kernel       : access Kernel_Handle_Record'Class;
-         Child        : out GPS_MDI_Child;
-         View         : out View_Access;
-         Toolbar_Id   : String := View_Name;
-         Init         : access procedure
-            (View : not null access Formal_View_Record'Class) := null);
+        (Kernel          : access Kernel_Handle_Record'Class;
+         Child           : out GPS_MDI_Child;
+         View            : out View_Access;
+         Toolbar_Id      : String := View_Name;
+         Init            : access procedure
+           (View : not null access Formal_View_Record'Class) := null;
+         Is_Load_Desktop : Boolean := False);
       --  Create or reuse a view.
 
       procedure Find
@@ -731,12 +732,13 @@ package body Generic_Views is
       ----------------------
 
       procedure Create_If_Needed
-        (Kernel       : access Kernel_Handle_Record'Class;
-         Child        : out GPS_MDI_Child;
-         View         : out View_Access;
-         Toolbar_Id   : String := View_Name;
-         Init         : access procedure
-            (View : not null access Formal_View_Record'Class) := null)
+        (Kernel          : access Kernel_Handle_Record'Class;
+         Child           : out GPS_MDI_Child;
+         View            : out View_Access;
+         Toolbar_Id      : String := View_Name;
+         Init            : access procedure
+           (View : not null access Formal_View_Record'Class) := null;
+         Is_Load_Desktop : Boolean := False)
       is
          use Filter_Panels;
 
@@ -864,6 +866,10 @@ package body Generic_Views is
             Init (View);
          end if;
 
+         if not Is_Load_Desktop then
+            Save_Backup_Desktop (Kernel);
+         end if;
+
          View.On_Create (Child);
       end Create_If_Needed;
 
@@ -890,7 +896,7 @@ package body Generic_Views is
          Child        : GPS_MDI_Child;
       begin
          if Node.Tag.all = Module_Name then
-            Create_If_Needed (User, Child, View);
+            Create_If_Needed (User, Child, View, Is_Load_Desktop => True);
             Load_From_XML (View, Node);
             return MDI_Child (Child);
          end if;

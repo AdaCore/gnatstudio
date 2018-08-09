@@ -2633,6 +2633,7 @@ procedure GPS.Main is
          end if;
       end if;
 
+      Create_Or_Load_Backup_Desktop (GPS_Main.Kernel);
       if Auto_Load_Project and then Project_Name /= No_File then
          --  Do not clear to keep the welcome message on kernel's console
          Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);

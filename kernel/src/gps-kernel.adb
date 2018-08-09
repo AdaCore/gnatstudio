@@ -970,6 +970,7 @@ package body GPS.Kernel is
                        Handle.Get_History_File;
    begin
       Trace (Me, "Destroying the kernel");
+      Destroy_Backup_Desktop (Handle);
 
       --  Stop executing actions in the background
       Handle.Tasks.Interrupt_All_Tasks;

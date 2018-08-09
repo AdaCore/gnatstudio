@@ -87,7 +87,8 @@ package GPS.Kernel.MDI is
 
    procedure Save_Desktop
      (Handle              : access Kernel_Handle_Record'Class;
-      Desktop_Perspective : String := "");
+      Desktop_Perspective : String  := "";
+      Backup              : Boolean := False);
    --  Save the current desktop.
    --  Current perspective will be replaced to passed in parameter in
    --  XML file and will be used as first perspective when GPS starts
@@ -185,6 +186,26 @@ package GPS.Kernel.MDI is
       Callback : GNATCOLL.Scripts.Subprogram_Type);
    --  Set the subprogram to be called by the default Save_Desktop. This will
    --  have no effect if you override Save_Desktop
+
+   procedure Create_Or_Load_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  If the backup file exists then uses the backup file when loading.
+   --  Else creates the backup file.
+   --  Do nothing if the preference Desktop_Backup_Save is False
+
+   procedure Save_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Save the desktop in a backup file in case of GPS crash/freeze
+   --  For performance issue this procedure should not be called during
+   --  Load_Desktop.
+   --  Do nothing if the preference Desktop_Backup_Save is False
+
+   procedure Destroy_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Destroy the backup file if it exists
+
+   procedure Set_Is_Loading (Value : Boolean);
+   --  Set to True to prevent backup save when loading a project
 
    overriding procedure Set_Title
      (Child       : access GPS_MDI_Child_Record;
@@ -495,6 +516,9 @@ private
    type General_UI_Module_Record is new Module_ID_Record with record
       Desktop_Saved : Boolean := False;
       --  Control whether desktop already saved and no more needed to save it
+
+      Is_Loading    : Boolean := False;
+      --  True, if GPS is loading a new project
    end record;
 
    type Monitored_File is record

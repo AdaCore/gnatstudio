@@ -119,6 +119,7 @@ package body GPS.Kernel.MDI is
    Auto_Reload_Files     : Boolean_Preference;
 
    Desktop_Name : constant Filesystem_String := "perspectives6.xml";
+   Backup_Name : constant Filesystem_String := Desktop_Name & ".bkp";
 
    UI_Module : General_UI_Module;
 
@@ -192,6 +193,11 @@ package body GPS.Kernel.MDI is
      (Self   : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Called when a different child gains the focus
+
+   procedure On_Destroy
+     (Self   : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when child is destroyed
 
    procedure On_Perspectives_Added
      (MDI    : access GObject_Record'Class;
@@ -275,6 +281,10 @@ package body GPS.Kernel.MDI is
       Child.Desktop_Independent := Desktop_Independent;
       Child.Default_Width := Default_Width;
       Child.Default_Height := Default_Height;
+
+      Kernel_Callback.Connect
+        (Child, Signal_Destroy, On_Destroy'Access,
+         Kernel_Handle (Kernel));
    end Initialize;
 
    --------------------------
@@ -968,6 +978,22 @@ package body GPS.Kernel.MDI is
       Mdi_Child_Selected_Hook.Run (Kernel, Get_Focus_Child (MDI));
    end On_Child_Selected;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Self   : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Self);
+      MDI : constant MDI_Window := Get_MDI (Kernel);
+   begin
+      if not MDI.In_Destruction then
+         Save_Backup_Desktop (Kernel);
+      end if;
+   end On_Destroy;
+
    -----------------------------------------
    -- Register_Switch_Perspective_Command --
    -----------------------------------------
@@ -1148,7 +1174,8 @@ package body GPS.Kernel.MDI is
 
    procedure Save_Desktop
      (Handle              : access Kernel_Handle_Record'Class;
-      Desktop_Perspective : String := "")
+      Desktop_Perspective : String  := "";
+      Backup              : Boolean := False)
    is
 
       function Get_Project_Name return Virtual_File;
@@ -1170,7 +1197,8 @@ package body GPS.Kernel.MDI is
 
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant Virtual_File :=
-                       Create_From_Dir (Handle.Home_Dir, Desktop_Name);
+        Create_From_Dir (Handle.Home_Dir,
+                         (if Backup then Backup_Name else Desktop_Name));
       Project_Name : constant Virtual_File := Get_Project_Name;
       N, N2        : Node_Ptr;
       M, M2        : Node_Ptr;
@@ -1182,7 +1210,7 @@ package body GPS.Kernel.MDI is
       Perspectives, Central : Glib.Xml_Int.Node_Ptr;
       Perspectives_Convert, Central_Convert : Node_Ptr;
    begin
-      if UI_Module.Desktop_Saved then
+      if UI_Module.Desktop_Saved and then not Backup then
          return;
       end if;
 
@@ -1234,6 +1262,7 @@ package body GPS.Kernel.MDI is
 
       if Central_Convert /= null
         and then Desktop_Perspective /= ""
+        and then not Backup
       then
          Set_Attribute (Central_Convert, "perspective", Desktop_Perspective);
          UI_Module.Desktop_Saved := True;
@@ -1960,6 +1989,115 @@ package body GPS.Kernel.MDI is
    begin
       Self.Save_Desktop := Callback;
    end Set_Save_Desktop_Callback;
+
+   -----------------------------------
+   -- Create_Or_Load_Backup_Desktop --
+   -----------------------------------
+
+   procedure Create_Or_Load_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      New_File    : Writable_File;
+      Backup_File : constant Virtual_File :=
+        Create_From_Dir (Kernel.Home_Dir, Backup_Name);
+      File        : constant Virtual_File :=
+        Create_From_Dir (Kernel.Home_Dir, Desktop_Name);
+      Predefined  : constant Virtual_File :=
+        Create_From_Dir (Get_System_Dir (Kernel), "share/gps/" & Desktop_Name);
+      Success     : Boolean;
+   begin
+      if not Desktop_Backup_Save.Get_Pref then
+         return;
+      end if;
+
+      Trace (Me, "Checking the backup desktop file");
+      Increase_Indent (Me, "");
+
+      if Is_Regular_File (Backup_File) then
+         if Is_Regular_File (File) then
+            Delete (File, Success);
+            if not Success then
+               Trace (Me, "Could not delete " & File.Display_Full_Name);
+            end if;
+         end if;
+
+         Rename (Backup_File, File, Success);
+         if not Success then
+            Trace (Me, "Could not rename " & Backup_File.Display_Full_Name);
+         end if;
+      else
+         New_File := Backup_File.Write_File;
+         if Is_Regular_File (File) then
+            Write (New_File, Read_File (File).all);
+         else
+            Write (New_File, Read_File (Predefined).all);
+         end if;
+         Close (New_File);
+      end if;
+
+      Decrease_Indent (Me, "");
+   end Create_Or_Load_Backup_Desktop;
+
+   --------------------------
+   --  Save_Backup_Desktop --
+   --------------------------
+
+   procedure Save_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Backup_File : constant Virtual_File :=
+        Create_From_Dir (Kernel.Home_Dir, Backup_Name);
+   begin
+      --  Saving the desktop while closing will create invalid XML
+      --  Also for perfomance's sake don't save while loading a project
+      if UI_Module /= null
+        and then not UI_Module.Is_Loading
+        and then not Kernel.Is_In_Destruction
+        and then Desktop_Backup_Save.Get_Pref
+      then
+         if not Is_Regular_File (Backup_File) then
+            --  This case happens if the user manually deletes the backup file
+            --  or if the preference is changed.
+            Create_Or_Load_Backup_Desktop (Kernel);
+         end if;
+
+         Save_Desktop (Kernel, Backup => True);
+      end if;
+   end Save_Backup_Desktop;
+
+   ----------------------------
+   -- Destroy_Backup_Desktop --
+   ----------------------------
+
+   procedure Destroy_Backup_Desktop
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Backup_File : constant Virtual_File :=
+        Create_From_Dir (Kernel.Home_Dir, Backup_Name);
+      Success     : Boolean;
+   begin
+      if not Desktop_Backup_Save.Get_Pref then
+         return;
+      end if;
+
+      if Is_Regular_File (Backup_File) then
+         Delete (Backup_File, Success);
+         if not Success then
+            Trace (Me, "Could not delete " & Backup_File.Display_Full_Name);
+         end if;
+      end if;
+   end Destroy_Backup_Desktop;
+
+   --------------------
+   -- Set_Is_Loading --
+   --------------------
+
+   procedure Set_Is_Loading (Value : Boolean) is
+   begin
+      if UI_Module /= null then
+         UI_Module.Is_Loading := Value;
+      end if;
+   end Set_Is_Loading;
 
    ------------------
    -- Save_Desktop --

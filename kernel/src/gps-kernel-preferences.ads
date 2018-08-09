@@ -166,6 +166,7 @@ package GPS.Kernel.Preferences is
    Display_Welcome          : Boolean_Preference;
    Auto_Save                : Boolean_Preference;
    Save_Desktop_On_Exit     : Boolean_Preference;
+   Desktop_Backup_Save      : Boolean_Preference;
    Save_Editor_Desktop      : Editor_Desktop_Policy_Prefs.Preference;
    Multi_Language_Builder   : Multi_Language_Builder_Policy_Prefs.Preference;
    Hyper_Mode               : Boolean_Preference;

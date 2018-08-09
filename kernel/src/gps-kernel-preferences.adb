@@ -600,6 +600,15 @@ package body GPS.Kernel.Preferences is
              & " and compiling."),
          Default => True);
 
+      Desktop_Backup_Save := Manager.Create
+        (Path    => -"General:Behavior",
+         Name    => "General-Desktop-Backup-Save",
+         Label   => -"Perform backup saves in case of crash/freeze.",
+         Doc     =>
+            -("Save size and position of views in a backup file. Use this file"
+              & " in the next session to restore the desktop."),
+         Default => True);
+
       Save_Desktop_On_Exit := Manager.Create
         (Path    => -"General:Behavior",
          Name    => "General-Save-Desktop-On-Exit",

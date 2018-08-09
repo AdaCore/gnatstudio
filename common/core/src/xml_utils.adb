@@ -669,6 +669,9 @@ package body XML_Utils is
             --  when you parsed <tag/> vs. <tag />.
             if N.Tag (N.Tag'Last) = '/' then
                Put_Line (">");
+            elsif N.Tag (N.Tag'Last) = ' ' then
+               --  Don't add more whitespaces
+               Put_Line ("/>");
             else
                Put_Line (" />");
             end if;

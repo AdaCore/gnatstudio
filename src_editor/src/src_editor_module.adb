@@ -886,12 +886,13 @@ package body Src_Editor_Module is
 
                Src := Open_File
                  (User, F,
-                  Project    => Project,
-                  Focus      => False,
-                  Line       => Line,
-                  Create_New => True,
-                  Column     => Column,
-                  Column_End => Column);
+                  Project         => Project,
+                  Focus           => False,
+                  Line            => Line,
+                  Create_New      => True,
+                  Column          => Column,
+                  Column_End      => Column,
+                  Is_Load_Desktop => True);
                Child := Find_Child (User, Src);
 
             else
@@ -1386,7 +1387,8 @@ package body Src_Editor_Module is
         Gtkada.MDI.Position_Automatic;
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
-      Title            : String := "")
+      Title            : String := "";
+      Is_Load_Desktop  : Boolean := False)
       return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
@@ -1518,6 +1520,10 @@ package body Src_Editor_Module is
             Areas          => Areas);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
+
+         if not Is_Load_Desktop then
+            Save_Backup_Desktop (Kernel);
+         end if;
 
          Check_Writable (Editor);
 
