@@ -349,7 +349,8 @@ package body Src_Editor_Box.Tooltips is
                   end loop;
 
                   if Text /= Null_Unbounded_String then
-                     if Message.Get_Action /= null
+                     if Message /= null
+                       and then Message.Get_Action /= null
                        and then Message.Get_Action.Image /=
                          Null_Unbounded_String
                      then
