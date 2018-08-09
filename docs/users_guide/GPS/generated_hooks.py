@@ -762,8 +762,7 @@ class Predefined_Hooks:
     # location_changed = 'location_changed'
     def location_changed(name,file,line,column,project):
         """
-      Emitted when the location in the current editor has changed, and the
-      cursor has stopped moving.
+      Emitted when the location in the current editor has changed.
 
       :param str name:
       :param GPS.File file:
