@@ -45,7 +45,7 @@ package body Debugger.Base_Gdb is
    --  Another string used to detect undefined commands
 
    Version_Pattern : constant Pattern_Matcher := Compile
-     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(.[0-9]+)? .*");
+     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(\.[0-9]+)? .*");
    --  To detect the version of GDB
 
    --------------------------
