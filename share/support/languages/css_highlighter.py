@@ -1,4 +1,7 @@
-from highlighter.common import *
+from highlighter.common import (
+    region_template, tag_string, hl_inside_strings, region, tag_comment,
+    hl_comment_notes, simple, tag_keyword, tag_number, tag_type, words,
+    tag_default, register_highlighter)
 
 
 #################################################
@@ -137,24 +140,6 @@ color_names_list = ["aliceblue", "antiquewhite", "aqua", "aquamarine",
                     "turquoise", "transparent", "violet", "wheat", "white",
                     "whitesmoke", "yellow", "yellowgreen"]
 
-####################
-# Tag definitions #
-####################
-
-tag_classes_id_identifiers = new_style(lang="CSS",
-                                       name="css_classes_id_identifiers",
-                                       label="Classes and ID identifiers",
-                                       doc="Style used for class selectors"
-                                       " and id selectors identifiers",
-                                       foreground_colors=('#99FF33',
-                                                          '#99FF33'))
-
-tag_length_units = new_style(lang="CSS",
-                             name="css_length_units",
-                             label="Length units",
-                             doc="Style used for the CSS length units",
-                             foreground_colors=('#F92572', '#F92572'))
-
 #######################
 # Matcher definitions #
 #######################
@@ -175,7 +160,7 @@ number_literals = simple(r"\b[0-9]*\.?[0-9]+\b", tag=tag_number)
 
 colors = simple(r"#[0-9-a-f-A-F]{3}(?:[0-9-a-f-A-F]{3})?\b", tag=tag_number)
 
-length_units = simple(r"{0}".format(length_units_list), tag=tag_length_units)
+length_units = simple(r"{0}".format(length_units_list), tag=tag_keyword)
 
 length_values = region(r"\b[0-9]", r"\b", tag=tag_number,
                        highlighter=(length_units,))
@@ -184,12 +169,12 @@ properties = words(properties_list, tag=tag_type)
 
 html_elements = words(html_elements_list, tag=tag_keyword)
 
-color_names = words(color_names_list, tag=tag_type)
+color_names = words(color_names_list, tag=tag_string)
 
 border_types = words(border_types_list, tag=tag_type)
 
 class_or_id_identifiers = simple(r"(?:\.|#)(?:\w|-)+",
-                                 tag=tag_classes_id_identifiers)
+                                 tag=tag_type)
 
 gtk_variables = simple(r"@(?:\w|-)+", tag=tag_default)
 
