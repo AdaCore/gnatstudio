@@ -49,12 +49,14 @@ with open(gnatprove_file, "r") as input_file2:
 # constants that are required by the plugin
 
 toolname = 'gnatprove'
+messages_category = 'GNATprove'
 obj_subdir_name = toolname
 report_file_name = toolname + '.out'
 prefix = 'SPARK'
 menu_prefix = '/' + prefix
 # hook on exit when ITP has been launched
 hook_itp = False
+
 
 examine_all = 'Examine All'
 examine_root_project = 'Examine All Sources'
@@ -302,7 +304,7 @@ def check_proof_after_close(proc, ex_st, outp):
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
             llarg = limit_line_option(proc._proc_msg, vc_kind)
-            GPS.Locations.remove_category("Builder results")
+            GPS.Locations.remove_category(messages_category)
             GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
                                                    synchronous=False)
         except TypeError:
@@ -524,7 +526,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         # a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
         if GPS.Preference(Display_Analysis_Report).get():
-            self.analysis_tool = GPS.AnalysisTool('GNATprove')
+            self.analysis_tool = GPS.AnalysisTool(messages_category)
 
             # create rules for all the messages not related with SPARK itself
             # (e.g: GNAT warnings etc.).
@@ -700,9 +702,8 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         report_should_be_displayed = GPS.Preference(
             Display_Analysis_Report).get()
-        report_displayed = False
 
-        for m in GPS.Message.list("Builder results"):
+        for m in GPS.Message.list(messages_category):
             text = get_comp_text(m)
             if text in self.msg_id:
                 id = self.msg_id[text]
@@ -723,9 +724,8 @@ class GNATprove_Parser(tool_output.OutputParser):
             if extra:
                 self.act_on_extra_info(m, extra, artifact_dir, command)
 
-            if not report_displayed and report_should_be_displayed:
-                GPS.Analysis.display_report()
-                report_displayed = True
+        if report_should_be_displayed:
+            GPS.Analysis.display_report()
 
         if self.child is not None:
             self.child.on_exit(status, command)
@@ -738,16 +738,17 @@ class GNATprove_Parser(tool_output.OutputParser):
            which will be used later (in on_exit) to associate more info to the
            message
         """
+
         lines = text.splitlines()
         for line in lines:
             m = re.match(self.regex, line)
             if m:
                 text = m.group(1)
-                self.pass_output(text, command)
+                GPS.Locations.parse(text, category=messages_category)
                 self.msg_id[text] = int(m.group(2))
             else:
                 # the line doesn't have any extra info, go on
-                self.pass_output(line, command)
+                GPS.Locations.parse(line, category=messages_category)
 
 
 def is_file_context(self):
@@ -759,7 +760,7 @@ def is_file_context(self):
 
 def generic_on_analyze(target, args=[]):
     disable_trace_and_ce()
-    GPS.Locations.remove_category("Builder results")
+    GPS.Locations.remove_category(messages_category)
     GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
@@ -960,7 +961,7 @@ def generic_action_on_subp(self, action):
         args = [arg]
         if inside_generic_unit_context(self):
             args.append("-U")
-        GPS.Locations.remove_category("Builder results")
+        GPS.Locations.remove_category(messages_category)
         target = GPS.BuildTarget(action)
         target.execute(extra_args=args,
                        synchronous=False)
@@ -1162,7 +1163,7 @@ def on_prove_check(context):
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.Locations.remove_category("Builder results")
+    GPS.Locations.remove_category(messages_category)
     GPS.BuildTarget(prove_check()).execute(extra_args=args,
                                            synchronous=False)
 
@@ -1307,7 +1308,7 @@ def on_prove_itp(context, edit_session=False):
     file_name = os.path.basename(abs_fn_path)
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.Locations.remove_category("Builder results")
+    GPS.Locations.remove_category(messages_category)
     start_ITP(tree, file_name, abs_fn_path, args, edit_session)
     # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
     # launched last = False so that it is the first hook to be run

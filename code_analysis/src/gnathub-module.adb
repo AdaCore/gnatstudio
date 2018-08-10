@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with Gtk.Widget;
 with Gtkada.Handlers;
@@ -33,6 +34,8 @@ with GNAThub.Loader.External;
 with GNAThub.Loader.Databases;
 
 package body GNAThub.Module is
+
+   Me : constant Trace_Handle := Create ("GNATHUB");
 
    type On_Before_Exit is
      new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
@@ -60,6 +63,7 @@ package body GNAThub.Module is
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
    begin
       if Self.Report /= null then
+         Trace (Me, "Destroying the Analysis report");
          Self.Report.Destroy;
       end if;
 
@@ -98,6 +102,8 @@ package body GNAThub.Module is
       end if;
 
       if Has_Data then
+         Trace (Me, "Displaying the Analysis report");
+
          --  Switch to GNATHub perspective.
          Load_Perspective (Self.Kernel, "Analyze");
 
