@@ -465,7 +465,7 @@ package body GNAThub.Loader is
          Severity_Id => Severity_Id,
          Visible     => Visible);
 
-      if File = GNATCOLL.VFS.No_File then
+      if File = GNATCOLL.Projects.Project_Path (Project) then
          Project_Node.Messages.Append (M_Ref);
          return;
       end if;
@@ -526,7 +526,7 @@ package body GNAThub.Loader is
          Severity_Id => 0,
          Visible     => False);
 
-      if File = GNATCOLL.VFS.No_File then
+      if File = GNATCOLL.Projects.Project_Path (Project) then
          if not Project_Node.Metrics.Contains (Metric.Rule.Tool.Name) then
             Project_Node.Metrics.Include
               (Metric.Rule.Tool.Name,

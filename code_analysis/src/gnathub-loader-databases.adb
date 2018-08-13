@@ -223,7 +223,7 @@ package body GNAThub.Loader.Databases is
                Project :=
                  GPS.Kernel.Project.Get_Project_Tree
                    (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
-               File := GNATCOLL.VFS.No_File;
+               File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                Project :=
                  GPS.Kernel.Project.Get_Project (Self.Module.Get_Kernel);
@@ -296,7 +296,7 @@ package body GNAThub.Loader.Databases is
                Project :=
                  GPS.Kernel.Project.Get_Project_Tree
                    (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
-               File := GNATCOLL.VFS.No_File;
+               File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                Project :=
                  GPS.Kernel.Project.Get_Project (Self.Module.Get_Kernel);
