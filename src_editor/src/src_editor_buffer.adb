@@ -5142,7 +5142,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Success := True;
-      while not Ends_Word (End_Iter) loop
+      while not Ends_Word (Buffer, End_Iter) loop
          Forward_Char (End_Iter, Success);
          exit when not Success;
       end loop;
@@ -5151,7 +5151,7 @@ package body Src_Editor_Buffer is
          Forward_Char (End_Iter, Success);
       end if;
 
-      while not Starts_Word (Start_Iter) loop
+      while not Starts_Word (Buffer, Start_Iter) loop
          Backward_Char (Start_Iter, Success);
          exit when not Success;
       end loop;
