@@ -517,7 +517,8 @@ package body KeyManager_Module is
 
       if Event_Type = Key_Press
         or else Event_Type = Key_Release
-        or else Event_Type = Button_Press
+        or else (Event_Type = Button_Press
+                 and then Get_Button (Event) > 3)
       then
          --  Check that the current input window is not modal.
          --  In the case that we have a modal dialog, we do not want to
