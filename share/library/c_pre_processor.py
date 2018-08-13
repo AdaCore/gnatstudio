@@ -67,7 +67,7 @@ def is_c_file(dummy):
              filter=is_c_file,
              menu="Analyze/Preprocessor/cpp on current file")
 def cpp_on_file():
-    obj_dir = GPS.Project.root().object_dirs()[0]
+    obj_dir = GPS.Project.root().artifacts_dir()
     file = GPS.current_context().file()
     # Put the generated file in the object dir and for "foo.c"
     # creates "foo.prep.c"
