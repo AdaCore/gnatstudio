@@ -32,6 +32,7 @@ with Cairo;                     use Cairo;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Window;                use Gdk.Window;
 
 with Glib.Main;
 with Glib.Error;                use Glib.Error;
@@ -742,7 +743,14 @@ package body GPS.Main_Window is
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
       Set_Position (Main_Window, Win_Pos_Center);
-      Set_Default_Size (Main_Window, 800, 700);
+      Set_Geometry_Hints
+        (Window          => Main_Window,
+         Geometry_Widget => null,
+         Geometry        => Gdk_Geometry'
+           (Min_Width  => 1280,
+            Min_Height => 720,
+            others     => <>),
+         Geom_Mask       => Hint_Min_Size);
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);

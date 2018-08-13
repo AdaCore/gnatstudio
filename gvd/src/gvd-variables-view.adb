@@ -420,8 +420,9 @@ package body GVD.Variables.View is
       pragma Unreferenced (Filter);
 
       View : constant GVD_Variable_View :=
-        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context));
-
+        Variable_MDI_Views.Retrieve_View
+          (Get_Kernel (Context),
+           Visible_Only => True);
    begin
       if View /= null
         and then GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
@@ -1540,7 +1541,9 @@ package body GVD.Variables.View is
    is
       pragma Unreferenced (Self);
       View : constant GVD_Variable_View :=
-        Variable_MDI_Views.Retrieve_View (Kernel);
+        Variable_MDI_Views.Retrieve_View
+          (Kernel,
+           Visible_Only => False);
    begin
       if View /= null then
          Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);

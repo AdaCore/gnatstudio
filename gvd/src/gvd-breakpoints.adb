@@ -533,7 +533,10 @@ package body GVD.Breakpoints is
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       View    : constant Breakpoint_Editor :=
         (if Debugger = null
-         then Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel))
+         then Breakpoint_Editor
+           (Breakpoints_MDI_Views.Retrieve_View
+                (Kernel,
+                 Visible_Only => True))
          else Breakpoint_Editor (Process.Breakpoints_Editor));
    begin
       if View /= null then
@@ -555,7 +558,10 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Self, Column, Project);
 
       View : constant Breakpoint_Editor :=
-        Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
+        Breakpoint_Editor
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Kernel,
+              Visible_Only => True));
    begin
       if View /= null then
          Select_Breakpoint_On (View, File, Line);
@@ -1341,7 +1347,9 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Filter);
       View : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context)));
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context),
+              Visible_Only => True));
       Res  : Boolean                    := False;
    begin
       if View /= null then
@@ -1606,7 +1614,9 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Command);
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
       Props : Properties_Editor;
       Br : Breakpoint_Data := (Num => 0, others => <>);
    begin
@@ -1637,7 +1647,10 @@ package body GVD.Breakpoints is
    is
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       View    : constant Breakpoint_Editor :=
-        Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
+        Breakpoint_Editor
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Kernel,
+              Visible_Only => True));
       Id_List : List_Breakpoint_Identifiers.List;
    begin
       if View = null then
@@ -1750,7 +1763,9 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Command);
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
    begin
       if View /= null then
          Show_Selected_Breakpoint_Details (View);
@@ -1793,7 +1808,10 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       View    : constant Breakpoint_Editor :=
-        Breakpoint_Editor (Breakpoints_MDI_Views.Retrieve_View (Kernel));
+        Breakpoint_Editor
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Kernel,
+              Visible_Only => True));
       Id_List : List_Breakpoint_Identifiers.List;
    begin
       --  Get the list of selected breakpoints
@@ -1819,7 +1837,9 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Command);
       View      : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
       Model     : Gtk_Tree_Store;
    begin
       if View /= null then
@@ -1863,7 +1883,9 @@ package body GVD.Breakpoints is
       pragma Unreferenced (Command);
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
-          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
    begin
       if View /= null then
          Show_Selected_Breakpoint_In_Editor (View);
