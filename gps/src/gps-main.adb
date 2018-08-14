@@ -2343,7 +2343,9 @@ procedure GPS.Main is
 
       LAL.Module.Register_Module
         (GPS_Main.Kernel,
-         (LAL.Use_LAL_In_Editor    => Use_LAL_In_Editor.Get_Pref,
+         (LAL.Use_LAL_In_Editor    => Use_LAL_In_Outline.Get_Pref
+                                        or else Use_LAL_In_Indent.Get_Pref
+                                        or else Use_LAL_In_Highlight.Get_Pref,
           LAL.Use_LAL_In_Outline   => Use_LAL_In_Outline.Get_Pref,
           LAL.Use_LAL_In_Shell     => Use_LAL_In_Shell.Get_Pref,
           LAL.Use_LAL_In_Info      => Use_LAL_In_Info.Get_Pref,

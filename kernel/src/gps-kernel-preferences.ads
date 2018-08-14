@@ -305,7 +305,6 @@ package GPS.Kernel.Preferences is
    --  Debugger preferences are registered in GVD.Preferences
 
    -- LibAdaLang --
-   Use_LAL_In_Editor    : Boolean_Preference;
    Use_LAL_In_Outline   : Boolean_Preference;
    Use_LAL_In_Shell     : Boolean_Preference;
    Use_LAL_In_Info      : Boolean_Preference;

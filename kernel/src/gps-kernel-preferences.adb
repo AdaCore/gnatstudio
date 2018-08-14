@@ -487,12 +487,6 @@ package body GPS.Kernel.Preferences is
          Default  => False);
 
       --  LibAdaLang --
-      Use_LAL_In_Editor := Manager.Create_Invisible_Pref
-        (Name     => "use-lal-in-editor",
-         Label    => -"Use LAL in editor",
-         Doc      => -("Enable usage of libadalang in a source editor."),
-         Default  => Active (Experimental_LAL));
-
       Use_LAL_In_Outline := Manager.Create_Invisible_Pref
         (Name     => "use-lal-in-outline",
          Label    => -"Use LAL in Outline",
