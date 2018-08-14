@@ -21,6 +21,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
+with GNAThub.Filters_Views;     use GNAThub.Filters_Views;
 with GNAThub.Module;            use GNAThub.Module;
 with GNAThub.Messages;          use GNAThub.Messages;
 with GNAThub.Loader.External;
@@ -91,10 +92,27 @@ package body GNAThub.Module.Shell is
    procedure Analysis_Commands_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Data);
    begin
       if Command = "display_report" then
-         GNAThub.Module.Module.Display_Data;
+         declare
+            Tool_Inst : constant Class_Instance := Data.Nth_Arg
+              (1, Allow_Null => True);
+            Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
+         begin
+            GNAThub.Module.Module.Display_Data;
+
+            if Tool /= null then
+               --  If a tool is specified, select only this tool in the Filters
+               --  view.
+
+               for Registered_Tool of GNAThub.Module.Module.Tools loop
+                  Set_Tool_Selection
+                    (Kernel   => GNAThub.Module.Module.Kernel,
+                     Tool     => Registered_Tool,
+                     Selected => Registered_Tool.Name = Tool.Name);
+               end loop;
+            end if;
+         end;
       end if;
    end Analysis_Commands_Handler;
 
@@ -180,6 +198,7 @@ package body GNAThub.Module.Shell is
 
       Kernel.Scripts.Register_Command
         (Command       => "display_report",
+         Params        => (1 => Param ("tool", Optional => True)),
          Handler       => Analysis_Commands_Handler'Access,
          Class         => Analysis_Class,
          Static_Method => True);

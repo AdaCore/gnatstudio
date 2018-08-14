@@ -26,11 +26,63 @@ package body GNAThub.Loader.External is
    --  command that loads external messages.
 
    ---------------------
+   -- Remove_Messages --
+   ---------------------
+
+   overriding procedure Remove_Messages
+     (Self : in out External_Loader_Type) is
+   begin
+      --  Don't remove the messages if there is no new data to load: this
+      --  allows to display the previously loaded data when displaying the
+      --  Analysis Report.
+      if Self.Has_Data_To_Load then
+         Loader_Type (Self).Remove_Messages;
+      end if;
+   end Remove_Messages;
+
+   ---------------------
    -- Prepare_Loading --
    ---------------------
 
    overriding procedure Prepare_Loading
-     (Self : in out External_Loader_Type) is null;
+     (Self : in out External_Loader_Type) is
+   begin
+      --  If there is no new messages to process, put the prevously loaded
+      --  messages in the queue again so that the Anaylis Report gets filled
+      --  with the previous data when no new analysis has been performed.
+      if Self.Messages_To_Process.Is_Empty
+        and then not Self.Messages.Is_Empty
+      then
+         for Message_Ref of Self.Messages loop
+            if not Message_Ref.Is_Empty then
+               declare
+                  Message      : constant GNAThub_Message_Access :=
+                                   GNAThub_Message_Access
+                                     (Message_Ref.Message);
+                  New_Message  : constant GNAThub_Message_Access :=
+                                   new GNAThub_Message;
+               begin
+                  GNAThub.Messages.Initialize
+                    (Self          => New_Message,
+                     Container     =>
+                       Self.Module.Kernel.Get_Messages_Container,
+                     Severity      => Message.Get_Severity,
+                     Rule          => Message.Get_Rule,
+                     Text          => Message.Get_Text,
+                     File          => Message.Get_File,
+                     Line          => Message.Get_Line,
+                     Column        => Message.Get_Column);
+
+                  Message.Remove;
+
+                  Self.Add_External_Message (New_Message);
+               end;
+            end if;
+         end loop;
+
+         Self.Messages.Clear;
+      end if;
+   end Prepare_Loading;
 
    ----------------------
    -- Has_Data_To_Load --

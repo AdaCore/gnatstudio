@@ -1144,6 +1144,26 @@ package body GNAThub.Filters_Views is
       View := Views.Get_Or_Create_View (Kernel);
    end Open_View;
 
+   ------------------------
+   -- Set_Tool_Selection --
+   ------------------------
+
+   procedure Set_Tool_Selection
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Tool     : not null Tool_Access;
+      Selected :  Boolean)
+   is
+      View : constant Views.View_Access := Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         if Selected then
+            View.Tools_Editor.Choose (Tool);
+         else
+            View.Tools_Editor.Unselect (Tool);
+         end if;
+      end if;
+   end Set_Tool_Selection;
+
    ---------------------
    -- Register_Module --
    ---------------------

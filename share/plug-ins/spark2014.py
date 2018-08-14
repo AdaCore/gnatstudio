@@ -90,7 +90,7 @@ MESSAGES = "Messages"
 def print_error(message):
     """print errors on the messages console"""
     console = GPS.Console(MESSAGES)
-    console.write(message, mode="error")
+    console.write(message + '\n', mode="error")
 
 
 # getters for proof target depending on user profile
@@ -149,6 +149,7 @@ def prove_check():
 
 
 show_report = 'Show Report'
+show_log = 'Show Log'
 clean_up = 'Clean Proofs'
 check_msg_prefix = 'medium: '
 
@@ -522,26 +523,24 @@ class GNATprove_Parser(tool_output.OutputParser):
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
 
-        # if the display_analysis_report preference is enabled, create
-        # a GPS.AnalysisTool instance to collect the messages that will
+        # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
-        if GPS.Preference(Display_Analysis_Report).get():
-            self.analysis_tool = GPS.AnalysisTool(messages_category)
+        gnatprove_plug.analysis_tool = GPS.AnalysisTool(messages_category)
 
-            # create rules for all the messages not related with SPARK itself
-            # (e.g: GNAT warnings etc.).
-            self.analysis_tool.add_rule('warnings', 'WARNINGS')
-            self.analysis_tool.add_rule('informational', 'INFORMATIONAL')
-            self.analysis_tool.add_rule('errors', 'ERRORS')
+        # create rules for all the messages not related with SPARK itself
+        # (e.g: GNAT warnings etc.).
+        gnatprove_plug.analysis_tool.add_rule('warnings', 'WARNINGS')
+        gnatprove_plug.analysis_tool.add_rule('informational', 'INFORMATIONAL')
+        gnatprove_plug.analysis_tool.add_rule('errors', 'ERRORS')
 
-            # create the SPARK rules from the '--list-categories' switch
-            process = GPS.Process("gnatprove --list-categories")
-            output = process.get_result()
-            for line in output.split('\n'):
-                splitted_line = line.split(' - ')
-                if len(splitted_line) == 3:
-                    self.analysis_tool.add_rule(splitted_line[1],
-                                                splitted_line[0])
+        # create the SPARK rules from the '--list-categories' switch
+        process = GPS.Process("gnatprove --list-categories")
+        output = process.get_result()
+        for line in output.split('\n'):
+            splitted_line = line.split(' - ')
+            if len(splitted_line) == 3:
+                gnatprove_plug.analysis_tool.add_rule(splitted_line[1],
+                                                      splitted_line[0])
 
     def pass_output(self, text, command):
         """pass the text on to the next output parser"""
@@ -718,14 +717,14 @@ class GNATprove_Parser(tool_output.OutputParser):
                     extra = self.extra_info[full_id]
 
             if report_should_be_displayed:
-                self.analysis_tool.add_message(
+                gnatprove_plug.analysis_tool.add_message(
                     m, self.get_rule_id_for_msg(m, extra))
 
             if extra:
                 self.act_on_extra_info(m, extra, artifact_dir, command)
 
         if report_should_be_displayed:
-            GPS.Analysis.display_report()
+            gnatprove_plug.show_report()
 
         if self.child is not None:
             self.child.on_exit(status, command)
@@ -811,6 +810,10 @@ def on_prove_line(self):
 
 def on_show_report(self):
     gnatprove_plug.show_report()
+
+
+def on_show_log(self):
+    gnatprove_plug.show_log()
 
 
 def on_clean_up(self):
@@ -986,6 +989,10 @@ class GNATProve_Plugin:
 
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
+    analysis_tool = None
+    # The GPS.AnalysisTool instance that will be responsible to add messages
+    # in the Analysis Report.
+
     def __init__(self):
         process = GPS.Process("gnatprove -h")
         help_msg = process.get_result()
@@ -993,7 +1000,14 @@ class GNATProve_Plugin:
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
 
     def show_report(self):
-        """show report produced in gnatprove/gnatprove.out"""
+        """Display the Analysis Report with the GNATprove messages"""
+        if self.analysis_tool:
+            GPS.Analysis.display_report(self.analysis_tool)
+        else:
+            print_error("No data available. Please run GNATprove first.")
+
+    def show_log(self):
+        """Display the gnatprove.out log"""
 
         artifact_dir = GPS.Project.root().artifacts_dir()
         report_file = os.path.join(artifact_dir, obj_subdir_name,
@@ -1004,7 +1018,7 @@ class GNATProve_Plugin:
 
         if not os.path.exists(report_file):
             if artifact_dir.endswith(os.sep):
-                artifact_dir = artifact_dir[:-len(os.sep)]
+                artifact_dir = artifact_dir[:len(os.sep)]
             artifact_dir = os.path.dirname(artifact_dir)
             candidate_report_file = \
                 os.path.join(artifact_dir,
@@ -1024,6 +1038,7 @@ class GNATProve_Plugin:
             buf = GPS.EditorBuffer.get(GPS.File(report_file))
             v = buf.current_view()
             GPS.MDI.get_by_child(v).raise_window()
+
 
 # Manual proof
 
@@ -1124,6 +1139,10 @@ def prove_check_context(context, edit_session):
             else:
                 return False
     return False
+
+
+def can_show_report():
+    return gnatprove_plug.analysis_tool is not None
 
 
 def get_vc_kind(msg):

@@ -471,11 +471,17 @@ class Analysis(object):
     """
 
     @staticmethod
-    def display_report():
+    def display_report(tool=None):
         """
         Display the GPS analysis report.
         Make sure to add your messages before calling this function in order
         to display them.
+
+        When the optional :class:`GPS.AnalysisTool` parameter is specified,
+        only this tool will be selected in the Filters view.
+
+        :param :class:`GPS.AnalysisTool` tool: The tool that will be
+        exclusively selected.
         """
         pass  # implemented in Ada
 

@@ -92,14 +92,8 @@ package body GNAThub.Module is
    begin
       Self.Clean;
 
-      --  Try to load the data collected by the external loader first.
       Has_Data := Self.Ext_Loader.Load;
-
-      --  If there is no data to load in the external loader, try to load the
-      --  data from the database loader.
-      if not Has_Data then
-         Has_Data := Self.Db_Loader.Load;
-      end if;
+      Has_Data := Has_Data or Self.Db_Loader.Load;
 
       if Has_Data then
          Trace (Me, "Displaying the Analysis report");
@@ -125,7 +119,6 @@ package body GNAThub.Module is
 
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
          Self.Report.Raise_Child;
-
       else
          Self.Get_Kernel.Insert
            ("No analysis data available.");

@@ -89,10 +89,19 @@
       </shell>
     </action>
     <action name="Show Report Action" category="GNATprove" output="none">
+      <filter shell_lang="python"
+              shell_cmd="spark2014.can_show_report()" />
         <shell
           lang="python">spark2014.on_show_report(GPS.current_context())
         </shell>
     </action>
+
+    <action name="Show Log Action" category="GNATprove" output="none">
+        <shell
+          lang="python">spark2014.on_show_log(GPS.current_context())
+        </shell>
+    </action>
+
     <action name="Clean Proofs Action" category="GNATprove" output="none">
         <shell
           lang="python">spark2014.on_clean_up(GPS.current_context())</shell>
@@ -128,6 +137,9 @@
         <menu><title/></menu>
         <menu action="Show Report Action">
           <Title>Show Report</Title>
+        </menu>
+        <menu action="Show Log Action">
+          <Title>Show Log</Title>
         </menu>
         <menu action="Clean Proofs Action">
           <Title>Clean Proofs</Title>
