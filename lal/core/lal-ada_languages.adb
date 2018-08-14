@@ -26,6 +26,7 @@ with Pp.Scanner;                     use Pp.Scanner;
 with GPS.Messages_Windows;
 with String_Utils;
 with Utils.Char_Vectors;             use Utils.Char_Vectors;
+with Utils.Command_Lines.Common;     use Utils.Command_Lines.Common;
 
 package body LAL.Ada_Languages is
 
@@ -213,6 +214,10 @@ package body LAL.Ada_Languages is
          Utils.Command_Lines.Cmd_Line_1,
          Callback           => null,
          Collect_File_Names => False);
+
+      --  Use the "--syntax-only" mode when using lalpp from GPS
+      Common_Boolean_Switches.Set_Arg
+        (Self.Pp_Command_Line, Syntax_Only, True);
    end Initialize;
 
 end LAL.Ada_Languages;
