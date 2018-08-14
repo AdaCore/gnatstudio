@@ -57,6 +57,7 @@ variant_prefs = {
     'keywords': "Src-Editor-Keywords-Variant",
     'types': "Src-Editor-Type-Variant",
     'blocks': "Src-Editor-Block-Variant",
+    'keywords_in_aspects': "Src-Editor-Aspects-Keywords-Variant",
     'preprocessor': "Editor/Fonts & Colors:General/preprocessor"
 }
 # These keys are interpreted as variant preferences
@@ -270,6 +271,8 @@ common_light = {
     'current_block': Rgba(226, 226, 226),
     'browsers_bg': Rgba(255, 255, 255),
 
+    'keywords_in_aspects': ("DEFAULT", Rgba(0, 109, 151), transparent),
+
     'preprocessor': ("DEFAULT", Color("#606090"), transparent)
 }
 
@@ -327,6 +330,8 @@ common_dark = {
     'current_line':  Rgba(48, 51, 51),
     'current_block':  Rgba(48, 51, 51),
     'browsers_bg': Rgba(255, 255, 255),
+
+    'keywords_in_aspects': ("DEFAULT", Rgba(173, 127, 168), transparent),
 
     'preprocessor': ("DEFAULT", Color("#606090"), transparent)
 }
