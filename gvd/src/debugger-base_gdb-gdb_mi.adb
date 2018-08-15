@@ -335,18 +335,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ---------------------
 
    function Get_GDB_Version
-     (Debugger : access Gdb_MI_Debugger) return Version_Number is
+     (Debugger : access Gdb_MI_Debugger) return Version_Number
+   is
+      Mode   : GVD.Types.Command_Type renames GVD.Types.Internal;
+      Output : Unbounded_String;
+
    begin
       if Debugger.GDB_Version /= Unknown_Version then
          return Debugger.GDB_Version;
       end if;
 
-      declare
-         S : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-gdb-version", Mode => Internal);
-      begin
-         Debugger.GDB_Version := Parse_GDB_Version (S);
-      end;
+      Debugger.Filter_Output
+        (Mode,
+         Debugger.Send_And_Get_Clean_Output ("-gdb-version", Mode => Mode),
+         Output);
+
+      Debugger.GDB_Version := Parse_GDB_Version (To_String (Output));
 
       return Debugger.GDB_Version;
    end Get_GDB_Version;
