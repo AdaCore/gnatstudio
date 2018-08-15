@@ -514,6 +514,7 @@ private
       Line  => 0);
 
    type Gdb_MI_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
+      GDB_Version          : Version_Number  := Unknown_Version;
       Breakpoints_Changed  : Boolean := False;
       Current_Frame        : Frame_Info       := Null_Frame_Info;
       Current_Command_Kind : Command_Category := Misc_Command;

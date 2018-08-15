@@ -67,7 +67,6 @@ private
       Executable              : GNATCOLL.VFS.Virtual_File;
       Executable_Args         : GNAT.Strings.String_Access;
       Stored_Language         : GNAT.Strings.String_Access;
-      GDB_Version             : Version_Number  := Unknown_Version;
       Endian                  : Endian_Type     := Unknown_Endian;
       Debuggee_Pid            : Integer         := 0;
 

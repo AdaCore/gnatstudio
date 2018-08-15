@@ -479,6 +479,7 @@ private
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    type Gdb_Debugger is new Debugger.Base_Gdb.Base_Gdb_Debugger with record
+      GDB_Version      : Version_Number  := Unknown_Version;
       WTX_List         : GNAT.Strings.String_Access;
       WTX_Index        : Natural;
       VxWorks_Version  : GVD.Types.VxWorks_Version_Type := GVD.Types.Vx_None;
