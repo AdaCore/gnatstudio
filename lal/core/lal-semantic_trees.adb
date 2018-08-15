@@ -705,7 +705,7 @@ package body LAL.Semantic_Trees is
             return GNATCOLL.Symbols.Symbol is
          begin
             case Node.Kind is
-               when Ada_Identifier | Ada_String_Literal =>
+               when Ada_Identifier | Ada_String_Literal | Ada_Char_Literal =>
                   declare
                      Token : constant Token_Reference := Node.Token_Start;
                   begin
