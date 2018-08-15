@@ -1088,7 +1088,7 @@ package body KeyManager_Module is
       Key    := 0;
       Button := 0;
 
-      if Get_Event_Type (Event) = Key_Press then
+      if Get_Event_Type (Event) in Key_Press | Key_Release then
          State := Event.Key.State;
          Key   := Get_Key_Val (Event);
 
