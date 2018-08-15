@@ -45,8 +45,12 @@ package body Debugger.Base_Gdb is
    --  Another string used to detect undefined commands
 
    Version_Pattern : constant Pattern_Matcher := Compile
-     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(\.[0-9]+)? .*");
+     ("^GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(\.[.0-9]+)? .*");
    --  To detect the version of GDB
+   --
+   --  Known formats:
+   --    GNU gdb (GDB) 8.1 for GNAT Pro 19.0w
+   --    GNU gdb (GDB) 8.1.90.20180726 for GNAT Pro 19.0w
 
    --------------------------
    -- Detect_Debugger_Mode --
