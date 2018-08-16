@@ -356,6 +356,88 @@ class Bookmarks(Dialog):
         self.treeview = get_widget_by_name('Bookmark TreeView')
 
 
+##################
+# AnalysisReport #
+##################
+
+class AnalysisReport(Dialog):
+
+    FilterKind = gps_utils.enum(
+        TOOL=0,
+        SEVERITY=1,
+        RULE=2)
+
+    def open_and_yield(self):
+        yield self._open_and_yield('gnathub display analysis')
+        self.filters = GPS.MDI.get("Filters").pywidget()
+        self.tools = get_widget_by_name(
+            'gnathub tools editor', self.filters)
+        self.severities = get_widget_by_name(
+            'gnathub severities editor', self.filters)
+        self.rules = get_widget_by_name(
+            'gnathub rules editor', self.filters)
+
+    def __get_filters_tree(self, filter_kind):
+        if filter_kind == AnalysisReport.FilterKind.TOOL:
+            tree = get_widgets_by_type(Gtk.TreeView, self.tools)[0]
+        elif filter_kind == AnalysisReport.FilterKind.SEVERITY:
+            tree = get_widgets_by_type(Gtk.TreeView, self.severities)[0]
+        else:
+            tree = get_widgets_by_type(Gtk.TreeView, self.rules)[0]
+
+        return tree
+
+    def yield_toggle_filter(self, name, filter_kind):
+        """
+        Toggle the filter identified by the given name and kind (eg:
+        AnalysisReport.FilterKind.TOOL to toggle a tool filter).
+
+        :param name: The name of the filter to toggle.
+        :param kind: The filter's kind
+        """
+
+        tree = self.__get_filters_tree(filter_kind)
+        model = tree.get_model()
+
+        for row in model:
+            if row[0] == name:
+                pygps.tree.click_in_tree(tree, row.path, column=0)
+                return
+
+        yield wait_tasks()
+
+    def get_filters(self, filter_kind):
+        """
+        Return the list of dictionaries representing the filters of the
+        given kind.
+
+        The returned dictionaries have the following form:
+
+          {"name": string, "number": string, "state": bool}
+
+        :param kind: The filter's kind
+        """
+        model = self.__get_filters_tree(filter_kind).get_model()
+        filters = []
+
+        for row in model:
+            filters.append(
+                {"name": row[0], "number": row[1], "state": row[2]})
+
+        return filters
+
+    def dump_filters(self, filter_kind):
+        """
+        Dump the filters editor corresponding to the given kind.
+
+        e.g: >>> report.dump_filters(AnalysisReport.FilterKind.TOOL)
+             >>> [['codepeer', '5', True], ['gnatcheck', '1', True]]
+        """
+        model = self.__get_filters_tree(filter_kind).get_model()
+
+        return dump_tree_model(model, -1)
+
+
 #################
 # Key Shortcuts #
 #################
