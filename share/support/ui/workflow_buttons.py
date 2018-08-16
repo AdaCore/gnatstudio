@@ -43,7 +43,9 @@ class WorkflowButtons(object):
             WorkflowButtons.__connect_editor_hooks()
 
             GPS.Hook('build_mode_changed').add(
-                WorkflowButtons.__on_build_mode_changed)
+                WorkflowButtons.__on_mode_or_view_changed)
+            GPS.Hook('project_view_changed').add(
+                WorkflowButtons.__on_mode_or_view_changed)
 
     @staticmethod
     def force_rebuild_main(main_name):
@@ -86,7 +88,7 @@ class WorkflowButtons(object):
                 WorkflowButtons.__needs_build[main_name] = True
 
     @staticmethod
-    def __on_build_mode_changed(hook, build_mode):
+    def __on_mode_or_view_changed(hook, build_mode=None):
         """
         Called when the build mode changes. Force the build phase in that case.
         """
