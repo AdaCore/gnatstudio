@@ -81,7 +81,7 @@
 }
 
 .gps-local-toolbar .button, .dialog-views-button-boxes .button,
-.completion.search .button
+.completion.search .button, .dialog-views .image-button
  {
    background: transparent;
    border-radius: 2px;
