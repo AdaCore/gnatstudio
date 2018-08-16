@@ -60,11 +60,11 @@ def parse_parentheses(editor, begin=None, end=None):
             if c in h:
                 stack.append((i, j))
             elif c in t:
-                    if stack is []:
-                        continue
-                    elif pairs[source[stack[-1][0]][stack[-1][1]]] == c:
-                        # when parenthesis is closed, remember its line number
-                        last = stack.pop()[0]
+                if not stack:
+                    continue
+                elif pairs[source[stack[-1][0]][stack[-1][1]]] == c:
+                    # when parenthesis is closed, remember its line number
+                    last = stack.pop()[0]
 
     closed = (len(stack) == 0)
     # get the last char of parsed text
