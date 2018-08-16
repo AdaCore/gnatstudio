@@ -512,9 +512,18 @@ class GNATprove_Parser(tool_output.OutputParser):
        :func:`act_on_extra_info()` to know what is done with this extra
        information.
     """
+    analysis_tool = None
+    # The GPS.AnalysisTool instance that will be responsible to add messages
+    # in the Analysis Report.
+
+    command = None
+    # The GNATprove command being parsed.
 
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
+
+        gnatprove_plug.output_parser = self
+
         # holds the unit names for which extra info is retrieved
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
@@ -525,13 +534,13 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
-        gnatprove_plug.analysis_tool = GPS.AnalysisTool(messages_category)
+        self.analysis_tool = GPS.AnalysisTool(messages_category)
 
         # create rules for all the messages not related with SPARK itself
         # (e.g: GNAT warnings etc.).
-        gnatprove_plug.analysis_tool.add_rule('warnings', 'WARNINGS')
-        gnatprove_plug.analysis_tool.add_rule('informational', 'INFORMATIONAL')
-        gnatprove_plug.analysis_tool.add_rule('errors', 'ERRORS')
+        self.analysis_tool.add_rule('warnings', 'WARNINGS')
+        self.analysis_tool.add_rule('informational', 'INFORMATIONAL')
+        self.analysis_tool.add_rule('errors', 'ERRORS')
 
         # create the SPARK rules from the '--list-categories' switch
         process = GPS.Process("gnatprove --list-categories")
@@ -539,8 +548,8 @@ class GNATprove_Parser(tool_output.OutputParser):
         for line in output.split('\n'):
             splitted_line = line.split(' - ')
             if len(splitted_line) == 3:
-                gnatprove_plug.analysis_tool.add_rule(splitted_line[1],
-                                                      splitted_line[0])
+                self.analysis_tool.add_rule(splitted_line[1],
+                                            splitted_line[0])
 
     def pass_output(self, text, command):
         """pass the text on to the next output parser"""
@@ -680,51 +689,18 @@ class GNATprove_Parser(tool_output.OutputParser):
                                extra['vc_file'] + "\n")
 
     def on_exit(self, status, command):
-        """When GNATprove has finished, scan through messages to see if extra
-           info has been attached to them. If so, parse the .spark file of
-           the corresponding unit to get the extra info, and act on the extra
-           info"""
+        """When GNATprove has finished, check if extra information can be
+        attached to them. Display the Analysis Report if the corresponding
+        preference is set."""
 
-        # Global map that associates messages text to the location of the
-        # check. Messages already contain a location but it cannot be trusted
-        # for launching manual prover. Messages locations records precisely
-        # what is failing in a vc not the location of said vc.
-        global map_msg
+        self.command = command
+        display_in_report = GPS.Preference(Display_Analysis_Report).get()
 
-        artifact_dir = os.path.join(
-            GPS.Project.root().artifacts_dir(),
-            obj_subdir_name)
+        self.add_extra_info_on_messages(
+            command, display_in_report=display_in_report)
 
-        map_msg = {}
-        imported_units = set()
-        extra = {}
-
-        report_should_be_displayed = GPS.Preference(
-            Display_Analysis_Report).get()
-
-        for m in GPS.Message.list(messages_category):
-            text = get_comp_text(m)
-            if text in self.msg_id:
-                id = self.msg_id[text]
-                unit = get_compunit_for_message(m)
-                full_id = unit, id
-                if unit not in imported_units:
-                    self.parsejson(unit, os.path.join(artifact_dir,
-                                                      unit + ".spark"))
-                    imported_units.add(unit)
-                extra = {}
-                if full_id in self.extra_info:
-                    extra = self.extra_info[full_id]
-
-            if report_should_be_displayed:
-                gnatprove_plug.analysis_tool.add_message(
-                    m, self.get_rule_id_for_msg(m, extra))
-
-            if extra:
-                self.act_on_extra_info(m, extra, artifact_dir, command)
-
-        if report_should_be_displayed:
-            gnatprove_plug.show_report()
+        if display_in_report:
+            GPS.Analysis.display_report(self.analysis_tool)
 
         if self.child is not None:
             self.child.on_exit(status, command)
@@ -748,6 +724,49 @@ class GNATprove_Parser(tool_output.OutputParser):
             else:
                 # the line doesn't have any extra info, go on
                 GPS.Locations.parse(line, category=messages_category)
+
+    def add_extra_info_on_messages(self, command, display_in_report=False):
+        """Scan through messages to see if extra
+           info has been attached to them. If so, parse the .spark file of
+           the corresponding unit to get the extra info, and act on the extra
+           info.
+           Also, display the messages in Analysis Report if the corresponding
+           preference is enabled.
+        """
+        # Global map that associates messages text to the location of the
+        # check. Messages already contain a location but it cannot be trusted
+        # for launching manual prover. Messages locations records precisely
+        # what is failing in a vc not the location of said vc.
+        global map_msg
+
+        artifact_dir = os.path.join(
+            GPS.Project.root().artifacts_dir(),
+            obj_subdir_name)
+
+        map_msg = {}
+        imported_units = set()
+        extra = {}
+
+        for m in GPS.Message.list(messages_category):
+            text = get_comp_text(m)
+            if text in self.msg_id:
+                id = self.msg_id[text]
+                unit = get_compunit_for_message(m)
+                full_id = unit, id
+                if unit not in imported_units:
+                    self.parsejson(unit, os.path.join(artifact_dir,
+                                                      unit + ".spark"))
+                    imported_units.add(unit)
+                extra = {}
+                if full_id in self.extra_info:
+                    extra = self.extra_info[full_id]
+
+            if display_in_report:
+                self.analysis_tool.add_message(
+                    m, self.get_rule_id_for_msg(m, extra))
+
+            if extra:
+                self.act_on_extra_info(m, extra, artifact_dir, command)
 
 
 def is_file_context(self):
@@ -989,9 +1008,8 @@ class GNATProve_Plugin:
 
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
-    analysis_tool = None
-    # The GPS.AnalysisTool instance that will be responsible to add messages
-    # in the Analysis Report.
+    output_parser = None
+    # The GNATprove_Parser instance used to parse the tool's output
 
     def __init__(self):
         process = GPS.Process("gnatprove -h")
@@ -1000,9 +1018,14 @@ class GNATProve_Plugin:
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
 
     def show_report(self):
-        """Display the Analysis Report with the GNATprove messages"""
-        if self.analysis_tool:
-            GPS.Analysis.display_report(self.analysis_tool)
+        """Display the Analysis Report with the GNATprove messages."""
+        if self.output_parser:
+            if not GPS.Preference(Display_Analysis_Report).get():
+                self.output_parser.add_extra_info_on_messages(
+                    self.output_parser.command,
+                    display_in_report=True)
+
+            GPS.Analysis.display_report(self.output_parser.analysis_tool)
         else:
             print_error("No data available. Please run GNATprove first.")
 
@@ -1142,7 +1165,7 @@ def prove_check_context(context, edit_session):
 
 
 def can_show_report():
-    return gnatprove_plug.analysis_tool is not None
+    return len(GPS.Message.list(category=messages_category)) > 1
 
 
 def get_vc_kind(msg):
