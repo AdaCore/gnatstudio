@@ -1083,17 +1083,15 @@ package body KeyManager_Module is
       Button   : out Guint;
       Modifier : out Gdk_Modifier_Type)
    is
-      State : Gdk_Modifier_Type;
+      State : constant Gdk_Modifier_Type := Get_State (Event);
    begin
       Key    := 0;
       Button := 0;
 
       if Get_Event_Type (Event) in Key_Press | Key_Release then
-         State := Event.Key.State;
-         Key   := Get_Key_Val (Event);
+         Key := Get_Key_Val (Event);
 
       elsif Get_Event_Type (Event) = Button_Press then
-         State  := Event.Button.State;
          Button := Get_Button (Event);
       end if;
 
