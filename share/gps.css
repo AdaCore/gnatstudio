@@ -23,8 +23,6 @@
 @define-color entry_color_two @editor_bg_color;
 
 @define-color button_bg_color @editor_bg_color;
-@define-color active_button_bg_color_one shade(@button_bg_color, 0.85);
-@define-color active_button_bg_color_two shade(@button_bg_color, 0.9);
 
 @define-color gutter_color mix(@editor_fg_color, @editor_bg_color, 0.6);
 
@@ -69,35 +67,36 @@
 
 .button
 {
-   background: @button_bg_color;
+   background-image: -gtk-gradient (linear,
+                                   0 0, 0 0.5,
+                                   from(@active_button_bg_color_two),
+                                   to(@active_button_bg_color_one));
    border-width: 1px;
    border-color: @popup_border_color;
 }
 
-.toolbar .button {
-  padding: 4px;
-  border-width: 0px;
+.gps-welcome-dialog .list-row.button, GtkTreeView > .button {
   background: transparent;
 }
 
-.gps-local-toolbar .image-button, .dialog-views-button-boxes .image-button,
-.completion.search .image-button, .dialog-views .image-button
+.button.flat
  {
    background: transparent;
+   background-image: none;
    border-radius: 2px;
+   border-width: 1px;
    border-color: transparent;
 }
 
-.button:link {
-   background-color: transparent;
+.toolbar .button {
+  padding: 4px;
 }
 
 .button:link:hover {
    color: @theme_selected_bg_color;
 }
 
-.button:active, .button:checked,
-.completion.search .button:active, .completion.search .button:checked{
+.button:active, .button:checked {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
                                    from(@active_button_bg_color_one),
@@ -585,7 +584,8 @@ GtkTextView.view.editor.readonly {
  * Selection
  **********************************/
 
-*:selected, GtkTextView.view:selected, GtkTextView.view.editor:selected {
+*:selected, GtkTextView.view:selected, GtkTextView.view.editor:selected,
+.list-row.button:selected {
   background-color: @theme_selected_bg_color;
   color: @theme_selected_fg_color;
 }

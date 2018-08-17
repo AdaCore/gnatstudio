@@ -19,3 +19,6 @@
 @define-color learn-items-color shade(@theme_base_color, 1.1);
 
 @define-color entry_color_one shade(@editor_bg_color, 0.9);
+
+@define-color active_button_bg_color_one shade(@button_bg_color, 0.95);
+@define-color active_button_bg_color_two shade(@button_bg_color, 1.05);
