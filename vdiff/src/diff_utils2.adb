@@ -28,7 +28,7 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with Toolchains_Old;         use Toolchains_Old;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
 with String_Diff;            use String_Diff;
