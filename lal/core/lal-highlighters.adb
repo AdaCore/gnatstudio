@@ -25,6 +25,8 @@ with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
 with Language;
 with Libadalang.Analysis;
 with Libadalang.Common;
+with Libadalang.Lexer;
+with Langkit_Support.Diagnostics;
 with Langkit_Support.Text;
 
 package body LAL.Highlighters is
@@ -537,48 +539,54 @@ package body LAL.Highlighters is
       From   : Integer;
       To     : Integer)
    is
+      pragma Unreferenced (Self);
+
       use Libadalang.Lexer.Token_Data_Handlers;
+
       First : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (From);
-      Last : constant GPS.Editors.Editor_Location'Class :=
+      Last  : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (To).End_Of_Line;
       Index : Libadalang.Lexer.Token_Data_Handlers.Token_Or_Trivia_Index;
-      Text : aliased String := Buffer.Get_Chars (First, Last);
+      Text  : aliased String := Buffer.Get_Chars (First, Last);
       Input : constant Libadalang.Lexer.Lexer_Input :=
         (Kind     => Libadalang.Lexer.Bytes_Buffer,
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
          Bytes    => Text'Unchecked_Access);
+      TDH   : Libadalang.Lexer.Token_Data_Handlers.Token_Data_Handler;
+      Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
 
       Wrong_Literal : Boolean := False;
       --  We have found unfinished string literal somewhere in current line
+
    begin
       Remove_Style (Buffer, From, To);
 
       Libadalang.Lexer.Extract_Tokens
         (Input,
-         TDH         => Self.TDH,
-         Diagnostics => Self.Diags,
+         TDH         => TDH,
+         Diagnostics => Diags,
          With_Trivia => True);
 
-      Index := First_Token_Or_Trivia (Self.TDH);
+      Index := First_Token_Or_Trivia (TDH);
 
       while Index /= No_Token_Or_Trivia_Index loop
          declare
             Token : constant Libadalang.Lexer.Stored_Token_Data :=
-              Data (Index, Self.TDH);
+              Data (Index, TDH);
             Loc   : constant Source_Location_Range :=
               Libadalang.Lexer.Sloc_Range (Token);
             Error : constant Boolean :=
               Token.Kind in Libadalang.Lexer.Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
               (if Check_Keyword (Loc) or Error
-               then Libadalang.Lexer.Text (Self.TDH, Token) else "");
+               then Libadalang.Lexer.Text (TDH, Token) else "");
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
             Start : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.Start_Column);
-            Stop : constant Visible_Column_Type :=
+            Stop  : constant Visible_Column_Type :=
               Visible_Column_Type (Token.Sloc_Range.End_Column);
          begin
             Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
@@ -593,10 +601,11 @@ package body LAL.Highlighters is
             end;
          end;
 
-         Index := Next (Index, Self.TDH);
+         Index := Next (Index, TDH);
       end loop;
 
-      Self.Diags.Clear;
+      Free (TDH);
+      Diags.Clear;
    end Highlight_Fast;
 
    --------------------------
