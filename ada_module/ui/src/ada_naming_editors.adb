@@ -147,17 +147,24 @@ package body Ada_Naming_Editors is
          Column => Editable_Column,
          Value  => True);
 
-      Editor.Exception_List.Scroll_To_Cell
-        (Get_Path (Editor.Exception_List_Model, New_Iter),
-         Column    => Get_Column (Editor.Exception_List, Unit_Column),
-         Use_Align => False,
-         Row_Align => 0.0,
-         Col_Align => 0.0);
-      Editor.Exception_List.Set_Cursor_On_Cell
-        (Get_Path (Editor.Exception_List_Model, New_Iter),
-         Focus_Column  => Get_Column (Editor.Exception_List, Unit_Column),
-         Focus_Cell    => null,
-         Start_Editing => True);
+      declare
+         Path : constant Gtk_Tree_Path :=
+           Get_Path (Editor.Exception_List_Model, New_Iter);
+
+      begin
+         Editor.Exception_List.Scroll_To_Cell
+           (Path      => Path,
+            Column    => Get_Column (Editor.Exception_List, Unit_Column),
+            Use_Align => False,
+            Row_Align => 0.0,
+            Col_Align => 0.0);
+         Editor.Exception_List.Set_Cursor_On_Cell
+           (Path          => Path,
+            Focus_Column  => Get_Column (Editor.Exception_List, Unit_Column),
+            Focus_Cell    => null,
+            Start_Editing => True);
+         Path_Free (Path);
+      end;
    end On_Add_Naming_Exception;
 
    --------------------------------

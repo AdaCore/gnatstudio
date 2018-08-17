@@ -1108,12 +1108,12 @@ package body Project_Explorers_Files is
          end loop;
 
          if Iter = Null_Iter then
-
             Path := V.Model.Get_Path (Parent);
             --  Can't get the children, so try to expand the parent node
             --  to load the children in cache.
             Dummy := V.Expand_Row (Path, Open_All => False);
             Iter := V.Model.Children (V.Model.Get_Iter (Path));
+            Path_Free (Path);
 
             --  Search in the added children
             while Iter /= Null_Iter loop
@@ -1272,6 +1272,7 @@ package body Project_Explorers_Files is
             --  First select the parent and set the 'scroll to dir' state
             Path := Get_Path (View.Tree.Model, Parent (View.Tree.Model, Iter));
             Set_Cursor (View.Tree, Path, null, False);
+            Path_Free (Path);
 
             --  Now remove the node, this will invoke the expose event, that
             --  will scroll to the parent directory.
@@ -1345,6 +1346,9 @@ package body Project_Explorers_Files is
                --  When we rename a directory, we might have deleted the only
                --  dir's child, then this dir won't have children at all. We
                --  don't want to fall back in this case here.
+
+               Path_Free (Path);
+
                return;
             end if;
 
@@ -1414,6 +1418,7 @@ package body Project_Explorers_Files is
             end if;
 
             Ignore := Expand_Row (View.Tree, Path, False);
+            Path_Free (Path);
 
             return;
          end if;

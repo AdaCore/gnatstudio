@@ -98,19 +98,26 @@ package body Naming_Exceptions is
             Editable_Column    => As_Boolean (Editable)));
 
       if Scroll_To_Cell then
-         Self.Exceptions_List_Tree.Scroll_To_Cell
-           (Get_Path (Self.Exceptions_List_Model, New_Iter),
-            Column    => Get_Column
-              (Self.Exceptions_List_Tree, Filename_Column),
-            Use_Align => False,
-            Row_Align => 0.0,
-            Col_Align => 0.0);
-         Self.Exceptions_List_Tree.Set_Cursor_On_Cell
-           (Get_Path (Self.Exceptions_List_Model, New_Iter),
-            Focus_Column  => Get_Column
-              (Self.Exceptions_List_Tree, Filename_Column),
-            Focus_Cell    => null,
-            Start_Editing => True);
+         declare
+            Path : constant Gtk_Tree_Path :=
+              Get_Path (Self.Exceptions_List_Model, New_Iter);
+
+         begin
+            Self.Exceptions_List_Tree.Scroll_To_Cell
+              (Path      => Path,
+               Column    =>
+                 Get_Column (Self.Exceptions_List_Tree, Filename_Column),
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
+            Self.Exceptions_List_Tree.Set_Cursor_On_Cell
+              (Path          => Path,
+               Focus_Column  => Get_Column
+                 (Self.Exceptions_List_Tree, Filename_Column),
+               Focus_Cell    => null,
+               Start_Editing => True);
+            Path_Free (Path);
+         end;
       end if;
    end Add_Naming_Exception;
 

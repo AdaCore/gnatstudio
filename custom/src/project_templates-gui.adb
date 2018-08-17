@@ -817,11 +817,13 @@ package body Project_Templates.GUI is
 
       if Default_Path /= Null_Gtk_Tree_Path then
          Tree.Get_Selection.Select_Path (Default_Path);
+         Path_Free (Default_Path);
+
       else
          Iter := Model.Get_Iter_First;
 
          while Model.Has_Child (Iter) loop
-               Iter := Model.Children (Iter);
+            Iter := Model.Children (Iter);
          end loop;
 
          if Iter /= Null_Iter then

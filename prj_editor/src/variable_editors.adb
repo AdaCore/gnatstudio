@@ -270,7 +270,6 @@ package body Variable_Editors is
       --  Select the new entry in editing mode
 
       Path := Get_Path (E.Model, Iter);
-
       E.Values_List.Scroll_To_Cell
         (Path      => Path,
          Column    => null,
@@ -282,6 +281,7 @@ package body Variable_Editors is
          Focus_Column  => Get_Column (E.Values_List, Value_Column),
          Focus_Cell    => null,
          Start_Editing => True);
+      Path_Free (Path);
    end New_Variable;
 
    ---------------------
@@ -300,11 +300,17 @@ package body Variable_Editors is
       E.Model := -M;
 
       if Iter /= Null_Iter then
-         Set_Cursor
-           (E.Values_List,
-            Path => Get_Path (E.Model, Iter),
-            Focus_Column => Get_Column (E.Values_List, Value_Column),
-            Start_Editing => True);
+         declare
+            Path : constant Gtk_Tree_Path := Get_Path (E.Model, Iter);
+
+         begin
+            Set_Cursor
+              (E.Values_List,
+               Path          => Path,
+               Focus_Column  => Get_Column (E.Values_List, Value_Column),
+               Start_Editing => True);
+            Path_Free (Path);
+         end;
       end if;
    end Rename_Variable;
 

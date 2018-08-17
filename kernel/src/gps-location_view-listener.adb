@@ -721,15 +721,25 @@ package body GPS.Location_View.Listener is
 
       function Is_Deleted
         (Model : Classic_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path) return Boolean is
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path) return Boolean
+      is
+         Image : constant String := To_String (Path);
+
       begin
          for Reference of Model.Removed_Rows loop
-            if Reference.Valid
-              and then To_String (Reference.Get_Path) = To_String (Path)
-            then
-               return True;
-            end if;
+            declare
+               Path       : constant Gtk_Tree_Path := Reference.Get_Path;
+               Path_Image : constant String := To_String (Path);
+
+            begin
+               Path_Free (Path);
+
+               if Reference.Valid and then Path_Image = Image then
+                  return True;
+               end if;
+            end;
          end loop;
+
          return False;
       end Is_Deleted;
 

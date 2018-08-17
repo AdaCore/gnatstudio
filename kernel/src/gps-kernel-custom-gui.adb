@@ -144,13 +144,12 @@ package body GPS.Kernel.Custom.GUI is
      (Self         : not null access Startup_Editor_Page_View_Record;
       Subpage_Name : String)
    is
-      Subpage_Iter : constant Gtk_Tree_Iter :=
-                      Get_Subpage_Iter (Editor       => Self,
-                                        Subpage_Name => Subpage_Name);
-      Subpage_Path : constant Gtk_Tree_Path :=
-                       Self.Model.Get_Path (Subpage_Iter);
+      Path : constant Gtk_Tree_Path :=
+        Self.Model.Get_Path (Get_Subpage_Iter (Self, Subpage_Name));
+
    begin
-      Self.Tree.Set_Cursor (Subpage_Path, null, False);
+      Self.Tree.Set_Cursor (Path, null, False);
+      Path_Free (Path);
    end Display_Subpage;
 
    --------------------------

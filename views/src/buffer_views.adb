@@ -610,14 +610,21 @@ package body Buffer_Views is
             end if;
 
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
-               V.Tree.Get_Selection.Select_Iter
-                 (V.Tree.Convert_To_Filter_Iter (Iter));
-               V.Tree.Scroll_To_Cell
-                 (V.Tree.Model.Get_Path (Iter),
-                  Column    => null,
-                  Use_Align => False,
-                  Row_Align => 0.0,
-                  Col_Align => 0.0);
+               declare
+                  Path : constant Gtk_Tree_Path :=
+                    V.Tree.Model.Get_Path (Iter);
+
+               begin
+                  V.Tree.Get_Selection.Select_Iter
+                    (V.Tree.Convert_To_Filter_Iter (Iter));
+                  V.Tree.Scroll_To_Cell
+                    (Path      => Path,
+                     Column    => null,
+                     Use_Align => False,
+                     Row_Align => 0.0,
+                     Col_Align => 0.0);
+                  Path_Free (Path);
+               end;
             end if;
          end if;
       end Show_Child;

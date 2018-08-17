@@ -487,6 +487,8 @@ package body GPS.Kernel.Preferences_Views is
          Page_Path := Self.Model.Get_Path (Page_Iter);
          Page_Path := Self.Filter.Convert_Child_Path_To_Path (Page_Path);
          Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+         Path_Free (Page_Path);
+
       else
          declare
             Root_Page_Name : constant String :=
@@ -504,6 +506,7 @@ package body GPS.Kernel.Preferences_Views is
 
                Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
                Root_Page_View.Display_Subpage (Page_Name_In_Model);
+               Path_Free (Page_Path);
             end if;
          end;
       end if;

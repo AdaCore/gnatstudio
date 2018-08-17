@@ -240,12 +240,19 @@ package body Project_Dependencies_Editors is
             Full_Path     => Project_File,
             Use_Base_Name => True);
 
-         Editor.Dependencies_Tree.Scroll_To_Cell
-           (Path      => Get_Path (Model, Iter),
-            Column    => null,
-            Use_Align => False,
-            Row_Align => 0.0,
-            Col_Align => 0.0);
+         declare
+            Path : constant Gtk_Tree_Path := Get_Path (Model, Iter);
+
+         begin
+            Editor.Dependencies_Tree.Scroll_To_Cell
+              (Path      => Path,
+               Column    => null,
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
+            Path_Free (Path);
+         end;
+
          Editor.Dependencies_Tree.Get_Selection.Unselect_All;
          Editor.Dependencies_Tree.Get_Selection.Select_Iter (Iter);
 
@@ -630,12 +637,19 @@ package body Project_Dependencies_Editors is
             Full_Path     => Name,
             Use_Base_Name => False);
 
-         Editor.Dependencies_Tree.Scroll_To_Cell
-           (Path      => Get_Path (Model, Iter),
-            Column    => null,
-            Use_Align => False,
-            Row_Align => 0.0,
-            Col_Align => 0.0);
+         declare
+            Path : constant Gtk_Tree_Path := Get_Path (Model, Iter);
+
+         begin
+            Editor.Dependencies_Tree.Scroll_To_Cell
+              (Path      => Path,
+               Column    => null,
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
+            Path_Free (Path);
+         end;
+
          Editor.Dependencies_Tree.Get_Selection.Unselect_All;
          Editor.Dependencies_Tree.Get_Selection.Select_Iter (Iter);
       end if;

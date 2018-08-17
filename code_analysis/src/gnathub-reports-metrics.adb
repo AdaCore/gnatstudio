@@ -191,8 +191,14 @@ package body GNAThub.Reports.Metrics is
                                 (Format_Title (To_String (M.Rule.Name))),
                             1 => As_String (Pretty_Print_Value (M.Value))));
          end loop;
-         Dummy :=
-           Self.Metrics_View.Expand_Row (Model.Get_Path (Tool_Iter), False);
+
+         declare
+            Path : constant Gtk_Tree_Path := Model.Get_Path (Tool_Iter);
+
+         begin
+            Dummy := Self.Metrics_View.Expand_Row (Path, False);
+            Path_Free (Path);
+         end;
       end loop;
    end Display_Metrics_Report;
 
