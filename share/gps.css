@@ -80,8 +80,8 @@
   background: transparent;
 }
 
-.gps-local-toolbar .button, .dialog-views-button-boxes .button,
-.completion.search .button, .dialog-views .image-button
+.gps-local-toolbar .image-button, .dialog-views-button-boxes .image-button,
+.completion.search .image-button, .dialog-views .image-button
  {
    background: transparent;
    border-radius: 2px;
