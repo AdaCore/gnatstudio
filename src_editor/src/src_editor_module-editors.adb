@@ -74,7 +74,7 @@ package body Src_Editor_Module.Editors is
    type Buffer_Reference_Access is access all Buffer_Reference;
 
    type
-     Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
+    Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
    with record
       Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
@@ -505,6 +505,12 @@ package body Src_Editor_Module.Editors is
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
+   overriding procedure Remove_Style_Line_Range
+     (This      : Src_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type);
+
    overriding procedure Add_File_Information
      (This       : Src_Editor_Buffer;
       Identifier : String;
@@ -2454,6 +2460,24 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Remove_Style;
+
+   -----------------------------
+   -- Remove_Style_Line_Range --
+   -----------------------------
+
+   overriding procedure Remove_Style_Line_Range
+     (This      : Src_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type)
+   is
+      S : Style_Access;
+   begin
+      if This.Contents.Buffer /= null then
+         S := Get_Style_Manager (This.Contents.Kernel).Get (Style);
+         Remove_Highlighting (This.Contents.Buffer, S, From_Line, To_Line);
+      end if;
+   end Remove_Style_Line_Range;
 
    ----------------------
    -- Start_Undo_Group --

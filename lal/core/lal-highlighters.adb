@@ -19,6 +19,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Handling;  use Ada.Wide_Wide_Characters.Handling;
 
+with GNAT.Strings;
 with Basic_Types;                        use Basic_Types;
 with LAL.Core_Module;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
@@ -30,6 +31,27 @@ with Langkit_Support.Diagnostics;
 with Langkit_Support.Text;
 
 package body LAL.Highlighters is
+
+   type Styles is (Keyword, String_Style, Number, Comment, Block, Type_Style,
+                   Aspect, Aspect_Keyword, Aspect_String, Aspect_Number,
+                   Aspect_Comment, Aspect_Block, Aspect_Type);
+
+   type Known_Styles_Array is array (Styles) of GNAT.Strings.String_Access;
+
+   Known_Styles : constant Known_Styles_Array :=
+     (Keyword        => new String'("keyword"),
+      String_Style   => new String'("string"),
+      Number         => new String'("number"),
+      Comment        => new String'("comment"),
+      Block          => new String'("block"),
+      Type_Style     => new String'("type"),
+      Aspect         => new String'("aspect"),
+      Aspect_Keyword => new String'("aspect_keyword"),
+      Aspect_String  => new String'("aspect_string"),
+      Aspect_Number  => new String'("aspect_number"),
+      Aspect_Comment => new String'("aspect_comment"),
+      Aspect_Block   => new String'("aspect_block"),
+      Aspect_Type    => new String'("aspect_type"));
 
    procedure Remove_Style
      (Buffer : GPS.Editors.Editor_Buffer'Class;
@@ -990,20 +1012,10 @@ package body LAL.Highlighters is
       From   : Positive;
       To     : Positive) is
    begin
-      for Line in From .. To loop
-         Buffer.Remove_Style ("keyword", Line, 1);
-         Buffer.Remove_Style ("string", Line, 1);
-         Buffer.Remove_Style ("number", Line, 1);
-         Buffer.Remove_Style ("comment", Line, 1);
-         Buffer.Remove_Style ("block", Line, 1);
-         Buffer.Remove_Style ("type", Line, 1);
-         Buffer.Remove_Style ("aspect", Line, 1);
-         Buffer.Remove_Style ("aspect_keyword", Line, 1);
-         Buffer.Remove_Style ("aspect_string", Line, 1);
-         Buffer.Remove_Style ("aspect_number", Line, 1);
-         Buffer.Remove_Style ("aspect_comment", Line, 1);
-         Buffer.Remove_Style ("aspect_block", Line, 1);
-         Buffer.Remove_Style ("aspect_type", Line, 1);
+      for J in Styles loop
+         Buffer.Remove_Style_Line_Range (Known_Styles (J).all,
+                                         Editable_Line_Type (From),
+                                         Editable_Line_Type (To));
       end loop;
    end Remove_Style;
 

@@ -254,6 +254,14 @@ package Src_Editor_Buffer.Line_Information is
    --  If the style was created so that a mark should be put in the speedbar,
    --  this function also takes care of this.
 
+   procedure Remove_Highlighting
+     (Buffer    : access Source_Buffer_Record'Class;
+      Style     : Style_Access;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type);
+   --  Remove the given style highlighting from the given range of lines,
+   --  included.
+
    procedure Highlight_Message
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;

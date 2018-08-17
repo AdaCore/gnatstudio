@@ -3313,6 +3313,41 @@ package body Src_Editor_Buffer.Line_Information is
                        Remove     => Remove);
    end Highlight_Range;
 
+   -------------------------
+   -- Remove_Highlighting --
+   -------------------------
+
+   procedure Remove_Highlighting
+     (Buffer    : access Source_Buffer_Record'Class;
+      Style     : Style_Access;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result               : Boolean;
+      One : constant Character_Offset_Type := 1;
+      Tag : Gtk_Text_Tag;
+   begin
+      Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
+
+      --  Remove tag-based highlighting
+      if Tag /= null then
+         Get_Iter_At_Screen_Position (Buffer, Start_Iter, From_Line, One);
+         Get_Iter_At_Screen_Position (Buffer, End_Iter, To_Line, One);
+         Forward_To_Line_End (End_Iter, Result);
+         if Result then
+            Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
+         end if;
+      end if;
+
+      --  Remove line-based highlighting
+      if Get_In_Speedbar (Style) then
+         for Line in From_Line .. To_Line loop
+            Remove_Line_Highlighting (Buffer, Line, Style);
+         end loop;
+      end if;
+   end Remove_Highlighting;
+
    --------------
    -- Get_Line --
    --------------

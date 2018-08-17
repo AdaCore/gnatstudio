@@ -661,6 +661,13 @@ package GPS.Editors is
    --  Remove highlighting from a specific part of the text.
    --  If Line is 0, the removal is done on the whole buffer.
 
+   procedure Remove_Style_Line_Range
+     (This      : Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type) is abstract;
+   --  Remove the given style in the given line range
+
    function Create_Overlay
      (This : Editor_Buffer;
       Name : String := "") return Editor_Overlay'Class is abstract;
@@ -1190,6 +1197,12 @@ private
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is null;
+
+   overriding procedure Remove_Style_Line_Range
+     (This      : Dummy_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type) is null;
 
    overriding function File (This : Dummy_Editor_Buffer) return Virtual_File;
 
