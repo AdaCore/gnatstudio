@@ -1466,14 +1466,15 @@ package body GPS.Main_Window is
 
             Text : Text_View_Array;
 
-            procedure Create_Entry (N : Natural);
-            --  Create the Nth entry. N must be in Ent_Array'Range
+            procedure Create_Entry (N : Natural; Focus : Boolean);
+            --  Create the Nth entry. N must be in Ent_Array'Range.
+            --  Give it the focus if Focus.
 
             ------------------
             -- Create_Entry --
             ------------------
 
-            procedure Create_Entry (N : Natural) is
+            procedure Create_Entry (N : Natural; Focus : Boolean) is
                Multiline_Prefix : constant String := "multiline:";
                Is_Multiline     : Boolean := False;
 
@@ -1507,6 +1508,10 @@ package body GPS.Main_Window is
                     (Text (N),
                      Label       => Arg (First .. Index - 1),
                      Same_Height => False);
+
+                  if Focus then
+                     Dialog.Set_Focus (Text (N));
+                  end if;
                else
                   Gtk_New (Ent (N));
                   Ent (N).Set_Text (Arg (Index + 1 .. Arg'Last));
@@ -1515,6 +1520,10 @@ package body GPS.Main_Window is
                   Group_Widget.Create_Child
                     (Ent (N),
                      Label => Arg (First .. Index - 1));
+
+                  if Focus then
+                     Dialog.Set_Focus (Ent (N));
+                  end if;
                end if;
             end Create_Entry;
 
@@ -1548,10 +1557,11 @@ package body GPS.Main_Window is
                Parent_View         => Main_View,
                Allow_Multi_Columns => False);
 
-            --  Create the entries for each parameter
+            --  Create the entries for each parameter, giving the focus to the
+            --  first entry.
 
             for Num in Ent'Range loop
-               Create_Entry (Num);
+               Create_Entry (Num, Focus => Num = Ent'First);
             end loop;
 
             --  Add the buttons
@@ -1564,7 +1574,6 @@ package body GPS.Main_Window is
             --  the selection of the group widget's row.
 
             Dialog.Show_All;
-            Dialog.Set_Focus (null);
 
             Set_Return_Value_As_List (Data);
 
@@ -1652,7 +1661,6 @@ package body GPS.Main_Window is
             --  the selection of the group widget's row
 
             Dialog.Show_All;
-            Dialog.Set_Focus (null);
 
             --  Return the selected choice if the user clicks on OK
 
