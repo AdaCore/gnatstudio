@@ -574,15 +574,6 @@ package body Src_Editor_Buffer is
       Phase  : Positive);
    --  Run Highlight_Range_Hook to highlight given buffer
 
-   type On_File_Edited is new File_Hooks_Function with record
-      Buffer : Source_Buffer;
-   end record;
-   overriding procedure Execute
-     (Self   : On_File_Edited;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File);
-   --  Callback for the "file_edited" hook
-
    -------------------------
    -- Set_Current_Command --
    -------------------------
@@ -743,29 +734,6 @@ package body Src_Editor_Buffer is
       if Need_Action then
          Self.Buffer.Saved_Position := -1;
          Self.Buffer.Status_Changed;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_File_Edited;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File)
-   is
-      pragma Unreferenced (Kernel, File);
-      F, L          : Gtk_Text_Iter;
-   begin
-      --  Highlight the newly inserted text
-
-      if Get_Language_Context (Self.Buffer.Lang).Syntax_Highlighting then
-         Get_Bounds (Self.Buffer, F, L);
-         Self.Buffer.Highlight_Needed := True;
-         Move_Mark (Self.Buffer, Self.Buffer.First_Highlight_Mark, F);
-         Move_Mark (Self.Buffer, Self.Buffer.Last_Highlight_Mark, F);
-         Update_Highlight_Region (Self.Buffer, L);
       end if;
    end Execute;
 
@@ -3392,7 +3360,6 @@ package body Src_Editor_Buffer is
       Command      : Check_Modified_State;
       P_Hook       : access On_Pref_Changed;
       Prj_Hook     : access On_Project_Changed;
-      Edited_Hook  : access On_File_Edited;
       Deleted_Hook : access On_File_Deleted;
       Renamed_Hook : access On_File_Renamed;
       Tree_Updated_Hook : access On_Semantic_Tree_Updated;
@@ -3433,9 +3400,6 @@ package body Src_Editor_Buffer is
       Deleted_Hook := new On_File_Deleted;
       Deleted_Hook.Buffer := Source_Buffer (Buffer);
       File_Deleted_Hook.Add (Deleted_Hook, Watch => Buffer);
-      Edited_Hook := new On_File_Edited;
-      Edited_Hook.Buffer := Source_Buffer (Buffer);
-      File_Edited_Hook.Add (Edited_Hook, Watch => Buffer);
 
       --  Renamed_Hook.Execute will change the buffer's filename:
       --  Add it with Last=>True so that other modules have a chance to react
@@ -4129,6 +4093,7 @@ package body Src_Editor_Buffer is
          end if;
       end Insert_Text;
 
+      F, L          : Gtk_Text_Iter;
    begin
       Insert_Text
         (From_File    => Filename,
@@ -4145,6 +4110,16 @@ package body Src_Editor_Buffer is
 
       if File_Is_New then
          Check_Auto_Saved_File;
+      end if;
+
+      --  Highlight the newly inserted text
+
+      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
+         Get_Bounds (Buffer, F, L);
+         Buffer.Highlight_Needed := True;
+         Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
+         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
+         Process_Highlight_Region (Source_Buffer (Buffer));
       end if;
 
       Buffer.Modified_Auto := False;
