@@ -248,13 +248,14 @@ package body Memory_Usage_Views.Scripts is
       if Command = "_register" then
          declare
             Name      : constant String := Data.Nth_Arg (1);
-            Construct : constant Subprogram_Type := Data.Nth_Arg (2);
+            Construct : Subprogram_Type := Data.Nth_Arg (2);
             Provider  : constant access Script_Memory_Usage_Provider_Type :=
                           new Script_Memory_Usage_Provider_Type;
             Inst      : Class_Instance;
             Args      : Callback_Data'Class := Data.Get_Script.Create (0);
          begin
             Inst := Construct.Execute (Args);  --  create the python instance
+            Free (Construct);
             Free (Args);
 
             Provider.Script := Data.Get_Script;
