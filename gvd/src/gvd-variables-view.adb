@@ -1340,47 +1340,46 @@ package body GVD.Variables.View is
 
       --  Create the column that displays the variables' icons
 
+      Gtk_New (Text);
       Gtk_New (Col);
       Col.Set_Resizable (True);
       Col.Set_Reorderable (True);
-      Col.Set_Sizing (Tree_View_Column_Autosize);
+
       Dummy := Self.Tree.Append_Column (Col);
 
       Gtk_New (Pixbuf);
       Col.Pack_Start (Pixbuf, False);
       Col.Add_Attribute (Pixbuf, "icon-name", Column_Icon);
 
-      --  Create the column that displays the variables' names
-
-      Gtk_New (Text);
-      Col.Pack_Start (Text, False);
+      Col.Pack_Start (Text, Expand => True);
       Col.Add_Attribute (Text, "markup", Column_Name);
       Col.Add_Attribute (Text, "foreground", Column_Name_Fg);
       Col.Set_Title ("Name");
 
+      --  Create the column that displays the variables' values
+
       Gtk_New (Col);
       Col.Set_Resizable (True);
       Col.Set_Reorderable (True);
-      Dummy := Self.Tree.Append_Column (Col);
 
-      --  Create the column that displays the variables' values
+      Dummy := Self.Tree.Append_Column (Col);
 
       Gtk_New (Text);
       Self.Tree.Text := Text;
-      Col.Pack_Start (Text, False);
+      Col.Pack_Start (Text, Expand => True);
       Col.Add_Attribute (Text, "markup", Column_Value);
       Col.Add_Attribute (Text, "foreground", Column_Value_Fg);
       Col.Set_Title ("Value");
+
+      --  Create the column that displays the variables' type
 
       Gtk_New (Self.Tree.Types_Column);
       Self.Tree.Types_Column.Set_Resizable (True);
       Self.Tree.Types_Column.Set_Reorderable (True);
       Dummy := Self.Tree.Append_Column (Self.Tree.Types_Column);
 
-      --  Create the column that displays the variables' type
-
       Gtk_New (Text);
-      Self.Tree.Types_Column.Pack_Start (Text, False);
+      Self.Tree.Types_Column.Pack_Start (Text, Expand => False);
       Self.Tree.Types_Column.Add_Attribute (Text, "markup", Column_Type);
       Self.Tree.Types_Column.Add_Attribute
         (Text, "foreground", Column_Type_Fg);
