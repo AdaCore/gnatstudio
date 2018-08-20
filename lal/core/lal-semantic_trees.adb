@@ -1109,8 +1109,8 @@ package body LAL.Semantic_Trees is
       overriding function Root_Iterator
         (Self : Tree) return Semantic_Tree_Iterator'Class
       is
-         Root : constant Ada_Node :=
-           Libadalang.Analysis.Root (Self.Unit.all);
+         Root : constant Ada_Node := Self.Unit.Root;
+
       begin
          if Root = No_Ada_Node then
             return No_Semantic_Tree.Root_Iterator;
@@ -1132,8 +1132,8 @@ package body LAL.Semantic_Trees is
       overriding function Root_Nodes
         (Self : Tree) return Semantic_Node_Array'Class
       is
-         Root : constant Ada_Node :=
-           Libadalang.Analysis.Root (Self.Unit.all);
+         Root : constant Ada_Node := Self.Unit.Root;
+
       begin
          if Root = No_Ada_Node then
             return No_Semantic_Tree.Root_Nodes;
@@ -1187,7 +1187,8 @@ package body LAL.Semantic_Trees is
             Step   : Libadalang.Common.Token_Reference;
             Result : Source_Location;
             Token  : constant Libadalang.Common.Token_Reference :=
-              Libadalang.Analysis.Lookup_Token (Self.Unit.all, Loc);
+              Self.Unit.Lookup_Token (Loc);
+
          begin
             if Token = Libadalang.Common.No_Token then
                return No_Source_Location;
