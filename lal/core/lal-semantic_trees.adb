@@ -85,7 +85,7 @@ package body LAL.Semantic_Trees is
          Kernel   : GPS.Core_Kernels.Core_Kernel;
          Context  : Libadalang.Analysis.Analysis_Context;
          File     : GNATCOLL.VFS.Virtual_File;
-         Unit     : access Libadalang.Analysis.Analysis_Unit;
+         Unit     : Libadalang.Analysis.Analysis_Unit;
          Provider : access constant LAL.Semantic_Trees.Provider;
       end record;
 
@@ -1279,13 +1279,13 @@ package body LAL.Semantic_Trees is
              (Self.File, False, False, False, False);
       begin
          if Buffer = GPS.Editors.Nil_Editor_Buffer then
-            Self.Unit.all :=
+            Self.Unit :=
               Libadalang.Analysis.Get_From_File
                 (Context     => Self.Context,
                  Filename    => String (Name),
                  Reparse     => True);
          else
-            Self.Unit.all :=
+            Self.Unit :=
               Libadalang.Analysis.Get_From_Buffer
                 (Context     => Self.Context,
                  Filename    => String (Name),
@@ -1330,7 +1330,7 @@ package body LAL.Semantic_Trees is
 
    begin
       if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then
-         Result.Unit.all :=
+         Result.Unit :=
            Libadalang.Analysis.Get_From_File
              (Context     => Self.Context,
               Filename    => String (Name));
