@@ -17,11 +17,12 @@
 
 with Ada.Calendar;                use Ada.Calendar;
 with Ada.Containers;              use Ada.Containers;
-with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings;                 use Ada.Strings;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
@@ -169,11 +170,11 @@ package body VCS2.History is
    end record;
    type Node_Data_Access is access all Node_Data;
 
-   package Commit_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
+   package Commit_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
       Element_Type    => Node_Data_Access,    --  owned
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+      Hash            => Ada.Strings.Unbounded.Hash,
+      Equivalent_Keys => Ada.Strings.Unbounded."=");
 
    package Line_Vectors is new Ada.Containers.Vectors
      (Line_Index, Node_Data_Access);
@@ -1278,7 +1279,7 @@ package body VCS2.History is
          --  Create the new node for this commit (or reuse existing one if
          --  we have already created it.
 
-         C := Tree.Commits.Find (ID);
+         C := Tree.Commits.Find (To_Unbounded_String (ID));
          Is_Head_Of_Branch := not Commit_Maps.Has_Element (C);
          if Is_Head_Of_Branch then
             N := new Node_Data;
@@ -1315,7 +1316,8 @@ package body VCS2.History is
          end if;
 
          for P of Parents loop
-            C := Tree.Commits.Find (To_String (P));
+            C := Tree.Commits.Find (P);
+
             if Commit_Maps.Has_Element (C) then
                Parent_N := Commit_Maps.Element (C);
                --  visible if more than one child
@@ -1335,7 +1337,7 @@ package body VCS2.History is
                Parent_N.Visible := 1;   --  one child
                Parent_N.Num_Children := 1;
                Parent_N.Col := No_Graph_Column;
-               Tree.Commits.Include (To_String (P), Parent_N);
+               Tree.Commits.Include (P, Parent_N);
             end if;
 
             --  If current has multiple parents (a merge), we must
@@ -1346,7 +1348,7 @@ package body VCS2.History is
             end if;
          end loop;
 
-         Tree.Commits.Include (ID, N);
+         Tree.Commits.Include (To_Unbounded_String (ID), N);
 
          if N.Visible >= Always_Visible then
             Tree.Lines.Append (N);
@@ -1443,7 +1445,7 @@ package body VCS2.History is
       Node : Node_Data_Access;
       Curs : Commit_Maps.Cursor;
    begin
-      Curs := Tree.Commits.Find (To_String (N.Parents (Parent).ID));
+      Curs := Tree.Commits.Find (N.Parents (Parent).ID);
 
       if not Commit_Maps.Has_Element (Curs) then
          return null;
@@ -1462,9 +1464,7 @@ package body VCS2.History is
             return null;
          end if;
 
-         Curs :=
-           Tree.Commits.Find
-             (To_String (Node.Parents (Node.Parents'First).ID));
+         Curs := Tree.Commits.Find (Node.Parents (Node.Parents'First).ID);
 
          if not Commit_Maps.Has_Element (Curs) then
             return null;
