@@ -894,6 +894,10 @@ package body Switches_Chooser.Gtkada is
 
       Editor.Ent.Set_Sensitive (not Read_Only);
 
+      if Fixed_Font /= null then
+         Modify_Font (Editor.Ent, Fixed_Font);
+      end if;
+
       if Config.Show_Command_Line then
          declare
             Hbox : Gtk_Hbox;
