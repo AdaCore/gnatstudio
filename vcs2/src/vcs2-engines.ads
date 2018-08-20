@@ -26,6 +26,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNAT.Strings;               use GNAT.Strings;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.VCS;                    use GPS.VCS;
+with GPS_Unbounded_String_Vectors;
 
 package VCS2.Engines is
 
@@ -161,7 +162,7 @@ package VCS2.Engines is
 
    type Name_Kind is (Name_Head, Name_Local, Name_Remote, Name_Tag);
    type Name_Description is record
-      Name    : GNAT.Strings.String_Access;
+      Name    : Ada.Strings.Unbounded.Unbounded_String;
       Kind    : Name_Kind;
    end record;
    type Commit_Names is array (Natural range <>) of Name_Description;
@@ -177,7 +178,7 @@ package VCS2.Engines is
       Author  : String;
       Date    : String;
       Subject : String;
-      Parents : in out GNAT.Strings.String_List_Access;
+      Parents : in out GPS_Unbounded_String_Vectors.Vector;
       Names   : in out Commit_Names_Access;
       Flags   : Commit_Flags := 0) is null;
    --  Called for every line in the history ('git log', 'cvs log',...)

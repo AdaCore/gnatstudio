@@ -19,7 +19,7 @@ with Ada.Calendar;                use Ada.Calendar;
 with Ada.Containers;              use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Fixed;           use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings;                 use Ada.Strings;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -69,6 +69,7 @@ with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Search;                  use GPS.Search;
+with GPS_Unbounded_String_Vectors;
 
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
@@ -138,7 +139,7 @@ package body VCS2.History is
    --  See History_Line.Visible
 
    type Parent is record
-      ID            : GNAT.Strings.String_Access;
+      ID            : Ada.Strings.Unbounded.Unbounded_String;
       Has_Invisible : Boolean := False;
    end record;
    type Parent_Array is array (Natural range <>) of Parent;
@@ -310,7 +311,7 @@ package body VCS2.History is
       Author  : String;
       Date    : String;
       Subject : String;
-      Parents : in out GNAT.Strings.String_List_Access;
+      Parents : in out GPS_Unbounded_String_Vectors.Vector;
       Names   : in out Commit_Names_Access;
       Flags   : Commit_Flags);
    --  Add a new log entry to the view
@@ -1259,7 +1260,7 @@ package body VCS2.History is
       Author  : String;
       Date    : String;
       Subject : String;
-      Parents : in out GNAT.Strings.String_List_Access;
+      Parents : in out GPS_Unbounded_String_Vectors.Vector;
       Names   : in out Commit_Names_Access;
       Flags   : Commit_Flags)
    is
@@ -1293,9 +1294,10 @@ package body VCS2.History is
          N.Col     := No_Graph_Column;
          N.Flags   := Flags;
 
-         if Parents /= null then
-            N.Parents := new Parent_Array (Parents'Range);
-            for P in Parents'Range loop
+         if not Parents.Is_Empty then
+            N.Parents := new Parent_Array (1 .. Natural (Parents.Length));
+
+            for P in N.Parents'Range loop
                N.Parents (P).ID := Parents (P);
             end loop;
          end if;
@@ -1305,46 +1307,44 @@ package body VCS2.History is
          if not Tree.Show_Graph
            or else not Tree.Config.Collapse   --  want to view all
            or else Names /= null       --  named commit
-           or else Parents = null      --  first commit on a branch
-           or else Parents'Length > 1  --  a branching commit
+           or else Parents.Length > 1  --  first commit on a branch
+                                       --  a branching commit
            or else Is_Head_Of_Branch   --  current head of the branch
          then
             N.Visible := Always_Visible;
          end if;
 
-         if Parents /= null then
-            for P of Parents.all loop
-               C := Tree.Commits.Find (P.all);
-               if Commit_Maps.Has_Element (C) then
-                  Parent_N := Commit_Maps.Element (C);
-                  --  visible if more than one child
-                  Parent_N.Visible := Parent_N.Visible + 1;
-                  Parent_N.Num_Children := Parent_N.Num_Children + 1;
+         for P of Parents loop
+            C := Tree.Commits.Find (To_String (P));
+            if Commit_Maps.Has_Element (C) then
+               Parent_N := Commit_Maps.Element (C);
+               --  visible if more than one child
+               Parent_N.Visible := Parent_N.Visible + 1;
+               Parent_N.Num_Children := Parent_N.Num_Children + 1;
 
-                  --  If parent is a branchpoint, always make the children
-                  --  visible (The first parent is not necessarily made
-                  --  visible, but since it will in general be in the same
-                  --  column that's OK).
-                  if Parent_N.Num_Children > 1 then
-                     N.Visible := Always_Visible;
-                  end if;
-               else
-                  --  Include parent in hash
-                  Parent_N := new Node_Data;
-                  Parent_N.Visible := 1;   --  one child
-                  Parent_N.Num_Children := 1;
-                  Parent_N.Col := No_Graph_Column;
-                  Tree.Commits.Include (P.all, Parent_N);
+               --  If parent is a branchpoint, always make the children
+               --  visible (The first parent is not necessarily made
+               --  visible, but since it will in general be in the same
+               --  column that's OK).
+               if Parent_N.Num_Children > 1 then
+                  N.Visible := Always_Visible;
                end if;
+            else
+               --  Include parent in hash
+               Parent_N := new Node_Data;
+               Parent_N.Visible := 1;   --  one child
+               Parent_N.Num_Children := 1;
+               Parent_N.Col := No_Graph_Column;
+               Tree.Commits.Include (To_String (P), Parent_N);
+            end if;
 
-               --  If current has multiple parents (a merge), we must
-               --  show each of the parent nodes for proper display in
-               --  the collapsed mode
-               if not Tree.Config.Collapse or else Parents'Length > 1 then
-                  Parent_N.Visible := Always_Visible;
-               end if;
-            end loop;
-         end if;
+            --  If current has multiple parents (a merge), we must
+            --  show each of the parent nodes for proper display in
+            --  the collapsed mode
+            if not Tree.Config.Collapse or else Parents.Length > 1 then
+               Parent_N.Visible := Always_Visible;
+            end if;
+         end loop;
 
          Tree.Commits.Include (ID, N);
 
@@ -1353,8 +1353,8 @@ package body VCS2.History is
             N.Line := Tree.Lines.Last_Index;
          end if;
 
-         Parents := null;  --  adopted
-         Names   := null;  --  adopted
+         Parents.Clear;  --  adopted
+         Names := null;  --  adopted
       end if;
    end On_History_Line;
 
@@ -1380,9 +1380,6 @@ package body VCS2.History is
          Free (L.Names);
 
          if L.Parents /= null then
-            for P of L.Parents.all loop
-               Free (P.ID);
-            end loop;
             Unchecked_Free (L.Parents);
          end if;
 
@@ -1446,7 +1443,8 @@ package body VCS2.History is
       Node : Node_Data_Access;
       Curs : Commit_Maps.Cursor;
    begin
-      Curs := Tree.Commits.Find (N.Parents (Parent).ID.all);
+      Curs := Tree.Commits.Find (To_String (N.Parents (Parent).ID));
+
       if not Commit_Maps.Has_Element (Curs) then
          return null;
       end if;
@@ -1464,13 +1462,17 @@ package body VCS2.History is
             return null;
          end if;
 
-         Curs := Tree.Commits.Find (Node.Parents (Node.Parents'First).ID.all);
+         Curs :=
+           Tree.Commits.Find
+             (To_String (Node.Parents (Node.Parents'First).ID));
+
          if not Commit_Maps.Has_Element (Curs) then
             return null;
          end if;
 
          Node := Commit_Maps.Element (Curs);
       end loop;
+
       return Node;
    end Get_Parent_Node;
 
@@ -1594,7 +1596,9 @@ package body VCS2.History is
 
                   Append (Tmp, " foreground='black'>");
                   Append
-                     (Tmp, Escape_Text (Trim (N.Names (B).Name.all, Both)));
+                    (Tmp,
+                     Escape_Text (To_String (Trim (N.Names (B).Name, Both))));
+
                   if B = N.Names'Last then
                      Append (Tmp, "</span> ");
                   else

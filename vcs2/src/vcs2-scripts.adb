@@ -23,6 +23,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNAT.Strings;          use GNAT.Strings;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.VCS;               use GPS.VCS;
+with GPS_Unbounded_String_Vectors;
 with Informational_Popups;  use Informational_Popups;
 with VCS2.Engines;          use VCS2.Engines;
 
@@ -732,13 +733,12 @@ package body VCS2.Scripts is
                   Names   : constant List_Instance'Class := Line.Nth_Arg (6);
                   P_Count : constant Natural := Parents.Number_Of_Arguments;
                   N_Count : constant Natural := Names.Number_Of_Arguments;
-                  P       : String_List_Access;
+                  P       : GPS_Unbounded_String_Vectors.Vector;
                   N       : Commit_Names_Access;
                begin
                   if P_Count /= 0 then
-                     P := new String_List (1 .. P_Count);
                      for A in 1 .. P_Count loop
-                        P (A) := new String'(Parents.Nth_Arg (A));
+                        P.Append (Parents.Nth_Arg (A));
                      end loop;
                   end if;
 
@@ -749,7 +749,7 @@ package body VCS2.Scripts is
                            B : constant List_Instance'Class :=
                               Names.Nth_Arg (A);
                         begin
-                           N (A).Name := new String'(B.Nth_Arg (1));
+                           N (A).Name := B.Nth_Arg (1);
                            N (A).Kind := Name_Kind'Val (B.Nth_Arg (2));
                         end;
                      end loop;
@@ -763,7 +763,6 @@ package body VCS2.Scripts is
                      Parents  => P,
                      Names    => N,
                      Flags    => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
-                  Free (P);
                   Free (N);
                end;
             end loop;
