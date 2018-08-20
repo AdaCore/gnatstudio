@@ -805,13 +805,6 @@ package body GPS.Location_View is
 
       Unregister (V.Kernel, Locations_Listener_Access (V.Listener));
 
-      if not Locations_Save_In_Desktop.Get_Pref then
-         Get_Messages_Container (V.Kernel).Remove_All_Messages
-           ((Editor_Side                   => False,
-             Editor_Line                   => False,
-             GPS.Kernel.Messages.Locations => True));
-      end if;
-
       if V.Idle_Expand_Handler /= No_Source_Id then
          Glib.Main.Remove (V.Idle_Expand_Handler);
          V.Idle_Expand_Handler := No_Source_Id;
