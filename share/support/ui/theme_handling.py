@@ -312,7 +312,7 @@ common_dark = {
     "msg_info": Rgba(15, 53, 188, 120),
     "msg_high": Rgba(75, 34, 34),
     "msg_medium": Rgba(85, 52, 18),
-    "msg_low": Rgba(189, 183, 107, 128),
+    "msg_low": Rgba(191, 188, 64, 50),
     "horiz_diff": Rgba(143, 89, 2),
     "diff_change": Rgba(107, 73, 19),
     "diff_remove": Rgba(88, 43, 43),
