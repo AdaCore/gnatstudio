@@ -99,12 +99,13 @@ package body LAL.Core_Module is
    begin
       Module         := new LAL_Module_Id_Record;
       Module.Kernel  := GPS.Core_Kernels.Core_Kernel (Kernel);
-      Module.Context := Libadalang.Analysis.Create
-        (Unit_Provider => Module.Unit_Provider'Access,
+      Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
+      Module.Context := Libadalang.Analysis.Create_Context
+        (Unit_Provider => Libadalang.Analysis.Create_Unit_Provider_Reference
+          (Module.Unit_Provider),
          With_Trivia   => True,
          Charset       => Charset);
 
-      Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
       Module.Highlighter.Initialize (Module);
 
       Kernel.Scripts.Register_Command

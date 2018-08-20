@@ -324,7 +324,7 @@ package body LAL.Semantic_Trees is
          pragma Unreferenced (Ok);
       begin
          return Result : Immediate_Iterator :=
-           Immediate_Iterator'(Plain => Iterators.Create (Root))
+           Immediate_Iterator'(Plain => Iterators.Create_Tree_Iterator (Root))
          do
             Ok := Result.Next (Skip);
             --  The Plain iterator always return the Root at first step.

@@ -403,10 +403,8 @@ package body LAL.Highlighters is
          when
               Ada_Abort |
               Ada_Abs |
-              Ada_Abstract |
               Ada_Accept |
               Ada_Access |
-              Ada_Aliased |
               Ada_All |
               Ada_And |
               Ada_Array |
@@ -452,19 +450,15 @@ package body LAL.Highlighters is
               Ada_Record |
               Ada_Rem |
               Ada_Renames |
-              Ada_Requeue |
               Ada_Return |
               Ada_Reverse |
               Ada_Select |
               Ada_Separate |
-              Ada_Some |
               Ada_Subtype |
-              Ada_Tagged |
               Ada_Task |
               Ada_Terminate |
               Ada_Then |
               Ada_Type |
-              Ada_Until |
               Ada_Use |
               Ada_When |
               Ada_While |

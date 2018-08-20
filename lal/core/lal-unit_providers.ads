@@ -51,4 +51,6 @@ private
       Name : Wide_Wide_String;
       Kind : Libadalang.Common.Unit_Kind) return String;
 
+   overriding procedure Release (Self : in out Unit_Provider) is null;
+
 end LAL.Unit_Providers;
