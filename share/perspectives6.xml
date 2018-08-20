@@ -13,10 +13,10 @@
             </Child>
           </Notebook>
           <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT" >
-            <Child Group=" 106" State="NORMAL" >
+            <Child Raised="True" Group=" 106" State="NORMAL" >
               <Learn_View />
             </Child>
-            <Child Raised="True" Group=" 106" State="NORMAL" >
+            <Child Group=" 106" State="NORMAL" >
               <Outline_View />
             </Child>
           </Notebook>
