@@ -1074,8 +1074,9 @@ package body GPS.Search is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (GNATCOLL.Boyer_Moore.Pattern, Boyer_Moore_Pattern_Access);
    begin
-      Free (Search_Pattern (Self));
+      GNATCOLL.Boyer_Moore.Free (Self.Pattern.all);
       Unchecked_Free (Self.Pattern);
+      Free (Search_Pattern (Self));
    end Free;
 
    ----------
@@ -1084,8 +1085,8 @@ package body GPS.Search is
 
    overriding procedure Free (Self : in out Regexp_Search) is
    begin
-      Free (Search_Pattern (Self));
       Unchecked_Free (Self.Pattern);
+      Free (Search_Pattern (Self));
    end Free;
 
    ----------
