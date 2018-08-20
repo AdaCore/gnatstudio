@@ -1363,8 +1363,12 @@ package body VCS2.History is
    -----------------
 
    procedure Reset_Lines (Self : not null access History_Tree_Record'Class) is
+
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Parent_Array, Parent_Array_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Node_Data, Node_Data_Access);
+
    begin
       for L of Self.Commits loop
          L.Col     := No_Graph_Column;
@@ -1381,6 +1385,8 @@ package body VCS2.History is
             end loop;
             Unchecked_Free (L.Parents);
          end if;
+
+         Unchecked_Free (L);
       end loop;
 
       Self.Lines.Clear;
