@@ -79,7 +79,7 @@ package Language.Abstract_Construct_Tree is
    function Create (K : Kernel_Handle) return Semantic_Tree_Provider_Access;
 
    overriding function Get_Tree_For_File
-     (Self    : Construct_Tree_Provider;
+     (Self    : in out Construct_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
 
@@ -97,9 +97,9 @@ package Language.Abstract_Construct_Tree is
    overriding function File
      (Self : Abstract_Construct_Tree) return GNATCOLL.VFS.Virtual_File;
 
-   overriding procedure Update (Self : Abstract_Construct_Tree);
+   overriding procedure Update (Self : in out Abstract_Construct_Tree);
 
-   overriding procedure Update_Async (Self : Abstract_Construct_Tree);
+   overriding procedure Update_Async (Self : in out Abstract_Construct_Tree);
 
    overriding function Is_Ready (Self : Abstract_Construct_Tree)
      return Boolean is (True);

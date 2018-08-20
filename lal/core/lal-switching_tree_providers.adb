@@ -22,11 +22,10 @@ package body LAL.Switching_Tree_Providers is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self    : Provider;
+     (Self    : in out Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File)
-      return Semantic_Tree'Class
-   is
+      return Semantic_Tree'Class is
    begin
       if (Self.Config (Use_LAL_In_Editor) and then Context = "EDIT") or else
         (Self.Config (Use_LAL_In_Outline) and then Context = "OUTLINE") or else

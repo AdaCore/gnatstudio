@@ -114,7 +114,7 @@ package body Language.Libclang_Tree is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self    : Clang_Tree_Provider;
+     (Self    : in out Clang_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
@@ -184,9 +184,7 @@ package body Language.Libclang_Tree is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (Self : Abstract_Clang_Tree)
-   is
+   overriding procedure Update (Self : in out Abstract_Clang_Tree) is
       TU : Clang_Translation_Unit :=
         Translation_Unit (Self.Kernel, Self.File, Reparse => True);
       pragma Unreferenced (TU);
@@ -198,8 +196,7 @@ package body Language.Libclang_Tree is
    -- Update_Async --
    ------------------
 
-   overriding procedure Update_Async (Self : Abstract_Clang_Tree)
-   is
+   overriding procedure Update_Async (Self : in out Abstract_Clang_Tree) is
       Callback : Parse_Callback_Access := new Update_Async_Record'
         (Parse_Callback with Kernel => Self.Kernel);
    begin

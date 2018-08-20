@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNAT.Strings;              use GNAT.Strings;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNAT.Strings;                    use GNAT.Strings;
+with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
 with Interfaces.C;
 
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Module;         use Src_Editor_Module;
-with Src_Editor_View;           use Src_Editor_View;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Src_Editor_Box;                  use Src_Editor_Box;
+with Src_Editor_Module;               use Src_Editor_Module;
+with Src_Editor_View;                 use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
 
@@ -659,10 +660,13 @@ package body Commands.Editor is
 
    overriding function Execute
      (Command : access Update_Async_Record)
-      return Commands.Command_Return_Type is
+      return Commands.Command_Return_Type
+   is
+      Tree : Semantic_Tree'Class :=
+        Command.Kernel.Get_Abstract_Tree_For_File ("EDIT", Command.Filename);
+
    begin
-      Command.Kernel.Get_Abstract_Tree_For_File
-        ("EDIT", Command.Filename).Update_Async;
+      Tree.Update_Async;
 
       return Success;
    end Execute;

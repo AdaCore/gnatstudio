@@ -6398,8 +6398,9 @@ package body Src_Editor_Buffer is
       end if;
 
       declare
-         Tree : constant Semantic_Tree'Class :=
+         Tree : Semantic_Tree'Class :=
            Editor.Kernel.Get_Abstract_Tree_For_File ("EDIT", Editor.Filename);
+
       begin
          if Update_Immediately then
             Tree.Update;

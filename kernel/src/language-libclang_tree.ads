@@ -80,7 +80,7 @@ package Language.Libclang_Tree is
    function Create (K : Core_Kernel) return Semantic_Tree_Provider_Access;
 
    overriding function Get_Tree_For_File
-     (Self    : Clang_Tree_Provider;
+     (Self    : in out Clang_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
 
@@ -102,9 +102,9 @@ package Language.Libclang_Tree is
    overriding function File
      (Self : Abstract_Clang_Tree) return GNATCOLL.VFS.Virtual_File;
 
-   overriding procedure Update (Self : Abstract_Clang_Tree);
+   overriding procedure Update (Self : in out Abstract_Clang_Tree);
 
-   overriding procedure Update_Async (Self : Abstract_Clang_Tree);
+   overriding procedure Update_Async (Self : in out Abstract_Clang_Tree);
 
    overriding function Is_Ready (Self : Abstract_Clang_Tree) return Boolean
      is (Has_Translation_Unit_In_Cache (Self.File));

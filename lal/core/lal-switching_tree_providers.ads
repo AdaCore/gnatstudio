@@ -31,7 +31,7 @@ package LAL.Switching_Tree_Providers is
    end record;
 
    overriding function Get_Tree_For_File
-     (Self    : Provider;
+     (Self    : in out Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
 

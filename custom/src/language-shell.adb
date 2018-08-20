@@ -220,7 +220,12 @@ package body Language.Shell is
       elsif Command = "is_ready" then
          Set_Return_Value (Data, Get_Tree.Is_Ready);
       elsif Command = "update" then
-         Get_Tree.Update;
+         declare
+            Tree : Semantic_Tree'Class := Get_Tree;
+
+         begin
+            Tree.Update;
+         end;
       end if;
    end Semantic_Tree_Handler;
 

@@ -42,7 +42,7 @@ package body Language.Abstract_Construct_Tree is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self    : Construct_Tree_Provider;
+     (Self    : in out Construct_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
@@ -164,8 +164,7 @@ package body Language.Abstract_Construct_Tree is
    -- Update --
    ------------
 
-   overriding procedure Update
-     (Self : Abstract_Construct_Tree) is
+   overriding procedure Update (Self : in out Abstract_Construct_Tree) is
    begin
       Update_Contents
         (Get_Construct_Database (Self.Kernel), Self.File);
@@ -175,7 +174,7 @@ package body Language.Abstract_Construct_Tree is
    -- Update_Async --
    ------------------
 
-   overriding procedure Update_Async (Self : Abstract_Construct_Tree) is
+   overriding procedure Update_Async (Self : in out Abstract_Construct_Tree) is
    begin
       Self.Update;
       Self.Kernel.Semantic_Tree_Updated (Self.File);

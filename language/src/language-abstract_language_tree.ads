@@ -170,7 +170,7 @@ package Language.Abstract_Language_Tree is
    -------------------------------------------
 
    function Get_Tree_For_File
-     (Self    : Semantic_Tree_Provider;
+     (Self    : in out Semantic_Tree_Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
       is abstract;
@@ -205,13 +205,11 @@ package Language.Abstract_Language_Tree is
      (Self : Semantic_Tree) return GNATCOLL.VFS.Virtual_File is abstract;
    --  Returns the file for this semantic tree
 
-   procedure Update
-     (Self : Semantic_Tree) is abstract;
+   procedure Update (Self : in out Semantic_Tree) is abstract;
    --  Ask the tree to update itself to the new content of the file. This will
    --  invalidate all semantic nodes
 
-   procedure Update_Async
-     (Self : Semantic_Tree) is abstract;
+   procedure Update_Async (Self : in out Semantic_Tree) is abstract;
    --  Some as above but will executing asynchronously
 
    function Is_Ready (Self : Semantic_Tree) return Boolean is abstract;
@@ -491,9 +489,10 @@ private
      (Self : Dummy_Semantic_Tree) return GNATCOLL.VFS.Virtual_File is
      (GNATCOLL.VFS.No_File);
 
-   overriding procedure Update (Self : Dummy_Semantic_Tree) is null;
+   overriding procedure Update (Self : in out Dummy_Semantic_Tree) is null;
 
-   overriding procedure Update_Async (Self : Dummy_Semantic_Tree) is null;
+   overriding procedure Update_Async
+     (Self : in out Dummy_Semantic_Tree) is null;
 
    overriding function Is_Ready
      (Self : Dummy_Semantic_Tree) return Boolean is (False);

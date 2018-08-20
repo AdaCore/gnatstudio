@@ -85,8 +85,7 @@ package body LAL.Semantic_Trees is
          Kernel   : GPS.Core_Kernels.Core_Kernel;
          Context  : Libadalang.Analysis.Analysis_Context;
          File     : GNATCOLL.VFS.Virtual_File;
-         Unit     : access Libadalang.Analysis.Analysis_Unit :=
-           new Libadalang.Analysis.Analysis_Unit;
+         Unit     : access Libadalang.Analysis.Analysis_Unit;
          Provider : access constant LAL.Semantic_Trees.Provider;
       end record;
 
@@ -104,11 +103,12 @@ package body LAL.Semantic_Trees is
 
       overriding function File (Self : Tree) return GNATCOLL.VFS.Virtual_File;
 
-      overriding procedure Update (Self : Tree);
+      overriding procedure Update (Self : in out Tree);
 
-      overriding procedure Update_Async (Self : Tree);
+      overriding procedure Update_Async (Self : in out Tree);
 
       overriding function Is_Ready (Self : Tree) return Boolean is (True);
+
    end Trees;
 
    package Nodes is
@@ -1220,11 +1220,11 @@ package body LAL.Semantic_Trees is
             return Loc;
          end Adjust_Source_Location;
 
-         Root : constant Ada_Node := Libadalang.Analysis.Root (Self.Unit.all);
+         Root : constant Ada_Node := Self.Unit.Root;
          Loc  : Source_Location :=
            (Line_Number (Sloc.Line), Column_Number (Sloc.Column));
+         Node : Libadalang.Analysis.Ada_Node := No_Ada_Node;
 
-         Node     : Libadalang.Analysis.Ada_Node := No_Ada_Node;
       begin
          if Root /= No_Ada_Node then
             Loc := Adjust_Source_Location (Loc);
@@ -1268,7 +1268,7 @@ package body LAL.Semantic_Trees is
       -- Update --
       ------------
 
-      overriding procedure Update (Self : Tree) is
+      overriding procedure Update (Self : in out Tree) is
          use type GPS.Editors.Editor_Buffer'Class;
 
          Name   : constant GNATCOLL.VFS.Filesystem_String :=
@@ -1298,7 +1298,7 @@ package body LAL.Semantic_Trees is
       -- Update_Async --
       ------------------
 
-      overriding procedure Update_Async (Self : Tree) is
+      overriding procedure Update_Async (Self : in out Tree) is
       begin
          Self.Update;
          Self.Kernel.Semantic_Tree_Updated (Self.File);
@@ -1311,7 +1311,7 @@ package body LAL.Semantic_Trees is
    -----------------------
 
    overriding function Get_Tree_For_File
-     (Self    : Provider;
+     (Self    : in out Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
@@ -1319,7 +1319,7 @@ package body LAL.Semantic_Trees is
 
       Name   : constant GNATCOLL.VFS.Filesystem_String := File.Full_Name;
 
-      Result : constant Trees.Tree :=
+      Result : Trees.Tree :=
         Trees.Tree'(Kernel   => Self.Kernel,
                     Context  => Self.Context,
                     File     => File,
@@ -1327,12 +1327,14 @@ package body LAL.Semantic_Trees is
                     Provider => Self'Unchecked_Access);  --  We have only
       --  one Provider and its lifespan is the same as GPS instance, so it's
       --  save to get access to it.
+
    begin
       if Libadalang.Analysis.Has_Unit (Self.Context, String (Name)) then
          Result.Unit.all :=
            Libadalang.Analysis.Get_From_File
              (Context     => Self.Context,
               Filename    => String (Name));
+
       else
          Result.Update;
       end if;

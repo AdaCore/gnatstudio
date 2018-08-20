@@ -52,8 +52,13 @@ package body Src_Editor_Buffer.Blocks is
       end if;
 
       if Immediate then
-         Buffer.Get_Tree.Update;
-         Buffer.Blocks_Exact := True;
+         declare
+            Tree : Semantic_Tree'Class := Buffer.Get_Tree;
+
+         begin
+            Tree.Update;
+            Buffer.Blocks_Exact := True;
+         end;
       end if;
 
       if Buffer.Block_Folding then

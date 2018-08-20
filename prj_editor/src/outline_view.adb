@@ -939,9 +939,15 @@ package body Outline_View is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
       if Outline.File /= No_File then
-         Outline.Kernel.Get_Abstract_Tree_For_File
-           ("OUTLINE", Outline.File).Update_Async;
-         --  will be completed after trigger Semantic_Tree_Updated_Hook
+         declare
+            Tree : Semantic_Tree'Class :=
+              Outline.Kernel.Get_Abstract_Tree_For_File
+                ("OUTLINE", Outline.File);
+
+         begin
+            Tree.Update_Async;
+            --  will be completed after trigger Semantic_Tree_Updated_Hook
+         end;
       end if;
    end Refresh;
 
