@@ -2531,8 +2531,17 @@ package body GPS.Kernel.Messages is
                         Message_Access (Current_Node).Corresponding_File);
                end case;
 
-               Self.Savers.Element
-                 (Current_Node'Tag) (Message_Access (Current_Node), XML_Node);
+               --  Save the message in XML if its class has registered a saver.
+               --  Free the corresponding XML node otherwise.
+
+               if Self.Savers.Contains (Current_Node'Tag) then
+                  Self.Savers.Element
+                    (Current_Node'Tag)
+                    (Message_Access (Current_Node), XML_Node);
+               else
+                  Free (XML_Node);
+                  return;
+               end if;
 
                if Debug then
                   --  In debug mode save flag to mark messages with associated
