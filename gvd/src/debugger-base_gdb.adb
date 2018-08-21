@@ -15,29 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Tags;                    use Ada.Tags;
-with GNAT.Strings;                use GNAT.Strings;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with Ada.Characters.Handling;             use Ada.Characters.Handling;
+with Ada.Tags;                            use Ada.Tags;
+with GNAT.Strings;                        use GNAT.Strings;
+with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 
-with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
-with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
-with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
-with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
-with GVD.Variables.Types;         use GVD.Variables.Types;
-with Language.Debugger;           use Language.Debugger;
-with Language;                    use Language;
-with String_Utils;                use String_Utils;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Intl;                    use GPS.Intl;
+with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Records;         use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Simples;         use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Simples.Strings;
+use GVD.Variables.Types.Simples.Strings;
+with GVD.Variables.Types;                 use GVD.Variables.Types;
+with Language.Debugger;                   use Language.Debugger;
+with Language;                            use Language;
+with String_Utils;                        use String_Utils;
+with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
+with GPS.Intl;                            use GPS.Intl;
 with GPS.Markers;
 
-with GVD.Dialogs;                 use GVD.Dialogs;
-with GVD.Trace;                   use GVD.Trace;
+with GVD.Dialogs;                         use GVD.Dialogs;
+with GVD.Trace;                           use GVD.Trace;
 
-with Debugger.Base_Gdb.Ada;       use Debugger.Base_Gdb.Ada;
-with Debugger.Base_Gdb.C;         use Debugger.Base_Gdb.C;
-with Debugger.Base_Gdb.Cpp;       use Debugger.Base_Gdb.Cpp;
+with Debugger.Base_Gdb.Ada;               use Debugger.Base_Gdb.Ada;
+with Debugger.Base_Gdb.C;                 use Debugger.Base_Gdb.C;
+with Debugger.Base_Gdb.Cpp;               use Debugger.Base_Gdb.Cpp;
 
 package body Debugger.Base_Gdb is
 
@@ -135,6 +137,7 @@ package body Debugger.Base_Gdb is
            or else Result.Get_Type'Tag = GVD_Range_Type'Tag
            or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
            or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
+           or else Result.Get_Type.all in GVD_String_Type'Class
          then
             GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
 
@@ -153,16 +156,41 @@ package body Debugger.Base_Gdb is
         or else Result.Get_Type'Tag = GVD_Range_Type'Tag
         or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
         or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
+        or else Result.Get_Type.all in GVD_String_Type'Class
       then
          if Type_Str /= "" then
             Skip_Parenthesis (Index);
             declare
                Int : constant Natural := Index;
             begin
-               Skip_Simple_Value (Type_Str, Index,
-                                  Array_Item_Separator => ',',
-                                  End_Of_Array         => Context.Array_End,
-                                  Repeat_Item_Start    => '<');
+               if Result.Get_Type.all in GVD_String_Type'Class then
+                  Index := Index + 1; --  skip first '"'
+                  loop
+                     Skip_To_Char (Type_Str, Index, '"');
+                     if Index <= Type_Str'Last then
+                        Index := Index + 1;
+                     end if;
+
+                     exit when Index > Type_Str'Last;
+
+                     if Type_Str (Index) = '"'
+                       or else Type_Str (Index) = ']'
+                       or else (Index - 2 > Int
+                                and then Type_Str (Index - 2) = '[')
+                     then
+                        Index := Index + 1;
+                     else
+                        exit;
+                     end if;
+                  end loop;
+
+               else
+                  Skip_Simple_Value (Type_Str, Index,
+                                     Array_Item_Separator => ',',
+                                     End_Of_Array         => Context.Array_End,
+                                     Repeat_Item_Start    => '<');
+               end if;
+
                GVD_Simple_Type_Access (Result.Get_Type).Set_Value
                  (Type_Str (Int .. Index - 1));
             end;

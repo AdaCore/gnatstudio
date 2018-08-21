@@ -15,18 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Ada.Strings;                 use Ada.Strings;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
-with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
-with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
-with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
-with GVD.Variables.Types;         use GVD.Variables.Types;
-with Language.Ada;                use Language.Ada;
-with Language.Debugger;           use Language.Debugger;
-with String_Utils;                use String_Utils;
+with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
+with Ada.Strings;                         use Ada.Strings;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
+with GVD.Variables.Types.Records;         use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Simples;         use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Simples.Strings;
+use GVD.Variables.Types.Simples.Strings;
+with GVD.Variables.Types;                 use GVD.Variables.Types;
+with Language.Ada;                        use Language.Ada;
+with Language.Debugger;                   use Language.Debugger;
+with String_Utils;                        use String_Utils;
 
 pragma Warnings (Off);
 with GVD.Variables.Types.Classes.Ada.Finalization;
@@ -39,6 +41,10 @@ package body Debugger.Base_Gdb.Ada is
 
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part
+
+   String_Pattern : constant Pattern_Matcher := Compile
+     ("^array \((\d+) \.\. (\d+)\) of character.*");
+   --  To detect strings
 
    --------------
    -- Get_Name --
@@ -459,6 +465,7 @@ package body Debugger.Base_Gdb.Ada is
       Index_Str      : Unbounded_String;
       G              : GVD_Type_Holder;
 
+      Matched : Match_Array (0 .. 2);
    begin
       --  A special case for strings
 
@@ -468,6 +475,16 @@ package body Debugger.Base_Gdb.Ada is
       then
          Result := New_Simple_Type;
          Result.Get_Type.Set_Type_Name ("character");
+         return;
+      end if;
+
+      Match (String_Pattern, Type_Str (Tmp_Index .. Type_Str'Last), Matched);
+      if Matched (0) /= No_Match then
+         Result := New_String_Type;
+         Result.Get_Type.Set_Type_Name
+           ("string (" &
+              Type_Str (Matched (1).First .. Matched (1).Last) &
+              " .. " & Type_Str (Matched (2).First .. Matched (2).Last) & ')');
          return;
       end if;
 

@@ -17,45 +17,47 @@
 
 pragma Ada_2012;
 
-with Ada.Tags;                    use Ada.Tags;
+with Ada.Tags;                            use Ada.Tags;
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Expect;                 use GNAT.Expect;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with GNAT.Regpat;                 use GNAT.Regpat;
+with GNAT.Expect;                         use GNAT.Expect;
+with GNAT.OS_Lib;                         use GNAT.OS_Lib;
+with GNAT.Regpat;                         use GNAT.Regpat;
 with GNAT.Strings;
 
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 
-with Default_Preferences;         use Default_Preferences;
+with Default_Preferences;                 use Default_Preferences;
 
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Markers;
 
-with GVD.Preferences;             use GVD.Preferences;
-with GVD.Proc_Utils;              use GVD.Proc_Utils;
-with GVD.Process;                 use GVD.Process;
-with GVD.Trace;                   use GVD.Trace;
-with GVD.Types;                   use GVD.Types;
+with GVD.Preferences;                     use GVD.Preferences;
+with GVD.Proc_Utils;                      use GVD.Proc_Utils;
+with GVD.Process;                         use GVD.Process;
+with GVD.Trace;                           use GVD.Trace;
+with GVD.Types;                           use GVD.Types;
 
-with Language;                    use Language;
-with Process_Proxies;             use Process_Proxies;
-with Remote;                      use Remote;
+with Language;                            use Language;
+with Process_Proxies;                     use Process_Proxies;
+with Remote;                              use Remote;
 
-with Language.Debugger;           use Language.Debugger;
-with Language.Debugger.Lldb.C;    use Language.Debugger.Lldb.C;
-with Language.Debugger.Lldb.Cpp;  use Language.Debugger.Lldb.Cpp;
-with GVD.Variables.Types;         use GVD.Variables.Types;
-with GVD.Variables.Types.Arrays;  use GVD.Variables.Types.Arrays;
-with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
-with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
-with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
+with Language.Debugger;                   use Language.Debugger;
+with Language.Debugger.Lldb.C;            use Language.Debugger.Lldb.C;
+with Language.Debugger.Lldb.Cpp;          use Language.Debugger.Lldb.Cpp;
+with GVD.Variables.Types;                 use GVD.Variables.Types;
+with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
+with GVD.Variables.Types.Simples;         use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Simples.Strings;
+use GVD.Variables.Types.Simples.Strings;
+with GVD.Variables.Types.Records;         use GVD.Variables.Types.Records;
+with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
 
-with String_Utils;                use String_Utils;
+with String_Utils;                        use String_Utils;
 
 package body Debugger.LLDB is
 
@@ -3363,6 +3365,7 @@ package body Debugger.LLDB is
            or else Result.Get_Type'Tag = GVD_Range_Type'Tag
            or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
            or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
+           or else Result.Get_Type.all in GVD_String_Type'Class
          then
             GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
 
@@ -3381,6 +3384,7 @@ package body Debugger.LLDB is
         or else Result.Get_Type'Tag = GVD_Range_Type'Tag
         or else Result.Get_Type'Tag = GVD_Mod_Type'Tag
         or else Result.Get_Type'Tag = GVD_Enum_Type'Tag
+        or else Result.Get_Type.all in GVD_String_Type'Class
       then
          if Type_Str /= "" then
             Skip_Parenthesis (Index);
