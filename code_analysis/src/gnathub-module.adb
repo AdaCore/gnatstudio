@@ -135,9 +135,7 @@ package body GNAThub.Module is
    is
       pragma Unreferenced (Self, Kernel);
    begin
-      Module.Clean_Messages := True;
       Module.Clean;
-      Module.Clean_Messages := False;
    end Execute;
 
    -------------
@@ -239,7 +237,6 @@ package body GNAThub.Module is
    is
       pragma Unreferenced (View);
    begin
-      Module.Clean_Messages := True;
       --  Restore default perspective
       GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
       Module.Report := null;

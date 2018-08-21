@@ -1519,19 +1519,7 @@ Classes
 
 
 
-   .. autoattribute:: GPS.Message.MESSAGE_INVISIBLE
-
-
-
-   .. autoattribute:: GPS.Message.MESSAGE_IN_LOCATIONS
-
-
-
-   .. autoattribute:: GPS.Message.MESSAGE_IN_SIDEBAR
-
-
-
-   .. autoattribute:: GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS
+   .. autoattribute:: GPS.Message.Flags
 
 
    .. automethod:: GPS.Message.__init__

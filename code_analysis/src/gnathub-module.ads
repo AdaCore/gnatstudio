@@ -48,7 +48,6 @@ package GNAThub.Module is
       Tree           : Code_Analysis.Code_Analysis_Tree;
       Collector      : GNAThub.Reports.Collector.Report;
       Report         : GNAThub_Child;
-      Clean_Messages : Boolean := False;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;

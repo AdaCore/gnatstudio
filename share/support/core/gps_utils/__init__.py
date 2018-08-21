@@ -46,11 +46,6 @@ GPS.MDI.FLAGS_ALWAYS_DESTROY_FLOAT = 16
 GPS.MDI.FLAGS_ALL_BUTTONS = 4
 # Must be kept in sync with Gtkada.MDI
 
-GPS.Message.MESSAGE_INVISIBLE = 0
-GPS.Message.MESSAGE_IN_SIDEBAR = 1
-GPS.Message.MESSAGE_IN_LOCATIONS = 2
-GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
-
 GPS.Task.EXECUTE_AGAIN = "execute_again"
 GPS.Task.SUCCESS = "success"
 GPS.Task.FAILURE = "failure"
@@ -75,6 +70,9 @@ GPS.Browsers.Link.Side = enum(
     AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
 GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
+
+GPS.Message.Flags = enum(
+    INVISIBLE=0, IN_SIDEBAR=1, IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
 
 
 def get_focused_widget():
@@ -270,7 +268,6 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
                      # Learn
                      for_learning=False):
-
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key.

@@ -7228,6 +7228,9 @@ class Message(object):
     annotations, etc.
     """
 
+    Flags = enum('Message.Flags', INVISIBLE=0, IN_SIDEBAR=1,
+                 IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
+
     @staticmethod
     def __del__():
         """
@@ -7314,16 +7317,16 @@ class Message(object):
         bit is set, and is displayed in locations view when first bit is set,
         so here is possible values:
 
-        * GPS.Message.MESSAGE_INVISIBLE:
+        * GPS.Message.Flags.INVISIBLE:
           message is invisible
 
-        * GPS.Message.MESSAGE_IN_SIDEBAR:
+        * GPS.Message.Flags.IN_SIDEBAR:
           message is visible in source editor's sidebar only
 
-        * GPS.Message.MESSAGE_IN_LOCATIONS:
+        * GPS.Message.Flags.IN_LOCATIONS:
           message is visible in locations view only
 
-        * GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS:
+        * GPS.Message.Flags.IN_SIDEBAR_AND_LOCATIONS:
           message is visible in source editor and locations view
 
         Note, this set of flags can be extended in the future, so they should

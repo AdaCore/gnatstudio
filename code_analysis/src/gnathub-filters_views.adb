@@ -31,6 +31,7 @@ with Gtk.Widget;
 with Gtkada.Handlers;
 with Gtkada.MDI;
 
+with Commands;                         use Commands;
 with Default_Preferences;              use Default_Preferences;
 with Generic_Views;
 with GNAThub.Generic_Criteria_Editors;
@@ -42,9 +43,14 @@ with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Search;
+with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Search.GUI;
 
 package body GNAThub.Filters_Views is
+
+   -- Constants --
+
+   Update_View_Command_ID : constant String := "update_report_filters_task";
 
    -- Tools --
 
@@ -140,10 +146,9 @@ package body GNAThub.Filters_Views is
      (Self    : not null access Message_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
 
-   overriding function Message_Can_Be_Destroyed
+   overriding procedure Message_Removed
      (Self    : not null access Message_Listener;
-      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
-      return Boolean;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (Message_Listener'Class, Message_Listener_Access);
@@ -151,6 +156,15 @@ package body GNAThub.Filters_Views is
    -----------
    --  View --
    -----------
+
+   type Update_View_Command_Type is new Root_Command with record
+      Apply_Filters : Boolean := False;
+   end record;
+   type Update_View_Command_Access is access all Update_View_Command_Type;
+   --  Commands used to update the view asynchronously.
+
+   overriding function Execute
+     (Command : access Update_View_Command_Type) return Command_Return_Type;
 
    type Filters_View_Record is new Generic_Views.View_Record with record
       On_Update         : Boolean := True;
@@ -161,6 +175,8 @@ package body GNAThub.Filters_Views is
 
       Flow_Box          : Gtk.Flow_Box.Gtk_Flow_Box;
       Listener          : Message_Listener_Access;
+
+      Update_Report_Cmd : Update_View_Command_Access;
    end record;
 
    type Filters_View_Access is access all Filters_View_Record;
@@ -195,7 +211,16 @@ package body GNAThub.Filters_Views is
    procedure Apply_Filters (View : access Filters_View_Record'Class);
    --  Apply selected rules/severities/tools
 
+   procedure Update_Models (View : access Filters_View_Record'Class);
+   --  Update the rules/severities/tools editor models
+
    -- Internal Routines --
+
+   procedure Update_View_Async
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Apply_Filters : Boolean);
+   --  Update the Filters view asynchronously.
+   --  If Apply_Filters is True, the message filters will be applied too.
 
    procedure On_Flow_Box_Size_Allocated
      (Self       : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -330,6 +355,27 @@ package body GNAThub.Filters_Views is
 
    package body Search_Provider is separate;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Update_View_Command_Type) return Command_Return_Type
+   is
+      View : constant Views.View_Access := Views.Retrieve_View
+        (GNAThub_Module.Kernel);
+   begin
+      if View /= null then
+         View.Update_Models;
+
+         if Command.Apply_Filters then
+            View.Apply_Filters;
+         end if;
+      end if;
+
+      return Success;
+   end Execute;
+
    -------------------
    -- Apply_Filters --
    -------------------
@@ -414,6 +460,17 @@ package body GNAThub.Filters_Views is
 
       View.On_Update := False;
    end Apply_Filters;
+
+   -------------------
+   -- Update_Models --
+   -------------------
+
+   procedure Update_Models (View : access Filters_View_Record'Class) is
+   begin
+      View.Tools_Editor.Update;
+      View.Rules_Editor.Update;
+      View.Severities_Editor.Update;
+   end Update_Models;
 
    ----------------
    -- Close_View --
@@ -699,8 +756,6 @@ package body GNAThub.Filters_Views is
       Gtkada.Handlers.Widget_Callback.Connect
         (Self, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
 
-      GNAThub_Module.Clean_Messages := False;
-
       Preferences_Changed_Hook.Add
         (new On_Pref_Changed'(Preferences_Hooks_Function
          with View => Filters_View_Access (Self)),
@@ -806,6 +861,33 @@ package body GNAThub.Filters_Views is
       return False;
    end Is_Severity_Visible;
 
+   -----------------------
+   -- Update_View_Async --
+   -----------------------
+
+   procedure Update_View_Async
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Apply_Filters : Boolean) is
+   begin
+      if not Has_Queue (Kernel, Update_View_Command_ID) then
+         declare
+            Command : constant Update_View_Command_Access :=
+                        new Update_View_Command_Type;
+         begin
+            Command.Apply_Filters := Apply_Filters;
+
+            Launch_Background_Command
+              (Kernel            => Kernel,
+               Command           => Command,
+               Active            => False,
+               Show_Bar          => True,
+               Block_Exit        => False,
+               Queue_Id          => Update_View_Command_ID,
+               Start_Immediately => False);
+         end;
+      end if;
+   end Update_View_Async;
+
    -------------------
    -- Message_Added --
    -------------------
@@ -817,29 +899,46 @@ package body GNAThub.Filters_Views is
       View : constant Filters_View_Access := Filters_View_Access (Self.View);
    begin
       if Message.all in GNAThub_Message'Class then
-         View.Tools_Editor.Update;
-         View.Rules_Editor.Update;
-         View.Severities_Editor.Update;
+         View.Update_Models;
       end if;
    end Message_Added;
 
-   ------------------------------
-   -- Message_Can_Be_Destroyed --
-   ------------------------------
+   ---------------------
+   -- Message_Removed --
+   ---------------------
 
-   overriding function Message_Can_Be_Destroyed
+   overriding procedure Message_Removed
      (Self    : not null access Message_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
-      return Boolean
    is
-      pragma Unreferenced (Self);
+      View : constant Filters_View_Access := Filters_View_Access (Self.View);
    begin
-      if Message.all in GNAThub_Message'Class then
-         return GNAThub_Module.Clean_Messages;
-      else
-         return True;
+      if Message.all in GNAThub_Message'Class
+        and then Message.Get_Flags (Locations)
+      then
+         declare
+            M        : constant GNAThub_Message_Access :=
+                         GNAThub_Message_Access (Message);
+            Rule     : constant Rule_Access := M.Get_Rule;
+            Severity : constant Severity_Access := M.Get_Severity;
+         begin
+            --  Decrease the counter of the rule associated to the message
+            --  being removed.
+
+            if Rule.Count (Severity) > 0 then
+               Rule.Count (Severity) := Rule.Count (Severity) - 1;
+            end if;
+
+            --  Update the view asynchronously so that it's updated after
+            --  messages have been actually removed (which is not the case
+            --  here).
+
+            Update_View_Async
+              (View.Kernel,
+               Apply_Filters => True);
+         end;
       end if;
-   end Message_Can_Be_Destroyed;
+   end Message_Removed;
 
    ----------------
    -- On_Destroy --
@@ -852,6 +951,8 @@ package body GNAThub.Filters_Views is
       GPS.Kernel.Messages.Unregister_Listener
         (GNAThub_Module.Kernel.Get_Messages_Container,
          GPS.Kernel.Messages.Listener_Access (Self.Listener));
+
+      Interrupt_Queue (Self.Kernel, Queue_Id => Update_View_Command_ID);
 
       Free (Self.Listener);
    end On_Destroy;
