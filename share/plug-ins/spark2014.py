@@ -551,10 +551,10 @@ class GNATprove_Parser(tool_output.OutputParser):
                 self.analysis_tool.add_rule(splitted_line[1],
                                             splitted_line[0])
 
-    def pass_output(self, text, command):
-        """pass the text on to the next output parser"""
-        if self.child:
-            self.child.on_stdout(text + '\n', command)
+    def print_output(self, text):
+        """print the text on to the Messages view"""
+        if text:
+            GPS.Console().write(text + '\n')
 
     def parse_trace_file(self, filename):
         """ parse the trace file as a list of "file:line" information and
@@ -720,10 +720,12 @@ class GNATprove_Parser(tool_output.OutputParser):
             if m:
                 text = m.group(1)
                 GPS.Locations.parse(text, category=messages_category)
+                self.print_output(text)
                 self.msg_id[text] = int(m.group(2))
             else:
                 # the line doesn't have any extra info, go on
                 GPS.Locations.parse(line, category=messages_category)
+                self.print_output(line)
 
     def add_extra_info_on_messages(self, command, display_in_report=False):
         """Scan through messages to see if extra
