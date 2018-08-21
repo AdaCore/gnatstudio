@@ -190,6 +190,11 @@ package Browsers.Canvas is
    procedure Hide_Right_Arrow (Self : not null access GPS_Item_Record);
    --  Control the visibility of the arrows in an item's title bar
 
+   procedure Set_Left_Arrow
+     (Self : not null access GPS_Item_Record; Text : Glib.UTF8_String);
+   procedure Set_Right_Arrow
+     (Self : not null access GPS_Item_Record; Text : Glib.UTF8_String);
+
    procedure Highlight_Related_Items
      (Self   : not null access GPS_Canvas_View_Record'Class;
       Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);

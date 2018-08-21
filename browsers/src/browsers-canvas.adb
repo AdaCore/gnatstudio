@@ -1392,6 +1392,26 @@ package body Browsers.Canvas is
       Self.Right.Hide;
    end Hide_Right_Arrow;
 
+   --------------------
+   -- Set_Left_Arrow --
+   --------------------
+
+   procedure Set_Left_Arrow
+     (Self : not null access GPS_Item_Record; Text : Glib.UTF8_String) is
+   begin
+      Gtkada.Canvas_View.Text_Item (Self.Left).Set_Text (Text);
+   end Set_Left_Arrow;
+
+   ---------------------
+   -- Set_Right_Arrow --
+   ---------------------
+
+   procedure Set_Right_Arrow
+     (Self : not null access GPS_Item_Record; Text : Glib.UTF8_String) is
+   begin
+      Gtkada.Canvas_View.Text_Item (Self.Right).Set_Text (Text);
+   end Set_Right_Arrow;
+
    -------------------
    -- Is_Selectable --
    -------------------

@@ -502,6 +502,8 @@ package body Browsers.Call_Graph is
                Style       => L.Default_Style);
          end if;
          Browser_Model (Browser.Get_View.Model).Add (L);
+         Src.Set_Right_Arrow (Collapse_Arrow);
+         Dest.Set_Left_Arrow (Collapse_Arrow);
       end if;
    end Add_Link_If_Not_Present;
 
@@ -618,6 +620,8 @@ package body Browsers.Call_Graph is
          --  The action does nothing for this node so hide the button
          if Set.Is_Empty then
             It.Hide_Left_Arrow;
+         else
+            It.Set_Left_Arrow (Collapse_Arrow);
          end if;
          Highlight_Related_Items (View, It);
          View.Model.Item_Contents_Changed (It);
@@ -628,6 +632,7 @@ package body Browsers.Call_Graph is
          end if;
          Model.Remove (Set);
          Model.Refresh_Layout;
+         It.Set_Left_Arrow (Left_Arrow);
       end if;
    end On_Click;
 
@@ -654,6 +659,8 @@ package body Browsers.Call_Graph is
          --  The action does nothing for this node so hide the button
          if Set.Is_Empty then
             It.Hide_Right_Arrow;
+         else
+            It.Set_Right_Arrow (Collapse_Arrow);
          end if;
          Highlight_Related_Items (View, It);
          View.Model.Item_Contents_Changed (It);
@@ -664,6 +671,7 @@ package body Browsers.Call_Graph is
          end if;
          Model.Remove (Set);
          Model.Refresh_Layout;
+         It.Set_Right_Arrow (Right_Arrow);
       end if;
    end On_Click;
 

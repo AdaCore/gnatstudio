@@ -26,6 +26,21 @@ package Browsers is
    Default_Space_Between_Layers : constant Glib.Gdouble := 30.0;
    --  Controlling the layout algorithm
 
+   Left_Arrow     : constant  Glib.UTF8_String :=
+     (Character'Val (16#E2#)     --  \u25C0 black left pointing triangle
+      & Character'Val (16#97#)
+      & Character'Val (16#80#));
+
+   Right_Arrow    : constant  Glib.UTF8_String :=
+     (Character'Val (16#E2#)     --  \u25B6 black right pointing triangle
+      & Character'Val (16#96#)
+      & Character'Val (16#B6#));
+
+   Collapse_Arrow : constant  Glib.UTF8_String :=
+     (Character'Val (16#E2#)     --  \u25BC black down pointing triangle
+      & Character'Val (16#96#)
+      & Character'Val (16#BC#));
+
    type Background_Type is
      (Background_None,
       Background_Color,

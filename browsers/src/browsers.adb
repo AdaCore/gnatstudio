@@ -139,9 +139,7 @@ package body Browsers is
       Self.Initialize_Text
         (Gtk_New (Stroke => Null_RGBA,
                   Font => (Name => From_String ("sans 12"), others => <>)),
-         Character'Val (16#E2#)     --  \u21E8 leftwards white arrow
-         & Character'Val (16#87#)
-         & Character'Val (16#A6#),
+         Left_Arrow,
          Height => 12.0);
    end Initialize;
 
@@ -154,9 +152,7 @@ package body Browsers is
       Self.Initialize_Text
         (Gtk_New (Stroke => Null_RGBA,
                   Font => (Name => From_String ("sans 12"), others => <>)),
-         Character'Val (16#E2#)     --  \u21E6 rightwards white arrow
-         & Character'Val (16#87#)
-         & Character'Val (16#A8#),
+         Right_Arrow,
          Height => 12.0);
    end Initialize;
 
