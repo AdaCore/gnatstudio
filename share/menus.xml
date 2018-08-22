@@ -688,8 +688,9 @@
      <separator/>
       <button action='Log subsystem values'/>
       <button action='Stop logging subsystem values'/>
-      <button action='MDL goto parent subsystem'/>
-      <button action='MDL goto previous subsystem'/>
+      <button action='Goto parent subsystem'/>
+      <button action='Goto previous subsystem'/>
+      <button action='Fit window to view'/>
    </toolbar>
 
    <toolbar id='Log'>

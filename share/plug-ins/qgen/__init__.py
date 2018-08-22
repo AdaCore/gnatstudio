@@ -578,9 +578,10 @@ class CLI(GPS.Process):
     @staticmethod
     def action_goto_previous_subsystem():
         """
-        Retrieves the focused QGen Diagram viewer and get the
-        previous diagram from the history list.
+        Displays the previous subsystem.
         """
+        # Retrieves the focused QGen Diagram viewer and get the previous
+        # diagram from the history list.
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
         if viewer:
             diag_name = viewer.get_prev_diag()
@@ -591,11 +592,12 @@ class CLI(GPS.Process):
     @staticmethod
     def action_goto_parent_subsystem():
         """
-        Retrieves the focused QGen Diagram viewer and changes the
-        diagram to display based on the `parent` field of the
-        `qgen_navigation_info` item of the current diagram or
-        if non existent retrieves it from the history list.
+        Displays the parent subsystem.
         """
+        # Retrieves the focused QGen Diagram viewer and changes the
+        # diagram to display based on the `parent` field of the
+        # `qgen_navigation_info` item of the current diagram or if non
+        # existent retrieves it from the history list.
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
         if viewer:
             diag_name = viewer.get_parent_diag()
@@ -606,12 +608,29 @@ class CLI(GPS.Process):
     @staticmethod
     def action_scale_to_fit():
         """
-        Retrieves the focused QGen Diagram viewer and scales the view
-        to the window size.
+        Scales the diagram to the window size.
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
         if viewer:
             viewer.scale_to_fit()
+
+    @staticmethod
+    def action_zoom_in():
+        """
+        Zoom in.
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            GPS.execute_action("browser zoom in")
+
+    @staticmethod
+    def action_zoom_out():
+        """
+        Zoom out.
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            GPS.execute_action("browser zoom out")
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
@@ -2278,39 +2297,58 @@ else:
 
             gps_utils.make_interactive(
                 callback=CLI.action_goto_parent_subsystem,
-                name='MDL goto parent subsystem',
-                category='Browsers',
+                name='Goto parent subsystem',
+                category='QGen Debugger',
                 filter=self.__contextual_filter_viewer_active_history_parent,
                 icon='gps-upward-symbolic',
-                key='Escape')
+                key='Escape',
+                for_learning=True)
 
             gps_utils.make_interactive(
                 callback=CLI.action_goto_previous_subsystem,
-                name='MDL goto previous subsystem',
-                category='Browsers',
+                name='Goto previous subsystem',
+                category='QGen Debugger',
                 filter=self.__contextual_filter_viewer_active_history,
                 icon='gps-backward-symbolic',
-                key='Left')
+                key='Left',
+                for_learning=True)
 
             gps_utils.make_interactive(
                 callback=CLI.action_scale_to_fit,
-                name='MDL fit window',
-                category='Browsers',
+                name='Fit window to view',
+                category='QGen Debugger',
                 filter=self.__contextual_filter_viewer_active,
-                icon='gps-zoom-100-symbolic',
-                key='space')
+                icon='gps-zoom-fit-symbolic',
+                key='space',
+                for_learning=True)
+
+            gps_utils.make_interactive(
+                callback=CLI.action_zoom_in,
+                name='Zoom in',
+                category='QGen Debugger',
+                filter=self.__contextual_filter_viewer_active,
+                key='plus',
+                for_learning=True)
+
+            gps_utils.make_interactive(
+                callback=CLI.action_zoom_out,
+                name='Zoom out',
+                category='QGen Debugger',
+                filter=self.__contextual_filter_viewer_active,
+                key='minus',
+                for_learning=True)
 
             gps_utils.make_interactive(
                 callback=CLI.stop_logging_subsystem_values,
                 name='Stop logging subsystem values',
-                category='Browsers',
+                category='QGen Debugger',
                 filter=self.__contextual_filter_debugger_active,
                 icon='gps-stop-save-symbolic')
 
             gps_utils.make_interactive(
                 callback=CLI.log_subsystem_values,
                 name='Log subsystem values',
-                category='Browsers',
+                category='QGen Debugger',
                 filter=self.__contextual_filter_debugger_active,
                 icon='gps-save-symbolic')
 
