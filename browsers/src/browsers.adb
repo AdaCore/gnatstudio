@@ -27,8 +27,6 @@ with Pango.Font;               use Pango.Font;
 
 package body Browsers is
 
-   function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
-     (Modifier => Mod1_Mask);
    function On_Item_Event_Key_Navigate
    is new On_Item_Event_Key_Navigate_Generic (Modifier => 0);
    function On_Item_Event_Key_Scrolls is new On_Item_Event_Key_Scrolls_Generic
@@ -38,6 +36,14 @@ package body Browsers is
      (Self    : not null access GObject_Record'Class;
       Details : Event_Details_Access) return Boolean;
    --  Called when an item is clicked, to possibly execute its action
+
+   function On_Item_Event_Zoom_Internal
+     (View   : not null access Glib.Object.GObject_Record'Class;
+      Event : Event_Details_Access)
+      return Boolean;
+   --  Wrapper for On_Item_Event_Zoom which gives Primary_Mask as a Modifier.
+
+   Primary_Mask : Gdk.Types.Gdk_Modifier_Type := 0;
 
    -------------------
    -- On_Item_Event --
@@ -121,11 +127,15 @@ package body Browsers is
       Self := new GPS_Canvas_View_Record;
       Gtkada.Canvas_View.Initialize (Self, Model);
 
+      if Primary_Mask = 0 then
+         Primary_Mask := Self.Get_Modifier_Mask (Primary_Accelerator);
+      end if;
+
       --  Put this first
       Self.On_Item_Event (On_Item_Event'Access);
 
       Self.On_Item_Event (On_Item_Event_Scroll_Background'Access);
-      Self.On_Item_Event (On_Item_Event_Zoom'Access);
+      Self.On_Item_Event (On_Item_Event_Zoom_Internal'Access);
       Self.On_Item_Event (On_Item_Event_Key_Navigate'Access);
       Self.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
    end Gtk_New;
@@ -307,6 +317,19 @@ package body Browsers is
            (Stroke     => Selected,
             Line_Width => 3.0));
    end Create_Styles;
+
+   ---------------------------------
+   -- On_Item_Event_Zoom_Internal --
+   ---------------------------------
+
+   function On_Item_Event_Zoom_Internal
+     (View   : not null access Glib.Object.GObject_Record'Class;
+      Event : Event_Details_Access)
+      return Boolean is
+   begin
+      return On_Item_Event_Zoom
+        (View, Event, Primary_Mask, 1.1, 0.0, Easing_In_Out_Cubic'Access);
+   end On_Item_Event_Zoom_Internal;
 
    -------------------
    -- Set_Read_Only --
