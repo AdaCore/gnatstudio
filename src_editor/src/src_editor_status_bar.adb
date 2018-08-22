@@ -203,7 +203,10 @@ package body Src_Editor_Status_Bar is
             while Parent.First_Line > 1 loop
                Parent := Get_Subprogram_Block (Bar.Buffer,
                                                Parent.First_Line - 1);
-               if Parent.Name /= GNATCOLL.Symbols.No_Symbol then
+               --  Verify that parent is an enclosing block
+               if Parent.Last_Line > Block.Last_Line
+                 and then Parent.Name /= GNATCOLL.Symbols.No_Symbol
+               then
                   Val :=
                     "<span underline='none'><a href='"
                     & Parent.First_Line'Img
@@ -456,6 +459,7 @@ package body Src_Editor_Status_Bar is
       Bar.Set_Resize_Mode (Resize_Queue);
 
       Gtk_New (Bar.Function_Label);
+      Bar.Function_Label.Set_Name ("Status Bar Name Label"); -- For testing
       Bar.Function_Label.Set_Ellipsize (Ellipsize_Start);
       Bar.Function_Label.Set_Alignment (0.0, 0.5);
       Bar.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
