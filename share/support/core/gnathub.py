@@ -7,8 +7,14 @@ import gps_utils
 import os_utils
 
 gnathub_menu = "/Analyze/GNAThub/"
-tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatstack',
-         'gnatmetric', 'spark2014']
+tools = {'codepeer':     'codepeer',
+         'gcov':         'gcov',
+         'gnatcoverage': 'gnatcov',
+         'gnatcheck':    'gnatcheck',
+         'gnatstack':    'gnatstack',
+         'gnatmetric':   'gnatmetric',
+         'spark2014':    'gnatprove'
+         }
 
 
 XML = r"""<?xml version="1.0" ?>
@@ -66,11 +72,11 @@ logger = GPS.Logger("GPS.INTERNAL.MODULE_GNAThub")
 
 if os_utils.locate_exec_on_path("gnathub") and logger.active:
     checkboxes = ""
-    for tool in tools:
+    for name, tool in tools.iteritems():
         if os_utils.locate_exec_on_path(tool):
-            checkboxes += template.format(tool, tool, tool, "on")
+            checkboxes += template.format(name, name, name, "on")
         else:
-            checkboxes += template.format(tool, tool, tool, "off")
+            checkboxes += template.format(name, name, name, "off")
 
     GPS.parse_xml(XML.format(checkboxes))
 
