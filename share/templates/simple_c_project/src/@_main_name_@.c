@@ -1,4 +1,4 @@
-int @_Main_Name_@(void) {
+int @_main_name_@(void) {
 
     //  Insert code here.
     return 0;
