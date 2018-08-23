@@ -133,6 +133,11 @@ package Generic_Views is
    --  This is called after a new view has been created, and it has been added
    --  to the MDI.
 
+   procedure On_Destroy
+     (View : not null access View_Record) is null;
+   --  Called each time a view is destroyed (e.g: when the user closes the
+   --  view).
+
    -----------------------
    -- Search bar fields --
    -----------------------

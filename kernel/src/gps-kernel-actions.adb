@@ -396,6 +396,10 @@ package body GPS.Kernel.Actions is
 
       if For_Learning then
          Kernel.Actions_For_Learning.Append (Name);
+
+         if Provider /= null then
+            Notify_Listeners_About_Provider_Changed (Provider);
+         end if;
       end if;
    end Register_Action;
 

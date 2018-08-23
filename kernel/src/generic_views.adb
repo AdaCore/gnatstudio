@@ -338,6 +338,8 @@ package body Generic_Views is
          V.Config_Menu.Destroy;
          V.Config_Menu := null;
       end if;
+
+      V.On_Destroy;
    end On_Destroy_View;
 
    -----------------------

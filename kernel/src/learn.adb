@@ -63,6 +63,43 @@ package body Learn is
          New_Item => Provider);
    end Register_Provider;
 
+   -----------------------
+   -- Register_Listener --
+   -----------------------
+
+   procedure Register_Listener
+     (Listener : not null access Learn_Listener_Type'Class) is
+   begin
+      Learn_Module.Listeners.Append (Learn_Listener (Listener));
+   end Register_Listener;
+
+   -------------------------
+   -- Unregister_Listener --
+   -------------------------
+
+   procedure Unregister_Listener
+     (Listener : not null access Learn_Listener_Type'Class)
+   is
+      Position : Learn_Listener_Vectors.Cursor :=
+                   Learn_Module.Listeners.Find (Listener);
+   begin
+      if Learn_Listener_Vectors.Has_Element (Position) then
+         Learn_Module.Listeners.Delete (Position);
+      end if;
+   end Unregister_Listener;
+
+   ---------------------------------------------
+   -- Notify_Listeners_About_Provider_Changed --
+   ---------------------------------------------
+
+   procedure Notify_Listeners_About_Provider_Changed
+     (Provider : not null access Learn_Provider_Type'Class) is
+   begin
+      for Listener of Learn_Module.Listeners loop
+         Listener.On_Provider_Changed (Provider);
+      end loop;
+   end Notify_Listeners_About_Provider_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------

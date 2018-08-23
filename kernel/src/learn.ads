@@ -17,6 +17,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Vectors;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -109,6 +110,37 @@ package Learn is
      (Provider : not null access Learn_Provider_Type'Class);
    --  Register a learn provider.
 
+   ---------------------
+   -- Learn Listeners --
+   ---------------------
+
+   type Learn_Listener_Type is interface;
+   type Learn_Listener is access all Learn_Listener_Type'Class;
+   --  A listener interfaced used to react to changes made regarding providers
+   --  (e.g: when adding learn items to a provider).
+
+   procedure On_Provider_Changed
+     (Self     : not null access Learn_Listener_Type;
+      Provider : not null access Learn_Provider_Type'Class) is abstract;
+   --  Called when the given providers' set of learn items has changed.
+
+   procedure Register_Listener
+     (Listener : not null access Learn_Listener_Type'Class);
+   --  Register a learn listener.
+
+   procedure Unregister_Listener
+     (Listener : not null access Learn_Listener_Type'Class);
+   --  Unregister the given learn provider.
+
+   procedure Notify_Listeners_About_Provider_Changed
+     (Provider : not null access Learn_Provider_Type'Class);
+   --  Used to notify the learn listeners that the given learn provider has
+   --  changed.
+
+   ------------------
+   -- Learn Module --
+   ------------------
+
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Register the learn module.
@@ -135,10 +167,16 @@ private
         Equivalent_Keys => "=",
         "="             => "=");
 
+   package Learn_Listener_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Learn_Listener,
+      "="          => "=");
+
    function Get_Registered_Providers return Learn_Provider_Maps.Map;
 
    type Learn_Module_Type is new Module_ID_Record with record
       Providers : Learn_Provider_Maps.Map;
+      Listeners : Learn_Listener_Vectors.Vector;
    end record;
 
 end Learn;
