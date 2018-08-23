@@ -324,7 +324,6 @@ def check_proof_after_close(proc, ex_st, outp):
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
             llarg = limit_line_option(proc._proc_msg, vc_kind)
-            GPS.Locations.remove_category(messages_category)
             GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
                                                    synchronous=False)
         except TypeError:
@@ -539,6 +538,10 @@ class GNATprove_Parser(tool_output.OutputParser):
     # The GNATprove command being parsed.
 
     def __init__(self, child):
+        # Remove the previous GNATprove messages first
+        GPS.Locations.remove_category(
+            messages_category, GPS.Message.Flags.INVISIBLE)
+
         tool_output.OutputParser.__init__(self, child)
 
         gnatprove_plug.output_parser = self
@@ -799,7 +802,6 @@ def is_file_context(self):
 
 def generic_on_analyze(target, args=[]):
     disable_trace_and_ce()
-    GPS.Locations.remove_category(messages_category)
     GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
@@ -1028,7 +1030,6 @@ def generic_action_on_subp(self, action):
         args = [arg]
         if inside_generic_unit_context(self):
             args.append("-U")
-        GPS.Locations.remove_category(messages_category)
         target = GPS.BuildTarget(action)
         target.execute(extra_args=args,
                        synchronous=False)
@@ -1211,7 +1212,7 @@ def prove_check_context(context, edit_session):
 
 
 def can_show_report():
-    return len(GPS.Message.list(category=messages_category)) > 1
+    return len(GPS.Message.list(category=messages_category)) > 0
 
 
 def get_vc_kind(msg):
@@ -1251,7 +1252,6 @@ def on_prove_check(context):
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.Locations.remove_category(messages_category)
     GPS.BuildTarget(prove_check()).execute(extra_args=args,
                                            synchronous=False)
 
@@ -1396,7 +1396,8 @@ def on_prove_itp(context, edit_session=False):
     file_name = os.path.basename(abs_fn_path)
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.Locations.remove_category(messages_category)
+    GPS.Locations.remove_category(messages_category,
+                                  GPS.Message.Flags.INVISIBLE)
     start_ITP(tree, file_name, abs_fn_path, args, edit_session)
     # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
     # launched last = False so that it is the first hook to be run

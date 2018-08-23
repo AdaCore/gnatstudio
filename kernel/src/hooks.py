@@ -534,6 +534,10 @@ called for the backspace key.\n
 .. seealso:: :func:`GPS.Predefined_Hooks.character_added`\n
 .. seealso:: :func:`GPS.Predefined_Hooks.word_added`'''),
 
+    Hook('analysis_loading_finsished', 'simple_hooks', descr='''
+Emitted when all the messages that should be displayed in the Analysis
+ Report have been loaded.'''),
+
     Hook('annotation_parsed_hook', 'simple_hooks',
          descr='Emitted when the last annotation has been parsed'),
 

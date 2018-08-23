@@ -318,6 +318,18 @@ package body GNAThub.Generic_Criteria_Editors is
       end if;
    end Item_By_Path;
 
+   ------------------
+   -- Path_By_Item --
+   ------------------
+
+   function Path_By_Item
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Path is
+   begin
+      return Self.Model.Get_Path (Item);
+   end Path_By_Item;
+
    --------------------------
    -- On_Model_Row_Changed --
    --------------------------
@@ -351,9 +363,7 @@ package body GNAThub.Generic_Criteria_Editors is
 
       else
          for I of Self.Model.All_Items loop
-            if not Self.Model.Get_Visible_Items.Contains (I)
-              and then (Is_Visible = null or else Is_Visible (I, Self.Parent))
-            then
+            if not Self.Model.Get_Visible_Items.Contains (I) then
                Self.Model.Show (I);
             end if;
          end loop;
@@ -439,37 +449,13 @@ package body GNAThub.Generic_Criteria_Editors is
    -------------------------
 
    procedure Update_Toggle_State
-     (Self : not null access Criteria_Editor_Record'Class)
-   is
-      function Is_Full return Boolean;
-
-      -------------
-      -- Is_Full --
-      -------------
-
-      function Is_Full return Boolean is
-      begin
-         if Is_Visible = null then
-            return Self.Model.Is_Full;
-         else
-            for I of Self.Model.All_Items loop
-               if Is_Visible (I, Self.Parent)
-                 and then not Self.Model.Get_Visible_Items.Contains (I)
-               then
-                  return False;
-               end if;
-            end loop;
-
-            return True;
-         end if;
-      end Is_Full;
-
+     (Self : not null access Criteria_Editor_Record'Class) is
    begin
       if Self.Model.Is_Empty then
          Self.Toggle.Set_Inconsistent (False);
          Self.Toggle.Set_Active (False);
 
-      elsif Is_Full then
+      elsif Self.Model.Is_Full then
          Self.Toggle.Set_Inconsistent (False);
          Self.Toggle.Set_Active (True);
 

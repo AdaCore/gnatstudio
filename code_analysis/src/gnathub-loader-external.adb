@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-
-with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package body GNAThub.Loader.External is
 
@@ -60,7 +58,7 @@ package body GNAThub.Loader.External is
                                    GNAThub_Message_Access
                                      (Message_Ref.Message);
                   New_Message  : constant GNAThub_Message_Access :=
-                                   new GNAThub_Message;
+                    new GNAThub_Message;
                begin
                   GNAThub.Messages.Initialize
                     (Self          => New_Message,
@@ -71,7 +69,8 @@ package body GNAThub.Loader.External is
                      Text          => Message.Get_Text,
                      File          => Message.Get_File,
                      Line          => Message.Get_Line,
-                     Column        => Message.Get_Column);
+                     Column        => Message.Get_Column,
+                     Entity        => Message.Get_Entity);
 
                   Message.Remove;
 
@@ -110,9 +109,6 @@ package body GNAThub.Loader.External is
    is
       M_Ref    : Message_Reference;
       Message  : GNAThub_Message_Access;
-      Rule     : GNAThub.Rule_Access;
-      Severity : GNAThub.Severity_Access;
-      Position : GNAThub.Severity_Natural_Maps.Cursor;
       Count    : Natural := 0;
    begin
       while not Self.Messages_To_Process.Is_Empty loop
@@ -125,23 +121,7 @@ package body GNAThub.Loader.External is
 
             Insert_Message
               (Self    => Self,
-               Project => Get_Registry
-                 (Self.Module.Kernel).Tree.Info (Message.Get_File).Project,
-               Entity  => No_Entity_Data,
                Message => Message);
-
-            --  Update the severities counter
-
-            Severity := Message.Get_Severity;
-            Rule     := Message.Get_Rule;
-            Position := Rule.Count.Find (Severity);
-
-            if Severity_Natural_Maps.Has_Element (Position) then
-               Rule.Count.Replace_Element
-                 (Position, Severity_Natural_Maps.Element (Position) + 1);
-            else
-               Rule.Count.Insert (Severity, 1);
-            end if;
          end if;
 
          Count := Count + 1;

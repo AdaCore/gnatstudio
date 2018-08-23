@@ -363,6 +363,11 @@ package GPS.Kernel.Messages is
    -- Messages Container --
    ------------------------
 
+   function Get_Kernel
+     (Self : not null access constant Messages_Container'Class)
+      return Kernel_Handle;
+   --  Return the container's kernel
+
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
       Category : String) return Boolean;

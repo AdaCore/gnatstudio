@@ -40,4 +40,12 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Display Data..." menu item is activated
 
+   type Remove_Database_Command is
+     new GNAThub_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Remove_Database_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Clean the GNAThub module by deleting the GNAThub database and its
+   --  associated messages.
+
 end GNAThub.Actions;

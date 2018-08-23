@@ -433,18 +433,36 @@ package body Gtkada.Tree_View is
    ---------------------------
 
    function Convert_To_Store_Iter
-     (Self        : access Tree_View_Record'Class;
-      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+     (Self : access Tree_View_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk_Tree_Iter
    is
-      Store_Iter : Gtk_Tree_Iter;
+      Filter_Iter : Gtk_Tree_Iter;
+      Store_Iter  : Gtk_Tree_Iter;
    begin
-      if Self.Filter /= null and then Filter_Iter /= Null_Iter then
-         Self.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
-         return Store_Iter;
+      --  If the tree view has a sortable model, convert the given iter to
+      --  a child one.
+
+      if Self.Sortable_Model /= null and then Iter /= Null_Iter then
+         Self.Sortable_Model.Convert_Iter_To_Child_Iter
+           (Child_Iter  => Filter_Iter,
+            Sorted_Iter => Iter);
       else
-         return Filter_Iter;
+         Filter_Iter := Iter;
       end if;
+
+      --  If the tree view has a filtered model, convert the given iter to
+      --  a child one.
+
+      if Self.Filter /= null and then Filter_Iter /= Null_Iter then
+         Self.Filter.Convert_Iter_To_Child_Iter
+           (Child_Iter  => Store_Iter,
+            Filter_Iter => Filter_Iter);
+      else
+         Store_Iter := Filter_Iter;
+      end if;
+
+      return Store_Iter;
    end Convert_To_Store_Iter;
 
    ------------------------------------
@@ -486,7 +504,6 @@ package body Gtkada.Tree_View is
       return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-
    begin
       if Self.Filter /= null then
          Self.Filter.Convert_Child_Iter_To_Iter (Iter, Store_Iter);
@@ -495,6 +512,25 @@ package body Gtkada.Tree_View is
          return Self.Model.Get_Path (Store_Iter);
       end if;
    end Get_Filter_Path_For_Store_Iter;
+
+   --------------------------------------
+   -- Get_Sortable_Path_For_Store_Iter --
+   --------------------------------------
+
+   function Get_Sortable_Path_For_Store_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path
+   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      if Self.Sortable_Model /= null then
+         Iter := Self.Convert_To_Sortable_Model_Iter (Store_Iter);
+         return Self.Sortable_Model.Get_Path (Iter);
+      else
+         return Self.Get_Filter_Path_For_Store_Iter (Store_Iter);
+      end if;
+   end Get_Sortable_Path_For_Store_Iter;
 
    ------------------------------------
    -- Get_Store_Path_For_Filter_Path --
@@ -905,7 +941,8 @@ package body Gtkada.Tree_View is
    --------------
 
    procedure Refilter
-     (Self    : not null access Tree_View_Record'Class)
+     (Self    : not null access Tree_View_Record'Class;
+      Iter    : Gtk_Tree_Iter := Null_Iter)
    is
       function Check_Node
         (Model : Gtk_Tree_Model;
@@ -959,8 +996,19 @@ package body Gtkada.Tree_View is
 
    begin
       if Self.Filter /= null then
-         Self.Model.Foreach (Check_Node'Unrestricted_Access);
-         Self.Filter.Refilter;
+         if Iter = Null_Iter then
+            Self.Model.Foreach (Check_Node'Unrestricted_Access);
+            Self.Filter.Refilter;
+         else
+            declare
+               Path  : constant Gtk_Tree_Path := Self.Model.Get_Path (Iter);
+               Dummy : Boolean;
+            begin
+               Dummy := Check_Node (+(Self.Model), Path, Iter);
+               Self.Model.Row_Changed (Path, Iter);
+               Path_Free (Path);
+            end;
+         end if;
       end if;
    end Refilter;
 
@@ -1091,19 +1139,19 @@ package body Gtkada.Tree_View is
          is
             pragma Unreferenced (Model, Path);
 
-            Dummy       : Boolean;
-            The_Id      : constant Id := Get_Id (Self, Iter);
-            Filter_Path : Gtk_Tree_Path;
+            Dummy         : Boolean;
+            The_Id        : constant Id := Get_Id (Self, Iter);
+            Sortable_Path : Gtk_Tree_Path;
          begin
             if Status.Expanded.Contains (The_Id) then
-               Filter_Path := Self.Get_Filter_Path_For_Store_Iter (Iter);
-               Dummy := Self.Expand_Row (Filter_Path, Open_All => False);
-               Path_Free (Filter_Path);
+               Sortable_Path := Self.Get_Sortable_Path_For_Store_Iter (Iter);
+               Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
+               Path_Free (Sortable_Path);
             end if;
 
             if Status.Selection.Contains (The_Id) then
                Self.Get_Selection.Select_Iter
-                 (Self.Convert_To_Filter_Iter (Iter));
+                 (Self.Convert_To_Sortable_Model_Iter (Iter));
             end if;
 
             return False;  --  keep iterating

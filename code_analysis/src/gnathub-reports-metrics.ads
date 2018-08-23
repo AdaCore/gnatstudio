@@ -17,30 +17,56 @@
 
 --  Report of GNAThub's metrics
 
-with Gtk.Box;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
+
 with Gtkada.Tree_View;
+with Gtk.Tree_Model;    use Gtk.Tree_Model;
+
+with GNAThub.Metrics;   use GNAThub.Metrics;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package GNAThub.Reports.Metrics is
 
-   type GNAThub_Report_Metrics is new Gtk.Box.Gtk_Vbox_Record with private;
+   type GNAThub_Report_Metrics_Record is new Gtkada.Tree_View.Tree_View_Record
+     and Metrics_Listener_Interface with private;
+   type GNAThub_Report_Metrics is
+     access all GNAThub_Report_Metrics_Record'Class;
 
-   type Metrics_Report is access all GNAThub_Report_Metrics'Class;
+   procedure Gtk_New (Widget : out GNAThub_Report_Metrics);
+   --  Create a new metrics' report.
 
-   procedure Gtk_New (Widget : out Metrics_Report);
+   procedure Initialize
+     (Self : not null access GNAThub_Report_Metrics_Record'Class);
+   --  Initialize the metrics' report.
 
-   procedure Initialize (Self : not null access GNAThub_Report_Metrics'Class);
+   procedure Show_Metrics
+     (Self        : not null access GNAThub_Report_Metrics_Record'Class;
+      Location_ID : String);
+   --  Show all the metrics associated to the given location's ID.
 
-   procedure Display_Metrics_Report
-     (Self    : not null access GNAThub_Report_Metrics'Class;
-      Metrics : Metric_Tool_Maps.Map);
+   procedure Clear
+     (Self : not null access GNAThub_Report_Metrics_Record'Class);
+   --  Clear the metrics' report
 
-   procedure Clear (Self : not null access GNAThub_Report_Metrics'Class);
+   overriding procedure Metric_Added
+     (Self   : not null access GNAThub_Report_Metrics_Record;
+      Metric : not null access Metric_Record'Class);
 
 private
 
-   type GNAThub_Report_Metrics is
-     new Gtk.Box.Gtk_Vbox_Record with record
-      Metrics_View : Gtkada.Tree_View.Tree_View;
+   package Entities_To_Metrics_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Metrics_Ordered_Sets.Set,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => Metrics_Ordered_Sets."=");
+
+   type GNAThub_Report_Metrics_Record is new Gtkada.Tree_View.Tree_View_Record
+     and Metrics_Listener_Interface with record
+      Metrics : Entities_To_Metrics_Maps.Map;
    end record;
 
 end GNAThub.Reports.Metrics;

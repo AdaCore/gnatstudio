@@ -39,7 +39,8 @@ package GNAThub.Messages is
       Text      : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
-      Column    : Basic_Types.Visible_Column_Type);
+      Column    : Basic_Types.Visible_Column_Type;
+      Entity    : Entity_Data := No_Entity_Data);
    --  Initialize instance of GNAThub's message.
 
    function Get_Severity (Self : GNAThub_Message) return Severity_Access;
@@ -51,17 +52,34 @@ package GNAThub.Messages is
    function Get_Rule (Self : GNAThub_Message) return Rule_Access;
    --  Returns rule of the message
 
+   function Get_Entity (Self : GNAThub_Message) return Entity_Data;
+   --  Returns the entity associated to the message
+
+   procedure Increment_Current_Counters (Self : GNAThub_Message);
+   --  Increment the current counters of the severity/rule/tool associated to
+   --  this message.
+
+   procedure Decrement_Current_Counters (Self : GNAThub_Message);
+   --  Decrement the current counters of the severity/rule/tool associated to
+   --  this message.
+
+   procedure Increment_Total_Counters (Self : GNAThub_Message);
+   --  Increment the total counters of the severity/rule/tool associated to
+   --  this message.
+
    overriding function Get_Background_Color
      (Self : not null access GNAThub_Message)
       return Gdk.RGBA.Gdk_RGBA;
+   --  Return the message's background color
 
 private
 
    type GNAThub_Message is
      new GPS.Kernel.Messages.Primary_Abstract_Message with record
-      Severity : Severity_Access;
-      Rule     : Rule_Access;
-      Text     : Ada.Strings.Unbounded.Unbounded_String;
+      Severity   : Severity_Access;
+      Rule       : Rule_Access;
+      Text       : Ada.Strings.Unbounded.Unbounded_String;
+      Entity     : Entity_Data;
    end record;
 
    overriding function Get_Text

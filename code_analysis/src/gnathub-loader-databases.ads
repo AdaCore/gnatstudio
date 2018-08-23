@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 --  This package contains loader code to load data from the database.
 
-private with GNATCOLL.Projects;
 private with Ada.Containers.Ordered_Maps;
+private with GNATCOLL.Projects;
 
 package GNAThub.Loader.Databases is
 
@@ -33,6 +33,9 @@ package GNAThub.Loader.Databases is
      (Self : in out Database_Loader_Type);
 
    overriding procedure Cleanup (Self : in out Database_Loader_Type);
+
+   procedure Remove_Database (Self : in out Database_Loader_Type);
+   --  Remove the GNAThub database.
 
 private
 
@@ -64,7 +67,7 @@ private
       Rules     : Rule_Maps.Map;
       --  Database's id to object mappings.
 
-      Metrics      : Rule_Maps.Map;
+      Metrics   : Rule_Maps.Map;
       --  Database's id to object mappings for the metrics
 
       Resources : Resource_Maps.Map;

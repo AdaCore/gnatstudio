@@ -35,6 +35,21 @@ package body GNAThub.Actions is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Remove_Database_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+   begin
+      Self.Module.Remove_Database;
+
+      return Success;
+   end Execute;
+
    ----------------------
    -- Register_Actions --
    ----------------------
@@ -44,7 +59,18 @@ package body GNAThub.Actions is
       Register_Action
         (Module.Get_Kernel,
          "gnathub display analysis",
-         new Display_Command (Module));
+         new Display_Command (Module),
+         Description => "Load and display the GNAThub data present in "
+         & "the database.",
+         Category    => "GNAThub");
+
+      Register_Action
+        (Module.Get_Kernel,
+         "gnathub remove database",
+         new Remove_Database_Command (Module),
+         Description => "Remove the GNAThub database and its associated "
+         & "messages",
+         Category    => "GNAThub");
    end Register_Actions;
 
 end GNAThub.Actions;

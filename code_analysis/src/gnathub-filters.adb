@@ -14,9 +14,13 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with GNAThub.Messages; use GNAThub.Messages;
 
 package body GNAThub.Filters is
+
+   Me : constant Trace_Handle := Create ("GNATHUB.FILTERS");
 
    -----------
    -- Apply --
@@ -81,6 +85,30 @@ package body GNAThub.Filters is
       Self.Tools      := Tools;
       Self.Severities := Severities;
       Self.Rules      := Rules;
+
+      --  Trace the filters being applied
+
+      Trace (Me, "Applying filters...");
+
+      Increase_Indent (Me, "Selected tools:");
+      for Tool of Tools loop
+         Trace (Me, To_String (Tool.Name));
+      end loop;
+      Decrease_Indent (Me);
+
+      Increase_Indent (Me, "Selected severities:");
+      for Sev of Severities loop
+         Trace (Me, Message_Importance_Type'Image (Sev.Ranking));
+      end loop;
+      Decrease_Indent (Me);
+
+      Increase_Indent (Me, "Selected rules:");
+      for Rule of Rules loop
+         Trace (Me, To_String (Rule.Name));
+      end loop;
+      Decrease_Indent (Me);
+
+      --  Emit the 'criteria-changed' signal to react to the filter's changes
 
       Self.Criteria_Changed;
    end Fill;

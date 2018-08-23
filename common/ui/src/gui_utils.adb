@@ -1888,17 +1888,22 @@ package body GUI_Utils is
    ---------------
 
    function Find_Node
-     (Model  : Gtk_Tree_Store;
+     (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
       Name   : String;
-      Column : Gint) return Gtk_Tree_Iter
+      Column : Gint;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Parent : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Iter : Gtk_Tree_Iter := (if Parent /= Null_Iter then
+                                  Model.Children (Parent)
+                               else
+                                  Get_Iter_First (Model));
    begin
-      while Parent /= Null_Iter loop
-         if Get_String (Model, Parent, Column) = Name then
-            return Parent;
+      while Iter /= Null_Iter loop
+         if Get_String (Model, Iter, Column) = Name then
+            return Iter;
          end if;
-         Next (Model, Parent);
+         Next (Model, Iter);
       end loop;
 
       return Null_Iter;

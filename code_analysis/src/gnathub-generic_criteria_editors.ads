@@ -112,6 +112,12 @@ package GNAThub.Generic_Criteria_Editors is
       return Item_Access;
    --  Return Item by Path
 
+   function Path_By_Item
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   --  Return Path by Item
+
    procedure Highlight
      (Self : access Criteria_Editor_Record'Class;
       Item : Item_Access);

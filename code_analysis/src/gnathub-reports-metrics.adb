@@ -16,24 +16,38 @@
 ------------------------------------------------------------------------------
 
 with Ada.Float_Text_IO;
-
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Glib;                     use Glib;
-with Glib_Values_Utils;        use Glib_Values_Utils;
 with GNATCOLL.Utils;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
-with String_Utils;             use String_Utils;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+
+with String_Utils;           use String_Utils;
+with GUI_Utils;              use GUI_Utils;
+with Gtk.Widget;
 
 package body GNAThub.Reports.Metrics is
+
+   Me : constant Trace_Handle := Create ("GNATHUB.REPORTS.METRICS");
+
+   procedure Add_Metric
+     (Self   : not null access GNAThub_Report_Metrics_Record'Class;
+      Metric : not null access Metric_Record'Class);
+   --  Add the given metric to the metrics' report.
 
    function Sort_Func
      (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Used to sort the metrics' report columns.
+
+   procedure On_Destroy
+     (Self : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the metrics report is destroyed.
+   --  Unregister it from the metrics' listeners.
 
    ---------------
    -- Sort_Func --
@@ -69,9 +83,9 @@ package body GNAThub.Reports.Metrics is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Widget : out Metrics_Report) is
+   procedure Gtk_New (Widget : out GNAThub_Report_Metrics) is
    begin
-      Widget := new GNAThub_Report_Metrics;
+      Widget := new GNAThub_Report_Metrics_Record;
       Initialize (Widget);
    end Gtk_New;
 
@@ -79,9 +93,9 @@ package body GNAThub.Reports.Metrics is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : not null access GNAThub_Report_Metrics'Class)
+   procedure Initialize
+     (Self : not null access GNAThub_Report_Metrics_Record'Class)
    is
-      Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Dummy    : Gint;
       pragma Unreferenced (Dummy);
 
@@ -108,35 +122,36 @@ package body GNAThub.Reports.Metrics is
          return Col;
       end New_Column;
    begin
-      Gtk.Box.Initialize_Vbox (Self);
+      Trace (Me, "Creating the GNAThub Metrics report");
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Self.Pack_Start (Scrolled);
+      Gtkada.Tree_View.Initialize
+        (Self,
+         Column_Types    => (0 => GType_String,    -- name of the metric
+                             1 => GType_String));  -- value of the metric
 
-      Gtkada.Tree_View.Gtk_New (Self.Metrics_View,
-                                (0 => GType_String,   -- name of the metric
-                                 1 => GType_String)); -- value of the metric
+      Dummy := Self.Append_Column (New_Column ("Metric", 0));
+      Dummy := Self.Append_Column (New_Column ("Value", 1));
+      Self.Set_Search_Column (0);
+      Set_Sort_Func (Self.Model, 1, Sort_Func'Access);
 
-      Dummy := Self.Metrics_View.Append_Column (New_Column ("Metric", 0));
-      Dummy := Self.Metrics_View.Append_Column (New_Column ("Value", 1));
-      Self.Metrics_View.Set_Search_Column (0);
-      Set_Sort_Func (Self.Metrics_View.Model, 1, Sort_Func'Access);
+      Self.On_Destroy (On_Destroy'Access);
 
-      Scrolled.Add (Self.Metrics_View);
+      GNAThub.Metrics.Register_Listener (Self);
    end Initialize;
 
-   ----------------------------
-   -- Display_Metrics_Report --
-   ----------------------------
+   ----------------
+   -- Add_Metric --
+   ----------------
 
-   procedure Display_Metrics_Report
-     (Self    : not null access GNAThub_Report_Metrics'Class;
-      Metrics : Metric_Tool_Maps.Map)
+   procedure Add_Metric
+     (Self   : not null access GNAThub_Report_Metrics_Record'Class;
+      Metric : not null access Metric_Record'Class)
    is
+      Tool_Title  : constant String := Format_Title
+        (To_String (Metric.Get_Rule.Tool.Name));
       Tool_Iter   : Gtk_Tree_Iter;
       Metric_Iter : Gtk_Tree_Iter           := Null_Iter;
-      Model       : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store'(-Self.Metrics_View.Get_Model);
+      Model       : constant Gtk_Tree_Store := Self.Model;
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
 
@@ -171,44 +186,107 @@ package body GNAThub.Reports.Metrics is
          return To_String (Tmp);
       end Pretty_Print_Value;
 
-      use Metric_Tool_Maps;
    begin
-      Model.Clear;
+      Tool_Iter := Find_Node
+        (Model  => Model,
+         Name   => Tool_Title,
+         Column => 0,
+         Parent => Null_Iter);
 
-      for Cursor in Metrics.Iterate loop
+      if Tool_Iter = Null_Iter then
          Model.Append (Tool_Iter, Null_Iter);
-         Set_And_Clear (Model,
-                        Tool_Iter,
-                        (0 =>
-                           As_String
-                             (Format_Title (To_String (Key (Cursor))))));
-         for M of Element (Cursor) loop
-            Model.Append (Metric_Iter, Tool_Iter);
-            Set_And_Clear (Model,
-                           Metric_Iter,
-                           (0 =>
-                              As_String
-                                (Format_Title (To_String (M.Rule.Name))),
-                            1 => As_String (Pretty_Print_Value (M.Value))));
-         end loop;
+         Set_And_Clear
+           (Model,
+            Tool_Iter,
+            (0 => As_String (Tool_Title),
+             1 => As_String ("")));
+      end if;
 
-         declare
-            Path : constant Gtk_Tree_Path := Model.Get_Path (Tool_Iter);
-
-         begin
-            Dummy := Self.Metrics_View.Expand_Row (Path, False);
-            Path_Free (Path);
-         end;
-      end loop;
-   end Display_Metrics_Report;
+      Model.Append (Metric_Iter, Tool_Iter);
+      Set_And_Clear
+        (Model,
+         Metric_Iter,
+         (0 => As_String
+              (Format_Title (To_String (Metric.Get_Rule.Name))),
+          1 => As_String (Pretty_Print_Value (Metric.Get_Value))));
+   end Add_Metric;
 
    -----------
    -- Clear --
    -----------
 
-   procedure Clear (Self : not null access GNAThub_Report_Metrics'Class) is
+   procedure Clear
+     (Self : not null access GNAThub_Report_Metrics_Record'Class) is
    begin
-      Self.Metrics_View.Model.Clear;
+      Trace (Me, "Clearing the GNAThub Metrics report");
+      Self.Model.Clear;
+      Self.Metrics.Clear;
    end Clear;
+
+   ------------------
+   -- Show_Metrics --
+   ------------------
+
+   procedure Show_Metrics
+     (Self        : not null access GNAThub_Report_Metrics_Record'Class;
+      Location_ID : String) is
+   begin
+      Trace (Me, "Showing metrics for Location ID: " & Location_ID);
+
+      Self.Model.Clear;
+
+      if not Self.Metrics.Contains (Location_ID) then
+         Trace (Me, "No metrics found for Location ID: " & Location_ID);
+         return;
+      end if;
+
+      for Metric of Self.Metrics (Location_ID) loop
+         Self.Add_Metric (Metric);
+      end loop;
+
+      Self.Expand_All;
+   end Show_Metrics;
+
+   ------------------
+   -- Metric_Added --
+   ------------------
+
+   overriding procedure Metric_Added
+     (Self   : not null access GNAThub_Report_Metrics_Record;
+      Metric : not null access Metric_Record'Class)
+   is
+      Entity      : constant Entity_Data := Metric.Get_Entity;
+      Full_Name   : constant String := Metric.Get_File.Display_Full_Name;
+      Location_ID : constant String :=
+        (if Entity /= No_Entity_Data then
+            Full_Name & ":" & Integer'Image (Entity.Line)
+         else
+            Full_Name);
+   begin
+      if not Self.Metrics.Contains (Location_ID) then
+         declare
+            New_Set : Metrics_Ordered_Sets.Set;
+         begin
+            New_Set.Include (Metric);
+            Self.Metrics.Insert (Location_ID, New_Set);
+         end;
+      else
+         Self.Metrics.Reference (Location_ID).Include (Metric);
+      end if;
+   end Metric_Added;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Self : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      View : constant GNAThub_Report_Metrics := GNAThub_Report_Metrics (Self);
+   begin
+      Trace (Me, "Destroying the GNAThub Metrics report");
+
+      GNAThub.Metrics.Unregister_Listener (View);
+   end On_Destroy;
 
 end GNAThub.Reports.Metrics;

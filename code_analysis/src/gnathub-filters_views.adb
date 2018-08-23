@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 
 with Glib;                              use Glib;
 with Glib.Values;
@@ -43,14 +44,16 @@ with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Search;
-with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Search.GUI;
 
 package body GNAThub.Filters_Views is
 
    -- Constants --
 
-   Update_View_Command_ID : constant String := "update_report_filters_task";
+   Me : constant Trace_Handle := Create ("GNATHUB.FILTER_VIEWS")
+     with Unreferenced;
+
+   GNAThub_Module : GNAThub_Module_Id;
 
    -- Tools --
 
@@ -64,6 +67,11 @@ package body GNAThub.Filters_Views is
      (Item : GNAThub.Tool_Record; Dummy_View : Gtk.Widget.Gtk_Widget)
       return String is (Ada.Strings.Unbounded.To_String (Item.Name));
 
+   function Is_Tool_Visible
+     (Item : GNAThub.Tool_Access;
+      View : Gtk.Widget.Gtk_Widget)
+      return Boolean;
+
    package Tools_Editors is
      new GNAThub.Generic_Criteria_Editors
        (GNAThub.Tool_Record,
@@ -73,7 +81,8 @@ package body GNAThub.Filters_Views is
         Get_Tool_Value,
         Get_History_Name,
         Less,
-        Tools_Ordered_Sets);
+        Tools_Ordered_Sets,
+        Is_Tool_Visible'Access);
 
    -- Severities --
 
@@ -139,7 +148,6 @@ package body GNAThub.Filters_Views is
 
    type Message_Listener (View : Generic_Views.Abstract_View_Access) is
      new GPS.Kernel.Messages.Abstract_Listener with null record;
-
    type Message_Listener_Access is access all Message_Listener'Class;
 
    overriding procedure Message_Added
@@ -157,26 +165,12 @@ package body GNAThub.Filters_Views is
    --  View --
    -----------
 
-   type Update_View_Command_Type is new Root_Command with record
-      Apply_Filters : Boolean := False;
-   end record;
-   type Update_View_Command_Access is access all Update_View_Command_Type;
-   --  Commands used to update the view asynchronously.
-
-   overriding function Execute
-     (Command : access Update_View_Command_Type) return Command_Return_Type;
-
    type Filters_View_Record is new Generic_Views.View_Record with record
-      On_Update         : Boolean := True;
-
       Tools_Editor      : Tools_Editors.Criteria_Editor;
       Severities_Editor : Severities_Editors.Criteria_Editor;
       Rules_Editor      : Rules_Editors.Criteria_Editor;
-
       Flow_Box          : Gtk.Flow_Box.Gtk_Flow_Box;
-      Listener          : Message_Listener_Access;
-
-      Update_Report_Cmd : Update_View_Command_Access;
+      Messages_Listener : Message_Listener_Access;
    end record;
 
    type Filters_View_Access is access all Filters_View_Record;
@@ -208,79 +202,36 @@ package body GNAThub.Filters_Views is
    procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   procedure Apply_Filters (View : access Filters_View_Record'Class);
-   --  Apply selected rules/severities/tools
-
-   procedure Update_Models (View : access Filters_View_Record'Class);
-   --  Update the rules/severities/tools editor models
-
    -- Internal Routines --
-
-   procedure Update_View_Async
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Apply_Filters : Boolean);
-   --  Update the Filters view asynchronously.
-   --  If Apply_Filters is True, the message filters will be applied too.
 
    procedure On_Flow_Box_Size_Allocated
      (Self       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Allocation : Gtk.Widget.Gtk_Allocation);
 
-   package Tools_Callbacks is new Gtk.Handlers.Callback (Filters_View_Record);
+   procedure Apply_Filters
+     (View : not null access Filters_View_Record'Class);
 
-   procedure On_Tools_Changed
-     (View : access Filters_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path);
-
-   package Severities_Callbacks is
+   package Filters_Callbacks is
      new Gtk.Handlers.Callback (Filters_View_Record);
 
-   procedure On_Severities_Changed
-     (View : access Filters_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path);
-
-   package Rules_Callbacks is
-     new Gtk.Handlers.Callback (Filters_View_Record);
-
-   procedure On_Rules_Changed
+   procedure On_Filters_Changed
      (View : access Filters_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Filters_View_Access;
    end record;
-
    overriding procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
 
-   function Img (Item : Natural) return String;
-   function Img (Total, Selected : Natural) return String;
-
-   function Is_Selected
-     (Item : Tool_Access;
-      View : Views.View_Access)
-      return Boolean;
-
-   function Is_Selected
-     (Item : Severity_Access;
-      View : Views.View_Access)
-      return Boolean;
-
-   function Count (Item : Rule_Access) return Natural;
-
-   function Count
-     (Item     : Rule_Access;
-      Severity : Severity_Access)
-      return Natural;
-
-   function Is_Severity_Visible
-     (Severity : Severity_Access;
-      Tool     : Tool_Access)
-      return Boolean;
-
-   GNAThub_Module : GNAThub_Module_Id;
+   type On_Analysis_Finished is new Simple_Hooks_Function with record
+      View : Filters_View_Access;
+   end record;
+   overriding procedure Execute
+      (Self   : On_Analysis_Finished;
+       Kernel : not null access Kernel_Handle_Record'Class);
 
    ---------------------
    -- Search_Provider --
@@ -355,123 +306,6 @@ package body GNAThub.Filters_Views is
 
    package body Search_Provider is separate;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Update_View_Command_Type) return Command_Return_Type
-   is
-      View : constant Views.View_Access := Views.Retrieve_View
-        (GNAThub_Module.Kernel);
-   begin
-      if View /= null then
-         View.Update_Models;
-
-         if Command.Apply_Filters then
-            View.Apply_Filters;
-         end if;
-      end if;
-
-      return Success;
-   end Execute;
-
-   -------------------
-   -- Apply_Filters --
-   -------------------
-
-   procedure Apply_Filters (View : access Filters_View_Record'Class)
-   is
-
-      procedure Add (From : Counts_Array; To : in out Counts_Array);
-
-      procedure Calculate
-        (Messages : Messages_Vectors.Vector;
-         Counts   : in out Counts_Array);
-
-      ---------
-      -- Add --
-      ---------
-
-      procedure Add (From : Counts_Array; To : in out Counts_Array) is
-      begin
-         for Index in From'Range loop
-            To (Index) := To (Index) + From (Index);
-         end loop;
-      end Add;
-
-      ---------------
-      -- Calculate --
-      ---------------
-
-      procedure Calculate
-        (Messages : Messages_Vectors.Vector;
-         Counts   : in out Counts_Array)
-      is
-         Severity_Id   : Positive;
-         Message       : GNAThub_Message_Access;
-         Filter_Result : GPS.Kernel.Messages.Filter_Result;
-      begin
-         for Item of Messages loop
-            Message := GNAThub_Message_Access (Item.Message);
-            if Message /= null then
-               Filter_Result := GNAThub_Module.Filter.Apply (Message.all);
-               if not Filter_Result.Non_Applicable
-                 and then Filter_Result.Flags (GPS.Kernel.Messages.Locations)
-               then
-                  Severity_Id := GNAThub_Module.Severities_Id
-                    (Message.Get_Severity);
-                  Counts (Severity_Id) := Counts (Severity_Id) + 1;
-                  Counts (Counts'Last) := Counts (Counts'Last) + 1;
-               end if;
-            end if;
-         end loop;
-      end Calculate;
-
-   begin
-      GNAThub_Module.Filter.Fill
-        (View.Tools_Editor.Get_Visible_Items,
-         View.Severities_Editor.Get_Visible_Items,
-         View.Rules_Editor.Get_Visible_Items);
-
-      --  Update tree counts
-
-      for Project of GNAThub_Module.Tree.all loop
-         GNAThub_Project_Access (Project).Counts := (others => 0);
-
-         for File of GNAThub_Project_Access (Project).Files loop
-            GNAThub_File_Access (File).Counts := (others => 0);
-
-            for Subprogram of GNAThub_File_Access (File).Subprograms loop
-               GNAThub_Subprogram_Access (Subprogram).Counts := (others => 0);
-               Calculate (GNAThub_Subprogram_Access (Subprogram).Messages,
-                          GNAThub_Subprogram_Access (Subprogram).Counts);
-               Add (GNAThub_Subprogram_Access (Subprogram).Counts,
-                    GNAThub_File_Access (File).Counts);
-            end loop;
-            Calculate (GNAThub_File_Access (File).Messages,
-                       GNAThub_File_Access (File).Counts);
-            Add (GNAThub_File_Access (File).Counts,
-                 GNAThub_Project_Access (Project).Counts);
-         end loop;
-      end loop;
-
-      GNAThub_Module.Update_Report;
-
-      View.On_Update := False;
-   end Apply_Filters;
-
-   -------------------
-   -- Update_Models --
-   -------------------
-
-   procedure Update_Models (View : access Filters_View_Record'Class) is
-   begin
-      View.Tools_Editor.Update;
-      View.Rules_Editor.Update;
-      View.Severities_Editor.Update;
-   end Update_Models;
-
    ----------------
    -- Close_View --
    ----------------
@@ -481,38 +315,6 @@ package body GNAThub.Filters_Views is
    begin
       Views.Close (Kernel);
    end Close_View;
-
-   -----------
-   -- Count --
-   -----------
-
-   function Count (Item : Rule_Access) return Natural is
-      Result : Natural := 0;
-   begin
-      for Count of Item.Count loop
-         Result := Result + Count;
-      end loop;
-
-      return Result;
-   end Count;
-
-   -----------
-   -- Count --
-   -----------
-
-   function Count
-     (Item     : Rule_Access;
-      Severity : Severity_Access)
-      return Natural
-   is
-      C : constant Severity_Natural_Maps.Cursor := Item.Count.Find (Severity);
-   begin
-      if Severity_Natural_Maps.Has_Element (C) then
-         return Severity_Natural_Maps.Element (C);
-      else
-         return 0;
-      end if;
-   end Count;
 
    -----------------
    -- Create_Menu --
@@ -533,9 +335,7 @@ package body GNAThub.Filters_Views is
               (Menu, GNAThub_Module.Kernel, Pref);
          end if;
       end loop;
-      GPS.Kernel.Preferences.Append_Menu
-        (Menu, GNAThub_Module.Kernel,
-         GNAThub.Module.Hide_Node_Without_Messages);
+
       GPS.Kernel.Preferences.Append_Menu
         (Menu, GNAThub_Module.Kernel,
          GNAThub.Module.Always_Display_The_Rules);
@@ -551,32 +351,15 @@ package body GNAThub.Filters_Views is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Filters : constant Views.View_Access := Views.View_Access (View);
+      pragma Unreferenced (View);
    begin
       if Column = 0 then
          Glib.Values.Init_Set_String
            (Value, Ada.Strings.Unbounded.To_String (Self.Name));
 
       elsif Column = 1 then
-         declare
-            Cursor : Severity_Natural_Maps.Cursor := Self.Count.First;
-            Total, Selected, C : Natural := 0;
-         begin
-            while Severity_Natural_Maps.Has_Element (Cursor) loop
-               C     := Severity_Natural_Maps.Element (Cursor);
-               Total := Total + C;
-               if Is_Selected
-                 (Severity_Natural_Maps.Key (Cursor), Filters)
-               then
-                  Selected := Selected + C;
-               end if;
-
-               Severity_Natural_Maps.Next (Cursor);
-            end loop;
-
-            Glib.Values.Init_Set_String (Value, Img (Total, Selected));
-         end;
-
+         Glib.Values.Init_Set_String
+           (Value, Self.Image);
       else
          Glib.Values.Init (Value, Glib.GType_Invalid);
       end if;
@@ -592,26 +375,14 @@ package body GNAThub.Filters_Views is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Filters : constant Views.View_Access := Views.View_Access (View);
+      pragma Unreferenced (View);
    begin
       if Column = 0 then
          Glib.Values.Init_Set_String
            (Value, Ada.Strings.Unbounded.To_String (Get_Name (Self.all)));
 
       elsif Column = 1 then
-         declare
-            Total, Selected, C : Natural := 0;
-         begin
-            for Rule of GNAThub_Module.Rules loop
-               C     := Count (Rule, Self);
-               Total := Total + C;
-               if Is_Selected (Rule.Tool, Filters) then
-                  Selected := Selected + C;
-               end if;
-            end loop;
-
-            Glib.Values.Init_Set_String (Value, Img (Total, Selected));
-         end;
+         Glib.Values.Init_Set_String (Value, Self.Image);
 
       else
          Glib.Values.Init (Value, Glib.GType_Invalid);
@@ -635,45 +406,23 @@ package body GNAThub.Filters_Views is
            (Value, Ada.Strings.Unbounded.To_String (Self.Name));
 
       elsif Column = 1 then
-         declare
-            C : Natural := 0;
-         begin
-            for Rule of GNAThub_Module.Rules loop
-               if Rule.Tool = Self then
-                  C := C + Count (Rule);
-               end if;
-            end loop;
-
-            Glib.Values.Init_Set_String (Value, Img (C));
-         end;
+         Glib.Values.Init_Set_String (Value, Self.Image);
 
       else
          Glib.Values.Init (Value, Glib.GType_Invalid);
       end if;
    end Get_Tool_Value;
 
-   ---------
-   -- Img --
-   ---------
+   ---------------------
+   -- Is_Tool_Visible --
+   ---------------------
 
-   function Img (Item : Natural) return String is
-      Result : constant String := Item'Img;
-   begin
-      return Result (Result'First + 1 .. Result'Last);
-   end Img;
-
-   ---------
-   -- Img --
-   ---------
-
-   function Img (Total, Selected : Natural) return String is
-   begin
-      if Selected = Total then
-         return Img (Total);
-      else
-         return Img (Selected) & " (" & Img (Total) & ")";
-      end if;
-   end Img;
+   function Is_Tool_Visible
+     (Item : GNAThub.Tool_Access;
+      View : Gtk.Widget.Gtk_Widget)
+      return Boolean
+   is
+      (True);
 
    ----------------
    -- Initialize --
@@ -725,32 +474,32 @@ package body GNAThub.Filters_Views is
 
       -- signals--
 
-      Tools_Callbacks.Object_Connect
+      Filters_Callbacks.Object_Connect
         (Self.Tools_Editor,
          Tools_Editors.Signal_Criteria_Changed,
-         Tools_Callbacks.To_Marshaller (On_Tools_Changed'Access),
+         Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
          Self);
 
-      Severities_Callbacks.Object_Connect
+      Filters_Callbacks.Object_Connect
         (Self.Severities_Editor,
          Severities_Editors.Signal_Criteria_Changed,
-         Severities_Callbacks.To_Marshaller (On_Severities_Changed'Access),
+         Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
          Self);
 
-      Rules_Callbacks.Object_Connect
+      Filters_Callbacks.Object_Connect
         (Self.Rules_Editor,
          Rules_Editors.Signal_Criteria_Changed,
-         Rules_Callbacks.To_Marshaller (On_Rules_Changed'Access),
+         Filters_Callbacks.To_Marshaller (On_Filters_Changed'Access),
          Self);
 
-      Apply_Filters (Views.View_Access (Self));
+      Self.Apply_Filters;
 
-      Self.Listener := new Message_Listener
+      Self.Messages_Listener := new Message_Listener
         (Generic_Views.Abstract_View_Access (Self));
 
       GPS.Kernel.Messages.Register_Listener
         (GNAThub_Module.Kernel.Get_Messages_Container,
-         GPS.Kernel.Messages.Listener_Access (Self.Listener),
+         GPS.Kernel.Messages.Listener_Access (Self.Messages_Listener),
          GPS.Kernel.Messages.Locations_Only);
 
       Gtkada.Handlers.Widget_Callback.Connect
@@ -758,6 +507,11 @@ package body GNAThub.Filters_Views is
 
       Preferences_Changed_Hook.Add
         (new On_Pref_Changed'(Preferences_Hooks_Function
+         with View => Filters_View_Access (Self)),
+         Watch => Self);
+
+      Analysis_Loading_Finsished_Hook.Add
+        (new On_Analysis_Finished'(Simple_Hooks_Function
          with View => Filters_View_Access (Self)),
          Watch => Self);
 
@@ -773,51 +527,7 @@ package body GNAThub.Filters_Views is
       View : Gtk.Widget.Gtk_Widget)
       return Boolean
    is
-      C       : Severity_Natural_Maps.Cursor := Item.Count.First;
-      Filters : constant Views.View_Access   := Views.View_Access (View);
-   begin
-      if GNAThub.Module.Always_Display_The_Rules.Get_Pref then
-         return True;
-      end if;
-
-      if Is_Selected (Item.Tool, Filters) then
-         while Severity_Natural_Maps.Has_Element (C) loop
-            if Severity_Natural_Maps.Element (C) > 0
-              and then Is_Selected
-                (Severity_Natural_Maps.Key (C), Filters)
-            then
-               return True;
-            end if;
-            Severity_Natural_Maps.Next (C);
-         end loop;
-      end if;
-
-      return False;
-   end Is_Rule_Visible;
-
-   -----------------
-   -- Is_Selected --
-   -----------------
-
-   function Is_Selected
-     (Item : Tool_Access;
-      View : Views.View_Access)
-      return Boolean is
-   begin
-      return View.Tools_Editor.Get_Visible_Items.Contains (Item);
-   end Is_Selected;
-
-   -----------------
-   -- Is_Selected --
-   -----------------
-
-   function Is_Selected
-     (Item : Severity_Access;
-      View : Views.View_Access)
-      return Boolean is
-   begin
-      return View.Severities_Editor.Get_Visible_Items.Contains (Item);
-   end Is_Selected;
+     (Item.Total > 0 or else Always_Display_The_Rules.Get_Pref);
 
    -------------------------
    -- Is_Severity_Visible --
@@ -828,65 +538,7 @@ package body GNAThub.Filters_Views is
       View : Gtk.Widget.Gtk_Widget)
       return Boolean
    is
-      Filters : constant Views.View_Access := Views.View_Access (View);
-   begin
-      for Rule of GNAThub_Module.Rules loop
-         if Count (Rule, Item) > 0
-           and then Is_Selected (Rule.Tool, Filters)
-         then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Is_Severity_Visible;
-
-   -------------------------
-   -- Is_Severity_Visible --
-   -------------------------
-
-   function Is_Severity_Visible
-     (Severity : Severity_Access;
-      Tool     : Tool_Access)
-      return Boolean is
-   begin
-      for Rule of GNAThub_Module.Rules loop
-         if Rule.Tool = Tool
-           and then Rule.Count.Contains (Severity)
-         then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Is_Severity_Visible;
-
-   -----------------------
-   -- Update_View_Async --
-   -----------------------
-
-   procedure Update_View_Async
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Apply_Filters : Boolean) is
-   begin
-      if not Has_Queue (Kernel, Update_View_Command_ID) then
-         declare
-            Command : constant Update_View_Command_Access :=
-                        new Update_View_Command_Type;
-         begin
-            Command.Apply_Filters := Apply_Filters;
-
-            Launch_Background_Command
-              (Kernel            => Kernel,
-               Command           => Command,
-               Active            => False,
-               Show_Bar          => True,
-               Block_Exit        => False,
-               Queue_Id          => Update_View_Command_ID,
-               Start_Immediately => False);
-         end;
-      end if;
-   end Update_View_Async;
+     (Item.Total > 0);
 
    -------------------
    -- Message_Added --
@@ -896,10 +548,21 @@ package body GNAThub.Filters_Views is
      (Self    : not null access Message_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
    is
-      View : constant Filters_View_Access := Filters_View_Access (Self.View);
+      pragma Unreferenced (Self);
    begin
       if Message.all in GNAThub_Message'Class then
-         View.Update_Models;
+         declare
+            View : constant Views.View_Access := Views.Retrieve_View
+              (GNAThub_Module.Kernel);
+         begin
+            if Message.Get_Flags (Locations) then
+               GNAThub_Message_Access (Message).Increment_Current_Counters;
+
+               View.Tools_Editor.Update;
+               View.Severities_Editor.Update;
+               View.Rules_Editor.Update;
+            end if;
+         end;
       end if;
    end Message_Added;
 
@@ -909,33 +572,19 @@ package body GNAThub.Filters_Views is
 
    overriding procedure Message_Removed
      (Self    : not null access Message_Listener;
-      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
-   is
-      View : constant Filters_View_Access := Filters_View_Access (Self.View);
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class) is
+      pragma Unreferenced (Self);
    begin
-      if Message.all in GNAThub_Message'Class
-        and then Message.Get_Flags (Locations)
-      then
+      if Message.all in GNAThub_Message'Class then
          declare
-            M        : constant GNAThub_Message_Access :=
-                         GNAThub_Message_Access (Message);
-            Rule     : constant Rule_Access := M.Get_Rule;
-            Severity : constant Severity_Access := M.Get_Severity;
+            View : constant Views.View_Access := Views.Retrieve_View
+              (GNAThub_Module.Kernel);
          begin
-            --  Decrease the counter of the rule associated to the message
-            --  being removed.
+            GNAThub_Message_Access (Message).Decrement_Current_Counters;
 
-            if Rule.Count (Severity) > 0 then
-               Rule.Count (Severity) := Rule.Count (Severity) - 1;
-            end if;
-
-            --  Update the view asynchronously so that it's updated after
-            --  messages have been actually removed (which is not the case
-            --  here).
-
-            Update_View_Async
-              (View.Kernel,
-               Apply_Filters => True);
+            View.Tools_Editor.Update;
+            View.Severities_Editor.Update;
+            View.Rules_Editor.Update;
          end;
       end if;
    end Message_Removed;
@@ -950,11 +599,9 @@ package body GNAThub.Filters_Views is
    begin
       GPS.Kernel.Messages.Unregister_Listener
         (GNAThub_Module.Kernel.Get_Messages_Container,
-         GPS.Kernel.Messages.Listener_Access (Self.Listener));
+         GPS.Kernel.Messages.Listener_Access (Self.Messages_Listener));
 
-      Interrupt_Queue (Self.Kernel, Queue_Id => Update_View_Command_ID);
-
-      Free (Self.Listener);
+      Free (Self.Messages_Listener);
    end On_Destroy;
 
    -------------
@@ -974,6 +621,34 @@ package body GNAThub.Filters_Views is
          Self.View.Rules_Editor.Update;
       end if;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Analysis_Finished;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Self.View.Tools_Editor.Update;
+      Self.View.Severities_Editor.Update;
+      Self.View.Rules_Editor.Update;
+   end Execute;
+
+   -------------------
+   -- Apply_Filters --
+   -------------------
+
+   procedure Apply_Filters
+     (View : not null access Filters_View_Record'Class) is
+   begin
+      GNAThub_Module.Filter.Fill
+        (View.Tools_Editor.Get_Visible_Items,
+         View.Severities_Editor.Get_Visible_Items,
+         View.Rules_Editor.Get_Visible_Items);
+   end Apply_Filters;
 
    --------------------------------
    -- On_Flow_Box_Size_Allocated --
@@ -1000,234 +675,18 @@ package body GNAThub.Filters_Views is
       end if;
    end On_Flow_Box_Size_Allocated;
 
-   ----------------------
-   -- On_Rules_Changed --
-   ----------------------
+   ------------------------
+   -- On_Filters_Changed --
+   ------------------------
 
-   procedure On_Rules_Changed
+   procedure On_Filters_Changed
      (View : access Filters_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
       pragma Unreferenced (Path);
    begin
-      if not View.On_Update then
-         Apply_Filters (View);
-      end if;
-   end On_Rules_Changed;
-
-   ---------------------------
-   -- On_Severities_Changed --
-   ---------------------------
-
-   procedure On_Severities_Changed
-     (View : access Filters_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-   is
-      use type Rules_Editors.Criteria_Editor;
-      use type Gtk.Tree_Model.Gtk_Tree_Path;
-
-      Update   : constant Boolean := not View.On_Update;
-      Severity : Severity_Access;
-   begin
-      if View.Rules_Editor = null then
-         return;
-      end if;
-
-      if Update then
-         View.On_Update := True;
-      end if;
-
-      if Path = Gtk.Tree_Model.Null_Gtk_Tree_Path then
-         --  Toggle select/unselect all
-         if View.Severities_Editor.Get_Visible_Items.Is_Empty then
-            --  Unselect all
-            for Rule of GNAThub_Module.Rules loop
-               if View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
-                  View.Rules_Editor.Unselect (Rule);
-               end if;
-            end loop;
-
-         else
-            --  Select all
-            for Rule of GNAThub_Module.Rules loop
-               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
-                  View.Rules_Editor.Choose (Rule);
-               end if;
-            end loop;
-         end if;
-
-      else
-         --  Single Selection
-         Severity := View.Severities_Editor.Item_By_Path (Path);
-
-         if View.Severities_Editor.Get_Visible_Items.Contains (Severity) then
-            for Rule of GNAThub_Module.Rules loop
-               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule)
-                 and then Rule.Count.Contains (Severity)
-               then
-                  View.Rules_Editor.Choose (Rule);
-               end if;
-            end loop;
-
-         else
-            for Rule of GNAThub_Module.Rules loop
-               if View.Rules_Editor.Get_Visible_Items.Contains (Rule)
-                 and then Rule.Count.Contains (Severity)
-                 and then not Is_Rule_Visible
-                   (Rule, Gtk.Widget.Gtk_Widget (View))
-               then
-                  View.Rules_Editor.Unselect (Rule);
-               end if;
-            end loop;
-         end if;
-      end if;
-
-      View.Rules_Editor.Update;
-
-      if Update then
-         Apply_Filters (View);
-      end if;
-
-   exception
-      when others =>
-         if Update then
-            View.On_Update := False;
-         end if;
-   end On_Severities_Changed;
-
-   ----------------------
-   -- On_Tools_Changed --
-   ----------------------
-
-   procedure On_Tools_Changed
-     (View : access Filters_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-   is
-      use type Severities_Editors.Criteria_Editor;
-      use type Rules_Editors.Criteria_Editor;
-      use type Gtk.Tree_Model.Gtk_Tree_Path;
-
-      Update   : constant Boolean := not View.On_Update;
-      Tool     : Tool_Access;
-      Selected : Boolean;
-
-   begin
-      if View.Rules_Editor = null
-        or else View.Severities_Editor = null
-      then
-         return;
-      end if;
-
-      if Update then
-         View.On_Update := True;
-      end if;
-
-      if Path = Gtk.Tree_Model.Null_Gtk_Tree_Path then
-         --  Toggle select/unselect all
-
-         if View.Tools_Editor.Get_Visible_Items.Is_Empty then
-            --  Unselect all
-            for Rule of GNAThub_Module.Rules loop
-               if View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
-                  View.Rules_Editor.Unselect (Rule);
-               end if;
-            end loop;
-
-         else
-            --  Select all
-            for Rule of GNAThub_Module.Rules loop
-               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
-                  View.Rules_Editor.Choose (Rule);
-               end if;
-            end loop;
-         end if;
-
-      else
-         --  Single selection
-         Tool     := View.Tools_Editor.Item_By_Path (Path);
-         Selected := View.Tools_Editor.Get_Visible_Items.Contains (Tool);
-
-         if Selected then
-            for Rule of GNAThub_Module.Rules loop
-               if Rule.Tool = Tool
-                 and then not View.Rules_Editor.
-                   Get_Visible_Items.Contains (Rule)
-               then
-                  View.Rules_Editor.Choose (Rule);
-               end if;
-            end loop;
-
-         else
-            for Rule of GNAThub_Module.Rules loop
-               if Rule.Tool = Tool
-                 and then View.Rules_Editor.Get_Visible_Items.Contains (Rule)
-               then
-                  View.Rules_Editor.Unselect (Rule);
-               end if;
-            end loop;
-         end if;
-      end if;
-
-      if Tool = null then
-         --  Toggle select/unselect
-         if View.Tools_Editor.Get_Visible_Items.Is_Empty then
-            --  Unselect all
-            for Severity of GNAThub_Module.Severities loop
-               if View.Severities_Editor.
-                 Get_Visible_Items.Contains (Severity)
-               then
-                  View.Severities_Editor.Unselect (Severity);
-               end if;
-            end loop;
-         else
-            --  Select all
-            for Severity of GNAThub_Module.Severities loop
-               if not View.Severities_Editor.
-                 Get_Visible_Items.Contains (Severity)
-               then
-                  View.Severities_Editor.Choose (Severity);
-               end if;
-            end loop;
-         end if;
-
-      else
-         --  Single selection
-         if Selected then
-            for Severity of GNAThub_Module.Severities loop
-               if not View.Severities_Editor.
-                 Get_Visible_Items.Contains (Severity)
-                 and then Is_Severity_Visible (Severity, Tool)
-               then
-                  View.Severities_Editor.Choose (Severity);
-               end if;
-            end loop;
-
-         else
-            for Severity of GNAThub_Module.Severities loop
-               if View.Severities_Editor.
-                 Get_Visible_Items.Contains (Severity)
-                 and then not Is_Severity_Visible
-                   (Severity, Gtk.Widget.Gtk_Widget (View))
-               then
-                  View.Severities_Editor.Unselect (Severity);
-               end if;
-            end loop;
-         end if;
-      end if;
-
-      View.Severities_Editor.Update;
-      View.Rules_Editor.Update;
-
-      if Update then
-         Apply_Filters (View);
-      end if;
-
-   exception
-      when others =>
-         if Update then
-            View.On_Update := False;
-         end if;
-   end On_Tools_Changed;
+      Apply_Filters (View);
+   end On_Filters_Changed;
 
    ---------------
    -- Open_View --
@@ -1262,6 +721,8 @@ package body GNAThub.Filters_Views is
          else
             View.Tools_Editor.Unselect (Tool);
          end if;
+
+         View.Apply_Filters;
       end if;
    end Set_Tool_Selection;
 

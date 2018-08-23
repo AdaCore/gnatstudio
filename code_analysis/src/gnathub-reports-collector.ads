@@ -18,55 +18,25 @@
 --  Collector for all GNAThub's reports which organizes all reports
 --  as a tabs in one notebook
 
-with Gtk.Box;
+with Gtk.Widget;
 with GPS.Kernel;
-with GNAThub.Reports.Messages;
-with GNAThub.Reports.Metrics;
+with GNAThub.Module;
 
 package GNAThub.Reports.Collector is
 
-   type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with private;
+   function Get_Or_Create_View
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;
+      Created : out Boolean)
+      return Gtk.Widget.Gtk_Widget;
+   --  Get or create a report collector view.
+   --  Created is set to True if the view has been created.
 
-   type Report is access all GNAThub_Report_Collector'Class;
+   procedure Close_View
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Close the report collector view.
 
-   procedure Gtk_New
-     (Widget     : out Report;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Severities : GNAThub.Severities_Ordered_Sets.Set);
-
-   procedure Initialize
-     (Self       : not null access GNAThub_Report_Collector'Class;
-      Kernel     : GPS.Kernel.Kernel_Handle;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Severities : GNAThub.Severities_Ordered_Sets.Set);
-
-   procedure Update (Self : not null access GNAThub_Report_Collector'Class);
-
-private
-
-   ----------------------
-   -- Message_Listener --
-   ----------------------
-
-   type Message_Listener (View : Gtk.Box.Gtk_Vbox) is
-     new GPS.Kernel.Messages.Abstract_Listener with null record;
-
-   type Message_Listener_Access is access all Message_Listener'Class;
-
-   overriding procedure Message_Added
-     (Self    : not null access Message_Listener;
-      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
-
-   ------------------------------
-   -- GNAThub_Report_Collector --
-   ------------------------------
-
-   type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with record
-      Kernel          : GPS.Kernel.Kernel_Handle;
-      Messages_Report : GNAThub.Reports.Messages.Messages_Report;
-      Metric_Report   : GNAThub.Reports.Metrics.Metrics_Report;
-      Listener        : Message_Listener_Access;
-   end record;
+   procedure Clear
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
 end GNAThub.Reports.Collector;

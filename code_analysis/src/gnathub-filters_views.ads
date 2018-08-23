@@ -25,11 +25,11 @@ package GNAThub.Filters_Views is
    procedure Open_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class);
-   --  Open the filter's view
+   --  Open the filters view
 
    procedure Close_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Close the filter's view
+   --  Close the filters view
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

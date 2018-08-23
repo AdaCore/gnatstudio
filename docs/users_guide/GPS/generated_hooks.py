@@ -49,6 +49,16 @@ class Predefined_Hooks:
 
         """
 
+    # analysis_loading_finsished = 'analysis_loading_finsished'
+    def analysis_loading_finsished(name):
+        """
+      Emitted when all the messages that should be displayed in the Analysis
+       Report have been loaded.
+
+      :param str name:
+
+        """
+
     # annotation_parsed_hook = 'annotation_parsed_hook'
     def annotation_parsed_hook(name):
         """

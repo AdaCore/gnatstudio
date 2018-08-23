@@ -14,16 +14,21 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;
 
 with GNAThub.Messages;      use GNAThub.Messages;
 with GNAThub.Module;
 with GPS.Scripts.Commands;
 
 package GNAThub.Loader is
+
+   ------------
+   -- Loader --
+   ------------
 
    type Loader_Type is abstract tagged private;
 
@@ -33,48 +38,67 @@ package GNAThub.Loader is
 
    type Loader_Access is access all GNAThub.Loader.Loader_Type'Class;
 
-   function Load (Self : in out Loader_Type'Class) return Boolean;
-   --  Called to load the data used to create the GNAThub messages that will
-   --  be displayed in the GNAThub Report.
-   --  Should return True when data has been found, False otherwise.
+   procedure Load (Self : in out Loader_Type'Class);
+   --  Called to load asynchronously the data used to create the GNAThub
+   --  messages that will be displayed in the Analysis Report.
 
    procedure Remove_Messages (Self : in out Loader_Type);
+   --  Remove the messages loaded by the given loader.
 
    procedure Cleanup (Self : in out Loader_Type);
+   --  Cleanup the loader, interrupting the loading if needed.
 
    procedure Prepare_Loading (Self : in out Loader_Type) is abstract;
+   --  Should be called just before loading data via the Load subprogram.
+   --  Override this procedure if you need to perform specific operations
+   --  before loading data.
 
    function Has_Data_To_Load (Self : Loader_Type) return Boolean is abstract;
+   --  Should return True if there is some data to load, False otherwise.
 
    procedure Load_Data (Self : in out Loader_Type) is abstract;
+   --  The procedure that will actually load the data.
+   --  This procedure should only take a definite amount of time: the
+   --  asynchonous command will re-call this procedure if Has_Data_To_Load
+   --  keeps returning True and stop otherwise.
+
+   ----------------------
+   -- Loader Listeners --
+   ----------------------
+
+   type Loader_Listener_Interface is interface;
+   type Loader_Listener is access all Loader_Listener_Interface'Class;
+
+   procedure On_Finish_Loading
+     (Self : not null access Loader_Listener_Interface) is abstract;
+   --  Called when the loader has finished to load data.
+
+   procedure Register_Listener
+     (Self : not null access Loader_Type'Class;
+      Listener : not null access Loader_Listener_Interface'Class);
+   --  Register a listener for the given loader.
+
+   procedure Unregister_Listener
+     (Self : not null access Loader_Type'Class;
+      Listener : not null access Loader_Listener_Interface'Class);
+   --  Unregister the listener for the given loader.
 
 private
 
+   package Loader_Listener_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Positive,
+      Element_Type => Loader_Listener,
+      "="          => "=");
+
    type Loader_Type is abstract tagged record
-      Module       : GNAThub.Module.GNAThub_Module_Id;
-      Messages     : Messages_Vectors.Vector;
-      Command      : GPS.Scripts.Commands.Scheduled_Command_Access;
+      Module    : GNAThub.Module.GNAThub_Module_Id;
+      Messages  : Messages_Vectors.Vector;
+      Command   : GPS.Scripts.Commands.Scheduled_Command_Access;
+      Listeners : Loader_Listener_Vectors.Vector;
    end record;
-
-   type Entity_Data is record
-      Name   : Unbounded_String;
-      Line   : Natural;
-      Column : Natural;
-   end record;
-
-   No_Entity_Data : constant Entity_Data := (To_Unbounded_String (""), 1, 1);
 
    procedure Insert_Message
      (Self    : in out Loader_Type'Class;
-      Project : GNATCOLL.Projects.Project_Type;
-      Entity  : Entity_Data;
       Message : GNAThub_Message_Access);
-
-   procedure Insert_Metric
-     (Self    : in out Loader_Type'Class;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Entity  : Entity_Data;
-      Metric  : Metric_Access);
 
 end GNAThub.Loader;

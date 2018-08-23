@@ -397,8 +397,24 @@ class AnalysisReport(Dialog):
         SEVERITY=1,
         RULE=2)
 
+    MessagesReportColumn = gps_utils.enum(
+        ICON_NAME=0,
+        ENTITY_ID=1,
+        ENTITY_NAME=2,
+        TOTAL=3)
+
+    MetricsReportColumn = gps_utils.enum(
+        NAME=0,
+        VALUE=1)
+
     def open_and_yield(self):
-        yield self._open_and_yield('gnathub display analysis')
+        self.report_mdi = GPS.MDI.get("Analysis Report")
+
+        if self.report_mdi is None:
+            yield self._open_and_yield('gnathub display analysis')
+            self.report_mdi = GPS.MDI.get("Analysis Report")
+
+        self.report = self.report_mdi.pywidget()
         self.filters = GPS.MDI.get("Filters").pywidget()
         self.tools = get_widget_by_name(
             'gnathub tools editor', self.filters)
@@ -406,6 +422,14 @@ class AnalysisReport(Dialog):
             'gnathub severities editor', self.filters)
         self.rules = get_widget_by_name(
             'gnathub rules editor', self.filters)
+        self.messages_report = get_widget_by_name(
+            'messages-report', self.report)
+        self.metrics_report = get_widget_by_name(
+            'metrics-report', self.report)
+
+    def yield_close(self):
+        self.report_mdi.close()
+        yield wait_idle()
 
     def __get_filters_tree(self, filter_kind):
         if filter_kind == AnalysisReport.FilterKind.TOOL:
@@ -456,6 +480,19 @@ class AnalysisReport(Dialog):
 
         return filters
 
+    def yield_select_in_messages(self, entity):
+        """
+        Select the given entity in the message's report
+
+        :param entity: The entity's name
+        """
+
+        select_in_tree(
+            self.messages_report,
+            AnalysisReport.MessagesReportColumn.ENTITY_NAME,
+            entity)
+        yield wait_idle()
+
     def dump_filters(self, filter_kind):
         """
         Dump the filters editor corresponding to the given kind.
@@ -466,6 +503,24 @@ class AnalysisReport(Dialog):
         model = self.__get_filters_tree(filter_kind).get_model()
 
         return dump_tree_model(model, -1)
+
+    def dump_messages_report(self, column):
+        """
+        Dump the messages report of the given column.
+
+        :param column: an AnalysisReport.MessagesReportColumn
+        """
+        model = self.messages_report.get_model()
+        return dump_tree_model(model, column)
+
+    def dump_metrics_report(self, column):
+        """
+        Dump the metrics report of the given column.
+
+        :param column: an AnalysisReport.MetricsReportColumn
+        """
+        model = self.metrics_report.get_model()
+        return dump_tree_model(model, column)
 
 
 #################

@@ -16,40 +16,48 @@
 ------------------------------------------------------------------------------
 --  Root package of GNAThub integration module.
 
-with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
-with Ada.Strings.Unbounded.Hash;
 
-with Code_Analysis;                  use Code_Analysis;
 with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
 package GNAThub is
 
+   type Filterable_Item is tagged limited private;
+
    type Tool_Record;
    type Tool_Access is access all Tool_Record;
+
+   function Get_Current_Count (Self : Filterable_Item) return Natural;
+
+   function Get_Total_Count (Self : Filterable_Item) return Natural;
+
+   procedure Reset_Counters (Self : in out Filterable_Item);
+
+   procedure Increment_Current_Count (Self : in out Filterable_Item);
+
+   procedure Decrement_Current_Count (Self : in out Filterable_Item);
+
+   procedure Increment_Total_Count (Self : in out Filterable_Item);
+
+   function Image (Self : Filterable_Item) return String;
 
    --------------
    -- Severity --
    --------------
 
-   type Severity_Record is limited record
-      Ranking : Message_Importance_Type;
-      Style   : Style_Access;
-   end record;
+   type Severity_Record is limited new Filterable_Item with private;
 
    type Severity_Access is access all Severity_Record;
 
-   function Get_Name (Item : Severity_Record)
-                      return Ada.Strings.Unbounded.Unbounded_String;
+   function Get_Name
+     (Item : Severity_Record)
+      return Ada.Strings.Unbounded.Unbounded_String;
 
    function Hash (Item : Severity_Access) return Ada.Containers.Hash_Type;
-
-   package Severity_Natural_Maps is
-     new Ada.Containers.Hashed_Maps (Severity_Access, Natural, Hash, "=");
 
    function Less (L, R : GNAThub.Severity_Access) return Boolean;
 
@@ -62,12 +70,7 @@ package GNAThub is
    -- Rule --
    ----------
 
-   type Rule_Record is limited record
-      Name       : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Ada.Strings.Unbounded.Unbounded_String;
-      Tool       : Tool_Access;
-      Count      : Severity_Natural_Maps.Map;
-   end record;
+   type Rule_Record is limited new Filterable_Item with private;
 
    type Rule_Access is access all Rule_Record;
 
@@ -80,48 +83,23 @@ package GNAThub is
    -- Tool --
    ----------
 
-   type Tool_Record is limited record
-      Name  : Ada.Strings.Unbounded.Unbounded_String;
-      Rules : Rule_Sets.Set;
-   end record;
+   type Tool_Record is limited new Filterable_Item with private;
 
    package Tool_Vectors is
      new Ada.Containers.Vectors (Positive, Tool_Access);
 
-   function Less (L, R : GNAThub.Tool_Access) return Boolean is
-     (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+   function Less (L, R : GNAThub.Tool_Access) return Boolean;
 
    package Tools_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (GNAThub.Tool_Access, Less, "=");
 
-   ------------
-   -- Metric --
-   ------------
-
-   type Metric_Record is record
-      Severity : Severity_Access;
-      Rule     : Rule_Access;
-      Value    : Float;
-   end record;
-   type Metric_Access is access Metric_Record;
-
-   function Less (L, R : Metric_Access) return Boolean is
-     (Ada.Strings.Unbounded."<" (L.Rule.Name, R.Rule.Name));
-
-   package Metrics_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (Metric_Access, Less, "=");
-
-   package Metric_Tool_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Key_Type        => Unbounded_String,
-        Element_Type    => Metrics_Ordered_Sets.Set,
-        Hash            => Ada.Strings.Unbounded.Hash,
-        Equivalent_Keys => "=",
-        "="             => Metrics_Ordered_Sets."=");
-
    --------------
-   -- Analisis --
+   -- Analysis --
    --------------
+
+   type Entity_Data is private;
+
+   No_Entity_Data : constant Entity_Data;
 
    package Messages_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Reference);
@@ -129,40 +107,35 @@ package GNAThub is
    type Counts_Array is array (Positive range <>) of Integer;
    type Counts_Array_Access is access all Counts_Array;
 
-   ----------------------
-   --  GNAThub_Project --
-   ----------------------
+private
 
-   type GNAThub_Project (Counts_Size : Natural) is
-     new Code_Analysis.Project with record
-      Counts   : Counts_Array (1 .. Counts_Size);
-      Messages : Messages_Vectors.Vector;
-      Metrics  : Metric_Tool_Maps.Map;
+   type Filterable_Item is tagged limited record
+      Current : Natural;
+      Total   : Natural;
    end record;
-   type GNAThub_Project_Access is access all GNAThub_Project;
 
-   -------------------
-   --  GNAThub_File --
-   -------------------
-
-   type GNAThub_File (Counts_Size : Natural) is
-     new Code_Analysis.File with record
-      Counts   : Counts_Array (1 .. Counts_Size);
-      Messages : Messages_Vectors.Vector;
-      Metrics  : Metric_Tool_Maps.Map;
+   type Severity_Record is limited new Filterable_Item with record
+      Ranking : Message_Importance_Type;
+      Style   : Style_Access;
    end record;
-   type GNAThub_File_Access is access all GNAThub_File;
 
-   ------------------------
-   -- GNAThub_Subprogram --
-   ------------------------
-
-   type GNAThub_Subprogram (Counts_Size : Natural) is
-     new Code_Analysis.Subprogram with record
-      Counts   : Counts_Array (1 .. Counts_Size);
-      Messages : Messages_Vectors.Vector;
-      Metrics  : Metric_Tool_Maps.Map;
+   type Rule_Record is limited new Filterable_Item with record
+      Name       : Ada.Strings.Unbounded.Unbounded_String;
+      Identifier : Ada.Strings.Unbounded.Unbounded_String;
+      Tool       : Tool_Access;
    end record;
-   type GNAThub_Subprogram_Access is access all GNAThub_Subprogram;
+
+   type Tool_Record is limited new Filterable_Item with record
+      Name    : Ada.Strings.Unbounded.Unbounded_String;
+      Rules   : Rule_Sets.Set;
+   end record;
+
+   type Entity_Data is record
+      Name   : Unbounded_String;
+      Line   : Natural;
+      Column : Natural;
+   end record;
+
+   No_Entity_Data : constant Entity_Data := (To_Unbounded_String (""), 0, 0);
 
 end GNAThub;

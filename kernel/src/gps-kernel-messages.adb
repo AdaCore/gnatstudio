@@ -483,6 +483,17 @@ package body GPS.Kernel.Messages is
       end if;
    end Get_Background_Color;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Self : not null access constant Messages_Container'Class)
+      return Kernel_Handle is
+   begin
+      return Kernel_Handle (Self.Kernel);
+   end Get_Kernel;
+
    ------------------
    -- Has_Category --
    ------------------

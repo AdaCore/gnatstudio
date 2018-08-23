@@ -1182,7 +1182,7 @@ package body Project_Explorers is
       end if;
       Path_Free (Filter_Path);
 
-      Iter := T.Tree.Convert_To_Store_Iter (Filter_Iter => Filter_Iter);
+      Iter := T.Tree.Convert_To_Store_Iter (Iter => Filter_Iter);
       T.Tree.Context_Factory (Context, Iter);
       return Context;
    end Build_Context;

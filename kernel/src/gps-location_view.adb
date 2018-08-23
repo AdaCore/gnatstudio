@@ -1510,7 +1510,7 @@ package body GPS.Location_View is
       Register_Command
         (Kernel, "remove_category",
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => Locations_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1580,9 +1580,26 @@ package body GPS.Location_View is
          end;
 
       elsif Command = "remove_category" then
-         Name_Parameters (Data, Remove_Category_Parameters);
-         Get_Messages_Container (Get_Kernel (Data)).Remove_Category
-            (Nth_Arg (Data, 1), Locations_Message_Flags);
+         declare
+            Category  : constant String := Data.Nth_Arg (1);
+            Int_Flags : constant Integer := Data.Nth_Arg (2, Default => 2);
+            Flags     : Message_Flags;
+         begin
+            case Int_Flags is
+               when 0 =>
+                  Flags := GPS.Kernel.Messages.Empty_Message_Flags;
+               when 1 =>
+                  Flags := GPS.Kernel.Messages.Sides_Only;
+               when 2 =>
+                  Flags := GPS.Kernel.Messages.Locations_Only;
+               when others =>
+                  Flags := GPS.Kernel.Messages.Side_And_Locations;
+            end case;
+
+            Name_Parameters (Data, Remove_Category_Parameters);
+            Get_Messages_Container (Get_Kernel (Data)).Remove_Category
+              (Category, Flags);
+         end;
 
       elsif Command = "list_categories" then
          declare

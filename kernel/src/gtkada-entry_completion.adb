@@ -659,7 +659,7 @@ package body Gtkada.Entry_Completion is
       --  Add the label that is displayed when there is no search results
 
       Gtk_New (Self.No_Results_Label, "No results");
-      Get_Style_Context (Self.No_Results_Label).Add_Class ("no-results-label");
+      Get_Style_Context (Self.No_Results_Label).Add_Class ("help-label");
       Box.Pack_Start (Self.No_Results_Label);
 
       --  Add the progress bar that is displayed while loading search results

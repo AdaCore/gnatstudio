@@ -18,13 +18,12 @@
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Glib.Object;
 with Gtk.Widget;
-with Gtkada.Handlers;
-with Gtkada.MDI;
 
 with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;
 
@@ -32,10 +31,27 @@ with GNAThub.Actions;
 with GNAThub.Filters_Views;
 with GNAThub.Loader.External;
 with GNAThub.Loader.Databases;
+with GNAThub.Metrics;
+with GNAThub.Reports.Collector;
 
 package body GNAThub.Module is
 
    Me : constant Trace_Handle := Create ("GNATHUB");
+
+   type Loader_Listener_Type is
+     new GNAThub.Loader.Loader_Listener_Interface with record
+      Loaders_Finished_Count : Natural := 0;
+   end record;
+   --  A listener used to react when a loader starts/finishes loading.
+   --
+   --  The Filters and Analysys Report views should be opened when a loader
+   --  actually starts loading data.
+   --
+   --  The Analysis_Loading_Finished_Hook should be run when both loaders have
+   --  finished loading their data.
+
+   overriding procedure On_Finish_Loading
+     (Self : not null access Loader_Listener_Type);
 
    type On_Before_Exit is
      new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
@@ -53,7 +69,8 @@ package body GNAThub.Module is
    --  Called when project view is changed. Close report and clean all data.
 
    procedure On_Report_Destroy
-     (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (View   : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
    --  Called when report closing
 
    -----------
@@ -62,25 +79,53 @@ package body GNAThub.Module is
 
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
    begin
-      if Self.Report /= null then
-         Trace (Me, "Destroying the Analysis report");
-         Self.Report.Destroy;
-      end if;
+      Trace (Me, "Cleaning the GNAThub module");
 
+      --  Close the views
+
+      GNAThub.Reports.Collector.Clear (Self.Kernel);
       GNAThub.Filters_Views.Close_View (Self.Kernel);
+
+      --  Clear the filters
 
       Self.Filter.Clear;
 
-      --  Reset rules counters
+      --  Clear the loaders
+
+      Self.Ext_Loader.Cleanup;
+      Self.Db_Loader.Cleanup;
+
+      --  Reset counters
+
       for Rule of Self.Rules loop
-         Rule.Count.Clear;
+         Rule.Reset_Counters;
       end loop;
 
-      Clear_Code_Analysis (Self.Tree);
+      for Severity of Self.Severities loop
+         Severity.Reset_Counters;
+      end loop;
+
+      for Tool of Self.Tools loop
+         Tool.Reset_Counters;
+      end loop;
+
+      --  Remove the loaded messages
 
       Self.Db_Loader.Remove_Messages;
       Self.Ext_Loader.Remove_Messages;
    end Clean;
+
+   ---------------------
+   -- Remove_Database --
+   ---------------------
+
+   procedure Remove_Database
+     (Self : in out GNAThub_Module_Id_Record'Class) is
+   begin
+      Self.Db_Loader.Cleanup;
+      Self.Db_Loader.Remove_Database;
+      Self.Db_Loader.Remove_Messages;
+   end Remove_Database;
 
    ------------------
    -- Display_Data --
@@ -88,42 +133,85 @@ package body GNAThub.Module is
 
    procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class)
    is
-      Has_Data : Boolean;
+      Ext_Loader_Has_Data : Boolean;
+      Db_Loader_Has_Data  : Boolean;
    begin
       Self.Clean;
 
-      Has_Data := Self.Ext_Loader.Load;
-      Has_Data := Has_Data or Self.Db_Loader.Load;
+      Self.Ext_Loader.Prepare_Loading;
+      Self.Db_Loader.Prepare_Loading;
 
-      if Has_Data then
-         Trace (Me, "Displaying the Analysis report");
+      Ext_Loader_Has_Data := Self.Ext_Loader.Has_Data_To_Load;
+      Db_Loader_Has_Data := Self.Db_Loader.Has_Data_To_Load;
 
-         --  Switch to GNATHub perspective.
-         Load_Perspective (Self.Kernel, "Analyze");
+      --  Switch to the 'Analyze' perspective and display the Analysis Report
+      --  and the Filters view if there is some data to load in one of the
+      --  loaders.
 
-         GNAThub.Filters_Views.Open_View (Self.Kernel, Module);
+      if Db_Loader_Has_Data or else Ext_Loader_Has_Data then
+         declare
+            Report_View         : Gtk.Widget.Gtk_Widget;
+            Report_View_Created : Boolean;
+         begin
+            Trace (Me, "Starting loading the data: open the views");
 
-         GNAThub.Reports.Collector.Gtk_New
-           (Self.Collector, Self.Kernel, Self.Tree, Self.Severities);
+            --  Switch to GNATHub perspective.
+            Load_Perspective (Module.Kernel, "Analyze");
 
-         Self.Report := new GNAThub_Child_Record;
-         GPS.Kernel.MDI.Initialize
-           (Self.Report, Self.Collector, Self.Kernel, Module => Module);
-         Self.Report.Set_Title (-"Analysis Report");
+            GNAThub.Filters_Views.Open_View (Module.Kernel, Module);
 
-         GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
-           (new On_Before_Exit, Watch => Self.Collector);
+            Report_View :=
+              GNAThub.Reports.Collector.Get_Or_Create_View
+                (Module.Kernel,
+                 Module  => Module,
+                 Created => Report_View_Created);
 
-         Gtkada.Handlers.Widget_Callback.Connect
-           (Self.Report, Gtk.Widget.Signal_Destroy, On_Report_Destroy'Access);
+            if Report_View_Created then
+               GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
+                 (new On_Before_Exit, Watch => Report_View);
 
-         GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
-         Self.Report.Raise_Child;
-      else
+               Kernel_Callback.Connect
+                 (Report_View,
+                  Gtk.Widget.Signal_Destroy,
+                  On_Report_Destroy'Access,
+                  User_Data => Module.Kernel);
+            end if;
+         end;
+      elsif not Db_Loader_Has_Data then
          Self.Get_Kernel.Insert
-           ("No analysis data available.");
+           ("Could not display the Analysis Report: "
+            & "GNAThub database not found.",
+            Mode => GPS.Kernel.Error);
+      end if;
+
+      --  Start loading the data
+
+      if Ext_Loader_Has_Data then
+         Self.Ext_Loader.Load;
+      end if;
+
+      if Db_Loader_Has_Data then
+         Self.Db_Loader.Load;
       end if;
    end Display_Data;
+
+   -----------------------
+   -- On_Finish_Loading --
+   -----------------------
+
+   overriding procedure On_Finish_Loading
+     (Self : not null access Loader_Listener_Type) is
+   begin
+      Self.Loaders_Finished_Count := Self.Loaders_Finished_Count + 1;
+
+      if Self.Loaders_Finished_Count = 2 then
+         Trace (Me, "Finished loading all the data");
+
+         Analysis_Loading_Finsished_Hook.Run (Module.Kernel);
+
+         Self.Loaders_Finished_Count := 0;
+      end if;
+   end On_Finish_Loading;
 
    -------------
    -- Execute --
@@ -155,8 +243,6 @@ package body GNAThub.Module is
          GPS.Kernel.MDI.Save_Desktop (Kernel, "Default");
       end if;
 
-      Module.Clean;
-
       return True;
    end Execute;
 
@@ -179,10 +265,11 @@ package body GNAThub.Module is
 
       return Rule : constant Rule_Access :=
         new Rule_Record'
-          (Name       => Name,
+          (Current    => 0,
+           Total      => 0,
+           Name       => Name,
            Identifier => Identifier,
-           Tool       => Tool,
-           Count      => <>)
+           Tool       => Tool)
       do
          Tool.Rules.Insert (Rule);
          Self.Rules.Insert (Rule);
@@ -222,7 +309,11 @@ package body GNAThub.Module is
       end loop;
 
       return Tool : constant Tool_Access :=
-        new Tool_Record'(Name => Name, Rules => <>)
+        new Tool_Record'
+          (Current => 0,
+           Total   => 0,
+           Name    => Name,
+           Rules   => <>)
       do
          Self.Tools.Insert (Tool);
       end return;
@@ -233,32 +324,16 @@ package body GNAThub.Module is
    -----------------------
 
    procedure On_Report_Destroy
-     (View : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (View   : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (View);
    begin
-      --  Restore default perspective
-      GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
-      Module.Report := null;
-   end On_Report_Destroy;
-
-   -------------------
-   -- Update_Report --
-   -------------------
-
-   procedure Update_Report (Self : in out GNAThub_Module_Id_Record'Class) is
-      use type Gtkada.MDI.MDI_Child;
-
-      MDI : Gtkada.MDI.MDI_Child;
-   begin
-      MDI := GPS.Kernel.MDI.Get_MDI
-        (Self.Kernel).Find_MDI_Child_By_Tag
-        (GNAThub.Reports.Collector.GNAThub_Report_Collector'Tag);
-
-      if MDI /= null then
-         GNAThub.Reports.Collector.Report (MDI.Get_Widget).Update;
+      if not Kernel.Is_In_Destruction then
+         --  Restore default perspective
+         GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
       end if;
-   end Update_Report;
+   end On_Report_Destroy;
 
    ---------------------
    -- Register_Module --
@@ -274,20 +349,15 @@ package body GNAThub.Module is
       ---------------------
 
       procedure Load_Severities is
-         Id : Natural := 1;
       begin
          --  Load the severities
          for Ranking in Message_Importance_Type loop
             Module.Severities.Insert
               (new Severity_Record'
-                 (Ranking => Ranking,
+                 (Current => 0,
+                  Total   => 0,
+                  Ranking => Ranking,
                   Style   => Messages_Styles (Ranking)));
-         end loop;
-
-         --  Associate them with unique IDs
-         for Severity of Module.Severities loop
-            Module.Severities_Id.Insert (Severity, Id);
-            Id := Id + 1;
          end loop;
       end Load_Severities;
 
@@ -295,7 +365,6 @@ package body GNAThub.Module is
 
       Module        := new GNAThub_Module_Id_Record;
       Module.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-      Module.Tree   := new Project_Maps.Map;
 
       Module.Register_Module (Kernel, "GNAThub");
       GNAThub.Actions.Register_Actions (Module);
@@ -305,6 +374,11 @@ package body GNAThub.Module is
 
       Module.Ext_Loader := new GNAThub.Loader.External.External_Loader_Type;
       Module.Ext_Loader.Initialize (Module);
+
+      Module.Loaders_Listener := new Loader_Listener_Type;
+
+      Module.Ext_Loader.Register_Listener (Module.Loaders_Listener);
+      Module.Db_Loader.Register_Listener (Module.Loaders_Listener);
 
       Load_Severities;
 
@@ -330,7 +404,9 @@ package body GNAThub.Module is
            Label   => -"Always display rules",
            Doc     =>
              -"If enabled, the rules without messages will be displayed.");
+
       GNAThub.Filters_Views.Register_Module (Kernel);
+      GNAThub.Metrics.Register_Module (Kernel);
    end Register_Module;
 
 end GNAThub.Module;

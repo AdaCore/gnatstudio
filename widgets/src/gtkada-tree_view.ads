@@ -161,6 +161,9 @@ package Gtkada.Tree_View is
    package Expansion_Support is
 
       type Expansion_Status is private;
+
+      No_Expansion : constant Expansion_Status;
+
       procedure Get_Expansion_Status
         (Self           : not null access Tree_Record'Class;
          Status         : out Expansion_Status;
@@ -243,6 +246,12 @@ package Gtkada.Tree_View is
          --  Top visible row
       end record;
 
+      No_Expansion : constant Expansion_Status := Expansion_Status'
+        (Expanded        => <>,
+         Selection       => <>,
+         Has_Scroll_Info => False,
+         Scroll_Y        => Null_Gtk_Tree_Path);
+
       type Detached_Data is record
          Tree           : access Tree_Record'Class;
          Was_Detached   : Boolean := True;
@@ -278,10 +287,14 @@ package Gtkada.Tree_View is
    -------------
 
    procedure Refilter
-     (Self    : not null access Tree_View_Record'Class);
-   --  For each row of the model, calls Self.Is_Visible to check whether it
-   --  should be made visible. The parent rows are automatically made visible
-   --  as well.
+     (Self    : not null access Tree_View_Record'Class;
+      Iter    : Gtk_Tree_Iter := Null_Iter);
+   --  Calls Self.Is_Visible to check whether if the given row should be made
+   --  visible. The parent rows are automatically made visible as well.
+   --
+   --  When no row is specified, Self.Is_Visible is called on every row of the
+   --  model.
+   --
    --  This only has an effect if a filter has been set.
    --  This procedure needs to be called every time the model is repopulated if
    --  a filter pattern is currently applied to the view.
@@ -388,10 +401,10 @@ package Gtkada.Tree_View is
    --  model. In this case, the subprograms do nothing.
 
    function Convert_To_Store_Iter
-     (Self        : access Tree_View_Record'Class;
-      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+     (Self : access Tree_View_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter;
-   --  Converts model filter iter into model store iter
+   --  Converts model filter or sortable iter into model store iter
 
    function Convert_To_Filter_Iter
      (Self        : access Tree_View_Record'Class;
@@ -428,6 +441,13 @@ package Gtkada.Tree_View is
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Path;
    --  Converts model store iter into model filter path
+   --  Returned value must be freed by caller
+
+   function Get_Sortable_Path_For_Store_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   --  Converts model store iter into sortable model path
    --  Returned value must be freed by caller
 
 private

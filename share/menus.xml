@@ -301,6 +301,7 @@
 
          <menu label="GNAThub">
             <menu label='Display GNAThub Analysis' action='gnathub display analysis' optional='true'/>
+            <menu label='Remove GNAThub Database' action='gnathub remove database' optional='true'/>
          </menu>
 
          <menu label="Cov_erage">

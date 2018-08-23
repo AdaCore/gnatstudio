@@ -15,13 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 --  Main entry point for GNAThub module
-with Default_Preferences;        use Default_Preferences;
 
+with Default_Preferences;        use Default_Preferences;
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-
 with GNAThub.Filters;
-with GNAThub.Reports.Collector;
 limited with GNAThub.Loader.Databases;
 limited with GNAThub.Loader.External;
 
@@ -33,21 +31,18 @@ package GNAThub.Module is
    type GNAThub_Child_Record is new GPS_MDI_Child_Record with null record;
    type GNAThub_Child is access all GNAThub_Child_Record'Class;
 
-   type GNAThub_Module_Id_Record is
-     new GPS.Kernel.Modules.Module_ID_Record with record
-      Kernel         : GPS.Kernel.Kernel_Handle;
-      Tools          : Tools_Ordered_Sets.Set;
-      Severities     : Severities_Ordered_Sets.Set;
-      Severities_Id  : Severity_Natural_Maps.Map;
-      Rules          : Rule_Sets.Set;
-      Filter         : GNAThub.Filters.Filter_Access;
-      Db_Loader      : access
+   type GNAThub_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record
+     with record
+      Kernel           : GPS.Kernel.Kernel_Handle;
+      Tools            : Tools_Ordered_Sets.Set;
+      Severities       : Severities_Ordered_Sets.Set;
+      Rules            : Rule_Sets.Set;
+      Filter           : GNAThub.Filters.Filter_Access;
+      Db_Loader        : access
         GNAThub.Loader.Databases.Database_Loader_Type'Class;
-      Ext_Loader     : access
+      Ext_Loader       : access
         GNAThub.Loader.External.External_Loader_Type'Class;
-      Tree           : Code_Analysis.Code_Analysis_Tree;
-      Collector      : GNAThub.Reports.Collector.Report;
-      Report         : GNAThub_Child;
+      Loaders_Listener : access GNAThub.Loader.Loader_Listener_Interface'Class;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;
@@ -59,11 +54,12 @@ package GNAThub.Module is
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class);
    --  Deallocate all loaded data
 
-   procedure Update_Report (Self : in out GNAThub_Module_Id_Record'Class);
-   --  Called when preferences or filter criterias for report have been changed
+   procedure Remove_Database
+     (Self : in out GNAThub_Module_Id_Record'Class);
+   --  Remove the external loader's database and its associated messages.
 
    function Get_Severity
-     (Self : GNAThub_Module_Id_Record'Class;
+     (Self    : GNAThub_Module_Id_Record'Class;
       Ranking : Message_Importance_Type)
       return Severity_Access;
    --  Return the severity object corresponding to the given ranking or null
