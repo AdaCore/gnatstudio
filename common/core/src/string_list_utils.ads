@@ -29,18 +29,6 @@ package String_List_Utils is
      (S : String_List.Vector) return String_List.Vector;
    --  Return a deep copy of S
 
-   package Sorting is new String_List.Generic_Sorting;
-   procedure Sort (This : in out String_List.Vector) renames Sorting.Sort;
-   --  Sort L alphabetically
-
-   function Less_Than_Case_Insensitive (Item1, Item2 : String) return Boolean;
-   --  Compare two strings case insensitive
-
-   package Case_Insensitive_Sorting is
-     new String_List.Generic_Sorting (Less_Than_Case_Insensitive);
-   procedure Sort_Case_Insensitive (This : in out String_List.Vector)
-                                    renames Case_Insensitive_Sorting.Sort;
-
    procedure Remove_From_List
      (L               : in out String_List.Vector;
       S               : String;

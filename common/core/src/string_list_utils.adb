@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body String_List_Utils is
@@ -31,17 +30,6 @@ package body String_List_Utils is
    begin
       return S;
    end Copy_String_List;
-
-   --------------------------------
-   -- Less_Than_Case_Insensitive --
-   --------------------------------
-
-   function Less_Than_Case_Insensitive (Item1, Item2 : String)
-      return Boolean is
-   begin
-      return Ada.Characters.Handling.To_Lower (Item1)
-        < Ada.Characters.Handling.To_Lower (Item2);
-   end Less_Than_Case_Insensitive;
 
    ----------------------
    -- Remove_From_List --
