@@ -57,6 +57,9 @@ package GPS.Default_Styles is
    -- Debugger --
    --------------
 
+   Debugger_Current_Line_Style : Style_Access;
+   --  Style used for highlighting the current debugger line.
+
    Debugger_Breakpoint_Style             : Style_Access;
    Debugger_Conditional_Breakpoint_Style : Style_Access;
    Debugger_Disabled_Breakpoint_Style    : Style_Access;

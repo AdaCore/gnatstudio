@@ -6195,7 +6195,7 @@ package body Src_Editor_Buffer is
         (Data     : in out Highlighting_Data_Record;
          Category : Natural;
          Enabled  : Boolean);
-      --  Sets highligting state and recompute activw highlighting
+      --  Sets highligting state and recompute active highlighting
 
       ----------------------
       -- Set_Highlighting --

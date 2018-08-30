@@ -27,20 +27,15 @@ with GPS.Editors.GtkAda;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
-with GPS.Kernel.Style_Manager;     use GPS.Kernel.Style_Manager;
-with GVD.Preferences;              use GVD.Preferences;
 with GVD.Process;                  use GVD.Process;
+with GPS.Default_Styles;           use GPS.Default_Styles;
 
 package body GVD.Code_Editors is
 
-   Messages_Category_For_Current_Line : constant String :=
+   Debugger_Messages_Category  : constant String :=
      "debugger-current-line";
-   Breakpoints_Current_Line_Flags     : constant Message_Flags :=
+   Debugger_Current_Line_Flags : constant Message_Flags :=
      (Editor_Line => True, Locations => False, Editor_Side => False);
-
-   Current_Line_Style      : Style_Access;
-   --  style used for highlighting the current line.
-   --  Doesn't need to be freed, it is handled by the style manager
 
    -------------------------------
    -- Set_Current_File_And_Line --
@@ -84,26 +79,18 @@ package body GVD.Code_Editors is
                Msg := Create_Simple_Message
                  (Get_Messages_Container (Kernel),
                   Category                 =>
-                    Messages_Category_For_Current_Line,
+                    Debugger_Messages_Category,
                   File                     => File,
                   Line                     => Line,
                   Column                   => 1,
                   Text                     => "Current line in debugger",
                   Importance               => Unspecified,
-                  Flags                    => Breakpoints_Current_Line_Flags,
+                  Flags                    => Debugger_Current_Line_Flags,
                   Allow_Auto_Jump_To_First => False);
 
-               if Current_Line_Style = null then
-                  Current_Line_Style :=
-                    Get_Style_Manager (Kernel_Handle (Kernel))
-                      .Create_From_Preferences
-                        ("debugger current line",
-                         Fg_Pref => null,
-                         Bg_Pref => Editor_Current_Line_Color);
-                  Set_In_Speedbar (Current_Line_Style, True);
-               end if;
+               Msg.Set_Highlighting
+                 (Debugger_Current_Line_Style, Highlight_Whole_Line);
 
-               Msg.Set_Highlighting (Current_Line_Style, Highlight_Whole_Line);
                Msg.Set_Action
                  (new Line_Information_Record'
                     (Text         => Null_Unbounded_String,
@@ -182,8 +169,8 @@ package body GVD.Code_Editors is
      (Kernel  : not null access Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Messages_Category_For_Current_Line,
-         Breakpoints_Current_Line_Flags);
+        (Debugger_Messages_Category,
+         Debugger_Current_Line_Flags);
    end Unhighlight_Current_Line;
 
 end GVD.Code_Editors;

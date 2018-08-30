@@ -45,7 +45,6 @@ package GVD.Preferences is
 
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;
-   Editor_Current_Line_Color     : Color_Preference;
 
    -- Assembly Window --
    Assembly_Range_Size           : Integer_Preference;

@@ -122,14 +122,6 @@ package body GVD.Preferences is
            & "editors."),
          Default   => True);
 
-      Editor_Current_Line_Color := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Editor-Current-Line",
-         Label     => -"Current line",
-         Doc       => -"Color to highlight the current line in editors.",
-         Path      => -"Debugger:Editors",
-         Default   => "rgba(125,236,57,0.6)");
-
       Assembly_Range_Size := Create
         (Manager  => Prefs,
          Name     => "Debugger-Assembly-Range-Size",

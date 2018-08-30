@@ -1472,6 +1472,14 @@ package body GPS.Kernel.Preferences is
 
       -- Debugger --
 
+      Debugger_Current_Line_Color := Manager.Create
+        (Name      => "Debugger-Editor-Current-Line",
+         Label     => -"Debugger Current line",
+         Doc       =>
+           -"Color to highlight the debugger current line in editors.",
+         Path      => -"Debugger:Editors",
+         Default   => "rgba(125,236,57,0.6)");
+
       Breakpoint_Color := Manager.Create
         (Name      => "Debugger-Line-With-Breakpoint",
          Label     => -"Line with breakpoint",

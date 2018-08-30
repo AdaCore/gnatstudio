@@ -169,6 +169,10 @@ package body GPS.Default_Styles is
       -- Debugger --
       --------------
 
+      Init (Debugger_Current_Line_Style,
+            -"Debugger current line",
+            Bg       => Debugger_Current_Line_Color,
+            Speedbar => True);
       Init (Debugger_Breakpoint_Style,
             -"Lines with breakpoints",
             Icon_Name => "gps-emblem-debugger-breakpoint",

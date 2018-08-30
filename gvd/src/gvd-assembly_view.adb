@@ -548,7 +548,7 @@ package body GVD.Assembly_View is
             Columns (1) := BG_Color_Column;
             Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value
-              (Values (1), Editor_Current_Line_Color.Get_Pref);
+              (Values (1), Debugger_Current_Line_Color.Get_Pref);
 
             while Start_Iter /= Null_Iter
               and then String_To_Address

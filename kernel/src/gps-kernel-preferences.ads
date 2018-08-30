@@ -253,6 +253,7 @@ package GPS.Kernel.Preferences is
    Use_ACL                   : Boolean_Preference;
 
    -- Debugger --
+   Debugger_Current_Line_Color   : Color_Preference;
    Breakpoint_Color              : Color_Preference;
    Conditional_Breakpoint_Color  : Color_Preference;
    Disabled_Breakpoint_Color     : Color_Preference;
