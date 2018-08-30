@@ -209,6 +209,12 @@ package body Debugger.Base_Gdb.Ada is
 
             --  Simple types, like <4-byte integer> and <4-byte float>
 
+            elsif Looking_At
+              (Type_Str, Index, "<<data variable, no debug info>>")
+            then
+               Skip_To_Char (Type_Str, Index, '>');
+               Index := Index + 2;
+
             else
                Skip_To_Char (Type_Str, Index, '>');
                Result := New_Simple_Type;
