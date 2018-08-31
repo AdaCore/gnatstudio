@@ -54,8 +54,8 @@ package body VCS is
       Result.File := F.File;
       Replace (Result.Working_Revision, F.Working_Revision);
       Replace (Result.Repository_Revision, F.Repository_Revision);
-      Result.Tags := Copy_String_List (F.Tags);
-      Result.Users := Copy_String_List (F.Users);
+      Result.Tags := F.Tags;
+      Result.Users := F.Users;
       Result.Status := F.Status;
       return Result;
    end Copy_File_Status;

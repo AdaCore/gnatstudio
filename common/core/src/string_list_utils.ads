@@ -25,10 +25,6 @@ package String_List_Utils is
    package String_List is
      new Ada.Containers.Indefinite_Vectors (Positive, String);
 
-   function Copy_String_List
-     (S : String_List.Vector) return String_List.Vector;
-   --  Return a deep copy of S
-
    procedure Remove_From_List
      (L               : in out String_List.Vector;
       S               : String;

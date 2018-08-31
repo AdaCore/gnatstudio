@@ -87,8 +87,8 @@ package body Commands.External is
          Item.Dir := Dir;
       end if;
 
-      Item.Args           := Copy_String_List (Args);
-      Item.Head           := Copy_String_List (Head);
+      Item.Args           := Args;
+      Item.Head           := Head;
       Item.Handler        := Handler;
       Item.Check_Password := Check_Password;
 

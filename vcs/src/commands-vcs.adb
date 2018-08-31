@@ -67,7 +67,7 @@ package body Commands.VCS is
       Item.Kernel    := Kernel;
       Item.Rep       := Rep;
       Item.Filenames := new File_Array'(Filenames);
-      Item.Logs      := Copy_String_List (Logs);
+      Item.Logs      := Logs;
       Item.Action    := Action;
    end Create;
 

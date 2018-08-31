@@ -22,16 +22,6 @@ package body String_List_Utils is
    use String_List;
 
    ----------------------
-   -- Copy_String_List --
-   ----------------------
-
-   function Copy_String_List
-     (S : String_List.Vector) return String_List.Vector is
-   begin
-      return S;
-   end Copy_String_List;
-
-   ----------------------
    -- Remove_From_List --
    ----------------------
 
