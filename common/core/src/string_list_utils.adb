@@ -43,15 +43,6 @@ package body String_List_Utils is
       end loop;
    end Remove_From_List;
 
-   ----------------
-   -- Is_In_List --
-   ----------------
-
-   function Is_In_List (L : String_List.Vector; S : String) return Boolean is
-   begin
-      return L.Contains (S);
-   end Is_In_List;
-
    -----------------------
    -- Add_Unique_Sorted --
    -----------------------

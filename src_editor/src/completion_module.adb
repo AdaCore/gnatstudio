@@ -734,7 +734,7 @@ package body Completion_Module is
                     M.Prefix.all,
                     Case_Sensitive => M.Case_Sensitive)
                  and then S /= M.Prefix.all   -- only if case differs
-                 and then not Is_In_List (M.List, S (S'First .. S'Last))
+                 and then not M.List.Contains (S (S'First .. S'Last))
                then
                   Found := True;
 

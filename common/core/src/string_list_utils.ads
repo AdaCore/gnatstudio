@@ -32,9 +32,6 @@ package String_List_Utils is
    --  Remove S from L. If All_Occurrences is True, remove all occurrences,
    --  otherwise remove only the first occurrence.
 
-   function Is_In_List (L : String_List.Vector; S : String) return Boolean;
-   --  Return True if S is in L
-
    function Longest_Prefix (L : String_List.Vector) return String;
    --  Return the longest prefix of all the strings in L. The empty string is
    --  returned if there is no common suffix.
