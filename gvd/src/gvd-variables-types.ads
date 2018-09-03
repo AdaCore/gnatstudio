@@ -159,6 +159,13 @@ package GVD.Variables.Types is
    --  This is the string that should be used for each row of the variables
    --  view.
 
+   function Get_Advanced_Value
+     (Self      : not null access GVD_Generic_Type;
+      Is_Nested : Boolean := False)
+      return String;
+   --  Return the complete value for Self.
+   --  This is the string displayed in the tooltips.
+
    function Structurally_Equivalent
      (Self : not null access GVD_Generic_Type; Item : GVD_Type_Holder'Class)
      return Boolean is abstract;

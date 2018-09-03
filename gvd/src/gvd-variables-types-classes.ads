@@ -72,7 +72,7 @@ package GVD.Variables.Types.Classes is
      (Self          : not null access GVD_Class_Type;
       Unused_Entity : String)
       return String is ("");
-   --  Returns command for retriving value
+   --  Returns command for retrieving value
 
    procedure Set_Value
      (Self  : not null access GVD_Class_Type;
@@ -114,6 +114,11 @@ private
    overriding function Get_Type_Name
      (Self : not null access GVD_Class_Type;
       Lang : Language.Language_Access)
+      return String;
+
+   overriding function Get_Advanced_Value
+     (Self      : not null access GVD_Class_Type;
+      Is_Nested : Boolean := False)
       return String;
 
    overriding function Structurally_Equivalent

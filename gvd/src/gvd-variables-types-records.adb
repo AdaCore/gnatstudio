@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
 with Glib; use Glib;
 
 package body GVD.Variables.Types.Records is
@@ -250,6 +249,65 @@ package body GVD.Variables.Types.Records is
          return "";  --  Value given in the fields
       end if;
    end Get_Simple_Value;
+
+   ------------------------
+   -- Get_Advanced_Value --
+   ------------------------
+
+   overriding function Get_Advanced_Value
+     (Self      : not null access GVD_Record_Type;
+      Is_Nested : Boolean := False) return String
+   is
+      Output : Unbounded_String;
+      Lenght : Natural := 0;
+   begin
+      if Self.Fields'Length = 0 then
+         Output := Output & "null record";
+      else
+         --  Display the initial record using multilines for more readibility
+         --  Display the nested record on one line
+         if Is_Nested then
+            Append (Output, "(");
+         else
+            Append (Output, ASCII.LF);
+            --  Retrieve the name with the longer lenght
+            for Field of Self.Fields loop
+               if Lenght < To_String (Field.Name)'Length then
+                  Lenght := To_String (Field.Name)'Length;
+               end if;
+            end loop;
+         end if;
+
+         for Index in Self.Fields'First .. Self.Fields'Last loop
+            Append (Output,
+                    "<b>"
+                    & Self.Fields (Index).Name
+                    & "</b>"
+                    &
+                    (if Is_Nested then ""
+                       else
+                          To_String (((Lenght - To_String
+                         (Self.Fields (Index).Name)'Length)
+                         * " ")))
+                    & " => "
+                    & Self.Fields (Index).Value.Get_Type.Get_Advanced_Value
+                    (Is_Nested => True));
+
+            if Index /= Self.Fields'Last then
+               if Is_Nested then
+                  Append (Output, ", ");
+               else
+                  Append (Output, ASCII.LF);
+               end if;
+            end if;
+         end loop;
+
+         if Is_Nested then
+            Append (Output, ")");
+         end if;
+      end if;
+      return To_String (Output);
+   end Get_Advanced_Value;
 
    ---------------
    -- Get_Value --

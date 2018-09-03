@@ -198,8 +198,7 @@ package body GVD.Variables.View is
       Local_Toolbar      => True,
       Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
-      Group              => GPS.Kernel.MDI.Group_Graphs,
-      Position           => Position_Top,
+      Position           => Position_Right,
       Initialize         => Initialize);
    package Variable_Views is new GVD.Generic_View.Simple_Views
      (Formal_View_Record => GVD_Variable_View_Record,
@@ -313,7 +312,7 @@ package body GVD.Variables.View is
       Parent            : Gtk_Tree_Iter;
       Id                : Item_ID;
       Lang              : not null Language_Access);
-   --  Adddd a new row in the tree to represent a variable
+   --  Add a new row in the tree to represent a variable
 
    function Get_Item_Info
      (Self : not null access Variable_Tree_View_Record'Class;

@@ -37,6 +37,6 @@ package GVD.Contexts is
    function Get_Variable
      (Context : GPS.Kernel.Selection_Context)
       return Item_Info;
-   --  Retrive the debugging variable from the Context.
+   --  Retrieve the debugging variable from the Context.
 
 end GVD.Contexts;

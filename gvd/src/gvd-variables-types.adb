@@ -421,4 +421,18 @@ package body GVD.Variables.Types is
       return Iter;
    end Start;
 
+   -----------------------
+   -- Get_Avanced_Value --
+   -----------------------
+
+   function Get_Advanced_Value
+     (Self      : not null access GVD_Generic_Type;
+      Is_Nested : Boolean := False)
+      return String
+   is
+      pragma Unreferenced (Is_Nested);
+   begin
+      return GVD_Generic_Type'Class (Self.all).Get_Simple_Value;
+   end Get_Advanced_Value;
+
 end GVD.Variables.Types;

@@ -68,6 +68,7 @@ with GVD.Process;                  use GVD.Process;
 with GVD.Process_Lists;            use GVD.Process_Lists;
 with GVD.Scripts;
 with GVD.Types;                    use GVD.Types;
+with GVD.Variables.Items;          use GVD.Variables.Items;
 with Histories;                    use Histories;
 with Language;                     use Language;
 with Language_Handlers;            use Language_Handlers;
@@ -1526,6 +1527,8 @@ package body GVD_Module is
       Debugger : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Value    : GNAT.Strings.String_Access;
+      Pretty   : GNAT.Strings.String_Access;
+      Output   : GNAT.Strings.String_Access;
       W        : Gtk_Widget;
       Label    : Gtk_Label;
 
@@ -1541,7 +1544,7 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
-
+         Variable      : Item_Info       := Wrap_Variable (Variable_Name);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1550,11 +1553,31 @@ package body GVD_Module is
             return null;
 
          else
+            --  Retrieve the debugger output
             Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
          end if;
 
          if Value.all /= "" then
-            Gtk_New (Label, Value.all);
+            Update (Variable, Debugger);
+            --  Compute the output pretty printed by the variables view
+            Pretty := new String'(Variable.Entity.Get_Type.Get_Advanced_Value);
+
+            --  Choose the appropriate output
+            if Pretty.all /= "" then
+               Output := new String'(Pretty.all);
+            else
+               Output := new String'(Value.all);
+            end if;
+            GNAT.Strings.Free (Pretty);
+
+            Gtk_New (Label, "<b>Debugger value:</b> " & Output.all);
+            GNAT.Strings.Free (Output);
+            --  If the tooltips is too long wrap it
+            Label.Set_Line_Wrap (True);
+            Label.Set_Max_Width_Chars (80);
+            Label.Set_Use_Markup (True);
+            Label.Modify_Font (View_Fixed_Font.Get_Pref);
+            Label.Set_Alignment (0.0, 0.5);
             W := Gtk_Widget (Label);
          else
             --  Note: if Value.all is "", we will return Pixmap below, hence
@@ -1564,6 +1587,7 @@ package body GVD_Module is
          end if;
 
          GNAT.Strings.Free (Value);
+         Free (Variable);
          return W;
       end;
 

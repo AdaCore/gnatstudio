@@ -30,7 +30,11 @@ package body GVD.Contexts is
      (Context : GPS.Kernel.Selection_Context)
       return Item_Info is
    begin
-      return Context_Item_Info_Access (Debugging_Variable (Context)).Info;
+      if Has_Debugging_Variable (Context) then
+         return Context_Item_Info_Access (Debugging_Variable (Context)).Info;
+      else
+         return No_Item_Info;
+      end if;
    end Get_Variable;
 
    -----------------------

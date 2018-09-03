@@ -307,7 +307,10 @@ package body Src_Editor_Box.Tooltips is
          W := Compute_Tooltip (Box.Kernel, Context);
 
          if W /= null then
-            return W;
+            if Vbox = null then
+               Gtk_New_Vbox (Vbox, Homogeneous => False);
+            end if;
+            Vbox.Pack_End (W, Expand => False, Fill => True);
          end if;
 
          --  If there is a message on this line, display it

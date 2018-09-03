@@ -248,6 +248,18 @@ package body GVD.Variables.Types.Classes is
       end if;
    end Get_Type_Name;
 
+   ------------------------
+   -- Get_Advanced_Value --
+   ------------------------
+
+   overriding function Get_Advanced_Value
+     (Self      : not null access GVD_Class_Type;
+      Is_Nested : Boolean := False)
+      return String is
+   begin
+      return Self.Child.Get_Type.Get_Advanced_Value (Is_Nested);
+   end Get_Advanced_Value;
+
    --------------------
    -- New_Class_Type --
    --------------------

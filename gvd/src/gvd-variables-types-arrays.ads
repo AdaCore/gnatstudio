@@ -163,6 +163,10 @@ private
 
    overriding procedure Free (Self : not null access GVD_Array_Type);
 
+   overriding function Get_Advanced_Value
+     (Self      : not null access GVD_Array_Type;
+      Is_Nested : Boolean := False) return String;
+
    overriding function Replace
      (Self         : not null access GVD_Array_Type;
       Current      : GVD_Type_Holder'Class;
