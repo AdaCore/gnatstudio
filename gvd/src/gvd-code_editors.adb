@@ -54,8 +54,10 @@ package body GVD.Code_Editors is
       Highlight : Boolean := True;
       Focus     : Boolean := True)
    is
-      P   : constant Visual_Debugger := Visual_Debugger (Process);
-      Msg : Simple_Message_Access;
+      P      : constant Visual_Debugger := Visual_Debugger (Process);
+      Msg    : Simple_Message_Access;
+      Notify : Boolean := False;
+
    begin
       if File = GNATCOLL.VFS.No_File
         and then P = null
@@ -113,7 +115,10 @@ package body GVD.Code_Editors is
          end if;
 
          if P.Debugger.Is_Started then
-            Debugger_Location_Changed_Hook.Run (Kernel, P);
+            Notify := True;
+            --  Postpone notification till complete of operations on source
+            --  code editor, some plugins (Qgen for instance) may use this
+            --  notification to open own views.
          end if;
       end if;
 
@@ -143,6 +148,12 @@ package body GVD.Code_Editors is
                end;
             end if;
          end;
+      end if;
+
+      --  Run "debugger location changed" hook.
+
+      if Notify then
+         Debugger_Location_Changed_Hook.Run (Kernel, P);
       end if;
    end Set_Current_File_And_Line;
 
