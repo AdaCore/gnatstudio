@@ -34,5 +34,3 @@ def run_test():
     gps_assert(
         is_visible, True,
         "the 'Do nothing' action should be displayed in the Learn view")
-
-    yield timeout(100000)
