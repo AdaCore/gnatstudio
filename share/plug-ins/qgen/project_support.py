@@ -70,8 +70,8 @@ class Project_Support(object):
              <tool
               name="QGen"
               package="QGen"
-              index="Simulink">
-               <language>Simulink</language>
+              index="QGen">
+               <language>QGen</language>
                <switches>
                  <title line="1">Input Files</title>
                  <title line="2">Generation Configuration</title>
@@ -84,14 +84,6 @@ class Project_Support(object):
                   separator=" "
                   as-file="true"
                  tip="Provides variable declarations of the Matlab workspace"/>
-
-                 <field
-                  line="1"
-                  label="Typing file"
-                  switch="-t"
-                  separator=" "
-                  as-file="true"
-                  tip="Provides Simulink block typing information"/>
 
                  <field
                   line="1"
@@ -161,6 +153,12 @@ custom block implementations"/>
 
                  <check
                   line="2"
+                  label="Generate entry point source file"
+                  switch="--gen-entrypoint"
+                 tip=""/>
+
+                 <check
+                  line="2"
                   label="Use simulink function packaging for subsystem\
  code generation"
                   switch="--simulink-subsystem"
@@ -169,7 +167,7 @@ custom block implementations"/>
                  <check
                   line="2"
                   label="Always generate system variables as variables"
-                  switch="--consts-as-var"
+                  switch="--consts-as-vars"
                  tip=""/>
 
                  <check
@@ -268,7 +266,7 @@ custom block implementations"/>
                 index=os.path.basename(filename))
             for mod in models:
                 models_files.append(GPS.File(mod))
-        except:
+        except Exception:
             models_files = []
 
         return models_files
@@ -288,7 +286,7 @@ custom block implementations"/>
                 switches = file.project().get_attribute_as_list(
                     attribute='Switches', package='QGen',
                     index='simulink')
-        except:
+        except Exception:
             switches = ''
 
         return switches
