@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;
-with GNAT.Strings;
 
 with Ada.Containers.Indefinite_Vectors;
 
@@ -25,26 +24,9 @@ package String_List_Utils is
    package String_List is
      new Ada.Containers.Indefinite_Vectors (Positive, String);
 
-   procedure Remove_From_List
-     (L               : in out String_List.Vector;
-      S               : String;
-      All_Occurrences : Boolean := True);
-   --  Remove S from L. If All_Occurrences is True, remove all occurrences,
-   --  otherwise remove only the first occurrence.
-
    function Longest_Prefix (L : String_List.Vector) return String;
    --  Return the longest prefix of all the strings in L. The empty string is
    --  returned if there is no common suffix.
-
-   function Longest_Prefix
-     (L : GNAT.Strings.String_List_Access) return String;
-   --  Likewise for the String_List_Access
-
-   procedure Add_Unique_Sorted
-     (L : in out String_List.Vector;
-      S : String);
-   --  Insert S in L, sorted, if S does not already exist in L.
-   --  L is supposed to be sorted before calling this subprogram.
 
    function List_To_Argument_List
      (L : String_List.Vector) return GNAT.OS_Lib.Argument_List;

@@ -21,67 +21,6 @@ package body String_List_Utils is
 
    use String_List;
 
-   ----------------------
-   -- Remove_From_List --
-   ----------------------
-
-   procedure Remove_From_List
-     (L               : in out String_List.Vector;
-      S               : String;
-      All_Occurrences : Boolean := True)
-   is
-      Node : Cursor := L.Find (S);
-   begin
-      while Has_Element (Node) loop
-         L.Delete (Node);
-
-         if not All_Occurrences then
-            return;
-         end if;
-
-         Node := L.Find (S);
-      end loop;
-   end Remove_From_List;
-
-   -----------------------
-   -- Add_Unique_Sorted --
-   -----------------------
-
-   procedure Add_Unique_Sorted
-     (L : in out String_List.Vector;
-      S : String)
-   is
-      N : Cursor;
-      P : Cursor;
-   begin
-      if L.Is_Empty then
-         L.Append (S);
-
-         return;
-      end if;
-
-      N := L.First;
-
-      while Has_Element (N)
-        and then Element (N) < S
-      loop
-         P := N;
-         Next (N);
-      end loop;
-
-      if Has_Element (N)
-        and then Element (N) = S
-      then
-         return;
-      else
-         if not Has_Element (P) then
-            L.Prepend (S);
-         else
-            L.Insert (P, S);
-         end if;
-      end if;
-   end Add_Unique_Sorted;
-
    ---------------------------
    -- List_To_Argument_List --
    ---------------------------
@@ -134,35 +73,6 @@ package body String_List_Utils is
             end;
 
             Next (Node);
-         end loop;
-
-         return First_S (First_S'First .. First_S'First + Length - 1);
-      end;
-   end Longest_Prefix;
-
-   function Longest_Prefix
-     (L : GNAT.Strings.String_List_Access) return String is
-   begin
-      if L = null or else L'Length = 0 then
-         return "";
-      end if;
-
-      declare
-         First_S : constant String := L (L'First).all;
-         Length  : Natural         := First_S'Length;
-      begin
-         for K in L'Range loop
-            Length := Natural'Min (Length, L (K)'Length);
-            while Length > 0
-              and then First_S
-                (First_S'First .. First_S'First + Length - 1) /=
-                L (K) (L (K)'First .. L (K)'First + Length - 1)
-            loop
-               Length := Length - 1;
-            end loop;
-
-            --  No need to continue further if there is no prefix
-            exit when Length = 0;
          end loop;
 
          return First_S (First_S'First .. First_S'First + Length - 1);
