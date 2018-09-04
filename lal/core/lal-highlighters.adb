@@ -23,6 +23,7 @@ with GNAT.Strings;
 with Basic_Types;                        use Basic_Types;
 with LAL.Core_Module;
 with Langkit_Support.Slocs;              use Langkit_Support.Slocs;
+with Langkit_Support.Token_Data_Handlers;
 with Language;
 with Libadalang.Analysis;
 with Libadalang.Common;
@@ -66,7 +67,7 @@ package body LAL.Highlighters is
    --  Should be in sync with To_Style implementation
 
    function To_Style
-     (Token     : Libadalang.Lexer.Token_Kind;
+     (Token     : Libadalang.Common.Token_Kind;
       Text      : Wide_Wide_String;
       In_Aspect : Boolean;
       In_String : Boolean) return String;
@@ -388,12 +389,12 @@ package body LAL.Highlighters is
    --------------
 
    function To_Style
-     (Token     : Libadalang.Lexer.Token_Kind;
+     (Token     : Libadalang.Common.Token_Kind;
       Text      : Wide_Wide_String;
       In_Aspect : Boolean;
       In_String : Boolean) return String
    is
-      use Libadalang.Lexer;
+      use Libadalang.Common;
    begin
       if In_String then
          return Aspect_Prefix ("string", In_Aspect);
@@ -563,20 +564,20 @@ package body LAL.Highlighters is
    is
       pragma Unreferenced (Self);
 
-      use Libadalang.Lexer.Token_Data_Handlers;
+      use Langkit_Support.Token_Data_Handlers;
 
       First : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (From);
       Last  : constant GPS.Editors.Editor_Location'Class :=
         Buffer.New_Location_At_Line (To).End_Of_Line;
-      Index : Libadalang.Lexer.Token_Data_Handlers.Token_Or_Trivia_Index;
-      Text  : aliased String := Buffer.Get_Chars (First, Last);
+      Index : Langkit_Support.Token_Data_Handlers.Token_Or_Trivia_Index;
+      Text  : constant String := Buffer.Get_Chars (First, Last);
       Input : constant Libadalang.Lexer.Lexer_Input :=
-        (Kind     => Libadalang.Lexer.Bytes_Buffer,
+        (Kind     => Libadalang.Common.Bytes_Buffer,
          Charset  => Ada.Strings.Unbounded.To_Unbounded_String ("utf-8"),
          Read_BOM => False,
-         Bytes    => Text'Unchecked_Access);
-      TDH   : Libadalang.Lexer.Token_Data_Handlers.Token_Data_Handler;
+         Bytes    => Ada.Strings.Unbounded.To_Unbounded_String (Text));
+      TDH   : Langkit_Support.Token_Data_Handlers.Token_Data_Handler;
       Diags : Langkit_Support.Diagnostics.Diagnostics_Vectors.Vector;
 
       Wrong_Literal : Boolean := False;
@@ -595,15 +596,16 @@ package body LAL.Highlighters is
 
       while Index /= No_Token_Or_Trivia_Index loop
          declare
-            Token : constant Libadalang.Lexer.Stored_Token_Data :=
-              Data (Index, TDH);
-            Loc   : constant Source_Location_Range :=
-              Libadalang.Lexer.Sloc_Range (Token);
+            Token : constant Stored_Token_Data := Data (Index, TDH);
+            Kind  : constant Libadalang.Common.Token_Kind :=
+              Libadalang.Lexer.To_Token_Kind (Token.Kind);
+            Loc   : constant Source_Location_Range := Token.Sloc_Range;
             Error : constant Boolean :=
-              Token.Kind in Libadalang.Lexer.Ada_Lexing_Failure;
+              Kind in Libadalang.Common.Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
               (if Check_Keyword (Loc) or Error
-               then Libadalang.Lexer.Text (TDH, Token) else "");
+               then Langkit_Support.Token_Data_Handlers.Text (TDH, Token)
+               else "");
             Line  : constant Positive :=
               From + Natural (Token.Sloc_Range.Start_Line) - 1;
             Start : constant Visible_Column_Type :=
@@ -615,7 +617,7 @@ package body LAL.Highlighters is
 
             declare
                Style : constant String :=
-                 To_Style (Token.Kind, Image, False, Wrong_Literal);
+                 To_Style (Kind, Image, False, Wrong_Literal);
             begin
                if Style /= "" then
                   Buffer.Apply_Style (Style, Line, Start, Stop);
@@ -642,7 +644,6 @@ package body LAL.Highlighters is
    is
       use Libadalang.Analysis;
       use Libadalang.Common;
-      package L renames Libadalang.Lexer;
 
       type Context is record
          In_Aspect       : Boolean := False;
@@ -684,25 +685,23 @@ package body LAL.Highlighters is
          if Node.Parent.Is_Null then
             null;
          --  check if node is an aspect
-         elsif Kind_Of (Node, Libadalang.Common.Ada_Aspect_Assoc) then
+         elsif Kind_Of (Node, Ada_Aspect_Assoc) then
             Value.In_Aspect := True;
 
          --  Check if identifier itself should be highlighted
-         elsif (Kind_Of (Node, Libadalang.Common.Ada_Identifier)
+         elsif (Kind_Of (Node, Ada_Identifier)
              and then Check (Id_List, Node))
            --  check if node is a dotted_name to be highlighted
            or else
-             (Kind_Of (Node, Libadalang.Common.Ada_Dotted_Name)
+             (Kind_Of (Node, Ada_Dotted_Name)
               and then Check (Dotted_Name_List, Node))
            --  check if node is a defining_name to be highlighted
            or else
-             (Kind_Of (Node,
-                       Libadalang.Common.Ada_Defining_Name)
+             (Kind_Of (Node, Ada_Defining_Name)
               and then Check (Defining_Name_List, Node))
            --  check if node is part of any end_name
            or else
-             Kind_Of (Node.Parent,
-                      Libadalang.Common.Ada_End_Name)
+             Kind_Of (Node.Parent, Ada_End_Name)
          then
             Value.In_Block_Name := True;
 
@@ -842,8 +841,7 @@ package body LAL.Highlighters is
             Top   : constant Context := Stack.Last_Element;
             Token : constant Token_Data_Type := Data (Index);
             Loc   : constant Source_Location_Range := Sloc_Range (Token);
-            Error : constant Boolean :=
-              Kind (Token) in Libadalang.Lexer.Ada_Lexing_Failure;
+            Error : constant Boolean := Kind (Token) in Ada_Lexing_Failure;
             Image : constant Wide_Wide_String :=
               (if Check_Keyword (Loc) or Error then Text (Index) else "");
             Line  : constant Positive := Positive (Loc.Start_Line);
@@ -857,7 +855,7 @@ package body LAL.Highlighters is
             Update_Wrong_Literal_State (Wrong_Literal, Error, Image, Loc);
 
             if not Wrong_Literal
-              and Kind (Token) in L.Ada_Identifier | L.Ada_Dot
+              and Kind (Token) in Ada_Identifier | Ada_Dot
             then
                if Top.In_Block_Name then
                   Buffer.Apply_Style

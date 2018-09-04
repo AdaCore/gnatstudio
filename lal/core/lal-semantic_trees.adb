@@ -31,7 +31,6 @@ with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Iterators;
 
 with GPS.Editors;
-with Libadalang.Lexer;
 
 package body LAL.Semantic_Trees is
 
@@ -859,7 +858,7 @@ package body LAL.Semantic_Trees is
                   Span  : constant Langkit_Support.Slocs.Source_Location_Range
                     := Sloc_Range (Value);
                begin
-                  if Kind (Value) in Libadalang.Lexer.Ada_Whitespace
+                  if Kind (Value) in Libadalang.Common.Ada_Whitespace
                     and then Span.Start_Line /= Span.End_Line
                   then
                      return Visible_Column (Span.Start_Column);
