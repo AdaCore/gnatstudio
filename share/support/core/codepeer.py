@@ -451,7 +451,7 @@ been reanalyzed." />
     </target-model>
 
     <target-model name="codepeer_msg_reader" category="">
-       <description>Generate HTML with codepeer</description>
+       <description>Generate codepeer messages</description>
        <command-line>
           <arg>codepeer</arg>
           <arg>-d</arg>
@@ -483,20 +483,11 @@ been reanalyzed." />
          <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
                default="0" separator=" " column="2"
                tip="Override baseline run id"/>
-         <combo label="Security" switch="-security" noswitch="disabled"
-               separator=" " column="1" column-span="2"
-               tip="Enable security filter on messages. Disabled: no security
-filter (all messages are output). Normal: output only security relevant
-messages. Full: same as normal, plus run-time checks related messages">
-            <combo-entry label="Disabled" value="disabled" />
-            <combo-entry label="Normal" value="normal" />
-            <combo-entry label="Full" value="full" />
-         </combo>
 
          <check label="CSV output" switch="-csv"
                column="2"
                tip="generate output in CSV format, suitable for spreadsheets"/>
-         <check label="HTML output" switch="-html"
+         <check label="HTML output" switch="-html-only"
                column="2"
                tip="generate output in HTML format"/>
        </switches>
@@ -590,8 +581,7 @@ messages. Full: same as normal, plus run-time checks related messages">
           <arg>-d</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-output-msg-only</arg>
-          <arg>-html</arg>
+          <arg>-html-only</arg>
        </command-line>
     </target>
 
