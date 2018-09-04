@@ -581,7 +581,7 @@ package body Variable_Editors is
          Changed := True;
       end if;
 
-      if Editor.Var = No_Variable then
+      if Editor.Var /= No_Variable then
          --  ??? The variable is null, we shouldn't do anything. Maybe the
          --  above test should be "/="
 
@@ -597,9 +597,11 @@ package body Variable_Editors is
       end if;
 
       if Changed then
-         --  Recompute the view so that the explorer is updated graphically
-
-         Recompute_View (Editor.Kernel);
+         --  Save the project if the scenario variables have changed
+         Changed := Save_Project
+           (Kernel    => Editor.Kernel,
+            Project   => Editor.Kernel.Get_Project_Tree.Root_Project,
+            Recursive => False);
          Variable_Changed_Hook.Run (Editor.Kernel);
       end if;
 

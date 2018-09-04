@@ -174,7 +174,29 @@ class Project_Properties_Editor(Dialog):
                 found += 1
         gps_assert(found, len(lang), "Some languages not found %s" % lang)
 
-    def select_scenario(self, var, value=None):
+    def get_scenarios(self):
+        """
+        Return the selected scenarios in the Project Properties editor, in the
+        following format:
+
+        [var_name_1, [value_1, value_2], var_name_2, [value_3, ...], ...]
+        """
+        result = []
+
+        for m in self.scenario_selector_tree.get_model():
+            if m[0]:
+                result.append(m[1])
+                children = m.iterchildren()
+                children_list = []
+                for child in children:
+                    if child[0]:
+                        children_list.append(child[1])
+                if len(children_list) > 0:
+                    result.append(children_list)
+
+        return result
+
+    def select_scenario(self, var, values=None):
         """
         Select a scenario for which the changes made in the Project Properties
         should be applied.
@@ -182,19 +204,27 @@ class Project_Properties_Editor(Dialog):
         ``var`` is used to identify the scenario variable and ``value`` the
         possible value for which we want to apply the changes.
 
-        When no ``value`` is specified, all the possible values for the
+        When no ``values`` are specified, all the possible values for the
         scenario variable are selected.
         """
         for m in self.scenario_selector_tree.get_model():
             if m[1] == var:
-                if value:
+                # Unselect all the variable's values first
+                pygps.tree.click_in_tree(
+                    self.scenario_selector_tree,
+                    m.path)
+                if m[0]:
+                    pygps.tree.click_in_tree(
+                        self.scenario_selector_tree,
+                        m.path)
+
+                if values:
                     children = m.iterchildren()
                     for child in children:
-                        if child[1] == value:
+                        if child[1] in values:
                             pygps.tree.click_in_tree(
                                 self.scenario_selector_tree,
                                 child.path)
-                            return
                 else:
                     pygps.tree.click_in_tree(
                         self.scenario_selector_tree,
@@ -976,6 +1006,7 @@ class Variables_View(Dialog):
 ##############
 
 class Custom_Build_Dialog(Dialog):
+
     def open_and_yield(self):
         yield self._open_and_yield("/Build/Project/Custom Build...")
         self.dialog = get_window_by_title("Custom Build...")
@@ -989,6 +1020,7 @@ class Custom_Build_Dialog(Dialog):
 ###################
 
 class Editor_Properties_Dialog(Dialog):
+
     def open_and_yield(self, file):
         yield self._open_and_yield("edit file properties")
         self.dialog = get_window_by_title("Properties for %s" % file)
@@ -1029,6 +1061,7 @@ class Refactoring_Rename(Dialog):
           d.set_new_name("XYZ")
           yield d.ok()
     """
+
     def __init__(self):
         pass
 

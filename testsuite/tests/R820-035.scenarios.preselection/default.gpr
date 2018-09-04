@@ -1,0 +1,11 @@
+project Default is
+
+   type VAR_1_Type is
+      ("A", "B");
+   VAR_1 : VAR_1_Type := external ("VAR_1", "A");
+   type VAR_2_Type is
+      ("C", "D");
+   VAR_2 : VAR_2_Type := external ("VAR_2", "C");
+
+end Default;
+

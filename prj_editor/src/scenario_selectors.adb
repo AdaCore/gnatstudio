@@ -485,29 +485,28 @@ package body Scenario_Selectors is
      (Selector : access Scenario_Selector_Record'Class)
    is
       Vars : constant Scenario_Variable_Array :=
-        Get_Registry (Selector.Kernel).Tree.Scenario_Variables;
+        Scenario_Variables (Selector.Kernel);
       Iter, Child : Gtk_Tree_Iter;
    begin
-      for V in Vars'Range loop
+      for Var of Vars loop
          Append (Selector.Model, Iter, Null_Iter);
          Set_And_Clear
            (Selector.Model, Iter,
             (Selected_Column, Var_Name_Column),
-            (0 => As_Boolean (False),
-             1 => As_String  (External_Name (Vars (V)))));
+            (0 => As_Boolean (True),
+             1 => As_String  (External_Name (Var))));
 
          declare
-            Current : constant String := Value (Vars (V));
-            Values  : GNAT.Strings.String_List :=
-              Get_Registry (Selector.Kernel).Tree.Possible_Values_Of
-              (Vars (V));
+            Values : GNAT.Strings.String_List :=
+                       Get_Registry (Selector.Kernel).Tree.Possible_Values_Of
+                       (Var);
          begin
             for Val in Values'Range loop
                Append (Selector.Model, Child, Iter);
                Set_And_Clear
                  (Selector.Model, Child,
                   (Selected_Column, Var_Name_Column),
-                  (0 => As_Boolean (Values (Val).all = Current),
+                  (0 => As_Boolean (True),
                    1 => As_String  (Values (Val).all)));
             end loop;
 
