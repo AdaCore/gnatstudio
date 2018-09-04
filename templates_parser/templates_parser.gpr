@@ -55,7 +55,7 @@ project Templates_Parser is
 
    end Naming;
 
-   Common_Options := ("-gnat05");
+   Common_Options := ("");
    --  Common options used for the Debug and Release modes
 
    Debug_Options :=
