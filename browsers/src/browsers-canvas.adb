@@ -1323,9 +1323,11 @@ package body Browsers.Canvas is
       Right   : access Right_Arrow_Record'Class := null;
       Buttons : Button_Array := No_Buttons)
    is
-      Text   : Text_Item;
-      Title  : Rect_Item;
-      Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      Text       : Text_Item;
+      Title      : Rect_Item;
+      Styles     : constant access Browser_Styles :=
+        Browser.Get_View.Get_Styles;
+      Title_Font : Font_Style renames Styles.Title_Font.Get_Font;
    begin
       Title := Gtk_New_Rect (Styles.Title);
       Title.Set_Child_Layout (Horizontal_Stack);
@@ -1333,7 +1335,7 @@ package body Browsers.Canvas is
 
       if Left /= null then
          Item.Left := Abstract_Item (Left);
-         Initialize (Left);
+         Initialize (Left, Font => Copy (Title_Font));
          Title.Add_Child
            (Left, Align => Align_Center, Margin => (0.0, 0.0, 0.0, 4.0));
       end if;
@@ -1343,7 +1345,7 @@ package body Browsers.Canvas is
 
       if Right /= null then
          Item.Right := Abstract_Item (Right);
-         Initialize (Right);
+         Initialize (Right, Font => Copy (Title_Font));
          Title.Add_Child
            (Right, Align => Align_Center, Pack_End => True,
             Margin => (0.0, 4.0, 0.0, 0.0));

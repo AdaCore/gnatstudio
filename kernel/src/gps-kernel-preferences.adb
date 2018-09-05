@@ -1051,13 +1051,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Background",
          Path    => -"Browsers:Colors");
 
-      Browsers_Hyper_Link_Color := Manager.Create
-        (Name    => "Browsers-Hyper-Link-Color",
-         Default => "#0000FF",
-         Doc     => -"Hyper links in the items.",
-         Label   => -"Hyper links ",
-         Path    => -"Browsers:Colors");
-
       Selected_Link_Color := Manager.Create
         (Name    => "browsers-link-to-selected-color",
          Default => "rgba(230,50,50,0.7)",

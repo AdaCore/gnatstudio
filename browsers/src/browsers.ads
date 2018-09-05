@@ -129,14 +129,18 @@ package Browsers is
    type Left_Arrow_Record
       is abstract new Gtkada.Canvas_View.Text_Item_Record and Clickable_Item
       with null record;
-   procedure Initialize (Self : not null access Left_Arrow_Record'Class);
+   procedure Initialize
+     (Self : not null access Left_Arrow_Record'Class;
+      Font : Font_Style);
    --  Left-pointing arrow in title bars.
    --  You must override On_Click to use this.
 
    type Right_Arrow_Record
       is abstract new Gtkada.Canvas_View.Text_Item_Record and Clickable_Item
       with null record;
-   procedure Initialize (Self : not null access Right_Arrow_Record'Class);
+   procedure Initialize
+     (Self : not null access Right_Arrow_Record'Class;
+      Font : Font_Style);
    --  Right-pointing arrow in title bars.
    --  You must override On_Click to use this.
 

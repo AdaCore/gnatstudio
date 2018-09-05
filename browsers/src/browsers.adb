@@ -144,11 +144,13 @@ package body Browsers is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : not null access Left_Arrow_Record'Class) is
+   procedure Initialize
+     (Self : not null access Left_Arrow_Record'Class;
+      Font : Font_Style) is
    begin
       Self.Initialize_Text
         (Gtk_New (Stroke => Null_RGBA,
-                  Font => (Name => From_String ("sans 12"), others => <>)),
+                  Font   => Font),
          Left_Arrow,
          Height => 12.0);
    end Initialize;
@@ -157,11 +159,13 @@ package body Browsers is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : not null access Right_Arrow_Record'Class) is
+   procedure Initialize
+     (Self : not null access Right_Arrow_Record'Class;
+      Font : Font_Style) is
    begin
       Self.Initialize_Text
         (Gtk_New (Stroke => Null_RGBA,
-                  Font => (Name => From_String ("sans 12"), others => <>)),
+                  Font   => Font),
          Right_Arrow,
          Height => 12.0);
    end Initialize;
@@ -214,20 +218,31 @@ package body Browsers is
 
    procedure Create_Styles (Self : not null access GPS_Canvas_View_Record) is
 
-      function Create_Title_Style (Base : Gdk_RGBA) return Drawing_Style;
-      function Create_Title_Style (Base : Gdk_RGBA) return Drawing_Style is
+      function Create_Title_Style
+        (Base       : Gdk_RGBA;
+         Font_Color : Gdk_RGBA) return Drawing_Style;
+
+      ------------------------
+      -- Create_Title_Style --
+      ------------------------
+
+      function Create_Title_Style
+        (Base       : Gdk_RGBA;
+         Font_Color : Gdk_RGBA) return Drawing_Style
+      is
          B : Gdk_RGBA;
          P : Cairo_Pattern;
       begin
          P := Pattern_Create_Linear (0.0, 0.0, 0.0, 1.0);
          B := Lighten (Base, 0.1);
          Pattern_Add_Color_Stop_Rgb (P, 0.0, B.Red, B.Green, B.Blue);
-         B := Shade (Base, 0.1);
+         B := Shade (Base, 0.05);
          Pattern_Add_Color_Stop_Rgb (P, 1.0, B.Red, B.Green, B.Blue);
          return Gtk_New
            (Fill   => P,
             Stroke => Null_RGBA,
             Font   => (Name   => From_String ("sans 8"),
+                       Color  => Font_Color,
                        Halign => Pango.Enums.Pango_Align_Center,
                        others => <>));
       end Create_Title_Style;
@@ -253,23 +268,29 @@ package body Browsers is
 
       Self.Styles :=
         (Item => Gtk_New
-           (Fill => Create_Rgba_Pattern (White_RGBA),
+           (Fill => Create_Rgba_Pattern
+                (Lighten (Default_Style.Get_Pref_Bg, 0.05)),
             Shadow => (Color => (0.0, 0.0, 0.0, 0.1), others => <>)),
          Nested => Gtk_New
            (Stroke => (0.8, 0.8, 0.8, 0.8)),
          Title      =>
-           Create_Title_Style (White_RGBA),
+           Create_Title_Style
+             (Default_Style.Get_Pref_Bg,
+              Default_Style.Get_Pref_Fg),
          Title_Font => Gtk_New
            (Font   => (Name   => Copy (F),
                        Halign => Pango.Enums.Pango_Align_Center,
+                       Color  => Default_Style.Get_Pref_Fg,
                        others => <>),
             Stroke => Null_RGBA),
          Text_Font  => Gtk_New
-           (Font   => (Name => F2, others => <>),
+           (Font   => (Name => F2,
+                       Color => Default_Style.Get_Pref_Fg,
+                       others => <>),
             Stroke => Null_RGBA),
          Hyper_Link  => Gtk_New
            (Font      => (Name => F4,
-                          Color     => Browsers_Hyper_Link_Color.Get_Pref,
+                          Color     => Hyper_Links_Style.Get_Pref_Fg,
                           Underline => Pango_Underline_Single,
                           others => <>),
             Stroke    => Null_RGBA),
