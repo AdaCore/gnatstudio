@@ -70,10 +70,19 @@ class ASTVisitor(ast.NodeVisitor):
     def get_locations(self, n, kw=None):
         end_line = n.end_line
         start_pos = self.make_tuple(n.lineno, n.col_offset)
-        end_col = len(self.buflines[end_line - 1]) - 1
+        end_col = len(self.buflines[end_line - 1])
         end_pos = self.make_tuple(end_line, end_col)
         if kw:
-            entity_pos = self.make_tuple(n.lineno, n.col_offset + len(kw))
+            # n.lineno value corresponds to the first line of the block.
+            # I.E. if the function/class has decorators it will return the line
+            # of the first decorator and not the line where the function/class
+            # is declared.
+            line = n.lineno
+            for d in n.decorator_list:
+                line = max(line, d.lineno)
+            if n.decorator_list:
+                line = line + 1
+            entity_pos = self.make_tuple(line, n.col_offset + len(kw) + 1)
             return start_pos, end_pos, entity_pos
         else:
             return start_pos, end_pos
