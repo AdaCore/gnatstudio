@@ -48,7 +48,10 @@ if tool != "":
 
   <!--  Support for GNATStack's switches in Project Properties Editor  -->
 
-  <tool name="GNATStack" package="Stack" attribute="switches" index="">
+  <tool name="GNATstack" package="Stack" attribute="switches" index="">
+    <language>Ada</language>
+    <language>C</language>
+    <language>C++</language>
     <switches>
       <title line="1" column="1">Entry points</title>
       <field line="1" column="1" switch="-e" separator=" "
