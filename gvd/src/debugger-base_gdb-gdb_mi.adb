@@ -3883,29 +3883,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Entity    : String;
       Default   : String) return String
    is
-      V : Variable := Debugger.Create_Var (Entity);
+      V      : Variable := Debugger.Create_Var (Entity);
+      Result : constant String := To_String (V.Var_Type);
    begin
-      if V.Name = "" then
-         return Default;
-      end if;
-
-      declare
-         S    : constant String := Debugger.Send_And_Get_Clean_Output
-           ("-var-info-type " & To_String (V.Name),
-            Mode => Internal);
-         Idx  : Natural := Index (S, "type=" & '"');
-         Idx1 : Natural;
-      begin
+      if V.Name = "" or else Result = "" then
          Free (Debugger, V);
-         if Idx >= S'First then
-            Idx  := Idx + 6;
-            Idx1 := Idx;
-            Skip_To_Char (S, Idx1, '"');
-            return S (Idx .. Idx1 - 1);
-         end if;
-      end;
-
-      return Default;
+         return Default;
+      else
+         Free (Debugger, V);
+         return Result;
+      end if;
    end Get_Type_Info;
 
    ---------------
@@ -4455,6 +4442,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Result.Childs := Natural'Value (Element (T).Text.all);
          end if;
 
+         T := Find_Identifier (T, "type");
+         if T /= Token_Lists.No_Element then
+            Next (T, 2);
+            Result.Var_Type := To_Unbounded_String (Element (T).Text.all);
+         end if;
          return Result;
       end if;
 

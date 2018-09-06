@@ -489,9 +489,10 @@ private
    --  Type which represent a node in MI tree structure
 
    type Variable is record
-      Name   : Unbounded_String;
-      Childs : Natural := 0;
-      Nodes  : Nodes_Vectors.Vector;
+      Name     : Unbounded_String;
+      Childs   : Natural := 0;
+      Nodes    : Nodes_Vectors.Vector;
+      Var_Type : Unbounded_String;
    end record;
    --  Represent variable
 
