@@ -69,8 +69,7 @@ private
       Name : String) is null;
 
    overriding function Get_Type_Name
-     (Self        : not null access GVD_Ada_Finalization_Type;
-      Unused_Lang : Language.Language_Access)
+     (Self : not null access GVD_Ada_Finalization_Type)
       return String is (To_String (Self.Name));
 
    function Create_Controlled return GVD_Type_Holder;

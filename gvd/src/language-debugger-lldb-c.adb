@@ -447,7 +447,7 @@ package body Language.Debugger.Lldb.C is
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Result;
       R.Get_Type.Set_Type_Name
-        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+        (Get_Type_Info (Lang.Get_Debugger, Entity, Type_Str));
 
       --  Then parse the dimensions.
       Num_Dim := 0;
@@ -1015,8 +1015,9 @@ package body Language.Debugger.Lldb.C is
          --  from the general Type_Str (see  void (*field[2])(int a))
 
          Result.Get_Type.Set_Type_Name
-           (Unknown_Type_Prefix & Entity & ASCII.LF &
-              Type_Str (Type_Str'First .. Index - 1));
+           (Get_Type_Info
+              (Lang.Get_Debugger, Entity,
+               Type_Str (Type_Str'First .. Index - 1)));
 
       --  An array type ?
 

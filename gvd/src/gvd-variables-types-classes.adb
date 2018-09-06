@@ -236,15 +236,14 @@ package body GVD.Variables.Types.Classes is
    -------------------
 
    overriding function Get_Type_Name
-     (Self : not null access GVD_Class_Type;
-      Lang : Language.Language_Access)
+     (Self : not null access GVD_Class_Type)
       return String is
    begin
       if Self.Child.Data /= null then
-         return Self.Child.Get_Type.Get_Type_Name (Lang);
+         return Self.Child.Get_Type.Get_Type_Name;
       else
          return GVD.Variables.Types.Get_Type_Name
-           (GVD_Generic_Type_Access (Self), Lang);
+           (GVD_Generic_Type_Access (Self));
       end if;
    end Get_Type_Name;
 

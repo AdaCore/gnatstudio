@@ -48,7 +48,7 @@ package body Parse_Support is
       begin
          Put_Line
            ((1 .. Indent => ' ') & Name & ": "
-            & Entity.Get_Type.Get_Type_Name (Language_Access (Lang))
+            & Entity.Get_Type.Get_Type_Name
             & " := " & Entity.Get_Type.Get_Simple_Value
             & " [" & Entity.Get_Type.Get_Type_Descr & "]");
 

@@ -78,8 +78,7 @@ package body GVD.Variables.Types.Repeats is
    -------------------
 
    overriding function Get_Type_Name
-     (Self : not null access GVD_Repeat_Type;
-      Lang : Language.Language_Access)
+     (Self : not null access GVD_Repeat_Type)
       return String is
    begin
       --  So that we display  "(record) <repeat 11 times>", and not
@@ -88,7 +87,7 @@ package body GVD.Variables.Types.Repeats is
       if Self.Value.Data = null then
          return "";
       else
-         return Self.Value.Get_Type.Get_Type_Name (Lang);
+         return Self.Value.Get_Type.Get_Type_Name;
       end if;
    end Get_Type_Name;
 

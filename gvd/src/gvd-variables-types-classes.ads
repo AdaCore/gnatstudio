@@ -112,8 +112,7 @@ private
       Name : String);
 
    overriding function Get_Type_Name
-     (Self : not null access GVD_Class_Type;
-      Lang : Language.Language_Access)
+     (Self : not null access GVD_Class_Type)
       return String;
 
    overriding function Get_Advanced_Value

@@ -138,8 +138,7 @@ package GVD.Variables.Types is
      (Self : not null access GVD_Generic_Type;
       Name : String);
    function Get_Type_Name
-     (Self : not null access GVD_Generic_Type;
-      Lang : Language.Language_Access)
+     (Self : not null access GVD_Generic_Type)
       return String;
    --  Return the type of Item.
    --  If the type has not been evaluated yet (lazy evaluation), this is done
@@ -213,10 +212,6 @@ package GVD.Variables.Types is
    ---------------
    -- Constants --
    ---------------
-
-   Unknown_Type_Prefix : constant String := "???";
-   --  Prefix to indicate that a type has not been parsed yet, and needs some
-   --  more parsing.
 
    Line_Spacing : constant Glib.Gint := 1;
    --  Space between lines in the display of items in a pixmap.

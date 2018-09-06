@@ -1127,7 +1127,7 @@ package body GVD.Variables.View is
          T : constant String :=
            (if Entity = Empty_GVD_Type_Holder
             then ""
-            else Entity.Get_Type.Get_Type_Name (Lang));
+            else Entity.Get_Type.Get_Type_Name);
       begin
          if T'Length = 0 then
             return "";

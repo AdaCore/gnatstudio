@@ -235,10 +235,9 @@ package body Debugger.Base_Gdb.Ada is
             elsif Looking_At (Type_Str, Index, "access ") then
                Result := New_Access_Type;
 
-               --  Use the result of "whatis" so as to get a more interesting
-               --  information
+               --  Try to retrieve the type name and not the type description
                Result.Get_Type.Set_Type_Name
-                 (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+                 (Get_Type_Info (Lang.Get_Debugger, Entity, Type_Str));
             else
                raise Unexpected_Type;
             end if;
@@ -418,11 +417,10 @@ package body Debugger.Base_Gdb.Ada is
             Skip_To_Char (Type_Str, Index, ')');
             Result := New_Enum_Type;
 
-            --  Get the result of "whatis" so as to get a more concise
-            --  information.
+            --  Try to retrieve the type name and not the type description
             Result.Get_Type.Set_Type_Name
-              (Unknown_Type_Prefix & Entity
-               & ASCII.LF & Type_Str (Start .. Index));
+              (Get_Type_Info
+                 (Lang.Get_Debugger, Entity, Type_Str (Start .. Index)));
             Index := Index + 1;
 
          --  A type we do not expect
@@ -521,7 +519,7 @@ package body Debugger.Base_Gdb.Ada is
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Result;
       R.Get_Type.Set_Type_Name
-        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+        (Get_Type_Info (Lang.Get_Debugger, Entity, Type_Str));
 
       --  Then parse the dimensions
 
@@ -648,9 +646,10 @@ package body Debugger.Base_Gdb.Ada is
       then
          G := New_Access_Type;
          G.Get_Type.Set_Type_Name
-           (Unknown_Type_Prefix &
-              Array_Item_Name (Lang, Entity, "0") &
-              ASCII.LF & "array");
+           (Get_Type_Info
+              (Lang.Get_Debugger,
+               Array_Item_Name (Lang, Entity, "0"),
+               "array"));
          GVD_Array_Type_Access (R.Get_Type).Set_Item_Type (New_Access_Type);
 
       else
@@ -790,7 +789,7 @@ package body Debugger.Base_Gdb.Ada is
       R := Result;
 
       GVD_Record_Type_Access (R.Get_Type).Set_Type_Name
-        (Unknown_Type_Prefix & Entity & ASCII.LF & Type_Str);
+        (Get_Type_Info (Lang.Get_Debugger, Entity, Type_Str));
 
       --  Now parse all the fields
 

@@ -67,8 +67,7 @@ private
      (Self : not null access GVD_Repeat_Type) return String;
 
    overriding function Get_Type_Name
-     (Self    : not null access GVD_Repeat_Type;
-      Lang    : Language.Language_Access) return String;
+     (Self : not null access GVD_Repeat_Type) return String;
 
    overriding procedure Clone
      (Self : not null access GVD_Repeat_Type;

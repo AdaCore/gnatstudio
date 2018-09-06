@@ -19,11 +19,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Glib.Convert; use Glib.Convert;
 
-with Debugger;          use Debugger;
-with Language.Debugger; use Language.Debugger;
-
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
-
 package body GVD.Variables.Types is
 
    GVD_Type_Holder_GType : Glib.GType := Glib.GType_None;
@@ -183,40 +178,10 @@ package body GVD.Variables.Types is
    -------------------
 
    function Get_Type_Name
-     (Self    : not null access GVD_Generic_Type;
-      Lang    : Language.Language_Access)
-     return String is
+     (Self    : not null access GVD_Generic_Type)
+      return String is
    begin
-      if Self.Type_Name = Null_Unbounded_String then
-         return "";
-
-      --  Lazy evaluation ?
-      elsif Starts_With (To_String (Self.Type_Name), Unknown_Type_Prefix) then
-         declare
-            Entity_Start, Default_Start : Positive;
-            Debugger : constant Debugger_Access :=
-              Get_Debugger (Language_Debugger_Access (Lang));
-         begin
-            Entity_Start := Unknown_Type_Prefix'Length + 1;
-
-            Default_Start := Entity_Start;
-            while Default_Start < Length (Self.Type_Name)
-              and then Element (Self.Type_Name, Default_Start) /= ASCII.LF
-            loop
-               Default_Start := Default_Start + 1;
-            end loop;
-
-            Self.Set_Type_Name
-              (Get_Type_Info
-                 (Debugger,
-                  Slice (Self.Type_Name, Entity_Start, Default_Start - 1),
-                  Slice (Self.Type_Name,
-                    Default_Start + 1, Length (Self.Type_Name))));
-            return To_String (Self.Type_Name);
-         end;
-      else
-         return To_String (Self.Type_Name);
-      end if;
+      return To_String (Self.Type_Name);
    end Get_Type_Name;
 
    ---------------
