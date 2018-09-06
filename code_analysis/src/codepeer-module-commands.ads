@@ -15,15 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with CodePeer.Module;
+with Commands;
 
-package Commands.CodePeer is
+package CodePeer.Module.Commands is
 
-   type Review_Message_Command is new Root_Command with record
-      Module : Standard.CodePeer.Module.CodePeer_Module_Id;
+   ----------------------------
+   -- Review_Message_Command --
+   ----------------------------
+
+   type Review_Message_Command is
+     new Standard.Commands.Root_Command with record
+      Module : CodePeer.Module.CodePeer_Module_Id;
    end record;
 
    overriding function Execute
-     (Self : access Review_Message_Command) return Command_Return_Type;
+     (Self : access Review_Message_Command)
+      return Standard.Commands.Command_Return_Type;
 
-end Commands.CodePeer;
+end CodePeer.Module.Commands;

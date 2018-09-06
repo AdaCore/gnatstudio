@@ -17,14 +17,15 @@
 
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 
-package body Commands.CodePeer is
+package body CodePeer.Module.Commands is
 
    -------------
    -- Execute --
    -------------
 
    overriding function Execute
-     (Self : access Review_Message_Command) return Command_Return_Type
+     (Self : access Review_Message_Command)
+      return Standard.Commands.Command_Return_Type
    is
       Context  : constant GPS.Kernel.Selection_Context :=
         Self.Module.Kernel.Get_Current_Context;
@@ -41,7 +42,7 @@ package body Commands.CodePeer is
          Self.Module.Review_Messages (Messages);
       end if;
 
-      return Success;
+      return Standard.Commands.Success;
    end Execute;
 
-end Commands.CodePeer;
+end CodePeer.Module.Commands;

@@ -59,11 +59,11 @@ with CodePeer.Message_Review_Dialogs;
 with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
+with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
 with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
 with CodePeer.Single_Message_Review_Dialogs;
-with Commands.CodePeer;
 with Commands;                       use Commands;
 with Code_Analysis_GUI;
 
@@ -1794,7 +1794,7 @@ package body CodePeer.Module is
          GPS.Kernel.Messages.Empty_Message_Flags);
 
       Module.Review_Command :=
-        new Commands.CodePeer.Review_Message_Command'
+        new CodePeer.Module.Commands.Review_Message_Command'
           (Root_Command with Module);
       --  This command is shared for all CodePeer messages.
 
