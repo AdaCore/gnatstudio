@@ -40,6 +40,16 @@ import itp_lib  # noqa
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
+OUTPUT_PARSERS = """
+    output_chopper
+    utf_converter
+    progress_parser
+    job_recorder
+    gnatprove_parser
+    console_writer
+    location_parser
+    end_of_build"""
+
 with open(gnatprove_menus_file, "r") as input_file:
     xml_gnatprove_menus = input_file.read()
 
@@ -663,7 +673,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         editor_dialog = "The condition couldn't be verified\n" \
                         + "Would you like to edit the VC file?\n"
 
-        if command.name() == prove_check() and 'vc_file' in extra \
+        if command and command.name() == prove_check() and 'vc_file' in extra \
            and GPS.MDI.yes_no_dialog(editor_dialog):
             if 'editor_cmd' in extra:
                 cmd = extra['editor_cmd']
@@ -1016,7 +1026,8 @@ class GNATProve_Plugin:
     def __init__(self):
         process = GPS.Process("gnatprove -h")
         help_msg = process.get_result()
-        GPS.parse_xml(xml_gnatprove.format(help=help_msg))
+        GPS.parse_xml(xml_gnatprove.format(help=help_msg,
+                                           output_parsers=OUTPUT_PARSERS))
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
 
     def show_report(self):

@@ -271,13 +271,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -297,13 +291,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-U</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -324,13 +312,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>%fp</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -349,13 +331,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -374,13 +350,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -397,13 +367,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -423,13 +387,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-U</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -448,13 +406,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-U</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -475,13 +427,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>%fp</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -500,13 +446,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>%fp</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -525,13 +465,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--level=0</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -549,13 +483,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -575,13 +503,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--limit-line=%f:%l</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -599,13 +521,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--limit-line=%f:%l</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -624,13 +540,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--level=0</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -648,13 +558,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -699,13 +603,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--level=0</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
 
@@ -722,13 +620,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         gnatprove_parser
-         console_writer
-         location_parser
-         end_of_build
+         {output_parsers}
        </output-parsers>
     </target>
   </GNATPROVE>
