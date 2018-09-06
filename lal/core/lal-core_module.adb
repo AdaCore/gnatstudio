@@ -77,7 +77,7 @@ package body LAL.Core_Module is
       Value := GNATCOLL.Python.PyInt_FromSize_t (Interfaces.C.size_t (Int));
       Python_Callback_Data'Class (Args).Set_Nth_Arg (1, Value);
 
-      Args.Execute_Command ("libadalang.AnalysisUnit._wrap");
+      Args.Execute_Command ("lal_utils._wrap_analysis_unit");
       Data.Set_Return_Value (Class_Instance'(Args.Return_Value));
    end Get_Analysis_Unit_Shell;
 

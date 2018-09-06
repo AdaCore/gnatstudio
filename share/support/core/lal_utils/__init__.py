@@ -1,5 +1,7 @@
 import GPS
+import ctypes
 import lal_view
+import libadalang
 
 __all__ = [lal_view]
 
@@ -14,3 +16,8 @@ def node(kind_name, line, column):
                                 x.kind_name == kind_name)
     if results:
         return results[0]
+
+
+def _wrap_analysis_unit(value):
+    c_type = ctypes.cast(value, libadalang.AnalysisUnit._c_type)
+    return libadalang.AnalysisUnit._wrap(c_type)

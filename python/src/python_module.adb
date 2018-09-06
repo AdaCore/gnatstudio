@@ -387,9 +387,9 @@ package body Python_Module is
          Script : constant Scripting_Language :=
            Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       begin
-         --  Now we are ready to import libadalang
+         --  Now we are ready to import lal_utils (and libadalang)
          Script.Execute_Command
-           (CL           => Create ("import libadalang"),
+           (CL           => Create ("import lal_utils"),
             Hide_Output  => True,
             Errors       => Errors);
 
