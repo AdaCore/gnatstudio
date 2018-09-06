@@ -1244,7 +1244,7 @@ package body CodePeer.Module is
                   Code_Analysis.File_Maps.Element (Position);
 
       begin
-         Editors.Hide_Annotations (Context.Module, File);
+         Editors.Hide_Annotations (Context.Module.all, File);
       end Process_File;
 
       ---------------------
@@ -1353,7 +1353,7 @@ package body CodePeer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Editors.Hide_Annotations (Context.Module, Context.File);
+      Editors.Hide_Annotations (Context.Module.all, Context.File);
 
    exception
       when E : others =>

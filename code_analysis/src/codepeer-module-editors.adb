@@ -50,7 +50,7 @@ package body CodePeer.Module.Editors is
    ----------------------
 
    procedure Hide_Annotations
-     (Self : access Module_Id_Record'Class;
+     (Self : in out Module_Id_Record'Class;
       File : Code_Analysis.File_Access)
    is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
@@ -118,7 +118,7 @@ package body CodePeer.Module.Editors is
          Project_Node := Module.Tree.Element (Project);
 
          if Project_Node.Files.Contains (File) then
-            Hide_Annotations (Module, Project_Node.Files.Element (File));
+            Hide_Annotations (Module.all, Project_Node.Files.Element (File));
          end if;
       end if;
    end Execute;

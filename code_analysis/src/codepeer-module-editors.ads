@@ -20,7 +20,7 @@
 private package CodePeer.Module.Editors is
 
    procedure Hide_Annotations
-     (Self : access Module_Id_Record'Class;
+     (Self : in out Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
    --  Hide annotations for the specified file
 
