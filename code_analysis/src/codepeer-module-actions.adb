@@ -22,6 +22,7 @@ with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
 with CodePeer.Module.Bridge;
+with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;
 
 package body CodePeer.Module.Actions is
@@ -30,6 +31,11 @@ package body CodePeer.Module.Actions is
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
    --  Returns path to Inspection_Info.xml file.
+
+   function Is_Show_Hide_Allowed
+     (Module  : CodePeer.Module.CodePeer_Module_Id;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Returns True when show/hide annotations is allowed.
 
    -------------
    -- Execute --
@@ -511,6 +517,156 @@ package body CodePeer.Module.Actions is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Hide_Annotations_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
+         declare
+            Project_Node : constant Code_Analysis.Project_Access :=
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree, Project_Information (Context.Context));
+            File_Node    : constant Code_Analysis.File_Access :=
+              Code_Analysis.Get_Or_Create
+                (Project_Node, File_Information (Context.Context));
+
+         begin
+            CodePeer.Module.Editors.Hide_Annotations
+              (Self.Module.all, File_Node);
+         end;
+      end if;
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Show_Annotations_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
+         declare
+            Project_Node : constant Code_Analysis.Project_Access :=
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree, Project_Information (Context.Context));
+            File_Node    : constant Code_Analysis.File_Access :=
+              Code_Analysis.Get_Or_Create
+                (Project_Node, File_Information (Context.Context));
+
+         begin
+            CodePeer.Module.Editors.Show_Annotations
+              (Self.Module.all, File_Node);
+         end;
+      end if;
+
+      return Success;
+   end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Hide_Annotations_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      if not Is_Show_Hide_Allowed (Filter.Module, Context) then
+         return False;
+      end if;
+
+      declare
+         use type GPS.Editors.Editor_Buffer'Class;
+
+         Project_Node    : constant Code_Analysis.Project_Access :=
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree, Project_Information (Context));
+         File_Node       : constant Code_Analysis.File_Access :=
+           Code_Analysis.Get_Or_Create
+             (Project_Node, File_Information (Context));
+         Subprogram_Node : Code_Analysis.Subprogram_Access;
+         Subprogram_Data : CodePeer.Subprogram_Data_Access;
+         Kernel          : constant GPS.Kernel.Kernel_Handle :=
+           GPS.Kernel.Get_Kernel (Context);
+         Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
+           Kernel.Get_Buffer_Factory.Get
+             (File_Node.Name, False, False, False);
+
+      begin
+         if not File_Node.Subprograms.Is_Empty then
+            Subprogram_Node :=
+              Code_Analysis.Subprogram_Maps.Element
+                (File_Node.Subprograms.First);
+            Subprogram_Data :=
+              CodePeer.Subprogram_Data_Access
+                (Subprogram_Node.Analysis_Data.CodePeer_Data);
+
+            if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+               if not Subprogram_Data.Mark.Is_Empty then
+                  return True;
+               end if;
+            end if;
+         end if;
+      end;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Show_Annotations_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      if not Is_Show_Hide_Allowed (Filter.Module, Context) then
+         return False;
+      end if;
+
+      declare
+         use type GPS.Editors.Editor_Buffer'Class;
+
+         Project_Node    : constant Code_Analysis.Project_Access :=
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree, Project_Information (Context));
+         File_Node       : constant Code_Analysis.File_Access :=
+           Code_Analysis.Get_Or_Create
+             (Project_Node, File_Information (Context));
+         Subprogram_Node : Code_Analysis.Subprogram_Access;
+         Subprogram_Data : CodePeer.Subprogram_Data_Access;
+         Kernel          : constant GPS.Kernel.Kernel_Handle :=
+           GPS.Kernel.Get_Kernel (Context);
+         Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
+           Kernel.Get_Buffer_Factory.Get
+             (File_Node.Name, False, False, False);
+
+      begin
+         if not File_Node.Subprograms.Is_Empty then
+            Subprogram_Node :=
+              Code_Analysis.Subprogram_Maps.Element
+                (File_Node.Subprograms.First);
+            Subprogram_Data :=
+              CodePeer.Subprogram_Data_Access
+                (Subprogram_Node.Analysis_Data.CodePeer_Data);
+
+            if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+               if Subprogram_Data.Mark.Is_Empty then
+                  return True;
+               end if;
+            end if;
+         end if;
+      end;
+
+      return False;
+   end Filter_Matches_Primitive;
+
    --------------------------
    -- Inspection_Info_File --
    --------------------------
@@ -523,6 +679,22 @@ package body CodePeer.Module.Actions is
         Codepeer_Output_Directory
           (Kernel).Create_From_Dir ("Inspection_Info.xml");
    end Inspection_Info_File;
+
+   --------------------------
+   -- Is_Show_Hide_Allowed --
+   --------------------------
+
+   function Is_Show_Hide_Allowed
+     (Module  : CodePeer.Module.CodePeer_Module_Id;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      use type Code_Analysis.Code_Analysis_Tree;
+
+   begin
+      return
+        Module.Tree /= null
+          and then GPS.Kernel.Contexts.Has_File_Information (Context);
+   end Is_Show_Hide_Allowed;
 
    ----------------------
    -- Register_Actions --
@@ -580,6 +752,30 @@ package body CodePeer.Module.Actions is
         (Module.Kernel,
          "codepeer remove xml review",
          new Remove_XML_Review_Command (Module));
+
+      --  Commands for contextual menu
+
+      Register_Action
+        (Kernel   => Module.Kernel,
+         Name     => "show codepeer annotations",
+         Command  => new Show_Annotations_Command (Module),
+         Category => "CodePeer",
+         Filter   => new Is_Show_Annotations_Filter (Module));
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Module.Kernel,
+         Action => "show codepeer annotations",
+         Label  => "CodePeer/Show annotations");
+
+      Register_Action
+        (Kernel   => Module.Kernel,
+         Name     => "hide codepeer annotations",
+         Command  => new Hide_Annotations_Command (Module),
+         Category => "CodePeer",
+         Filter   => new Is_Hide_Annotations_Filter (Module));
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Module.Kernel,
+         Action => "hide codepeer annotations",
+         Label  => "CodePeer/Hide annotations");
    end Register_Actions;
 
 end CodePeer.Module.Actions;

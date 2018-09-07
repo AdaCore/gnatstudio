@@ -27,7 +27,7 @@ private
    use Standard.Commands.Interactive;
 
    type CodePeer_Interactive_Command
-     (Module : access Module_Id_Record'Class) is
+     (Module : not null CodePeer_Module_Id) is
      abstract new Interactive_Command with null record;
 
    type Analyze_Command is new CodePeer_Interactive_Command with null record;
@@ -127,5 +127,35 @@ private
      (Self    : access Remove_XML_Review_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Advanced->Remove XML Code Review" menu item is activated
+
+   type Show_Annotations_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Show_Annotations_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called on "show annotations" item of contextual menu
+
+   type Hide_Annotations_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Hide_Annotations_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called on "hide annotations" item of contextual menu
+
+   type Is_Hide_Annotations_Filter
+     (Module : not null CodePeer.Module.CodePeer_Module_Id) is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Hide_Annotations_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Controls availability of "hide annotaions" contextual menu
+
+   type Is_Show_Annotations_Filter
+     (Module : not null CodePeer.Module.CodePeer_Module_Id) is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Show_Annotations_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Controls availability of "show annotaions" contextual menu
 
 end CodePeer.Module.Actions;

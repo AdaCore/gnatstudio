@@ -35,7 +35,6 @@ with GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
@@ -1716,34 +1715,6 @@ package body CodePeer.Module is
       Kernel.Get_Messages_Container.Register_Filter (Module.Filter);
 
       Editors.Register_Module (Kernel);
-
-      --  Commands for contextual menu
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel   => Kernel,
-         Name     => "show codepeer annotations",
-         Command  =>
-            new CodePeer.Module.Commands.Show_Annotations_Command (Module),
-         Category => "CodePeer",
-         Filter   =>
-            new CodePeer.Module.Commands.Is_Show_Annotations_Filter (Module));
-      GPS.Kernel.Modules.UI.Register_Contextual_Menu
-        (Kernel => Kernel,
-         Action => "show codepeer annotations",
-         Label  => "CodePeer/Show annotations");
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel   => Kernel,
-         Name     => "hide codepeer annotations",
-         Command  =>
-            new CodePeer.Module.Commands.Hide_Annotations_Command (Module),
-         Category => "CodePeer",
-         Filter   =>
-            new CodePeer.Module.Commands.Is_Hide_Annotations_Filter (Module));
-      GPS.Kernel.Modules.UI.Register_Contextual_Menu
-        (Kernel => Kernel,
-         Action => "hide codepeer annotations",
-         Label  => "CodePeer/Hide annotations");
    end Register_Module;
 
    -------------------
