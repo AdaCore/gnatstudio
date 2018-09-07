@@ -667,6 +667,23 @@ package body CodePeer.Module.Actions is
       return False;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Local_Mode_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+
+      Project : constant Project_Type :=
+        GPS.Kernel.Project.Get_Project (Self.Module.Kernel);
+
+   begin
+      return Codepeer_Server_URL (Project) = "";
+   end Filter_Matches_Primitive;
+
    --------------------------
    -- Inspection_Info_File --
    --------------------------
@@ -701,57 +718,87 @@ package body CodePeer.Module.Actions is
    ----------------------
 
    procedure Register_Actions (Module : not null CodePeer_Module_Id) is
+      Is_Local_Mode : constant Action_Filter :=
+        new Is_Local_Mode_Filter (Module);
+
    begin
       Register_Action
-        (Module.Kernel, "codepeer analyze...", new Analyze_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer analyze...",
+         Command => new Analyze_Command (Module),
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer analyze all",
-         new Analyze_All_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer analyze all",
+         Command => new Analyze_All_Command (Module),
+         Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
          Name    => "codepeer analyze file",
          Command => new Analyze_File_Command,
          Filter  =>
            Lookup_Filter (Module.Kernel, "File")
-             and Create (Language => "ada"));
+             and Create (Language => "ada")
+             and Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer analyze file by file",
-         new Analyze_File_By_File_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer analyze file by file",
+         Command => new Analyze_File_By_File_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer display code review",
-         new Display_Code_Review_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer display code review",
+         Command => new Display_Code_Review_Command (Module));
       Register_Action
-        (Module.Kernel, "codepeer display html", new Display_HTML_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer display html",
+         Command => new Display_HTML_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer generate csv",
-         new Generate_CSV_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer generate csv",
+         Command => new Generate_CSV_Command (Module),
+         Filter => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer generate html",
-         new Generate_HTML_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer generate html",
+         Command => new Generate_HTML_Command (Module),
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel, "codepeer generate scil", new Generate_SCIL_Command);
-      Register_Action (Module.Kernel, "codepeer log", new Log_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer generate scil",
+         Command => new Generate_SCIL_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer regenerate report",
-         new Regenerate_Report_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer log",
+         Command => new Log_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel, "codepeer remove lock", new Remove_Lock_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer regenerate report",
+         Command => new Regenerate_Report_Command (Module),
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel, "codepeer remove scil", new Remove_SCIL_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer remove lock",
+         Command => new Remove_Lock_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer remove scil and db",
-         new Remove_SCIL_DB_Command);
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer remove scil",
+         Command => new Remove_SCIL_Command,
+         Filter  => Is_Local_Mode);
       Register_Action
-        (Module.Kernel,
-         "codepeer remove xml review",
-         new Remove_XML_Review_Command (Module));
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer remove scil and db",
+         Command => new Remove_SCIL_DB_Command,
+         Filter  => Is_Local_Mode);
+      Register_Action
+        (Kernel  => Module.Kernel,
+         Name    => "codepeer remove xml review",
+         Command => new Remove_XML_Review_Command (Module),
+         Filter  => Is_Local_Mode);
 
       --  Commands for contextual menu
 

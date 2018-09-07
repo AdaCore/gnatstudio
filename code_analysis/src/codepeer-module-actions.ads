@@ -142,6 +142,10 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called on "hide annotations" item of contextual menu
 
+   -------------
+   -- Filters --
+   -------------
+
    type Is_Hide_Annotations_Filter
      (Module : not null CodePeer.Module.CodePeer_Module_Id) is
      new Action_Filter_Record with null record;
@@ -157,5 +161,13 @@ private
      (Filter  : access Is_Show_Annotations_Filter;
       Context : Selection_Context) return Boolean;
    --  Controls availability of "show annotaions" contextual menu
+
+   type Is_Local_Mode_Filter
+     (Module : not null CodePeer.Module.CodePeer_Module_Id) is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Self    : access Is_Local_Mode_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Controls availability of actions which is possible in local mode only.
 
 end CodePeer.Module.Actions;
