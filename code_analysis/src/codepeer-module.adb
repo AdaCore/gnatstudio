@@ -35,6 +35,7 @@ with GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
@@ -70,7 +71,6 @@ with Code_Analysis_GUI;
 package body CodePeer.Module is
 
    use type Code_Analysis.Code_Analysis_Tree;
-   use type GPS.Editors.Editor_Buffer'Class;
 
    Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
    CodePeer_Subdir : constant Filesystem_String := "codepeer";
@@ -83,14 +83,6 @@ package body CodePeer.Module is
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
-
-   procedure On_Hide_Annotations
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context);
-
-   procedure On_Show_Annotations
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context);
 
    procedure On_Show_Messages
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -605,52 +597,9 @@ package body CodePeer.Module is
               Code_Analysis.Get_Or_Create
                 (Project_Node,
                  GPS.Kernel.Contexts.File_Information (Context));
-            Subprogram_Node : Code_Analysis.Subprogram_Access;
-            Subprogram_Data : CodePeer.Subprogram_Data_Access;
-            Kernel          : constant GPS.Kernel.Kernel_Handle :=
-                                GPS.Kernel.Get_Kernel (Context);
-            Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
-                                Kernel.Get_Buffer_Factory.Get
-                                  (File_Node.Name, False, False, False);
 
          begin
             if not File_Node.Subprograms.Is_Empty then
-               Subprogram_Node :=
-                 Code_Analysis.Subprogram_Maps.Element
-                   (File_Node.Subprograms.First);
-               Subprogram_Data :=
-                 CodePeer.Subprogram_Data_Access
-                   (Subprogram_Node.Analysis_Data.CodePeer_Data);
-
-               if Buffer /= GPS.Editors.Nil_Editor_Buffer then
-                  if not Subprogram_Data.Mark.Is_Empty then
-                     Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
-                     Menu.Append (Item);
-                     Context_CB.Connect
-                       (Item,
-                        Gtk.Menu_Item.Signal_Activate,
-                        Context_CB.To_Marshaller
-                          (On_Hide_Annotations'Access),
-                        Module_Context'
-                          (CodePeer_Module_Id (Factory.Module),
-                           Project_Node,
-                           File_Node));
-
-                  else
-                     Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
-                     Menu.Append (Item);
-                     Context_CB.Connect
-                       (Item,
-                        Gtk.Menu_Item.Signal_Activate,
-                        Context_CB.To_Marshaller
-                          (On_Show_Annotations'Access),
-                        Module_Context'
-                          (CodePeer_Module_Id (Factory.Module),
-                           Project_Node,
-                           File_Node));
-                  end if;
-               end if;
-
                if Module.Filter_Criteria.Files.Contains (File_Node) then
                   Gtk.Menu_Item.Gtk_New (Item, -"Hide messages");
                   Menu.Append (Item);
@@ -1342,24 +1291,6 @@ package body CodePeer.Module is
       return True;
    end Execute;
 
-   -------------------------
-   -- On_Hide_Annotations --
-   -------------------------
-
-   procedure On_Hide_Annotations
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context)
-   is
-      pragma Unreferenced (Item);
-
-   begin
-      Editors.Hide_Annotations (Context.Module.all, Context.File);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Hide_Annotations;
-
    ----------------------
    -- On_Hide_Messages --
    ----------------------
@@ -1451,23 +1382,6 @@ package body CodePeer.Module is
 
       Module.Listener.Set_Cleanup_Mode (False);
    end Execute;
-
-   -------------------------
-   -- On_Show_Annotations --
-   -------------------------
-
-   procedure On_Show_Annotations
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context)
-   is
-      pragma Unreferenced (Item);
-
-   begin
-      Editors.Show_Annotations (Context.Module.all, Context.File);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Show_Annotations;
 
    ----------------------
    -- On_Show_Messages --
@@ -1802,6 +1716,34 @@ package body CodePeer.Module is
       Kernel.Get_Messages_Container.Register_Filter (Module.Filter);
 
       Editors.Register_Module (Kernel);
+
+      --  Commands for contextual menu
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel   => Kernel,
+         Name     => "show codepeer annotations",
+         Command  =>
+            new CodePeer.Module.Commands.Show_Annotations_Command (Module),
+         Category => "CodePeer",
+         Filter   =>
+            new CodePeer.Module.Commands.Is_Show_Annotations_Filter (Module));
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Kernel,
+         Action => "show codepeer annotations",
+         Label  => "CodePeer/Show annotations");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel   => Kernel,
+         Name     => "hide codepeer annotations",
+         Command  =>
+            new CodePeer.Module.Commands.Hide_Annotations_Command (Module),
+         Category => "CodePeer",
+         Filter   =>
+            new CodePeer.Module.Commands.Is_Hide_Annotations_Filter (Module));
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Kernel,
+         Action => "hide codepeer annotations",
+         Label  => "CodePeer/Hide annotations");
    end Register_Module;
 
    -------------------

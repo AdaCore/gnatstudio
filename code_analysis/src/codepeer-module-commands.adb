@@ -17,7 +17,43 @@
 
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 
+with CodePeer.Module.Editors;
+
 package body CodePeer.Module.Commands is
+
+   function Is_Show_Hide_Allowed
+     (Module  : CodePeer.Module.CodePeer_Module_Id;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Returns True when show/hide annotations is allowed.
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Hide_Annotations_Command;
+      Context : Standard.Commands.Interactive.Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type is
+   begin
+      if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
+         declare
+            Project_Node    : constant Code_Analysis.Project_Access :=
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree,
+                 GPS.Kernel.Contexts.Project_Information (Context.Context));
+            File_Node       : constant Code_Analysis.File_Access :=
+              Code_Analysis.Get_Or_Create
+                (Project_Node,
+                 GPS.Kernel.Contexts.File_Information (Context.Context));
+
+         begin
+            CodePeer.Module.Editors.Hide_Annotations
+              (Self.Module.all, File_Node);
+         end;
+      end if;
+
+      return Standard.Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -44,5 +80,152 @@ package body CodePeer.Module.Commands is
 
       return Standard.Commands.Success;
    end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Show_Annotations_Command;
+      Context : Standard.Commands.Interactive.Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type is
+   begin
+      if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
+         declare
+            Project_Node    : constant Code_Analysis.Project_Access :=
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree,
+                 GPS.Kernel.Contexts.Project_Information (Context.Context));
+            File_Node       : constant Code_Analysis.File_Access :=
+              Code_Analysis.Get_Or_Create
+                (Project_Node,
+                 GPS.Kernel.Contexts.File_Information (Context.Context));
+
+         begin
+            CodePeer.Module.Editors.Show_Annotations
+              (Self.Module.all, File_Node);
+         end;
+      end if;
+
+      return Standard.Commands.Success;
+   end Execute;
+
+   --------------------------
+   -- Is_Show_Hide_Allowed --
+   --------------------------
+
+   function Is_Show_Hide_Allowed
+     (Module  : CodePeer.Module.CodePeer_Module_Id;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      use type Code_Analysis.Code_Analysis_Tree;
+
+   begin
+      return
+        Module.Tree /= null
+          and then GPS.Kernel.Contexts.Has_File_Information (Context);
+   end Is_Show_Hide_Allowed;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Hide_Annotations_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      if not Is_Show_Hide_Allowed (Filter.Module, Context) then
+         return False;
+      end if;
+
+      declare
+         use type GPS.Editors.Editor_Buffer'Class;
+
+         Project_Node    : constant Code_Analysis.Project_Access :=
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree,
+              GPS.Kernel.Contexts.Project_Information (Context));
+         File_Node       : constant Code_Analysis.File_Access :=
+           Code_Analysis.Get_Or_Create
+             (Project_Node,
+              GPS.Kernel.Contexts.File_Information (Context));
+         Subprogram_Node : Code_Analysis.Subprogram_Access;
+         Subprogram_Data : CodePeer.Subprogram_Data_Access;
+         Kernel          : constant GPS.Kernel.Kernel_Handle :=
+           GPS.Kernel.Get_Kernel (Context);
+         Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
+           Kernel.Get_Buffer_Factory.Get
+             (File_Node.Name, False, False, False);
+
+      begin
+         if not File_Node.Subprograms.Is_Empty then
+            Subprogram_Node :=
+              Code_Analysis.Subprogram_Maps.Element
+                (File_Node.Subprograms.First);
+            Subprogram_Data :=
+              CodePeer.Subprogram_Data_Access
+                (Subprogram_Node.Analysis_Data.CodePeer_Data);
+
+            if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+               if not Subprogram_Data.Mark.Is_Empty then
+                  return True;
+               end if;
+            end if;
+         end if;
+      end;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Show_Annotations_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      if not Is_Show_Hide_Allowed (Filter.Module, Context) then
+         return False;
+      end if;
+
+      declare
+         use type GPS.Editors.Editor_Buffer'Class;
+
+         Project_Node    : constant Code_Analysis.Project_Access :=
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree,
+              GPS.Kernel.Contexts.Project_Information (Context));
+         File_Node       : constant Code_Analysis.File_Access :=
+           Code_Analysis.Get_Or_Create
+             (Project_Node,
+              GPS.Kernel.Contexts.File_Information (Context));
+         Subprogram_Node : Code_Analysis.Subprogram_Access;
+         Subprogram_Data : CodePeer.Subprogram_Data_Access;
+         Kernel          : constant GPS.Kernel.Kernel_Handle :=
+           GPS.Kernel.Get_Kernel (Context);
+         Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
+           Kernel.Get_Buffer_Factory.Get
+             (File_Node.Name, False, False, False);
+
+      begin
+         if not File_Node.Subprograms.Is_Empty then
+            Subprogram_Node :=
+              Code_Analysis.Subprogram_Maps.Element
+                (File_Node.Subprograms.First);
+            Subprogram_Data :=
+              CodePeer.Subprogram_Data_Access
+                (Subprogram_Node.Analysis_Data.CodePeer_Data);
+
+            if Buffer /= GPS.Editors.Nil_Editor_Buffer then
+               if Subprogram_Data.Mark.Is_Empty then
+                  return True;
+               end if;
+            end if;
+         end if;
+      end;
+
+      return False;
+   end Filter_Matches_Primitive;
 
 end CodePeer.Module.Commands;
