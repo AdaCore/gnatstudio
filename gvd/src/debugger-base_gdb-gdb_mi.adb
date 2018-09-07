@@ -4707,106 +4707,158 @@ package body Debugger.Base_Gdb.Gdb_MI is
       J         : Integer := Str'First;
       New_Line  : Boolean := True;
       Ret_Value : Boolean := False;
+      First_Log : Boolean := True;
+      Log       : Unbounded_String;
+      Target    : Unbounded_String;
+      Error     : Unbounded_String;
 
+      procedure Parse_And_Escape_String (Res : in out Unbounded_String);
+      --  Parse the debugger output and return when '"' is found.
+      --  The parsed output will be append to Res
+
+      procedure Ignore_Line;
+      --  Ignore all the character until a EOL character
+
+      function Lookup (S : String) return Boolean;
+      --  Check if the next characters matched S. If true consume S.
+
+      -----------------------------
+      -- Parse_And_Escape_String --
+      -----------------------------
+
+      procedure Parse_And_Escape_String (Res : in out Unbounded_String) is
+      begin
+         while J <= Str'Last and then Str (J) /= '"' loop
+            if Str (J) /= '\'
+              or else J = Str'Last
+            then
+               Append (Res, Str (J));
+            else
+               J := J + 1;
+               case Str (J) is
+                  when '\' | '"' =>
+                     Append (Res, Str (J));
+                  when 'n' | 'r' =>
+                     Append (Res, ASCII.LF);
+                  when 't' =>
+                     Append (Res, ASCII.HT);
+                  when others =>
+                     Append (Res, Str (J - 1 .. J));
+               end case;
+            end if;
+
+            J := J + 1;
+         end loop;
+      end Parse_And_Escape_String;
+
+      -----------------
+      -- Ignore_Line --
+      -----------------
+
+      procedure Ignore_Line is
+      begin
+         while J <= Str'Last and then Str (J) /= ASCII.LF loop
+            J := J + 1;
+         end loop;
+      end Ignore_Line;
+
+      ------------
+      -- Lookup --
+      ------------
+
+      function Lookup (S : String) return Boolean is
+      begin
+         if J + S'Length - 1 < Str'Last
+           and then Str (J .. J + S'Length - 1) = S
+         then
+            J := J + S'Length;
+            return True;
+         end if;
+         return False;
+      end Lookup;
    begin
+      --  We need to parse the 3 following streams:
+      --  "~" string-output: The console output stream contains text that
+      --  should be displayed in the CLI console window. It contains the
+      --  textual responses to CLI commands.
+      --  "@" string-output: The target output stream contains any textual
+      --  output from the running target.
+      --  "&" string-output: The log stream contains debugging messages being
+      --  produced by GDB's internals.
+
       while J <= Str'Last loop
-         if New_Line and then J + 2 < Str'Last then
+         if Str (J) = ASCII.LF then
+            --  Suppress all the ASCII.LF, the multilines are already done
+            --  via \n and \r
+            null;
+         elsif New_Line and then J + 2 < Str'Last then
             if Str (J) = '~'
               and then Str (J + 1) = '"'
             then
                --  Replace ~"...." by ....
-
                J := J + 2;
-
-               while J <= Str'Last and then Str (J) /= '"' loop
-                  if Str (J) /= '\'
-                    or else J = Str'Last
-                  then
-                     Append (Result, Str (J));
-                  else
-                     J := J + 1;
-                     case Str (J) is
-                        when '\' | '"' =>
-                           Append (Result, Str (J));
-                        when 'n' | 'r' =>
-                           if J < Str'Last
-                             and then Str (J + 1) /= '"'
-                           then
-                              Append (Result, ASCII.LF);
-                           end if;
-
-                        when others =>
-                           Append (Result, Str (J - 1 .. J));
-                     end case;
-                  end if;
-
-                  J := J + 1;
-               end loop;
+               Parse_And_Escape_String (Result);
 
             elsif Str (J) = '&'
               and then Str (J + 1) = '"'
             then
-               --  Strip &"..."
+               --  & indicates a log output: we need to keep it to retrieve
+               --  the error messages coming from the CLI commands
                J := J + 2;
+               Parse_And_Escape_String (Log);
+               if First_Log then
+                  --  The first log contains the command, ignore it
+                  First_Log := False;
+                  Log := Null_Unbounded_String;
+               end if;
 
-               while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                  J := J + 1;
-               end loop;
+            elsif Str (J) = '@'
+              and then Str (J + 1) = '"'
+            then
+               --  We need to parse the target stream: however this is unused
+               --  for now.
+               J := J + 2;
+               Parse_And_Escape_String (Target);
 
             elsif Mode in User | Visible
-              and then J + 4 <= Str'Last
-              and then Str (J .. J + 4) = "^done"
+              and then Lookup ("^done")
             then
-               --  Strip "^done[,]", keep the rest (result expected by user)
-                  J := J + 5;
+               declare
+                  Added : Boolean := False;
+               begin
+                  --  If we have extra information after the ^done then
+                  --  we need to skip the next character which will be ','
+                  --  and we need to add a new line.
+                  while J <= Str'Last and then Str (J) /= ASCII.LF loop
+                     if not Added then
+                        Added := True;
+                     else
+                        Append (Result, Str (J));
+                     end if;
+                     J := J + 1;
+                  end loop;
 
+                  if Added then
+                     Append (Result, ASCII.LF);
+                  end if;
+               end;
             elsif Str (J) in '^' | '*' | '=' then
                --  Strip [^*=]...
                J := J + 1;
 
-               if J + 12 < Str'Last
-                 and then Str (J .. J + 10) = "error,msg="""
-               then
-                  J := J + 11;
-
-                  while J <= Str'Last and then Str (J) /= '"' loop
-                     if Str (J) /= '\'
-                       or else J = Str'Last
-                     then
-                        Append (Result, Str (J));
-                     else
-                        J := J + 1;
-                        case Str (J) is
-                           when '\' | '"' =>
-                              Append (Result, Str (J));
-                           when 'n' | 'r' =>
-                              if J < Str'Last
-                                and then Str (J + 1) /= '"'
-                              then
-                                 Append (Result, ASCII.LF);
-                              end if;
-
-                           when others =>
-                              Append (Result, Str (J - 1 .. J));
-                        end case;
-                     end if;
-
-                     J := J + 1;
-                  end loop;
+               if Lookup ("error,msg=""") then
+                  Parse_And_Escape_String (Error);
+                  --  There is no '\n' at the end of the error message
+                  Append (Error, ASCII.LF);
+                  Ignore_Line;
 
                else
-                  if J + 6 < Str'Last
-                    and then Str (J .. J + 6) = "stopped"
-                  then
+                  if Lookup ("stopped") then
                      --  Display info to the user
                      Append (Result, "[program stopped");
-                     J := J + 7;
 
-                     if J + 8 < Str'Last
-                       and then Str (J .. J + 8) = ",reason="""
-                     then
+                     if Lookup (",reason=""") then
                         Append (Result, ": ");
-                        J := J + 9;
 
                         while J <= Str'Last and then Str (J) /= '"' loop
                            Append (Result, Str (J));
@@ -4819,11 +4871,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
                      loop
                         --  looking for a return value
                         if not Ret_Value
-                          and then J + 16 < Str'Last
-                          and then Str (J .. J + 14) = "gdb-result-var="
+                          and then Lookup ("gdb-result-var=")
                         then
                            Append (Result, "Return value: ");
-                           J := J + 16;
                            while J <= Str'Last and then Str (J) /= '"' loop
                               Append (Result, Str (J));
                               J := J + 1;
@@ -4834,10 +4884,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         end if;
 
                         if Ret_Value
-                          and then J + 14 < Str'Last
-                          and then Str (J .. J + 12) = "return-value="
+                          and then Lookup ("return-value=")
                         then
-                           J := J + 14;
                            while J <= Str'Last and then Str (J) /= '"' loop
                               Append (Result, Str (J));
                               J := J + 1;
@@ -4851,62 +4899,33 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         J := J + 1;
                      end loop;
 
-                  elsif J + 6 < Str'Last
-                    and then Str (J - 1) = '*'
-                    and then Str (J .. J + 6) = "running"
+                  elsif Str (J - 1) = '*'
+                    and then Lookup ("running")
                   then
                      --  Display info to the user
                      Append (Result, "[program running");
 
-                     J := J + 7;
                      while J <= Str'Last and then Str (J) /= ASCII.LF loop
                         Append (Result, Str (J));
                         J := J + 1;
                      end loop;
                      Append (Result, "]" & ASCII.LF);
 
-                     --  remove "(gdb)" for a running program"
                      J := J + 1;
                   end if;
 
-                  while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                     J := J + 1;
-                  end loop;
+                  Ignore_Line;
                end if;
 
-            elsif J + 14 <= Str'Last
-              and then Str (J .. J + 14) = "Sending packet:"
-            then
-               while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                  J := J + 1;
-               end loop;
+            elsif Lookup ("Sending packet:") then
+               Ignore_Line;
 
-            elsif J + 15 <= Str'Last
-              and then Str (J .. J + 15) = "Packet received:"
-            then
-               while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                  J := J + 1;
-               end loop;
+            elsif Lookup ("Packet received:") then
+               Ignore_Line;
 
             else
                Append (Result, Str (J));
             end if;
-
-         elsif J = Str'Last
-           and then Str (J) = ASCII.LF
-           and then J - 6 >= Str'First
-           and then Str (J - 6 .. J - 1) = "(gdb) "
-         then
-            --  Strip last LF after prompt
-            null;
-
-         elsif J = Str'Last
-           and then Str (J) = ASCII.LF
-           and then J - 2 >= Str'First
-           and then Str (J - 2 .. J - 1) = ">"""
-         then
-            --  Strip last LF after prompt
-            null;
 
          else
             Append (Result, Str (J));
@@ -4915,6 +4934,18 @@ package body Debugger.Base_Gdb.Gdb_MI is
          New_Line := J <= Str'Last and then Str (J) = ASCII.LF;
          J := J + 1;
       end loop;
+
+      --  Add the error messages
+      if not First_Log then
+         --  We priotorize the Log stream over the console stream for the
+         --  error messages because of the multiline commands using a mix
+         --  of CLI and MI commands.
+         Append (Log, Result);
+         Result := Log;
+      elsif Error /= Null_Unbounded_String then
+         Append (Error, Result);
+         Result := Error;
+      end if;
    end Filter_Output;
 
    ---------------------
