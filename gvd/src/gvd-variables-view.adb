@@ -58,6 +58,7 @@ with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
+with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -337,6 +338,13 @@ package body GVD.Variables.View is
      (Filter  : access Is_Variables_View_Focused_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Variable_Single_Selection is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Variable_Single_Selection;
+      Context : Selection_Context) return Boolean;
+   --  True if only one row is selected.
+
    function Display_Value_Select_Dialog is
      new Display_Select_Dialog (Debugger.Value_Format);
 
@@ -357,6 +365,18 @@ package body GVD.Variables.View is
    overriding function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Variables_Collapse_Or_Expand_Command (Is_Collapse : Boolean) is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Variables_Collapse_Or_Expand_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Expand_Next_Layer_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Expand_Next_Layer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  This action should only be called when a single row is selected
 
    function Print_Access_Label_Expansion
      (Context : Selection_Context) return String;
@@ -499,6 +519,32 @@ package body GVD.Variables.View is
       end if;
 
       return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_MAtches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Variable_Single_Selection;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant GVD_Variable_View :=
+               Variable_MDI_Views.Retrieve_View
+                 (Get_Kernel (Context),
+                  Visible_Only => True);
+      Res  : Boolean                    := False;
+   begin
+      if View /= null then
+         declare
+            Selection : constant Gtk_Tree_Selection :=
+              Get_Selection (View.Tree);
+         begin
+            Res := Selection.Count_Selected_Rows = 1;
+         end;
+      end if;
+      return Res;
    end Filter_Matches_Primitive;
 
    ------------
@@ -1649,6 +1695,104 @@ package body GVD.Variables.View is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Variables_Collapse_Or_Expand_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      View   : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
+
+      use Gtk_Tree_Path_List;
+   begin
+      if View /= null then
+         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before their fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  if Command.Is_Collapse then
+                     Dummy := Collapse_Row (View.Tree, Path);
+                  else
+                     Dummy := Expand_Row (View.Tree, Path, False);
+                  end if;
+               end if;
+
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
+         end if;
+         Gtk_Tree_Path_List.Free (List);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Expand_Next_Layer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View   : constant GVD_Variable_View :=
+        Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
+
+      procedure Expand_Children (Parent : Gtk_Tree_Iter);
+
+      procedure Expand_Children (Parent : Gtk_Tree_Iter)
+      is
+         Cur : Gtk_Tree_Iter := Children (Model, Parent);
+      begin
+         Dummy := Expand_Row (View.Tree, Get_Path (Model, Parent), False);
+         while Cur /= Null_Iter loop
+            Expand_Children (Cur);
+            Next (Model, Cur);
+         end loop;
+      end Expand_Children;
+
+      use Gtk_Tree_Path_List;
+   begin
+      if View /= null then
+         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            if G_Iter /= Gtk_Tree_Path_List.Null_List then
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  Expand_Children (Get_Iter (Model, Path));
+               end if;
+
+               Path_Free (Path);
+            end if;
+         end if;
+         Gtk_Tree_Path_List.Free (List);
+      end if;
+      return Commands.Success;
+   end Execute;
+
    -----------------
    -- Create_Menu --
    -----------------
@@ -1733,6 +1877,7 @@ package body GVD.Variables.View is
       Not_Connamd_Filter      : Action_Filter;
       Access_Filter           : Action_Filter;
       View_Focused_Filter     : Action_Filter;
+      Selection_Filter        : Action_Filter;
       Command                 : Interactive_Command_Access;
    begin
       Variable_Views.Register_Module (Kernel);
@@ -1868,6 +2013,7 @@ package body GVD.Variables.View is
          Filter    => Debugger_Stopped_Filter and Access_Filter and
            Printable_Var_Filter,
          Category  => "Debug");
+
       Register_Contextual_Menu
         (Kernel => Kernel,
          Label  => "Debug/Print %C",
@@ -1883,6 +2029,30 @@ package body GVD.Variables.View is
            "Set a new value for the selected variable.",
          Icon_Name   => "gps-rename-symbolic",
          Category    => "Debug");
+
+      Register_Action
+        (Kernel, "variables view collapse selected",
+         Command     => new Variables_Collapse_Or_Expand_Command (True),
+         Description => -"Collapse the selected nodes in the variables tree",
+         Icon_Name   => "gps-collapse-all-symbolic",
+         Category    => "Debug");
+
+      Register_Action
+        (Kernel, "variables view expand selected",
+         Command     => new Variables_Collapse_Or_Expand_Command (False),
+         Description => -"Expand the selected nodes in the variables tree",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Category    => "Debug");
+
+      Selection_Filter := new Variable_Single_Selection;
+      Register_Action
+        (Kernel, "variables view expand next layer",
+         Command     => new Expand_Next_Layer_Command,
+         Description =>
+           -"Expand the children of all the selected nodes",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Category    => "Debug",
+         Filter      => Selection_Filter);
 
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => -"Show types");

@@ -631,6 +631,10 @@
       <button action="debug tree undisplay"/>
       <button action="debug tree set value"/>
       <separator/>
+      <button action="variables view expand selected"/>
+      <button action="variables view collapse selected"/>
+      <button action="variables view expand next layer"/>
+      <separator/>
       <button action="debug tree display local variables"/>
       <button action="debug tree display arguments"/>
    </toolbar>
