@@ -41,6 +41,10 @@ private package CodePeer.Bridge.Inspection_Readers.Base is
       Name  : String);
    --  Process end of XML element
 
+   function Ignore_Element
+     (Self : in out Base_Inspection_Reader'Class) return Boolean;
+   --  Returns True when element must be ignored.
+
    overriding function Get_Code_Analysis_Tree
      (Self : Base_Inspection_Reader) return Code_Analysis.Code_Analysis_Tree;
    --  Returns build code analisys tree

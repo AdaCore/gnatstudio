@@ -14,6 +14,12 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with Ada.Strings.Fixed;
+
+with Basic_Types;
+with GPS.Kernel.Messages.Simple;
+
 with CodePeer.Bridge.Reader_Utilities;
 
 package body CodePeer.Bridge.Inspection_Readers.V6 is
@@ -83,6 +89,25 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    end End_Document;
 
    -----------------
+   -- End_Element --
+   -----------------
+
+   overriding procedure End_Element
+     (Self  : in out Inspection_Reader_V6;
+      Name  : String) is
+   begin
+      if Self.Ignore_Element then
+         Base.Base_Inspection_Reader (Self).End_Element (Name);
+
+      elsif Name = "backtrace" then
+         Self.Backtrace_Mode := False;
+
+      else
+         Base.Base_Inspection_Reader (Self).End_Element (Name);
+      end if;
+   end End_Element;
+
+   -----------------
    -- End_Message --
    -----------------
 
@@ -101,6 +126,65 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
    begin
       return Ada.Containers.Hash_Type (Item.Message.Id);
    end Hash;
+
+   -------------------
+   -- Start_Element --
+   -------------------
+
+   overriding procedure Start_Element
+     (Self  : in out Inspection_Reader_V6;
+      Name  : String;
+      Attrs : Sax.Attributes.Attributes'Class) is
+   begin
+      if Self.Ignore_Element then
+         Base.Base_Inspection_Reader (Self).Start_Element (Name, Attrs);
+
+      elsif Name = "backtrace" then
+         Self.Backtrace_Mode := True;
+
+      elsif Self.Backtrace_Mode and then Name = "frame" then
+         declare
+            use all type GPS.Kernel.Messages.Message_Visibility_Kind;
+
+            File_Name : constant GNATCOLL.VFS.Virtual_File :=
+              GPS.Kernel.Create
+                (Name   =>
+                   GNATCOLL.VFS.Filesystem_String (Attrs.Get_Value ("file")),
+                 Kernel => Self.Kernel);
+            Line      : constant Natural :=
+              Integer'Value (Attrs.Get_Value ("line"));
+            Column    : constant Basic_Types.Visible_Column_Type :=
+              Basic_Types.Visible_Column_Type'Value
+                (Attrs.Get_Value ("column"));
+            Text      : constant String := Attrs.Get_Value ("text");
+
+            Dummy     : GPS.Kernel.Messages.Simple.Simple_Message_Access;
+
+         begin
+            Dummy :=
+              GPS.Kernel.Messages.Simple.Create_Simple_Message
+                (Parent => GPS.Kernel.Messages.Message_Access (Self.Message),
+                 File   => File_Name,
+                 Line   => Line,
+                 Column => Column,
+                 Text   =>
+                   Text
+                 & " at "
+                 & File_Name.Display_Base_Name
+                 & ":"
+                 & Ada.Strings.Fixed.Trim
+                   (Integer'Image (Line), Ada.Strings.Both)
+                 & ":"
+                 & Ada.Strings.Fixed.Trim
+                   (Basic_Types.Visible_Column_Type'Image (Column),
+                    Ada.Strings.Both),
+                 Flags  => (Locations => True, others => False));
+         end;
+
+      else
+         Base.Base_Inspection_Reader (Self).Start_Element (Name, Attrs);
+      end if;
+   end Start_Element;
 
    -------------------
    -- Start_Message --

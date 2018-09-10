@@ -52,7 +52,19 @@ private
       Postponed       : Message_Subprogram_Sets.Set;
       --  Set of messages which is not associated to subprograms due to missing
       --  of subprogram mapping at message processing time.
+
+      Backtrace_Mode  : Boolean := False;
+      --  Set inside of "backtrace" element.
    end record;
+
+   overriding procedure Start_Element
+     (Self  : in out Inspection_Reader_V6;
+      Name  : String;
+      Attrs : Sax.Attributes.Attributes'Class);
+
+   overriding procedure End_Element
+     (Self  : in out Inspection_Reader_V6;
+      Name  : String);
 
    overriding procedure Start_Message
      (Self  : in out Inspection_Reader_V6;

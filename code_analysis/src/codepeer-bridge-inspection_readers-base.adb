@@ -260,6 +260,16 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       return Self.Race_Category;
    end Get_Race_Category;
 
+   --------------------
+   -- Ignore_Element --
+   --------------------
+
+   function Ignore_Element
+     (Self : in out Base_Inspection_Reader'Class) return Boolean is
+   begin
+      return Self.Ignore_Depth /= 0;
+   end Ignore_Element;
+
    --------------------------
    -- Include_CWE_Category --
    --------------------------
