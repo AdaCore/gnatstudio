@@ -17,6 +17,7 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Glib.Convert; use Glib.Convert;
 
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
@@ -432,7 +433,7 @@ package body GVD.Variables.Types is
    is
       pragma Unreferenced (Is_Nested);
    begin
-      return GVD_Generic_Type'Class (Self.all).Get_Simple_Value;
+      return Escape_Text (GVD_Generic_Type'Class (Self.all).Get_Simple_Value);
    end Get_Advanced_Value;
 
 end GVD.Variables.Types;
