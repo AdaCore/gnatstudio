@@ -92,38 +92,6 @@
         </Pane>
       </Pane>
     </perspective>
-    <perspective name="CodePeer">
-      <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL">
-        <Pane height="100%" Orientation="ORIENTATION_HORIZONTAL">
-          <Notebook width=" 20%" Tabs="POS_LEFT">
-            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL">
-              <Project_Explorer_Project  />
-            </Child>
-            <Child Group=" 106" State="NORMAL">
-              <Outline_View  />
-            </Child>
-            <Child Group=" 106" State="NORMAL">
-              <Scenario_View  />
-            </Child>
-          </Notebook>
-          <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL">
-            <Pane height=" 80%" Orientation="ORIENTATION_HORIZONTAL">
-              <central width=" 80%" />
-              <Notebook width=" 20%" Tabs="POS_RIGHT">
-                <Child Raised="True" Group=" 103" State="NORMAL">
-                  <Backtrace_View  />
-                </Child>
-              </Notebook>
-            </Pane>
-            <Notebook height=" 20%" Tabs="POS_TOP">
-              <Child Raised="True" Group=" 107" State="NORMAL">
-                <Message_Window  />
-              </Child>
-            </Notebook>
-          </Pane>
-        </Pane>
-      </Pane>
-    </perspective>
     <perspective name="Analyze">
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
         <Notebook width=" 2.10251E+01%" Tabs="POS_LEFT">

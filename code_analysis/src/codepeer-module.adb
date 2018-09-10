@@ -853,9 +853,6 @@ package body CodePeer.Module is
          Self.Report_Subwindow.Destroy;
       end if;
 
-      --  Switch to CodePeer perspective.
-      Load_Perspective (Self.Kernel, "CodePeer");
-
       --  Remove messages from the messages container and clear backtraces data
       --  cache.
 
@@ -1184,12 +1181,6 @@ package body CodePeer.Module is
       end Process_Project;
 
    begin
-      --  Load the default perspective before closing the report view. This
-      --  is necessary because the position of views is memorized at this
-      --  time: if views are closed before the perspective change, their
-      --  position is lost.
-      Load_Perspective (Context.Module.Kernel, "Default");
-
       --  Switch listener to cleanup mode to allow to destroy messages
 
       Module.Listener.Set_Cleanup_Mode (True);
@@ -1251,12 +1242,9 @@ package body CodePeer.Module is
       Kernel : not null access Kernel_Handle_Record'Class)
       return Boolean
    is
-      pragma Unreferenced (Self);
-   begin
-      if Save_Desktop_On_Exit.Get_Pref then
-         Save_Desktop (Kernel, "Default");
-      end if;
+      pragma Unreferenced (Self, Kernel);
 
+   begin
       --  Destroy report window
 
       Module.Report_Subwindow.Destroy;
