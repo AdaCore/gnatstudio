@@ -41,7 +41,7 @@ private
      (Self    : Unit_Provider;
       Context : Libadalang.Analysis.Analysis_Context'Class;
       Name    : Wide_Wide_String;
-      Kind    : Libadalang.Common.Unit_Kind;
+      Kind    : Libadalang.Common.Analysis_Unit_Kind;
       Charset : String := "";
       Reparse : Boolean := False)
       return Libadalang.Analysis.Analysis_Unit'Class;
@@ -49,7 +49,7 @@ private
    overriding function Get_Unit_Filename
      (Self : Unit_Provider;
       Name : Wide_Wide_String;
-      Kind : Libadalang.Common.Unit_Kind) return String;
+      Kind : Libadalang.Common.Analysis_Unit_Kind) return String;
 
    overriding procedure Release (Self : in out Unit_Provider) is null;
 

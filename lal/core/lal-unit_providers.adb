@@ -27,7 +27,7 @@ package body LAL.Unit_Providers is
    function Get_Unit_Filename
      (Self : Unit_Provider'Class;
       Name : Wide_Wide_String;
-      Kind : Libadalang.Common.Unit_Kind)
+      Kind : Libadalang.Common.Analysis_Unit_Kind)
       return GNATCOLL.VFS.Filesystem_String;
 
    -----------------------
@@ -37,10 +37,10 @@ package body LAL.Unit_Providers is
    function Get_Unit_Filename
      (Self : Unit_Provider'Class;
       Name : Wide_Wide_String;
-      Kind : Libadalang.Common.Unit_Kind)
+      Kind : Libadalang.Common.Analysis_Unit_Kind)
       return GNATCOLL.VFS.Filesystem_String
    is
-      Map : constant array (Libadalang.Common.Unit_Kind) of
+      Map : constant array (Libadalang.Common.Analysis_Unit_Kind) of
         GNATCOLL.Projects.Unit_Parts :=
           (Libadalang.Common.Unit_Specification =>
              GNATCOLL.Projects.Unit_Spec,
@@ -70,7 +70,7 @@ package body LAL.Unit_Providers is
    overriding function Get_Unit_Filename
      (Self : Unit_Provider;
       Name : Wide_Wide_String;
-      Kind : Libadalang.Common.Unit_Kind) return String
+      Kind : Libadalang.Common.Analysis_Unit_Kind) return String
    is
       File : constant GNATCOLL.VFS.Filesystem_String :=
         Get_Unit_Filename (Self, Name, Kind);
@@ -86,7 +86,7 @@ package body LAL.Unit_Providers is
      (Self    : Unit_Provider;
       Context : Libadalang.Analysis.Analysis_Context'Class;
       Name    : Wide_Wide_String;
-      Kind    : Libadalang.Common.Unit_Kind;
+      Kind    : Libadalang.Common.Analysis_Unit_Kind;
       Charset : String := "";
       Reparse : Boolean := False)
       return Libadalang.Analysis.Analysis_Unit'Class
