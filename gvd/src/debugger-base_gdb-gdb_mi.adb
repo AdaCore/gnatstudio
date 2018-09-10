@@ -1066,11 +1066,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       else
          Debugger.Execution_Window := False;
       end if;
-
-      --  Make sure gdb will not ask too much interactive questions.
-      --  Interactive questions are better left to the GUI itself.
-      Debugger.Send ("-gdb-set confirm off", Mode => Internal);
-
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
