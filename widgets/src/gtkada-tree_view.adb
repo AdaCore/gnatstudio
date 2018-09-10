@@ -756,11 +756,11 @@ package body Gtkada.Tree_View is
       Filter_Iter : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path)
    is
-      pragma Unreferenced (Filter_Path);
+      pragma Unreferenced (Filter_Iter);
       Tree       : constant Tree_View := Tree_View (Widget);
       Store_Iter : Gtk_Tree_Iter;
    begin
-      Store_Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
+      Store_Iter := Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
       Clear_Flag (Tree, Store_Iter, Flag_Is_Expanded);
    end Row_Collapsed_Callback;
 
