@@ -109,7 +109,6 @@ package CodePeer.Module is
       From_Line        : Positive;
       From_Column      : Positive;
       Checks           : Message_Category_Sets.Set;
-      Vns              : Natural_Sets.Set;
       CWEs             : CWE_Category_Sets.Set)
       return Message_Access;
 

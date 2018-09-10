@@ -55,7 +55,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    Primary_Checks_Attribute     : constant String := "primary_checks";
    Rank_Attribute               : constant String := "rank";
    Vn_Id_Attribute              : constant String := "vn-id";
-   Vn_Ids_Attribute             : constant String := "vn-ids";
 
    function Subprogram_Name
      (Self : Base_Inspection_Reader'Class)
@@ -595,10 +594,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       --  Returns value of "rank" attribute. Handle old representation of Info
       --  literal ("INFORMATIONAL").
 
-      function Get_Vns return Natural_Sets.Set;
-      --  Returns value of "vn_ids" attribute if specified, overwise returns
-      --  empty set.
-
       function Is_Check return Boolean;
       --  Returns value of "is_check" attribute is any, otherwise returns
       --  False.
@@ -622,34 +617,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
             return Message_Ranking_Level'Value (Image);
          end if;
       end Get_Rank;
-
-      -------------
-      -- Get_Vns --
-      -------------
-
-      function Get_Vns return Natural_Sets.Set is
-         Index : constant Integer := Attrs.Get_Index (Vn_Ids_Attribute);
-
-      begin
-         if Index /= -1 then
-            declare
-               List   : constant GNATCOLL.Utils.Unbounded_String_Array :=
-                 GNATCOLL.Utils.Split (Attrs.Get_Value (Index), ' ');
-               Result : Natural_Sets.Set;
-
-            begin
-               for Item of List loop
-                  Result.Insert
-                    (Integer'Value (Ada.Strings.Unbounded.To_String (Item)));
-               end loop;
-
-               return Result;
-            end;
-
-         else
-            return Natural_Sets.Empty_Set;
-         end if;
-      end Get_Vns;
 
       --------------
       -- Is_Check --
@@ -778,7 +745,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            From_Line   => From_Line,
            From_Column => From_Column,
            Checks      => Checks,
-           Vns         => Get_Vns,
            CWEs        => CWEs);
 
       if Self.Messages.Contains (Self.Current_Message.Id) then

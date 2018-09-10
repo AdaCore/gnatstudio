@@ -131,7 +131,6 @@ package CodePeer is
       Audit_Loaded    : Boolean;
       Audit           : Audit_Vectors.Vector;
       Checks          : Message_Category_Sets.Set;
-      Vns             : Natural_Sets.Set;
       CWEs            : CWE_Category_Sets.Set;
       Display_CWEs    : Boolean;
       --  Enable displaying of CWEs
