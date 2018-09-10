@@ -236,6 +236,7 @@ package body CodePeer.Bridge.Commands is
       Inspection_File_Name : Virtual_File;
       Status_File_Name     : Virtual_File;
       Import_Annotations   : Boolean;
+      Import_Backtraces    : Boolean;
       Maximum_Version      : Format_Version)
    is
       Database_Node   : XML_Utils.Node_Ptr :=
@@ -275,6 +276,11 @@ package body CodePeer.Bridge.Commands is
          "export_annotations",
          Ada.Characters.Handling.To_Lower
            (Boolean'Image (Import_Annotations)));
+      XML_Utils.Set_Attribute
+        (Inspection_Node,
+         "export_backtraces",
+         Ada.Characters.Handling.To_Lower
+           (Boolean'Image (Import_Backtraces)));
       XML_Utils.Add_Child (Database_Node, Inspection_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);

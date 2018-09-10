@@ -33,6 +33,7 @@ package CodePeer.Bridge.Commands is
       Inspection_File_Name : Virtual_File;
       Status_File_Name     : Virtual_File;
       Import_Annotations   : Boolean;
+      Import_Backtraces    : Boolean;
       Maximum_Version      : Format_Version);
    --  Generates command file for export inspection information from the
    --  database.

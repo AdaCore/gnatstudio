@@ -165,6 +165,8 @@ private
       Message_Styles         : Message_Ranking_Style_Array;
       Import_Annotations     : Default_Preferences.Boolean_Preference;
       --  Control import of CodePeer annotations
+      Import_Backtraces      : Default_Preferences.Boolean_Preference;
+      --  Control import of CodePeer backtraces
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter

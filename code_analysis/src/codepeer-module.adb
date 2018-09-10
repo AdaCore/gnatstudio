@@ -1722,7 +1722,7 @@ package body CodePeer.Module is
 
       Module.Message_Colors (CodePeer.Info) := Info_Messages_Highlight;
 
-      --  Create a preference for importing annotations
+      --  Create a preference for importing annotations and backtraces
 
       Module.Import_Annotations :=
         Default_Preferences.Create
@@ -1732,6 +1732,15 @@ package body CodePeer.Module is
            Path    => -"CodePeer:General",
            Doc     => -("Import and display CodePeer annotations in source"
              & " editor"),
+           Default => True);
+
+      Module.Import_Backtraces :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "CodePeer-Import-Backtraces",
+           Label   => -"Import CodePeer backtraces",
+           Path    => -"CodePeer:General",
+           Doc     => -("Import and display CodePeer backtraces"),
            Default => True);
 
       --  Create CodePeer own preferences for CodePeer specific messages
