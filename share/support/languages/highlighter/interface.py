@@ -311,13 +311,6 @@ def new_style(lang, name, label, doc, foreground_colors,
         import theme_handling
         from theme_handling import Color, transparent
 
-        style_id = "{0}_{1}".format(lang, name)
-        pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
-        pref = GPS.Preference(pref_name)
-        pref.create_style(label, doc,
-                          foreground_colors[0], background_colors[0],
-                          font_style)
-
         dark_bg_color = None
         light_bg_color = None
 
@@ -330,6 +323,14 @@ def new_style(lang, name, label, doc, foreground_colors,
             dark_bg_color = transparent
         else:
             dark_bg_color = Color(background_colors[1])
+
+        style_id = "{0}_{1}".format(lang, name)
+        pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
+        pref = GPS.Preference(pref_name)
+        pref.create_style(label, doc,
+                          foreground_colors[0],
+                          light_bg_color.to_rgba_string(),
+                          font_style)
 
         theme_handling.variant_prefs[style_id] = pref_name
         theme_handling.common_dark[style_id] = (font_style.upper(),

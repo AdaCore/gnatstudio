@@ -517,6 +517,9 @@ package Default_Preferences is
    --    in decreasing order.
    --  See Default_Preferences.Generics to create preferences associated with
    --    enumerations
+   --  Color values should be specified either using hexa colors for RGB values
+   --    (e.g: "#161616") or using the "rgba(r,g.b.a)" notation for colors with
+   --  transparency.
 
    function Create_Invisible_Pref
      (Manager : access Preferences_Manager_Record'Class;

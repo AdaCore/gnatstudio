@@ -315,7 +315,7 @@ package body GPS.Kernel.Preferences is
             Doc                : constant String := Nth_Arg (Data, 3, "");
             Default_Fg         : constant String := Nth_Arg (Data, 4, "");
             Default_Bg         : constant String := Nth_Arg
-              (Data, 5, "transparent");
+              (Data, 5, "rgba(0,0,0,0)");
             Default_Font_Style : constant String :=
               To_Lower (Nth_Arg (Data, 6, "default"));
             Default_Variant    : Variant_Enum;
