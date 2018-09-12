@@ -179,19 +179,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Mode      : Command_Type := Hidden);
    --  Set the debuggee arguments to Arguments
 
-   procedure Switch_Language
-     (Debugger : access Gdb_MI_Debugger;
-      Language : String);
-   --  Switch gdb to another language. The possible values for Language are:
-   --  "ada", "c", "c++", "asm", "chill", "fortran", "java", "modula-2",
-   --  "scheme".
-   --  When calling this function, the current language is stored internally
-   --  and can be restored by calling Restore_Language.
-
-   procedure Restore_Language
-     (Debugger : access Gdb_MI_Debugger);
-   --  Restore the language that was active before Switch_Language was called
-
    procedure Get_Register_Names
      (Debugger : access Gdb_MI_Debugger);
    --  Retrive names of registers
@@ -3905,8 +3892,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          return File_Name;
       end if;
 
-      Debugger.Switch_Language ("c");
-
       declare
          Block : Process_Proxies.Parse_File_Switch
            (Debugger.Process) with Unreferenced;
@@ -3917,7 +3902,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Addr : GVD.Types.Address_Type;
 
       begin
-         Debugger.Restore_Language;
          Debugger.Found_File_Name (Str, File, Line, Addr);
 
          if Length (File) = 0 then
@@ -4099,7 +4083,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
         (Debugger.Process) with Unreferenced;
 
    begin
-      Debugger.Switch_Language ("c");
 
       declare
          S : constant String := Debugger.Send_And_Get_Clean_Output
@@ -4122,7 +4105,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end;
 
-      Debugger.Restore_Language;
    end Get_Line_Address;
 
    ----------------
@@ -4337,11 +4319,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Address  : String;
       Byte     : String) is
    begin
-      Debugger.Switch_Language ("c");
       Debugger.Send
         ("-data-write-memory-bytes " & Address & " 0x" & Byte,
          Mode => Internal);
-      Debugger.Restore_Language;
    end Put_Memory_Byte;
 
    ----------------------
@@ -4637,37 +4617,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       null;
    end Detect_Language;
-
-   ---------------------
-   -- Switch_Language --
-   ---------------------
-
-   procedure Switch_Language
-     (Debugger : access Gdb_MI_Debugger;
-      Language : String) is
-   begin
-      Free (Debugger.Stored_Language);
-
-      Debugger.Send ("show lang", Mode => Internal);
-
-      if Debugger.Get_Language /= null then
-         Debugger.Stored_Language :=
-           new String'(Debugger.Get_Language.Get_Name);
-      end if;
-
-      Debugger.Send ("set lang " & Language, Mode => Internal);
-   end Switch_Language;
-
-   ----------------------
-   -- Restore_Language --
-   ----------------------
-
-   procedure Restore_Language (Debugger : access Gdb_MI_Debugger) is
-   begin
-      if Debugger.Stored_Language /= null then
-         Debugger.Send ("set lang " & Debugger.Stored_Language.all);
-      end if;
-   end Restore_Language;
 
    -----------------
    -- Support_TTY --
