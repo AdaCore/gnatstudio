@@ -262,7 +262,7 @@ package body GVD.Variables.Types.Records is
       Lenght : Natural := 0;
    begin
       if Self.Fields'Length = 0 then
-         Output := Output & "null record";
+         return "null record";
       else
          --  Display the initial record using multilines for more readibility
          --  Display the nested record on one line
@@ -270,7 +270,7 @@ package body GVD.Variables.Types.Records is
             Append (Output, "(");
          else
             Append (Output, ASCII.LF);
-            --  Retrieve the name with the longer lenght
+            --  Retrieve the name with the longer length
             for Field of Self.Fields loop
                if Lenght < To_String (Field.Name)'Length then
                   Lenght := To_String (Field.Name)'Length;

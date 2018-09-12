@@ -2049,7 +2049,7 @@ package body GVD.Variables.View is
         (Kernel, "variables view expand next layer",
          Command     => new Expand_Next_Layer_Command,
          Description =>
-           -"Expand the children of all the selected nodes",
+           -"Expand one time all the children of the selected node",
          Icon_Name   => "gps-expand-all-symbolic",
          Category    => "Debug",
          Filter      => Selection_Filter);

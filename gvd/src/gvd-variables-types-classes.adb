@@ -254,9 +254,33 @@ package body GVD.Variables.Types.Classes is
    overriding function Get_Advanced_Value
      (Self      : not null access GVD_Class_Type;
       Is_Nested : Boolean := False)
-      return String is
+      return String
+   is
+      Output : Unbounded_String;
    begin
-      return Self.Child.Get_Type.Get_Advanced_Value (Is_Nested);
+      for J in Self.Ancestors'Range loop
+         Append (Output,
+                 Self.Ancestors (J).Get_Type.Get_Advanced_Value (Is_Nested));
+         if J /= Self.Ancestors'Last then
+            Append (Output, ASCII.LF);
+         end if;
+      end loop;
+
+      if Self.Child.Get_Type /= null then
+         declare
+            Child : constant String :=
+              Self.Child.Get_Type.Get_Advanced_Value (Is_Nested);
+         begin
+            if Self.Ancestors'Length > 0 then
+               if Child /= "null record" then
+                  Append (Output, Child);
+               end if;
+            else
+               Append (Output, Child);
+            end if;
+         end;
+      end if;
+      return To_String (Output);
    end Get_Advanced_Value;
 
    --------------------
