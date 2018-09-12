@@ -3334,7 +3334,11 @@ package body Src_Editor_Buffer.Line_Information is
       if Tag /= null then
          Get_Iter_At_Screen_Position (Buffer, Start_Iter, From_Line, One);
          Get_Iter_At_Screen_Position (Buffer, End_Iter, To_Line, One);
-         Forward_To_Line_End (End_Iter, Result);
+
+         if not Ends_Line (End_Iter) then
+            Forward_To_Line_End (End_Iter, Result);
+         end if;
+
          if Result then
             Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
          end if;
