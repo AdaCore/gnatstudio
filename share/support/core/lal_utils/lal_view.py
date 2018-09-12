@@ -259,7 +259,8 @@ class LAL_View_Widget():
         if self.token:
             self.message_label.set_markup(
                 "Token: <b>{}</b> {}".format(self.token.kind,
-                                             self.token.text.strip()))
+                                             self.token.text.strip()
+                                             if self.token.text else ''))
         else:
             self.message_label.set_text("")
 
