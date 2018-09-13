@@ -82,6 +82,7 @@ basic_prove_subp = 'Basic Prove Subprogram'
 basic_prove_line = 'Basic Prove Line'
 basic_prove_line_loc = 'Basic Prove Line Location'
 basic_prove_check = 'Basic Prove Check'
+basic_prove_region = 'Basic Prove Selected Region'
 
 # proof targets when user profile is 'Advanced'
 
@@ -92,6 +93,7 @@ advanced_prove_subp = 'Prove Subprogram'
 advanced_prove_line = 'Prove Line'
 advanced_prove_line_loc = 'Prove Line Location'
 advanced_prove_check = 'Prove Check'
+advanced_prove_region = 'Prove Selected Region'
 
 # Name of the messages console
 MESSAGES = "Messages"
@@ -139,6 +141,13 @@ def prove_line():
         return basic_prove_line
     elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
         return advanced_prove_line
+
+
+def prove_region():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_region
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_region
 
 
 # used to launch Prove Line from Location View
@@ -839,6 +848,24 @@ def on_prove_line(self):
     generic_on_analyze(target, args=args)
 
 
+def on_prove_region(self):
+    args = []
+    lsparg = build_limit_subp_string(self)
+    if lsparg is not None:
+        args.append(lsparg)
+        if inside_generic_unit_context(self):
+            args.append("-U")
+
+    target = prove_region()
+    lrarg = "--limit-region=" \
+            + str(os.path.basename(self.file().path)) \
+            + ":" + str(self.start_line()) \
+            + ":" + str(self.end_line())
+    args.append(lrarg)
+
+    generic_on_analyze(target, args=args)
+
+
 def on_show_report(self):
     gnatprove_plug.show_report()
 
@@ -942,6 +969,12 @@ def inside_subp_context(self):
         return 1
     else:
         return 0
+
+
+def region_selected(self):
+    """Return True if there is a selected region"""
+
+    return int(self.end_line()) > 0
 
 
 def inside_generic_unit_context(self):

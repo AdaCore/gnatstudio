@@ -562,6 +562,43 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        </output-parsers>
     </target>
 
+    <target model="gnatprove-basic-prove" name="Basic Prove Selected Region"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
+       </command-line>
+       <output-parsers>
+         {output_parsers}
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Selected Region"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>-j0</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         {output_parsers}
+       </output-parsers>
+    </target>
+
     <target-model name="gnatprove_clean">
        <description>Target model for GNATprove for cleaning</description>
        <command-line>

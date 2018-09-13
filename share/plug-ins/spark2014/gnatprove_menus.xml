@@ -2,6 +2,8 @@
   <GNATPROVE>
     <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
         shell_cmd="spark2014.inside_subp_context(GPS.current_context())" />
+    <filter name="Region Selected" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.region_selected(GPS.current_context())" />
 
     <action name="Examine All Action" category="GNATprove" output="none">
        <shell
@@ -58,6 +60,12 @@
          shell_cmd="spark2014.is_file_context(GPS.current_context())" />
        <shell
          lang="python">spark2014.on_prove_line(GPS.current_context())
+       </shell>
+    </action>
+    <action name="Prove Region Action" category="GNATprove" output="none">
+       <filter id="Region Selected" />
+       <shell
+         lang="python">spark2014.on_prove_region(GPS.current_context())
        </shell>
     </action>
     <action name="Prove Check Action" category="GNATprove" output="none">
@@ -160,6 +168,9 @@
     </contextual>
     <contextual action="Prove Line Action">
       <Title>%(prefix)s/Prove Line</Title>
+    </contextual>
+    <contextual action="Prove Region Action">
+      <Title>%(prefix)s/Prove Selected Region</Title>
     </contextual>
     <contextual action="Prove Check Action">
       <Title>%(prefix)s/Prove Check</Title>
