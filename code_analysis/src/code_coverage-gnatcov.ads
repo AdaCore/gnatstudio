@@ -54,11 +54,11 @@ package Code_Coverage.GNATcov is
 
    GNATcov_Msg_Importances : constant GNATcov_Message_Style_Categories :=
                                 (Not_Covered                     =>
-                                    High_Importance,
+                                    High,
                                  GNATcov_Partially_Covered'Range =>
-                                    Medium_Importance,
+                                    Medium,
                                  others                          =>
-                                    Low_Importance);
+                                    Low);
 
    type GNATcov_Item_Coverage is record
       Column  : Basic_Types.Visible_Column_Type;

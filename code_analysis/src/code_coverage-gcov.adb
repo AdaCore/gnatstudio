@@ -178,7 +178,7 @@ package body Code_Coverage.Gcov is
               Line_Number,
               1,
               Line_Text.all,
-              High_Importance,
+              High,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       end if;

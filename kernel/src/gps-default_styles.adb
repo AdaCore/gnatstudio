@@ -207,17 +207,17 @@ package body GPS.Default_Styles is
             Bg        => Info_Messages_Highlight,
             Speedbar  => True);
 
-      Init (Messages_Styles (High_Importance),
+      Init (Messages_Styles (High),
             Name      => -"Builder results",
             Bg        => High_Messages_Highlight,
             Speedbar  => True);
 
-      Init (Messages_Styles (Medium_Importance),
+      Init (Messages_Styles (Medium),
             Name      => -"Builder warnings",
             Bg        => Medium_Messages_Highlight,
             Speedbar  => True);
 
-      Init (Messages_Styles (Low_Importance),
+      Init (Messages_Styles (Low),
             Name      => -"Style errors",
             Bg        => Low_Messages_Highlight,
             Speedbar  => True);

@@ -454,7 +454,7 @@ package body GNAThub.Filters_Views is
         (Editor         => Self.Severities_Editor,
          Kernel         => Self.Kernel,
          View           => Gtk.Widget.Gtk_Widget (Self),
-         Title          => "Severities",
+         Title          => "Importance",
          History_Prefix => Severity_History_Prefix,
          Items          => GNAThub_Module.Severities,
          Default        => True);

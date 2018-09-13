@@ -457,7 +457,7 @@ package body Refactoring.Rename is
                0,
                -"The navigation information for this file is not up-to-date"
                & " (recompile to regenerate it)",
-               Medium_Importance,
+               Medium,
                Side_And_Locations);
          end if;
       end if;

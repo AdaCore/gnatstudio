@@ -527,13 +527,13 @@ package body GPS.Kernel.Messages.Tools_Output is
 
             if Highlight then
                if Matched (Warning_Index) /= GNAT.Regpat.No_Match then
-                  Importance := Medium_Importance;
+                  Importance := Medium;
                elsif  Matched (Style_Index) /= GNAT.Regpat.No_Match then
-                  Importance := Low_Importance;
+                  Importance := Low;
                elsif  Matched (Info_Index) /= GNAT.Regpat.No_Match then
                   Importance := Informational;
                else
-                  Importance := High_Importance;
+                  Importance := High;
                end if;
             end if;
 
@@ -617,15 +617,15 @@ package body GPS.Kernel.Messages.Tools_Output is
 
       else
          --   ??? reuse existing styles defined in Style_Manager?
-         Styles (High_Importance) :=
+         Styles (High) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Highlight_Category);
 
-         Styles (Medium_Importance) :=
+         Styles (Medium) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Warning_Category);
 
-         Styles (Low_Importance) :=
+         Styles (Low) :=
            Get_Style_Manager
              (Kernel_Handle (Kernel)).Get (Style_Category);
 

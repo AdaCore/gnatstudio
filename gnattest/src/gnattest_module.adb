@@ -482,7 +482,7 @@ package body GNATTest_Module is
                   Text       => "Unimplemented " &
                     To_String (Key.Test_Case_Name) & " " &
                     To_String (Key.Subprogram_Name),
-                  Importance => GPS.Kernel.Messages.Low_Importance,
+                  Importance => GPS.Kernel.Messages.Low,
                   Flags      => Flags);
             end if;
 

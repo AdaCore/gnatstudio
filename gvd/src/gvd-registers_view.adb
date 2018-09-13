@@ -750,7 +750,7 @@ package body GVD.Registers_View is
          Bg_Name       := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.1);
          Bg_Name_Dark  := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.15);
 
-         Fg := Background (Messages_Styles (High_Importance));
+         Fg := Background (Messages_Styles (High));
 
          --  Get names of selected registers
          for Item of Names loop

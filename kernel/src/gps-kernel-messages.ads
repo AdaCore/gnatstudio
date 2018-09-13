@@ -67,10 +67,10 @@ package GPS.Kernel.Messages is
      (Annotation,
       Unspecified,
       Informational,
-      Low_Importance,
-      Medium_Importance,
-      High_Importance);
-   --  Used to represent the messages importance (e.g: High_Importance should
+      Low,
+      Medium,
+      High);
+   --  Used to represent the messages importance (e.g: High should
    --  be used for errors).
 
    type Message_Flags is array (Message_Visibility_Kind) of Boolean;

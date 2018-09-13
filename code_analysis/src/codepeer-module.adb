@@ -394,11 +394,11 @@ package body CodePeer.Module is
             when Not_An_Error .. Info =>
                return Informational;
             when Low =>
-               return Low_Importance;
+               return Low;
             when Medium =>
-               return Medium_Importance;
+               return Medium;
             when High =>
-               return High_Importance;
+               return High;
          end case;
       end Get_Message_Importance_From_Ranking;
 
@@ -1612,13 +1612,13 @@ package body CodePeer.Module is
       Module.Annotations_Style := Editor_Code_Annotations_Style;
 
       Module.Message_Styles (CodePeer.High) :=
-        Messages_Styles (High_Importance);
+        Messages_Styles (High);
 
       Module.Message_Styles (CodePeer.Medium) :=
-        Messages_Styles (Medium_Importance);
+        Messages_Styles (Medium);
 
       Module.Message_Styles (CodePeer.Low) :=
-        Messages_Styles (Low_Importance);
+        Messages_Styles (Low);
 
       Initialize_Style
         (Module.Message_Styles (CodePeer.Info),

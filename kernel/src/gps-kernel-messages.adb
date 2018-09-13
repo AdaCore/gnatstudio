@@ -1200,11 +1200,11 @@ package body GPS.Kernel.Messages is
                      when -1 =>
                         return Unspecified;
                      when 0 =>
-                        return Low_Importance;
+                        return Low;
                      when 1 =>
-                        return Medium_Importance;
+                        return Medium;
                      when others =>
-                        return High_Importance;
+                        return High;
                   end case;
                end;
             end if;
