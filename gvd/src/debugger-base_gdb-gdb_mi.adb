@@ -4936,15 +4936,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end loop;
 
       --  Add the error messages
-      if not First_Log then
-         --  We priotorize the Log stream over the console stream for the
-         --  error messages because of the multiline commands using a mix
-         --  of CLI and MI commands.
-         Append (Log, Result);
-         Result := Log;
-      elsif Error /= Null_Unbounded_String then
+      if Error /= Null_Unbounded_String then
          Append (Error, Result);
          Result := Error;
+      elsif not First_Log and then Log /= Null_Unbounded_String then
+         --  If the error message is empty, then try to retrieve warnings
+         --  in the log stream.
+         Append (Log, Result);
+         Result := Log;
       end if;
    end Filter_Output;
 
