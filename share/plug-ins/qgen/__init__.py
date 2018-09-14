@@ -1742,31 +1742,38 @@ else:
                         frame_infos.insert(0, (diag.id, block))
 
             logger.log("Frames info is %s" % str(frame_infos))
+            i = 0
             frames_len = len(frame_infos)
-            for i in range(0, frames_len):
-                # Resolve Frames info is [(u'modelwithsub_Gain_Sub_Inner_gain',
-                # u'modelwithsub/Gain Sub /Inner gain/Gain'), (u'modelwithsub',
-                # u'modelwithsub')] case
-                # by looking into the previous model and generating correct
-                # frameinfo for subsystem.
-                model = Diagram_Utils.block_split(frame_infos[i][1], 1)[0]
-                k = i + 1
-                if k < frames_len:
-                    next_model_path = frame_infos[k][1]
-                    next_model_split = Diagram_Utils.block_split(
-                        next_model_path)
-                    ran = range(
-                        2 if next_model_split[0] == model else 1, len(
-                            next_model_split))
-                    for j in ran:
-                        subsys_path = '/'.join(next_model_split[0:j])
-                        subsys_diag_name = Diagram_Utils.mangle_block_name(
-                            subsys_path)
-                        if frame_infos[k][0] != subsys_diag_name:
-                            frame_infos.insert(k, (
-                                subsys_diag_name, subsys_path))
-                            k += 1
-                    i = k - 1
+
+            while i < frames_len:
+                # Resolve Frames info is:
+                #                [(u'alias_model_ref',
+                #                  u'alias_model_ref/Model2'),
+                #                 (u'switchaction', u'switchaction/Model5'),
+                #                 (u'matrixdiv', u'matrixdiv/Subsystem'),
+                #                 (u'Subsystem_Subsystem',
+                #                  u'Subsystem/Subsystem/Unit Delay')]
+                # We are trying to recreate the correct list of construct in
+                # the outline.
+                model_split = Diagram_Utils.block_split(frame_infos[i][1])
+                current_d_name = frame_infos[i][0]
+                diagram_name = model_split[0]
+                split_len = len(model_split)
+                split_idx = 1
+
+                # Split the path in the right pair element and join paths
+                # members until they match the diagram on left pair element
+                # Each non matching joined path is a diagram to be added
+                # after mangling, e.g. Subsystem/Subsystem/Unit Delay
+                # needs to generate 'Subsystem', 'Subsystem_Subsystem'
+                while split_idx < split_len and diagram_name != current_d_name:
+                    frame_infos.insert(i + split_idx - 1, (diagram_name, ''))
+                    diagram_name = Diagram_Utils.mangle_block_name(
+                        diagram_name + '/' + model_split[split_idx])
+                    split_idx += 1
+
+                i += split_idx
+                frames_len += split_idx - 1
 
             frame_infos = [it[0] for it in frame_infos]
             logger.log("Frames info after adding subsystems is %s" % str(
