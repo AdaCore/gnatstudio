@@ -703,6 +703,12 @@ package body LAL.Semantic_Trees is
            (Node : Libadalang.Analysis.Ada_Node'Class)
             return GNATCOLL.Symbols.Symbol is
          begin
+            if Node.Is_Null then
+               --  In case of incomplete/invalid source some names are
+               --  unavailable, so Node could be null.
+               return GNATCOLL.Symbols.No_Symbol;
+            end if;
+
             case Node.Kind is
                when Ada_Identifier | Ada_String_Literal | Ada_Char_Literal =>
                   declare
