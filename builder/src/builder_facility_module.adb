@@ -35,7 +35,6 @@ with Projects;                  use Projects;
 with Commands;                    use Commands;
 with Commands.Interactive;        use Commands.Interactive;
 
-with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Switches_Chooser;            use Switches_Chooser;
 
@@ -270,8 +269,11 @@ package body Builder_Facility_Module is
       Level  : Customization_Level);
    --  See inherited documentation
 
-   procedure Clear_Actions_Menus_And_Toolbars;
-   --  Remove the target build menus
+   procedure Clear_Menu_And_Toolbar_For_Target (Target : Target_Access);
+   --  Remove the given target's menu and toolbar
+
+   procedure Clear_All_Actions_Menus_And_Toolbars;
+   --  Remove all the target build menus
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
    --  Return the file where user targets are stored
@@ -547,7 +549,7 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      Clear_Actions_Menus_And_Toolbars;
+      Clear_All_Actions_Menus_And_Toolbars;
       Module.Builder.Destroy;
       Free (Module.Registry);
    end Destroy;
@@ -917,7 +919,7 @@ package body Builder_Facility_Module is
 
       Free (N);
 
-      Refresh_Graphical_Elements;
+      Refresh_All_Graphical_Elements;
       Execute_Switch_Filters_For_All_Targets (Before_Save => False);
    end Load_Targets;
 
@@ -1051,7 +1053,7 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Self, Kernel);
    begin
-      Refresh_Graphical_Elements;
+      Refresh_All_Graphical_Elements;
       Execute_Switch_Filters_For_All_Targets (Before_Save => False);
    end Execute;
 
@@ -1183,15 +1185,15 @@ package body Builder_Facility_Module is
       end if;
    end Execute;
 
-   --------------------------------
-   -- Refresh_Graphical_Elements --
-   --------------------------------
+   ------------------------------------
+   -- Refresh_All_Graphical_Elements --
+   ------------------------------------
 
-   procedure Refresh_Graphical_Elements is
+   procedure Refresh_All_Graphical_Elements is
       C      : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
       Target : Target_Access;
    begin
-      Clear_Actions_Menus_And_Toolbars;
+      Clear_All_Actions_Menus_And_Toolbars;
 
       loop
          Target := Get_Target (C);
@@ -1199,6 +1201,16 @@ package body Builder_Facility_Module is
          Add_Action_And_Menu_For_Target (Target);
          Next (C);
       end loop;
+   end Refresh_All_Graphical_Elements;
+
+   --------------------------------
+   -- Refresh_Graphical_Elements --
+   --------------------------------
+
+   procedure Refresh_Graphical_Elements (Target : Target_Access) is
+   begin
+      Clear_Menu_And_Toolbar_For_Target (Target);
+      Add_Action_And_Menu_For_Target (Target);
    end Refresh_Graphical_Elements;
 
    -----------------------------------
@@ -1436,11 +1448,30 @@ package body Builder_Facility_Module is
          Trace (Me, E);
    end On_Button_Or_Menu_Click;
 
+   ---------------------------------------
+   -- Clear_Menu_And_Toolbar_For_Target --
+   ---------------------------------------
+
+   procedure Clear_Menu_And_Toolbar_For_Target (Target : Target_Access)
+   is
+      Action_Name : constant String := Get_Name (Target);
+      Position    : Action_Lists.Cursor := Builder_Module_ID.Actions.Find
+        (Action_Name);
+   begin
+      if Action_Lists.Has_Element (Position) then
+         Unregister_Action
+           (Kernel                    => Get_Kernel,
+            Name                      => Action_Name,
+            Remove_Menus_And_Toolbars => True);
+         Builder_Module_ID.Actions.Delete (Position);
+      end if;
+   end Clear_Menu_And_Toolbar_For_Target;
+
    --------------------------------------
-   -- Clear_Actions_Menus_And_Toolbars --
+   -- Clear_Menu_And_Toolbar_For_Target --
    --------------------------------------
 
-   procedure Clear_Actions_Menus_And_Toolbars is
+   procedure Clear_All_Actions_Menus_And_Toolbars is
       use Action_Lists;
       C : Action_Lists.Cursor;
    begin
@@ -1453,7 +1484,7 @@ package body Builder_Facility_Module is
             Remove_Menus_And_Toolbars => True);
          Builder_Module_ID.Actions.Delete (C);
       end loop;
-   end Clear_Actions_Menus_And_Toolbars;
+   end Clear_All_Actions_Menus_And_Toolbars;
 
    -------------
    -- Execute --

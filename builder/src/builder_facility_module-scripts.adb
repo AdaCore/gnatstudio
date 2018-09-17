@@ -58,7 +58,7 @@ package body Builder_Facility_Module.Scripts is
                Set_Error_Msg (Data, -"Invalid target");
             elsif Get_Properties (Ref).Visible then
                Visible (Ref, False);
-               Refresh_Graphical_Elements;
+               Refresh_Graphical_Elements (Ref);
             end if;
          end;
 
@@ -73,7 +73,8 @@ package body Builder_Facility_Module.Scripts is
                Set_Error_Msg (Data, -"Invalid target");
             elsif not Get_Properties (Ref).Visible then
                Visible (Ref, True);
-               Refresh_Graphical_Elements;
+
+               Refresh_Graphical_Elements (Ref);
             end if;
          end;
 
@@ -89,7 +90,7 @@ package body Builder_Facility_Module.Scripts is
 
             Remove_Target (Registry, Name);
 
-            Refresh_Graphical_Elements;
+            Refresh_All_Graphical_Elements;
             Save_Targets;
          end;
 
@@ -107,7 +108,7 @@ package body Builder_Facility_Module.Scripts is
 
             Duplicate_Target (Registry, Name, New_Name, New_Category);
 
-            Refresh_Graphical_Elements;
+            Refresh_All_Graphical_Elements;
             Save_Targets;
          end;
       elsif Command = "get_command_line" then

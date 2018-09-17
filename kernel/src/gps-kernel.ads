@@ -1137,9 +1137,6 @@ private
       Actions : Root_Table_Access;
       --  The actions registered in the kernel
 
-      Actions_For_Learning : Action_Lists.List;
-      --  The list of actions that can be displayed in the Learn view
-
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 

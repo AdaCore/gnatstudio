@@ -2093,6 +2093,16 @@ procedure GPS.Main is
       end Load_Sources;
 
    begin
+      --  Register the Learn module and the associated view
+      Learn.Register_Module (GPS_Main.Kernel);
+
+      --  Register the actions learn provider
+      GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
+
+      --  Register the Learn view once we know that all the learn providers
+      --  have been registered.
+      Learn.Views.Register_Module (GPS_Main.Kernel);
+
       --  Register the default filters, so that other modules can create
       --  contextual menus
 
@@ -2440,16 +2450,6 @@ procedure GPS.Main is
          GVD.Preferences.Debugger_Kind.Set_Pref
            (GPS_Main.Kernel.Get_Preferences, "LLDB");
       end if;
-
-      --  Register the Learn module and the associated view
-      Learn.Register_Module (GPS_Main.Kernel);
-
-      --  Register the actions learn provider
-      GPS.Kernel.Actions.Register_Actions_Learn_Provider (GPS_Main.Kernel);
-
-      --  Register the Learn view once we know that all the learn providers
-      --  have been registered.
-      Learn.Views.Register_Module (GPS_Main.Kernel);
 
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overridden by the user's

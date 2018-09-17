@@ -102,11 +102,11 @@
 --   The loading of Xref
 
 with GPS.Kernel;
-with Build_Configurations;
+with Build_Configurations;  use Build_Configurations;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Build_Command_Utils; use Build_Command_Utils;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with Build_Command_Utils;   use Build_Command_Utils;
 
 package Builder_Facility_Module is
 
@@ -127,9 +127,12 @@ package Builder_Facility_Module is
    function Builder return Builder_Context;
    --  Return the builder context stored in the module
 
-   procedure Refresh_Graphical_Elements;
+   procedure Refresh_All_Graphical_Elements;
    --  Recompute the menus and toolbar icons, based on the targets described
    --  in the Registry.
+
+   procedure Refresh_Graphical_Elements (Target : Target_Access);
+   --  Recompute the menu and toolba button only for the given target.
 
    procedure Save_Targets;
    procedure Load_Targets;

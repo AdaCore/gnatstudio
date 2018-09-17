@@ -15,13 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Gtk.Flow_Box_Child;    use Gtk.Flow_Box_Child;
+with Gtk.Widget;            use Gtk.Widget;
 
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
@@ -35,11 +34,30 @@ package Learn is
    -- Learn Items --
    -----------------
 
-   type Learn_Item_Type is abstract new Gtk_Flow_Box_Child_Record
-   with private;
+   type Learn_Item_Type is abstract tagged private;
    type Learn_Item is access all Learn_Item_Type'Class;
    --  This represents the GUI elements that will be displayed in the Learn
    --  view.
+
+   procedure Initialize
+     (Item       : not null access Learn_Item_Type;
+      Group_Name : String);
+   --  Initialize the given item, associating it to a group.
+
+   function Get_Group_Name
+     (Item : not null access Learn_Item_Type) return String;
+   --  Return the item's group name.
+
+   function Get_ID
+     (Item : not null access Learn_Item_Type) return String is abstract;
+   --  Return a unique ID for the given learn item.
+   --  Can be used by some listeners to identify easily learn items.
+
+   function Get_Widget
+     (Item : not null access Learn_Item_Type)
+      return Gtk_Widget is abstract;
+   --  Return the widget corresponding to the given item and that will be
+   --  displayed in the Learn view.
 
    function Get_Help
      (Item : not null access Learn_Item_Type) return String
@@ -60,37 +78,11 @@ package Learn is
    --  Called each time the user double-clicks on the given learn item.
    --  Override this function if you want to react to this event.
 
-   -----------------------
-   -- Learn Item Groups --
-   -----------------------
-
-   type Learn_Item_Group_Type is tagged private;
-   type Learn_Item_Group is access all Learn_Item_Group_Type;
-   --  Used to group learn items in the Learn view.
-
-   procedure Initialize
-     (Self : not null access Learn_Item_Group_Type;
-      Name : String);
-   --  Initialize the learn item group
-
-   function Get_Name
-     (Self : not null access Learn_Item_Group_Type) return String;
-   --  Return the name of the learn item group.
-
-   procedure Add_Learn_Item
-     (Self : not null access Learn_Item_Group_Type;
-      Item : not null access Learn_Item_Type'Class);
-   --  Add a learn item to the group
-
-   package Learn_Item_Group_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Learn_Item_Group,
-      "="          => "=");
-
    ---------------------
    -- Learn Providers --
    ---------------------
 
-   type Learn_Provider_Type is interface;
+   type Learn_Provider_Type is abstract tagged private;
    type Learn_Provider is access all Learn_Provider_Type'Class;
    --  An interface used to provide the learn items of a given kind
    --  (e.g : Actions).
@@ -100,11 +92,17 @@ package Learn is
       is abstract;
    --  Return the name of the learn provider.
 
-   function Get_Learn_Items
-     (Provider : not null access Learn_Provider_Type)
-      return Learn_Item_Group_Lists.List is abstract;
-   --  Return a list of all the learn items that should be displayed for this
-   --  provider.
+   procedure Add_Item
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class;
+      ID       : String);
+   --  Add an item to the learn provider.
+   --  If an item with the same ID has already been added, replace it.
+
+   procedure Delete_Item
+     (Provider : not null access Learn_Provider_Type'Class;
+      ID       : String);
+   --  Delete an item from the learn provider.
 
    procedure Register_Provider
      (Provider : not null access Learn_Provider_Type'Class);
@@ -119,10 +117,17 @@ package Learn is
    --  A listener interfaced used to react to changes made regarding providers
    --  (e.g: when adding learn items to a provider).
 
-   procedure On_Provider_Changed
+   procedure On_Item_Added
      (Self     : not null access Learn_Listener_Type;
-      Provider : not null access Learn_Provider_Type'Class) is abstract;
-   --  Called when the given providers' set of learn items has changed.
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class) is abstract;
+   --  Called when the given item is added to the learn provider.
+
+   procedure On_Item_Deleted
+     (Self     : not null access Learn_Listener_Type;
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class) is abstract;
+   --  Called when the given item is deleted from the learn provider.
 
    procedure Register_Listener
      (Listener : not null access Learn_Listener_Type'Class);
@@ -131,11 +136,6 @@ package Learn is
    procedure Unregister_Listener
      (Listener : not null access Learn_Listener_Type'Class);
    --  Unregister the given learn provider.
-
-   procedure Notify_Listeners_About_Provider_Changed
-     (Provider : not null access Learn_Provider_Type'Class);
-   --  Used to notify the learn listeners that the given learn provider has
-   --  changed.
 
    ------------------
    -- Learn Module --
@@ -147,16 +147,19 @@ package Learn is
 
 private
 
-   type Learn_Item_Type is abstract new Gtk_Flow_Box_Child_Record with
-     null record;
+   type Learn_Item_Type is abstract tagged record
+      Group_Name : Unbounded_String;
+   end record;
 
-   package Learn_Item_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Learn_Item,
-      "="          => "=");
+   package Learn_Item_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Learn_Item,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => "=",
+      "="             => "=");
 
-   type Learn_Item_Group_Type is tagged record
-      Name  : Unbounded_String;
-      Items : Learn_Item_Lists.List;
+   type Learn_Provider_Type is abstract tagged record
+      Items : Learn_Item_Maps.Map;
    end record;
 
    package Learn_Provider_Maps is

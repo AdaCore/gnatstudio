@@ -102,6 +102,11 @@ package Dialog_Utils is
      (Self : not null access Dialog_View_Record'Class);
    --  Remove all the children that have been appended to the dialog view
 
+   procedure Remove_Child
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String);
+   --  Remove the child identified by Child_Key, if found.
+
    procedure Set_Child_Visible
      (Self      : not null access Dialog_View_Record'Class;
       Child_Key : String;
@@ -375,6 +380,9 @@ private
       Has_Children_Visible : Boolean := False;
       --  Used to hide the group widget itself if all its children are not
       --  visible anymore after some filtering.
+
+      Is_Filter_Func_Set   : Boolean := False;
+      --  Used to know if the filtering function has been already set
    end record;
 
 end Dialog_Utils;

@@ -86,7 +86,7 @@ package body Builder_Facility_Module.GUI is
      (Self : not null access Targets_Editor_Preferences_Page_View_Record) is
    begin
       Self.Config_UI.Apply_Changes;
-      Refresh_Graphical_Elements;
+      Refresh_All_Graphical_Elements;
       Save_Targets;
    end On_Apply_Button_Clicked;
 

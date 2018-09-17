@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Values;
@@ -42,17 +44,28 @@ with XML_Utils;              use XML_Utils;
 
 package body Learn.Views is
 
+   Me : constant Trace_Handle := Create ("LEARN.VIEWS");
+
    Learn_View_Module : Learn_View_Module_Access;
 
    Default_Sep_Pos   : constant Float := 75.0;
 
-   package Group_Widget_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Dialog_Group_Widget,
-      "="          => "=");
+   type Learn_Item_Row_Record is new Gtk_Flow_Box_Child_Record with record
+      Item : Learn_Item;
+   end record;
+   type Learn_Item_Row is access all Learn_Item_Row_Record'Class;
+   --  Type representing Gtk_Flow_Box rows for learn items
+
+   package Group_Widget_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Dialog_Group_Widget,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => "=",
+      "="             => "=");
 
    type Learn_Provider_Widgets_Type is record
       Provider_Label : Gtk_Label;
-      Group_Widgets  : Group_Widget_Lists.List;
+      Group_Widgets  : Group_Widget_Maps.Map;
    end record;
 
    package Learn_Provider_Widgets_Maps is new
@@ -71,9 +84,10 @@ package body Learn.Views is
       Paned_View            : Gtk_Paned;
       Help_Label            : Gtk_Label;
       Stored_Pos            : Float := Default_Sep_Pos;
-      Selected_Item         : Learn_Item;
+      Selected_Row          : Learn_Item_Row;
       On_Realize_Handler_ID : Handler_Id;
       Previous_Context      : Selection_Context := No_Context;
+      Number_Of_Items       :  Natural := 0;
    end record;
    type Learn_View is access all Learn_View_Record'Class;
 
@@ -89,14 +103,15 @@ package body Learn.Views is
    overriding procedure On_Destroy
      (View : not null access Learn_View_Record);
 
-   overriding procedure On_Provider_Changed
+   overriding procedure On_Item_Added
      (Self     : not null access Learn_View_Record;
-      Provider : not null access Learn_Provider_Type'Class);
-   --  Refresh the Learn view when a provider changes.
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class);
 
-   procedure Refresh (View : not null access Learn_View_Record'Class);
-   --  Refresh the Learn view by getting and displayimg all the learn items
-   --  registered in all the providers.
+   overriding procedure On_Item_Deleted
+     (Self     : not null access Learn_View_Record;
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class);
 
    package Generic_Learn_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Learn_View",
@@ -261,7 +276,7 @@ package body Learn.Views is
    function Filter_Learn_Item
      (Child : not null access Gtk_Flow_Box_Child_Record'Class) return Boolean
    is
-      Item   : constant Learn_Item := Learn_Item (Child);
+      Item   : constant Learn_Item := Learn_Item_Row (Child).Item;
       Kernel : constant Kernel_Handle :=
                  Generic_Learn_Views.Get_Module.Get_Kernel;
    begin
@@ -278,6 +293,8 @@ package body Learn.Views is
    is
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Self.Kernel));
    begin
+      Trace (Me, "Filtering learn items");
+
       --  Don't refresh the view according to the context if the Learn view
       --  gains the focus: the user probably wants to click on a learn item
       --  to display its help.
@@ -334,20 +351,20 @@ package body Learn.Views is
       Child : not null access Gtk_Flow_Box_Child_Record'Class)
    is
       View : constant Learn_View := Learn_View (Self);
-      Item : constant Learn_Item := Learn_Item (Child);
+      Row  : constant Learn_Item_Row := Learn_Item_Row (Child);
    begin
       --  Don't unselect the previously selected item if the user selects it
       --  again.
-      if View.Selected_Item /= null
-        and then View.Selected_Item.Get_Name /= Item.Get_Name
+      if View.Selected_Row /= null
+        and then View.Selected_Row.Get_Name /= Row.Get_Name
       then
          View.Main_View.Set_Child_Highlighted
-           (Child_Key => View.Selected_Item.Get_Name,
+           (Child_Key => View.Selected_Row.Get_Name,
             Highlight => False);
       end if;
 
-      View.Help_Label.Set_Markup (Item.Get_Help);
-      View.Selected_Item := Item;
+      View.Help_Label.Set_Markup (Row.Item.Get_Help);
+      View.Selected_Row := Row;
    end On_Learn_Item_Selected;
 
    --------------------------------
@@ -365,16 +382,16 @@ package body Learn.Views is
          declare
             use Gtk.Widget.Widget_List;
             List : constant Glist := Group_Widget.Get_Selected_Children;
-            Item : Learn_Item;
+            Row  : Learn_Item_Row;
             View : constant Generic_Learn_Views.View_Access :=
               Generic_Learn_Views.Retrieve_View (Learn_View_Module.Get_Kernel);
          begin
             if List /= Null_List then
-               Item := Learn_Item (Get_Data (List));
+               Row := Learn_Item_Row (Get_Data (List));
             end if;
 
-            if Item /= null then
-               Item.On_Double_Click (Context => View.Previous_Context);
+            if Row /= null then
+               Row.Item.On_Double_Click (Context => View.Previous_Context);
             end if;
          end;
       end if;
@@ -405,7 +422,10 @@ package body Learn.Views is
    is
       Group_Widget : Dialog_Group_Widget;
       Help_View    : Dialog_View;
+      Providers    : constant Learn_Provider_Maps.Map :=
+        Get_Registered_Providers;
    begin
+      Trace (Me, "Initializing Learn view...");
       Initialize_Vbox (View);
 
       Gtk_New_Vpaned (View.Paned_View);
@@ -436,9 +456,14 @@ package body Learn.Views is
       Dialog_Utils.Initialize (View.Main_View);
       View.Paned_View.Pack1 (View.Main_View, Resize => True, Shrink => True);
 
-      --  Create group widgets for all the registered providers
-
-      View.Refresh;
+      for Provider of Providers loop
+         for Item of Provider.Items loop
+            On_Item_Added
+              (Self     => View,
+               Provider => Provider,
+               Item     => Item);
+         end loop;
+      end loop;
 
       --  Create the documentation view
 
@@ -467,6 +492,8 @@ package body Learn.Views is
       --  Register the Learn view as a learn module's listener
 
       Learn.Register_Listener (View);
+
+      Trace (Me, "Learn view created");
 
       return Gtk_Widget (View);
    end Initialize;
@@ -539,103 +566,146 @@ package body Learn.Views is
       Learn.Unregister_Listener (View);
    end On_Destroy;
 
-   -------------
-   -- Refresh --
-   -------------
+   -------------------
+   -- On_Item_Added --
+   -------------------
 
-   procedure Refresh (View : not null access Learn_View_Record'Class) is
-      Providers    : constant Learn_Provider_Maps.Map :=
-                       Get_Registered_Providers;
-      Group_Widget : Dialog_Group_Widget;
+   overriding procedure On_Item_Added
+     (Self     : not null access Learn_View_Record;
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class)
+   is
+      use Learn_Provider_Widgets_Maps;
+      use Group_Widget_Maps;
+
+      Provider_Name           : constant String := Provider.Get_Name;
+      Group_Name              : constant String := Item.Get_Group_Name;
+      Show_Pref               : constant Boolean_Preference :=
+        Learn_View_Module.Show_Providers_Preferences
+          (Provider_Name);
+      Provider_Widgets_Cursor : Learn_Provider_Widgets_Maps.Cursor;
+      Group_Widget_Cursor     : Group_Widget_Maps.Cursor;
+      Group_Widget            : Dialog_Group_Widget;
+      Item_Widget             : Gtk_Widget;
+      Row                     : Learn_Item_Row;
+      Dummy                   : Boolean;
    begin
-      --  Create group widgets for all the registered providers
 
-      for Provider of Providers loop
+      --  Create the widget for the learn item
+
+      Item_Widget := Item.Get_Widget;
+
+      if Item_Widget = null then
+         return;
+      end if;
+
+      --  Create the row for the learn intem
+
+      Row := new Learn_Item_Row_Record'
+        (GObject_Record with Item => Learn_Item (Item));
+      Gtk.Flow_Box_Child.Initialize (Row);
+      Row.Add (Item_Widget);
+      Get_Style_Context (Row).Add_Class ("learn-items");
+
+      --  Search for the provider's widget and create one if not found
+
+      Provider_Widgets_Cursor := Self.Provider_Widgets_Map.Find
+        (Provider_Name);
+
+      if not Has_Element (Provider_Widgets_Cursor) then
          declare
-            Provider_Name    : constant String := Provider.Get_Name;
             Provider_Widgets : Learn_Provider_Widgets_Type;
-            Show_Pref        : constant Boolean_Preference :=
-                                 Learn_View_Module.Show_Providers_Preferences
-                                   (Provider_Name);
-            Item_ID          : Positive := 1;
          begin
             Gtk_New (Provider_Widgets.Provider_Label, Provider_Name);
             Get_Style_Context (Provider_Widgets.Provider_Label).Add_Class
               ("learn-provider-labels");
             Provider_Widgets.Provider_Label.Set_No_Show_All
               (not Show_Pref.Get_Pref);
-            View.Main_View.Append
+            Self.Main_View.Append
               (Provider_Widgets.Provider_Label,
                Expand => False);
 
-            for Item_Group of Provider.Get_Learn_Items loop
-               Group_Widget := new Dialog_Group_Widget_Record;
-               Provider_Widgets.Group_Widgets.Append (Group_Widget);
-
-               Initialize
-                 (Self                => Group_Widget,
-                  Parent_View         => View.Main_View,
-                  Group_Name          => Item_Group.Get_Name,
-                  Allow_Multi_Columns => True,
-                  Selection           => Selection_Single,
-                  Filtering_Function  => Filter_Learn_Item'Access);
-
-               Group_Widget.On_Child_Selected
-                 (Call => On_Learn_Item_Selected'Access,
-                  Slot => View);
-
-               Group_Widget.Set_Column_Spacing (10);
-               Group_Widget.Set_Row_Spacing (3);
-
-               Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
-
-               --  Connect to the Button_Press_Event signal to detect
-               --  double-clicks on learn items.
-
-               Group_Widget.On_Button_Press_Event
-                 (On_Learn_Item_Button_Press'Access);
-
-               --  Add the group's learn items in the group widget
-
-               for Item of Item_Group.Items loop
-                  Get_Style_Context (Item).Add_Class ("learn-items");
-                  Item.Set_Name ("learn-item-" & Item_ID'Img);
-                  Group_Widget.Append_Child
-                    (Widget      => Item,
-                     Expand      => False,
-                     Homogeneous => True,
-                     Child_Key   => Item.Get_Name);
-
-                  Item_ID := Item_ID + 1;
-               end loop;
-
-               --  Set the group widget's visibility depending on the
-               --  associated  preference.
-
-               Group_Widget.Set_No_Show_All (not Show_Pref.Get_Pref);
-            end loop;
-
-            View.Provider_Widgets_Map.Insert
-              (Key      => Provider_Name,
-               New_Item => Provider_Widgets);
+            Self.Provider_Widgets_Map.Insert
+              (Provider_Name,
+               Provider_Widgets,
+               Position => Provider_Widgets_Cursor,
+               Inserted => Dummy);
          end;
-      end loop;
-   end Refresh;
+      end if;
 
-   -------------------------
-   -- On_Provider_Changed --
-   -------------------------
+      --  Search for a group widget with the same group name and create one
+      --  if not found.
 
-   overriding procedure On_Provider_Changed
+      Group_Widget_Cursor := Self.Provider_Widgets_Map.Reference
+        (Provider_Widgets_Cursor).Group_Widgets.Find (Group_Name);
+
+      if not Has_Element (Group_Widget_Cursor) then
+         Group_Widget := new Dialog_Group_Widget_Record;
+         Self.Provider_Widgets_Map.Reference
+           (Provider_Widgets_Cursor).Group_Widgets.Insert
+           (Group_Name,
+            Group_Widget,
+            Position => Group_Widget_Cursor,
+            Inserted => Dummy);
+
+         Initialize
+           (Self                => Group_Widget,
+            Parent_View         => Self.Main_View,
+            Group_Name          => Group_Name,
+            Allow_Multi_Columns => True,
+            Selection           => Selection_Single,
+            Filtering_Function  => Filter_Learn_Item'Access);
+
+         Group_Widget.On_Child_Selected
+           (Call => On_Learn_Item_Selected'Access,
+            Slot => Self);
+
+         Group_Widget.Set_Column_Spacing (10);
+         Group_Widget.Set_Row_Spacing (3);
+
+         Get_Style_Context (Group_Widget).Add_Class ("learn-groups");
+
+         --  Connect to the Button_Press_Event signal to detect
+         --  double-clicks on learn items.
+
+         Group_Widget.On_Button_Press_Event
+           (On_Learn_Item_Button_Press'Access);
+
+         --  Set the group widget's visibility depending on the
+         --  associated  preference.
+
+         Group_Widget.Set_No_Show_All (not Show_Pref.Get_Pref);
+      else
+         Group_Widget := Self.Provider_Widgets_Map.Reference
+           (Provider_Widgets_Cursor).Group_Widgets.Reference
+           (Group_Widget_Cursor);
+      end if;
+
+      Row.Set_Name (Item.Get_ID);
+      Self.Number_Of_Items := Self.Number_Of_Items + 1;
+
+      --  Append the learn item's row to the group widget
+
+      Group_Widget.Append_Child
+        (Widget      => Row,
+         Expand      => False,
+         Homogeneous => True,
+         Child_Key   => Row.Get_Name);
+   end On_Item_Added;
+
+   ---------------------
+   -- On_Item_Deleted --
+   ---------------------
+
+   overriding procedure On_Item_Deleted
      (Self     : not null access Learn_View_Record;
-      Provider : not null access Learn_Provider_Type'Class)
+      Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class)
    is
       pragma Unreferenced (Provider);
    begin
-      Self.Main_View.Remove_All_Children;
-      Self.Provider_Widgets_Map.Clear;
-      Self.Refresh;
-   end On_Provider_Changed;
+      Self.Main_View.Remove_Child (Item.Get_ID);
+   end On_Item_Deleted;
 
    --------------------------
    -- Register_Preferences --

@@ -19,37 +19,69 @@ package body Learn is
 
    Learn_Module : Learn_Module_Access;
 
+   procedure Notify_Listeners_About_Learn_Item_Added
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class);
+
+   procedure Notify_Listeners_About_Learn_Item_Deleted
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class);
+
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Self : not null access Learn_Item_Group_Type;
-      Name : String) is
+     (Item       : not null access Learn_Item_Type;
+      Group_Name : String) is
    begin
-      Self.Name := To_Unbounded_String (Name);
+      Item.Group_Name := To_Unbounded_String (Group_Name);
    end Initialize;
 
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (Self : not null access Learn_Item_Group_Type) return String is
-   begin
-      return To_String (Self.Name);
-   end Get_Name;
-
    --------------------
-   -- Add_Learn_Item --
+   -- Get_Group_Name --
    --------------------
 
-   procedure Add_Learn_Item
-     (Self : not null access Learn_Item_Group_Type;
-      Item : not null access Learn_Item_Type'Class) is
+   function Get_Group_Name
+     (Item : not null access Learn_Item_Type) return String is
    begin
-      Self.Items.Append (Item);
-   end Add_Learn_Item;
+      return To_String (Item.Group_Name);
+   end Get_Group_Name;
+
+   --------------
+   -- Add_Item --
+   --------------
+
+   procedure Add_Item
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class;
+      ID       : String) is
+   begin
+      Provider.Items.Include (ID, Item);
+
+      Notify_Listeners_About_Learn_Item_Added
+        (Provider => Provider,
+         Item     => Item);
+   end Add_Item;
+
+   -----------------
+   -- Delete_Item --
+   -----------------
+
+   procedure Delete_Item
+     (Provider : not null access Learn_Provider_Type'Class;
+      ID       : String)
+   is
+      Position : Learn_Item_Maps.Cursor := Provider.Items.Find (ID);
+   begin
+      if Learn_Item_Maps.Has_Element (Position) then
+         Notify_Listeners_About_Learn_Item_Deleted
+           (Provider => Provider,
+            Item     => Learn_Item_Maps.Element (Position));
+
+         Provider.Items.Delete (Position);
+      end if;
+   end Delete_Item;
 
    -----------------------
    -- Register_Provider --
@@ -88,17 +120,35 @@ package body Learn is
       end if;
    end Unregister_Listener;
 
-   ---------------------------------------------
-   -- Notify_Listeners_About_Provider_Changed --
-   ---------------------------------------------
+   ---------------------------------------
+   -- Notify_Listeners_About_Item_Added --
+   ---------------------------------------
 
-   procedure Notify_Listeners_About_Provider_Changed
-     (Provider : not null access Learn_Provider_Type'Class) is
+   procedure Notify_Listeners_About_Learn_Item_Added
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class) is
    begin
       for Listener of Learn_Module.Listeners loop
-         Listener.On_Provider_Changed (Provider);
+         Listener.On_Item_Added
+           (Provider => Provider,
+            Item     => Item);
       end loop;
-   end Notify_Listeners_About_Provider_Changed;
+   end Notify_Listeners_About_Learn_Item_Added;
+
+   -----------------------------------------------
+   -- Notify_Listeners_About_Learn_Item_Deleted --
+   -----------------------------------------------
+
+   procedure Notify_Listeners_About_Learn_Item_Deleted
+     (Provider : not null access Learn_Provider_Type'Class;
+      Item     : not null access Learn_Item_Type'Class) is
+   begin
+      for Listener of Learn_Module.Listeners loop
+         Listener.On_Item_Deleted
+           (Provider => Provider,
+            Item     => Item);
+      end loop;
+   end Notify_Listeners_About_Learn_Item_Deleted;
 
    ---------------------
    -- Register_Module --

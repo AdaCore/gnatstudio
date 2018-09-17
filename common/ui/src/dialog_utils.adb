@@ -31,8 +31,8 @@ package body Dialog_Utils is
 
    procedure Refilter_On_Show (Self : access Gtk_Widget_Record'Class);
    --  Called each time a dialog group widget has been shown.
-   --  Used to refilter the items and hide the group if there is no visible
-   --  child.
+   --  Set the filtering function (if any) and refilter the items. It will also
+   --  hide the group if there is no visible child.
 
    -------------------------
    -- Filter_Func_Wrapper --
@@ -239,6 +239,26 @@ package body Dialog_Utils is
       Self.Number_Of_Children := 0;
    end Remove_All_Children;
 
+   ------------------
+   -- Remove_Child --
+   ------------------
+
+   procedure Remove_Child
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String)
+   is
+      Position : Gtk_Flow_Box_Child_Maps.Cursor;
+      Child    : Gtk_Flow_Box_Child;
+   begin
+      Position := Self.Children_Map.Find (Child_Key);
+
+      if Gtk_Flow_Box_Child_Maps.Has_Element (Position) then
+         Child := Self.Children_Map (Child_Key);
+         Gtk_Flow_Box (Child.Get_Parent).Remove (Child);
+         Self.Children_Map.Delete (Position);
+      end if;
+   end Remove_Child;
+
    -----------------------
    -- Set_Child_Visible --
    -----------------------
@@ -403,8 +423,13 @@ package body Dialog_Utils is
 
    procedure Refilter_On_Show (Self : access Gtk_Widget_Record'Class) is
       Group_Widget : constant Dialog_Group_Widget :=
-                       Dialog_Group_Widget (Self);
+        Dialog_Group_Widget (Self);
    begin
+      if not Group_Widget.Is_Filter_Func_Set then
+         Group_Widget.Flow_Box.Set_Filter_Func (Filter_Func_Wrapper'Access);
+         Group_Widget.Is_Filter_Func_Set := True;
+      end if;
+
       Group_Widget.Force_Refilter;
    end Refilter_On_Show;
 
@@ -443,7 +468,6 @@ package body Dialog_Utils is
 
       if Filtering_Function /= null then
          Self.Filter_Func := Filtering_Function;
-         Self.Flow_Box.Set_Filter_Func (Filter_Func_Wrapper'Access);
          Self.On_Show (Refilter_On_Show'Access, After => True);
       end if;
 

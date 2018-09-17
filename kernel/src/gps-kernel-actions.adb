@@ -32,7 +32,6 @@ with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Flow_Box_Child;      use Gtk.Flow_Box_Child;
 with Gtk.Size_Group;          use Gtk.Size_Group;
 with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
@@ -69,11 +68,9 @@ package body GPS.Kernel.Actions is
    is
      ("Actions");
 
-   overriding function Get_Learn_Items
-     (Self : not null access Actions_Learn_Provider_Type) return
-     Learn_Item_Group_Lists.List;
-
    Provider : access Actions_Learn_Provider_Type;
+
+   Actions_Size_Group : Gtk_Size_Group;
 
    ------------------------
    -- Actions Learn Item --
@@ -82,7 +79,14 @@ package body GPS.Kernel.Actions is
    type Action_Learn_Item_Type is new Learn_Item_Type with record
       Action_Name : Unbounded_String;
    end record;
-   type Action_Learn_Item is access all Action_Learn_Item_Type;
+
+   overriding function Get_ID
+     (Self : not null access Action_Learn_Item_Type) return String
+   is
+     (To_String (Self.Action_Name));
+
+   overriding function Get_Widget
+     (Self : not null access Action_Learn_Item_Type) return Gtk_Widget;
 
    overriding function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String;
@@ -99,6 +103,53 @@ package body GPS.Kernel.Actions is
       Context : Selection_Context);
    --  Execute the action associated with the given learn item when the user
    --  double-clicks on it.
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self : not null access Action_Learn_Item_Type) return Gtk_Widget
+   is
+      Action_Name    : constant String := To_String (Self.Action_Name);
+      Action         : constant Action_Record_Access := Lookup_Action
+        (Kernel => Provider.Kernel,
+         Name   => Action_Name);
+      Action_Hbox    : Gtk_Hbox;
+      Name_Label     : Gtk_Label;
+      Shortcut_Label : Gtk_Label;
+   begin
+      if Action = null then
+         return null;
+      end if;
+
+      Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
+
+      Gtk_New (Name_Label,  Get_Label (Action));
+      Action_Hbox.Pack_Start (Name_Label, Expand => False);
+
+      if Actions_Size_Group = null then
+         Gtk_New (Actions_Size_Group);
+      end if;
+
+      Actions_Size_Group.Add_Widget (Name_Label);
+      Name_Label.Set_Alignment (0.0, 0.5);
+      Name_Label.Set_Ellipsize (Ellipsize_Middle);
+
+      Gtk_New
+        (Shortcut_Label,
+         Provider.Kernel.Get_Shortcut
+           (Action          => Action_Name,
+            Use_Markup      => True,
+            Return_Multiple => True));
+      Shortcut_Label.Set_Use_Markup (True);
+      Action_Hbox.Pack_Start
+        (Shortcut_Label,
+         Expand => True,
+         Fill   => False);
+
+      return Gtk_Widget (Action_Hbox);
+   end Get_Widget;
 
    --------------
    -- Get_Help --
@@ -148,136 +199,6 @@ package body GPS.Kernel.Actions is
          Action  => To_String (Self.Action_Name),
          Context => Context);
    end On_Double_Click;
-
-   ---------------------
-   -- Get_Learn_Items --
-   ---------------------
-
-   overriding function Get_Learn_Items
-     (Self : not null access Actions_Learn_Provider_Type) return
-     Learn_Item_Group_Lists.List
-   is
-      Added_Categories  : Learn_Item_Group_Lists.List;
-      Action_Size_Group : Gtk_Size_Group;
-
-      procedure Create_Category_Learn_Group_If_Needed
-        (Action_Item : not null Action_Learn_Item;
-         Action      : not null Action_Record_Access);
-      --  Create a learn group for the given action item's category if not
-      --  created yet. This is used to group the actions that belong to a
-      --  same category.
-
-      function Create_Action_Learn_Item
-        (Action : not null Action_Record_Access) return Action_Learn_Item;
-      --  Create a learn item for the given action
-
-      -------------------------------------------
-      -- Create_Category_Learn_Group_If_Needed --
-      -------------------------------------------
-
-      procedure Create_Category_Learn_Group_If_Needed
-        (Action_Item : not null Action_Learn_Item;
-         Action      : not null Action_Record_Access)
-      is
-         use Learn_Item_Group_Lists;
-
-         Category       : constant String := Get_Category (Action);
-         Category_Group : Learn_Item_Group;
-         Cursor         : Learn_Item_Group_Lists.Cursor := No_Element;
-      begin
-         --  If we already created a group for this category, retrieve it.
-         --  Otherwise, create a new one.
-
-         if not Added_Categories.Is_Empty then
-            Cursor := Added_Categories.First;
-         end if;
-
-         while Cursor /= No_Element loop
-            if Element (Cursor).Get_Name = Category then
-               exit;
-            end if;
-
-            Next (Cursor);
-         end loop;
-
-         if Cursor /= No_Element then
-            Category_Group := Element (Cursor);
-         else
-            Category_Group := new Learn_Item_Group_Type;
-            Initialize (Category_Group, Name => Category);
-
-            Added_Categories.Append (Category_Group);
-         end if;
-
-         --  Add the action learn item to the category group
-
-         Category_Group.Add_Learn_Item (Learn_Item (Action_Item));
-      end Create_Category_Learn_Group_If_Needed;
-
-      ------------------------------
-      -- Create_Action_Learn_Item --
-      ------------------------------
-
-      function Create_Action_Learn_Item
-        (Action : not null Action_Record_Access) return Action_Learn_Item
-      is
-         Action_Name    : constant String := Get_Name (Action);
-         Action_Item    : Action_Learn_Item;
-         Action_Hbox    : Gtk_Hbox;
-         Name_Label     : Gtk_Label;
-         Shortcut_Label : Gtk_Label;
-      begin
-         Action_Item := new Action_Learn_Item_Type;
-         Action_Item.Action_Name := To_Unbounded_String (Action_Name);
-
-         Gtk.Flow_Box_Child.Initialize (Action_Item);
-
-         Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
-
-         Gtk_New (Name_Label, Get_Label (Action));
-         Action_Hbox.Pack_Start (Name_Label, Expand => False);
-         Action_Size_Group.Add_Widget (Name_Label);
-         Name_Label.Set_Alignment (0.0, 0.5);
-         Name_Label.Set_Ellipsize (Ellipsize_Middle);
-
-         Gtk_New
-           (Shortcut_Label,
-            Self.Kernel.Get_Shortcut
-              (Action          => Action_Name,
-               Use_Markup      => True,
-               Return_Multiple => True));
-         Shortcut_Label.Set_Use_Markup (True);
-         Action_Hbox.Pack_Start
-           (Shortcut_Label,
-            Expand => True,
-            Fill   => False);
-
-         Action_Item.Add (Action_Hbox);
-
-         return Action_Item;
-      end Create_Action_Learn_Item;
-
-   begin
-      Gtk_New (Action_Size_Group);
-
-      for Action_Name of Self.Kernel.Actions_For_Learning loop
-         declare
-            Action      : constant Action_Record_Access :=
-                           Lookup_Action (Self.Kernel, Action_Name);
-            Action_Item : constant Action_Learn_Item :=
-                            (if Action /= null then
-                                Create_Action_Learn_Item (Action)
-                             else
-                                null);
-         begin
-            if Action_Item /= null then
-               Create_Category_Learn_Group_If_Needed (Action_Item, Action);
-            end if;
-         end;
-      end loop;
-
-      return Added_Categories;
-   end Get_Learn_Items;
 
    ----------
    -- Free --
@@ -385,7 +306,7 @@ package body GPS.Kernel.Actions is
          Overridden                   => Overridden,
          Disabled                     => False,
          Icon_Name                    => Stock,
-         Shortcut_Active_For_View              => Shortcut_Active_For_View);
+         Shortcut_Active_For_View     => Shortcut_Active_For_View);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
@@ -395,11 +316,16 @@ package body GPS.Kernel.Actions is
       end if;
 
       if For_Learning then
-         Kernel.Actions_For_Learning.Append (Name);
-
-         if Provider /= null then
-            Notify_Listeners_About_Provider_Changed (Provider);
-         end if;
+         declare
+            Item : constant access Action_Learn_Item_Type :=
+              new Action_Learn_Item_Type;
+         begin
+            Item.Action_Name := To_Unbounded_String (Name);
+            Initialize (Item, Group_Name => Category);
+            Provider.Add_Item
+              (Item        => Item,
+               ID          => Name);
+         end;
       end if;
    end Register_Action;
 
@@ -427,15 +353,7 @@ package body GPS.Kernel.Actions is
          Remove_UI_For_Action (Kernel, Name);
       end if;
 
-      declare
-         use Action_Lists;
-         Action_Cursor : Action_Lists.Cursor :=
-                           Kernel.Actions_For_Learning.Find (Name);
-      begin
-         if Action_Cursor /= No_Element then
-            Kernel.Actions_For_Learning.Delete (Action_Cursor);
-         end if;
-      end;
+      Provider.Delete_Item (Name);
 
       --  Unregister the gtk+ action, too.
       Kernel.Get_Application.Remove_Action (Name);
@@ -955,7 +873,8 @@ package body GPS.Kernel.Actions is
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Provider := new Actions_Learn_Provider_Type'
-        (Kernel => Kernel_Handle (Kernel));
+        (Learn_Provider_Type with
+           Kernel => Kernel_Handle (Kernel));
       Learn.Register_Provider (Provider);
    end Register_Actions_Learn_Provider;
 
