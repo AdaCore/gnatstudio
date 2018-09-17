@@ -62,6 +62,9 @@ private package GNATdoc.Utils is
    function No (Text : Unbounded_String) return Boolean;
    --  Return true if Text = Null_Unbounded_String
 
+   function No (Text : Unbounded_String_Vectors.Vector) return Boolean;
+   --  Return true if Text is empty
+
    function Present (E : Root_Entity'Class) return Boolean;
    --  Return true if E /= No_Root_Entity
 
@@ -86,6 +89,8 @@ private package GNATdoc.Utils is
    function To_Unbounded_String
      (Text : Unbounded_String_Vectors.Vector) return Unbounded_String;
    --  Convert vector of strings into string using LF as separator.
+
+   function Split_Lines (Text : String) return Unbounded_String_Vectors.Vector;
 
 private
    pragma Inline (No);

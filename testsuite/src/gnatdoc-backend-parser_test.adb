@@ -20,6 +20,7 @@ with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNATdoc.Markup_Streams;      use GNATdoc.Markup_Streams;
 with GNATdoc.Backend.Text_Parser; use GNATdoc.Backend.Text_Parser;
 with GNATdoc.Customization.Tag_Handlers.Images;
+with GNATdoc.Utils;
 
 procedure GNATdoc.Backend.Parser_Test is
    Text     : Unbounded_String;
@@ -38,7 +39,7 @@ begin
       Append (Text, Get_Line & ASCII.LF);
    end loop;
 
-   Events := Parse_Text (To_String (Text));
+   Events := Parse_Text (GNATdoc.Utils.Split_Lines (To_String (Text)));
 
    for Event of Events loop
       case Event.Kind is

@@ -171,6 +171,11 @@ package body GNATdoc.Utils is
       return Text = Null_Unbounded_String;
    end No;
 
+   function No (Text : Unbounded_String_Vectors.Vector) return Boolean is
+   begin
+      return Text.Is_Empty;
+   end No;
+
    -------------
    -- Present --
    -------------
@@ -214,6 +219,52 @@ package body GNATdoc.Utils is
          return True;
       end if;
    end Spaces_Only;
+
+   -----------------
+   -- Split_Lines --
+   -----------------
+
+   function Split_Lines
+     (Text : String) return Unbounded_String_Vectors.Vector
+   is
+      use Ada.Characters.Latin_1;
+
+      First   : Positive := Text'First;
+      Current : Positive := Text'First;
+      Result  : Unbounded_String_Vectors.Vector;
+
+   begin
+      while Current <= Text'Last loop
+         if Text (Current) = CR or Text (Current) = LF then
+            Result.Append (To_Unbounded_String (Text (First .. Current - 1)));
+
+            --  CR & LF combination is handled as single line separator
+
+            if Text (Current) = CR
+              and then Current < Text'Last
+              and then Text (Current + 1) = LF
+            then
+               Current := Current + 2;
+
+            else
+               Current := Current + 1;
+            end if;
+
+            First := Current;
+
+         else
+            Current := Current + 1;
+         end if;
+      end loop;
+
+      if First /= Current then
+         --  Append content of last non terminated line
+
+         Result.Append (To_Unbounded_String (Text (First .. Text'Last)));
+      end if;
+
+      return Result;
+   end Split_Lines;
 
    ---------------
    -- To_String --

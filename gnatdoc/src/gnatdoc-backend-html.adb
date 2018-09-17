@@ -1858,7 +1858,8 @@ package body GNATdoc.Backend.HTML is
       if not Context.Options.Disable_Markup then
          return
            To_JSON_Representation
-             (Parse_Text (To_String (Text)), Context.Kernel);
+             (Parse_Text (Split_Lines (To_String (Text))),
+              Context.Kernel);
 
       else
          declare

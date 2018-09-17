@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Latin_1; use Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with GNAT.Regpat;            use GNAT.Regpat;
 
@@ -27,14 +26,6 @@ use GNATdoc.Customization.Tag_Handlers;
 package body GNATdoc.Backend.Text_Parser is
 
    use GNATdoc.Markup_Streams;
-
-   package Unbounded_String_Vectors is
-     new Ada.Containers.Vectors
-       (Positive,
-        Ada.Strings.Unbounded.Unbounded_String,
-        Ada.Strings.Unbounded."=");
-
-   function Split_Lines (Text : String) return Unbounded_String_Vectors.Vector;
 
    type State_Kinds is (Initial, Paragraph, Itemized_List, Code);
 
@@ -107,12 +98,13 @@ package body GNATdoc.Backend.Text_Parser is
    -- Parse_Text --
    ----------------
 
-   function Parse_Text (Comment_Text : String) return Event_Vectors.Vector is
+   function Parse_Text
+     (Comment_Text : Unbounded_String_Vectors.Vector)
+      return Event_Vectors.Vector
+   is
       Doc_Tag_Pattern : constant Pattern_Matcher := Build_Doc_Tag_Pattern;
-      Lines           : constant Unbounded_String_Vectors.Vector :=
-        Split_Lines (Comment_Text);
       Result          : Event_Vectors.Vector;
-      Current         : Positive := Lines.First_Index;
+      Current         : Positive := Comment_Text.First_Index;
       State           : State_Type :=
         ((Kind => Initial, Last_Para_Offset => <>));
       State_Stack     : State_Vectors.Vector;
@@ -193,7 +185,9 @@ package body GNATdoc.Backend.Text_Parser is
       begin
          Parse_Line
            (Slice
-              (Lines (Current), P_Matches (1).First, Length (Lines (Current))),
+              (Comment_Text (Current),
+               P_Matches (1).First,
+               Length (Comment_Text (Current))),
             Line_Events,
             Emit_After);
 
@@ -236,9 +230,9 @@ package body GNATdoc.Backend.Text_Parser is
          Result.Append
            ((Text,
             Unbounded_Slice
-              (Lines (Current),
+              (Comment_Text (Current),
                State.Para_Offset,
-               Length (Lines (Current)))));
+               Length (Comment_Text (Current)))));
       end Open_UL_LI_And_Push;
 
       ----------------
@@ -328,9 +322,9 @@ package body GNATdoc.Backend.Text_Parser is
       end Parse_Line;
 
    begin
-      while Current <= Lines.Last_Index loop
-         Match (LI_Pattern, To_String (Lines (Current)), LI_Matches);
-         Match (P_Pattern, To_String (Lines (Current)), P_Matches);
+      while Current <= Comment_Text.Last_Index loop
+         Match (LI_Pattern, To_String (Comment_Text (Current)), LI_Matches);
+         Match (P_Pattern, To_String (Comment_Text (Current)), P_Matches);
 
          <<Restart>>
          case State.Kind is
@@ -351,9 +345,9 @@ package body GNATdoc.Backend.Text_Parser is
                      Result.Append
                        ((Text,
                         Unbounded_Slice
-                          (Lines (Current),
+                          (Comment_Text (Current),
                            P_Matches (1).First,
-                           Length (Lines (Current)))));
+                           Length (Comment_Text (Current)))));
                      State_Stack.Append (State);
                      State :=
                        ((Kind => Code, Code_Offset => P_Matches (1).First));
@@ -391,9 +385,9 @@ package body GNATdoc.Backend.Text_Parser is
                      begin
                         Parse_Line
                           (Slice
-                             (Lines (Current),
+                             (Comment_Text (Current),
                               P_Matches (1).First,
-                              Length (Lines (Current))),
+                              Length (Comment_Text (Current))),
                            Line_Events,
                            State.Emit_After);
 
@@ -415,9 +409,9 @@ package body GNATdoc.Backend.Text_Parser is
                      Result.Append
                        ((Text,
                         Unbounded_Slice
-                          (Lines (Current),
+                          (Comment_Text (Current),
                            State.Code_Offset,
-                           Length (Lines (Current)))));
+                           Length (Comment_Text (Current)))));
 
                   else
                      Close_Pre_And_Pop;
@@ -442,9 +436,9 @@ package body GNATdoc.Backend.Text_Parser is
                      Result.Append
                        ((Text,
                         Unbounded_Slice
-                          (Lines (Current),
+                          (Comment_Text (Current),
                            State.Para_Offset,
-                           Length (Lines (Current)))));
+                           Length (Comment_Text (Current)))));
                      State.Para_Offset := LI_Matches (2).First;
 
                   elsif LI_Matches (1).First > State.Item_Offset then
@@ -500,49 +494,5 @@ package body GNATdoc.Backend.Text_Parser is
 
       return Result;
    end Parse_Text;
-
-   -----------------
-   -- Split_Lines --
-   -----------------
-
-   function Split_Lines
-     (Text : String) return Unbounded_String_Vectors.Vector
-   is
-      First   : Positive := Text'First;
-      Current : Positive := Text'First;
-      Result  : Unbounded_String_Vectors.Vector;
-
-   begin
-      while Current <= Text'Last loop
-         if Text (Current) = CR or Text (Current) = LF then
-            Result.Append (To_Unbounded_String (Text (First .. Current - 1)));
-
-            --  CR & LF combination is handled as single line separator
-
-            if Text (Current) = CR
-              and then Current < Text'Last
-              and then Text (Current + 1) = LF
-            then
-               Current := Current + 2;
-
-            else
-               Current := Current + 1;
-            end if;
-
-            First := Current;
-
-         else
-            Current := Current + 1;
-         end if;
-      end loop;
-
-      if First /= Current then
-         --  Append content of last non terminated line
-
-         Result.Append (To_Unbounded_String (Text (First .. Text'Last)));
-      end if;
-
-      return Result;
-   end Split_Lines;
 
 end GNATdoc.Backend.Text_Parser;

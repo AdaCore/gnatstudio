@@ -20,7 +20,7 @@ with GNATdoc.Markup_Streams;
 package GNATdoc.Backend.Text_Parser is
 
    function Parse_Text
-     (Comment_Text : String)
+     (Comment_Text : Unbounded_String_Vectors.Vector)
       return GNATdoc.Markup_Streams.Event_Vectors.Vector;
    --  Parses text and generates markup event stream
 
