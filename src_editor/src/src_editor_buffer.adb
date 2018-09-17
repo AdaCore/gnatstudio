@@ -119,11 +119,18 @@ package body Src_Editor_Buffer is
 
    Editors_Factory : Src_Editor_Factory_Access;
 
-   Me                   : constant Trace_Handle :=
-                            Create ("GPS.Source_Editor.Buffer");
+   Me                  : constant Trace_Handle :=
+     Create ("GPS.Source_Editor.Buffer");
 
-   Prevent_Align        : constant Trace_Handle :=
-                            Create ("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB", On);
+   Prevent_Align       : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB", On);
+
+   Auto_Save_No_Reload : constant Trace_Handle :=
+     Create ("DIALOG_AUTO_SAVE_NO_RELOAD", Off);
+
+   Auto_Save_Reload    : constant Trace_Handle :=
+     Create ("DIALOG_AUTO_SAVE_RELOAD", Off);
+
    pragma Unreferenced (Prevent_Align);
    --  This trace is setup here for the benefit of tab.py
 
@@ -3940,9 +3947,9 @@ package body Src_Editor_Buffer is
             if Active (Testsuite_Handle) then
                --  In the testsuite, we test for two specific handles to
                --  control the behavior of this dialog:
-               if Active (Create ("DIALOG_AUTO_SAVE_RELOAD")) then
+               if Active (Auto_Save_Reload) then
                   Buttons := Button_Yes;
-               elsif Active (Create ("DIALOG_AUTO_SAVE_NO_RELOAD")) then
+               elsif Active (Auto_Save_No_Reload) then
                   Buttons := Button_No;
                else
                   Buttons := Button_No;

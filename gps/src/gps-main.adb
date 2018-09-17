@@ -1062,9 +1062,15 @@ procedure GPS.Main is
          Config_Files.Autoconf := True;
 
       elsif Switch = "--traceon" then
+         if not GNATCOLL.Traces.Exists (ICS.Value (Value)) then
+            Put_Line ("Unknown trace for traceon: " & ICS.Value (Value));
+         end if;
          GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
 
       elsif Switch = "--traceoff" then
+         if not GNATCOLL.Traces.Exists (ICS.Value (Value)) then
+            Put_Line ("Unknown trace for traceoff: " & ICS.Value (Value));
+         end if;
          GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
 
       elsif Switch = "--tracefile" then
