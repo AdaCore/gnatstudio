@@ -4818,7 +4818,9 @@ package body Ada_Analyzer is
 
                if Token = Tok_Body
                  or else Token = Tok_Renames
-                 or else (Token = Tok_Is and then not In_Generic)
+                 or else (Token = Tok_Is
+                          and then not In_Generic
+                          and then In_Declaration /= Expression_Function)
                then
                   In_Declaration := No_Decl;
                elsif In_Declaration in Subprogram_Decl | Expression_Function
