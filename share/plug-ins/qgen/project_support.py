@@ -159,13 +159,6 @@ custom block implementations"/>
 
                  <check
                   line="2"
-                  label="Use simulink function packaging for subsystem\
- code generation"
-                  switch="--simulink-subsystem"
-                 tip=""/>
-
-                 <check
-                  line="2"
                   label="Always generate system variables as variables"
                   switch="--consts-as-vars"
                  tip=""/>
@@ -196,6 +189,8 @@ custom block implementations"/>
                                  switch="--full-flattening" />
                     <radio-entry label="Flattening by reference"
                                  switch="--ref-flattening"/>
+                    <radio-entry label="Flatten non reusable functions"
+                                 switch="--noreuse-flattening" />
                  </radio>
 
                  <field
