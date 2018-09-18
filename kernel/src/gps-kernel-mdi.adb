@@ -2055,6 +2055,7 @@ package body GPS.Kernel.MDI is
         and then not Kernel.Is_In_Destruction
         and then Desktop_Backup_Save.Get_Pref
       then
+         Trace (Me, "Start saving the backup desktop");
          if not Is_Regular_File (Backup_File) then
             --  This case happens if the user manually deletes the backup file
             --  or if the preference is changed.
@@ -2062,6 +2063,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          Save_Desktop (Kernel, Backup => True);
+         Trace (Me, "Finish saving the backup desktop");
       end if;
    end Save_Backup_Desktop;
 
