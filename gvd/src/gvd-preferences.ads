@@ -61,12 +61,6 @@ package GVD.Preferences is
    Registers_Raw                 : Boolean_Preference;
    Registers_Natural             : Boolean_Preference;
 
-   -- Data Window --
-   Title_Font                    : Font_Preference;
-   Type_Font                     : Font_Preference;
-   Max_Item_Width                : Integer_Preference;
-   Max_Item_Height               : Integer_Preference;
-
    -- Memory Window --
    Memory_View_Color             : Color_Preference;
    Memory_Highlighted_Color      : Color_Preference;

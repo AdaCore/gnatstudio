@@ -189,42 +189,6 @@ package body GVD.Preferences is
          Path      => -"Debugger:Memory",
          Default   => True);
 
-      Title_Font := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Title-Font",
-         Path     => -"Debugger:Data View",
-         Label    => -"Item name",
-         Doc      => -"Font used for variable names.",
-         Default  => "Sans Bold 9");
-
-      Type_Font := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Type-Font",
-         Path     => -"Debugger:Data View",
-         Label    => -"Item type",
-         Doc      => -"Font used for variable types.",
-         Default  => "Sans Oblique 9");
-
-      Max_Item_Width := Create
-        (Manager => Prefs,
-         Name    => "Browsers-Item-Max-Width",
-         Path    => -"Debugger:Data View",
-         Minimum => 1,
-         Maximum => Integer'Last,
-         Default => 1200,
-         Doc     => -"Maximum width of a box in Data view.",
-         Label   => -"Max item width");
-
-      Max_Item_Height := Create
-        (Manager => Prefs,
-         Name    => "Browsers-Item-Max-Height",
-         Path    => -"Debugger:Data View",
-         Minimum => 1,
-         Maximum => Integer'Last,
-         Default => 12000,
-         Doc     => -"Maximum height of a box in Data view.",
-         Label   => -"Max item height");
-
       Registers_Hexadecimal := Create_Invisible_Pref
         (Manager  => Prefs,
          Name     => "registers_view-hexadecimal",
