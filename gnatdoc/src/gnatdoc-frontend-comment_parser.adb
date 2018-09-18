@@ -1195,7 +1195,7 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Doc_Wrapper
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String);
+         S            : Unbounded_String_Vectors.Vector);
       --  Perform a fast analysis of S and invoke Parse_Doc or Parse_XML_Doc
 
       function Process_Node
@@ -1216,23 +1216,32 @@ package body GNATdoc.Frontend.Comment_Parser is
       procedure Parse_Doc_Wrapper
         (Context : access constant Docgen_Context;
          E       : Entity_Id;
-         S       : String)
+         S       : Unbounded_String_Vectors.Vector)
       is
+         Aux     : constant String := To_String (S);
          Matches : Match_Array (0 .. 3);
 
       begin
-         if Index (S, "@") > 0 then
-            Parse_Doc (Context, E, S);
-            return;
-         end if;
+         for Line of S loop
+            if Index (Line, "@") /= 0 then
+               --  Tag has been found.
 
-         Match (XML_Regpat, S, Matches);
+               exit;
 
-         if Matches (0) /= No_Match then
-            Parse_XML_Doc (Context, E, S);
-         else
-            Parse_Doc (Context, E, S);
-         end if;
+            else
+               Match (XML_Regpat, Aux, Matches);
+
+               if Matches (0) /= No_Match then
+                  --  XML tag has been found
+
+                  Parse_XML_Doc (Context, E, Aux);
+
+                  return;
+               end if;
+            end if;
+         end loop;
+
+         Parse_Doc (Context, E, Aux);
       end Parse_Doc_Wrapper;
 
       --------------------------------
@@ -1267,7 +1276,7 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the documentation
 
          if Get_Doc (Enum) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Enum, To_String (Get_Doc (Enum).Text));
+            Parse_Doc_Wrapper (Context, Enum, Get_Doc (Enum).Text);
             Set_Doc (Enum, No_Comment_Result);
          end if;
 
@@ -1326,7 +1335,7 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the documentation of the record
 
          if Get_Doc (Rec) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Rec, To_String (Get_Doc (Rec).Text));
+            Parse_Doc_Wrapper (Context, Rec, Get_Doc (Rec).Text);
             Set_Doc (Rec, No_Comment_Result);
          end if;
 
@@ -1421,7 +1430,7 @@ package body GNATdoc.Frontend.Comment_Parser is
          --  Parse the documentation of the subprogram
 
          if Get_Doc (Subp) /= No_Comment_Result then
-            Parse_Doc_Wrapper (Context, Subp, To_String (Doc.Text));
+            Parse_Doc_Wrapper (Context, Subp, Doc.Text);
             Set_Doc (Subp, No_Comment_Result);
          end if;
 
@@ -1525,7 +1534,7 @@ package body GNATdoc.Frontend.Comment_Parser is
          elsif Present (Get_Doc (Entity).Text) then
             Set_Comment (Entity, New_Structured_Comment);
             Parse_Doc_Wrapper
-              (Context, Entity, To_String (Get_Doc (Entity).Text));
+              (Context, Entity, Get_Doc (Entity).Text);
             Set_Doc (Entity, No_Comment_Result);
          end if;
 
