@@ -144,15 +144,15 @@ package body Default_Preferences.Enums is
          Radio (K).Enum_Value := K - Choices'First;
          Radio_Box.Pack_Start (Radio (K), Expand => False);
 
-         if K = Pref.Enum_Value + Choices'First then
-            Radio (K).Set_Active (True);
-         end if;
-
          Preference_Handlers.Connect
            (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
             Enum_Radio_Changed'Access,
             User_Data =>
               (Preferences_Manager (Manager), Preference (Pref)));
+
+         if K = Pref.Enum_Value + Choices'First then
+            Radio (K).Set_Active (True);
+         end if;
       end loop;
 
       return Radio_Box;
