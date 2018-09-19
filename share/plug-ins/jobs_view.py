@@ -54,7 +54,7 @@ class SavedRunManager(object):
                             'saved_runs')
         if not os.path.exists(base):
             os.mkdir(base)
-        return os.path.join(base, run['timestamp'])
+        return os.path.join(base, run['timestamp'].replace(':', '_'))
 
     def restore_run(self, run_timestamp):
         run = self.runs[run_timestamp]
