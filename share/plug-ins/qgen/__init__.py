@@ -1136,8 +1136,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         action = topitem.data.get('dblclick')
         if action:
-            self.last_dblclicked = item.id
-            self.perform_action(action, topitem)
+            if hasattr(item, 'id'):
+                self.last_dblclicked = item.id
+                self.perform_action(action, topitem)
 
     # @overriding
     def on_item_clicked(self, topitem, item, x, y, *args):
@@ -2041,8 +2042,11 @@ else:
             b = QGEN_Module.modeling_map.get_block(
                 ctxt.file(), ctxt.location().line())
             mdl_file = QGEN_Module.get_model_for_source(ctxt.file())
-            QGEN_Diagram_Viewer.get_or_create_from_model(
-                mdl_file, on_loaded=__on_viewer_loaded)
+            if mdl_file:
+                QGEN_Diagram_Viewer.get_or_create_from_model(
+                    mdl_file, on_loaded=__on_viewer_loaded)
+            else:
+                GPS.Console().write("No model found\n")
 
         def __contextual_filter_qgen_code(self, context):
             """
