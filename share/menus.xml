@@ -577,6 +577,11 @@
    <toolbar id='Outline'>
    </toolbar>
 
+   <toolbar id="Analysis Report">
+      <button action='gnathub report expand rows'/>
+      <button action='gnathub report collapse rows'/>
+   </toolbar>
+
    <toolbar id='Files'>
       <button action='refresh files view'/>
    </toolbar>

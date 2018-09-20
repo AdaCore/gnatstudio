@@ -222,7 +222,8 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type;
    --  Changes sort order in locations view.
 
-   type Locations_Collapse_Or_Expand_Command (Is_Collapse : Boolean) is
+   type Locations_Collapse_Or_Expand_Command
+     (Command : Expansion_Command_Type) is
      new Interactive_Command with null record;
    overriding function Execute
      (Self    : access Locations_Collapse_Or_Expand_Command;
@@ -640,38 +641,13 @@ package body GPS.Location_View is
       K : constant Kernel_Handle := Get_Kernel (Context.Context);
       V : constant Location_View := Location_Views.Retrieve_View (K);
 
-      List   : Gtk_Tree_Path_List.Glist;
-      G_Iter : Gtk_Tree_Path_List.Glist;
-      Path   : Gtk_Tree_Path;
-      Model  : Gtk_Tree_Model;
-      Dummy  : Boolean;
-
-      use Gtk_Tree_Path_List;
    begin
       if V /= null then
-         Get_Selected_Rows (V.View.Get_Selection, Model, List);
-
-         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
-            --  The children must be modified before there fathers
-            G_Iter := Gtk_Tree_Path_List.Last (List);
-
-            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-
-               if Path /= Null_Gtk_Tree_Path then
-                  if Self.Is_Collapse then
-                     Dummy := Collapse_Row (V.View, Path);
-                  else
-                     Dummy := Expand_Row (V.View, Path, False);
-                  end if;
-               end if;
-
-               Path_Free (Path);
-               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
-            end loop;
-         end if;
-         Gtk_Tree_Path_List.Free (List);
+         Expand_Or_Collapse_Selected_Rows
+           (Tree    => V.View,
+            Command => Self.Command);
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -1467,14 +1443,14 @@ package body GPS.Location_View is
 
       Register_Action
         (Kernel, "locations expand selected",
-         new Locations_Collapse_Or_Expand_Command (False),
+         new Locations_Collapse_Or_Expand_Command (Expand_Rows),
          -"Expand the selected rows in the locations view",
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Locations");
 
       Register_Action
         (Kernel, "locations collapse selected",
-         new Locations_Collapse_Or_Expand_Command (True),
+         new Locations_Collapse_Or_Expand_Command (Collapse_Rows),
          -"Collapse the selected rows in the locations view",
          Icon_Name => "gps-collapse-all-symbolic",
          Category => -"Locations");

@@ -186,13 +186,8 @@ package body GNAThub.Module is
 
       --  Start loading the data
 
-      if Ext_Loader_Has_Data then
-         Self.Ext_Loader.Load;
-      end if;
-
-      if Db_Loader_Has_Data then
-         Self.Db_Loader.Load;
-      end if;
+      Self.Ext_Loader.Load;
+      Self.Db_Loader.Load;
    end Display_Data;
 
    -----------------------
@@ -407,6 +402,7 @@ package body GNAThub.Module is
 
       GNAThub.Filters_Views.Register_Module (Kernel);
       GNAThub.Metrics.Register_Module (Kernel);
+      GNAThub.Reports.Collector.Register_Module (Kernel);
    end Register_Module;
 
 end GNAThub.Module;

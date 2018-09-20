@@ -41,6 +41,9 @@ package GNAThub.Loader is
    procedure Load (Self : in out Loader_Type'Class);
    --  Called to load asynchronously the data used to create the GNAThub
    --  messages that will be displayed in the Analysis Report.
+   --  If listeners have been registered for this loader, On_Finish_Loading
+   --  will be called once the loader finish to load all its data or if
+   --  the loader has not any data to load.
 
    procedure Remove_Messages (Self : in out Loader_Type);
    --  Remove the messages loaded by the given loader.

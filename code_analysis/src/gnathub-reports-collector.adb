@@ -18,8 +18,7 @@
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
-with Default_Preferences;        use Default_Preferences;
-
+with Glib.Object;                use Glib.Object;
 with Gtkada.MDI;
 with Gtk.Box;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -30,16 +29,19 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 
+with Commands.Interactive;       use Commands.Interactive;
+with Default_Preferences;        use Default_Preferences;
 with Dialog_Utils;               use Dialog_Utils;
 with Generic_Views;
 with GNAThub.Metrics;            use GNAThub.Metrics;
 with GNAThub.Reports.Messages;
 with GNAThub.Reports.Metrics;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with Glib.Object;                use Glib.Object;
+with GUI_Utils;                  use GUI_Utils;
 
 package body GNAThub.Reports.Collector is
 
@@ -91,6 +93,15 @@ package body GNAThub.Reports.Collector is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
    --  Trigger On_Selection_Changed if a preference affect the selection
+
+   type Expand_Or_Collapse_Command (Command : Expansion_Command_Type) is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Expand_Or_Collapse_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Command used to expand/collapse the rows selected in the messages
+   --  report.
 
    procedure On_Selection_Changed (Self : access GObject_Record'Class);
    --  Called when the selection changes in the tree
@@ -277,6 +288,26 @@ package body GNAThub.Reports.Collector is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Expand_Or_Collapse_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      View : constant GNAThub_Report_Collector_Views.View_Access :=
+        GNAThub_Report_Collector_Views.Retrieve_View
+          (Get_Kernel (Context.Context));
+   begin
+      Expand_Or_Collapse_Selected_Rows
+        (Tree    => View.Messages_Report,
+         Command => Self.Command);
+
+      return Commands.Success;
+   end Execute;
+
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -290,11 +321,33 @@ package body GNAThub.Reports.Collector is
    begin
       View.Help_Label.Hide;
 
-      View.Messages_Report.Get_Selection.Get_Selected (Model, Sort_Iter);
+      View.Messages_Report.Get_First_Selected (Model, Sort_Iter);
 
       Iter := View.Messages_Report.Convert_To_Store_Iter (Sort_Iter);
 
       View.Metric_Report.Show_Metrics (View.Messages_Report.Get_ID (Iter));
    end On_Selection_Changed;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Register_Action
+        (Kernel, "gnathub report expand rows",
+         Command     => new Expand_Or_Collapse_Command (Expand_Rows),
+         Category    => "Analyze",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Description => "Expand the rows selected in the Analysis Report.");
+
+      Register_Action
+        (Kernel, "gnathub report collapse rows",
+         Command     => new Expand_Or_Collapse_Command (Collapse_Rows),
+         Category    => "Analyze",
+         Icon_Name   => "gps-collapse-all-symbolic",
+         Description => "Collapse the rows selected in the Analysis Report.");
+   end Register_Module;
 
 end GNAThub.Reports.Collector;

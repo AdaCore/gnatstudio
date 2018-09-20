@@ -366,7 +366,8 @@ package body GVD.Variables.View is
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Variables_Collapse_Or_Expand_Command (Is_Collapse : Boolean) is
+   type Variables_Collapse_Or_Expand_Command
+     (Command : Expansion_Command_Type) is
      new Interactive_Command with null record;
    overriding function Execute
      (Command : access Variables_Collapse_Or_Expand_Command;
@@ -1703,40 +1704,15 @@ package body GVD.Variables.View is
      (Command : access Variables_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      View   : constant GVD_Variable_View :=
+      View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
-      List   : Gtk_Tree_Path_List.Glist;
-      G_Iter : Gtk_Tree_Path_List.Glist;
-      Path   : Gtk_Tree_Path;
-      Model  : Gtk_Tree_Model;
-      Dummy  : Boolean;
-
-      use Gtk_Tree_Path_List;
    begin
       if View /= null then
-         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
-
-         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
-            --  The children must be modified before their fathers
-            G_Iter := Gtk_Tree_Path_List.Last (List);
-
-            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-
-               if Path /= Null_Gtk_Tree_Path then
-                  if Command.Is_Collapse then
-                     Dummy := Collapse_Row (View.Tree, Path);
-                  else
-                     Dummy := Expand_Row (View.Tree, Path, False);
-                  end if;
-               end if;
-
-               Path_Free (Path);
-               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
-            end loop;
-         end if;
-         Gtk_Tree_Path_List.Free (List);
+         Expand_Or_Collapse_Selected_Rows
+           (Tree    => View.Tree,
+            Command => Command.Command);
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -2032,14 +2008,16 @@ package body GVD.Variables.View is
 
       Register_Action
         (Kernel, "variables view collapse selected",
-         Command     => new Variables_Collapse_Or_Expand_Command (True),
+         Command     => new Variables_Collapse_Or_Expand_Command
+           (Collapse_Rows),
          Description => -"Collapse the selected nodes in the variables tree",
          Icon_Name   => "gps-collapse-all-symbolic",
          Category    => "Debug");
 
       Register_Action
         (Kernel, "variables view expand selected",
-         Command     => new Variables_Collapse_Or_Expand_Command (False),
+         Command     => new Variables_Collapse_Or_Expand_Command
+           (Expand_Rows),
          Description => -"Expand the selected nodes in the variables tree",
          Icon_Name   => "gps-expand-all-symbolic",
          Category    => "Debug");

@@ -341,6 +341,14 @@ package GUI_Utils is
      (Tree : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class);
    --  Select the first row of the given tree view, if it exists.
 
+   type Expansion_Command_Type is (Expand_Rows, Collapse_Rows);
+
+   procedure Expand_Or_Collapse_Selected_Rows
+     (Tree    : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Command : Expansion_Command_Type);
+   --  Expand or collapse the rows that are currently selected in the given
+   --  tree view.
+
    type Editable_Cb is access procedure
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);

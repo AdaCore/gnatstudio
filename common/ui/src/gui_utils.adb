@@ -2293,6 +2293,48 @@ package body GUI_Utils is
       end if;
    end Select_First_Row;
 
+   --------------------------------------
+   -- Expand_Or_Collapse_Selected_Rows --
+   --------------------------------------
+
+   procedure Expand_Or_Collapse_Selected_Rows
+     (Tree    : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Command : Expansion_Command_Type)
+   is
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+      Dummy  : Boolean;
+
+      use Gtk_Tree_Path_List;
+   begin
+      Get_Selected_Rows (Tree.Get_Selection, Model, List);
+
+      if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+         --  The children must be modified before there fathers
+         G_Iter := Gtk_Tree_Path_List.Last (List);
+
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+            if Path /= Null_Gtk_Tree_Path then
+               case Command is
+                  when Collapse_Rows =>
+                     Dummy := Collapse_Row (Tree, Path);
+                  when Expand_Rows =>
+                     Dummy := Expand_Row (Tree, Path, False);
+               end case;
+            end if;
+
+            Path_Free (Path);
+            G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+         end loop;
+
+         Gtk_Tree_Path_List.Free (List);
+      end if;
+   end Expand_Or_Collapse_Selected_Rows;
+
    ---------------------------------
    -- Gtk_New_From_Name_And_Label --
    ---------------------------------

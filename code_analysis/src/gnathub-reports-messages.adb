@@ -29,7 +29,9 @@ with Glib_Values_Utils;        use Glib_Values_Utils;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Tree_Sortable;        use Gtk.Tree_Sortable;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model_Sort;      use Gtk.Tree_Model_Sort;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Pango.Layout;             use Pango.Layout;
@@ -40,6 +42,7 @@ with Default_Preferences;      use Default_Preferences;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 
 package body GNAThub.Reports.Messages is
 
@@ -82,6 +85,9 @@ package body GNAThub.Reports.Messages is
 
    Total_Column          : constant := 3;
    --  Column displaying the number of messages per entity.
+
+   package Sorting_Functions is new Gtk.Tree_Sortable.Set_Sort_Func_User_Data
+     (GNAThub_Report_Messages);
 
    function Get_Column_Types
      (Self : not null access GNAThub_Report_Messages_Record'Class)
@@ -142,6 +148,13 @@ package body GNAThub.Reports.Messages is
    --  Return a suitable string value for the severity total columns.
    --  Return an empty string when the new value is 0.
 
+   function Entity_Name_Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Tree  : GNAThub_Report_Messages) return Gint;
+   --  Used to sort the column displaying entity names.
+
    --------------------------------
    -- Get_New_Value_For_Severity --
    --------------------------------
@@ -156,12 +169,39 @@ package body GNAThub.Reports.Messages is
                                                Gint'Value (Current_Value));
       New_Int_Value     : constant Gint := Current_Int_Value + Value_To_Add;
    begin
-      if New_Int_Value = 0 then
+      if New_Int_Value <= 0 then
          return "";
       else
          return String_Utils.Image (Integer (New_Int_Value));
       end if;
    end Get_New_Value_For_Severity;
+
+   ---------------------------
+   -- Entity_Name_Sort_Func --
+   ---------------------------
+
+   function Entity_Name_Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Tree  : GNAThub_Report_Messages) return Gint
+   is
+      A_Value : constant String := Get_String (Model, A, Entity_Name_Column);
+      B_Value : constant String := Get_String (Model, B, Entity_Name_Column);
+      Column  : Gint;
+      Order   : Gtk_Sort_Type;
+   begin
+      Gtk.Tree_Model_Sort.Get_Sort_Column_Id
+        (Tree.Sortable_Model, Column, Order);
+
+      if A_Value = Total_Row_Name then
+         return (if Order = Sort_Descending then 1 else -1);
+      elsif A_Value > B_Value then
+         return -1;
+      else
+         return 1;
+      end if;
+   end Entity_Name_Sort_Func;
 
    --------------------
    -- Set_Row_Colors --
@@ -300,14 +340,21 @@ package body GNAThub.Reports.Messages is
          ----------------
 
          procedure Update_Row
-           (Iter : Gtk_Tree_Iter) is
+           (Iter : Gtk_Tree_Iter)
+         is
+            New_Total : constant Gint := Model.Get_Int (Iter, Total_Column)
+              + Value;
          begin
-            --  Update the row's counters
+            --  Update the row's counters. Negative total can happend when
+            --  messages are being removed after the tree view's model has
+            --  been cleared: avoid displaying them.
 
-            Model.Set
-              (Iter,
-               Column => Total_Column,
-               Value  => Model.Get_Int (Iter, Total_Column) + Value);
+            if New_Total >= 0 then
+               Model.Set
+                 (Iter,
+                  Column => Total_Column,
+                  Value  => New_Total);
+            end if;
 
             if Columns_Info.Total_Col /= -1 then
                Model.Set
@@ -554,7 +601,7 @@ package body GNAThub.Reports.Messages is
          Column_Types     => Self.Get_Column_Types,
          Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
-      Self.Get_Selection.Set_Mode (Selection_Single);
+      Self.Get_Selection.Set_Mode (Selection_Multiple);
       Self.Set_Propagate_Filtered_Status (False);
 
       --  Create a tree view column to display an icon representing the type
@@ -615,6 +662,15 @@ package body GNAThub.Reports.Messages is
             Dummy := Self.Append_Column (Column);
          end;
       end loop;
+
+      --  Use a special sort function for the column displaying entity names
+      --  in order to have the 'Total:' row always on top.
+
+      Sorting_Functions.Set_Sort_Func
+        (Sortable       => +Self.Sortable_Model,
+         Sort_Column_Id => Entity_Name_Column,
+         Sort_Func      => Entity_Name_Sort_Func'Access,
+         User_Data      => Self);
 
       --  Regsiter all the needed listeners/callbacks/hook functions
 

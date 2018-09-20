@@ -407,10 +407,10 @@ class AnalysisReport(Dialog):
         NAME=0,
         VALUE=1)
 
-    def open_and_yield(self):
+    def open_and_yield(self, force=False):
         self.report_mdi = GPS.MDI.get("Analysis Report")
 
-        if self.report_mdi is None:
+        if (self.report_mdi is None) or force:
             yield self._open_and_yield('gnathub display analysis')
             self.report_mdi = GPS.MDI.get("Analysis Report")
 
@@ -486,6 +486,8 @@ class AnalysisReport(Dialog):
 
         :param entity: The entity's name
         """
+        self.messages_report.get_selection().unselect_all()
+        yield wait_idle()
 
         select_in_tree(
             self.messages_report,
@@ -511,6 +513,7 @@ class AnalysisReport(Dialog):
         :param column: an AnalysisReport.MessagesReportColumn
         """
         model = self.messages_report.get_model()
+
         return dump_tree_model(model, column)
 
     def dump_metrics_report(self, column):

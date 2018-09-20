@@ -24,6 +24,10 @@ with GNAThub.Module;
 
 package GNAThub.Reports.Collector is
 
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the actions related with the GNAThub report collector.
+
    function Get_Or_Create_View
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;

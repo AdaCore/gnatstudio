@@ -548,13 +548,11 @@ package body GNAThub.Filters_Views is
             View : constant Views.View_Access := Views.Retrieve_View
               (GNAThub_Module.Kernel);
          begin
-            if Message.Get_Flags (Locations) then
-               GNAThub_Message_Access (Message).Increment_Current_Counters;
+            GNAThub_Message_Access (Message).Increment_Current_Counters;
 
-               View.Tools_Editor.Update;
-               View.Severities_Editor.Update;
-               View.Rules_Editor.Update;
-            end if;
+            View.Tools_Editor.Update;
+            View.Severities_Editor.Update;
+            View.Rules_Editor.Update;
          end;
       end if;
    end Message_Added;
