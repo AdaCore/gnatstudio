@@ -565,6 +565,8 @@ package body Variable_Editors is
             Get_Registry (Editor.Kernel).Tree.Add_Values
               (Editor.Var,
                New_Values (New_Values'First .. Num_Values));
+            Editor.Var := Get_Registry (Editor.Kernel).Tree.Scenario_Variables
+              (External_Name => External_Name (Editor.Var));
             Free (New_Values);
             Changed := True;
          end if;

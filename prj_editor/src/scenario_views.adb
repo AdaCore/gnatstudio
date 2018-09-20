@@ -640,6 +640,7 @@ package body Scenario_Views is
         & "that variable, except for the currently selected value";
 
       Response : Message_Dialog_Buttons;
+      Success  : Boolean;
    begin
       if Var /= No_Variable then
          Response := Message_Dialog
@@ -653,16 +654,26 @@ package body Scenario_Views is
             Parent        => Get_Current_Window (V.Kernel));
 
          if Response = Button_OK then
+            Trace (Me, "Delete_Variable: " & External_Name (Var));
+
             Get_Registry (V.Kernel).Tree.Delete_Scenario_Variable
               (External_Name            => External_Name (Var),
                Keep_Choice              => Value (Var),
                Delete_Direct_References => False);
+
+            V.Kernel.Get_Project_Tree.Recompute_View;
+
+            Success := Save_Project
+              (Kernel    => V.Kernel,
+               Project   => V.Kernel.Get_Project_Tree.Root_Project,
+               Recursive => False);
             Variable_Changed_Hook.Run (V.Kernel);
 
-            --  Recompute the view so that the explorer is updated graphically
-            Recompute_View (V.Kernel);
-
-            Trace (Me, "Delete_Variable: " & External_Name (Var));
+            if not Success then
+               Trace
+                 (Me, "Failed to save the project after deleting "
+                  & "variable:" & External_Name (Var));
+            end if;
          end if;
       end if;
    end Command_Delete_Variable;
