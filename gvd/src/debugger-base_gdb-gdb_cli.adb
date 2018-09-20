@@ -50,7 +50,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    ---------------
 
    Prompt_Regexp             : constant Pattern_Matcher :=
-     Compile ("^>|^\(([^\s]*-)?gdb\) ", Multiple_Lines);
+     Compile ("^\(([^\s]*-)?gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -171,7 +171,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Pattern to match a single line in "info
    --  breakpoints-extra-info"
 
-   Continuation_Line_Pattern : constant Pattern_Matcher := Compile ("^ ?>");
+   Continuation_Line_Pattern : constant Pattern_Matcher := Compile
+     ("^ ?>$", Multiple_Lines);
 
    Address_Range_Pattern     : constant Pattern_Matcher := Compile
      ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
@@ -199,12 +200,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect when the program no longer runs
-
-   procedure Continuation_Line_Filter
-     (Process : access Visual_Debugger_Record'Class;
-      Str     : String;
-      Matched : Match_Array);
-   --  Filter used to detect commands handled on multiple lines
 
    procedure Parse_Backtrace_Info
      (S     : String;
@@ -337,20 +332,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  ??? Should generate a callback/hook informing other units
       --  that debugging has ended (so that e.g. the call stack can be cleared)
    end Running_Filter;
-
-   ------------------------------
-   -- Continuation_Line_Filter --
-   ------------------------------
-
-   procedure Continuation_Line_Filter
-     (Process : access Visual_Debugger_Record'Class;
-      Str     : String;
-      Matched : Match_Array)
-   is
-      pragma Unreferenced (Str, Matched);
-   begin
-      Process.Debugger.Continuation_Line := True;
-   end Continuation_Line_Filter;
 
    -------------------------------
    -- Send_And_Get_Clean_Output --

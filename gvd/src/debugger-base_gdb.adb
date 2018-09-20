@@ -54,6 +54,20 @@ package body Debugger.Base_Gdb is
    --    GNU gdb (GDB) 8.1 for GNAT Pro 19.0w
    --    GNU gdb (GDB) 8.1.90.20180726 for GNAT Pro 19.0w
 
+   ------------------------------
+   -- Continuation_Line_Filter --
+   ------------------------------
+
+   procedure Continuation_Line_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
+   is
+      pragma Unreferenced (Str, Matched);
+   begin
+      Process.Debugger.Continuation_Line := True;
+   end Continuation_Line_Filter;
+
    --------------------------
    -- Detect_Debugger_Mode --
    --------------------------

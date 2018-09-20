@@ -818,7 +818,16 @@ package body Debugger is
                      --  we're sending input in the middle of a command,
                      --  which is delicate.
 
-                     Process_Proxies.Empty_Buffer (Debugger.Get_Process);
+                     --  But in Continuation_Line mode we are waiting for the
+                     --  prompt which means that command sending is completed
+
+                     --  A case where we should clear output is needed.
+                     --  We should add automatic test for it and decide do we
+                     --  need clear output at all.
+
+                     if not Debugger.Continuation_Line then
+                        Process_Proxies.Empty_Buffer (Debugger.Get_Process);
+                     end if;
                   end if;
                end if;
          end case;

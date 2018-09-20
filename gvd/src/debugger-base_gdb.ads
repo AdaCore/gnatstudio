@@ -138,4 +138,10 @@ private
    --  remove breakpoint with given number and all others in same location
    --  if the location has more than one breakpoint
 
+   procedure Continuation_Line_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
+   --  Filter used to detect commands handled on multiple lines
+
 end Debugger.Base_Gdb;

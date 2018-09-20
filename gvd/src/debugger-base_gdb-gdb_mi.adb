@@ -143,6 +143,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Prompt_Str & "|" & Error_Str, Multiple_Lines);
    --  Pattern used to detect error or prompt
 
+   Continuation_Line_Pattern : constant Pattern_Matcher := Compile
+     ("^ ?>$", Multiple_Lines);
+
    procedure Breakpoint_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -1000,6 +1003,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
            (Question_Filter1'Access, Question_Filter_Pattern1);
          Process.Add_Regexp_Filter
            (Question_Filter2'Access, Question_Filter_Pattern2);
+
+         Add_Regexp_Filter
+           (Process, Continuation_Line_Filter'Access,
+            Continuation_Line_Pattern);
 
          Set_Input_Output_Filter (Process);
       end if;
