@@ -17,6 +17,8 @@
 
 with Ada.Containers.Vectors;
 
+with Glib.Main;
+
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package body GNAThub.Metrics is
@@ -25,6 +27,12 @@ package body GNAThub.Metrics is
      (Index_Type   => Positive,
       Element_Type => Metrics_Listener,
       "="          => "=");
+
+   package Unregister_Listener_Sources is new Glib.Main.Generic_Sources
+     (Metrics_Listener);
+
+   function On_Unregister_Listener_Idle
+     (Listener : Metrics_Listener) return Boolean;
 
    type GNAThub_Metrics_Module_ID_Record is new Module_ID_Record with record
       Listeners : Metrics_Listener_Vectors.Vector;
@@ -140,13 +148,31 @@ package body GNAThub.Metrics is
    procedure Unregister_Listener
      (Listener : not null access Metrics_Listener_Interface'Class)
    is
+      Id : Glib.Main.G_Source_Id with Unreferenced;
+   begin
+      --  Unregister a listener in an idle callback to avoid deleting it
+      --  from the listeners list while iterating on it.
+
+      Id := Unregister_Listener_Sources.Idle_Add
+        (On_Unregister_Listener_Idle'Access, Listener);
+   end Unregister_Listener;
+
+   ---------------------------------
+   -- On_Unregister_Listener_Idle --
+   ---------------------------------
+
+   function On_Unregister_Listener_Idle
+     (Listener : Metrics_Listener) return Boolean
+   is
       Position : Metrics_Listener_Vectors.Cursor := Module.Listeners.Find
         (Listener);
    begin
       if Metrics_Listener_Vectors.Has_Element (Position) then
          Module.Listeners.Delete (Position);
       end if;
-   end Unregister_Listener;
+
+      return False;
+   end On_Unregister_Listener_Idle;
 
    ---------------------
    -- Register_Module --

@@ -325,17 +325,7 @@ package body GNAThub.Filters_Views is
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (View);
-      Pref : Color_Preference;
    begin
-      for Severety of GNAThub_Module.Severities loop
-         Pref := Get_Color_Preference (Severety.Style);
-
-         if Pref /= null then
-            GPS.Kernel.Preferences.Append_Menu
-              (Menu, GNAThub_Module.Kernel, Pref);
-         end if;
-      end loop;
-
       GPS.Kernel.Preferences.Append_Menu
         (Menu, GNAThub_Module.Kernel,
          GNAThub.Module.Always_Display_The_Rules);
@@ -443,7 +433,8 @@ package body GNAThub.Filters_Views is
         (Editor         => Self.Tools_Editor,
          Kernel         => Self.Kernel,
          View           => Gtk.Widget.Gtk_Widget (Self),
-         Title          => "Tools",
+         Titles         => (0 => To_Unbounded_String ("Tools"),
+                            1 => To_Unbounded_String ("Total")),
          History_Prefix => "gnathub-tools",
          Items          => GNAThub_Module.Tools,
          Default        => True);
@@ -454,7 +445,8 @@ package body GNAThub.Filters_Views is
         (Editor         => Self.Severities_Editor,
          Kernel         => Self.Kernel,
          View           => Gtk.Widget.Gtk_Widget (Self),
-         Title          => "Importance",
+         Titles         => (0 => To_Unbounded_String ("Importance"),
+                            1 => To_Unbounded_String ("Total")),
          History_Prefix => Severity_History_Prefix,
          Items          => GNAThub_Module.Severities,
          Default        => True);
@@ -465,7 +457,8 @@ package body GNAThub.Filters_Views is
         (Editor         => Self.Rules_Editor,
          Kernel         => Self.Kernel,
          View           => Gtk.Widget.Gtk_Widget (Self),
-         Title          => "Rules",
+         Titles         => (0 => To_Unbounded_String ("Rules"),
+                            1 => To_Unbounded_String ("Total")),
          History_Prefix => "gnathub-rules",
          Items          => GNAThub_Module.Rules,
          Default        => True);

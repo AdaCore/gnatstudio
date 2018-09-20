@@ -32,6 +32,7 @@ with Gtk.Tree_Model;             use Gtk.Tree_Model;
 
 with Dialog_Utils;               use Dialog_Utils;
 with Generic_Views;
+with GNAThub.Metrics;            use GNAThub.Metrics;
 with GNAThub.Reports.Messages;
 with GNAThub.Reports.Metrics;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -50,9 +51,11 @@ package body GNAThub.Reports.Collector is
    -- GNAThub_Report_Collector --
    ------------------------------
 
-   type GNAThub_Report_Collector is new Generic_Views.View_Record with record
+   type GNAThub_Report_Collector is
+     new Generic_Views.View_Record and Metrics_Listener_Interface with record
       Messages_Report : GNAThub.Reports.Messages.GNAThub_Report_Messages;
       Metric_Report   : GNAThub.Reports.Metrics.GNAThub_Report_Metrics;
+      Metrics_View    : Dialog_View;
       Help_Label      : Gtk_Label;
    end record;
    type Report is access all GNAThub_Report_Collector'Class;
@@ -64,6 +67,10 @@ package body GNAThub.Reports.Collector is
    overriding procedure Create_Menu
      (Self : not null access GNAThub_Report_Collector;
       Menu : not null access Gtk_Menu_Record'Class);
+
+   overriding procedure Metric_Added
+     (Self   : not null access GNAThub_Report_Collector;
+      Metric : not null access Metric_Record'Class);
 
    package GNAThub_Report_Collector_Views is new Generic_Views.Simple_Views
      (Module_Name        => "analysis_report",
@@ -155,8 +162,18 @@ package body GNAThub.Reports.Collector is
            Visible_Only => True);
    begin
       if View /= null then
+         --  Clear both messages and metrics report
+
          View.Messages_Report.Clear;
          View.Metric_Report.Clear;
+
+         --  Hid the metrics report and register ourself again as a metrics
+         --  listener in order to show the metrics view if a metric is added
+         --  in the future.
+
+         View.Metrics_View.Set_No_Show_All (True);
+         View.Metrics_View.Hide;
+         GNAThub.Metrics.Register_Listener (View);
       end if;
    end Clear;
 
@@ -169,7 +186,6 @@ package body GNAThub.Reports.Collector is
       return Gtk.Widget.Gtk_Widget
    is
       Hook         : access On_Pref_Changed;
-      Metrics_View : Dialog_View;
       Paned    : Gtk_Paned;
       Scrolled : Gtk_Scrolled_Window;
    begin
@@ -194,13 +210,13 @@ package body GNAThub.Reports.Collector is
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      Metrics_View := new Dialog_View_Record;
-      Dialog_Utils.Initialize (Metrics_View);
-      Paned.Pack2 (Metrics_View, True, True);
+      Self.Metrics_View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (Self.Metrics_View);
+      Paned.Pack2 (Self.Metrics_View, True, True);
 
       GNAThub.Reports.Metrics.Gtk_New (Self.Metric_Report);
       Self.Metric_Report.Set_Name ("metrics-report");
-      Metrics_View.Append (Self.Metric_Report, Expand => False);
+      Self.Metrics_View.Append (Self.Metric_Report, Expand => False);
 
       Self.Messages_Report.Get_Selection.On_Changed
         (On_Selection_Changed'Access, Self);
@@ -214,12 +230,34 @@ package body GNAThub.Reports.Collector is
          "Click on the tree view's nodes to see associated metrics.");
       Get_Style_Context (Self.Help_Label).Add_Class ("help-label");
 
-      Metrics_View.Append
+      GNAThub.Metrics.Register_Listener (Self);
+
+      --  Don't show the metrics view on Show_All: only show it if metrics
+      --  need to be displayed.
+
+      Self.Metrics_View.Set_No_Show_All (True);
+
+      Self.Metrics_View.Append
         (Self.Help_Label,
          Add_Separator => False);
 
       return Gtk.Widget.Gtk_Widget (Self);
    end Initialize;
+
+   ------------------
+   -- Metric_Added --
+   ------------------
+
+   overriding procedure Metric_Added
+     (Self   : not null access GNAThub_Report_Collector;
+      Metric : not null access Metric_Record'Class) is
+      pragma Unreferenced (Metric);
+   begin
+      Self.Metrics_View.Set_No_Show_All (False);
+      Self.Metrics_View.Show_All;
+
+      GNAThub.Metrics.Unregister_Listener (Self);
+   end Metric_Added;
 
    -------------
    -- Execute --

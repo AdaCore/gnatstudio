@@ -19,6 +19,7 @@
 --  filter criteria editor. It is used by filter views.
 
 with Ada.Containers.Ordered_Sets;
+with GNATCOLL.Utils;
 
 with Glib.Values;
 with Gtk.Tree_Model;
@@ -76,7 +77,7 @@ package GNAThub.Generic_Criteria_Editors is
      (Editor         : in out Criteria_Editor;
       Kernel         : GPS.Kernel.Kernel_Handle;
       View           : Gtk.Widget.Gtk_Widget;
-      Title          : String;
+      Titles         : GNATCOLL.Utils.Unbounded_String_Array;
       History_Prefix : String;
       Items          : Item_Sets.Set;
       Default        : Boolean);
@@ -85,7 +86,7 @@ package GNAThub.Generic_Criteria_Editors is
      (Self           : not null access Criteria_Editor_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       View           : Gtk.Widget.Gtk_Widget;
-      Title          : String;
+      Titles         : GNATCOLL.Utils.Unbounded_String_Array;
       History_Prefix : String;
       Items          : Item_Sets.Set;
       Default        : Boolean);

@@ -164,13 +164,14 @@ package body GNAThub.Generic_Criteria_Editors is
      (Editor         : in out Criteria_Editor;
       Kernel         : GPS.Kernel.Kernel_Handle;
       View           : Gtk.Widget.Gtk_Widget;
-      Title          : String;
+      Titles         : GNATCOLL.Utils.Unbounded_String_Array;
       History_Prefix : String;
       Items          : Item_Sets.Set;
       Default        : Boolean) is
    begin
       Editor := new Criteria_Editor_Record;
-      Initialize (Editor, Kernel, View, Title, History_Prefix, Items, Default);
+      Initialize
+        (Editor, Kernel, View, Titles, History_Prefix, Items, Default);
    end Gtk_New;
 
    ---------------
@@ -199,7 +200,7 @@ package body GNAThub.Generic_Criteria_Editors is
      (Self           : not null access Criteria_Editor_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       View           : Gtk.Widget.Gtk_Widget;
-      Title          : String;
+      Titles         : GNATCOLL.Utils.Unbounded_String_Array;
       History_Prefix : String;
       Items          : Item_Sets.Set;
       Default        : Boolean)
@@ -207,6 +208,7 @@ package body GNAThub.Generic_Criteria_Editors is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Toggle_Renderer : Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle;
       Dummy           : Glib.Gint;
+      Title_Idx       : Natural := Titles'First;
       pragma Warnings (Off, Dummy);
 
    begin
@@ -284,9 +286,7 @@ package body GNAThub.Generic_Criteria_Editors is
                   Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
                begin
                   Gtk.Tree_View_Column.Gtk_New (Column);
-                  if Index = Columns'First then
-                     Column.Set_Title (Title);
-                  end if;
+                  Column.Set_Title (To_String (Titles (Title_Idx)));
 
                   Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
                   Column.Pack_End (Renderer, False);
@@ -299,6 +299,7 @@ package body GNAThub.Generic_Criteria_Editors is
                  "GNATHub.Generic_Criteria_Editors";
          end case;
          Dummy := Self.View.Append_Column (Column);
+         Title_Idx := Title_Idx + 1;
       end loop;
    end Initialize;
 
