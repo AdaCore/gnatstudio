@@ -77,14 +77,19 @@ package body GNAThub.Loader is
 
    procedure Remove_Messages (Self : in out Loader_Type) is
       M_Ref   : Message_Reference;
-      Message : GPS.Kernel.Messages.Message_Access;
+      Message : GNAThub_Message_Access;
    begin
       while not Self.Messages.Is_Empty loop
          M_Ref := Self.Messages.First_Element;
 
          if not M_Ref.Is_Empty then
-            Message := M_Ref.Message;
+            Message := GNAThub_Message_Access (M_Ref.Message);
+
+            --  Remove the message and decrement its counters
+
             Message.Remove;
+            Message.Decrement_Current_Counters;
+            Message.Decrement_Total_Counters;
          end if;
 
          Self.Messages.Delete_First;

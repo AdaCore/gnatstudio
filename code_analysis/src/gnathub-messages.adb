@@ -112,6 +112,17 @@ package body GNAThub.Messages is
       Self.Rule.Tool.Increment_Total_Count;
    end Increment_Total_Counters;
 
+   ------------------------------
+   -- Decrement_Total_Counters --
+   ------------------------------
+
+   procedure Decrement_Total_Counters (Self : GNAThub_Message) is
+   begin
+      Self.Rule.Decrement_Total_Count;
+      Self.Severity.Decrement_Total_Count;
+      Self.Rule.Tool.Decrement_Total_Count;
+   end Decrement_Total_Counters;
+
    ----------------
    -- Initialize --
    ----------------

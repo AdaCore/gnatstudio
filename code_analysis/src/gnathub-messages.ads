@@ -67,6 +67,10 @@ package GNAThub.Messages is
    --  Increment the total counters of the severity/rule/tool associated to
    --  this message.
 
+   procedure Decrement_Total_Counters (Self : GNAThub_Message);
+   --  Decrement the total counters of the severity/rule/tool associated to
+   --  this message.
+
    overriding function Get_Background_Color
      (Self : not null access GNAThub_Message)
       return Gdk.RGBA.Gdk_RGBA;

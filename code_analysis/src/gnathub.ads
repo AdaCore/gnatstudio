@@ -43,6 +43,8 @@ package GNAThub is
 
    procedure Increment_Total_Count (Self : in out Filterable_Item);
 
+   procedure Decrement_Total_Count (Self : in out Filterable_Item);
+
    function Image (Self : Filterable_Item) return String;
 
    --------------

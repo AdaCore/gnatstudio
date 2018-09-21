@@ -525,6 +525,16 @@ class AnalysisReport(Dialog):
         model = self.metrics_report.get_model()
         return dump_tree_model(model, column)
 
+    def get_messages_report_total(self):
+        """
+        Return the total number of messages displayed in the messages
+        report's first row.
+
+        :return: An integer
+        """
+        total_row = self.messages_report.get_model()[0]
+        return total_row[AnalysisReport.MessagesReportColumn.TOTAL]
+
 
 #################
 # Key Shortcuts #

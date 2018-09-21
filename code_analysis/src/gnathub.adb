@@ -76,6 +76,17 @@ package body GNAThub is
       Self.Total := Self.Total + 1;
    end Increment_Total_Count;
 
+   ---------------------------
+   -- Decrement_Total_Count --
+   ---------------------------
+
+   procedure Decrement_Total_Count (Self : in out Filterable_Item) is
+   begin
+      if Self.Total > 0 then
+         Self.Total := Self.Total - 1;
+      end if;
+   end Decrement_Total_Count;
+
    -----------
    -- Image --
    -----------
