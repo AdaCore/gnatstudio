@@ -270,10 +270,14 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 3 launch the debugger
-        debugger_promise = promises.DebuggerWrapper(
-            GPS.File(binary),
-            remote_target="localhost:" + debug_port,
-            remote_protocol="remote")
+        try:
+            debugger_promise = promises.DebuggerWrapper(
+                GPS.File(binary),
+                remote_target="localhost:" + debug_port,
+                remote_protocol="remote")
+        except Exception:
+            GNATemulator.__error_exit("Could not initialize the debugger.")
+            return
 
         # block execution until debugger is free
         r3 = yield debugger_promise.wait_and_send(block=True)

@@ -878,6 +878,9 @@ class DebuggerWrapper(object):
        and the corresponding promises are answered after
            1 the debugger is not busy, execute the command required
            2 timeout
+
+      Instantiating a DebuggerWrapper instance raises an exception when
+      the underlying debugger fails to start.
     """
 
     # static variable for interval that the manager checks whether
@@ -917,9 +920,18 @@ class DebuggerWrapper(object):
                     executable=f,
                     remote_target=remote_target,
                     remote_protocol=remote_protocol)
-                pass
+                if self.__debugger:
+                    pass
+                else:
+                    raise Exception("Could not launch the debugger")
         else:
             self.__debugger = GPS.Debugger.spawn(f)
+            self.__debugger = GPS.Debugger.spawn(
+                executable=f,
+                remote_target=remote_target,
+                remote_protocol=remote_protocol)
+            if not self.__debugger:
+                raise Exception("Could not launch the debugger")
 
         # current on waiting promise
         self.__this_promise = None
