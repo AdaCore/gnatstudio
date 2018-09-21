@@ -149,10 +149,10 @@ package body GVD.Process_Lists is
    begin
       Self.Show_All;
 
-      if Self.Run = Gtk_Response_Cancel then
-         return "";
-      else
+      if Self.Run = Gtk_Response_OK then
          return Self.Ent.Get_Text;
+      else
+         return "";
       end if;
    end Get_Selection;
 
