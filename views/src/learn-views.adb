@@ -470,6 +470,7 @@ package body Learn.Views is
       Help_View := new Dialog_View_Record;
       Dialog_Utils.Initialize (Help_View);
       View.Paned_View.Pack2 (Help_View, Resize => True, Shrink => True);
+      Get_Style_Context (Help_View).Add_Class ("learn-help");
 
       Group_Widget := new Dialog_Group_Widget_Record;
       Initialize

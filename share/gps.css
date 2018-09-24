@@ -242,6 +242,10 @@ GtkDialog {
    padding-left: 10px;
 }
 
+.learn-help .dialog-views-groups {
+  padding-top: 16px;
+}
+
 /************************
  * GPS Scenario View    *
  ************************/
