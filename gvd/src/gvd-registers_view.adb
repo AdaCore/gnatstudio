@@ -38,14 +38,11 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;
 
 with GPS.Debuggers;             use GPS.Debuggers;
-with GPS.Default_Styles;        use GPS.Default_Styles;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 
 with Debugger;                  use Debugger;
 with GVD.Generic_View;          use GVD.Generic_View;
@@ -584,7 +581,7 @@ package body GVD.Registers_View is
       Fg            : Gdk.RGBA.Gdk_RGBA;
 
       procedure Get_Values (Fmt : GVD.Types.Registers_Format);
-      --  Retrive values in selected format
+      --  Retrieve values in selected format
 
       procedure Get_Values (Fmt : GVD.Types.Registers_Format) is
          use type GVD.Types.Debugger_Type;
@@ -750,7 +747,7 @@ package body GVD.Registers_View is
          Bg_Name       := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.1);
          Bg_Name_Dark  := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.15);
 
-         Fg := Background (Messages_Styles (High));
+         Fg := Numbers_Style.Get_Pref_Fg;
 
          --  Get names of selected registers
          for Item of Names loop
