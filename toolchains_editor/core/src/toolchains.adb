@@ -138,29 +138,32 @@ package body Toolchains is
 
             declare
                Lang       : constant String :=
-                              Get_Value (Comp_Num, "lang", Output);
+                 Get_Value (Comp_Num, "lang", Output);
                Path       : constant String :=
-                              Get_Value (Comp_Num, "path", Output);
+                 Get_Value (Comp_Num, "path", Output);
+               --  FIXME: gprconfig returns gnatls in the executable field
+               --  replace it by gnatmake
                Exe        : constant String :=
-                              Get_Value (Comp_Num, "executable", Output);
+                 Replace (Get_Value (Comp_Num, "executable", Output),
+                          Pattern     => "gnatls",
+                          Replacement => "gnatmake");
                Target     : constant String :=
-                              Get_Value (Comp_Num, "target", Output);
+                 Get_Value (Comp_Num, "target", Output);
                Runtime    : constant String :=
-                              Get_Value (Comp_Num, "runtime", Output);
+                 Get_Value (Comp_Num, "runtime", Output);
                N_Target   : constant String :=
-                              Get_Value (Comp_Num, "normalized_target",
-                                         Output);
+                 Get_Value (Comp_Num, "normalized_target", Output);
                Is_Native  : constant Boolean :=
-                              Boolean'Value
-                                (Get_Value (Comp_Num, "native", Output));
+                 Boolean'Value (Get_Value (Comp_Num, "native", Output));
                Tc_Name    : constant String := (if Is_Native then
                                                    N_Target & "(native)"
                                                 else
                                                    Target);
                Stripped   : constant String := Strip_Exe (Exe);
                Full       : Virtual_File;
-               Is_Visible : Boolean;
+               Is_Found   : Boolean;
                New_Comp   : Compiler;
+
             begin
                if not Toolchains.Contains (Tc_Name) then
                   Trace
@@ -187,17 +190,17 @@ package body Toolchains is
                Full :=
                  Locate_On_Path (+Exe, Remote.Get_Nickname (Build_Server));
 
-               --  Is_Visible is set if Exe could be located on path, and Exe
+               --  Is_Found is set if Exe could be located on path, and Exe
                --  is a base name.
                if Full /= No_File
                  and then Full.Base_Name = +Exe
                then
-                  Is_Visible := True;
+                  Is_Found := True;
                else
-                  Is_Visible := False;
+                  Is_Found := False;
                end if;
 
-               if Is_Visible then
+               if Is_Found then
                   New_Comp :=
                     (Exe       => To_Unbounded_String (Stripped),
                      Is_Valid  => True,
@@ -206,13 +209,14 @@ package body Toolchains is
                      Lang      => To_Unbounded_String (Lang),
                      Base_Name => True);
                else
+                  --  Try to use gprbuild
                   New_Comp :=
-                    (Exe       => To_Unbounded_String (Path & Stripped),
+                    (Exe       => To_Unbounded_String ("gprbuild"),
                      Is_Valid  => True,
                      Origin    => From_Gprconfig,
                      Toolchain => To_Unbounded_String (Tc_Name),
                      Lang      => To_Unbounded_String (Lang),
-                     Base_Name => False);
+                     Base_Name => True);
 
                   if Equal_Case_Insensitive (Lang, "Ada") then
                      --  If it's the first one for this target, then we have
