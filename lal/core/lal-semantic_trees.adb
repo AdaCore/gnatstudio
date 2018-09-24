@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 with Ada.Containers;
 with Ada.Containers.Generic_Array_Sort;
+with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
@@ -187,10 +188,14 @@ package body LAL.Semantic_Trees is
    package Iterators is
       --  Implementation of Semantic_Tree_Iterator
 
+      package Holders is new Ada.Containers.Indefinite_Holders
+        (Element_Type => Libadalang.Iterators.Traverse_Iterator'Class,
+         "="          => Libadalang.Iterators."=");
+
       type Iterator is limited new Semantic_Tree_Iterator with record
          Done    : Boolean := True;
          Node    : Nodes.Node;
-         Cursor  : Libadalang.Iterators.Local_Find_Iterator;
+         Cursor  : Holders.Holder;
       end record;
 
       overriding procedure Next (Self : in out Iterator);
@@ -204,7 +209,7 @@ package body LAL.Semantic_Trees is
 
       overriding procedure Next (Self : in out Iterator) is
       begin
-         Self.Done := not Self.Cursor.Next (Self.Node.Ada_Node);
+         Self.Done := not Self.Cursor.Reference.Next (Self.Node.Ada_Node);
       end Next;
 
       overriding function Element
@@ -225,7 +230,7 @@ package body LAL.Semantic_Trees is
       --  But this rule doesn't count root of the subtree:
       --  Immediate children of root are traversed, even if root exposed.
 
-      type Immediate_Iterator is limited
+      type Immediate_Iterator is
         new Libadalang.Iterators.Ada_Node_Iterators.Iterator
       with private;
       --  This iterator provides access to nodes immediate reacheble
@@ -266,7 +271,7 @@ package body LAL.Semantic_Trees is
            Last_Child_Index  => Last,
            Iterators         => Wrapper_Iterators);
 
-      type Immediate_Iterator is limited
+      type Immediate_Iterator is
         new Libadalang.Iterators.Ada_Node_Iterators.Iterator
       with record
          Plain : Iterators.Traverse_Iterator;
@@ -284,7 +289,7 @@ package body LAL.Semantic_Trees is
 
       type Exposed_Iterator
        (Parent : access Libadalang.Iterators.Ada_Node_Iterators.Iterator'Class)
-         is limited new Libadalang.Iterators.Ada_Node_Iterators.Iterator
+         is new Libadalang.Iterators.Ada_Node_Iterators.Iterator
            with null record;
 
       overriding function Next
@@ -322,9 +327,8 @@ package body LAL.Semantic_Trees is
          Ok   : Boolean;
          pragma Unreferenced (Ok);
       begin
-         return Result : Immediate_Iterator :=
-           Immediate_Iterator'(Plain => Iterators.Create_Tree_Iterator (Root))
-         do
+         return Result : Immediate_Iterator do
+            Iterators.Create_Tree_Iterator (Root, Result.Plain);
             Ok := Result.Next (Skip);
             --  The Plain iterator always return the Root at first step.
             --  Skip it right now.
@@ -1122,10 +1126,13 @@ package body LAL.Semantic_Trees is
          end if;
 
          return Result : Iterators.Iterator :=
-           (Cursor => Libadalang.Iterators.Find (Root, Is_Exposed'Access),
+           (Cursor => Iterators.Holders.To_Holder
+              (Libadalang.Iterators.Traverse_Iterator
+                   (Libadalang.Iterators.Find (Root, Is_Exposed'Access))),
             others => <>)
          do
-            Result.Done := not Result.Cursor.Next (Result.Node.Ada_Node);
+            Result.Done := not Result.Cursor.Reference.Next
+              (Result.Node.Ada_Node);
             Result.Node.Provider := Self.Provider;
          end return;
       end Root_Iterator;
