@@ -30,6 +30,7 @@ with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Xref;               use GNATCOLL.Xref;
 
 with Glib;                        use Glib;
+with Glib.Convert;                use Glib.Convert;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
@@ -1631,7 +1632,8 @@ package body Call_Graph_Views is
          Prepend (Model, Iter, Parent_Iter);
 
          declare
-            Name : constant String := To_String (Decl.Name) & Suffix;
+            Name : constant String :=
+              Escape_Text (To_String (Decl.Name) & Suffix);
             Dcl  : constant String := Decl.Loc.File.Display_Base_Name & ':' &
               Image (Decl.Loc.Line) & ':' & Image (Integer (Decl.Loc.Column));
          begin
