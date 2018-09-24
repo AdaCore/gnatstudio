@@ -602,7 +602,9 @@ package body GVD.Dialogs is
                   Columns (Gint (Col)) :=
                     Gint (Col - Info (J).Information'First);
                   Glib.Values.Init_Set_String
-                    (Values (Gint (Col)), Value (Info (J).Information (Col)));
+                    (Values (Gint (Col)),
+                     (if Info (J).Information (Col) = Null_Ptr then ""
+                      else Value (Info (J).Information (Col))));
                end loop;
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
