@@ -214,7 +214,9 @@ package body GVD.Assembly_View is
    pragma Unreferenced (Is_Breakpoint_Address);
    --  Result is set to True if a breakpoint is set at address Addr
 
-   procedure Highlight (View : access Assembly_View_Record'Class);
+   procedure Highlight
+     (View         : access Assembly_View_Record'Class;
+      Scroll_To_Pc : Boolean := True);
    --  Redo the buffer highlighting
 
    procedure On_Frame_Changed
@@ -494,7 +496,10 @@ package body GVD.Assembly_View is
    -- Highlight --
    ---------------
 
-   procedure Highlight (View : access Assembly_View_Record'Class) is
+   procedure Highlight
+     (View         : access Assembly_View_Record'Class;
+      Scroll_To_Pc : Boolean := True)
+   is
       use Ada.Strings.Unbounded;
 
       Process    : Visual_Debugger;
@@ -506,9 +511,29 @@ package body GVD.Assembly_View is
 
       Detached   : Gtk.Tree_Model.Gtk_Tree_Model;
       Last       : Address_Type := Invalid_Address;
+
+      First_Visible_Line_Iter : Gtk_Tree_Iter := Null_Iter;
+      Selected_Line_Iter      : Gtk_Tree_Iter := Null_Iter;
    begin
       if View = null then
          return;
+      end if;
+
+      if not Scroll_To_Pc then
+         declare
+            From : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
+            To   : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
+            M    : Gtk_Tree_Model := Null_Gtk_Tree_Model;
+         begin
+            View.Tree.Get_Visible_Range (From, To, Found);
+            if Found then
+               First_Visible_Line_Iter := Get_Iter (View.Tree.Get_Model, From);
+               Path_Free (From);
+               Path_Free (To);
+            end if;
+
+            View.Tree.Get_Selection.Get_Selected (M, Selected_Line_Iter);
+         end;
       end if;
 
       Detached := View.Tree.Get_Model;
@@ -623,8 +648,25 @@ package body GVD.Assembly_View is
 
       View.Tree.Set_Model (Detached);
 
-      if Start_Iter /= Null_Iter then
-         View.Tree.Get_Selection.Select_Iter (Start_Iter);
+      if Scroll_To_Pc then
+         if Start_Iter /= Null_Iter then
+            View.Tree.Get_Selection.Select_Iter (Start_Iter);
+         end if;
+
+      else
+         if First_Visible_Line_Iter /= Null_Iter then
+            declare
+               P : Gtk_Tree_Path;
+            begin
+               P := Get_Path (View.Tree.Get_Model, First_Visible_Line_Iter);
+               View.Tree.Scroll_To_Cell (P, null, True, 0.0, 0.0);
+               Path_Free (P);
+            end;
+         end if;
+
+         if Selected_Line_Iter /= Null_Iter then
+            View.Tree.Get_Selection.Select_Iter (Selected_Line_Iter);
+         end if;
       end if;
    end Highlight;
 
@@ -1250,7 +1292,7 @@ package body GVD.Assembly_View is
       if Debugger /= null then
          V := Get_View (Debugger);
          if V /= null then
-            Highlight (V);
+            Highlight (V, False);
          end if;
       end if;
    end Execute;
