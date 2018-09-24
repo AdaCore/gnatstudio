@@ -453,7 +453,11 @@ package body Debugger.Base_Gdb is
                      Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
                      Internal_Parse_Value
-                       (Lang, Entity, Type_Str, Index, V, Repeat_Num,
+                       (Lang,
+                        Lang.Record_Field_Name
+                          (Entity, GVD_Record_Type_Access
+                               (Result.Get_Type).Get_Field_Name (J)),
+                        Type_Str, Index, V, Repeat_Num,
                         Parent => Result);
                   end;
 
@@ -509,7 +513,11 @@ package body Debugger.Base_Gdb is
 
                      if V /= Empty_GVD_Type_Holder then
                         Internal_Parse_Value
-                          (Lang, Entity, Type_Str, Index, V, Repeat_Num,
+                          (Lang,
+                           Lang.Record_Field_Name
+                             (Entity, GVD_Record_Type_Access
+                               (Result.Get_Type).Get_Field_Name (J)),
+                           Type_Str, Index, V, Repeat_Num,
                            Parent => Result);
                      end if;
                   end;
