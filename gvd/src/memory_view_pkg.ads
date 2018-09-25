@@ -38,11 +38,9 @@ package Memory_View_Pkg is
       Close          : Gtk_Button;
       Address_View   : Gtk_Button;
       Format         : Gtk_Combo_Box_Text;
-      Search_Button  : Gtk_Button;
       Show_Ascii     : Gtk_Check_Button;
       Size           : Gtk_Combo_Box_Text;
       Address_Entry  : Gtk_Entry;
-      Search_Entry   : Gtk_Entry;
       Lines_Spin     : Gtk_Spin_Button;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;

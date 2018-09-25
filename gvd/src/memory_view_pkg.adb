@@ -47,7 +47,6 @@ package body Memory_View_Pkg is
       pragma Suppress (All_Checks);
 
       Label95      : Gtk_Label;
-      Label96      : Gtk_Label;
       Hbox12       : Gtk_Hbox;
       Vbuttonbox5  : Gtk_Vbutton_Box;
       Label98      : Gtk_Label;
@@ -88,27 +87,6 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.Address_View, -"View");
       Set_Relief (Memory_View.Address_View, Relief_Normal);
       Attach (Table, Memory_View.Address_View, 2, 3, 0, 1, Xoptions => 0);
-
-      Gtk_New (Label96, -("Find"));
-      Set_Alignment (Label96, 0.5, 0.5);
-      Set_Padding (Label96, 0, 0);
-      Set_Justify (Label96, Justify_Center);
-      Set_Line_Wrap (Label96, False);
-      Set_Sensitive (Label96, False);
-      Attach (Table, Label96, 0, 1, 1, 2, Xoptions => 0);
-
-      Gtk_New (Memory_View.Search_Entry);
-      Set_Editable (Memory_View.Search_Entry, True);
-      Set_Max_Length (Memory_View.Search_Entry, 0);
-      Set_Text (Memory_View.Search_Entry, -"");
-      Set_Visibility (Memory_View.Search_Entry, True);
-      Set_Sensitive (Memory_View.Search_Entry, False);
-      Attach (Table, Memory_View.Search_Entry, 1, 2, 1, 2);
-
-      Gtk_New (Memory_View.Search_Button, -"Search");
-      Set_Relief (Memory_View.Search_Button, Relief_Normal);
-      Set_Sensitive (Memory_View.Search_Button, False);
-      Attach (Table, Memory_View.Search_Button, 2, 3, 1, 2, Xoptions => 0);
 
       --  The toolbar
 
