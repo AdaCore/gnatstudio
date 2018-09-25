@@ -4741,6 +4741,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
             --  via \n and \r
             null;
          elsif New_Line and then J + 2 < Str'Last then
+
+            --  Suppress the digits at the beginning of the line
+            --  result-record ==>
+            --         [ token ] "^" result-class ( "," result )* nl
+            --  token ==>
+            --         any sequence of digits.
+            while Str (J) in '0' .. '9' loop
+               J := J + 1;
+            end loop;
+
             if Str (J) = '~'
               and then Str (J + 1) = '"'
             then
