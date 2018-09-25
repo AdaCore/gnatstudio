@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Finalization;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -883,6 +884,37 @@ package body GVD.Assembly_View is
       Meta_Scroll (Assembly_View (View), Down => False);
    end Meta_Scroll_Up;
 
+   ---------------------------------
+   -- Off_On_Sensitive_Controller --
+   ---------------------------------
+
+   type Off_On_Sensitive_Controller
+     (View  : access Assembly_View_Record'Class) is new
+     Ada.Finalization.Limited_Controlled with null record;
+   --  This type makes view's tree insensitive on initialization and restore
+   --  sensitivity on destruction. We use it because we don't want to process
+   --  too many key events while performing the disassemble operation because
+   --  several such operation processing one by one can hung GPS for a while.
+
+   overriding procedure Initialize (Self : in out Off_On_Sensitive_Controller);
+   overriding procedure Finalize (Self : in out Off_On_Sensitive_Controller);
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self : in out Off_On_Sensitive_Controller) is
+   begin
+      Self.View.Tree.Set_Sensitive (False);
+   end Initialize;
+
+   overriding procedure Finalize (Self : in out Off_On_Sensitive_Controller) is
+   begin
+      Self.View.Tree.Set_Sensitive (True);
+      Self.View.Tree.Grab_Focus;
+   end Finalize;
+
    ------------------
    -- Key_Press_Cb --
    ------------------
@@ -893,11 +925,19 @@ package body GVD.Assembly_View is
    begin
       case Get_Key_Val (Event) is
          when GDK_Page_Down =>
-            Meta_Scroll_Down (Assembly_View (View));
+            declare
+               C : Off_On_Sensitive_Controller (View) with Unreferenced;
+            begin
+               Meta_Scroll_Down (Assembly_View (View));
+            end;
             return True;
 
          when GDK_Page_Up =>
-            Meta_Scroll_Up (Assembly_View (View));
+            declare
+               C : Off_On_Sensitive_Controller (View) with Unreferenced;
+            begin
+               Meta_Scroll_Up (Assembly_View (View));
+            end;
             return True;
 
          when GDK_Home =>
