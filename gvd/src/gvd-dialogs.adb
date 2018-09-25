@@ -31,7 +31,6 @@ with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
 with GVD;                   use GVD;
 with GVD_Module;            use GVD_Module;
-with Gdk.Event;             use Gdk.Event;
 with Generic_Views;         use Generic_Views;
 with Glib.Object;           use Glib.Object;
 with Glib.Values;
@@ -136,9 +135,7 @@ package body GVD.Dialogs is
       Get_View           => Get_Thread_View,
       Set_View           => Set_Thread_View);
 
-   function On_Thread_Button_Release
-     (Thread : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+   procedure On_Selection_Changed (Thread : access Gtk_Widget_Record'Class);
    --  Called when a thread was selected in the view
 
    ----------------
@@ -390,25 +387,22 @@ package body GVD.Dialogs is
    -- On_Thread_Button_Release --
    ------------------------------
 
-   function On_Thread_Button_Release
-     (Thread : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+   procedure On_Selection_Changed (Thread : access Gtk_Widget_Record'Class)
    is
-      T     : constant Thread_View := Thread_View (Thread);
-      Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
-      Iter  : Gtk_Tree_Iter;
+      T           : constant Thread_View := Thread_View (Thread);
+      Store_Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
+      Model       : Gtk_Tree_Model;
+      Iter        : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (T.Tree, Event);
+      Get_Selected (T.Tree.Get_Selection, Model, Iter);
 
       if Iter /= Null_Iter then
-         T.Switch (T, Get_String (Model, Iter, 0));
+         T.Switch (T, Get_String (Store_Model, Iter, 0));
       end if;
 
-      return False;
    exception
       when E : others => Trace (Me, E);
-         return False;
-   end On_Thread_Button_Release;
+   end On_Selection_Changed;
 
    ---------------------
    -- Get_Thread_View --
@@ -526,9 +520,6 @@ package body GVD.Dialogs is
       Len         : Natural;
       Num_Columns : Thread_Fields;
       Iter        : Gtk_Tree_Iter;
-      Model       : Gtk_Tree_Model;
-      Path        : Gtk_Tree_Path;
-      Sel         : Gtk_Tree_Selection;
       V   : constant Visual_Debugger := Visual_Debugger (Get_Process (Thread));
    begin
       if V /= null
@@ -567,27 +558,21 @@ package body GVD.Dialogs is
 
                Thread.Scrolled.Add (Thread.Tree);
                Show_All (Thread.Tree);
-               Gtkada.Handlers.Return_Callback.Object_Connect
-                 (Thread.Tree, Signal_Button_Release_Event,
-                  Gtkada.Handlers.Return_Callback.To_Marshaller
-                    (On_Thread_Button_Release'Access),
-                  Thread, After => False);
+
+               Widget_Callback.Object_Connect
+                 (Get_Selection (Thread.Tree), Signal_Changed,
+                  Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
+                  Slot_Object => Thread);
             end;
          end if;
 
-         --  Before clearing the tree, save the position of the selection
          if Thread.Tree /= null then
-            Sel := Get_Selection (Thread.Tree);
-
-            if Sel /= null then
-               Get_Selected (Sel, Model, Iter);
-
-               if Iter /= Null_Iter then
-                  Path := Get_Path (Model, Iter);
-               end if;
-            end if;
-
+            --  Disable the selection before the Clear procedure:
+            --  this procedure will send the "changed" signal multiple times
+            --  when deleting the rows
+            Thread.Tree.Get_Selection.Set_Mode (Selection_None);
             Clear (-Get_Model (Thread.Tree));
+            Thread.Tree.Get_Selection.Set_Mode (Selection_Single);
          end if;
 
          for J in Info'First + 1 .. Len loop
@@ -609,13 +594,6 @@ package body GVD.Dialogs is
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
          end loop;
-
-         --  If a selection was found before clearing the tree, restore it
-
-         if Path /= Null_Gtk_Tree_Path then
-            Set_Cursor (Thread.Tree, Path, null, False);
-            Path_Free (Path);
-         end if;
 
          Free (Info);
       end if;
