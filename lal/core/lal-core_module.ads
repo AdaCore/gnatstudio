@@ -37,6 +37,11 @@ package LAL.Core_Module is
 
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;
 
+   not overriding procedure Reset_Context
+     (Self    : in out LAL_Module_Id_Record;
+      Charset : String);
+   --  Recreate LAL context, use Charset by default
+
    procedure Register_Module
      (Kernel     : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Config     : Use_LAL_Configuration;

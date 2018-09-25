@@ -47,6 +47,11 @@ package body LAL.Module is
       File   : GNATCOLL.VFS.Virtual_File);
    --  Callback for the "file_edited" hook
 
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+
    procedure Highlight_For_Phase
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
       Phase     : Integer;
@@ -119,6 +124,21 @@ package body LAL.Module is
          Phase => 1,
          From_Line => 1,
          To_Line => Buffer.End_Of_Buffer.Line);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self, Kernel);
+      Default_Charset : constant String := GPS.Kernel.Charsets.Get_File_Charset
+        (GNATCOLL.VFS.No_File);
+   begin
+      Module.Core.Reset_Context (Default_Charset);
    end Execute;
 
    ---------------------

@@ -100,12 +100,8 @@ package body LAL.Core_Module is
       Module         := new LAL_Module_Id_Record;
       Module.Kernel  := GPS.Core_Kernels.Core_Kernel (Kernel);
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
-      Module.Context := Libadalang.Analysis.Create_Context
-        (Unit_Provider => Libadalang.Analysis.Create_Unit_Provider_Reference
-          (Module.Unit_Provider),
-         With_Trivia   => True,
-         Charset       => Charset);
 
+      Module.Reset_Context (Charset);
       Module.Highlighter.Initialize (Module);
 
       Kernel.Scripts.Register_Command
@@ -129,5 +125,20 @@ package body LAL.Core_Module is
       Kernel.Register_Module (GPS.Core_Kernels.Abstract_Module (Module));
       Result := Module;
    end Register_Module;
+
+   -------------------
+   -- Reset_Context --
+   -------------------
+
+   not overriding procedure Reset_Context
+     (Self    : in out LAL_Module_Id_Record;
+      Charset : String) is
+   begin
+      Self.Context := Libadalang.Analysis.Create_Context
+        (Unit_Provider => Libadalang.Analysis.Create_Unit_Provider_Reference
+          (Self.Unit_Provider),
+         With_Trivia   => True,
+         Charset       => Charset);
+   end Reset_Context;
 
 end LAL.Core_Module;
