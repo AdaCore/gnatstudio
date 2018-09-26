@@ -938,7 +938,9 @@ package body Scenario_Views is
 
          Gtk.Combo_Box_Text.Initialize_With_Entry (Combo);
          Flow_Child := Create_Child
-           (Group, Combo, Label => Name, Child_Key => Name);
+           (Group, Combo,
+            Label     => Name,
+            Child_Key => Name);
 
          Set_Font_And_Colors (Combo.Get_Child, Fixed_Font => True);
 
@@ -958,6 +960,10 @@ package body Scenario_Views is
          Set_Active_Text (Combo, Value);
 
          Ent := Gtk_Entry (Combo.Get_Child);
+
+         --  Decrease the entry's minimum width so that the combobox buttons
+         --  are still displayed when reudcing the Scenario view's width.
+         Ent.Set_Width_Chars (4);
 
          --  Display the 'up-to-date' icon in the combo's entry
          Ent.Set_Icon_From_Icon_Name
