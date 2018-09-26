@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk;                       use Gtk;
-with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Arrow;                 use Gtk.Arrow;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Table;                 use Gtk.Table;
-with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
+with Gtk;                 use Gtk;
+with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Arrow;           use Gtk.Arrow;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Flow_Box;        use Gtk.Flow_Box;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Separator;       use Gtk.Separator;
 
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Intl;            use GPS.Intl;
 
 package body Memory_View_Pkg is
 
@@ -46,82 +46,76 @@ package body Memory_View_Pkg is
    procedure Initialize (Memory_View : access Memory_View_Record'Class) is
       pragma Suppress (All_Checks);
 
-      Label95      : Gtk_Label;
-      Hbox12       : Gtk_Hbox;
-      Vbuttonbox5  : Gtk_Vbutton_Box;
-      Label98      : Gtk_Label;
-      Vseparator7  : Gtk_Vseparator;
-      Label97      : Gtk_Label;
-      Vseparator10 : Gtk_Vseparator;
-      Vseparator9  : Gtk_Vseparator;
-      Arrow1       : Gtk_Arrow;
-      Arrow2       : Gtk_Arrow;
-      Hseparator2  : Gtk_Hseparator;
+      Label        : Gtk_Label;
+      Flow         : Gtk_Flow_Box;
+      Hbox         : Gtk_Hbox;
+      Hseparator   : Gtk_Hseparator;
+      Arrow        : Gtk_Arrow;
       Hbuttonbox11 : Gtk_Hbutton_Box;
       Adjustment   : Gtk_Adjustment;
-      Table        : Gtk_Table;
+      Scrolled     : Gtk_Scrolled_Window;
 
    begin
-      Gtk.Box.Initialize_Vbox (Memory_View, False, 0);
+      Gtk.Box.Initialize_Vbox (Memory_View);
 
-      --  Main controls
+      --  Flowbox containing control widgets
 
-      Gtk_New (Table, Rows => 2, Columns => 3, Homogeneous => False);
-      Pack_Start (Memory_View, Table, Expand => False);
+      Gtk_New (Flow);
+      Pack_Start (Memory_View, Flow, Expand => False);
+      Flow.Set_Homogeneous (False);
+      Flow.Set_Orientation (Orientation_Horizontal);
+      Flow.Set_Can_Focus (False);
+      Flow.Set_Selection_Mode (Selection_None);
 
-      Gtk_New (Label95, -("Location"));
-      Set_Alignment (Label95, 0.5, 0.5);
-      Set_Padding (Label95, 0, 0);
-      Set_Justify (Label95, Justify_Center);
-      Set_Line_Wrap (Label95, False);
-      Attach (Table, Label95, 0, 1, 0, 1, Xoptions => 0);
+      --  Location widget
+
+      Gtk_New_Hbox (Hbox);
+      Flow.Add (Hbox);
+
+      Gtk_New (Label, -("Location"));
+      Set_Alignment (Label, 0.5, 0.5);
+      Set_Padding (Label, 0, 0);
+      Set_Justify (Label, Justify_Center);
+      Set_Line_Wrap (Label, False);
+      Hbox.Pack_Start (Label, False, False, 4);
 
       Gtk_New (Memory_View.Address_Entry);
       Set_Editable (Memory_View.Address_Entry, True);
       Set_Max_Length (Memory_View.Address_Entry, 0);
       Set_Text (Memory_View.Address_Entry, -"");
       Set_Visibility (Memory_View.Address_Entry, True);
-      Attach (Table, Memory_View.Address_Entry, 1, 2, 0, 1);
       Set_Name (Memory_View.Address_Entry, "memory view adress entry");
+      Hbox.Pack_Start (Memory_View.Address_Entry, False);
 
       Gtk_New (Memory_View.Address_View, -"View");
       Set_Relief (Memory_View.Address_View, Relief_Normal);
-      Attach (Table, Memory_View.Address_View, 2, 3, 0, 1, Xoptions => 0);
+      Hbox.Pack_Start (Memory_View.Address_View, False, False);
 
-      --  The toolbar
+      --  Unit size widget
 
-      Gtk_New_Hbox (Hbox12, False, 0);
-      Pack_Start (Memory_View, Hbox12, False, False, 4);
+      Gtk_New_Hbox (Hbox);
+      Flow.Add (Hbox);
 
-      Gtk_New (Vbuttonbox5);
-      Set_Spacing (Vbuttonbox5, 10);
-      Set_Layout (Vbuttonbox5, Buttonbox_Spread);
-      Pack_Start (Hbox12, Vbuttonbox5, False, False, 0);
-
-      Gtk_New (Label98, -("Unit size: "));
-      Set_Alignment (Label98, 0.5, 0.5);
-      Set_Padding (Label98, 0, 0);
-      Set_Justify (Label98, Justify_Center);
-      Set_Line_Wrap (Label98, False);
-      Pack_Start (Hbox12, Label98, True, True, 4);
+      Gtk_New (Label, -("Unit size: "));
+      Set_Line_Wrap (Label, False);
+      Pack_Start (Hbox, Label, False, False, 4);
 
       Gtk_New (Memory_View.Size);
       Memory_View.Size.Append_Text (-"Byte");
       Memory_View.Size.Append_Text (-"Halfword");
       Memory_View.Size.Append_Text (-"Word");
       Memory_View.Size.Set_Active (0);
-      Pack_Start (Hbox12, Memory_View.Size, True, True, 0);
+      Pack_Start (Hbox, Memory_View.Size, False, False, 7);
       Set_Name (Memory_View.Size, "memory view unit size");
 
-      Gtk_New_Vseparator (Vseparator7);
-      Pack_Start (Hbox12, Vseparator7, False, True, 10);
+      --  Format widget
 
-      Gtk_New (Label97, -("Format: "));
-      Set_Alignment (Label97, 0.5, 0.5);
-      Set_Padding (Label97, 0, 0);
-      Set_Justify (Label97, Justify_Center);
-      Set_Line_Wrap (Label97, False);
-      Pack_Start (Hbox12, Label97, True, True, 0);
+      Gtk_New_Hbox (Hbox);
+      Flow.Add (Hbox);
+
+      Gtk_New (Label, -("Format: "));
+      Set_Line_Wrap (Label, False);
+      Pack_Start (Hbox, Label, False, False, 4);
 
       Gtk_New (Memory_View.Format);
       Memory_View.Format.Append_Text (-"Hex");
@@ -129,59 +123,64 @@ package body Memory_View_Pkg is
       Memory_View.Format.Append_Text (-"Octal");
       Memory_View.Format.Append_Text (-"ASCII");
       Memory_View.Format.Set_Active (0);
-      Pack_Start (Hbox12, Memory_View.Format, True, True, 7);
+      Pack_Start (Hbox, Memory_View.Format, False, False, 7);
       Set_Name (Memory_View.Format, "memory view format");
 
-      Gtk_New_Vseparator (Vseparator10);
-      Pack_Start (Hbox12, Vseparator10, True, True, 0);
+      --  ASCII check button
 
       Gtk_New (Memory_View.Show_Ascii, -"Show ASCII");
       Set_Active (Memory_View.Show_Ascii, True);
-      Pack_Start (Hbox12, Memory_View.Show_Ascii, False, False, 0);
       Set_Name (Memory_View.Show_Ascii, "memory view show ascii");
+      Flow.Add (Memory_View.Show_Ascii);
 
-      Gtk_New_Vseparator (Vseparator9);
-      Pack_Start (Hbox12, Vseparator9, True, True, 0);
+      --  Page up/down action
+
+      Gtk_New_Hbox (Hbox);
+      Flow.Add (Hbox);
 
       Gtk_New (Memory_View.Pgup);
       Set_Relief (Memory_View.Pgup, Relief_Normal);
-      Pack_Start (Hbox12, Memory_View.Pgup, True, True, 0);
+      Pack_Start (Hbox, Memory_View.Pgup, False, False, 0);
 
-      Gtk_New (Arrow1, Arrow_Up, Shadow_Out);
-      Set_Alignment (Arrow1, 0.5, 0.5);
-      Set_Padding (Arrow1, 0, 0);
-      Add (Memory_View.Pgup, Arrow1);
+      Gtk_New (Arrow, Arrow_Up, Shadow_Out);
+      Set_Alignment (Arrow, 0.5, 0.5);
+      Set_Padding (Arrow, 0, 0);
+      Add (Memory_View.Pgup, Arrow);
 
       Gtk_New (Memory_View.Pgdn);
       Set_Relief (Memory_View.Pgdn, Relief_Normal);
-      Pack_Start (Hbox12, Memory_View.Pgdn, True, True, 0);
+      Pack_Start (Hbox, Memory_View.Pgdn, False, False, 0);
 
-      Gtk_New (Arrow2, Arrow_Down, Shadow_Out);
-      Set_Alignment (Arrow2, 0.5, 0.5);
-      Set_Padding (Arrow2, 0, 0);
-      Add (Memory_View.Pgdn, Arrow2);
+      Gtk_New (Arrow, Arrow_Down, Shadow_Out);
+      Set_Alignment (Arrow, 0.5, 0.5);
+      Set_Padding (Arrow, 0, 0);
+      Add (Memory_View.Pgdn, Arrow);
 
-      Gtk_New
-        (Adjustment, 16.0, 1.0, 30.0, 1.0, 0.0);
-      Gtk_New
-        (Memory_View.Lines_Spin, Adjustment, 0.0, 0);
-      Pack_Start (Hbox12, Memory_View.Lines_Spin, True, True, 0);
+      --  Lines spin
 
-      --  The scrolled window showing the memory
+      Gtk_New (Adjustment, 16.0, 1.0, 30.0, 1.0, 0.0);
+      Gtk_New (Memory_View.Lines_Spin, Adjustment, 0.0, 0);
+      Pack_Start (Hbox, Memory_View.Lines_Spin, False, False, 0);
 
-      Gtk_New (Memory_View.Scrolledwindow);
+      --  Scrolled window containing the memory
+
+      Gtk_New (Scrolled);
       Set_Policy
-        (Memory_View.Scrolledwindow, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Memory_View, Memory_View.Scrolledwindow, True, True, 0);
+        (Scrolled, Policy_Automatic, Policy_Automatic);
+      Pack_Start (Memory_View, Scrolled, True, True, 0);
+
+      --  Memory view
 
       Gtk_New (Memory_View.View);
       Set_Editable (Memory_View.View, True);
       Memory_View.View.Get_Buffer.Set_Text ("");
       Set_Name (Memory_View.View, "memory view text");
-      Add (Memory_View.Scrolledwindow, Memory_View.View);
+      Add (Scrolled, Memory_View.View);
 
-      Gtk_New_Hseparator (Hseparator2);
-      Pack_Start (Memory_View, Hseparator2, False, False, 3);
+      Gtk_New_Hseparator (Hseparator);
+      Pack_Start (Memory_View, Hseparator, False, False, 3);
+
+      --  Buttons to undo/submit changes
 
       Gtk_New (Hbuttonbox11);
       Set_Spacing (Hbuttonbox11, 30);
