@@ -248,6 +248,41 @@ package body GNATdoc.Backend.HTML is
       Summary     := Empty_Array;
       Description := Empty_Array;
 
+      --  In extensions mode process summary/description of subprogram
+      --  specification before.
+
+      if Self.Context.Options.Extensions_Enabled
+        and then Is_Subprogram_Body (Entity)
+        and then Present (Get_Corresponding_Spec (Entity))
+        and then Present (Get_Comment (Get_Corresponding_Spec (Entity)))
+      then
+         declare
+            Cursor : Tag_Cursor :=
+              New_Cursor (Get_Comment (Get_Corresponding_Spec (Entity)));
+            Tag    : Tag_Info_Ptr;
+
+         begin
+            while not At_End (Cursor) loop
+               Tag := Get (Cursor);
+
+               if Tag.Tag = "summary" then
+                  Summary :=
+                    To_JSON_Representation (Tag.Text, Self.Context.all);
+
+               elsif Tag.Tag = "description"
+                 or Tag.Tag = ""
+               then
+                  Description :=
+                    To_JSON_Representation (Tag.Text, Self.Context.all);
+               end if;
+
+               Next (Cursor);
+            end loop;
+         end;
+      end if;
+
+      --  Process summary/description of entity itself
+
       if Present (Get_Comment (Entity)) then
          declare
             Cursor : Tag_Cursor := New_Cursor (Get_Comment (Entity));
@@ -264,8 +299,15 @@ package body GNATdoc.Backend.HTML is
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
-                  Description :=
-                    To_JSON_Representation (Tag.Text, Self.Context.all);
+                  declare
+                     Body_Description : constant JSON_Array :=
+                       To_JSON_Representation (Tag.Text, Self.Context.all);
+
+                  begin
+                     for J in 1 .. Length (Body_Description) loop
+                        Append (Description, Get (Body_Description, J));
+                     end loop;
+                  end;
                end if;
 
                Next (Cursor);
