@@ -108,7 +108,8 @@ class BoardLoader(Module):
 
         return self.__target != "" and self.__target != "native"
 
-    def __display_message(self, msg, mode="text"):
+    @staticmethod
+    def __display_message(msg, mode="text"):
         """
         Display the given message in the GPS Messages windows.
         Use the 'error' mode for to display warning/error messages.
@@ -532,15 +533,19 @@ class BoardLoader(Module):
 
         status, output = yield con.wait_until_terminate()
         if status != 0:
+            #  Show output in the Messages view on error
+            self.__display_message(output)
             self.__error_exit("%s returned an error." % (cmd[0]))
             return
 
         # Flash the binary and wait until it completes
-        self.__display_message("Flashing image to board.")
+        cmd = self.__get_flashing_command_line(binary)
+        self.__display_message("Flashing image to board...")
+        self.__display_message(' '.join(cmd))
+
         try:
-            con = promises.ProcessWrapper(
-                cmdargs=self.__get_flashing_command_line(binary),
-                spawn_console=True)
+            con = promises.ProcessWrapper(cmd)
+            con.lines.subscribe(self.__display_message)
             output = yield con.wait_until_match(
                 self.__get_flashing_complete_regexp(),
                 120000)
@@ -604,11 +609,10 @@ class BoardLoader(Module):
         if self.__connector:
             # Launch the connection tool with its associated console
             cmd = self.__connector.get_command_line()
-            self.__display_message("Launching %s" % (self.__connection_tool))
+            self.__display_message("Launching: %s" % (' '.join(cmd)))
             try:
-                self.__connection = promises.ProcessWrapper(
-                    cmdargs=cmd,
-                    spawn_console=True)
+                self.__connection = promises.ProcessWrapper(cmd)
+                self.__connection.lines.subscribe(self.__display_message)
                 output = yield self.__connection.wait_until_match(
                     self.__get_connection_detection_regexp(),
                     120000)
