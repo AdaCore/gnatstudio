@@ -20,7 +20,7 @@ Communication Subsystem. See E.2.3.</DOC>
    <ASPECT id="0" name="Annotate" origin="GNAT RM" category="unknown">
        <DOC>There are three forms of this aspect (where ID is an identifier, and
 ARG is a general expression), corresponding to *note pragma Annotate:
-25.
+29.
 
 `Annotate =&gt; ID'
 Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
@@ -32,10 +32,10 @@ Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
 Equivalent to `pragma Annotate (ID, ID {, ARG}, Entity =&gt; Name);'</DOC>
    </ASPECT>
    <ASPECT id="0" name="Async_Readers" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Async_Readers: 2c.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Async_Readers: 30.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Async_Writers" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Async_Writers: 2f.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Async_Writers: 33.</DOC>
    </ASPECT>
    <ASPECT id="6/3" name="Asynchronous" origin="Ada RM" category="unknown">
        <DOC>Remote procedure calls are asynchronous; the caller continues
@@ -67,14 +67,14 @@ aspect_specification. See 13.4.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Constant_After_Elaboration" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to *note pragma Constant_After_Elaboration:
-40.</DOC>
+44.</DOC>
    </ASPECT>
    <ASPECT id="13/3" name="Constant_Indexing" origin="Ada RM" category="unknown">
        <DOC>Defines function(s) to implement user-defined
 indexed_components. See 4.1.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Contract_Cases" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Contract_Cases: 42, the
+       <DOC>This aspect is equivalent to *note pragma Contract_Cases: 46, the
 sequence of clauses being enclosed in parentheses so that syntactically
 it is an aggregate.</DOC>
    </ASPECT>
@@ -87,7 +87,7 @@ other languages. See B.1.</DOC>
 subtype. See 3.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Default_Initial_Condition" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Default_Initial_Condition: 4c.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Default_Initial_Condition: 50.</DOC>
    </ASPECT>
    <ASPECT id="17/3" name="Default_Iterator" origin="Ada RM" category="unknown">
        <DOC>Default iterator to be used in for loops. See 5.5.1.</DOC>
@@ -103,7 +103,7 @@ Requests a reduction in storage for names associated with an
 entity. See C.5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Depends" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Depends: 51.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Depends: 55.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Dimension" origin="GNAT RM" category="unknown">
        <DOC>The `Dimension' aspect is used to specify the dimensions of a given
@@ -198,10 +198,10 @@ See D.16.1.</DOC>
 the subtype is not static. See 3.2.4.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Effective_Reads" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Effective_Reads: 57.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Effective_Reads: 5b.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Effective_Writes" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Effective_Writes: 59.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Effective_Writes: 5d.</DOC>
    </ASPECT>
    <ASPECT id="22/3" name="Elaborate_Body" origin="Ada RM" category="unknown">
        <DOC>A given package must have a body, and that body is elaborated
@@ -215,7 +215,7 @@ a protected type. See 9.5.1.</DOC>
        <DOC>Entity is exported to another language. See B.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Extensions_Visible" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Extensions_Visible: 65.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Extensions_Visible: 69.</DOC>
    </ASPECT>
    <ASPECT id="24/3" name="External_Name" origin="Ada RM" category="unknown">
        <DOC>Name used to identify an imported or exported entity. See
@@ -225,13 +225,13 @@ B.1.</DOC>
        <DOC>Unique identifier for a tagged type in streams. See 13.3.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Favor_Top_Level" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Favor_Top_Level: 6a.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Favor_Top_Level: 6e.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Ghost" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Ghost: 6d.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Ghost: 71.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Global" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Global: 6f.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Global: 73.</DOC>
    </ASPECT>
    <ASPECT id="26/3" name="Implicit_Dereference" origin="Ada RM" category="unknown">
        <DOC>Mechanism for user-defined implicit .all. See 4.1.5.</DOC>
@@ -248,17 +248,17 @@ addressable. See C.6.</DOC>
 array object, are independently addressable. See C.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Initial_Condition" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Initial_Condition: 7d.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Initial_Condition: 81.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Initializes" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Initializes: 7f.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Initializes: 83.</DOC>
    </ASPECT>
    <ASPECT id="30/3" name="Inline" origin="Ada RM" category="unknown">
        <DOC>For efficiency, Inline calls are requested for a subprogram.
 See 6.3.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Inline_Always" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Inline_Always: 82.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Inline_Always: 86.</DOC>
    </ASPECT>
    <ASPECT id="31/3" name="Input" origin="Ada RM" category="unknown">
        <DOC>Function to read a value from a stream for a given type,
@@ -278,13 +278,13 @@ object or type; the priority is in the interrupt range. See
 D.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Invariant" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Invariant: 89. It is a
+       <DOC>This aspect is equivalent to *note pragma Invariant: 8d. It is a
 synonym for the language defined aspect `Type_Invariant' except that it
 is separately controllable using pragma `Assertion_Policy'.
 
 3.22 Aspect Invariant'Class
 
-This aspect is equivalent to *note pragma Type_Invariant_Class: 100. It
+This aspect is equivalent to *note pragma Type_Invariant_Class: 104. It
 is a synonym for the language defined aspect `Type_Invariant'Class'
 except that it is separately controllable using pragma
 `Assertion_Policy'.</DOC>
@@ -350,38 +350,38 @@ See 13.5.1.</DOC>
 See B.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Linker_Section" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Linker_Section: 91.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Linker_Section: 95.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Lock_Free" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Lock_Free: 93.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Lock_Free: 97.</DOC>
    </ASPECT>
    <ASPECT id="37/3" name="Machine_Radix" origin="Ada RM" category="unknown">
        <DOC>Radix (2 or 10) that is used to represent a decimal fixed
 point type. See F.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Max_Queue_Length" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Max_Queue_Length: 9b.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Max_Queue_Length: 9f.</DOC>
    </ASPECT>
    <ASPECT id="0" name="No_Elaboration_Code_All" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma No_Elaboration_Code_All: 9f.
+       <DOC>This aspect is equivalent to *note pragma No_Elaboration_Code_All: a3.
 for a program unit.</DOC>
    </ASPECT>
    <ASPECT id="0" name="No_Inline" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma No_Inline: a2.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma No_Inline: a6.</DOC>
    </ASPECT>
    <ASPECT id="38/3" name="No_Return" origin="Ada RM" category="unknown">
        <DOC>A procedure will not return normally. See 6.5.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="No_Tagged_Streams" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma No_Tagged_Streams: a6. with an
+       <DOC>This aspect is equivalent to *note pragma No_Tagged_Streams: aa. with an
 argument specifying a root tagged type (thus this aspect can only be
 applied to such a type).</DOC>
    </ASPECT>
    <ASPECT id="0" name="Object_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Object_Size: 13f.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Object_Size: 143.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Obsolescent" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Obsolescent: a9. Note that the
+       <DOC>This aspect is equivalent to *note pragma Obsolescent: ad. Note that the
 evaluation of this aspect happens at the point of occurrence, it is not
 delayed until the freeze point.</DOC>
    </ASPECT>
@@ -398,10 +398,10 @@ discriminants. See 13.13.2.</DOC>
        <DOC>Minimize storage when laying out records and arrays. See</DOC>
    </ASPECT>
    <ASPECT id="0" name="Part_Of" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Part_Of: b1.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Part_Of: b5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Persistent_BSS" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Persistent_BSS: b4.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Persistent_BSS: b8.</DOC>
    </ASPECT>
    <ASPECT id="41/3" name="Post" origin="Ada RM" category="unknown">
        <DOC>Postcondition; a condition that must hold true after a call.
@@ -421,7 +421,7 @@ See 6.1.1.</DOC>
 Action to be performed when a predicate check fails. See</DOC>
    </ASPECT>
    <ASPECT id="0" name="Predicate" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Predicate: bd. It is thus
+       <DOC>This aspect is equivalent to *note pragma Predicate: c1. It is thus
 similar to the language defined aspects `Dynamic_Predicate' and
 `Static_Predicate' except that whether the resulting predicate is
 static or dynamic is controlled by the form of the expression. It is
@@ -441,7 +441,7 @@ See D.1.</DOC>
 package. See 10.2.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Pure_Function" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Pure_Function: c8.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Pure_Function: cc.</DOC>
    </ASPECT>
    <ASPECT id="48/3" name="Read" origin="Ada RM" category="unknown">
        <DOC>Procedure to read a value from a stream for a given type. See
@@ -457,23 +457,23 @@ type associated with a given type. See 13.13.2.</DOC>
 See Layout. See 13.5.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Depends" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Depends: cc.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Depends: d0.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Global" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Global: ce.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Global: d2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_Post" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_Post: d0.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_Post: d4.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Refined_State" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Refined_State: d2.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Refined_State: d6.</DOC>
    </ASPECT>
    <ASPECT id="50/3" name="Relative_Deadline" origin="Ada RM" category="unknown">
        <DOC>Task parameter used in Earliest Deadline First Dispatching.
 See D.2.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Remote_Access_Type" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Remote_Access_Type: d6.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Remote_Access_Type: da.</DOC>
    </ASPECT>
    <ASPECT id="51/3" name="Remote_Call_Interface" origin="Ada RM" category="unknown">
        <DOC>Subprograms in a given package may be used in remote procedure
@@ -484,19 +484,19 @@ calls. See E.2.3.</DOC>
 calls. See E.2.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="SPARK_Mode" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma SPARK_Mode: e9. and may be
+       <DOC>This aspect is equivalent to *note pragma SPARK_Mode: ed. and may be
 specified for either or both of the specification and body of a
 subprogram or package.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Scalar_Storage_Order" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to a *note attribute Scalar_Storage_Order:
-14c.</DOC>
+150.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Secondary_Stack_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Secondary_Stack_Size: db.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Secondary_Stack_Size: df.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Shared" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Shared: de.  and is
+       <DOC>This boolean aspect is equivalent to *note pragma Shared: e2.  and is
 thus a synonym for aspect `Atomic'.</DOC>
    </ASPECT>
    <ASPECT id="53/3" name="Shared_Passive" origin="Ada RM" category="unknown">
@@ -504,11 +504,11 @@ thus a synonym for aspect `Atomic'.</DOC>
 distributed system. See E.2.1.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Simple_Storage_Pool" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Simple_Storage_Pool: e3.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Simple_Storage_Pool: e7.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Simple_Storage_Pool_Type" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma
-Simple_Storage_Pool_Type: e1.</DOC>
+Simple_Storage_Pool_Type: e5.</DOC>
    </ASPECT>
    <ASPECT id="54/3" name="Size" origin="Ada RM" category="unknown">
        <DOC>Size in bits of an object. See 13.3.</DOC>
@@ -540,11 +540,11 @@ See 13.13.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Suppress_Debug_Info" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Suppress_Debug_Info:
-f1.</DOC>
+f5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Suppress_Initialization" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma
-Suppress_Initialization: f5.</DOC>
+Suppress_Initialization: f9.</DOC>
    </ASPECT>
    <ASPECT id="62/3" name="Synchronization" origin="Ada RM" category="unknown">
        <DOC>Defines whether a given primitive operation of a synchronized
@@ -552,7 +552,7 @@ interface must be implemented by an entry or protected
 procedure. See 9.5.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Test_Case" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Test_Case: f8.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Test_Case: fc.</DOC>
    </ASPECT>
    <ASPECT id="1/3" name="This" origin="Ada RM" category="unknown">
        <DOC>subclause summarizes the definitions given elsewhere of the
@@ -562,7 +562,7 @@ specified using an aspect_specification.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Thread_Local_Storage" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Thread_Local_Storage:
-fa.</DOC>
+fe.</DOC>
    </ASPECT>
    <ASPECT id="63/3" name="Type_Invariant" origin="Ada RM" category="unknown">
        <DOC>A condition that must hold true for all objects of a type. See</DOC>
@@ -576,26 +576,26 @@ types. See 7.3.2.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Universal_Aliasing" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Universal_Aliasing:
-105.</DOC>
+109.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Universal_Data" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note pragma Universal_Data: 106.</DOC>
+       <DOC>This aspect is equivalent to *note pragma Universal_Data: 10a.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unmodified" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Unmodified: 108.</DOC>
+       <DOC>This boolean aspect is equivalent to *note pragma Unmodified: 10c.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unreferenced" origin="GNAT RM" category="unknown">
-       <DOC>This boolean aspect is equivalent to *note pragma Unreferenced: 10a.
+       <DOC>This boolean aspect is equivalent to *note pragma Unreferenced: 10e.
 Note that in the case of formal parameters, it is not permitted to have
 aspects for a formal parameter, so in this case the pragma form must be
 used.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Unreferenced_Objects" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Unreferenced_Objects:
-10c.</DOC>
+110.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Value_Size" origin="GNAT RM" category="unknown">
-       <DOC>This aspect is equivalent to *note attribute Value_Size: 15b.</DOC>
+       <DOC>This aspect is equivalent to *note attribute Value_Size: 15f.</DOC>
    </ASPECT>
    <ASPECT id="66/3" name="Variable_Indexing" origin="Ada RM" category="unknown">
        <DOC>Defines function(s) to implement user-defined
@@ -611,15 +611,15 @@ volatile. See C.6.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Volatile_Full_Access" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Volatile_Full_Access:
-115.</DOC>
+119.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Volatile_Function" origin="GNAT RM" category="unknown">
        <DOC>This boolean aspect is equivalent to *note pragma Volatile_Function:
-118.</DOC>
+11c.</DOC>
    </ASPECT>
    <ASPECT id="0" name="Warnings" origin="GNAT RM" category="unknown">
        <DOC>This aspect is equivalent to the two argument form of *note pragma
-Warnings: 11a, where the first argument is `ON' or `OFF' and the second
+Warnings: 11e, where the first argument is `ON' or `OFF' and the second
 argument is the entity.</DOC>
    </ASPECT>
    <ASPECT id="69/3" name="Write" origin="Ada RM" category="unknown">
@@ -2882,6 +2882,145 @@ ABSTRACT_STATE ::= name
 For the semantics of this pragma, see the entry for aspect
 `Abstract_State' in the SPARK 2014 Reference Manual, section 7.1.4.</DOC>
    </PRAGMA>
+   <PRAGMA id="0" name="Acc_Data" origin="GNAT RM">
+      <DOC>Syntax:
+
+pragma Acc_Data ([ ACC_DATA_CLAUSE [, ACC_DATA_CLAUSE...]]);
+
+ACC_DATA_CLAUSE ::=
+Copy          =&gt; IDENTIFIERS
+| Copy_In       =&gt; IDENTIFIERS
+| Copy_Out      =&gt; IDENTIFIERS
+| Create        =&gt; IDENTIFIERS
+| Device_Ptr    =&gt; IDENTIFIERS
+| Present       =&gt; IDENTIFIERS
+
+Requires the `-fopenacc' flag.
+
+Equivalent to the `data' directive of the OpenAcc standard. This pragma
+should be placed in loops.
+
+For more information about the effect of the clauses, see the OpenAcc
+specification.</DOC>
+   </PRAGMA>
+   <PRAGMA id="0" name="Acc_Kernels" origin="GNAT RM">
+      <DOC>Syntax:
+
+pragma Acc_Kernels [( ACC_KERNELS_CLAUSE [, ACC_KERNELS_CLAUSE...])];
+
+ACC_KERNELS_CLAUSE ::=
+Acc_If        =&gt; boolean_EXPRESSION
+| Async         =&gt; integer_EXPRESSION
+| Copy          =&gt; IDENTIFIERS
+| Copy_In       =&gt; IDENTIFIERS
+| Copy_Out      =&gt; IDENTIFIERS
+| Create        =&gt; IDENTIFIERS
+| Default       =&gt; None
+| Device_Ptr    =&gt; IDENTIFIERS
+| Num_Gangs     =&gt; integer_EXPRESSION
+| Num_Workers   =&gt; integer_EXPRESSION
+| Present       =&gt; IDENTIFIERS
+| Vector_Length =&gt; integer_EXPRESSION
+| Wait          =&gt; INTEGERS
+
+IDENTIFIERS ::=
+| IDENTIFIER
+| (IDENTIFIER, IDENTIFIERS)
+
+INTEGERS ::=
+| integer_EXPRESSION
+| (integer_EXPRESSION, INTEGERS)
+
+Requires the `-fopenacc' flag.
+
+Equivalent to the kernels directive of the OpenAcc standard. This
+pragma should be placed in loops.
+
+For more information about the effect of the clauses, see the OpenAcc
+specification.</DOC>
+   </PRAGMA>
+   <PRAGMA id="0" name="Acc_Loop" origin="GNAT RM">
+      <DOC>Syntax:
+
+pragma Acc_Loop [( ACC_LOOP_CLAUSE [, ACC_LOOP_CLAUSE... ])];
+
+ACC_LOOP_CLAUSE ::=
+Auto
+| Collapse        =&gt; INTEGER_LITERAL
+| Gang            [=&gt; GANG_ARG]
+| Independent
+| Private         =&gt; IDENTIFIERS
+| Reduction       =&gt; (REDUCTION_RECORD)
+| Seq
+| Tile            =&gt; SIZE_EXPRESSION
+| Vector          [=&gt; integer_EXPRESSION]
+| Worker          [=&gt; integer_EXPRESSION]
+
+GANG_ARG ::=
+integer_EXPRESSION
+| Static =&gt; SIZE_EXPRESSION
+
+SIZE_EXPRESSION ::=
+*
+| integer_EXPRESSION
+
+Requires the `-fopenacc' flag.
+
+Equivalent to the `loop' directive of the OpenAcc standard. This pragma
+should be placed in for loops after the "Acc_Parallel" pragma. It tells
+the compiler how to parallelize the loop.
+
+For more information about the effect of the clauses, see the OpenAcc
+specification.</DOC>
+   </PRAGMA>
+   <PRAGMA id="0" name="Acc_Parallel" origin="GNAT RM">
+      <DOC>Syntax:
+
+pragma Acc_Parallel [( ACC_PARALLEL_CLAUSE [, ACC_PARALLEL_CLAUSE... ])];
+
+ACC_PARALLEL_CLAUSE ::=
+Acc_If        =&gt; boolean_EXPRESSION
+| Acc_Private   =&gt; IDENTIFIERS
+| Async         =&gt; integer_EXPRESSION
+| Copy          =&gt; IDENTIFIERS
+| Copy_In       =&gt; IDENTIFIERS
+| Copy_Out      =&gt; IDENTIFIERS
+| Create        =&gt; IDENTIFIERS
+| Default       =&gt; None
+| Device_Ptr    =&gt; IDENTIFIERS
+| First_Private =&gt; IDENTIFIERS
+| Num_Gangs     =&gt; integer_EXPRESSION
+| Num_Workers   =&gt; integer_EXPRESSION
+| Present       =&gt; IDENTIFIERS
+| Reduction     =&gt; (REDUCTION_RECORD)
+| Vector_Length =&gt; integer_EXPRESSION
+| Wait          =&gt; INTEGERS
+
+REDUCTION_RECORD ::=
+"+"   =&gt; IDENTIFIERS
+| "*"   =&gt; IDENTIFIERS
+| "min" =&gt; IDENTIFIERS
+| "max" =&gt; IDENTIFIERS
+| "or"  =&gt; IDENTIFIERS
+| "and" =&gt; IDENTIFIERS
+
+IDENTIFIERS ::=
+| IDENTIFIER
+| (IDENTIFIER, IDENTIFIERS)
+
+INTEGERS ::=
+| integer_EXPRESSION
+| (integer_EXPRESSION, INTEGERS)
+
+Requires the `-fopenacc' flag.
+
+Equivalent to the `parallel' directive of the OpenAcc standard. This
+pragma should be placed in loops. It offloads the content of the loop
+to an accelerator device.
+
+For more information about the effect of the clauses, see the OpenAcc
+specification.</DOC>
+   </PRAGMA>
    <PRAGMA id="0" name="Ada_05" origin="GNAT RM">
       <DOC>Syntax:
 
@@ -3340,7 +3479,7 @@ constructor functions (see pragma `CPP_Constructor'). Such types are
 implicitly limited if not explicitly declared as limited or derived
 from a limited type, and an error is issued in that case.
 
-See *note Interfacing to C++: 45. for related information.
+See *note Interfacing to C++: 49. for related information.
 
 Note: Pragma `CPP_Class' is currently obsolete. It is supported for
 backward compatibility but its functionality is available using pragma
@@ -3381,7 +3520,7 @@ on the Ada side and the type is implicitly declared abstract.
 
 Pragma `CPP_Constructor' is intended primarily for automatic generation
 using an automatic binding generator tool (such as the `-fdump-ada-spec'
-GCC switch).  See *note Interfacing to C++: 45. for more related
+GCC switch).  See *note Interfacing to C++: 49. for more related
 information.
 
 Note: The use of functions returning class-wide types for constructors
@@ -3399,7 +3538,7 @@ ensure compoatibility with C++, but is no longer required for that
 purpose because GNAT generates the same object layout as the G++
 compiler by default.
 
-See *note Interfacing to C++: 45. for related information.</DOC>
+See *note Interfacing to C++: 49. for related information.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="CPP_Vtable" origin="GNAT RM">
       <DOC>This pragma is now obsolete and, other than generating a warning if
@@ -3408,7 +3547,7 @@ It used to be required to ensure compatibility with C++, but is no
 longer required for that purpose because GNAT generates the same object
 layout as the G++ compiler by default.
 
-See *note Interfacing to C++: 45. for related information.</DOC>
+See *note Interfacing to C++: 49. for related information.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="CPU" origin="GNAT RM">
       <DOC>Syntax:
@@ -7541,7 +7680,7 @@ declared for a simple storage pool type (such as for supporting a
 mark/release storage-management discipline).
 
 An object of a simple storage pool type can be associated with an access
-type by specifying the attribute *note Simple_Storage_Pool: e3. For
+type by specifying the attribute *note Simple_Storage_Pool: e7. For
 example:
 
 My_Pool : My_Simple_Storage_Pool_Type;
@@ -7550,7 +7689,7 @@ type Acc is access My_Data_Type;
 
 for Acc'Simple_Storage_Pool use My_Pool;
 
-See attribute *note Simple_Storage_Pool: e3.  for further details.</DOC>
+See attribute *note Simple_Storage_Pool: e7.  for further details.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Source_File_Name" origin="GNAT RM">
       <DOC>Syntax:
@@ -7635,7 +7774,7 @@ would not be aware of the intended naming conventions. If you are using
 project files, file naming is controlled by Source_File_Name_Project
 pragmas, which are usually supplied automatically by the project
 manager. A pragma Source_File_Name cannot appear after a *note Pragma
-Source_File_Name_Project: e6.
+Source_File_Name_Project: ea.
 
 For more details on the use of the `Source_File_Name' pragma, see the
 sections on `Using Other File Names' and `Alternative File Naming
@@ -7644,7 +7783,7 @@ Schemes' in the :title:`GNAT User's Guide'.</DOC>
    <PRAGMA id="0" name="Source_File_Name_Project" origin="GNAT RM">
       <DOC>This pragma has the same syntax and semantics as pragma
 Source_File_Name.  It is only allowed as a stand-alone configuration
-pragma.  It cannot appear after a *note Pragma Source_File_Name: e4, and
+pragma.  It cannot appear after a *note Pragma Source_File_Name: e8, and
 most importantly, once pragma Source_File_Name_Project appears, no
 further Source_File_Name pragmas are allowed.
 
@@ -8317,7 +8456,7 @@ Note that if a warning is desired for all calls to a given subprogram,
 regardless of whether they occur in the same unit as the subprogram
 declaration, then this pragma should not be used (calls from another
 unit would not be flagged); pragma Obsolescent can be used instead for
-this purpose, see *note Pragma Obsolescent: a9.
+this purpose, see *note Pragma Obsolescent: ad.
 
 The second form of pragma `Unreferenced' is used within a context
 clause. In this case the arguments must be unit names of units
@@ -8567,7 +8706,7 @@ class of warnings as errors.
 The above use of patterns to match the message applies only to warning
 messages generated by the front end. This pragma can also be applied to
 warnings provided by the back end and mentioned in *note Pragma
-Warnings: 11a.  By using a single full `-Wxxx' switch in the pragma,
+Warnings: 11e.  By using a single full `-Wxxx' switch in the pragma,
 such warnings can also be treated as errors.
 
 The pragma can appear either in a global configuration pragma file
