@@ -941,11 +941,11 @@ package body LAL.Semantic_Trees is
                      end case;
                   end if;
 
-                  Append (Item, Param.F_Type_Expr.Text);
+                  Append (Item, Param.F_Type_Expr.String_Text);
 
                   if not Init.Is_Null then
                      Append (Result, " := ");
-                     Append (Item, Init.Text);
+                     Append (Item, Init.String_Text);
                   end if;
 
                   for J in
@@ -955,7 +955,7 @@ package body LAL.Semantic_Trees is
                         Append (Result, "; ");
                      end if;
 
-                     Append (Result, Names.Child (J).Text);
+                     Append (Result, Names.Child (J).String_Text);
                      Append (Result, Item);
                      Item := Null_Unbounded_String;
                   end loop;
@@ -969,7 +969,7 @@ package body LAL.Semantic_Trees is
 
             if not Returns.Is_Null then
                Append (Result, " return ");
-               Append (Result, Returns.Text);
+               Append (Result, Returns.String_Text);
             end if;
 
             return To_String (Result);
