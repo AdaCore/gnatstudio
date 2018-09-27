@@ -309,9 +309,11 @@ package body GVD.Memory_View is
      (S        : String;
       Size     : Integer;
       Format   : Display_Type;
-      Trunc_At : Integer) return String;
+      Trunc_At : Integer;
+      Is_ASCII : Boolean := False) return String;
    --  Converts a string of hexadecimal digits into a string representing
    --  the same number in Format, with a constant size.
+   --  If Is_ASCII and the conversion failed returns Non_Valid_Character
 
    function To_Standard_Base
      (Address  : Long_Long_Integer;
@@ -535,7 +537,8 @@ package body GVD.Memory_View is
      (S        : String;
       Size     : Integer;
       Format   : Display_Type;
-      Trunc_At : Integer) return String
+      Trunc_At : Integer;
+      Is_ASCII : Boolean := False) return String
    is
       pragma Unreferenced (Size);
 
@@ -547,7 +550,7 @@ package body GVD.Memory_View is
       Skip_To_String (S, Test, Non_Valid_Character);
 
       if Test < S'Last then
-         if Trunc_At /= -1 then
+         if Trunc_At /= -1 and not Is_ASCII then
             return Dummy (1 .. Trunc_At);
          else
             return Non_Valid_Character;
@@ -1552,8 +1555,9 @@ package body GVD.Memory_View is
             Insert
               (Buffer,
                End_Iter,
-               Conversion (S, View.Unit_Size, Text, View.Trunc) &
-               Data_Separator);
+               Conversion
+                 (S, View.Unit_Size, Text, View.Trunc, Is_ASCII => True) &
+                 Data_Separator);
 
             Get_Iter_At_Mark (Buffer, Start_Iter, Start_Mark);
             Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
