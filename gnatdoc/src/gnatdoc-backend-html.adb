@@ -1050,6 +1050,12 @@ package body GNATdoc.Backend.HTML is
          Label          : String;
          Entities       : EInfo_List.Vector);
 
+      function Entity_Data
+        (Tag_Name : Unbounded_String;
+         Entity   : Root_Entity'Class;
+         Text     : Unbounded_String) return JSON_Value;
+      --  Constructs description data for given tag
+
       --------------------------
       -- Build_Entity_Entries --
       --------------------------
@@ -1059,67 +1065,6 @@ package body GNATdoc.Backend.HTML is
          Label          : String;
          Entities       : EInfo_List.Vector)
       is
-
-         function Entity_Data
-           (Tag_Name : Unbounded_String;
-            Entity   : Root_Entity'Class;
-            Text     : Unbounded_String) return JSON_Value;
-
-         --  Constructs description data for given tag
-
-         -----------------
-         -- Entity_Data --
-         -----------------
-
-         function Entity_Data
-           (Tag_Name : Unbounded_String;
-            Entity   : Root_Entity'Class;
-            Text     : Unbounded_String) return JSON_Value
-         is
-            Result      : JSON_Value;
-            Declaration : Xref.General_Entity_Declaration;
-            Type_Data   : JSON_Value;
-            Entity_Type : Entity_Id;
-
-         begin
-            Result := Create_Object;
-
-            if Tag_Name /= "return" then
-               Declaration := Xref.Get_Declaration (Entity);
-               Result.Set_Field ("label", Declaration.Name);
-               Result.Set_Field ("line", Declaration.Loc.Line);
-               Result.Set_Field ("column", Natural (Declaration.Loc.Column));
-
-               if Tag_Name /= "value" and Tag_Name /= "gen_param" then
-                  --  Construct reference information to entity's type
-
-                  Declaration :=
-                    Xref.Get_Declaration (Xref.Get_Type_Of (Entity));
-                  Entity_Type := Find_Unique_Entity (Declaration.Loc);
-
-                  Type_Data := Create_Object;
-
-                  if Present (Entity_Type) then
-                     Type_Data.Set_Field
-                       ("label", Get_Full_Name (Entity_Type));
-                     Type_Data.Set_Field
-                       ("docHref", Get_Docs_Href (Entity_Type));
-
-                  else
-                     Type_Data.Set_Field ("label", Declaration.Name);
-                  end if;
-
-                  Result.Set_Field ("type", Type_Data);
-               end if;
-            end if;
-
-            Result.Set_Field
-              ("description",
-               To_JSON_Representation (Text, Self.Context.all));
-
-            return Result;
-         end Entity_Data;
-
          Entity_Kind_Entry : constant JSON_Value := Create_Object;
          Entity_Entry      : JSON_Value;
          Aux               : JSON_Array;
@@ -1433,6 +1378,59 @@ package body GNATdoc.Backend.HTML is
          Entity_Kind_Entry.Set_Field ("label", Label);
          Append (Entity_Entries, Entity_Kind_Entry);
       end Build_Entity_Entries;
+
+      -----------------
+      -- Entity_Data --
+      -----------------
+
+      function Entity_Data
+        (Tag_Name : Unbounded_String;
+         Entity   : Root_Entity'Class;
+         Text     : Unbounded_String) return JSON_Value
+      is
+         Result      : JSON_Value;
+         Declaration : Xref.General_Entity_Declaration;
+         Type_Data   : JSON_Value;
+         Entity_Type : Entity_Id;
+
+      begin
+         Result := Create_Object;
+
+         if Tag_Name /= "return" then
+            Declaration := Xref.Get_Declaration (Entity);
+            Result.Set_Field ("label", Declaration.Name);
+            Result.Set_Field ("line", Declaration.Loc.Line);
+            Result.Set_Field ("column", Natural (Declaration.Loc.Column));
+
+            if Tag_Name /= "value" and Tag_Name /= "gen_param" then
+               --  Construct reference information to entity's type
+
+               Declaration :=
+                 Xref.Get_Declaration (Xref.Get_Type_Of (Entity));
+               Entity_Type := Find_Unique_Entity (Declaration.Loc);
+
+               Type_Data := Create_Object;
+
+               if Present (Entity_Type) then
+                  Type_Data.Set_Field
+                    ("label", Get_Full_Name (Entity_Type));
+                  Type_Data.Set_Field
+                    ("docHref", Get_Docs_Href (Entity_Type));
+
+               else
+                  Type_Data.Set_Field ("label", Declaration.Name);
+               end if;
+
+               Result.Set_Field ("type", Type_Data);
+            end if;
+         end if;
+
+         Result.Set_Field
+           ("description",
+            To_JSON_Representation (Text, Self.Context.all));
+
+         return Result;
+      end Entity_Data;
 
       Docs_Dir       : constant Virtual_File :=
         Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
