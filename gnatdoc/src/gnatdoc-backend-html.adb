@@ -1411,6 +1411,11 @@ package body GNATdoc.Backend.HTML is
          Parameters         : out JSON_Array;
          Returns            : out JSON_Value)
       is
+         Entity_Spec : constant Entity_Id :=
+           (if Is_Subprogram (Entity)
+                 and then Present (Get_Corresponding_Spec (Entity))
+              then Get_Corresponding_Spec (Entity)
+              else No_Entity);
 
          function Process_Parameters_And_Return
            (Entity      : Entity_Id;
@@ -1424,8 +1429,41 @@ package body GNATdoc.Backend.HTML is
 
          function Process_Parameters_And_Return
            (Entity      : Entity_Id;
-            Scope_Level : Natural) return Traverse_Result is
+            Scope_Level : Natural) return Traverse_Result
+         is
+            Entity_Documentation : constant Unbounded_String_Vectors.Vector :=
+              Get_Doc (Entity).Text;
+            Spec_Documentation   : Unbounded_String_Vectors.Vector;
+
+            function Process_Spec_Parameters_And_Return
+              (Spec_Entity : Entity_Id;
+               Scope_Level : Natural) return Traverse_Result;
+            --  Process entities of subprogram specification to lookup
+            --  documentation for processed entity.
+
+            ----------------------------------------
+            -- Process_Spec_Parameters_And_Return --
+            ----------------------------------------
+
+            function Process_Spec_Parameters_And_Return
+              (Spec_Entity : Entity_Id;
+               Scope_Level : Natural) return Traverse_Result is
+            begin
+               if Get_Short_Name (Spec_Entity) = Get_Short_Name (Entity) then
+                  Spec_Documentation := Get_Doc (Spec_Entity).Text;
+
+                  return Skip;
+               end if;
+
+               return (if Scope_Level > 1 then Skip else OK);
+            end Process_Spec_Parameters_And_Return;
+
          begin
+            if Present (Entity_Spec) then
+               Traverse_Tree
+                 (Entity_Spec, Process_Spec_Parameters_And_Return'Access);
+            end if;
+
             if Get_Kind (Entity) = E_Formal then
                Append
                  (Parameters,
@@ -1433,7 +1471,8 @@ package body GNATdoc.Backend.HTML is
                     (To_Unbounded_String ("param"),
                      LL.Get_Entity (Entity),
                      Utils.To_Unbounded_String
-                       (Get_Doc (Entity).Text)));
+                       (if Entity_Documentation.Is_Empty
+                        then Spec_Documentation else Entity_Documentation)));
 
             elsif Get_Kind (Entity) = E_Return then
                Returns :=
@@ -1441,7 +1480,8 @@ package body GNATdoc.Backend.HTML is
                    (To_Unbounded_String ("return"),
                     LL.Get_Entity (Entity),
                     Utils.To_Unbounded_String
-                      (Get_Doc (Entity).Text));
+                      (if Entity_Documentation.Is_Empty
+                        then Spec_Documentation else Entity_Documentation));
 
             elsif Get_Kind (Entity) = E_Generic_Formal then
                Append
@@ -1450,7 +1490,8 @@ package body GNATdoc.Backend.HTML is
                     (To_Unbounded_String ("gen_param"),
                      LL.Get_Entity (Entity),
                      Utils.To_Unbounded_String
-                       (Get_Doc (Entity).Text)));
+                       (if Entity_Documentation.Is_Empty
+                        then Spec_Documentation else Entity_Documentation)));
             end if;
 
             return (if Scope_Level > 1 then Skip else OK);
