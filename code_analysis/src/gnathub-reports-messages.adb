@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
-
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -47,6 +45,10 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 package body GNAThub.Reports.Messages is
 
    Me : constant Trace_Handle := Create ("GNATHUB.REPORTS.MESSAGES");
+
+   File_Line_Sep : constant String := "<line>";
+   --  Separator betwwen file full names and line numbers used to contruct
+   --  row IDs.
 
    type Row_Kind_Type is
      (Total_Kind, Project_Kind, Dir_Kind, File_Kind, Subprogram_Kind);
@@ -443,7 +445,7 @@ package body GNAThub.Reports.Messages is
                Subp_Name   : constant String := To_String (Entity.Name);
                Line        : constant String := Integer'Image (Entity.Line);
                ID          : constant String :=
-                 File.Display_Full_Name & ":" & Line;
+                 File.Display_Full_Name & File_Line_Sep & Line;
             begin
                Dummy := Insert_Or_Update_Row
                  (Parent => Dummy,
@@ -819,20 +821,46 @@ package body GNAThub.Reports.Messages is
       --  Get the location where we should jump to from the row's location ID.
 
       declare
-         Locations : GNAT.Strings.String_List_Access := GNATCOLL.Utils.Split
-           (Str              => View.Get_ID (Iter),
-            On               => ':',
-            Omit_Empty_Lines => True);
-         Full_Name : constant String := Locations (Locations'First).all;
-         Line      : constant Integer :=
-           (if Locations'Length > 1 then
-               Integer'Value
-              (Locations (Locations'First + 1).all)
+         Is_File : Boolean := True;
+         ID      : constant String := View.Get_ID (Iter);
+         File    : GNATCOLL.VFS.Virtual_File;
+         Line    : Integer := 1;
+
+         function For_Each (Item : String) return Boolean;
+
+         --------------
+         -- For_Each --
+         --------------
+
+         function For_Each (Item : String) return Boolean is
+         begin
+            --  Get the file first, and if there is a line appended to the ID,
+            --  get it too.
+
+            if Is_File then
+               File := GNATCOLL.VFS.Create (+Item);
+               Is_File := False;
             else
-               1);
-         File      : constant GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.Create
-           (GNATCOLL.VFS."+" (Full_Name));
+               Line := Integer'Value (Item);
+            end if;
+
+            return True;
+         exception
+            when Constraint_Error =>
+               Trace
+                 (Me,
+                  "Error on multipress, could not find a location "
+                  & "for ID: " & ID);
+
+               return False;
+         end For_Each;
+
       begin
+         GNATCOLL.Utils.Split
+           (Str      => View.Get_ID (Iter),
+            On       => File_Line_Sep,
+            For_Each => For_Each'Unrestricted_Access);
+
          if File.Is_Regular_File then
             Open_File_Action_Hook.Run
               (View.Kernel,
@@ -840,8 +868,6 @@ package body GNAThub.Reports.Messages is
                Project => GNATCOLL.Projects.No_Project,
                Line    => Line);
          end if;
-
-         GNAT.Strings.Free (Locations);
       end;
    end On_Multipress;
 
