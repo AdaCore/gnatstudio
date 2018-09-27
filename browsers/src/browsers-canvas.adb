@@ -1045,8 +1045,9 @@ package body Browsers.Canvas is
            and then Z < Zoom_Levels (J + 1)
          then
             B.View.Scale_To_Fit
-               (Min_Scale => Zoom_Levels (J + 1),
-                Max_Scale => Zoom_Levels (J + 1));
+              (Rect      => B.View.Get_Visible_Area,
+               Min_Scale => Zoom_Levels (J + 1),
+               Max_Scale => Zoom_Levels (J + 1));
          end if;
       end loop;
       return Commands.Success;
@@ -1071,8 +1072,9 @@ package body Browsers.Canvas is
            and then Z <= Zoom_Levels (J)
          then
             B.View.Scale_To_Fit
-               (Min_Scale => Zoom_Levels (J - 1),
-                Max_Scale => Zoom_Levels (J - 1));
+              (Rect      => B.View.Get_Visible_Area,
+               Min_Scale => Zoom_Levels (J - 1),
+               Max_Scale => Zoom_Levels (J - 1));
          end if;
       end loop;
       return Commands.Success;
