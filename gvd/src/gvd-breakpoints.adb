@@ -232,7 +232,6 @@ package body GVD.Breakpoints is
       Commands_Category  => "",
       Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Default,
       Position           => Position_Automatic,
       Initialize         => Initialize);
    package Simple_Views is new GVD.Generic_View.Simple_Views
