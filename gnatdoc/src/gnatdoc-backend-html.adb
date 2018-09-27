@@ -1056,6 +1056,14 @@ package body GNATdoc.Backend.HTML is
          Text     : Unbounded_String) return JSON_Value;
       --  Constructs description data for given tag
 
+      procedure Process_Parameters_And_Return
+        (Entity             : Entity_Id;
+         Generic_Parameters : out JSON_Array;
+         Parameters         : out JSON_Array;
+         Returns            : out JSON_Value);
+      --  Extract documentation for generic parameters/parameters/return of
+      --  the given subprogram.
+
       --------------------------
       -- Build_Entity_Entries --
       --------------------------
@@ -1135,59 +1143,20 @@ package body GNATdoc.Backend.HTML is
             then
                if Self.Context.Options.Extensions_Enabled then
                   declare
-                     Parameters         : JSON_Array;
                      Generic_Parameters : JSON_Array;
-
-                     function Process_Parameters_And_Return
-                       (Entity      : Entity_Id;
-                        Scope_Level : Natural) return Traverse_Result;
-                     --  Extracts information about parameters (for all kinds
-                     --  of subprograms) and return value (for functions).
-
-                     -----------------------------------
-                     -- Process_Parameters_And_Return --
-                     -----------------------------------
-
-                     function Process_Parameters_And_Return
-                       (Entity      : Entity_Id;
-                        Scope_Level : Natural) return Traverse_Result is
-                     begin
-                        if Get_Kind (Entity) = E_Formal then
-                           Append
-                             (Parameters,
-                              Entity_Data
-                                (To_Unbounded_String ("param"),
-                                 LL.Get_Entity (Entity),
-                                 Utils.To_Unbounded_String
-                                   (Get_Doc (Entity).Text)));
-
-                        elsif Get_Kind (Entity) = E_Return then
-                           Entity_Entry.Set_Field
-                             ("returns",
-                              Entity_Data
-                                (To_Unbounded_String ("return"),
-                                 LL.Get_Entity (Entity),
-                                 Utils.To_Unbounded_String
-                                   (Get_Doc (Entity).Text)));
-
-                        elsif Get_Kind (Entity) = E_Generic_Formal then
-                           Append
-                             (Generic_Parameters,
-                              Entity_Data
-                                (To_Unbounded_String ("gen_param"),
-                                 LL.Get_Entity (Entity),
-                                 Utils.To_Unbounded_String
-                                   (Get_Doc (Entity).Text)));
-                        end if;
-
-                        return (if Scope_Level > 1 then Skip else OK);
-                     end Process_Parameters_And_Return;
+                     Parameters         : JSON_Array;
+                     Returns            : JSON_Value;
 
                   begin
-                     Traverse_Tree (E, Process_Parameters_And_Return'Access);
+                     Process_Parameters_And_Return
+                       (E, Generic_Parameters, Parameters, Returns);
 
                      if not Is_Empty (Parameters) then
                         Entity_Entry.Set_Field ("parameters", Parameters);
+                     end if;
+
+                     if Returns /= JSON_Null then
+                        Entity_Entry.Set_Field ("returns", Returns);
                      end if;
 
                      if not Is_Empty (Generic_Parameters) then
@@ -1431,6 +1400,69 @@ package body GNATdoc.Backend.HTML is
 
          return Result;
       end Entity_Data;
+
+      -----------------------------------
+      -- Process_Parameters_And_Return --
+      -----------------------------------
+
+      procedure Process_Parameters_And_Return
+        (Entity             : Entity_Id;
+         Generic_Parameters : out JSON_Array;
+         Parameters         : out JSON_Array;
+         Returns            : out JSON_Value)
+      is
+
+         function Process_Parameters_And_Return
+           (Entity      : Entity_Id;
+            Scope_Level : Natural) return Traverse_Result;
+         --  Extracts information about parameters (for all kinds
+         --  of subprograms) and return value (for functions).
+
+         -----------------------------------
+         -- Process_Parameters_And_Return --
+         -----------------------------------
+
+         function Process_Parameters_And_Return
+           (Entity      : Entity_Id;
+            Scope_Level : Natural) return Traverse_Result is
+         begin
+            if Get_Kind (Entity) = E_Formal then
+               Append
+                 (Parameters,
+                  Entity_Data
+                    (To_Unbounded_String ("param"),
+                     LL.Get_Entity (Entity),
+                     Utils.To_Unbounded_String
+                       (Get_Doc (Entity).Text)));
+
+            elsif Get_Kind (Entity) = E_Return then
+               Returns :=
+                 Entity_Data
+                   (To_Unbounded_String ("return"),
+                    LL.Get_Entity (Entity),
+                    Utils.To_Unbounded_String
+                      (Get_Doc (Entity).Text));
+
+            elsif Get_Kind (Entity) = E_Generic_Formal then
+               Append
+                 (Generic_Parameters,
+                  Entity_Data
+                    (To_Unbounded_String ("gen_param"),
+                     LL.Get_Entity (Entity),
+                     Utils.To_Unbounded_String
+                       (Get_Doc (Entity).Text)));
+            end if;
+
+            return (if Scope_Level > 1 then Skip else OK);
+         end Process_Parameters_And_Return;
+
+      begin
+         Generic_Parameters := Empty_Array;
+         Parameters         := Empty_Array;
+         Returns            := JSON_Null;
+
+         Traverse_Tree (Entity, Process_Parameters_And_Return'Access);
+      end Process_Parameters_And_Return;
 
       Docs_Dir       : constant Virtual_File :=
         Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
