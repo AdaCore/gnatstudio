@@ -19,7 +19,6 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Glib.Object;                use Glib.Object;
-with Gtkada.MDI;
 with Gtk.Box;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Label;                  use Gtk.Label;
@@ -41,6 +40,7 @@ with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with Gtkada.MDI;                 use Gtkada.MDI;
 with GUI_Utils;                  use GUI_Utils;
 
 package body GNAThub.Reports.Collector is
@@ -142,7 +142,15 @@ package body GNAThub.Reports.Collector is
          Created := True;
          View := GNAThub_Report_Collector_Views.Get_Or_Create_View (Kernel);
       else
-         Created := False;
+         declare
+            Child : constant MDI_Child :=
+              GNAThub_Report_Collector_Views.Child_From_View (View);
+         begin
+            --  Focus the view's MDI child when it's already visible.
+            Child.Raise_Child (Give_Focus => True);
+            Set_Focus_Child (Child);
+            Created := False;
+         end;
       end if;
 
       return Gtk.Widget.Gtk_Widget (View);
