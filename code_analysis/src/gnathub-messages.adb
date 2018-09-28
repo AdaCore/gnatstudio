@@ -19,7 +19,34 @@ with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with GNATCOLL.Symbols;
 
+with GNAThub.Loader.External;         use GNAThub.Loader.External;
+with GNAThub.Module;                  use GNAThub.Module;
+with GPS.Kernel;                      use GPS.Kernel;
+with XML_Utils;                       use XML_Utils;
+
 package body GNAThub.Messages is
+
+   GNAThub_Module : GNAThub.Module.GNAThub_Module_Id;
+
+   procedure Save
+     (Message_Node : not null Message_Access;
+      XML_Node     : not null Node_Ptr);
+   --  Used to save GNAThub messages when GPS exits.
+
+   function Load
+     (XML_Node      : not null Node_Ptr;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Importance    : Message_Importance_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer;
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean)
+      return not null Message_Access;
+   --  Used to load GNAThub messages when GPS starts.
 
    --------------------------
    -- Get_Background_Color --
@@ -186,5 +213,108 @@ package body GNAThub.Messages is
          Actual_Line   => Line,
          Actual_Column => Integer (Column));
    end Initialize;
+
+   ----------
+   -- Save --
+   ----------
+
+   procedure Save
+     (Message_Node : not null Message_Access;
+      XML_Node     : not null Node_Ptr)
+   is
+      Self : constant GNAThub_Message_Access :=
+        GNAThub_Message_Access (Message_Node);
+   begin
+      Set_Attribute
+        (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute
+        (XML_Node, "tool_name", To_String (Self.Get_Tool.Name));
+      Set_Attribute
+        (XML_Node, "rule_name", To_String (Self.Get_Rule.Name));
+      Set_Attribute
+        (XML_Node, "rule_id", To_String (Self.Get_Rule.Identifier));
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   function Load
+     (XML_Node      : not null Node_Ptr;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Importance    : Message_Importance_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer;
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean)
+      return not null Message_Access
+   is
+      pragma Unreferenced
+        (Actual_Line, Actual_Column, Flags,
+         Allow_Auto_Jump_To_First, Category);
+      Text      : constant String := Get_Attribute (XML_Node, "text", "");
+      Tool_Name : constant String := Get_Attribute (XML_Node, "tool_name", "");
+      Rule_Name : constant String := Get_Attribute (XML_Node, "rule_name", "");
+      Rule_ID   : constant String := Get_Attribute (XML_Node, "rule_id", "");
+      Tool      : constant Tool_Access :=
+        GNAThub_Module.Get_Or_Create_Tool (To_Unbounded_String (Tool_Name));
+      Rule      : constant Rule_Access := GNAThub_Module.Get_Or_Create_Rule
+        (Tool       => Tool,
+         Name       => To_Unbounded_String (Rule_Name),
+         Identifier => To_Unbounded_String (Rule_ID));
+      Severity  : constant Severity_Access := GNAThub_Module.Get_Severity
+        (Importance);
+      Message   : GNAThub_Message_Access;
+   begin
+      --  Restore the GNAthub message from the attributes saved in XML
+
+      Message := new GNAThub_Message;
+
+      GNAThub.Messages.Initialize
+        (Self      => Message,
+         Container => Container,
+         Severity  => Severity,
+         Rule      => Rule,
+         Text      => To_Unbounded_String (Text),
+         File      => File,
+         Line      => Line,
+         Column    => Column,
+         Entity    => No_Entity_Data);
+
+      --  Add the associated tool, rule and severity to the GNAThub filter
+      --  so that the message is visible by default.
+
+      GNAThub_Module.Ext_Loader.all.Add_External_Message
+        (Message);
+
+      GNAThub_Module.Filter.Add_Tool (Tool);
+      GNAThub_Module.Filter.Add_Rule (Rule);
+      GNAThub_Module.Filter.Add_Severity (Severity);
+
+      return Message_Access (Message);
+   end Load;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
+   is
+   begin
+      GNAThub_Module := GNAThub_Module_Id (Module);
+
+      GPS.Kernel.Messages.Register_Message_Class
+        (Self           => Kernel.Get_Messages_Container,
+         Tag            => GNAThub_Message'Tag,
+         Save           => Save'Access,
+         Primary_Load   => Load'Access,
+         Secondary_Load => null);
+   end Register_Module;
 
 end GNAThub.Messages;

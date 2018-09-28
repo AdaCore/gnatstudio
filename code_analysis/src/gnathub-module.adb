@@ -31,6 +31,7 @@ with GNAThub.Actions;
 with GNAThub.Filters_Views;
 with GNAThub.Loader.External;
 with GNAThub.Loader.Databases;
+with GNAThub.Messages;
 with GNAThub.Metrics;
 with GNAThub.Reports.Collector;
 
@@ -400,6 +401,7 @@ package body GNAThub.Module is
            Doc     =>
              -"If enabled, the rules without messages will be displayed.");
 
+      GNAThub.Messages.Register_Module (Kernel, Module);
       GNAThub.Filters_Views.Register_Module (Kernel);
       GNAThub.Metrics.Register_Module (Kernel);
       GNAThub.Reports.Collector.Register_Module (Kernel);

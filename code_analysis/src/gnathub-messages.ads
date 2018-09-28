@@ -22,6 +22,7 @@ with Gdk.RGBA;
 with GNATCOLL.VFS;
 
 with Basic_Types;
+with GNAThub.Module;
 with GPS.Kernel.Messages;
 
 package GNAThub.Messages is
@@ -75,6 +76,11 @@ package GNAThub.Messages is
      (Self : not null access GNAThub_Message)
       return Gdk.RGBA.Gdk_RGBA;
    --  Return the message's background color
+
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class);
+   --  Register the GNAThub messages class
 
 private
 

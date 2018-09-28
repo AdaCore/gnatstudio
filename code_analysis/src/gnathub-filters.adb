@@ -72,6 +72,39 @@ package body GNAThub.Filters is
       Self.Rules.Clear;
    end Clear;
 
+   --------------
+   -- Add_Tool --
+   --------------
+
+   procedure Add_Tool
+     (Self : in out Message_Filter;
+      Tool : Tool_Access) is
+   begin
+      Self.Tools.Include (Tool);
+   end Add_Tool;
+
+   ------------------
+   -- Add_Severity --
+   ------------------
+
+   procedure Add_Severity
+     (Self     : in out Message_Filter;
+      Severity : Severity_Access) is
+   begin
+      Self.Severities.Include (Severity);
+   end Add_Severity;
+
+   --------------
+   -- Add_Rule --
+   --------------
+
+   procedure Add_Rule
+     (Self : in out Message_Filter;
+      Rule : Rule_Access) is
+   begin
+      Self.Rules.Include (Rule);
+   end Add_Rule;
+
    ----------
    -- Fill --
    ----------

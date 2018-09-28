@@ -511,6 +511,49 @@ package GPS.Kernel.Messages is
    --  made visible by changing its flags or by calling of the Refilter
    --  subprogram of the messages container.
 
+   ----------------------------
+   -- Message Savers/Loaders --
+   ----------------------------
+
+   type Message_Save_Procedure is
+     access procedure
+       (Message_Node : not null Message_Access;
+        XML_Node     : not null XML_Utils.Node_Ptr);
+
+   type Primary_Message_Load_Procedure is
+     access function
+       (XML_Node      : not null XML_Utils.Node_Ptr;
+        Container     : not null Messages_Container_Access;
+        Category      : String;
+        File          : GNATCOLL.VFS.Virtual_File;
+        Line          : Natural;
+        Column        : Basic_Types.Visible_Column_Type;
+        Importance    : Message_Importance_Type;
+        Actual_Line   : Integer;
+        Actual_Column : Integer;
+        Flags         : Message_Flags;
+        Allow_Auto_Jump_To_First : Boolean)
+        return not null Message_Access;
+
+   type Secondary_Message_Load_Procedure is
+     access procedure
+       (XML_Node      : not null XML_Utils.Node_Ptr;
+        Parent        : not null Message_Access;
+        File          : GNATCOLL.VFS.Virtual_File;
+        Line          : Natural;
+        Column        : Basic_Types.Visible_Column_Type;
+        Actual_Line   : Integer;
+        Actual_Column : Integer;
+        Flags         : Message_Flags);
+
+   procedure Register_Message_Class
+     (Self           : not null access Messages_Container'Class;
+      Tag            : Ada.Tags.Tag;
+      Save           : not null Message_Save_Procedure;
+      Primary_Load   : Primary_Message_Load_Procedure;
+      Secondary_Load : Secondary_Message_Load_Procedure);
+   --  Registers save and load procedures for the specified class of messages
+
    --------------------------
    -- For private use only --
    --------------------------
@@ -690,37 +733,6 @@ private
       end case;
    end record;
 
-   type Message_Save_Procedure is
-     access procedure
-       (Message_Node : not null Message_Access;
-        XML_Node     : not null XML_Utils.Node_Ptr);
-
-   type Primary_Message_Load_Procedure is
-     access function
-       (XML_Node      : not null XML_Utils.Node_Ptr;
-        Container     : not null Messages_Container_Access;
-        Category      : String;
-        File          : GNATCOLL.VFS.Virtual_File;
-        Line          : Natural;
-        Column        : Basic_Types.Visible_Column_Type;
-        Importance    : Message_Importance_Type;
-        Actual_Line   : Integer;
-        Actual_Column : Integer;
-        Flags         : Message_Flags;
-        Allow_Auto_Jump_To_First : Boolean)
-        return not null Message_Access;
-
-   type Secondary_Message_Load_Procedure is
-     access procedure
-       (XML_Node      : not null XML_Utils.Node_Ptr;
-        Parent        : not null Message_Access;
-        File          : GNATCOLL.VFS.Virtual_File;
-        Line          : Natural;
-        Column        : Basic_Types.Visible_Column_Type;
-        Actual_Line   : Integer;
-        Actual_Column : Integer;
-        Flags         : Message_Flags);
-
    package Listener_Vectors is
      new Ada.Containers.Vectors (Positive, Listener_Access);
 
@@ -782,14 +794,6 @@ private
       --  unprocessed messages because it is possible that message is not
       --  initialized completely.
    end record;
-
-   procedure Register_Message_Class
-     (Self           : not null access Messages_Container'Class;
-      Tag            : Ada.Tags.Tag;
-      Save           : not null Message_Save_Procedure;
-      Primary_Load   : Primary_Message_Load_Procedure;
-      Secondary_Load : Secondary_Message_Load_Procedure);
-   --  Registers save and load procedures for the specified class of messages
 
    function Match (A, B : Message_Flags) return Boolean;
    pragma Inline (Match);

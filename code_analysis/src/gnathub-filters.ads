@@ -33,6 +33,18 @@ package GNAThub.Filters is
 
    procedure Clear (Self : in out Message_Filter);
 
+   procedure Add_Tool
+     (Self : in out Message_Filter;
+      Tool : Tool_Access);
+
+   procedure Add_Severity
+     (Self     : in out Message_Filter;
+      Severity : Severity_Access);
+
+   procedure Add_Rule
+     (Self : in out Message_Filter;
+      Rule : Rule_Access);
+
    overriding function Apply
      (Self    : in out Message_Filter;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)

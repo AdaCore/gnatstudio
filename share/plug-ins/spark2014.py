@@ -1074,7 +1074,7 @@ class GNATProve_Plugin:
 
             GPS.Analysis.display_report(self.output_parser.analysis_tool)
         else:
-            print_error("No data available. Please run GNATprove first.")
+            GPS.Analysis.display_report(GPS.AnalysisTool(messages_category))
 
     def show_log(self):
         """Display the gnatprove.out log"""
@@ -1212,7 +1212,8 @@ def prove_check_context(context, edit_session):
 
 
 def can_show_report():
-    return len(GPS.Message.list(category=messages_category)) > 0
+    return len(GPS.Message.list(category=messages_category)) > 0 \
+        and gnatprove_plug.output_parser is not None
 
 
 def get_vc_kind(msg):
