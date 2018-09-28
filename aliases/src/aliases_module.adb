@@ -49,7 +49,6 @@ with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Menu;                 use Gtk.Menu;
@@ -1806,13 +1805,13 @@ package body Aliases_Module is
    procedure Gtk_New
      (Editor : out Alias_Editor; Kernel : access Kernel_Handle_Record'Class)
    is
+      Main_View        : Dialog_View_With_Button_Box;
       Box              : Gtk_Box;
       Pane             : Gtk_Paned;
       Render           : Gtk_Cell_Renderer_Text;
       Toggle_Render    : Gtk_Cell_Renderer_Toggle;
       Col              : Gtk_Tree_View_Column;
       Number           : Gint;
-      Frame            : Gtk_Frame;
       C                : Gdk_RGBA;
       Expansion_Buffer : Gtk_Text_Buffer;
       Scrolled         : Gtk_Scrolled_Window;
@@ -1835,21 +1834,22 @@ package body Aliases_Module is
 
       Editor.Local_Aliases.Clear;
 
-      Gtk_New_Hpaned (Pane);
+      Main_View := new Dialog_View_With_Button_Box_Record;
+      Main_View.Initialize (Position => Pos_Left);
       Pack_Start
-        (Get_Content_Area (Editor), Pane, Expand => True, Fill => True);
+        (Get_Content_Area (Editor), Main_View, Expand => True, Fill => True);
+
+      Gtk_New_Hpaned (Pane);
+      Main_View.Append (Pane);
 
       --  List of aliases
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack1 (Pane, Box);
 
-      Gtk_New (Frame);
-      Pack_Start (Box, Frame, Expand => True, Fill => True);
-
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Add (Frame, Scrolled);
+      Pack_Start (Box, Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Editor.Aliases_Model, Aliases_Column_Types);
       Gtk_New (Editor.Aliases, Editor.Aliases_Model);
@@ -1892,11 +1892,8 @@ package body Aliases_Module is
 
       --  Right part
 
-      Gtk_New (Frame);
-      Pack2 (Pane, Frame);
-
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Add (Frame, Box);
+      Pack2 (Pane, Box);
 
       --  Parameters list
 
@@ -1977,13 +1974,21 @@ package body Aliases_Module is
 
       --  Buttons
 
-      Gtk_New_From_Stock (Button, Stock_New);
-      Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Main_View.Append_Button (Button);
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Alias_Created'Access, Editor);
 
-      Gtk_New_From_Stock (Button, Stock_Delete);
-      Pack_Start (Get_Action_Area (Editor), Button, Expand => False);
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Main_View.Append_Button (Button);
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Alias_Deleted'Access, Editor);
 
