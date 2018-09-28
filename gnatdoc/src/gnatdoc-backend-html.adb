@@ -1483,7 +1483,7 @@ package body GNATdoc.Backend.HTML is
                       (if Entity_Documentation.Is_Empty
                         then Spec_Documentation else Entity_Documentation));
 
-            elsif Get_Kind (Entity) = E_Generic_Formal then
+            elsif Is_Generic_Formal (Entity) then
                Append
                  (Generic_Parameters,
                   Entity_Data
