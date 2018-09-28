@@ -648,12 +648,31 @@ package body GNATdoc.Frontend.Comment_Parser is
                Tag_Name : constant String :=
                             To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
 
+               procedure Extract_Operator_Name (Loc : in out Location);
+               --  Modify Loc to point to the name of the Ada operator.
+
                procedure Search_Generic_Formal (Name : String);
                --  Search for the entity associated with the generic formal
                --  Name
 
                procedure Search_Parameter (Name : String);
                --  Search for the entity associated with parameter Name
+
+               ---------------------------
+               -- Extract_Operator_Name --
+               ---------------------------
+
+               procedure Extract_Operator_Name (Loc : in out Location) is
+               begin
+                  if Present (Loc) then
+                     --  Ada's operators starts from quotation mark, drop them.
+
+                     if S (Loc.First) = '"' then
+                        Loc.First := Loc.First + 1;
+                        Loc.Last  := Loc.Last - 1;
+                     end if;
+                  end if;
+               end Extract_Operator_Name;
 
                ---------------------------
                -- Search_Generic_Formal --
@@ -796,6 +815,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                        (S (Attr_Loc.First .. Attr_Loc.Last));
 
                   elsif Tag_Name = New_Tag then
+                     Extract_Operator_Name (Attr_Loc);
                      Search_Generic_Formal
                        (S (Attr_Loc.First .. Attr_Loc.Last));
                   end if;
