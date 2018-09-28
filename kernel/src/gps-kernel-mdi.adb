@@ -2280,6 +2280,8 @@ package body GPS.Kernel.MDI is
       To_Update : File_Sets.Set;
       F        : Monitored_File_Lists.Cursor;
       Dialog   : GPS_Dialog;
+      Scrolled : Gtk_Scrolled_Window;
+      Vbox     : Gtk_Vbox;
       Label    : Gtk_Label;
       Ignore   : Gtk_Widget;
       Response : Gtk_Response_Type;
@@ -2332,16 +2334,25 @@ package body GPS.Kernel.MDI is
             end loop;
          else
             Gtk_New (Dialog,
-                     Title  => -"Files changed on disk",
-                     Kernel => Kernel,
-                     Flags  => Modal or Destroy_With_Parent);
+                     Title          => -"Files changed on disk",
+                     Kernel         => Kernel,
+                     Flags          => Modal or Destroy_With_Parent,
+                     Default_Width  => 500,
+                     Default_Length => 600);
             Kernel.Check_Monitored_Files_Dialog := Dialog;
+
+            Gtk_New (Scrolled);
+            Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+            Pack_Start (Get_Content_Area (Dialog), Scrolled, Padding => 10);
+
+            Gtk_New_Vbox (Vbox);
+            Scrolled.Add (Vbox);
 
             Gtk_New (Label, -"The following files were changed on disk."
                      & ASCII.LF);
             Label.Set_Selectable (True);
             Label.Set_Alignment (0.0, 0.0);
-            Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
+            Vbox.Pack_Start (Label, Expand => False);
 
             F := Modified.First;
             while Has_Element (F) loop
@@ -2353,7 +2364,7 @@ package body GPS.Kernel.MDI is
                   Initialize (Button, Button.File.Display_Full_Name);
                   Button.Set_Alignment (0.0, 0.5);
                   Button.Set_Active (True);
-                  Dialog.Get_Content_Area.Pack_Start (Button, Expand => False);
+                  Vbox.Pack_Start (Button, Expand => False);
                end if;
 
                Next (F);
@@ -2365,7 +2376,7 @@ package body GPS.Kernel.MDI is
                & " This setting can also be changed in the preferences"
                & " dialog");
             Auto_Reload.Set_Alignment (0.0, 0.5);
-            Dialog.Get_Action_Area.Pack_End (Auto_Reload, Expand => False);
+            Vbox.Pack_End (Auto_Reload, Expand => False);
             Auto_Reload.Set_Active (Auto_Reload_Files.Get_Pref);
 
             Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_Yes);

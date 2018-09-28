@@ -62,14 +62,17 @@ package body GPS.Dialogs is
    -------------
 
    procedure Gtk_New
-     (Self   : out GPS_Dialog;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type) is
+     (Self           : out GPS_Dialog;
+      Title          : Glib.UTF8_String;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags          : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ            : Glib.GType := Gtk.Dialog.Get_Type;
+      Default_Width  : Glib.Gint := -1;
+      Default_Length : Glib.Gint := -1) is
    begin
       Self := new GPS_Dialog_Record;
-      Initialize (Self, Title, Kernel, Flags, Typ);
+      Initialize
+        (Self, Title, Kernel, Flags, Typ, Default_Width, Default_Length);
    end Gtk_New;
 
    ----------------
@@ -77,11 +80,13 @@ package body GPS.Dialogs is
    ----------------
 
    procedure Initialize
-     (Self   : not null access GPS_Dialog_Record'Class;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type)
+     (Self           : not null access GPS_Dialog_Record'Class;
+      Title          : Glib.UTF8_String;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags          : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ            : Glib.GType := Gtk.Dialog.Get_Type;
+      Default_Width  : Glib.Gint := -1;
+      Default_Length : Glib.Gint := -1)
    is
       Win : constant Gtk_Window := Get_Current_Window (Kernel);
       F   : constant Gtk_Dialog_Flags := Flags
@@ -111,8 +116,8 @@ package body GPS.Dialogs is
         (Win    => Self,
          Name   => Title,
          Kernel => Kernel,
-         Width  => 0,
-         Height => 0);
+         Width  => Default_Width,
+         Height => Default_Length);
    end Initialize;
 
    ----------------------

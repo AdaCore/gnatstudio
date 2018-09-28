@@ -46,17 +46,21 @@ package GPS.Dialogs is
    --  are launched.
 
    procedure Gtk_New
-     (Self   : out GPS_Dialog;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type);
+     (Self           : out GPS_Dialog;
+      Title          : Glib.UTF8_String;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags          : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ            : Glib.GType := Gtk.Dialog.Get_Type;
+      Default_Width  : Glib.Gint := -1;
+      Default_Length : Glib.Gint := -1);
    procedure Initialize
-     (Self   : not null access GPS_Dialog_Record'Class;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type);
+     (Self           : not null access GPS_Dialog_Record'Class;
+      Title          : Glib.UTF8_String;
+      Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags          : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ            : Glib.GType := Gtk.Dialog.Get_Type;
+      Default_Width  : Glib.Gint := -1;
+      Default_Length : Glib.Gint := -1);
    --  Create a new empty dialog.
    --
    --  If you are subclassing the GtkDialog class to add new signals, pass the
