@@ -996,6 +996,8 @@ Classes
 
    .. automethod:: GPS.Entity.get_called_entities
 
+   .. automethod:: GPS.Entity.has_body
+
    .. automethod:: GPS.Entity.instance_of
 
    .. automethod:: GPS.Entity.is_access
@@ -1035,6 +1037,8 @@ Classes
    .. automethod:: GPS.Entity.references
 
    .. automethod:: GPS.Entity.rename
+
+   .. automethod:: GPS.Entity.requires_body
 
    .. automethod:: GPS.Entity.return_type
 

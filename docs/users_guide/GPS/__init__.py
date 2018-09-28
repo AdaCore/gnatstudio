@@ -5028,6 +5028,15 @@ class Entity(object):
         :return: a list of :class:`GPS.Entity`
         """
 
+    def has_body(self, nth='1'):
+        """
+        Whether the entity has a body.
+
+        :return: A boolean
+
+        .. seealso:: :func:`GPS.Entity.body`
+        """
+
     def instance_of(self):
         """
         If self is an instantiation of some other generic entity, this
@@ -5373,6 +5382,15 @@ class Entity(object):
         :param auto_save: A boolean
         """
         pass  # implemented in Ada
+
+    def requires_body(self):
+        """
+        Whether the entity should be completed with a body.
+
+        :return: A boolean
+
+        .. seealso:: :func:`GPS.Entity.body`
+        """
 
     def return_type(self):
         """

@@ -433,6 +433,9 @@ package Xref is
    function Has_Methods (E : Root_Entity) return Boolean is abstract;
    --  True if the entity might have methods
 
+   function Requires_Body (E : Root_Entity) return Boolean is abstract;
+   --  True if the entity is a declaration and requires a body
+
    function Is_Access (E : Root_Entity) return Boolean is abstract;
    --  True if E is a type or a variable, and it points to some other type.
    --  This is an Ada access type, an Ada access variable, a C pointer,...
@@ -1006,6 +1009,8 @@ private
      (Entity : General_Entity) return Entity_Array;
 
    overriding function Has_Methods (E : General_Entity) return Boolean;
+
+   overriding function Requires_Body (E : General_Entity) return Boolean;
 
    overriding function Is_Access (E : General_Entity) return Boolean;
    overriding function Is_Abstract
