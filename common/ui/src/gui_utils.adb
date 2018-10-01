@@ -2324,6 +2324,8 @@ package body GUI_Utils is
                      Dummy := Collapse_Row (Tree, Path);
                   when Expand_Rows =>
                      Dummy := Expand_Row (Tree, Path, False);
+                  when Expand_All_Rows =>
+                     Dummy := Expand_Row (Tree, Path, True);
                end case;
             end if;
 

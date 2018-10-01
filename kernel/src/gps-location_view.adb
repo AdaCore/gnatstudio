@@ -1443,7 +1443,7 @@ package body GPS.Location_View is
 
       Register_Action
         (Kernel, "locations expand selected",
-         new Locations_Collapse_Or_Expand_Command (Expand_Rows),
+         new Locations_Collapse_Or_Expand_Command (Expand_All_Rows),
          -"Expand the selected rows in the locations view",
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Locations");
