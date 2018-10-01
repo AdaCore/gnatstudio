@@ -3564,10 +3564,55 @@ package body GNATdoc.Frontend is
 
                      elsif Par_Count = 0 then
                         declare
+                           function Tolerate_EOS_Glitch
+                             (Loc : General_Location) return Boolean;
+                           --  Return True if we can confirm that the character
+                           --  referenced at the given end-of-scope location is
+                           --  displaced in the sources. Done to tolerate this
+                           --  special case in ALI files.
+
+                           --------------------------
+                           -- Tolerante_EOS_Glitch --
+                           --------------------------
+
+                           function Tolerate_EOS_Glitch
+                             (Loc : General_Location) return Boolean
+                           is
+                              Idx           : Natural := Buffer'First;
+                              Lines_Skipped : Natural;
+
+                           begin
+                              --  Displace the pointer to the beginning of the
+                              --  given location
+
+                              GNATCOLL.Utils.Skip_Lines
+                                (Str           => Buffer.all,
+                                 Lines         => Loc.Line - 1,
+                                 Index         => Idx,
+                                 Lines_Skipped => Lines_Skipped);
+
+                              GNATCOLL.Utils.Skip_To_Column
+                                (Str           => Buffer.all,
+                                 Columns       => Natural (Loc.Column),
+                                 Index         => Idx);
+
+                              while Idx <= Buffer'Last
+                                and then Buffer (Idx) = ' '
+                              loop
+                                 Idx := Idx + 1;
+                              end loop;
+
+                              return Idx <= Buffer'Last
+                                and then Buffer (Idx) = ';';
+                           end Tolerate_EOS_Glitch;
+
+                           --  Local variables
+
                            Scope : constant Entity_Id :=
                              Get_Scope (Current_Context);
                            E : constant Entity_Id :=
                              Get_Current_Entity (Current_Context);
+
                         begin
                            if End_Decl_Found then
                               begin
@@ -3665,10 +3710,16 @@ package body GNATdoc.Frontend is
 
                                           if Loc.File = File
                                             and then Loc.Line = Sloc_Start.Line
-                                            and then Natural (Loc.Column)
-                                                       = Sloc_Start.Column
                                           then
-                                             Do_Exit;
+                                             if Natural (Loc.Column)
+                                                  = Sloc_Start.Column
+                                             then
+                                                Do_Exit;
+
+                                             elsif Tolerate_EOS_Glitch (Loc)
+                                             then
+                                                Do_Exit;
+                                             end if;
                                           end if;
                                        end;
                                     end if;
