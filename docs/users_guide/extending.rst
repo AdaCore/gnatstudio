@@ -5710,7 +5710,7 @@ GPS.  As opposed to the standard hooks described in the previous section,
 the execution of the action hooks stops if one of the subprograms returns a
 True value (:command:`1` or :command:`true`). The subprograms associated
 with that hook are executed sequentially. If any such subprogram knows how
-to do the the action for that hook, it should do so and return "1".
+to do the action for that hook, it should do so and return "1".
 
 Other action hooks expect a string as a return value instead of a
 boolean. Execution stops when a subprogram returns a non-empty string.

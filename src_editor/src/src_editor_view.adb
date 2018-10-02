@@ -1999,7 +1999,7 @@ package body Src_Editor_View is
 
       --  Get_Iter_At_Location does not behave quite exactly like I wished it
       --  did: The iterator returned is always located in a valid position,
-      --  even if the user clicked outside of the the areas where there is some
+      --  even if the user clicked outside of the areas where there is some
       --  text. In our case, we don't want that, so we need to add some extra
       --  logic in order to detect these cases, and return -1,-1 to signal it.
       --

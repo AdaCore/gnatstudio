@@ -22,7 +22,7 @@ def compute_paths():
     parent = os.path.abspath(os.path.join(GPS.get_system_dir(), '..'))
 
     # As a first approximation, we are going to go up one level, and add
-    # the the PATH all that share a parent dir with the GPS install.
+    # the PATH all that share a parent dir with the GPS install.
     # For instance this supports an architecture of the form
     #    C:\GNAT\2018\gps\bin
     #    C:\GNAT\2018\gnat\bin
