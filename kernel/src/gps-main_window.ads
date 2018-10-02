@@ -151,8 +151,12 @@ package GPS.Main_Window is
    --  Register the key bindings associated with the window
 
    procedure Setup_Perspective_Selector
-     (Self        : not null access GPS_Window_Record'Class);
+     (Self : not null access GPS_Window_Record'Class);
    --  Setup and add the perspectives selector to the toolbar
+
+   procedure Setup_VCS_Selector
+     (Self : not null access GPS_Window_Record'Class);
+   --  Setup and add the VCS selector to the toolbar
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;

@@ -2307,6 +2307,7 @@ procedure GPS.Main is
 
       if Active (VCS2_Trace) then
          VCS2.Module.Register_Module (GPS_Main.Kernel);
+         GPS.Main_Window.Setup_VCS_Selector (GPS_Main);
       end if;
 
       if Active (VFS_Trace) then

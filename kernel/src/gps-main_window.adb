@@ -79,6 +79,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.VCS;                   use GPS.VCS;
 with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;
 with Informational_Popups;      use Informational_Popups;
@@ -814,7 +815,7 @@ package body GPS.Main_Window is
    --------------------------------
 
    procedure Setup_Perspective_Selector
-     (Self        : not null access GPS_Window_Record'Class)
+     (Self : not null access GPS_Window_Record'Class)
    is
       P : Gtkada_Combo_Tool_Button;
    begin
@@ -835,6 +836,24 @@ package body GPS.Main_Window is
 
       Self.Toolbar_Box.Pack_End (P, Expand => False, Fill => False);
    end Setup_Perspective_Selector;
+
+   ------------------------
+   -- Setup_VCS_Selector --
+   ------------------------
+
+   procedure Setup_VCS_Selector
+     (Self : not null access GPS_Window_Record'Class)
+   is
+      VCS : constant Abstract_VCS_Repository_Access := Self.Kernel.VCS;
+      W   : Gtk_Widget;
+   begin
+      if VCS /= null then
+         W := VCS.Get_VCS_Selector;
+         if W /= null then
+            Self.Toolbar_Box.Pack_End (W, False, False, Padding => 4);
+         end if;
+      end if;
+   end Setup_VCS_Selector;
 
    --------------------
    -- On_Float_Child --

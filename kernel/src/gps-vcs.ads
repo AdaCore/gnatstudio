@@ -19,11 +19,12 @@
 --  This contains types needed for the hooks, so that changes to VCS_Engines
 --  do not force a whole recompilation of the project.
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Scripts;            use GPS.Scripts;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GPS.Scripts;              use GPS.Scripts;
+with Gtk.Widget;               use Gtk.Widget;
 
 package GPS.VCS is
 
@@ -64,6 +65,11 @@ package GPS.VCS is
      (Self : not null access Abstract_VCS_Repository)
       return Abstract_VCS_Engine_Access is abstract;
    --  Return the currently active VCS repository or null
+
+   function Get_VCS_Selector
+     (Self : not null access Abstract_VCS_Repository)
+      return Gtk_Widget is abstract;
+   --  Return a widget to select the active VCS
 
    procedure Invalidate_All_Caches
      (Self    : not null access Abstract_VCS_Repository) is abstract;

@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
+with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
+with Gtkada.Handlers;             use Gtkada.Handlers;
 
 package body VCS2.Engines is
    Me : constant Trace_Handle := Create ("GPS.VCS.VCS2");
@@ -130,11 +132,18 @@ package body VCS2.Engines is
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
 
+   type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
+      record
+         Kernel : Kernel_Handle;
+      end record;
+   type Kernel_Combo_Tool is access all Kernel_Combo_Tool_Record'Class;
+
    type Kernel_Data is record
       Factories     : Name_To_Factory.Map;
       All_Engines   : Engine_Lists.List;
       VCS_Engines   : Project_To_Engine.Map;
       No_VCS_Engine : VCS_Engine_Access := new Dummy_VCS_Engine;
+      VCS_Selector  : Kernel_Combo_Tool;
 
       Active_VCS    : VCS_Engine_Access := null;
       --  See the function Active_VCS
@@ -288,6 +297,22 @@ package body VCS2.Engines is
       VCS   : access VCS_Engine'Class);
    --  A wrapper for another visitor, which executes the On_Complete callback
    --  with a null parameter after it has itself completed Steps times.
+
+   procedure On_Active_VCS_Selected (Widget : access Gtk_Widget_Record'Class);
+   --  Called when a new active VCS is selected by the user in the toolbar.
+   --  This is *not* the same as the VCS_Active_Changed_Hook, which should be
+   --  monitored to react to actual changes
+
+   type On_Active_VCS_Changed is new Simple_Hooks_Function with record
+      Combo : Kernel_Combo_Tool;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
+   procedure Update_VCS_Selector
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Update the VCS_Selector by adding the current repository
 
    -------------------
    -- Command queue --
@@ -653,6 +678,8 @@ package body VCS2.Engines is
             Set_Active_VCS (Kernel, Global_Data.All_Engines.First_Element);
          end if;
       end;
+
+      Update_VCS_Selector (Kernel);
    end Compute_VCS_Engines;
 
    ------------------------------------------------
@@ -1663,6 +1690,113 @@ package body VCS2.Engines is
    begin
       return Abstract_VCS_Engine_Access (Global_Data.Active_VCS);
    end Get_Active_VCS;
+
+   ----------------------------
+   -- On_Active_VCS_Selected --
+   ----------------------------
+
+   procedure On_Active_VCS_Selected
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Combo    : constant Kernel_Combo_Tool := Kernel_Combo_Tool (Widget);
+      Selected : constant String := Combo.Get_Selected_Item;
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
+         N : constant String :=
+           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+      begin
+         if N = Selected then
+            Set_Active_VCS (Combo.Kernel, VCS);
+
+            --  Need to update the context, so that VCS-related menus can be
+            --  updated
+            Combo.Kernel.Refresh_Context;
+         end if;
+      end On_VCS;
+
+   begin
+      For_Each_VCS (Combo.Kernel, On_VCS'Access);
+   end On_Active_VCS_Selected;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      VCS : constant VCS_Engine_Access := Active_VCS (Kernel);
+      N   : constant String :=
+        VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+   begin
+      Self.Combo.Select_Item (N);
+   end Execute;
+
+   -------------------------
+   -- Update_VCS_Selector --
+   -------------------------
+
+   procedure Update_VCS_Selector
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+
+      ------------
+      -- On_VCS --
+      ------------
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
+         N : constant String :=
+           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+      begin
+         Global_Data.VCS_Selector.Add_Item (N, Short_Name => VCS.Name);
+         if VCS = Active_VCS (Kernel) then
+            Global_Data.VCS_Selector.Show;
+            Global_Data.VCS_Selector.Select_Item (N);
+            Global_Data.VCS_Selector.Set_Label (VCS.Name);
+         end if;
+      end On_VCS;
+   begin
+      if Global_Data.VCS_Selector /= null then
+         Global_Data.VCS_Selector.Hide;
+         Global_Data.VCS_Selector.Clear_Items;
+         For_Each_VCS (Kernel, On_VCS'Access);
+      end if;
+   end Update_VCS_Selector;
+
+   ----------------------
+   -- Get_VCS_Selector --
+   ----------------------
+
+   overriding function Get_VCS_Selector
+     (Self : not null access VCS_Repository)
+      return Gtk_Widget is
+   begin
+      if Global_Data.VCS_Selector = null then
+         Global_Data.VCS_Selector := new Kernel_Combo_Tool_Record;
+         Global_Data.VCS_Selector.Kernel := Kernel_Handle (Self.Kernel);
+         Initialize (Global_Data.VCS_Selector,
+                     Icon_Name     => "",
+                     Click_Pops_Up => True);
+         Global_Data.VCS_Selector.Set_No_Show_All (True);
+
+         Global_Data.VCS_Selector.Set_Tooltip_Text
+           ("Change the active VCS repository.");
+
+         Vcs_Active_Changed_Hook.Add
+           (new On_Active_VCS_Changed'
+              (Simple_Hooks_Function with Combo => Global_Data.VCS_Selector),
+            Watch => Global_Data.VCS_Selector);
+
+         Widget_Callback.Connect
+           (Global_Data.VCS_Selector,
+            Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
+            On_Active_VCS_Selected'Access);
+      end if;
+      return Gtk_Widget (Global_Data.VCS_Selector);
+   end Get_VCS_Selector;
 
    ----------------
    -- Active_VCS --

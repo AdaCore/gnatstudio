@@ -27,6 +27,7 @@ with GNAT.Strings;               use GNAT.Strings;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.VCS;                    use GPS.VCS;
 with GPS_Unbounded_String_Vectors;
+with Gtk.Widget;                 use Gtk.Widget;
 
 package VCS2.Engines is
 
@@ -635,6 +636,9 @@ package VCS2.Engines is
    overriding function Get_Active_VCS
      (Self : not null access VCS_Repository)
       return Abstract_VCS_Engine_Access;
+   overriding function Get_VCS_Selector
+     (Self : not null access VCS_Repository)
+      return Gtk_Widget;
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       VCS    : not null access VCS_Engine'Class);
