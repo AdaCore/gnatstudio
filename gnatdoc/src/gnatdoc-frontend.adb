@@ -1642,6 +1642,7 @@ package body GNATdoc.Frontend is
          In_Compilation_Unit    : Boolean := False;
          In_Generic_Formals     : Boolean := False;
          In_Generic_Decl        : Boolean := False;
+         Generic_Formal_Subp    : Entity_Id := Atree.No_Entity;
          Generic_Formals        : EInfo_List.Vector;
          Generic_Formals_Loc    : General_Location := No_Location;
          --  Location of the word "generic"
@@ -1707,6 +1708,7 @@ package body GNATdoc.Frontend is
             In_Generic_Decl        := False;
             Generic_Formals.Clear;
             Generic_Formals_Loc    := No_Location;
+            Generic_Formal_Subp    := Atree.No_Entity;
 
             In_Aggregate    := False;
             Aggr_Begin_Line := 0;
@@ -2044,10 +2046,6 @@ package body GNATdoc.Frontend is
                      In_Generic_Formals := False;
                      In_Generic_Decl := False;
 
-                     --  For subprograms found in generic formals this code
-                     --  is erroneously decorating their formals as generic
-                     --  formals???
-
                      for Formal of Generic_Formals loop
                         Set_Is_Generic_Formal (Formal);
 
@@ -2071,8 +2069,22 @@ package body GNATdoc.Frontend is
                      Generic_Formals.Clear;
 
                   elsif In_Generic_Formals then
-                     Generic_Formals.Append (E);
 
+                     --  Formals of subprograms that are generic formals must
+                     --  not be added to the current list generic formals.
+
+                     if Get_Kind (E) = E_Formal
+                       and then Get_Scope (E) = Generic_Formal_Subp
+                     then
+                        null;
+
+                     else
+                        Generic_Formals.Append (E);
+
+                        if Is_Subprogram (E) then
+                           Generic_Formal_Subp := E;
+                        end if;
+                     end if;
                   else
                      case Prev_Token is
                         when Tok_Subtype =>

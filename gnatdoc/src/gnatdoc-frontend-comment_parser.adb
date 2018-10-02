@@ -815,9 +815,13 @@ package body GNATdoc.Frontend.Comment_Parser is
                        (S (Attr_Loc.First .. Attr_Loc.Last));
 
                   elsif Tag_Name = New_Tag then
-                     Extract_Operator_Name (Attr_Loc);
-                     Search_Generic_Formal
-                       (S (Attr_Loc.First .. Attr_Loc.Last));
+                     if Is_Generic (E) then
+                        Extract_Operator_Name (Attr_Loc);
+                        Search_Generic_Formal
+                          (S (Attr_Loc.First .. Attr_Loc.Last));
+                     else
+                        Error (E, "wrong use of @" & New_Tag);
+                     end if;
                   end if;
 
                   if Present (Text_Loc) then
