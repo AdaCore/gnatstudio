@@ -42,7 +42,7 @@ package Variable_Editors is
    --  Called to validate and take into account the contents of the editor.
    --  If everything is valid, the editor is closed, otherwise an error
    --  message is displayed.
-   --  If False is returned, the the editor should be run again, since there
+   --  If False is returned, the editor should be run again, since there
    --  was some incorrect information.
 
    type Add_Variable_Command

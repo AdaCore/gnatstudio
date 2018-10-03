@@ -5619,7 +5619,7 @@ class File(object):
 
     def imports(self, include_implicit=False, include_system=True):
         """
-        Returns the the list of files that self depends on. If
+        Returns the list of files that self depends on. If
         ``include_implicit`` is true, implicit dependencies are also
         returned. If ``include_system`` is true, then system files from the
         compiler runtime are also considered.
@@ -10456,7 +10456,7 @@ class OutlineView(object):
         Select the construct idetified with the given id in the Outline
         view.
 
-        An exception is raised when the the id does not match a construct
+        An exception is raised when the id does not match a construct
         in the Outline view.
         """
 

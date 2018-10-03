@@ -443,7 +443,7 @@ try:
             GPS.Logger('UNEXPECTED_EXCEPTION').log(text)
 
     # Redirect the standard error from the Messages window to an instance of
-    # the PyConsole class based on the the Messages window. Each python error
+    # the PyConsole class based on the Messages window. Each python error
     # will therefore be displayed both in the Messages window and in the traces
     # (under the UNEXPECTED_EXCEPTION debug handle).
     # Disabled on Windows for now so that we can concentrate on the other

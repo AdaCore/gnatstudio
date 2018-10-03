@@ -794,7 +794,7 @@ package body Project_Viewers is
          end loop;
 
          if Edit_Switches_For_Files (V.Kernel, V.Current_Project, Names) then
-            --  Temporarily block the handlers so that the the editor is not
+            --  Temporarily block the handlers so that the editor is not
             --  cleared, or we would lose the selection
             V.View_Changed_Blocked := True;
             Recompute_View (V.Kernel);

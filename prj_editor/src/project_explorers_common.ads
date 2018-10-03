@@ -244,7 +244,7 @@ package Project_Explorers_Common is
       Max_Profile_Length : Positive := Positive'Last) return String;
    --  Return the string to use to display the entity.
    --  This returns a string in Pango Markup format. If Show_Profiles is true
-   --  the the entity profile is returned. As this can be large it is possible
+   --  the entity profile is returned. As this can be large it is possible
    --  to specify the maximum number of characters returned for the profile
    --  using Max_Profile_Length.
 

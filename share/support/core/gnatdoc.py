@@ -197,7 +197,7 @@ def doc_for_project():
 @interactive(name="documentation generate for project and subprojects",
              category="GNATdoc")
 def doc_for_project_and_subprojects():
-    """Launch GNATdoc on the the project, recursively"""
+    """Launch GNATdoc on the project, recursively"""
     run_gnatdoc("gnatdoc project recursive")
 
 

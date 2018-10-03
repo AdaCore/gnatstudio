@@ -247,7 +247,7 @@ package body Scenario_Views is
       C2 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class)
       return Glib.Gint;
    --  Function used to sort the scenario variables. Each flow box child must
-   --  have the name set to the the scenario variable name it's representing
+   --  have the name set to the scenario variable name it's representing
 
    procedure Fill_Build_Mode (View : Scenario_View);
    --  Fill View.Combo_Build with the build mode value

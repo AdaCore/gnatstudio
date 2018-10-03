@@ -163,7 +163,7 @@ package body GPS.Main_Window is
    --  Called when the preferences have changed
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
-   --  Called when the the main window is destroyed
+   --  Called when the main window is destroyed
 
    type MDI_Child_Selection_Command is new Interactive_Command with record
       Move_To_Next : Boolean;

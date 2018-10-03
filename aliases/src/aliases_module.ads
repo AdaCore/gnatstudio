@@ -94,7 +94,7 @@ package Aliases_Module is
    --  Must_Reindent is set to True if the editor should be reindented after
    --  insertion.
    --
-   --  Params_Substitutions is filled with the the values retrieved for each
+   --  Params_Substitutions is filled with the values retrieved for each
    --  alias parameter.
    --
    --  Dialog_Title is used to set the dialog's title.

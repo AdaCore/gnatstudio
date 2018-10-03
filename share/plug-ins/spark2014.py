@@ -1016,7 +1016,7 @@ def inside_generic_unit_context(self):
 
 
 def generic_action_on_subp(self, action):
-    """execute the action on the the given subprogram entity
+    """execute the action on the given subprogram entity
     """
 
     # The argument --limit-subp is not defined in the examine_subp/prove_subp
@@ -1036,7 +1036,7 @@ def generic_action_on_subp(self, action):
 
 
 def on_examine_subp(self):
-    """execute the "examine subprogram" action on the the given subprogram
+    """execute the "examine subprogram" action on the given subprogram
        entity
     """
 
@@ -1044,7 +1044,7 @@ def on_examine_subp(self):
 
 
 def on_prove_subp(self):
-    """execute the "prove subprogram" action on the the given subprogram entity
+    """execute the "prove subprogram" action on the given subprogram entity
     """
 
     generic_action_on_subp(self, prove_subp())
