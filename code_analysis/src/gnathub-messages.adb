@@ -19,7 +19,6 @@ with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with GNATCOLL.Symbols;
 
-with GNAThub.Loader.External;         use GNAThub.Loader.External;
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
 with XML_Utils;                       use XML_Utils;
@@ -284,12 +283,6 @@ package body GNAThub.Messages is
          Line      => Line,
          Column    => Column,
          Entity    => No_Entity_Data);
-
-      --  Add the associated tool, rule and severity to the GNAThub filter
-      --  so that the message is visible by default.
-
-      GNAThub_Module.Ext_Loader.all.Add_External_Message
-        (Message);
 
       GNAThub_Module.Filter.Add_Tool (Tool);
       GNAThub_Module.Filter.Add_Rule (Rule);
