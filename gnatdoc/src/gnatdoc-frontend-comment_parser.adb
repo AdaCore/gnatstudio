@@ -1478,16 +1478,39 @@ package body GNATdoc.Frontend.Comment_Parser is
                     E_Generic_Function)
                  and then No (Get_Doc (Get_Internal_Return (Subp)))
                then
-                  Warning (Context, LL.Get_Entity (Subp),
-                    "undocumented return value");
+                  --  Check if the spec has the documentation
+
+                  if Present (Get_Corresponding_Spec (Subp))
+                    and then
+                      Present
+                        (Get_Doc
+                          (Get_Internal_Return
+                            (Get_Corresponding_Spec (Subp))))
+                  then
+                     null;
+                  else
+                     Warning (Context, LL.Get_Entity (Subp),
+                       "undocumented return value");
+                  end if;
                end if;
 
                for Param of Get_Entities (Subp).all loop
                   if No (Get_Doc (Param)) then
-                     Warning (Context, LL.Get_Entity (Param),
-                       "undocumented parameter ("
-                       & Get_Short_Name (Param)
-                       & ")");
+
+                     --  Check if the spec has the documentation
+
+                     if Present (Get_Corresponding_Spec (Param))
+                       and then
+                         Present (Get_Doc (Get_Corresponding_Spec (Param)))
+                     then
+                        null;
+
+                     else
+                        Warning (Context, LL.Get_Entity (Param),
+                          "undocumented parameter ("
+                          & Get_Short_Name (Param)
+                          & ")");
+                     end if;
                   end if;
                end loop;
 
