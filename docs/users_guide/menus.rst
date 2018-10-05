@@ -1194,7 +1194,7 @@ The Analyze Menu
 
 * :menuselection:`Analyze --> Documentation --> Generate Project & Subprojects`
 
-   Launch GNATdoc on the the project, recursively
+   Launch GNATdoc on the project, recursively
    
 .. index:: menu; analyze --> documentation --> generate current file
 

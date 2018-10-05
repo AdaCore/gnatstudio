@@ -105,7 +105,7 @@ class Color(object):
     def shade_or_lighten(self, amount):
         """Compute a suitable overlay color.
 
-        If the the color is "dark" return a lighten version. If the
+        If the color is "dark" return a lighten version. If the
         color is "light" return darker version of the color.
 
         :param amount: amount by which the luminance is modified. If the amount

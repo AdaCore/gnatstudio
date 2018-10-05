@@ -197,7 +197,7 @@ package Codefix.Text_Manager is
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String is abstract;
-   --  Get Len characters from the the position specified by the cursor. The
+   --  Get Len characters from the position specified by the cursor. The
    --  String resulting must have parameter 'First equal to Cursor.Col.
 
    function Get
@@ -208,7 +208,7 @@ package Codefix.Text_Manager is
    function Get
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class) return Character is abstract;
-   --  Get the characters from the the position specified by the cursor
+   --  Get the characters from the position specified by the cursor
 
    function Get_Line
      (This      : Text_Interface;

@@ -213,7 +213,7 @@ package body Default_Preferences is
       Preferences      : in out Preferences_Names_Lists.List;
       Pref             : not null Preference;
       Replace_If_Exist : Boolean := False);
-   --  Insert Pref at the end of the the given list.
+   --  Insert Pref at the end of the given list.
    --  If Replace_If_Exist is True, delete the previous Pref associated with
    --  Name in the given list, and insert Pref instead. Otherwise, do nothing.
 

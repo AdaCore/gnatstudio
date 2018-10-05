@@ -238,7 +238,7 @@ package body Vsearch is
    procedure Set_Search_Module
      (Self   : not null access Vsearch_Record'Class;
       Module : Search_Module);
-   --  Set the the current search module used by the Search view
+   --  Set the current search module used by the Search view
 
    procedure Set_Last_Search_Module
      (Handle : access Kernel_Handle_Record'Class;
