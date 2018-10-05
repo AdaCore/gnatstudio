@@ -36,6 +36,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 
 with Gtk;                        use Gtk;
+with Gtk.Accel_Group;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -63,6 +64,7 @@ with Config;                     use Config;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -206,6 +208,11 @@ package body Src_Editor_View is
    function Key_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
+
+   function Scroll_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "scroll-event" signal
 
    function Line_Highlight_Redraw (User : Source_View) return Boolean;
    --  Redraw the source view after a change in highlights
@@ -1594,6 +1601,11 @@ package body Src_Editor_View is
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
 
+      Return_Callback.Connect
+        (View, Signal_Scroll_Event,
+         Marsh => Return_Callback.To_Marshaller (Scroll_Event_Cb'Access),
+         After => False);
+
       Widget_Callback.Connect
         (View, Signal_Paste_Clipboard,
          Widget_Callback.To_Marshaller (Paste_Clipboard_Before'Access),
@@ -2461,6 +2473,46 @@ package body Src_Editor_View is
          Trace (Me, E);
          return False;
    end Key_Press_Event_Cb;
+
+   ---------------------
+   -- Scroll_Event_Cb --
+   ---------------------
+
+   function Scroll_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View      : constant Source_View := Source_View (Widget);
+      Direction : Gdk_Scroll_Direction;
+      Dummy     : Boolean;
+   begin
+      --  Increase/decrease the text size (by calling corresponding actions)
+      --  when the user scrolls while pressing the primary key
+      --  (e.g: Ctrl on Linux, Cmd on Mac)
+
+      if (Get_State (Event) and Gtk.Accel_Group.Get_Default_Mod_Mask) =
+        View.Get_Modifier_Mask (Primary_Accelerator)
+      then
+         Get_Scroll_Direction (Event, Direction);
+         if Direction = Scroll_Up or else Direction = Scroll_Down then
+            Dummy := GPS.Kernel.Actions.Execute_Action
+              (View.Kernel,
+               (if Direction = Scroll_Down
+                then "increase text size"
+                else "decrease text size"));
+            return True;
+         else
+            return False;
+         end if;
+      else
+         return False;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Scroll_Event_Cb;
 
    --------------------
    -- Redraw_Columns --
