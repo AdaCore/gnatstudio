@@ -7366,7 +7366,7 @@ class Message(object):
             Specifying this parameter restricts the output to messages
             of this category only
 
-        :return: a list of :class:`GMS.Message`
+        :return: a list of :class:`GPS.Message`
         """
         pass  # implemented in Ada
 
@@ -10344,7 +10344,8 @@ class Language(object):
             ..  seealso: :func:`GPS.Language.should_refresh_constructs`
 
             :param GPS.ConstructList constructs_list: The list of constructs to
-                populate.
+                populate. The enclosing constructs must be added in the
+                constructs_list after nested constructs.
             :param GPS.File gps_file: the name of the file to parse.
             :param str content_string: The content of the file
 
