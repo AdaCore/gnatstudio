@@ -750,12 +750,13 @@ class GNATprove_Parser(tool_output.OutputParser):
                 self.print_output(line)
 
     def add_extra_info_on_messages(self, command, display_in_report=False):
-        """Scan through messages to see if extra
-           info has been attached to them. If so, parse the .spark file of
-           the corresponding unit to get the extra info, and act on the extra
-           info.
+        """Scan through messages to see if extra info has been attached to
+           them. If so, parse the .spark file of the corresponding unit to
+           get the extra info, and act on the extra info.
+
            Also, display the messages in Analysis Report if the corresponding
            preference is enabled.
+
         """
         # Global map that associates messages text to the location of the
         # check. Messages already contain a location but it cannot be trusted
@@ -763,12 +764,12 @@ class GNATprove_Parser(tool_output.OutputParser):
         # what is failing in a vc not the location of said vc.
         global map_msg
 
-        artifact_dir = os.path.join(
-            GPS.Project.root().artifacts_dir(),
-            obj_subdir_name)
+        artifact_dirs = \
+            [os.path.join(f, obj_subdir_name)
+             for f in GPS.Project.root().object_dirs(recursive=True)]
 
         map_msg = {}
-        imported_units = set()
+        imported_units = {}  # map from unit to corresponding object directory
         extra = {}
 
         for m in GPS.Message.list(messages_category):
@@ -777,10 +778,19 @@ class GNATprove_Parser(tool_output.OutputParser):
                 id = self.msg_id[text]
                 unit = get_compunit_for_message(m)
                 full_id = unit, id
+                # First time this unit is seen, identify the corresponding
+                # object directory where extra info can be found for that unit.
                 if unit not in imported_units:
-                    self.parsejson(unit, os.path.join(artifact_dir,
-                                                      unit + ".spark"))
-                    imported_units.add(unit)
+                    for artifact_dir in artifact_dirs:
+                        sparkfile = os.path.join(artifact_dir, unit + ".spark")
+                        if os.path.exists(sparkfile):
+                            self.parsejson(unit, sparkfile)
+                            imported_units[unit] = artifact_dir
+                            break
+                # If no object directory was identified, associate the default
+                # artifacts directory.
+                if unit not in imported_units:
+                    imported_units[unit] = GPS.Project.root().artifacts_dir()
                 extra = {}
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
@@ -790,7 +800,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                     m, self.get_rule_id_for_msg(m, extra))
 
             if extra:
-                self.act_on_extra_info(m, extra, artifact_dir, command)
+                self.act_on_extra_info(m, extra, imported_units[unit], command)
 
 
 def is_file_context(self):
