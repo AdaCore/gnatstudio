@@ -496,7 +496,7 @@ the most meaningful way for you. Scoring is based on a number of criteria:
 The :guilabel:`Messages` view
 =============================
 
-.. image:: messages.png
+.. image:: views-messages.png
 
 The :guilabel:`Messages` view, which is read-only, displays information and
 feedback about operations, including build output, information about
@@ -526,7 +526,7 @@ important messages.  If GPS closed it, you can reopen it with the
 The :guilabel:`Locations` View
 ==============================
 
-.. image:: locations-view.png
+.. image:: views-locations.png
 
 GPS uses the :guilabel:`Location` view, which is also read-only, to display
 a list of locations in source files (for example, when performing a global
@@ -908,8 +908,7 @@ can also double-click on it if you want to actually run it.
 The :guilabel:`Scenario` view
 =============================
 
-.. image:: scenario-view.png
-.. image:: scenario-view-nobuild.png
+.. image:: views-scenario.png
 
 As described in the GNAT User's Guide, project files can be configured
 through external variables (typically environment variables). This means
@@ -992,8 +991,8 @@ files and directories belonging to the project (use the
 The :guilabel:`Windows` view
 ============================
 
-.. image:: windows-view1.png
-.. image:: windows-view2.png
+.. image:: views-windows-flat.png
+.. image:: views-windows-notebooks.png
 .. index:: menu; tools --> views --> windows
 
 The :guilabel:`Windows` view displays the currently opened windows.  Open
@@ -1026,8 +1025,8 @@ you have finished working on a task.
 The :guilabel:`Outline` view
 ============================
 
-.. image:: outline-view1.png
-.. image:: outline-view2.png
+.. image:: views-outline-default.png
+.. image:: views-outline-flat-group.png
 .. image:: outline-view3.png
 .. index:: menu; tools --> views --> outline
 
@@ -1102,7 +1101,7 @@ how the outline view is displayed:
 The :guilabel:`Clipboard` view
 ==============================
 
-.. image:: clipboard.png
+.. image:: views-clipboard.png
 
 GPS has an advanced mechanism for handling copy/paste operations.
 
@@ -1201,7 +1200,7 @@ subprogram is in fact never called.)
 Call Trees
 ----------
 
-.. image:: calltree.png
+.. image:: views-call_tree.png
 
 The :guilabel:`Call trees` are displayed when you select one of the
 contextual menus :menuselection:`<entity> calls` and
@@ -1245,7 +1244,7 @@ The local toolbar provides the following buttons:
 Callgraph browser
 -----------------
 
-.. image:: callgraph.png
+.. image:: browsers-call_tree.png
 
 The :guilabel:`Callgraph` browser graphically displays the relationship
 between subprogram callers and callees. A link between two items indicates
