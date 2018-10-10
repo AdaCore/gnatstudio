@@ -346,7 +346,7 @@ Editing existing scenario variables
 If at least one configuration variable is defined in your project, the
 :guilabel:`Scenario` view contains something similar to:
 
-.. image:: scenario-view.png
+.. image:: views-scenario.png
 
 You can change the current value of any of these variables by clicking on
 one, which displays a pop-up window with the list of possible values, from
