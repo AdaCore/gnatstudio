@@ -58,7 +58,11 @@ variant_prefs = {
     'types': "Src-Editor-Type-Variant",
     'blocks': "Src-Editor-Block-Variant",
     'keywords_in_aspects': "Src-Editor-Aspects-Keywords-Variant",
-    'preprocessor': "Editor/Fonts & Colors:General/preprocessor"
+    'preprocessor': "Editor/Fonts & Colors:General/preprocessor",
+    'diff_change': "Diff-Change-Color",
+    'diff_remove': "Diff-Remove-Color",
+    'diff_append': "Diff-Append-Color",
+    'horiz_diff': "Horizontal-Diff-Change-Color",
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -73,10 +77,6 @@ rgb_prefs = {
     'msg_high': "High-Importance-Messages-Highlight",
     'msg_medium': "Medium-Importance-Messages-Highlight",
     'msg_low': "Low-Importance-Messages-Highlight",
-    'horiz_diff': "Horizontal-Diff-Change-Color",
-    'diff_change': "Diff-Change-Color",
-    'diff_remove': "Diff-Remove-Color",
-    'diff_append': "Diff-Append-Color",
     'breakpoint': "Debugger-Line-With-Breakpoint",
     'dispatching': "Plugins/dispatching/color",
     'ispell': "Plugins/ispell/bgcolor",
@@ -254,10 +254,10 @@ common_light = {
     "msg_high": Rgba(255, 183, 183),
     "msg_medium": Rgba(255, 204, 156),
     "msg_low": Rgba(255, 255, 240),
-    "horiz_diff": Rgba(253, 230, 106),
-    "diff_change": Rgba(236, 236, 170),
-    "diff_remove": Rgba(255, 160, 160),
-    "diff_append": Rgba(136, 238, 170),
+    "horiz_diff": ("Default", Rgba(253, 230, 106), transparent),
+    "diff_change": ("Default", Rgba(236, 236, 170), transparent),
+    "diff_remove": ("Default", Rgba(120, 10, 10), transparent),
+    "diff_append": ("Default", Rgba(10, 100, 10), transparent),
     "breakpoint": Rgba(0, 0, 255, 77),
 
     "dispatching": Rgba(255, 243, 194),
@@ -313,10 +313,10 @@ common_dark = {
     "msg_high": Rgba(75, 34, 34),
     "msg_medium": Rgba(85, 52, 18),
     "msg_low": Rgba(191, 188, 64, 50),
-    "horiz_diff": Rgba(143, 89, 2),
-    "diff_change": Rgba(107, 73, 19),
-    "diff_remove": Rgba(88, 43, 43),
-    "diff_append": Rgba(38, 68, 36),
+    "horiz_diff": ("Default", Rgba(143, 89, 2), transparent),
+    "diff_change": ("Default", Rgba(107, 73, 19), transparent),
+    "diff_remove": ("Default", Rgba(253, 31, 31), transparent),
+    "diff_append": ("Default", Rgba(10, 150, 10), transparent),
     "breakpoint": Rgba(190, 191, 196),
 
     "dispatching": Rgba(46, 52, 56),

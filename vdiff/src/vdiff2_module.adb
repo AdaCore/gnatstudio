@@ -247,6 +247,7 @@ package body Vdiff2_Module is
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
       Submenu_Filter : Action_Filter;
+      Pref_Path      : constant String := -"Visual diff:Colors";
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.Vector;
@@ -312,43 +313,73 @@ package body Vdiff2_Module is
 
       Diff_Default_Color := Create
         (Get_Preferences (Kernel),
-         Name     =>  "Diff-Default-Color",
-         Label    => -"Default Color",
-         Doc      => "",
-         Path     => -"Visual diff:Colors",
-         Default  => "#C1C1C1");
+         Name            =>  "Diff-Default-Color",
+         Label           => -"Default Color",
+         Doc             => "",
+         Path            => Pref_Path,
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(193,193,193,1)");
 
       Diff_Append_Color := Create
         (Get_Preferences (Kernel),
-         Name     =>  "Diff-Append-Color",
-         Label    => -"Append Color",
-         Doc      => "",
-         Path     => -"Visual diff:Colors",
-         Default  => "#88EEAA");
+         Name            =>  "Diff-Append-Color",
+         Label           => -"Append Color",
+         Doc             => "",
+         Path            => Pref_Path,
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(10,100,10,1)");
 
       Diff_Remove_Color := Create
         (Get_Preferences (Kernel),
-         Name     =>  "Diff-Remove-Color",
-         Label    => -"Remove Color",
-         Doc      => "",
-         Path     => -"Visual diff:Colors",
-         Default  => "#FFA0A0");
+         Name            =>  "Diff-Remove-Color",
+         Label           => -"Remove Color",
+         Doc             => "",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Path            => Pref_Path,
+         Default_Fg      => "rgba(200,10,10,1)");
 
       Diff_Change_Color := Create
         (Get_Preferences (Kernel),
-         Name     =>  "Diff-Change-Color",
-         Label    => -"Change Color",
-         Doc      => "",
-         Path     => -"Visual diff:Colors",
-         Default  => "#ECECAA");
+         Name            =>  "Diff-Change-Color",
+         Label           => -"Change Color",
+         Doc             => "",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Path            => Pref_Path,
+         Default_Fg      => "rgba(236,236,170,1)");
 
       Diff_Fine_Change_Color := Create
         (Get_Preferences (Kernel),
-         Name     =>  "Horizontal-Diff-Change-Color",
-         Label    => -"Fine Change Color",
-         Doc      => "",
-         Path     => -"Visual diff:Colors",
-         Default  => "#FDE66A");
+         Name            =>  "Horizontal-Diff-Change-Color",
+         Label           => -"Fine Change Color",
+         Doc             => "",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Path            => Pref_Path,
+         Default_Fg      => "rgba(253,230,106,1)");
+
+      Diff_File_Color := Create
+        (Get_Preferences (Kernel),
+         Name            =>  "Diff-File-Header-Color",
+         Label           => -"File Header Color",
+         Doc             => "",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Path            => Pref_Path,
+         Default_Fg      => "rgba(100,163,224,1)");
+
+      Diff_Code_Color := Create
+        (Get_Preferences (Kernel),
+         Name            =>  "Diff-Code-Header-Color",
+         Label           => -"Code Header Color",
+         Doc             => "",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Path            => Pref_Path,
+         Default_Fg      => "rgba(51,204,179,1)");
 
       Preferences_Changed_Hook.Add
          (new Standard.Vdiff2_Module.Callback.On_Pref_Changed);

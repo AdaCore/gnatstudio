@@ -29,11 +29,13 @@ package Vdiff2_Module is
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
    Diff3_Cmd              : Default_Preferences.String_Preference;
-   Diff_Default_Color     : Default_Preferences.Color_Preference;
-   Diff_Append_Color      : Default_Preferences.Color_Preference;
-   Diff_Remove_Color      : Default_Preferences.Color_Preference;
-   Diff_Change_Color      : Default_Preferences.Color_Preference;
-   Diff_Fine_Change_Color : Default_Preferences.Color_Preference;
+   Diff_Default_Color     : Default_Preferences.Variant_Preference;
+   Diff_Append_Color      : Default_Preferences.Variant_Preference;
+   Diff_Remove_Color      : Default_Preferences.Variant_Preference;
+   Diff_Change_Color      : Default_Preferences.Variant_Preference;
+   Diff_Fine_Change_Color : Default_Preferences.Variant_Preference;
+   Diff_File_Color        : Default_Preferences.Variant_Preference;
+   Diff_Code_Color        : Default_Preferences.Variant_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

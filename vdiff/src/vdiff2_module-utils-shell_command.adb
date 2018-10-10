@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with Gdk.RGBA;                 use Gdk.RGBA;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
-with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
-with GPS.Kernel.Style_Manager;     use GPS.Kernel.Style_Manager;
-with String_Utils;                 use String_Utils;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with String_Utils;             use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
 
@@ -210,11 +211,16 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       CL : Arg_List;
-      Default_Color      : constant String  := Diff_Default_Color.Get_Pref;
-      Append_Color       : constant String  := Diff_Append_Color.Get_Pref;
-      Remove_Color       : constant String  := Diff_Remove_Color.Get_Pref;
-      Change_Color       : constant String  := Diff_Change_Color.Get_Pref;
-      Change_Fine_Color  : constant String  := Diff_Fine_Change_Color.Get_Pref;
+      Default_Color      : constant String  :=
+        To_String (Diff_Default_Color.Get_Pref_Fg_Color);
+      Append_Color       : constant String  :=
+        To_String (Diff_Append_Color.Get_Pref_Fg_Color);
+      Remove_Color       : constant String  :=
+        To_String (Diff_Remove_Color.Get_Pref_Fg_Color);
+      Change_Color       : constant String  :=
+        To_String (Diff_Change_Color.Get_Pref_Fg_Color);
+      Change_Fine_Color  : constant String  :=
+        To_String (Diff_Fine_Change_Color.Get_Pref_Fg_Color);
 
    begin
       --  <preferences>
