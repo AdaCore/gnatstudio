@@ -38,7 +38,7 @@
         </Pane>
       </Pane>
     </perspective>
-    <perspective name="Debug">
+    <perspective name="Debug" save_as_central="false">
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
         <Pane width=" 2.75157E+01%" Orientation="ORIENTATION_VERTICAL" >
           <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT" >
@@ -81,9 +81,6 @@
               </Child>
             </Notebook>
             <Notebook width=" 5.02179E+01%" Tabs="POS_TOP" >
-              <Child Group=" 107" State="NORMAL" >
-                <Debugger_Execution />
-              </Child>
               <Child Raised="True" Focus="True" Group=" 107" State="NORMAL" >
                 <Location_View_Record />
               </Child>

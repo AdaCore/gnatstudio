@@ -1283,6 +1283,34 @@ package body GPS.Kernel.MDI is
             Specific_Data => 0);
       end if;
 
+      --  Do not store perspectives like "Debug" as a desktop
+      declare
+         Name : constant XML_Utils.UTF8_String :=
+           Get_Attribute (Central_Convert, "perspective", "");
+      begin
+         if Name /= "" then
+            M := Perspectives_Convert.Child;
+            while M /= null loop
+               if M.Tag /= null
+                 and then M.Tag.all = "perspective"
+                 and then Get_Attribute (M, "name") = Name
+               then
+                  if To_Lower
+                    (Get_Attribute (M, "save_as_central", "")) = "false"
+                  then
+                     Trace (Me, "not saving central area" &
+                              " (perspective can't be saved as a central)");
+                     Central_Convert := null;
+                     Glib.Xml_Int.Free (Central);
+                  end if;
+
+                  exit;
+               end if;
+               M := M.Next;
+            end loop;
+         end if;
+      end;
+
       M := Old.Child;
       while M /= null loop
          M2 := M.Next;
@@ -1291,7 +1319,9 @@ package body GPS.Kernel.MDI is
             if M.Tag.all = "perspectives" then
                Free (M);
 
-            elsif Central_Convert /= null and then M.Tag.all = "desktops" then
+            elsif Central_Convert /= null
+              and then M.Tag.all = "desktops"
+            then
                N := M.Child;
                while N /= null loop
                   N2 := N.Next;
