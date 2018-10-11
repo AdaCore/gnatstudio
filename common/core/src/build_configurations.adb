@@ -448,7 +448,8 @@ package body Build_Configurations is
       The_Model := Registry.Models.Element (To_Unbounded_String (Model));
 
       Target := new Target_Type;
-      Target.Name := To_Unbounded_String (Strip_Single_Underscores (Name));
+      Target.Name :=
+        To_Unbounded_String (Strip_Single_And_Unescape_Underscores (Name));
       Target.Properties.Parent_Menu_Name := To_Unbounded_String (Build_Menu);
       Target.Properties.Menu_Name := To_Unbounded_String (Name);
       Target.Properties.Category := To_Unbounded_String (Category);
@@ -1230,17 +1231,17 @@ package body Build_Configurations is
 
       declare
          Parent_Menu      : constant String :=
-                               Get_Attribute (XML, "menu", Build_Menu);
+           Get_Attribute (XML, "menu", Build_Menu);
          Menu_Name         : constant String :=
-                               Get_Attribute (XML, "name", "");
+           Get_Attribute (XML, "name", "");
          Target_Name       : constant String :=
-                               Strip_Single_Underscores (Menu_Name);
+           Strip_Single_And_Unescape_Underscores (Menu_Name);
          Category          : constant String :=
-                               Get_Attribute (XML, "category", "");
+           Get_Attribute (XML, "category", "");
          Model             : constant String :=
-                               Get_Attribute (XML, "model", "");
+           Get_Attribute (XML, "model", "");
          Messages_Category : constant String :=
-                               Get_Attribute (XML, "messages_category", "");
+           Get_Attribute (XML, "messages_category", "");
 
       begin
          if Menu_Name = "" then

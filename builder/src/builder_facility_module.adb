@@ -574,7 +574,7 @@ package body Builder_Facility_Module is
         and then Category (Category'Last) = '_';
 
       Cat_Path : constant String :=
-        Strip_Single_Underscores (Get_Parent_Menu_Name (Target))
+        Strip_Single_And_Unescape_Underscores (Get_Parent_Menu_Name (Target))
         & (if Toplevel_Menu then "" else Category & "/");
       --  For instance:  /Build/Project/
 

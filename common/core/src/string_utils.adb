@@ -1406,26 +1406,32 @@ package body String_Utils is
       return Result;
    end Revert;
 
-   ------------------------------
-   -- Strip_Single_Underscores --
-   ------------------------------
+   -------------------------------------------
+   -- Strip_Single_And_Unescape_Underscores --
+   -------------------------------------------
 
-   function Strip_Single_Underscores (S : String) return String is
-      S2 : String := S;
-      J2 : Natural := S'First;
+   function Strip_Single_And_Unescape_Underscores (S : String) return String is
+      Result : Unbounded_String;
+      Number : Integer := 0;
+      Cur    : Integer := S'First;
    begin
-      for J in S'Range loop
-         S2 (J2) := S (J);
+      while Cur <= S'Last loop
+         if S (Cur) = '_' then
+            Number := 1;
+            while S (Cur + Number) = '_' loop
+               Number := Number + 1;
+            end loop;
 
-         if S (J) /= '_'
-           or else (J > S'First and then S (J - 1) = '_')
-         then
-            J2 := J2 + 1;
+            Append (Result, (Number / 2) * "_");
+
+            Cur := Cur + Number;
+         else
+            Append (Result, S (Cur));
+            Cur := Cur + 1;
          end if;
       end loop;
-
-      return S2 (S2'First .. J2 - 1);
-   end Strip_Single_Underscores;
+      return To_String (Result);
+   end Strip_Single_And_Unescape_Underscores;
 
    -------------
    -- Compare --

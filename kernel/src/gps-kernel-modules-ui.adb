@@ -451,7 +451,8 @@ package body GPS.Kernel.Modules.UI is
    --
    --  Full_Path should have a form like "/main_main/submenu/label".
    --  Underscores are not used for mnemonics, and will be present in the
-   --  final menu. Use String_Utils.Strip_Single_Underscores if needed.
+   --  final menu.
+   --  Use String_Utils.Strip_Single_And_Unescape_Underscores if needed.
    --  Full_Path must include the Menu_Label, although the latter is also
    --  provided separately for efficiency.
    --  Any special character like '/' should be quoted in Full_Path, using
@@ -2067,7 +2068,8 @@ package body GPS.Kernel.Modules.UI is
       Act      : GPS_Action;
       Menu     : Gmenu;
    begin
-      Add_Menu_To_Action (Action, Strip_Single_Underscores (Full_Path));
+      Add_Menu_To_Action
+        (Action, Strip_Single_And_Unescape_Underscores (Full_Path));
 
       Item := Find_Or_Create_Menu (Globals.Menu_Model, Parent_Path);
       if Item /= No_Menu_Item then
@@ -2078,7 +2080,8 @@ package body GPS.Kernel.Modules.UI is
             Act := Create_Or_Lookup_Action (Kernel, Action);
             G_New
                (It,
-                Escape_Underscore (Strip_Single_Underscores (Menu_Label)),
+                Escape_Underscore (Strip_Single_And_Unescape_Underscores
+                  (Menu_Label)),
                 Detailed_Action => Act.Gtk_Name);
          else
             G_New_Section (It, "", Gmenu_New);
@@ -3432,7 +3435,8 @@ package body GPS.Kernel.Modules.UI is
                   Label_With_Mnemonic := To_Unbounded_String
                     (Get_String (Val, null));
                   Label := To_Unbounded_String
-                    (Strip_Single_Underscores (Get_String (Val, null)));
+                    (Strip_Single_And_Unescape_Underscores
+                       (Get_String (Val, null)));
                elsif N = "action" then
                   Action := To_Unbounded_String (Get_String (Val, null));
                elsif N = "hidden-when" then
@@ -3594,7 +3598,8 @@ package body GPS.Kernel.Modules.UI is
          Clean_Label : constant String :=
             Parent_Path &
             Escape_Menu_Name                        --  protect '/' in the name
-               (Strip_Single_Underscores (Label));  --  remove '_' mnemonics
+           (Strip_Single_And_Unescape_Underscores
+              (Label));  --  remove '_' mnemonics
          Action  : constant DOM_String := Get_Attribute (Menu_Node, "action");
          Optional_Str : constant DOM_String :=
            Get_Attribute (Menu_Node, "optional");

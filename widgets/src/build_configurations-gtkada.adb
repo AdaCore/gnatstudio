@@ -1328,7 +1328,8 @@ package body Build_Configurations.Gtkada is
             Name     => To_String (Name),
             Category => To_String (Cat),
             Model    => To_String (Model));
-         Refresh (UI, Strip_Single_Underscores (To_String (Name)));
+         Refresh
+           (UI, Strip_Single_And_Unescape_Underscores (To_String (Name)));
       end if;
    exception
       when E : others =>

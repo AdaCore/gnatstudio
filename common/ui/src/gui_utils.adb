@@ -1367,7 +1367,7 @@ package body GUI_Utils is
       Label         : Gtk_Label;
       Box           : Gtk_Box;
       New_Name      : constant String :=
-        Unescape_Underscore (Strip_Single_Underscores (Name));
+        Strip_Single_And_Unescape_Underscores (Name);
 
    begin
       Menu_Item := null;
@@ -1527,21 +1527,22 @@ package body GUI_Utils is
    -------------------------
 
    function Unescape_Underscore (Name : String) return String is
-      Result : String (Name'Range);
-      Last   : Integer := Result'First;
+      Result : Unbounded_String;
+      Cur    : Integer := Name'First;
    begin
-      for N in Name'Range loop
-         if Name (N) = '_'
-           and then N > Name'First
-           and then Name (N - 1) = '_'
+      while Cur <= Name'Last loop
+         if Name (Cur) = '_'
+           and then Cur < Name'Last
+           and then Name (Cur + 1) = '_'
          then
-            null;
+            Append (Result, '_');
+            Cur := Cur + 2;
          else
-            Result (Last) := Name (N);
-            Last := Last + 1;
+            Append (Result, Name (Cur));
+            Cur := Cur + 1;
          end if;
       end loop;
-      return Result (Result'First .. Last - 1);
+      return To_String (Result);
    end Unescape_Underscore;
 
    ----------------------
@@ -1662,7 +1663,7 @@ package body GUI_Utils is
             if Val /= Null_Gvariant then
                declare
                   It_Name : constant String :=
-                     Strip_Single_Underscores
+                     Strip_Single_And_Unescape_Underscores
                         (Unescape_Menu_Name (Get_String (Val, null)));
                begin
                   Unref (Val);
@@ -1719,7 +1720,7 @@ package body GUI_Utils is
 
       Item := Find_Or_Create_Single_Level
          (Model,
-          Strip_Single_Underscores (Unescape_Menu_Name
+          Strip_Single_And_Unescape_Underscores (Unescape_Menu_Name
             (Path (First .. Last - 1))),
           Allow_Create => Allow_Create);
 
