@@ -476,6 +476,21 @@ def get_comp_text(m):
     return (text)
 
 
+def get_norm_text(text):
+    """Returns the normalized text of a message text.
+
+       This amounts to getting the basename of the file in the location, so
+       that it matches the result of calling [get_comp_text], even in cases
+       where GNATprove uses the complete path name in its messages, when
+       switch -gnatef is used.
+    """
+    reg = re.compile(r"([^:]*):(.*)")
+    m = re.match(reg, text)
+    file = os.path.basename(m.group(1))
+    text = file + ':' + m.group(2)
+    return text
+
+
 # Any change to the regular expressions below should follow changes
 # in messages issued by GNATprove in Compute_Message in
 # flow_error_messages.adb
@@ -740,7 +755,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         for line in lines:
             m = re.match(self.regex, line)
             if m:
-                text = m.group(1)
+                text = get_norm_text(m.group(1))
                 GPS.Locations.parse(text, category=messages_category)
                 self.print_output(text)
                 self.msg_id[text] = int(m.group(2))
