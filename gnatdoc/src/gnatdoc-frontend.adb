@@ -3667,6 +3667,11 @@ package body GNATdoc.Frontend is
                                     then
                                        null;
 
+                                    elsif Is_Subprogram (Scope)
+                                      and then Is_Alias (Scope)
+                                    then
+                                       Do_Exit;
+
                                     elsif Processing_Body
                                       and then not
                                         In_Concurrent_Type_Definition
