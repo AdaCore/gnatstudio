@@ -15,35 +15,35 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with Generic_Views;            use Generic_Views;
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Intl;                 use GPS.Intl;
-with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Files;   use GNATCOLL.Scripts.Files;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Text_Tag;             use Gtk.Text_Tag;
-with Gtk.Widget;               use Gtk.Widget;
-with Pango.Enums;              use Pango.Enums;
-with VCS2.Engines;             use VCS2.Engines;
-with VCS2.Views;               use VCS2.Views;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Basic_Types;                  use Basic_Types;
+with Commands.Interactive;         use Commands, Commands.Interactive;
+
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.GtkAda;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Files;       use GNATCOLL.Scripts.Files;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+
+with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Text_Tag;                 use Gtk.Text_Tag;
+with Gtk.Widget;                   use Gtk.Widget;
+
+with VCS2.Engines;                 use VCS2.Engines;
 
 package body VCS2.Diff is
+
+   Diff_Name : constant Filesystem_String := "vcs2_diff.diff";
 
    type Diff_Head_For_File is new Interactive_Command with null record;
    overriding function Execute
@@ -76,126 +76,72 @@ package body VCS2.Diff is
      (Self     : not null access On_Diff_Visitor;
       Contents : String);
 
-   type Diff_View_Record is new View_Record with record
-      Patch : Diff_Viewer;
-   end record;
+   ---------------------------------
+   -- Create_Or_Reuse_Diff_Editor --
+   ---------------------------------
 
-   function Initialize
-     (Self : access Diff_View_Record'Class) return Gtk_Widget;
-
-   package Diff_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "VCS_Diff",
-      View_Name          => "Diff",
-      Formal_View_Record => Diff_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
-      Local_Toolbar      => False,
-      Local_Config       => False,
-      Areas              => Gtkada.MDI.Central_Only,
-      Position           => Position_Automatic,
-      Initialize         => Initialize);
-   subtype Diff_View is Diff_Views.View_Access;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   function Initialize
-     (Self : access Diff_View_Record'Class) return Gtk_Widget
+   procedure Create_Or_Reuse_Diff_Editor
+     (Kernel : Kernel_Handle;
+      Patch  : String;
+      Title  : String := "";
+      Header : String := "")
    is
-      Scrolled : Gtk_Scrolled_Window;
-   begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      File   : constant Virtual_File :=
+        Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
+      Buffer : constant GPS_Editor_Buffer'Class :=
+        GPS_Editor_Buffer'Class
+          (Kernel.Get_Buffer_Factory.Get (File => File));
 
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
+      procedure Highlight_Header;
 
-      Gtk_New (Self.Patch);
-      Scrolled.Add (Self.Patch);
+      ----------------------
+      -- Highlight_Header --
+      ----------------------
 
-      return Gtk_Widget (Self.Patch);
-   end Initialize;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New (Self  : out Diff_Viewer) is
-   begin
-      --  ??? Should be implemented as an editor with a special language for
-      --  syntax highlighting, which provides folding for chunks.
-
-      Self := new Diff_Viewer_Record;
-      Gtk.Text_View.Initialize (Self);
-      Self.Set_Editable (False);
-
-      Set_Font_And_Colors (Self, Fixed_Font => True, Pref => null);
-   end Gtk_New;
-
-   --------------
-   -- Add_Diff --
-   --------------
-
-   procedure Add_Diff
-     (Self  : not null access Diff_Viewer_Record;
-      Patch : String)
-   is
-      Buffer : constant Gtk_Text_Buffer := Self.Get_Buffer;
-      Iter   : Gtk_Text_Iter;
-      Diff, Block, Added, Removed  : Gtk_Text_Tag;
-      List   : String_List_Access;
-
-   begin
-      Diff := Buffer.Create_Tag;
-      Set_Property (Diff, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
-      Gdk.RGBA.Set_Property
-        (Diff, Gtk.Text_Tag.Foreground_Rgba_Property, Emblem_Color);
-
-      Block := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Block, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.8, 0.7, 1.0));
-
-      Added := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Added, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.6, 0.0, 1.0));
-
-      Removed := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Removed, Gtk.Text_Tag.Foreground_Rgba_Property,
-         (1.0, 0.29, 0.32, 1.0));
-
-      Buffer.Get_End_Iter (Iter);
-
-      List := Split (Patch, ASCII.LF, Omit_Empty_Lines => False);
-
-      for L of List.all loop
-         if L'Length > 5
-           and then L (L'First .. L'First + 4) = "diff "
-         then
-            Buffer.Insert_With_Tags (Iter, L.all, Diff);
-
-         elsif L'Length > 2
-           and then L (L'First .. L'First + 2) = "@@ "
-         then
-            Buffer.Insert_With_Tags (Iter, L.all, Block);
-
-         elsif L'Length >= 1 and then L (L'First) = '-' then
-            Buffer.Insert_With_Tags (Iter, L.all, Removed);
-
-         elsif L'Length >= 1 and then L (L'First) = '+' then
-            Buffer.Insert_With_Tags (Iter, L.all, Added);
-
-         else
-            Buffer.Insert (Iter, L.all);
+      procedure Highlight_Header
+      is
+         From_Line : constant Integer :=
+           Buffer.End_Of_Buffer.Line;
+         To_Line   : Integer;
+      begin
+         if Header /= "" then
+            Buffer.Insert (Buffer.End_Of_Buffer, Header & ASCII.LF);
+            To_Line := Buffer.End_Of_Buffer.Line;
+            Buffer.Apply_Style_To_Lines
+              ("Editor ephemeral highlighting simple",
+               Editable_Line_Type (From_Line),
+               Editable_Line_Type (To_Line));
          end if;
+      end Highlight_Header;
+   begin
+      Buffer.Set_Read_Only (False);
+      Highlight_Header;
+      Buffer.Insert (Buffer.End_Of_Buffer, Patch & ASCII.LF);
+      Buffer.Save (Interactive => False);
+      Buffer.Set_Read_Only (True);
 
-         Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
-      end loop;
+      if Title /= "" then
+         GPS.Editors.GtkAda.Get_MDI_Child
+           (Buffer.Current_View).Set_Title (Title);
+      end if;
+   end Create_Or_Reuse_Diff_Editor;
 
-      Free (List);
-      Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
-   end Add_Diff;
+   -----------------------
+   -- Clear_Diff_Editor --
+   -----------------------
+
+   procedure Clear_Diff_Editor (Kernel : Kernel_Handle)
+   is
+      File   : constant Virtual_File :=
+        Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
+      Buffer : constant GPS_Editor_Buffer'Class :=
+        GPS_Editor_Buffer'Class
+          (Kernel.Get_Buffer_Factory.Get (File => File));
+   begin
+      Buffer.Set_Read_Only (False);
+      Buffer.Delete (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer);
+      Buffer.Set_Read_Only (True);
+   end Clear_Diff_Editor;
 
    ----------------------
    -- On_Diff_Computed --
@@ -203,26 +149,24 @@ package body VCS2.Diff is
 
    overriding procedure On_Diff_Computed
      (Self   : not null access On_Diff_Visitor;
-      Diff   : String)
-   is
-      View  : Diff_View;
-      Child : MDI_Child;
+      Diff   : String) is
    begin
       if Diff = "" then
          if Self.File = No_File then
-            Insert (Self.Kernel, -"No difference found");
+            Insert (Self.Kernel, "No difference found");
          else
             Insert
-              (Self.Kernel, -"No difference found for "
+              (Self.Kernel, "No difference found for "
                & Self.File.Display_Full_Name);
          end if;
-
       else
-         View  := Diff_Views.Get_Or_Create_View (Self.Kernel);
-         Child := MDI_Child (Diff_Views.Child_From_View (View));
-         Child.Set_Title ("Diff " & Self.File.Display_Base_Name
-                          & " [" & To_String (Self.Ref) & "]");
-         View.Patch.Add_Diff (Diff);
+         Clear_Diff_Editor (Kernel_Handle (Self.Kernel));
+         Create_Or_Reuse_Diff_Editor
+           (Kernel => Kernel_Handle (Self.Kernel),
+            Patch  => Diff,
+            Title  => "Diff " & Self.File.Display_Base_Name
+            & " [" & To_String (Self.Ref) & "]",
+            Header => "");
       end if;
    end On_Diff_Computed;
 
@@ -368,13 +312,13 @@ package body VCS2.Diff is
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
+      File_Action : constant String := "diff against head for file";
+      Head_Action : constant String := "diff against head for file in editor";
    begin
-      Diff_Views.Register_Module (Kernel);
-
       Register_Action
-        (Kernel, "diff against head for file",
+        (Kernel, File_Action,
          Description =>
-           -("Display the local changes for the current file"),
+           "Display the local changes for the current file",
          Command     => new Diff_Head_For_File,
          Filter      => Kernel.Lookup_Filter ("File"),
          Icon_Name   => "vcs-diff-symbolic",
@@ -382,27 +326,27 @@ package body VCS2.Diff is
 
       Register_Contextual_Menu
         (Kernel,
-         Action   => "diff against head for file",
+         Action   => File_Action,
          Label    => "Version Control/Show local changes for %f");
 
       Register_Action
-        (Kernel, "diff against head for file in editor",
+        (Kernel, Head_Action,
          Description =>
-           -("Display the local changes for the current file in an editor"),
+           "Display the local changes for the current file in an editor",
          Command  => new Diff_Head_For_File_In_Editor,
          Filter   => Kernel.Lookup_Filter ("File"),
          Category => "VCS2");
 
       Register_Contextual_Menu
         (Kernel,
-         Action   => "diff against head for file in editor",
+         Action   => Head_Action,
          Label    => "Version Control/Show local changes for %f (in editor)");
 
       Register_Action
         (Kernel, "diff all against head",
          Description =>
-           -("Display all the local changes for the current version control"
-             & " system"),
+           ("Display all the local changes for the current version control"
+            & " system"),
          Command  => new Diff_Head,
          Category => "VCS2");
    end Register_Module;

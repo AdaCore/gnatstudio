@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;    use GPS.Kernel;
-with Gtk.Text_View; use Gtk.Text_View;
+with GPS.Kernel; use GPS.Kernel;
 
 package VCS2.Diff is
 
@@ -24,24 +23,16 @@ package VCS2.Diff is
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Create actions for this module
 
-   -----------------
-   -- Diff viewer --
-   -----------------
+   procedure Create_Or_Reuse_Diff_Editor
+     (Kernel : Kernel_Handle;
+      Patch  : String;
+      Title  : String := "";
+      Header : String := "");
+   --  Get or reuse an editor using the diff language. Patch will replace the
+   --  buffer content. If Title is set then renames the editor.
+   --  If Header is set then prefix the Patch with Header.
 
-   type Diff_Viewer_Record is new Gtk_Text_View_Record with private;
-   type Diff_Viewer is access all Diff_Viewer_Record'Class;
-   --  This widget can be used to display a diff/patch with syntax highlighting
-
-   procedure Gtk_New (Self  : out Diff_Viewer);
-   --  Create a new widget
-
-   procedure Add_Diff
-     (Self  : not null access Diff_Viewer_Record;
-      Patch : String);
-   --  Display some diff in Self.
-
-private
-
-   type Diff_Viewer_Record is new Gtk_Text_View_Record with null record;
+   procedure Clear_Diff_Editor (Kernel : Kernel_Handle);
+   --  Empty the diff editor.
 
 end VCS2.Diff;

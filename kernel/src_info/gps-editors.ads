@@ -653,6 +653,13 @@ package GPS.Editors is
    --  that the whole line including the trailing spaces appear selected.
    --  Otherwise only the actual characters will be styled.
 
+   procedure Apply_Style_To_Lines
+     (This      : Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type) is abstract;
+   --  Apply a specific style between From_Line and To_Line
+
    procedure Remove_Style
      (This  : Editor_Buffer;
       Style : String;
@@ -661,7 +668,7 @@ package GPS.Editors is
    --  Remove highlighting from a specific part of the text.
    --  If Line is 0, the removal is done on the whole buffer.
 
-   procedure Remove_Style_Line_Range
+   procedure Remove_Style_On_Lines
      (This      : Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
@@ -1192,13 +1199,19 @@ private
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is null;
 
+   overriding procedure Apply_Style_To_Lines
+     (This      : Dummy_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type) is null;
+
    overriding procedure Remove_Style
      (This  : Dummy_Editor_Buffer;
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is null;
 
-   overriding procedure Remove_Style_Line_Range
+   overriding procedure Remove_Style_On_Lines
      (This      : Dummy_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;

@@ -45,8 +45,6 @@ with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
-with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -75,9 +73,7 @@ with GPS_Unbounded_String_Vectors;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Generic_Views;               use Generic_Views;
-with GUI_Utils;                   use GUI_Utils;
-with Pango.Enums;                 use Pango.Enums;
-with VCS2.Diff;                   use VCS2.Diff;
+with VCS2.Diff;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 with Filter_Panels;               use Filter_Panels;
@@ -238,8 +234,6 @@ package body VCS2.History is
       return Selection_Context;
 
    type History_View_Record is new Base_VCS_View_Record with record
-      Details     : Diff_Viewer;
-
       Refresh_On_Pref_Changed : Boolean := True;
    end record;
    overriding procedure Refresh
@@ -321,6 +315,7 @@ package body VCS2.History is
 
    type On_Details is new Task_Visitor with record
       Kernel   : Kernel_Handle;
+      Multiple : Boolean;
    end record;
    overriding procedure On_Commit_Details
      (Self    : not null access On_Details;
@@ -932,71 +927,22 @@ package body VCS2.History is
       Header  : String;
       Message : String)
    is
-      pragma Unreferenced (ID);
-      View : constant History_View :=
+      View  : constant History_View :=
         History_Views.Retrieve_View (Self.Kernel);
-      Buffer : constant Gtk_Text_Buffer := View.Details.Get_Buffer;
-      Iter : Gtk_Text_Iter;
-      Grey, Bold  : Gtk_Text_Tag;
-
-      Header_Bg : constant Gdk_RGBA :=
-        Shade_Or_Lighten (Default_Style.Get_Pref_Fg, 0.8);
-
+      Title : constant String :=
+        (if Self.Multiple then
+            "Commit Overview"
+         elsif ID'Length > 6 then
+            "Commit " & ID (ID'First .. (ID'First + 6))
+         else
+            ID
+        );
    begin
-      Grey := Buffer.Create_Tag;
-      Gdk.RGBA.Set_Property
-        (Grey, Gtk.Text_Tag.Paragraph_Background_Rgba_Property,
-         Header_Bg);
-
-      Bold := Buffer.Create_Tag;
-      Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
-      Gdk.RGBA.Set_Property
-        (Bold, Gtk.Text_Tag.Paragraph_Background_Rgba_Property,
-         Header_Bg);
-      Gdk.RGBA.Set_Property
-        (Bold, Gtk.Text_Tag.Foreground_Rgba_Property, Emblem_Color);
-
-      Buffer.Get_End_Iter (Iter);
-
-      if Header /= "" then
-         declare
-            List : String_List_Access :=
-              Split (Header, ASCII.LF, Omit_Empty_Lines => False);
-            B    : Natural;
-         begin
-            for L of List.all loop
-               B := L'First;
-               while B <= L'Last loop
-                  if L (B) = ':' then
-                     Buffer.Insert_With_Tags (Iter, L (L'First .. B), Bold);
-                     Buffer.Insert (Iter, L (B + 1 .. L'Last));
-                     exit;
-                  end if;
-
-                  B := B + 1;
-               end loop;
-
-               if B > L'Last then
-                  Buffer.Insert_With_Tags (Iter, L.all, Grey);
-               end if;
-
-               --  Add spaces so that the gray background extends to the right
-               --  reasonably.
-               Buffer.Insert (Iter,
-                              (1 .. 80 => ' ',
-                               81      => ASCII.LF));
-            end loop;
-
-            Free (List);
-            Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
-         end;
-      end if;
-
-      if Message /= "" then
-         View.Details.Add_Diff (Message);
-      end if;
-
-      Show_Placeholder_If_Needed (View.Details);
+      VCS2.Diff.Create_Or_Reuse_Diff_Editor
+        (Kernel => View.Kernel,
+         Patch  => Message,
+         Title  => Title,
+         Header => Header);
    end On_Commit_Details;
 
    --------------------------
@@ -1039,18 +985,17 @@ package body VCS2.History is
          Seen := new On_Details;
          Seen.Kernel := Self.Kernel;
 
-         Self.Details.Get_Buffer.Set_Text ("");
          Count := Natural (Tree.Get_Selection.Count_Selected_Rows);
+         Seen.Multiple := Count > 1;
 
          if Count /= 0 then
+            VCS2.Diff.Clear_Diff_Editor (Self.Kernel);
             Ids := new GNAT.Strings.String_List (1 .. Count);
             Count := Ids'First;
             Tree.Get_Selection.Selected_Foreach
               (On_Selected'Unrestricted_Access);
 
             VCS.Queue_Fetch_Commit_Details (Ids => Ids, Visitor => Seen);
-         else
-            Show_Placeholder_If_Needed (Self.Details);
          end if;
       end if;
    end On_Selection_Changed;
@@ -1062,13 +1007,13 @@ package body VCS2.History is
    function Initialize
      (Self : access History_View_Record'Class) return Gtk_Widget
    is
-      Scrolled, Scrolled2 : Gtk_Scrolled_Window;
-      Paned               : Gtkada_Multi_Paned;
-      Text                : Gtk_Cell_Renderer_Text;
-      Col                 : Gtk_Tree_View_Column;
-      Dummy               : Gint;
-      Box                 : Gtk_Box;
-      T                   : History_Tree;
+      Scrolled : Gtk_Scrolled_Window;
+      Paned    : Gtkada_Multi_Paned;
+      Text     : Gtk_Cell_Renderer_Text;
+      Col      : Gtk_Tree_View_Column;
+      Dummy    : Gint;
+      Box      : Gtk_Box;
+      T        : History_Tree;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroy'Access);
@@ -1105,14 +1050,6 @@ package body VCS2.History is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Box.Pack_Start (Scrolled, Expand => True, Fill => True);
       Scrolled.Get_Vadjustment.On_Value_Changed (On_Scrolled'Access, Self);
-
-      Gtk_New (Scrolled2);
-      Scrolled2.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Paned.Split
-        (Ref_Widget   => Box,
-         New_Child    => Scrolled2,
-         Orientation  => Orientation_Vertical,
-         Height       => 15);
 
       Self.Tree.Set_Headers_Visible (True);
       Self.Tree.Set_Fixed_Height_Mode (True);
@@ -1151,11 +1088,6 @@ package body VCS2.History is
       Gtk_New (Text);
       T.Col_Date.Pack_Start (Text, False);
       T.Col_Date.Add_Attribute (Text, "text", Column_Date);
-
-      VCS2.Diff.Gtk_New (Self.Details);
-      Set_Placeholder
-        (Self.Details, -"Select one or more lines to view details");
-      Scrolled2.Add (Self.Details);
 
       Setup_Contextual_Menu
         (Kernel          => Self.Kernel,
@@ -1212,7 +1144,6 @@ package body VCS2.History is
       Config : History_View_Config;
    begin
       Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
-      Set_Font_And_Colors (Self.Details, Fixed_Font => True, Pref => Pref);
 
       Config :=
         (Initialized  => True,

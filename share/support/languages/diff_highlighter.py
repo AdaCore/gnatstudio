@@ -1,4 +1,5 @@
-from highlighter.common import register_highlighter, region, existing_style
+from highlighter.common import register_highlighter, region, existing_style, \
+    tag_keyword, simple
 
 
 file_tag = existing_style("Diff-File-Header-Color", "file-diff")
@@ -17,6 +18,8 @@ register_highlighter(
         # Match added line
         region(r"^\+", "\n", tag=added_tag),
         # Match removed line
-        region(r"^\-", "\n", tag=removed_tag)
+        region(r"^\-", "\n", tag=removed_tag),
+        # Match header keyword
+        simple(r"^[\w|-]+:", tag=tag_keyword)
     )
 )

@@ -500,12 +500,17 @@ package body Src_Editor_Module.Editors is
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
+   overriding procedure Apply_Style_To_Lines
+     (This      : Src_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type);
    overriding procedure Remove_Style
      (This  : Src_Editor_Buffer;
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-   overriding procedure Remove_Style_Line_Range
+   overriding procedure Remove_Style_On_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
@@ -2432,6 +2437,35 @@ package body Src_Editor_Module.Editors is
       end if;
    end Apply_Style;
 
+   ----------------------------
+   -- Apply_Style_Line_Range --
+   ----------------------------
+
+   overriding procedure Apply_Style_To_Lines
+     (This      : Src_Editor_Buffer;
+      Style     : String;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type)
+   is
+      The_Style : Style_Access;
+   begin
+      if To_Line < From_Line then
+         return;
+      end if;
+
+      The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
+
+      if This.Contents.Buffer /= null then
+         for Line in From_Line .. To_Line loop
+            Add_Line_Highlighting
+              (This.Contents.Buffer,
+               Editable_Line_Type (Line),
+               The_Style,
+               Highlight_In => (others => True));
+         end loop;
+      end if;
+   end Apply_Style_To_Lines;
+
    ------------------
    -- Remove_Style --
    ------------------
@@ -2465,7 +2499,7 @@ package body Src_Editor_Module.Editors is
    -- Remove_Style_Line_Range --
    -----------------------------
 
-   overriding procedure Remove_Style_Line_Range
+   overriding procedure Remove_Style_On_Lines
      (This      : Src_Editor_Buffer;
       Style     : String;
       From_Line : Editable_Line_Type;
@@ -2477,7 +2511,7 @@ package body Src_Editor_Module.Editors is
          S := Get_Style_Manager (This.Contents.Kernel).Get (Style);
          Remove_Highlighting (This.Contents.Buffer, S, From_Line, To_Line);
       end if;
-   end Remove_Style_Line_Range;
+   end Remove_Style_On_Lines;
 
    ----------------------
    -- Start_Undo_Group --
