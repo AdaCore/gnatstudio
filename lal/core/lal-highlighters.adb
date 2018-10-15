@@ -1011,9 +1011,9 @@ package body LAL.Highlighters is
       To     : Positive) is
    begin
       for J in Styles loop
-         Buffer.Remove_Style_Line_Range (Known_Styles (J).all,
-                                         Editable_Line_Type (From),
-                                         Editable_Line_Type (To));
+         Buffer.Remove_Style_On_Lines (Known_Styles (J).all,
+                                       Editable_Line_Type (From),
+                                       Editable_Line_Type (To));
       end loop;
    end Remove_Style;
 

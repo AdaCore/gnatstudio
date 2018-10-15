@@ -6,7 +6,7 @@ from constructs import CAT_PACKAGE, CAT_PROCEDURE, INDENTATION_NONE, \
     VISIBILITY_PUBLIC
 
 FILE_SECTION = "diff "
-LOC_SECTION = "@@ "
+LOC_SECTION = "@@"
 DIFF_CATEGORY = "Diff category"
 
 
@@ -29,17 +29,14 @@ class DiffLanguage(GPS.Language):
         diff section in the construct tree.
         :parameter text: |str| the content of the line
         """
-
         if is_file:
             type = CAT_PACKAGE
             name = text[len(FILE_SECTION):]
-            block_end = col_end
             entity_col = len(FILE_SECTION) + 1
         else:
             type = CAT_PROCEDURE
             name = self.get_loc_descr(text).strip()
-            block_end = col_end - 1
-            entity_col = len(LOC_SECTION) + 1
+            entity_col = len(LOC_SECTION) + 2
 
         clist.add_construct(type,
                             False,
@@ -47,7 +44,7 @@ class DiffLanguage(GPS.Language):
                             name,
                             "",
                             self.make_tuple(start_line + 1, 1),
-                            self.make_tuple(end_line, block_end),
+                            self.make_tuple(end_line, col_end),
                             self.make_tuple(start_line + 1, entity_col))
 
     def pairwise(self, lst):
