@@ -1442,6 +1442,11 @@ package body GPS.Kernel.Scripts is
         ("keywords",
          Class        => Language_Info,
          Getter       => Language_Info_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_lsp_arguments",
+         Class        => Language_Info,
+         Params       => (1 => Param ("args")),
+         Handler      => Language_Info_Handler'Access);
 
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
       GPS.Scripts.Commands.Register_Commands (Kernel);
@@ -1494,6 +1499,16 @@ package body GPS.Kernel.Scripts is
          if Lang.Keywords /= null then
             Data.Set_Return_Value (Lang.Keywords.all);
          end if;
+
+      elsif Command = "set_lsp_arguments" then
+         declare
+            List : constant List_Instance := Data.Nth_Arg (2);
+         begin
+            Lang.Remove_LSP_Args;
+            for A in 1 .. List.Number_Of_Arguments loop
+               Lang.Add_LSP_Arg (List.Nth_Arg (A));
+            end loop;
+         end;
       end if;
    end Language_Info_Handler;
 

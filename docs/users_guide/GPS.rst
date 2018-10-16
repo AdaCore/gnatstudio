@@ -1269,6 +1269,8 @@ Classes
    .. autoattribute:: GPS.LanguageInfo.name
 
 
+   .. automethod:: GPS.LanguageInfo.set_lsp_arguments
+
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
 
