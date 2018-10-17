@@ -156,7 +156,7 @@ package body GVD.Dialogs is
 
    package Tasks_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Tasks_View",
-      View_Name          => -"Tasks",
+      View_Name          => -"Debugger Tasks",
       Formal_View_Record => Task_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => False,
