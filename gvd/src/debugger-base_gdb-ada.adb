@@ -528,7 +528,33 @@ package body Debugger.Base_Gdb.Ada is
 
       while Num_Dim <= GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
          declare
-            First, Last : Long_Integer;
+            First, Last       : Long_Integer;
+            Discriminant_Type : Unbounded_String;
+
+            function Get_Discriminant_Value
+              (Name : String) return Long_Integer;
+            --  Converts discriminant name into its integer representation.
+
+            ----------------------------
+            -- Get_Discriminant_Value --
+            ----------------------------
+
+            function Get_Discriminant_Value
+              (Name : String) return Long_Integer is
+            begin
+               if Discriminant_Type = "" then
+                  Discriminant_Type := To_Unbounded_String
+                    (Lang.Get_Debugger.Get_Type_Info (Entity & "'First", ""));
+               end if;
+
+               return Long_Integer'Value
+                 (Lang.Get_Debugger.Value_Of
+                    ((if Discriminant_Type = ""
+                     then Name
+                     else To_String (Discriminant_Type) & "'(" & Name & ")"),
+                     Format => Decimal));
+            end Get_Discriminant_Value;
+
          begin
             --  The dimensions might not be numbers.
             --  For instance, when a record field is an array constrained by
@@ -546,10 +572,8 @@ package body Debugger.Base_Gdb.Ada is
 
                --  Evaluate First to decimal value
                begin
-                  First := Long_Integer'Value
-                    (Lang.Get_Debugger.Value_Of
-                       (Type_Str (Tmp_Index .. Index - 1),
-                        Format => Decimal));
+                  First := Get_Discriminant_Value
+                    (Type_Str (Tmp_Index .. Index - 1));
                exception
                   when Constraint_Error =>
                      First := Long_Integer'Last;
@@ -574,10 +598,8 @@ package body Debugger.Base_Gdb.Ada is
 
                --  Evaluate Last to decimal value
                begin
-                  Last := Long_Integer'Value
-                    (Lang.Get_Debugger.Value_Of
-                       (Type_Str (Tmp_Index .. Index - 1),
-                        Format => Decimal));
+                  Last := Get_Discriminant_Value
+                    (Type_Str (Tmp_Index .. Index - 1));
                exception
                   when Constraint_Error =>
                      Last := Long_Integer'First;
@@ -661,11 +683,17 @@ package body Debugger.Base_Gdb.Ada is
          --  array.
 
          for J in 1 .. GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
-            Append
-              (Index_Str,
-               Long_Integer'Image
+            declare
+               Img : constant String := Long_Integer'Image
                  (GVD_Array_Type_Access
-                      (R.Get_Type).Get_Dimensions (J).First));
+                    (R.Get_Type).Get_Dimensions (J).First);
+            begin
+               Append
+                 (Index_Str,
+                  (if Img (Img'First) = ' '
+                   then Img (Img'First + 1 .. Img'Last)
+                   else Img));
+            end;
 
             if J /= GVD_Array_Type_Access (R.Get_Type).Num_Dimensions then
                Append (Index_Str, ",");

@@ -455,7 +455,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Format   : Value_Format := Default_Format) return String
    is
       S : constant String := Send_And_Get_Clean_Output
-        (Debugger, "print" & Fmt_Array (Format) & ' ' & Entity,
+        (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
          Mode => Internal);
       Matched : Match_Array (0 .. 1);
    begin
