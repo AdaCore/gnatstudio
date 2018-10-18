@@ -652,8 +652,10 @@
    </toolbar>
 
    <toolbar id='Registers'>
-      <button action='register_view select all'/>
-      <button action='register_view deselect all'/>
+      <button action='registers add all'/>
+      <separator/>
+      <button action='registers add dialog'/>
+      <button action='registers delete selected'/>
    </toolbar>
 
    <toolbar id='Browser'>

@@ -1745,7 +1745,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector
+      return GVD.Types.String_To_String_Maps.Map
    is
       use Token_Lists;
 
@@ -1784,10 +1784,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end Get_Indices;
 
-      Values : array (1 .. Debugger.Registers.Last_Index) of
+      Values  : array (1 .. Debugger.Registers.Last_Index) of
         Standard.Ada.Strings.Unbounded.Unbounded_String;
 
-      Result  : GVD.Types.Strings_Vectors.Vector;
+      Result  : GVD.Types.String_To_String_Maps.Map;
 
       Tokens  : Token_List_Controller;
       C       : Token_Lists.Cursor;
@@ -1796,6 +1796,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Matched : Match_Array (0 .. 2);
 
    begin
+      if Debugger.Registers.Is_Empty then
+         return Result;
+      end if;
+
       declare
          Block : Process_Proxies.Parse_File_Switch
            (Debugger.Process) with Unreferenced;
@@ -1858,26 +1862,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
             use GVD.Types.Strings_Vectors;
             C : GVD.Types.Strings_Vectors.Cursor;
          begin
-            if Names.Is_Empty then
-               C := Debugger.Registers.First;
-               while Has_Element (C) loop
-                  if Element (C) /= "" then
-                     Result.Append (To_String (Values (To_Index (C))));
-                  end if;
-
-                  Next (C);
-               end loop;
-
-            else
-               for Name of Names loop
-                  C := Debugger.Registers.Find (Name);
-                  if Has_Element (C) then
-                     Result.Append (To_String (Values (To_Index (C))));
-                  else
-                     Result.Append ("");
-                  end if;
-               end loop;
-            end if;
+            for Name of Names loop
+               C := Debugger.Registers.Find (Name);
+               if Has_Element (C) then
+                  Result.Include (Name, To_String (Values (To_Index (C))));
+               else
+                  Result.Include (Name, "");
+               end if;
+            end loop;
          end;
 
       end;

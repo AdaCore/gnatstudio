@@ -3182,9 +3182,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector
+      return GVD.Types.String_To_String_Maps.Map
    is
-      Result : GVD.Types.Strings_Vectors.Vector;
+      Result : GVD.Types.String_To_String_Maps.Map;
 
       ---------
       -- Get --
@@ -3241,16 +3241,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end Get;
 
    begin
-      if Names.Is_Empty then
-         for N of Debugger.Registers loop
-            Result.Append (Get (N));
-         end loop;
-
-      else
-         for N of Names loop
-            Result.Append (Get (N));
-         end loop;
-      end if;
+      for N of Names loop
+         Result.Include (N, Get (N));
+      end loop;
 
       return Result;
    end Get_Registers_Values;

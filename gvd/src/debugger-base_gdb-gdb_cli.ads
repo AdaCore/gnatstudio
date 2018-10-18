@@ -460,7 +460,7 @@ package Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector;
+      return GVD.Types.String_To_String_Maps.Map;
 
 private
 

@@ -2823,7 +2823,7 @@ package body Debugger.LLDB is
      (Debugger : access LLDB_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector
+      return GVD.Types.String_To_String_Maps.Map
    is
       Block : Process_Proxies.Parse_File_Switch
         (Debugger.Process) with Unreferenced;
@@ -2845,15 +2845,16 @@ package body Debugger.LLDB is
         To_Unbounded_String ("register read --format " & Convert (Format));
       S   : Ada.Strings.Unbounded.Unbounded_String;
 
+      Index   : Integer := Names.First_Index;
       List    : String_List_Access;
       Matched : Match_Array (0 .. 4);
-      Result  : GVD.Types.Strings_Vectors.Vector;
+      Result  : GVD.Types.String_To_String_Maps.Map;
    begin
       if Names.Is_Empty then
          Append (Cmd, " --all");
       else
-         for I of Names loop
-            Append (Cmd, " " & I);
+         for Item of Names loop
+            Append (Cmd, " " & Item);
          end loop;
       end if;
 
@@ -2866,8 +2867,10 @@ package body Debugger.LLDB is
          Match (Register_Regexp, Line.all, Matched);
 
          if Matched (0) /= No_Match then
-            Result.Append
-              (Line (Matched (2).First .. Matched (2).Last - 1));
+            Result.Include
+              (Names.Element (Index),
+               Line (Matched (2).First .. Matched (2).Last - 1));
+            Index := Index + 1;
          end if;
       end loop;
 

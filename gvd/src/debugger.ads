@@ -945,7 +945,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector is abstract;
+      return GVD.Types.String_To_String_Maps.Map is abstract;
 
    procedure Set_Register
      (Debugger : access Debugger_Root;

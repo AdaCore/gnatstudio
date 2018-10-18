@@ -15,29 +15,37 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers;
+with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Glib;                      use Glib;
 with Glib.Object;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Flow_Box;              use Gtk.Flow_Box;
+with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gdk.RGBA;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;
 
 with GPS.Debuggers;             use GPS.Debuggers;
+with GPS.Dialogs;               use GPS.Dialogs;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -60,19 +68,27 @@ with Commands.Interactive;      use Commands.Interactive;
 
 package body GVD.Registers_View is
 
-   package Registers_Preferences_Map is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, Boolean_Preference);
-
-   Registers_Preferences : Registers_Preferences_Map.Map;
+   package Registers_Set is
+      new Ada.Containers.Indefinite_Ordered_Sets (String);
 
    type Registers_View_Record is new Process_View_Record with
       record
          Tree       : Gtk.Tree_View.Gtk_Tree_View;
+
          Model      : Gtk.Tree_Store.Gtk_Tree_Store;
          --  The actual contents of the viewer
-         Old_Values : GVD.Types.Strings_Vectors.Vector;
+
+         Old_Values : GVD.Types.String_To_String_Maps.Map;
+
+         Registers  : Registers_Set.Set;
+         --  Set of all the displayed registers
+
          Locked     : Boolean := False;
+         --  If true, disable updates
+
          Resize     : Boolean := False;
+         --  If true, the column will be resized at the next update
+
       end record;
    type Registers_View is access all Registers_View_Record'Class;
 
@@ -96,11 +112,6 @@ package body GVD.Registers_View is
      (Process : not null access Base_Visual_Debugger'Class;
       View    : access Registers_View_Record'Class := null);
    --  Store or retrieve the view from the process
-
-   procedure Create_Register_Preferences
-     (View  : not null Registers_View;
-      Names : GVD.Types.Strings_Vectors.Vector);
-   --  Create preferences for them
 
    package Registers_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Registers_View",
@@ -133,13 +144,24 @@ package body GVD.Registers_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
-   type Selection_Command is new Interactive_Command with record
-      Selection : Boolean := True;
-   end record;
+   type Add_All_Registers_Command is new Interactive_Command with null record;
    overriding function Execute
-     (Command : access Selection_Command;
+     (Command : access Add_All_Registers_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Select/deselect all registers
+   --  Add all the available registers in the view.
+
+   type Add_Registers_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Add_Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Open a dialog to let the user choose the visible registers
+
+   type Remove_Selected_Registers_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Remove_Selected_Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Remove the selected registers
 
    procedure On_Edit
      (Self     : access Glib.Object.GObject_Record'Class;
@@ -169,15 +191,8 @@ package body GVD.Registers_View is
    is
       use type GVD.Types.Debugger_Type;
 
-      K       : constant Kernel_Handle := View.Kernel;
-      Process : Visual_Debugger;
-      Names   : GVD.Types.Strings_Vectors.Vector;
+      K : constant Kernel_Handle := View.Kernel;
    begin
-      Process := Get_Process (View);
-      Names   := Process.Debugger.Get_Register_Names;
-
-      Create_Register_Preferences (View, Names);
-
       Append_Menu (Menu, K, Registers_Hexadecimal);
       Append_Menu (Menu, K, Registers_Natural);
       if Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
@@ -187,56 +202,7 @@ package body GVD.Registers_View is
          Append_Menu (Menu, K, Registers_Raw);
       end if;
       Menu.Append (Gtk.Menu_Item.Gtk_Menu_Item_New);
-
-      for Item of Names loop
-         Append_Menu (Menu, K, Registers_Preferences.Element (Item));
-      end loop;
    end Create_Menu;
-
-   ---------------------------------
-   -- Create_Register_Preferences --
-   ---------------------------------
-
-   procedure Create_Register_Preferences
-     (View  : not null Registers_View;
-      Names : GVD.Types.Strings_Vectors.Vector)
-   is
-      Manager : constant Preferences_Manager := View.Kernel.Get_Preferences;
-   begin
-      for Item of Names loop
-         if not Registers_Preferences.Contains (Item) then
-            Registers_Preferences.Insert
-              (Item,
-               Create_Invisible_Pref (Manager, Item, True, Item));
-         end if;
-      end loop;
-   end Create_Register_Preferences;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Selection_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Manager : constant Preferences_Manager :=
-        Get_Kernel (Context.Context).Get_Preferences;
-      View    : constant Registers_View := Registers_View
-        (Registers_MDI_Views.Get_Or_Create_View
-           (Get_Kernel (Context.Context)));
-   begin
-      View.Locked := True;
-      for Item of Registers_Preferences loop
-         Set_Pref (Item, Manager, Command.Selection);
-      end loop;
-
-      View.Locked := False;
-      View.Resize := True;
-      View.Update;
-
-      return Commands.Success;
-   end Execute;
 
    -------------
    -- Execute --
@@ -251,24 +217,6 @@ package body GVD.Registers_View is
       use type GVD.Types.Debugger_Type;
 
       pragma Unreferenced (Kernel);
-
-      function Is_Register_Pref return Boolean;
-
-      ----------------------
-      -- Is_Register_Pref --
-      ----------------------
-
-      function Is_Register_Pref return Boolean is
-      begin
-         for Item of Registers_Preferences loop
-            if Preference (Item) = Pref then
-               return True;
-            end if;
-         end loop;
-
-         return False;
-      end Is_Register_Pref;
-
       Changed : Boolean := False;
    begin
       if Pref = null then
@@ -308,13 +256,185 @@ package body GVD.Registers_View is
          end if;
       end if;
 
-      if Changed
-        or else Is_Register_Pref
-      then
+      if Changed then
          Self.View.Old_Values.Clear;
          Self.View.Resize := True;
          Update (Self.View);
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Add_All_Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View    : constant Registers_View :=
+        Registers_View
+          (Registers_MDI_Views.Get_Or_Create_View
+             (Get_Kernel (Context.Context)));
+      Process : Visual_Debugger;
+      Names   : GVD.Types.Strings_Vectors.Vector;
+   begin
+      Process := Get_Process (View);
+      View.Locked := True;
+      Names := Process.Debugger.Get_Register_Names;
+
+      for Item of Names loop
+         View.Registers.Include (Item);
+      end loop;
+
+      View.Locked := False;
+      View.Old_Values.Clear;
+      View.Update;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Add_Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View     : constant Registers_View :=
+        Registers_View
+          (Registers_MDI_Views.Get_Or_Create_View
+             (Get_Kernel (Context.Context)));
+      Process  : Visual_Debugger;
+      Names    : GVD.Types.Strings_Vectors.Vector;
+
+      Scrolled : Gtk_Scrolled_Window;
+      Dialog   : GPS_Dialog;
+      Button   : Gtk_Widget;
+      Ignore   : Gtk_Widget;
+      Flow_Box : Gtk_Flow_Box;
+      Check    : Gtk_Check_Button;
+
+      procedure Is_Selected_Register
+        (Widget : not null access Gtk_Widget_Record'Class);
+
+      --------------------------
+      -- Is_Selected_Register --
+      --------------------------
+
+      procedure Is_Selected_Register
+        (Widget : not null access Gtk_Widget_Record'Class) is
+      begin
+         if Gtk_Check_Button (Gtk_Flow_Box_Child (Widget).Get_Child).Get_Active
+         then
+            View.Registers.Include
+              (Gtk_Check_Button
+                 (Gtk_Flow_Box_Child (Widget).Get_Child).Get_Label);
+         end if;
+      end Is_Selected_Register;
+   begin
+      Process := Get_Process (View);
+      View.Locked := True;
+      Names := Process.Debugger.Get_Register_Names;
+
+      Gtk_New (Dialog,
+               Title          => "Registers Selector",
+               Kernel         => View.Kernel,
+               Flags          => Destroy_With_Parent,
+               Default_Width  => 500,
+               Default_Length => 400);
+
+      Gtk_New (Scrolled);
+      Gtk_New (Flow_Box);
+      Flow_Box.Set_Homogeneous (True);
+      Scrolled.Add (Flow_Box);
+      Pack_Start
+        (Get_Content_Area (Dialog), Scrolled, Expand => True, Fill => True);
+
+      for Name of Names loop
+         Gtk_New (Check, Name);
+         if View.Registers.Contains (Name) then
+            Check.Set_Active (True);
+         end if;
+         Check.Set_Name (Name);
+         Flow_Box.Add (Check);
+      end loop;
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Grab_Default (Button);
+      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      case Run (Dialog) is
+         when Gtk_Response_OK =>
+            --  Update the list of visible child
+            View.Registers.Clear;
+            View.Old_Values.Clear;
+            Flow_Box.Foreach
+              (Is_Selected_Register'Unrestricted_Access);
+            Destroy (Dialog);
+         when others =>
+            Destroy (Dialog);
+      end case;
+
+      View.Locked := False;
+      View.Update;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Remove_Selected_Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View   : constant Registers_View :=
+        Registers_View
+          (Registers_MDI_Views.Get_Or_Create_View
+             (Get_Kernel (Context.Context)));
+      List   : Gtk_Tree_Path_List.Glist;
+      G_Iter : Gtk_Tree_Path_List.Glist;
+      Path   : Gtk_Tree_Path;
+      Model  : Gtk_Tree_Model;
+
+      use Gtk_Tree_Path_List;
+   begin
+      View.Locked := True;
+
+      if View /= null then
+         View.Tree.Get_Selection.Get_Selected_Rows (Model, List);
+
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
+            --  The children must be modified before their fathers
+            G_Iter := Gtk_Tree_Path_List.Last (List);
+
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+
+               if Path /= Null_Gtk_Tree_Path then
+                  declare
+                     Name : constant String :=
+                       View.Model.Get_String
+                         (View.Model.Get_Iter (Path), Name_Column);
+                  begin
+                     View.Registers.Delete (Name);
+                  end;
+               end if;
+               Path_Free (Path);
+               G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+            end loop;
+         end if;
+         Gtk_Tree_Path_List.Free (List);
+      end if;
+
+      View.Locked := False;
+      View.Update;
+      return Commands.Success;
    end Execute;
 
    --------------
@@ -372,7 +492,7 @@ package body GVD.Registers_View is
          Col.Set_Title (Name);
          Col.Set_Resizable (True);
          Col.Set_Reorderable (True);
-         Col.Set_Clickable (False);
+         Col.Set_Clickable (True);
          Gtk_New (Render);
          Col.Pack_Start (Render, False);
          Col.Add_Attribute (Render, "text", Column);
@@ -394,7 +514,8 @@ package body GVD.Registers_View is
       Gtk_New (Widget.Tree,  Widget.Model);
       Set_Name (Widget.Tree, "Registers Tree");  --  For testsuite
 
-      Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
+      Widget.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      Widget.Tree.Set_Search_Column (Name_Column);
       Widget.Tree.Set_Grid_Lines (Grid_Lines_Both);
       Add (Scrolled, Widget.Tree);
 
@@ -402,8 +523,8 @@ package body GVD.Registers_View is
       Col_Number := Widget.Tree.Append_Column (Col);
       Col.Set_Title ("Name");
       Col.Set_Resizable (True);
-      Col.Set_Reorderable (False);
-      Col.Set_Clickable (False);
+      Col.Set_Sort_Column_Id (Name_Column);
+      Col.Set_Clickable (True);
       Gtk_New (Render);
       Col.Pack_Start (Render, False);
       Col.Add_Attribute (Render, "text", Name_Column);
@@ -513,19 +634,25 @@ package body GVD.Registers_View is
          Filter      => Debugger_Stopped);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "register_view select all",
-         Command     => new Selection_Command'
-           (Interactive_Command with Selection => True),
-         Description => "Select all registers",
+        (Kernel, "registers add all",
+         Command     => new Add_All_Registers_Command,
+         Description => "Add all registers",
          Icon_Name   => "gps-add-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Stopped);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "register_view deselect all",
-         Command     => new Selection_Command'
-           (Interactive_Command with Selection => False),
-         Description => "Deselect all registers",
+        (Kernel, "registers add dialog",
+         Command     => new Add_Registers_Command,
+         Description => "Open a dialog to select the registers",
+         Icon_Name   => "gps-add-symbolic",
+         Category    => "Debug",
+         Filter      => Debugger_Stopped);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "registers delete selected",
+         Command     => new Remove_Selected_Registers_Command,
+         Description => "Select all registers",
          Icon_Name   => "gps-remove-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Stopped);
@@ -564,7 +691,6 @@ package body GVD.Registers_View is
 
       Process    : Visual_Debugger;
       Instance   : Debugger.Debugger_Access;
-      Names      : GVD.Types.Strings_Vectors.Vector;
       Selected   : GVD.Types.Strings_Vectors.Vector;
       First_Pass : Boolean := True;
 
@@ -574,11 +700,12 @@ package body GVD.Registers_View is
       Columns    : Columns_Array (Values'Range);
       Last       : Gint := 0;
 
+      Index         : Integer := 0;
       Bg_Name       : Gdk.RGBA.Gdk_RGBA;
       Bg_Name_Dark  : Gdk.RGBA.Gdk_RGBA;
       Bg_Value      : Gdk.RGBA.Gdk_RGBA;
       Bg_Value_Dark : Gdk.RGBA.Gdk_RGBA;
-      Fg            : Gdk.RGBA.Gdk_RGBA;
+      Modified_Fg   : Gdk.RGBA.Gdk_RGBA;
 
       procedure Get_Values (Fmt : GVD.Types.Registers_Format);
       --  Retrieve values in selected format
@@ -588,7 +715,7 @@ package body GVD.Registers_View is
          use type GVD.Types.Registers_Format;
 
          Allowed : Boolean;
-         Result  : GVD.Types.Strings_Vectors.Vector;
+         Result  : GVD.Types.String_To_String_Maps.Map;
          Column  : Glib.Gint;
       begin
          if Debugger_Kind.Get_Pref /= GVD.Types.Gdb then
@@ -636,12 +763,7 @@ package body GVD.Registers_View is
             return;
          end if;
 
-         if Selected.Length = Names.Length then
-            Result := Instance.Get_Registers_Values
-              (GVD.Types.Strings_Vectors.Empty_Vector, Fmt);
-         else
-            Result := Instance.Get_Registers_Values (Selected, Fmt);
-         end if;
+         Result := Instance.Get_Registers_Values (Selected, Fmt);
 
          if Selected.Length /= Result.Length then
             View.Old_Values.Clear;
@@ -652,7 +774,7 @@ package body GVD.Registers_View is
             Row := Model.Get_Iter_First;
          end if;
 
-         for Index in 1 .. Natural (Selected.Length) loop
+         for Item of Selected loop
             Last := 0;
 
             if First_Pass then
@@ -661,7 +783,7 @@ package body GVD.Registers_View is
                Columns (2) := BG_Name_Color_Column;
                Columns (3) := BG_Value_Color_Column;
 
-               Values  (1) := As_String (Selected.Element (Index));
+               Values  (1) := As_String (Item);
 
                if Index rem 2 = 0 then
                   Gdk.RGBA.Set_Value (Values (2), Bg_Name);
@@ -674,18 +796,18 @@ package body GVD.Registers_View is
                Last := 3;
 
                if not View.Old_Values.Is_Empty
-                 and then View.Old_Values.Element
-                   (Index) /= Result.Element (Index)
+                 and then
+                   View.Old_Values.Element (Item) /= Result.Element (Item)
                then
                   Last := 4;
                   Columns (4) := FG_Color_Column;
-                  Gdk.RGBA.Set_Value (Values (4), Fg);
+                  Gdk.RGBA.Set_Value (Values (4), Modified_Fg);
                end if;
             end if;
 
             Last := Last + 1;
             Columns (Last) := Column;
-            Values  (Last) := As_String (Result.Element (Index));
+            Values  (Last) := As_String (Result.Element (Item));
 
             Last := Last + 1;
             Columns (Last) := Editable_Column;
@@ -700,6 +822,8 @@ package body GVD.Registers_View is
             if not First_Pass then
                Model.Next (Row);
             end if;
+
+            Index := Index + 1;
          end loop;
 
          if First_Pass then
@@ -738,22 +862,16 @@ package body GVD.Registers_View is
       Instance := Process.Debugger;
 
       if Instance /= null then
-         Names := Instance.Get_Register_Names;
-
-         Create_Register_Preferences (View, Names);
-
          Bg_Value      := Default_Style.Get_Pref_Bg;
          Bg_Value_Dark := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.05);
          Bg_Name       := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.1);
          Bg_Name_Dark  := Gtkada.Style.Shade_Or_Lighten (Bg_Value, 0.15);
 
-         Fg := Numbers_Style.Get_Pref_Fg;
+         Modified_Fg := Numbers_Style.Get_Pref_Fg;
 
          --  Get names of selected registers
-         for Item of Names loop
-            if Registers_Preferences.Element (Item).Get_Pref then
-               Selected.Append (Item);
-            end if;
+         for Item of View.Registers loop
+            Selected.Append (Item);
          end loop;
 
          for Index in GVD.Types.Registers_Format loop

@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;                   use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
@@ -191,6 +193,9 @@ package GVD.Types is
 
    package Strings_Vectors is
      new Ada.Containers.Indefinite_Vectors (Positive, String);
+
+   package String_To_String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+       (String, String, Ada.Strings.Hash, "=");
 
 private
    subtype Address_Range is Integer range 0 .. 20;
