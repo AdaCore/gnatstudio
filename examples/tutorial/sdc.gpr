@@ -9,9 +9,7 @@ project Sdc is
    for Object_Dir use "obj";
 
    package Compiler is
-
       case Build is
-
          when "DEBUG" =>
             for Switches ("ada") use ("-gnatwe", "-gnaty", "-gnato", "-g");
             for Switches ("screen_output.adb") use ("-gnatwe", "-gnaty", "-g");
@@ -22,9 +20,7 @@ project Sdc is
    end Compiler;
 
    package Builder is
-
       case Build is
-
          when "DEBUG" =>
             for Switches ("ada") use ("-g");
 
@@ -36,6 +32,10 @@ project Sdc is
    package Binder is
       for Switches ("ada") use ("-static");
    end Binder;
+
+   package CodePeer is
+      for Switches use ("-level", "3");
+   end CodePeer;
 
 end Sdc;
 
