@@ -605,7 +605,7 @@ package body GVD.Variables.View is
 
       Values : JSON_Array;
    begin
-      Trace (Me, "Saving variable view to xml, has items ?"
+      Trace (Me, "Saving variable view to JSON, has items ?"
              & Self.Items.Length'Img);
 
       for Item of Self.Items loop

@@ -18,9 +18,20 @@
 with Ada.Containers;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+
+with Default_Preferences;       use Default_Preferences;
+with Debugger;                  use Debugger;
+with Generic_Views;             use Generic_Views;
+
 with Glib;                      use Glib;
 with Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
+with GNATCOLL.JSON;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -51,22 +62,19 @@ with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;
+with GPS.Properties;            use GPS.Properties;
 
-with Debugger;                  use Debugger;
 with GVD.Generic_View;          use GVD.Generic_View;
 with GVD_Module;                use GVD_Module;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Types;
 
-with Default_Preferences;       use Default_Preferences;
-with Generic_Views;             use Generic_Views;
-with Glib_Values_Utils;         use Glib_Values_Utils;
-
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
+with String_Utils; use String_Utils;
 
 package body GVD.Registers_View is
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.REGISTERS_VIEW");
 
    package Registers_Set is
       new Ada.Containers.Indefinite_Ordered_Sets (String);
@@ -79,6 +87,7 @@ package body GVD.Registers_View is
          --  The actual contents of the viewer
 
          Old_Values : GVD.Types.String_To_String_Maps.Map;
+         --  Register name => value
 
          Registers  : Registers_Set.Set;
          --  Set of all the displayed registers
@@ -97,6 +106,26 @@ package body GVD.Registers_View is
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    overriding procedure Update (View : not null access Registers_View_Record);
+
+   overriding procedure On_Attach
+     (Self    : not null access Registers_View_Record;
+      Process : not null access Base_Visual_Debugger'Class);
+
+   overriding procedure On_Detach
+     (Self    : not null access Registers_View_Record;
+      Process : not null access Base_Visual_Debugger'Class);
+
+   type Registers_Property_Record is new Property_Record with record
+      Items : Registers_Set.Set;
+   end record;
+   --  This type is used to preverse the visible registers accross sessions by
+   --  saving them in the property database.
+   overriding procedure Save
+     (Self  : access Registers_Property_Record;
+      Value : in out GNATCOLL.JSON.JSON_Value);
+   overriding procedure Load
+     (Self  : in out Registers_Property_Record;
+      Value : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Process_Terminated
      (View : not null access Registers_View_Record);
@@ -168,6 +197,12 @@ package body GVD.Registers_View is
       Path     : UTF8_String;
       New_Text : UTF8_String);
    --  Edit a register's value callback
+
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Smart sort for the registers' names
 
    Name_Column           : constant := 0;
    Hexadecimal_Column    : constant := 1;
@@ -563,6 +598,9 @@ package body GVD.Registers_View is
          GVD.Preferences.Registers_Raw.Get_Pref,
          "Raw");
 
+      Widget.Model.Set_Sort_Func (Name_Column, Sort_Func'Access);
+      Widget.Model.Set_Sort_Column_Id (Name_Column, Sort_Descending);
+
       Widget.Modify_Font (Default_Style.Get_Pref_Font);
 
       Hook      := new On_Pref_Changed;
@@ -604,6 +642,25 @@ package body GVD.Registers_View is
          Widget.Update;
       end if;
    end On_Edit;
+
+   ---------------
+   -- Sort_Func --
+   ---------------
+
+   function Sort_Func
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      S_A : constant String := Get_String (Model, A, Name_Column);
+      S_B : constant String := Get_String (Model, B, Name_Column);
+   begin
+      if Smart_Sort (S_A, S_B) then
+         return 1;
+      else
+         return -1;
+      end if;
+   end Sort_Func;
 
    ---------------------------
    -- On_Process_Terminated --
@@ -896,5 +953,123 @@ package body GVD.Registers_View is
          Path_Free (Current);
       end if;
    end Update;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   overriding procedure On_Attach
+     (Self    : not null access Registers_View_Record;
+      Process : not null access Base_Visual_Debugger'Class)
+   is
+      V        : constant Visual_Debugger := Visual_Debugger (Process);
+      Found    : Boolean;
+      Property : Registers_Property_Record;
+   begin
+      if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
+         Get_Property
+           (Property,
+            Get_Executable (V.Debugger),
+            Name  => "debugger_registers",
+            Found => Found);
+         if Found then
+            Self.Registers := Property.Items;
+            Self.Old_Values.Clear;
+            Self.Update;
+         end if;
+      end if;
+   end On_Attach;
+
+   ---------------
+   -- On_Detach --
+   ---------------
+
+   overriding procedure On_Detach
+     (Self    : not null access Registers_View_Record;
+      Process : not null access Base_Visual_Debugger'Class)
+   is
+      V        : constant Visual_Debugger := Visual_Debugger (Process);
+      Property : access Registers_Property_Record;
+
+      function Deep_Copy
+        (Registers : Registers_Set.Set) return Registers_Set.Set;
+
+      ---------------
+      -- Deep_Copy --
+      ---------------
+
+      function Deep_Copy
+        (Registers : Registers_Set.Set) return Registers_Set.Set
+      is
+         Result : Registers_Set.Set;
+      begin
+         for Name of Registers loop
+            Result.Include (Name);
+         end loop;
+
+         return Result;
+      end Deep_Copy;
+   begin
+      if V.Debugger /= null and then Preserve_State_On_Exit.Get_Pref then
+         Property := new Registers_Property_Record;
+         Property.Items := Deep_Copy (Self.Registers);
+         GPS.Kernel.Properties.Set_Property
+           (Kernel     => Self.Kernel,
+            File       => Get_Executable (Visual_Debugger (Process).Debugger),
+            Name       => "debugger_registers",
+            Property   => Property,
+            Persistent => True);
+      end if;
+   end On_Detach;
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Self  : access Registers_Property_Record;
+      Value : in out GNATCOLL.JSON.JSON_Value)
+   is
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
+   begin
+      Trace (Me, "Saving registers view to JSON, has items ?"
+             & Self.Items.Length'Img);
+
+      for Item of Self.Items loop
+         declare
+            Register_Value : constant JSON_Value := Create_Object;
+         begin
+            Register_Value.Set_Field ("name", Item);
+            Append (Values, Register_Value);
+         end;
+      end loop;
+      Value.Set_Field ("value", Values);
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   overriding procedure Load
+     (Self  : in out Registers_Property_Record;
+      Value : GNATCOLL.JSON.JSON_Value)
+   is
+      use GNATCOLL.JSON;
+
+      Values : constant JSON_Array := Value.Get ("value");
+   begin
+      Trace (Me, "Loading variable view from JSON, has items ?"
+             &  Boolean'Image (Length (Values) > 0));
+
+      for Index in 1 .. Length (Values) loop
+         declare
+            V : constant JSON_Value := Get (Values, Index);
+         begin
+            Self.Items.Include (String'(V.Get ("name")));
+         end;
+      end loop;
+   end Load;
 
 end GVD.Registers_View;
