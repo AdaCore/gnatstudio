@@ -428,7 +428,7 @@ package Debugger.LLDB is
      (Debugger : access LLDB_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
-      return GVD.Types.Strings_Vectors.Vector;
+      return GVD.Types.String_To_String_Maps.Map;
 
    overriding procedure Set_Register
      (Debugger : access LLDB_Debugger;
