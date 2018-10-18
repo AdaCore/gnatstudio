@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
@@ -156,13 +157,45 @@ package body GVD.Variables.Types.Classes is
    overriding function Field_Name
      (Iter : Class_Iterator;
       Lang : not null access Language_Root'Class;
-      Base : String := "") return String is
+      Base : String := "") return String
+   is
+      function Cut (Value : String) return String;
+      --  Returns end of the Value up to '.'
+
+      function Cut (Value : String) return String is
+         Idx : Integer := Ada.Strings.Fixed.Index
+           (Value, ".", Ada.Strings.Backward);
+      begin
+         if Idx > Value'First then
+            return Value (Idx + 1 .. Value'Last);
+
+         else
+            --  Cutting out 'public' prefix for cpp classes
+            Idx := Ada.Strings.Fixed.Index
+              (Value (Value'First .. Value'Last - 1),
+               " ", Ada.Strings.Backward);
+
+            if Idx > Value'First then
+               return Value (Idx + 1 .. Value'Last);
+
+            else
+               return Value;
+            end if;
+         end if;
+      end Cut;
+
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          if Base /= "" then
             return Base;
          else
-            return "<parent class>";
+            if GVD_Type_Holder (Iter.Data) /= Empty_GVD_Type_Holder then
+               return "<" &
+                 Cut (GVD_Type_Holder (Iter.Data).Get_Type.Get_Type_Name) &
+                 ">";
+            else
+               return "<parent class>";
+            end if;
          end if;
 
       elsif Iter.Child /= null then
