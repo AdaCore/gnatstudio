@@ -2494,13 +2494,17 @@ package body Src_Editor_View is
         View.Get_Modifier_Mask (Primary_Accelerator)
       then
          Get_Scroll_Direction (Event, Direction);
-         if Direction = Scroll_Up or else Direction = Scroll_Down then
+
+         if Direction = Scroll_Up
+           or else Direction = Scroll_Down
+         then
             Dummy := GPS.Kernel.Actions.Execute_Action
               (View.Kernel,
-               (if Direction = Scroll_Down
+               (if Direction = Scroll_Up
                 then "increase text size"
                 else "decrease text size"));
             return True;
+
          else
             return False;
          end if;
