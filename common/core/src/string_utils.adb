@@ -175,6 +175,101 @@ package body String_Utils is
       return Ada.Strings.Fixed.Translate (Mixed_Case (Title), Translation);
    end Format_Title;
 
+   ----------------
+   -- Smart_Sort --
+   ----------------
+
+   function Smart_Sort (S1, S2 : String) return Boolean
+   is
+      Index_1 : Natural;
+      Value_1 : Integer;
+      Char_1  : Character;
+      Neg_1   : Boolean := False;
+
+      Index_2 : Natural;
+      Value_2 : Integer;
+      Char_2  : Character;
+      Neg_2   : Boolean := False;
+
+      procedure Next_Step
+        (S      : String;
+         Is_Neg : in out Boolean;
+         Index  : in out Natural;
+         Char   : out Character;
+         Value  : out Integer);
+
+      ---------------
+      -- Next_Step --
+      ---------------
+
+      procedure Next_Step
+        (S      : String;
+         Is_Neg : in out Boolean;
+         Index  : in out Natural;
+         Char   : out Character;
+         Value  : out Integer)
+      is
+      begin
+         Char := Character'Val (0);
+         Value := 0;
+
+         if S (Index) in '0' .. '9' then
+            while Index <= S'Last and then S (Index) in '0' .. '9' loop
+               Value :=
+                 Value * 10 + Character'Pos (S (Index)) - Character'Pos ('0');
+               Index := Index + 1;
+            end loop;
+            if Is_Neg then
+               Value := -Value;
+            end if;
+         elsif S (Index) = '-' then
+            Char := '-';
+            Is_Neg := True;
+         else
+            Char := S (Index);
+            Is_Neg := False;
+         end if;
+      end Next_Step;
+
+   begin
+      --  Treat invalid user input
+      if S1 = "" then
+         return True;
+      elsif S2 = "" then
+         return False;
+      end if;
+
+      Index_1 := S1'First;
+      Index_2 := S2'First;
+
+      while Index_1 <= S1'Last and then Index_2 <= S2'Last loop
+         Next_Step (S1, Neg_1, Index_1, Char_1, Value_1);
+         Next_Step (S2, Neg_2, Index_2, Char_2, Value_2);
+
+         if Char_1 /= Character'Val (0) then
+            if Char_2 /= Character'Val (0) then
+               if Char_1 /= Char_2 then
+                  return Char_1 < Char_2;
+               end if;
+            else
+               return False;
+            end if;
+         else
+            if Char_2 /= Character'Val (0) then
+               return True;
+            else
+               --  We are comparing two numbers at this point
+               return Value_1 < Value_2;
+            end if;
+         end if;
+         Index_1 := Index_1 + 1;
+         Index_2 := Index_2 + 1;
+      end loop;
+
+      --  Check which is the word we completely parsed
+      return Index_2 <= S2'Last;
+   end Smart_Sort;
+
    --------------------------
    -- Get_Surrounding_Line --
    --------------------------

@@ -49,6 +49,9 @@ package String_Utils is
    --  Replace the '_' by ' ' and transform the first character of each word
    --  on its uppercase equivalent
 
+   function Smart_Sort (S1, S2 : String) return Boolean;
+   --  Return True if S1 is less than S2 alphabetically and numerically
+
    function Get_Surrounding_Line
      (Str    : String;
       Start  : Natural;
