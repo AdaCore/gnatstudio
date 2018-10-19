@@ -2953,16 +2953,16 @@ begin
 
    --  If, for some obscure reason, there is a DBUS address specified,
    --  allow it.
-   declare
-      Bus_Addr : String_Access := Getenv ("DBUS_SESSION_BUS_ADDRESS");
-   begin
-      if Bus_Addr = null
-        or else Bus_Addr.all = ""
-      then
-         Setenv ("DBUS_SESSION_BUS_ADDRESS", "null");
-      end if;
-      Free (Bus_Addr);
-   end;
+   --  declare
+   --     Bus_Addr : String_Access := Getenv ("DBUS_SESSION_BUS_ADDRESS");
+   --  begin
+   --     if Bus_Addr = null
+   --       or else Bus_Addr.all = ""
+   --     then
+   --        Setenv ("DBUS_SESSION_BUS_ADDRESS", "null");
+   --     end if;
+   --     Free (Bus_Addr);
+   --  end;
 
    --  Create and setup a Gtk Application. We create our own class so that we
    --  can override the local_command_Line virtual method, and thus do our own
