@@ -1248,7 +1248,7 @@ package body GVD.Variables.View is
             Column_Value_Fg     => As_String
               (if Entity /= Empty_GVD_Type_Holder
                and then Entity.Get_Type.Is_Changed
-               then To_String (Blocks_Style.Get_Pref_Fg) else Fg),
+               then To_String (Numbers_Style.Get_Pref_Fg) else Fg),
             Column_Type_Fg      => As_String
               (To_String (Types_Style.Get_Pref_Fg)),
             Column_Full_Name    => As_String (Full_Name)));
