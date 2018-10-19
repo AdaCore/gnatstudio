@@ -1274,9 +1274,9 @@ package body Src_Editor_View is
       Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
       case Layer is
-         when Text_View_Layer_Below =>
+         when Text_View_Layer_Below | Text_View_Layer_Below_Text =>
             Draw_Below (Iter);
-         when Text_View_Layer_Above =>
+         when Text_View_Layer_Above | Text_View_Layer_Above_Text =>
             Draw_Above;
       end case;
 
