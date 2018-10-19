@@ -337,7 +337,7 @@ SCIL for another architecture" />
                tip="Generate CodePeer messages in compiler format, without
 creating/updating the database" />
          <spin label="Analysis level" switch="-level" min="0" max="4"
-               default="3" separator=" " column="1"
+               default="0" separator=" " column="1"
                tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
 local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
 global analysis (within the memory constraints), and 4 to force a global
@@ -632,7 +632,7 @@ xmlHead = """<?xml version="1.0"?>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="6">
          <spin label="Analysis level" switch="-level" min="0" max="4"
-               default="3" separator=" " column="1"
+               default="0" separator=" " column="1"
                tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
 local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
 global analysis (within the memory constraints), and 4 to force a global
