@@ -72,6 +72,7 @@ with GVD.Process;                 use GVD.Process;
 with GVD.Types;                   use GVD.Types;
 with GVD.Variables.Items;         use GVD.Variables.Items;
 with GVD.Variables.Types.Simples; use GVD.Variables.Types.Simples;
+with GVD.Variables.Types.Classes; use GVD.Variables.Types.Classes;
 with GVD.Variables.Types;         use GVD.Variables.Types;
 with GVD_Module;                  use GVD_Module;
 with Language.Icons;              use Language.Icons;
@@ -86,6 +87,7 @@ package body GVD.Variables.View is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.Variables_View");
 
    Show_Types : Boolean_Preference;
+   Flat_View  : Boolean_Preference;
 
    GVD_Variables_Contextual_Group : constant Integer := 1;
    --  The GVD.Variables actions' contextual menus group
@@ -307,12 +309,13 @@ package body GVD.Variables.View is
    --  Return a row in the variables view converted into an item
 
    procedure Add_Row
-     (Self              : not null access Variable_Tree_View_Record'Class;
-      Entity            : GVD_Type_Holder;
-      Name, Full_Name   : String;
-      Parent            : Gtk_Tree_Iter;
-      Id                : Item_ID;
-      Lang              : not null Language_Access);
+     (Self            : not null access Variable_Tree_View_Record'Class;
+      Entity          : GVD_Type_Holder;
+      Name, Full_Name : String;
+      Parent          : Gtk_Tree_Iter;
+      Id              : Item_ID;
+      Lang            : not null Language_Access;
+      Recurse         : Boolean := False);
    --  Add a new row in the tree to represent a variable
 
    function Get_Item_Info
@@ -1129,12 +1132,13 @@ package body GVD.Variables.View is
    -------------
 
    procedure Add_Row
-     (Self              : not null access Variable_Tree_View_Record'Class;
-      Entity            : GVD_Type_Holder;
-      Name, Full_Name   : String;
-      Parent            : Gtk_Tree_Iter;
-      Id                : Item_ID;
-      Lang              : not null Language_Access)
+     (Self            : not null access Variable_Tree_View_Record'Class;
+      Entity          : GVD_Type_Holder;
+      Name, Full_Name : String;
+      Parent          : Gtk_Tree_Iter;
+      Id              : Item_ID;
+      Lang            : not null Language_Access;
+      Recurse         : Boolean := False)
    is
       Row   : Gtk_Tree_Iter;
       Ent   : GVD_Type_Holder;
@@ -1226,51 +1230,127 @@ package body GVD.Variables.View is
                      else XML_Utils.Protect
                        (Validate_UTF_8 (Entity.Get_Type.Get_Simple_Value)));
       Type_Name : constant String := Display_Type_Name;
+      Printable : Boolean := True;
    begin
-      Self.Model.Append (Iter => Row, Parent => Parent);
-      Set_And_Clear
-        (Self.Model,
-         Iter   => Row,
-         Values =>
-           (Column_Name         => As_String (Var_Name),
-            Column_Value        => As_String (Value),
-            Column_Type         => As_String (Type_Name),
-            Column_Icon         => As_String
-              (if Parent = Null_Iter
-               then Stock_From_Category
-                 (Is_Declaration => False,
-                  Visibility     => Language.Visibility_Public,
-                  Category       => Language.Cat_Function)
-               else ""),
-            Column_Id           => As_Int (Gint (Id)),
-            Column_Generic_Type => As_GVD_Type_Holder (Entity),
-            Column_Name_Fg      => As_String (Fg),
-            Column_Value_Fg     => As_String
-              (if Entity /= Empty_GVD_Type_Holder
-               and then Entity.Get_Type.Is_Changed
-               then To_String (Numbers_Style.Get_Pref_Fg) else Fg),
-            Column_Type_Fg      => As_String
-              (To_String (Types_Style.Get_Pref_Fg)),
-            Column_Full_Name    => As_String (Full_Name)));
+      if Flat_View.Get_Pref
+        and then Entity.Get_Type.all in GVD_Class_Type'Class
+      then
+         --  Check whether class has fields
+         declare
+            Iter : Generic_Iterator'Class := Entity.Get_Type.Start;
+            Num  : Natural := 0;
+         begin
+            Printable := False;
+            while not Iter.At_End loop
+               if Num < GVD_Class_Type_Access
+                 (Entity.Get_Type).Get_Num_Ancestors
+               then
+                  Num := Num + 1;
+               else
+                  --  Have fields, print this class
+                  Printable := True;
+                  exit;
+               end if;
+               Iter.Next;
+            end loop;
+         end;
+      end if;
+
+      if Printable then
+         Self.Model.Append (Iter => Row, Parent => Parent);
+         Set_And_Clear
+           (Self.Model,
+            Iter   => Row,
+            Values =>
+              (Column_Name         => As_String (Var_Name),
+               Column_Value        => As_String (Value),
+               Column_Type         => As_String (Type_Name),
+               Column_Icon         => As_String
+                 (if Parent = Null_Iter
+                  then Stock_From_Category
+                    (Is_Declaration => False,
+                     Visibility     => Language.Visibility_Public,
+                     Category       => Language.Cat_Function)
+                  else ""),
+               Column_Id           => As_Int (Gint (Id)),
+               Column_Generic_Type => As_GVD_Type_Holder (Entity),
+               Column_Name_Fg      => As_String (Fg),
+               Column_Value_Fg     => As_String
+                 (if Entity /= Empty_GVD_Type_Holder
+                  and then Entity.Get_Type.Is_Changed
+                  then To_String (Numbers_Style.Get_Pref_Fg) else Fg),
+               Column_Type_Fg      => As_String
+                 (To_String (Types_Style.Get_Pref_Fg)),
+               Column_Full_Name    => As_String (Full_Name)));
+      end if;
 
       if Entity /= Empty_GVD_Type_Holder then
          declare
             Iter : Generic_Iterator'Class := Entity.Get_Type.Start;
+            Flat : constant Boolean := Flat_View.Get_Pref
+              and then Entity.Get_Type.all in GVD_Class_Type'Class;
+
          begin
-            while not Iter.At_End loop
-               Ent := GVD_Type_Holder (Iter.Data);
-               if Ent /= Empty_GVD_Type_Holder then
-                  Add_Row
-                    (Self,
-                     Entity    => Ent,
-                     Name      => Iter.Field_Name (Lang, ""),
-                     Full_Name => Iter.Field_Name (Lang, Full_Name),
-                     Parent    => Row,
-                     Id        => Unknown_Id,
-                     Lang      => Lang);
-               end if;
-               Iter.Next;
-            end loop;
+            if Flat then
+               declare
+                  Num           : Natural := 0;
+                  Num_Ancestors : constant Natural := GVD_Class_Type_Access
+                    (Entity.Get_Type).Get_Num_Ancestors;
+
+               begin
+                  while not Iter.At_End loop
+                     if Num < Num_Ancestors then
+                        --  Print all ancestors as subnodes
+                        --  of a descendant class
+
+                        Num := Num + 1;
+                        Ent := GVD_Type_Holder (Iter.Data);
+                        if Ent /= Empty_GVD_Type_Holder then
+                           Add_Row
+                             (Self,
+                              Entity    => Ent,
+                              Name      => Iter.Field_Name (Lang, ""),
+                              Full_Name => Iter.Field_Name (Lang, Full_Name),
+                              Parent    =>
+                                (if Recurse then Parent else Row),
+                              Id        => Unknown_Id,
+                              Lang      => Lang,
+                              Recurse   => True);
+                        end if;
+
+                     else
+                        Ent := GVD_Type_Holder (Iter.Data);
+                        if Ent /= Empty_GVD_Type_Holder then
+                           Add_Row
+                             (Self,
+                              Entity    => Ent,
+                              Name      => Iter.Field_Name (Lang, ""),
+                              Full_Name => Iter.Field_Name (Lang, Full_Name),
+                              Parent    => Row,
+                              Id        => Unknown_Id,
+                              Lang      => Lang);
+                        end if;
+                     end if;
+                     Iter.Next;
+                  end loop;
+               end;
+
+            else
+               while not Iter.At_End loop
+                  Ent := GVD_Type_Holder (Iter.Data);
+                  if Ent /= Empty_GVD_Type_Holder then
+                     Add_Row
+                       (Self,
+                        Entity    => Ent,
+                        Name      => Iter.Field_Name (Lang, ""),
+                        Full_Name => Iter.Field_Name (Lang, Full_Name),
+                        Parent    => Row,
+                        Id        => Unknown_Id,
+                        Lang      => Lang);
+                  end if;
+                  Iter.Next;
+               end loop;
+            end if;
          end;
 
          --  Make sure access types are expandable.
@@ -1321,7 +1401,9 @@ package body GVD.Variables.View is
       Expansions.Get_Expansion_Status (Self.Tree, Expansion);
       Self.Tree.Model.Clear;
 
-      if Process.Debugger /= null and then not Self.Tree.Items.Is_Empty then
+      if Process.Debugger /= null
+        and then not Self.Tree.Items.Is_Empty
+      then
          for It of Self.Tree.Items loop
             if not It.Nested then
                Self.Tree.Add_Row
@@ -1594,6 +1676,7 @@ package body GVD.Variables.View is
          Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
          if Pref = null
            or else Pref = Preference (Show_Types)
+           or else Pref = Preference (Flat_View)
          then
             View.Update;
          end if;
@@ -1778,6 +1861,7 @@ package body GVD.Variables.View is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Show_Types);
+      Append_Menu (Menu, View.Kernel, Flat_View);
    end Create_Menu;
 
    --------------------
@@ -2034,6 +2118,10 @@ package body GVD.Variables.View is
 
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => -"Show types");
+
+      Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debugger-variables-flat-view", False, Label => -"Flat view",
+         Doc => "Show all ancestors in flat mode.");
    end Register_Module;
 
 end GVD.Variables.View;
