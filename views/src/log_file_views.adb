@@ -105,6 +105,12 @@ package body Log_File_Views is
       return Boolean;
    --  Checks whether trace's output is allowed in local config menu
 
+   procedure On_Preferences_Changed (View : access Log_View_Record'Class);
+   --  Update view properties due to preferences changing
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed
+
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Log_View",
       View_Name          => "Log",
@@ -208,6 +214,7 @@ package body Log_File_Views is
    Preferences_Registered : Boolean := False;
    Lines                  : Strings.Vector;
    Kernel                 : Kernel_Handle;
+   Has_View               : Boolean := False;
 
    type Log_View_Type is (Off, Only_When_Opened, Always);
 
@@ -226,19 +233,30 @@ package body Log_File_Views is
       Handle : not null Logger;
       Msg    : in out Msg_Strings.XString)
    is
-      pragma Unreferenced (Handle, Self);
-      View   : View_Access;
-      Kernel : constant Kernel_Handle := Log_File_Views.Kernel;
+      pragma Unreferenced (Self);
+      View     : View_Access;
+      Kernel   : constant Kernel_Handle := Log_File_Views.Kernel;
+      Log_Type : Log_View_Type;
    begin
+      if Handle.Unit_Name = Gtkada.Terminal.Trace_Name then
+         --  Inserting in a terminal activates this trace,
+         --  which calls After_Message recursively and so on.
+         return;
+      end if;
+
       --  Do nothing if GPS is exiting or if the Enable_Log_View
       --  preference is set to False.
 
-      if Kernel /= null and then Kernel.Is_In_Destruction then
+      if Kernel /= null
+        and then Kernel.Is_In_Destruction
+      then
          return;
       end if;
 
       if Log_View_Preference /= null then
-         case Log_View_Type'(Log_View_Preference.Get_Pref) is
+         Log_Type := Log_View_Preference.Get_Pref;
+
+         case Log_Type is
             when Off =>
                return;
 
@@ -259,7 +277,9 @@ package body Log_File_Views is
       begin
          Strings.Append (Lines, Str);
 
-         if Log_File_Views.Kernel /= null then
+         if Log_File_Views.Kernel /= null
+           and then Has_View
+         then
             View := Generic_View.Retrieve_View (Log_File_Views.Kernel, False);
 
             if View /= null then
@@ -480,13 +500,17 @@ package body Log_File_Views is
          Wrap_Mode     => Wrap_Char,
          Manage_Prompt => False);
 
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
+
       View.Enable_Prompt_Display (False);
       Set_Font_And_Colors (View.Get_View, Fixed_Font => True);
 
       Hook := new On_Pref_Changed;
       Hook.View := Log_View (View);
       Preferences_Changed_Hook.Add (Hook, Watch => View);
-      Hook.Execute (View.Kernel, Pref => null);
+      View.On_Preferences_Changed;
+
+      Has_View := True;
 
       if Log_View_Preference.Get_Pref /= Always then
          Strings.Clear (Lines);
@@ -822,32 +846,56 @@ package body Log_File_Views is
         or else Pref = Default_Preferences.Preference
           (GPS.Kernel.Preferences.Comments_Style)
       then
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Black,
-            GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Red,
-            GPS.Kernel.Preferences.Numbers_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Green,
-            GPS.Kernel.Preferences.Types_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Yellow,
-            GPS.Kernel.Preferences.Strings_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Blue,
-            GPS.Kernel.Preferences.Keywords_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Magenta,
-            GPS.Kernel.Preferences.Bookmark_Color.Get_Pref);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.Cyan,
-            GPS.Kernel.Preferences.Comments_Style.Get_Pref_Fg);
-         Self.View.Set_Foreground
-           (Gtkada.Terminal.White,
-            GPS.Kernel.Preferences.Default_Style.Get_Pref_Bg);
+         Self.View.On_Preferences_Changed;
       end if;
    end Execute;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (View);
+   begin
+      Has_View := False;
+
+      if Log_View_Preference.Get_Pref /= Always then
+         Strings.Clear (Lines);
+      end if;
+   end On_Destroy;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed (View : access Log_View_Record'Class) is
+   begin
+      View.Set_Foreground
+        (Gtkada.Terminal.Black,
+         GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.Red,
+         GPS.Kernel.Preferences.Numbers_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.Green,
+         GPS.Kernel.Preferences.Types_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.Yellow,
+         GPS.Kernel.Preferences.Strings_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.Blue,
+         GPS.Kernel.Preferences.Keywords_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.Magenta,
+         GPS.Kernel.Preferences.Bookmark_Color.Get_Pref);
+      View.Set_Foreground
+        (Gtkada.Terminal.Cyan,
+         GPS.Kernel.Preferences.Comments_Style.Get_Pref_Fg);
+      View.Set_Foreground
+        (Gtkada.Terminal.White,
+         GPS.Kernel.Preferences.Default_Style.Get_Pref_Bg);
+   end On_Preferences_Changed;
 
    --------------------------
    -- Register_Interceptor --

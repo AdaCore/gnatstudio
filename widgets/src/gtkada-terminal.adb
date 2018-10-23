@@ -36,7 +36,7 @@ with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Gtkada.Terminal is
-   Me : constant Trace_Handle := Create ("GPS.WIDGETS.TERMINAL", Off);
+   Me : constant Trace_Handle := Create (Trace_Name, Off);
 
    type c_char_array is array (size_t) of char;
    for c_char_array'Component_Size use CHAR_BIT;
