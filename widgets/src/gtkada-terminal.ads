@@ -80,6 +80,9 @@ package Gtkada.Terminal is
    --  Set Color which will be used for background instead of default
    --  Value color when text contains ANSI codes for highlighting
 
+   Trace_Name : constant String := "GPS.WIDGETS.TERMINAL";
+   --  The name for trace
+
 private
    type FSM_Transition;
    type FSM_Transition_Access is access FSM_Transition;
