@@ -496,11 +496,6 @@ package body Vdiff2_Module.Callback is
       pragma Unreferenced (Pref, Self);
    begin
       Register_Highlighting (Kernel);
-
-      for Diff of VDiff2_Module (Vdiff_Module_ID).List_Diff.all loop
-         Hide_Differences (Kernel, Diff);
-         Show_Differences3 (Kernel, Diff);
-      end loop;
    end Execute;
 
    -------------

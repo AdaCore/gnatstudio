@@ -29,13 +29,18 @@ package Vdiff2_Module is
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
    Diff3_Cmd              : Default_Preferences.String_Preference;
-   Diff_Default_Color     : Default_Preferences.Variant_Preference;
-   Diff_Append_Color      : Default_Preferences.Variant_Preference;
-   Diff_Remove_Color      : Default_Preferences.Variant_Preference;
-   Diff_Change_Color      : Default_Preferences.Variant_Preference;
-   Diff_Fine_Change_Color : Default_Preferences.Variant_Preference;
-   Diff_File_Color        : Default_Preferences.Variant_Preference;
-   Diff_Code_Color        : Default_Preferences.Variant_Preference;
+
+   --  Colors used for the Side by Side diff
+   Side_Default_Color     : Default_Preferences.Color_Preference;
+   Side_Append_Color      : Default_Preferences.Color_Preference;
+   Side_Remove_Color      : Default_Preferences.Color_Preference;
+   Side_Change_Color      : Default_Preferences.Color_Preference;
+
+   --  Colors used for the Patch diff
+   Patch_File_Color       : Default_Preferences.Variant_Preference;
+   Patch_Code_Color       : Default_Preferences.Variant_Preference;
+   Patch_Append_Color     : Default_Preferences.Variant_Preference;
+   Patch_Remove_Color     : Default_Preferences.Variant_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -45,9 +50,8 @@ private
 
    type VDiff2_Module_Record is new GPS.Kernel.Modules.Module_ID_Record with
       record
-         Number_active    : Natural := 0;
-         List_Diff        : Diff_Head_List_Access;
-         Enable_Fine_Diff : Boolean := True;
+         Number_active : Natural := 0;
+         List_Diff     : Diff_Head_List_Access;
       end record;
 
    type VDiff2_Module is access all VDiff2_Module_Record'Class;

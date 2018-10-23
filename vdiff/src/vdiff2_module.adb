@@ -247,7 +247,8 @@ package body Vdiff2_Module is
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
       Submenu_Filter : Action_Filter;
-      Pref_Path      : constant String := -"Visual diff:Colors";
+      Patch_Path     : constant String := -"Visual diff:Patch Colors";
+      Side_Path      : constant String := -"Visual diff:Side by Side Colors";
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.Vector;
@@ -270,15 +271,15 @@ package body Vdiff2_Module is
          Filter => Submenu_Filter);
 
       Register_Action
-        (Kernel, "vdiff remove difference",
-         Command     => new Remove_Difference_Command,
-         Description => "Remove the current diff block",
+        (Kernel, "vdiff close all",
+         Command     => new Close_Difference_Command,
+         Description => "Close all the files related to the diff",
          Category    => -"Diff",
          Filter      => Filter);
       Register_Contextual_Menu
         (Kernel,
-         Label  => -"Visual Diff/Close",
-         Action => "vdiff remove difference");
+         Label  => -"Visual Diff/Close All",
+         Action => "vdiff close all");
 
       Register_Action
         (Kernel, "vdiff recompute difference",
@@ -290,6 +291,17 @@ package body Vdiff2_Module is
         (Kernel,
          Label  => -"Visual Diff/Recompute",
          Action => "vdiff recompute difference");
+
+      Register_Action
+        (Kernel, "vdiff remove difference",
+         Command     => new Remove_Difference_Command,
+         Description => "Remove the current diff block",
+         Category    => -"Diff",
+         Filter      => Filter);
+      Register_Contextual_Menu
+        (Kernel,
+         Label  => -"Visual Diff/Remove difference",
+         Action => "vdiff remove difference");
 
       Register_Action
         (Kernel, "vdiff change reference file",
@@ -311,74 +323,76 @@ package body Vdiff2_Module is
          Path  => -"Visual diff:General",
          Default => Config.Default_Diff3_Cmd);
 
-      Diff_Default_Color := Create
+      Side_Default_Color := Create
         (Get_Preferences (Kernel),
-         Name            =>  "Diff-Default-Color",
-         Label           => -"Default Color",
-         Doc             => "",
-         Path            => Pref_Path,
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg      => "rgba(193,193,193,1)");
+         Name    => "Diff-Side-Default-Color",
+         Label   => -"Old Color",
+         Doc     => "",
+         Path    => Side_Path,
+         Default => "rgba(85,87,83,1)");
 
-      Diff_Append_Color := Create
+      Side_Change_Color := Create
         (Get_Preferences (Kernel),
-         Name            =>  "Diff-Append-Color",
-         Label           => -"Append Color",
+         Name     => "Diff-Side-Change-Color",
+         Label    => -"Change Color",
+         Doc      => "",
+         Path     => Side_Path,
+         Default  => "rgba(236,236,170,1)");
+
+      Side_Append_Color := Create
+        (Get_Preferences (Kernel),
+         Name    => "Diff-Side-Append-Color",
+         Label   => -"Append Color",
+         Doc     => "",
+         Path    => Side_Path,
+         Default => "rgba(10,100,10,1)");
+
+      Side_Remove_Color := Create
+        (Get_Preferences (Kernel),
+         Name    =>  "Diff-Side-Remove-Color",
+         Label   => -"Remove Color",
+         Doc     => "",
+         Path    => Side_Path,
+         Default => "rgba(200,10,10,1)");
+
+      Patch_Append_Color := Create
+        (Get_Preferences (Kernel),
+         Name            => "Diff-Patch-Append-Variant",
+         Label           => -"Patch Append Color",
          Doc             => "",
-         Path            => Pref_Path,
+         Path            => Patch_Path,
          Base            => Default_Style,
          Default_Variant => Default,
          Default_Fg      => "rgba(10,100,10,1)");
 
-      Diff_Remove_Color := Create
+      Patch_Remove_Color := Create
         (Get_Preferences (Kernel),
-         Name            =>  "Diff-Remove-Color",
-         Label           => -"Remove Color",
+         Name            => "Diff-Patch-Remove-Variant",
+         Label           => -"Patch Remove Color",
          Doc             => "",
          Base            => Default_Style,
          Default_Variant => Default,
-         Path            => Pref_Path,
+         Path            => Patch_Path,
          Default_Fg      => "rgba(200,10,10,1)");
 
-      Diff_Change_Color := Create
+      Patch_File_Color := Create
         (Get_Preferences (Kernel),
-         Name            =>  "Diff-Change-Color",
-         Label           => -"Change Color",
+         Name            => "Diff-Patch-File-Header-Variant",
+         Label           => -"Patch File Header Color",
          Doc             => "",
          Base            => Default_Style,
          Default_Variant => Default,
-         Path            => Pref_Path,
-         Default_Fg      => "rgba(236,236,170,1)");
-
-      Diff_Fine_Change_Color := Create
-        (Get_Preferences (Kernel),
-         Name            =>  "Horizontal-Diff-Change-Color",
-         Label           => -"Fine Change Color",
-         Doc             => "",
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Path            => Pref_Path,
-         Default_Fg      => "rgba(253,230,106,1)");
-
-      Diff_File_Color := Create
-        (Get_Preferences (Kernel),
-         Name            =>  "Diff-File-Header-Color",
-         Label           => -"File Header Color",
-         Doc             => "",
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Path            => Pref_Path,
+         Path            => Patch_Path,
          Default_Fg      => "rgba(100,163,224,1)");
 
-      Diff_Code_Color := Create
+      Patch_Code_Color := Create
         (Get_Preferences (Kernel),
-         Name            =>  "Diff-Code-Header-Color",
-         Label           => -"Code Header Color",
+         Name            => "Diff-Patch-Code-Header-Variant",
+         Label           => -"Patch Code Header Color",
          Doc             => "",
          Base            => Default_Style,
          Default_Variant => Default,
-         Path            => Pref_Path,
+         Path            => Patch_Path,
          Default_Fg      => "rgba(51,204,179,1)");
 
       Preferences_Changed_Hook.Add

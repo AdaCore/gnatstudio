@@ -23,6 +23,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with Gtkada.Style;             use Gtkada.Style;
 with String_Utils;             use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
@@ -211,16 +212,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       CL : Arg_List;
-      Default_Color      : constant String  :=
-        To_String (Diff_Default_Color.Get_Pref_Fg_Color);
-      Append_Color       : constant String  :=
-        To_String (Diff_Append_Color.Get_Pref_Fg_Color);
-      Remove_Color       : constant String  :=
-        To_String (Diff_Remove_Color.Get_Pref_Fg_Color);
-      Change_Color       : constant String  :=
-        To_String (Diff_Change_Color.Get_Pref_Fg_Color);
+      Default_Color      : constant String  := Side_Default_Color.Get_Pref;
+      Append_Color       : constant String  := Side_Append_Color.Get_Pref;
+      Remove_Color       : constant String  := Side_Remove_Color.Get_Pref;
+      Change_Color       : constant String  := Side_Change_Color.Get_Pref;
       Change_Fine_Color  : constant String  :=
-        To_String (Diff_Fine_Change_Color.Get_Pref_Fg_Color);
+        To_String (Shade_Or_Lighten (Side_Change_Color.Get_Pref));
 
    begin
       --  <preferences>
@@ -258,9 +255,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Append_Argument (CL, Fine_Change_Style, One_Arg);
       Append_Argument (CL, Change_Fine_Color, One_Arg);
       Execute_GPS_Shell_Command (Kernel, CL);
-
-      VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
-        := (Change_Fine_Color /= Change_Color);
    end Register_Highlighting;
 
    ------------------

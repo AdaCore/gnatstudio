@@ -59,10 +59,8 @@ variant_prefs = {
     'blocks': "Src-Editor-Block-Variant",
     'keywords_in_aspects': "Src-Editor-Aspects-Keywords-Variant",
     'preprocessor': "Editor/Fonts & Colors:General/preprocessor",
-    'diff_change': "Diff-Change-Color",
-    'diff_remove': "Diff-Remove-Color",
-    'diff_append': "Diff-Append-Color",
-    'horiz_diff': "Horizontal-Diff-Change-Color",
+    'diff_patch_remove': "Diff-Patch-Remove-Variant",
+    'diff_patch_append': "Diff-Patch-Append-Variant",
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -88,6 +86,10 @@ rgb_prefs = {
     'current_line': "Src-Editor-Current-Line-Color",
     'current_block': "Src-Editor-Current-Block-Color",
     'browsers_bg': "Browsers-Bg-Color",
+    'diff_side_default': "Diff-Side-Default-Color",
+    'diff_side_change': "Diff-Side-Change-Color",
+    'diff_side_remove': "Diff-Side-Remove-Color",
+    'diff_side_append': "Diff-Side-Append-Color",
 }
 # These keys are interpreted as rgb preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -254,10 +256,12 @@ common_light = {
     "msg_high": Rgba(255, 183, 183),
     "msg_medium": Rgba(255, 204, 156),
     "msg_low": Rgba(255, 255, 240),
-    "horiz_diff": ("Default", Rgba(253, 230, 106), transparent),
-    "diff_change": ("Default", Rgba(236, 236, 170), transparent),
-    "diff_remove": ("Default", Rgba(120, 10, 10), transparent),
-    "diff_append": ("Default", Rgba(10, 100, 10), transparent),
+    "diff_side_default": Rgba(186, 189, 182),
+    "diff_side_change": Rgba(236, 236, 170),
+    "diff_side_remove": Rgba(255, 160, 160),
+    "diff_side_append": Rgba(136, 238, 170),
+    "diff_patch_remove": ("Default", Rgba(120, 10, 10), transparent),
+    "diff_patch_append": ("Default", Rgba(10, 100, 10), transparent),
     "breakpoint": Rgba(0, 0, 255, 77),
 
     "dispatching": Rgba(255, 243, 194),
@@ -313,10 +317,12 @@ common_dark = {
     "msg_high": Rgba(75, 34, 34),
     "msg_medium": Rgba(85, 52, 18),
     "msg_low": Rgba(191, 188, 64, 50),
-    "horiz_diff": ("Default", Rgba(143, 89, 2), transparent),
-    "diff_change": ("Default", Rgba(107, 73, 19), transparent),
-    "diff_remove": ("Default", Rgba(253, 31, 31), transparent),
-    "diff_append": ("Default", Rgba(10, 150, 10), transparent),
+    "diff_side_default": Rgba(85, 87, 83),
+    "diff_side_change": Rgba(107, 73, 19),
+    "diff_side_remove": Rgba(88, 43, 43),
+    "diff_side_append": Rgba(38, 68, 36),
+    "diff_patch_remove": ("Default", Rgba(253, 31, 31), transparent),
+    "diff_patch_append": ("Default", Rgba(10, 150, 10), transparent),
     "breakpoint": Rgba(190, 191, 196),
 
     "dispatching": Rgba(46, 52, 56),
