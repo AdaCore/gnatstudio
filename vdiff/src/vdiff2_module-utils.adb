@@ -251,10 +251,6 @@ package body Vdiff2_Module.Utils is
       Line                : Natural := Dest_Range.First;
 
    begin
-      if not VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff then
-         return;
-      end if;
-
       if Offset_Source < Offset_Dest then
          Offset_Min := Offset_Source;
       else

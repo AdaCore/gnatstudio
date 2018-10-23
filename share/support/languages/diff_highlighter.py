@@ -2,10 +2,10 @@ from highlighter.common import register_highlighter, region, existing_style, \
     tag_keyword, simple
 
 
-file_tag = existing_style("Diff-File-Header-Color", "file-diff")
-code_tag = existing_style("Diff-Code-Header-Color", "code-diff")
-added_tag = existing_style("Diff-Append-Color", "added-diff")
-removed_tag = existing_style("Diff-Remove-Color", "removed-diff")
+file_tag = existing_style("Diff-Patch-File-Header-Variant", "file-diff")
+code_tag = existing_style("Diff-Patch-Code-Header-Variant", "code-diff")
+added_tag = existing_style("Diff-Patch-Append-Variant", "added-diff")
+removed_tag = existing_style("Diff-Patch-Remove-Variant", "removed-diff")
 
 
 register_highlighter(
