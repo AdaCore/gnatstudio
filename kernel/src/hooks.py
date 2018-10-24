@@ -365,9 +365,10 @@ background task or process'''),
          Param('line1', 'Integer'),
          Param('line2', 'Integer')]),
 
-    'preferences_hooks': Hook_Type(
+    'preferences_hooks': Debounce_Hook_Type(
         [Param('name', '__hookname__'),
-         Param('pref', 'Preference', default='null')]),
+         Param('pref', 'Preference', default='null')],
+        debounce=400),
 
     'open_file_hooks': Hook_Type(
         [Param('name', '__hookname__'),
@@ -1970,7 +1971,7 @@ class Predefined_Hooks:
 
         if isinstance(type, Debounce_Hook_Type):
             f.write('''
-      :asynchronouse %(asynch)s (ms)
+      :asynchronous %(asynch)s (ms)
 ''' % subst)
 
         f.write('''

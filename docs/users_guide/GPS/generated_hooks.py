@@ -286,7 +286,7 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.Context context:
 
-      :asynchronouse 400 (ms)
+      :asynchronous 400 (ms)
 
         """
 
@@ -779,7 +779,7 @@ class Predefined_Hooks:
       :param int line:
       :param int column:
 
-      :asynchronouse 200 (ms)
+      :asynchronous 200 (ms)
 
         """
 
@@ -812,7 +812,7 @@ class Predefined_Hooks:
       :param str name:
       :param GPS.MDIWindow child:
 
-      :asynchronouse 400 (ms)
+      :asynchronous 400 (ms)
 
         """
 
@@ -879,6 +879,8 @@ class Predefined_Hooks:
       refresh themselves dynamically.
 
       :param str name:
+
+      :asynchronous 400 (ms)
 
         """
 
