@@ -751,7 +751,7 @@ package body GPS.Main_Window is
            (Min_Width  => 1280,
             Min_Height => 720,
             others     => <>),
-         Geom_Mask       => Hint_Min_Size);
+         Geom_Mask       => Hint_Base_Size);
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
