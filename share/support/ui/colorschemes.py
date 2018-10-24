@@ -396,11 +396,27 @@ class ColorSchemePicker(object):
                 logger.log("No fallback theme found: applying default CSS")
                 the_theme_switcher.apply_theme(default)
 
-    def on_pref_changed(self):
+    def on_pref_changed(self, hook):
         """
         Update the CSS colors using the new values set for their corresponding
         preferences.
         """
+
+        # Create a new provider instead of using the previous one since
+        # the Gtk.CssProvider.load_from_data method clears the
+        # previouly loaded CSS: we don't want to loose the other colors
+        # that may have been set.
+
+        the_theme_switcher.provider = Gtk.CssProvider()
+        screen = Gdk.Display.get_default().get_default_screen()
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            the_theme_switcher.provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        # Redefine the CSS color variables linked with color/variant
+        # preferences.
+
         css_template = "@define-color {} {};"
         css = ""
 
@@ -440,13 +456,12 @@ GPS.PreferencesPage.create(
     is_integrated=True)
 
 
-# Check if we need to apply a fallback theme for compatibility reasons
+# Check if we need to apply a fallback theme for compatibility reasons.
+# Add a hook function on the 'preferences_changed' hook to reapply the
+# CSS colors if an associated preference has changed (e.g: the
+# editor's style preference).
 
 @hook("gps_started")
 def on_started():
     picker.no_theme_fallback()
-
-
-@hook("preferences_changed")
-def on_pref_changed():
-    picker.on_pref_changed()
+    GPS.Hook("preferences_changed").add_debounce(picker.on_pref_changed)
