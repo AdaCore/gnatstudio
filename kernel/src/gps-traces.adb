@@ -64,7 +64,12 @@ package body GPS.Traces is
      Create ("GPS.INTERNAL.SHOW_TRACES_NAMES", GNATCOLL.Traces.On);
 
    Show_All_Products : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.SHOW_ALL_PRODUCTS_TRACES", GNATCOLL.Traces.On);
+     Create ("GPS.INTERNAL.CONFIG_ALL_PRODUCTS_TRACES", GNATCOLL.Traces.Off);
+   --  By default we show only GPS traces. If this trace is active we show
+   --  all traces, belong to GNATCOLL for example.
+
+   Me : constant Trace_Handle :=
+     Create ("GPS.OTHERS.TRACES_CONFIG_MODULE", GNATCOLL.Traces.On);
 
    GPS_Home_Dir : GNATCOLL.VFS.Virtual_File;
 
@@ -465,13 +470,19 @@ package body GPS.Traces is
    is
       pragma Unreferenced (Object);
 
-      Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+      Sort_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Gtk.Tree_Model.Get_Iter_From_String
-          (Gtk.Tree_Model.To_Interface (Self.Model),
+          (Gtk.Tree_Model.To_Interface (Self.Sort),
            Value (Path));
 
-      Parent_Iter, Parent_Parent_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Filter_Iter,
+      Iter,
+      Parent_Iter,
+      Parent_Parent_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
+      Self.Sort.Convert_Iter_To_Child_Iter (Filter_Iter, Sort_Iter);
+      Self.Filter.Convert_Iter_To_Child_Iter (Iter, Filter_Iter);
+
       Parent_Iter := Parent (Self.Model, Iter);
 
       if Parent_Iter = Null_Iter then
@@ -660,7 +671,7 @@ package body GPS.Traces is
         or else Trace.Unit_Name
           (Matched (2).First .. Matched (2).Last) = "TESTSUITE"
         or else
-          (Show_All_Products.Active
+          (not Show_All_Products.Active
            and then Trace.Unit_Name
              (Matched (1).First .. Matched (1).Last) /= "GPS")
       then
@@ -730,27 +741,28 @@ package body GPS.Traces is
       Has_Inactive : Boolean;
       T            : Traces_Maps.Cursor;
       Active       : Boolean;
-
-      Path     : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Column   : Gtk_Tree_View_Column;
-      GPS_Path : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Fill         : Boolean := False;
 
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
       --  This works around a bug in gtk+.
       Editor.Disable_Filtering := True;
 
-      Editor.View.Get_Cursor (Path, Column);
-      Clear (Editor.Model);
-
       if Products.Is_Empty then
+         Fill := True;
          GNATCOLL.Traces.For_Each_Handle (Add_Trace'Access);
       end if;
 
       --  Add all known actions in the table.
       P := Products.First;
+      if not Fill then
+         Product := Editor.Model.Get_Iter_First;
+      end if;
+
       while Products_Maps.Has_Element (P) loop
-         Append (Editor.Model, Product, Null_Iter);
+         if Fill then
+            Append (Editor.Model, Product, Null_Iter);
+         end if;
 
          Product_Has_Active   := False;
          Product_Has_Inactive := False;
@@ -760,8 +772,15 @@ package body GPS.Traces is
             Modules : constant Modules_Maps.Map := Products_Maps.Element (P);
          begin
             M := Modules.First;
+            if not Fill then
+               Module := Editor.Model.Children (Product);
+            end if;
+
             while Modules_Maps.Has_Element (M) loop
-               Append (Editor.Model, Module, Product);
+               if Fill then
+                  Append (Editor.Model, Module, Product);
+               end if;
+
                Has_Active   := False;
                Has_Inactive := False;
 
@@ -770,18 +789,33 @@ package body GPS.Traces is
                     Modules_Maps.Element (M);
                begin
                   T := Traces.First;
+                  if not Fill then
+                     Iter := Editor.Model.Children (Module);
+                  end if;
+
                   while Traces_Maps.Has_Element (T) loop
                      if Show_Trace_Names.Active then
-                        Append (Editor.Model, Iter, Module);
-
                         Active := Traces_Maps.Element (T).Instance.Is_Active;
-                        Set_And_Clear
-                          (Editor.Model,
-                           Iter,
-                           (Name_Column, Toggle_Column, Inconsistent_Column),
-                           (1 => As_String (Traces_Maps.Key (T)),
-                            2 => As_Boolean (Active),
-                            3 => As_Boolean (False)));
+
+                        if Fill then
+                           Append (Editor.Model, Iter, Module);
+                           Set_And_Clear
+                             (Editor.Model,
+                              Iter,
+                              (Name_Column,
+                               Toggle_Column,
+                               Inconsistent_Column),
+                              (1 => As_String (Traces_Maps.Key (T)),
+                               2 => As_Boolean (Active),
+                               3 => As_Boolean (False)));
+                        else
+                           Set_And_Clear
+                             (Editor.Model,
+                              Iter,
+                              (Toggle_Column, Inconsistent_Column),
+                              (1 => As_Boolean (Active),
+                               2 => As_Boolean (False)));
+                        end if;
                      end if;
 
                      if Active then
@@ -791,16 +825,28 @@ package body GPS.Traces is
                      end if;
 
                      Traces_Maps.Next (T);
+                     if not Fill then
+                        Editor.Model.Next (Iter);
+                     end if;
                   end loop;
                end;
 
-               Set_And_Clear
-                 (Editor.Model,
-                  Module,
-                  (Name_Column, Toggle_Column, Inconsistent_Column),
-                  (1 => As_String (Modules_Maps.Key (M)),
-                   2 => As_Boolean (Has_Active and then not Has_Inactive),
-                   3 => As_Boolean (Has_Active and then Has_Inactive)));
+               if Fill then
+                  Set_And_Clear
+                    (Editor.Model,
+                     Module,
+                     (Name_Column, Toggle_Column, Inconsistent_Column),
+                     (1 => As_String (Modules_Maps.Key (M)),
+                      2 => As_Boolean (Has_Active and then not Has_Inactive),
+                      3 => As_Boolean (Has_Active and then Has_Inactive)));
+               else
+                  Set_And_Clear
+                    (Editor.Model,
+                     Module,
+                     (Toggle_Column, Inconsistent_Column),
+                     (1 => As_Boolean (Has_Active and then not Has_Inactive),
+                      2 => As_Boolean (Has_Active and then Has_Inactive)));
+               end if;
 
                if Has_Active and then Has_Inactive then
                   Product_Has_Both := True;
@@ -811,20 +857,37 @@ package body GPS.Traces is
                end if;
 
                Modules_Maps.Next (M);
+
+               if not Fill then
+                  Editor.Model.Next (Module);
+               end if;
             end loop;
          end;
 
-         Set_And_Clear
-           (Editor.Model,
-            Product,
-            (Name_Column, Toggle_Column, Inconsistent_Column),
-            (1 => As_String (Products_Maps.Key (P)),
-             2 => As_Boolean
-               (Product_Has_Active and then
-                  (not Product_Has_Inactive and not Product_Has_Both)),
-             3 => As_Boolean
-               (Product_Has_Both or else
-                  (Product_Has_Active and then Product_Has_Inactive))));
+         if Fill then
+            Set_And_Clear
+              (Editor.Model,
+               Product,
+               (Name_Column, Toggle_Column, Inconsistent_Column),
+               (1 => As_String (Products_Maps.Key (P)),
+                2 => As_Boolean
+                  (Product_Has_Active and then
+                     (not Product_Has_Inactive and not Product_Has_Both)),
+                3 => As_Boolean
+                  (Product_Has_Both or else
+                     (Product_Has_Active and then Product_Has_Inactive))));
+         else
+            Set_And_Clear
+              (Editor.Model,
+               Product,
+               (Toggle_Column, Inconsistent_Column),
+               (1 => As_Boolean
+                  (Product_Has_Active and then
+                     (not Product_Has_Inactive and not Product_Has_Both)),
+                2 => As_Boolean
+                  (Product_Has_Both or else
+                     (Product_Has_Active and then Product_Has_Inactive))));
+         end if;
 
          if Product_Has_Both
            or else
@@ -832,13 +895,19 @@ package body GPS.Traces is
               and then Product_Has_Inactive)
          then
             Top_Has_Both := True;
+
          elsif Product_Has_Active then
             Top_Has_Active := True;
+
          elsif Product_Has_Inactive then
             Top_Has_Inactive := True;
          end if;
 
          Products_Maps.Next (P);
+
+         if not Fill then
+            Editor.Model.Next (Product);
+         end if;
       end loop;
 
       Editor.Toggle.Set_Active (False);
@@ -848,33 +917,44 @@ package body GPS.Traces is
         or else (Top_Has_Active and then Top_Has_Inactive)
       then
          Editor.Toggle.Set_Inconsistent (True);
+
       elsif Top_Has_Active then
          Editor.Toggle.Set_Active (True);
       end if;
 
-      Editor.Disable_Filtering := False;
-
       --  Expand "GPS" node
-      Iter := Editor.Model.Get_Iter_First;
-      while Iter /= Null_Iter loop
-         if Editor.Model.Get_String (Iter, Name_Column) = "GPS" then
-            GPS_Path := Editor.Model.Get_Path (Iter);
-            Editor.View.Expand_To_Path (GPS_Path);
-            Path_Free (GPS_Path);
-            exit;
-         end if;
+      if Fill then
+         declare
+            GPS_Path    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+            Filter_Iter : Gtk_Tree_Iter;
+            Sort_Iter   : aliased Gtk_Tree_Iter;
+         begin
+            Iter := Editor.Model.Get_Iter_First;
+            while Iter /= Null_Iter loop
+               if Editor.Model.Get_String (Iter, Name_Column) = "GPS" then
+                  Editor.Filter.Convert_Child_Iter_To_Iter (Filter_Iter, Iter);
+                  if Editor.Sort.Convert_Child_Iter_To_Iter
+                    (Sort_Iter'Access, Filter_Iter)
+                  then
+                     GPS_Path := Editor.Sort.Get_Path (Sort_Iter);
+                     Editor.View.Expand_To_Path (GPS_Path);
+                     Path_Free (GPS_Path);
+                  end if;
 
-         Editor.Model.Next (Iter);
-      end loop;
+                  exit;
+               end if;
 
-      --  Select old selected item
-      if Path /= Null_Gtk_Tree_Path then
-         Editor.View.Expand_To_Path (Path);
-         Editor.View.Set_Cursor (Path, Column, False);
-         Path_Free (Path);
+               Editor.Model.Next (Iter);
+            end loop;
+         end;
       end if;
 
+      Editor.Disable_Filtering := False;
       Refilter (Editor.Filter);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Fill_Editor;
 
    --------------------
