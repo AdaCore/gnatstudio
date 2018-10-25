@@ -32,40 +32,56 @@
  *********************/
 
 * {
-   /* Reduce the size of the scroll arrows in notebooks */
-   -GtkWidget-scroll-arrow-hlength: 8;
-   -GtkWidget-scroll-arrow-vlength: 8;
-   -GtkNotebook-arrow-spacing: 0;
-   icon-shadow: none;
+   -gtk-icon-shadow: none;
    text-shadow: none;
    box-shadow: none;
 }
 
-.view, .menu, column-header .button, GtkListBox, GtkFlowBox {
+
+dialog {
+  margin: 0px;
+}
+
+.view, menu, column-header button, GtkListBox, GtkFlowBox {
    background-color: @theme_base_color;
 }
 
-.mdi, GtkTextView.view {
+.mdi, textview.view, textview.view text {
    background-color: @editor_bg_color;
 }
+
+undershoot, overshoot {
+  background-image: none;
+}
+
+frame > border {
+   border: none;
+}
+
 
 /*********************
  * Entries
  *********************/
 
-.entry, .entry.multiline GtkTextView.view {
+entry, .entry.multiline {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
                                    from(@entry_color_one),
                                    to(@entry_color_two));
-   border-color: @popup_border_color;
+   border: 1px solid @popup_border_color;
+   border-radius: 4px;
+}
+
+.entry.multiline * {
+   background-color: transparent;
+   border: none;
 }
 
 /*********************
  * Buttons and Combos
  *********************/
 
-.button
+button
 {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
@@ -75,11 +91,11 @@
    border-color: @popup_border_color;
 }
 
-.gps-welcome-dialog .list-row.button, GtkTreeView > .button {
+.gps-welcome-dialog .list-row.button, treeview.view > .button {
   background: transparent;
 }
 
-.button.flat
+button.flat
  {
    background: transparent;
    background-image: none;
@@ -88,28 +104,20 @@
    border-color: transparent;
 }
 
-.toolbar .button {
+toolbar button {
   padding: 4px;
 }
 
-.button:link:hover {
+button.link:hover, button.link:hover label {
    color: @theme_selected_bg_color;
 }
 
-.button:active, .button:checked {
+button:active, button:checked {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
                                    from(@active_button_bg_color_one),
                                    to(@active_button_bg_color_two));
    border-color: @popup_border_color;
-}
-
-/*********************
- * Task Manager
- *********************/
-
-.gps-task-manager GtkProgressBar {
-   -GtkProgressBar-min-horizontal-bar-height: 1;
 }
 
 /*************
@@ -125,12 +133,6 @@ GtkDialog {
    -GtkDialog-content-area-spacing: 0px;
    -GtkDialog-action-area-border: 3px;
    border-width: 0px;
-}
-
-.dialog-action-box, .dialog .buttonbox {
-   background-color: @notebook_background;
-   border-width: 0px;
-   padding: 3px;
 }
 
 /*************
@@ -167,12 +169,12 @@ GtkDialog {
  * GPS dialog view groups *
  **************************/
 
-.dialog-views-groups {
+.dialog-views-groups > border {
    box-shadow: none;
-   border-width: 0;
+   border-width: 0px;
 }
 
-.dialog-views-groups > GtkLabel {
+.dialog-views-groups > label {
    /* Set bold font for group titles */
    font-weight: bold;
    padding-top: 12px;
@@ -188,7 +190,7 @@ GtkDialog {
    background-color: @error-color;
 }
 
-.dialog-views-groups-rows GtkRadioButton > GtkLabel {
+.dialog-views-groups-rows radio > label {
    padding-right: 12px;
 }
 
@@ -205,13 +207,6 @@ GtkDialog {
    color: @inactive_items_selected_color;
 }
 
-.dialog-views-button-boxes {
-   -GtkButtonBox-child-min-width: 0;
-   -GtkButtonBox-child-min-height: 0;
-   -GtkButtonBox-child-internal-pad-y: 0;
-   -GtkButtonBox-child-internal-pad-x: 0;
-}
-
 .dialog-views-groups.with-message {
    padding-top: 12px;
    padding-bottom: 12px;
@@ -226,7 +221,7 @@ GtkDialog {
    padding-right: 10px;
 }
 
-.learn-groups > GtkLabel {
+.learn-groups > label {
    font-weight: normal;
    color: @inactive_items_color;
    padding-top: 10px;
@@ -240,6 +235,7 @@ GtkDialog {
 .learn-items {
    background-color: @learn-items-color;
    padding-left: 10px;
+   border-radius: 3px;
 }
 
 .learn-help .dialog-views-groups {
@@ -250,7 +246,7 @@ GtkDialog {
  * GPS Scenario View    *
  ************************/
 
-.scenario-variables-view .action-box GtkButton {
+.scenario-variables-view .action-box button {
     padding-left: 24px;
     padding-right: 24px;
 }
@@ -295,12 +291,12 @@ GtkDialog {
     padding-left: 12px;
 }
 
-.gps-welcome-dialog-main-view .button {
+.gps-welcome-dialog-main-view button {
     background: transparent;
     border-color: transparent;
 }
 
-.gps-welcome-dialog-main-view .button:hover {
+.gps-welcome-dialog-main-view button:hover {
     color: @theme_selected_bg_color;
 }
 
@@ -324,7 +320,7 @@ GtkDialog {
  * GPS Welcome View    *
  ***********************/
 
-.gps-welcome-view GtkLinkButton {
+.gps-welcome-view button.link{
    padding: 0px;
    border: 0px;
    margin: 0px;
@@ -384,12 +380,7 @@ GtkDialog {
  * MDI Notebooks
  *********************/
 
-.notebook.mdi {
-   -GtkNotebook-initial-gap: 0;
-
-   /* No space between tabs */
-   -GtkNotebook-tab-overlap: 0;
-
+notebook.mdi {
    background-color: @notebook_background;
 }
 
@@ -397,68 +388,76 @@ GtkDialog {
  * MDI Notebook headers
  ***********************/
 
-.notebook.mdi.header {
+notebook.mdi header {
   border: none;
   box-shadow: none;
+  background-color: @notebook_background;
 }
 
 /*********************
  * MDI Notebook tabs
  *********************/
 
-
-.notebook.mdi tab {
-   border-width: 0px;
-   border-color: @mdi_border_color;
-}
-
-.notebook.mdi tab GtkLabel {
+notebook.mdi header tab {
    font-weight: normal;
    color: @inactive_items_color;
+   margin: 0px;
 }
 
-.notebook.mdi tab.top,
-.notebook.mdi tab.bottom {
-   padding: 5px 2px 5px 6px;
+notebook.mdi header tab {
+  padding: 4px;
 }
 
-.notebook.mdi tab.left {
-   padding: 2px 5px 6px 5px;
-}
-.notebook.mdi tab.right {
-   padding: 6px 5px 2px 5px;
+notebook.mdi header tab {
+  padding: 6px;
 }
 
-.notebook.mdifocused tab:active {
-   background-color: @theme_base_color;
-}
-
-.notebook.mdi .active-page GtkLabel {
+notebook.mdi header tab:checked label {
    color: @theme_fg_color;;
 }
 
-.notebook.mdi .mdi-highlighted-tab {
+notebook.mdi header .mdi-highlighted-tab {
    color: @theme_selected_bg_color;
 }
 
-.notebook.mdifocused tab:active.top {
-   border-top-width: 2px;
-   border-top-color: @theme_selected_bg_color;
+notebook.mdi header.top tab {
+   border-top: 2px solid @notebook_background;
 }
 
-.notebook.mdifocused tab:active.left {
-   border-left-width: 2px;
-   border-left-color: @theme_selected_bg_color;
+notebook.mdi header.left tab {
+   border-left: 2px solid @notebook_background;
 }
 
-.notebook.mdifocused tab:active.right {
-   border-right-width: 2px;
-   border-right-color: @theme_selected_bg_color;
+notebook.mdi header.right tab {
+   border-right: 2px solid @notebook_background;
 }
 
-.notebook.mdifocused tab:active.bottom {
-   border-bottom-width: 2px;
-   border-bottom-color: @theme_selected_bg_color;
+/***************************
+ * MDI Notebook focused tabs
+ ***************************/
+
+.notebook.mdi header.bottom tab {
+   border-bottom: 2px solid @notebook_background;
+}
+
+notebook.mdifocused header tab:checked {
+   background-color: @theme_base_color;
+}
+
+notebook.mdifocused header.top tab:checked {
+   border-top: 2px solid @theme_selected_bg_color;
+}
+
+notebook.mdifocused header.left tab:checked {
+   border-left: 2px solid @theme_selected_bg_color;
+}
+
+notebook.mdifocused header.right tab:checked {
+   border-right: 2px solid @theme_selected_bg_color;
+}
+
+.notebook.mdifocused header.bottom tab:checked {
+   border-bottom: 2px solid @theme_selected_bg_color;
 }
 
 /**********************
@@ -467,7 +466,6 @@ GtkDialog {
 
 .scrollbar {
    border-width: 0px;
-   -GtkRange-slider-width: 8px;
    background-color: @theme_base_color;
 }
 
@@ -494,7 +492,11 @@ GtkDialog {
    padding: 2px;
 }
 
-.gps-editor-status-bar GtkButton {
+/***************************
+ * GPS Editors Status Bar
+ ***************************/
+
+.gps-editor-status-bar button {
    padding: 0px 2px;
 }
 .gps-editor-status-bar > * {
@@ -502,7 +504,15 @@ GtkDialog {
    padding: 0px;
 }
 
-.gps-switches-editor GtkScrolledWindow {
+.gps-editor-status-bar {
+   background-color: @notebook_background;
+}
+
+/***************************
+ * GPS Switches Editor
+ ***************************/
+
+.gps-switches-editor scrolledwindow {
    background: @theme_base_color;
 }
 
@@ -519,27 +529,23 @@ GtkDialog {
  * Tooltips, Completion
  **********************************/
 
-.tooltip, .completion {
-   color: @tooltip-text-color;
-   text-shadow: none;
+tooltip, .completion.notes > frame {
    margin: 0;
    border-radius: 0;
    border: 1px solid @popup_border_color;
+   background-color: @tooltip-background-color;
 }
 
-.tooltip.background, .completion {
-   background-color: @tooltip-background-color;
+tooltip label {
+   color: @tooltip-text-color;
+   text-shadow: none;
 }
 
 .tooltip * {
    padding: 12px;
 }
 
-.completion.notes > .frame {
-   border: 1px solid @popup_border_color;
-}
-
-.completion.notes > .frame * {
+.completion.notes > frame * {
    padding: 3px;
    border-width: 0px;
 }
@@ -548,25 +554,25 @@ GtkDialog {
    font-size: xx-large;
 }
 
-.completion.search GtkFrame {
+.completion.search frame {
    background-color: @theme_base_color;
    box-shadow: none;
    border-width: 0;
 }
 
-.completion.search GtkTreeView column:first-child {
+.completion.search treeview.view column:first-child {
    background-color: @notebook_background;
 }
 
-.completion.search GtkTreeView column:first-child:selected {
+.completion.search treeview.view column:first-child:selected {
    background-color: @theme_selected_bg_color;
 }
 
-.completion.search GtkTreeView column:first-child * {
+.completion.search treeview.view column:first-child * {
    color: @inactive_items_color;
 }
 
-.completion.search GtkTreeView column:first-child:selected * {
+.completion.search treeview.view column:first-child:selected * {
    color: @inactive_items_selected_color;
 }
 
@@ -574,12 +580,12 @@ GtkDialog {
  * Editors
  **********************************/
 
-GtkTextView.view.editor {
+treeview.view.editor {
   background-color: @editor_bg_color;
   color: @editor_fg_color;
 }
 
-GtkTextView.view.editor.readonly {
+treeview.view.editor.readonly {
   background-color: @editor_readonly_bg_color;
 }
 
@@ -592,8 +598,8 @@ GtkTextView.view.editor.readonly {
  * Selection
  **********************************/
 
-*:selected, GtkTextView.view:selected, GtkTextView.view.editor:selected,
-.list-row.button:selected {
+*:selected, textview.view selection, textview.view.editor selection,
+.list-row button:selected {
   background-color: @theme_selected_bg_color;
   color: @theme_selected_fg_color;
 }
