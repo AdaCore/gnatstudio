@@ -1045,9 +1045,9 @@ package body Custom_Module is
                Register_Menu
                  (Kernel,
                   Create_Menu_Path (Parent_Path, Title.all),
-                  Action => Action,
-                  Ref_Item    => After,
-                  Add_Before  => False);
+                  Action          => Action,
+                  Ref_Item        => After,
+                  Before_Ref_Item => False);
             else
                Register_Menu
                  (Kernel,
@@ -1469,8 +1469,8 @@ package body Custom_Module is
          begin
             Register_Menu
               (Kernel, Path, Action,
-               Ref_Item    => Ref,
-               Add_Before  => Before);
+               Ref_Item        => Ref,
+               Before_Ref_Item => Before);
             Inst := New_Instance (Get_Script (Data), Menu_Class);
             Set_Data (Inst, Menu_Class, Path);
             Set_Return_Value (Data, Inst);

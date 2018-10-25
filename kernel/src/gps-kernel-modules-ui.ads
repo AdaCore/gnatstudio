@@ -310,17 +310,21 @@ package GPS.Kernel.Modules.UI is
    --  changes.
 
    procedure Register_Menu
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Path          : String;
-      Action        : String;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True);
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Path            : String;
+      Action          : String;
+      Ref_Item        : String  := "";
+      Before_Ref_Item : Boolean := True;
+      Prepend         : Boolean := False);
    --  Append a menu binding a GPS action. The action need not exist when the
    --  menu is created (but the menu will always be greyd out if the action
    --  does not exist).
    --  Accel_Key, Accel_Mods are looked up from the action.
    --  Filter is looked up from the action.
    --  The image is also looked up from the action.
+   --
+   --  If Prepend then the menu will be added at the beginning,
+   --  Before_Ref_Item is ignored in this case.
    --
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.

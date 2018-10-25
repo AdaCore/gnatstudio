@@ -742,12 +742,12 @@ package body Help_Module is
          if Menu_Before /= "" then
             Register_Menu
               (Kernel, Menu_Path, Action => "display documentation " & Descr,
-               Ref_Item => Menu_Before, Add_Before => True);
+               Ref_Item => Menu_Before, Before_Ref_Item => True);
 
          elsif Menu_After /= "" then
             Register_Menu
               (Kernel, Menu_Path, Action => "display documentation " & Descr,
-               Ref_Item => Menu_After, Add_Before => False);
+               Ref_Item => Menu_After, Before_Ref_Item => False);
          else
             Register_Menu
               (Kernel, Menu_Path, Action => "display documentation " & Descr);

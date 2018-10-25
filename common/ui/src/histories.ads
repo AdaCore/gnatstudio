@@ -85,6 +85,12 @@ package Histories is
    --  If Key is the empty string, then this becomes the default maximum
    --  length, used unless a key-specific one is specified later on.
 
+   function Get_Max_Length
+     (Hist : History_Record; Key : History_Key := "") return Positive;
+   --  Return the maximum capacity of Hist.
+   --  If Key is the empty string, then returns the default maximum
+   --  length.
+
    procedure Allow_Duplicates
      (Hist        : in out History_Record;
       Key         : History_Key;
