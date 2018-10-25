@@ -342,29 +342,28 @@ GtkDialog {
  * Menus
  *********************/
 
-.window-frame {
-   /* gtk+ displays a 4px semi-transparent around menus the first time they
-    * are displayed. Perhaps this is a resize handle ? */
-   box-shadow: none;
-}
-
-.menu .menuitem:hover {
+menu menuitem:hover {
    background: @theme_selected_bg_color;
    color: @theme_selected_fg_color;
 }
 
-.menubar {
+menubar {
    background: @notebook_background;
 }
 
-.menu {
-  border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
+menu {
+  border: 1px solid mix(@theme_base_color, @mdi_border_color, 0.5);
+  padding: 0px;
 }
 
-.separator {
+/*********************
+ * Separators
+ *********************/
+
+separator {
   /* Change the color of the separators to make them more visible in
      dark themes */
-  color: @mdi_border_color;
+  background-color: @mdi_border_color;
 }
 
 /*********************
