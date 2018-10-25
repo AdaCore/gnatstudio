@@ -1970,11 +1970,12 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    procedure Register_Menu
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Path          : String;
-      Action        : String;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Path            : String;
+      Action          : String;
+      Ref_Item        : String  := "";
+      Before_Ref_Item : Boolean := True;
+      Prepend         : Boolean := False)
    is
       Full_Path   : constant String := Create_Menu_Path ("/", Path);
       Parent_Path : constant String := Parent_Menu_Name (Full_Path);
@@ -2006,7 +2007,7 @@ package body GPS.Kernel.Modules.UI is
                Menu         => null,
                Path         => Parent_Path,
                Accelerators => Get_Default_Accelerators (Kernel),
-               Add_Before   => Add_Before,
+               Add_Before   => Before_Ref_Item,
                Ref_Item     => Ref_Item,
                Allow_Create => True);
 
@@ -2049,9 +2050,11 @@ package body GPS.Kernel.Modules.UI is
                   Optional    => False);
             end if;
 
-            if Index = -1 then
+            if Prepend then
+               Parent_Menu.Prepend (Item);
+            elsif Index = -1 then
                Parent_Menu.Append (Item);
-            elsif Add_Before then
+            elsif Before_Ref_Item then
                Parent_Menu.Insert (Item, Index);
             else
                Parent_Menu.Insert (Item, Index + 1);
@@ -2097,7 +2100,7 @@ package body GPS.Kernel.Modules.UI is
             else
                Trace (Me, "Error adding menu " & Path & " ref=" & Ref_Item);
             end if;
-         elsif Add_Before then
+         elsif Before_Ref_Item then
             Ref.Model.Insert_Item (Ref.Position, It);
          else
             Ref.Model.Insert_Item (Ref.Position + 1, It);

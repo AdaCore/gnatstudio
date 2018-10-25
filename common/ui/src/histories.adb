@@ -180,6 +180,27 @@ package body Histories is
       end if;
    end Set_Max_Length;
 
+   --------------------
+   -- Get_Max_Length --
+   --------------------
+
+   function Get_Max_Length
+     (Hist : History_Record; Key : History_Key := "") return Positive
+   is
+      Current : History_Key_Access;
+   begin
+      if Key = "" then
+         return Hist.Max_Length;
+      else
+         Current := Create_New_Key_If_Necessary (Hist, Key, Strings);
+         if Current.Max_Length = -1 then
+            return Hist.Max_Length;
+         else
+            return Current.Max_Length;
+         end if;
+      end if;
+   end Get_Max_Length;
+
    ----------------------
    -- Allow_Duplicates --
    ----------------------

@@ -275,6 +275,7 @@ package body Src_Editor_Module is
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed
+   --  Remove the older menu if the history is full.
 
    function Get_Filename
      (Child : not null access MDI_Child_Record'Class)
@@ -333,6 +334,12 @@ package body Src_Editor_Module is
    overriding function Filter_Matches_Primitive
      (Filter  : access Has_Redo_Filter;
       Context : Selection_Context) return Boolean;
+
+   procedure Create_New_Recent_Menu
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Prepend : Boolean);
+   --  Create a submenu for File in "Open Recent Files"
 
    procedure Regenerate_Recent_Files_Menu
      (Kernel : access Kernel_Handle_Record'Class);
@@ -1268,6 +1275,45 @@ package body Src_Editor_Module is
       return Editor;
    end Create_File_Editor;
 
+   ----------------------------
+   -- Create_New_Recent_Menu --
+   ----------------------------
+
+   procedure Create_New_Recent_Menu
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Prepend : Boolean)
+   is
+      M                : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Name             : constant String := File.Display_Full_Name;
+      Prefix_Menu_Name : constant String := "open recent file: ";
+      File_Menu_Paths  : constant Unbounded_String_Array := Split
+        (To_String (Menu_List_For_Action ("open file")),
+         On => '/');
+   begin
+      Register_Action
+        (Kernel,
+         Name        => Prefix_Menu_Name & Name,
+         Command     => new On_Open_Recent'
+           (Interactive_Command with File => File),
+         Description => "Reopen the file " & Name,
+         Category    => "Internal");
+      Register_Menu
+        (Kernel,
+         Path     => To_String (File_Menu_Paths (File_Menu_Paths'First))
+         & "/Open Recent Files/"
+         & Escape_Underscore (File.Display_Base_Name),
+         Action   => Prefix_Menu_Name & Name,
+         Prepend  => Prepend);
+
+      if Prepend then
+         M.Recent_File_Actions.Prepend (Prefix_Menu_Name & Name);
+      else
+         M.Recent_File_Actions.Append (Prefix_Menu_Name & Name);
+      end if;
+   end Create_New_Recent_Menu;
+
    ----------------------------------
    -- Regenerate_Recent_Files_Menu --
    ----------------------------------
@@ -1275,14 +1321,11 @@ package body Src_Editor_Module is
    procedure Regenerate_Recent_Files_Menu
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      M               : constant Source_Editor_Module :=
-                          Source_Editor_Module (Src_Editor_Module_Id);
-      V               : constant String_List_Access :=  --  Do not free
-                          Get_History (Kernel.Get_History.all, Hist_Key);
-      F               : Virtual_File;
-      File_Menu_Paths : constant Unbounded_String_Array := Split
-        (To_String (Menu_List_For_Action ("open file")),
-         On => '/');
+      M : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      V : constant String_List_Access :=  --  Do not free
+        Get_History (Kernel.Get_History.all, Hist_Key);
+      F : Virtual_File;
    begin
       --  Remove old menus and actions
 
@@ -1301,20 +1344,7 @@ package body Src_Editor_Module is
       if V /= null then
          for N of V.all loop
             F := Create (+N.all);
-            Register_Action
-              (Kernel,
-               Name        => "open recent file: " & N.all,
-               Command     => new On_Open_Recent'
-                 (Interactive_Command with File => F),
-               Description => "Reopen the file " & N.all,
-               Category    => "Internal");
-            Register_Menu
-              (Kernel,
-               Path     => To_String (File_Menu_Paths (File_Menu_Paths'First))
-               & "/Open Recent Files/"
-               & Escape_Underscore (F.Display_Base_Name),
-               Action   => "open recent file: " & N.all);
-            M.Recent_File_Actions.Append ("open recent file: " & N.all);
+            Create_New_Recent_Menu (Kernel, F, Prepend => False);
          end loop;
       end if;
    end Regenerate_Recent_Files_Menu;
@@ -1324,20 +1354,28 @@ package body Src_Editor_Module is
    ------------------------
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+   is
+      M        : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Is_Full  : Boolean := False;
    begin
       --  Make sure we won't add duplicate entries in the history.
       --  This loop is not very optimal, but we have to do this since
       --  histories only store strings and we do not have a way of
       --  normalizing capitalization under Windows.
       declare
-         V : constant String_List_Access :=  --  Do not free
-            Get_History (Kernel.Get_History.all, Hist_Key);
-         F : Virtual_File;
+         Hist      : constant History := Kernel.Get_History;
+         Name_List : constant String_List_Access :=  --  Do not free
+            Get_History (Hist.all, Hist_Key);
+         F         : Virtual_File;
       begin
-         if V /= null then
-            for N of V.all loop
-               F := Create (+N.all);
+         if Name_List /= null then
+
+            Is_Full := Name_List'Length = Get_Max_Length (Hist.all, Hist_Key);
+
+            for Name of Name_List.all loop
+               F := Create (+Name.all);
                if F = File then
                   --  The menu and actions are already there, nothing to do.
                   return;
@@ -1346,12 +1384,20 @@ package body Src_Editor_Module is
          end if;
       end;
 
-      --  If we reach this, it means the menu doesn't already exist: proceed.
+      --  If we reach this, it means the menu doesn't already exist.
+
+      if Is_Full then
+         --  Max capacity: Pop the oldest menu
+         Unregister_Action
+           (Kernel                    => Kernel,
+            Name                      => M.Recent_File_Actions.Last_Element,
+            Remove_Menus_And_Toolbars => True);
+         M.Recent_File_Actions.Delete_Last;
+      end if;
 
       Add_To_History (Kernel, Hist_Key, UTF8_Full_Name (File));
 
-      --  Add new menus
-      Regenerate_Recent_Files_Menu (Kernel);
+      Create_New_Recent_Menu (Kernel, File, Prepend => True);
    end Add_To_Recent_Menu;
 
    -------------
