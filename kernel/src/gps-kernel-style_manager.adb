@@ -597,6 +597,8 @@ package body GPS.Kernel.Style_Manager is
 
    function Get_Tag (Style : Style_Access) return Gtk_Text_Tag is
       Tag : Gtk_Text_Tag;
+      W   : Weight := Pango_Weight_Normal;
+      S   : Pango.Enums.Style := Pango_Style_Normal;
    begin
       Gtk_New (Tag, Style.Name.all);
 
@@ -609,7 +611,24 @@ package body GPS.Kernel.Style_Manager is
                     Id           => "tag_data" & Style.Name.all,
                     On_Destroyed => On_Tag_Destroyed'Access);
 
-      Refresh_Values (Style);
+      case Style.Variant is
+         when Default =>
+            null;
+         when Normal =>
+            null;
+         when Bold =>
+            W := Pango_Weight_Bold;
+         when Italic =>
+            S := Pango_Style_Italic;
+         when Bold_Italic =>
+            W := Pango_Weight_Bold;
+            S := Pango_Style_Italic;
+      end case;
+
+      Set_Property (Tag, Foreground_Rgba_Property, Style.Foreground);
+      Set_Property (Tag, Background_Rgba_Property, Style.Background);
+      Set_Property (Tag, Weight_Property, W);
+      Set_Property (Tag, Style_Property, S);
 
       return Tag;
    end Get_Tag;
