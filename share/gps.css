@@ -38,10 +38,6 @@
 }
 
 
-dialog {
-  margin: 0px;
-}
-
 .view, menu, column-header button, GtkListBox, GtkFlowBox {
    background-color: @theme_base_color;
 }
@@ -124,15 +120,15 @@ button:active, button:checked {
  * Dialogs   *
  *************/
 
-GtkDialog > GtkBox {
-   background-color: @theme_base_color;
-}
-
-GtkDialog {
+dialog {
    -GtkDialog-content-area-border: 0px;
    -GtkDialog-content-area-spacing: 0px;
    -GtkDialog-action-area-border: 3px;
    border-width: 0px;
+}
+
+.dialog-action-box {
+   background-color: @mdi_border_color;
 }
 
 /*************
@@ -283,7 +279,7 @@ GtkDialog {
    padding-bottom: 60px;
 }
 
-.gps-welcome-dialog GtkListBox {
+.gps-welcome-dialog list {
     background-color: @editor_bg_color;
 }
 
