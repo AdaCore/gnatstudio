@@ -87,7 +87,7 @@ button
    border-color: @popup_border_color;
 }
 
-.gps-welcome-dialog .list-row.button, treeview.view > .button {
+.gps-welcome-dialog .list-row.button, treeview.view > header > button {
   background: transparent;
 }
 
@@ -120,11 +120,12 @@ button:active, button:checked {
  * Dialogs   *
  *************/
 
-dialog {
+dialog, window {
    -GtkDialog-content-area-border: 0px;
    -GtkDialog-content-area-spacing: 0px;
    -GtkDialog-action-area-border: 3px;
    border-width: 0px;
+   background-color: @theme_base_color;
 }
 
 .dialog-action-box {
@@ -175,6 +176,7 @@ dialog {
    font-weight: bold;
    padding-top: 12px;
    padding-bottom: 5px;
+   padding-left: 4px;
 }
 
 .dialog-views-groups-rows {
@@ -472,6 +474,7 @@ notebook.mdifocused header.right tab:checked {
 .gps-local-toolbar {
    background: @theme_base_color;
    padding: 0px;
+   margin: 2px;
 }
 
 .gps-local-toolbar button {
