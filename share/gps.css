@@ -12,7 +12,7 @@
    @define-color theme_bg_color green;
 */
 
-@define-color theme_base_color mix(@theme_bg_color, @editor_bg_color, 0.8);
+@define-color theme_base_color @editor_bg_color;
 
 @define-color inactive_items_color mix(@theme_base_color, @theme_fg_color, 0.55);
 @define-color inactive_items_selected_color mix(@theme_selected_bg_color, @theme_selected_fg_color, 0.7);
@@ -356,19 +356,11 @@ menu {
  * Separators
  *********************/
 
-separator {
+separator, .pane-separator {
   /* Change the color of the separators to make them more visible in
      dark themes */
   background-color: @mdi_border_color;
-}
-
-/*********************
- * Panes
- *********************/
-
-.pane-separator {
-   background-color: @mdi_border_color;
-   background-image: none;
+  background-image: none;
 }
 
 /*********************
@@ -436,7 +428,7 @@ notebook.mdi header.right tab {
 }
 
 notebook.mdifocused header tab:checked {
-   background-color: @theme_base_color;
+   background-color: @editor_bg_color;
 }
 
 notebook.mdifocused header.top tab:checked {
