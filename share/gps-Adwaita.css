@@ -6,8 +6,6 @@
 @define-color mdi_border_color shade(@theme_base_color, 0.9);
 @define-color notebook_background shade(@theme_base_color, 0.95);
 
-@define-color scrollbar_slider_color shade(@mdi_border_color, 0.9);
-
 @define-color tooltip-background-color shade(@theme_base_color, 0.98);
 @define-color tooltip-text-color @theme_fg_color;
 

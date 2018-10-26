@@ -6,8 +6,6 @@
 @define-color mdi_border_color shade(@theme_base_color, 1.25);
 @define-color notebook_background shade(@theme_base_color, 1.1);
 
-@define-color scrollbar_slider_color shade(@mdi_border_color, 1.1);
-
 @define-color browser_decoration_color grey;
 @define-color browser_decoration_background #2a2a2a;
 

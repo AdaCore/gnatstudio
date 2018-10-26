@@ -26,6 +26,7 @@
 
 @define-color gutter_color mix(@editor_fg_color, @editor_bg_color, 0.6);
 
+@define-color scrollbar_slider_color alpha(@editor_fg_color, 0.5);
 
 /*********************
  * General
@@ -453,13 +454,19 @@ notebook.mdifocused header.right tab:checked {
  * Scrollbars
  **********************/
 
-.scrollbar {
-   border-width: 0px;
-   background-color: @theme_base_color;
+scrollbar {
+   background-color: @mdi_border_color;
+   border: none;
+   opacity: 0.75;
 }
 
-.scrollbar.slider {
-   background-color: @scrollbar_slider_color;
+scrollbar slider, scrollbar slider:hover {
+    border: none;
+    margin: 0px;
+    min-width: 8px;
+    min-height: 8px;
+    border-radius: 17px;
+    background-color: @scrollbar_slider_color;
 }
 
 /***************************
