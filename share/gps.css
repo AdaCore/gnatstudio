@@ -476,7 +476,7 @@ notebook.mdifocused header.right tab:checked {
  * Toolbars and Button Boxes
  ***************************/
 
-.toolbar {
+#toolbar-box, toolbar {
    background: @notebook_background;
 }
 
@@ -486,7 +486,7 @@ notebook.mdifocused header.right tab:checked {
    padding: 0px;
 }
 
-.gps-local-toolbar * {
+.gps-local-toolbar button {
    margin: 0px;
    padding: 2px;
 }
