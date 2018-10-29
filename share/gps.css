@@ -43,7 +43,7 @@
    background-color: @theme_base_color;
 }
 
-.mdi, textview.view, textview.view text {
+.mdi, .mdi stack, textview.view, textview.view text {
    background-color: @editor_bg_color;
 }
 
@@ -587,7 +587,6 @@ treeview.view.editor.readonly {
 }
 
 .gps_gutter {
-  background-color: @editor_bg_color;
   color: @gutter_color;
 }
 
