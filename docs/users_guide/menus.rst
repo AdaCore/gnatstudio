@@ -502,7 +502,7 @@ The Find Menu
 
 * :menuselection:`Find --> Find Entity`
 
-   Searches amonst entities defined in the project
+   Searches amongst entities defined in the project
    
    Shortcut: Ctrl+T
 .. index:: menu; find --> find file in project
