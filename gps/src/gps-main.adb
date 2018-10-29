@@ -331,6 +331,7 @@ procedure GPS.Main is
    Passed_Project_Name        : String_Access;
    Program_Args               : String_Access;
    Server_Mode                : Boolean := False;
+   Ignore_Saved_Values        : Boolean := False;
    Port_Number                : Natural := 0;
 
    GPS_Main                   : GPS_Window;
@@ -349,7 +350,7 @@ procedure GPS.Main is
        Exit_Status : access Glib.Gint) return Glib.Gboolean;
    pragma Convention (C, Local_Command_Line);
    --  override gtk+ builtin virtual method for an application.
-   --  This makes sure that we can do our own handling of --hep
+   --  This makes sure that we can do our own handling of --help
 
    procedure Application_Class_Init (Self : GObject_Class);
    pragma Convention (C, Application_Class_Init);
@@ -1088,7 +1089,8 @@ procedure GPS.Main is
          GNAT.Directory_Operations.Change_Dir (ICS.Value (Value));
 
       elsif Switch = "--ignore-saved-scenario-values" then
-         GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (True);
+         --  The kernel is not defined yet so store the value in a local var
+         Ignore_Saved_Values := True;
 
       elsif Switch = "--path" then
          declare
@@ -1557,6 +1559,7 @@ procedure GPS.Main is
       --  Finally create the main window, and setup the project
 
       GPS.Main_Window.Gtk_New (GPS_Main, App);
+      GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (Ignore_Saved_Values);
 
       GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
       App.Kernel.Set_Environment (Env);
