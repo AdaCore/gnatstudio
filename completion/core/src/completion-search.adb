@@ -116,7 +116,7 @@ package body Completion.Search is
    is
       pragma Unreferenced (Self);
    begin
-      return "Searches amonst entities defined in the project";
+      return "Searches amongst entities defined in the project";
    end Documentation;
 
    ----------
