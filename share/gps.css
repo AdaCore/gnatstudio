@@ -78,7 +78,7 @@ entry, .entry.multiline {
  * Buttons and Combos
  *********************/
 
-button
+button, checkbutton check, radiobutton radio
 {
    background-image: -gtk-gradient (linear,
                                    0 0, 0 0.5,
@@ -115,6 +115,23 @@ button:active, button:checked {
                                    from(@active_button_bg_color_one),
                                    to(@active_button_bg_color_two));
    border-color: @popup_border_color;
+}
+
+/*********************
+ * Spinbuttons
+ *********************/
+
+spinbutton {
+   border: 1px solid @popup_border_color;
+   border-radius: 4px;
+}
+
+spinbutton entry {
+   border: none;
+   border-top-left-radius: 4px;
+   border-bottom-left-radius: 4px;
+   border-top-right-radius: 0px;
+   border-bottom-right-radius: 0px;
 }
 
 /*************
@@ -555,22 +572,6 @@ tooltip label {
    background-color: @theme_base_color;
    box-shadow: none;
    border-width: 0;
-}
-
-.completion.search treeview.view column:first-child {
-   background-color: @notebook_background;
-}
-
-.completion.search treeview.view column:first-child:selected {
-   background-color: @theme_selected_bg_color;
-}
-
-.completion.search treeview.view column:first-child * {
-   color: @inactive_items_color;
-}
-
-.completion.search treeview.view column:first-child:selected * {
-   color: @inactive_items_selected_color;
 }
 
 /**********************************
