@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -1404,8 +1405,8 @@ package body Project_Properties is
          Name_Parameters (Data, Get_Attributes_Parameters);
          Set_Return_Attribute
            (Project => Get_Data (Data, 1),
-            Attr    => Nth_Arg (Data, 2),
-            Pkg     => Nth_Arg (Data, 3, ""),
+            Attr    => To_Lower (Nth_Arg (Data, 2)),
+            Pkg     => To_Lower (Nth_Arg (Data, 3, "")),
             Index   => Nth_Arg (Data, 4, ""),
             Attribute_Is_List => Command = "get_attribute_as_list",
             As_List           => Command = "get_attribute_as_list");
@@ -1425,8 +1426,8 @@ package body Project_Properties is
             else
                Set_Return_Attribute
                  (Project => Get_Data (Data, 1),
-                  Attr    => To_String (Props.Project_Attribute),
-                  Pkg     => To_String (Props.Project_Package),
+                  Attr    => To_Lower (To_String (Props.Project_Attribute)),
+                  Pkg     => To_Lower (To_String (Props.Project_Package)),
                   Index   => To_String (Props.Project_Index),
                   Attribute_Is_List => True,
                   As_List => Command = "get_tool_switches_as_list");
