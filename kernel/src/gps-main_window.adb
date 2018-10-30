@@ -61,6 +61,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
 with Gtkada.Style;
 
+with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 
 with Config;
@@ -579,10 +580,28 @@ package body GPS.Main_Window is
       if Pref = null
         or else Pref = Preference (Default_Font)
       then
-         --  ??? This creates a new css_provider every time prefs are changed.
-         Gtkada.Style.Load_Css_String
-           ("* { font: " & To_String (Default_Font.Get_Pref) & "}",
-            Priority => Gtk.Style_Provider.Priority_Theme);
+         declare
+            Default_Font_Val    : constant Pango_Font_Description :=
+                                    Default_Font.Get_Pref;
+            Default_Font_Family : constant String :=
+                                    Get_Family (Default_Font_Val);
+            Default_Font_Size   : constant String :=
+                                    Gint'Image
+                                      (Pango.Enums.To_Pixels
+                                         (Get_Size (Default_Font_Val)));
+            Default_Font_Style  : constant String :=
+                                    Get_Style_As_String (Default_Font_Val);
+         begin
+            --  ??? This creates a new css_provider every time prefs are
+            --  changed.
+            Gtkada.Style.Load_Css_String
+              ("* { font-family: " & Default_Font_Family & ";"
+               & ASCII.LF
+               & " font-size: " & Default_Font_Size & "px;"
+               & ASCII.LF
+               & " font-style: " & Default_Font_Style & ";}",
+               Priority => Gtk.Style_Provider.Priority_Theme);
+         end;
       end if;
 
       if Pref = null
