@@ -816,22 +816,22 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Is_Func    : aliased Boolean;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Is_Var     : aliased Boolean;
       Expression : constant String := Display_Text_Input_Dialog
         (Kernel        => Kernel,
          Title         => -"Display the value of an expression",
          Message       => -"Enter an expression to display:",
          Key           => "gvd_display_expression_dialog",
-         Check_Msg     => -"Expression is a debugger command",
+         Check_Msg     => -"Uncheck to evaluate as a command",
          Key_Check     => "expression_subprogram_debugger",
-         Button_Active => Is_Func'Unchecked_Access);
+         Button_Active => Is_Var'Unchecked_Access);
    begin
       if Expression /= "" & ASCII.NUL then
-         if Is_Func then
-            Execute_In_Debugger (Context, "tree display `" & Expression & "`");
-         else
+         if Is_Var then
             Execute_In_Debugger (Context, "tree display " & Expression);
+         else
+            Execute_In_Debugger (Context, "tree display `" & Expression & "`");
          end if;
       end if;
       return Commands.Success;
