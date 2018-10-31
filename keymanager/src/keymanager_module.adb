@@ -34,7 +34,6 @@ with Gtk.Accel_Group;                use Gtk.Accel_Group;
 with Gtk.Main;                       use Gtk.Main;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtk.Window;                     use Gtk.Window;
-with Gtkada.Dialogs;                 use Gtkada.Dialogs;
 with Gtkada.MDI;                     use Gtkada.MDI;
 with Gtkada.Style;
 with Gtkada.Types;                   use Gtkada.Types;
@@ -261,12 +260,6 @@ package body KeyManager_Module is
       Argument : String);
    --  This command reads a numeric argument, and will then execute the next
    --  action a number of times.
-
-   procedure Error_Message
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Message : String);
-   --  Emit a message in the context of the key manager shortcut, sending
-   --  it to the key manager GUI if present, and to the Messages window if not.
 
    procedure Set_Default_Key
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -873,20 +866,6 @@ package body KeyManager_Module is
                         --  removing existing actions.
 
                         Free (B.Action);
-
-                     else
-                        --  Cannot associate action as key shortcut already
-                        --  used.
-                        Error_Message
-                          (Kernel,
-                           (-"Cannot use key shortcut <") & Key
-                           & (-"> for action """)
-                           & Real_Action & """:" & ASCII.LF
-                           & (-"prefixing key shortcut <")
-                           & Key (Key'First .. Last - 1)
-                           & (-"> is already bound to action """)
-                           & B.Action.all & """.");
-                        return;
                      end if;
                   end if;
 
@@ -1771,20 +1750,41 @@ package body KeyManager_Module is
 
             while Child /= null loop
                declare
-                  Action : constant String := Get_Attribute (Child, "action");
-                  Load   : constant String := Get_Attribute (Child, "load");
+                  Action        : constant String :=
+                    Get_Attribute (Child, "action");
+                  Load          : constant String :=
+                    Get_Attribute (Child, "load");
+                  Actual_Action : constant String :=
+                    (if Action'Length > 0
+                     and then Action (Action'First) = '/'
+                     then
+                        Action_From_Menu (Kernel, Action)
+                     else
+                        Action);
                begin
+                  --  If we are loading user defined key shortcuts, check if
+                  --  the action actually exists before binding it.
+
                   if Load /= "" then
                      Load_Key_Theme (Kernel, Load);
-                  else
+                  elsif not User_Defined
+                    or else Actual_Action = ""
+                    or else Lookup_Action (Kernel, Actual_Action) /= null
+                  then
                      Bind_Default_Key_Internal
                        (Kernel           => Kernel,
                         Table            => Keymanager_Module.Table.all,
-                        Action           => Action,
+                        Action           => Actual_Action,
                         Key              => Child.Value.all,
                         Save_In_Keys_XML => User_Defined,
                         Remove_Existing_Shortcuts_For_Action => User_Defined,
                         Remove_Existing_Actions_For_Shortcut => False);
+                  else
+                     Trace
+                       (Debug,
+                        "'" & Child.Value.all
+                        & "' shortcut can't be bound to '"
+                        & Actual_Action & "': this action does not exist");
                   end if;
                end;
 
@@ -2657,30 +2657,6 @@ package body KeyManager_Module is
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       renames Standard.KeyManager_Module.GUI.Register_Key_Menu;
-
-   -------------------
-   -- Error_Message --
-   -------------------
-
-   procedure Error_Message
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Message : String)
-   is
-      Dummy : Message_Dialog_Buttons;
-      pragma Unreferenced (Dummy);
-   begin
-      if Keymanager_Module.GUI_Running then
-         Dummy := Message_Dialog
-           (Msg            => Message,
-            Dialog_Type    => Error,
-            Buttons        => Button_OK,
-            Default_Button => Button_OK,
-            Title          => -"Key binding error",
-            Parent         => Kernel.Get_Main_Window);
-      else
-         Insert (Kernel, Message, Mode => Error);
-      end if;
-   end Error_Message;
 
    ---------------------
    -- Set_GUI_Running --

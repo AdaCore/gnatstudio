@@ -2489,10 +2489,6 @@ procedure GPS.Main is
 
       Load_Preferences (GPS_Main.Kernel);
 
-      --  Load the custom keys last, so that they override everything else set
-      --  so far.
-      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
-
       --  Show the preferences assistant dialog if the user don't have any GPS
       --  home directory yet.
       if Show_Preferences_Assistant
@@ -2674,6 +2670,10 @@ procedure GPS.Main is
          Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
          Load_Sources;
       end if;
+
+      --  Load the custom keys last, so that they override everything else set
+      --  so far.
+      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
 
       if not File_Opened
         and then not Has_User_Desktop (GPS_Main.Kernel)
