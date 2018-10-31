@@ -543,25 +543,13 @@ scrollbar slider, scrollbar slider:hover {
  * Tooltips, Completion
  **********************************/
 
-tooltip, .completion.notes > frame {
-   margin: 0;
-   border-radius: 0;
-   border: 1px solid @popup_border_color;
+tooltip, .tooltip {
    background-color: @tooltip-background-color;
+   border: 1px solid @popup_border_color;
 }
 
-tooltip label {
-   color: @tooltip-text-color;
-   text-shadow: none;
-}
-
-.tooltip * {
-   padding: 12px;
-}
-
-.completion.notes > frame * {
-   padding: 3px;
-   border-width: 0px;
+.tooltip separator, .tooltip box {
+   padding: 0px;
 }
 
 .completion.search .help-label {
