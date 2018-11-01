@@ -109,21 +109,22 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Pattern used to detect when the debuggee is not running
 
    Frame_Pattern             : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
+     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (\w?\:?[^:]+)(:\d+)?)?$",
+      Multiple_Lines);
+   type Frame_Pattern_Kind is
+        (Frame_Matched, Frame_Num, Frame_Address_Part, Frame_Address,
+         Frame_Names, Frame_Location, Frame_File, Frame_Line)
+     with Warnings => Off;
+   Frame_Pattern_Groups      : constant Natural := 7;
    --  Regular expression used to detect and parse callstack frames
-
-   Frame_File_Line_Pattern : constant Pattern_Matcher := Compile
-     ("(.+):(\d+)$", Multiple_Lines);
-   --  Regular expression to separate line from file name
+   --  Example:
+   --  "#0  0x0000000000400548 in main () at /tests/RA25-028/common/main.c:17
+   --  "#1  0x0000000000400548 in main () at C:\tests\main.c:17
+   --  "#2  0x0000000000400548 in main ()
 
    Frame_Subprogram_Params_Pattern : constant Pattern_Matcher := Compile
      ("^(.*) (\(.*\))");
    --  Regular expression used to separate parameters form the subprogram name
-
-   Frame_Pattern_With_File   : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))$", Multiple_Lines);
-   --  Regular expression used to detect and parse callstack frames
-   --  with no file information
 
    Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
      ("(?:Breakpoint|Watchpoint|Catchpoint) (\d+)");
@@ -1614,28 +1615,33 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (S     : String;
       Value : out Backtrace_Vector)
    is
-      Matched : Match_Array (0 .. 6);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
       First   : Positive := S'First;
    begin
       loop
          Match (Frame_Pattern, S (First .. S'Last), Matched);
 
-         exit when Matched (0) = No_Match;
+         exit when Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) = No_Match;
 
          declare
             Rec : Backtrace_Record;
          begin
-            Rec.Frame_Id :=
-              Natural'Value (S (Matched (1).First .. Matched (1).Last));
+            Rec.Frame_Id := Natural'Value
+              (S (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                   Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
 
-            if Matched (2) /= No_Match then
+            if Matched
+              (Frame_Pattern_Kind'Pos (Frame_Address)) /= No_Match
+            then
                Rec.Address := String_To_Address
-                 (S (Matched (3).First .. Matched (3).Last));
+                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Address)).First ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Address)).Last));
             end if;
 
             declare
                N : constant String :=
-                 S (Matched (4).First .. Matched (4).Last);
+                 S (Matched (Frame_Pattern_Kind'Pos (Frame_Names)).First ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Names)).Last);
                Params_Match : Match_Array (0 .. 2);
                B, E : Natural;
             begin
@@ -1666,24 +1672,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                end if;
             end;
 
-            if Matched (5) /= No_Match then
-               declare
-                  Name : constant String :=
-                    S (Matched (6).First .. Matched (6).Last);
-                  MN   : Match_Array (0 .. 2);
-               begin
-                  Match (Frame_File_Line_Pattern, Name, MN);
+            if Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match then
+               Rec.File := Create
+                 (+(S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
+                    Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last)));
+            end if;
 
-                  if MN (0) /= No_Match then
-                     Rec.File := Create
-                       (+(Name (MN (1).First .. MN (1).Last)));
-                     Rec.Line := Natural'Value
-                       (Name (MN (2).First .. MN (2).Last));
-
-                  else
-                     Rec.File := Create (+(Name));
-                  end if;
-               end;
+            if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match then
+               Rec.Line := Natural'Value
+                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Line)).First + 1 ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Line)).Last));
             end if;
 
             First := Matched (0).Last + 2;
@@ -2484,11 +2482,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       pragma Unreferenced (Debugger);
 
       Start      : Natural := Str'First;
-      Matched    : Match_Array (0 .. 5);
-      Matched2   : Match_Array (0 .. 5);
-      Name_Index : Natural := 1;
-      Line_Index : Natural := 2;
-      Addr_Index : Natural := 3;
+      Matched    : Match_Array (0 .. Frame_Pattern_Groups);
+      Matched2   : Match_Array (0 .. Frame_Pattern_Groups);
+      Name_Index : Natural := 0;
+      Line_Index : Natural := 0;
+      Addr_Index : Natural := 0;
 
    begin
       --  Default values if nothing better is found
@@ -2528,31 +2526,54 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             Addr_Index := 0;
 
          else
-            --  Catch a frame without debug info
+            --  Catch a frame with or without debug info
+            --  #0  0x0000000000400548 in main () at C:/home/main.c:17
             --  #6  0x0000000000402e78 in sub ()
 
             Match (Frame_Pattern, Str, Matched);
-            if Matched (3) = No_Match then
+            if Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) = No_Match then
                return;
             end if;
 
-            Addr := String_To_Address
-              (Str (Matched (3).First .. Matched (3).Last));
-            return;
+            Addr_Index := Frame_Pattern_Kind'Pos (Frame_Address);
+            Name_Index := Frame_Pattern_Kind'Pos (Frame_File);
+            Line_Index := Frame_Pattern_Kind'Pos (Frame_Line);
          end if;
+      else
+         Name_Index := 1;
+         Line_Index := 2;
+         Addr_Index := 3;
       end if;
 
-      Set_Unbounded_String
-        (Name, Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
+      if Name_Index /= 0
+        and then Matched (Name_Index) /= No_Match
+      then
+         Set_Unbounded_String
+           (Name,
+            Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
+      end if;
 
-      if Addr_Index /= 0 then
+      if Addr_Index /= 0
+        and then Matched (Addr_Index) /= No_Match
+      then
          Addr :=
            String_To_Address
              (Str (Matched (Addr_Index).First .. Matched (Addr_Index).Last));
       end if;
 
-      Line := Natural'Value
-        (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+      if Line_Index /= 0
+        and then Matched (Line_Index) /= No_Match
+      then
+         if Str (Matched (Line_Index).First) = ':' then
+            Line := Natural'Value
+              (Str (Matched (Line_Index).First + 1 ..
+                 Matched (Line_Index).Last));
+
+         else
+            Line := Natural'Value
+              (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+         end if;
+      end if;
 
    exception
       when E : others =>
@@ -2573,19 +2594,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type)
    is
-      Matched : Match_Array (0 .. 1);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
    begin
       Match (Frame_Pattern, Str, Matched);
 
-      if Matched (1) /= No_Match then
+      if Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) /= No_Match then
          Set_Unbounded_String
-           (Frame, Str (Matched (1).First .. Matched (1).Last));
-         Debugger.Current_Frame_Num := Integer'Value
-           (Str (Matched (1).First .. Matched (1).Last));
+           (Frame, Str (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
+         Debugger.Current_Frame_Num := Integer'Value (To_String (Frame));
 
-         Match (Frame_Pattern_With_File, Str, Matched);
-
-         if Matched (1) /= No_Match then
+         if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match
+           or else Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match
+         then
             Message := Location_Found;
          else
             Message := No_Debug_Info;
@@ -4146,13 +4167,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Info     : String)
    is
-      Matched : Match_Array (0 .. 1);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
    begin
       Match (Frame_Pattern, Info, Matched);
 
-      if Matched (1) /= No_Match then
+      if Matched (Frame_Pattern_Kind'Pos (Frame_Num)) /= No_Match then
          Debugger.Current_Frame_Num := Integer'Value
-           (Info (Matched (1).First .. Matched (1).Last));
+           (Info (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
       end if;
    end Update_Frame_Info;
 
