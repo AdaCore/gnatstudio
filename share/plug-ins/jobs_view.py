@@ -27,7 +27,7 @@ record_jobs_pref.create(
     'boolean',
     'Record on disk the results of jobs runs, making them available'
     ' for replaying in the Jobs view',
-    True)
+    False)
 
 
 class SavedRunManager(object):
