@@ -21,6 +21,14 @@ from gps_utils import make_interactive
 
 MAX_SAVED_RUNS = 16  # The maximum number of runs to remember
 
+record_jobs_pref = GPS.Preference('Advanced/record_jobs')
+record_jobs_pref.create(
+    'Record runs of external tools (currently SPARK)',
+    'boolean',
+    'Record on disk the results of jobs runs, making them available'
+    ' for replaying in the Jobs view',
+    True)
+
 
 class SavedRunManager(object):
     """A singleton which handles the global list of saved runs"""
@@ -129,9 +137,11 @@ class Job_Recorder(tool_output.OutputParser):
 
     def on_exit(self, status, command):
         # Save the run in the jobs view.
-        # Do this only if it's a real run, ie if command exists.
+        # Do this only if
+        #   - the corresponding preference is set
+        #   - it's a real run, ie 'command' exists.
 
-        if command:
+        if record_jobs_pref.get() and command:
             run_manager.add_run(
                 command.name(),
                 self.child.__class__.__name__,
