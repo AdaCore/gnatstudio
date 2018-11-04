@@ -117,6 +117,7 @@ with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
+with UTF8_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_View;                     use Welcome_View;
 
@@ -553,6 +554,29 @@ procedure GPS.Main is
             Home_Dir := Create (+Home);
          else
             Home_Dir := Get_Home_Directory;
+         end if;
+
+         --  Under Windows, when the user directory contains international
+         --  characters, the value contained in the environment might not
+         --  be encoded in the same way as the filesystem. Add a safety check
+         --  for this.
+
+         if not Home_Dir.Is_Directory then
+            declare
+               Success   : aliased Boolean;
+               Converted : constant String :=
+                 UTF8_Utils.Unknown_To_UTF8
+                   (Input   => +Home_Dir.Full_Name.all,
+                    Success => Success'Access);
+            begin
+               if Success
+                 and then GNAT.OS_Lib.Is_Directory (Converted)
+               then
+                  --  $HOME/$USERPROFILE does not exist but its converted value
+                  --  exists; this is a safer bet for home directory: use it.
+                  Home_Dir := Create (+Converted);
+               end if;
+            end;
          end if;
       end;
 
