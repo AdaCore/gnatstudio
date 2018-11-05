@@ -545,10 +545,25 @@ scrollbar slider, scrollbar slider:hover {
 tooltip, .tooltip {
    background-color: @tooltip-background-color;
    border: 1px solid @popup_border_color;
+   border-radius: 0px;
+}
+
+tooltip label {
+   color: @tooltip-text-color;
 }
 
 .tooltip separator, .tooltip box {
    padding: 0px;
+}
+
+.completion frame {
+   background-color: @tooltip-background-color;
+   border: 1px solid @popup_border_color;
+}
+
+.completion.notes > frame * {
+   padding: 3px;
+   border-width: 0px;
 }
 
 .completion.search .help-label {
