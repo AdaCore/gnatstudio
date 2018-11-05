@@ -1589,22 +1589,15 @@ package body Project_Properties is
       end if;
    end Create_Project_Command_Handler;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+   ----------------------------
+   -- Register_Module_Reader --
+   ----------------------------
 
-   procedure Register_Module
+   procedure Register_Module_Reader
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Properties_Module_ID := new Properties_Module_ID_Record (Kernel);
       Kernel.Register_Module (Abstract_Module (Properties_Module_ID));
-
-      Register_Command
-        (Kernel, "properties_editor",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
 
       --  Redefine command to take into account attribute descriptions from
       --  projects.xml, which also provides the default values for attributes
@@ -1629,6 +1622,22 @@ package body Project_Properties is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+   end Register_Module_Reader;
+
+   ----------------------------
+   -- Register_Module_Writer --
+   ----------------------------
+
+   procedure Register_Module_Writer
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Register_Command
+        (Kernel, "properties_editor",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+
       Register_Command
         (Kernel, "set_attribute_as_string",
          Minimum_Args => 4,
@@ -1659,7 +1668,7 @@ package body Project_Properties is
          Maximum_Args  => 1,
          Class         => Get_Project_Class (Kernel),
          Handler       => Create_Project_Command_Handler'Access);
-   end Register_Module;
+   end Register_Module_Writer;
 
    ------------------------
    -- Paths_Are_Relative --

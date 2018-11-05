@@ -2253,8 +2253,9 @@ procedure GPS.Main is
          Project_Explorers.Register_Module (GPS_Main.Kernel);
       end if;
 
+      Project_Properties.Register_Module_Reader (GPS_Main.Kernel);
       if Active (Project_Properties_Trace) then
-         Project_Properties.Register_Module (GPS_Main.Kernel);
+         Project_Properties.Register_Module_Writer (GPS_Main.Kernel);
       end if;
 
       if Active (GNATTest_Trace) then

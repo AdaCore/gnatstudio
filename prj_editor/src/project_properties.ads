@@ -46,7 +46,11 @@ package Project_Properties is
    --  as a callback for a contextual menu.
    --  Context.Context must be of type File_Selection_Context
 
-   procedure Register_Module
+   procedure Register_Module_Reader
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the commands to retrieve the project properties
+
+   procedure Register_Module_Writer
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the project properties module
 
