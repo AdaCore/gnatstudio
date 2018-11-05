@@ -597,7 +597,7 @@ package body GPS.Main_Window is
             Gtkada.Style.Load_Css_String
               ("* { font-family: " & Default_Font_Family & ";"
                & ASCII.LF
-               & " font-size: " & Default_Font_Size & "px;"
+               & " font-size: " & Default_Font_Size & "pt;"
                & ASCII.LF
                & " font-style: " & Default_Font_Style & ";}",
                Priority => Gtk.Style_Provider.Priority_Theme);

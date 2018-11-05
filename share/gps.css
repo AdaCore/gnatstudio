@@ -169,7 +169,7 @@ dialog, window {
 
 .help-label {
    color: @inactive_items_color;
-   font-size: x-large;
+   font-size: 150%;
 }
 
 /********************
@@ -212,14 +212,14 @@ dialog, window {
 
 .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
-   font-size: x-small;
+   font-size: smaller;
    color: @inactive_items_color;
    padding-top: 4px;
 }
 
 *:selected .dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
-   font-size: x-small;
+   font-size: smaller;
    color: @inactive_items_selected_color;
 }
 
@@ -278,7 +278,7 @@ dialog, window {
 .assistant-page-views > GtkViewport > GtkBox > .dialog-views-groups > GtkLabel {
    /* Set extra large font for assistant pages titles */
    font-weight: normal;
-   font-size: x-large;
+   font-size: 150%;
    padding-bottom: 5px;
 }
 
@@ -317,19 +317,18 @@ dialog, window {
 }
 
 .gps-welcome-dialog-title {
-   font-size: xx-large;
+   font-size: 300%;
 }
 
 .gps-welcome-dialog-subtitle {
-   font-size: x-large;
+   font-size: 150%;
    color: @inactive_items_color;
 }
 
 .gps-welcome-dialog-version {
-   font-weight: 100;
    font-style: italic;
-   font-size: large;
-   color: @tooltip-background-color;
+   font-size: larger;
+   color: @gutter_color;
 }
 
 /***********************
@@ -343,7 +342,7 @@ dialog, window {
 }
 
 .gps-welcome-view-desc {
-   font-size: x-large;
+   font-size: 150%;
    color: @inactive_items_color;
    padding-left: 12px;
    padding-bottom: 40px;
@@ -553,7 +552,7 @@ tooltip, .tooltip {
 }
 
 .completion.search .help-label {
-   font-size: xx-large;
+   font-size: 300%;
 }
 
 .completion.search frame {
