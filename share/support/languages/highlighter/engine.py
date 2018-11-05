@@ -388,13 +388,15 @@ class SubHighlighter(object):
 
 class Highlighter(object):
 
-    def __init__(self, spec=(), igncase=False):
+    def __init__(self, spec=(), igncase=False, nb_lines=100):
         """
         :type spec: Iterable[BaseMatcher]
         :return:
         """
         self.root_highlighter = SubHighlighter(spec, igncase=igncase)
         self.sync_stop = False
+        # Nb lines we will rehighlight after a modification
+        self.nb_lines = nb_lines
 
     def highlight_info_gen(self, gtk_ed, start_line, end_line=0):
         """
@@ -530,7 +532,7 @@ class Highlighter(object):
         results.append((None, end_offset, end_offset))
         return results
 
-    def highlight_gen(self, gtk_ed, start_line=-1):
+    def highlight_gen(self, gtk_ed, start_line, nb_lines):
         """
         :type gtk_ed: Gtk.TextBuffer
         :type start_line: int
@@ -548,7 +550,9 @@ class Highlighter(object):
         else:
             st_iter = gtk_ed.get_iter_at_line(start_line)
             actions_list = self.highlight_info_gen(gtk_ed, start_line,
-                                                   start_line + 1000)
+                                                   start_line +
+                                                   max(nb_lines, self.nb_lines)
+                                                   )
 
             # if not self.sync_stop:
             #     actions_list = self.highlight_info_gen(gtk_ed, start_line)
@@ -565,10 +569,10 @@ class Highlighter(object):
         # print time() - t
 
     def gtk_highlight(self, gtk_ed):
-        self.highlight_gen(gtk_ed, -1)
+        self.highlight_gen(gtk_ed, -1, -1)
 
-    def gtk_highlight_region(self, gtk_ed, start_line):
-        self.highlight_gen(gtk_ed, start_line)
+    def gtk_highlight_region(self, gtk_ed, start_line, nb_lines):
+        self.highlight_gen(gtk_ed, start_line, nb_lines)
 
     def init_highlighting(self, ed):
         gtk_ed = get_gtk_buffer(ed)
@@ -578,15 +582,13 @@ class Highlighter(object):
         if not hasattr(gtk_ed, "idle_highlight_id"):
             gtk_ed.idle_highlight_id = None
 
-        def action_handler(loc):
+        def action_handler(loc, nb_lines):
             """:type loc: Gtk.TextIter"""
             if gtk_ed.idle_highlight_id:
                 GLib.source_remove(gtk_ed.idle_highlight_id)
 
             # Highlight all the rest of the buffer
-            # TODO: Highlight N lines synchronously, and if there are any
-            # TODO: remaining, the rest in async
-            self.gtk_highlight_region(gtk_ed, loc.get_line())
+            self.gtk_highlight_region(gtk_ed, loc.get_line(), nb_lines)
 
         # noinspection PyUnusedLocal
         def highlighting_insert_text_before(buf, loc, text, length):
@@ -597,7 +599,7 @@ class Highlighter(object):
             nb_new_lines = len(text.split("\n")) - 1
             itr = buf.iter_from_tuple(buf.insert_loc)
             buf.stacks.insert_newlines(nb_new_lines, itr.get_line())
-            action_handler(itr)
+            action_handler(itr, nb_new_lines + 1)
 
         def highlighting_delete_range_before(buf, loc, end):
             buf.nb_deleted_lines = len(
@@ -607,7 +609,8 @@ class Highlighter(object):
         # noinspection PyUnusedLocal
         def highlighting_delete_range(buf, loc, end):
             buf.stacks.delete_lines(buf.nb_deleted_lines, loc.get_line())
-            action_handler(loc)
+            # Recompute the highlighting of the 100 next lines
+            action_handler(loc, self.nb_lines)
 
         gtk_ed.connect_after("insert-text", highlighting_insert_text)
         gtk_ed.connect_after("delete-range", highlighting_delete_range)
