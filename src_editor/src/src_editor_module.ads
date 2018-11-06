@@ -27,6 +27,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
@@ -296,14 +297,15 @@ private
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Font                  : Pango.Font.Pango_Font_Description;
-      Display_Line_Numbers  : Boolean    := False;
+      Display_Line_Numbers  : Boolean    :=
+         GPS.Kernel.Preferences.Display_Line_Numbers.Get_Pref /= Never;
 
       Character_Width       : Gint := Minimum_Character_Width;
       --  Width of the size column to display line numbers and breakpoint
       --  info. This is set to a minimum size so that we can always display
       --  breakpoint information.
 
-      Show_Subprogram_Names : Boolean    := False;
+      Show_Subprogram_Names : Boolean    := Display_Subprogram_Names.Get_Pref;
 
       Stored_Marks          : File_Marker_Maps.Map;
       --  Lists of markers for files.
