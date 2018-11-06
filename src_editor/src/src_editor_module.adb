@@ -815,24 +815,7 @@ package body Src_Editor_Module is
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      if Is_Valid_Position (Get_Buffer (D.Edit), D.Line) then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
-
-         if D.Column_End /= 0
-           and then Is_Valid_Position
-             (Get_Buffer (D.Edit), D.Line, D.Column_End)
-         then
-            Select_Region
-              (Get_Buffer (D.Edit),
-               D.Line,
-               D.Column,
-               D.Line,
-               D.Column_End);
-         end if;
-      end if;
-
       File_Edited_Hook.Run (Get_Kernel (D.Edit), Get_Filename (D.Edit));
-
       return False;
 
    exception
@@ -1475,6 +1458,7 @@ package body Src_Editor_Module is
             Set_Position_Set_Explicitely (Get_View (Editor));
 
             if Column_End /= 0
+              and then Column < Column_End
               and then Is_Valid_Position
                 (Get_Buffer (Editor), Line, Column_End)
             then
@@ -1489,9 +1473,12 @@ package body Src_Editor_Module is
                   Real_Column_End);
             end if;
 
-         elsif Focus then
-            --  Gives the focus, thus child_selected, thus context_changed).
-            Raise_Child (Child, Focus);
+         else
+            Set_Cursor_Location (Editor, 1, 1, Force_Focus => False);
+            if Focus then
+               --  Gives the focus, thus child_selected, thus context_changed).
+               Raise_Child (Child, Focus);
+            end if;
          end if;
       end Jump_To_Location_And_Give_Focus;
 
@@ -1526,7 +1513,9 @@ package body Src_Editor_Module is
 
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
+            Freeze_Context (Get_Buffer (Editor));
             Jump_To_Location_And_Give_Focus (Child2);
+            Thaw_Context (Get_Buffer (Editor));
 
             return Editor;
          end if;
@@ -1555,6 +1544,7 @@ package body Src_Editor_Module is
       --  to the MDI to handle
 
       if Editor /= null then
+         Freeze_Context (Get_Buffer (Editor));
          Child := new Editor_Child_Record;
          Initialize
            (Child, Editor,
@@ -1701,6 +1691,7 @@ package body Src_Editor_Module is
             Add_To_Recent_Menu (Kernel, File);
          end if;
 
+         Thaw_Context (Get_Buffer (Editor));
       else
          Kernel.Insert
            ((-"Cannot open file ") & "'" & Display_Full_Name (File)

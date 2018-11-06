@@ -296,7 +296,7 @@ private
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
 
-      Current_Line        : Gint := -1;
+      Current_Line        : Gint := 0;
       --  The line that contains the cursor
 
       Current_Block       : Src_Editor_Buffer.Block_Record;

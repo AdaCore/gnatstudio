@@ -675,7 +675,6 @@ package body Src_Editor_Box is
 
       --  We do not want to send a context_changed even here. It will be done
       --  later anyway, with more accurate information.
-      Set_Cursor_Location (Box, 1, 1, Force_Focus => False);
       Update_Status (Box.Status_Bar);
    end Initialize;
 

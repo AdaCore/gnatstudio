@@ -2151,7 +2151,6 @@ package body GPS.Kernel.MDI is
       Self.Files := (File      => File,
                      Timestamp => GNATCOLL.Utils.No_Time,
                      Sha1      => (others => '-'));
-      Self.Update_File_Info;
    end Monitor_File;
 
    ----------------------
