@@ -392,14 +392,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access Gdb_MI_Debugger;
-      Cmd      : String;
-      Mode     : Command_Type := Hidden) return String is
+     (Debugger    : access Gdb_MI_Debugger;
+      Cmd         : String;
+      Mode        : Command_Type := Hidden;
+      Synchronous : Boolean := True) return String is
    begin
       Debugger.Reset_State;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Output (Cmd, Mode);
+         S   : constant String := Debugger.Send_And_Get_Output
+           (Cmd, Mode, Synchronous);
          Pos : Integer;
       begin
          if Ends_With (S, Prompt_String) then
@@ -1067,7 +1069,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Debugger.Set_Executable (Debugger.Executable, Mode => Visible);
+         Debugger.Set_Executable (Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if
@@ -1276,10 +1278,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_MI_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : Command_Type := Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
 
       Remote_Exec         : constant Virtual_File := To_Remote
         (Executable, Get_Nickname (Debug_Server));
@@ -1287,6 +1287,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
         Index (Remote_Exec.Display_Full_Name, " ") /= 0;
       Full_Name           : constant String :=
         +Remote_Exec.Unix_Style_Full_Name;
+
       No_Such_File_Regexp : constant Pattern_Matcher := Compile
         (Full_Name & ": No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
@@ -1313,30 +1314,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
               (Command & " " & Full_Name);
          end if;
 
-         if Process /= null then
-            Process.Output_Text (Cmd.all & ASCII.LF, Set_Position => True);
-         end if;
+         --  Send the command and wait until the end of it's execution without
+         --  blocking The UI.
 
          declare
-            S      : constant String := Debugger.Send_And_Get_Clean_Output
-              (Cmd.all, Mode => Hidden);
-            Result : Unbounded_String;
+            Output : constant String := Debugger.Send_And_Get_Clean_Output
+              (Cmd.all,
+               Mode        => Visible,
+               Synchronous => False);
          begin
             Free (Cmd);
 
-            if Match (No_Such_File_Regexp, S) /= 0 then
+            if Match (No_Such_File_Regexp, Output) /= 0 then
                raise Executable_Not_Found;
-            end if;
-
-            if Process /= null and then S /= "" then
-               Debugger.Filter_Output (Hidden, S, Result);
-               Process.Output_Text
-                 (To_String (Result) & ASCII.LF,
-                  Set_Position => True);
-
-               --  "file" command doesn't return prompt in answer,
-               --  so add it manually
-               Debugger.Display_Prompt;
             end if;
          end;
       end Launch_Command_And_Output;
@@ -1345,7 +1335,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Process := Convert (Debugger);
 
       Debugger.Executable := Executable;
-      Launch_Command_And_Output ("file");
+
+      --  Send the 'file' command and verify that the specified executable
+      --  actually exists by filtering the command's output.
+
+      Launch_Command_And_Output ("-file-exec-and-symbols");
 
       --  Connect to the remote target if needed
 

@@ -126,8 +126,7 @@ package Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_MI_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Executable : GNATCOLL.VFS.Virtual_File);
 
    overriding function Get_Executable
      (Debugger : access Gdb_MI_Debugger) return GNATCOLL.VFS.Virtual_File;
@@ -452,9 +451,10 @@ package Debugger.Base_Gdb.Gdb_MI is
 private
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger        : access Gdb_MI_Debugger;
-      Cmd             : String;
-      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access Gdb_MI_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String;
 
    overriding procedure Send

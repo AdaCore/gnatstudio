@@ -342,11 +342,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access Gdb_Debugger;
-      Cmd      : String;
-      Mode     : Command_Type := Hidden) return String
+     (Debugger    : access Gdb_Debugger;
+      Cmd         : String;
+      Mode        : Command_Type := Hidden;
+      Synchronous : Boolean := True) return String
    is
-      S   : constant String := Send_And_Get_Output (Debugger, Cmd, Mode);
+      S   : constant String := Send_And_Get_Output
+        (Debugger, Cmd, Mode, Synchronous);
       Pos : Integer;
    begin
       if Ends_With (S, Prompt_String) then
@@ -675,7 +677,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
+         Set_Executable (Debugger, Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if
@@ -721,6 +723,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          if Get_Pref (Open_Main_Unit) then
             Send (Debugger, "info line", Mode => Internal);
          end if;
+
+         --  Display the prompt when there is no executable at startup since
+         --  we did not launch any visible command.
+
+         Debugger.Display_Prompt;
       end if;
 
       if Debugger.Executable_Args /= null then
@@ -890,8 +897,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
                                      Protocol => Debugger.Get_Remote_Protocol,
                                      Mode     => Visible);
-      else
-         Display_Prompt (Debugger);
       end if;
    end Connect_To_Target_If_Needed;
 
@@ -901,11 +906,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : Command_Type := Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
-
       Remote_Exec         : constant Virtual_File :=
                               To_Remote
                                 (Executable, Get_Nickname (Debug_Server));
@@ -940,22 +942,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
               (Command & " " & Full_Name);
          end if;
 
-         if Process /= null then
-            Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
-         end if;
+         --  Send the command and wait until the end of it's execution without
+         --  blocking The UI.
 
          declare
-            S : constant String := Send_And_Get_Clean_Output
-              (Debugger, Cmd.all, Mode => Hidden);
+            Output : constant String := Debugger.Send_And_Get_Clean_Output
+              (Cmd.all,
+               Mode        => Visible,
+               Synchronous => False);
          begin
             Free (Cmd);
 
-            if Match (No_Such_File_Regexp, S) /= 0 then
+            if Match (No_Such_File_Regexp, Output) /= 0 then
                raise Executable_Not_Found;
-            end if;
-
-            if Process /= null and then S /= "" then
-               Output_Text (Process, S & ASCII.LF, Set_Position => True);
             end if;
          end;
       end Launch_Command_And_Output;

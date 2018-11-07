@@ -398,7 +398,7 @@ package body Debugger.LLDB is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Debugger.Set_Executable (Debugger.Executable, Mode => Visible);
+         Debugger.Set_Executable (Debugger.Executable);
 
       else
          --  Connect to the target, if needed. This is normally done by
@@ -554,15 +554,17 @@ package body Debugger.LLDB is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access LLDB_Debugger;
-      Cmd      : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access LLDB_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String is
    begin
       Debugger.Reset_State;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Output (Cmd, Mode);
+         S   : constant String := Debugger.Send_And_Get_Output
+           (Cmd, Mode, Synchronous);
          Pos : Integer;
       begin
          if Ends_With (S, Prompt_String) then
@@ -939,11 +941,8 @@ package body Debugger.LLDB is
 
    overriding procedure Set_Executable
      (Debugger   : access LLDB_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
-
       Remote_Exec         : constant Virtual_File := To_Remote
         (Executable, Get_Nickname (Debug_Server));
       Full_Name           : constant String :=

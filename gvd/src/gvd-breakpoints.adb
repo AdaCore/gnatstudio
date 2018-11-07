@@ -1658,20 +1658,25 @@ package body GVD.Breakpoints is
       if View = null then
          return Commands.Failure;
       end if;
-            --  Get the list of selected breakpoints
+
+      --  Get the list of selected breakpoints
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => False,
                                              State   => Command.Is_Enabled,
                                              Id_List => Id_List);
+
       --  Put them in numerical order
       Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Set_Breakpoints_State (View.Kernel, Id_List, Command.Is_Enabled);
+
       Breakpoint_Identifier_Lists.Clear (Id_List);
+
       --  Need to modify the toggle buttons in the model
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => True,
                                              State   => Command.Is_Enabled,
                                              Id_List => Id_List);
+
       return Commands.Success;
    end Execute;
 

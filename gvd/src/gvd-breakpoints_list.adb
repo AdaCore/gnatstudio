@@ -1077,10 +1077,9 @@ package body GVD.Breakpoints_List is
       State  : Boolean)
    is
       Process         : constant Visual_Debugger :=
-                          Visual_Debugger (Get_Current_Debugger (Kernel));
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Debugger_Active : constant Boolean := Process /= null
-        and then Is_Interactive (Kernel, Process)
-        and then not List.Is_Empty;
+        and then Is_Interactive (Kernel, Process);
    begin
       if List.Is_Empty then
          return;

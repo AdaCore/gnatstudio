@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
@@ -794,7 +793,11 @@ package body GVD.Process is
          --  Force_Send is always false so that commands are queued. We
          --  are not in a secondary prompt anyway (which should be when
          --  we have a Registered_Dialog).
-         Debugger.Debugger.Send (Command, Mode => Mode, Force_Send => False);
+         Debugger.Debugger.Send
+           (Command,
+            Mode            => Mode,
+            Wait_For_Prompt => False,
+            Force_Send      => False);
 
       else
          Output.all := new String'

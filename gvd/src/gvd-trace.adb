@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with GNAT.Expect;               use GNAT.Expect;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Debugger;                  use Debugger;
@@ -41,12 +40,6 @@ package body GVD.Trace is
    Direction_String : constant array (IO_Kind) of String (1 .. 4) :=
      (Input_Kind  => "-> """,
       Output_Kind => "<- """);
-
-   pragma Warnings (Off);
-   --  This UC is safe aliasing-wise, so kill warning
-   function To_Process is new
-     Ada.Unchecked_Conversion (System.Address, Visual_Debugger);
-   pragma Warnings (On);
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;
@@ -167,7 +160,7 @@ package body GVD.Trace is
       Process    : System.Address := System.Null_Address)
    is
       pragma Unreferenced (Descriptor);
-      P : constant Visual_Debugger := To_Process (Process);
+      P : constant Visual_Debugger := Convert (Process);
    begin
       if Debugger_Console_All_Interactions.Get_Pref then
          P.Output_Text (Str);
@@ -191,7 +184,7 @@ package body GVD.Trace is
       Process    : System.Address := System.Null_Address)
    is
       pragma Unreferenced (Descriptor);
-      P : constant Visual_Debugger := To_Process (Process);
+      P : constant Visual_Debugger := Convert (Process);
    begin
       if Debugger_Console_All_Interactions.Get_Pref then
          P.Output_Text (Str);

@@ -410,6 +410,7 @@ package body GVD.Scripts is
                Remote_Target   => Remote_Target,
                Remote_Protocol => Remote_Protocol,
                Load_Executable => Load_Executable);
+
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;

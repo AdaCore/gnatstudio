@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with System;
+
 with Glib;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -243,6 +246,11 @@ package GVD.Process is
      (Debugger : access Debugger_Root'Class)
       return Visual_Debugger;
    --  Conversion function.
+
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Visual_Debugger);
+   --  Convert a System.Addresss into a Visual_Debugger.
+   --  Used for GNAT.Expect filter functions.
 
    procedure Final_Post_Process
      (Process           : not null access Visual_Debugger_Record'Class;

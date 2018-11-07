@@ -321,6 +321,17 @@ class Predefined_Hooks:
 
         """
 
+    # debuggee_started = 'debuggee_started'
+    def debuggee_started(name,debugger):
+        """
+      Emitted when the debuggee has been started or when the debugger is connected
+      to the remote target.
+
+      :param str name:
+      :param GPS.Debugger debugger:
+
+        """
+
     # debugger_breakpoint_added = 'debugger_breakpoint_added'
     def debugger_breakpoint_added(name,debugger,id):
         """

@@ -27,6 +27,7 @@ with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with System;
 
 with Glib.Convert;
 with Gtk.Main;
@@ -655,6 +656,7 @@ package body Debugger is
       Force_Send      : Boolean := False;
       Mode            : Command_Type := Hidden)
    is
+      Full_Output : Unbounded_String;
       Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
       Last     : Positive := Cmd'First;
       Cmd_Last : Natural;
@@ -663,6 +665,30 @@ package body Debugger is
       procedure Wait_For_Prompt_And_Get_Output;
       --  Wait for the prompt synchronously, then get the full debugger
       --  output. Finally, terminate do all the post-processing.
+
+      procedure Retrieve_Output_Filter
+        (Descriptor : Process_Descriptor'Class;
+         Str        : String;
+         Process    : System.Address := System.Null_Address);
+      --  Used to retrieve the debugger's output of asynchronous commands
+      --  launched in visible mode.
+
+      ----------------------------
+      -- Retrieve_Output_Filter --
+      ----------------------------
+
+      procedure Retrieve_Output_Filter
+        (Descriptor : Process_Descriptor'Class;
+         Str        : String;
+         Process    : System.Address := System.Null_Address) is
+         pragma Unreferenced (Descriptor, Process);
+      begin
+         Full_Output := Full_Output & Str;
+      end Retrieve_Output_Filter;
+
+      ------------------------------------
+      -- Wait_For_Prompt_And_Get_Output --
+      ------------------------------------
 
       procedure Wait_For_Prompt_And_Get_Output is
          Dummy   : Boolean;
@@ -802,33 +828,53 @@ package body Debugger is
 
             when Visible_Command =>
                if Wait_For_Prompt then
-                  if Synchronous then
+
+                  --  If we should wait for the prompt, always make the command
+                  --  synchronous when there is no visual debugger.
+                  --  Otherwise, process graphical events while waiting for the
+                  --  prompt.
+
+                  if Synchronous or else Process = null then
                      Wait_For_Prompt_And_Get_Output;
                   else
                      --  Asynchronous handling of commands, done in
                      --  Output_Available.
 
                      Debugger.State := Async_Wait;
+
+                     --  Add an output filter to retrieve the command's output
+                     --  and wait until the end of its execution without
+                     --  blocking the UI.
+
+                     declare
+                        Descriptor : constant Process_Descriptor_Access :=
+                          Get_Descriptor (Get_Process (Debugger));
+                        User_Data  : constant System.Address :=
+                          System.Null_Address;
+                     begin
+                        Add_Filter
+                          (Descriptor.all,
+                           Retrieve_Output_Filter'Unrestricted_Access,
+                           GNAT.Expect.Output,
+                           User_Data);
+
+                        Debugger.Wait_User_Command;
+
+                        --  Verify that the process has not been killed by
+                        --  a quit command in the meantime.
+
+                        if Get_Process (Debugger) /= null then
+                           Remove_Filter
+                             (Descriptor.all,
+                              Retrieve_Output_Filter'Unrestricted_Access);
+                        end if;
+
+                        Output := new String'(To_String (Full_Output));
+                     end;
                   end if;
 
                else   --  always asynchronous
-                  if Mode >= Visible then
-                     --  Clear the current output received from the debugger
-                     --  to avoid confusing the prompt detection, since
-                     --  we're sending input in the middle of a command,
-                     --  which is delicate.
-
-                     --  But in Continuation_Line mode we are waiting for the
-                     --  prompt which means that command sending is completed
-
-                     --  A case where we should clear output is needed.
-                     --  We should add automatic test for it and decide do we
-                     --  need clear output at all.
-
-                     if not Debugger.Continuation_Line then
-                        Process_Proxies.Empty_Buffer (Debugger.Get_Process);
-                     end if;
-                  end if;
+                  Debugger.State := Async_Wait;
                end if;
          end case;
 
@@ -901,16 +947,17 @@ package body Debugger is
    -------------------------
 
    function Send_And_Get_Output
-     (Debugger : access Debugger_Root;
-      Cmd      : String;
-      Mode     : Command_Type := Hidden) return String
+     (Debugger    : access Debugger_Root;
+      Cmd         : String;
+      Mode        : Command_Type := Hidden;
+      Synchronous : Boolean := True) return String
    is
       Output : GNAT.OS_Lib.String_Access;
    begin
       Internal_Send
         (Debugger,
          Cmd             => Cmd,
-         Synchronous     => True,
+         Synchronous     => Synchronous,
          Output          => Output,
          Empty_Buffer    => True,
          Wait_For_Prompt => True,
@@ -987,7 +1034,11 @@ package body Debugger is
    begin
       Debugger.Is_Started := Is_Started;
       if Process /= null then   --  null in testsuite
-         Debugger_Process_Terminated_Hook.Run (Process.Kernel, Process);
+         if Is_Started then
+            Debuggee_Started_Hook.Run (Process.Kernel, Process);
+         else
+            Debugger_Process_Terminated_Hook.Run (Process.Kernel, Process);
+         end if;
       end if;
    end Set_Is_Started;
 

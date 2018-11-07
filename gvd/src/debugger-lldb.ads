@@ -55,9 +55,10 @@ package Debugger.LLDB is
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access LLDB_Debugger;
-      Cmd      : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access LLDB_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String;
 
    overriding function Highlighting_Pattern
@@ -138,8 +139,7 @@ package Debugger.LLDB is
 
    overriding procedure Set_Executable
      (Debugger   : access LLDB_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Executable : GNATCOLL.VFS.Virtual_File);
 
    overriding function Get_Executable
      (Debugger : access LLDB_Debugger)
