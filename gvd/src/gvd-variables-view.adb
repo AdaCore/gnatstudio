@@ -868,9 +868,9 @@ package body GVD.Variables.View is
       Command : String) return String
    is
       pragma Unreferenced (Self);
-      M         : Match_Array (0 .. Tree_Cmd_Max_Paren);
-      It        : Item;
-      View      : GVD_Variable_View;
+      M    : Match_Array (0 .. Tree_Cmd_Max_Paren);
+      It   : Item;
+      View : GVD_Variable_View;
 
       function Extract (Paren : Natural) return String
          is (Command (M (Paren).First .. M (Paren).Last));
@@ -911,6 +911,17 @@ package body GVD.Variables.View is
          Curs : Item_Vectors.Cursor;
       begin
          if Cmd = "display" then
+            --  Do not send debugger quit command
+            if Visual_Debugger (Process).Debugger.Is_Quit_Command
+              (To_String (It.Info.Cmd))
+            then
+               return Command_Intercepted;
+            end if;
+
+            --  Try if variables does not crash gdb
+            --  and add it into list only if not
+
+            Update (It.Info, Visual_Debugger (Process));
             View.Ids := View.Ids + 1;
             It.Id := View.Ids;
             View.Tree.Items.Append (It);
@@ -924,12 +935,20 @@ package body GVD.Variables.View is
                end if;
                Item_Vectors.Next (Curs);
             end loop;
+
+         else
+            Trace (Me, "Unsupported command:" & Command);
          end if;
       end;
 
       Update (View);
 
       return Command_Intercepted;  --  command was processed
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return Command_Intercepted;
    end Execute;
 
    --------------
