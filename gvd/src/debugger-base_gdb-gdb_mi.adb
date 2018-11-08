@@ -4915,9 +4915,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       pragma Unreferenced (Debugger);
    begin
-      return Starts_With (Command, "-gdb-exit")
-        or else Starts_With (Command, "quit")
-        or else Starts_With (Command, "q");
+      return    Command = "-gdb-exit"
+        or else Command = "quit"
+        or else Command = "q";
    end Is_Quit_Command;
 
 end Debugger.Base_Gdb.Gdb_MI;
