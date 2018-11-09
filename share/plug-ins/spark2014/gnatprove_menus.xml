@@ -90,7 +90,7 @@
       </shell>
     </action>
     <action name="Exit Manual Proof" category="GNATprove" output="none">
-      <filter language="Ada" shell_lang="python"
+      <filter shell_lang="python"
        shell_cmd="spark2014.manual_proof_started()" />
       <shell
           lang="python">spark2014.exit_ITP("")
