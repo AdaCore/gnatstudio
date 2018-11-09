@@ -283,10 +283,11 @@ class Git(core.VCS):
         git_cmd = [
             'log',
             # use tformat to get final newline
-            '--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s',
-            '--branches' if not current_branch_only else '',
-            '--tags' if not current_branch_only else '',
-            '--remotes' if not current_branch_only else '']
+            '--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s']
+        if not current_branch_only:
+            git_cmd.append('--branches')
+            git_cmd.append('--tags')
+            git_cmd.append('--remotes')
         if for_file:
             git_cmd.append('--follow')
         git_cmd += [

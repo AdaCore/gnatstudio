@@ -1154,6 +1154,7 @@ package body VCS2.History is
          Collapse     => Collapse_Simple_Commits.Get_Pref);
       if Config /= T.Config then
          T.Config := Config;
+         T.User_Filter.Current_Branch_Only := not T.Config.All_Branches;
 
          T.Col_Author.Set_Visible (Config.Show_Author);
          T.Col_Date.Set_Visible (Config.Show_Date);
