@@ -196,6 +196,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
+   Is_Quit_Pattern : constant Pattern_Matcher := Compile
+     ("^\s*(q|qu|qui|quit)\s*$");
+
    procedure Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -4137,15 +4140,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
-      Quit     : constant String := "quit     ";
    begin
-      if Command'Length <= Quit'Length
-        and then Command = Quit (1 .. Command'Length)
-      then
-         return True;
-      else
-         return False;
-      end if;
+      return Match (Is_Quit_Pattern, Command);
    end Is_Quit_Command;
 
    -----------------------

@@ -146,6 +146,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
    Continuation_Line_Pattern : constant Pattern_Matcher := Compile
      ("^ ?>$", Multiple_Lines);
 
+   Is_Quit_Pattern : constant Pattern_Matcher := Compile
+     ("^\s*(q|qui|quit|-gdb-exit)\s*$");
+   --  'qu' can be quit or queue-signal
+
    procedure Breakpoint_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -4915,9 +4919,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       pragma Unreferenced (Debugger);
    begin
-      return    Command = "-gdb-exit"
-        or else Command = "quit"
-        or else Command = "q";
+      return Match (Is_Quit_Pattern, Command);
    end Is_Quit_Command;
 
 end Debugger.Base_Gdb.Gdb_MI;
