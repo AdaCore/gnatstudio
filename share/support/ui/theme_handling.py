@@ -321,8 +321,8 @@ common_dark = {
     "diff_side_change": Rgba(107, 73, 19),
     "diff_side_remove": Rgba(88, 43, 43),
     "diff_side_append": Rgba(38, 68, 36),
-    "diff_patch_remove": ("Default", Rgba(253, 31, 31), transparent),
-    "diff_patch_append": ("Default", Rgba(10, 150, 10), transparent),
+    "diff_patch_remove": ("Default", Rgba(239, 41, 41), transparent),
+    "diff_patch_append": ("Default", Rgba(115, 210, 22), transparent),
     "breakpoint": Rgba(190, 191, 196),
 
     "dispatching": Rgba(46, 52, 56),
