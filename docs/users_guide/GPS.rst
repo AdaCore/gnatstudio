@@ -2074,7 +2074,7 @@ Classes
 
    .. automethod:: GPS.VCS2_Task_Visitor.file_computed
 
-   .. automethod:: GPS.VCS2_Task_Visitor.history_lines
+   .. automethod:: GPS.VCS2_Task_Visitor.history_line
 
    .. automethod:: GPS.VCS2_Task_Visitor.set_details
 

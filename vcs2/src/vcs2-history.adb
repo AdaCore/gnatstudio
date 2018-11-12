@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;                use Ada.Calendar;
 with Ada.Containers;              use Ada.Containers;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
@@ -30,7 +29,6 @@ with GNAT.Strings;                use GNAT.Strings;
 with Cairo;                       use Cairo;
 with Glib;                        use Glib;
 with Glib.Convert;                use Glib.Convert;
-with Glib.Main;                   use Glib.Main;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
@@ -45,6 +43,7 @@ with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Spinner;                 use Gtk.Spinner;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -52,7 +51,6 @@ with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 
 with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
 with Gtkada.Style;                use Gtkada.Style;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 
@@ -89,10 +87,11 @@ package body VCS2.History is
    Column_Subject : constant := 3;
    subtype All_Columns is Gint range Column_Line .. Column_Subject;
 
-   Inter_Row_Space  : constant Gint := 2;  --  hard-coded in gtk+
-   Column_Width     : constant Gdouble := 10.0;
-   Radius           : constant Gdouble := 3.0;
-   Outside_Graph    : constant Gdouble := 10_000.0;
+   Inter_Row_Space : constant Gint := 2;  --  hard-coded in gtk+
+   Column_Width    : constant Gdouble := 10.0;
+   Radius          : constant Gdouble := 3.0;
+   Outside_Graph   : constant Gdouble := 10_000.0;
+   Number_Commits  : constant Integer := 500;
 
    Color_Palettes : constant array (0 .. 9) of Gdk_RGBA :=
      (0   => (0.09, 0.46, 0.72, 1.0),
@@ -195,7 +194,7 @@ package body VCS2.History is
       Max_Columns : Natural := 0;  --  Number of columns in the graph
 
       User_Filter : History_Filter :=
-        (Up_To_Lines   => 2000,
+        (Up_To_Lines   => Number_Commits,
          others        => <>);
       --  Current filter
 
@@ -207,6 +206,15 @@ package body VCS2.History is
    end record;
    type History_Tree is access all History_Tree_Record'Class;
 
+   type Layout_Idle_Data is record
+      Is_Free   : Boolean_Vectors.Vector;
+      Current   : Natural;  --  in lines
+      Inserted  : Natural;  --  number of items inserted in tree
+      To_Select : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Kernel    : Kernel_Handle;
+   end record;
+   type Layout_Idle_Data_Access is access all Layout_Idle_Data;
+
    function Get_Parent_Node
      (Tree   : not null access History_Tree_Record'Class;
       N      : Node_Data_Access;
@@ -215,6 +223,18 @@ package body VCS2.History is
    --  find one visible parent (so it could be the Parent-th parent itself, or
    --  its own parent).
    --  Returns null if no such parent is found.
+
+   procedure Add_Commit_Node
+     (Tree : not null access History_Tree_Record'Class;
+      N    : Node_Data_Access;
+      Data : Layout_Idle_Data_Access);
+   --  Add N in Tree
+
+   procedure Finish_Filling_Tree
+     (Tree : not null access History_Tree_Record'Class;
+      Data : Layout_Idle_Data_Access);
+   --  Called when the maximum capacity of the tree is hit: will recompute
+   --  the graph and add an action
 
    function Get_ID_From_Node
      (Self       : not null access Tree_View_Record'Class;
@@ -234,6 +254,8 @@ package body VCS2.History is
       return Selection_Context;
 
    type History_View_Record is new Base_VCS_View_Record with record
+      Spinner                 : Gtk_Spinner;
+      Box                     : Gtk_Box;
       Refresh_On_Pref_Changed : Boolean := True;
    end record;
    overriding procedure Refresh
@@ -254,6 +276,12 @@ package body VCS2.History is
    function Initialize
      (Self : access History_View_Record'Class) return Gtk_Widget;
    --  Create a new view
+
+   procedure Hide_Spinner (Self : access History_View_Record'Class);
+   --  Hide the Spinner and show the tree view after finding a commit
+
+   procedure Show_Spinner (Self : access History_View_Record'Class);
+   --  Hide the view and show a spinner before the first commit is found
 
    package History_Views is new Generic_Views.Simple_Views
      (Module_Name        => "VCS_History",
@@ -279,17 +307,6 @@ package body VCS2.History is
 
    procedure On_Selection_Changed (View : access GObject_Record'Class);
    --  Called when one or more files are selected
-
-   type Layout_Step is (Step_Compute, Step_Insert);
-   type Layout_Idle_Data is record
-      Is_Free   : Boolean_Vectors.Vector;
-      Current   : Natural;  --  in lines
-      Step      : Layout_Step;
-      Inserted  : Natural;   --  number of items inserted in tree
-      To_Select : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Kernel    : Kernel_Handle;
-   end record;
-   type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
    type On_Line_Seen is new Task_Visitor with record
       Kernel   : Kernel_Handle;
@@ -323,12 +340,6 @@ package body VCS2.History is
       Header  : String;
       Message : String);
    --  Visitor when getting the details for a set of commits
-
-   procedure Free (Self : in out Layout_Idle_Data_Access);
-   function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean;
-   package Layout_Sources is new Glib.Main.Generic_Sources
-     (Layout_Idle_Data_Access);
-   --  Compute the layout for the tree and graph, and insert lines
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -785,7 +796,8 @@ package body VCS2.History is
             Column_Line) = -1
          then
             History_Tree (View.Tree).User_Filter.Up_To_Lines :=
-              History_Tree (View.Tree).User_Filter.Up_To_Lines + 2000;
+              History_Tree (View.Tree).User_Filter.Up_To_Lines
+              + Number_Commits;
             View.Refresh;
          end if;
 
@@ -1008,11 +1020,9 @@ package body VCS2.History is
      (Self : access History_View_Record'Class) return Gtk_Widget
    is
       Scrolled : Gtk_Scrolled_Window;
-      Paned    : Gtkada_Multi_Paned;
       Text     : Gtk_Cell_Renderer_Text;
       Col      : Gtk_Tree_View_Column;
       Dummy    : Gint;
-      Box      : Gtk_Box;
       T        : History_Tree;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
@@ -1034,21 +1044,21 @@ package body VCS2.History is
                   Set_Visible_Func => True);
       Set_Name (Self.Tree, "History Tree");
 
-      Gtk_New (Paned);
-      Paned.Set_Opaque_Resizing (True);
-      Self.Pack_Start (Paned);
+      Gtk_New (Self.Spinner);
+      Self.Pack_Start (Self.Spinner);
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Paned.Add_Child (Box, Orientation => Orientation_Vertical);
+      Gtk_New_Hbox (Self.Box, Homogeneous => False);
+      Self.Pack_Start (Self.Box);
+      Set_No_Show_All (Self.Box, True);
 
       Gtk_New (T.Graph);
       T.Graph.Set_Size_Request (0, -1);   --  will grow when it has data
-      Box.Pack_Start (T.Graph, Expand => False);
+      Self.Box.Pack_Start (T.Graph, Expand => False);
       T.Graph.On_Draw (On_Draw_Graph'Access, Self);
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Box.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Self.Box.Pack_Start (Scrolled, Expand => True, Fill => True);
       Scrolled.Get_Vadjustment.On_Value_Changed (On_Scrolled'Access, Self);
 
       Self.Tree.Set_Headers_Visible (True);
@@ -1095,6 +1105,32 @@ package body VCS2.History is
 
       return Gtk_Widget (Self.Tree);
    end Initialize;
+
+   ------------------
+   -- Hide_Spinner --
+   ------------------
+
+   procedure Hide_Spinner (Self : access History_View_Record'Class) is
+   begin
+      if not Self.Box.Is_Visible then
+         Self.Spinner.Stop;
+         Hide (Self.Spinner);
+         Set_No_Show_All (Self.Box, False);
+         Show_All (Self.Box);
+         Set_No_Show_All (Self.Box, True);
+      end if;
+   end Hide_Spinner;
+
+   ------------------
+   -- Show_Spinner --
+   ------------------
+
+   procedure Show_Spinner (Self : access History_View_Record'Class) is
+   begin
+      Hide (Self.Box);
+      Self.Spinner.Start;
+      Show (Self.Spinner);
+   end Show_Spinner;
 
    -----------------------------
    -- Label_For_Checkout_File --
@@ -1224,7 +1260,6 @@ package body VCS2.History is
          N.Date    := new String'(Date);
          N.Subject := new String'(Subject);
          N.Names   := Names;
-         N.Col     := No_Graph_Column;
          N.Flags   := Flags;
 
          if not Parents.Is_Empty then
@@ -1285,6 +1320,8 @@ package body VCS2.History is
          if N.Visible >= Always_Visible then
             Tree.Lines.Append (N);
             N.Line := Tree.Lines.Last_Index;
+            View.Hide_Spinner;
+            Tree.Add_Commit_Node (N, Self.Data);
          end if;
 
          Parents.Clear;  --  adopted
@@ -1335,36 +1372,6 @@ package body VCS2.History is
       Reset_Lines (History_Tree (View.Tree));
    end On_Destroy;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Self : in out Layout_Idle_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Layout_Idle_Data, Layout_Idle_Data_Access);
-      View : constant History_View :=
-               History_Views.Retrieve_View (Self.Kernel);
-      Tree : constant History_Tree :=
-               (if View /= null then History_Tree (View.Tree) else null);
-   begin
-      Trace (Me, "Free layout_idle_data");
-      if Tree /= null then
-
-         if Self.To_Select /= Null_Gtk_Tree_Path then
-            Tree.Get_Selection.Select_Path (Self.To_Select);
-            Tree.Scroll_To_Cell
-              (Path      => Self.To_Select,
-               Column    => null,
-               Use_Align => False,
-               Row_Align => 0.0,
-               Col_Align => 0.0);
-            Path_Free (Self.To_Select);
-         end if;
-
-         Unchecked_Free (Self);
-      end if;
-   end Free;
-
    ---------------------
    -- Get_Parent_Node --
    ---------------------
@@ -1408,22 +1415,27 @@ package body VCS2.History is
       return Node;
    end Get_Parent_Node;
 
-   --------------------
-   -- On_Layout_Idle --
-   --------------------
+   ---------------------
+   -- Add_Commit_Node --
+   ---------------------
 
-   function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean is
-      View     : constant History_View :=
-                   History_Views.Retrieve_View (Data.Kernel);
-      Tree     : constant History_Tree :=
-                   (if View /= null then History_Tree (View.Tree) else null);
-      Iter     : Gtk_Tree_Iter;
+   procedure Add_Commit_Node
+     (Tree : not null access History_Tree_Record'Class;
+      N    : Node_Data_Access;
+      Data : Layout_Idle_Data_Access)
+   is
       V        : Glib.Values.GValue_Array (All_Columns);
+      Iter     : Gtk_Tree_Iter;
       Tmp      : Unbounded_String;
       Is_First : Boolean;
+      Parent_N : Node_Data_Access;
 
       function Next_Empty_Col return Graph_Column;
       --  Compute the next empty column
+
+      --------------------
+      -- Next_Empty_Col --
+      --------------------
 
       function Next_Empty_Col return Graph_Column is
          C : Graph_Column;
@@ -1439,187 +1451,179 @@ package body VCS2.History is
          return C;
       end Next_Empty_Col;
 
-      Start       : constant Time := Clock;
-      N, Parent_N : Node_Data_Access;
-      Pref_Show_ID : Boolean;
    begin
       --  If the tree was destroyed, nothing more to do
       if Tree = null then
-         return False;
+         return;
       end if;
 
-      case Data.Step is
-      when Step_Compute =>
+      if Data.Inserted < Tree.User_Filter.Up_To_Lines
+        and then Data.Current <= Tree.Lines.Last_Index
+      then
+         --  Compute the column. We might already know it the commit is
+         --  the parent for one of the existing commits
 
-         while Data.Current <= Tree.Lines.Last_Index loop
-            N := Tree.Lines (Data.Current);
+         if N.Col = No_Graph_Column then
+            N.Col := Next_Empty_Col;
+         end if;
 
-            --  Compute the column. We might already know it the commit is
-            --  the parent for one of the existing commits
+         Data.Is_Free (N.Col) := True;
 
-            if N.Col = No_Graph_Column then
-               N.Col := Next_Empty_Col;
-            end if;
+         --  Reserve columns for the parent commit
 
-            Data.Is_Free (N.Col) := True;
-
-            --  Reserve columns for the parent commit
-
-            if N.Parents /= null then
-               Is_First := True;
-               for P in N.Parents'Range loop
-                  Parent_N := Get_Parent_Node (Tree, N, P);
-                  if Parent_N /= null then
-                     if Parent_N.Col = No_Graph_Column then
-                        --  If this is the first parent for which we do not
-                        --  already know the column, reuse the current column.
-                        if Is_First then
-                           Parent_N.Col := N.Col;
-                           Is_First := False;
-                        else
-                           Parent_N.Col := Next_Empty_Col;
-                        end if;
-
-                        Data.Is_Free (Parent_N.Col) := False;
+         if N.Parents /= null then
+            Is_First := True;
+            for P in N.Parents'Range loop
+               Parent_N := Get_Parent_Node (Tree, N, P);
+               if Parent_N /= null then
+                  if Parent_N.Col = No_Graph_Column then
+                     --  If this is the first parent for which we do not
+                     --  already know the column, reuse the current column.
+                     if Is_First then
+                        Parent_N.Col := N.Col;
+                        Is_First := False;
+                     else
+                        Parent_N.Col := Next_Empty_Col;
                      end if;
+
+                     Data.Is_Free (Parent_N.Col) := False;
                   end if;
-               end loop;
-            end if;
-
-            Data.Current := Data.Current + 1;
-
-            if Clock - Start >= 0.3 then
-               return True;  --  will try again later
-            end if;
-         end loop;
-
-         Trace (Me, "done computing graph layout");
-         Tree.Max_Columns := Natural (Data.Is_Free.Length);
-         Data.Step := Step_Insert;
-         Data.Inserted := 0;
-         Data.Current := Tree.Lines.First_Index;
-         return True;  --  Will run again for the actual insert
-
-      when Step_Insert =>
-         Pref_Show_ID := Show_ID.Get_Pref;
-
-         while Data.Inserted < Tree.User_Filter.Up_To_Lines
-           and then Data.Current <= Tree.Lines.Last_Index
-         loop
-            N := Tree.Lines (Data.Current);
-
-            Init_Set_Int    (V (Column_Line),    Gint (Data.Current));
-            Init_Set_String (V (Column_Author),  N.Author.all);
-            Init_Set_String (V (Column_Date),    N.Date.all);
-
-            Tmp := Null_Unbounded_String;
-            if N.Names /= null then
-               for B in N.Names'Range loop
-                  case N.Names (B).Kind is
-                     when Name_Head =>
-                        Append (Tmp, "<span background='#ff6600'");
-                     when Name_Local =>
-                        Append (Tmp, "<span background='#fee391'");
-                     when Name_Remote =>
-                        Append (Tmp, "<span background='#a6bddb'");
-                     when Name_Tag =>
-                        Append (Tmp, "<span background='#a1d99b'");
-                  end case;
-
-                  Append (Tmp, " foreground='black'>");
-                  Append
-                    (Tmp,
-                     Escape_Text (To_String (Trim (N.Names (B).Name, Both))));
-
-                  if B = N.Names'Last then
-                     Append (Tmp, "</span> ");
-                  else
-                     Append (Tmp, " </span>");
-                  end if;
-               end loop;
-            end if;
-
-            if (N.Flags and Commit_Uncommitted) /= 0 then
-               Append (Tmp, "<span foreground='#555'>");
-            end if;
-
-            if Pref_Show_ID then
-               Append (Tmp, N.ID.all & " " & Escape_Text (N.Subject.all));
-            else
-               Append (Tmp, Escape_Text (N.Subject.all));
-            end if;
-
-            if (N.Flags and Commit_Uncommitted) /= 0 then
-               Append (Tmp, "</span>");
-            end if;
-
-            Init_Set_String (V (Column_Subject), To_String (Tmp));
-
-            Tree.Model.Append (Iter, Parent => Null_Iter);
-            Set_All_And_Clear (Tree.Model, Iter, V);
-
-            Data.Inserted := Data.Inserted + 1;
-            Data.Current  := Data.Current + 1;
-
-            if N.ID.all = Tree.User_Filter.Select_Id then
-               Data.To_Select := Tree.Get_Filter_Path_For_Store_Iter (Iter);
-            end if;
-
-            if Clock - Start >= 0.3 then
-               return True;  --  will try again later
-            end if;
-         end loop;
-
-         Trace (Me, "inserted" & Data.Inserted'Img & " nodes");
-
-         Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
-           or else (Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines);
-         if Tree.Has_Show_Older then
-            Init_Set_Int    (V (Column_Line), -1);
-            Init_Set_String (V (Column_Author), "");
-            Init_Set_String (V (Column_Date), "");
-            Init_Set_String
-              (V (Column_Subject), "<i>-- Show older commits --</i>");
-            Tree.Model.Append (Iter, Parent => Null_Iter);
-            Set_All_And_Clear (Tree.Model, Iter, V);
+               end if;
+            end loop;
          end if;
 
-         --  Force redisplay of graph
-         Trace (Me, "done inserting nodes, max columns="
-                & Tree.Max_Columns'Img);
+         Init_Set_Int    (V (Column_Line),    Gint (Data.Current));
+         Init_Set_String (V (Column_Author),  N.Author.all);
+         Init_Set_String (V (Column_Date),    N.Date.all);
 
-         if Tree.Show_Graph then
-            Tree.Graph.Set_Size_Request
-              (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
+         Tmp := Null_Unbounded_String;
+         if N.Names /= null then
+            for B in N.Names'Range loop
+               case N.Names (B).Kind is
+                  when Name_Head =>
+                     Append (Tmp, "<span background='#ff6600'");
+                  when Name_Local =>
+                     Append (Tmp, "<span background='#fee391'");
+                  when Name_Remote =>
+                     Append (Tmp, "<span background='#a6bddb'");
+                  when Name_Tag =>
+                     Append (Tmp, "<span background='#a1d99b'");
+               end case;
+
+               Append (Tmp, " foreground='black'>");
+               Append
+                 (Tmp,
+                  Escape_Text (To_String (Trim (N.Names (B).Name, Both))));
+
+               if B = N.Names'Last then
+                  Append (Tmp, "</span> ");
+               else
+                  Append (Tmp, " </span>");
+               end if;
+            end loop;
+         end if;
+
+         if (N.Flags and Commit_Uncommitted) /= 0 then
+            Append (Tmp, "<span foreground='#555'>");
+         end if;
+
+         if Show_ID.Get_Pref then
+            Append (Tmp, N.ID.all & " " & Escape_Text (N.Subject.all));
          else
-            Tree.Graph.Set_Size_Request (0, -1);
+            Append (Tmp, Escape_Text (N.Subject.all));
          end if;
-         Tree.Graph.Queue_Draw;
 
-         Tree.Set_Search_Column (Column_Subject);
-         return False;  --  All done
-      end case;
-   end On_Layout_Idle;
+         if (N.Flags and Commit_Uncommitted) /= 0 then
+            Append (Tmp, "</span>");
+         end if;
+
+         Init_Set_String (V (Column_Subject), To_String (Tmp));
+
+         Tree.Model.Append (Iter, Parent => Null_Iter);
+         Set_All_And_Clear (Tree.Model, Iter, V);
+
+         if N.ID.all = Tree.User_Filter.Select_Id then
+            Data.To_Select := Tree.Get_Filter_Path_For_Store_Iter (Iter);
+         end if;
+
+         Data.Inserted := Data.Inserted + 1;
+         Data.Current := Data.Current + 1;
+         Tree.Max_Columns := Natural (Data.Is_Free.Length);
+      end if;
+   end Add_Commit_Node;
+
+   -------------------------
+   -- Finish_Filling_Tree --
+   -------------------------
+
+   procedure Finish_Filling_Tree
+     (Tree : not null access History_Tree_Record'Class;
+      Data : Layout_Idle_Data_Access)
+   is
+      V    : Glib.Values.GValue_Array (All_Columns);
+      Iter : Gtk_Tree_Iter;
+   begin
+      Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
+        or else (Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines);
+      if Tree.Has_Show_Older then
+         Init_Set_Int    (V (Column_Line), -1);
+         Init_Set_String (V (Column_Author), "");
+         Init_Set_String (V (Column_Date), "");
+         Init_Set_String
+           (V (Column_Subject), "<i>-- Show older commits --</i>");
+         Tree.Model.Append (Iter, Parent => Null_Iter);
+         Set_All_And_Clear (Tree.Model, Iter, V);
+      end if;
+
+      --  Force redisplay of graph
+      Trace (Me, "done inserting nodes, max columns="
+             & Tree.Max_Columns'Img);
+
+      if Tree.Show_Graph then
+         Tree.Graph.Set_Size_Request
+           (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
+      else
+         Tree.Graph.Set_Size_Request (0, -1);
+      end if;
+      Tree.Graph.Queue_Draw;
+
+      Tree.Set_Search_Column (Column_Subject);
+   end Finish_Filling_Tree;
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out On_Line_Seen) is
-      V  : constant History_View := History_Views.Retrieve_View (Self.Kernel);
-      Id : G_Source_Id with Unreferenced;
+   overriding procedure Free (Self : in out On_Line_Seen)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Layout_Idle_Data, Layout_Idle_Data_Access);
+
+      View : constant History_View :=
+        History_Views.Retrieve_View (Self.Kernel);
+
+      Tree : constant History_Tree :=
+               (if View /= null then History_Tree (View.Tree) else null);
    begin
-      if V /= null then
+      if Tree /= null then
+         Finish_Filling_Tree (Tree, Self.Data);
          Trace (Me, "Finished fetching whole log");
-         Clear_View (History_Tree (V.Tree));
-         Id := Layout_Sources.Idle_Add
-           (On_Layout_Idle'Access, Self.Data, Notify => Free'Access);
-         --  Do not free Self.Data, owned by the idle loop
-      else
-         Free (Self.Data);
+
+         if Self.Data.To_Select /= Null_Gtk_Tree_Path then
+            Tree.Get_Selection.Select_Path (Self.Data.To_Select);
+            Tree.Scroll_To_Cell
+              (Path      => Self.Data.To_Select,
+               Column    => null,
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
+            Path_Free (Self.Data.To_Select);
+         end if;
+         Unchecked_Free (Self.Data);
       end if;
 
       Task_Visitor (Self).Free;  --  inherited
+      View.Hide_Spinner;
    end Free;
 
    -------------
@@ -1661,7 +1665,6 @@ package body VCS2.History is
          begin
             Self.Data := new Layout_Idle_Data;
             Self.Data.Kernel := View.Kernel;
-            Self.Data.Step := Step_Compute;
             Self.Data.Inserted := 0;
             Self.Data.Current := 1;
             Tree.Max_Columns := 0;
@@ -1708,6 +1711,7 @@ package body VCS2.History is
       Tree : constant History_Tree := History_Tree (Self.Tree);
    begin
       if VCS /= null then
+         Self.Show_Spinner;
          Seen := new On_Line_Seen;
          Seen.Kernel := Self.Kernel;
          VCS.Queue_Fetch_History (Visitor => Seen, Filter => Tree.User_Filter);

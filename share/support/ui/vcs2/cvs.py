@@ -20,6 +20,8 @@ STATUSES = {
 CAT_TAGS = 'TAGS'
 
 CAN_RENAME = True
+FILE_HEADER = "Working file: "
+REV_HEADER = "revision "
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
@@ -160,8 +162,9 @@ class CVS(core_staging.Emulate_Staging,
                     self.previous = None
 
             def __call__(self, out_stream, line):
-                if line.startswith('Working file: '):
-                    self.file = line[14:]
+
+                if line.startswith(FILE_HEADER):
+                    self.file = line[len(FILE_HEADER):]
                     self.names = [(self.file, GPS.VCS2.Commit.Kind.LOCAL)]
                     self.previous = None  # previous commit
                     self.current = None
@@ -180,9 +183,9 @@ class CVS(core_staging.Emulate_Staging,
                     self.current = None
 
                 elif self.in_header:
-                    if line.startswith('revision '):
+                    if line.startswith(REV_HEADER):
                         self.revision = cvs._build_unique_id(
-                            line[9:], self.file)
+                            line[len(REV_HEADER):], self.file)
                         if self.previous is not None:
                             self.previous[4] = [self.revision]   # parents
 
@@ -218,19 +221,20 @@ class CVS(core_staging.Emulate_Staging,
         max_lines = filter[0]
         for_file = filter[1]
         pattern = filter[2]
-        result = []
+        self.added_lines = 0
 
         def add_log(log):
             log[3] = log[3].split('\n', 1)[0]  # first line only
-            if (len(result) < max_lines and
+            # We can't ask for only max_lines so manually count the added lines
+            if (self.added_lines < max_lines and
                     (not pattern or pattern in log[3])):
 
-                result.append(log)
+                self.added_lines += 1
+                visitor.history_line(log)
 
         f = [self._relpath(for_file.path)] if for_file else []
 
         yield self._log_stream(f).subscribe(add_log)
-        visitor.history_lines(result)
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):

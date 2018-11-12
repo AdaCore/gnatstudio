@@ -74,7 +74,7 @@ class _Branch(list):
 class _Commit(list):
     """
     A convenience wrapper to create the tuples to pass to
-    `GPS.VCS2_Task_Visitor.history_lines`
+    `GPS.VCS2_Task_Visitor.history_line`
     """
 
     Kind = gps_utils.enum(

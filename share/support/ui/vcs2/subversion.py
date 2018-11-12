@@ -173,20 +173,17 @@ class SVN(core_staging.Emulate_Staging,
         max_lines = filter[0]
         for_file = filter[1]
         pattern = filter[2]
-        result = []
 
         def add_log(log):
             log[3] = log[3].split('\n', 1)[0]  # first line only
-            if (len(result) <= max_lines and
-                    (not pattern or pattern in log[3])):
-                result.append(log)
+            if not pattern or pattern in log[3]:
+                visitor.history_line(log)
 
         f = [self._relpath(for_file.path)] if for_file else []
         yield self._log_stream([
             '-rHEAD:1',
             '--limit=%d' % (max_lines + 1),
             '--stop-on-copy'] + f).subscribe(add_log)
-        visitor.history_lines(result)
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):

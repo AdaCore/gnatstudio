@@ -297,9 +297,7 @@ class Git(core.VCS):
             '%s' % for_file.path if for_file else '']
         p = self._git(git_cmd)
 
-        children = {}   # number of children for each sha1
-        result = []
-        count = 0
+        nb_added_lines = 0
 
         while True:
             line = yield p.wait_line()
@@ -310,8 +308,6 @@ class Git(core.VCS):
             id, parents, author, branches, date, subject = line.split('@@')
             parents = parents.split()
             branches = None if not branches else branches.split(',')
-
-            has_head = None
 
             flags = 0
             if id in unpushed:
@@ -328,8 +324,19 @@ class Git(core.VCS):
                     if b.startswith('origin/'):
                         f = (b, GPS.VCS2.Commit.Kind.REMOTE)
                     elif b.startswith("HEAD"):
-                        has_head = id
                         f = (b, GPS.VCS2.Commit.Kind.HEAD)
+                        # Append a dummy entry if we have local changes, and
+                        # we have the HEAD
+                        if has_local:
+                            visitor.history_line(GPS.VCS2.Commit(
+                                LOCAL_CHANGES_ID,
+                                '',
+                                '',
+                                '<uncommitted changes>',
+                                parents=[id],
+                                flags=GPS.VCS2.Commit.Flags.UNCOMMITTED |
+                                GPS.VCS2.Commit.Flags.UNPUSHED))
+
                     elif b.startswith("tag: "):
                         f = (b[5:], GPS.VCS2.Commit.Kind.TAG)
                     else:
@@ -337,39 +344,12 @@ class Git(core.VCS):
 
                     branch_descr.append(f)
 
-            # Append a dummy entry if we have local changes, and
-            # we have the HEAD
-            if has_head is not None and has_local:
-                result.insert(0, GPS.VCS2.Commit(
-                    LOCAL_CHANGES_ID,
-                    '',
-                    '',
-                    '<uncommitted changes>',
-                    parents=[has_head],
-                    flags=GPS.VCS2.Commit.Flags.UNCOMMITTED |
-                    GPS.VCS2.Commit.Flags.UNPUSHED))
-
-            current = GPS.VCS2.Commit(
-                id, author, date, subject, parents, branch_descr, flags=flags)
-
-            if branch_commits_only:
-                for pa in parents:
-                    children[pa] = children.setdefault(pa, 0) + 1
-
-                # Count only relevant commits
-                if (len(parents) > 1 or
-                        branches is not None or
-                        id not in children or
-                        children[id] > 1):
-                    count += 1
-
-            result.append(current)
-            if count >= max_lines:
-                break
+            visitor.history_line(GPS.VCS2.Commit(
+                id, author, date, subject, parents, branch_descr, flags=flags))
+            nb_added_lines += 1
 
         GPS.Logger("GIT").log(
-            "done parsing git-log (%s lines)" % (len(result), ))
-        visitor.history_lines(result)
+            "done parsing git-log (%s lines)" % (nb_added_lines, ))
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):

@@ -9790,14 +9790,12 @@ class VCS2_Task_Visitor(object):
            a short while.
         """
 
-    def history_lines(self, list):
+    def history_line(self, list):
         """
         Report when a new line for the VCS history was seen. Used from
         `GPS.VCS2.async_fetch_history`.
 
-        :param List(GPS.VCS2.Commit) list: a list of lines from the history.
-           This doesn't have to be the whole log, though, although it is
-           more efficient to send bigger chunks.
+        :param GPS.VCS2.Commit: a line from the history.
         """
 
     def set_details(self, id, header, message):

@@ -5,7 +5,7 @@ import collections
 from constructs import CAT_PACKAGE, CAT_PROCEDURE, INDENTATION_NONE, \
     VISIBILITY_PUBLIC
 
-FILE_SECTION = "diff "
+FILE_SECTION = ["diff ", "Index:"]
 LOC_SECTION = "@@"
 DIFF_CATEGORY = "Diff category"
 
@@ -31,8 +31,8 @@ class DiffLanguage(GPS.Language):
         """
         if is_file:
             type = CAT_PACKAGE
-            name = text[len(FILE_SECTION):]
-            entity_col = len(FILE_SECTION) + 1
+            name = text
+            entity_col = 1
         else:
             type = CAT_PROCEDURE
             name = self.get_loc_descr(text).strip()
@@ -70,9 +70,11 @@ class DiffLanguage(GPS.Language):
 
         # Parse the file and create message
         for ix in range(0, len(lines)):
-            if lines[ix].startswith(FILE_SECTION):
-                blocks[ix] = []
-            elif lines[ix].startswith(LOC_SECTION):
+            for section in FILE_SECTION:
+                if lines[ix].startswith(section):
+                    blocks[ix] = []
+                    break
+            if lines[ix].startswith(LOC_SECTION):
                 blocks[list(blocks.keys())[-1]].append(ix)
 
         def _internal_parse(start_file, end_file):
