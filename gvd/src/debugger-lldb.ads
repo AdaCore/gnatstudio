@@ -306,16 +306,16 @@ package Debugger.LLDB is
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Remove_Breakpoint_At
      (Debugger : not null access LLDB_Debugger;

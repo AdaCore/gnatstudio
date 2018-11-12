@@ -707,22 +707,25 @@ package Debugger is
    --  This function is emulated when the debugger does not support it
    --  directly.
 
-   procedure Enable_Breakpoint
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
-   --  Enable or disable the breakpoint number Num.
-   --  Num is always the number returned in the Num field of the
+   procedure Enable_Breakpoints
+     (Debugger    : access Debugger_Root;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Enable or disable the given breakpoint identifiers.
+   --  The identifiers are always the numbers stored in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
+   --  Giving an empty list enables/disables all the breakpoints set for this
+   --  debugger.
 
-   procedure Remove_Breakpoint
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   procedure Remove_Breakpoints
+     (Debugger    : access Debugger_Root;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Delete a breakpoint.
-   --  Num is always the number returned in the Num field of the
-   --  Breakpoint_Data record.
+   --  The identifiers are always the numbers stored in the Num field of the
+   --  Breakpoint_Data record by List_Breakpoints.
+   --  Giving an empty list removes all the breakpoints set for this debugger.
 
    procedure Remove_Breakpoint_At
      (Debugger : not null access Debugger_Root;

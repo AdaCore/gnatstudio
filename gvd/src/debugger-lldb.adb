@@ -2076,35 +2076,46 @@ package body Debugger.LLDB is
          Mode => Mode);
    end Break_Regexp;
 
-   -----------------------
-   -- Enable_Breakpoint --
-   -----------------------
+   ------------------------
+   -- Enable_Breakpoints --
+   ------------------------
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
-   begin
-      if Enable then
-         Debugger.Send ("breakpoint enable" & Num'Img, Mode => Mode);
-      else
-         Debugger.Send ("breakpoint disable" & Num'Img, Mode => Mode);
-      end if;
-   end Enable_Breakpoint;
-
-   -----------------------
-   -- Remove_Breakpoint --
-   -----------------------
-
-   overriding procedure Remove_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
+      Cmd : Unbounded_String :=
+              (if Enable then
+                  To_Unbounded_String ("breakpoint enable")
+               else
+                  To_Unbounded_String ("breakpoint disable"));
    begin
-      Debugger.Send ("breakpoint delete" & Num'Img, Mode => Mode);
-   end Remove_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Enable_Breakpoints;
+
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      Cmd : Unbounded_String := To_Unbounded_String ("breakpoint delete");
+   begin
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Remove_Breakpoints;
 
    --------------------------
    -- Remove_Breakpoint_At --
