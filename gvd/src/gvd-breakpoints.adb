@@ -312,7 +312,7 @@ package body GVD.Breakpoints is
      (View    : not null access Breakpoint_Editor_Record'Class;
       Is_Set  : Boolean;
       State   : Boolean;
-      Id_List : in out List_Breakpoint_Identifiers.List);
+      Id_List : in out Breakpoint_Identifier_Lists.List);
    --  Procedure used to factorize the code: It will loop through the list
    --  of selected rows and retrieve the identifier in a list if not Is_Set
    --  else set the State in the model.
@@ -1284,7 +1284,7 @@ package body GVD.Breakpoints is
       Iter  : Gtk_Tree_Iter;
       Col   : Gtk_Tree_View_Column;
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
-      List  : List_Breakpoint_Identifiers.List;
+      List  : Breakpoint_Identifier_Lists.List;
       Cond  : Boolean;
    begin
       if View.Activatable
@@ -1650,7 +1650,7 @@ package body GVD.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Kernel,
               Visible_Only => True));
-      Id_List : List_Breakpoint_Identifiers.List;
+      Id_List : Breakpoint_Identifier_Lists.List;
    begin
       if View = null then
          return Commands.Failure;
@@ -1661,9 +1661,9 @@ package body GVD.Breakpoints is
                                              State   => Command.Is_Enabled,
                                              Id_List => Id_List);
       --  Put them in numerical order
-      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Set_Breakpoints_State (View.Kernel, Id_List, Command.Is_Enabled);
-      List_Breakpoint_Identifiers.Clear (Id_List);
+      Breakpoint_Identifier_Lists.Clear (Id_List);
       --  Need to modify the toggle buttons in the model
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => True,
@@ -1680,7 +1680,7 @@ package body GVD.Breakpoints is
      (View    : not null access Breakpoint_Editor_Record'Class;
       Is_Set  : Boolean;
       State   : Boolean;
-      Id_List : in out List_Breakpoint_Identifiers.List)
+      Id_List : in out Breakpoint_Identifier_Lists.List)
    is
       Selection   : Gtk.Tree_Selection.Gtk_Tree_Selection;
       Path        : Gtk_Tree_Path;
@@ -1811,7 +1811,7 @@ package body GVD.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Kernel,
               Visible_Only => True));
-      Id_List : List_Breakpoint_Identifiers.List;
+      Id_List : Breakpoint_Identifier_Lists.List;
    begin
       --  Get the list of selected breakpoints
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
@@ -1819,9 +1819,9 @@ package body GVD.Breakpoints is
                                              State   => False,
                                              Id_List => Id_List);
       --  Put them in numerical order
-      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Delete_Multiple_Breakpoints (Kernel, Id_List);
-      List_Breakpoint_Identifiers.Clear (Id_List);
+      Breakpoint_Identifier_Lists.Clear (Id_List);
       return Commands.Success;
    end Execute;
 

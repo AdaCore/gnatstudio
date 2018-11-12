@@ -3776,34 +3776,45 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end loop;
    end List_Breakpoints;
 
-   -----------------------
-   -- Enable_Breakpoint --
-   -----------------------
+   ------------------------
+   -- Enable_Breakpoints --
+   ------------------------
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : Command_Type := Hidden) is
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := (if Enable then
+                                    To_Unbounded_String ("-break-enable")
+                                 else
+                                    To_Unbounded_String ("-break-disable"));
    begin
-      if Enable then
-         Debugger.Send ("-break-enable" & Num'Img, Mode => Mode);
-      else
-         Debugger.Send ("-break-disable" & Num'Img, Mode => Mode);
-      end if;
-   end Enable_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
 
-   -----------------------
-   -- Remove_Breakpoint --
-   -----------------------
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Enable_Breakpoints;
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : Breakpoint_Identifier;
-      Mode     : Command_Type := Hidden) is
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := To_Unbounded_String ("delete");
    begin
-      Debugger.Send ("-break-delete" & Num'Img, Mode => Mode);
-   end Remove_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Remove_Breakpoints;
 
    ---------------------
    -- List_Exceptions --

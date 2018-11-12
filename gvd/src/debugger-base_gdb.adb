@@ -708,9 +708,14 @@ package body Debugger.Base_Gdb is
          if Item.Num /= Num
            and then Similar (Item.Location, Location)
          then
-            --  we have duplicates, so delete this just created breakpoint
-            Debugger.Remove_Breakpoint (Num);
-            exit;
+            declare
+               List : Breakpoint_Identifier_Lists.List;
+            begin
+               List.Append (Num);
+               --  we have duplicates, so delete this just created breakpoint
+               Debugger.Remove_Breakpoints (List);
+               exit;
+            end;
          end if;
       end loop;
    end Remove_Breakpoint_Duplicates;

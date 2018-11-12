@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Unbounded;                   use Ada.Strings.Unbounded;
 
@@ -112,6 +113,11 @@ package GVD.Types is
    No_Breakpoint : constant Breakpoint_Identifier := 0;
    --  How breakpoints are identified. Currently, the debuggers supported
    --  by gvd all associate numbers with breakpoints.
+
+   package Breakpoint_Identifier_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
+   --  This type is used when doing the same debugger action on a list of
+   --  breakpoints (delete/enable/disable).
 
    type Watchpoint_Trigger is (Read, Write, Read_Write);
    --  The kind of memory access that triggers a watchpoint

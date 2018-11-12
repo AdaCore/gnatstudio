@@ -275,16 +275,16 @@ package Debugger.Base_Gdb.Gdb_CLI is
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
      return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access Gdb_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access Gdb_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access Gdb_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access Gdb_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Get_Last_Breakpoint_Id
      (Debugger  : access Gdb_Debugger)
