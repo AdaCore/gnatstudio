@@ -509,7 +509,7 @@ package body Interactive_Consoles is
       if Inst = No_Class_Instance then
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), Console_Class_Name));
-         Set_Data (Inst, GObject (Console));
+         Set_Data (Inst, Console.Get_Or_Create_Virtual_Console);
       end if;
 
       return Inst;
