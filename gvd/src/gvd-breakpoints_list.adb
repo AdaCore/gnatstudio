@@ -20,6 +20,7 @@ with Commands.Interactive;           use Commands.Interactive;
 with Debugger;                       use Debugger;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 
 with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Editors;                    use GPS.Editors;
@@ -119,6 +120,10 @@ package body GVD.Breakpoints_List is
       Process : not null access Base_Visual_Debugger'Class)
       return Boolean;
    --  return True if debuger can process commands
+
+   function To_String (Breakpoint : Breakpoint_Data) return String;
+   --  Return a suitable string representation to display for the given
+   --  breakpoint.
 
    --------------
    -- Commands --
@@ -1018,12 +1023,18 @@ package body GVD.Breakpoints_List is
                   & "This can happen when the executable "
                   & "being debugged has not been compiled with the debug "
                   & "flags or when the breakpoint's source file is not found "
-                  & "in the symbols table."
+                  & "in the symbols table. This also can happen for "
+                  & "catchpoints."
+                  & ASCII.LF
+                  & ASCII.LF
+                  & "Breakpoints and/or catchpoints that could not be set: "
+                  & ASCII.LF
                   & ASCII.LF);
-               Process.Debugger.Display_Prompt;
-
-               Warning_Displayed := True;
             end if;
+
+            Process.Output_Text (To_String (B) & ASCII.LF);
+
+            Warning_Displayed := True;
          end if;
       end loop;
 
@@ -1031,8 +1042,8 @@ package body GVD.Breakpoints_List is
       --  copy of the debugger's breakpoints list to the persistent's one.
 
       if Warning_Displayed then
+         Process.Debugger.Display_Prompt;
          Process.Avoid_Breakpoints_Copy := True;
-         return;
       end if;
 
       --  Reparse the list to make sure of what the debugger is actually using
@@ -1329,6 +1340,29 @@ package body GVD.Breakpoints_List is
          return True;
       end if;
    end Is_Interactive;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Breakpoint : Breakpoint_Data) return String is
+   begin
+      if Breakpoint.Except /= "" then
+         return "exception " & To_String (Breakpoint.Except);
+      elsif Breakpoint.Location /= No_Marker then
+         return Get_File (Breakpoint.Location).Display_Base_Name
+           & ":"
+           & GNATCOLL.Utils.Image
+           (Integer (Get_Line (Breakpoint.Location)),
+            Min_Width => 0);
+      elsif Breakpoint.Subprogram /= "" then
+         return To_String (Breakpoint.Subprogram);
+      elsif Breakpoint.Address /= Invalid_Address then
+         return Address_To_String (Breakpoint.Address);
+      else
+         return "";
+      end if;
+   end To_String;
 
    ---------------------
    -- Register_Module --
