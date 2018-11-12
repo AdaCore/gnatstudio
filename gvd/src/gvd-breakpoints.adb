@@ -776,6 +776,7 @@ package body GVD.Breakpoints is
 
       Gtk_New (Self.File_Name);
       Self.File_Name.Set_Editable (True);
+      Self.File_Name.Set_Activates_Default (True);
       Hbox.Pack_Start (Self.File_Name, True, True, 0);
 
       Gtk_New_Hbox (Hbox, Spacing => 15);
@@ -789,6 +790,7 @@ package body GVD.Breakpoints is
       Gtk_New (Self.Line_Spin, Min => 1.0, Max => 1.0e+08, Step => 1.0);
       Self.Line_Spin.Set_Numeric (True);
       Self.Line_Spin.Set_Value (1.0);
+      Self.Line_Spin.Set_Activates_Default (True);
       Hbox.Pack_Start (Self.Line_Spin, True, True, 0);
 
       ------------
@@ -1074,6 +1076,7 @@ package body GVD.Breakpoints is
       Dummy := Self.Add_Button (Stock_Ok, Gtk_Response_Apply);
       Dummy.Grab_Default;
       Dummy := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Self.Set_Default_Response (Gtk_Response_Apply);
    end Initialize;
 
    ---------------------
