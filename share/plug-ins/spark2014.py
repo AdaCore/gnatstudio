@@ -859,8 +859,8 @@ def on_prove_line(self):
     lsparg = build_limit_subp_string(self)
     if lsparg is not None:
         args.append(lsparg)
-        if inside_generic_unit_context(self):
-            args.append("-U")
+    if inside_generic_unit_context(self):
+        args.append("-U")
 
     target = ""
     try:
