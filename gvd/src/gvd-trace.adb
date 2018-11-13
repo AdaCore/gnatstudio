@@ -25,7 +25,7 @@ with System;
 
 package body GVD.Trace is
 
-   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_OUT");
+   Me       : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_OUT");
    Me_Large : constant Trace_Handle := Create
      ("GPS.DEBUGGING.GVD_OUT_LARGE", Off);
 
