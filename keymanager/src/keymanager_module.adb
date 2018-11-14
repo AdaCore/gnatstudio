@@ -530,7 +530,8 @@ package body KeyManager_Module is
             Current : constant Gtk_Widget := Grab_Get_Current;
          begin
             if Current = null
-              or else not Get_Modal (Gtk_Window (Get_Toplevel (Current)))
+              or else (Current.Get_Realized and then
+                         not Get_Modal (Gtk_Window (Get_Toplevel (Current))))
             then
                if Process_Key_Event (Kernel, Event) then
                   return;

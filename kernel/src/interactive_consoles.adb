@@ -379,47 +379,48 @@ package body Interactive_Consoles is
    overriding procedure Grab_Events
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean) is
    begin
-      if Get_Window (Console.Console) /= null then
-         if Grab then
-            --  Grab only on the first incrementation, so that subsequent calls
-            --  to Grab_Events for this console won't grab. Also, if we already
-            --  have a grab at the Gtk level (for instance when the user is
-            --  displaying a menu and we are running the python command as a
-            --  filter for that menu), no need to take another. In fact, taking
-            --  another would break the above scenario, since in gtkmenu.c the
-            --  handler for grab_notify cancels the menu when another grab is
-            --  taken (G305-005). Grab the mouse, keyboard,... so as to avoid
-            --  recursive loops in GPS (user selecting a menu
-            --  while python is running).
+      --  Make sure to grab events only if the console is realized: the console
+      --  can still exist and not be realized in certain cases.
 
-            --  We only want to increment when either
-            --    * There is a grab and it is from us
-            --      (Grab_Get_Current is not null and Console.Took_Grab > 0)
-            --    * There  is no grab
-            if Gtk.Main.Grab_Get_Current = null
-              or else Console.Took_Grab > 0
-            then
-               Console.Took_Grab := Console.Took_Grab + 1;
-            end if;
+      if Console.Console.Get_Realized and then Grab then
+         --  Grab only on the first incrementation, so that subsequent calls
+         --  to Grab_Events for this console won't grab. Also, if we already
+         --  have a grab at the Gtk level (for instance when the user is
+         --  displaying a menu and we are running the python command as a
+         --  filter for that menu), no need to take another. In fact, taking
+         --  another would break the above scenario, since in gtkmenu.c the
+         --  handler for grab_notify cancels the menu when another grab is
+         --  taken (G305-005). Grab the mouse, keyboard,... so as to avoid
+         --  recursive loops in GPS (user selecting a menu
+         --  while python is running).
 
-            if Gtk.Main.Grab_Get_Current = null
-              and then Console.Took_Grab = 1
-            then
-                  Ref (Console.Console);
-                  Console.Console.Grab_Add;
-            end if;
+         --  We only want to increment when either
+         --    * There is a grab and it is from us
+         --      (Grab_Get_Current is not null and Console.Took_Grab > 0)
+         --    * There  is no grab
+         if Gtk.Main.Grab_Get_Current = null
+           or else Console.Took_Grab > 0
+         then
+            Console.Took_Grab := Console.Took_Grab + 1;
+         end if;
 
-         else
-            --  Note: the widget might have been destroyed by the python
-            --  command, we need to check that it still exists.
-            if Console.Took_Grab = 1 then
+         if Gtk.Main.Grab_Get_Current = null
+           and then Console.Took_Grab = 1
+         then
+            Ref (Console.Console);
+            Console.Console.Grab_Add;
+         end if;
 
-               Console.Console.Grab_Remove;
-               Unref (Console.Console);
-            end if;
-            if Console.Took_Grab >= 1 then
-               Console.Took_Grab := Console.Took_Grab - 1;
-            end if;
+      elsif not Grab then
+         --  Note: the widget might have been destroyed by the python
+         --  command, we need to check that it still exists.
+         if Console.Took_Grab = 1 then
+
+            Console.Console.Grab_Remove;
+            Unref (Console.Console);
+         end if;
+         if Console.Took_Grab >= 1 then
+            Console.Took_Grab := Console.Took_Grab - 1;
          end if;
       end if;
    end Grab_Events;
