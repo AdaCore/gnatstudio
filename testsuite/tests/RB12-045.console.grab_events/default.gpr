@@ -1,0 +1,10 @@
+project Default is
+
+   package Compiler is
+      for Switches ("ada") use ("-g");
+   end Compiler;
+
+   for Main use ("a.adb");
+
+end Default;
+
