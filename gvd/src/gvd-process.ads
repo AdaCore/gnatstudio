@@ -184,9 +184,12 @@ package GVD.Process is
    --  remote target.
    --  Prefer given debugger kind if it's supported by chosen debugger.
 
-   procedure Close_Debugger (Process : access Visual_Debugger_Record);
+   procedure Close_Debugger
+     (Process  : access Visual_Debugger_Record;
+      Has_Died : Boolean := False);
    --  Close the given debugger and terminate the debugging session if this
-   --  is the last one.
+   --  is the last one. Do not send quit command to debugger
+   --  if Has_Died is True.
 
    function Get_Kernel
      (Process : access Visual_Debugger_Record'Class)
