@@ -648,8 +648,10 @@ package body GVD.Process is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger (Process : access Visual_Debugger_Record) is
-
+   procedure Close_Debugger
+     (Process  : access Visual_Debugger_Record;
+      Has_Died : Boolean := False)
+   is
       Kernel : constant Kernel_Handle := Process.Kernel;
       Count  : Natural;
    begin
@@ -688,10 +690,16 @@ package body GVD.Process is
 
       --  Close the underlying debugger
 
-      if Process.Debugger /= null
+      if not Has_Died
+        and then Process.Debugger /= null
         and then Get_Process (Process.Debugger) /= null
       then
-         Close (Process.Debugger);
+         begin
+            Close (Process.Debugger);
+         exception
+            when E : others =>
+               Trace (Me, E);
+         end;
       end if;
 
       Process.Debugger := null;

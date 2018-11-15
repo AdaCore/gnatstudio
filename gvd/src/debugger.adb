@@ -866,7 +866,7 @@ package body Debugger is
               (-"The underlying debugger died unexpectedly. Closing it"),
               Error, Button_OK, Button_OK,
               Parent => Debugger.Kernel.Get_Main_Window);
-         Process.Close_Debugger;
+         Process.Close_Debugger (Has_Died => True);
       end if;
    end On_Debugger_Died;
 
