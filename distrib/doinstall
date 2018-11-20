@@ -139,6 +139,12 @@ install_binaries() {
       done
     fi
   done
+
+  # Must be synchronized with gps_wrapper
+  pixbuf_basedir="$basedir/lib/gps/gdk-pixbuf-2.0/2.10.0/"
+  GDK_PIXBUF_MODULE_FILE="$pixbuf_basedir/loaders.cache" \
+  GDK_PIXBUF_MODULEDIR="$pixbuf_basedir/loaders" \
+  "$basedir/bin/gdk-pixbuf-query-loaders" --update-cache
 }
 
 ##
