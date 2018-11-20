@@ -407,7 +407,8 @@
          <menu label="N_ext Instruction"            action="debug nexti"/>
          <menu label="_Finish"                      action="debug finish"/>
          <menu label="_Continue"                    action="debug continue"/>
-         <menu label="Continue to Current Line"     action="debug continue until"/>
+         <menu label="Continue to Current Line"     action="continue till line"  optional="True"/>
+         <menu label="Continue Until"               action="debug continue until"/>
          <menu label="_Interrupt"                   action="debug interrupt"/>
          <separator/>
          <menu label="Te_rminate Current"           action="terminate debugger"/>
