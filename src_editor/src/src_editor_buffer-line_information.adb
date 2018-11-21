@@ -24,7 +24,6 @@ with GNATCOLL.Xref;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Glib.Error;
 with Glib.Object;              use Glib.Object;
@@ -1131,8 +1130,7 @@ package body Src_Editor_Buffer.Line_Information is
             Layout.Set_Markup (Image (Num, Min_Width => 0));
             Get_Pixel_Size (Layout, Width, Height);
             From := From - Gdouble (Width) - Indentation;
-            Move_To (Cr, From, Y);
-            Show_Layout (Cr, Layout);
+            Render_Layout (Ctxt, Cr, From, Y, Layout);
          end Draw_Number;
 
          --------------------------------
@@ -1208,31 +1206,23 @@ package body Src_Editor_Buffer.Line_Information is
 
             if Image /= Null_Unbounded_String then
                declare
-                  P            : Gdk_Pixbuf;
-                  Info         : Gtk_Icon_Info;
-                  Was_Symbolic : aliased Boolean;
+                  Surface      : Cairo_Surface;
                   Error        : aliased Glib.Error.GError;
-                  Strs         : GNAT.Strings.String_List :=
-                                   (1 => new String'(To_String (Image)));
                begin
                   --   ??? Should have a cache
-                  Info := Choose_Icon_For_Scale
-                    (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
-                  Free (Strs);
-
-                  if Info /= null then
-                     P := Load_Symbolic_For_Context
-                       (Icon_Info    => Info,
-                        Context      => Ctxt,
-                        Was_Symbolic => Was_Symbolic'Access,
-                        Error        => Error'Access);
-                     Render_Icon
-                       (Ctxt, Cr, P,
-                        X,
-                        Y + Gdouble ((Line_Height - Size) / 2));
-                     Unref (P);
-                     Unref (Info);
-                  end if;
+                  Surface := Load_Surface
+                    (Gtk.Icon_Theme.Get_Default,
+                     To_String (Image),
+                     Size,
+                     1,
+                     View.Get_Window,
+                     Icon_Lookup_Force_Svg or Icon_Lookup_Use_Builtin
+                     or Icon_Lookup_Generic_Fallback,
+                     Error'Access);
+                  Render_Icon_Surface
+                    (Ctxt, Cr, Surface,
+                     X,
+                     Y + Gdouble ((Line_Height - Size) / 2));
                end;
             end if;
          end Draw_Side_Area_Line_Info;
