@@ -8,6 +8,7 @@ import GPS
 import gps_utils
 import os
 import os_utils
+from gi.repository import GLib
 
 
 can_update_body = True
@@ -48,6 +49,15 @@ def __contextual_label_for_gnatstub(context):
         return fmt.format(os_utils.display_name(name))
     else:
         return fmt.format(context.entity_name())
+
+
+def __contextual_label_for_gnatstub_separate(context):
+    """
+    Used to create the label for the gnatstub 'as separate' contextual menu.
+    """
+    fmt = "Generate Body of <b>{}</b> as separate"
+    name = GLib.markup_escape_text(context.entity_name())
+    return fmt.format(name)
 
 
 def is_ada_file(context):
@@ -97,16 +107,14 @@ def enable_gnatstub(context):
     return spec_has_no_body(context) or gnatstub_update_body(context)
 
 
-@gps_utils.interactive(
-    category="Ada",
-    contextual=__contextual_label_for_gnatstub,
-    filter=enable_gnatstub,
-    name="generate body",
-    for_learning=True,
-    description="Run gnatstub on the selected Ada specification to " +
-                "generate a matching body.",
-    static_path="Generate Body")
-def generate_body():
+def enable_gnatstub_separate(context):
+    """
+    Action filter to enable gnatstub 'as separate' action
+    """
+    return not spec_has_no_body(context) and gnatstub_update_body(context)
+
+
+def generate_body(as_separate):
     """
     Run gnatstub on the current Ada spec to generate a matching
     body file.
@@ -136,6 +144,9 @@ def generate_body():
     else:
         entity = None
 
+    if as_separate:
+        command.append('--subunits')
+
     proj = context.project()
     if proj:
         command.append('-P%s' % proj.file().path)
@@ -147,3 +158,28 @@ def generate_body():
         show_command=True,
         on_exit=OnExit(file, entity).on_exit)
     proc.wait()
+
+
+@gps_utils.interactive(
+    category="Ada",
+    contextual=__contextual_label_for_gnatstub,
+    filter=enable_gnatstub,
+    name="generate body",
+    for_learning=True,
+    description="Run gnatstub on the selected Ada specification to " +
+                "generate a matching body.",
+    static_path="Generate Body")
+def generate_plain_body():
+    generate_body(as_separate=False)
+
+
+@gps_utils.interactive(
+    category="Ada",
+    contextual=__contextual_label_for_gnatstub_separate,
+    filter=enable_gnatstub_separate,
+    name="generate body as separate",
+    for_learning=False,
+    description="Run gnatstub on the selected Ada subprogram specification " +
+                "to generate a matching body stub and separate file.")
+def generate_separate_body():
+    generate_body(as_separate=True)
