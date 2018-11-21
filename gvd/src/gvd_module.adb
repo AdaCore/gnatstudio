@@ -635,13 +635,13 @@ package body GVD_Module is
       declare
          Argument : constant String := List.Get_Selection;
       begin
+         List.Destroy;
+
          if Argument /= "" then
             Attach_Process
               (Process.Debugger, Argument, Mode => GVD.Types.Visible);
          end if;
       end;
-
-      List.Destroy;
 
       return Commands.Success;
    end Execute;
