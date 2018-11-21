@@ -27,6 +27,7 @@ with Xref;
 with Language.Tree;
 with Langkit_Support.Iterators;
 with Langkit_Support.Slocs;
+with Langkit_Support.Text;
 with Langkit_Support.Tree_Traversal_Iterator;
 with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Iterators;
@@ -34,6 +35,11 @@ with Libadalang.Iterators;
 with GPS.Editors;
 
 package body LAL.Semantic_Trees is
+
+   function To_UTF8
+     (Text : Langkit_Support.Text.Text_Type)
+      return Ada.Strings.UTF_Encoding.UTF_8_String
+      renames Langkit_Support.Text.To_UTF8;
 
    function Is_Exposed (Element : Ada_Node) return Boolean;
    --  Only nodes of a few kinds are exposed over Semantic_Trees interface.
@@ -941,11 +947,11 @@ package body LAL.Semantic_Trees is
                      end case;
                   end if;
 
-                  Append (Item, Param.F_Type_Expr.String_Text);
+                  Append (Item, To_UTF8 (Param.F_Type_Expr.Text));
 
                   if not Init.Is_Null then
                      Append (Result, " := ");
-                     Append (Item, Init.String_Text);
+                     Append (Item, To_UTF8 (Init.Text));
                   end if;
 
                   for J in
@@ -955,7 +961,7 @@ package body LAL.Semantic_Trees is
                         Append (Result, "; ");
                      end if;
 
-                     Append (Result, Names.Child (J).String_Text);
+                     Append (Result, To_UTF8 (Names.Child (J).Text));
                      Append (Result, Item);
                      Item := Null_Unbounded_String;
                   end loop;
@@ -969,7 +975,7 @@ package body LAL.Semantic_Trees is
 
             if not Returns.Is_Null then
                Append (Result, " return ");
-               Append (Result, Returns.String_Text);
+               Append (Result, To_UTF8 (Returns.Text));
             end if;
 
             return To_String (Result);
