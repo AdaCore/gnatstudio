@@ -939,16 +939,31 @@ package body VCS2.History is
       Header  : String;
       Message : String)
    is
+      function To_Title return String;
+      --  Use to generate a useful title depending of the ID
+
+      --------------
+      -- To_Title --
+      --------------
+
+      function To_Title return String is
+      begin
+         if Self.Multiple then
+            return "Overview";
+         elsif ID'Length > 1 and then ID (ID'First) not in 'A' .. 'Z' then
+            if ID'Length > 8 then
+               return "Commit " & ID (ID'First .. (ID'First + 7));
+            else
+               return "Commit " & ID;
+            end if;
+         else
+            return ID;
+         end if;
+      end To_Title;
+
       View  : constant History_View :=
         History_Views.Retrieve_View (Self.Kernel);
-      Title : constant String :=
-        (if Self.Multiple then
-            "Commit Overview"
-         elsif ID'Length > 6 then
-            "Commit " & ID (ID'First .. (ID'First + 6))
-         else
-            ID
-        );
+      Title : constant String := To_Title;
    begin
       VCS2.Diff.Create_Or_Reuse_Diff_Editor
         (Kernel => View.Kernel,

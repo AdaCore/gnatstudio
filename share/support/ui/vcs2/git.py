@@ -16,7 +16,7 @@ CAT_SUBMODULES = 'SUBMODULES'
 
 CAN_RENAME = True
 
-LOCAL_CHANGES_ID = 'localchanges'
+LOCAL_CHANGES_ID = 'Local change'
 # A dummy id to represent local changes in the History view
 
 _version = None

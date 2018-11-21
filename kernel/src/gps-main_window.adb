@@ -1615,7 +1615,7 @@ package body GPS.Main_Window is
 
             Set_Return_Value_As_List (Data);
 
-            --   Run the dialog andn return the values set in the entries
+            --   Run the dialog and return the values set in the entries
 
             if Run (Dialog) = Gtk_Response_OK then
                for Num in Ent'Range loop
