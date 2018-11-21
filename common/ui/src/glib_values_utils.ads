@@ -56,7 +56,6 @@ package Glib_Values_Utils is
    function As_Object (Value : Glib.Object.GObject) return Glib.Values.GValue;
    function As_List_Store
      (Value : Gtk.List_Store.Gtk_List_Store) return Glib.Values.GValue;
-   function As_Proxy  (Value : Glib.C_Proxy) return Glib.Values.GValue;
    function As_RGBA (Value : Gdk.RGBA.Gdk_RGBA) return Glib.Values.GValue;
 
    procedure Unset (Values : in out Glib.Values.GValue_Array);

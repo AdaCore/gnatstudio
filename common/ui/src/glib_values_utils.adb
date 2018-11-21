@@ -92,18 +92,6 @@ package body Glib_Values_Utils is
       end return;
    end As_Pointer;
 
-   --------------
-   -- As_Proxy --
-   --------------
-
-   function As_Proxy (Value : Glib.C_Proxy) return Glib.Values.GValue is
-   begin
-      return Result : Glib.Values.GValue do
-         Glib.Values.Init (Result, Glib.GType_Pointer);
-         Glib.Values.Set_Proxy (Result, Value);
-      end return;
-   end As_Proxy;
-
    -------------
    -- As_RGBA --
    -------------
