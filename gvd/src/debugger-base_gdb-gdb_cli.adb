@@ -3099,7 +3099,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Breakpoints : Breakpoint_Identifier_Lists.List;
       Mode        : Command_Type := Hidden)
    is
-      Cmd : Unbounded_String := To_Unbounded_String ("-break-delete");
+      Cmd : Unbounded_String := To_Unbounded_String ("delete");
    begin
       for Breakpoint of Breakpoints loop
          Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
