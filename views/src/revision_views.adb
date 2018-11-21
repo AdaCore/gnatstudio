@@ -20,7 +20,6 @@ with Ada.Strings.Maps;           use Ada.Strings.Maps;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
-with System;
 
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;               use GNAT.Strings;
@@ -31,7 +30,6 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
-with Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
 with Gdk.RGBA;                   use Gdk.RGBA;
@@ -594,9 +592,6 @@ package body Revision_Views is
       Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
       Store : constant Gtk_Tree_Model := Get_Model (Model);
 
-      function To_Proxy is new
-        Ada.Unchecked_Conversion (System.Address, C_Proxy);
-
       Child : Gtk_Tree_Iter;
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
@@ -609,7 +604,7 @@ package body Revision_Views is
       Append (-Store, Child, Iter);
       Set_And_Clear
         (-Store, Child, (Color_Column, Info_Column),
-         (As_Proxy  (C_Proxy'(null)),
+         (As_RGBA   (Null_RGBA),
           As_String (To_String (Line.Log.Log))));
 
       --  Tags & Branches
@@ -657,7 +652,7 @@ package body Revision_Views is
           5 => As_String  (To_String (Line.Log.Log)),
           6 => As_Boolean (Line.Link),
           7 => As_String  (To_String (Line.Log.Revision)),
-          8 => As_Proxy   (To_Proxy (View.Root_Color'Address))));
+          8 => As_RGBA    (View.Root_Color)));
    end Fill_Info;
 
    ------------------------
