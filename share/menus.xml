@@ -711,8 +711,4 @@
       <button action='log configure'/>
    </toolbar>
 
-   <toolbar id='Serial Ports'>
-      <button action='refresh serial ports'/>
-   </toolbar>
-
 </GPS>
