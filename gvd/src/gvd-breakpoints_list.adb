@@ -315,7 +315,10 @@ package body GVD.Breakpoints_List is
       begin
          if Is_Interactive (Kernel, Self) then
             Num := Visual_Debugger (Self).Debugger.Break_Source
-              (File, Line, Temporary => Temporary);
+              (File,
+               Line,
+               Temporary => Temporary,
+               Mode      => GVD.Types.Visible);
          end if;
       end On_Debugger;
 
@@ -571,7 +574,8 @@ package body GVD.Breakpoints_List is
                  ((if Has_File_Line_Information (Context.Context)
                   then File_Line_Information (Context.Context)
                   else Contexts.Line_Information (Context.Context))),
-               Temporary => True);
+               Temporary => True,
+               Mode      => GVD.Types.Visible);
             Process.Debugger.Continue (Mode => GVD.Types.Visible);
          end if;
 

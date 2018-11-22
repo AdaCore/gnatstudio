@@ -1068,7 +1068,7 @@ package body Debugger is
          --  invalid value for instance), and we also want the Variables view
          --  to refresh after the command.
 
-         Debugger.Send (S, Mode => Hidden);
+         Debugger.Send (S, Mode => GVD.Types.Visible);
       end if;
    end Set_Variable;
 
