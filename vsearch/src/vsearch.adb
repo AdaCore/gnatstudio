@@ -36,7 +36,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Types;                use Glib.Types;
 
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
-with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Clipboard;             use Gtk.Clipboard;
@@ -1484,58 +1483,16 @@ package body Vsearch is
 
    procedure Set_First_Next_Mode
      (Vsearch   : access Vsearch_Record'Class;
-      Find_Next : Boolean)
-   is
-      Label : Gtk_Label;
-      Align : Gtk_Alignment;
-      Req   : Gtk_Requisition;
-
+      Find_Next : Boolean) is
    begin
       Vsearch_Module_Id.Find_Next := Find_Next;
 
-      if Find_Next then
-         if Vsearch /= null then
-            --  Make sure the Search_Next_Button only grows in size. This
-            --  makes sure that a user won't click on "Find" and see the button
-            --  shrink so that next time he clicks (without moving the mouse)
-            --  is on "Replace".
-            Size_Request (Vsearch.Search_Next_Button, Req);
-            Set_Size_Request
-              (Vsearch.Search_Next_Button, Req.Width, Req.Height);
-
-            Remove (Vsearch.Search_Next_Button,
-                    Get_Child (Vsearch.Search_Next_Button));
-
-            Gtk_New_With_Mnemonic (Label, -"_Next");
-            Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
-            Add (Vsearch.Search_Next_Button, Align);
-            Add (Align, Label);
-            Show_All (Align);
-
-            --  Always activate the "Next" button, so that we can still do
-            --  selective replace. Otherwise, the button is greyed out when we
-            --  have a replace string, and would stay as such.
-            Set_Sensitive (Vsearch.Search_Next_Button, True);
-         end if;
-
-         Vsearch_Module_Id.Search_Started := True;
-
-      else
-         if Vsearch /= null then
-            --  Remove size constraints on Search_Next_Button.
-            Set_Size_Request (Vsearch.Search_Next_Button, -1, -1);
-            Remove (Vsearch.Search_Next_Button,
-                    Get_Child (Vsearch.Search_Next_Button));
-
-            Gtk_New_With_Mnemonic (Label, -"_Find");
-            Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
-            Add (Vsearch.Search_Next_Button, Align);
-            Add (Align, Label);
-            Show_All (Align);
-         end if;
-
-         Vsearch_Module_Id.Search_Started := False;
+      if Vsearch /= null then
+         Vsearch.Search_Next_Button.Set_Label
+           (if Find_Next then "_Next" else "_Find");
       end if;
+
+      Vsearch_Module_Id.Search_Started := Find_Next;
    end Set_First_Next_Mode;
 
    -------------
