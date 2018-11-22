@@ -1312,6 +1312,11 @@ private
    --  Signal the new cursor position by emitting the "cursor_position_changed"
    --  signal.
 
+   procedure Delete_Autosaved_File
+     (Buffer : access Source_Buffer_Record;
+      File   : GNATCOLL.VFS.Virtual_File);
+   --  Deletes autosaved backup file
+
    ---------------
    -- Line data --
    ---------------
