@@ -552,8 +552,12 @@ tooltip label {
    color: @tooltip-text-color;
 }
 
-.tooltip separator, .tooltip box {
+.tooltip separator {
    padding: 0px;
+}
+
+.tooltip > box {
+  padding: 12px;
 }
 
 .completion frame {
