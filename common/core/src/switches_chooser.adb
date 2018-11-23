@@ -1159,8 +1159,13 @@ package body Switches_Chooser is
                            null;
                      end case;
 
-                     On_Command_Line_Changed
-                       (Root_Switches_Editor'Class (Editor));
+                     if S.Typ /= Switch_Radio then
+                        --  Radio group calls Change_Switch multiple times,
+                        --  but On_Command_Line_Changed prevents RG updating
+                        On_Command_Line_Changed
+                          (Root_Switches_Editor'Class (Editor));
+                     end if;
+
                      Update_Graphical_Command_Line
                        (Root_Switches_Editor'Class (Editor));
                      return;
