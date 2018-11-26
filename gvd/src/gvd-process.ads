@@ -19,6 +19,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with Glib;
+with Glib.Main;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Regpat;          use GNAT.Regpat;
@@ -164,6 +165,10 @@ package GVD.Process is
       --  when we can't start gdb
       Store_History        : Boolean := True;
       Interactions_History : String_List_Utils.String_List.Vector;
+
+      Idle_Output_Monitor_Func : Glib.Main.G_Source_Id;
+      --  The idle function used to monitor the debugger's output when
+      --  waiting asynchronously for a command to finish.
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 

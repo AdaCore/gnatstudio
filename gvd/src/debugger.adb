@@ -30,12 +30,12 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with System;
 
 with Glib.Convert;
+with Glib.Main;                  use Glib.Main;
 with Gtk.Main;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Types;               use Gtkada.Types;
 
-with Commands;                   use Commands;
 with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -44,7 +44,6 @@ with GVD.Process;                use GVD.Process;
 with GVD.Types;                  use GVD.Types;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Intl;                   use GPS.Intl;
 with GVD.Variables.Types;        use GVD.Variables.Types;
 with Language;                   use Language;
@@ -63,16 +62,14 @@ package body Debugger is
    procedure Free is new
      Ada.Unchecked_Deallocation (Command_Record, Command_Access);
 
-   type Output_Monitor_Command is new Root_Command with record
-      Process : Visual_Debugger;
-   end record;
-   type Output_Monitor_Command_Access is access Output_Monitor_Command;
-   overriding function Execute (Command : access Output_Monitor_Command)
-     return Command_Return_Type;
+   package Debugger_Sources is new Generic_Sources (Visual_Debugger);
+
+   function Idle_Output_Monitor (Self : Visual_Debugger) return Boolean;
    --  Called when waiting output from the debugger.
-   --  This procedure is activated to handle asynchronous commands.
-   --  All it does is read all the available data and call the filters
-   --  that were set for the debugger, until a prompt is found.
+   --  This functions is activated to handle asynchronous commands. All it
+   --  does is to check if we received a prompt when waiting asynchronously a
+   --  command: if it's the case, it means that the asynchronous command has
+   --  finished and that we can do its post-processing.
 
    ---------------------
    -- Local Functions --
@@ -272,7 +269,7 @@ package body Debugger is
       Debugger_Num   : Natural;
       Proxy          : Process_Proxies.Process_Proxy_Access)
    is
-      Process    : Visual_Debugger;
+      pragma Unreferenced (Debugger_Num);
       Descriptor : Process_Descriptor_Access;
       Success    : Boolean;
       CL         : Arg_List := Create (Debugger_Name);
@@ -305,33 +302,6 @@ package body Debugger is
 
       Debugger.Process.Set_Descriptor (Descriptor);
       Debugger.Set_Is_Started (False);
-
-      --  Install a callback on the debugger's output file descriptor
-
-      Process := GVD.Process.Convert (Debugger);
-
-      if Process /= null then
-         declare
-            C : constant Output_Monitor_Command_Access :=
-              new Output_Monitor_Command;
-         begin
-            C.Process := Process;
-            Launch_Background_Command
-              (Kernel            => Kernel,
-               Command           => C,
-               Active            => False,
-               Show_Bar          => False,
-               Queue_Id          => Debug_Queue_Name & Debugger_Num'Img,
-               Block_Exit        => False,
-               Start_Immediately => False);
-
-            --  We have an issue with the monitoring of the lifecycle of the
-            --  Process above: we want to stop processing this command as
-            --  soon as we free the data structures. Right now there is no
-            --  way to do this as part of Process itself, so we rely on
-            --  GVD.Process.Close_Debugger to interrupt the queue.
-         end;
-      end if;
    end General_Spawn;
 
    ---------------------
@@ -401,12 +371,12 @@ package body Debugger is
    Line_Regexp : constant Pattern_Matcher := Compile ("^.*?\n");
    --  Matches a complete line
 
-   overriding function Execute
-     (Command : access Output_Monitor_Command)
-      return Command_Return_Type
-   is
-      Process  : Visual_Debugger renames Command.Process;
-      Debugger : constant Debugger_Access := Process.Debugger;
+   -------------------------
+   -- Idle_Output_Monitor --
+   -------------------------
+
+   function Idle_Output_Monitor (Self : Visual_Debugger) return Boolean is
+      Debugger : constant Debugger_Access := Self.Debugger;
       Mode     : Command_Type;
       Match    : Expect_Match;
 
@@ -427,7 +397,7 @@ package body Debugger is
             if Active (Me) then
                declare
                   S : constant String :=
-                    Strip_CR (Debugger.Get_Process.Expect_Out);
+                        Strip_CR (Debugger.Get_Process.Expect_Out);
                begin
                   --  Reduce noise in output
                   if S /= (1 => ASCII.LF) then
@@ -435,41 +405,26 @@ package body Debugger is
                   end if;
                end;
             end if;
-
-            --  Should we do anything more here??? Note that filters
-            --  have already been called automatically by GNAT.Expect
          end loop;
       end Flush_Async_Output;
 
    begin
-      --  Get everything that is available (and transparently call the
-      --  output filters set for Pid).
-      --  Nothing should be done if we are already processing a command
-      --  (ie somewhere we are blocked on a Wait call for this Debugger),
-      --  since otherwise that Wait won't see the output and will lose some
-      --  output. We don't have to do that anyway, since the other Wait will
-      --  indirectly call the output filter.
+
+      --  If the underlying debugger is dead, unregister this idle function.
 
       if Debugger = null then
-         return Success;
+         Self.Idle_Output_Monitor_Func := No_Source_Id;
+
+         return False;
       end if;
 
-      case Debugger.State is
-         when Async_Wait =>
-            --  Continue processing below
-            null;
-
-         when Idle =>
-            Flush_Async_Output;
-            return Execute_Again;
-
-         when Sync_Wait =>
-            --  In therory this shouldn't happen since calls are blocking
-            --  and this subprogram will never get a chance to be called
-            return Execute_Again;
-      end case;
-
-      pragma Assert (Debugger.State = Async_Wait);
+      --  If the debugger is waiting asynchronously, check if we received a
+      --  prompt.
+      --  If it's the case, set the debugger's state to Idle, flush the output,
+      --  and do some post processing on the command that has just finished
+      --  (e.g: call the debugger hooks if needed).
+      --  Don't unregister this idle function if the prompt has not been
+      --  received yet.
 
       if Debugger.Wait_Prompt (Timeout => 1) then
          Debugger.Continuation_Line := False;
@@ -479,16 +434,23 @@ package body Debugger is
          Flush_Async_Output;
 
          Send_Internal_Post (Debugger, Mode, Always_Emit_Hooks => True);
-      end if;
 
-      return Execute_Again;
+         Self.Idle_Output_Monitor_Func := No_Source_Id;
+
+         return False;
+      else
+         return True;
+      end if;
 
    exception
       when E : Process_Died =>
          Trace (Me, E);
 
          On_Debugger_Died (Debugger);
-         return Failure;
+
+         Self.Idle_Output_Monitor_Func := No_Source_Id;
+
+         return False;
 
       when E : others =>
          --  Will close the debugger in GVD.Process when getting this
@@ -500,10 +462,13 @@ package body Debugger is
             Debugger.Get_Process.Set_Command_In_Process (False);
          end if;
 
-         Free (Process.Current_Command);
-         Process.Unregister_Dialog;
-         return Failure;
-   end Execute;
+         Free (Self.Current_Command);
+         Self.Unregister_Dialog;
+
+         Self.Idle_Output_Monitor_Func := No_Source_Id;
+
+         return False;
+   end Idle_Output_Monitor;
 
    -----------------------
    -- Send_Internal_Pre --
@@ -842,6 +807,14 @@ package body Debugger is
 
                      Debugger.State := Async_Wait;
 
+                     --  Add the idle function that will monitor the debugger's
+                     --  output to detect when the command finishes.
+
+                     Process.Idle_Output_Monitor_Func :=
+                       Debugger_Sources.Idle_Add
+                         (Func => Idle_Output_Monitor'Access,
+                          Data => Process);
+
                      --  Add an output filter to retrieve the command's output
                      --  and wait until the end of its execution without
                      --  blocking the UI.
@@ -873,8 +846,17 @@ package body Debugger is
                      end;
                   end if;
 
-               else   --  always asynchronous
+               else
                   Debugger.State := Async_Wait;
+
+                  --  Add the idle function that will monitor the debugger's
+                  --  output to detect when the command finishes.
+
+                  Process.Idle_Output_Monitor_Func :=
+                    Debugger_Sources.Idle_Add
+                      (Func => Idle_Output_Monitor'Access,
+                       Data => Process);
+
                end if;
          end case;
 

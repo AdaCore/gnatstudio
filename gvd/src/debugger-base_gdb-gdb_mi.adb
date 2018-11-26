@@ -1437,10 +1437,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       Debugger.Set_Is_Started (False);
       Debugger.Send ("core " & (+Core_File), Mode => Mode);
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
    end Load_Core_File;
 
    ---------------------
@@ -1469,10 +1465,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
                "-interpreter-exec console ""load""",
                Mode => Mode);
          end if;
-
-         if Mode in Visible_Command then
-            Wait_User_Command (Debugger);
-         end if;
       end if;
    end Load_Executable;
 
@@ -1500,10 +1492,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Send
            ("add-symbol-file " & Symbols & " " & Address, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
    end Add_Symbols;
 
    --------------------
@@ -1525,10 +1513,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  processing Process_Terminated
 
       Debugger.Set_Is_Started (True);
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful

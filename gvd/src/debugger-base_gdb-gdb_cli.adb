@@ -1087,10 +1087,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Set_Is_Started (Debugger, False);
       Send (Debugger, "core " & (+Core_File), Mode => Mode);
 
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
-
       --  Detect the current language, and get the name and line of the
       --  current file.
 
@@ -1123,10 +1119,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
            (Debugger,
             "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
    end Add_Symbols;
 
    ---------------------
@@ -1147,10 +1139,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          else
             Send (Debugger, "load", Mode => Mode);
          end if;
-
-         if Mode in Visible_Command then
-            Wait_User_Command (Debugger);
-         end if;
       end if;
    end Load_Executable;
 
@@ -1165,10 +1153,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
-
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful

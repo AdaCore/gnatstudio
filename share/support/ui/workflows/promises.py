@@ -925,7 +925,6 @@ class DebuggerWrapper(object):
                 else:
                     raise Exception("Could not launch the debugger")
         else:
-            self.__debugger = GPS.Debugger.spawn(f)
             self.__debugger = GPS.Debugger.spawn(
                 executable=f,
                 remote_target=remote_target,
