@@ -73,6 +73,8 @@ GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
 
 GPS.Message.Flags = enum(
     INVISIBLE=0, IN_SIDEBAR=1, IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
+GPS.Message.Importance = enum(
+    ANNOTATION=0, UNSPECIFIED=1, INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
 
 
 def get_focused_widget():

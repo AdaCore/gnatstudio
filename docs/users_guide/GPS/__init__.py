@@ -522,11 +522,13 @@ class AnalysisTool(object):
         """
         pass  # implemented in Ada
 
-    def add_message(self, msg, rule_id):
+    def create_message(self, category, file, line, column, text, importance,
+                       rule_id):
         """
-        Adds the given message to the list of messages that will be displayed
-        in the GPS Analysis Report. The message will be associated to this tool
-        and to the rule identified by ``rule_id``.
+        Create a new message and add it to the list of messages that will be
+        displayed in the GPS Analysis Report. The message will be associated to
+        this tool and to the rule identified by ``rule_id``. For the others
+        parameters see the documentation of GPS.Messages.__init__.
 
         :param :class:`GPS.Message` msg: The message.
         :param string rule_id: The id of the rule associated to the message.
@@ -7249,6 +7251,9 @@ class Message(object):
     Flags = enum('Message.Flags', INVISIBLE=0, IN_SIDEBAR=1,
                  IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
 
+    Importance = enum('Message.Importance', ANNOTATION=0, UNSPECIFIED=1,
+                      INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
+
     @staticmethod
     def __del__():
         """
@@ -7259,7 +7264,8 @@ class Message(object):
     def __init__(self, category, file, line, column, text,
                  show_on_editor_side=True,
                  show_in_locations=True,
-                 allow_auto_jump_to_first=True):
+                 allow_auto_jump_to_first=True,
+                 importance=Importance.UNSPECIFIED):
         """
         Adds a Message in GPS.
 
@@ -7278,6 +7284,9 @@ class Message(object):
         :param bool allow_auto_jump_to_first: If True, then adding a message
             that is the first for its category will auto jump the editor to it,
             if the corresponding preference is activated
+
+        :param enum importance: Setting the importance applies the
+            corresponding style and allows the sort by importance.
 
         .. code-block:: python
 

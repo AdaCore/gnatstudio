@@ -2046,9 +2046,27 @@ package body GPS.Kernel.Messages is
      (Self   : not null access Messages_Container;
       Filter : not null Message_Filter_Access) is
    begin
-      Filter.Container := Messages_Container_Access (Self);
-      Self.Filters.Append (Filter);
+      if not Self.Filters.Contains (Filter) then
+         Filter.Container := Messages_Container_Access (Self);
+         Self.Filters.Append (Filter);
+      end if;
    end Register_Filter;
+
+   -----------------------
+   -- Unregister_Filter --
+   -----------------------
+
+   procedure Unregister_Filter
+     (Self   : not null access Messages_Container;
+      Filter : not null Message_Filter_Access)
+   is
+      use Filter_Vectors;
+      Cursor : Filter_Vectors.Cursor := Self.Filters.Find (Filter);
+   begin
+      if Cursor /= Filter_Vectors.No_Element then
+         Self.Filters.Delete (Cursor);
+      end if;
+   end Unregister_Filter;
 
    -----------------------
    -- Register_Listener --

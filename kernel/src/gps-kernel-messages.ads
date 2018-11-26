@@ -450,7 +450,12 @@ package GPS.Kernel.Messages is
    procedure Register_Filter
      (Self   : not null access Messages_Container;
       Filter : not null Message_Filter_Access);
-   --  Register filter.
+   --  Register filter. Do nothing when filter is already registered.
+
+   procedure Unregister_Filter
+     (Self   : not null access Messages_Container;
+      Filter : not null Message_Filter_Access);
+   --  Unregister filter. Do nothing when filter is not registered.
 
    procedure Refilter (Self : not null access Messages_Container);
    --  Reapply filters for all messages.

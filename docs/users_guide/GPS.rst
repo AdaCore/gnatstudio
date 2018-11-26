@@ -122,9 +122,9 @@ Classes
 
    .. automethod:: GPS.AnalysisTool.__init__
 
-   .. automethod:: GPS.AnalysisTool.add_message
-
    .. automethod:: GPS.AnalysisTool.add_rule
+
+   .. automethod:: GPS.AnalysisTool.create_message
 
 :class:`GPS.Bookmark`
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1526,6 +1526,10 @@ Classes
 
 
    .. autoattribute:: GPS.Message.Flags
+
+
+
+   .. autoattribute:: GPS.Message.Importance
 
 
    .. automethod:: GPS.Message.__init__

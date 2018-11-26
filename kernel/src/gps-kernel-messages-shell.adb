@@ -277,6 +277,7 @@ package body GPS.Kernel.Messages.Shell is
                Editor_Line => False,
                Locations   => Nth_Arg (Data, 8, True));
             Auto_First : constant Boolean := Nth_Arg (Data, 9, True);
+            Importance : constant Natural := Nth_Arg (Data, 10, 1);
             Message    : constant Markup_Message_Access :=
               Create_Markup_Message
                 (Container                => Container,
@@ -285,7 +286,8 @@ package body GPS.Kernel.Messages.Shell is
                  Line                     => Line,
                  Column                   => Visible_Column_Type (Column),
                  Text                     => Text,
-                 Importance               => Unspecified,
+                 Importance               =>
+                   Message_Importance_Type'Val (Importance),
                  Flags                    => Flags,
                  Allow_Auto_Jump_To_First => Auto_First);
 
@@ -512,7 +514,8 @@ package body GPS.Kernel.Messages.Shell is
             Param ("text"),
             Param ("show_on_editor_side", Optional => True),
             Param ("show_in_locations", Optional => True),
-            Param ("allow_auto_jump_to_first",  Optional => True)),
+            Param ("allow_auto_jump_to_first",  Optional => True),
+            Param ("importance",  Optional => True)),
          Handler => Message_Command_Handler'Access,
          Class => Message_Class);
 

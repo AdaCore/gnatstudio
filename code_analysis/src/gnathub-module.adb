@@ -159,6 +159,8 @@ package body GNAThub.Module is
             --  Switch to GNATHub perspective.
             Load_Perspective (Module.Kernel, "Analyze");
 
+            Self.Kernel.Get_Messages_Container.Register_Filter
+              (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
             GNAThub.Filters_Views.Open_View (Module.Kernel, Module);
 
             Report_View :=
@@ -328,6 +330,8 @@ package body GNAThub.Module is
       if not Kernel.Is_In_Destruction then
          --  Restore default perspective
          GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
+         Kernel.Get_Messages_Container.Unregister_Filter
+           (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
       end if;
    end On_Report_Destroy;
 
@@ -380,8 +384,6 @@ package body GNAThub.Module is
 
       Module.Filter := new GNAThub.Filters.Message_Filter;
 
-      Kernel.Get_Messages_Container.Register_Filter
-        (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
       GPS.Kernel.Hooks.Project_Changed_Hook.Add (new On_Project_Changed);
 
       Hide_Node_Without_Messages :=

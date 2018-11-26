@@ -45,36 +45,32 @@ package body GNAThub.Loader.External is
    overriding procedure Prepare_Loading
      (Self : in out External_Loader_Type) is
    begin
+      --  Hide the messages: the filter will decide if we need
+      --  to show them. Thus triggering the listerners.
+      if not Self.Messages_To_Process.Is_Empty then
+         for Message_Ref of Self.Messages_To_Process loop
+            if not Message_Ref.Is_Empty then
+               declare
+                  Message : constant GNAThub_Message_Access :=
+                    GNAThub_Message_Access (Message_Ref.Message);
+               begin
+                  Message.Set_Flags (GPS.Kernel.Messages.Empty_Message_Flags);
+               end;
+            end if;
+         end loop;
+
       --  If there is no new messages to process, put the prevously loaded
-      --  messages in the queue again so that the Anaylis Report gets filled
+      --  messages in the queue again so that the Analysis Report gets filled
       --  with the previous data when no new analysis has been performed.
-      if Self.Messages_To_Process.Is_Empty
-        and then not Self.Messages.Is_Empty
-      then
+      elsif not Self.Messages.Is_Empty then
          for Message_Ref of Self.Messages loop
             if not Message_Ref.Is_Empty then
                declare
-                  Message      : constant GNAThub_Message_Access :=
-                                   GNAThub_Message_Access
-                                     (Message_Ref.Message);
-                  New_Message  : constant GNAThub_Message_Access :=
-                    new GNAThub_Message;
+                  Message : constant GNAThub_Message_Access :=
+                    GNAThub_Message_Access (Message_Ref.Message);
                begin
-                  GNAThub.Messages.Initialize
-                    (Self          => New_Message,
-                     Container     =>
-                       Self.Module.Kernel.Get_Messages_Container,
-                     Severity      => Message.Get_Severity,
-                     Rule          => Message.Get_Rule,
-                     Text          => Message.Get_Text,
-                     File          => Message.Get_File,
-                     Line          => Message.Get_Line,
-                     Column        => Message.Get_Column,
-                     Entity        => Message.Get_Entity);
-
-                  Message.Remove;
-
-                  Self.Add_External_Message (New_Message);
+                  Message.Set_Flags (GPS.Kernel.Messages.Empty_Message_Flags);
+                  Self.Add_External_Message (Message);
                end;
             end if;
          end loop;

@@ -21,6 +21,9 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAThub.Filters_Views;     use GNAThub.Filters_Views;
 with GNAThub.Module;            use GNAThub.Module;
 with GNAThub.Messages;          use GNAThub.Messages;
@@ -125,6 +128,7 @@ package body GNAThub.Module.Shell is
    is
       GNAThub_Module : GNAThub_Module_Id renames GNAThub.Module.Module;
       Tool_Inst      : constant Class_Instance := Data.Nth_Arg (1);
+      Kernel         : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = Constructor_Method then
          declare
@@ -148,39 +152,45 @@ package body GNAThub.Module.Shell is
                Identifier => Identifier);
          end;
 
-      elsif Command = "add_message" then
+      elsif Command = "create_message" then
          declare
             Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
             Container  : constant Messages_Container_Access :=
-                           GNAThub_Module.Kernel.Get_Messages_Container;
-            Message_Inst : constant Class_Instance := Data.Nth_Arg (2);
-            Rule_ID      : constant Unbounded_String := Data.Nth_Arg (3);
-            Message      : constant Message_Access := Get_Data (Message_Inst);
-            Rule         : constant Rule_Access :=
-                             GNAThub_Module.Get_Or_Create_Rule
-                               (Tool       => Tool,
-                                Name       => Null_Unbounded_String,
-                                Identifier => Rule_ID);
-            New_Message  : constant GNAThub_Message_Access :=
-                             new GNAThub_Message;
+              GNAThub_Module.Kernel.Get_Messages_Container;
+            Category   : constant String := Nth_Arg (Data, 2);
+            File       : constant Virtual_File :=
+              Get_Data (Nth_Arg
+                        (Data, 3, Get_File_Class (Kernel),
+                         Default => No_Class_Instance, Allow_Null => False));
+            Line       : constant Natural := Nth_Arg (Data, 4);
+            Column     : constant Natural := Nth_Arg (Data, 5);
+            Text       : constant Unbounded_String := Nth_Arg (Data, 6);
+            Importance : constant Natural := Nth_Arg (Data, 7);
+            Rule_ID    : constant Unbounded_String := Data.Nth_Arg (8);
+            Rule       : constant Rule_Access :=
+              GNAThub_Module.Get_Or_Create_Rule
+                (Tool       => Tool,
+                 Name       => Null_Unbounded_String,
+                 Identifier => Rule_ID);
+            Message    : constant GNAThub_Message_Access :=
+              new GNAThub_Message;
          begin
             GNAThub.Messages.Initialize
-              (Self          => New_Message,
+              (Self          => Message,
                Container     => Container,
                Severity      => GNAThub_Module.Get_Severity
-                 (Message.Get_Importance),
+                 (Message_Importance_Type'Val (Importance)),
                Rule          => Rule,
-               Text          => Message.Get_Text,
-               File          => Message.Get_File,
-               Line          => Message.Get_Line,
-               Column        => Message.Get_Column);
+               Text          => Text,
+               File          => File,
+               Line          => Line,
+               Column        => Visible_Column (Column),
+               Category      => Category);
 
-            GNAThub_Module.Ext_Loader.all.Add_External_Message
-              (New_Message);
-
-            Message.Remove;
-
-            Set_Data (Message_Inst, Message_Access (New_Message));
+            GNAThub_Module.Ext_Loader.all.Add_External_Message (Message);
+            Data.Set_Return_Value
+              (Create_Message_Instance
+                 (Data.Get_Script, Message_Access (Message)));
          end;
       end if;
    end Analysis_Tool_Commands_Handler;
@@ -217,11 +227,16 @@ package body GNAThub.Module.Shell is
                            2 => Param ("id")));
 
       Kernel.Scripts.Register_Command
-        (Command       => "add_message",
+        (Command       => "create_message",
          Handler       => Analysis_Tool_Commands_Handler'Access,
          Class         => Analysis_Tool_Class,
-         Params        => (1 => Param ("msg"),
-                           2 => Param ("rule_id")));
+         Params        => (1 => Param ("category"),
+                           2 => Param ("file"),
+                           3 => Param ("line"),
+                           4 => Param ("column"),
+                           5 => Param ("text"),
+                           6 => Param ("importance"),
+                           7 => Param ("rule_id")));
    end Register_Commands;
 
 end GNAThub.Module.Shell;
