@@ -134,6 +134,14 @@ spinbutton entry {
    border-bottom-right-radius: 0px;
 }
 
+/*********************
+ * Progress Bars
+ *********************/
+
+progress, trough {
+  min-height: 4px;
+}
+
 /*************
  * Dialogs   *
  *************/
