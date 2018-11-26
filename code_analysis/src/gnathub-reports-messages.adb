@@ -46,10 +46,6 @@ package body GNAThub.Reports.Messages is
 
    Me : constant Trace_Handle := Create ("GNATHUB.REPORTS.MESSAGES");
 
-   File_Line_Sep : constant String := "<line>";
-   --  Separator betwwen file full names and line numbers used to contruct
-   --  row IDs.
-
    type Row_Kind_Type is
      (Total_Kind, Project_Kind, Dir_Kind, File_Kind, Subprogram_Kind);
    --  The different kind of rows displayed in the tree view
@@ -245,7 +241,7 @@ package body GNAThub.Reports.Messages is
       Kind            : Row_Kind_Type;
       Name            : String;
       ID              : String;
-      Update_Action      : Update_Action_Type;
+      Update_Action   : Update_Action_Type;
       Severity_Column : Gint)
    is
       Model : constant Gtk_Tree_Store := Self.Model;
