@@ -135,8 +135,8 @@ package body Dialog_Utils is
       --  Create the button box
       Gtk_New
         (Self.Button_Box,
-         Orientation => Orientation);
-      Self.Button_Box.Set_Layout (Buttonbox_Start);
+         Orientation => Orientation,
+         Spacing     => 0);
       Get_Style_Context (Self.Button_Box).Add_Class
         ("dialog-views-button-boxes");
 

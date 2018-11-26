@@ -30,7 +30,6 @@ with Glib.Object;                           use Glib.Object;
 
 with Gtk.Box;                               use Gtk.Box;
 with Gtk.Button;                            use Gtk.Button;
-with Gtk.Button_Box;                        use Gtk.Button_Box;
 with Gtk.Enums;                             use Gtk.Enums;
 with Gtk.Frame;                             use Gtk.Frame;
 with Gtk.Flow_Box;                          use Gtk.Flow_Box;
@@ -360,7 +359,7 @@ private
 
    type Dialog_View_With_Button_Box_Record is new Dialog_View_Record
    with record
-      Button_Box : Gtk_Button_Box;
+      Button_Box : Gtk_Box;
       --  The button box containing all the appended buttons
    end record;
 
