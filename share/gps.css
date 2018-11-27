@@ -155,7 +155,7 @@ dialog, window, assistant {
 }
 
 .dialog-action-box {
-   background-color: @mdi_border_color;
+   background-color: @notebook_background;
 }
 
 /*************
@@ -311,8 +311,10 @@ dialog, window, assistant {
     background-color: @editor_bg_color;
 }
 
-.gps-welcome-dialog GtkListBoxRow {
+.gps-welcome-dialog list row {
     padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 6px;
 }
 
 .gps-welcome-dialog-main-view button {
