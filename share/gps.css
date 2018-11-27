@@ -146,7 +146,7 @@ progress, trough {
  * Dialogs   *
  *************/
 
-dialog, window {
+dialog, window, assistant {
    -GtkDialog-content-area-border: 0px;
    -GtkDialog-content-area-spacing: 0px;
    -GtkDialog-action-area-border: 3px;
