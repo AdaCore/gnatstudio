@@ -1776,8 +1776,7 @@ package body KeyManager_Module.GUI is
      (Editor : access Keys_Editor_Record'Class) return Gtk_Widget
    is
       Scrolled           : Gtk_Scrolled_Window;
-      Hbox               : Gtk_Box;
-      Bbox               : Gtk_Button_Box;
+      Main_View          : Dialog_View_With_Button_Box;
       Button             : Gtk_Button;
       Col                : Gtk_Tree_View_Column;
       Render             : Gtk_Cell_Renderer_Text;
@@ -1818,11 +1817,15 @@ package body KeyManager_Module.GUI is
       --  A hbox: on the left, the list of actions and help, on the left some
       --  buttons to modify key shortcuts
 
-      Gtk_New_Hbox (Hbox);
-      Editor.Pack_Start (Hbox, Expand => True, Fill => True);
+      Main_View := new Dialog_View_With_Button_Box_Record;
+      Dialog_Utils.Initialize
+        (Self     => Main_View,
+         Position => Pos_Right);
+
+      Editor.Pack_Start (Main_View, Expand => True, Fill => True);
 
       Gtk_New_Vpaned (Pane);
-      Hbox.Pack_Start (Pane, Expand => True, Fill => True);
+      Main_View.Append (Pane, Expand => True, Fill => True);
 
       --  List of actions
 
@@ -1840,17 +1843,16 @@ package body KeyManager_Module.GUI is
 
       --  Action buttons
 
-      Gtk_New (Bbox, Orientation_Vertical);
-      Bbox.Set_Layout (Buttonbox_Start);
-      Bbox.Set_Spacing (5);
-      Hbox.Pack_Start (Bbox, Expand => False, Fill => True);
-
       Gtk_New (Editor.Themes);
-      Bbox.Add (Editor.Themes);
+      Main_View.Append_Button (Editor.Themes);
       Editor.Themes.Set_Tooltip_Text
         (-("Select an alternate list of shortcuts. User-overridden shortcuts"
            & " are preserved, but all others are reset and reloaded from the"
-           & " new theme"));
+         & " new theme"));
+
+      Gtk_New (Sep, Orientation_Horizontal);
+      Main_View.Append_Button (Sep);
+
       while Key_Theme_Cursor /= Null_Key_Theme_Type_Cursor loop
          declare
             Key_Theme_Name : constant String :=
@@ -1876,7 +1878,7 @@ package body KeyManager_Module.GUI is
       Gtk_New (Button, -"Reset");
       Button.Set_Tooltip_Text
         (-"Remove all custom key bindings, and revert to the theme's default");
-      Bbox.Add (Button);
+      Main_View.Append_Button (Button);
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, On_Reset'Access, Editor);
 
@@ -1887,17 +1889,17 @@ package body KeyManager_Module.GUI is
          & ASCII.LF
          & "Once the theme has been created, the manual changes will be part"
          & " of the theme, and thus no longer marked as 'modified'."));
-      Bbox.Add (Button);
+      Main_View.Append_Button (Button);
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, On_Create'Access, Editor);
 
       Gtk_New (Sep, Orientation_Horizontal);
-      Bbox.Add (Sep);
+      Main_View.Append_Button (Sep);
 
       Gtk_New (Editor.Remove_Button, -"Remove");
       Editor.Remove_Button.Set_Tooltip_Text (-"Remove selected key binding");
       Editor.Remove_Button.Set_Sensitive (False);
-      Bbox.Add (Editor.Remove_Button);
+      Main_View.Append_Button (Editor.Remove_Button);
       Widget_Callback.Object_Connect
         (Editor.Remove_Button,
          Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
@@ -1906,7 +1908,7 @@ package body KeyManager_Module.GUI is
       Editor.Grab_Button.Set_Tooltip_Text
         (-"Add a new key binding to the selected action");
       Editor.Grab_Button.Set_Sensitive (False);
-      Bbox.Add (Editor.Grab_Button);
+      Main_View.Append_Button (Editor.Grab_Button);
       Widget_Callback.Object_Connect
         (Editor.Grab_Button,
          Gtk.Toggle_Button.Signal_Toggled, On_Grab_Key'Access, Editor);
