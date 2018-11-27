@@ -159,6 +159,7 @@ class Watchpoint_Add (gdb.Command):
                 wp[0].value = args[1]
                 Utils.set_variable(symbol, args[1])
 
+
 Watchpoint_Add()
 
 
@@ -190,6 +191,7 @@ class Watchpoint_Delete (gdb.Command):
                             "delete %s" % watchdog_dict[context].number)
                         del watchdog_dict[context]
 
+
 Watchpoint_Delete()
 
 
@@ -209,6 +211,7 @@ class Qgen_Delete_Logpoint(gdb.Command):
 
         if bp and bp.symbols.get(symbol) is not None:
             del bp.symbols[symbol]
+
 
 Qgen_Delete_Logpoint()
 
@@ -238,6 +241,7 @@ class Qgen_Set_Logpoint(gdb.Command):
         # symbol => (blockname, filename, model_name)
         bp.symbols[symbol] = (args[2].rsplit('/', 1)[0], args[3], args[5])
 
+
 Qgen_Set_Logpoint()
 
 
@@ -258,7 +262,11 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
 
             # The watchpoint has been deleted, add it back
             else:
-                self.watchpoint_dict[symbol].delete()
+                try:
+                    self.watchpoint_dict[symbol].delete()
+                except RuntimeError:
+                    # If the watchpoint is invalid it raises an exception
+                    pass
                 del self.watchpoint_dict[symbol]
                 self.watchpoint_dict[symbol] = Qgen_Watchpoint(
                     symbol, wp.value, gdb.BP_WATCHPOINT)
@@ -346,6 +354,6 @@ class Qgen_Watchpoint (gdb.Breakpoint):
         try:
             Utils.set_variable(self.var, self.value)
             gdb.write("{0} set to {1}\n".format(self.var, self.value))
-        except:
+        except Exception:
             pass
         return False
