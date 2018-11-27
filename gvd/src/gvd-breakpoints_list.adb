@@ -1352,8 +1352,10 @@ package body GVD.Breakpoints_List is
       if Process.Command_In_Process then
          Insert
            (Kernel,
-            -"The debugger is busy processing a command",
-            Mode => Error);
+            -("The debugger"
+              & Integer'Image (Integer (Process.Get_Num))
+              & " is busy processing a command"),
+            Mode => Info);
          return False;
 
       else
