@@ -136,12 +136,13 @@ class Watchpoint_Add (gdb.Command):
         symbol = args[0].split('/')  # Remove the "context/" part
         context = symbol[0]
         symbol = symbol[-1].strip()
-        if len(args) == 2:
-            # If there is not watchdog for that context, create one
+        if len(args) == 3:
+            # If there is no watchdog for that context, create one
             if not watchdog_dict.get(context):
                 watchdog_dict[context] = Watchpoint_Watchdog(
                     context, gdb.BP_BREAKPOINT)
-
+                Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
+                                   watchdog_dict[context])
             wp = watchdog_dict[context].watchpoint_dict.get(symbol)
             if not wp:
                 try:
@@ -243,6 +244,25 @@ class Qgen_Set_Logpoint(gdb.Command):
 
 
 Qgen_Set_Logpoint()
+
+
+class Watchpoint_Cleaner (gdb.Breakpoint):
+    def __init__(self, spec, ty, watchdog):
+        super(Watchpoint_Cleaner, self).__init__(spec, ty, internal=True)
+        # This breakpoint is associated to a watchdog
+        # It it associated with the end of a function and cleans
+        # all watchpoints from the scope to avoid erros.
+        self.watchdog = watchdog
+
+    def stop(self):
+        for symbol, wp in self.watchdog.watchpoint_dict.iteritems():
+            self.watchdog.watchpoint_dict[symbol] = wp.value
+            # We cannot delete the watchpoint here, it needs
+            # to delete itself, so we only mark it as
+            # out of scope
+            wp.out_of_scope = True
+
+        return False
 
 
 class Watchpoint_Watchdog (gdb.Breakpoint):
@@ -349,11 +369,16 @@ class Qgen_Watchpoint (gdb.Breakpoint):
         super(Qgen_Watchpoint, self).__init__(spec, ty, internal=True)
         self.var = spec
         self.value = value
+        self.silent = True
+        self.out_of_scope = False
 
     def stop(self):
-        try:
-            Utils.set_variable(self.var, self.value)
-            gdb.write("{0} set to {1}\n".format(self.var, self.value))
-        except Exception:
-            pass
-        return False
+        if self.out_of_scope:
+            self.delete()
+        else:
+            try:
+                Utils.set_variable(self.var, self.value)
+                gdb.write("{0} set to {1}\n".format(self.var, self.value))
+            except Exception:
+                pass
+            return False

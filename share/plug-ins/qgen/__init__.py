@@ -2125,8 +2125,7 @@ else:
                 QGEN_Module.signal_attributes[it.id] = sig_obj
 
             signalDialog = signalSetter(
-                debugger, it.id, self.modeling_map.get_symbols(blockid=it.id),
-                sig_obj.watched)
+                debugger, it.id, self.modeling_map, sig_obj.watched)
 
             signalDialog.run()
 

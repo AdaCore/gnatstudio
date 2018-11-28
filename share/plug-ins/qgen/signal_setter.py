@@ -20,7 +20,7 @@ class signalSetter(Gtk.Dialog):
         GObject.source_remove(self.timeout_id)
 
     def __set_button_clicked(self, button, entry_field, check, debugger,
-                             function, var):
+                             function, var, modeling_map):
         current_function = debugger.frames()[debugger.current_frame()][2]
         popover = Gtk.Popover()
         popover.set_relative_to(button)
@@ -31,21 +31,25 @@ class signalSetter(Gtk.Dialog):
             self.is_watched = False
             debugger.send("qgen_delete_watchpoint %s/%s" % (function, var),
                           output=False)
-
-        if current_function == function:
+            info = Gtk.Label("Persistent value successfully disabled")
+        elif current_function == function:
             desired_value = entry_field.get_text()
             previous_val = debugger.value_of(var)
             debugger.set_variable(var, desired_value)
             new_value = debugger.value_of(var)
             changed_persistent_value = new_value != self.watched_value
 
+            # Pass the end of the function to qgen_watchpoint
+            func_info = modeling_map.get_func_bounds(function)
+
             # Only create a watchpoint if it did not exist already
             # or if its value changed.
             if is_persistent and (
                     not self.is_watched or changed_persistent_value):
-                debugger.send("qgen_watchpoint %s/%s %s" % (
-                    function, var, desired_value),
-                              output=True)
+                debugger.send('qgen_watchpoint %s/%s "%s" "%s:%s"' % (
+                    function, var, desired_value, func_info[0],
+                    func_info[-1][-1]),
+                              output=False)
                 if not self.is_watched:
                     set_label = "Persistent variable value set"
                 else:
@@ -74,7 +78,7 @@ class signalSetter(Gtk.Dialog):
         self.timeout_id = GObject.timeout_add(1500, self.__destroy_popover,
                                               popover)
 
-    def __init__(self, debugger, signal, symbols, is_watched):
+    def __init__(self, debugger, signal, modeling_map, is_watched):
         Gtk.Dialog.__init__(
             self,
             title="Setting values for variables associated to the signal %s" %
@@ -95,7 +99,7 @@ class signalSetter(Gtk.Dialog):
 
         current_function = debugger.frames()[debugger.current_frame()][2]
 
-        for s in symbols:
+        for s in modeling_map.get_symbols(signal):
             ss = s.split('/')  # Remove the "context/" part
             var = ss[-1].strip()
             if ss[0] == current_function:
@@ -117,7 +121,8 @@ class signalSetter(Gtk.Dialog):
                 "Check to always keep these value across iterations")
 
             validate_button.connect("clicked", self.__set_button_clicked,
-                                    entry_field, check, debugger, ss[0], var)
+                                    entry_field, check, debugger, ss[0],
+                                    var, modeling_map)
 
             signal_box.pack_start(persistent_label, False, False, 5)
             signal_box.pack_start(check, False, False, 5)
