@@ -19,6 +19,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 
+with String_Utils;
+
 with Gtkada.Style;
 
 package body CodePeer is
@@ -217,15 +219,18 @@ package body CodePeer is
    is
 
       function Checks_Image return Unbounded_String;
-      --  Returns image of set of originating checks for the message.
+      --  Return image of set of originating checks for the message.
 
       function CWE_Image
         (Category : Message_Category_Access) return Unbounded_String;
-      --  Returns image of set of CWEs of given category
+      --  Return image of set of CWEs of given category
 
       function Ranking_Image
         (Self : not null access constant Message) return String;
       --  Return an suitable Image corresponding to Message's ranking
+
+      function Id_Image (Id : Natural) return String;
+      --  Return image of the given message Id.
 
       ------------------
       -- Checks_Image --
@@ -253,6 +258,19 @@ package body CodePeer is
 
          return Aux;
       end Checks_Image;
+
+      --------------
+      -- Id_Image --
+      --------------
+
+      function Id_Image (Id : Natural) return String is
+      begin
+         if Self.Show_Msg_Id then
+            return "[id " & String_Utils.Image (Id) & "] ";
+         else
+            return "";
+         end if;
+      end Id_Image;
 
       ---------------
       -- CWE_Image --
@@ -366,6 +384,7 @@ package body CodePeer is
 
    begin
       return Text : Ada.Strings.Unbounded.Unbounded_String do
+         Append (Text, Id_Image (Self.Id));
          Append (Text, Ranking_Image (Self));
          Append (Text, ": ");
          Append (Text, Self.Category.Name);

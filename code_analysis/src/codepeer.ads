@@ -137,6 +137,7 @@ package CodePeer is
       Removed_Color   : Default_Preferences.Color_Preference;
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
+      Show_Msg_Id     : Boolean;
    end record;
 
    overriding function Get_Text

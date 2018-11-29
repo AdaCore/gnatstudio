@@ -373,7 +373,8 @@ package body CodePeer.Module is
            Project.Has_Attribute (CWE_Attribute)
              and then Ada.Characters.Handling.To_Lower
                (Project.Attribute_Value (CWE_Attribute)) = "true",
-         Removed_Color   => Module.Removed_Message_Color);
+         Removed_Color   => Module.Removed_Message_Color,
+         Show_Msg_Id     => Module.Show_Msg_Id.Get_Pref);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
 
       function Get_Message_Importance_From_Ranking
@@ -1584,6 +1585,15 @@ package body CodePeer.Module is
            Path    => -"CodePeer:General",
            Doc     => -("Import and display CodePeer backtraces"),
            Default => True);
+
+      Module.Show_Msg_Id :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "CodePeer-Show-Msg-Id",
+           Label   => -"Show CodePeer Message IDs",
+           Path    => -"CodePeer:General",
+           Doc     => -("Show message IDs in Locations view"),
+           Default => False);
 
       --  Create CodePeer own preferences for CodePeer specific messages
 

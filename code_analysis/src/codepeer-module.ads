@@ -166,6 +166,7 @@ private
       --  Control import of CodePeer annotations
       Import_Backtraces      : Default_Preferences.Boolean_Preference;
       --  Control import of CodePeer backtraces
+      Show_Msg_Id            : Default_Preferences.Boolean_Preference;
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter
