@@ -1129,7 +1129,9 @@ package body VCS2.History is
    begin
       Hide (Self.Box);
       Self.Spinner.Start;
+      Self.Spinner.Set_No_Show_All (False);
       Show (Self.Spinner);
+      Self.Spinner.Set_No_Show_All (True);
    end Show_Spinner;
 
    -----------------------------
