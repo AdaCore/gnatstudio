@@ -47,7 +47,6 @@ with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
-with String_Utils;
 
 with BT.Xml.Reader;
 with CodePeer.Bridge.Annotations_Readers;
@@ -1689,47 +1688,15 @@ package body CodePeer.Module is
               Force       => False,
               Open_Buffer => False,
               Open_View   => False);
-         Location : GPS.Editors.Editor_Location'Class :=
+         Location : constant GPS.Editors.Editor_Location'Class :=
            Buffer.New_Location
              (Line_Information (Context), Column_Information (Context));
 
       begin
-         --  CodePeer associates values with position close to start of
-         --  identifier. It can be:
-         --   - position of first character of direct name
-         --   - position of dot character in expanded name
-         --   - position of apostrophe character in attribute reference
-
-         while Values.Is_Empty loop
-            Values :=
-              BT.Xml.Reader.Get_Srcpos_Vn_Values
-                (String (File.Full_Name.all),
-                 (Location.Line, Natural (Location.Column)));
-
-            exit when not String_Utils.Is_Entity_Letter
-              (Wide_Wide_Character'Val (Location.Get_Char))
-                 and Wide_Wide_Character'Val (Location.Get_Char) /= '''
-                 and Wide_Wide_Character'Val (Location.Get_Char) /= '.';
-
-            exit when Location.Offset = 0;
-
-            Location := Location.Forward_Char (-1);
-         end loop;
-
-         --  CodePeer associates values of indexed component at position after
-         --  open bracket character.
-
-         Location := Location.Forward_Word (1);
-
-         if Values.Is_Empty
-           and then Wide_Wide_Character'Val (Location.Get_Char) = '('
-         then
-            Location := Location.Forward_Char (1);
-            Values :=
-              BT.Xml.Reader.Get_Srcpos_Vn_Values
-                (String (File.Full_Name.all),
-                 (Location.Line, Natural (Location.Column)));
-         end if;
+         Values :=
+           BT.Xml.Reader.Get_Srcpos_Vn_Values
+             (String (File.Full_Name.all),
+              (Location.Line, Natural (Location.Column)));
       end;
 
       if Values.Is_Empty then
