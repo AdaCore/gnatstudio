@@ -47,38 +47,137 @@ package Message_Kinds is
    --  When adding a new kind, please also consider updating the various
    --  Is_xxx functions below, in particular Is_Documented_Kind.
 
-     (Module_Annotation,
+     (
+   --  BE_Message_Subkind
+   --  Annotation_Subkind
+   --  Place_Holder_Subkind
+
+      Module_Annotation,
       Procedure_Annotation,
       End_Module_Annotation, --  TBD: Not sure of exact rules for these.
       End_Procedure_Annotation, --  TBD.
+
+   --  Place_Holder_Subkind end
+   --  Method_Annotation_Subkind
+   --  In_Out_Annotation_Subkind
+
       Input_Annotation,
       Output_Annotation,
+
+   --  In_Out_Annotation_Subkind end
+
       New_Obj_Annotation,
+
+   --  Pre_Post_Annotation_Subkind
+
       Precondition_Annotation,
       Presumption_Annotation,
       Postcondition_Annotation,
 
-      --  another annotation:
-      Unknown_Call_Annotation,
+   --  Pre_Post_Annotation_Subkind end
 
-      --  another annotation:
+      Unknown_Call_Annotation,
       Test_Vector_Annotation,
 
-   --  Implicit warnings
+      --  used to represent the obj_ids that have been modified but not used
+      --  locally (do not appear in the listing)
+      Locally_Unused_Store_Annotation,
+
+   --  Method_Annotation_Subkind end
+   --  Annotation_Subkind end
+   --  Informational_Subkind
+
+      --  Implicit warnings
       Non_Analyzed_Call_Warning,    --  We are making a call that is
-                                    --  "too_complex"
+      --  "too_complex"
+      Unknown_Call_Warning,      --  We are making a call on an unknown proc
+
+      Dead_Block_Continuation_Warning,  --  Block that is dead because
+      --  its predecessors are dead.
+
+      --  limitation warnings
+      Analyzed_Module_Warning,           --  info
+      Non_Analyzed_Module_Warning,       --  module was poisoned
+      Non_Analyzed_Procedure_Warning,    --  procedure was poisoned
+      Incompletely_Analyzed_Procedure_Warning, --  incomplete analysis
+
+   --  Informational_Subkind end
+   --  Warning_Subkind
+   --  Suspicious_Precondition_Subkind
+
       Suspicious_Precondition_Warning,       --  NOTE: No longer used
       Suspicious_Range_Precondition_Warning, --  Precondition looks fishy
       Suspicious_First_Precondition_Warning, --  Precondition looks fishy
+
+   --  Suspicious_Precondition_Subkind end
+
       Suspicious_Input_Warning,              --  Out param read before assigned
       Suspicious_Constant_Operation_Warning, --  Operation computes a constant
       Unread_In_Out_Parameter_Warning,       --  Mode in out could be mode out
       Unassigned_In_Out_Parameter_Warning,   --  In out param never assigned
 
-   --  Implicit checks.  See the documentation of Check_Stm in
-   --  SCIL.Statements for the semantics of these.
+   --  Dead_Store_Subkind
+
+      Dead_Store_Warning,
+      Dead_Outparam_Store_Warning,    --  assign into outparam
+      Potentially_Dead_Store_Warning,  --  assign into dmod
+      Same_Value_Dead_Store_Warning,
+
+   --  Dead_Store_Subkind end
+   --  Dead_Control_Flow_Subkind
+
+      Dead_Block_Warning,  --  "Interesting" Basic block is dead
+      Infinite_Loop_Warning,  --  Infinite loop
+
+   --  Dead_Edge_Subkind
+   --  Decision_Dead_Edge_Subkind
+
+      Dead_Edge_Warning, --  unused, replaced with the following warnings
+      Plain_Dead_Edge_Warning, --  Test leading to interesting Basic Block
+      --  always goes the same way
+      True_Dead_Edge_Warning,  --  A test is always "true", so that the other
+      --  edge is dead
+      False_Dead_Edge_Warning, --  A test is always "false", so that the other
+      --  edge is dead
+
+   --  Decision_Dead_Edge_Subkind end
+   --  Condition_Dead_Edge_Subkind
+
+      True_Condition_Dead_Edge_Warning,  --  A condition is always "true", so
+      --  that the other edge is dead
+      False_Condition_Dead_Edge_Warning, --  A condition is always "false", so
+      --  that the other edge is dead
+      Unrepeatable_While_Loop_Warning,
+      --  A while-loop's body will never execute more than once
+
+   --  Condition_Dead_Edge_Subkind end
+   --  Dead_Edge_Subkind end
+   --  Dead_Control_Flow_Subkind end
+   --  Always_Fail_Subkind
+
+      Procedure_Does_Not_Return_Error,  --  Procedure never returns
+      Check_Fails_On_Every_Call_Error,  --  Procedure fails a check
+
+   --  Always_Fail_Subkind end
+   --  Warning_Subkind end
+   --  Race_Condition_Subkind
+
+      Unlocked_Reentrant_Update_Error,
+      Unlocked_Shared_Daemon_Update_Error,
+      Mismatched_Locked_Update_Error,
+
+   --  Race_Condition_Subkind end
+   --  Check_Subkind
+   --  Pre_Or_Post_Check_Subkind
+
+      --  Implicit checks.  See the documentation of Check_Stm in
+      --  SCIL.Statements for the semantics of these.
       Precondition_Check,    --  Must be first check so subranges work
       Postcondition_Check,
+
+   --  Pre_Or_Post_Check_Subkind end
+   --  Local_Check_Subkind
+
       User_Precondition_Check,
       Invalid_Check,
       Invalid_Or_Null_Check,
@@ -87,15 +186,21 @@ package Message_Kinds is
       Boolean_Check,
       Non_Neg_Check,
       Negative_Exponent_Check,
+
+   --  Assign_Stm_Check_Subkind
+
       User_Assign_Stm_Check,
       Pre_Assign_Stm_Check,  --  Implicitly generated pre-call assignments
       Post_Assign_Stm_Check, --  ...post-call...
+
+   --  Assign_Stm_Check_Subkind end
+
       Aliasing_Check,        --  For checking parameter aliasing
 
-   --  Explicit checks (corresponding to Check_Stm/Check_Exp).
+      --  Explicit checks (corresponding to Check_Stm/Check_Exp).
       Raise_Check, --  Unconditional explicit raise/throw
       Conditional_Raise_Check, --  Conditional raise/throw (presuming FE
-   --  recognizes user-written "if ... then raise")
+      --  recognizes user-written "if ... then raise")
       Array_Indexing_Check, --  Array bounds or length check
       Assertion_Check, --  Assert statement/pragma
       Numeric_Overflow_Check, --  Check against physical bounds of type
@@ -104,156 +209,158 @@ package Message_Kinds is
       Type_Variant_Check, --  Variant record check
       Tag_Check, --  Type tag check
 
-      Procedure_Does_Not_Return_Error,  --  Procedure never returns
-      Check_Fails_On_Every_Call_Error,  --  Procedure fails a check
+   --  Local_Check_Subkind end
+   --  Check_Subkind end
+   --  BE_Message_Subkind end
 
-      Unlocked_Reentrant_Update_Error,
-      Unlocked_Shared_Daemon_Update_Error,
-      Mismatched_Locked_Update_Error,
+   --  External_Message_Subkind
 
-      Unknown_Call_Warning,      --  We are making a call on an unknown proc
-
-      Dead_Store_Warning,
-      Dead_Outparam_Store_Warning,    --  assign into outparam
-      Potentially_Dead_Store_Warning,  --  assign into dmod
-      Same_Value_Dead_Store_Warning,
-
-      Dead_Block_Warning,  --  "Interesting" Basic block is dead
-      Infinite_Loop_Warning,  --  Infinite loop
-      Dead_Edge_Warning, --  unused, replaced with the following warnings
-      Plain_Dead_Edge_Warning, --  Test leading to interesting Basic Block
-   --  always goes the same way
-      True_Dead_Edge_Warning,  --  A test is always "true", so that the other
-   --  edge is dead
-      False_Dead_Edge_Warning, --  A test is always "false", so that the other
-   --  edge is dead
-      True_Condition_Dead_Edge_Warning,  --  A condition is always "true", so
-   --  that the other edge is dead
-      False_Condition_Dead_Edge_Warning, --  A condition is always "false", so
-   --  that the other edge is dead
-      Unrepeatable_While_Loop_Warning,
-   --  A while-loop's body will never execute more than once
-
-   --  used to represent the obj_ids that have been modified but not used
-   --  locally (do not appear in the listing)
-      Locally_Unused_Store_Annotation,
-      Dead_Block_Continuation_Warning,  --  Block that is dead because
-   --  its predecessors are dead.
-      Local_Lock_Of_Global_Object,  --  message detected during race_condition
-
-   --  limitation warnings
-      Analyzed_Module_Warning,           --  info
-      Non_Analyzed_Module_Warning,       --  module was poisoned
-      Non_Analyzed_Procedure_Warning,    --  procedure was poisoned
-      Incompletely_Analyzed_Procedure_Warning, --  incomplete analysis
-
-   --  Two security-related checks
-      SQL_Injection_Check,  --  using tainted data in an SQL command
-      XSS_Check,  --  Cross-site scripting; using tainted data in HTML output
-
-   --  GNAT Warning messages
+      --  GNAT Warning messages
       GNAT_Warning,
 
-   --  GNATcheck messages
-      GNATcheck);
+      --  GNATcheck messages
+      GNATcheck,
+
+      --  LAL checkers
+      LAL_Checkers);
+
+   --  Mesagge_Subkind ranges
 
    subtype BE_Message_Subkind is Message_Subkind range
-     Module_Annotation .. XSS_Check;
+     Module_Annotation .. Tag_Check;
    subtype External_Message_Subkind is Message_Subkind range
-     GNAT_Warning .. GNATcheck;
+     GNAT_Warning .. Message_Subkind'Last;
 
-   --  NOTE: These subranges are generally *not* to be used
-   --       to distinguish, e.g., "informational" from "warning" messages,
-   --       because we no longer guarantee that all messages of the
-   --       same category will get contiguous enumeration literals
-   --       (because we want to avoid invalidating existing databases).
-   --       Use functions Is_Warning, Is_Warning_Or_Check,
-   --       Is_Informational, etc.  for that purpose (see functions below).
-   --       Those functions will make use of these subranges as appropriate.
+   --  BE_Message_Subkind main ranges
 
-   subtype Place_Holder_Subkind is BE_Message_Subkind range
-     Module_Annotation .. End_Procedure_Annotation;
    subtype Annotation_Subkind is BE_Message_Subkind range
-      Module_Annotation .. Postcondition_Annotation;
-   subtype Method_Annotation_Subkind is BE_Message_Subkind range
-     Input_Annotation .. Postcondition_Annotation;
-   subtype Pre_Post_Annotation_Subkind is BE_Message_Subkind range
-     Precondition_Annotation .. Postcondition_Annotation;
-   subtype In_Out_Annotation_Subkind is BE_Message_Subkind range
-     Input_Annotation .. Output_Annotation;
-   --  cannot have this subtype as the range is no longer contiguous
-   --  subtype Warning_Subkind is BE_Message_Subkind
-   --  range Unknown_Call_Warning .. Suspicious_Precondition_Warning;
-   subtype Suspicious_Precondition_Subkind is BE_Message_Subkind range
-     Suspicious_Precondition_Warning ..
-      Suspicious_First_Precondition_Warning;
-   subtype Pre_Or_Post_Check is BE_Message_Subkind range
-      Precondition_Check .. Postcondition_Check;
-   subtype Error_Subkind is BE_Message_Subkind range
-      Precondition_Check .. Mismatched_Locked_Update_Error;
-   subtype Warning_Or_Error_Subkind is BE_Message_Subkind range
-     Non_Analyzed_Call_Warning .. Unrepeatable_While_Loop_Warning;
-   subtype Check_Kind_Enum is Error_Subkind range
-      Precondition_Check .. Tag_Check;
-   subtype Local_Check is Check_Kind_Enum
-   --  all but Precondition_Check and Postcondition_Check
-     range
-      Check_Kind_Enum'Succ (Postcondition_Check) .. Check_Kind_Enum'Last;
-   subtype Assign_Stm_Check is Check_Kind_Enum range
-      User_Assign_Stm_Check .. Post_Assign_Stm_Check;
+     Module_Annotation .. Locally_Unused_Store_Annotation;
+   subtype Informational_Subkind is BE_Message_Subkind range
+     --  An informational message is NOT counted in the error counts,
+     --  nor is it part of the next/prev chain in the message-window.
+     --  However, it is "printable", and if you click on it, in the
+     --  source window, an informational message will be printed in the
+     --  message window.
+     Non_Analyzed_Call_Warning .. Incompletely_Analyzed_Procedure_Warning;
+   subtype Warning_Subkind is BE_Message_Subkind range
+     Suspicious_Precondition_Warning .. Check_Fails_On_Every_Call_Error;
    subtype Race_Condition_Subkind is BE_Message_Subkind range
      Unlocked_Reentrant_Update_Error .. Mismatched_Locked_Update_Error;
-   --  Note: do not include the Local_Lock_Of_Global_Object
-   subtype Dead_Store_Subkind is BE_Message_Subkind range
-      Dead_Store_Warning .. Same_Value_Dead_Store_Warning;
-   subtype Dead_Control_Flow_Subkind is BE_Message_Subkind range
+   subtype Check_Subkind is BE_Message_Subkind range
+     --  TBD rename in Subkind
+     Precondition_Check .. Tag_Check;
+
+   --  Annotation_Subkind ranges
+
+   subtype Place_Holder_Subkind is Annotation_Subkind range
+     Annotation_Subkind'First .. End_Procedure_Annotation;
+   subtype Method_Annotation_Subkind is Annotation_Subkind range
+     Input_Annotation .. Annotation_Subkind'Last;
+
+   --  Method_Annotation_Subkind ranges
+
+   subtype In_Out_Annotation_Subkind is Method_Annotation_Subkind range
+     Input_Annotation .. Output_Annotation;
+   subtype Pre_Post_Annotation_Subkind is Method_Annotation_Subkind range
+     Precondition_Annotation .. Postcondition_Annotation;
+
+   --  Warning_Subkind ranges
+
+   subtype Suspicious_Precondition_Subkind is Warning_Subkind range
+     Suspicious_Precondition_Warning ..
+       Suspicious_First_Precondition_Warning;
+   subtype Dead_Store_Subkind is Warning_Subkind range
+     Dead_Store_Warning .. Same_Value_Dead_Store_Warning;
+   subtype Dead_Control_Flow_Subkind is Warning_Subkind range
      Dead_Block_Warning .. Unrepeatable_While_Loop_Warning;
-   subtype Condition_Dead_Edge_Subkind is BE_Message_Subkind range
-     True_Condition_Dead_Edge_Warning .. Unrepeatable_While_Loop_Warning;
-   subtype Decision_Dead_Edge_Subkind is BE_Message_Subkind range
+   subtype Always_Fail_Subkind is Warning_Subkind range
+     Procedure_Does_Not_Return_Error .. Check_Fails_On_Every_Call_Error;
+
+   --  Dead_Control_Flow_Subkind ranges
+
+   subtype Dead_Edge_Subkind is Dead_Control_Flow_Subkind range
+     Dead_Edge_Warning .. Unrepeatable_While_Loop_Warning;
+
+   --  Dead_Edge_Subkind ranges
+   subtype Decision_Dead_Edge_Subkind is Dead_Edge_Subkind range
      Dead_Edge_Warning .. False_Dead_Edge_Warning;
-   subtype Dead_Edge_Subkind is BE_Message_Subkind range
-      Dead_Edge_Warning .. Unrepeatable_While_Loop_Warning;
-   subtype Security_Check_Subkind is BE_Message_Subkind range
-     SQL_Injection_Check .. XSS_Check;
-   subtype All_Checks_Subkind is BE_Message_Subkind range
-      Check_Kind_Enum'First .. Security_Check_Subkind'Last;
-   --  This subrange is meant to cover *all* "checks" though
-   --  it might not be contiguous
-   subtype Non_Checks_Subkind is All_Checks_Subkind range
-      All_Checks_Subkind'Succ (Check_Kind_Enum'Last) ..
-      All_Checks_Subkind'Pred (Security_Check_Subkind'First);
-   --  This subrange covers the "hole" in All_Checks_Subkind
+   subtype Condition_Dead_Edge_Subkind is Dead_Edge_Subkind range
+     True_Condition_Dead_Edge_Warning .. Unrepeatable_While_Loop_Warning;
 
-   subtype All_Checks_With_External_Subkinds is Message_Subkind range
-     All_Checks_Subkind'First .. Message_Subkind'Last;
+   --  Check_Subkind ranges
 
-   type Check_Kinds_Array is array (Check_Kind_Enum) of Boolean;
+   subtype Pre_Or_Post_Check_Subkind is Check_Subkind range
+     Precondition_Check .. Postcondition_Check;
+   subtype Local_Check_Subkind is Check_Subkind
+     with Static_Predicate =>
+       Local_Check_Subkind not in Pre_Or_Post_Check_Subkind;
+
+   --  Local_Check_Subkind ranges
+
+   subtype Assign_Stm_Check_Subkind is Local_Check_Subkind range
+     User_Assign_Stm_Check .. Post_Assign_Stm_Check;
+
+   --  transversal BE_Message_Subkind ranges
+
+   subtype Error_Subkind is BE_Message_Subkind
+     with Static_Predicate => Error_Subkind in
+       Check_Subkind | Race_Condition_Subkind | Always_Fail_Subkind;
+
+   subtype Warning_Or_Error_Subkind is BE_Message_Subkind
+     with Static_Predicate => Warning_Or_Error_Subkind in
+                              Informational_Subkind | Warning_Subkind |
+                              Race_Condition_Subkind | Check_Subkind;
+
+   subtype All_Checks_With_External_Subkind is Message_Subkind
+     with Static_Predicate => All_Checks_With_External_Subkind in
+       Check_Subkind | External_Message_Subkind;
+
+   subtype Countable_Subkind is Message_Subkind
+     --  messages to be counted in the count of *all* messages. This includes
+     --  race condition messages, dead stores, etc.
+     with Static_Predicate =>
+       Countable_Subkind not in Annotation_Subkind;
+
+   --  end of subkind ranges
+
+   type Check_Kinds_Array is array (Check_Subkind) of Boolean;
    pragma Pack (Check_Kinds_Array);
-   Check_Kinds_Array_Default : constant Check_Kinds_Array :=
+   Check_Kinds_Array_Default  : constant Check_Kinds_Array :=
+     (others => False);
+   Check_Kinds_Array_No_Check : constant Check_Kinds_Array :=
      (others => False);
    Check_Kinds_String_Default : constant String := "";
 
+   type Message_Subkind_Set is array (Message_Subkind) of Boolean;
+
    function Is_Documented_Kind (M : Message_Subkind) return Boolean is
      (case M is
-         when Non_Analyzed_Call_Warning
-           | Suspicious_First_Precondition_Warning .. Invalid_Or_Null_Check
+         when Non_Analyzed_Call_Warning ..
+             Incompletely_Analyzed_Procedure_Warning
+           | Suspicious_First_Precondition_Warning ..
+             Infinite_Loop_Warning
+           | Plain_Dead_Edge_Warning .. True_Condition_Dead_Edge_Warning
+           | Procedure_Does_Not_Return_Error .. Invalid_Or_Null_Check
            | Divide_By_Zero_Check
            | Aliasing_Check .. Numeric_Range_Check
-           | Type_Variant_Check .. Infinite_Loop_Warning
-           | Plain_Dead_Edge_Warning .. True_Condition_Dead_Edge_Warning
-           | Dead_Block_Continuation_Warning
-           | Analyzed_Module_Warning ..
-               Incompletely_Analyzed_Procedure_Warning => True,
-         when others                                   => False);
+           | Type_Variant_Check | Tag_Check  => True,
+         when others                         => False);
    --  Lists all warning/checks/info messages that should be documented
+
+   type CWE_Id_Array is array (Positive range <>) of Positive;
 
    function CWE_Ids
      (Kind : Message_Subkind;
-      Msg  : String := "") return String;
-   --  Return the set of applicate CWE ids for Kind, or """ if none.
+      Msg  : String := "";
+      HTML : Boolean := False) return String;
+   function CWE_Ids
+     (Kind : Message_Subkind;
+      Msg  : String := "") return CWE_Id_Array;
+   --  Return the set of applicate CWE ids for Kind, or a null array if none.
    --  Msg if not null is the message string associated with the message
    --  which can be used to e.g. differentiate between precondition messages.
+   --  If HTML is True, return an HTML string, with links to relevant
+   --  cwe.org URLs.
 
    function Is_Security_Relevant
      (Kind          : BE_Message_Subkind;
@@ -278,34 +385,9 @@ package Message_Kinds is
    --  If For_HTML_Output is True, will use HTML (e.g. "2<sup>X"), otherwise
    --  Text (e.g. "2**X").
 
-   function Is_Annotation (Subkind : Message_Subkind) return Boolean;
-   function Is_Method_Annotation (Subkind : Message_Subkind) return Boolean;
-   --  true if subkind is in annotation subkinds, or locally_unused_assignment
-
    function Is_Stored_In_DB_Method_Annotation
      (Subkind : Message_Subkind)
       return    Boolean;
    --  same as above, but only keep certain messages (no input/output)
 
-   function Is_Warning (Subkind : Message_Subkind) return Boolean;
-   --  Return True if message is not considered a check, which
-   --  means there is no reason to add "check that ..." in front
-   --  of the text of the message.  Also, these messages are
-   --  *not* counted as one of the "check-related" messages.
-
-   function Is_Check (Subkind : Message_Subkind) return Boolean;
-   --  Returns True if message is a check.
-
-   function Is_Warning_Or_Check (Subkind : Message_Subkind) return Boolean;
-   --  Return True if message is to be counted in the count of
-   --  all messages.  This includes race condition messages,
-   --  dead stores, external checkers, GNAT warnings etc.
-
-   function Is_Informational (Subkind : Message_Subkind) return Boolean;
-   --  Return True if "Subkind" is an informational message.
-   --  An informational message is NOT counted in the error counts,
-   --  nor is it part of the next/prev chain in the message-window.
-   --  However, it is "printable", and if you click on it, in the
-   --  source window, an informational message will be printed in the
-   --  message window.
 end Message_Kinds;
