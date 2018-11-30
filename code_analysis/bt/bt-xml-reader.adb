@@ -1408,7 +1408,7 @@ package body BT.Xml.Reader is
       --  Make sure we have read the corresponding Xml file
       Read_Xml_File (File_Name, File_Exists);
 
-      if not File_Exists or else not File_Vals.Contains (Srcpos) then
+      if not File_Exists then
          return Vn_Values_Seqs.Empty_Vector;
       end if;
 
@@ -1418,21 +1418,20 @@ package body BT.Xml.Reader is
          declare
             Pos : constant Source_Position :=
                Srcpos_Vals_Mappings.Key (Curr);
-
-            E  : constant Vector :=
-               Srcpos_Vals_Mappings.Element (Curr);
          begin
             if Pos.Line = Line then
-               for Info of E loop
-                  if not Variables_On_Line.Contains
-                    (To_String (Info.Vn_Image))
-                  then
-                     Variables_On_Line.Append
-                       (To_String (Info.Vn_Image));
-                  end if;
+               for Info of Srcpos_Vals_Mappings.Element (Curr) loop
+                  declare
+                     S : constant String := To_String (Info.Vn_Image);
+                  begin
+                     if not Variables_On_Line.Contains (S) then
+                        Variables_On_Line.Append (S);
+                     end if;
+                  end;
                end loop;
             end if;
          end;
+
          Curr := Srcpos_Vals_Mappings.Next (Curr);
       end loop;
 
@@ -1446,30 +1445,31 @@ package body BT.Xml.Reader is
          -----------------------
 
          procedure Find_One_Variable (Position : Name_Set.Cursor) is
-            Var_Name      : constant String :=
-               Name_Set.Element (Position);
+            Var_Name      : constant String := Name_Set.Element (Position);
             Closest_Match : Source_Position;
-            Var_Values : constant String :=
-               Get_Variable_Vn_Value
-                 (File_Name, Var_Name, Srcpos, Closest_Match);
+            Var_Values    : constant String :=
+              Get_Variable_Vn_Value
+                (File_Name, Var_Name, Srcpos, Closest_Match);
+
          begin
             if Debug_On then
                Put_Line ("checking variable " & Var_Name);
             end if;
+
             if Closest_Match /= No_Source_Position then
                if Debug_On then
                   Put_Line (" => " & Var_Values);
                end if;
-               Vn_Values_Seqs.Append (Result,
-                 (To_Unbounded_String (Var_Name),
-                  To_Unbounded_String (Var_Values)));
+
+               Vn_Values_Seqs.Append
+                 (Result,
+                  (To_Unbounded_String (Var_Name),
+                   To_Unbounded_String (Var_Values)));
             end if;
          end Find_One_Variable;
 
       begin
-         Name_Set.Iterate (Variables_On_Line,
-           Find_One_Variable'Access);
-
+         Name_Set.Iterate (Variables_On_Line, Find_One_Variable'Access);
          return Result;
       end;
    end Get_Srcpos_Vn_Values;
