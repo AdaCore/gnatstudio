@@ -136,13 +136,16 @@ class Watchpoint_Add (gdb.Command):
         symbol = args[0].split('/')  # Remove the "context/" part
         context = symbol[0]
         symbol = symbol[-1].strip()
-        if len(args) == 3:
+        numargs = len(args)
+        if numargs >= 2:
             # If there is no watchdog for that context, create one
             if not watchdog_dict.get(context):
                 watchdog_dict[context] = Watchpoint_Watchdog(
                     context, gdb.BP_BREAKPOINT)
-                Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
-                                   watchdog_dict[context])
+                if numargs == 3:
+                    # The watchpoint cleaner is only needed in C
+                    Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
+                                       watchdog_dict[context])
             wp = watchdog_dict[context].watchpoint_dict.get(symbol)
             if not wp:
                 try:

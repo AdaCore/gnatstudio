@@ -2117,6 +2117,7 @@ else:
         def __contextual_set_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
             it = ctx.modeling_item
+
             debugger = GPS.Debugger.get()
 
             sig_obj = QGEN_Module.signal_attributes.get(it.id, None)

@@ -39,16 +39,22 @@ class signalSetter(Gtk.Dialog):
             new_value = debugger.value_of(var)
             changed_persistent_value = new_value != self.watched_value
 
-            # Pass the end of the function to qgen_watchpoint
+            # Pass the end of the function to qgen_watchpoint when the
+            # language is C. This argument used to clean watchpoint is
+            # not necessary in Ada as this is done properly already.
             func_info = modeling_map.get_func_bounds(function)
+            function_file = func_info[0]
+            if GPS.File(function_file).language().lower() == "c":
+                extra_arg = '"' + function_file + ":" + func_info[-1][-1] + '"'
+            else:
+                extra_arg = ""
 
             # Only create a watchpoint if it did not exist already
             # or if its value changed.
             if is_persistent and (
                     not self.is_watched or changed_persistent_value):
-                debugger.send('qgen_watchpoint %s/%s "%s" "%s:%s"' % (
-                    function, var, desired_value, func_info[0],
-                    func_info[-1][-1]),
+                debugger.send('qgen_watchpoint %s/%s "%s" %s' % (
+                    function, var, desired_value, extra_arg),
                               output=False)
                 if not self.is_watched:
                     set_label = "Persistent variable value set"
