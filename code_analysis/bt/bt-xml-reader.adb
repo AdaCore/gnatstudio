@@ -42,6 +42,14 @@ package body BT.Xml.Reader is
    Inspection_Output_Directory : Unbounded_String := Null_Unbounded_String;
    --  Save a copy for use with subsequent XML files.
 
+   function Get_Variable_Vn_Value
+     (File          : String;
+      Variable      : String;
+      Srcpos        : Source_Position;
+      Closest_Match : out Source_Position) return String;
+   --  Returns the value_set associated with Variable on the same line
+   --  as Srcpos, and the closest column available.
+
    function Hash (Key_Type : Natural) return Hash_Type
      is (Hash_Type (Key_Type));
    --  Hash function on the VN_Id
@@ -1092,10 +1100,15 @@ package body BT.Xml.Reader is
       Srcpos        : Source_Position;
       Closest_Match : out Source_Position) return String
    is
-      File_Exists        : Boolean;
-      Curr               : Srcpos_Vals_Mappings.Cursor;
-      Variable_Positions : List_Of_Source_Positions.List;
-      Variable_Vals      : Map_Of_Source_Positions.Map;
+      File_Exists  : Boolean;
+      Curr         : Srcpos_Vals_Mappings.Cursor;
+      Pos          : Source_Position;
+      D            : Natural;
+      Min_Distance : Natural := Integer'Last;
+      Set_Image    : Unbounded_String;
+
+      function Distance (A, B : Integer) return Natural is (abs (A - B));
+      --  Return the distance between A and B
 
    begin
       --  Make sure we have read the corresponding Xml file
@@ -1109,248 +1122,58 @@ package body BT.Xml.Reader is
               & Variable & "), no values found for file "
               & File);
          end if;
+
          return "";
       end if;
 
       if Debug_On then
          Put_Line ("Get_Variable_Vn_Value for " & Variable &
-           " at " &
+           " at" &
             Integer'Image (Srcpos.Line) & ":" &
-            Integer'Image (Srcpos.Column) & ":" &
-           ":");
+            Integer'Image (Srcpos.Column) & ":");
       end if;
+
       Curr := Srcpos_Vals_Mappings.First (File_Vals);
+
       while Srcpos_Vals_Mappings.Has_Element (Curr) loop
-         declare
-            Pos : constant Source_Position :=
-               Srcpos_Vals_Mappings.Key (Curr);
+         Pos := Srcpos_Vals_Mappings.Key (Curr);
 
-            E  : constant Vector :=
-               Srcpos_Vals_Mappings.Element (Curr);
-
-         begin
-            for Info of E loop
+         if Pos.Line = Srcpos.Line then
+            for Info of Srcpos_Vals_Mappings.Element (Curr) loop
                if Info.Vn_Image = Variable then
-                  if Pos = Srcpos then
+                  if Pos.Column = Srcpos.Column then
                      --  exact match
                      if Debug_On then
-                        Put_Line ("Found an exact match : " &
-                           To_String (Info.Set_Image));
+                        Put_Line ("found an exact match: " &
+                          To_String (Info.Set_Image));
                      end if;
+
                      Closest_Match := Srcpos;
                      return To_String (Info.Set_Image);
                   else
-                     if Debug_On then
-                        Put_Line ("add a possible match at " &
-                           Integer'Image (Pos.Line) & ":" &
-                           Integer'Image (Pos.Column) & ":" &
-                           To_String (Info.Set_Image));
+                     D := Distance (Pos.Column, Srcpos.Column);
+
+                     if D < Min_Distance then
+                        if Debug_On then
+                           Put_Line ("found a match at" &
+                             Integer'Image (Pos.Line) & ":" &
+                             Integer'Image (Pos.Column) & ": " &
+                             To_String (Info.Set_Image));
+                        end if;
+
+                        Closest_Match := Srcpos;
+                        Min_Distance := D;
+                        Set_Image := Info.Set_Image;
                      end if;
-                     Variable_Positions.Append (Pos);
-                     Variable_Vals.Include (Pos, Info);
                   end if;
                end if;
             end loop;
-         end;
+         end if;
+
          Curr := Srcpos_Vals_Mappings.Next (Curr);
       end loop;
 
-      --  Check the found values, if any.
-      if List_Of_Source_Positions.Is_Empty (Variable_Positions) then
-         --  no known values
-         if Debug_On then
-            Put_Line ("Get_Variable_Vn_Value, "
-            & Variable & " was not found");
-         end if;
-         return "";
-      elsif List_Of_Source_Positions.Length (Variable_Positions) = 1 then
-         if Debug_On then
-            Put_Line ("return only possible match");
-         end if;
-         Closest_Match := List_Of_Source_Positions.First_Element
-            (Variable_Positions);
-         return To_String (Variable_Vals.Element
-                (List_Of_Source_Positions.First_Element
-                  (Variable_Positions)).Set_Image);
-      end if;
-      --  No exact match, find the closest to Srcpos
-      declare
-         function "<" (Left, Right : Source_Position) return Boolean;
-         --  compare 2 source_positions
-
-         -------
-         --  "<"
-         -------
-         function "<" (Left, Right : Source_Position) return Boolean
-         is
-         begin
-            if Left.Line = Right.Line then
-               return Left.Column < Right.Column;
-            else
-               return Left.Line < Right.Line;
-            end if;
-         end "<";
-
-         package Sort_Positions is new
-              List_Of_Source_Positions.Generic_Sorting ("<");
-
-         Cursor, Prev_Cursor, Next_Cursor : List_Of_Source_Positions.Cursor;
-      begin
-         Sort_Positions.Sort (Variable_Positions);
-
-         --  Check first if Srcpos is outside the bounds of known values
-         if List_Of_Source_Positions.First_Element (Variable_Positions).
-            Line > Srcpos.Line
-         then
-            --  the first value is already past the line we are
-            --  interested in, return the first
-            Closest_Match := List_Of_Source_Positions.First_Element
-               (Variable_Positions);
-            if Debug_On then
-               Put_Line ("use first entry at " &
-                  Integer'Image (Closest_Match.Line) & ":" &
-                  Integer'Image (Closest_Match.Column) & " :" &
-                  To_String (Variable_Vals.Element
-                      (List_Of_Source_Positions.First_Element
-                        (Variable_Positions)).Set_Image));
-            end if;
-            return To_String (Variable_Vals.Element
-                (List_Of_Source_Positions.First_Element
-                  (Variable_Positions)).Set_Image);
-         elsif List_Of_Source_Positions.Last_Element (Variable_Positions).
-            Line < Srcpos.Line
-         then
-            --  the last value is still before the line we are
-            --  interested in, return the last
-            Closest_Match := List_Of_Source_Positions.Last_Element
-               (Variable_Positions);
-            if Debug_On then
-               Put_Line ("use last entry at " &
-                  Integer'Image (Closest_Match.Line) & ":" &
-                  Integer'Image (Closest_Match.Column) & " :" &
-                  To_String (Variable_Vals.Element
-                      (List_Of_Source_Positions.Last_Element
-                        (Variable_Positions)).Set_Image));
-            end if;
-            return To_String (Variable_Vals.Element
-               (List_Of_Source_Positions.Last_Element
-               (Variable_Positions)).Set_Image);
-         end if;
-
-         --  Find the values closest to srcpos. We'll choose the closest
-         --  preceding values.
-         Cursor := List_Of_Source_Positions.First (Variable_Positions);
-         Prev_Cursor := List_Of_Source_Positions.No_Element;
-         Next_Cursor := List_Of_Source_Positions.Next (Cursor);
-         declare
-            use List_Of_Source_Positions;
-            Has_Prev : Boolean;
-            Has_Next : Boolean;
-            Pos, Prev_Pos, Next_Pos : Source_Position := No_Source_Position;
-         begin
-            while List_Of_Source_Positions.Has_Element (Cursor) loop
-               Pos := List_Of_Source_Positions.Element (Cursor);
-               Has_Prev := Prev_Cursor /= List_Of_Source_Positions.No_Element
-                 and then List_Of_Source_Positions.Has_Element (Prev_Cursor);
-               Has_Next := Next_Cursor /= List_Of_Source_Positions.No_Element
-                 and then List_Of_Source_Positions.Has_Element (Next_Cursor);
-               if Has_Prev then
-                  Prev_Pos := List_Of_Source_Positions.Element (Prev_Cursor);
-               end if;
-               if Has_Next then
-                  Next_Pos := List_Of_Source_Positions.Element (Next_Cursor);
-               end if;
-               if Pos.Line = Srcpos.Line then
-                  --  found a possible entry
-                  if (Prev_Pos /= No_Source_Position and then
-                     Prev_Pos.Line < Srcpos.Line)
-
-                     or else (Next_Pos /= No_Source_Position and then
-                     Next_Pos.Line > Srcpos.Line)
-                  then
-                     --  use entry on the same line
-                     if Debug_On then
-                        Put_Line ("Only match on line " &
-                           Integer'Image (Pos.Line) & ":" &
-                           Integer'Image (Pos.Column) & " : " &
-                           To_String (Variable_Vals.Element
-                              (Pos).Set_Image));
-                     end if;
-                     Closest_Match := Pos;
-                     return To_String (Variable_Vals.Element
-                              (Pos).Set_Image);
-                  elsif Prev_Pos /= No_Source_Position and then
-                     Prev_Pos.Line = Srcpos.Line
-                  then
-                     if Next_Pos = No_Source_Position or else
-                       Next_Pos.Line > Srcpos.Line
-                     then
-                        --  Choose between Pos and Prev_Pos
-                        if (Prev_Pos.Column < Srcpos.Column
-                          and then Pos.Column > Srcpos.Column)
-                          or else Pos.Column > Srcpos.Column
-                        then
-                           --  return previous
-                           if Debug_On then
-                              Put_Line ("Match on same line " &
-                                 Integer'Image (Prev_Pos.Line) & ":" &
-                                 Integer'Image (Prev_Pos.Column) & " : " &
-                                 To_String (Variable_Vals.Element
-                                    (Prev_Pos).Set_Image));
-                           end if;
-                           Closest_Match := Prev_Pos;
-                           return To_String (Variable_Vals.Element
-                              (Prev_Pos).Set_Image);
-                        else
-                           --  return current
-                           if Debug_On then
-                              Put_Line ("Match on same line " &
-                                 Integer'Image (Pos.Line) & ":" &
-                                 Integer'Image (Pos.Column) & " : " &
-                                 To_String (Variable_Vals.Element
-                                    (Pos).Set_Image));
-                           end if;
-                           Closest_Match := Pos;
-                           return To_String (Variable_Vals.Element
-                              (Pos).Set_Image);
-                        end if;
-                     end if;
-                  elsif Next_Pos.Line > Srcpos.Line then
-                     null;
-                  else
-                     null;
-                  end if;
-               elsif Pos.Line > Srcpos.Line then
-                  --  we passed the desired line.
-                  if Prev_Pos /= No_Source_Position and then
-                     Prev_Pos.Line < Srcpos.Line
-                  then
-                     --  return previous
-                     if Debug_On then
-                        Put_Line ("Match on closest prev line " &
-                           Integer'Image (Prev_Pos.Line) & ":" &
-                           Integer'Image (Prev_Pos.Column) & " : " &
-                           To_String (Variable_Vals.Element
-                              (Prev_Pos).Set_Image));
-                     end if;
-                     Closest_Match := Prev_Pos;
-                     return To_String (Variable_Vals.Element
-                        (Prev_Pos).Set_Image);
-                  end if;
-               else
-                  --  keep looking
-                  null;
-               end if;
-               Prev_Cursor := Cursor;
-               Cursor := List_Of_Source_Positions.Next (Cursor);
-               Next_Cursor := List_Of_Source_Positions.Next (Cursor);
-            end loop;
-         end;
-         if Debug_On then
-            Put_Line ("Get_Variable_Vn_Value, " & Variable & " was not found");
-         end if;
-         return "";
-      end;
+      return To_String (Set_Image);
    end Get_Variable_Vn_Value;
 
    --------------------------
@@ -1372,25 +1195,20 @@ package body BT.Xml.Reader is
       if not File_Exists then
          return Vn_Values_Seqs.Empty_Vector;
       end if;
+
       Curr := Srcpos_Vals_Mappings.First (File_Vals);
+
       while Srcpos_Vals_Mappings.Has_Element (Curr) loop
-         declare
-            Pos : constant Source_Position :=
-               Srcpos_Vals_Mappings.Key (Curr);
+         if Srcpos_Vals_Mappings.Key (Curr).Line = Line then
+            --  Collect values on this line
+            for Info of Srcpos_Vals_Mappings.Element (Curr) loop
+               Vn_Values_Seqs.Append (Result, Info);
+            end loop;
+         end if;
 
-            E  : constant Vector :=
-               Srcpos_Vals_Mappings.Element (Curr);
-
-         begin
-            if Pos.Line = Line then
-               --  Collect values on this line
-               for Info of E loop
-                  Vn_Values_Seqs.Append (Result, Info);
-               end loop;
-            end if;
-         end;
          Curr := Srcpos_Vals_Mappings.Next (Curr);
       end loop;
+
       return Result;
    end Get_Srcpos_Vn_Values;
 
@@ -1415,22 +1233,17 @@ package body BT.Xml.Reader is
       --  find the VN images on this line
       Curr := Srcpos_Vals_Mappings.First (File_Vals);
       while Srcpos_Vals_Mappings.Has_Element (Curr) loop
-         declare
-            Pos : constant Source_Position :=
-               Srcpos_Vals_Mappings.Key (Curr);
-         begin
-            if Pos.Line = Line then
-               for Info of Srcpos_Vals_Mappings.Element (Curr) loop
-                  declare
-                     S : constant String := To_String (Info.Vn_Image);
-                  begin
-                     if not Variables_On_Line.Contains (S) then
-                        Variables_On_Line.Append (S);
-                     end if;
-                  end;
-               end loop;
-            end if;
-         end;
+         if Srcpos_Vals_Mappings.Key (Curr).Line = Line then
+            for Info of Srcpos_Vals_Mappings.Element (Curr) loop
+               declare
+                  S : constant String := To_String (Info.Vn_Image);
+               begin
+                  if not Variables_On_Line.Contains (S) then
+                     Variables_On_Line.Append (S);
+                  end if;
+               end;
+            end loop;
+         end if;
 
          Curr := Srcpos_Vals_Mappings.Next (Curr);
       end loop;
