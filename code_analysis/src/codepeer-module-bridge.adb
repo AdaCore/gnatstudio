@@ -154,6 +154,9 @@ package body CodePeer.Module.Bridge is
                   or (Status_File_Name.Is_Regular_File
                       and then DB_File_Name.File_Time_Stamp
                         < Status_File_Name.File_Time_Stamp))
+        and then (Output_Directory.Create_From_Dir
+                   ("Output_Info.xml").File_Time_Stamp
+                   < Reply_File_Name.File_Time_Stamp)
       then
          --  Inspection data file and review status data files are up to date,
          --  and can be loaded without run of gps_codepeer_bridge.
