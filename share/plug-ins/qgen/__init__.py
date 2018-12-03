@@ -1849,6 +1849,7 @@ else:
                         QGEN_Module.__update_current_construct(
                             debugger, viewer)
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
+                    GPS.MDI.get_by_child(viewer).raise_window()
 
                 if scroll_to:
                     logger.log("Scroll to " + str(scroll_to.id))
