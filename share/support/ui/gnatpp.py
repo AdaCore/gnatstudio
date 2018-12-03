@@ -29,7 +29,7 @@ def gnatpp(file):
 
     cmd = [gps_utils.get_gnat_driver_cmd(),
            'pretty',
-           '-rf',
+           '-rnb',
            '-P%s' % GPS.Project.root().file().path] + x_args + [file.path]
 
     p = ProcessWrapper(cmd, spawn_console='')
