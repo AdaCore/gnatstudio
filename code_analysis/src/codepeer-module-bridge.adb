@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;        use Ada.Calendar;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
@@ -124,8 +123,6 @@ package body CodePeer.Module.Bridge is
         Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
       Status_File_Name      : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Review_Status_File_Name);
-      DB_File_Name          : constant Virtual_File :=
-        Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
       Output_Directory      : constant Virtual_File :=
         Codepeer_Output_Directory (Module.Kernel);
       Bts_Directory         : constant Virtual_File :=
@@ -147,47 +144,25 @@ package body CodePeer.Module.Bridge is
       Module.Output_Directory := Output_Directory;
       Module.Bts_Directory := Bts_Directory;
 
-      if DB_File_Name.Is_Regular_File
-        and then Reply_File_Name.Is_Regular_File
-        and then (DB_File_Name.File_Time_Stamp
-                    < Reply_File_Name.File_Time_Stamp
-                  or (Status_File_Name.Is_Regular_File
-                      and then DB_File_Name.File_Time_Stamp
-                        < Status_File_Name.File_Time_Stamp))
-        and then (Output_Directory.Create_From_Dir
-                   ("Output_Info.xml").File_Time_Stamp
-                   < Reply_File_Name.File_Time_Stamp)
-      then
-         --  Inspection data file and review status data files are up to date,
-         --  and can be loaded without run of gps_codepeer_bridge.
+      --  Generate command file
 
-         Module.Load
-           (Reply_File_Name,
-            Status_File_Name,
-            Bts_Directory,
-            Output_Directory);
+      CodePeer.Bridge.Commands.Inspection
+        (Command_File_Name    => Command_File_Name,
+         Server_URL           => Codepeer_Server_URL (Project),
+         Output_Directory     => Output_Directory,
+         DB_Directory         => Codepeer_Database_Directory (Project),
+         Message_Patterns     => Codepeer_Message_Patterns (Project),
+         Additional_Patterns  => Codepeer_Additional_Patterns (Project),
+         Inspection_File_Name => Reply_File_Name,
+         Status_File_Name     => Status_File_Name,
+         Import_Annotations   => Module.Import_Annotations.Get_Pref,
+         Import_Backtraces    => Module.Import_Backtraces.Get_Pref,
+         Maximum_Version      => Supported_Format_Version'Last);
 
-      else
-         --  Generate command file
-
-         CodePeer.Bridge.Commands.Inspection
-           (Command_File_Name    => Command_File_Name,
-            Server_URL           => Codepeer_Server_URL (Project),
-            Output_Directory     => Output_Directory,
-            DB_Directory         => Codepeer_Database_Directory (Project),
-            Message_Patterns     => Codepeer_Message_Patterns (Project),
-            Additional_Patterns  => Codepeer_Additional_Patterns (Project),
-            Inspection_File_Name => Reply_File_Name,
-            Status_File_Name     => Status_File_Name,
-            Import_Annotations   => Module.Import_Annotations.Get_Pref,
-            Import_Backtraces    => Module.Import_Backtraces.Get_Pref,
-            Maximum_Version      => Supported_Format_Version'Last);
-
-         Module.Action := Load_Bridge_Results;
-         Module.Inspection_File := Reply_File_Name;
-         Module.Status_File := Status_File_Name;
-         Run_GPS_Codepeer_Bridge (Module, Command_File_Name, Preserve_Output);
-      end if;
+      Module.Action := Load_Bridge_Results;
+      Module.Inspection_File := Reply_File_Name;
+      Module.Status_File := Status_File_Name;
+      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, Preserve_Output);
    end Inspection;
 
    ----------------------
