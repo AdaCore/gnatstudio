@@ -5,17 +5,43 @@ import os_utils
 from . import core
 from . import core_staging
 import subprocess
-import re
 from workflows.promises import ProcessWrapper
+from enum import Enum
 
 LOG_ID = "CLEARCASE"
-VCS_PATH = "Version Control/"
+VCS_PATH = "VCS/"
+VCS_CONTEXT_PATH = "Version Control/"
 CATEGORY = "VCS"
 MESSAGES_VIEW = "Messages"
 ID_HEADER = "Event "
 # The actions must only be registered once
 ALREADY_LOADED = False
 VOBS = None
+
+CC_PATH = "Clearcase/"
+UNCHECKOUT_PREF = "Uncheckout behavior"
+CHECKOUT_PREF = "Create element in checkout"
+
+GPS.Preference(CC_PATH + UNCHECKOUT_PREF).create(
+    UNCHECKOUT_PREF,
+    'enum',
+    'Keep will create a copy with the changes when uncheckout,' +
+    ' Discard will suppress the changes',
+    0,  # Default value corresponding to keep
+    'Keep',
+    'Discard')
+
+GPS.Preference(CC_PATH + CHECKOUT_PREF).create(
+    CHECKOUT_PREF,
+    'boolean',
+    'Add the element in the vob if no activity set',
+    True)
+
+
+class Activity(Enum):
+    YES = 0
+    NO = 1
+    LOCKED = 2
 
 
 @core.register_vcs(name='ClearCase Native',
@@ -64,64 +90,64 @@ class Clearcase(core_staging.Emulate_Staging,
         global ALREADY_LOADED
         super(Clearcase, self).__init__(*args, **kwargs)
 
-        self._file_with_status = None
         self.details = {}
 
         if not ALREADY_LOADED:
+
+            def _register_clearcase_action(name, action):
+                gps_utils.make_interactive(
+                    callback=action,
+                    name='clearcase ' + name + ' current file',
+                    category=CATEGORY,
+                    filter="File",
+                    menu=(VCS_PATH + 'Clearcase ' + name + ' current file'),
+                    contextual=VCS_CONTEXT_PATH + name.title() + ' file %f')
+
             ALREADY_LOADED = True
             GPS.Logger(LOG_ID).log("Registering the clearcase actions...")
-            gps_utils.make_interactive(
-                callback=self._checkout_current_file,
-                name='clearcase checkout current file',
-                category=CATEGORY,
-                filter="File",
-                contextual=VCS_PATH + 'Checkout file %f')
-            gps_utils.make_interactive(
-                callback=self._checkin_current_file,
-                name='clearcase checkin current file',
-                category=CATEGORY,
-                filter="File",
-                contextual=VCS_PATH + 'Checkin file %f')
-            gps_utils.make_interactive(
-                callback=self._uncheckout_current_file,
-                name='clearcase uncheckout current file',
-                category=CATEGORY,
-                filter="File",
-                contextual=VCS_PATH + 'Uncheckout file %f')
+            _register_clearcase_action("checkout", self._checkout_current_file)
+            _register_clearcase_action("checkin", self._checkin_current_file)
+            _register_clearcase_action("uncheckout",
+                                       self._uncheckout_current_file)
             GPS.Logger(LOG_ID).log("Finishing registering the actions")
+
+    def _set_clearcase_status(self, cmd_line):
+
+        def __set_buffer_writable(buf, writable):
+            if buf:
+                buf.set_read_only(not writable)
+
+        with self.set_status_for_all_files() as s:
+            p = self._cleartool(cmd_line)
+            while True:
+                line = yield p.wait_line()
+                if not line:
+                    break
+                splitted = line.split('@@')
+                file = GPS.File(splitted[0])
+
+                buf = GPS.EditorBuffer.get(file, open=False)
+                if len(splitted) == 1:
+                    status = GPS.VCS2.Status.UNTRACKED
+                elif line.endswith('CHECKEDOUT'):
+                    status = GPS.VCS2.Status.MODIFIED
+                    __set_buffer_writable(buf, True)
+                else:
+                    status = GPS.VCS2.Status.UNMODIFIED
+                    __set_buffer_writable(buf, False)
+                s.set_status(file, status, '', '')
+
+    @core.run_in_background
+    def async_fetch_status_for_files(self, files):
+        cmd_line = ['ls', '-short'] + [file.path for file in files]
+        yield self._set_clearcase_status(cmd_line)
 
     @core.run_in_background
     def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
-        _re = re.compile(
-            '(?P<file>[^@@]+)(?P<sep>@@)?(?P<rev>[^\s]*)(\n|$)')
+        cmd_line = ['ls', '-recurse', '-short', '.']
+        yield self._set_clearcase_status(cmd_line)
 
-        with self.set_status_for_all_files() as s:
-            p = self._cleartool(['ls', '-short', '.'])
-            while True:
-                line = yield p.wait_line()
-                if line is None:
-                    break
-
-                GPS.Logger(LOG_ID).log(line)
-                m = _re.search(line)
-                if m:
-                    status = GPS.VCS2.Status.UNMODIFIED
-                    rev = m.group('rev')
-                    if not m.group('sep'):
-                        status = GPS.VCS2.Status.UNTRACKED
-                    elif rev.endswith('CHECKEDOUT'):
-                        status = GPS.VCS2.Status.MODIFIED
-                    elif rev == '':
-                        status = GPS.VCS2.Status.IGNORED
-
-                    s.set_status(
-                        GPS.File(m.group('file')),
-                        status,
-                        rev,
-                        '')  # repo revision
-            self._file_with_status = s.files_with_explicit_status
-
-    def _has_defined_activity(self, file):
+    def _has_defined_activity(self, file, verbose):
         """
         Whether there is a defined activity currently defined and if the file
         is not locked which is necessary to be able to do a checkout.
@@ -135,54 +161,89 @@ class Clearcase(core_staging.Emulate_Staging,
         output, error = p.communicate()
         status = p.wait()
         if status:
-            return False  # No Clearcase activity on the file
+            self.__log(str(file) + " has no activity", verbose)
+            return Activity.NO  # No Clearcase activity on the file
         elif output:
-            return False  # The file is locked
+            self.__log(str(file) + " is locked", True)
+            return Activity.LOCKED  # The file is locked
         else:
-            return True
+            return Activity.YES
 
     def __log(self, message, visible):
         GPS.Logger(LOG_ID).log(message)
         if visible:
             GPS.Console(MESSAGES_VIEW).write(message + "\n")
 
-    def __log_result(self, command, status, output, writable, file):
+    def __log_result(self, command, status, output, visible):
         if status == 0:
-            self.__log(command + " succeed", True)
-            GPS.EditorBuffer.get(file, open=False).set_read_only(writable)
+            self.__log(command + " succeeded", visible)
         else:
-            self.__log(command + " failed: " + output, True)
+            self.__log(command + " failed: " + output, visible)
 
     def _checkout_current_file(self):
-        ctxt = GPS.contextual_context() or GPS.current_context()
-        file = ctxt.file()
+        """
+        Checkout the current file if not locked and has Clearcase activity.
+        If no activity, try to create new file element in the current dir.
+        """
+        file = GPS.current_context().file()
+        if not file:
+            return
 
-        if not self._has_defined_activity(file):
-            GPS.Console().write('No clearcase activity set for ' +
-                                str(file) + '\n')
+        activity = self._has_defined_activity(file, False)
+        if activity == Activity.LOCKED:
             return
 
         # Ask a checkout comment to the user
         comment = GPS.MDI.input_dialog(
             "Checkout's comment", "multiline:Comment")
 
-        if not comment:
-            return  # The dialog was closed or no comment
+        cmd_line = ['cleartool', 'co']
 
-        p = subprocess.Popen(['cleartool', 'co', '-c', comment[0], file.path],
+        if not comment:
+            return  # The dialog was closed
+        elif comment[0]:
+            comment_option = ['-c', comment[0]]
+        else:
+            comment_option = ['-nc']
+
+        cmd_line += comment_option
+        cmd_line.append(file.path)
+
+        if (activity == Activity.NO and
+                GPS.Preference(CC_PATH + CHECKOUT_PREF).get()):
+            # Create activity for file
+            subprocess.Popen(['cleartool', 'co'] + comment_option + ['.'],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        output, error = p.communicate()
-        status = p.wait()
-        self.__log_result("checkout", status, output, False, file)
+                             stderr=subprocess.STDOUT).wait()
+            p = subprocess.Popen(['cleartool', 'mkelem'] + comment_option +
+                                 [file.path],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            output, error = p.communicate()
+            status = p.wait()
+            subprocess.Popen(['cleartool', 'ci'] + comment_option + ['.'],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT).wait()
+        else:
+            p = subprocess.Popen(cmd_line,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            output, error = p.communicate()
+            status = p.wait()
+        self.__log_result("checkout", status, output, True)
+        self.invalidate_status_cache()
+        self.ensure_status_for_files([file])
 
     def _checkin_current_file(self):
-        ctxt = GPS.contextual_context() or GPS.current_context()
-        file = ctxt.file()
+        """
+        Checkin the current file if not locked and has Clearcase activity.
+        Will retrieve the checkout comment.
+        """
+        file = GPS.current_context().file()
+        if not file:
+            return
 
-        if not self._has_defined_activity(file):
-            GPS.Console().write('No clearcase activity set for ' +
-                                str(file) + '\n')
+        if not (self._has_defined_activity(file, True) == Activity.YES):
             return
 
         # Retrieve the checkout message
@@ -193,39 +254,60 @@ class Clearcase(core_staging.Emulate_Staging,
         output, error = p.communicate()
         status = p.wait()
 
-        if not output:
-            output = "GPS checkin"  # Default message for hijacked files
-        else:
+        if output:
             output = output[:-1]  # Remove the new line created by the command
+
         # Confirm the checkin message
         comment = GPS.MDI.input_dialog(
             "Checkin's comment", "multiline:Comment=" + output)
 
-        if not comment:
-            return  # The dialog was closed or no comment
+        cmd_line = ['cleartool', 'ci']
 
-        p = subprocess.Popen(['cleartool', 'ci', '-c', comment[0], file.path],
+        if not comment:
+            return  # The dialog was closed
+        elif comment[0]:
+            cmd_line += ['-c', comment[0]]
+        else:
+            cmd_line.append('-nc')
+        cmd_line.append(file.path)
+
+        p = subprocess.Popen(cmd_line,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         output, error = p.communicate()
         status = p.wait()
-        self.__log_result("checkin", status, output, True, file)
+        self.__log_result("checkin", status, output, True)
+        self.invalidate_status_cache()
+        self.ensure_status_for_files([file])
 
     def _uncheckout_current_file(self):
-        ctxt = GPS.contextual_context() or GPS.current_context()
-        file = ctxt.file()
-
-        if not self._has_defined_activity(file):
-            GPS.Console().write('No clearcase activity set for ' +
-                                str(file) + '\n')
+        """
+        Uncheckout the current file if not locked and has Clearcase activity.
+        The preference "Clearcase uncheckout" will determine if a .keep file
+        is created.
+        """
+        file = GPS.current_context().file()
+        if not file:
             return
 
-        p = subprocess.Popen(['cleartool', 'unco', '-keep', file.path],
+        if not (self._has_defined_activity(file, True) == Activity.YES):
+            return
+
+        cmd_line = ['cleartool', 'unco']
+        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == 'Keep':
+            cmd_line.append('-keep')
+        else:
+            cmd_line.append('-rm')
+        cmd_line.append(file.path)
+
+        p = subprocess.Popen(cmd_line,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         output, error = p.communicate()
         status = p.wait()
-        self.__log_result("uncheckout", status, output, True, file)
+        self.__log_result("uncheckout", status, output, True)
+        self.invalidate_status_cache()
+        self.ensure_status_for_files([file])
 
     @core.run_in_background
     def async_commit_staged_files(self, visitor, message):
@@ -253,10 +335,13 @@ class Clearcase(core_staging.Emulate_Staging,
                     ['ci', '-comment', message, '.'],
                     block_exit=True).wait_until_terminate()
 
-        yield self._cleartool(
-            ['ci', '-comment', message] + [f.path for f in self._staged],
-            block_exit=True).wait_until_terminate()
-        visitor.success('Commit successful')
+            elif status & GPS.VCS2.Status.STAGED_MODIFIED:
+                status, output = yield self._cleartool(
+                    ['ci', '-comment', message, f.path],
+                    block_exit=True).wait_until_terminate()
+                self.__log_result("checkin", status, output, True)
+
+        visitor.success('Finish staging')
 
     @core.run_in_background
     def async_fetch_history(self, visitor, filter):
@@ -480,3 +565,14 @@ class Clearcase(core_staging.Emulate_Staging,
                 ids.append(event_to_id[event])
 
         visitor.annotations(file, 1, ids, lines)
+
+    @core.run_in_background
+    def async_discard_local_changes(self, files):
+        cmd_line = ['unco']
+        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == 'Keep':
+            cmd_line.append('-keep')
+        else:
+            cmd_line.append('-rm')
+        cmd_line += [file.path for file in files]
+        status, output = yield self._cleartool(cmd_line).wait_until_terminate()
+        self.__log_result("uncheckout", status, output, True)
