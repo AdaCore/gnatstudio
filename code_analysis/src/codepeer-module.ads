@@ -112,6 +112,9 @@ package CodePeer.Module is
       CWEs             : CWE_Category_Sets.Set)
       return Message_Access;
 
+   procedure Set_Review_Action (Message : Message_Access);
+   --  Create a review action icon associated with Message
+
 private
 
    type Message_Ranking_Color_Preference_Array is

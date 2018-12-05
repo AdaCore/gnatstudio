@@ -45,8 +45,11 @@ package Code_Analysis_GUI is
    --  Name of the icon used for file node in the analysis report
    Subp_Pixbuf_Cst  : constant String := "gps-emblem-entity-subprogram";
    --  Name of the icon used for subprogram node in the analysis report
-   Post_Analysis_Cst : constant String := "gps-emblem-file-modified";
-   --  Name of the icon used for posting an analysis
+   Grey_Analysis_Cst   : constant String := "gps-emblem-pencil-grey";
+   Purple_Analysis_Cst : constant String := "gps-emblem-pencil-purple";
+   Blue_Analysis_Cst   : constant String := "gps-emblem-pencil-blue";
+   Red_Analysis_Cst    : constant String := "gps-emblem-pencil-red";
+   --  Name of the icons used for posting an analysis
 
    Icon_Name_Col  : constant := 0;
    --  Gtk_Tree_Model column number dedicated to the icons associated with each

@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with CodePeer.Module; use CodePeer.Module;
+
 package body CodePeer.Bridge.Status_Readers is
 
    Status_Tag            : constant String := "status";
@@ -90,6 +92,8 @@ package body CodePeer.Bridge.Status_Readers is
          end if;
       end Get_Optional_Editable;
 
+      Message : Message_Access;
+
    begin
       if Self.Ignore_Depth /= 0 then
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
@@ -98,12 +102,9 @@ package body CodePeer.Bridge.Status_Readers is
          null;
 
       elsif Qname = Message_Tag then
-         declare
-            Message : constant Message_Access :=
-              Self.Messages.all
-                (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
-
          begin
+            Message := Self.Messages.all
+              (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
             Message.Status_Editable := Get_Optional_Editable;
             Message.Status :=
               CodePeer.Audit_Status_Kinds'Value
@@ -116,6 +117,8 @@ package body CodePeer.Bridge.Status_Readers is
 
                Message.Status := Uncategorized;
          end;
+
+         Set_Review_Action (Message);
 
       else
          --  Activate ignore of nested XML elements to be able to load data

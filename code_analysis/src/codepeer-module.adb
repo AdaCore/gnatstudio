@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
@@ -326,6 +326,33 @@ package body CodePeer.Module is
       end if;
    end Finalize;
 
+   -----------------------
+   -- Set_Review_Action --
+   -----------------------
+
+   procedure Set_Review_Action (Message : Message_Access) is
+      use Code_Analysis_GUI;
+   begin
+      Module.Review_Command.Ref;
+      Message.Set_Action
+        (new GPS.Editors.Line_Information.Line_Information_Record'
+           (Text               => Null_Unbounded_String,
+            Tooltip_Text       => To_Unbounded_String
+              (if Message.Status = Uncategorized
+               then "Manual review"
+               else To_Lower (Message.Status'Image) & ASCII.LF &
+                 "Update manual review"),
+            Image              => To_Unbounded_String
+              (case Message.Status is
+               when Uncategorized => Grey_Analysis_Cst,
+               when Pending       => Purple_Analysis_Cst,
+               when Bug           => Red_Analysis_Cst,
+               when others        => Blue_Analysis_Cst),
+            Message            =>
+              Create (GPS.Kernel.Messages.Message_Access (Message)),
+            Associated_Command => Module.Review_Command));
+   end Set_Review_Action;
+
    -----------------------------
    -- Create_CodePeer_Message --
    -----------------------------
@@ -420,18 +447,7 @@ package body CodePeer.Module is
          Message.Set_Highlighting (Style);
       end if;
 
-      Module.Review_Command.Ref;
-      Message.Set_Action
-        (new GPS.Editors.Line_Information.Line_Information_Record'
-           (Text               => Null_Unbounded_String,
-            Tooltip_Text       => To_Unbounded_String
-              ("Review message"),
-            Image              => To_Unbounded_String
-              (Code_Analysis_GUI.Post_Analysis_Cst),
-            Message            =>
-              Create (GPS.Kernel.Messages.Message_Access (Message)),
-            Associated_Command =>
-              Module.Review_Command));
+      Set_Review_Action (Message);
 
       if From_File /= No_File then
          declare
@@ -1038,8 +1054,6 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Item);
 
-      --  use type Code_Analysis.File_Access;
-      --  ??? Uncomment this line after I120-013 is be fixed
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
@@ -1276,14 +1290,22 @@ package body CodePeer.Module is
 
    procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context) is
+      Context : Module_Context)
+   is
+      Messages : constant CodePeer.Message_Vectors.Vector :=
+        CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
+           (Item.all).Get_Messages;
+
    begin
-      CodePeer.Module.Bridge.Add_Audit_Record
-        (Context.Module,
-         CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
-           (Item.all).Get_Messages);
+      CodePeer.Module.Bridge.Add_Audit_Record (Context.Module, Messages);
       Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
+
+      --  Update review icon and tooltip for reviewed messages
+
+      for Message of Messages loop
+         Set_Review_Action (Message);
+      end loop;
 
    exception
       when E : others =>
@@ -1394,7 +1416,10 @@ package body CodePeer.Module is
       Loaded        : Boolean := False;
 
    begin
-      --  Check that all messages has loaded audit trail.
+      --  Check that all messages have loaded audit trail.
+      --  Shouldn't we always reload audit trail info in case another user
+      --  posted a manual analysis (e.g. in client/server mode)???
+      --  See R919-013.
 
       for Message of Messages loop
          Loaded := Message.Audit_Loaded;
@@ -1557,12 +1582,13 @@ package body CodePeer.Module is
       --  and high priority messages.
 
       Module.Message_Colors (CodePeer.High) := High_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Medium) := Medium_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Low) := Low_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Info) := Info_Messages_Highlight;
+
+      --  Suppressed is no longer used in recent versions, so reuse Info
+
+      Module.Message_Colors (CodePeer.Suppressed) := Info_Messages_Highlight;
 
       --  Create a preference for importing annotations and backtraces
 
@@ -1596,16 +1622,6 @@ package body CodePeer.Module is
 
       --  Create CodePeer own preferences for CodePeer specific messages
 
-      Module.Message_Colors (CodePeer.Suppressed) :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "Messages-Suppressed-Background",
-           Label   => -"Color for 'suppressed' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of suppressed"
-             & " messages"),
-           Default => "#EFEFEF");
-
       Module.Removed_Message_Color :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
@@ -1620,14 +1636,9 @@ package body CodePeer.Module is
 
       Module.Annotations_Style := Editor_Code_Annotations_Style;
 
-      Module.Message_Styles (CodePeer.High) :=
-        Messages_Styles (High);
-
-      Module.Message_Styles (CodePeer.Medium) :=
-        Messages_Styles (Medium);
-
-      Module.Message_Styles (CodePeer.Low) :=
-        Messages_Styles (Low);
+      Module.Message_Styles (CodePeer.High) := Messages_Styles (High);
+      Module.Message_Styles (CodePeer.Medium) := Messages_Styles (Medium);
+      Module.Message_Styles (CodePeer.Low) := Messages_Styles (Low);
 
       Initialize_Style
         (Module.Message_Styles (CodePeer.Info),

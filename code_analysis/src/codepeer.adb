@@ -185,6 +185,15 @@ package body CodePeer is
                & Gtkada.Style.To_Hex (Self.Removed_Color.Get_Pref)
                & """>");
             Append (Result, "</span>");
+
+         elsif Self.Status in Not_A_Bug | False_Positive | Intentional then
+            Insert
+              (Result,
+               1,
+               "<span foreground="""
+               & Gtkada.Style.To_Hex (Self.Removed_Color.Get_Pref)
+               & """>");
+            Append (Result, "</span>");
          end if;
       end return;
    end Get_Markup;
