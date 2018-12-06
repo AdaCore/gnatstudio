@@ -86,6 +86,12 @@ class Clearcase(core_staging.Emulate_Staging,
             directory=self.working_dir.path)
         return p
 
+    def _file_or_dir_filter(self, context):
+        if context.file() or context.directory():
+            return True
+        else:
+            return False
+
     def __init__(self, *args, **kwargs):
         global ALREADY_LOADED
         super(Clearcase, self).__init__(*args, **kwargs)
@@ -93,22 +99,23 @@ class Clearcase(core_staging.Emulate_Staging,
         self.details = {}
 
         if not ALREADY_LOADED:
-
             def _register_clearcase_action(name, action):
                 gps_utils.make_interactive(
                     callback=action,
-                    name='clearcase ' + name + ' current file',
+                    name='clearcase ' + name + ' current element',
                     category=CATEGORY,
-                    filter="File",
-                    menu=(VCS_PATH + 'Clearcase ' + name + ' current file'),
-                    contextual=VCS_CONTEXT_PATH + name.title() + ' file %f')
+                    filter=self._file_or_dir_filter,
+                    menu=(VCS_PATH + 'Clearcase ' + name + ' current element'),
+                    contextual=(VCS_CONTEXT_PATH + "Clearcase " +
+                                name + " element"))
 
             ALREADY_LOADED = True
             GPS.Logger(LOG_ID).log("Registering the clearcase actions...")
-            _register_clearcase_action("checkout", self._checkout_current_file)
-            _register_clearcase_action("checkin", self._checkin_current_file)
-            _register_clearcase_action("uncheckout",
-                                       self._uncheckout_current_file)
+            _register_clearcase_action("checkout", self._checkout_current)
+            _register_clearcase_action("checkin", self._checkin_current)
+            _register_clearcase_action("uncheckout", self._uncheckout_current)
+            _register_clearcase_action("create", self._create_current)
+            _register_clearcase_action("remove", self._remove_current)
             GPS.Logger(LOG_ID).log("Finishing registering the actions")
 
     def _set_clearcase_status(self, cmd_line):
@@ -147,7 +154,7 @@ class Clearcase(core_staging.Emulate_Staging,
         cmd_line = ['ls', '-recurse', '-short', '.']
         yield self._set_clearcase_status(cmd_line)
 
-    def _has_defined_activity(self, file, verbose):
+    def _has_defined_activity(self, path, verbose):
         """
         Whether there is a defined activity currently defined and if the file
         is not locked which is necessary to be able to do a checkout.
@@ -155,16 +162,16 @@ class Clearcase(core_staging.Emulate_Staging,
         :returntype: a promise that will be resolved to a boolean, to
             indicate whether there is a defined activity.
         """
-        p = subprocess.Popen(['cleartool', 'lslock', str(file) + "@@"],
+        p = subprocess.Popen(['cleartool', 'lslock', path],
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
         output, error = p.communicate()
         status = p.wait()
         if status:
-            self.__log(str(file) + " has no activity", verbose)
+            self.__log(path + " has no activity", verbose)
             return Activity.NO  # No Clearcase activity on the file
         elif output:
-            self.__log(str(file) + " is locked", True)
+            self.__log(path + " is locked", True)
             return Activity.LOCKED  # The file is locked
         else:
             return Activity.YES
@@ -180,34 +187,50 @@ class Clearcase(core_staging.Emulate_Staging,
         else:
             self.__log(command + " failed: " + output, visible)
 
-    def _checkout_current_file(self):
-        """
-        Checkout the current file if not locked and has Clearcase activity.
-        If no activity, try to create new file element in the current dir.
-        """
+    def __data_from_context(self):
         file = GPS.current_context().file()
-        if not file:
-            return
+        if file:
+            path = file.path
+        else:
+            path = GPS.current_context().directory()
+        return file, path
 
-        activity = self._has_defined_activity(file, False)
-        if activity == Activity.LOCKED:
-            return
+    def __invalidate_clearcase_cache(self, file):
+        self.invalidate_status_cache()
+        if file:
+            self.ensure_status_for_files([file])
+        else:
+            self.ensure_status_for_all_source_files()
 
-        # Ask a checkout comment to the user
+    def __user_input(self, title, text=""):
+        # Ask a comment to the user
         comment = GPS.MDI.input_dialog(
-            "Checkout's comment", "multiline:Comment")
-
-        cmd_line = ['cleartool', 'co']
-
+            title + "'s comment", "multiline:Comment=" + text)
         if not comment:
-            return  # The dialog was closed
+            comment_option = None
         elif comment[0]:
             comment_option = ['-c', comment[0]]
         else:
             comment_option = ['-nc']
+        return comment_option
 
+    def _checkout_current(self):
+        """
+        Checkout the current element if not locked and has Clearcase activity.
+        If no activity, try to create new file element in the current dir.
+        """
+        file, path = self.__data_from_context()
+
+        activity = self._has_defined_activity(path, False)
+        if activity == Activity.LOCKED:
+            return
+
+        cmd_line = ['cleartool', 'co']
+        comment_option = self.__user_input("Checkout")
+        if not comment_option:
+            return
         cmd_line += comment_option
-        cmd_line.append(file.path)
+        cmd_line.append(path)
 
         if (activity == Activity.NO and
                 GPS.Preference(CC_PATH + CHECKOUT_PREF).get()):
@@ -216,7 +239,7 @@ class Clearcase(core_staging.Emulate_Staging,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT).wait()
             p = subprocess.Popen(['cleartool', 'mkelem'] + comment_option +
-                                 [file.path],
+                                 [path],
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
             output, error = p.communicate()
@@ -231,23 +254,20 @@ class Clearcase(core_staging.Emulate_Staging,
             output, error = p.communicate()
             status = p.wait()
         self.__log_result("checkout", status, output, True)
-        self.invalidate_status_cache()
-        self.ensure_status_for_files([file])
+        self.__invalidate_clearcase_cache(file)
 
-    def _checkin_current_file(self):
+    def _checkin_current(self):
         """
-        Checkin the current file if not locked and has Clearcase activity.
+        Checkin the current element if not locked and has Clearcase activity.
         Will retrieve the checkout comment.
         """
-        file = GPS.current_context().file()
-        if not file:
-            return
+        file, path = self.__data_from_context()
 
-        if not (self._has_defined_activity(file, True) == Activity.YES):
+        if not (self._has_defined_activity(path, True) == Activity.YES):
             return
 
         # Retrieve the checkout message
-        p = subprocess.Popen(['cleartool', 'lsco', '-fmt', '%c', file.path],
+        p = subprocess.Popen(['cleartool', 'lsco', '-fmt', '%c', path],
                              cwd=self.working_dir.path,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
@@ -257,19 +277,12 @@ class Clearcase(core_staging.Emulate_Staging,
         if output:
             output = output[:-1]  # Remove the new line created by the command
 
-        # Confirm the checkin message
-        comment = GPS.MDI.input_dialog(
-            "Checkin's comment", "multiline:Comment=" + output)
-
         cmd_line = ['cleartool', 'ci']
-
-        if not comment:
-            return  # The dialog was closed
-        elif comment[0]:
-            cmd_line += ['-c', comment[0]]
-        else:
-            cmd_line.append('-nc')
-        cmd_line.append(file.path)
+        comment_option = self.__user_input("Checkin", output)
+        if not comment_option:
+            return
+        cmd_line += comment_option
+        cmd_line.append(path)
 
         p = subprocess.Popen(cmd_line,
                              stdout=subprocess.PIPE,
@@ -277,20 +290,17 @@ class Clearcase(core_staging.Emulate_Staging,
         output, error = p.communicate()
         status = p.wait()
         self.__log_result("checkin", status, output, True)
-        self.invalidate_status_cache()
-        self.ensure_status_for_files([file])
+        self.__invalidate_clearcase_cache(file)
 
-    def _uncheckout_current_file(self):
+    def _uncheckout_current(self):
         """
-        Uncheckout the current file if not locked and has Clearcase activity.
+        Uncheckout the current element if not locked and has activity.
         The preference "Clearcase uncheckout" will determine if a .keep file
         is created.
         """
-        file = GPS.current_context().file()
-        if not file:
-            return
+        file, path = self.__data_from_context()
 
-        if not (self._has_defined_activity(file, True) == Activity.YES):
+        if not (self._has_defined_activity(path, True) == Activity.YES):
             return
 
         cmd_line = ['cleartool', 'unco']
@@ -298,7 +308,7 @@ class Clearcase(core_staging.Emulate_Staging,
             cmd_line.append('-keep')
         else:
             cmd_line.append('-rm')
-        cmd_line.append(file.path)
+        cmd_line.append(path)
 
         p = subprocess.Popen(cmd_line,
                              stdout=subprocess.PIPE,
@@ -306,8 +316,52 @@ class Clearcase(core_staging.Emulate_Staging,
         output, error = p.communicate()
         status = p.wait()
         self.__log_result("uncheckout", status, output, True)
-        self.invalidate_status_cache()
-        self.ensure_status_for_files([file])
+        self.__invalidate_clearcase_cache(file)
+
+    def _create_current(self):
+        """
+        Try to add the current element in the VOB.
+        """
+        file, path = self.__data_from_context()
+
+        cmd_line = ['cleartool', 'mkelem']
+        comment_option = self.__user_input("Mkelem")
+        if not comment_option:
+            return
+        cmd_line += comment_option
+        cmd_line.append(path)
+
+        p = subprocess.Popen(cmd_line,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        output, error = p.communicate()
+        status = p.wait()
+        self.__log_result("mkelem", status, output, True)
+        self.__invalidate_clearcase_cache(file)
+
+    def _remove_current(self):
+        """
+        Try to remove the current element from the VOB.
+        """
+        file, path = self.__data_from_context()
+
+        cmd_line = ['cleartool', 'rmelem', '-force']
+        comment_option = self.__user_input("Remove")
+        if not comment_option:
+            return
+        cmd_line += comment_option
+        cmd_line.append(path)
+
+        p = subprocess.Popen(cmd_line,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        output, error = p.communicate()
+        status = p.wait()
+        if status and file:
+            # Close the file if present in the editor
+            GPS.EditorBuffer.get(file, open=False).close(force=True)
+        self.__log_result("rmelem", status, output, True)
+        self.__invalidate_clearcase_cache(file)
 
     @core.run_in_background
     def async_commit_staged_files(self, visitor, message):
