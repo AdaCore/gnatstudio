@@ -210,6 +210,20 @@
       </menu>
     </submenu>
 
+    <action name="spark2014_example_allocators" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/allocators/allocators.gpr"</shell>
+      <shell>Editor.edit "simple_allocator.ads"</shell>
+      <shell>Editor.edit "simple_allocator.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_allocators">
+        <title>allocators</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_autopilot" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/autopilot/test.gpr"</shell>
