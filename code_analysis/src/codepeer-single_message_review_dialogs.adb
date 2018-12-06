@@ -157,8 +157,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
       -- Process_Audit --
       -------------------
 
-      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor)
-      is
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor) is
          Audit : constant CodePeer.Audit_Record_Access :=
            CodePeer.Audit_Vectors.Element (Position);
       begin

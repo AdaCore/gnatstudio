@@ -160,10 +160,14 @@ package body CodePeer.Bridge.Commands is
 
    begin
       --  Create list of identifiers of messages for which audit trail was not
-      --  loaded.
+      --  loaded, or all messages in remote mode.
 
       for Message of Messages loop
          if not Message.Audit_Loaded then
+            Append (Ids, Natural'Image (Message.Id));
+         elsif Server_URL /= "" then
+            Message.Audit.Clear;
+            Message.Audit_Loaded := False;
             Append (Ids, Natural'Image (Message.Id));
          end if;
       end loop;

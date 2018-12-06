@@ -1389,7 +1389,7 @@ package body CodePeer.Module is
          Input_Sources.File.Open (+File.Full_Name, Input);
          Reader.Parse (Input, Self.Messages);
          Input_Sources.File.Close (Input);
-         Module.Review_Messages (Messages);
+         Module.Review_Messages (Messages, Need_Reload => False);
 
       else
          Self.Kernel.Insert
@@ -1404,8 +1404,9 @@ package body CodePeer.Module is
    ---------------------
 
    procedure Review_Messages
-     (Self     : access Module_Id_Record'Class;
-      Messages : CodePeer.Message_Vectors.Vector)
+     (Self        : access Module_Id_Record'Class;
+      Messages    : CodePeer.Message_Vectors.Vector;
+      Need_Reload : Boolean)
    is
       use type Ada.Containers.Count_Type;
 
@@ -1413,24 +1414,25 @@ package body CodePeer.Module is
         CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
       Multiple_Review :
         CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
-      Loaded        : Boolean := False;
+      Loaded          : Boolean := not Need_Reload;
 
    begin
       --  Check that all messages have loaded audit trail.
-      --  Shouldn't we always reload audit trail info in case another user
-      --  posted a manual analysis (e.g. in client/server mode)???
-      --  See R919-013.
+      --  In client/server mode, always reload since another user might have
+      --  posted a manual analysis under another session.
 
-      for Message of Messages loop
-         Loaded := Message.Audit_Loaded;
-
-         exit when not Loaded;
-      end loop;
+      if Need_Reload
+        and then Codepeer_Server_URL (Get_Project (Module.Kernel)) = ""
+      then
+         for Message of Messages loop
+            Loaded := Message.Audit_Loaded;
+            exit when not Loaded;
+         end loop;
+      end if;
 
       if not Loaded then
          CodePeer.Module.Bridge.Load_Audit_Trail
            (CodePeer_Module_Id (Self), Messages);
-
       else
          --  Create and show review dialog
 

@@ -61,8 +61,12 @@ package CodePeer.Module is
    --  and display loaded results.
 
    procedure Review_Messages
-     (Self     : access Module_Id_Record'Class;
-      Messages : CodePeer.Message_Vectors.Vector);
+     (Self        : access Module_Id_Record'Class;
+      Messages    : CodePeer.Message_Vectors.Vector;
+      Need_Reload : Boolean);
+   --  Open a dialog so that the user can review the given CodePeer Messages.
+   --  If Need_Reload is True, it means the audit trail information about
+   --  messages may need to be reloaded.
 
    procedure Review_Messages
      (Self     : access Module_Id_Record'Class;
