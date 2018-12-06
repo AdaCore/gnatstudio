@@ -98,7 +98,8 @@ package body CodePeer.Module.Bridge is
       end case;
 
       Module.Action := None;
-      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, False);
+      Run_GPS_Codepeer_Bridge
+        (Module, Command_File_Name, Preserve_Output => False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Add_Audit_Record;
 
@@ -189,8 +190,7 @@ package body CodePeer.Module.Bridge is
 
       Object_Directory := CodePeer_Object_Directory (Project);
       Command_File_Name :=
-        Create_From_Dir
-          (Object_Directory, Audit_Request_File_Name);
+        Create_From_Dir (Object_Directory, Audit_Request_File_Name);
       Reply_File_Name :=
         Create_From_Dir (Object_Directory, Audit_Reply_File_Name);
 
@@ -212,7 +212,8 @@ package body CodePeer.Module.Bridge is
       Module.Action := Audit_Trail;
       Module.Inspection_File := Reply_File_Name;
       Module.Bridge_Messages := Messages;
-      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, False);
+      Run_GPS_Codepeer_Bridge
+        (Module, Command_File_Name, Preserve_Output => False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Load_Audit_Trail;
 
@@ -259,13 +260,17 @@ package body CodePeer.Module.Bridge is
    begin
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
+
+      --  Set Quiet parameter to True when Preserve_Output is False so
+      --  that the Messages window will not be raised unnecessarily.
+
       Commands.Builder.Launch_Target
         (Builder         => Builder,
          Target_Name     => "CodePeer Bridge",
          Mode_Name       => "codepeer",
          Force_File      => No_File,
          Extra_Args      => Extra_Args,
-         Quiet           => False,
+         Quiet           => not Preserve_Output,
          Synchronous     => False,
          Dialog          => Force_No_Dialog,
          Via_Menu        => False,
