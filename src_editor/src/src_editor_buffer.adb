@@ -1451,12 +1451,17 @@ package body Src_Editor_Buffer is
    ---------------------------
 
    procedure Register_Edit_Timeout
-     (Buffer : access Source_Buffer_Record'Class) is
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Timeout : Gint;
    begin
       Buffer.Blocks_Request_Timestamp := Clock;
 
-      if not Buffer.In_Destruction
-        and then not Buffer.Blocks_Timeout_Registered
+      if Buffer.In_Destruction then
+         return;
+      end if;
+
+      if not Buffer.Blocks_Timeout_Registered
         and then Buffer.Blocks_Timeout = Glib.Main.No_Source_Id
       then
          Buffer.Blocks_Timeout_Registered := True;
@@ -1464,6 +1469,15 @@ package body Src_Editor_Buffer is
            (Buffer_Recompute_Interval,
             Edition_Timeout'Access,
             Source_Buffer (Buffer));
+      end if;
+
+      Timeout := Gint (Integer'(Periodic_Save.Get_Pref));
+      if not Buffer.Timeout_Registered
+        and then Timeout > 0
+      then
+         Buffer.Timeout_Id := Buffer_Timeout.Timeout_Add
+           (Guint (Timeout) * 1000,  Automatic_Save'Access, Buffer.all'Access);
+         Buffer.Timeout_Registered := True;
       end if;
    end Register_Edit_Timeout;
 
@@ -1571,7 +1585,8 @@ package body Src_Editor_Buffer is
          Success);
       Buffer.Modified_Auto := False;
 
-      return True;
+      --  timeout will be restarted when the bufer is changed
+      return False;
    end Automatic_Save;
 
    ----------------------
@@ -3664,24 +3679,10 @@ package body Src_Editor_Buffer is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel, Pref);
-      B       : constant Source_Buffer := Self.Buffer;
-      Timeout : Gint;
-      Prev    : Boolean;
+      B    : constant Source_Buffer := Self.Buffer;
+      Prev : Boolean;
    begin
       --  Connect timeout, to handle automatic saving of buffer
-
-      if B.Timeout_Registered then
-         Glib.Main.Remove (B.Timeout_Id);
-         B.Timeout_Registered := False;
-      end if;
-
-      Timeout := Gint (Integer'(Periodic_Save.Get_Pref));
-
-      if Timeout > 0 then
-         B.Timeout_Id := Buffer_Timeout.Timeout_Add
-           (Guint (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
-         B.Timeout_Registered := True;
-      end if;
 
       Prev := B.Block_Highlighting;
       B.Block_Highlighting := Block_Highlighting.Get_Pref;
