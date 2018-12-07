@@ -1765,6 +1765,13 @@ procedure GPS.Main is
    begin
       Gps_Started_Hook.Run (GPS_Main.Kernel);
 
+      --  Load the custom after running the 'gps_started' to be sure that
+      --  actions that get registered while running this hook are available.
+      --  This also ensures that the user key shortcuts will override
+      --  everything else set so far.
+
+      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
+
       --  A number of actions are created in reaction to the hook above:
       --  if there is a menu described in menus.xml corresponding to such
       --  an action, this menu will remain greyed out until the first context
@@ -2670,10 +2677,6 @@ procedure GPS.Main is
          Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
          Load_Sources;
       end if;
-
-      --  Load the custom keys last, so that they override everything else set
-      --  so far.
-      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
 
       if not File_Opened
         and then not Has_User_Desktop (GPS_Main.Kernel)
