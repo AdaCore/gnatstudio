@@ -291,6 +291,8 @@ package body Src_Editor_Box.Tooltips is
 
       Area.Width  := Win_X - Area.X + Location.Width;
       Area.Height := Win_Y - Area.Y + Location.Height;
+      Area.X := Area.X + X - LX;
+      Area.Y := Area.Y + Y - LY;
 
       Tooltip.Set_Tip_Area (Area);
 
