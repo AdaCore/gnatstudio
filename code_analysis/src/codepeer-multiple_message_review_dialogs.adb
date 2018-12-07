@@ -244,7 +244,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 0, 1);
 
-         Self.New_Status := Create_Status_Combo_Box (Uncategorized);
+         Self.New_Status := Create_Status_Combo_Box ("Uncategorized");
          Table.Attach (Self.New_Status, 1, 2, 0, 1);
 
          --  "Approved by" entry
@@ -324,9 +324,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Iter       : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                      Self.New_Status.Get_Active_Iter;
       Status     : constant CodePeer.Audit_Status_Kinds :=
-                     CodePeer.Audit_Status_Kinds'Val
-                       (Model.Get_Int
-                          (Iter, Status_Model_Value_Column));
+                     Get_Status (Positive
+                       (Model.Get_Int (Iter, Status_Model_Value_Column)));
       Timestamp  : constant Unbounded_String :=
                      To_Unbounded_String
                        (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));

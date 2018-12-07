@@ -245,16 +245,14 @@ package body CodePeer.Module is
 
          if not Module.Filter_Criteria.Lineages (Message.Lifeage)
            or not Module.Filter_Criteria.Rankings (Message.Ranking)
-           or not Module.Filter_Criteria.Statuses (Message.Status)
+           or not Module.Filter_Criteria.Statuses (Message.Status.Id)
          then
             return False;
          end if;
 
          --  Category of the message should be selected
 
-         if Module.Filter_Criteria.Categories.Contains
-           (Message.Category)
-         then
+         if Module.Filter_Criteria.Categories.Contains (Message.Category) then
             return True;
          end if;
 
@@ -338,16 +336,16 @@ package body CodePeer.Module is
         (new GPS.Editors.Line_Information.Line_Information_Record'
            (Text               => Null_Unbounded_String,
             Tooltip_Text       => To_Unbounded_String
-              (if Message.Status = Uncategorized
+              (if Message.Status.Category = Uncategorized
                then "Manual review"
-               else To_Lower (Message.Status'Image) & ASCII.LF &
+               else Image (Message.Status) & ASCII.LF &
                  "Update manual review"),
             Image              => To_Unbounded_String
-              (case Message.Status is
+              (case Message.Status.Category is
                when Uncategorized => Grey_Analysis_Cst,
                when Pending       => Purple_Analysis_Cst,
                when Bug           => Red_Analysis_Cst,
-               when others        => Blue_Analysis_Cst),
+               when Not_A_Bug     => Blue_Analysis_Cst),
             Message            =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
             Associated_Command => Module.Review_Command));
@@ -388,7 +386,7 @@ package body CodePeer.Module is
          Category        => Category,
          Is_Check        => Is_Check,
          Ranking         => Ranking,
-         Status          => Uncategorized,
+         Status          => Uncategorized_Status,
          Status_Editable => True,
          Text            => To_Unbounded_String (Text),
          Audit_Loaded    => False,

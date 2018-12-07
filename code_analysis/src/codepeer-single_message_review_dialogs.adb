@@ -267,7 +267,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 2, 3);
 
-         Self.New_Status := Create_Status_Combo_Box (Message.Status);
+         Self.New_Status := Create_Status_Combo_Box
+           (To_String (Message.Status.Name));
          Table.Attach (Self.New_Status, 1, 2, 2, 3);
 
          --  "Approved by" entry
@@ -404,8 +405,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
       --  Add new record and change message probability
 
       New_Record.Status :=
-        CodePeer.Audit_Status_Kinds'Val
-          (Model.Get_Int (Iter, Status_Model_Value_Column));
+        Get_Status
+          (Positive (Model.Get_Int (Iter, Status_Model_Value_Column)));
       Self.Message.Status := New_Record.Status;
 
       Self.Comment_Buffer.Get_Start_Iter (Start_Iter);

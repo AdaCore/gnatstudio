@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 
@@ -186,7 +186,7 @@ package body CodePeer is
                & """>");
             Append (Result, "</span>");
 
-         elsif Self.Status in Not_A_Bug | False_Positive | Intentional then
+         elsif Self.Status.Category = Not_A_Bug then
             Insert
               (Result,
                1,
@@ -466,31 +466,9 @@ package body CodePeer is
       end case;
    end Image;
 
-   -----------
-   -- Image --
-   -----------
-
    function Image (Status : Audit_Status_Kinds) return String is
    begin
-      case Status is
-         when Uncategorized =>
-            return "Uncategorized";
-
-         when Pending =>
-            return "Pending";
-
-         when Not_A_Bug =>
-            return "Not a bug";
-
-         when False_Positive =>
-            return "False positive";
-
-         when Intentional =>
-            return "Intentional";
-
-         when Bug =>
-            return "Bug";
-      end case;
+      return To_String (Status.Name);
    end Image;
 
    ----------
@@ -526,4 +504,94 @@ package body CodePeer is
       return Left.Name < Right.Name;
    end Less;
 
+   ----------------------
+   -- Add_Audit_Status --
+   ----------------------
+
+   Next_Id : Positive := 1;
+
+   function Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds;
+   --  Convenience function version of Add_Audit_Status
+
+   procedure Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category) is
+   begin
+      Audit_Statuses.Append
+        ((To_Unbounded_String (Status), Category, Next_Id));
+      Next_Id := Next_Id + 1;
+   end Add_Audit_Status;
+
+   function Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds
+   is
+      Result : constant Audit_Status_Kinds :=
+        (To_Unbounded_String (Status), Category, Next_Id);
+   begin
+      Audit_Statuses.Append (Result);
+      Next_Id := Next_Id + 1;
+      return Result;
+   end Add_Audit_Status;
+
+   -----------------
+   -- Standardize --
+   -----------------
+
+   function Standardize (S : String) return String is
+      Result : String := To_Lower (S);
+   begin
+      for J in Result'Range loop
+         if Result (J) = ' ' then
+            Result (J) := '_';
+         end if;
+      end loop;
+
+      return Result;
+   end Standardize;
+
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   function Get_Status (Name : String) return Audit_Status_Kinds is
+   begin
+      for Status of Audit_Statuses loop
+         if Standardize (To_String (Status.Name)) = Standardize (Name) then
+            return Status;
+         end if;
+      end loop;
+
+      --  Special case "unclassified" for backward compatibility
+
+      if To_Lower (Name) = "unclassified" then
+         return Uncategorized_Status;
+      end if;
+
+      --  A new status, register and return it
+
+      return Add_Audit_Status (Name, Not_A_Bug);
+   end Get_Status;
+
+   function Get_Status (Id : Integer) return Audit_Status_Kinds is
+   begin
+      for Status of Audit_Statuses loop
+         if Status.Id = Id then
+            return Status;
+         end if;
+      end loop;
+
+      return Uncategorized_Status;
+   end Get_Status;
+
+begin
+   --  Register predefined statuses
+
+   Add_Audit_Status ("Uncategorized", Uncategorized);
+   Add_Audit_Status ("Pending", Pending);
+   Add_Audit_Status ("Not a bug", Not_A_Bug);
+   Add_Audit_Status ("False positive", Not_A_Bug);
+   Add_Audit_Status ("Intentional", Not_A_Bug);
+   Add_Audit_Status ("Bug", Bug);
 end CodePeer;

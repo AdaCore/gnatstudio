@@ -33,27 +33,24 @@ package body CodePeer.Message_Review_Dialogs.Utils is
    -----------------------------
 
    function Create_Status_Combo_Box
-     (Active : Audit_Status_Kinds)
-      return Gtk.Combo_Box.Gtk_Combo_Box
+     (Active_Status : String) return Gtk.Combo_Box.Gtk_Combo_Box
    is
       Result        : Gtk.Combo_Box.Gtk_Combo_Box;
       Store         : Gtk.Tree_Store.Gtk_Tree_Store;
       Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
 
-      procedure Set_Status (Name : String; Status : Audit_Status_Kinds);
+      procedure Set_Status (Status : Audit_Status_Kinds);
 
-      procedure Set_Status
-        (Name : String; Status : Audit_Status_Kinds) is
+      procedure Set_Status (Status : Audit_Status_Kinds) is
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-
          Set_All_And_Clear
            (Store, Iter,
-            (0 => As_String (Name),
-             1 => As_Int    (Audit_Status_Kinds'Pos (Status))));
+            (0 => As_String (Image (Status)),
+             1 => As_Int    (Glib.Gint (Status.Id))));
 
-         if Active = Status then
+         if Status.Name = Active_Status then
             Result.Set_Active_Iter (Iter);
          end if;
       end Set_Status;
@@ -71,12 +68,9 @@ package body CodePeer.Message_Review_Dialogs.Utils is
          "text",
          0);
 
-      Set_Status ("Uncategorized",  Uncategorized);
-      Set_Status ("Pending",        Pending);
-      Set_Status ("Not a bug",      Not_A_Bug);
-      Set_Status ("False positive", False_Positive);
-      Set_Status ("Intentional",    Intentional);
-      Set_Status ("Bug",            Bug);
+      for Status of Audit_Statuses loop
+         Set_Status (Status);
+      end loop;
 
       return Result;
    end Create_Status_Combo_Box;

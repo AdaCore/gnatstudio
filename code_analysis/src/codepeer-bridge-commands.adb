@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with XML_Utils;
 
@@ -88,7 +88,8 @@ package body CodePeer.Bridge.Commands is
          XML_Utils.Set_Attribute
            (Message_Node,
             "status",
-            Audit_Status_Kinds'Image (Message.Audit.First_Element.Status));
+            To_Upper
+              (Standardize (Image (Message.Audit.First_Element.Status))));
          XML_Utils.Set_Attribute
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
@@ -278,13 +279,11 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Set_Attribute
         (Inspection_Node,
          "export_annotations",
-         Ada.Characters.Handling.To_Lower
-           (Boolean'Image (Import_Annotations)));
+         To_Lower (Boolean'Image (Import_Annotations)));
       XML_Utils.Set_Attribute
         (Inspection_Node,
          "export_backtraces",
-         Ada.Characters.Handling.To_Lower
-           (Boolean'Image (Import_Backtraces)));
+         To_Lower (Boolean'Image (Import_Backtraces)));
       XML_Utils.Add_Child (Database_Node, Inspection_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
