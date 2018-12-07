@@ -23,7 +23,7 @@ with System;
 with Glib.Object;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;
-with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
@@ -33,34 +33,50 @@ with Gtk.Table;
 with Gtk.Text_Iter;
 with Gtk.Text_View;
 with Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
-with GNATCOLL.Xref;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
 with GPS.Main_Window;
 
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with String_Utils; use String_Utils;
+
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with CodePeer.Message_Review_Dialogs.Utils;
 use CodePeer.Message_Review_Dialogs.Utils;
 
 package body CodePeer.Multiple_Message_Review_Dialogs is
 
-   Messages_Model_Ranking_Column  : constant := 0;
-   Messages_Model_Status_Column   : constant := 1;
-   Messages_Model_Location_Column : constant := 2;
-   Messages_Model_Text_Column     : constant := 3;
+   Messages_Model_Id_Column       : constant := 0;
+   Messages_Model_Ranking_Column  : constant := 1;
+   Messages_Model_Status_Column   : constant := 2;
+   Messages_Model_Location_Column : constant := 3;
+   Messages_Model_Text_Column     : constant := 4;
 
    Messages_Model_Types : constant Glib.GType_Array :=
-     (Messages_Model_Ranking_Column  => Glib.GType_String,
+     (Messages_Model_Id_Column       => Glib.GType_String,
+      Messages_Model_Ranking_Column  => Glib.GType_String,
       Messages_Model_Status_Column   => Glib.GType_String,
       Messages_Model_Location_Column => Glib.GType_String,
       Messages_Model_Text_Column     => Glib.GType_String);
+
+   History_Model_Id_Column        : constant := 0;
+   History_Model_Timestamp_Column : constant := 1;
+   History_Model_Status_Column    : constant := 2;
+   History_Model_Approved_Column  : constant := 3;
+   History_Model_Comment_Column   : constant := 4;
+
+   History_Model_Types : constant Glib.GType_Array :=
+     (History_Model_Id_Column        => Glib.GType_String,
+      History_Model_Timestamp_Column => Glib.GType_String,
+      History_Model_Status_Column    => Glib.GType_String,
+      History_Model_Approved_Column  => Glib.GType_String,
+      History_Model_Comment_Column   => Glib.GType_String);
 
    package Message_Review_Callbacks is
      new Gtk.Handlers.User_Callback
@@ -133,9 +149,29 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Tree_View     : Gtk.Tree_View.Gtk_Tree_View;
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Dummy_W       : Gtk.Widget.Gtk_Widget;
-      pragma Warnings (Off, Dummy_W);
       Dummy_I       : Glib.Gint;
-      pragma Warnings (Off, Dummy_I);
+      Current_Id    : Integer := 0;
+
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor);
+      --  Fill GtkTreeStore of history view
+
+      -------------------
+      -- Process_Audit --
+      -------------------
+
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor) is
+         Audit : constant CodePeer.Audit_Record_Access :=
+           CodePeer.Audit_Vectors.Element (Position);
+      begin
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Set_All_And_Clear
+           (Store, Iter,
+            (0 => As_String (Image (Current_Id)),
+             1 => As_String (To_String (Audit.Timestamp)),
+             2 => As_String (Image (Audit.Status)),
+             3 => As_String (To_String (Audit.Approved_By)),
+             4 => As_String (To_String (Audit.Comment))));
+      end Process_Audit;
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -161,17 +197,26 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          end if;
       end loop;
 
-      --  Messages view and underling model
+      --  Messages view and underlying model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Scrolled.Set_Size_Request (Height => 100);
       Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
 
       Gtk.Tree_Store.Gtk_New (Store, Messages_Model_Types);
 
       Gtk.Tree_View.Gtk_New (Tree_View, Store);
       Scrolled.Add (Tree_View);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Id");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Messages_Model_Id_Column);
+      Dummy_I := Tree_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Ranking");
@@ -209,22 +254,20 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
       for Message of Self.Messages loop
          declare
-            Line_Image    : constant String :=
-              Integer'Image (Message.Get_Line);
-            Column_Image  : constant String :=
-              GNATCOLL.Xref.Visible_Column'Image (Message.Get_Column);
             Location_Text : constant String :=
               Message.Get_File.Display_Base_Name
               & ':'
-              & Line_Image (Line_Image'First + 1 .. Line_Image'Last)
+              & Image (Message.Get_Line)
               & ':'
-              & Column_Image (Column_Image'First + 1 .. Column_Image'Last);
+              & Image (Integer (Message.Get_Column));
 
          begin
             Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
             Set_All_And_Clear
               (Store, Iter,
-               (Messages_Model_Ranking_Column  =>
+               (Messages_Model_Id_Column  =>
+                  As_String (Image (Message.Id)),
+                Messages_Model_Ranking_Column  =>
                   As_String (Image (Message.Ranking)),
                 Messages_Model_Status_Column   =>
                   As_String (Image (Message.Status)),
@@ -235,7 +278,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          end;
       end loop;
 
-      Gtk.Table.Gtk_New (Table, 2, 2, False);
+      Gtk.Table.Gtk_New (Table, 2, 4, False);
       Self.Get_Content_Area.Pack_Start (Table, False, False);
 
       if not Self.Messages.Is_Empty then
@@ -264,13 +307,70 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-         Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+         Self.Get_Content_Area.Pack_Start (Scrolled, True, True);
 
          Gtk.Text_View.Gtk_New (Text_View);
          Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
          Scrolled.Add (Text_View);
 
          Self.Comment_Buffer := Text_View.Get_Buffer;
+
+         --  History view and underlying model
+
+         Gtk.Scrolled_Window.Gtk_New (Scrolled);
+         Scrolled.Set_Policy
+           (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+         Self.Get_Content_Area.Pack_End (Scrolled, True, True);
+
+         Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
+
+         for Message of Self.Messages loop
+            Current_Id := Message.Id;
+            Message.Audit.Iterate (Process_Audit'Access);
+         end loop;
+
+         Gtk.Tree_View.Gtk_New (Tree_View, Store);
+         Scrolled.Add (Tree_View);
+
+         Gtk.Tree_View_Column.Gtk_New (Column);
+         Column.Set_Title (-"Id");
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Column.Pack_Start (Text_Renderer, False);
+         Column.Add_Attribute (Text_Renderer, "text", History_Model_Id_Column);
+         Dummy_I := Tree_View.Append_Column (Column);
+
+         Gtk.Tree_View_Column.Gtk_New (Column);
+         Column.Set_Title (-"Timestamp");
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Column.Pack_Start (Text_Renderer, False);
+         Column.Add_Attribute
+           (Text_Renderer, "text", History_Model_Timestamp_Column);
+         Dummy_I := Tree_View.Append_Column (Column);
+
+         Gtk.Tree_View_Column.Gtk_New (Column);
+         Column.Set_Title (-"Status");
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Column.Pack_Start (Text_Renderer, False);
+         Column.Add_Attribute
+           (Text_Renderer, "text", History_Model_Status_Column);
+         Dummy_I := Tree_View.Append_Column (Column);
+
+         Gtk.Tree_View_Column.Gtk_New (Column);
+         Column.Set_Title (-"Approved by");
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Column.Pack_Start (Text_Renderer, False);
+         Column.Add_Attribute
+           (Text_Renderer, "text", History_Model_Approved_Column);
+         Dummy_I := Tree_View.Append_Column (Column);
+
+         Gtk.Tree_View_Column.Gtk_New (Column);
+         Column.Set_Title (-"Comment");
+         Column.Set_Resizable (True);
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Column.Pack_Start (Text_Renderer, False);
+         Column.Add_Attribute
+           (Text_Renderer, "text", History_Model_Comment_Column);
+         Dummy_I := Tree_View.Append_Column (Column);
 
          --  Dialog buttons
 
