@@ -1309,7 +1309,7 @@ itp_lib.print_debug("[gnat_server path]:" + gnat_server)
 
 # Checking for existence of gnat_server (compatibility with spark version < 18)
 is_itp = False
-if os.path.exists(gnat_server):
+if os.path.exists(gnat_server) or os.path.exists(gnat_server + ".exe"):
     is_itp = True
 
 
@@ -1401,7 +1401,7 @@ def on_prove_itp(context, edit_session=False):
 
     if not is_itp:
         # If itp is not detected do not run the tool
-        print_error("Interactive theorem proving requires version 18 of SPARK")
+        print_error("manual proof requires more recent version of SPARK")
         return
     # ITP part
     tree = itp_lib.Tree_with_process()
