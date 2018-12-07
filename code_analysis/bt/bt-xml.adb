@@ -44,4 +44,20 @@ package body BT.Xml is
       end if;
    end Xml_File_Name;
 
+   function Xml_BT_File_Name
+     (Output_Dir     : String;
+      File_Name      : String) return String
+   is
+   begin
+      return Xml_File_Name (Output_Dir, File_Name, For_Backtraces => True);
+   end Xml_BT_File_Name;
+
+   function Xml_Vals_File_Name
+     (Output_Dir     : String;
+      File_Name      : String) return String
+   is
+   begin
+      return Xml_File_Name (Output_Dir, File_Name, For_Backtraces => False);
+   end Xml_Vals_File_Name;
+
 end BT.Xml;
