@@ -2643,7 +2643,12 @@ package body Project_Properties is
          Set_Resizable (Col, True);
          Set_Title
            (Col,
-            Title => (if Editor.As_Directory then "Directory" else "File"));
+            Title =>
+              (case Attr.Typ is
+               when Attribute_As_Filename  => "File",
+               when Attribute_As_Unit      => "Unit",
+               when Attribute_As_Directory => "Directory",
+               when others => "Value"));
          Ignore := Append_Column (Editor.View, Col);
          Pack_Start (Col, Text, True);
          Add_Attribute (Col, Text, "text", 0);
@@ -3779,6 +3784,13 @@ package body Project_Properties is
             Attribute_Index => "",
             Path_Widget     => Path_Widget,
             Is_List         => Editable_Attr.Is_List);
+      end if;
+
+      --  Avoid getting an exception later on in case the editor could not be
+      --  created, rather than silently not displaying any properties at all.
+
+      if Editable_Attr.Editor = null then
+         return;
       end if;
 
       Attribute_Handler.Connect
