@@ -17,14 +17,19 @@
 
 with Ada.Calendar.Formatting;
 with Ada.Characters.Latin_1;
-with Ada.Strings.Fixed;
+
+with String_Utils; use String_Utils;
 
 with Gtk.Label;
 with Gtk.Notebook;
 
+with Pango.Layout; use Pango.Layout;
+
 with GPS.Kernel.Project;
 
 package body CodePeer.Reports is
+
+   use Ada.Strings.Unbounded;
 
    -------------
    -- Gtk_New --
@@ -52,7 +57,6 @@ package body CodePeer.Reports is
    is
       use type Ada.Calendar.Time;
       use Ada.Strings;
-      use Ada.Strings.Fixed;
 
       Inspections_Box     : Gtk.Box.Gtk_Hbox;
       Baseline_Inspection : Gtk.Label.Gtk_Label;
@@ -62,9 +66,9 @@ package body CodePeer.Reports is
       Project_Data        : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-               (Tree,
-                GPS.Kernel.Project.Get_Project
-                  (Kernel)).Analysis_Data.CodePeer_Data.all);
+            (Tree,
+             GPS.Kernel.Project.Get_Project
+               (Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
       Gtk.Box.Initialize_Vbox (Self);
@@ -78,34 +82,35 @@ package body CodePeer.Reports is
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
         ("Base run #"
-         & Trim (Natural'Image (Project_Data.Baseline.Inspection), Both)
+         & Image (Project_Data.Baseline.Inspection)
          & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
              (Project_Data.Baseline.Timestamp)));
       Baseline_Inspection.Set_Tooltip_Text
-        (Ada.Strings.Unbounded.To_String (Project_Data.Baseline.Main)
+        (To_String (Project_Data.Baseline.Main)
          & Ada.Characters.Latin_1.LF
-         & Ada.Strings.Unbounded.To_String (Project_Data.Baseline.Switches));
+         & To_String (Project_Data.Baseline.Switches));
       Inspections_Box.Pack_Start (Baseline_Inspection);
 
       Gtk.Label.Gtk_New (Inspection_Switches, "switches");
       Inspection_Switches.Set_Alignment (0.5, 1.0);
       Inspection_Switches.Set_Label
-        (Ada.Strings.Unbounded.To_String (Project_Data.Current.Switches));
-      Inspections_Box.Pack_Start (Inspection_Switches, True);
+        (To_String (Project_Data.Current.Switches));
+      Inspection_Switches.Set_Ellipsize (Ellipsize_End);
+      Inspections_Box.Pack_Start (Inspection_Switches, True, True);
 
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
         ("Current run #"
-         & Trim (Natural'Image (Project_Data.Current.Inspection), Both)
+         & Image (Project_Data.Current.Inspection)
          & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
              (Project_Data.Current.Timestamp)));
       Current_Inspection.Set_Tooltip_Text
-        (Ada.Strings.Unbounded.To_String (Project_Data.Current.Main)
+        (To_String (Project_Data.Current.Main)
          & Ada.Characters.Latin_1.LF
-         & Ada.Strings.Unbounded.To_String (Project_Data.Current.Switches));
+         & To_String (Project_Data.Current.Switches));
       Inspections_Box.Pack_End (Current_Inspection);
 
       --  Notebook
