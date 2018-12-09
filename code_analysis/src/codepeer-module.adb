@@ -20,6 +20,8 @@ with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
+with GNAT.Strings; use GNAT.Strings;
+
 with Input_Sources.File;
 
 with Glib.Object;                    use Glib.Object;
@@ -49,21 +51,24 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
 with BT.Xml.Reader;
+with Build_Command_Utils; use Build_Command_Utils;
+with Build_Configurations; use Build_Configurations;
 with CodePeer.Bridge.Annotations_Readers;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs;
-with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
+with CodePeer.Messages_Reports; use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
-with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
+with CodePeer.Shell_Commands; use CodePeer.Shell_Commands;
 with CodePeer.Single_Message_Review_Dialogs;
-with Commands;                       use Commands;
+with Commands; use Commands;
 with Code_Analysis_GUI;
+with String_Utils; use String_Utils;
 
 package body CodePeer.Module is
 
@@ -187,9 +192,10 @@ package body CodePeer.Module is
    Additional_Patterns_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
        GNATCOLL.Projects.Build ("CodePeer", "Additional_Patterns");
-   CWE_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "CWE");
+   CWE_Attribute : constant GNATCOLL.Projects.Attribute_Pkg_String :=
+     GNATCOLL.Projects.Build ("CodePeer", "CWE");
+   Switches_Attribute : constant GNATCOLL.Projects.Attribute_Pkg_List :=
+     GNATCOLL.Projects.Build ("CodePeer", "Switches");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -558,10 +564,23 @@ package body CodePeer.Module is
       Force        : Boolean;
       Build_Target : String)
    is
-      Project : constant Project_Type := Get_Project (Module.Kernel);
+      Project  : constant Project_Type := Get_Project (Module.Kernel);
+      Switches : String_List_Access;
+      Builder  : constant Builder_Context := Builder_Context
+        (Module.Kernel.Module (Builder_Context_Record'Tag));
+
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel_Handle (Module.Kernel));
       pragma Unreferenced (Ensure_Build_Mode);
+
    begin
+      if Project.Has_Attribute (Switches_Attribute) then
+         Switches := Project.Attribute_Value (Switches_Attribute);
+         Set_Project_Switches
+           (Get_Target_From_Name (Builder.Registry, Build_Target),
+            To_String (Switches.all));
+         Free (Switches);
+      end if;
+
       Module.Action := Load_UI;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),

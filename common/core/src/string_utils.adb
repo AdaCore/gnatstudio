@@ -1350,6 +1350,23 @@ package body String_Utils is
       List (List'Last - List2'Length + 1 .. List'Last) := List2;
    end Append;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String
+     (Args : GNAT.Strings.String_List) return String is
+   begin
+      if Args'Length = 0 then
+         return "";
+      elsif Args'Length = 1 then
+         return Args (Args'First).all;
+      else
+         return Args (Args'First).all & " " &
+                To_String (Args (Args'First + 1 .. Args'Last));
+      end if;
+   end To_String;
+
    ----------------
    -- Safe_Value --
    ----------------

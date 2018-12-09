@@ -324,6 +324,9 @@ package Build_Configurations is
 
       Parser_List       : String_List_Utils.String_List.Vector;
       --  Names of output parsers.
+
+      Project_Switches  : Unbounded_String;
+      --  Project switches relevant for this target, if any.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -333,9 +336,14 @@ package Build_Configurations is
    --  Return the Target_Type property.
 
    procedure Set_Target_Type
-     (Target : Target_Access;
+     (Target          : Target_Access;
       New_Target_Type : String);
    --  Set the Target_Type property.
+
+   procedure Set_Project_Switches
+     (Target           : Target_Access;
+      Project_Switches : String);
+   --  Set the Project_Switches property.
 
    ------------------------------------
    -- Accessing target-specific data --

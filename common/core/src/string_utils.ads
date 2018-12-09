@@ -305,6 +305,10 @@ package String_Utils is
    --  The strings in List2 are not duplicated.
    --  List might be null initially.
 
+   function To_String (Args : GNAT.Strings.String_List) return String;
+   --  Return a concatenation of all arguments contained in Args, separated
+   --  with a space character.
+
    ---------------------------
    -- C String manipulation --
    ---------------------------

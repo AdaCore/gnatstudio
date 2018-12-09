@@ -871,6 +871,17 @@ package body Build_Configurations.Gtkada is
             Set_Shadow_Type (Options_Frame, Shadow_None);
             Add (Options_Frame, Scrolled.Expanded_Entry);
             Pack_Start (Box, Options_Frame, False, False, 3);
+
+            if Length (Target.Properties.Project_Switches) /= 0 then
+               Gtk_New (Label, "Project switches: " &
+                        To_String (Target.Properties.Project_Switches));
+               Set_Line_Wrap (Label, True);
+               Set_Halign (Label, Align_Start);
+               Gtk_New (Options_Frame);
+               Set_Shadow_Type (Options_Frame, Shadow_None);
+               Add (Options_Frame, Label);
+               Pack_Start (Box, Options_Frame, False, False, 3);
+            end if;
          end if;
       end if;
 
