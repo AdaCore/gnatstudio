@@ -146,6 +146,7 @@ package body GNAThub.Module.Shell is
             Identifier : constant Unbounded_String := Data.Nth_Arg (3);
             Rule       : Rule_Access with Unreferenced;
          begin
+
             Rule := GNAThub_Module.Get_Or_Create_Rule
               (Tool       => Tool,
                Name       => Name,
@@ -170,11 +171,12 @@ package body GNAThub.Module.Shell is
             Rule       : constant Rule_Access :=
               GNAThub_Module.Get_Or_Create_Rule
                 (Tool       => Tool,
-                 Name       => Null_Unbounded_String,
+                 Name       => To_Unbounded_String ("unknown"),
                  Identifier => Rule_ID);
             Message    : constant GNAThub_Message_Access :=
               new GNAThub_Message;
          begin
+
             GNAThub.Messages.Initialize
               (Self          => Message,
                Container     => Container,

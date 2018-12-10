@@ -774,18 +774,18 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def to_importance(self, importance):
         """Transform the string *importance* into a GPS.Message.Importance"""
-        # Could be replace by a map
+        # Could be replaced by a map
         if importance == "annotation":
             return GPS.Message.Importance.ANNOTATION
         elif importance == "unspecified":
             return GPS.Message.Importance.UNSPECIFIED
-        elif importance == "informational":
+        elif importance in ["informational", "info"]:
             return GPS.Message.Importance.INFORMATIONAL
         elif importance == "low":
             return GPS.Message.Importance.LOW
-        elif importance == "medium":
+        elif importance in ["medium", "warning"]:
             return GPS.Message.Importance.MEDIUM
-        elif importance == "high":
+        elif importance in ["high", "error"]:
             return GPS.Message.Importance.HIGH
 
     def on_stdout(self, text, command):
