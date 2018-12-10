@@ -567,6 +567,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                                      r"(?P<text>.+)")
         self.extra_re = re.compile(r"(?P<text>.*)"
                                    r"\[#(?P<extra>[0-9]+)\]$")
+        self.nested_re = re.compile(r"line ([0-9]+)")
 
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
@@ -769,7 +770,16 @@ class GNATprove_Parser(tool_output.OutputParser):
         for text in list_secondaries[1:]:
             if text.startswith('(') or text.startswith('['):
                 text = text[1:-1]
-            msg.create_nested_message(file, line, column, text.strip())
+            line_match = re.findall(self.nested_re, text)
+            if line_match:
+                # Point to the first line number found
+                nested_line = int(line_match[0])
+                nested_column = 1
+            else:
+                nested_line = line
+                nested_column = column
+            msg.create_nested_message(
+                file, nested_line, nested_column, text.strip())
         return msg
 
     def to_importance(self, importance):
