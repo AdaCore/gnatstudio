@@ -160,11 +160,14 @@ package BT.Xml is
    --  Return the path to the directory where the backtrace and value_set
    --  xml files are stored.
 
-   function Xml_File_Name
+   function Xml_BT_File_Name
      (Output_Dir     : String;
-      File_Name      : String;
-      For_Backtraces : Boolean) return String;
-   --  Return the path to the xml file holding either the backtraces or
-   --  the value_sets.
+      File_Name      : String) return String;
+   --  Return the path to the xml file holding the backtraces.
+
+   function Xml_Vals_File_Name
+     (Output_Dir     : String;
+      File_Name      : String) return String;
+   --  Return the path to the xml file holding the value sets.
 
 end BT.Xml;

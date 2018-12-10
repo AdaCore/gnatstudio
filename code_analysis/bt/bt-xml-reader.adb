@@ -590,7 +590,7 @@ package body BT.Xml.Reader is
       use Input_Sources.File;
 
       File_To_Read : constant String :=
-        BT.Xml.Xml_File_Name (Output_Dir, File_Name, For_Backtraces => True);
+        BT.Xml.Xml_BT_File_Name (Output_Dir, File_Name);
 
       Input  : Input_Sources.File.File_Input;
       Reader : Backtrace_Reader;
@@ -634,7 +634,7 @@ package body BT.Xml.Reader is
       use Input_Sources.File;
 
       File_To_Read : constant String :=
-        BT.Xml.Xml_File_Name (Output_Dir, File_Name, For_Backtraces => False);
+        BT.Xml.Xml_Vals_File_Name (Output_Dir, File_Name);
 
       Input  : Input_Sources.File.File_Input;
       Reader : Vals_Reader;
@@ -797,10 +797,9 @@ package body BT.Xml.Reader is
 
                begin
                   if not Files_Read.Contains
-                    (BT.Xml.Xml_File_Name
+                    (BT.Xml.Xml_BT_File_Name
                        (To_String (Inspection_Output_Directory),
-                        Callee_File_Name,
-                        For_Backtraces => True))
+                        Callee_File_Name))
                   then
                      Read_File_Backtrace_Xml
                        (To_String (Inspection_Output_Directory),
@@ -1063,10 +1062,9 @@ package body BT.Xml.Reader is
       File_Exists : out Boolean) is
    begin
       if not Files_Read.Contains (
-         BT.Xml.Xml_File_Name (
+         BT.Xml.Xml_Vals_File_Name (
             To_String (Inspection_Output_Directory),
-            File_Name,
-            For_Backtraces => False))
+            File_Name))
       then
          Read_File_Vals_Xml
             (To_String (Inspection_Output_Directory),
