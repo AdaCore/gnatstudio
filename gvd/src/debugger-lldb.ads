@@ -110,7 +110,9 @@ package Debugger.LLDB is
    overriding function Value_Of
      (Debugger : access LLDB_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String;
 
    overriding function Print_Value_Cmd
      (Debugger : access LLDB_Debugger;

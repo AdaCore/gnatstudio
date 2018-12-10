@@ -542,7 +542,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding function Value_Of
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String
    is
       use Nodes_Vectors;
 
@@ -553,7 +555,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Language_Debugger_Access (Lang));
 
-      V       : Variable := Debugger.Create_Var (Entity);
+      V       : Variable;
       Matched : Match_Array (0 .. 1);
 
       function Fmt return String;
@@ -826,6 +828,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end Build_Result;
 
    begin
+      if From_API then
+         return Data_Evaluate (Entity);
+      end if;
+
+      V := Debugger.Create_Var (Entity);
+
       if V.Name = "" then
          return "";
       end if;

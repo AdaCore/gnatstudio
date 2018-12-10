@@ -854,9 +854,12 @@ package body Debugger.LLDB is
    overriding function Value_Of
      (Debugger : access LLDB_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format)
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
       return String
    is
+      pragma Unreferenced (From_API);
+
       S   : constant String := Debugger.Send_And_Get_Clean_Output
         ((if Is_Expression (Entity)
           then "expression "

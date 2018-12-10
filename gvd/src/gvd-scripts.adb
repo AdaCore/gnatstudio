@@ -279,7 +279,8 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          --   ??? Should return None if variable is undefined
          Data.Set_Return_Value
-           (Process.Debugger.Value_Of (Entity => Data.Nth_Arg (2)));
+           (Process.Debugger.Value_Of
+              (Entity => Data.Nth_Arg (2), From_API => True));
 
       elsif Command = "set_variable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

@@ -108,7 +108,9 @@ package Debugger.Base_Gdb.Gdb_MI is
    overriding function Value_Of
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String;
 
    overriding function Print_Value_Cmd
      (Debugger : access Gdb_MI_Debugger;

@@ -291,7 +291,9 @@ package Debugger is
    function Value_Of
      (Debugger : access Debugger_Root;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String is abstract;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"

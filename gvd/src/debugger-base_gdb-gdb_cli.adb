@@ -458,8 +458,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    overriding function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String
    is
+      pragma Unreferenced (From_API);
+
       S : constant String := Send_And_Get_Clean_Output
         (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
          Mode => Internal);
