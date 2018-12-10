@@ -73,6 +73,7 @@ with String_Utils; use String_Utils;
 package body CodePeer.Module is
 
    use type Code_Analysis.Code_Analysis_Tree;
+   use GNATCOLL.Projects;
 
    Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
    CodePeer_Subdir : constant Filesystem_String := "codepeer";
@@ -178,24 +179,25 @@ package body CodePeer.Module is
       return GPS.Kernel.Messages.Filter_Result;
 
    Output_Directory_Attribute   :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
-   Database_Directory_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
-   Server_URL_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Server_URL");
-   Message_Patterns_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Message_Patterns");
-   Additional_Patterns_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Additional_Patterns");
-   CWE_Attribute : constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build ("CodePeer", "CWE");
-   Switches_Attribute : constant GNATCOLL.Projects.Attribute_Pkg_List :=
-     GNATCOLL.Projects.Build ("CodePeer", "Switches");
+     constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
+   Database_Directory_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Database_Directory");
+   Server_URL_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Server_URL");
+   Message_Patterns_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Message_Patterns");
+   Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Additional_Patterns");
+   CWE_Attribute : constant Attribute_Pkg_String :=
+     Build ("CodePeer", "CWE");
+   Switches_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Switches");
+   Pending_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Pending_Status");
+   Not_A_Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Not_A_Bug_Status");
+   Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Bug_Status");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -1338,6 +1340,32 @@ package body CodePeer.Module is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
+
+      procedure Add_Statuses
+        (Attribute : Attribute_Pkg_List; Category : Audit_Status_Category);
+      --  Add the statuses defined by this Attribute, in the given Category.
+
+      ------------------
+      -- Add_Statuses --
+      ------------------
+
+      procedure Add_Statuses
+        (Attribute : Attribute_Pkg_List; Category : Audit_Status_Category)
+      is
+         Project  : constant Project_Type := Get_Project (Kernel);
+         Statuses : String_List_Access;
+      begin
+         if Project.Has_Attribute (Attribute) then
+            Statuses := Project.Attribute_Value (Attribute);
+
+            for Status of Statuses.all loop
+               Add_Audit_Status (Status.all, Category);
+            end loop;
+
+            Free (Statuses);
+         end if;
+      end Add_Statuses;
+
    begin
       Module.Listener.Set_Cleanup_Mode (True);
 
@@ -1360,6 +1388,22 @@ package body CodePeer.Module is
       BT.Xml.Reader.Clear;
 
       Module.Listener.Set_Cleanup_Mode (False);
+
+      --  Reset audit statuses and register predefined ones
+
+      Audit_Statuses.Clear;
+      Add_Audit_Status ("Uncategorized", Uncategorized);
+      Add_Audit_Status ("Pending", Pending);
+      Add_Audit_Status ("Not a bug", Not_A_Bug);
+      Add_Audit_Status ("False positive", Not_A_Bug);
+      Add_Audit_Status ("Intentional", Not_A_Bug);
+      Add_Audit_Status ("Bug", Bug);
+
+      --  Then register the project specific ones, if any
+
+      Add_Statuses (Pending_Status_Attribute, Pending);
+      Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
+      Add_Statuses (Bug_Status_Attribute, Bug);
    end Execute;
 
    ----------------------

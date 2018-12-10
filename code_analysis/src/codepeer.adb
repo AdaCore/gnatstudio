@@ -585,13 +585,4 @@ package body CodePeer is
       return Uncategorized_Status;
    end Get_Status;
 
-begin
-   --  Register predefined statuses
-
-   Add_Audit_Status ("Uncategorized", Uncategorized);
-   Add_Audit_Status ("Pending", Pending);
-   Add_Audit_Status ("Not a bug", Not_A_Bug);
-   Add_Audit_Status ("False positive", Not_A_Bug);
-   Add_Audit_Status ("Intentional", Not_A_Bug);
-   Add_Audit_Status ("Bug", Bug);
 end CodePeer;

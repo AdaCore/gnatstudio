@@ -315,6 +315,42 @@ excluded from CodePeer's analysis."
       <string type="file"/>
     </project_attribute>
 
+    <project_attribute
+      package="CodePeer"
+      name="Pending_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'pending' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'pending' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Not_A_Bug_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'not a bug' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'not a bug' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Bug_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'bug' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'bug' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
     <tool name="CodePeer" package="CodePeer" index="">
       <language>Ada</language>
       <switches columns="2" lines="3">
@@ -332,9 +368,8 @@ SCIL for another architecture" />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-        <check label="GNAT warnings" switch="-gnatwna" column="1"
-               tip="Enable GNAT warnings during SCIL generation" />
-        <check label="Generate CodePeer messages" switch="-gnateC" column="2"
+        <check label="Generate CodePeer messages" switch="-compiler-mode"
+               column="2"
                tip="Generate CodePeer messages in compiler format, without
 creating/updating the database" />
          <spin label="Analysis level" switch="-level" min="0" max="4"
@@ -387,9 +422,7 @@ SCIL for another architecture" />
          <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <check label="GNAT warnings" switch="-gnatwna" column="1"
-                tip="Enable GNAT warnings during SCIL generation" />
-         <check label="Generate CodePeer messages" switch="-gnateC" column="2"
+         <check label="Generate CodePeer messages" switch="-gnateC" column="1"
                 tip="Generate CodePeer messages in compiler format, without
 creating/updating the database" />
        </switches>
