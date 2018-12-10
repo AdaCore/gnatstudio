@@ -173,7 +173,7 @@ package body Serial_Ports_Views is
          View.Kernel,
          Handler             => Interpret_Command_Handler'Access,
          User_Data           => View.all'Address,
-         Prompt              => ">",
+         Prompt              => "",
          History_List        => Get_History (View.Kernel),
          Key                 => "serial_port_console",
          Wrap_Mode           => Wrap_Char,
@@ -215,7 +215,7 @@ package body Serial_Ports_Views is
    begin
       Gtk_New (View.Status);
 
-      View.Status.Set_Icon_Name ("gps-close-symbolic");
+      View.Status.Set_Label ("Open");
       View.Status.Set_Tooltip_Text ("Open/Close selected port");
       Widget_Callback.Object_Connect
         (View.Status, Gtk.Tool_Button.Signal_Clicked,
@@ -537,7 +537,7 @@ package body Serial_Ports_Views is
 
       View.Console.Clear;
       View.Console.Set_Sensitive (False);
-      View.Status.Set_Icon_Name ("gps-close-symbolic");
+      View.Status.Set_Label ("Open");
    end Close;
 
    ----------
@@ -562,7 +562,7 @@ package body Serial_Ports_Views is
       Set  (Current_Port, Data_Rate'Value (View.Rates.Get_Selected_Item),
             Block => False, Timeout => 0.01);
 
-      View.Status.Set_Icon_Name ("github-check-symbolic");
+      View.Status.Set_Label ("Close");
       View.Console.Set_Sensitive (True);
       View.Console.Insert
         ("Connected to " & Port & " with " & Rate & " rate.");
