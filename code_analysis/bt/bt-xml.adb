@@ -21,12 +21,15 @@ with Ada.Directories; use Ada.Directories;
 
 package body BT.Xml is
 
-   function Xml_Directory
-     (Output_Dir     : String) return String
-   is
-   begin
-      return Output_Dir & "/bts/";
-   end Xml_Directory;
+   function Xml_File_Name
+     (Output_Dir     : String;
+      File_Name      : String;
+      For_Backtraces : Boolean) return String;
+   --  Return the XML file name corresponding to the given parameters
+
+   -------------------
+   -- Xml_File_Name --
+   -------------------
 
    function Xml_File_Name
      (Output_Dir     : String;
@@ -43,5 +46,36 @@ package body BT.Xml is
          return Xml_File_Name & "_vals.xml";
       end if;
    end Xml_File_Name;
+
+   -------------------
+   -- Xml_Directory --
+   -------------------
+
+   function Xml_Directory (Output_Dir : String) return String is
+   begin
+      return Output_Dir & "/bts/";
+   end Xml_Directory;
+
+   ----------------------
+   -- Xml_BT_File_Name --
+   ----------------------
+
+   function Xml_BT_File_Name
+     (Output_Dir : String;
+      File_Name  : String) return String is
+   begin
+      return Xml_File_Name (Output_Dir, File_Name, For_Backtraces => True);
+   end Xml_BT_File_Name;
+
+   ------------------------
+   -- Xml_Vals_File_Name --
+   ------------------------
+
+   function Xml_Vals_File_Name
+     (Output_Dir : String;
+      File_Name  : String) return String is
+   begin
+      return Xml_File_Name (Output_Dir, File_Name, For_Backtraces => False);
+   end Xml_Vals_File_Name;
 
 end BT.Xml;
