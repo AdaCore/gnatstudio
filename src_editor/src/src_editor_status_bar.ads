@@ -72,7 +72,7 @@ private
       Modified_Status      : Gtk_Tool_Button;
       Toolbar              : Gtk_Toolbar;
 
-      Current_Line         : Editable_Line_Type;
+      Current_Line         : Editable_Line_Type := 1;
       --  Cache for the current line
 
    end record;
