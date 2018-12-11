@@ -1214,12 +1214,18 @@ vc_msg_dict = {
     'predicate check might fail': 'VC_PREDICATE_CHECK',
     'predicate check might fail on default value':
         'VC_PREDICATE_CHECK_ON_DEFAULT_VALUE',
+    'pointer dereference check might fail':
+        'VC_NULL_POINTER_DEREFERENCE',
+    'null exclusion check might fail': 'VC_NULL_EXCLUSION',
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
     'tag check might fail': 'VC_TAG_CHECK',
     'ceiling priority might not be in Interrupt_Priority':
         'VC_CEILING_INTERRUPT',
     'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
+    'invariant check might fail': 'VC_INVARIANT_CHECK',
+    'invariant check might fail on default value':
+        'VC_INVARIANT_CHECK_ON_DEFAULT_VALUE',
     'ceiling priority protocol might not be respected':
         'VC_CEILING_PRIORITY_PROTOCOL',
     'the task might terminate': 'VC_TASK_TERMINATION',
@@ -1243,6 +1249,7 @@ vc_msg_dict = {
     'loop variant might fail': 'VC_LOOP_VARIANT',
     'assertion might fail': 'VC_ASSERT',
     'exception might be raised': 'VC_RAISE',
+    'Inline_For_Proof annotation might be incorrect': 'VC_INLINE_CHECK',
 
     # VC_LSP_Kind - Liskov Substitution Principle
 
