@@ -12,7 +12,7 @@ from gps_utils.internal.utils import *
 def run_test():
     # Build the executable first
 
-    GPS.execute_action("Build Main Number 1");
+    GPS.execute_action("Build Main Number 1")
     yield wait_tasks()
 
     # Open the Python console
