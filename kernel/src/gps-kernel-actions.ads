@@ -136,7 +136,7 @@ package GPS.Kernel.Actions is
    --  Return the icon to use when this action is made visible to the user.
 
    function Is_Key_Shortcut_Active
-     (Self  : not null access Action_Record;
+     (Self  : access Action_Record;
       Child : access MDI_Child_Record'Class;
       Key   : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type)
