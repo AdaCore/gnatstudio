@@ -33,6 +33,8 @@ with Glib.Main;
 
 package body Default_Preferences.Assistants is
 
+   Preferences_Assistant_Title : constant String := "Customize GNAT Studio";
+
    type Preferences_Assistant_Record is new Gtk_Assistant_Record with record
       Running_Main_Loop : Boolean := True;
       --  True if the preferences assistant is running a nested main loop
@@ -78,6 +80,7 @@ package body Default_Preferences.Assistants is
         Preferences_Assistant (Self);
    begin
       Assistant.Set_Current_Page (Assistant.Get_Current_Page + 1);
+      Assistant.Set_Title (Preferences_Assistant_Title);
    end On_Next;
 
    -------------
@@ -89,6 +92,7 @@ package body Default_Preferences.Assistants is
         Preferences_Assistant (Self);
    begin
       Assistant.Set_Current_Page (Assistant.Get_Current_Page - 1);
+      Assistant.Set_Title (Preferences_Assistant_Title);
    end On_Back;
 
    ----------------
@@ -305,6 +309,10 @@ package body Default_Preferences.Assistants is
       --  Show the assistant and launch a main loop: we do not want to leave
       --  this procedure while the assistant is running.
       Assistant.Show_All;
+
+      --  Set the title once the assistant is shown: it seems to be the only
+      --  way to override the pages' titles
+      Assistant.Set_Title (Preferences_Assistant_Title);
 
       --  A trace allows automatically pressing Next on the assistant. This
       --  is used for testing purposes.
