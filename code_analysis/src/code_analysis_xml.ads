@@ -20,11 +20,11 @@
 --  of a Code_Analysis tree structure on the standard output.
 --  </description>
 
+with GPS.Core_Kernels;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with XML_Utils;         use XML_Utils;
 with Code_Analysis;     use Code_Analysis;
-with Projects;
 
 package Code_Analysis_XML is
 
@@ -37,9 +37,9 @@ package Code_Analysis_XML is
    --  can be restored by the next GPS session.
 
    procedure Parse_Full_XML
-     (Registry : Projects.Project_Registry_Access;
-      Tree     : Code_Analysis_Tree;
-      Child    : in out Node_Ptr);
+     (Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Tree   : Code_Analysis_Tree;
+      Child  : in out Node_Ptr);
    --  Starts a dominos calling to the xml parsing subprograms
    --  to fill the Code_Analysis tree structure.
 

@@ -48,6 +48,8 @@ with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Location_View;     use GPS.Location_View;
 with GUI_Utils;             use GUI_Utils;
+with Projects.Views;
+
 with CodePeer.Module;
 
 package body CodePeer.Messages_Reports is
@@ -319,7 +321,7 @@ package body CodePeer.Messages_Reports is
          if Subprogram /= null then
             GPS.Kernel.Contexts.Set_File_Information
               (Context => Context,
-               Project => Project.Name,
+               Project => Project.View.Get_Project_Type,
                Files   => (1 => File.Name));
             GPS.Kernel.Contexts.Set_Entity_Information
               (Context     => Context,
@@ -328,12 +330,13 @@ package body CodePeer.Messages_Reports is
          elsif File /= null then
             GPS.Kernel.Contexts.Set_File_Information
               (Context => Context,
-               Project => Project.Name,
+               Project => Project.View.Get_Project_Type,
                Files   => (1 => File.Name));
 
          elsif Project /= null then
             GPS.Kernel.Contexts.Set_File_Information
-              (Context => Context, Project => Project.Name);
+              (Context => Context,
+               Project => Project.View.Get_Project_Type);
          end if;
 
          Gtk.Tree_Model.Path_Free (Model_Path);
@@ -444,12 +447,12 @@ package body CodePeer.Messages_Reports is
       Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
-      Project      : constant GNATCOLL.Projects.Project_Type :=
-        GPS.Kernel.Project.Get_Project (Kernel);
-      Project_Data : CodePeer.Project_Data'Class renames
+      Project_View    : constant Projects.Views.Project_View_Reference :=
+        GPS.Kernel.Project.Get_Root_Project_View (Kernel);
+      Project_Data    : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-               (Tree, Project).Analysis_Data.CodePeer_Data.all);
+               (Tree, Project_View).Analysis_Data.CodePeer_Data.all);
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -678,8 +681,9 @@ package body CodePeer.Messages_Reports is
 
       --  CWEs categories
 
-      if Project.Has_Attribute (CWE_Attribute)
-        and then To_Lower (Project.Attribute_Value (CWE_Attribute)) = "true"
+      if Project_View.Has_Attribute (CWE_Attribute)
+        and then To_Lower
+          (Project_View.Get_Attribute_Value (CWE_Attribute)) = "true"
       then
          CodePeer.CWE_Criteria_Editors.Gtk_New
            (Editor         => Self.CWE_Editor,

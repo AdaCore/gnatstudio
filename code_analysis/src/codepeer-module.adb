@@ -49,6 +49,7 @@ with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
+with Projects.Views;
 
 with BT.Xml.Reader;
 with Build_Command_Utils; use Build_Command_Utils;
@@ -496,7 +497,7 @@ package body CodePeer.Module is
       Data : CodePeer.Project_Data'Class
         renames CodePeer.Project_Data'Class
           (Self.Tree.Element
-             (GPS.Kernel.Project.Get_Project
+             (GPS.Kernel.Project.Get_Root_Project_View
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
       File : GNATCOLL.VFS.Virtual_File;
 
@@ -613,9 +614,12 @@ package body CodePeer.Module is
       if GPS.Kernel.Contexts.Has_File_Information (Context) then
          declare
             Project_Node    : constant Code_Analysis.Project_Access :=
-              Code_Analysis.Get_Or_Create
-                (Factory.Module.Tree,
-                 GPS.Kernel.Contexts.Project_Information (Context));
+                                Code_Analysis.Get_Or_Create
+                                  (Factory.Module.Tree,
+                                   Projects.Views.Create_Project_View_Reference
+                                     (Get_Kernel (Context),
+                                      GPS.Kernel.Contexts.Project_Information
+                                        (Context)));
             File_Node       : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node,
@@ -1088,7 +1092,7 @@ package body CodePeer.Module is
          Open_File_Action_Hook.Run
            (Kernel  => Context.Module.Kernel,
             File    => File.Name,
-            Project => Project.Name,
+            Project => Project.View.Get_Project_Type,
             Line    => Subprogram.Line,
             Column  => Basic_Types.Visible_Column_Type (Subprogram.Column));
 
@@ -1096,7 +1100,7 @@ package body CodePeer.Module is
          Open_File_Action_Hook.Run
            (Kernel  => Context.Module.Kernel,
             File    => File.Name,
-            Project => Project.Name);
+            Project => Project.View.Get_Project_Type);
       end if;
 
       if File /= null
@@ -1538,7 +1542,7 @@ package body CodePeer.Module is
       Data : CodePeer.Project_Data'Class
         renames CodePeer.Project_Data'Class
           (Self.Tree.Element
-             (GPS.Kernel.Project.Get_Project
+             (GPS.Kernel.Project.Get_Root_Project_View
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin

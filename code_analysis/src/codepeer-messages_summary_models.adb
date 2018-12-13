@@ -257,12 +257,12 @@ package body CodePeer.Messages_Summary_Models is
             elsif Project_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
 
-               if Project_Node.Node.Name = No_Project then
+               if Project_Node.Node.View.Get_Project_Type = No_Project then
                   Glib.Values.Set_String (Value, -"RTL and removed");
 
                else
                   Glib.Values.Set_String
-                    (Value, Project_Node.Node.Name.Name);
+                    (Value, Project_Node.Node.View.Name);
                end if;
 
             else

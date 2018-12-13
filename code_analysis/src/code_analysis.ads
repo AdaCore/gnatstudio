@@ -28,11 +28,11 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
-with GNATCOLL.Projects;                     use GNATCOLL.Projects;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors.Line_Information;
 with Commands;
+with Projects.Views;
 
 package Code_Analysis is
 
@@ -179,7 +179,8 @@ package Code_Analysis is
 
    function Less (V1, V2 : String) return Boolean;
    function Less (V1, V2 : Virtual_File) return Boolean;
-   function Less (V1, V2 : Project_Type) return Boolean;
+   function Less
+     (V1, V2 : Projects.Views.Project_View_Reference) return Boolean;
    function Equ  (V1, V2 : Subprogram_Access) return Boolean;
    function Equ  (V1, V2 : File_Access) return Boolean;
    function Equ  (V1, V2 : Project_Access) return Boolean;
@@ -202,7 +203,7 @@ package Code_Analysis is
 
    package Project_Maps is
      new Ordered_Maps
-       (Key_Type        => Project_Type,
+       (Key_Type        => Projects.Views.Project_View_Reference,
         Element_Type    => Project_Access,
         "="             => Equ,
         "<"             => Less);
@@ -250,7 +251,7 @@ package Code_Analysis is
    end record;
 
    type Project is new Node with record
-      Name  : Project_Type;
+      View  : Projects.Views.Project_View_Reference;
       Files : File_Maps.Map;
    end record;
 
@@ -268,7 +269,8 @@ package Code_Analysis is
 
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;
-      Project_Name : Project_Type) return Project_Access;
+      Project_View : Standard.Projects.Views.Project_View_Reference)
+      return Project_Access;
    --  allow to get an access pointing on an identified tree node
    --  if the node doesn't exists, it is created
 

@@ -807,6 +807,19 @@ package body GPS.Kernel.Project is
       return Handle.Registry.Tree;
    end Get_Project_Tree;
 
+   ---------------------------
+   -- Get_Root_Project_View --
+   ---------------------------
+
+   function Get_Root_Project_View
+     (Self : not null access Kernel_Handle_Record'Class)
+      return Projects.Views.Project_View_Reference is
+   begin
+      return
+        Projects.Views.Create_Project_View_Reference
+          (Self, Self.Registry.Tree.Root_Project);
+   end Get_Root_Project_View;
+
    ------------------------
    -- Scenario_Variables --
    ------------------------

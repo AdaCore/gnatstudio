@@ -22,6 +22,7 @@ with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with CodePeer.Module;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
+with Projects.Views;
 
 with CodePeer.Bridge.Reader_Utilities;
 
@@ -312,7 +313,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Root_Project :=
         Code_Analysis.Get_Or_Create
           (Self.Projects,
-           GPS.Kernel.Project.Get_Project (Self.Kernel));
+           GPS.Kernel.Project.Get_Root_Project_View (Self.Kernel));
       Root_Project.Analysis_Data.CodePeer_Data := Self.Root_Inspection;
 
       Self.Object_Race :=
@@ -569,7 +570,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Project_Node :=
            Code_Analysis.Get_Or_Create
              (Self.Projects,
-              F_Info.Project);
+              Projects.Views.Create_Project_View_Reference
+                (Self.Kernel, F_Info.Project));
       end;
 
       Self.File_Node :=

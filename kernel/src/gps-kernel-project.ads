@@ -42,7 +42,7 @@
 --  the view changes.
 
 with GNAT.OS_Lib;
-with Projects;
+with Projects.Views;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
@@ -130,6 +130,9 @@ package GPS.Kernel.Project is
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class)
       return GNATCOLL.Projects.Project_Type;
+   function Get_Root_Project_View
+     (Self : not null access Kernel_Handle_Record'Class)
+      return Projects.Views.Project_View_Reference;
    --  Return the current project tree. This tree can be fully manipulated, and
    --  extended. However, you should reevaluate the view after you have
    --  finished your changes, so as to report the changes to all the other

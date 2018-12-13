@@ -22,6 +22,7 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with Projects.Views;
 
 package body CodePeer.Module.Editors is
 
@@ -101,21 +102,26 @@ package body CodePeer.Module.Editors is
    is
       pragma Unreferenced (Self);
       use type Code_Analysis.Code_Analysis_Tree;
+
       Project_Node : Code_Analysis.Project_Access;
-      Project      : Project_Type;
+      Project_View : Projects.Views.Project_View_Reference;
+
    begin
       declare
          F_Info : constant File_Info'Class :=
            File_Info'Class
              (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
+
       begin
-         Project := F_Info.Project;
+         Project_View :=
+           Projects.Views.Create_Project_View_Reference
+             (Kernel, F_Info.Project);
       end;
 
       if Module.Tree /= null
-        and then Module.Tree.Contains (Project)
+        and then Module.Tree.Contains (Project_View)
       then
-         Project_Node := Module.Tree.Element (Project);
+         Project_Node := Module.Tree.Element (Project_View);
 
          if Project_Node.Files.Contains (File) then
             Hide_Annotations (Module.all, Project_Node.Files.Element (File));
@@ -134,21 +140,26 @@ package body CodePeer.Module.Editors is
    is
       pragma Unreferenced (Self);
       use type Code_Analysis.Code_Analysis_Tree;
+
       Project_Node : Code_Analysis.Project_Access;
-      Project      : Project_Type;
+      Project_View : Projects.Views.Project_View_Reference;
+
    begin
       declare
          F_Info : constant File_Info'Class :=
            File_Info'Class
              (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
+
       begin
-         Project := F_Info.Project;
+         Project_View :=
+           Projects.Views.Create_Project_View_Reference
+             (Kernel, F_Info.Project);
       end;
 
       if Module.Tree /= null
-        and then Module.Tree.Contains (Project)
+        and then Module.Tree.Contains (Project_View)
       then
-         Project_Node := Module.Tree.Element (Project);
+         Project_Node := Module.Tree.Element (Project_View);
 
          if Project_Node.Files.Contains (File) then
             Show_Annotations (Module.all, Project_Node.Files.Element (File));

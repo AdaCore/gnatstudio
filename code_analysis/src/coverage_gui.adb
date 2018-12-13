@@ -62,7 +62,7 @@ package body Coverage_GUI is
       --  get every source files of the project
       --  check if they are associated with gcov info
       --  load their info
-      Src_Files := Prj_Node.Name.Source_Files (Recursive => False);
+      Src_Files := Prj_Node.View.Source_Files (Recursive => False);
 
       for J in Src_Files'First .. Src_Files'Last loop
          Src_File := Src_Files (J);
@@ -674,14 +674,14 @@ package body Coverage_GUI is
    --------------------
 
    function Have_Gcov_Info
-     (Projects : Code_Analysis_Tree;
-      Project  : Project_Type;
-      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+     (Projects     : Code_Analysis_Tree;
+      Project_View : Standard.Projects.Views.Project_View_Reference;
+      File         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
       return Boolean
    is
       Prj_Node : Code_Analysis.Project_Access;
    begin
-      Prj_Node := Get_Or_Create (Projects, Project);
+      Prj_Node := Get_Or_Create (Projects, Project_View);
 
       if File /= No_File then
          declare

@@ -224,9 +224,9 @@ package body CodePeer.Race_Summary_Models is
       Project_Data : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-               (Tree,
-                GPS.Kernel.Project.Get_Project
-                  (Kernel)).Analysis_Data.CodePeer_Data.all);
+             (Tree,
+              GPS.Kernel.Project.Get_Root_Project_View
+                (Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
       Gtkada.Abstract_List_Model.Initialize (Self);
