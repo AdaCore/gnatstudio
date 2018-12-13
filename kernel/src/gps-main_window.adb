@@ -1014,6 +1014,14 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access,
          Class         => MDI_Class,
          Static_Method => True);
+
+      Kernel.Scripts.Register_Command
+        ("get_main_window",
+         Params        => No_Params,
+         Handler       => Default_Command_Handler'Access,
+         Class         => MDI_Class,
+         Static_Method => True);
+
       Kernel.Scripts.Register_Command
         ("dialog",
          Minimum_Args  => 1,
@@ -1357,6 +1365,17 @@ package body GPS.Main_Window is
    begin
       if Command = "present_main_window" then
          Get_Main_Window (Kernel).Present;
+
+      elsif Command = "get_main_window" then
+         declare
+            Result : Class_Instance;
+         begin
+
+            Result := New_Instance (Get_Script (Data), Get_GUI_Class (Kernel));
+
+            Set_Data (Result, GObject (Get_Main_Window (Kernel)));
+            Set_Return_Value (Data, Result);
+         end;
 
       elsif Command = "getenv" then
          declare

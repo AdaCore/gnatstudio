@@ -6990,6 +6990,18 @@ class MDI(object):
 
         pass  # implemented in Ada
 
+    @staticmethod
+    def get_main_window():
+        """
+        Return the GPS main window. This is useful when you want to
+        create dialogs or windows that should always stay on top of
+        GPS.
+
+        :return: An instance of :class:`GPS.GUI`
+        """
+
+        pass  # implemented in Ada
+
 
 ###########################################################
 # MDIWindow

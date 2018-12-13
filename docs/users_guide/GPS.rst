@@ -1431,6 +1431,8 @@ Classes
 
    .. automethod:: GPS.MDI.get_by_child
 
+   .. automethod:: GPS.MDI.get_main_window
+
    .. automethod:: GPS.MDI.hide
 
    .. automethod:: GPS.MDI.information_popup
