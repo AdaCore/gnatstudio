@@ -1088,6 +1088,30 @@ class Custom_Build_Dialog(Dialog):
         return get_widgets_by_type(Gtk.Entry, self.dialog)[0]
 
 
+##############
+# CustomRun #
+##############
+
+class CustomRunDialog(Dialog):
+    def open_and_yield(self):
+        yield self._open_and_yield("/Build/Run/Custom...")
+        self.dialog = get_window_by_title("Custom...")
+
+    def get_command_line_entry(self):
+        return get_widgets_by_type(Gtk.Entry, self.dialog)[0]
+
+
+#########################
+# CloseWithConfirmation #
+#########################
+
+class CloseWithConfirmationDialog(Dialog):
+    def open_and_yield(self):
+        yield self._open_and_yield("/File/Close")
+        yield wait_idle()
+        self.dialog = get_window_by_title("Confirmation")
+
+
 ###################
 # Editor_Properties
 ###################
