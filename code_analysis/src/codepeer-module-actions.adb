@@ -15,17 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
+
+with Build_Command_Utils;  use Build_Command_Utils;
+with Build_Configurations; use Build_Configurations;
+with String_Utils;         use String_Utils;
+
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;
 
 package body CodePeer.Module.Actions is
+
+   Switches_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Switches");
 
    function Inspection_Info_File
      (Kernel : not null access Kernel_Handle_Record'Class)
@@ -109,13 +120,27 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Build_Target : constant String := "Run CodePeer File By File";
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project  : constant Project_Type  := Get_Project (Kernel);
+      Builder  : constant Builder_Context := Builder_Context
+        (Kernel.Module (Builder_Context_Record'Tag));
+      Switches : String_List_Access;
 
    begin
+      if Project.Has_Attribute (Switches_Attribute) then
+         Switches := Project.Attribute_Value (Switches_Attribute);
+         Set_Project_Switches
+           (Get_Target_From_Name (Builder.Registry, Build_Target),
+            To_String (Switches.all));
+         Free (Switches);
+      end if;
+
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, "Run CodePeer File By File"),
+           (Kernel, Build_Target),
          Force       => False,
          Synchronous => False);
       return Success;
@@ -183,8 +208,13 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_CSV_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project : constant Project_Type  := Get_Project (Kernel);
+      Build_Target : constant String := "Generate CSV Report";
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project  : constant Project_Type  := Get_Project (Kernel);
+      Builder  : constant Builder_Context := Builder_Context
+        (Kernel.Module (Builder_Context_Record'Tag));
+      Switches : String_List_Access;
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
@@ -203,13 +233,21 @@ package body CodePeer.Module.Actions is
          return Failure;
       end if;
 
+      if Project.Has_Attribute (Switches_Attribute) then
+         Switches := Project.Attribute_Value (Switches_Attribute);
+         Set_Project_Switches
+           (Get_Target_From_Name (Builder.Registry, Build_Target),
+            To_String (Switches.all));
+         Free (Switches);
+      end if;
+
       Self.Module.Inspection_File :=
         Object_Dir.Create_From_Dir ("codepeer.csv");
       Self.Module.Action := Load_CSV;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, "Generate CSV Report"),
+           (Kernel, Build_Target),
          Build_Mode  => "codepeer",
          Synchronous => False,
          Dir         => Object_Dir);
@@ -225,8 +263,13 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_HTML_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project : constant Project_Type  := Get_Project (Kernel);
+      Build_Target : constant String := "Generate HTML Report";
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project  : constant Project_Type  := Get_Project (Kernel);
+      Builder  : constant Builder_Context := Builder_Context
+        (Kernel.Module (Builder_Context_Record'Tag));
+      Switches : String_List_Access;
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
@@ -245,11 +288,19 @@ package body CodePeer.Module.Actions is
          return Failure;
       end if;
 
+      if Project.Has_Attribute (Switches_Attribute) then
+         Switches := Project.Attribute_Value (Switches_Attribute);
+         Set_Project_Switches
+           (Get_Target_From_Name (Builder.Registry, Build_Target),
+            To_String (Switches.all));
+         Free (Switches);
+      end if;
+
       Self.Module.Action := None;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, "Generate HTML Report"),
+           (Kernel, Build_Target),
          Build_Mode  => "codepeer",
          Synchronous => False,
          Dir         => Object_Dir);
