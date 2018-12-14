@@ -1,0 +1,6 @@
+project Hello is
+
+    for Languages use ("C");
+    for Source_Dirs use (".");
+
+end Hello;
