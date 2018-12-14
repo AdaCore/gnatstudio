@@ -91,10 +91,4 @@ package Vdiff2_Module.Callback is
    --  Hide difference ,recalculate the difference
    --  and show the new difference list
 
-   type Close_Difference_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Close_Difference_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Close all file for current diff
-
 end Vdiff2_Module.Callback;

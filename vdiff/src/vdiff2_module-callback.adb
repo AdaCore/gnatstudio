@@ -589,6 +589,7 @@ package body Vdiff2_Module.Callback is
       Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
+      To_Close      : Virtual_File := No_File;
    begin
       Create
         (Cmd,
@@ -603,22 +604,27 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Element (Node));
-
       --  Remove all virtual buffers created during diff operations
-      --  ??? This never closes the ref file in side-by-side diffs.
 
-      for J of Element (Node).Files loop
-         declare
-            Editor : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get (J, Open_View => False);
-         begin
-            if Editor.Current_View = Nil_Editor_View then
-               Editor.Close;
-            end if;
-         end;
+      for File of Element (Node).Files loop
+         if File /= No_File
+           and then Starts_With (File.Display_Base_Name, String (Ref_Prefix))
+         then
+            To_Close := File;
+         end if;
       end loop;
 
       VDiff2_Module (Vdiff_Module_ID).List_Diff.Delete (Node);
+
+      --  Closes the ref file in side-by-side diffs.
+      if To_Close /= No_File then
+         declare
+            Editor : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get (To_Close, Open_View => False);
+         begin
+            Editor.Close;
+         end;
+      end if;
 
       Unref (Command_Access (Cmd));
       return Commands.Success;
@@ -685,38 +691,6 @@ package body Vdiff2_Module.Callback is
       end loop;
 
       Unref (Command_Access (Cmd));
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Close_Difference_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Node          : Diff_Head_List.Std_Vectors.Cursor;
-      Selected_File : Virtual_File;
-      Cmd           : Diff_Command_Access;
-
-   begin
-      Create
-        (Cmd,
-         Get_Kernel (Vdiff_Module_ID.all),
-         VDiff2_Module (Vdiff_Module_ID).List_Diff,
-         Close_Difference'Access);
-
-      Selected_File := Get_Ref_Filename (File_Information (Context.Context));
-
-      Node := Get_Diff_Node
-        (Selected_File,
-         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-
-      Unchecked_Execute (Cmd, Diff_Head_List.Std_Vectors.Element (Node));
-      Unref (Command_Access (Cmd));
-
       return Commands.Success;
    end Execute;
 
