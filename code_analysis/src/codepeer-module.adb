@@ -1341,6 +1341,14 @@ package body CodePeer.Module is
    begin
       Module.Listener.Set_Cleanup_Mode (True);
 
+      --  Remove CodePeer report window if still around to avoid keeping
+      --  reference to an old project data structure.
+
+      if Module.Report_Subwindow /= null then
+         Module.Report_Subwindow.Destroy;
+         Module.Report_Subwindow := null;
+      end if;
+
       --  Remove all messages of all categories starting from
       --  Codepeer_Category_Prefix to be sure that all possible categories are
       --  removed.
