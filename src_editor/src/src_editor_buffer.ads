@@ -24,6 +24,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
@@ -52,7 +53,6 @@ with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Messages.References;  use GPS.Kernel.Messages.References;
 with Language.Tree;
 with Src_Highlighting;
-with Ada.Strings.Unbounded;
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with Gtk.Clipboard;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
@@ -423,11 +423,10 @@ package Src_Editor_Buffer is
       Start_Line   : Editable_Line_Type;
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type := 0;
-      End_Column   : Character_Offset_Type := 0) return String;
+      End_Column   : Character_Offset_Type := 0) return Unbounded_String;
    --  Return (as UTF-8) the text in range [Start, end).
    --  If End_Line is 0, get the entire range between start position and end
-   --  of text.
-   --  ??? Should return UTF-8 string ?
+   --  of text. Note that the contents returned in Unbounded_String are UTF-8.
 
    procedure Forward_Position
      (Buffer       : access Source_Buffer_Record;

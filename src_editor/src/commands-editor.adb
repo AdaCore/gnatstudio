@@ -15,9 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
-with GNAT.Strings;                    use GNAT.Strings;
-with Gtk.Text_Buffer;                 use Gtk.Text_Buffer;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNAT.Strings;          use GNAT.Strings;
+with Gtk.Text_Buffer;       use Gtk.Text_Buffer;
 with Interfaces.C;
 
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
@@ -601,10 +602,9 @@ package body Commands.Editor is
       Item.End_Line_Before := End_Line;
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
-
       Item.Text_Before := new String'
-        (Get_Text (Buffer, Start_Line, Start_Column, End_Line, End_Column));
-
+        (To_String (Get_Text
+          (Buffer, Start_Line, Start_Column, End_Line, End_Column)));
       Item.Text_After := new String'(Text);
       Item.Move_Cursor := Move_Cursor;
    end Create;

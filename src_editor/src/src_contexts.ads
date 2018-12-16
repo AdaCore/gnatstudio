@@ -60,7 +60,8 @@ package Src_Contexts is
    --  Whole scope means never use any context (i.e. files are whole scanned).
    --  This scope mostly applies to source files.
    --  Warning: do not change the contents or order of this type without
-   --  synchronizing with vsearch.glade and Scan_Buffer.
+   --  synchronizing with Initialize_Scope_Combo and Scan_Buffer in the body
+   --  of this package.
 
    type Source_Search_Occurrence_Record is
      new Search_Occurrence_Record with private;

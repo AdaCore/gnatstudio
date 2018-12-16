@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Containers.Ordered_Sets; use Ada.Containers;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -357,11 +358,10 @@ package body Src_Editor_Box is
 
          File_Up_To_Date := File_Up_To_Date
            and then Equal
-             (Get_Text
-                  (Source.Source_Buffer,
-                   Line, Char_Column,
-                   Line,
-                   Char_Column + Character_Offset_Type (Length)),
+             (To_String (Get_Text
+                (Source.Source_Buffer,
+                 Line, Char_Column,
+                 Line, Char_Column + Character_Offset_Type (Length))),
               Entity_Name,
               Case_Sensitive => Is_Case_Sensitive);
 

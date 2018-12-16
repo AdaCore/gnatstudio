@@ -2133,11 +2133,13 @@ package body Src_Editor_Module.Editors is
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
          Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
          Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
+
          if From = Nil_Editor_Location then
             Begin_Line := 1;
          end if;
-         return Get_Text
-           (This.Contents.Buffer, Begin_Line, Begin_Col, End_Line, End_Col);
+
+         return To_String (Get_Text
+           (This.Contents.Buffer, Begin_Line, Begin_Col, End_Line, End_Col));
       else
          return "";
       end if;

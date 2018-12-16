@@ -99,8 +99,6 @@ with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Gtk.Window;                          use Gtk.Window;
 
-use Ada.Strings.Unbounded;
-
 package body Src_Editor_Buffer is
 
    type Gtk_TB_Access is access all Gtk_Text_Buffer_Record;
@@ -8060,7 +8058,7 @@ package body Src_Editor_Buffer is
       Start_Line   : Editable_Line_Type;
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type := 0;
-      End_Column   : Character_Offset_Type := 0) return String
+      End_Column   : Character_Offset_Type := 0) return Unbounded_String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Start_End, End_Begin : Gtk_Text_Iter;
@@ -8120,18 +8118,45 @@ package body Src_Editor_Buffer is
          Set_Line_Offset (End_Begin, 0);
 
          declare
-            A : GNAT.Strings.String_Access :=
+            A   : GNAT.Strings.String_Access :=
               Get_Buffer_Lines
                 (Buffer, Start_Line + 1, Real_End_Line - 1);
-            S : constant String :=
-              Get_Text (Buffer, Start_Iter, Start_End) & ASCII.LF
-                & A.all & Get_Text (Buffer, End_Begin, End_Iter);
+            S   : Unbounded_String;
+
+            Buf_Start : constant Gtkada.Types.Chars_Ptr :=
+              Get_Text (Buffer, Start_Iter, Start_End);
+            Buf_End   : constant Gtkada.Types.Chars_Ptr :=
+              Get_Text (Buffer, End_Begin, End_Iter);
+            US_Start  : constant Unchecked_String_Access :=
+              To_Unchecked_String (Buf_Start);
+            US_End    : constant Unchecked_String_Access :=
+              To_Unchecked_String (Buf_End);
+
          begin
+            Set_Unbounded_String
+              (S, US_Start (1 .. Natural (Strlen (Buf_Start))));
+            Append (S, ASCII.LF);
+            Append (S, A.all);
+            Append (S, US_End (1 .. Natural (Strlen (Buf_End))));
             GNAT.Strings.Free (A);
+            g_free (Buf_Start);
+            g_free (Buf_End);
             return S;
          end;
       else
-         return Get_Text (Buffer, Start_Iter, End_Iter, True);
+         declare
+            Buf    : constant Gtkada.Types.Chars_Ptr :=
+              Get_Text (Buffer, Start_Iter, End_Iter, True);
+            US_Buf : constant Unchecked_String_Access :=
+              To_Unchecked_String (Buf);
+            Result : Unbounded_String;
+
+         begin
+            Set_Unbounded_String
+              (Result, US_Buf (1 .. Natural (Strlen (Buf))));
+            g_free (Buf);
+            return Result;
+         end;
       end if;
    end Get_Text;
 
