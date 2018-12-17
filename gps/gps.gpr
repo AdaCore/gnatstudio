@@ -19,6 +19,7 @@ with "../help/help";
 with "../kernel/kernel";
 with "../keymanager/keymanager";
 with "../lal/lal";
+with "../lsp_client/gps_lsp_client";
 with "../memory_usage/memory_usage";
 with "../navigation/navigation";
 with "../prj_editor/prj_editor";

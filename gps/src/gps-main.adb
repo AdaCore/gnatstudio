@@ -172,6 +172,7 @@ with LAL.Module;
 with Language_Handlers.Assistants;
 with Learn.Views;
 with Log_File_Views;
+with GPS.LSP_Module;
 with Memory_Usage_Views.Module;
 with Navigation_Module;
 with Outline_View;
@@ -2492,6 +2493,7 @@ procedure GPS.Main is
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
+      GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
 
       if Server_Mode then
          Socket_Module.Register_Module (GPS_Main.Kernel, Port_Number);
