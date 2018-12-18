@@ -56,6 +56,26 @@ package body Projects.Views is
    end Get_Attribute_Value;
 
    ----------------------
+   -- Get_Project_Path --
+   ----------------------
+
+   function Get_Project_Path
+     (Self : Project_View_Reference'Class;
+      Host : String := GNATCOLL.VFS.Local_Host)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Aux : constant GNATCOLL.Projects.Project_Type := Self.Get_Project_Type;
+
+   begin
+      if Aux /= No_Project then
+         return Aux.Project_Path (Host);
+
+      else
+         return GNATCOLL.VFS.No_File;
+      end if;
+   end Get_Project_Path;
+
+   ----------------------
    -- Get_Project_Type --
    ----------------------
 

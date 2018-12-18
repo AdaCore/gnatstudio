@@ -96,6 +96,13 @@ package Projects.Views is
    --  itself, then the attribute is looked up in the project extended by
    --  Project (if any).
 
+   function Get_Project_Path
+     (Self : Project_View_Reference'Class;
+      Host : String := GNATCOLL.VFS.Local_Host)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return the path to the project file
+   --  If Host is given, the path will be the one on the specified host.
+
 private
 
    type Project_View_Reference is tagged record

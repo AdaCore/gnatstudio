@@ -350,7 +350,8 @@ package body Src_Editor_Module.Markers is
    begin
       if Source = null then
          Source := Get_Source_Box_From_MDI
-           (Find_Editor (Kernel, Marker.File, Marker.Project));
+           (Find_Editor
+              (Kernel, Marker.File, Marker.Project_View.Get_Project_Type));
       end if;
 
       if Source /= null then
@@ -449,21 +450,22 @@ package body Src_Editor_Module.Markers is
       Project : GNATCOLL.Projects.Project_Type;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
-      Length  : Natural := 0) return Location_Marker
-   is
+      Length  : Natural := 0) return Location_Marker is
    begin
       return M : Location_Marker do
          M.Set (File_Marker_Data'
-                  (File     => File,
-                   Project  => Project,
-                   Line     => Line,
-                   Column   => Column,
-                   Length   => Length,
-                   Buffer   => null,
-                   Mark     => null,
-                   Cid      => <>,
-                   Instances => <>,
-                   Kernel   => Kernel_Handle (Kernel)));
+                  (File         => File,
+                   Project_View =>
+                     Projects.Views.Create_Project_View_Reference
+                       (Kernel, Project),
+                   Line         => Line,
+                   Column       => Column,
+                   Length       => Length,
+                   Buffer       => null,
+                   Mark         => null,
+                   Cid          => <>,
+                   Instances    => <>,
+                   Kernel       => Kernel_Handle (Kernel)));
          Create_Text_Mark (Kernel, File_Marker (M.Unchecked_Get), Box => null);
          Register_Persistent_Marker (M);
       end return;
@@ -509,16 +511,18 @@ package body Src_Editor_Module.Markers is
 
       return M : Location_Marker do
          M.Set (File_Marker_Data'
-                  (File     => File,
-                   Project  => Project,
-                   Line     => 0,
-                   Column   => 1,
-                   Length   => 0,
-                   Buffer   => Get_Buffer (Mark),
-                   Mark     => Mark,
-                   Cid      => <>,
-                   Instances => <>,
-                   Kernel   => Kernel_Handle (Kernel)));
+                  (File         => File,
+                   Project_View =>
+                     Projects.Views.Create_Project_View_Reference
+                       (Kernel, Project),
+                   Line         => 0,
+                   Column       => 1,
+                   Length       => 0,
+                   Buffer       => Get_Buffer (Mark),
+                   Mark         => Mark,
+                   Cid          => <>,
+                   Instances    => <>,
+                   Kernel       => Kernel_Handle (Kernel)));
 
          D := File_Marker (M.Unchecked_Get);
          D.Link_Mark;
@@ -603,7 +607,7 @@ package body Src_Editor_Module.Markers is
      (Marker : not null access File_Marker_Data) return Boolean
    is
       Child : constant MDI_Child := Find_Editor
-        (Marker.Kernel, Marker.File, Marker.Project);
+        (Marker.Kernel, Marker.File, Marker.Project_View.Get_Project_Type);
       Box   : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Child /= null
@@ -618,7 +622,7 @@ package body Src_Editor_Module.Markers is
          Open_File_Action_Hook.Run
            (Marker.Kernel,
             File      => Marker.File,
-            Project   => Marker.Project,
+            Project   => Marker.Project_View.Get_Project_Type,
             Line      => Integer (Marker.Line),
             Column    => Marker.Column,
             Column_End => Marker.Column + Visible_Column_Type (Marker.Length),
@@ -671,7 +675,10 @@ package body Src_Editor_Module.Markers is
       function Get_Subprogram_Name return String is
          Box : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI
-                   (Find_Editor (Marker.Kernel, Marker.File, Marker.Project));
+                   (Find_Editor
+                      (Marker.Kernel,
+                       Marker.File,
+                       Marker.Project_View.Get_Project_Type));
       begin
          if Box /= null then
             return Get_Subprogram_Name (Box, Marker.Line);
@@ -709,7 +716,7 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
       Add_File_Child (Node, "file", Marker.File);
-      Add_File_Child (Node, "project", Marker.Project.Project_Path);
+      Add_File_Child (Node, "project", Marker.Project_View.Get_Project_Path);
       Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
       Set_Attribute (Node, "column", Visible_Column_Type'Image
                      (Marker.Column));
