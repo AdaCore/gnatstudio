@@ -1334,7 +1334,7 @@ def limit_line_option(msg, line, col, vc_kind):
                            + ":" + vc_kind
 
 
-def on_prove_check(context):
+def on_prove_check(context, force=False, opt_args=[]):
     msg = context._loc_msg
     text_msg = get_comp_text(msg)
     msg_line = map_msg[text_msg, 'check_line']
@@ -1344,8 +1344,9 @@ def on_prove_check(context):
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.BuildTarget(prove_check()).execute(extra_args=args,
-                                           synchronous=False)
+    GPS.BuildTarget(prove_check()).execute(extra_args=args+opt_args,
+                                           synchronous=False,
+                                           force=force)
 
 
 # Check for GNAT toolchain: gnatprove
