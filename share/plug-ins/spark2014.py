@@ -500,6 +500,18 @@ reg2 = re.compile(r"in call inlined at ([\w\.-]+):[0-9]+")
 reg3 = re.compile(r"in inherited contract at ([\w\.-]+):[0-9]+")
 
 
+def match_regexp_inst(text):
+    """ Find the first reference to instantiation, inherited or inlined filename
+    in the text. Return the matched datastructure to allow new searches in the
+    same text."""
+    m = re.search(reg1, text)
+    if not m:
+        m = re.search(reg2, text)
+    if not m:
+        m = re.search(reg3, text)
+    return m
+
+
 def get_compunit_for_message(text, file):
     """ Return the compilation unit for a given text and file, so that extra
     information for the message will be found in the file
@@ -507,14 +519,19 @@ def get_compunit_for_message(text, file):
     inherited contracts, this corresponds to the last unit in the
     chain of locations. Otherwise, this is simply the compilation
     unit where the message is reported."""
-    m = re.search(reg1, text)
-    if not m:
-        m = re.search(reg2, text)
-    if not m:
-        m = re.search(reg3, text)
-    if m:
-        fname = m.group(1)
-    else:
+    b = True
+    fname = ""
+    while b:
+        try:
+            m = match_regexp_inst(text)
+            if m:
+                fname = m.group(1)
+                text = text[m.end():]
+            else:
+                b = False
+        except Exception:
+            b = False
+    if fname == "":
         fname = os.path.basename(file.path)
     return os.path.splitext(fname)[0]
 
