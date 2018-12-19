@@ -133,15 +133,4 @@ package Basic_Types is
    type String_Index_Type is new Natural;
    --  String_Index_Type indicates a index in a string, in bytes, starts at 1.
 
-   -----------------
-   -- File caches --
-   -----------------
-
-   type Packed_Boolean_Array is array (Positive range <>) of Boolean;
-   pragma Pack (Packed_Boolean_Array);
-   type Packed_Boolean_Access is access Packed_Boolean_Array;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Packed_Boolean_Array, Packed_Boolean_Access);
-
 end Basic_Types;
