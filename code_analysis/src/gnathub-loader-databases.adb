@@ -30,6 +30,7 @@ with GPS.Kernel.Project;              use GPS.Kernel.Project;
 with GNAThub.Metrics;                 use GNAThub.Metrics;
 with Database.Orm;
 with Language.Abstract_Language_Tree;
+with Projects.Views;
 
 package body GNAThub.Loader.Databases is
 
@@ -317,14 +318,16 @@ package body GNAThub.Loader.Databases is
          end if;
 
          Metric.Initialize
-           (Severity => Severity,
-            Rule     => Rule,
-            Value    =>
+           (Severity     => Severity,
+            Rule         => Rule,
+            Value        =>
               Float'Value
                 (Database.Orm.Data (M)),
-            Project  => Project,
-            File     => File,
-            Entity   => Entity_D);
+            Project_View =>
+              Projects.Views.Create_Project_View_Reference
+                (Self.Module.Get_Kernel, Project),
+            File         => File,
+            Entity       => Entity_D);
       end Load_Metric;
 
    begin

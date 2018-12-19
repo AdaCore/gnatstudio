@@ -47,18 +47,18 @@ package body GNAThub.Metrics is
    ----------------
 
    procedure Initialize
-     (Self     : not null access Metric_Record'Class;
-      Severity : Severity_Access;
-      Rule     : not null Rule_Access;
-      Value    : Float;
-      Project  : GNATCOLL.Projects.Project_Type;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Entity   : Entity_Data) is
+     (Self         : not null access Metric_Record'Class;
+      Severity     : Severity_Access;
+      Rule         : not null Rule_Access;
+      Value        : Float;
+      Project_View : Projects.Views.Project_View_Reference;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Entity       : Entity_Data) is
    begin
       Self.Severity := Severity;
       Self.Rule := Rule;
       Self.Value := Value;
-      Self.Project := Project;
+      Self.Project_View := Project_View;
       Self.File := File;
       Self.Entity := Entity;
 
@@ -102,7 +102,7 @@ package body GNAThub.Metrics is
      (Self : not null access Metric_Record)
       return GNATCOLL.Projects.Project_Type
    is
-      (Self.Project);
+      (Self.Project_View.Get_Project_Type);
 
    --------------
    -- Get_File --
