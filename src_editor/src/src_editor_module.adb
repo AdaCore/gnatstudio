@@ -1428,7 +1428,8 @@ package body Src_Editor_Module is
       Child2  : MDI_Child;
 
       procedure Jump_To_Location_And_Give_Focus
-         (Child : not null access MDI_Child_Record'Class);
+        (Child     : not null access MDI_Child_Record'Class;
+         Is_Opened : Boolean);
       --  Jump to the location given in parameter to Open_File
 
       -------------------------------------
@@ -1436,7 +1437,8 @@ package body Src_Editor_Module is
       -------------------------------------
 
       procedure Jump_To_Location_And_Give_Focus
-         (Child : not null access MDI_Child_Record'Class)
+        (Child     : not null access MDI_Child_Record'Class;
+         Is_Opened : Boolean)
       is
          Real_Column, Real_Column_End : Character_Offset_Type;
       begin
@@ -1473,7 +1475,10 @@ package body Src_Editor_Module is
             end if;
 
          else
-            Set_Cursor_Location (Editor, 1, 1, Force_Focus => False);
+            if not Is_Opened then
+               --  Place the cursor if we are opening the file
+               Set_Cursor_Location (Editor, 1, 1, Force_Focus => False);
+            end if;
             if Focus then
                --  Gives the focus, thus child_selected, thus context_changed).
                Raise_Child (Child, Focus);
@@ -1513,7 +1518,7 @@ package body Src_Editor_Module is
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
             Freeze_Context (Get_Buffer (Editor));
-            Jump_To_Location_And_Give_Focus (Child2);
+            Jump_To_Location_And_Give_Focus (Child2, Is_Opened => True);
             Thaw_Context (Get_Buffer (Editor));
 
             return Editor;
@@ -1684,7 +1689,7 @@ package body Src_Editor_Module is
          --  Change location only at the end, since other calls above might
          --  reset it.
 
-         Jump_To_Location_And_Give_Focus (Child);
+         Jump_To_Location_And_Give_Focus (Child, Is_Opened => False);
 
          if File /= GNATCOLL.VFS.No_File then
             Add_To_Recent_Menu (Kernel, File);
