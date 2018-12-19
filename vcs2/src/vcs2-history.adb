@@ -142,26 +142,29 @@ package body VCS2.History is
    type Parent_Array_Access is access all Parent_Array;
 
    type Node_Data is record
-      ID, Author, Date, Subject : GNAT.Strings.String_Access;
-      Parents                   : Parent_Array_Access;
-      Names                     : Commit_Names_Access;
+      ID            : Ada.Strings.Unbounded.Unbounded_String;
+      Author        : Ada.Strings.Unbounded.Unbounded_String;
+      Date          : Ada.Strings.Unbounded.Unbounded_String;
+      Subject       : Ada.Strings.Unbounded.Unbounded_String;
+      Parents       : Parent_Array_Access;
+      Names         : Commit_Names_Access;
 
-      Col                       : Graph_Column := No_Graph_Column;
+      Col           : Graph_Column := No_Graph_Column;
       --  which column to draw in
 
-      Circle_Center             : Gdouble;
+      Circle_Center : Gdouble;
       --  coordinate, depending on current scroll value
 
-      Num_Children              : Natural := 0;
+      Num_Children  : Natural := 0;
       --  Number of children commits
 
-      Line                      : Integer := -1;
+      Line          : Integer := -1;
       --  Line number within the tree model
 
-      Visible                   : Visibility;
+      Visible       : Visibility;
       --  A node is visible when this field is Always_Visible or more.
 
-      Flags                     : Commit_Flags := 0;
+      Flags         : Commit_Flags := 0;
    end record;
    type Node_Data_Access is access all Node_Data;
 
@@ -457,7 +460,7 @@ package body VCS2.History is
          N : constant Node_Data_Access :=
            Tree.Lines (Integer (Get_Int (M, I, Column_Line)));
       begin
-         Set_Commit_Id_Information (Context, String'(N.ID.all));
+         Set_Commit_Id_Information (Context, To_String (N.ID));
       end On_Selected;
 
    begin
@@ -477,7 +480,7 @@ package body VCS2.History is
                N : constant Node_Data_Access := Tree.Lines
                  (Integer (V.Tree.Model.Get_Int (Iter, Column_Line)));
             begin
-               Set_Commit_Id_Information (Context, String'(N.ID.all));
+               Set_Commit_Id_Information (Context, To_String (N.ID));
             end;
          end if;
          Path_Free (Path);
@@ -506,7 +509,7 @@ package body VCS2.History is
       if Line = -1 then
          return "";
       else
-         return Commit_ID (History_Tree (Self).Lines (Line).ID.all);
+         return Commit_ID (To_String (History_Tree (Self).Lines (Line).ID));
       end if;
    end Get_ID_From_Node;
 
@@ -1003,7 +1006,7 @@ package body VCS2.History is
          N : constant Node_Data_Access :=
            Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line)));
       begin
-         Ids (Count) := new String'(N.ID.all);
+         Ids (Count) := new String'(To_String (N.ID));
          Count := Count + 1;
       end On_Selected;
 
@@ -1272,10 +1275,10 @@ package body VCS2.History is
             N := Commit_Maps.Element (C);
          end if;
 
-         N.ID      := new String'(ID);
-         N.Author  := new String'(Author);
-         N.Date    := new String'(Date);
-         N.Subject := new String'(Subject);
+         N.ID      := To_Unbounded_String (ID);
+         N.Author  := To_Unbounded_String (Author);
+         N.Date    := To_Unbounded_String (Date);
+         N.Subject := To_Unbounded_String (Subject);
          N.Names   := Names;
          N.Flags   := Flags;
 
@@ -1361,10 +1364,6 @@ package body VCS2.History is
       for L of Self.Commits loop
          L.Col     := No_Graph_Column;
          L.Visible := 0;
-         Free (L.ID);
-         Free (L.Author);
-         Free (L.Date);
-         Free (L.Subject);
          Free (L.Names);
 
          if L.Parents /= null then
@@ -1509,9 +1508,9 @@ package body VCS2.History is
             end loop;
          end if;
 
-         Init_Set_Int    (V (Column_Line),    Gint (Data.Current));
-         Init_Set_String (V (Column_Author),  N.Author.all);
-         Init_Set_String (V (Column_Date),    N.Date.all);
+         Init_Set_Int    (V (Column_Line),   Gint (Data.Current));
+         Init_Set_String (V (Column_Author), To_String (N.Author));
+         Init_Set_String (V (Column_Date),   To_String (N.Date));
 
          Tmp := Null_Unbounded_String;
          if N.Names /= null then
@@ -1545,9 +1544,9 @@ package body VCS2.History is
          end if;
 
          if Show_ID.Get_Pref then
-            Append (Tmp, N.ID.all & " " & Escape_Text (N.Subject.all));
+            Append (Tmp, N.ID & " " & Escape_Text (To_String (N.Subject)));
          else
-            Append (Tmp, Escape_Text (N.Subject.all));
+            Append (Tmp, Escape_Text (To_String (N.Subject)));
          end if;
 
          if (N.Flags and Commit_Uncommitted) /= 0 then
@@ -1559,7 +1558,7 @@ package body VCS2.History is
          Tree.Model.Append (Iter, Parent => Null_Iter);
          Set_All_And_Clear (Tree.Model, Iter, V);
 
-         if N.ID.all = Tree.User_Filter.Select_Id then
+         if N.ID = Tree.User_Filter.Select_Id then
             Data.To_Select := Tree.Get_Filter_Path_For_Store_Iter (Iter);
          end if;
 
