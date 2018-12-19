@@ -1569,21 +1569,24 @@ package body Src_Editor_Buffer is
    -- Automatic_Save --
    --------------------
 
-   function Automatic_Save (Buffer : Source_Buffer) return Boolean is
+   function Automatic_Save (Buffer : Source_Buffer) return Boolean
+   is
       Success : Boolean;
    begin
-      if not Buffer.Modified_Auto or else Buffer.Filename = No_File then
-         return True;
+      if Buffer.Modified_Auto
+        and then Buffer.Filename /= No_File
+      then
+         Internal_Save_To_File
+           (Buffer,
+            Autosaved_File (Buffer.Filename),
+            True,
+            Success);
+         Buffer.Modified_Auto := False;
       end if;
 
-      Internal_Save_To_File
-        (Buffer,
-         Autosaved_File (Buffer.Filename),
-         True,
-         Success);
-      Buffer.Modified_Auto := False;
-
       --  timeout will be restarted when the bufer is changed
+      Buffer.Timeout_Registered := False;
+      Buffer.Timeout_Id := Glib.Main.No_Source_Id;
       return False;
    end Automatic_Save;
 
