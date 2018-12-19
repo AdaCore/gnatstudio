@@ -75,6 +75,7 @@ use GPS.Process_Launchers.Implementation;
 with GPS.Scripts;                     use GPS.Scripts;
 with GPS.VCS;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+private with Projects.Views;
 
 package GPS.Kernel is
 
@@ -890,13 +891,11 @@ private
       --  The current selected files
       File_Lang         : Unbounded_String;
 
-      Project           : GNATCOLL.Projects.Project_Type :=
-        GNATCOLL.Projects.No_Project;
-      Importing_Project : GNATCOLL.Projects.Project_Type :=
-        GNATCOLL.Projects.No_Project;
-      Line              : Integer := 0;
-      File_Line         : Natural := 0;
-      Column            : Basic_Types.Visible_Column_Type := 0;
+      Project_View           : Projects.Views.Project_View_Reference;
+      Importing_Project_View : Projects.Views.Project_View_Reference;
+      Line                   : Integer := 0;
+      File_Line              : Natural := 0;
+      Column                 : Basic_Types.Visible_Column_Type := 0;
 
       Browser_Details : Gtkada.Canvas_View.Canvas_Event_Details;
       Has_Browser_Details : Boolean := False;

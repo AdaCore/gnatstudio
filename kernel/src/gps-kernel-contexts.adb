@@ -230,8 +230,12 @@ package body GPS.Kernel.Contexts is
       Data.Column                   := Column;
       Data.Creator_Provided_Project :=
         Project /= No_Project and then Publish_Project;
-      Data.Project                  := Project;
-      Data.Importing_Project        := Importing_Project;
+      Data.Project_View             :=
+        Projects.Views.Create_Project_View_Reference
+          (Get_Kernel (Context), Project);
+      Data.Importing_Project_View   :=
+        Projects.Views.Create_Project_View_Reference
+          (Get_Kernel (Context), Importing_Project);
 
       Data.Revision       := To_Unbounded_String (Revision);
       Data.Other_Revision := To_Unbounded_String (Other_Revision);
@@ -259,7 +263,8 @@ package body GPS.Kernel.Contexts is
    begin
       if Context.Ref.Is_Null then
          return No_Project;
-      elsif Context.Ref.Get.Project = No_Project
+
+      elsif Context.Ref.Get.Project_View.Get_Project_Type = No_Project
         and then Has_File_Information (Context)
       then
          --  Tries to guess which project is the correct one. Since we do not
@@ -269,11 +274,15 @@ package body GPS.Kernel.Contexts is
               File_Info'Class
                 (Get_Registry (Get_Kernel (Context)).Tree
                  .Info_Set (File_Information (Context)).First_Element);
+
          begin
-            Context.Ref.Get.Project := F_Info.Project;
+            Context.Ref.Get.Project_View :=
+              Projects.Views.Create_Project_View_Reference
+                (Get_Kernel (Context), F_Info.Project);
          end;
       end if;
-      return Context.Ref.Get.Project;
+
+      return Context.Ref.Get.Project_View.Get_Project_Type;
    end Project_Information;
 
    generic
@@ -519,7 +528,8 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return not Context.Ref.Is_Null
-        and then Context.Ref.Get.Importing_Project /= No_Project;
+        and then Context.Ref.Get.Importing_Project_View.Get_Project_Type
+          /= No_Project;
    end Has_Importing_Project_Information;
 
    -----------------------------------
@@ -529,7 +539,7 @@ package body GPS.Kernel.Contexts is
    function Importing_Project_Information
      (Context : Selection_Context) return Project_Type is
    begin
-      return Context.Ref.Get.Importing_Project;
+      return Context.Ref.Get.Importing_Project_View.Get_Project_Type;
    end Importing_Project_Information;
 
    ------------------------------
@@ -859,7 +869,7 @@ package body GPS.Kernel.Contexts is
                  (Db.Get_Entity
                     (Loc  =>
                          (File         => Data.Files (Data.Files'First),
-                          Project_Path => Data.Project.Project_Path,
+                          Project_Path => Data.Project_View.Get_Project_Path,
                           Line         => Data.Line,
                           Column       => Data.Entity_Column),
                      Name => To_String (Data.Entity_Name),

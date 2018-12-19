@@ -20,6 +20,7 @@
 with GPS.Search;
 with GNATCOLL.VFS;
 with GNAT.Strings;
+private with Projects.Views;
 
 package GPS.Kernel.Search.Sources is
 
@@ -84,14 +85,14 @@ package GPS.Kernel.Search.Sources is
 
 private
    type Single_Source_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : GPS.Search.Search_Pattern_Access;
+      Pattern            : GPS.Search.Search_Pattern_Access;
       Pattern_Needs_Free : Boolean := False;
 
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type;
-      Text    : GNAT.Strings.String_Access;
-      Restart : Boolean := False;
-      Context : GPS.Search.Search_Context;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Project_View       : Projects.Views.Project_View_Reference;
+      Text               : GNAT.Strings.String_Access;
+      Restart            : Boolean := False;
+      Context            : GPS.Search.Search_Context;
    end record;
 
    type Sources_Search_Provider is new Kernel_Search_Provider with record

@@ -22,6 +22,8 @@ with GNATCOLL.VFS;
 with Gtk.Box;
 with Glib.Object;
 
+private with Projects.Views;
+
 package GPS.Kernel.Search.Filenames is
 
    type Filenames_Search_Provider is new Kernel_Search_Provider
@@ -103,7 +105,7 @@ private
 
    type Filenames_Search_Result is new Kernel_Search_Result with record
       File         : GNATCOLL.VFS.Virtual_File;
-      Project      : GNATCOLL.Projects.Project_Type;
+      Project_View : Projects.Views.Project_View_Reference;
       Line, Column : Natural := 0;
    end record;
    overriding procedure Execute
