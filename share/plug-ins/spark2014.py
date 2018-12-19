@@ -519,20 +519,14 @@ def get_compunit_for_message(text, file):
     inherited contracts, this corresponds to the last unit in the
     chain of locations. Otherwise, this is simply the compilation
     unit where the message is reported."""
-    b = True
-    fname = ""
-    while b:
-        try:
-            m = match_regexp_inst(text)
-            if m:
-                fname = m.group(1)
-                text = text[m.end():]
-            else:
-                b = False
-        except Exception:
-            b = False
-    if fname == "":
-        fname = os.path.basename(file.path)
+    fname = os.path.basename(file.path)
+    while True:
+        m = match_regexp_inst(text)
+        if m:
+            fname = m.group(1)
+            text = text[m.end():]
+        else:
+            break
     return os.path.splitext(fname)[0]
 
 
