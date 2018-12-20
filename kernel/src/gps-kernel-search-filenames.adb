@@ -780,6 +780,10 @@ package body GPS.Kernel.Search.Filenames is
       end Count_Project_Files;
 
    begin
+      if Self.Total_Count > -1 then
+         return Self.Total_Count;
+      end if;
+
       --  Retrieve all the filenames available for the currently loaded project
 
       if Self.Files = null then
@@ -799,10 +803,12 @@ package body GPS.Kernel.Search.Filenames is
             (Recursive => True));
       end if;
 
-      return Self.Files'Length
+      Self.Total_Count := Self.Files'Length
         + Self.Runtime'Length
         + Count_Project_Files
         + Count_Source_Files;
+
+      return Self.Total_Count;
    end Get_Total_Progress;
 
 end GPS.Kernel.Search.Filenames;
