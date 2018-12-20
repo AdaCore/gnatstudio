@@ -329,10 +329,18 @@ package body Src_Editor_Status_Bar is
       if Result then
          Lines := Get_Line (The_End) - Get_Line (Start) + 1;
          Offset := Get_Offset (The_End) - Get_Offset (Start);
-         Bar.Cursor_Loc.Set_Label
-            ("("
-             & Image (Integer (Lines), Min_Width => 1) & " lines,"
-             & Offset'Img & " chars) " & Pos);
+            Bar.Cursor_Loc.Set_Label
+              ("("
+               & Image (Integer (Lines), Min_Width => 1)
+               & (if Lines > 1
+                 then " lines,"
+                 else " line,")
+               & Offset'Img
+               & (if Offset > 1
+                 then " chars"
+                 else " char")
+               & ") "
+               & Pos);
       else
          Bar.Cursor_Loc.Set_Label (Pos);
       end if;
@@ -469,6 +477,7 @@ package body Src_Editor_Status_Bar is
       Bar.Pack_End (Bar.Toolbar, Expand => False);
 
       Gtk_New (Bar.Cursor_Loc, Label => "1:1");
+      Bar.Cursor_Loc.Set_Name ("Status Bar Cursor Location"); -- For testing
       Bar.Cursor_Loc.Set_Homogeneous (False);
       Bar.Toolbar.Insert (Bar.Cursor_Loc);
       Bar.Cursor_Loc.On_Clicked (On_Goto_Line_Func'Access, Bar);

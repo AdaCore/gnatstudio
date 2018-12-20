@@ -20,14 +20,15 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 
 with Default_Preferences;
 with GPS.Editors;
 with GPS.Kernel.Messages;
-with Code_Analysis;
+with Code_Analysis; use Code_Analysis;
 
 package CodePeer is
 
@@ -51,13 +52,39 @@ package CodePeer is
 
    function Image (Level : CodePeer.Message_Ranking_Level) return String;
 
-   type Audit_Status_Kinds is
-     (Uncategorized,
-      Pending,
-      Not_A_Bug,
-      False_Positive,
-      Intentional,
-      Bug);
+   type Audit_Status_Category is (Uncategorized, Pending, Not_A_Bug, Bug);
+   --  The categories of audit status
+
+   type Audit_Status_Kinds is record
+      Name     : Unbounded_String;
+      Category : Audit_Status_Category;
+      Id       : Positive;
+   end record;
+   --  Generic audit status, so that the user can define custom ones
+
+   package Audit_Status_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Positive, Audit_Status_Kinds);
+
+   Audit_Statuses : Audit_Status_Vectors.Vector;
+   --  The list of registered audit statuses
+
+   Uncategorized_Status : constant Audit_Status_Kinds :=
+     (To_Unbounded_String ("Uncategorized"), Uncategorized, 1);
+   --  Default status
+
+   procedure Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category);
+   --  Add an audit status in Audit_Statuses
+
+   function Get_Status (Id : Integer) return Audit_Status_Kinds;
+   function Get_Status (Name : String) return Audit_Status_Kinds;
+   --  Return the Audit_Status_Kinds in Audit_Statuses with the given name
+   --  or id.
+   --  Return Uncategorized_Status if not found.
+
+   function Standardize (S : String) return String;
+   --  Return a standardized string.
+   --  Concretely this means convert S in lower case, and replace ' ' by '_'
 
    function Image (Status : Audit_Status_Kinds) return String;
 
@@ -100,9 +127,9 @@ package CodePeer is
      (Message_Category_Access, Less, "=");
 
    type Audit_Record is record
-      Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
-      Comment     : Ada.Strings.Unbounded.Unbounded_String;
-      Approved_By : Ada.Strings.Unbounded.Unbounded_String;
+      Timestamp   : Unbounded_String;
+      Comment     : Unbounded_String;
+      Approved_By : Unbounded_String;
       Status      : Audit_Status_Kinds;
    end record;
 
@@ -137,6 +164,7 @@ package CodePeer is
       Removed_Color   : Default_Preferences.Color_Preference;
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
+      Show_Msg_Id     : Boolean;
    end record;
 
    overriding function Get_Text
@@ -284,8 +312,7 @@ package CodePeer is
       --  Introduced in version 5.
    end record;
 
-   type Subprogram_Data is
-     new Code_Analysis.CodePeer_Data_Root with record
+   type Subprogram_Data is new Code_Analysis.CodePeer_Data_Root with record
       Lifeage       : Lifeage_Kinds;
       Messages      : Message_Vectors.Vector;
       Annotations   : Annotation_Maps.Map;
@@ -299,22 +326,19 @@ package CodePeer is
 
    --  Message filter criteria
 
-   use type Code_Analysis.File_Access;
-   --  ??? Remove this clase after I120-013 will be fixed
-
    function Hash
      (Item : Code_Analysis.File_Access) return Ada.Containers.Hash_Type;
 
-   package File_Sets is
-     new Ada.Containers.Hashed_Sets
-          (Code_Analysis.File_Access, Hash, Code_Analysis."=");
+   package File_Sets is new Ada.Containers.Hashed_Sets
+     (Code_Analysis.File_Access, Hash, Code_Analysis."=");
 
    type Message_Ranking_Level_Flags is
      array (Message_Ranking_Level) of Boolean;
 
    type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
 
-   type Review_Status_Kinds_Flags is array (Audit_Status_Kinds) of Boolean;
+   type Review_Status_Kinds_Flags is array (1 .. 256) of Boolean;
+   --  Use a hard coded max size "large enough" for convenience
 
    type Message_Filter_Criteria is record
       Files      : File_Sets.Set;
@@ -323,7 +347,7 @@ package CodePeer is
       CWEs       : CWE_Category_Sets.Set;
       Rankings   : Message_Ranking_Level_Flags;
       Lineages   : Lifeage_Kinds_Flags;
-      Statuses   : Review_Status_Kinds_Flags;
+      Statuses   : Review_Status_Kinds_Flags := (others => False);
    end record;
 
 end CodePeer;

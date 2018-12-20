@@ -214,6 +214,7 @@ def is_visual_state(state):
 def is_insert_state(state):
     return state in [InsertState, ReplaceState]
 
+
 override_keys_map = {
     65106: 94
 }
@@ -696,7 +697,7 @@ basic_actions = {
     ";": (ReplayMove, ),
     "i": (Insert, ),
     "a": (ChainedAction, (SimpleMovement, Mov_Char, 1), (Insert, )),
-    "x": (ChainedAction, (Deletion,), (SimpleMovement, Mov_Char, 1)),
+    "x": (ChainedAction, (Deletion,), (SimpleMovement, Mov_Char, 0)),
     "h": (SimpleMovement, Mov_Char, -1),
     "l": (SimpleMovement, Mov_Char, 1),
     "k": (SimpleMovement, Mov_Line, -1),
@@ -756,5 +757,6 @@ def on_file_edited(hn, f):
     gtk_view.vim_state = VimState(view, gtk_view)
     buffer.vim_state = gtk_view.vim_state
     gtk_view.connect("key-press-event", key_pressed_proxy)
+
 
 GPS.Hook("file_edited").add(on_file_edited)

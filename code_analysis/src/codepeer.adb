@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
+
+with String_Utils;
 
 with Gtkada.Style;
 
@@ -183,6 +185,15 @@ package body CodePeer is
                & Gtkada.Style.To_Hex (Self.Removed_Color.Get_Pref)
                & """>");
             Append (Result, "</span>");
+
+         elsif Self.Status.Category = Not_A_Bug then
+            Insert
+              (Result,
+               1,
+               "<span foreground="""
+               & Gtkada.Style.To_Hex (Self.Removed_Color.Get_Pref)
+               & """>");
+            Append (Result, "</span>");
          end if;
       end return;
    end Get_Markup;
@@ -217,15 +228,18 @@ package body CodePeer is
    is
 
       function Checks_Image return Unbounded_String;
-      --  Returns image of set of originating checks for the message.
+      --  Return image of set of originating checks for the message.
 
       function CWE_Image
         (Category : Message_Category_Access) return Unbounded_String;
-      --  Returns image of set of CWEs of given category
+      --  Return image of set of CWEs of given category
 
       function Ranking_Image
         (Self : not null access constant Message) return String;
       --  Return an suitable Image corresponding to Message's ranking
+
+      function Id_Image (Id : Natural) return String;
+      --  Return image of the given message Id.
 
       ------------------
       -- Checks_Image --
@@ -253,6 +267,19 @@ package body CodePeer is
 
          return Aux;
       end Checks_Image;
+
+      --------------
+      -- Id_Image --
+      --------------
+
+      function Id_Image (Id : Natural) return String is
+      begin
+         if Self.Show_Msg_Id then
+            return "[id " & String_Utils.Image (Id) & "] ";
+         else
+            return "";
+         end if;
+      end Id_Image;
 
       ---------------
       -- CWE_Image --
@@ -366,6 +393,7 @@ package body CodePeer is
 
    begin
       return Text : Ada.Strings.Unbounded.Unbounded_String do
+         Append (Text, Id_Image (Self.Id));
          Append (Text, Ranking_Image (Self));
          Append (Text, ": ");
          Append (Text, Self.Category.Name);
@@ -438,31 +466,9 @@ package body CodePeer is
       end case;
    end Image;
 
-   -----------
-   -- Image --
-   -----------
-
    function Image (Status : Audit_Status_Kinds) return String is
    begin
-      case Status is
-         when Uncategorized =>
-            return "Uncategorized";
-
-         when Pending =>
-            return "Pending";
-
-         when Not_A_Bug =>
-            return "Not a bug";
-
-         when False_Positive =>
-            return "False positive";
-
-         when Intentional =>
-            return "Intentional";
-
-         when Bug =>
-            return "Bug";
-      end case;
+      return To_String (Status.Name);
    end Image;
 
    ----------
@@ -497,5 +503,86 @@ package body CodePeer is
    begin
       return Left.Name < Right.Name;
    end Less;
+
+   ----------------------
+   -- Add_Audit_Status --
+   ----------------------
+
+   Next_Id : Positive := 1;
+
+   function Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds;
+   --  Convenience function version of Add_Audit_Status
+
+   procedure Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category) is
+   begin
+      Audit_Statuses.Append
+        ((To_Unbounded_String (Status), Category, Next_Id));
+      Next_Id := Next_Id + 1;
+   end Add_Audit_Status;
+
+   function Add_Audit_Status
+     (Status : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds
+   is
+      Result : constant Audit_Status_Kinds :=
+        (To_Unbounded_String (Status), Category, Next_Id);
+   begin
+      Audit_Statuses.Append (Result);
+      Next_Id := Next_Id + 1;
+      return Result;
+   end Add_Audit_Status;
+
+   -----------------
+   -- Standardize --
+   -----------------
+
+   function Standardize (S : String) return String is
+      Result : String := To_Lower (S);
+   begin
+      for J in Result'Range loop
+         if Result (J) = ' ' then
+            Result (J) := '_';
+         end if;
+      end loop;
+
+      return Result;
+   end Standardize;
+
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   function Get_Status (Name : String) return Audit_Status_Kinds is
+   begin
+      for Status of Audit_Statuses loop
+         if Standardize (To_String (Status.Name)) = Standardize (Name) then
+            return Status;
+         end if;
+      end loop;
+
+      --  Special case "unclassified" for backward compatibility
+
+      if To_Lower (Name) = "unclassified" then
+         return Uncategorized_Status;
+      end if;
+
+      --  A new status, register and return it
+
+      return Add_Audit_Status (Name, Not_A_Bug);
+   end Get_Status;
+
+   function Get_Status (Id : Integer) return Audit_Status_Kinds is
+   begin
+      for Status of Audit_Statuses loop
+         if Status.Id = Id then
+            return Status;
+         end if;
+      end loop;
+
+      return Uncategorized_Status;
+   end Get_Status;
 
 end CodePeer;

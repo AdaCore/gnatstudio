@@ -129,39 +129,50 @@ package Debugger is
       Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Send a command to the underlying process associated with Debugger.
+   --
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
-   --  Call Wait_Prompt before exiting if Wait_For_Prompt is True.
+   --
+   --  If Wait_For_Prompt is True, this procedure will wait for the debugger's
+   --  prompt before returning, without blocking the UI: the Gtk main loop will
+   --  be ran while waiting for the debugger's prompt.
+
    --  If Mode <= Hidden, then the output of the command won't be shown
    --  in the command window.
-   --  If Mode indicates a visible command, it is executed asynchronously,
-   --  otherwise it is executed synchronously, ie wait until we get the
-   --  prompt.
+   --
    --  If a command is already executing, Cmd will be queued and executed
    --  afterward. However, in some cases it is necessary to immediately send
    --  Cmd to the debugger (for instance because the latter is waiting for
    --  input). In this case, Force_Send might be set to True
+   --
    --  Modules can define their own commands ("graph display ...") which are
    --  intercepted via the Debugger_Command_Action_Hook.
 
    function Send_And_Get_Output
-     (Debugger        : access Debugger_Root;
-      Cmd             : String;
-      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return String;
+     (Debugger    : access Debugger_Root;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True) return String;
    --  Same as above, but also return the output of the debugger.
+   --
    --  The full output is returned, ie this includes the final prompt.
    --  You should rather use the function Send below.
+   --
    --  Note that any input waiting from the process is first discarded before
    --  sending the command.
+   --
    --  You should always use this function instead of using Expect_Out
    --  yourself after calling the procedure Send, since some intermediate
    --  hidden calls to the debugger might have taken place in the meanwhile.
+   --
+   --  This function will not block the UI while waiting for the debugger's
+   --  output: the Gtk main loop will still be ran.
 
    function Send_And_Get_Clean_Output
-     (Debugger : access Debugger_Root;
-      Cmd      : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access Debugger_Root;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String is abstract;
    --  Same Send_And_Get_Output, but return a clean version of the output, i.e.
    --  delete the final prompt if any, depending on the debugger type.
@@ -280,7 +291,9 @@ package Debugger is
    function Value_Of
      (Debugger : access Debugger_Root;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String is abstract;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
    --  JDB_COMMAND: "dump"
@@ -372,8 +385,7 @@ package Debugger is
 
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
       is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
@@ -707,22 +719,25 @@ package Debugger is
    --  This function is emulated when the debugger does not support it
    --  directly.
 
-   procedure Enable_Breakpoint
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
-   --  Enable or disable the breakpoint number Num.
-   --  Num is always the number returned in the Num field of the
+   procedure Enable_Breakpoints
+     (Debugger    : access Debugger_Root;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Enable or disable the given breakpoint identifiers.
+   --  The identifiers are always the numbers stored in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
+   --  Giving an empty list enables/disables all the breakpoints set for this
+   --  debugger.
 
-   procedure Remove_Breakpoint
-     (Debugger : access Debugger_Root;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   procedure Remove_Breakpoints
+     (Debugger    : access Debugger_Root;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Delete a breakpoint.
-   --  Num is always the number returned in the Num field of the
-   --  Breakpoint_Data record.
+   --  The identifiers are always the numbers stored in the Num field of the
+   --  Breakpoint_Data record by List_Breakpoints.
+   --  Giving an empty list removes all the breakpoints set for this debugger.
 
    procedure Remove_Breakpoint_At
      (Debugger : not null access Debugger_Root;

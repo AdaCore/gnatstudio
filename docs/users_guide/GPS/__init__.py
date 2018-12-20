@@ -522,11 +522,13 @@ class AnalysisTool(object):
         """
         pass  # implemented in Ada
 
-    def add_message(self, msg, rule_id):
+    def create_message(self, category, file, line, column, text, importance,
+                       rule_id):
         """
-        Adds the given message to the list of messages that will be displayed
-        in the GPS Analysis Report. The message will be associated to this tool
-        and to the rule identified by ``rule_id``.
+        Create a new message and add it to the list of messages that will be
+        displayed in the GPS Analysis Report. The message will be associated to
+        this tool and to the rule identified by ``rule_id``. For the others
+        parameters see the documentation of GPS.Messages.__init__.
 
         :param :class:`GPS.Message` msg: The message.
         :param string rule_id: The id of the rule associated to the message.
@@ -5028,6 +5030,15 @@ class Entity(object):
         :return: a list of :class:`GPS.Entity`
         """
 
+    def has_body(self, nth='1'):
+        """
+        Whether the entity has a body.
+
+        :return: A boolean
+
+        .. seealso:: :func:`GPS.Entity.body`
+        """
+
     def instance_of(self):
         """
         If self is an instantiation of some other generic entity, this
@@ -5373,6 +5384,15 @@ class Entity(object):
         :param auto_save: A boolean
         """
         pass  # implemented in Ada
+
+    def requires_body(self):
+        """
+        Whether the entity should be completed with a body.
+
+        :return: A boolean
+
+        .. seealso:: :func:`GPS.Entity.body`
+        """
 
     def return_type(self):
         """
@@ -6970,6 +6990,18 @@ class MDI(object):
 
         pass  # implemented in Ada
 
+    @staticmethod
+    def get_main_window():
+        """
+        Return the GPS main window. This is useful when you want to
+        create dialogs or windows that should always stay on top of
+        GPS.
+
+        :return: An instance of :class:`GPS.GUI`
+        """
+
+        pass  # implemented in Ada
+
 
 ###########################################################
 # MDIWindow
@@ -7231,6 +7263,9 @@ class Message(object):
     Flags = enum('Message.Flags', INVISIBLE=0, IN_SIDEBAR=1,
                  IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
 
+    Importance = enum('Message.Importance', ANNOTATION=0, UNSPECIFIED=1,
+                      INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
+
     @staticmethod
     def __del__():
         """
@@ -7241,7 +7276,8 @@ class Message(object):
     def __init__(self, category, file, line, column, text,
                  show_on_editor_side=True,
                  show_in_locations=True,
-                 allow_auto_jump_to_first=True):
+                 allow_auto_jump_to_first=True,
+                 importance=Importance.UNSPECIFIED):
         """
         Adds a Message in GPS.
 
@@ -7260,6 +7296,9 @@ class Message(object):
         :param bool allow_auto_jump_to_first: If True, then adding a message
             that is the first for its category will auto jump the editor to it,
             if the corresponding preference is activated
+
+        :param enum importance: Setting the importance applies the
+            corresponding style and allows the sort by importance.
 
         .. code-block:: python
 
@@ -9772,14 +9811,12 @@ class VCS2_Task_Visitor(object):
            a short while.
         """
 
-    def history_lines(self, list):
+    def history_line(self, list):
         """
         Report when a new line for the VCS history was seen. Used from
         `GPS.VCS2.async_fetch_history`.
 
-        :param List(GPS.VCS2.Commit) list: a list of lines from the history.
-           This doesn't have to be the whole log, though, although it is
-           more efficient to send bigger chunks.
+        :param GPS.VCS2.Commit: a line from the history.
         """
 
     def set_details(self, id, header, message):
@@ -10443,6 +10480,14 @@ class LanguageInfo(object):
     string is a keyword for the language. The regexp is anchored with
     '^' and ends with '\\\\b' (word separator).
     """
+
+    def set_lsp_arguments(args):
+        """
+        Set arguments for launching LSP server for the language
+
+        :param args: A list of strings
+        """
+        pass  # implemented in Ada
 
 
 class OutlineView(object):

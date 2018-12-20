@@ -15,7 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with System;
+
 with Glib;
+with Glib.Main;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Regpat;          use GNAT.Regpat;
@@ -161,6 +165,10 @@ package GVD.Process is
       --  when we can't start gdb
       Store_History        : Boolean := True;
       Interactions_History : String_List_Utils.String_List.Vector;
+
+      Idle_Output_Monitor_Func : Glib.Main.G_Source_Id;
+      --  The idle function used to monitor the debugger's output when
+      --  waiting asynchronously for a command to finish.
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
@@ -184,9 +192,12 @@ package GVD.Process is
    --  remote target.
    --  Prefer given debugger kind if it's supported by chosen debugger.
 
-   procedure Close_Debugger (Process : access Visual_Debugger_Record);
+   procedure Close_Debugger
+     (Process  : access Visual_Debugger_Record;
+      Has_Died : Boolean := False);
    --  Close the given debugger and terminate the debugging session if this
-   --  is the last one.
+   --  is the last one. Do not send quit command to debugger
+   --  if Has_Died is True.
 
    function Get_Kernel
      (Process : access Visual_Debugger_Record'Class)
@@ -240,6 +251,11 @@ package GVD.Process is
      (Debugger : access Debugger_Root'Class)
       return Visual_Debugger;
    --  Conversion function.
+
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Visual_Debugger);
+   --  Convert a System.Addresss into a Visual_Debugger.
+   --  Used for GNAT.Expect filter functions.
 
    procedure Final_Post_Process
      (Process           : not null access Visual_Debugger_Record'Class;

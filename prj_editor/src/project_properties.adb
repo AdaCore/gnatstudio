@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -1404,8 +1405,8 @@ package body Project_Properties is
          Name_Parameters (Data, Get_Attributes_Parameters);
          Set_Return_Attribute
            (Project => Get_Data (Data, 1),
-            Attr    => Nth_Arg (Data, 2),
-            Pkg     => Nth_Arg (Data, 3, ""),
+            Attr    => To_Lower (Nth_Arg (Data, 2)),
+            Pkg     => To_Lower (Nth_Arg (Data, 3, "")),
             Index   => Nth_Arg (Data, 4, ""),
             Attribute_Is_List => Command = "get_attribute_as_list",
             As_List           => Command = "get_attribute_as_list");
@@ -1425,8 +1426,8 @@ package body Project_Properties is
             else
                Set_Return_Attribute
                  (Project => Get_Data (Data, 1),
-                  Attr    => To_String (Props.Project_Attribute),
-                  Pkg     => To_String (Props.Project_Package),
+                  Attr    => To_Lower (To_String (Props.Project_Attribute)),
+                  Pkg     => To_Lower (To_String (Props.Project_Package)),
                   Index   => To_String (Props.Project_Index),
                   Attribute_Is_List => True,
                   As_List => Command = "get_tool_switches_as_list");
@@ -1588,22 +1589,15 @@ package body Project_Properties is
       end if;
    end Create_Project_Command_Handler;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+   ----------------------------
+   -- Register_Module_Reader --
+   ----------------------------
 
-   procedure Register_Module
+   procedure Register_Module_Reader
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Properties_Module_ID := new Properties_Module_ID_Record (Kernel);
       Kernel.Register_Module (Abstract_Module (Properties_Module_ID));
-
-      Register_Command
-        (Kernel, "properties_editor",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
 
       --  Redefine command to take into account attribute descriptions from
       --  projects.xml, which also provides the default values for attributes
@@ -1628,6 +1622,22 @@ package body Project_Properties is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+   end Register_Module_Reader;
+
+   ----------------------------
+   -- Register_Module_Writer --
+   ----------------------------
+
+   procedure Register_Module_Writer
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Register_Command
+        (Kernel, "properties_editor",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+
       Register_Command
         (Kernel, "set_attribute_as_string",
          Minimum_Args => 4,
@@ -1658,7 +1668,7 @@ package body Project_Properties is
          Maximum_Args  => 1,
          Class         => Get_Project_Class (Kernel),
          Handler       => Create_Project_Command_Handler'Access);
-   end Register_Module;
+   end Register_Module_Writer;
 
    ------------------------
    -- Paths_Are_Relative --
@@ -2633,7 +2643,12 @@ package body Project_Properties is
          Set_Resizable (Col, True);
          Set_Title
            (Col,
-            Title => (if Editor.As_Directory then "Directory" else "File"));
+            Title =>
+              (case Attr.Typ is
+               when Attribute_As_Filename  => "File",
+               when Attribute_As_Unit      => "Unit",
+               when Attribute_As_Directory => "Directory",
+               when others => "Value"));
          Ignore := Append_Column (Editor.View, Col);
          Pack_Start (Col, Text, True);
          Add_Attribute (Col, Text, "text", 0);
@@ -3769,6 +3784,13 @@ package body Project_Properties is
             Attribute_Index => "",
             Path_Widget     => Path_Widget,
             Is_List         => Editable_Attr.Is_List);
+      end if;
+
+      --  Avoid getting an exception later on in case the editor could not be
+      --  created, rather than silently not displaying any properties at all.
+
+      if Editable_Attr.Editor = null then
+         return;
       end if;
 
       Attribute_Handler.Connect

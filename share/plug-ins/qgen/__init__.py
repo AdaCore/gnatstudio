@@ -55,6 +55,7 @@ import constructs
 from workflows.promises import Promise, TargetWrapper, timeout
 from project_support import Project_Support
 from sig_utils import Signal
+from signal_setter import signalSetter
 
 
 logger = GPS.Logger('MODELING')
@@ -1588,10 +1589,10 @@ else:
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
-        def log_values_from_item(itid, filename, model_filename, debug):
+        def log_values_from_item(itid, filename, model_filename, debugger):
             """
             Logs all symbols for the signal 'itid' in 'filename' by registering
-            it in the debugger 'debug'
+            it in the debugger
             """
             for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
                 symbol = Diagram_Utils.block_split(s)
@@ -1600,7 +1601,7 @@ else:
                 src_file, lines = QGEN_Module.modeling_map.get_func_bounds(
                     context)
 
-                debug.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
+                debugger.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
                     symbol, context, itid, filename, src_file, lines[1],
                     model_filename), output=False)
                 sig_obj = QGEN_Module.signal_attributes.get(itid, None)
@@ -1612,18 +1613,18 @@ else:
                     sig_obj.logged = True
 
         @staticmethod
-        def stop_logging_value_for_item(itid, debug):
+        def stop_logging_value_for_item(itid, debugger):
             """
             Removes the symbols for the signal 'itid' from the list of logged
-            signals and updates this information in the debugger 'debug'
+            signals and updates this information in the debugger
             """
 
             for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
                 symbol = Diagram_Utils.block_split(s)
                 context = symbol[0]
                 symbol = symbol[-1].strip()
-                debug.send("qgen_delete_logpoint %s %s" % (symbol, context),
-                           output=False)
+                debugger.send("qgen_delete_logpoint %s %s" % (symbol, context),
+                              output=False)
 
             sig_obj = QGEN_Module.signal_attributes.get(itid, None)
             sig_obj.logged = False
@@ -1633,15 +1634,16 @@ else:
             """
             Stop logging all signal values in the given diagrams
             """
-            debug = GPS.Debugger.get()
+            debugger = GPS.Debugger.get()
 
             for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
                 parent = it.get_parent_with_id() or toplvl
                 sig_obj = QGEN_Module.signal_attributes.get(parent.id, None)
                 if sig_obj is not None and sig_obj.logged:
-                    QGEN_Module.stop_logging_value_for_item(parent.id, debug)
+                    QGEN_Module.stop_logging_value_for_item(
+                        parent.id, debugger)
 
-            QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+            QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         @staticmethod
         def log_values_in_file(diagrams, filename):
@@ -1654,7 +1656,7 @@ else:
             :param filename: the name of the logfile to write in
             """
             ctxt = GPS.current_context()
-            debug = GPS.Debugger.get()
+            debugger = GPS.Debugger.get()
             filename = os.path.join(
                 Project_Support.get_output_dir(
                     ctxt.file()), filename + '.html')
@@ -1665,8 +1667,8 @@ else:
             for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
                 parent = it.get_parent_with_id() or toplvl
                 QGEN_Module.log_values_from_item(parent.id, filename,
-                                                 ctxt.file(), debug)
-            QGEN_Module.__show_diagram_and_signal_values(debug,
+                                                 ctxt.file(), debugger)
+            QGEN_Module.__show_diagram_and_signal_values(debugger,
                                                          force=True)
 
         @staticmethod
@@ -1847,6 +1849,7 @@ else:
                         QGEN_Module.__update_current_construct(
                             debugger, viewer)
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
+                    GPS.MDI.get_by_child(viewer).raise_window()
 
                 if scroll_to:
                     logger.log("Scroll to " + str(scroll_to.id))
@@ -2080,27 +2083,6 @@ else:
             it = self.get_item_with_sources(context.modeling_item)
             return 'Delete breakpoints on %s' % it.id.replace("/", "\\/")
 
-        def __contextual_set_signal_value(self):
-            ctx = GPS.contextual_context() or GPS.current_context()
-            it = ctx.modeling_item
-            debug = GPS.Debugger.get()
-
-            for s in self.modeling_map.get_symbols(blockid=it.id):
-                ss = s.split('/')[-1].strip()  # Remove the "context/" part
-                current = debug.value_of(ss)
-                added = False
-
-                if current is not None:
-                    v = GPS.MDI.input_dialog(
-                        "Value for block %s" % it.id,
-                        "value=%s" % current)
-                    if v:
-                        added = True
-                        debug.set_variable(ss, v[0])
-
-            if added:
-                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
-
         def __contextual_log_signal_value(self):
             """
             Adds the selected signal to the lists of logged signals
@@ -2108,7 +2090,7 @@ else:
             """
             ctx = GPS.contextual_context() or GPS.current_context()
             it = ctx.modeling_item
-            debug = GPS.Debugger.get()
+            debugger = GPS.Debugger.get()
 
             v = GPS.MDI.input_dialog("Log signal %s in" % it.id, "filename")
 
@@ -2120,57 +2102,40 @@ else:
                     return
 
                 QGEN_Module.log_values_from_item(
-                    it.id, filename, ctx.file(), debug)
+                    it.id, filename, ctx.file(), debugger)
 
-                QGEN_Module.__show_diagram_and_signal_values(debug,
+                QGEN_Module.__show_diagram_and_signal_values(debugger,
                                                              force=True)
 
         def __contextual_disable_log_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
             it = ctx.modeling_item
-            debug = GPS.Debugger.get()
+            debugger = GPS.Debugger.get()
 
-            QGEN_Module.stop_logging_value_for_item(it.id, debug)
-            QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+            QGEN_Module.stop_logging_value_for_item(it.id, debugger)
+            QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
-        def __contextual_set_persistent_signal_value(self):
+        def __contextual_set_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
             it = ctx.modeling_item
-            debug = GPS.Debugger.get()
-            added = False
 
-            for s in self.modeling_map.get_symbols(blockid=it.id):
-                v = GPS.MDI.input_dialog(
-                    "Persistent value for signal %s" % it.id,
-                    "value=")
-                if v:
-                    added = True
-                    debug.send("qgen_watchpoint %s %s" % (s, v[0]),
-                               output=False)
+            debugger = GPS.Debugger.get()
 
-            if added:
-                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
-                if sig_obj is None:
-                    sig_obj = Signal(it.id)
-                    QGEN_Module.signal_attributes[it.id] = sig_obj
-                sig_obj.watched = True
+            sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
+            if sig_obj is None:
+                sig_obj = Signal(it.id)
+                QGEN_Module.signal_attributes[it.id] = sig_obj
 
-                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+            signalDialog = signalSetter(
+                debugger, it.id, self.modeling_map, sig_obj.watched)
 
-        def __contextual_disable_persistent_signal_value(self):
-            ctx = GPS.contextual_context() or GPS.current_context()
-            it = ctx.modeling_item
-            debug = GPS.Debugger.get()
-            removed = False
+            signalDialog.run()
 
-            for s in self.modeling_map.get_symbols(blockid=it.id):
-                removed = True
-                debug.send("qgen_delete_watchpoint %s" % s, output=False)
+            sig_obj.watched = signalDialog.is_watched
+            signalDialog.destroy()
 
-            if removed:
-                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
-                sig_obj.watched = False
-                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+            QGEN_Module.__show_diagram_and_signal_values(debugger,
+                                                         force=True)
 
         def __contextual_set_breakpoint(self):
             """
@@ -2178,7 +2143,7 @@ else:
             """
             ctx = GPS.contextual_context() or GPS.current_context()
             it = self.get_item_with_sources(ctx.modeling_item)
-            debug = GPS.Debugger.get()
+            debugger = GPS.Debugger.get()
 
             # Create the breakpoints
 
@@ -2190,11 +2155,11 @@ else:
                     filename = filename or file
                     line = line or rg[0]
                     # Set a breakpoint only on the first line of a range
-                    debug.break_at_location(file, line=rg[0])
+                    debugger.break_at_location(file, line=rg[0])
 
                 # Force a refresh to show blocks with breakpoints
                 QGEN_Module.__show_diagram_and_signal_values(
-                    debug, force=True)
+                    debugger, force=True)
 
         def __contextual_delete_breakpoint(self):
             """
@@ -2204,13 +2169,13 @@ else:
             it = self.get_item_with_sources(ctx.modeling_item)
             ranges = self.block_source_ranges(it.id)
             if ranges:
-                debug = GPS.Debugger.get()
+                debugger = GPS.Debugger.get()
                 for file, rg in ranges:
                     line = rg[0]
-                    debug.unbreak_at_location(file, line=line)
+                    debugger.unbreak_at_location(file, line=line)
 
                 QGEN_Module.__show_diagram_and_signal_values(
-                    debug, force=True)
+                    debugger, force=True)
 
         def __contextual_show_source_code(self):
             """
@@ -2283,22 +2248,10 @@ else:
                 callback=self.__contextual_set_signal_value)
 
             gps_utils.make_interactive(
-                name='MDL set persistent signal value',
-                contextual='Debug/Set persistent value for signal',
-                filter=self.__contextual_filter_debug_and_symbols,
-                callback=self.__contextual_set_persistent_signal_value)
-
-            gps_utils.make_interactive(
                 name='MDL log signal value',
                 contextual='Debug/Log this signal',
                 filter=self.__contextual_filter_debug_and_symbols,
                 callback=self.__contextual_log_signal_value)
-
-            gps_utils.make_interactive(
-                name='MDL disable persistent signal value',
-                contextual='Debug/Disable persistent value for signal',
-                filter=self.__contextual_filter_debug_and_watchpoint,
-                callback=self.__contextual_disable_persistent_signal_value)
 
             gps_utils.make_interactive(
                 name='MDL disable log signal value',

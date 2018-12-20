@@ -7,7 +7,7 @@ def test_driver():
     GPS.execute_action("Build & Debug Number 1")
     yield wait_idle()
     d = GPS.Debugger.get()
-    for s in ["b main.adb:26",
+    for s in ["b main.adb:31",
               "run"]:
         yield wait_until_not_busy(d)
         d.send(s)

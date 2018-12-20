@@ -369,15 +369,20 @@ def task_workflow(task_name, workflow, **kwargs):
 
     For instance:
 
+        import GPS
+        import workflows
+        from workflows import task_workflow
+        from workflows.promises import ProcessWrapper
+
         # this is the definition of the workflow
         def my_function(task):
-            # let's pretend this is a process which returns 100 lines
-            p = ProcessWrapper([...])
+            # let's pretend this is a process which returns 10000 lines
+            p = ProcessWrapper(["find", "/"])
             counter = 1
 
             while True:
                 # use this to set the progress counter on the task
-                task.set_progress(counter, 100)
+                task.set_progress(counter, 10000)
 
                 counter += 1
                 line = yield p.wait_until_match('^.+$')
@@ -385,7 +390,7 @@ def task_workflow(task_name, workflow, **kwargs):
                     break
 
         # this creates the task and launches the workflow
-        GPS.workflows.task_workflow("my_task_name", my_function)
+        task_workflow("my_task_name", my_function)
 
     :param task_name: the name to give to the task
     :param workflow: the workflow to launch: this is a function which

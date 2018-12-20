@@ -146,6 +146,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
    Continuation_Line_Pattern : constant Pattern_Matcher := Compile
      ("^ ?>$", Multiple_Lines);
 
+   Is_Quit_Pattern : constant Pattern_Matcher := Compile
+     ("^\s*(q|qui|quit|-gdb-exit)\s*$");
+   --  'qu' can be quit or queue-signal
+
    procedure Breakpoint_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
@@ -388,14 +392,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access Gdb_MI_Debugger;
-      Cmd      : String;
-      Mode     : Command_Type := Hidden) return String is
+     (Debugger    : access Gdb_MI_Debugger;
+      Cmd         : String;
+      Mode        : Command_Type := Hidden;
+      Synchronous : Boolean := True) return String is
    begin
       Debugger.Reset_State;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Output (Cmd, Mode);
+         S   : constant String := Debugger.Send_And_Get_Output
+           (Cmd, Mode, Synchronous);
          Pos : Integer;
       begin
          if Ends_With (S, Prompt_String) then
@@ -536,7 +542,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
    overriding function Value_Of
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String
    is
       use Nodes_Vectors;
 
@@ -547,7 +555,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Language_Debugger_Access (Lang));
 
-      V       : Variable := Debugger.Create_Var (Entity);
+      V       : Variable;
       Matched : Match_Array (0 .. 1);
 
       function Fmt return String;
@@ -820,6 +828,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end Build_Result;
 
    begin
+      if From_API then
+         return Data_Evaluate (Entity);
+      end if;
+
+      V := Debugger.Create_Var (Entity);
+
       if V.Name = "" then
          return "";
       end if;
@@ -1063,7 +1077,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Debugger.Set_Executable (Debugger.Executable, Mode => Visible);
+         Debugger.Set_Executable (Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if
@@ -1272,10 +1286,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_MI_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : Command_Type := Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
 
       Remote_Exec         : constant Virtual_File := To_Remote
         (Executable, Get_Nickname (Debug_Server));
@@ -1283,6 +1295,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
         Index (Remote_Exec.Display_Full_Name, " ") /= 0;
       Full_Name           : constant String :=
         +Remote_Exec.Unix_Style_Full_Name;
+
       No_Such_File_Regexp : constant Pattern_Matcher := Compile
         (Full_Name & ": No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
@@ -1309,30 +1322,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
               (Command & " " & Full_Name);
          end if;
 
-         if Process /= null then
-            Process.Output_Text (Cmd.all & ASCII.LF, Set_Position => True);
-         end if;
+         --  Send the command and wait until the end of it's execution without
+         --  blocking The UI.
 
          declare
-            S      : constant String := Debugger.Send_And_Get_Clean_Output
-              (Cmd.all, Mode => Hidden);
-            Result : Unbounded_String;
+            Output : constant String := Debugger.Send_And_Get_Clean_Output
+              (Cmd.all,
+               Mode        => Visible,
+               Synchronous => False);
          begin
             Free (Cmd);
 
-            if Match (No_Such_File_Regexp, S) /= 0 then
+            if Match (No_Such_File_Regexp, Output) /= 0 then
                raise Executable_Not_Found;
-            end if;
-
-            if Process /= null and then S /= "" then
-               Debugger.Filter_Output (Hidden, S, Result);
-               Process.Output_Text
-                 (To_String (Result) & ASCII.LF,
-                  Set_Position => True);
-
-               --  "file" command doesn't return prompt in answer,
-               --  so add it manually
-               Debugger.Display_Prompt;
             end if;
          end;
       end Launch_Command_And_Output;
@@ -1341,7 +1343,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Process := Convert (Debugger);
 
       Debugger.Executable := Executable;
-      Launch_Command_And_Output ("file");
+
+      --  Send the 'file' command and verify that the specified executable
+      --  actually exists by filtering the command's output.
+
+      Launch_Command_And_Output ("-file-exec-and-symbols");
 
       --  Connect to the remote target if needed
 
@@ -1439,10 +1445,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
    begin
       Debugger.Set_Is_Started (False);
       Debugger.Send ("core " & (+Core_File), Mode => Mode);
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
    end Load_Core_File;
 
    ---------------------
@@ -1471,10 +1473,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
                "-interpreter-exec console ""load""",
                Mode => Mode);
          end if;
-
-         if Mode in Visible_Command then
-            Wait_User_Command (Debugger);
-         end if;
       end if;
    end Load_Executable;
 
@@ -1502,10 +1500,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Debugger.Send
            ("add-symbol-file " & Symbols & " " & Address, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
    end Add_Symbols;
 
    --------------------
@@ -1527,10 +1521,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  processing Process_Terminated
 
       Debugger.Set_Is_Started (True);
-
-      if Mode in Visible_Command then
-         Debugger.Wait_User_Command;
-      end if;
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful
@@ -3768,34 +3758,45 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end loop;
    end List_Breakpoints;
 
-   -----------------------
-   -- Enable_Breakpoint --
-   -----------------------
+   ------------------------
+   -- Enable_Breakpoints --
+   ------------------------
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : Command_Type := Hidden) is
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := (if Enable then
+                                    To_Unbounded_String ("-break-enable")
+                                 else
+                                    To_Unbounded_String ("-break-disable"));
    begin
-      if Enable then
-         Debugger.Send ("-break-enable" & Num'Img, Mode => Mode);
-      else
-         Debugger.Send ("-break-disable" & Num'Img, Mode => Mode);
-      end if;
-   end Enable_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
 
-   -----------------------
-   -- Remove_Breakpoint --
-   -----------------------
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Enable_Breakpoints;
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : Breakpoint_Identifier;
-      Mode     : Command_Type := Hidden) is
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := To_Unbounded_String ("delete");
    begin
-      Debugger.Send ("-break-delete" & Num'Img, Mode => Mode);
-   end Remove_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Remove_Breakpoints;
 
    ---------------------
    -- List_Exceptions --
@@ -4915,9 +4916,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       pragma Unreferenced (Debugger);
    begin
-      return Starts_With (Command, "-gdb-exit")
-        or else Starts_With (Command, "quit")
-        or else Starts_With (Command, "q");
+      return Match (Is_Quit_Pattern, Command);
    end Is_Quit_Command;
 
 end Debugger.Base_Gdb.Gdb_MI;

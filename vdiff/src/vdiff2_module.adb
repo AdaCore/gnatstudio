@@ -271,15 +271,15 @@ package body Vdiff2_Module is
          Filter => Submenu_Filter);
 
       Register_Action
-        (Kernel, "vdiff close all",
-         Command     => new Close_Difference_Command,
-         Description => "Close all the files related to the diff",
+        (Kernel, "vdiff remove difference",
+         Command     => new Remove_Difference_Command,
+         Description => "Remove the current diff block",
          Category    => -"Diff",
          Filter      => Filter);
       Register_Contextual_Menu
         (Kernel,
-         Label  => -"Visual Diff/Close All",
-         Action => "vdiff close all");
+         Label  => -"Visual Diff/Close",
+         Action => "vdiff remove difference");
 
       Register_Action
         (Kernel, "vdiff recompute difference",

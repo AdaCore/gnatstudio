@@ -17,6 +17,7 @@ import os.path
 import re
 import copy
 import gps_utils.gnat_rules
+from xml.sax.saxutils import escape
 
 prev_xml = ""
 
@@ -314,6 +315,42 @@ excluded from CodePeer's analysis."
       <string type="file"/>
     </project_attribute>
 
+    <project_attribute
+      package="CodePeer"
+      name="Pending_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'pending' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'pending' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Not_A_Bug_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'not a bug' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'not a bug' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Bug_Status"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Custom 'bug' status"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Custom message review status for the 'bug' category"
+      list="true">
+      <string/>
+    </project_attribute>
+
     <tool name="CodePeer" package="CodePeer" index="">
       <language>Ada</language>
       <switches columns="2" lines="3">
@@ -331,9 +368,8 @@ SCIL for another architecture" />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-        <check label="GNAT warnings" switch="-gnatwna" column="1"
-               tip="Enable GNAT warnings during SCIL generation" />
-        <check label="Generate CodePeer messages" switch="-gnateC" column="2"
+        <check label="Generate CodePeer messages" switch="-compiler-mode"
+               column="2"
                tip="Generate CodePeer messages in compiler format, without
 creating/updating the database" />
          <spin label="Analysis level" switch="-level" min="0" max="4"
@@ -386,9 +422,7 @@ SCIL for another architecture" />
          <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <check label="GNAT warnings" switch="-gnatwna" column="1"
-                tip="Enable GNAT warnings during SCIL generation" />
-         <check label="Generate CodePeer messages" switch="-gnateC" column="2"
+         <check label="Generate CodePeer messages" switch="-gnateC" column="1"
                 tip="Generate CodePeer messages in compiler format, without
 creating/updating the database" />
        </switches>
@@ -414,6 +448,7 @@ creating/updating the database" />
 
     <target-model name="codepeer-compiler" category="">
        <description>Review code with codepeer in compiler mode</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-d</arg>
@@ -452,6 +487,7 @@ been reanalyzed." />
 
     <target-model name="codepeer_msg_reader" category="">
        <description>Generate codepeer messages</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-d</arg>
@@ -622,6 +658,7 @@ xmlHead = """<?xml version="1.0"?>
   <CODEPEER>
     <target-model name="codepeer" category="">
        <description>Review code with codepeer</description>
+       <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
           <arg>-dbg-on</arg>
@@ -788,7 +825,16 @@ codepeer = os_utils.locate_exec_on_path("codepeer")
 if codepeer:
     root = os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')
     example_root = root + '/share/examples/codepeer'
-    xml_codepeer = xml_codepeer.format(example=example_root, root=root)
+    try:
+        with open(root + '/share/doc/codepeer/help.txt', 'r') as help_file:
+            help_msg = escape(help_file.read())
+    except Exception:
+        help_msg = ''
+
+    xml_codepeer = xml_codepeer.format(example=example_root,
+                                       root=root,
+                                       help=help_msg)
+    xmlHead = xmlHead.format(help=help_msg)
     GPS.parse_xml(xml_codepeer)
     GPS.Hook("project_changed").add(on_project_changed)
     GPS.Hook("project_view_changed").add(on_project_view_changed)

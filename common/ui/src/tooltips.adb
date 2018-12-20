@@ -314,7 +314,7 @@ package body Tooltips is
    -- Is_In_Area --
    ----------------
 
-   function Is_In_Area (Widget  : Gtk_Widget; X, Y : Gint) return Boolean is
+   function Is_In_Area (Widget : Gtk_Widget; X, Y : Gint) return Boolean is
    begin
       return Global_Tooltip.Get_Mapped
         and then Global_Tooltip.Area_Is_Set

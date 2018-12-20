@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+
+with GNAT.Strings; use GNAT.Strings;
 
 with Input_Sources.File;
 
@@ -47,28 +49,31 @@ with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
-with String_Utils;
 
 with BT.Xml.Reader;
+with Build_Command_Utils; use Build_Command_Utils;
+with Build_Configurations; use Build_Configurations;
 with CodePeer.Bridge.Annotations_Readers;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs;
-with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
+with CodePeer.Messages_Reports; use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
-with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
+with CodePeer.Shell_Commands; use CodePeer.Shell_Commands;
 with CodePeer.Single_Message_Review_Dialogs;
-with Commands;                       use Commands;
+with Commands; use Commands;
 with Code_Analysis_GUI;
+with String_Utils; use String_Utils;
 
 package body CodePeer.Module is
 
    use type Code_Analysis.Code_Analysis_Tree;
+   use GNATCOLL.Projects;
 
    Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
    CodePeer_Subdir : constant Filesystem_String := "codepeer";
@@ -174,23 +179,25 @@ package body CodePeer.Module is
       return GPS.Kernel.Messages.Filter_Result;
 
    Output_Directory_Attribute   :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
-   Database_Directory_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
-   Server_URL_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Server_URL");
-   Message_Patterns_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Message_Patterns");
-   Additional_Patterns_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "Additional_Patterns");
-   CWE_Attribute :
-     constant GNATCOLL.Projects.Attribute_Pkg_String :=
-       GNATCOLL.Projects.Build ("CodePeer", "CWE");
+     constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
+   Database_Directory_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Database_Directory");
+   Server_URL_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Server_URL");
+   Message_Patterns_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Message_Patterns");
+   Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
+       Build ("CodePeer", "Additional_Patterns");
+   CWE_Attribute : constant Attribute_Pkg_String :=
+     Build ("CodePeer", "CWE");
+   Switches_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Switches");
+   Pending_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Pending_Status");
+   Not_A_Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Not_A_Bug_Status");
+   Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("CodePeer", "Bug_Status");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -246,16 +253,14 @@ package body CodePeer.Module is
 
          if not Module.Filter_Criteria.Lineages (Message.Lifeage)
            or not Module.Filter_Criteria.Rankings (Message.Ranking)
-           or not Module.Filter_Criteria.Statuses (Message.Status)
+           or not Module.Filter_Criteria.Statuses (Message.Status.Id)
          then
             return False;
          end if;
 
          --  Category of the message should be selected
 
-         if Module.Filter_Criteria.Categories.Contains
-           (Message.Category)
-         then
+         if Module.Filter_Criteria.Categories.Contains (Message.Category) then
             return True;
          end if;
 
@@ -327,6 +332,33 @@ package body CodePeer.Module is
       end if;
    end Finalize;
 
+   -----------------------
+   -- Set_Review_Action --
+   -----------------------
+
+   procedure Set_Review_Action (Message : Message_Access) is
+      use Code_Analysis_GUI;
+   begin
+      Module.Review_Command.Ref;
+      Message.Set_Action
+        (new GPS.Editors.Line_Information.Line_Information_Record'
+           (Text               => Null_Unbounded_String,
+            Tooltip_Text       => To_Unbounded_String
+              (if Message.Status.Category = Uncategorized
+               then "Manual review"
+               else Image (Message.Status) & ASCII.LF &
+                 "Update manual review"),
+            Image              => To_Unbounded_String
+              (case Message.Status.Category is
+               when Uncategorized => Grey_Analysis_Cst,
+               when Pending       => Purple_Analysis_Cst,
+               when Bug           => Red_Analysis_Cst,
+               when Not_A_Bug     => Blue_Analysis_Cst),
+            Message            =>
+              Create (GPS.Kernel.Messages.Message_Access (Message)),
+            Associated_Command => Module.Review_Command));
+   end Set_Review_Action;
+
    -----------------------------
    -- Create_CodePeer_Message --
    -----------------------------
@@ -362,7 +394,7 @@ package body CodePeer.Module is
          Category        => Category,
          Is_Check        => Is_Check,
          Ranking         => Ranking,
-         Status          => Uncategorized,
+         Status          => Uncategorized_Status,
          Status_Editable => True,
          Text            => To_Unbounded_String (Text),
          Audit_Loaded    => False,
@@ -373,7 +405,8 @@ package body CodePeer.Module is
            Project.Has_Attribute (CWE_Attribute)
              and then Ada.Characters.Handling.To_Lower
                (Project.Attribute_Value (CWE_Attribute)) = "true",
-         Removed_Color   => Module.Removed_Message_Color);
+         Removed_Color   => Module.Removed_Message_Color,
+         Show_Msg_Id     => Module.Show_Msg_Id.Get_Pref);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
 
       function Get_Message_Importance_From_Ranking
@@ -420,18 +453,7 @@ package body CodePeer.Module is
          Message.Set_Highlighting (Style);
       end if;
 
-      Module.Review_Command.Ref;
-      Message.Set_Action
-        (new GPS.Editors.Line_Information.Line_Information_Record'
-           (Text               => Null_Unbounded_String,
-            Tooltip_Text       => To_Unbounded_String
-              ("Review message"),
-            Image              => To_Unbounded_String
-              (Code_Analysis_GUI.Post_Analysis_Cst),
-            Message            =>
-              Create (GPS.Kernel.Messages.Message_Access (Message)),
-            Associated_Command =>
-              Module.Review_Command));
+      Set_Review_Action (Message);
 
       if From_File /= No_File then
          declare
@@ -544,10 +566,23 @@ package body CodePeer.Module is
       Force        : Boolean;
       Build_Target : String)
    is
-      Project : constant Project_Type := Get_Project (Module.Kernel);
+      Project  : constant Project_Type := Get_Project (Module.Kernel);
+      Switches : String_List_Access;
+      Builder  : constant Builder_Context := Builder_Context
+        (Module.Kernel.Module (Builder_Context_Record'Tag));
+
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel_Handle (Module.Kernel));
       pragma Unreferenced (Ensure_Build_Mode);
+
    begin
+      if Project.Has_Attribute (Switches_Attribute) then
+         Switches := Project.Attribute_Value (Switches_Attribute);
+         Set_Project_Switches
+           (Get_Target_From_Name (Builder.Registry, Build_Target),
+            To_String (Switches.all));
+         Free (Switches);
+      end if;
+
       Module.Action := Load_UI;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),
@@ -1038,8 +1073,6 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Item);
 
-      --  use type Code_Analysis.File_Access;
-      --  ??? Uncomment this line after I120-013 is be fixed
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
@@ -1276,14 +1309,22 @@ package body CodePeer.Module is
 
    procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context) is
+      Context : Module_Context)
+   is
+      Messages : constant CodePeer.Message_Vectors.Vector :=
+        CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
+           (Item.all).Get_Messages;
+
    begin
-      CodePeer.Module.Bridge.Add_Audit_Record
-        (Context.Module,
-         CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
-           (Item.all).Get_Messages);
+      CodePeer.Module.Bridge.Add_Audit_Record (Context.Module, Messages);
       Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
+
+      --  Update review icon and tooltip for reviewed messages
+
+      for Message of Messages loop
+         Set_Review_Action (Message);
+      end loop;
 
    exception
       when E : others =>
@@ -1299,8 +1340,42 @@ package body CodePeer.Module is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
+
+      procedure Add_Statuses
+        (Attribute : Attribute_Pkg_List; Category : Audit_Status_Category);
+      --  Add the statuses defined by this Attribute, in the given Category.
+
+      ------------------
+      -- Add_Statuses --
+      ------------------
+
+      procedure Add_Statuses
+        (Attribute : Attribute_Pkg_List; Category : Audit_Status_Category)
+      is
+         Project  : constant Project_Type := Get_Project (Kernel);
+         Statuses : String_List_Access;
+      begin
+         if Project.Has_Attribute (Attribute) then
+            Statuses := Project.Attribute_Value (Attribute);
+
+            for Status of Statuses.all loop
+               Add_Audit_Status (Status.all, Category);
+            end loop;
+
+            Free (Statuses);
+         end if;
+      end Add_Statuses;
+
    begin
       Module.Listener.Set_Cleanup_Mode (True);
+
+      --  Remove CodePeer report window if still around to avoid keeping
+      --  reference to an old project data structure.
+
+      if Module.Report_Subwindow /= null then
+         Module.Report_Subwindow.Destroy;
+         Module.Report_Subwindow := null;
+      end if;
 
       --  Remove all messages of all categories starting from
       --  Codepeer_Category_Prefix to be sure that all possible categories are
@@ -1313,6 +1388,22 @@ package body CodePeer.Module is
       BT.Xml.Reader.Clear;
 
       Module.Listener.Set_Cleanup_Mode (False);
+
+      --  Reset audit statuses and register predefined ones
+
+      Audit_Statuses.Clear;
+      Add_Audit_Status ("Uncategorized", Uncategorized);
+      Add_Audit_Status ("Pending", Pending);
+      Add_Audit_Status ("Not a bug", Not_A_Bug);
+      Add_Audit_Status ("False positive", Not_A_Bug);
+      Add_Audit_Status ("Intentional", Not_A_Bug);
+      Add_Audit_Status ("Bug", Bug);
+
+      --  Then register the project specific ones, if any
+
+      Add_Statuses (Pending_Status_Attribute, Pending);
+      Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
+      Add_Statuses (Bug_Status_Attribute, Bug);
    end Execute;
 
    ----------------------
@@ -1367,7 +1458,7 @@ package body CodePeer.Module is
          Input_Sources.File.Open (+File.Full_Name, Input);
          Reader.Parse (Input, Self.Messages);
          Input_Sources.File.Close (Input);
-         Module.Review_Messages (Messages);
+         Module.Review_Messages (Messages, Need_Reload => False);
 
       else
          Self.Kernel.Insert
@@ -1382,8 +1473,9 @@ package body CodePeer.Module is
    ---------------------
 
    procedure Review_Messages
-     (Self     : access Module_Id_Record'Class;
-      Messages : CodePeer.Message_Vectors.Vector)
+     (Self        : access Module_Id_Record'Class;
+      Messages    : CodePeer.Message_Vectors.Vector;
+      Need_Reload : Boolean)
    is
       use type Ada.Containers.Count_Type;
 
@@ -1391,21 +1483,25 @@ package body CodePeer.Module is
         CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
       Multiple_Review :
         CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
-      Loaded        : Boolean := False;
+      Loaded          : Boolean := not Need_Reload;
 
    begin
-      --  Check that all messages has loaded audit trail.
+      --  Check that all messages have loaded audit trail.
+      --  In client/server mode, always reload since another user might have
+      --  posted a manual analysis under another session.
 
-      for Message of Messages loop
-         Loaded := Message.Audit_Loaded;
-
-         exit when not Loaded;
-      end loop;
+      if Need_Reload
+        and then Codepeer_Server_URL (Get_Project (Module.Kernel)) = ""
+      then
+         for Message of Messages loop
+            Loaded := Message.Audit_Loaded;
+            exit when not Loaded;
+         end loop;
+      end if;
 
       if not Loaded then
          CodePeer.Module.Bridge.Load_Audit_Trail
            (CodePeer_Module_Id (Self), Messages);
-
       else
          --  Create and show review dialog
 
@@ -1557,12 +1653,13 @@ package body CodePeer.Module is
       --  and high priority messages.
 
       Module.Message_Colors (CodePeer.High) := High_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Medium) := Medium_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Low) := Low_Messages_Highlight;
-
       Module.Message_Colors (CodePeer.Info) := Info_Messages_Highlight;
+
+      --  Suppressed is no longer used in recent versions, so reuse Info
+
+      Module.Message_Colors (CodePeer.Suppressed) := Info_Messages_Highlight;
 
       --  Create a preference for importing annotations and backtraces
 
@@ -1585,17 +1682,16 @@ package body CodePeer.Module is
            Doc     => -("Import and display CodePeer backtraces"),
            Default => True);
 
-      --  Create CodePeer own preferences for CodePeer specific messages
-
-      Module.Message_Colors (CodePeer.Suppressed) :=
+      Module.Show_Msg_Id :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
-           Name    => "Messages-Suppressed-Background",
-           Label   => -"Color for 'suppressed' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of suppressed"
-             & " messages"),
-           Default => "#EFEFEF");
+           Name    => "CodePeer-Show-Msg-Id",
+           Label   => -"Show CodePeer Message IDs",
+           Path    => -"CodePeer:General",
+           Doc     => -("Show message IDs in Locations view"),
+           Default => False);
+
+      --  Create CodePeer own preferences for CodePeer specific messages
 
       Module.Removed_Message_Color :=
         Default_Preferences.Create
@@ -1611,14 +1707,9 @@ package body CodePeer.Module is
 
       Module.Annotations_Style := Editor_Code_Annotations_Style;
 
-      Module.Message_Styles (CodePeer.High) :=
-        Messages_Styles (High);
-
-      Module.Message_Styles (CodePeer.Medium) :=
-        Messages_Styles (Medium);
-
-      Module.Message_Styles (CodePeer.Low) :=
-        Messages_Styles (Low);
+      Module.Message_Styles (CodePeer.High) := Messages_Styles (High);
+      Module.Message_Styles (CodePeer.Medium) := Messages_Styles (Medium);
+      Module.Message_Styles (CodePeer.Low) := Messages_Styles (Low);
 
       Initialize_Style
         (Module.Message_Styles (CodePeer.Info),
@@ -1689,47 +1780,15 @@ package body CodePeer.Module is
               Force       => False,
               Open_Buffer => False,
               Open_View   => False);
-         Location : GPS.Editors.Editor_Location'Class :=
+         Location : constant GPS.Editors.Editor_Location'Class :=
            Buffer.New_Location
              (Line_Information (Context), Column_Information (Context));
 
       begin
-         --  CodePeer associates values with position close to start of
-         --  identifier. It can be:
-         --   - position of first character of direct name
-         --   - position of dot character in expanded name
-         --   - position of apostrophe character in attribute reference
-
-         while Values.Is_Empty loop
-            Values :=
-              BT.Xml.Reader.Get_Srcpos_Vn_Values
-                (String (File.Full_Name.all),
-                 (Location.Line, Natural (Location.Column)));
-
-            exit when not String_Utils.Is_Entity_Letter
-              (Wide_Wide_Character'Val (Location.Get_Char))
-                 and Wide_Wide_Character'Val (Location.Get_Char) /= '''
-                 and Wide_Wide_Character'Val (Location.Get_Char) /= '.';
-
-            exit when Location.Offset = 0;
-
-            Location := Location.Forward_Char (-1);
-         end loop;
-
-         --  CodePeer associates values of indexed component at position after
-         --  open bracket character.
-
-         Location := Location.Forward_Word (1);
-
-         if Values.Is_Empty
-           and then Wide_Wide_Character'Val (Location.Get_Char) = '('
-         then
-            Location := Location.Forward_Char (1);
-            Values :=
-              BT.Xml.Reader.Get_Srcpos_Vn_Values
-                (String (File.Full_Name.all),
-                 (Location.Line, Natural (Location.Column)));
-         end if;
+         Values :=
+           BT.Xml.Reader.Get_Srcpos_Vn_Values
+             (String (File.Full_Name.all),
+              (Location.Line, Natural (Location.Column)));
       end;
 
       if Values.Is_Empty then

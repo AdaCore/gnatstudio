@@ -38,7 +38,7 @@ package body CodePeer.Module.Commands is
       end loop;
 
       if not Messages.Is_Empty then
-         Self.Module.Review_Messages (Messages);
+         Self.Module.Review_Messages (Messages, Need_Reload => True);
       end if;
 
       return Standard.Commands.Success;

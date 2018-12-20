@@ -8,7 +8,7 @@ from gi.repository import Gtk
 from asserts import gps_assert, gps_not_null
 from tree import Tree
 from workflows.promises import timeout, wait_idle, modal_dialog, \
-    idle_modal_dialog, wait_tasks
+    idle_modal_dialog, wait_tasks, hook
 from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
     get_button_from_label, get_widgets_by_type, select_combo, \
     get_window_by_prefix, get_window_by_title
@@ -972,6 +972,11 @@ class Debug_Run_Dialog(Dialog):
         check = [w for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
                  if w.get_label().startswith("Use exec dir")][0]
         check.set_active(value)
+
+    def ok(self):
+        get_stock_button(self.dialogs, Gtk.STOCK_OK).clicked()
+        yield wait_idle()
+        yield hook('debuggee_started')
 
 
 ##########################

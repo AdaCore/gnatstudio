@@ -90,6 +90,10 @@ private
       Runtime     : GNATCOLL.VFS.File_Array_Access;
       Source_Dirs : GNATCOLL.VFS.File_Array_Access;
 
+      Total_Count : Integer := -1;
+      --  Cached value for the "total progress" count.
+      --  -1 means that the cache is not initialized.
+
       Data : Search_Data;
 
       Seen : GPS.Kernel.File_Sets.Set;

@@ -3469,7 +3469,7 @@ package body Src_Editor_Buffer.Line_Information is
          return False;
       end if;
 
-      Editable_Line_Start :=  Get_Editable_Line (Buffer, Line_Start);
+      Editable_Line_Start := Get_Editable_Line (Buffer, Line_Start);
       Editable_Line_End   := Get_Editable_Line (Buffer, Line_End);
 
       --  Trivial cases indicating the presence of special lines

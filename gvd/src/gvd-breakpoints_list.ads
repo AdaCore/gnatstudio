@@ -23,7 +23,6 @@ with GVD.Types;              use GVD.Types;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Markers;            use GPS.Markers;
-with Ada.Containers.Doubly_Linked_Lists;
 
 package GVD.Breakpoints_List is
 
@@ -32,12 +31,6 @@ package GVD.Breakpoints_List is
 
    type Breakpoint_Disposition is (Delete, Disable, Keep);
    --  What to do with a breakpoint when it is reached.
-
-   package List_Breakpoint_Identifiers is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   use List_Breakpoint_Identifiers;
-   --  This type is used when doing the same debugger action on a list of
-   --  breakpoints (delete/enable/disable).
 
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -56,7 +49,7 @@ package GVD.Breakpoints_List is
 
    procedure Set_Breakpoints_State
      (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : List_Breakpoint_Identifiers.List;
+      List   : Breakpoint_Identifier_Lists.List;
       State  : Boolean);
    --  Use State to set the state of each breakpoint of the list.
 
@@ -85,7 +78,7 @@ package GVD.Breakpoints_List is
 
    procedure Delete_Multiple_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : List_Breakpoint_Identifiers.List);
+      List   : Breakpoint_Identifier_Lists.List);
    --  Go through the list and delete the breakpoints. The list is not freed
    --  by this procedure.
 

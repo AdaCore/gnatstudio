@@ -1,16 +1,5 @@
 procedure Main is
 
-   task Count_Down;
-
-   task body Count_Down is
-      X : Integer := 10_000;
-   begin
-      while X > 0 loop
-         X := X - 1;
-         delay 1.0;
-      end loop;
-   end Count_Down;
-
    task type Worker is
       entry Start;
    end Worker;
@@ -18,9 +7,26 @@ procedure Main is
    task body Worker is
    begin
       accept Start;
+      accept Start;
    end Worker;
 
    Workers : array (1 .. 4) of Worker;
+
+   task Count_Down is
+      entry Start;
+   end Count_Down;
+
+   task body Count_Down is
+   begin
+      accept Start;
+      for J of Workers loop
+         J.Start;
+         delay 1.0;
+      end loop;
+      accept Start;
+   end Count_Down;
+
 begin
-   null;
-end Main;  --  Stop debuger here
+   Count_Down.Start;
+   Count_Down.Start;  --  Stop debuger here
+end Main;

@@ -41,7 +41,8 @@ package GNAThub.Messages is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
-      Entity    : Entity_Data := No_Entity_Data);
+      Entity    : Entity_Data := No_Entity_Data;
+      Category  : String := "");
    --  Initialize instance of GNAThub's message.
 
    function Get_Severity (Self : GNAThub_Message) return Severity_Access;

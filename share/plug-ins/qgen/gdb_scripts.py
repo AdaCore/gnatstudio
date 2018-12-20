@@ -136,12 +136,16 @@ class Watchpoint_Add (gdb.Command):
         symbol = args[0].split('/')  # Remove the "context/" part
         context = symbol[0]
         symbol = symbol[-1].strip()
-        if len(args) == 2:
-            # If there is not watchdog for that context, create one
+        numargs = len(args)
+        if numargs >= 2:
+            # If there is no watchdog for that context, create one
             if not watchdog_dict.get(context):
                 watchdog_dict[context] = Watchpoint_Watchdog(
                     context, gdb.BP_BREAKPOINT)
-
+                if numargs == 3:
+                    # The watchpoint cleaner is only needed in C
+                    Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
+                                       watchdog_dict[context])
             wp = watchdog_dict[context].watchpoint_dict.get(symbol)
             if not wp:
                 try:
@@ -158,6 +162,7 @@ class Watchpoint_Add (gdb.Command):
                 # If the watchpoint already exists just update the value
                 wp[0].value = args[1]
                 Utils.set_variable(symbol, args[1])
+
 
 Watchpoint_Add()
 
@@ -190,6 +195,7 @@ class Watchpoint_Delete (gdb.Command):
                             "delete %s" % watchdog_dict[context].number)
                         del watchdog_dict[context]
 
+
 Watchpoint_Delete()
 
 
@@ -209,6 +215,7 @@ class Qgen_Delete_Logpoint(gdb.Command):
 
         if bp and bp.symbols.get(symbol) is not None:
             del bp.symbols[symbol]
+
 
 Qgen_Delete_Logpoint()
 
@@ -238,7 +245,27 @@ class Qgen_Set_Logpoint(gdb.Command):
         # symbol => (blockname, filename, model_name)
         bp.symbols[symbol] = (args[2].rsplit('/', 1)[0], args[3], args[5])
 
+
 Qgen_Set_Logpoint()
+
+
+class Watchpoint_Cleaner (gdb.Breakpoint):
+    def __init__(self, spec, ty, watchdog):
+        super(Watchpoint_Cleaner, self).__init__(spec, ty, internal=True)
+        # This breakpoint is associated to a watchdog
+        # It it associated with the end of a function and cleans
+        # all watchpoints from the scope to avoid erros.
+        self.watchdog = watchdog
+
+    def stop(self):
+        for symbol, wp in self.watchdog.watchpoint_dict.iteritems():
+            self.watchdog.watchpoint_dict[symbol] = wp.value
+            # We cannot delete the watchpoint here, it needs
+            # to delete itself, so we only mark it as
+            # out of scope
+            wp.out_of_scope = True
+
+        return False
 
 
 class Watchpoint_Watchdog (gdb.Breakpoint):
@@ -258,7 +285,11 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
 
             # The watchpoint has been deleted, add it back
             else:
-                self.watchpoint_dict[symbol].delete()
+                try:
+                    self.watchpoint_dict[symbol].delete()
+                except RuntimeError:
+                    # If the watchpoint is invalid it raises an exception
+                    pass
                 del self.watchpoint_dict[symbol]
                 self.watchpoint_dict[symbol] = Qgen_Watchpoint(
                     symbol, wp.value, gdb.BP_WATCHPOINT)
@@ -341,11 +372,16 @@ class Qgen_Watchpoint (gdb.Breakpoint):
         super(Qgen_Watchpoint, self).__init__(spec, ty, internal=True)
         self.var = spec
         self.value = value
+        self.silent = True
+        self.out_of_scope = False
 
     def stop(self):
-        try:
-            Utils.set_variable(self.var, self.value)
-            gdb.write("{0} set to {1}\n".format(self.var, self.value))
-        except:
-            pass
-        return False
+        if self.out_of_scope:
+            self.delete()
+        else:
+            try:
+                Utils.set_variable(self.var, self.value)
+                gdb.write("{0} set to {1}\n".format(self.var, self.value))
+            except Exception:
+                pass
+            return False

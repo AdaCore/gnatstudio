@@ -1,0 +1,21 @@
+package body Aaa is
+
+   ---------
+   -- Bbb --
+   ---------
+
+   procedure Bbb is
+   begin
+      --  Generated stub: replace with real body!
+      pragma Compile_Time_Warning (Standard.True, "Bbb unimplemented");
+      raise Program_Error with "Unimplemented procedure Bbb";
+   end Bbb;
+
+   ---------
+   -- Ccc --
+   ---------
+
+   procedure Ccc
+   is separate;
+
+end Aaa;

@@ -55,9 +55,10 @@ package Debugger.LLDB is
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access LLDB_Debugger;
-      Cmd      : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access LLDB_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String;
 
    overriding function Highlighting_Pattern
@@ -109,7 +110,9 @@ package Debugger.LLDB is
    overriding function Value_Of
      (Debugger : access LLDB_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String;
 
    overriding function Print_Value_Cmd
      (Debugger : access LLDB_Debugger;
@@ -138,8 +141,7 @@ package Debugger.LLDB is
 
    overriding procedure Set_Executable
      (Debugger   : access LLDB_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Executable : GNATCOLL.VFS.Virtual_File);
 
    overriding function Get_Executable
      (Debugger : access LLDB_Debugger)
@@ -306,16 +308,16 @@ package Debugger.LLDB is
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Remove_Breakpoint_At
      (Debugger : not null access LLDB_Debugger;

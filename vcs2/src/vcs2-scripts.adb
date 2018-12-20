@@ -721,51 +721,47 @@ package body VCS2.Scripts is
             Visitor.On_Success (Kernel);
          end;
 
-      elsif Command = "history_lines" then
+      elsif Command = "history_line" then
          declare
-            List  : constant List_Instance'Class := Data.Nth_Arg (2);
-            Count : constant Natural := List.Number_Of_Arguments;
+            Line : constant List_Instance'Class := Data.Nth_Arg (2);
          begin
-            for L in 1 .. Count loop
-               declare
-                  Line    : constant List_Instance'Class := List.Nth_Arg (L);
-                  Parents : constant List_Instance'Class := Line.Nth_Arg (5);
-                  Names   : constant List_Instance'Class := Line.Nth_Arg (6);
-                  P_Count : constant Natural := Parents.Number_Of_Arguments;
-                  N_Count : constant Natural := Names.Number_Of_Arguments;
-                  P       : GPS_Unbounded_String_Vectors.Vector;
-                  N       : Commit_Names_Access;
-               begin
-                  if P_Count /= 0 then
-                     for A in 1 .. P_Count loop
-                        P.Append (Parents.Nth_Arg (A));
-                     end loop;
-                  end if;
+            declare
+               Parents : constant List_Instance'Class := Line.Nth_Arg (5);
+               Names   : constant List_Instance'Class := Line.Nth_Arg (6);
+               P_Count : constant Natural := Parents.Number_Of_Arguments;
+               N_Count : constant Natural := Names.Number_Of_Arguments;
+               P       : GPS_Unbounded_String_Vectors.Vector;
+               N       : Commit_Names_Access;
+            begin
+               if P_Count /= 0 then
+                  for A in 1 .. P_Count loop
+                     P.Append (Parents.Nth_Arg (A));
+                  end loop;
+               end if;
 
-                  if N_Count /= 0 then
-                     N := new Commit_Names (1 .. N_Count);
-                     for A in 1 .. N_Count loop
-                        declare
-                           B : constant List_Instance'Class :=
-                              Names.Nth_Arg (A);
-                        begin
-                           N (A).Name := B.Nth_Arg (1);
-                           N (A).Kind := Name_Kind'Val (B.Nth_Arg (2));
-                        end;
-                     end loop;
-                  end if;
+               if N_Count /= 0 then
+                  N := new Commit_Names (1 .. N_Count);
+                  for A in 1 .. N_Count loop
+                     declare
+                        B : constant List_Instance'Class :=
+                          Names.Nth_Arg (A);
+                     begin
+                        N (A).Name := B.Nth_Arg (1);
+                        N (A).Kind := Name_Kind'Val (B.Nth_Arg (2));
+                     end;
+                  end loop;
+               end if;
 
-                  Visitor.On_History_Line
-                    (ID       => Line.Nth_Arg (1),
-                     Author   => Line.Nth_Arg (2),
-                     Date     => Line.Nth_Arg (3),
-                     Subject  => Line.Nth_Arg (4),
-                     Parents  => P,
-                     Names    => N,
-                     Flags    => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
-                  Free (N);
-               end;
-            end loop;
+               Visitor.On_History_Line
+                 (ID       => Line.Nth_Arg (1),
+                  Author   => Line.Nth_Arg (2),
+                  Date     => Line.Nth_Arg (3),
+                  Subject  => Line.Nth_Arg (4),
+                  Parents  => P,
+                  Names    => N,
+                  Flags    => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
+               Free (N);
+            end;
          end;
 
       elsif Command = "set_details" then
@@ -1016,8 +1012,8 @@ package body VCS2.Scripts is
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("history_lines",
-         Params        => (2 => Param ("lines")),
+        ("history_line",
+         Params        => (2 => Param ("line")),
          Class         => Task_Visitor,
          Handler       => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command

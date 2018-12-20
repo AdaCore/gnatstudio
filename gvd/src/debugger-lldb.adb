@@ -398,7 +398,7 @@ package body Debugger.LLDB is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Debugger.Set_Executable (Debugger.Executable, Mode => Visible);
+         Debugger.Set_Executable (Debugger.Executable);
 
       else
          --  Connect to the target, if needed. This is normally done by
@@ -554,15 +554,17 @@ package body Debugger.LLDB is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access LLDB_Debugger;
-      Cmd      : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access LLDB_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String is
    begin
       Debugger.Reset_State;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Output (Cmd, Mode);
+         S   : constant String := Debugger.Send_And_Get_Output
+           (Cmd, Mode, Synchronous);
          Pos : Integer;
       begin
          if Ends_With (S, Prompt_String) then
@@ -852,9 +854,12 @@ package body Debugger.LLDB is
    overriding function Value_Of
      (Debugger : access LLDB_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format)
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
       return String
    is
+      pragma Unreferenced (From_API);
+
       S   : constant String := Debugger.Send_And_Get_Clean_Output
         ((if Is_Expression (Entity)
           then "expression "
@@ -939,11 +944,8 @@ package body Debugger.LLDB is
 
    overriding procedure Set_Executable
      (Debugger   : access LLDB_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
-
       Remote_Exec         : constant Virtual_File := To_Remote
         (Executable, Get_Nickname (Debug_Server));
       Full_Name           : constant String :=
@@ -2076,35 +2078,46 @@ package body Debugger.LLDB is
          Mode => Mode);
    end Break_Regexp;
 
-   -----------------------
-   -- Enable_Breakpoint --
-   -----------------------
+   ------------------------
+   -- Enable_Breakpoints --
+   ------------------------
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
-   begin
-      if Enable then
-         Debugger.Send ("breakpoint enable" & Num'Img, Mode => Mode);
-      else
-         Debugger.Send ("breakpoint disable" & Num'Img, Mode => Mode);
-      end if;
-   end Enable_Breakpoint;
-
-   -----------------------
-   -- Remove_Breakpoint --
-   -----------------------
-
-   overriding procedure Remove_Breakpoint
-     (Debugger : access LLDB_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
+      Cmd : Unbounded_String :=
+              (if Enable then
+                  To_Unbounded_String ("breakpoint enable")
+               else
+                  To_Unbounded_String ("breakpoint disable"));
    begin
-      Debugger.Send ("breakpoint delete" & Num'Img, Mode => Mode);
-   end Remove_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Enable_Breakpoints;
+
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access LLDB_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      Cmd : Unbounded_String := To_Unbounded_String ("breakpoint delete");
+   begin
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Remove_Breakpoints;
 
    --------------------------
    -- Remove_Breakpoint_At --

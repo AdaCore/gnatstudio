@@ -40,6 +40,7 @@ with GVD.Types;               use GVD.Types;
 with GVD_Module;              use GVD_Module;
 with Interactive_Consoles;    use Interactive_Consoles;
 with GVD.Consoles;            use GVD.Consoles;
+with Process_Proxies;
 
 package body GVD.Scripts is
 
@@ -278,7 +279,8 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          --   ??? Should return None if variable is undefined
          Data.Set_Return_Value
-           (Process.Debugger.Value_Of (Entity => Data.Nth_Arg (2)));
+           (Process.Debugger.Value_Of
+              (Entity => Data.Nth_Arg (2), From_API => True));
 
       elsif Command = "set_variable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -410,6 +412,7 @@ package body GVD.Scripts is
                Remote_Target   => Remote_Target,
                Remote_Protocol => Remote_Protocol,
                Load_Executable => Load_Executable);
+
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;
@@ -429,7 +432,12 @@ package body GVD.Scripts is
          begin
             Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
             Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-            Process.Debugger.Backtrace (-1, 0, Bt);
+            declare
+               Block : Process_Proxies.Parse_File_Switch
+                 (Process.Debugger.Get_Process) with Unreferenced;
+            begin
+               Process.Debugger.Backtrace (-1, 0, Bt);
+            end;
 
             Data.Set_Return_Value_As_List;
             for Frame of Bt loop
@@ -481,7 +489,12 @@ package body GVD.Scripts is
       elsif Command = "current_frame" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Data.Set_Return_Value (Process.Debugger.Current_Frame);
+         declare
+            Block : Process_Proxies.Parse_File_Switch
+              (Process.Debugger.Get_Process) with Unreferenced;
+         begin
+            Data.Set_Return_Value (Process.Debugger.Current_Frame);
+         end;
 
       elsif Command = "frame_up" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

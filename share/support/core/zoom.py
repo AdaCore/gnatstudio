@@ -12,16 +12,21 @@ and the new text size will be active when GPS is relaunched later on.
 # No user customization below this line
 #############################################################################
 
-from GPS import *
+import GPS
 from gi.repository import Pango
 import gps_utils
 
 
 def zoom_pref(pref, factor, save=True):
-    p = Preference(pref)
+    p = GPS.Preference(pref)
     (font, fg, bg) = p.get().split("@")
     descr = Pango.FontDescription(font)
-    descr.set_size(int(descr.get_size() * factor))
+    new_size = descr.get_size() * factor
+    # Clamp the new size between reasonable values
+    new_size = max(new_size, 6.0 * Pango.SCALE)
+    new_size = min(new_size, 24.0 * Pango.SCALE)
+
+    descr.set_size(int(new_size))
     p.set(descr.to_string() + "@" + fg + "@" + bg, save)
 
 

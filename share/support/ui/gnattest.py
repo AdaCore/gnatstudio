@@ -254,7 +254,7 @@ XML = r"""<?xml version="1.0" ?>
     """place harness packages and project file for the test driver."
     hide_in="wizard library_wizard"
     >
-    <string type="directory" default="gnattest/harness"/>
+    <string type="directory" default=""/>
   </project_attribute>
 
   <project_attribute package="gnattest"

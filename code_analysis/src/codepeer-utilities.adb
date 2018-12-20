@@ -64,7 +64,7 @@ package body CodePeer.Utilities is
                or else not Categories.Intersection (Message.Checks).Is_Empty
                or else not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
            and Lifeages (Message.Lifeage)
-           and Statuses (Message.Status)
+           and Statuses (Message.Status.Id)
          then
             Counts (Message.Ranking).Current :=
               Counts (Message.Ranking).Current + 1;

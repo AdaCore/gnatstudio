@@ -237,7 +237,7 @@ common_light = {
     "annotations": ("DEFAULT", transparent, Rgba(224, 224, 224)),
     'hyperlinks': ("DEFAULT", Rgba(0, 0, 255), transparent),
     'strings': ("DEFAULT", Rgba(206, 123, 0), transparent),
-    'numbers': ("DEFAULT", Rgba(255, 51, 51), transparent),
+    'numbers': ("DEFAULT", Rgba(128, 0, 212), transparent),
     'annotated_comments': ("DEFAULT", Rgba(96, 97, 95), transparent),
     'comments': ("DEFAULT", Rgba(150, 150, 150), transparent),
     'keywords': ("DEFAULT", Rgba(0, 0, 230), transparent),
@@ -297,7 +297,7 @@ common_dark = {
 
     'hyperlinks': ("DEFAULT", Rgba(114, 159, 207), transparent),
     'strings': ("DEFAULT", Rgba(242, 212, 44), transparent),
-    'numbers': ("DEFAULT", Rgba(255, 51, 51), transparent),
+    'numbers': ("DEFAULT", Rgba(66, 180, 0), transparent),
     'annotated_comments': ("DEFAULT", Rgba(96, 97, 95), transparent),
     'comments': ("DEFAULT", Rgba(114, 159, 207), transparent),
     'keywords': ("DEFAULT", Rgba(240, 141, 36), transparent),

@@ -186,7 +186,7 @@ package body Src_Editor_View.Commands is
       View         : constant Source_View := Source_Box.Get_View;
       Buffer       : constant Source_Buffer := Get_Buffer (Source_Box);
       Iter         : Gtk_Text_Iter;
-      Saved_Mark         : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Saved_Mark   : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
       Scrolled     : Gtk_Scrolled_Window;
       Adj          : Gtk_Adjustment;
       Moved        : Boolean;
@@ -219,10 +219,9 @@ package body Src_Editor_View.Commands is
       else
          for Cursor of Get_Cursors (Buffer) loop
             declare
-               Mark     : Gtk_Text_Mark := Get_Mark (Cursor);
-               Horiz_Offset : constant Gint :=
-                 Get_Column_Memory (Cursor);
-               Prevent  : Boolean := False;
+               Mark         : constant Gtk_Text_Mark := Get_Mark (Cursor);
+               Horiz_Offset : constant Gint := Get_Column_Memory (Cursor);
+               Prevent      : Boolean := False;
                Old_Iter     : Gtk_Text_Iter;
             begin
                Buffer.Get_Iter_At_Mark (Iter, Mark);
@@ -238,10 +237,9 @@ package body Src_Editor_View.Commands is
                end if;
 
                if not Prevent then
-                  Buffer.Move_Mark (Mark, Iter);
-
                   if not Extend_Selection then
-                     Mark := Get_Sel_Mark (Cursor);
+                     Buffer.Place_Cursor (Iter);
+                  else
                      Buffer.Move_Mark (Mark, Iter);
                   end if;
 

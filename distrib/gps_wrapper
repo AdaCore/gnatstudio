@@ -69,6 +69,9 @@ save_and_export ()
             GSETTINGS_BACKEND)
                 GSETTINGS_BACKEND=memory
                 ;;
+            DBUS_SESSION_BUS_ADDRESS)
+                DBUS_SESSION_BUS_ADDRESS=null
+                ;;
         esac
 
         eval "value=\"\${$1}\""
@@ -102,6 +105,8 @@ fi
 save_and_export LD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
 
 save_and_export GSETTINGS_BACKEND
+
+save_and_export DBUS_SESSION_BUS_ADDRESS
 
 if [ "$debug" = debug ]; then
    gdb -args "$root/bin/${prog}_exe" "$@"

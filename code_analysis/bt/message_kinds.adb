@@ -18,6 +18,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+
 package body Message_Kinds is
 
    function Is_Suffix (S, Suffix : String) return Boolean;
@@ -39,77 +40,119 @@ package body Message_Kinds is
 
    function CWE_Ids
      (Kind : Message_Kinds.Message_Subkind;
-      Msg  : String := "") return String is
+      Msg  : String := "";
+      HTML : Boolean := False) return String
+   is
+      function To_String (Ids : CWE_Id_Array; HTML : Boolean) return String;
+      --  Add html reference if HTML is True and transform into a string
+
+      function CWE_Image (Id : Positive; HTML : Boolean) return String;
+      --  Return an image of CWE Id, taking into account HTML.
+
+      function Image (Val : Natural) return String;
+      --  Return an image of Val with no leading space.
+
+      function CWE_Image (Id : Positive; HTML : Boolean) return String is
+         S : constant String := Image (Id);
+      begin
+         if HTML then
+            return "<a class=""reference external"" href=""" &
+              "http://cwe.mitre.org/data/definitions/" & S &
+              ".html"">" & S & "</a>";
+         else
+            return S;
+         end if;
+      end CWE_Image;
+
+      function Image (Val : Natural) return String is
+         Result : constant String := Natural'Image (Val);
+      begin
+         return Result (Result'First + 1 .. Result'Last);
+      end Image;
+
+      function To_String (Ids : CWE_Id_Array; HTML : Boolean) return String is
+      begin
+         case Ids'Length is
+            when 0 => return "";
+            when 1 => return CWE_Image (Ids (Ids'First), HTML);
+            when others =>
+               return CWE_Image (Ids (Ids'First), HTML) & "," &
+                 To_String (Ids (Ids'First + 1 .. Ids'Last), HTML);
+         end case;
+      end To_String;
+
+   begin
+      return To_String (CWE_Ids (Kind, Msg), HTML);
+   end CWE_Ids;
+
+   function CWE_Ids
+     (Kind : Message_Kinds.Message_Subkind;
+      Msg  : String := "") return CWE_Id_Array is
    begin
       case Kind is
          when Invalid_Check =>
-            return "457";
+            return (1 => 457);
          when Invalid_Or_Null_Check =>
-            return "476";
+            return (1 => 476);
          when Divide_By_Zero_Check =>
-            return "369";
+            return (1 => 369);
          when Array_Indexing_Check =>
             --  Return only the main id to avoid clutering the output
-            --  "120,124-127,129-131";
-            return "120";
+            --  120,124-127,129-131
+            return (1 => 120);
          when Tag_Check | Type_Variant_Check =>
-            --  "136,137";
-            return "136";
+            --  136,137
+            return (1 => 136);
          when Numeric_Range_Check =>
-            return "682";
+            return (1 => 682);
          when Numeric_Overflow_Check |
               User_Assign_Stm_Check |
               Pre_Assign_Stm_Check |
               Post_Assign_Stm_Check =>
-            --  "190-191";
-            return "190";
-         when XSS_Check =>
-            return "80,81,82,83,84,85,87";
-         when SQL_Injection_Check =>
-            return "89";
+            --  190,191;
+            return (1 => 190);
          when Unlocked_Reentrant_Update_Error |
               Unlocked_Shared_Daemon_Update_Error =>
-            --  "362,366,820";
-            return "362";
+            --  362,366,820
+            return (1 => 362);
          when Mismatched_Locked_Update_Error =>
-            --  "362,366,821";
-            return "821";
+            --  362,366,821
+            return (1 => 821);
          when Dead_Store_Warning |
               Dead_Outparam_Store_Warning |
               Same_Value_Dead_Store_Warning |
               Potentially_Dead_Store_Warning =>
-            return "563";
+            return (1 => 563);
          when Dead_Block_Warning |
               Dead_Edge_Warning |
               Plain_Dead_Edge_Warning |
               Unrepeatable_While_Loop_Warning =>
-            return "561";
+            return (1 => 561);
          when False_Dead_Edge_Warning |
               False_Condition_Dead_Edge_Warning =>
-            return "570";
+            return (1 => 570);
          when True_Dead_Edge_Warning |
               True_Condition_Dead_Edge_Warning =>
-            return "571";
+            return (1 => 571);
          when Infinite_Loop_Warning =>
-            return "835";
+            return (1 => 835);
          when Precondition_Check =>
             if Is_Suffix (Msg, "to be initialized") then
                --  Validity check message
-               return "457";
+               return (1 => 457);
             elsif Is_Suffix (Msg, "/= null") then
                --  Access check message
-               return "476";
+               return (1 => 476);
             else
                --  We cannot differentiate the other cases, so list all
                --  possibilities. ??? Would be good to refine this in
                --  particular now that we propagate check info as part of
                --  preconditions.
-               --  return "120,124-131,136-137,190-191,369,476,682";
-               return "120,136,190,369,476,682";
+               return (120, 136, 190, 369, 476, 682);
             end if;
 
          when others =>
-            return "";
+            return (1 .. 0 => <>);
       end case;
    end CWE_Ids;
 
@@ -120,7 +163,6 @@ package body Message_Kinds is
    begin
       case Kind is
          when Invalid_Check |
-              XSS_Check | SQL_Injection_Check |
               Unlocked_Reentrant_Update_Error |
               Unlocked_Shared_Daemon_Update_Error |
               Mismatched_Locked_Update_Error |
@@ -174,7 +216,7 @@ package body Message_Kinds is
       --  precedence in annotations output relative to range checks and other
       --  checks.
 
-      for C in Check_Kind_Enum'Range loop
+      for C in Check_Subkind loop
          if Original_Checks (C) then
             case C is
                when Precondition_Check =>
@@ -232,7 +274,7 @@ package body Message_Kinds is
       --  - range check/discriminant check/array index check hide overflow
       --  - any check hides validity
 
-      for C in Check_Kind_Enum'Range loop
+      for C in Check_Subkind loop
          if Original_Checks (C) then
             case C is
                when Invalid_Check =>
@@ -484,7 +526,6 @@ package body Message_Kinds is
 
                      if bi <= S'Last
                        and then Found_Dot_Dot
-                       and then (S (bi) = ']' or else S (bi) = ')')
                        and then bi - I > Max_Readable_Set_Length
                      then
                         First := I + Max_Readable_Set_Length / 2;
@@ -515,20 +556,6 @@ package body Message_Kinds is
                   end;
                end if;
 
-            --  If we get here, it is not "[others{...}"
-            --  and it is not a long [ blah .. blah ]
-
-            when 'V' =>
-               --  Check for VN_Set{...}
-               if I + 6 <= S'Last and then S (I .. I + 6) = "VN_Set{" then
-                  --  Replace with "One-of{"
-                  return S (S'First .. I - 1) &
-                         "One-of{" &
-                         Improve_Number_Readability_In_Messages
-                            (S (I + 7 .. S'Last),
-                             For_HTML_Output);
-               end if;
-
             when others =>
                null;
          end case;
@@ -541,86 +568,6 @@ package body Message_Kinds is
    end Improve_Number_Readability_In_Messages;
 
    ------------
-
-   function Is_Warning (Subkind : Message_Subkind) return Boolean is
-   --  Return True if message is not considered a check, which
-   --  means there is no reason to add "requires ..." in front
-   --  of the text of the message.  Also, these messages are
-   --  *not* counted as one of the "check-related" messages.
-   begin
-      return Subkind in Suspicious_Precondition_Subkind
-            or else Subkind = Suspicious_Input_Warning
-            or else Subkind = Suspicious_Constant_Operation_Warning
-            or else Subkind = Unread_In_Out_Parameter_Warning
-            or else Subkind = Unassigned_In_Out_Parameter_Warning
-            or else Subkind = Non_Analyzed_Call_Warning
-            or else Subkind = Procedure_Does_Not_Return_Error
-            or else Subkind = Check_Fails_On_Every_Call_Error
-            or else Subkind = Unknown_Call_Warning
-            or else Subkind in Race_Condition_Subkind
-            or else Subkind in Dead_Store_Subkind
-            or else Subkind in Dead_Control_Flow_Subkind
-            or else Subkind = Dead_Block_Continuation_Warning
-            or else Subkind = Local_Lock_Of_Global_Object
-            or else Subkind in Analyzed_Module_Warning ..
-              Incompletely_Analyzed_Procedure_Warning
-            or else Subkind in External_Message_Subkind;
-   end Is_Warning;
-
-   function Is_Check (Subkind : Message_Subkind) return Boolean is
-   --  Returns True is messages is a check.
-   begin
-      return Subkind in Check_Kind_Enum
-            or else Subkind in Security_Check_Subkind;
-   end Is_Check;
-
-   function Is_Warning_Or_Check (Subkind : Message_Subkind) return Boolean is
-   --  Return True if message is to be counted in the count of
-   --  *all* messages.  This includes race condition messages,
-   --  dead stores, etc.
-   --  NOTE: This *also* includes "informational" messages as
-   --        well as GNAT warnings.
-   --  TBD: The name of this routine is somewhat misleading.
-   begin
-      return Is_Check (Subkind)
-        or else Is_Warning (Subkind);
-   end Is_Warning_Or_Check;
-
-   function Is_Informational (Subkind : Message_Subkind) return Boolean is
-   --  Return True if "Subkind" is an informational message.
-   --  An informational message is NOT counted in the error counts,
-   --  nor is it part of the next/prev chain in the message-window.
-   --  However, it is "printable", and if you click on it, in the
-   --  source window, an informational message will be printed in the
-   --  message window.
-   begin
-      return Subkind = Non_Analyzed_Call_Warning
-            or else Subkind = Unknown_Call_Warning
-            or else Subkind = Dead_Block_Continuation_Warning
-            or else Subkind = Analyzed_Module_Warning
-            or else Subkind = Non_Analyzed_Module_Warning
-            or else Subkind = Non_Analyzed_Procedure_Warning
-            or else Subkind = Incompletely_Analyzed_Procedure_Warning;
-   end Is_Informational;
-
-   function Is_Annotation (Subkind : Message_Subkind) return Boolean is
-   --  true if subkind is in annotation subkinds, or locally_unused_assignment
-   begin
-      return Subkind in Annotation_Subkind
-            or else Subkind = Locally_Unused_Store_Annotation
-            or else Subkind = Unknown_Call_Annotation
-            or else Subkind = Test_Vector_Annotation;
-   end Is_Annotation;
-
-   function Is_Method_Annotation (Subkind : Message_Subkind) return Boolean is
-      --  true if subkind is in annotation subkinds, or
-      --  locally_unused_assignment
-   begin
-      return Subkind in Method_Annotation_Subkind
-        or else Subkind = Locally_Unused_Store_Annotation
-        or else Subkind = Unknown_Call_Annotation
-        or else Subkind = Test_Vector_Annotation;
-   end Is_Method_Annotation;
 
    function Is_Stored_In_DB_Method_Annotation
      (Subkind : Message_Subkind)

@@ -90,7 +90,7 @@
       </shell>
     </action>
     <action name="Exit Manual Proof" category="GNATprove" output="none">
-      <filter language="Ada" shell_lang="python"
+      <filter shell_lang="python"
        shell_cmd="spark2014.manual_proof_started()" />
       <shell
           lang="python">spark2014.exit_ITP("")
@@ -207,6 +207,20 @@
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_adacore_u">
         <title>adacore__u</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_allocators" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/allocators/allocators.gpr"</shell>
+      <shell>Editor.edit "simple_allocator.ads"</shell>
+      <shell>Editor.edit "simple_allocator.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_allocators">
+        <title>allocators</title>
       </menu>
     </submenu>
 

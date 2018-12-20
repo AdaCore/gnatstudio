@@ -49,21 +49,6 @@ project GPS is
    for Object_Dir use Shared'Object_Dir;
    for Exec_Dir use "obj";  --  Not in a subdirectory
 
-   case Shared.Build is
-      --  In the development environment, on UNIX, do not rely on RPATH
-      --  to find the libraries.
-      when "Debug" =>
-         case Shared.OS is
-            when "unix" =>
-               for Run_Path_Origin  use "NO";
-            when "Windows_NT" | "osx" =>
-                null;
-         end case;
-
-      when "Production" =>
-         null;
-   end case;
-
    Processors := external ("PROCESSORS", "1");
 
    package Builder is

@@ -18,6 +18,9 @@
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+pragma Warnings (Off);
+with Ada.Strings.Unbounded.Aux;  use Ada.Strings.Unbounded.Aux;
+pragma Warnings (On);
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
@@ -347,9 +350,9 @@ package body Src_Contexts is
       Display_Matched_Only : Boolean := False)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
-        := (Statements     => Scope = Whole or else Scope = All_But_Comments,
-            Strings        => Scope = Whole
-              or else Scope in Comments_And_Strings .. All_But_Comments,
+        := (Statements     => Scope in Whole | All_But_Comments,
+            Strings        => Scope in Whole
+                              | Comments_And_Strings .. All_But_Comments,
             Mono_Comments  => Scope in Whole .. Comments_And_Strings,
             Multi_Comments => Scope in Whole .. Comments_And_Strings);
       --  Indicates what lexical states are valid, depending on the current
@@ -719,19 +722,22 @@ package body Src_Contexts is
 
       Lang := Get_Language_From_File (Handler, Get_Filename (Box));
 
-      if not Is_Valid_Position
-        (Get_Buffer (Box), Start_Line, Start_Column)
+      if not Is_Valid_Position (Get_Buffer (Box), Start_Line, Start_Column)
       then
          return;
       end if;
 
       declare
-         Buffer : constant String :=
+         Unbounded_Buffer : constant Unbounded_String :=
            Get_Text (Get_Buffer (Box), Start_Line, 1);
+         Buffer           : Big_String_Access;
+         Len              : Natural;
+
       begin
-         Ref := (Buffer'First, Integer (Start_Line), 1, 1);
+         Get_String (Unbounded_Buffer, Buffer, Len);
+         Ref := (1, Integer (Start_Line), 1, 1);
          Scan_Buffer
-           (Buffer,
+           (Buffer (1 .. Len),
             Start_Column,
             Context,
             Callback,
@@ -1006,12 +1012,16 @@ package body Src_Contexts is
 
       if Backward then
          declare
-            Text : constant String :=
+            Buffer : constant Unbounded_String :=
               Get_Text (Editor, Start_Line, 1, End_Line, End_Column);
+            Text   : Big_String_Access;
+            Len    : Natural;
+
          begin
-            Ref := (Text'First, Integer (Start_Line), 1, 1);
+            Get_String (Buffer, Text, Len);
+            Ref := (1, Integer (Start_Line), 1, 1);
             Scan_Buffer
-              (Buffer        => Text,
+              (Buffer        => Text (1 .. Len),
                From          => Start_Column,
                Context       => Context,
                Callback      => Backward_Callback'Unrestricted_Access,
@@ -1058,12 +1068,16 @@ package body Src_Contexts is
          end if;
 
          declare
-            Text : constant String :=
+            Buffer : constant Unbounded_String :=
               Get_Text (Editor, Begin_Line, 1, End_Line, End_Column);
+            Text   : Big_String_Access;
+            Len    : Natural;
+
          begin
-            Ref := (Text'First, Integer (Begin_Line), 1, 1);
+            Get_String (Buffer, Text, Len);
+            Ref := (1, Integer (Begin_Line), 1, 1);
             Scan_Buffer
-              (Buffer        => Text,
+              (Buffer        => Text (1 .. Len),
                From          => Begin_Column,
                Context       => Context,
                Callback      => Stop_At_First_Callback'Unrestricted_Access,
@@ -1094,12 +1108,16 @@ package body Src_Contexts is
             Lexical_State := Statements;
 
             declare
-               Text : constant String :=
+               Buffer : constant Unbounded_String :=
                  Get_Text (Editor, Start_Line, 1, End_Line, End_Column);
+               Text   : Big_String_Access;
+               Len    : Natural;
+
             begin
-               Ref := (Text'First, Integer (Start_Line), 1, 1);
+               Get_String (Buffer, Text, Len);
+               Ref := (1, Integer (Start_Line), 1, 1);
                Scan_Buffer
-                 (Text,
+                 (Text (1 .. Len),
                   Start_Column,
                   Context,
                   From_Beginning_Callback'Unrestricted_Access, Scope,
@@ -1732,8 +1750,8 @@ package body Src_Contexts is
          end;
 
          declare
-            Text : constant String := Buffer.Get_Text
-              (Begin_Line, Begin_Column, End_Line, End_Column);
+            Text : constant String := To_String (Buffer.Get_Text
+              (Begin_Line, Begin_Column, End_Line, End_Column));
             Ref          : constant Buffer_Position :=
               (Text'First, Integer (Begin_Line), Begin_Column,
                Visible_Column_Type (Begin_Column));
@@ -2351,12 +2369,12 @@ package body Src_Contexts is
                   Replacement.Replacement_Text (M, ""));
             else
                declare
-                  Text : constant String := Get_Text
+                  Text : constant String := To_String (Get_Text
                     (Buffer,
                      Editable_Line_Type (M.Start.Line),
                      M.Start.Column,
                      Editable_Line_Type (M.Finish.Line),
-                     M.Finish.Column + 1);
+                     M.Finish.Column + 1));
                begin
                   Replace_Slice
                     (Buffer,
@@ -2457,11 +2475,11 @@ package body Src_Contexts is
                  (if Is_Empty_Match (Context.Current) then
                      ""
                   else
-                     Editor.Get_Buffer.Get_Text
+                     To_String (Editor.Get_Buffer.Get_Text
                        (Editable_Line_Type (Context.Current.Start.Line),
                         Context.Current.Start.Column,
                         Editable_Line_Type (Context.Current.Finish.Line),
-                        Context.Current.Finish.Column + 1));
+                        Context.Current.Finish.Column + 1)));
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text

@@ -157,8 +157,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
       -- Process_Audit --
       -------------------
 
-      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor)
-      is
+      procedure Process_Audit (Position : CodePeer.Audit_Vectors.Cursor) is
          Audit : constant CodePeer.Audit_Record_Access :=
            CodePeer.Audit_Vectors.Element (Position);
       begin
@@ -189,7 +188,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
 
       Self.Message := Message;
 
-      --  Messages view and underling model
+      --  Messages view and underlying model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
@@ -250,7 +249,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Set_All_And_Clear
            (Store, Iter,
             (Messages_Model_Ranking_Column  =>
-                 As_String (Image (Message.Ranking)),
+               As_String (Image (Message.Ranking)),
              Messages_Model_Status_Column   =>
                As_String (Image (Message.Status)),
              Messages_Model_Location_Column =>
@@ -268,7 +267,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 2, 3);
 
-         Self.New_Status := Create_Status_Combo_Box (Message.Status);
+         Self.New_Status := Create_Status_Combo_Box
+           (To_String (Message.Status.Name));
          Table.Attach (Self.New_Status, 1, 2, 2, 3);
 
          --  "Approved by" entry
@@ -288,7 +288,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Gtk.Scrolled_Window.Gtk_New (Scrolled);
          Scrolled.Set_Policy
            (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-         Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+         Self.Get_Content_Area.Pack_Start (Scrolled, True, True);
 
          Gtk.Text_View.Gtk_New (Text_View);
          Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
@@ -297,7 +297,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Self.Comment_Buffer := Text_View.Get_Buffer;
       end if;
 
-      --  History view and underling model
+      --  History view and underlying model
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
@@ -405,8 +405,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
       --  Add new record and change message probability
 
       New_Record.Status :=
-        CodePeer.Audit_Status_Kinds'Val
-          (Model.Get_Int (Iter, Status_Model_Value_Column));
+        Get_Status
+          (Positive (Model.Get_Int (Iter, Status_Model_Value_Column)));
       Self.Message.Status := New_Record.Status;
 
       Self.Comment_Buffer.Get_Start_Iter (Start_Iter);

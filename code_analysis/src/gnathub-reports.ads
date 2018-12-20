@@ -19,4 +19,8 @@
 
 package GNAThub.Reports is
 
+   File_Line_Sep : constant String := "<line>";
+   --  Separator betwwen file full names and line numbers used to contruct
+   --  row IDs.
+
 end GNAThub.Reports;

@@ -86,7 +86,7 @@ package body GVD.Variables.Items is
       Process : not null access Visual_Debugger_Record'Class)
    is
       Value_Found : Boolean;
-      Result : Ada.Strings.Unbounded.Unbounded_String;
+      Result      : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder

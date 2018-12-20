@@ -36,7 +36,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Types;                use Glib.Types;
 
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
-with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Clipboard;             use Gtk.Clipboard;
@@ -127,6 +126,14 @@ package body Vsearch is
 
    H_Padding : constant Guint := 5;
    --  The horizontal padding used between widgets of a same row
+
+   Default_Width  : constant Gint := 630;
+   Default_Height : constant Gint := 180;
+   --  The default Search view's size
+
+   Default_Height_When_Optional_Selector : constant Gint :=
+                                             Default_Height + 120;
+   --  TODO: doc
 
    type Search_Regexp is record
       Name           : GNAT.Strings.String_Access;
@@ -220,7 +227,8 @@ package body Vsearch is
       Commands_Category      => "",  --  no automatic command
       MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
       Areas                  => Sides_Only,
-      Default_Height         => -1,
+      Default_Width          => Default_Width,
+      Default_Height         => Default_Height,
       Add_Close_Button_On_Float => True);
    use Search_Views;
    subtype Vsearch_Access is Search_Views.View_Access;
@@ -685,10 +693,6 @@ package body Vsearch is
       Regexp         : Boolean);
    --  Add the current settings to the history, and updates the combo box
 
-   procedure On_Float (Search_Child : access Gtk_Widget_Record'Class);
-   --  Called when the floating state of the search widget has changed.
-   --  Used to disable teh search view scrolled window when floating.
-
    procedure Add_History_To_Combo
      (Vsearch : not null access Vsearch_Record'Class;
       Value   : String);
@@ -715,22 +719,6 @@ package body Vsearch is
          Find_And_Replace
       else
          Unknown);
-
-   --------------
-   -- On_Float --
-   --------------
-
-   procedure On_Float (Search_Child : access Gtk_Widget_Record'Class) is
-      Child   : constant MDI_Child := MDI_Child (Search_Child);
-      Vsearch : constant Vsearch_Access :=
-                  Search_Views.View_From_Child (Child);
-   begin
-      if Is_Floating (Child) then
-         Vsearch.Main_View.Set_Policy (Policy_Never, Policy_Never);
-      else
-         Vsearch.Main_View.Set_Policy (Policy_Automatic, Policy_Automatic);
-      end if;
-   end On_Float;
 
    ----------
    -- Free --
@@ -1386,10 +1374,7 @@ package body Vsearch is
       Has_Whole_Word      : Boolean;
       Has_Backward        : Boolean;
       Child               : MDI_Child;
-      Dummy               : Gint;
-      Scroll_Width        : Gint;
-      Scroll_Height       : Gint;
-      Button_Width        : Gint;
+      Child_Toplevel      : Gtk_Window;
    begin
       if Module /= null then
          Set_Last_Search_Module (Vsearch_Module_Id.Kernel, Module);
@@ -1456,21 +1441,24 @@ package body Vsearch is
                  (Vsearch.Scope_Selector_Optional,
                   Expand => True,
                   Fill   => True);
+
+               Child := Search_Views.Child_From_View (Vsearch);
+
+               if Child /= null and then Is_Floating (Child) then
+                  Child_Toplevel := Gtk_Window (Vsearch.Get_Toplevel);
+
+                  if Child_Toplevel.Get_Allocated_Height
+                    < Default_Height_When_Optional_Selector
+                  then
+                     Child_Toplevel.Resize
+                       (Width  => Child_Toplevel.Get_Allocated_Width,
+                        Height => Default_Height_When_Optional_Selector);
+                     Vsearch.Get_Toplevel.Queue_Resize;
+                  end if;
+               end if;
+
                Vsearch.Scope_Optional_Box.Show_All;
             end if;
-         end if;
-
-         Child := Search_Views.Child_From_View (Vsearch);
-         if Child /= null and then Is_Floating (Child) then
-            --  Set the optimal size
-            Vsearch.Group_Widget.Get_Preferred_Width (Dummy, Scroll_Width);
-            Vsearch.Group_Widget.Get_Preferred_Height (Dummy, Scroll_Height);
-            Vsearch.Search_All_Button.Get_Preferred_Width
-              (Dummy, Button_Width);
-            --  The view contains the group_children/buttons/separator
-            Vsearch.Main_View.Set_Size_Request
-              (Scroll_Width + Button_Width + 10, Scroll_Height);
-            Vsearch.Queue_Resize;
          end if;
 
          --  Clear the module's search occurrences stack
@@ -1484,58 +1472,16 @@ package body Vsearch is
 
    procedure Set_First_Next_Mode
      (Vsearch   : access Vsearch_Record'Class;
-      Find_Next : Boolean)
-   is
-      Label : Gtk_Label;
-      Align : Gtk_Alignment;
-      Req   : Gtk_Requisition;
-
+      Find_Next : Boolean) is
    begin
       Vsearch_Module_Id.Find_Next := Find_Next;
 
-      if Find_Next then
-         if Vsearch /= null then
-            --  Make sure the Search_Next_Button only grows in size. This
-            --  makes sure that a user won't click on "Find" and see the button
-            --  shrink so that next time he clicks (without moving the mouse)
-            --  is on "Replace".
-            Size_Request (Vsearch.Search_Next_Button, Req);
-            Set_Size_Request
-              (Vsearch.Search_Next_Button, Req.Width, Req.Height);
-
-            Remove (Vsearch.Search_Next_Button,
-                    Get_Child (Vsearch.Search_Next_Button));
-
-            Gtk_New_With_Mnemonic (Label, -"_Next");
-            Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
-            Add (Vsearch.Search_Next_Button, Align);
-            Add (Align, Label);
-            Show_All (Align);
-
-            --  Always activate the "Next" button, so that we can still do
-            --  selective replace. Otherwise, the button is greyed out when we
-            --  have a replace string, and would stay as such.
-            Set_Sensitive (Vsearch.Search_Next_Button, True);
-         end if;
-
-         Vsearch_Module_Id.Search_Started := True;
-
-      else
-         if Vsearch /= null then
-            --  Remove size constraints on Search_Next_Button.
-            Set_Size_Request (Vsearch.Search_Next_Button, -1, -1);
-            Remove (Vsearch.Search_Next_Button,
-                    Get_Child (Vsearch.Search_Next_Button));
-
-            Gtk_New_With_Mnemonic (Label, -"_Find");
-            Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
-            Add (Vsearch.Search_Next_Button, Align);
-            Add (Align, Label);
-            Show_All (Align);
-         end if;
-
-         Vsearch_Module_Id.Search_Started := False;
+      if Vsearch /= null then
+         Vsearch.Search_Next_Button.Set_Label
+           (if Find_Next then "_Next" else "_Find");
       end if;
+
+      Vsearch_Module_Id.Search_Started := Find_Next;
    end Set_First_Next_Mode;
 
    -------------
@@ -2596,16 +2542,12 @@ package body Vsearch is
      (Self  : not null access Vsearch_Record;
       Child : not null access GPS_MDI_Child_Record'Class)
    is
+      pragma Unreferenced (Child);
       P  : aliased Search_Functions_Changed;
       P2 : aliased New_Predefined_Regexp;
    begin
       P.Execute (Self.Kernel);
       P2.Execute (Self.Kernel);
-
-      Widget_Callback.Connect (Child, Signal_Float_Child, On_Float'Access);
-      Widget_Callback.Connect (Child, Signal_Unfloat_Child, On_Float'Access);
-
-      On_Float (Child);
    end On_Create;
 
    ---------------------------

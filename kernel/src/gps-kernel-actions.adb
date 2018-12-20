@@ -715,7 +715,7 @@ package body GPS.Kernel.Actions is
    ----------------------------
 
    function Is_Key_Shortcut_Active
-     (Self  : not null access Action_Record;
+     (Self  : access Action_Record;
       Child : access MDI_Child_Record'Class;
       Key   : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type)
@@ -724,6 +724,12 @@ package body GPS.Kernel.Actions is
       pragma Unreferenced (Key);
       use Ada.Tags;
    begin
+      if Self = null then
+         --  The action was not created for this Key: a warning will be
+         --  displayed when trying to execute the action.
+         return True;
+      end if;
+
       --  If no child if focused, if there is no key modifier, or if the key
       --  shortcut is active from all the views, return True.
 

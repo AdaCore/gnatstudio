@@ -635,13 +635,13 @@ package body GVD_Module is
       declare
          Argument : constant String := List.Get_Selection;
       begin
+         List.Destroy;
+
          if Argument /= "" then
             Attach_Process
               (Process.Debugger, Argument, Mode => GVD.Types.Visible);
          end if;
       end;
-
-      List.Destroy;
 
       return Commands.Success;
    end Execute;
@@ -869,11 +869,12 @@ package body GVD_Module is
       On_Vx_56 : constant Boolean :=
         VxWorks_Version (Process.Debugger) in Vx5 .. Vx6;
 
-      Dialog       : GPS_Dialog;
-      Args         : Combo_Box;
-      Is_Start     : Gtk_Check_Button;
-      Is_Multitask : Gtk_Check_Button;
-      Use_Exec_Dir : Gtk_Check_Button;
+      Dialog              : GPS_Dialog;
+      Args_Combo          : Combo_Box;
+      Is_Start_Button     : Gtk_Check_Button;
+      Is_Multitask_Button : Gtk_Check_Button;
+      Use_Exec_Dir_Button : Gtk_Check_Button;
+      Response            : Gtk_Response_Type;
    begin
       Gtk_New
         (Dialog,
@@ -882,7 +883,7 @@ package body GVD_Module is
          Kernel => Process.Kernel);
       Dialog.Add_OK_Cancel;
 
-      Args := Dialog.Add_Combo
+      Args_Combo := Dialog.Add_Combo
         (Message => (if On_Vx_56
                      then -"Entry point and arguments:"
                      else -"Run arguments:"),
@@ -894,7 +895,7 @@ package body GVD_Module is
       --  stop at the beginning of the main program.
 
       if not Start_Cmd then
-         Is_Start := Dialog.Add_Check_Button
+         Is_Start_Button := Dialog.Add_Check_Button
            (Message => -"Stop at beginning of main subprogram",
             Key     => "stop_beginning_debugger");
       end if;
@@ -903,41 +904,51 @@ package body GVD_Module is
       --  executed, and we enable the multi-tasks-mode checkbox.
 
       if On_Vx_56 then
-         Is_Multitask := Dialog.Add_Check_Button
+         Is_Multitask_Button := Dialog.Add_Check_Button
            (Message => -"Enable VxWorks multi-tasks mode",
             Key     => "multitask_mode_debugger");
       else
-         Use_Exec_Dir := Dialog.Add_Check_Button
+         Use_Exec_Dir_Button := Dialog.Add_Check_Button
            (Message => -"Use exec dir instead of current dir",
             Key     => "run_in_executable_directory");
       end if;
 
       Dialog.Show_All;
 
-      if Dialog.Run = Gtk_Response_OK then
-         if Is_Multitask /= null then
-            Process.Debugger.Send
-              ("set multi-tasks-mode "
-               & (if Is_Multitask.Get_Active then "on" else "off"),
-               Mode => GVD.Types.Hidden);
-         end if;
+      Response := Dialog.Run;
 
-         if Use_Exec_Dir /= null and then Use_Exec_Dir.Get_Active then
-            Process.Debugger.Change_Directory (Process.Descriptor.Program.Dir);
-         end if;
+      declare
+         Is_Start     : constant Boolean := Is_Start_Button = null
+           or else Is_Start_Button.Get_Active;
+         Use_Exec_Dir : constant Boolean := Use_Exec_Dir_Button /= null
+           and then Use_Exec_Dir_Button.Get_Active;
+         Is_Multitask : constant Boolean := Is_Multitask_Button /= null
+           and then Is_Multitask_Button.Get_Active;
+         Args         : constant String := Strip_Ending_Linebreaks
+           (Args_Combo.Get_Text);
+      begin
+         Dialog.Destroy;
 
-         declare
-            A : constant String := Strip_Ending_Linebreaks (Args.Get_Text);
-         begin
-            if Is_Start = null or else Is_Start.Get_Active then
-               Process.Debugger.Start (A, Mode => GVD.Types.Visible);
-            else
-               Process.Debugger.Run (A, Mode => GVD.Types.Visible);
+         if Response = Gtk_Response_OK then
+            if Is_Multitask_Button /= null then
+               Process.Debugger.Send
+                 ("set multi-tasks-mode "
+                  & (if Is_Multitask then "on" else "off"),
+                  Mode => GVD.Types.Hidden);
             end if;
-         end;
-      end if;
 
-      Dialog.Destroy;
+            if Use_Exec_Dir then
+               Process.Debugger.Change_Directory
+                 (Process.Descriptor.Program.Dir);
+            end if;
+
+            if Is_Start then
+               Process.Debugger.Start (Args, Mode => GVD.Types.Visible);
+            else
+               Process.Debugger.Run (Args, Mode => GVD.Types.Visible);
+            end if;
+         end if;
+      end;
    end Start_Program;
 
    -------------
@@ -1099,7 +1110,7 @@ package body GVD_Module is
          end if;
 
          if S /= No_File then
-            Set_Executable (Process.Debugger, S, Mode => Hidden);
+            Set_Executable (Process.Debugger, S);
 
             --  Load the executable to the remote target if we are connected
             --  remotely.

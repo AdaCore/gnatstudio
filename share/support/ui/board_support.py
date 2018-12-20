@@ -626,7 +626,10 @@ class BoardLoader(Module):
         # Spawn the debugger on the executable and load it
         self.__display_message("Launching debugger.")
         exe = GPS.File(main_name).executable_path
-        debugger_promise = promises.DebuggerWrapper(exe)
+        debugger_promise = promises.DebuggerWrapper(
+            exe,
+            remote_target=self.__remote_target,
+            remote_protocol=self.__remote_protocol)
 
         # Load the executable
         yield debugger_promise.wait_and_send(

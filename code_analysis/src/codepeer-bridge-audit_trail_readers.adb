@@ -105,17 +105,7 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
          Self.Message.Audit_Loaded := True;
 
       elsif Qname = Audit_Tag then
-         begin
-            Status := Audit_Status_Kinds'Value (Attrs.Get_Value ("status"));
-
-         exception
-            when Constraint_Error =>
-               --  In case we have an unexpected value (e.g. new status kind),
-               --  revert to Uncategorized instead of crashing
-
-               Status := Uncategorized;
-         end;
-
+         Status := Get_Status (Attrs.Get_Value ("status"));
          Self.Audit_Record :=
            new CodePeer.Audit_Record'
              (Status      => Status,

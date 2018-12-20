@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
@@ -648,8 +647,10 @@ package body GVD.Process is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger (Process : access Visual_Debugger_Record) is
-
+   procedure Close_Debugger
+     (Process  : access Visual_Debugger_Record;
+      Has_Died : Boolean := False)
+   is
       Kernel : constant Kernel_Handle := Process.Kernel;
       Count  : Natural;
    begin
@@ -688,10 +689,16 @@ package body GVD.Process is
 
       --  Close the underlying debugger
 
-      if Process.Debugger /= null
+      if not Has_Died
+        and then Process.Debugger /= null
         and then Get_Process (Process.Debugger) /= null
       then
-         Close (Process.Debugger);
+         begin
+            Close (Process.Debugger);
+         exception
+            when E : others =>
+               Trace (Me, E);
+         end;
       end if;
 
       Process.Debugger := null;
@@ -786,7 +793,11 @@ package body GVD.Process is
          --  Force_Send is always false so that commands are queued. We
          --  are not in a secondary prompt anyway (which should be when
          --  we have a Registered_Dialog).
-         Debugger.Debugger.Send (Command, Mode => Mode, Force_Send => False);
+         Debugger.Debugger.Send
+           (Command,
+            Mode            => Mode,
+            Wait_For_Prompt => False,
+            Force_Send      => False);
 
       else
          Output.all := new String'

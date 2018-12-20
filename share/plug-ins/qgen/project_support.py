@@ -267,6 +267,25 @@ custom block implementations"/>
         return models_files
 
     @staticmethod
+    def get_target_language(file):
+        """
+        Return the code generation language targeted for
+        the given model file.
+        :param GPS.File file: A model file
+        :return str lang: "ada", "c" or None
+        """
+        lang_switch = False
+        for s in Project_Support.get_switches(file):
+            if lang_switch:
+                if s == "ada" or s == "c":
+                    return s
+                # Unknown language
+                return None
+            if s == "-l" or s == "--language":
+                lang_switch = True
+        return None
+
+    @staticmethod
     def get_switches(file):
         """
         Return the switches to use for a specific file.

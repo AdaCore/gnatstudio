@@ -411,10 +411,10 @@ package body Dialog_Utils is
    -------------------
 
    procedure Append_Button
-     (Self   : not null access Dialog_View_With_Button_Box_Record'Class;
-      Button : not null access Gtk_Button_Record'Class) is
+     (Self          : not null access Dialog_View_With_Button_Box_Record'Class;
+      Button_Widget : not null access Gtk_Widget_Record'Class) is
    begin
-      Self.Button_Box.Pack_Start (Button, Expand => False);
+      Self.Button_Box.Pack_Start (Button_Widget, Expand => False);
    end Append_Button;
 
    ----------------------

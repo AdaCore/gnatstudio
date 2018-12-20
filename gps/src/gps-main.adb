@@ -117,6 +117,7 @@ with Project_Templates.GPS;            use Project_Templates.GPS;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
+with UTF8_Utils;
 with Welcome_Dialogs;                  use Welcome_Dialogs;
 with Welcome_View;                     use Welcome_View;
 
@@ -553,6 +554,29 @@ procedure GPS.Main is
             Home_Dir := Create (+Home);
          else
             Home_Dir := Get_Home_Directory;
+         end if;
+
+         --  Under Windows, when the user directory contains international
+         --  characters, the value contained in the environment might not
+         --  be encoded in the same way as the filesystem. Add a safety check
+         --  for this.
+
+         if not Home_Dir.Is_Directory then
+            declare
+               Success   : aliased Boolean;
+               Converted : constant String :=
+                 UTF8_Utils.Unknown_To_UTF8
+                   (Input   => +Home_Dir.Full_Name.all,
+                    Success => Success'Access);
+            begin
+               if Success
+                 and then GNAT.OS_Lib.Is_Directory (Converted)
+               then
+                  --  $HOME/$USERPROFILE does not exist but its converted value
+                  --  exists; this is a safer bet for home directory: use it.
+                  Home_Dir := Create (+Converted);
+               end if;
+            end;
          end if;
       end;
 
@@ -1741,6 +1765,13 @@ procedure GPS.Main is
    begin
       Gps_Started_Hook.Run (GPS_Main.Kernel);
 
+      --  Load the custom after running the 'gps_started' to be sure that
+      --  actions that get registered while running this hook are available.
+      --  This also ensures that the user key shortcuts will override
+      --  everything else set so far.
+
+      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
+
       --  A number of actions are created in reaction to the hook above:
       --  if there is a menu described in menus.xml corresponding to such
       --  an action, this menu will remain greyed out until the first context
@@ -2253,8 +2284,9 @@ procedure GPS.Main is
          Project_Explorers.Register_Module (GPS_Main.Kernel);
       end if;
 
+      Project_Properties.Register_Module_Reader (GPS_Main.Kernel);
       if Active (Project_Properties_Trace) then
-         Project_Properties.Register_Module (GPS_Main.Kernel);
+         Project_Properties.Register_Module_Writer (GPS_Main.Kernel);
       end if;
 
       if Active (GNATTest_Trace) then
@@ -2463,10 +2495,6 @@ procedure GPS.Main is
       GPS.Traces.Register_Module (GPS_Main.Kernel, GPS_Home_Dir);
 
       Load_Preferences (GPS_Main.Kernel);
-
-      --  Load the custom keys last, so that they override everything else set
-      --  so far.
-      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
 
       --  Show the preferences assistant dialog if the user don't have any GPS
       --  home directory yet.

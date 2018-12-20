@@ -41,13 +41,8 @@ gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
 OUTPUT_PARSERS = """
-    output_chopper
-    utf_converter
-    progress_parser
     job_recorder
     gnatprove_parser
-    console_writer
-    location_parser
     end_of_build"""
 
 with open(gnatprove_menus_file, "r") as input_file:
@@ -505,24 +500,33 @@ reg2 = re.compile(r"in call inlined at ([\w\.-]+):[0-9]+")
 reg3 = re.compile(r"in inherited contract at ([\w\.-]+):[0-9]+")
 
 
-def get_compunit_for_message(msg):
-    """ Return the compilation unit for a given message, so that extra
-    information for the message will be found in the file
-    unit.spark. For generic instantiations, inlined calls and
-    inherited contracts, this corresponds to the last unit in the
-    chain of locations. Otherwise, this is simply the compilation
-    unit where the message is reported."""
-
-    text = msg.get_text()
+def match_regexp_inst(text):
+    """ Find the first reference to instantiation, inherited or inlined filename
+    in the text. Return the matched datastructure to allow new searches in the
+    same text."""
     m = re.search(reg1, text)
     if not m:
         m = re.search(reg2, text)
     if not m:
         m = re.search(reg3, text)
-    if m:
-        fname = m.group(1)
-    else:
-        fname = os.path.basename(msg.get_file().path)
+    return m
+
+
+def get_compunit_for_message(text, file):
+    """ Return the compilation unit for a given text and file, so that extra
+    information for the message will be found in the file
+    unit.spark. For generic instantiations, inlined calls and
+    inherited contracts, this corresponds to the last unit in the
+    chain of locations. Otherwise, this is simply the compilation
+    unit where the message is reported."""
+    fname = os.path.basename(file.path)
+    while True:
+        m = match_regexp_inst(text)
+        if m:
+            fname = m.group(1)
+            text = text[m.end():]
+        else:
+            break
     return os.path.splitext(fname)[0]
 
 
@@ -565,7 +569,17 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
         self.msg_id = {}
-        self.regex = re.compile(r"(.*)\[#([0-9]+)\]$")
+        self.message_re = re.compile(r"(?P<filename>[^:]+)"
+                                     r":"
+                                     r"(?P<line>[0-9]+)"
+                                     r":"
+                                     r"((?P<column>[0-9]+): )?"
+                                     r"((?P<importance>[^:]+): )?"
+                                     r"(?P<text>.+)")
+        self.extra_re = re.compile(r"(?P<text>.*)"
+                                   r"\[#(?P<extra>[0-9]+)\]$")
+        self.nested_re = re.compile(r"line ([0-9]+)")
+
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
 
@@ -644,16 +658,16 @@ class GNATprove_Parser(tool_output.OutputParser):
                 except ValueError:
                     pass
 
-    def get_rule_id_for_msg(self, m, extra):
-        """return the rule ID associated to the message m.
+    def get_rule_id(self, output, extra):
+        """return the rule ID associated to the output.
            The rule ID is retrieved from "extra" when it exists: otherwise,
            the rule ID defined for all non-SPARK messages is returned.
         """
         if 'rule' in extra:
             return extra['rule']
-        elif 'warning:' in m.get_text():
+        elif 'warning:' in output:
             return 'WARNINGS'
-        elif 'info:' in m.get_text():
+        elif 'info:' in output:
             return 'INFORMATIONAL'
         else:
             return 'ERRORS'
@@ -726,21 +740,74 @@ class GNATprove_Parser(tool_output.OutputParser):
                                extra['vc_file'] + "\n")
 
     def on_exit(self, status, command):
-        """When GNATprove has finished, check if extra information can be
-        attached to them. Display the Analysis Report if the corresponding
-        preference is set."""
+        """When GNATprove has finished, display the Analysis Report if the
+        corresponding preference is set."""
 
         self.command = command
-        display_in_report = GPS.Preference(Display_Analysis_Report).get()
 
-        self.add_extra_info_on_messages(
-            command, display_in_report=display_in_report)
-
-        if display_in_report:
+        if GPS.Preference(Display_Analysis_Report).get():
             GPS.Analysis.display_report(self.analysis_tool)
 
         if self.child is not None:
             self.child.on_exit(status, command)
+
+    def split_in_secondary_messages(self, file, line, column,
+                                    output, importance, extra):
+        """Parse the output and generate secondary messages.
+
+           :return type: |GPS.Message| the message created
+        """
+        remainder = output
+        list_secondaries = []
+        list_sub_message_header = ["cannot prove",
+                                   "(e.g.",
+                                   "[possible explanation:"]
+        for header in list_sub_message_header:
+            try:
+                index = remainder.index(header)
+                list_secondaries.append(remainder[:index])
+                remainder = remainder[index:]
+            except ValueError:
+                pass  # The substring was not found
+        list_secondaries.append(remainder)
+
+        message_text = list_secondaries[0]
+        msg = self.analysis_tool.create_message(messages_category, file,
+                                                line, column,
+                                                message_text,
+                                                importance,
+                                                self.get_rule_id(message_text,
+                                                                 extra))
+        for text in list_secondaries[1:]:
+            if text.startswith('(') or text.startswith('['):
+                text = text[1:-1]
+            line_match = re.findall(self.nested_re, text)
+            if line_match:
+                # Point to the first line number found
+                nested_line = int(line_match[0])
+                nested_column = 1
+            else:
+                nested_line = line
+                nested_column = column
+            msg.create_nested_message(
+                file, nested_line, nested_column, text.strip())
+        return msg
+
+    def to_importance(self, importance):
+        """Transform the string *importance* into a GPS.Message.Importance"""
+        # Could be replaced by a map
+        if importance == "annotation":
+            return GPS.Message.Importance.ANNOTATION
+        elif importance == "unspecified":
+            return GPS.Message.Importance.UNSPECIFIED
+        elif importance in ["informational", "info"]:
+            return GPS.Message.Importance.INFORMATIONAL
+        elif importance == "low":
+            return GPS.Message.Importance.LOW
+        elif importance in ["medium", "warning"]:
+            return GPS.Message.Importance.MEDIUM
+        elif importance in ["high", "error"]:
+            return GPS.Message.Importance.HIGH
 
     def on_stdout(self, text, command):
         """for each GNATprove message, check for a msg_id tag of the form
@@ -750,72 +817,83 @@ class GNATprove_Parser(tool_output.OutputParser):
            which will be used later (in on_exit) to associate more info to the
            message
         """
-
-        lines = text.splitlines()
-        for line in lines:
-            m = re.match(self.regex, line)
-            if m:
-                text = get_norm_text(m.group(1))
-                GPS.Locations.parse(text, category=messages_category)
-                self.print_output(text)
-                self.msg_id[text] = int(m.group(2))
-            else:
-                # the line doesn't have any extra info, go on
-                GPS.Locations.parse(line, category=messages_category)
-                self.print_output(line)
-
-    def add_extra_info_on_messages(self, command, display_in_report=False):
-        """Scan through messages to see if extra info has been attached to
-           them. If so, parse the .spark file of the corresponding unit to
-           get the extra info, and act on the extra info.
-
-           Also, display the messages in Analysis Report if the corresponding
-           preference is enabled.
-
-        """
         # Global map that associates messages text to the location of the
         # check. Messages already contain a location but it cannot be trusted
         # for launching manual prover. Messages locations records precisely
         # what is failing in a vc not the location of said vc.
         global map_msg
-
-        artifact_dirs = \
-            [os.path.join(f, obj_subdir_name)
-             for f in GPS.Project.root().object_dirs(recursive=True)]
-
         map_msg = {}
+
+        artifact_dirs = (
+            [os.path.join(f, obj_subdir_name)
+             for f in GPS.Project.root().object_dirs(recursive=True)])
         imported_units = {}  # map from unit to corresponding object directory
+
+        lines = text.splitlines()
+        for line in lines:
+            msg_match = re.match(self.message_re, line)
+            self.print_output(line)
+
+            if msg_match:
+                text = msg_match.group('text')
+                file = GPS.File(msg_match.group('filename'))
+                lineno = int(msg_match.group('line'))
+                if msg_match.group('column'):
+                    column = int(msg_match.group('column'))
+                else:
+                    column = 1
+
+                # Refined the output if extra information
+                extra_match = re.match(self.extra_re, text)
+                if extra_match:
+                    text = extra_match.group('text')
+                    extra, unit = self.get_extra_info(
+                        extra_match.group('extra'), text, file, command,
+                        imported_units, artifact_dirs)
+                else:
+                    extra = {}
+
+                if msg_match.group('importance'):
+                    importance = self.to_importance(
+                        msg_match.group('importance'))
+                    text = msg_match.group('importance') + ": " + text
+                else:
+                    importance = GPS.Message.Importance.UNSPECIFIED
+
+                # Create the message and its secondaries
+                message = self.split_in_secondary_messages(
+                    file, lineno, column, text, importance, extra)
+
+                # Add action to the message
+                if extra:
+                    self.act_on_extra_info(
+                        message, extra, imported_units[unit], command)
+
+    def get_extra_info(self, id, text, file, command,
+                       imported_units, artifact_dirs):
+        """Parse the .spark file of the corresponding unit to
+           get the extra info.
+        """
         extra = {}
+        unit = get_compunit_for_message(text, file)
+        full_id = unit, int(id)
+        # First time this unit is seen, identify the corresponding
+        # object directory where extra info can be found for that unit.
+        if unit not in imported_units:
+            for artifact_dir in artifact_dirs:
+                sparkfile = os.path.join(artifact_dir, unit + ".spark")
+                if os.path.exists(sparkfile):
+                    self.parsejson(unit, sparkfile)
+                    imported_units[unit] = artifact_dir
+                    break
+        # If no object directory was identified, associate the default
+        # artifacts directory.
+        if unit not in imported_units:
+            imported_units[unit] = GPS.Project.root().artifacts_dir()
 
-        for m in GPS.Message.list(messages_category):
-            text = get_comp_text(m)
-            if text in self.msg_id:
-                id = self.msg_id[text]
-                unit = get_compunit_for_message(m)
-                full_id = unit, id
-                # First time this unit is seen, identify the corresponding
-                # object directory where extra info can be found for that unit.
-                if unit not in imported_units:
-                    for artifact_dir in artifact_dirs:
-                        sparkfile = os.path.join(artifact_dir, unit + ".spark")
-                        if os.path.exists(sparkfile):
-                            self.parsejson(unit, sparkfile)
-                            imported_units[unit] = artifact_dir
-                            break
-                # If no object directory was identified, associate the default
-                # artifacts directory.
-                if unit not in imported_units:
-                    imported_units[unit] = GPS.Project.root().artifacts_dir()
-                extra = {}
-                if full_id in self.extra_info:
-                    extra = self.extra_info[full_id]
-
-            if display_in_report:
-                self.analysis_tool.add_message(
-                    m, self.get_rule_id_for_msg(m, extra))
-
-            if extra:
-                self.act_on_extra_info(m, extra, imported_units[unit], command)
+        if full_id in self.extra_info:
+            extra = self.extra_info[full_id]
+        return extra, unit
 
 
 def is_file_context(self):
@@ -859,8 +937,8 @@ def on_prove_line(self):
     lsparg = build_limit_subp_string(self)
     if lsparg is not None:
         args.append(lsparg)
-        if inside_generic_unit_context(self):
-            args.append("-U")
+    if inside_generic_unit_context(self):
+        args.append("-U")
 
     target = ""
     try:
@@ -1091,15 +1169,7 @@ class GNATProve_Plugin:
 
     def show_report(self):
         """Display the Analysis Report with the GNATprove messages."""
-        if self.output_parser:
-            if not GPS.Preference(Display_Analysis_Report).get():
-                self.output_parser.add_extra_info_on_messages(
-                    self.output_parser.command,
-                    display_in_report=True)
-
-            GPS.Analysis.display_report(self.output_parser.analysis_tool)
-        else:
-            GPS.Analysis.display_report(GPS.AnalysisTool(messages_category))
+        GPS.Analysis.display_report(self.output_parser.analysis_tool)
 
     def show_log(self):
         """Display the gnatprove.out log"""
@@ -1155,12 +1225,18 @@ vc_msg_dict = {
     'predicate check might fail': 'VC_PREDICATE_CHECK',
     'predicate check might fail on default value':
         'VC_PREDICATE_CHECK_ON_DEFAULT_VALUE',
+    'pointer dereference check might fail':
+        'VC_NULL_POINTER_DEREFERENCE',
+    'null exclusion check might fail': 'VC_NULL_EXCLUSION',
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
     'tag check might fail': 'VC_TAG_CHECK',
     'ceiling priority might not be in Interrupt_Priority':
         'VC_CEILING_INTERRUPT',
     'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
+    'invariant check might fail': 'VC_INVARIANT_CHECK',
+    'invariant check might fail on default value':
+        'VC_INVARIANT_CHECK_ON_DEFAULT_VALUE',
     'ceiling priority protocol might not be respected':
         'VC_CEILING_PRIORITY_PROTOCOL',
     'the task might terminate': 'VC_TASK_TERMINATION',
@@ -1184,6 +1260,7 @@ vc_msg_dict = {
     'loop variant might fail': 'VC_LOOP_VARIANT',
     'assertion might fail': 'VC_ASSERT',
     'exception might be raised': 'VC_RAISE',
+    'Inline_For_Proof annotation might be incorrect': 'VC_INLINE_CHECK',
 
     # VC_LSP_Kind - Liskov Substitution Principle
 
@@ -1268,7 +1345,7 @@ def limit_line_option(msg, line, col, vc_kind):
                            + ":" + vc_kind
 
 
-def on_prove_check(context):
+def on_prove_check(context, force=False, opt_args=[]):
     msg = context._loc_msg
     text_msg = get_comp_text(msg)
     msg_line = map_msg[text_msg, 'check_line']
@@ -1278,8 +1355,9 @@ def on_prove_check(context):
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.BuildTarget(prove_check()).execute(extra_args=args,
-                                           synchronous=False)
+    GPS.BuildTarget(prove_check()).execute(extra_args=args+opt_args,
+                                           synchronous=False,
+                                           force=force)
 
 
 # Check for GNAT toolchain: gnatprove
@@ -1309,7 +1387,7 @@ itp_lib.print_debug("[gnat_server path]:" + gnat_server)
 
 # Checking for existence of gnat_server (compatibility with spark version < 18)
 is_itp = False
-if os.path.exists(gnat_server):
+if os.path.exists(gnat_server) or os.path.exists(gnat_server + ".exe"):
     is_itp = True
 
 
@@ -1401,7 +1479,7 @@ def on_prove_itp(context, edit_session=False):
 
     if not is_itp:
         # If itp is not detected do not run the tool
-        print_error("Interactive theorem proving requires version 18 of SPARK")
+        print_error("manual proof requires more recent version of SPARK")
         return
     # ITP part
     tree = itp_lib.Tree_with_process()
@@ -1417,7 +1495,7 @@ def on_prove_itp(context, edit_session=False):
         llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
         # This is not required in on_prove_check because the .mlw file is
         # computed in gnatprove.
-        abs_fn_path = get_compunit_for_message(msg)
+        abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
         args = [llarg]
     file_name = os.path.basename(abs_fn_path)
     if inside_generic_unit_context(context):

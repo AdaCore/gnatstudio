@@ -790,7 +790,7 @@ private
    No_Index : constant Clang_Index := CXIndex (System.Null_Address);
 
    No_Translation_Unit : constant Clang_Translation_Unit :=
-        Clang_Translation_Unit (System.Null_Address);
+        Clang_Translation_Unit'(null);
 
    Aliased_0 : aliased constant Interfaces.C.unsigned := 0;
 

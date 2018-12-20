@@ -162,6 +162,7 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="arm-eabi"/>
 
   <toolchain name="arm-sysgo-pikeos"/>
+  <toolchain name="arm-sysgo-pikeos4.2"/>
 
   <toolchain name="avr">
     <cpp_filt/>

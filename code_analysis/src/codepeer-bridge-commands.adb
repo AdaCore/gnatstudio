@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with XML_Utils;
 
@@ -88,7 +88,8 @@ package body CodePeer.Bridge.Commands is
          XML_Utils.Set_Attribute
            (Message_Node,
             "status",
-            Audit_Status_Kinds'Image (Message.Audit.First_Element.Status));
+            To_Upper
+              (Standardize (Image (Message.Audit.First_Element.Status))));
          XML_Utils.Set_Attribute
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
@@ -160,10 +161,14 @@ package body CodePeer.Bridge.Commands is
 
    begin
       --  Create list of identifiers of messages for which audit trail was not
-      --  loaded.
+      --  loaded, or all messages in remote mode.
 
       for Message of Messages loop
          if not Message.Audit_Loaded then
+            Append (Ids, Natural'Image (Message.Id));
+         elsif Server_URL /= "" then
+            Message.Audit.Clear;
+            Message.Audit_Loaded := False;
             Append (Ids, Natural'Image (Message.Id));
          end if;
       end loop;
@@ -274,13 +279,11 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Set_Attribute
         (Inspection_Node,
          "export_annotations",
-         Ada.Characters.Handling.To_Lower
-           (Boolean'Image (Import_Annotations)));
+         To_Lower (Boolean'Image (Import_Annotations)));
       XML_Utils.Set_Attribute
         (Inspection_Node,
          "export_backtraces",
-         Ada.Characters.Handling.To_Lower
-           (Boolean'Image (Import_Backtraces)));
+         To_Lower (Boolean'Image (Import_Backtraces)));
       XML_Utils.Add_Child (Database_Node, Inspection_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);

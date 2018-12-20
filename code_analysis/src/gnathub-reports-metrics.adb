@@ -259,7 +259,7 @@ package body GNAThub.Reports.Metrics is
       Full_Name   : constant String := Metric.Get_File.Display_Full_Name;
       Location_ID : constant String :=
         (if Entity /= No_Entity_Data then
-            Full_Name & ":" & Integer'Image (Entity.Line)
+            Full_Name & File_Line_Sep & Integer'Image (Entity.Line)
          else
             Full_Name);
    begin

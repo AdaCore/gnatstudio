@@ -31,6 +31,7 @@ package body GPS.Scripts.Entities is
    end record;
 
    Entity_Class_Name        : constant String := "Entity";
+
    --  Name of the class for shell commands associated with this package
 
    procedure Entity_Command_Handler
@@ -65,6 +66,29 @@ package body GPS.Scripts.Entities is
    procedure Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      function Get_Body_N (Entity : Root_Entity'Class) return General_Location;
+      --  Get body for an entity
+
+      --------------
+      -- Get_Body --
+      --------------
+
+      function Get_Body_N
+        (Entity : Root_Entity'Class) return General_Location
+      is
+         Location     : General_Location := No_Location;
+         Cur_Location : General_Location := No_Location;
+         Count        : Integer := Nth_Arg (Data, 2, 1);
+      begin
+         while Count > 0 loop
+            Location := Entity.Get_Body (After => Cur_Location);
+            Count := Count - 1;
+            Cur_Location := Location;
+         end loop;
+
+         return Location;
+      end Get_Body_N;
+
       Kernel    : constant Core_Kernel := Get_Kernel (Data);
       Entity    : constant Root_Entity'Class := Get_Data (Data, 1);
    begin
@@ -207,16 +231,8 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "body" then
          declare
-            Location     : General_Location := No_Location;
-            Cur_Location : General_Location := No_Location;
-            Count        : Integer := Nth_Arg (Data, 2, 1);
+            Location : constant General_Location := Get_Body_N (Entity);
          begin
-            while Count > 0 loop
-               Location := Entity.Get_Body (After => Cur_Location);
-               Count := Count - 1;
-               Cur_Location := Location;
-            end loop;
-
             if Location /= No_Location then
                Set_Return_Value
                  (Data, GPS.Scripts.File_Locations.Create_File_Location
@@ -261,6 +277,13 @@ package body GPS.Scripts.Entities is
             end loop;
 
             Free (Discrs);
+         end;
+
+      elsif Command = "has_body" then
+         declare
+            Location : constant General_Location := Get_Body_N (Entity);
+         begin
+            Set_Return_Value (Data, Location /= No_Location);
          end;
 
       elsif Command = "parameters" then
@@ -429,6 +452,8 @@ package body GPS.Scripts.Entities is
 
             Free (Parents);
          end;
+      elsif Command = "requires_body" then
+         Set_Return_Value (Data, Entity.Requires_Body);
 
       end if;
    end Entity_Command_Handler;
@@ -611,6 +636,14 @@ package body GPS.Scripts.Entities is
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("type",
+         Class        => C,
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("requires_body",
+         Class        => C,
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("has_body",
          Class        => C,
          Handler      => Entity_Command_Handler'Access);
    end Register_Commands;

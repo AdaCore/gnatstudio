@@ -604,7 +604,7 @@ package body Revision_Views is
       Append (-Store, Child, Iter);
       Set_And_Clear
         (-Store, Child, (Color_Column, Info_Column),
-         (As_RGBA   (Null_RGBA),
+         (As_RGBA (Null_RGBA),
           As_String (To_String (Line.Log.Log))));
 
       --  Tags & Branches

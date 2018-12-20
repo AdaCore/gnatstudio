@@ -61,7 +61,6 @@ with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
@@ -815,24 +814,7 @@ package body Src_Editor_Module is
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      if Is_Valid_Position (Get_Buffer (D.Edit), D.Line) then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
-
-         if D.Column_End /= 0
-           and then Is_Valid_Position
-             (Get_Buffer (D.Edit), D.Line, D.Column_End)
-         then
-            Select_Region
-              (Get_Buffer (D.Edit),
-               D.Line,
-               D.Column,
-               D.Line,
-               D.Column_End);
-         end if;
-      end if;
-
       File_Edited_Hook.Run (Get_Kernel (D.Edit), Get_Filename (D.Edit));
-
       return False;
 
    exception
@@ -1446,7 +1428,8 @@ package body Src_Editor_Module is
       Child2  : MDI_Child;
 
       procedure Jump_To_Location_And_Give_Focus
-         (Child : not null access MDI_Child_Record'Class);
+        (Child     : not null access MDI_Child_Record'Class;
+         Is_Opened : Boolean);
       --  Jump to the location given in parameter to Open_File
 
       -------------------------------------
@@ -1454,7 +1437,8 @@ package body Src_Editor_Module is
       -------------------------------------
 
       procedure Jump_To_Location_And_Give_Focus
-         (Child : not null access MDI_Child_Record'Class)
+        (Child     : not null access MDI_Child_Record'Class;
+         Is_Opened : Boolean)
       is
          Real_Column, Real_Column_End : Character_Offset_Type;
       begin
@@ -1475,6 +1459,7 @@ package body Src_Editor_Module is
             Set_Position_Set_Explicitely (Get_View (Editor));
 
             if Column_End /= 0
+              and then Column < Column_End
               and then Is_Valid_Position
                 (Get_Buffer (Editor), Line, Column_End)
             then
@@ -1489,9 +1474,15 @@ package body Src_Editor_Module is
                   Real_Column_End);
             end if;
 
-         elsif Focus then
-            --  Gives the focus, thus child_selected, thus context_changed).
-            Raise_Child (Child, Focus);
+         else
+            if not Is_Opened then
+               --  Place the cursor if we are opening the file
+               Set_Cursor_Location (Editor, 1, 1, Force_Focus => False);
+            end if;
+            if Focus then
+               --  Gives the focus, thus child_selected, thus context_changed).
+               Raise_Child (Child, Focus);
+            end if;
          end if;
       end Jump_To_Location_And_Give_Focus;
 
@@ -1526,7 +1517,9 @@ package body Src_Editor_Module is
 
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
-            Jump_To_Location_And_Give_Focus (Child2);
+            Freeze_Context (Get_Buffer (Editor));
+            Jump_To_Location_And_Give_Focus (Child2, Is_Opened => True);
+            Thaw_Context (Get_Buffer (Editor));
 
             return Editor;
          end if;
@@ -1555,6 +1548,7 @@ package body Src_Editor_Module is
       --  to the MDI to handle
 
       if Editor /= null then
+         Freeze_Context (Get_Buffer (Editor));
          Child := new Editor_Child_Record;
          Initialize
            (Child, Editor,
@@ -1695,12 +1689,13 @@ package body Src_Editor_Module is
          --  Change location only at the end, since other calls above might
          --  reset it.
 
-         Jump_To_Location_And_Give_Focus (Child);
+         Jump_To_Location_And_Give_Focus (Child, Is_Opened => False);
 
          if File /= GNATCOLL.VFS.No_File then
             Add_To_Recent_Menu (Kernel, File);
          end if;
 
+         Thaw_Context (Get_Buffer (Editor));
       else
          Kernel.Insert
            ((-"Cannot open file ") & "'" & Display_Full_Name (File)

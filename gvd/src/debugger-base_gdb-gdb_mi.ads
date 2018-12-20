@@ -108,7 +108,9 @@ package Debugger.Base_Gdb.Gdb_MI is
    overriding function Value_Of
      (Debugger : access Gdb_MI_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String;
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String;
 
    overriding function Print_Value_Cmd
      (Debugger : access Gdb_MI_Debugger;
@@ -126,8 +128,7 @@ package Debugger.Base_Gdb.Gdb_MI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_MI_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Executable : GNATCOLL.VFS.Virtual_File);
 
    overriding function Get_Executable
      (Debugger : access Gdb_MI_Debugger) return GNATCOLL.VFS.Virtual_File;
@@ -279,16 +280,16 @@ package Debugger.Base_Gdb.Gdb_MI is
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access Gdb_MI_Debugger;
-      Num      : GVD.Types.Breakpoint_Identifier;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access Gdb_MI_Debugger;
+      Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Get_Last_Breakpoint_Id
      (Debugger  : access Gdb_MI_Debugger)
@@ -452,9 +453,10 @@ package Debugger.Base_Gdb.Gdb_MI is
 private
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger        : access Gdb_MI_Debugger;
-      Cmd             : String;
-      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
+     (Debugger    : access Gdb_MI_Debugger;
+      Cmd         : String;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Synchronous : Boolean := True)
       return String;
 
    overriding procedure Send

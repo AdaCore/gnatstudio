@@ -20,7 +20,6 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Debugger;                  use Debugger;
-with Gdk.Event;                 use Gdk.Event;
 with Gdk.Window;                use Gdk.Window;
 with Generic_Views;             use Generic_Views;
 with Glib.Object;               use Glib.Object;
@@ -46,6 +45,7 @@ with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -254,10 +254,10 @@ package body GVD.Breakpoints is
      (View : access Breakpoint_Editor_Record'Class) return Breakpoint_Data;
    --  Return information on the currently selected breakpoint.
 
-   function Breakpoint_Clicked
-     (Widget : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
-   --  Called when receiving a click on the breakpoint tree.
+   procedure On_Breakpoint_State_Toggled
+     (Self : access Glib.Object.GObject_Record'Class;
+      Path : Glib.UTF8_String);
+   --  Called when the state of a brekpoint is toggled.
 
    procedure Recompute_Filters
      (Self : access Glib.Object.GObject_Record'Class);
@@ -312,7 +312,7 @@ package body GVD.Breakpoints is
      (View    : not null access Breakpoint_Editor_Record'Class;
       Is_Set  : Boolean;
       State   : Boolean;
-      Id_List : in out List_Breakpoint_Identifiers.List);
+      Id_List : in out Breakpoint_Identifier_Lists.List);
    --  Procedure used to factorize the code: It will loop through the list
    --  of selected rows and retrieve the identifier in a list if not Is_Set
    --  else set the State in the model.
@@ -645,8 +645,6 @@ package body GVD.Breakpoints is
       Self.Breakpoint_List := Create_Tree_View
         (Column_Types, Column_Names, Sortable_Columns => False);
       Self.Breakpoint_List.Get_Selection.Set_Mode (Selection_Multiple);
-      Self.Breakpoint_List.On_Button_Press_Event
-        (Breakpoint_Clicked'Access, Self);
       Self.Breakpoint_List.Get_Selection.On_Changed
         (Recompute_Filters'Access, Self);
       Self.Breakpoint_List.Set_Search_Column (Col_File);
@@ -662,6 +660,10 @@ package body GVD.Breakpoints is
            (Cell_Renderer_List.Get_Data (List),
             "activatable",
             Col_Activatable);
+         Gtk_Cell_Renderer_Toggle
+           (Cell_Renderer_List.Get_Data (List)).On_Toggled
+             (Call  => On_Breakpoint_State_Toggled'Access,
+              Slot  => Self);
          Cell_Renderer_List.Free (List);
       end;
 
@@ -776,6 +778,7 @@ package body GVD.Breakpoints is
 
       Gtk_New (Self.File_Name);
       Self.File_Name.Set_Editable (True);
+      Self.File_Name.Set_Activates_Default (True);
       Hbox.Pack_Start (Self.File_Name, True, True, 0);
 
       Gtk_New_Hbox (Hbox, Spacing => 15);
@@ -789,6 +792,7 @@ package body GVD.Breakpoints is
       Gtk_New (Self.Line_Spin, Min => 1.0, Max => 1.0e+08, Step => 1.0);
       Self.Line_Spin.Set_Numeric (True);
       Self.Line_Spin.Set_Value (1.0);
+      Self.Line_Spin.Set_Activates_Default (True);
       Hbox.Pack_Start (Self.Line_Spin, True, True, 0);
 
       ------------
@@ -1074,6 +1078,7 @@ package body GVD.Breakpoints is
       Dummy := Self.Add_Button (Stock_Ok, Gtk_Response_Apply);
       Dummy.Grab_Default;
       Dummy := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Self.Set_Default_Response (Gtk_Response_Apply);
    end Initialize;
 
    ---------------------
@@ -1272,55 +1277,29 @@ package body GVD.Breakpoints is
       Self.Set_Default.Set_Active (False);
    end Fill;
 
-   ------------------------
-   -- Breakpoint_Clicked --
-   ------------------------
+   ---------------------------------
+   -- On_Breakpoint_State_Toggled --
+   ---------------------------------
 
-   function Breakpoint_Clicked
-     (Widget : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
+   procedure On_Breakpoint_State_Toggled
+     (Self : access Glib.Object.GObject_Record'Class;
+      Path : Glib.UTF8_String)
    is
-      View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
-      Iter  : Gtk_Tree_Iter;
-      Col   : Gtk_Tree_View_Column;
+      View  : constant Breakpoint_Editor := Breakpoint_Editor (Self);
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
-      List  : List_Breakpoint_Identifiers.List;
-      Cond  : Boolean;
+      Iter  : constant Gtk_Tree_Iter := Model.Get_Iter_From_String (Path);
+      List  : Breakpoint_Identifier_Lists.List;
    begin
-      if View.Activatable
-        and then Event.Button = 1
-        and then Event.The_Type = Button_Press
-      then
-         Coordinates_For_Event
-           (View.Breakpoint_List,
-            Event, Iter, Col);
-
-         if Iter /= Null_Iter
-           and then Col = Get_Column (View.Breakpoint_List, Col_Enb)
-         then
-            --  Click in the second column => change the enable/disable state
-            --  For efficiency, no need to reparse the list of breakpoints,
-            --  since only the state of one of them as changed and we know all
-            --  about it.
-            List.Append
-              (Breakpoint_Identifier'Value
-                 (Get_String (Model, Iter, Col_Num)));
-            Set_Breakpoints_State
-              (View.Kernel,
-               List   => List,
-               State  => not Model.Get_Boolean (Iter, Col_Enb));
-            --  Retrieve the value and set the contrary
-            Cond := not Model.Get_Boolean (Iter, Col_Enb);
-            Model.Set (Iter, Col_Enb, Cond);
-            --  Stop propagating of the current signal, to avoid extra calls
-            --  to Select/Unselect row.
-
-            return True;
-         end if;
+      if Iter /= Null_Iter then
+         List.Append
+           (Breakpoint_Identifier'Value
+              (Get_String (Model, Iter, Col_Num)));
+         Set_Breakpoints_State
+           (View.Kernel,
+            List   => List,
+            State  => Model.Get_Boolean (Iter, Col_Enb));
       end if;
-
-      return False;
-   end Breakpoint_Clicked;
+   end On_Breakpoint_State_Toggled;
 
    -----------------------
    -- Recompute_Filters --
@@ -1650,25 +1629,30 @@ package body GVD.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Kernel,
               Visible_Only => True));
-      Id_List : List_Breakpoint_Identifiers.List;
+      Id_List : Breakpoint_Identifier_Lists.List;
    begin
       if View = null then
          return Commands.Failure;
       end if;
-            --  Get the list of selected breakpoints
+
+      --  Get the list of selected breakpoints
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => False,
                                              State   => Command.Is_Enabled,
                                              Id_List => Id_List);
+
       --  Put them in numerical order
-      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Set_Breakpoints_State (View.Kernel, Id_List, Command.Is_Enabled);
-      List_Breakpoint_Identifiers.Clear (Id_List);
+
+      Breakpoint_Identifier_Lists.Clear (Id_List);
+
       --  Need to modify the toggle buttons in the model
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
                                              Is_Set  => True,
                                              State   => Command.Is_Enabled,
                                              Id_List => Id_List);
+
       return Commands.Success;
    end Execute;
 
@@ -1680,7 +1664,7 @@ package body GVD.Breakpoints is
      (View    : not null access Breakpoint_Editor_Record'Class;
       Is_Set  : Boolean;
       State   : Boolean;
-      Id_List : in out List_Breakpoint_Identifiers.List)
+      Id_List : in out Breakpoint_Identifier_Lists.List)
    is
       Selection   : Gtk.Tree_Selection.Gtk_Tree_Selection;
       Path        : Gtk_Tree_Path;
@@ -1811,7 +1795,7 @@ package body GVD.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Kernel,
               Visible_Only => True));
-      Id_List : List_Breakpoint_Identifiers.List;
+      Id_List : Breakpoint_Identifier_Lists.List;
    begin
       --  Get the list of selected breakpoints
       Get_Selected_Breakpoints_Or_Set_State (View    => View,
@@ -1819,9 +1803,9 @@ package body GVD.Breakpoints is
                                              State   => False,
                                              Id_List => Id_List);
       --  Put them in numerical order
-      List_Breakpoint_Identifiers.Reverse_Elements (Id_List);
+      Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
       Delete_Multiple_Breakpoints (Kernel, Id_List);
-      List_Breakpoint_Identifiers.Clear (Id_List);
+      Breakpoint_Identifier_Lists.Clear (Id_List);
       return Commands.Success;
    end Execute;
 

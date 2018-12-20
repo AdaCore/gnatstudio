@@ -162,7 +162,8 @@ package body GNAThub.Messages is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Natural;
       Column    : Basic_Types.Visible_Column_Type;
-      Entity    : Entity_Data := No_Entity_Data) is
+      Entity    : Entity_Data := No_Entity_Data;
+      Category  : String := "") is
    begin
       Self.Rule     := Rule;
       Self.Severity := Severity;
@@ -204,13 +205,17 @@ package body GNAThub.Messages is
       GPS.Kernel.Messages.Initialize
         (Self          => Self,
          Container     => Container,
-         Category      => To_String (Self.Rule.Tool.Name),
+         Category      => (if Category /= ""
+                           then Category
+                           else To_String (Self.Rule.Tool.Name)),
          File          => File,
          Line          => Line,
          Column        => Column,
          Importance    => Severity.Ranking,
          Actual_Line   => Line,
          Actual_Column => Integer (Column));
+      --  The message should be visible by default
+      Self.Set_Flags (GPS.Kernel.Messages.Side_And_Locations);
    end Initialize;
 
    ----------

@@ -1167,6 +1167,48 @@ package body Xref is
                               Loc  => Loc));
    end To_General_Entity;
 
+   -------------------
+   -- Requires_Body --
+   -------------------
+
+   overriding function Requires_Body (E : General_Entity) return Boolean is
+   begin
+      if E.Entity /= No_Entity then
+         declare
+            Decl : constant Entity_Declaration :=
+              E.Db.Xref.Declaration (E.Entity);
+            Template : constant Entity_Information :=
+              E.Db.Xref.Instance_Of (E.Entity);
+            Flags : constant Entity_Flags :=
+              E.Db.Xref.Declaration (E.Entity).Flags;
+            Alias : constant Entity_Information :=
+              E.Db.Xref.Renaming_Of (E.Entity);
+         begin
+            if Flags.Is_Subprogram
+              and not Flags.Is_Abstract
+              and not Flags.Body_Is_Full_Declaration
+              and Template = No_Entity
+              and Alias = No_Entity
+              and not Is_Predefined_Entity (Decl)
+            then
+               return True;
+            end if;
+         end;
+      elsif E.Loc /= No_Location then
+         declare
+            C : constant access Simple_Construct_Information :=
+              Construct_From_Entity (E.Db, E);
+         begin
+            return C /= null
+              and then C.Category in Cat_Procedure | Cat_Function
+              and then C.Is_Declaration
+              and then not C.Is_Generic_Spec;
+         end;
+      end if;
+
+      return False;
+   end Requires_Body;
+
    -----------------
    -- Renaming_Of --
    -----------------

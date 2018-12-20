@@ -61,8 +61,12 @@ package CodePeer.Module is
    --  and display loaded results.
 
    procedure Review_Messages
-     (Self     : access Module_Id_Record'Class;
-      Messages : CodePeer.Message_Vectors.Vector);
+     (Self        : access Module_Id_Record'Class;
+      Messages    : CodePeer.Message_Vectors.Vector;
+      Need_Reload : Boolean);
+   --  Open a dialog so that the user can review the given CodePeer Messages.
+   --  If Need_Reload is True, it means the audit trail information about
+   --  messages may need to be reloaded.
 
    procedure Review_Messages
      (Self     : access Module_Id_Record'Class;
@@ -111,6 +115,9 @@ package CodePeer.Module is
       Checks           : Message_Category_Sets.Set;
       CWEs             : CWE_Category_Sets.Set)
       return Message_Access;
+
+   procedure Set_Review_Action (Message : Message_Access);
+   --  Create a review action icon associated with Message
 
 private
 
@@ -166,6 +173,7 @@ private
       --  Control import of CodePeer annotations
       Import_Backtraces      : Default_Preferences.Boolean_Preference;
       --  Control import of CodePeer backtraces
+      Show_Msg_Id            : Default_Preferences.Boolean_Preference;
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter

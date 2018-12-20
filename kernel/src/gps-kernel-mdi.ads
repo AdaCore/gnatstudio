@@ -502,15 +502,6 @@ package GPS.Kernel.MDI is
      (Glib.Object.GObject_Record, Boolean, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel
 
-   type File_Project_Record is record
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : aliased GNATCOLL.VFS.Virtual_File;
-   end record;
-
-   package File_Project_Cb is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, File_Project_Record);
-   --  Generic callback that can be used to connect a signal to a kernel
-
 private
 
    type General_UI_Module_Record is new Module_ID_Record with record

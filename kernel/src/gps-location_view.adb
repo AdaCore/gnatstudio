@@ -1907,7 +1907,8 @@ package body GPS.Location_View is
 
          if Have_Selection then
             --  Valid elements are selected
-            Export_File := Gtkada.File_Selector.Select_File;
+            Export_File := Gtkada.File_Selector.Select_File
+              (Parent => Get_Current_Window (View.Kernel));
 
             if Export_File /= No_File then
                --  User selected file, exporting
@@ -1940,7 +1941,8 @@ package body GPS.Location_View is
          end if;
 
          if Iter /= Null_Iter then
-            Export_File := Gtkada.File_Selector.Select_File;
+            Export_File := Gtkada.File_Selector.Select_File
+              (Parent => Get_Current_Window (View.Kernel));
 
             if Export_File /= No_File then
                --  User selected file, exporting

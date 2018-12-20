@@ -73,14 +73,6 @@ package BT.Xml.Reader is
    --  Returns the file_name in which the callee is declared
    --  (for preconditions).
 
-   function Get_Variable_Vn_Value
-     (File          : String;
-      Variable      : String;
-      Srcpos        : Source_Position;
-      Closest_Match : out Source_Position) return String;
-   --  Returns the value_set associated with Variable on the closest
-   --  source location to Srcpos available.
-
    function Get_Srcpos_Vn_Values
      (File_Name : String;
       Srcpos    : Source_Position) return Vn_Values_Seqs.Vector;

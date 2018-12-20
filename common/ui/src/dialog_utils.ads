@@ -158,10 +158,10 @@ package Dialog_Utils is
    --  the given Position.
 
    procedure Append_Button
-     (Self   : not null access Dialog_View_With_Button_Box_Record'Class;
-      Button : not null access Gtk_Button_Record'Class);
-   --  Append the given Button to dialog view's button box, aligning it with
-   --  the previously appended buttons.
+     (Self          : not null access Dialog_View_With_Button_Box_Record'Class;
+      Button_Widget : not null access Gtk_Widget_Record'Class);
+   --  Append the given Button_Widget to dialog view's button box, aligning it
+   --  with the previously appended buttons.
 
    --------------------------
    -- Dialog Group Widgets --

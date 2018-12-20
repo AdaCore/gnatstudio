@@ -20,6 +20,7 @@ with Case_Handling;
 with GNAT.Expect;
 with GNAT.Regpat;            use GNAT;
 with GNAT.Strings;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GNATCOLL.Xref;
 with Basic_Types;            use Basic_Types;
@@ -29,7 +30,7 @@ with GNATCOLL.VFS;
 package Language is
 
    Clang_Support : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
-     ("GPS.INTERNAL.LIBCLANG_BACKEND", GNATCOLL.Traces.On);
+     ("GPS.INTERNAL.LANGUAGE", GNATCOLL.Traces.On);
 
    type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;
@@ -887,11 +888,29 @@ package Language is
    --  A := B (C.D (X).E)
    --  and End_Offset is place after E, this will return "C.D(X).E".
 
+   -----------------
+   -- LSP support --
+   -----------------
+
+   function Has_LSP (Lang : access Language_Root) return Boolean;
+   --  Returns True if LSP server is registered for this language.
+
+   function Get_LSP_Args (Lang : access Language_Root) return Arg_List;
+   --  Returns arguments for the registered LSP server.
+
+   procedure Add_LSP_Arg (Lang : access Language_Root; Argument : String);
+   --  Adds given argument to the server arguments.
+
+   procedure Remove_LSP_Args (Lang : access Language_Root);
+   --  Removes all LSP arguments.
+
 private
+
    type Language_Root is abstract tagged limited record
       Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
       Indent_Style  : Indentation_Kind  := Extended;
+      LSP_Args      : Arg_List;
    end record;
 
    function Comment_Line

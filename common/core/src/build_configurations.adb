@@ -1668,9 +1668,20 @@ package body Build_Configurations is
      (Target          : Target_Access;
       New_Target_Type : String) is
    begin
-      Target.Properties.Target_Type :=
-         To_Unbounded_String (New_Target_Type);
+      Target.Properties.Target_Type := To_Unbounded_String (New_Target_Type);
    end Set_Target_Type;
+
+   --------------------------
+   -- Set_Project_Switches --
+   --------------------------
+
+   procedure Set_Project_Switches
+     (Target           : Target_Access;
+      Project_Switches : String) is
+   begin
+      Target.Properties.Project_Switches :=
+        To_Unbounded_String (Project_Switches);
+   end Set_Project_Switches;
 
    ----------------------
    -- Get_First_Target --

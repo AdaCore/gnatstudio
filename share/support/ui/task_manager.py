@@ -379,7 +379,7 @@ class Tasks_View(Module):
         d = Gtk.Dialog(
             "Tasks are running",
             flags=Gtk.DialogFlags.MODAL or Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            parent=GPS.MDI.current().pywidget().get_toplevel())
+            parent=GPS.MDI.get_main_window().pywidget())
 
         label = Gtk.Label(
                  "The following tasks are running, do you want to quit GPS?\n"

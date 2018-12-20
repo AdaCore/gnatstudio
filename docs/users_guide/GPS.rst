@@ -122,9 +122,9 @@ Classes
 
    .. automethod:: GPS.AnalysisTool.__init__
 
-   .. automethod:: GPS.AnalysisTool.add_message
-
    .. automethod:: GPS.AnalysisTool.add_rule
+
+   .. automethod:: GPS.AnalysisTool.create_message
 
 :class:`GPS.Bookmark`
 ^^^^^^^^^^^^^^^^^^^^^
@@ -996,6 +996,8 @@ Classes
 
    .. automethod:: GPS.Entity.get_called_entities
 
+   .. automethod:: GPS.Entity.has_body
+
    .. automethod:: GPS.Entity.instance_of
 
    .. automethod:: GPS.Entity.is_access
@@ -1035,6 +1037,8 @@ Classes
    .. automethod:: GPS.Entity.references
 
    .. automethod:: GPS.Entity.rename
+
+   .. automethod:: GPS.Entity.requires_body
 
    .. automethod:: GPS.Entity.return_type
 
@@ -1269,6 +1273,8 @@ Classes
    .. autoattribute:: GPS.LanguageInfo.name
 
 
+   .. automethod:: GPS.LanguageInfo.set_lsp_arguments
+
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -1425,6 +1431,8 @@ Classes
 
    .. automethod:: GPS.MDI.get_by_child
 
+   .. automethod:: GPS.MDI.get_main_window
+
    .. automethod:: GPS.MDI.hide
 
    .. automethod:: GPS.MDI.information_popup
@@ -1520,6 +1528,10 @@ Classes
 
 
    .. autoattribute:: GPS.Message.Flags
+
+
+
+   .. autoattribute:: GPS.Message.Importance
 
 
    .. automethod:: GPS.Message.__init__
@@ -2068,7 +2080,7 @@ Classes
 
    .. automethod:: GPS.VCS2_Task_Visitor.file_computed
 
-   .. automethod:: GPS.VCS2_Task_Visitor.history_lines
+   .. automethod:: GPS.VCS2_Task_Visitor.history_line
 
    .. automethod:: GPS.VCS2_Task_Visitor.set_details
 

@@ -109,21 +109,22 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Pattern used to detect when the debuggee is not running
 
    Frame_Pattern             : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
+     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (\w?\:?[^:]+)(:\d+)?)?$",
+      Multiple_Lines);
+   type Frame_Pattern_Kind is
+        (Frame_Matched, Frame_Num, Frame_Address_Part, Frame_Address,
+         Frame_Names, Frame_Location, Frame_File, Frame_Line)
+     with Warnings => Off;
+   Frame_Pattern_Groups      : constant Natural := 7;
    --  Regular expression used to detect and parse callstack frames
-
-   Frame_File_Line_Pattern : constant Pattern_Matcher := Compile
-     ("(.+):(\d+)$", Multiple_Lines);
-   --  Regular expression to separate line from file name
+   --  Example:
+   --  "#0  0x0000000000400548 in main () at /tests/RA25-028/common/main.c:17
+   --  "#1  0x0000000000400548 in main () at C:\tests\main.c:17
+   --  "#2  0x0000000000400548 in main ()
 
    Frame_Subprogram_Params_Pattern : constant Pattern_Matcher := Compile
      ("^(.*) (\(.*\))");
    --  Regular expression used to separate parameters form the subprogram name
-
-   Frame_Pattern_With_File   : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))$", Multiple_Lines);
-   --  Regular expression used to detect and parse callstack frames
-   --  with no file information
 
    Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
      ("(?:Breakpoint|Watchpoint|Catchpoint) (\d+)");
@@ -194,6 +195,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Question_Filter_Pattern2  : constant Pattern_Matcher :=
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
+
+   Is_Quit_Pattern : constant Pattern_Matcher := Compile
+     ("^\s*(q|qu|qui|quit)\s*$");
 
    procedure Running_Filter
      (Process : access Visual_Debugger_Record'Class;
@@ -338,11 +342,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -------------------------------
 
    overriding function Send_And_Get_Clean_Output
-     (Debugger : access Gdb_Debugger;
-      Cmd      : String;
-      Mode     : Command_Type := Hidden) return String
+     (Debugger    : access Gdb_Debugger;
+      Cmd         : String;
+      Mode        : Command_Type := Hidden;
+      Synchronous : Boolean := True) return String
    is
-      S   : constant String := Send_And_Get_Output (Debugger, Cmd, Mode);
+      S   : constant String := Send_And_Get_Output
+        (Debugger, Cmd, Mode, Synchronous);
       Pos : Integer;
    begin
       if Ends_With (S, Prompt_String) then
@@ -452,8 +458,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    overriding function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Default_Format) return String
+      Format   : Value_Format := Default_Format;
+      From_API : Boolean := False)
+      return String
    is
+      pragma Unreferenced (From_API);
+
       S : constant String := Send_And_Get_Clean_Output
         (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
          Mode => Internal);
@@ -671,7 +681,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
-         Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
+         Set_Executable (Debugger, Debugger.Executable);
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if
@@ -717,6 +727,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          if Get_Pref (Open_Main_Unit) then
             Send (Debugger, "info line", Mode => Internal);
          end if;
+
+         --  Display the prompt when there is no executable at startup since
+         --  we did not launch any visible command.
+
+         Debugger.Display_Prompt;
       end if;
 
       if Debugger.Executable_Args /= null then
@@ -886,8 +901,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
                                      Protocol => Debugger.Get_Remote_Protocol,
                                      Mode     => Visible);
-      else
-         Display_Prompt (Debugger);
       end if;
    end Connect_To_Target_If_Needed;
 
@@ -897,11 +910,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    overriding procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File;
-      Mode       : Command_Type := Hidden)
+      Executable : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (Mode);
-
       Remote_Exec         : constant Virtual_File :=
                               To_Remote
                                 (Executable, Get_Nickname (Debug_Server));
@@ -936,22 +946,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
               (Command & " " & Full_Name);
          end if;
 
-         if Process /= null then
-            Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
-         end if;
+         --  Send the command and wait until the end of it's execution without
+         --  blocking The UI.
 
          declare
-            S : constant String := Send_And_Get_Clean_Output
-              (Debugger, Cmd.all, Mode => Hidden);
+            Output : constant String := Debugger.Send_And_Get_Clean_Output
+              (Cmd.all,
+               Mode        => Visible,
+               Synchronous => False);
          begin
             Free (Cmd);
 
-            if Match (No_Such_File_Regexp, S) /= 0 then
+            if Match (No_Such_File_Regexp, Output) /= 0 then
                raise Executable_Not_Found;
-            end if;
-
-            if Process /= null and then S /= "" then
-               Output_Text (Process, S & ASCII.LF, Set_Position => True);
             end if;
          end;
       end Launch_Command_And_Output;
@@ -1084,10 +1091,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Set_Is_Started (Debugger, False);
       Send (Debugger, "core " & (+Core_File), Mode => Mode);
 
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
-
       --  Detect the current language, and get the name and line of the
       --  current file.
 
@@ -1120,10 +1123,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
            (Debugger,
             "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
    end Add_Symbols;
 
    ---------------------
@@ -1144,10 +1143,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          else
             Send (Debugger, "load", Mode => Mode);
          end if;
-
-         if Mode in Visible_Command then
-            Wait_User_Command (Debugger);
-         end if;
       end if;
    end Load_Executable;
 
@@ -1162,10 +1157,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
-
-      if Mode in Visible_Command then
-         Wait_User_Command (Debugger);
-      end if;
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful
@@ -1614,28 +1605,33 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (S     : String;
       Value : out Backtrace_Vector)
    is
-      Matched : Match_Array (0 .. 6);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
       First   : Positive := S'First;
    begin
       loop
          Match (Frame_Pattern, S (First .. S'Last), Matched);
 
-         exit when Matched (0) = No_Match;
+         exit when Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) = No_Match;
 
          declare
             Rec : Backtrace_Record;
          begin
-            Rec.Frame_Id :=
-              Natural'Value (S (Matched (1).First .. Matched (1).Last));
+            Rec.Frame_Id := Natural'Value
+              (S (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                   Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
 
-            if Matched (2) /= No_Match then
+            if Matched
+              (Frame_Pattern_Kind'Pos (Frame_Address)) /= No_Match
+            then
                Rec.Address := String_To_Address
-                 (S (Matched (3).First .. Matched (3).Last));
+                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Address)).First ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Address)).Last));
             end if;
 
             declare
                N : constant String :=
-                 S (Matched (4).First .. Matched (4).Last);
+                 S (Matched (Frame_Pattern_Kind'Pos (Frame_Names)).First ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Names)).Last);
                Params_Match : Match_Array (0 .. 2);
                B, E : Natural;
             begin
@@ -1666,24 +1662,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                end if;
             end;
 
-            if Matched (5) /= No_Match then
-               declare
-                  Name : constant String :=
-                    S (Matched (6).First .. Matched (6).Last);
-                  MN   : Match_Array (0 .. 2);
-               begin
-                  Match (Frame_File_Line_Pattern, Name, MN);
+            if Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match then
+               Rec.File := Create
+                 (+(S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
+                    Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last)));
+            end if;
 
-                  if MN (0) /= No_Match then
-                     Rec.File := Create
-                       (+(Name (MN (1).First .. MN (1).Last)));
-                     Rec.Line := Natural'Value
-                       (Name (MN (2).First .. MN (2).Last));
-
-                  else
-                     Rec.File := Create (+(Name));
-                  end if;
-               end;
+            if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match then
+               Rec.Line := Natural'Value
+                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Line)).First + 1 ..
+                      Matched (Frame_Pattern_Kind'Pos (Frame_Line)).Last));
             end if;
 
             First := Matched (0).Last + 2;
@@ -2484,11 +2472,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       pragma Unreferenced (Debugger);
 
       Start      : Natural := Str'First;
-      Matched    : Match_Array (0 .. 5);
-      Matched2   : Match_Array (0 .. 5);
-      Name_Index : Natural := 1;
-      Line_Index : Natural := 2;
-      Addr_Index : Natural := 3;
+      Matched    : Match_Array (0 .. Frame_Pattern_Groups);
+      Matched2   : Match_Array (0 .. Frame_Pattern_Groups);
+      Name_Index : Natural := 0;
+      Line_Index : Natural := 0;
+      Addr_Index : Natural := 0;
 
    begin
       --  Default values if nothing better is found
@@ -2528,31 +2516,54 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             Addr_Index := 0;
 
          else
-            --  Catch a frame without debug info
+            --  Catch a frame with or without debug info
+            --  #0  0x0000000000400548 in main () at C:/home/main.c:17
             --  #6  0x0000000000402e78 in sub ()
 
             Match (Frame_Pattern, Str, Matched);
-            if Matched (3) = No_Match then
+            if Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) = No_Match then
                return;
             end if;
 
-            Addr := String_To_Address
-              (Str (Matched (3).First .. Matched (3).Last));
-            return;
+            Addr_Index := Frame_Pattern_Kind'Pos (Frame_Address);
+            Name_Index := Frame_Pattern_Kind'Pos (Frame_File);
+            Line_Index := Frame_Pattern_Kind'Pos (Frame_Line);
          end if;
+      else
+         Name_Index := 1;
+         Line_Index := 2;
+         Addr_Index := 3;
       end if;
 
-      Set_Unbounded_String
-        (Name, Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
+      if Name_Index /= 0
+        and then Matched (Name_Index) /= No_Match
+      then
+         Set_Unbounded_String
+           (Name,
+            Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
+      end if;
 
-      if Addr_Index /= 0 then
+      if Addr_Index /= 0
+        and then Matched (Addr_Index) /= No_Match
+      then
          Addr :=
            String_To_Address
              (Str (Matched (Addr_Index).First .. Matched (Addr_Index).Last));
       end if;
 
-      Line := Natural'Value
-        (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+      if Line_Index /= 0
+        and then Matched (Line_Index) /= No_Match
+      then
+         if Str (Matched (Line_Index).First) = ':' then
+            Line := Natural'Value
+              (Str (Matched (Line_Index).First + 1 ..
+                 Matched (Line_Index).Last));
+
+         else
+            Line := Natural'Value
+              (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+         end if;
+      end if;
 
    exception
       when E : others =>
@@ -2573,19 +2584,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Frame    : out Unbounded_String;
       Message  : out Frame_Info_Type)
    is
-      Matched : Match_Array (0 .. 1);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
    begin
       Match (Frame_Pattern, Str, Matched);
 
-      if Matched (1) /= No_Match then
+      if Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) /= No_Match then
          Set_Unbounded_String
-           (Frame, Str (Matched (1).First .. Matched (1).Last));
-         Debugger.Current_Frame_Num := Integer'Value
-           (Str (Matched (1).First .. Matched (1).Last));
+           (Frame, Str (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
+         Debugger.Current_Frame_Num := Integer'Value (To_String (Frame));
 
-         Match (Frame_Pattern_With_File, Str, Matched);
-
-         if Matched (1) /= No_Match then
+         if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match
+           or else Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match
+         then
             Message := Location_Found;
          else
             Message := No_Debug_Info;
@@ -3044,37 +3055,45 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end;
    end List_Breakpoints;
 
-   -----------------------
-   -- Enable_Breakpoint --
-   -----------------------
+   ------------------------
+   -- Enable_Breakpoints --
+   ------------------------
 
-   overriding procedure Enable_Breakpoint
-     (Debugger : access Gdb_Debugger;
-      Num      : Breakpoint_Identifier;
-      Enable   : Boolean := True;
-      Mode     : Command_Type := Hidden) is
+   overriding procedure Enable_Breakpoints
+     (Debugger    : access Gdb_Debugger;
+      Breakpoints : Breakpoint_Identifier_Lists.List;
+      Enable      : Boolean := True;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := (if Enable then
+                                    To_Unbounded_String ("enable")
+                                 else
+                                    To_Unbounded_String ("disable"));
    begin
-      if Enable then
-         Send (Debugger, "enable" & Breakpoint_Identifier'Image (Num),
-               Mode => Mode);
-      else
-         Send (Debugger, "disable" & Breakpoint_Identifier'Image (Num),
-               Mode => Mode);
-      end if;
-   end Enable_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
 
-   -----------------------
-   -- Remove_Breakpoint --
-   -----------------------
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Enable_Breakpoints;
 
-   overriding procedure Remove_Breakpoint
-     (Debugger : access Gdb_Debugger;
-      Num      : Breakpoint_Identifier;
-      Mode     : Command_Type := Hidden) is
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   overriding procedure Remove_Breakpoints
+     (Debugger    : access Gdb_Debugger;
+      Breakpoints : Breakpoint_Identifier_Lists.List;
+      Mode        : Command_Type := Hidden)
+   is
+      Cmd : Unbounded_String := To_Unbounded_String ("delete");
    begin
-      Send (Debugger, "delete" & Breakpoint_Identifier'Image (Num),
-            Mode => Mode);
-   end Remove_Breakpoint;
+      for Breakpoint of Breakpoints loop
+         Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
+      end loop;
+
+      Debugger.Send (To_String (Cmd), Mode => Mode);
+   end Remove_Breakpoints;
 
    ---------------------
    -- List_Exceptions --
@@ -4116,15 +4135,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
-      Quit     : constant String := "quit     ";
    begin
-      if Command'Length <= Quit'Length
-        and then Command = Quit (1 .. Command'Length)
-      then
-         return True;
-      else
-         return False;
-      end if;
+      return Match (Is_Quit_Pattern, Command);
    end Is_Quit_Command;
 
    -----------------------
@@ -4146,13 +4158,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      (Debugger : access Gdb_Debugger;
       Info     : String)
    is
-      Matched : Match_Array (0 .. 1);
+      Matched : Match_Array (0 .. Frame_Pattern_Groups);
    begin
       Match (Frame_Pattern, Info, Matched);
 
-      if Matched (1) /= No_Match then
+      if Matched (Frame_Pattern_Kind'Pos (Frame_Num)) /= No_Match then
          Debugger.Current_Frame_Num := Integer'Value
-           (Info (Matched (1).First .. Matched (1).Last));
+           (Info (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
+                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
       end if;
    end Update_Frame_Info;
 

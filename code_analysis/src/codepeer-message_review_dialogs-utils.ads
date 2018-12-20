@@ -25,9 +25,8 @@ package CodePeer.Message_Review_Dialogs.Utils is
    --  Positions of columns in Status_Combo_Box's model
 
    function Create_Status_Combo_Box
-     (Active : Audit_Status_Kinds)
-      return Gtk.Combo_Box.Gtk_Combo_Box;
+     (Active_Status : String) return Gtk.Combo_Box.Gtk_Combo_Box;
    --  Create Combo_Box and fill it by Audit_Status_Kinds.
-   --  Set box's iterator to Active
+   --  Set box's iterator to Active_Status
 
 end CodePeer.Message_Review_Dialogs.Utils;

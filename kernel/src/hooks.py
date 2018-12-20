@@ -771,6 +771,10 @@ just executed and just completed.'''),
 Emitted just before the connection to the debugger is closed. It
 is still possible to send commands. Better to use debugger_state_changed'''),
 
+    Hook('debuggee_started', 'debugger_hooks', descr='''
+Emitted when the debuggee has been started or when the debugger is connected
+to the remote target.'''),
+
     Hook('debugger_location_changed', 'debugger_hooks', descr='''
 Emitted whenever the debugger reports a new current location, for instance
 when it stops at a breakpoint, when the user switches frame or thread,...'''),

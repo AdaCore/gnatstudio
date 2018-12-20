@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
@@ -39,7 +39,7 @@ with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtkada.MDI;            use Gtkada.MDI;
 
-with Histories;
+with Histories;             use Histories;
 with GNATCOLL.Projects;
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Contexts;
@@ -54,8 +54,6 @@ package body CodePeer.Messages_Reports is
 
    use type Glib.Signal_Name;
 
-   --  use type Code_Analysis.File_Access;
-   --  ??? Uncomment this line after I120-013 will be fixed
    use type Code_Analysis.Project_Access;
    use type Code_Analysis.Subprogram_Access;
 
@@ -107,22 +105,7 @@ package body CodePeer.Messages_Reports is
       Self   : Messages_Report);
    --  Handles change of state of items of ranking filter
 
-   procedure On_Show_Uncategorized_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Pending_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Not_A_Bug_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Intentional_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_False_Positive_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Bug_Messages_Toggled
+   procedure On_Show_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
    --  Handles change of state of items of review status filter
@@ -175,18 +158,8 @@ package body CodePeer.Messages_Reports is
    Ranking_High_History          : constant Histories.History_Key :=
      "codepeer-summary_report-ranking-high";
 
-   Status_Uncategorized_History   : constant Histories.History_Key :=
-     "codepeer-summary_report-status-uncategorized";
-   Status_Pending_History        : constant Histories.History_Key :=
-     "codepeer-summary_report-status-pending";
-   Status_Not_A_Bug_History      : constant Histories.History_Key :=
-     "codepeer-summary_report-status-not_a_bug";
-   Status_False_Positive_History : constant Histories.History_Key :=
-     "codepeer-summary_report-status-false_positive";
-   Status_Intentional_History    : constant Histories.History_Key :=
-     "codepeer-summary_report-status-intentional";
-   Status_Bug_History            : constant Histories.History_Key :=
-     "codepeer-summary_report-status-bug";
+   Status_History_Prefix : constant Histories.History_Key :=
+     "codepeer-summary_report-status-";
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
@@ -524,37 +497,18 @@ package body CodePeer.Messages_Reports is
            Histories.Get_History
              (Kernel.Get_History.all, Ranking_High_History));
 
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Uncategorized_History, True);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Pending_History, True);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Not_A_Bug_History, False);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_False_Positive_History, False);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Intentional_History, False);
-      Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Status_Bug_History, True);
-
-      Self.Show_Status :=
-        (Uncategorized  =>
-           Histories.Get_History
-             (Kernel.Get_History.all, Status_Uncategorized_History),
-         Pending        =>
-           Histories.Get_History
-             (Kernel.Get_History.all, Status_Pending_History),
-         Not_A_Bug      =>
-           Histories.Get_History
-             (Kernel.Get_History.all, Status_Not_A_Bug_History),
-         False_Positive =>
-           Histories.Get_History
-             (Kernel.Get_History.all, Status_False_Positive_History),
-         Intentional    =>
-           Histories.Get_History
-             (Kernel.Get_History.all, Status_Intentional_History),
-         Bug            =>
-           Histories.Get_History (Kernel.Get_History.all, Status_Bug_History));
+      for Status of Audit_Statuses loop
+         declare
+            Name : constant History_Key :=
+              Status_History_Prefix &
+              History_Key (Standardize (Image (Status)));
+         begin
+            Histories.Create_New_Boolean_Key_If_Necessary
+              (Kernel.Get_History.all, Name, Status.Category /= Not_A_Bug);
+            Self.Show_Status (Status.Id) :=
+              Histories.Get_History (Kernel.Get_History.all, Name);
+         end;
+      end loop;
 
       --  Create report's widgets
 
@@ -725,9 +679,7 @@ package body CodePeer.Messages_Reports is
       --  CWEs categories
 
       if Project.Has_Attribute (CWE_Attribute)
-        and then
-          Ada.Characters.Handling.To_Lower
-            (Project.Attribute_Value (CWE_Attribute)) = "true"
+        and then To_Lower (Project.Attribute_Value (CWE_Attribute)) = "true"
       then
          CodePeer.CWE_Criteria_Editors.Gtk_New
            (Editor         => Self.CWE_Editor,
@@ -850,65 +802,17 @@ package body CodePeer.Messages_Reports is
       Gtk.Box.Gtk_New_Vbox (Box);
       Scrolled.Add (Box);
 
-      Gtk.Check_Button.Gtk_New (Check, -"uncategorized");
-      Check.Set_Active (Self.Show_Status (Uncategorized));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Uncategorized_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"pending");
-      Check.Set_Active (Self.Show_Status (Pending));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Pending_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"not a bug");
-      Check.Set_Active (Self.Show_Status (Not_A_Bug));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Not_A_Bug_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"false positive");
-      Check.Set_Active (Self.Show_Status (False_Positive));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_False_Positive_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"intentional");
-      Check.Set_Active (Self.Show_Status (Intentional));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Intentional_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"bug");
-      Check.Set_Active (Self.Show_Status (Bug));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Bug_Messages_Toggled'Access),
-         Messages_Report (Self));
+      for Status of Audit_Statuses loop
+         Gtk.Check_Button.Gtk_New (Check, Image (Status));
+         Check.Set_Active (Self.Show_Status (Status.Id));
+         Box.Pack_Start (Check, False);
+         Check_Button_Report_Callbacks.Connect
+           (Check,
+            Gtk.Toggle_Button.Signal_Toggled,
+            Check_Button_Report_Callbacks.To_Marshaller
+              (On_Show_Messages_Toggled'Access),
+            Messages_Report (Self));
+      end loop;
 
       --  Set actual filter criteria (criteria are loaded from preferences to
       --  restore values used in last session).
@@ -1076,40 +980,6 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_All_Subprograms_Toggled;
 
-   ----------------------------------
-   -- On_Show_Bug_Messages_Toggled --
-   ----------------------------------
-
-   procedure On_Show_Bug_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Status (Bug) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_Bug_History,
-         Self.Show_Status (Bug));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Bug_Messages_Toggled;
-
-   ---------------------------------------------
-   -- On_Show_False_Positive_Messages_Toggled --
-   ---------------------------------------------
-
-   procedure On_Show_False_Positive_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Status (False_Positive) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_False_Positive_History,
-         Self.Show_Status (False_Positive));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_False_Positive_Messages_Toggled;
-
    -----------------------------------
    -- On_Show_High_Messages_Toggled --
    -----------------------------------
@@ -1141,23 +1011,6 @@ package body CodePeer.Messages_Reports is
          Self.Show_Ranking (Info));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Informational_Messages_Toggled;
-
-   ------------------------------------------
-   -- On_Show_Intentional_Messages_Toggled --
-   ------------------------------------------
-
-   procedure On_Show_Intentional_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Status (Intentional) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_Intentional_History,
-         Self.Show_Status (Intentional));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Intentional_Messages_Toggled;
 
    ----------------------------------
    -- On_Show_Low_Messages_Toggled --
@@ -1191,56 +1044,25 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Medium_Messages_Toggled;
 
-   ----------------------------------------
-   -- On_Show_Not_A_Bug_Messages_Toggled --
-   ----------------------------------------
+   ------------------------------
+   -- On_Show_Messages_Toggled --
+   ------------------------------
 
-   procedure On_Show_Not_A_Bug_Messages_Toggled
+   procedure On_Show_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
+      Self   : Messages_Report)
+   is
+      Status : Audit_Status_Kinds;
    begin
-      Self.Show_Status (Not_A_Bug) := Object.Get_Active;
+      Status := Get_Status (Object.Get_Label);
+      Self.Show_Status (Status.Id) := Object.Get_Active;
       Histories.Set_History
         (Self.Kernel.Get_History.all,
-         Status_Not_A_Bug_History,
-         Self.Show_Status (Not_A_Bug));
+         Status_History_Prefix & History_Key (Standardize (Image (Status))),
+         Self.Show_Status (Status.Id));
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Not_A_Bug_Messages_Toggled;
-
-   --------------------------------------
-   -- On_Show_Pending_Messages_Toggled --
-   --------------------------------------
-
-   procedure On_Show_Pending_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Status (Pending) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_Pending_History,
-         Self.Show_Status (Pending));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Pending_Messages_Toggled;
-
-   --------------------------------------------
-   -- On_Show_Uncategorized_Messages_Toggled --
-   --------------------------------------------
-
-   procedure On_Show_Uncategorized_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Status (Uncategorized) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_Uncategorized_History,
-         Self.Show_Status (Uncategorized));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Uncategorized_Messages_Toggled;
+   end On_Show_Messages_Toggled;
 
    ---------------------------------
    -- On_Lifeage_Criteria_Changed --
