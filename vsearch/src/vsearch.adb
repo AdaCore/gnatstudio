@@ -225,7 +225,8 @@ package body Vsearch is
       Position               => Position_Float,
       Group                  => Group_Consoles,
       Commands_Category      => "",  --  no automatic command
-      MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
+      MDI_Flags              => All_Buttons
+      or Float_As_Transient or Always_Destroy_Float,
       Areas                  => Sides_Only,
       Default_Width          => Default_Width,
       Default_Height         => Default_Height,
