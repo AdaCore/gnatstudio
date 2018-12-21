@@ -138,6 +138,14 @@ package GPS.Kernel.Project is
    --  finished your changes, so as to report the changes to all the other
    --  tools.
 
+   function Lookup_Project
+     (Self : not null access Kernel_Handle_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Projects.Project_Type;
+   --  Lookup for project for the given project file in the root project.
+   --
+   --  ??? For LibGPR2 it should return as many project views as exists.
+
    procedure Create_Registry
      (Handle : access Kernel_Handle_Record'Class;
       Result : out Projects.Project_Registry_Access);

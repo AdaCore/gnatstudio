@@ -231,8 +231,9 @@ package body Browsers.Projects is
       Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
    is
       P : constant Project_Type :=
-        Get_Project_Tree (Self.Kernel).Project_From_Path
-        (Create (+XML_Utils.Get_Attribute (Node, "path")));
+            Lookup_Project
+              (Self.Kernel,
+               Create (+XML_Utils.Get_Attribute (Node, "path")));
 
    begin
       return Self.Add_Project_If_Not_Present (P);
@@ -277,8 +278,7 @@ package body Browsers.Projects is
    function Project_Of (Self : not null access Project_Item_Record'Class)
       return Project_Type is
    begin
-      return Get_Project_Tree (Self.Browser.Kernel)
-        .Project_From_Path (Self.Path);
+      return Lookup_Project (Self.Browser.Kernel, Self.Path);
    end Project_Of;
 
    ------------------

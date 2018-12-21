@@ -820,6 +820,18 @@ package body GPS.Kernel.Project is
           (Self, Self.Registry.Tree.Root_Project);
    end Get_Root_Project_View;
 
+   --------------------
+   -- Lookup_Project --
+   --------------------
+
+   function Lookup_Project
+     (Self : not null access Kernel_Handle_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Projects.Project_Type is
+   begin
+      return Self.Registry.Tree.Project_From_Path (File);
+   end Lookup_Project;
+
    ------------------------
    -- Scenario_Variables --
    ------------------------

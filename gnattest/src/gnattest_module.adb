@@ -328,13 +328,9 @@ package body GNATTest_Module is
       -- Origin_Project --
       --------------------
 
-      function Origin_Project
-        (Project : Project_Type)
-         return Project_Type
-      is
-         use GNATCOLL.Projects;
-
+      function Origin_Project (Project : Project_Type) return Project_Type is
          File : Virtual_File;
+
       begin
          if Is_Harness_Project (Project)
            and then Project.Has_Attribute (Origin_Project_Attribute)
@@ -347,9 +343,9 @@ package body GNATTest_Module is
                File.Normalize_Path;
             end if;
 
-            return Project_From_Path
-              (GPS.Kernel.Project.Get_Project_Tree (Get_Kernel (Data)).all,
-               File);
+            return
+              GPS.Kernel.Project.Lookup_Project (Get_Kernel (Data), File);
+
          else
             return No_Project;
          end if;

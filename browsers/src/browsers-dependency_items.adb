@@ -300,8 +300,10 @@ package body Browsers.Dependency_Items is
    begin
       Self.Find_Or_Create_File
         (Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
-         Project  => Get_Project_Tree (Self.Kernel).Project_From_Path
-         (Create (+XML_Utils.Get_Attribute (Node, "project"))),
+         Project  =>
+           Lookup_Project
+             (Self.Kernel,
+              Create (+XML_Utils.Get_Attribute (Node, "project"))),
          Item     => It,
          Newly_Added => Newly_Added);
       return It;
