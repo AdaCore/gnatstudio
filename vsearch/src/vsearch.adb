@@ -2747,8 +2747,7 @@ package body Vsearch is
          Vsearch_Module_Id.Projects :=
            new Project_Type_Array'(1 .. 1 => Project_Information (Context));
       elsif Has_File_Information (Context) then
-         Set := Get_Project_Tree (Kernel).Info_Set
-           (File_Information (Context));
+         Set := Kernel.Get_Project_Tree.Info_Set (File_Information (Context));
 
          if not Set.Is_Empty then
             Vsearch_Module_Id.Projects := new Project_Type_Array

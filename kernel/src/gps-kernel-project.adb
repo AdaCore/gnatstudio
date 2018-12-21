@@ -795,18 +795,6 @@ package body GPS.Kernel.Project is
       return Handle.Registry.Tree.Root_Project;
    end Get_Project;
 
-   ----------------------
-   -- Get_Project_Tree --
-   ----------------------
-
-   function Get_Project_Tree
-     (Handle : access Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Tree_Access
-   is
-   begin
-      return Handle.Registry.Tree;
-   end Get_Project_Tree;
-
    ---------------------------
    -- Get_Root_Project_View --
    ---------------------------

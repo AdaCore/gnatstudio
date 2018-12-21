@@ -239,8 +239,8 @@ package body GNAThub.Loader.Databases is
          case Kind is
             when From_Project =>
                Project :=
-                 GPS.Kernel.Project.Get_Project_Tree
-                   (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
+                 Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
+                   (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                File := Resource_File;
@@ -296,8 +296,8 @@ package body GNAThub.Loader.Databases is
          case Kind is
             when From_Project =>
                Project :=
-                 GPS.Kernel.Project.Get_Project_Tree
-                   (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
+                 Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
+                   (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                Project :=

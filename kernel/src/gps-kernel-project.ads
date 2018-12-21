@@ -124,9 +124,6 @@ package GPS.Kernel.Project is
    --  this procedure.
    --  Return True if the project could be successfully saved
 
-   function Get_Project_Tree
-     (Handle : access Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Tree_Access;
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class)
       return GNATCOLL.Projects.Project_Type;
