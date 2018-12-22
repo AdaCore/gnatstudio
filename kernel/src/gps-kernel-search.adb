@@ -75,18 +75,18 @@ package body GPS.Kernel.Search is
    -------------------
 
    function Path_And_Name
-     (Kernel       : Kernel_Handle;
-      File         : Virtual_File;
-      Project_View : Projects.Views.Project_View_Reference) return String
+     (Kernel  : Kernel_Handle;
+      File    : Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type)
+      return String
    is
       use GNATCOLL.Projects;
-
    begin
-      if Project_View.Get_Project_Type /= No_Project
+      if Project /= No_Project
         and then Get_History
           (Get_History (Kernel).all, Key_Search_Displays_Relative_Paths)
       then
-         return +(Relative_Path (File, Project_View.Get_Project_Path.Dir));
+         return +(Relative_Path (File, Project.Project_Path.Dir));
       else
          return +(File.Full_Name);
       end if;

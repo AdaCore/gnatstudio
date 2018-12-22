@@ -55,7 +55,7 @@ package body GPS.Kernel.Search.Sources is
 
    type Source_Search_Result is new Kernel_Search_Result with record
       File                 : GNATCOLL.VFS.Virtual_File;
-      Project_View         : Projects.Views.Project_View_Reference;
+      Project              : GNATCOLL.Projects.Project_Type;
       Line, Column         : Natural;
       Line_End, Column_End : Natural;
    end record;
@@ -246,14 +246,12 @@ package body GPS.Kernel.Search.Sources is
       pragma Unreferenced (Props);
    begin
       if File /= Self.File
-        or else Project /= Self.Project_View.Get_Project_Type
+        or else Project /= Self.Project
       then
          Trace (Me, "Examining " & (+File.Full_Name.all));
          Free (Self.Text);
-         Self.File         := File;
-         Self.Project_View :=
-           Projects.Views.Create_Project_View_Reference
-             (Self.Kernel, Project);
+         Self.File    := File;
+         Self.Project := Project;
 
          if File /= No_File then
 
@@ -304,8 +302,7 @@ package body GPS.Kernel.Search.Sources is
          New_Kind => Approximate,
          Built    => Self.Pattern_Needs_Free);
 
-      Self.Set_File (Self.File, Self.Project_View.Get_Project_Type);
-      --  reset search
+      Self.Set_File (Self.File, Self.Project);  --  reset search
    end Set_Pattern;
 
    -----------------
@@ -395,37 +392,36 @@ package body GPS.Kernel.Search.Sources is
               Self.Context.Start.Index));
 
          P_Name       : constant String :=
-           (if Self.Project_View.Get_Project_Type = No_Project
+           (if Self.Project = No_Project
             or else not Get_Registry
               (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
             then ""
             else ASCII.LF
-            & "(" & Self.Project_View.Get_Project_Path.Display_Base_Name
-            & " -- "
-            & (+Self.Project_View.Get_Project_Path.Dir_Name) & ')');
+            & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
+            & (+Self.Project.Project_Path.Dir_Name) & ')');
       begin
          L := new String'
-           (Path_And_Name (Self.Kernel, Self.File, Self.Project_View)
+           (Path_And_Name (Self.Kernel, Self.File, Self.Project)
             & ":" & Image (Self.Context.Start.Line, Min_Width => 0)
             & ":"
             & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
             & P_Name);
 
          Result   := new Source_Search_Result'
-           (Kernel       => Self.Kernel,
-            Provider     => Self,
-            Score        => Self.Context.Score,
-            Short        => new String'
+           (Kernel     => Self.Kernel,
+            Provider   => Self,
+            Score      => Self.Context.Score,
+            Short      => new String'
               (Self.Pattern.Highlight_Match
                    (Matched_Line, Self.Context)),
-            Long         => L,
-            Id           => L,
-            File         => Self.File,
-            Project_View => Self.Project_View,
-            Line         => Self.Context.Start.Line,
-            Column       => Integer (Self.Context.Start.Column),
-            Line_End     => Self.Context.Finish.Line,
-            Column_End   => Integer (Self.Context.Finish.Column));
+            Long       => L,
+            Id         => L,
+            File       => Self.File,
+            Project    => Self.Project,
+            Line       => Self.Context.Start.Line,
+            Column     => Integer (Self.Context.Start.Column),
+            Line_End   => Self.Context.Finish.Line,
+            Column_End => Integer (Self.Context.Finish.Column));
          Self.Adjust_Score (Result);
          Has_Next := True;
       end;
@@ -506,7 +502,7 @@ package body GPS.Kernel.Search.Sources is
          Open_File_Action_Hook.Run
            (Self.Kernel,
             File              => Self.File,
-            Project           => Self.Project_View.Get_Project_Type,
+            Project           => Self.Project,
             Enable_Navigation => True,
             New_File          => False,
             Focus             => Give_Focus,

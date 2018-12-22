@@ -67,10 +67,10 @@ package body GPS.Kernel.Search.Filenames is
      (Self     : not null access Filenames_Search_Provider'Class;
       Has_Next : out Boolean;
       Callback : not null access function
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean);
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean);
    --  Search for the next possible match. When a match is found, calls
    --  Callback. Stops iterating when the callback returns False.
 
@@ -278,32 +278,24 @@ package body GPS.Kernel.Search.Filenames is
      (Self     : not null access Filenames_Search_Provider'Class;
       Has_Next : out Boolean;
       Callback : not null access function
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean)
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean)
    is
       Continue : Boolean := True;
 
-      procedure Check
-        (File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference);
+      procedure Check (F : Virtual_File; Project : Project_Type);
       --  Sets Result to non-null if F matches
 
       -----------
       -- Check --
       -----------
 
-      procedure Check
-        (File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference)
-      is
+      procedure Check (F : Virtual_File; Project : Project_Type) is
          Text : constant String :=
-                  (if Self.Match_Directory
-                   then +File.Full_Name.all
-                   else +File.Base_Name);
-         C    : Search_Context;
-
+            (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
+         C : Search_Context;
       begin
          --  As a special case, we systematically omit .o files, in case the
          --  object_dir is part of the source_dirs. Such files will make the
@@ -312,27 +304,26 @@ package body GPS.Kernel.Search.Filenames is
          --  We do not want to return the same file twice, unless we are using
          --  aggregate projects and this is a duplication in the project itself
 
-         if File.File_Extension /= ".o"
+         if F.File_Extension /= ".o"
 
            --  We don't want to show directories as entries in the results
-           and then not File.Is_Directory
+           and then not F.Is_Directory
 
            and then
              (Self.Data.Step = Project_Sources
-              or else not Self.Seen.Contains (File))
+              or else not Self.Seen.Contains (F))
          then
             C := Self.Pattern.Start (Text);
             if C /= GPS.Search.No_Match then
-               Continue := Callback (Text, C, File, Project_View);
-               Self.Seen.Include (File);
+               Continue := Callback (Text, C, F, Project);
+               Self.Seen.Include (F);
             end if;
          end if;
       end Check;
 
-      F     : Virtual_File;
-      Prj   : Project_Type;
+      F : Virtual_File;
+      Prj : Project_Type;
       Start : constant Ada.Calendar.Time := Clock;
-
    begin
       Has_Next := True;
 
@@ -347,10 +338,10 @@ package body GPS.Kernel.Search.Filenames is
             if F.Is_Regular_File then
                Self.Seen.Include (F);  --  avoid duplicates
                Continue := Callback
-                 (Text         => +F.Base_Name,
-                  Context      => GPS.Search.No_Match,
-                  File         => F,
-                  Project_View => Projects.Views.Empty_Project_View_Reference);
+                 (Text    => +F.Base_Name,
+                  Context => GPS.Search.No_Match,
+                  File    => F,
+                  Project => No_Project);
 
                exit For_Each_Step when not Continue;
             end if;
@@ -361,10 +352,8 @@ package body GPS.Kernel.Search.Filenames is
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Index := Self.Data.Index + 1;
                Self.Searched_Count := Self.Searched_Count + 1;
-               Check
-                 (Self.Files (Self.Data.Index).File,
-                  Projects.Views.Create_Project_View_Reference
-                    (Self.Kernel, Self.Files (Self.Data.Index).Project));
+               Check (Self.Files (Self.Data.Index).File,
+                      Self.Files (Self.Data.Index).Project);
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
@@ -375,9 +364,7 @@ package body GPS.Kernel.Search.Filenames is
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Runtime_Index := Self.Data.Runtime_Index + 1;
                Self.Searched_Count := Self.Searched_Count + 1;
-               Check
-                 (Self.Runtime (Self.Data.Runtime_Index),
-                  Projects.Views.Empty_Project_View_Reference);
+               Check (Self.Runtime (Self.Data.Runtime_Index), No_Project);
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
@@ -386,10 +373,7 @@ package body GPS.Kernel.Search.Filenames is
             loop
                Prj := Current (Self.Data.Iter);
                exit when Prj = No_Project;
-               Check
-                 (Prj.Project_Path,
-                  Projects.Views.Create_Project_View_Reference
-                    (Self.Kernel, Prj));
+               Check (Prj.Project_Path, Prj);
                Next (Self.Data.Iter);
                Self.Searched_Count := Self.Searched_Count + 1;
                exit For_Each_Step when not Continue;
@@ -405,9 +389,8 @@ package body GPS.Kernel.Search.Filenames is
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.File_Index := Self.Data.File_Index + 1;
                Self.Searched_Count := Self.Searched_Count + 1;
-               Check
-                 (Self.Data.Files_In_Dir (Self.Data.File_Index),
-                  Projects.Views.Empty_Project_View_Reference);
+               Check (Self.Data.Files_In_Dir (Self.Data.File_Index),
+                      No_Project);
                exit For_Each_Step when not Continue;
             end loop;
 
@@ -455,10 +438,10 @@ package body GPS.Kernel.Search.Filenames is
       --  For runtime files, highlight them specially
 
       function Callback
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean;
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean;
 
       -----------------------
       -- Highlight_Runtime --
@@ -479,69 +462,65 @@ package body GPS.Kernel.Search.Filenames is
       --------------
 
       function Callback
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean
       is
-         L      : GNAT.Strings.String_Access;
+         L : GNAT.Strings.String_Access;
          P_Name : constant String :=
-                    (if Project_View.Get_Project_Type = No_Project
-                     or else not Is_Aggregate
-                     then ""
-                     else ASCII.LF
-                     & "(" & Project_View.Get_Project_Path.Display_Base_Name
-                     & " -- "
-                     & (+Project_View.Get_Project_Path.Dir_Name) & ')');
-
+           (if Project = No_Project or else not Is_Aggregate
+            then ""
+            else ASCII.LF
+            & "(" & Project.Project_Path.Display_Base_Name & " -- "
+            & (+Project.Project_Path.Dir_Name) & ')');
       begin
          L := new String'
-           (Path_And_Name (Self.Kernel, File, Project_View) & P_Name);
+           (Path_And_Name (Self.Kernel, File, Project) & P_Name);
 
          if Context = GPS.Search.No_Match then
             Result := new Filenames_Search_Result'
-              (Kernel       => Self.Kernel,
-               Provider     => Self,
-               Score        => 100 * 100,
-               Short        => new String'(+File.Base_Name),
-               Long         => L,
-               Id           => L,
-               Line         => Self.Line,
-               Column       => Self.Column,
-               Project_View => Project_View,
-               File         => File);
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => 100 * 100,
+               Short    => new String'(+File.Base_Name),
+               Long     => L,
+               Id       => L,
+               Line     => Self.Line,
+               Column   => Self.Column,
+               Project  => Project,
+               File     => File);
 
          elsif Self.Match_Directory then
             Result := new Filenames_Search_Result'
-              (Kernel       => Self.Kernel,
-               Provider     => Self,
-               Score        => Context.Score,
-               Short        => new String'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => Context.Score,
+               Short    => new String'
                  (Highlight_Runtime (+File.Base_Name)),
-               Long         => new String'
+               Long     => new String'
                  (Self.Pattern.Highlight_Match
                       (Buffer => Text, Context => Context) & P_Name),
-               Id           => L,
-               Line         => Self.Line,
-               Column       => Self.Column,
-               Project_View => Project_View,
-               File         => File);
-
+               Id       => L,
+               Line     => Self.Line,
+               Column   => Self.Column,
+               Project  => Project,
+               File     => File);
          else
             Result := new Filenames_Search_Result'
-              (Kernel       => Self.Kernel,
-               Provider     => Self,
-               Score        => Context.Score,
-               Short        => new String'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => Context.Score,
+               Short    => new String'
                  (Highlight_Runtime
                       (Self.Pattern.Highlight_Match
                            (Buffer => Text, Context => Context))),
-               Long         => L,
-               Id           => L,
-               Line         => Self.Line,
-               Column       => Self.Column,
-               Project_View => Project_View,
-               File         => File);
+               Long     => L,
+               Id       => L,
+               Line     => Self.Line,
+               Column   => Self.Column,
+               Project  => Project,
+               File     => File);
          end if;
 
          --  Lower the score for runtime files, so that the source files
@@ -586,7 +565,7 @@ package body GPS.Kernel.Search.Filenames is
    begin
       Open_File_Action_Hook.Run
         (Self.Kernel, Self.File,
-         Project           => Self.Project_View.Get_Project_Type,
+         Project           => Self.Project,
          Enable_Navigation => True,
          New_File          => False,
          Focus             => Give_Focus,
@@ -697,18 +676,18 @@ package body GPS.Kernel.Search.Filenames is
       Suffix_Last : Natural := 0;
 
       function Callback
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean;
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean;
 
       function Callback
-        (Text         : String;
-         Context      : Search_Context;
-         File         : Virtual_File;
-         Project_View : Projects.Views.Project_View_Reference) return Boolean
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean
       is
-         pragma Unreferenced (File, Project_View);
+         pragma Unreferenced (File, Project);
       begin
          Self.Pattern.Compute_Suffix (Context, Text, Suffix, Suffix_Last);
          return True;  --  keep looking
