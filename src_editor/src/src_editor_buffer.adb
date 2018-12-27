@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -282,12 +282,6 @@ package body Src_Editor_Buffer is
    --  case the Start and End iterators are equal, since the text between
    --  these iterators have already been deleted.
 
-   procedure Kill_Highlighting
-     (Buffer : access Source_Buffer_Record'Class;
-      From   : Gtk_Text_Iter;
-      To     : Gtk_Text_Iter);
-   --  Remove all highlighting tags for the given region
-
    procedure Buffer_Destroy (Data : System.Address; Buf : System.Address);
    pragma Convention (C, Buffer_Destroy);
    --  Called when the buffer is being destroyed
@@ -472,18 +466,6 @@ package body Src_Editor_Buffer is
    --  If Enable_Undo is True, then the deletion action will be
    --  stored in the undo/redo queue.
 
-   procedure Update_Highlight_Region
-     (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter);
-   --  Update the region to be highlighted in the next highlighting timeout
-
-   procedure Process_Highlight_Region
-     (Buffer : Source_Buffer);
-   --  Highlight the region marked by the highlight marks in the editor
-
-   procedure Highlight_Parenthesis (Buffer : Source_Buffer);
-   --  Highlight the matching parenthesis that are next to the cursor, if any
-
    function Conversion_Error_Message
      (Charset : String) return Basic_Types.UTF8_String;
    --  Return the location category corresponding to errors when converting
@@ -574,10 +556,13 @@ package body Src_Editor_Buffer is
    procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer);
 
-   procedure Run_Highlight_Hook
-     (Buffer : Source_Buffer;
-      Phase  : Positive);
-   --  Run Highlight_Range_Hook to highlight given buffer
+   -----------
+   -- Utils --
+   -----------
+
+   procedure Unchecked_Free is
+     new Ada.Unchecked_Deallocation
+       (Source_Highlighter_Record'Class, Source_Highlighter);
 
    -------------------------
    -- Set_Current_Command --
@@ -766,11 +751,7 @@ package body Src_Editor_Buffer is
          end if;
 
          --  Trigger syntax highlighting if it is deferred
-         if Self.Buffer.Use_Highlighting_Hook
-           and then Self.Buffer.Highlight_Needed
-         then
-            Run_Highlight_Hook (Self.Buffer, Phase => 2);
-         end if;
+         Self.Buffer.Highlighter.Run_Hook;
       end if;
    end Execute;
 
@@ -822,9 +803,7 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Kernel, File, Line, Column, Project);
    begin
       --  Highlight the cursor delimiters
-      if Self.Buffer.Highlight_Delimiters then
-         Highlight_Parenthesis (Self.Buffer);
-      end if;
+      Self.Buffer.Highlighter.Highlight_Parenthesis;
    end Execute;
 
    ----------------------
@@ -1118,13 +1097,15 @@ package body Src_Editor_Buffer is
       CL : Arg_List;
 
    begin
-      if Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay then
+      if Buffer.In_Destruction
+        or else Clock < Buffer.Blocks_Request_Timestamp +
+          Buffer_Recompute_Delay
+      then
          return True;
       end if;
 
       --  Re-highlight the highlight region if needed
-
-      Process_Highlight_Region (Buffer);
+      Buffer.Highlighter.Highlight_Region;
 
       --  Perform on-the-fly style check
 
@@ -1387,62 +1368,6 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
    end Get_Delimiters;
-
-   ---------------------------
-   -- Highlight_Parenthesis --
-   ---------------------------
-
-   procedure Highlight_Parenthesis (Buffer : Source_Buffer) is
-      On_Cursor_Iter       : Gtk_Text_Iter;
-      First_Highlight_Iter : Gtk_Text_Iter;
-      Last_Highlight_Iter  : Gtk_Text_Iter;
-      Current              : Gtk_Text_Iter;
-      Found                : Natural;
-      Success              : Boolean;
-   begin
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
-      Get_Delimiters
-        (Buffer,
-         On_Cursor_Iter,
-         First_Highlight_Iter, Last_Highlight_Iter,
-         Found);
-
-      if Found >= 1 then
-         Copy (First_Highlight_Iter, Current);
-         Forward_Char (Current, Success);
-         Apply_Tag
-           (Buffer,
-            Buffer.Delimiter_Tag,
-            First_Highlight_Iter,
-            Current);
-
-         Copy (Last_Highlight_Iter, Current);
-         Backward_Char (Current, Success);
-         Apply_Tag
-           (Buffer,
-            Buffer.Delimiter_Tag,
-            Current,
-            Last_Highlight_Iter);
-
-         if Found = 2 then
-            Copy (On_Cursor_Iter, Current);
-            Backward_Char (Current, Success);
-            Forward_Char (On_Cursor_Iter, Success);
-            Apply_Tag
-              (Buffer,
-               Buffer.Delimiter_Tag,
-               Current,
-               On_Cursor_Iter);
-         end if;
-
-         Buffer.Start_Delimiters_Highlight := Create_Mark
-           (Buffer, "", First_Highlight_Iter);
-         Buffer.End_Delimiters_Highlight := Create_Mark
-           (Buffer, "", Last_Highlight_Iter);
-
-         Buffer.Has_Delimiters_Highlight := True;
-      end if;
-   end Highlight_Parenthesis;
 
    ---------------------------
    -- Register_Edit_Timeout --
@@ -1778,9 +1703,8 @@ package body Src_Editor_Buffer is
       Unchecked_Free (Buffer.Line_Data);
       GNAT.Strings.Free (Buffer.Charset);
 
-      Unref (Buffer.Delimiter_Tag);
       Unref (Buffer.Non_Editable_Tag);
-      Unref (Buffer.Syntax_Tags);
+      Unchecked_Free (Buffer.Highlighter);
       Unref (Buffer.Hyper_Mode_Tag);
 
       Reset_Completion_Data;
@@ -1881,7 +1805,8 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Update_Highlight_Region (Source_Buffer (Buffer), End_Insert_Iter);
+      Source_Buffer (Buffer).Highlighter.Update_Highlight_Region
+        (End_Insert_Iter);
    end Insert_Text_Cb;
 
    -----------------------
@@ -2139,8 +2064,7 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Move mark of start of re-highlight area into insertion position
-
-      Move_Mark (Buffer, Buffer.First_Highlight_Mark, Pos);
+      Move_Mark (Buffer, Buffer.Highlighter.First_Highlight_Mark, Pos);
 
       if Line = 0 then
          --  In a special line: we simply stop propagation
@@ -2282,7 +2206,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : Gtk_Text_Iter) is
    begin
-      Update_Highlight_Region (Source_Buffer (Buffer), Iter);
+      Source_Buffer (Buffer).Highlighter.Update_Highlight_Region (Iter);
    end Delete_Range_Cb;
 
    ------------------------
@@ -2303,7 +2227,7 @@ package body Src_Editor_Buffer is
 
       --  Move mark of start of re-highlight area into insertion position
 
-      Move_Mark (Buffer, Buffer.First_Highlight_Mark, Start_Iter);
+      Move_Mark (Buffer, Buffer.Highlighter.First_Highlight_Mark, Start_Iter);
 
       declare
          C : constant Editor_Command := Get_Current_Command (Buffer);
@@ -2819,25 +2743,7 @@ package body Src_Editor_Buffer is
          Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
          Column => C + 1);
 
-      --  Remove delimiters highlight
-
-      if Buffer.Has_Delimiters_Highlight then
-         declare
-            From : Gtk_Text_Iter;
-            To   : Gtk_Text_Iter;
-         begin
-            Get_Iter_At_Mark
-              (Buffer, From, Buffer.Start_Delimiters_Highlight);
-            Get_Iter_At_Mark (Buffer, To, Buffer.End_Delimiters_Highlight);
-
-            Delete_Mark (Buffer, Buffer.Start_Delimiters_Highlight);
-            Delete_Mark (Buffer, Buffer.End_Delimiters_Highlight);
-
-            Remove_Tag (Buffer, Buffer.Delimiter_Tag, From, To);
-         end;
-
-         Buffer.Has_Delimiters_Highlight := False;
-      end if;
+      Buffer.Highlighter.Remove_Delimiters_Highlighting;
    end Emit_New_Cursor_Position;
 
    ----------------------------
@@ -2958,344 +2864,6 @@ package body Src_Editor_Buffer is
       end if;
    end Ensure_Valid_Position;
 
-   ---------------------
-   -- Highlight_Slice --
-   ---------------------
-
-   procedure Highlight_Slice
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
-   is
-      procedure Is_Valid_Index is new
-        Generic_Valid_Position (Get_Bytes_In_Line, Set_Line_Index);
-      --  Column should be given in bytes, not characters
-
-      function Highlight_Cb
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
-      --  Function called by Language.Parse_Entities for each entity found
-
-      procedure Local_Highlight;
-      --  Highlight the region exactly located between Entity_Start and
-      --  Entity_End.
-      --  After this procedure is run, some variables are positioned to
-      --  the following values:
-      --    - Last_Entity is equal to the incomplete entity kind found inside
-      --      the given region, or to Normal_Text if all entities were complete
-      --    - Entity_Start is set to the begining of the incomplete region
-      --      found in the given buffer slice, if any.
-
-      Highlight_Complete : Boolean := False;
-      Entity_Start       : Gtk_Text_Iter;
-      Entity_End         : Gtk_Text_Iter;
-      Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset_Line  : Buffer_Line_Type;
-      --  Offset between the beginning of the Source_Buffer and the beginning
-      --  of the string slice passed to Parse_Entities.
-
-      Tmp_Start, Tmp_End  : Gtk_Text_Iter;
-      Slice_Offset_Column : Gint;
-      Result              : Boolean;
-      Ignored             : Boolean;
-      Entity_Kind         : Language_Entity;
-      Slice               : Unchecked_String_Access;
-      pragma Suppress (Access_Check, Slice);
-
-      ------------------
-      -- Highlight_Cb --
-      ------------------
-
-      function Highlight_Cb
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean
-      is
-         Success         : Boolean;
-         Start           : Natural;
-         Col, Line       : Gint;
-         Offset          : Gint;
-         Buffer_Line     : Buffer_Line_Type;
-         End_Buffer_Line : Buffer_Line_Type;
-
-      begin
-         if Partial_Entity then
-            Highlight_Complete := False;
-         end if;
-
-         if Entity not in Standout_Language_Entity then
-            return False;
-         end if;
-
-         --  Some parsers currently leave line numbers to 0. Don't highlight in
-         --  this case, since we cannot use from the byte index due to
-         --  limitations in gtk+
-
-         if Sloc_Start.Line < 1 then
-            return False;
-         end if;
-
-         --  Don't need to take into account the offset column, unless we are
-         --  still on the same line that we started at.
-
-         if Sloc_Start.Line = 1 then
-            Offset := Slice_Offset_Column;
-         else
-            Offset := 0;
-         end if;
-
-         Col := Gint (Sloc_Start.Column) + Offset - 1;
-         Buffer_Line := Buffer_Line_Type (Sloc_Start.Line) + Slice_Offset_Line;
-
-         End_Buffer_Line :=
-           Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
-
-         --  If the column is 0, the entity really ended on the end of the
-         --  previous line.
-
-         if End_Buffer_Line = 0 then
-            return False;
-         end if;
-
-         Line := Gint (Buffer_Line - 1);
-         Is_Valid_Index
-           (Source_Buffer (Buffer), Entity_Start, Success, Line, Col);
-
-         if not Success then
-            Trace (Me, "invalid position");
-            return False;
-         end if;
-
-         Line := Gint (End_Buffer_Line - 1);
-
-         if Sloc_End.Column = 0 then
-            Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
-            Backward_Char (Entity_End, Success);
-
-         else
-            if Gint (Sloc_End.Line) = 1 then
-               Offset := Slice_Offset_Column;
-            else
-               Offset := 0;
-            end if;
-
-            if Slice (Sloc_End.Index) /= ASCII.LF then
-               Col := Gint (Sloc_End.Column) + Offset - 1;
-
-               --  Is_Valid_Index requires an index at the start of a character
-               --  while Sloc_End.Index points to the end of a character, so
-               --  adjust if needed.
-
-               Start := UTF8_Find_Prev_Char
-                 (Slice (1 .. Sloc_End.Index + 1), Sloc_End.Index + 1);
-
-               if Start /= Sloc_End.Index then
-                  Col := Col - Gint (Sloc_End.Index - Start);
-               end if;
-
-               Is_Valid_Index
-                 (Source_Buffer (Buffer), Entity_End, Success, Line, Col);
-
-               if not Success then
-                  Trace (Me, "invalid position """
-                         & Buffer.Filename.Display_Full_Name & """"
-                         & Line'Img & Col'Img);
-                  return False;
-               end if;
-
-               Forward_Char (Entity_End, Success);
-
-            else
-               Is_Valid_Index
-                 (Source_Buffer (Buffer), Entity_End, Success, Line, 0);
-               if not Success then
-                  Trace (Me, "invalid position """
-                         & Buffer.Filename.Display_Full_Name & """"
-                         & Line'Img & " 0--");
-                  return False;
-               end if;
-
-               if not Ends_Line (Entity_End) then
-                  Forward_To_Line_End (Entity_End, Success);
-               end if;
-            end if;
-         end if;
-
-         Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
-         return False;
-      end Highlight_Cb;
-
-      ---------------------
-      -- Local_Highlight --
-      ---------------------
-
-      procedure Local_Highlight is
-         UTF8   : constant Gtkada.Types.Chars_Ptr :=
-           Get_Slice (Entity_Start, Entity_End);
-
-         --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
-         --  since this would give the number of chars, not bytes.
-
-         Length : constant Integer := Integer (Strlen (UTF8));
-
-      begin
-         Slice               := To_Unchecked_String (UTF8);
-         Highlight_Complete  := True;
-         Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
-         Slice_Offset_Column := Get_Line_Index (Entity_Start);
-
-         --  First, un-apply all the style tags...
-
-         Kill_Highlighting (Buffer, Entity_Start, Entity_End);
-
-         --  Now re-highlight the text...
-
-         Parse_Entities
-           (Buffer.Lang,
-            Slice (1 .. Length),
-            Highlight_Cb'Unrestricted_Access);
-         Slice := null;
-         g_free (UTF8);
-      end Local_Highlight;
-
-   begin
-      Copy (Source => Start_Iter, Dest => Entity_Start);
-      Copy (Source => End_Iter, Dest => Entity_End);
-
-      --  Start from the beginning of the current line to handle special
-      --  language semantics requiring information from previous characters,
-      --  such as x.all'address in Ada...
-
-      Set_Line_Offset (Entity_Start, 0);
-
-      if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
-         Copy (Source => Start_Iter, Dest => Entity_Start);
-      end if;
-
-      if Get_Language_Context (Buffer.Lang).Use_Semicolon then
-         --  ...and highlight from the previous semicolon, to handle multiple
-         --  line constructs such as C comments or Ada aspect clauses. Note:
-         --  this is a heuristic, since we could find a semicolon in the middle
-         --  of a comment, which wouldn't help us that much.
-
-         Backward_Search
-           (Iter => Entity_Start, Str => ";", Flags => 0,
-            Match_Start => Tmp_Start, Match_End => Tmp_End,
-            Result => Result);
-
-         if Result then
-            Forward_Char (Tmp_Start, Result);
-            Entity_Start := Tmp_Start;
-         else
-            Set_Offset (Entity_Start, 0);
-         end if;
-      end if;
-
-      --  Highlight to the end of line, to avoid missing most of the partial
-      --  entities (strings, characters, ...). In case we have started typing
-      --  a string for instance, that provides a nice optimization over
-      --  rehighlighting the whole buffer...
-
-      Forward_To_Line_End (Entity_End, Result);
-
-      if Get_Language_Context (Buffer.Lang).Use_Semicolon then
-         --  ...and go to next semicolon if any
-         Forward_Search
-           (Iter => Entity_End, Str => ";", Flags => 0,
-            Match_Start => Tmp_Start, Match_End => Tmp_End,
-            Result => Result);
-
-         if Result then
-            Entity_End := Tmp_Start;
-         else
-            Forward_To_End (Entity_End);
-         end if;
-      end if;
-
-      --  Search the initial minimum area to re-highlight...
-
-      Entity_Kind := Normal_Text;
-
-      Entity_Kind_Search_Loop :
-      for Current_Entity in Standout_Language_Entity loop
-         if Has_Tag (Entity_Start, Tags (Current_Entity)) then
-            --  This means that we are in a highlighted region. The minimum
-            --  region to re-highlight starts from the begining of the
-            --  current region to the end of the following region.
-
-            Entity_Kind := Current_Entity;
-
-            Backward_To_Tag_Toggle
-              (Entity_Start, Tags (Current_Entity), Result => Ignored);
-            Forward_To_Tag_Toggle (Entity_End, Tags (Entity_Kind), Ignored);
-            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-
-         elsif Begins_Tag (Entity_End, Tags (Current_Entity))
-           or else Ends_Tag (Entity_Start, Tags (Current_Entity))
-         then
-            --  Case Begins_Tag:
-            --    This means that we inserted right at the begining of
-            --    a highlighted region... The minimum region to re-highlight
-            --    starts from the begining of the previous region to the
-            --    end of the current region.
-            --  Case Ends_Tag:
-            --    This means that we inserted right at the end of a
-            --    highlighted region. In this case, the minimum region to
-            --    re-highlight starts from the begining of the previous
-            --    region to the end of the current region.
-            --  In both cases, the processing is the same...
-
-            Entity_Kind := Current_Entity;
-            Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
-            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-         end if;
-      end loop Entity_Kind_Search_Loop;
-
-      if Entity_Kind = Normal_Text then
-         --  We are inside a normal text region. Just re-highlight this
-         --  region.
-
-         Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
-         Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
-      end if;
-
-      Local_Highlight;
-
-      if not Highlight_Complete then
-         --  In this case, we are in the middle of e.g a multi-line comment,
-         --  and we re-highlight the whole buffer since we do not know where
-         --  the comment started.
-         --  ??? would be nice to optimize here. We could for instance
-         --  highlight only from the beginning of the section instead of from
-         --  the start
-
-         Set_Offset (Entity_Start, 0);
-         Forward_To_End (Entity_End);
-         Local_Highlight;
-      end if;
-   end Highlight_Slice;
-
-   -----------------------
-   -- Kill_Highlighting --
-   -----------------------
-
-   procedure Kill_Highlighting
-     (Buffer : access Source_Buffer_Record'Class;
-      From   : Gtk_Text_Iter;
-      To     : Gtk_Text_Iter) is
-   begin
-      for Entity_Kind in Standout_Language_Entity loop
-         Remove_Tag (Buffer, Buffer.Syntax_Tags (Entity_Kind), From, To);
-      end loop;
-   end Kill_Highlighting;
-
    -------------
    -- Gtk_New --
    -------------
@@ -3322,8 +2890,10 @@ package body Src_Editor_Buffer is
 
       --  Initialize the data for timeout highlighting
 
-      Buffer.First_Highlight_Mark := Create_Mark (Buffer, "", Iter);
-      Buffer.Last_Highlight_Mark  := Create_Mark (Buffer, "", Iter, False);
+      Buffer.Highlighter.First_Highlight_Mark :=
+        Create_Mark (Buffer, "", Iter);
+      Buffer.Highlighter.Last_Highlight_Mark  :=
+        Create_Mark (Buffer, "", Iter, False);
 
       --  Initialize the line info
 
@@ -3379,7 +2949,6 @@ package body Src_Editor_Buffer is
       Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
-      Tags         : Gtk_Text_Tag_Table;
       Command      : Check_Modified_State;
       P_Hook       : access On_Pref_Changed;
       Prj_Hook     : access On_Project_Changed;
@@ -3399,13 +2968,31 @@ package body Src_Editor_Buffer is
       Glib.Object.G_New (Buffer, Class_Record);
       Gtkada.Text_Buffer.Initialize (Buffer);
 
-      Buffer.Lang := Lang;
+      Buffer.Lang   := Lang;
       Buffer.Kernel := Kernel;
 
-      --  Save the newly created highlighting tags into the source buffer
-      --  tag table.
+      --  Create the Hyper Mode Tag
 
-      Tags := Get_Tag_Table (Buffer);
+      Gtk_New (Buffer.Hyper_Mode_Tag);
+      Set_Property
+        (Buffer.Hyper_Mode_Tag,
+         Gtk.Text_Tag.Underline_Property,
+         Pango_Underline_Single);
+      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Rgba_Property,
+                    Hyper_Links_Style.Get_Pref_Fg);
+
+      if Hyper_Links_Style.Get_Pref_Bg /= Gdk.RGBA.White_RGBA then
+         Set_Property (Buffer.Hyper_Mode_Tag, Background_Rgba_Property,
+                       Hyper_Links_Style.Get_Pref_Bg);
+      end if;
+
+      --  Create the Non Editable Tag
+
+      Gtk_New (Buffer.Non_Editable_Tag);
+      Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);
+
+      Buffer.Highlighter := new Source_Highlighter_Record
+        (Source_Buffer (Buffer));
 
       --  Preference changed hook
 
@@ -3438,38 +3025,6 @@ package body Src_Editor_Buffer is
       Loc_Changed := new On_Loc_Changed;
       Loc_Changed.Buffer := Source_Buffer (Buffer);
       Location_Changed_Hook.Add_Debounce (Loc_Changed, Watch => Buffer);
-
-      for Entity_Kind in Standout_Language_Entity'Range loop
-         Buffer.Syntax_Tags (Entity_Kind) := Get_Tag
-           (Language_Styles (Entity_Kind));
-         Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
-      end loop;
-
-      --  Create Delimiter_Tag and save it into the source buffer tag table
-
-      Buffer.Delimiter_Tag := Get_Tag (Editor_Ephemeral_Highlighting_Simple);
-      Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
-
-      --  Create the Hyper Mode Tag
-
-      Gtk_New (Buffer.Hyper_Mode_Tag);
-      Set_Property
-        (Buffer.Hyper_Mode_Tag,
-         Gtk.Text_Tag.Underline_Property,
-         Pango_Underline_Single);
-      Set_Property (Buffer.Hyper_Mode_Tag, Foreground_Rgba_Property,
-                    Hyper_Links_Style.Get_Pref_Fg);
-
-      if Hyper_Links_Style.Get_Pref_Bg /= Gdk.RGBA.White_RGBA then
-         Set_Property (Buffer.Hyper_Mode_Tag, Background_Rgba_Property,
-                       Hyper_Links_Style.Get_Pref_Bg);
-      end if;
-
-      Add (Tags, Buffer.Hyper_Mode_Tag);
-
-      Gtk_New (Buffer.Non_Editable_Tag);
-      Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);
-      Add (Tags, Buffer.Non_Editable_Tag);
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
@@ -3582,10 +3137,7 @@ package body Src_Editor_Buffer is
          Backward_Char (Pos, Success);
       end if;
 
-      return Has_Tag (Pos, Buffer.Syntax_Tags (Comment_Text))
-        or else Has_Tag (Pos, Buffer.Syntax_Tags (Aspect_Comment_Text))
-        or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Comment_Text))
-        or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Keyword_Text));
+      return Buffer.Highlighter.Is_Comment_Tag (Pos);
    end Is_In_Comment;
 
    ------------------
@@ -3721,9 +3273,11 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      B.Auto_Syntax_Check    := Automatic_Syntax_Check.Get_Pref;
-      B.Highlight_Delimiters := Highlight_Delimiters.Get_Pref;
-      B.Tab_Width            := String_Utils.Tab_Width;
+      B.Auto_Syntax_Check := Automatic_Syntax_Check.Get_Pref;
+      B.Tab_Width         := String_Utils.Tab_Width;
+
+      B.Highlighter.Highlight_Delimiters :=
+        Highlight_Delimiters.Get_Pref;
    end Execute;
 
    ---------------------
@@ -4102,7 +3656,6 @@ package body Src_Editor_Buffer is
          end if;
       end Insert_Text;
 
-      F, L          : Gtk_Text_Iter;
    begin
       Insert_Text
         (From_File    => Filename,
@@ -4121,15 +3674,7 @@ package body Src_Editor_Buffer is
          Check_Auto_Saved_File;
       end if;
 
-      --  Highlight the newly inserted text
-
-      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
-         Get_Bounds (Buffer, F, L);
-         Buffer.Highlight_Needed := True;
-         Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
-         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
-         Process_Highlight_Region (Source_Buffer (Buffer));
-      end if;
+      Buffer.Highlighter.On_Load_File;
 
       Buffer.Modified_Auto := False;
 
@@ -4581,21 +4126,12 @@ package body Src_Editor_Buffer is
       Buffer_Start_Iter : Gtk_Text_Iter;
       Buffer_End_Iter   : Gtk_Text_Iter;
    begin
-      Buffer.Use_Highlighting_Hook := Lang.Get_Name = "Ada"
-        and then Use_LAL_In_Highlight.Get_Pref;
-
       if Buffer.Lang /= Lang then
          Buffer.Lang := Lang;
          Get_Bounds (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
 
-         --  Do not try to highlight an empty buffer
-         if not Is_End (Buffer_Start_Iter) then
-            if not Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
-               Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-            elsif not Buffer.Use_Highlighting_Hook then
-               Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-            end if;
-         end if;
+         Buffer.Highlighter.On_Set_Language
+           (Buffer_Start_Iter, Buffer_End_Iter);
 
          Register_Edit_Timeout (Buffer);
 
@@ -6197,198 +5733,16 @@ package body Src_Editor_Buffer is
       return Buffer.Extra_Information;
    end Get_Extra_Information;
 
-   ---------------------------
-   -- Set_Line_Highlighting --
-   ---------------------------
+   ---------------------
+   -- Get_Highlighter --
+   ---------------------
 
-   procedure Set_Line_Highlighting
-     (Editor       : access Source_Buffer_Record;
-      Line         : Buffer_Line_Type;
-      Style        : not null Style_Access;
-      Set          : Boolean;
-      Highlight_In : Highlight_Location_Array)
-   is
-      procedure Set_Highlighting
-        (Data     : in out Highlighting_Data_Record;
-         Category : Natural;
-         Enabled  : Boolean);
-      --  Sets highligting state and recompute active highlighting
-
-      ----------------------
-      -- Set_Highlighting --
-      ----------------------
-
-      procedure Set_Highlighting
-        (Data     : in out Highlighting_Data_Record;
-         Category : Natural;
-         Enabled  : Boolean)
-      is
-         Last_Index : constant Natural := Get_Last_Index;
-
-      begin
-         --  Reallocate data when necessary
-
-         if Data.Enabled = null then
-            --  If we are removing a highlight where no highlight is defined,
-            --  we can exit immediately.
-
-            if not Set then
-               return;
-            end if;
-
-            Data.Enabled := new Boolean_Array (1 .. Last_Index);
-            Data.Enabled.all := (others => False);
-
-         elsif Data.Enabled'Last < Last_Index then
-            declare
-               Aux : Boolean_Array_Access;
-
-            begin
-               Aux := new Boolean_Array (1 .. Last_Index);
-               Aux (1 .. Data.Enabled'Last) := Data.Enabled.all;
-               Aux (Data.Enabled'Last + 1 .. Last_Index) := (others => False);
-               Unchecked_Free (Data.Enabled);
-               Data.Enabled := Aux;
-            end;
-         end if;
-
-         --  Set new state of highlighting
-
-         Data.Enabled (Category) := Enabled;
-
-         --  Find out which category has priority for highlighting
-
-         for J in Data.Enabled'Range loop
-            if Data.Enabled (J) then
-               Data.Active := J;
-
-               return;
-            end if;
-         end loop;
-
-         --  If we reach this stage, no highlighting was found
-
-         Data.Active := 0;
-      end Set_Highlighting;
-
-      Category : Natural;
-
+   function Get_Highlighter
+     (Editor : access Source_Buffer_Record)
+      return Source_Highlighter is
    begin
-      if Line = 0 then
-         return;
-      end if;
-
-      Category := Lookup_Category (Style);
-
-      if Category = 0 then
-         Trace (Me, "Set_Line_Highlight Id=" & Get_Name (Style)
-                & " couldn't identify category, nothing done");
-         --  Could not identify highlighting category
-         return;
-      end if;
-
-      if Line < Editor.Line_Data'First
-        or else Line > Editor.Line_Data'Last
-      then
-         Trace (Me, "Wrong line number: " & Image (Integer (Line)));
-         return;
-      end if;
-
-      for K in Highlight_Location loop
-         if Highlight_In (K) then
-            Set_Highlighting
-              (Editor.Line_Data (Line).Highlighting (K), Category, Set);
-         end if;
-      end loop;
-   end Set_Line_Highlighting;
-
-   ---------------------------
-   -- Add_Line_Highlighting --
-   ---------------------------
-
-   procedure Add_Line_Highlighting
-     (Editor       : access Source_Buffer_Record;
-      Line         : Editable_Line_Type;
-      Style        : not null Style_Access;
-      Highlight_In : Highlight_Location_Array)
-   is
-      The_Line : Buffer_Line_Type;
-   begin
-      if Line = 0 then
-         for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Style, True, Highlight_In);
-         end loop;
-      else
-         The_Line := Get_Buffer_Line (Editor, Line);
-
-         if The_Line /= 0 then
-            Set_Line_Highlighting
-              (Editor, The_Line, Style, True, Highlight_In);
-         end if;
-      end if;
-
-      Line_Highlights_Changed (Editor);
-   end Add_Line_Highlighting;
-
-   ------------------------------
-   -- Remove_Line_Highlighting --
-   ------------------------------
-
-   procedure Remove_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Style  : not null Style_Access)
-   is
-      The_Line : Buffer_Line_Type;
-   begin
-      if Editor.In_Destruction then
-         return;
-      end if;
-
-      if Line = 0 then
-         --  This procedure is called by Highlight_Range, but not when Line=0,
-         --  so there are no recursive calls here
-         Highlight_Range (Editor, Style, 0, 1, 1, True);
-
-         for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Style, False, (others => True));
-         end loop;
-      else
-         The_Line := Get_Buffer_Line (Editor, Line);
-
-         if The_Line /= 0 then
-            Set_Line_Highlighting
-              (Editor, The_Line, Style, False, (others => True));
-         end if;
-      end if;
-
-      Line_Highlights_Changed (Editor);
-   end Remove_Line_Highlighting;
-
-   -------------------------
-   -- Get_Highlight_Color --
-   -------------------------
-
-   function Get_Highlight_Color
-     (Editor  : access Source_Buffer_Record;
-      Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk_RGBA is
-   begin
-      if Line = 0 then
-         return Null_RGBA;
-      end if;
-
-      if Editor.Line_Data /= null
-        and then Line <= Editor.Line_Data'Last
-        and then Editor.Line_Data (Line).Highlighting (Context).Active /= 0
-      then
-         return
-           Get_Color (Editor.Line_Data (Line).Highlighting (Context).Active);
-
-      else
-         return Null_RGBA;
-      end if;
-   end Get_Highlight_Color;
+      return Editor.Highlighter;
+   end Get_Highlighter;
 
    ---------------
    -- Get_Block --
@@ -8168,94 +7522,6 @@ package body Src_Editor_Buffer is
       end if;
    end Get_Text;
 
-   -----------------------------
-   -- Update_Highlight_Region --
-   -----------------------------
-
-   procedure Update_Highlight_Region
-     (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter)
-   is
-      First_Mark_Iter : Gtk_Text_Iter;
-      Last_Mark_Iter  : Gtk_Text_Iter;
-
-   begin
-      if not Buffer.Highlight_Needed then
-         Buffer.Highlight_Needed := True;
-         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
-
-      else
-         Get_Iter_At_Mark
-           (Buffer, First_Mark_Iter, Buffer.First_Highlight_Mark);
-         Get_Iter_At_Mark
-           (Buffer, Last_Mark_Iter, Buffer.Last_Highlight_Mark);
-
-         if Get_Offset (First_Mark_Iter) > Get_Offset (Iter) then
-            Move_Mark (Buffer, Buffer.First_Highlight_Mark, Iter);
-         end if;
-
-         if Get_Offset (Last_Mark_Iter) < Get_Offset (Iter) then
-            Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
-         end if;
-      end if;
-
-      if not Buffer.Inserting and Buffer.Highlight_Enabled then
-         if not Buffer.Use_Highlighting_Hook then
-            Process_Highlight_Region (Buffer);
-         elsif Buffer.Highlight_Needed then
-            Run_Highlight_Hook (Buffer, Phase => 1);
-         end if;
-      end if;
-   end Update_Highlight_Region;
-
-   ------------------------------
-   -- Process_Highlight_Region --
-   ------------------------------
-
-   procedure Process_Highlight_Region (Buffer : Source_Buffer) is
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-   begin
-      if not Buffer.Highlight_Needed or else Buffer.Use_Highlighting_Hook then
-         return;
-      end if;
-
-      Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
-      Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
-
-      Highlight_Slice (Buffer, Start_Iter, End_Iter);
-      Buffer.Highlight_Needed := False;
-   end Process_Highlight_Region;
-
-   ------------------------
-   -- Run_Highlight_Hook --
-   ------------------------
-
-   procedure Run_Highlight_Hook
-     (Buffer : Source_Buffer;
-      Phase  : Positive)
-   is
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      From, To    : Integer;
-   begin
-      Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
-      From := Integer (Get_Line (Start_Iter)) + 1;
-      Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
-      To := Integer (Get_Line (End_Iter)) + 1;
-
-      Highlight_Range_Hook.Run
-        (Kernel    => Buffer.Kernel,
-         Phase     => Phase,
-         File      => Buffer.Filename,
-         From_Line => From,
-         To_Line   => To);
-
-      if Phase = 2 then
-         Buffer.Highlight_Needed := False;
-      end if;
-   end Run_Highlight_Hook;
-
    -------------------------
    -- Refresh_Side_Column --
    -------------------------
@@ -8758,26 +8024,6 @@ package body Src_Editor_Buffer is
       return New_Group (Buffer.Queue);
    end New_Undo_Group;
 
-   -------------------------
-   -- Enable_Highlighting --
-   -------------------------
-
-   procedure Enable_Highlighting
-     (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Buffer.Highlight_Enabled := True;
-   end Enable_Highlighting;
-
-   --------------------------
-   -- Disable_Highlighting --
-   --------------------------
-
-   procedure Disable_Highlighting
-     (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Buffer.Highlight_Enabled := False;
-   end Disable_Highlighting;
-
    --------------------------
    -- Add_Listener_Factory --
    --------------------------
@@ -8866,5 +8112,1047 @@ package body Src_Editor_Buffer is
      (Self  : not null access Source_Buffer_Record'Class)
       return Boolean
      is (Self.Context_Frozen > 0);
+
+   -------------------------------
+   -- Source_Highlighter_Record --
+   -------------------------------
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (Self : in out Source_Highlighter_Record)
+   is
+      Tags : Gtk_Text_Tag_Table;
+   begin
+      --  Save the newly created highlighting tags into the source buffer
+      --  tag table.
+
+      Tags := Get_Tag_Table (Self.Buffer);
+
+      for Entity_Kind in Standout_Language_Entity'Range loop
+         Self.Syntax_Tags (Entity_Kind) := Get_Tag
+           (Language_Styles (Entity_Kind));
+         Text_Tag_Table.Add (Tags, Self.Syntax_Tags (Entity_Kind));
+      end loop;
+
+      --  Create Delimiter_Tag and save it into the source buffer tag table
+      Self.Delimiter_Tag := Get_Tag (Editor_Ephemeral_Highlighting_Simple);
+
+      Add (Tags, Self.Delimiter_Tag);
+      Add (Tags, Self.Buffer.Hyper_Mode_Tag);
+      Add (Tags, Self.Buffer.Non_Editable_Tag);
+   end Initialize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Source_Highlighter_Record) is
+   begin
+      Unref (Self.Syntax_Tags);
+      Unref (Self.Delimiter_Tag);
+   end Finalize;
+
+   -------------------------
+   -- Enable_Highlighting --
+   -------------------------
+
+   procedure Enable_Highlighting
+     (Self : access Source_Highlighter_Record) is
+   begin
+      Self.Auto_Highlight_Enabled := True;
+   end Enable_Highlighting;
+
+   --------------------------
+   -- Disable_Highlighting --
+   --------------------------
+
+   procedure Disable_Highlighting
+     (Self : access Source_Highlighter_Record) is
+   begin
+      Self.Auto_Highlight_Enabled := False;
+   end Disable_Highlighting;
+
+   ---------------------------
+   -- Set_Line_Highlighting --
+   ---------------------------
+
+   procedure Set_Line_Highlighting
+     (Self         : access Source_Highlighter_Record;
+      Line         : Buffer_Line_Type;
+      Style        : not null Style_Access;
+      Set          : Boolean;
+      Highlight_In : Highlight_Location_Array)
+   is
+      procedure Set_Highlighting
+        (Data     : in out Highlighting_Data_Record;
+         Category : Natural;
+         Enabled  : Boolean);
+      --  Sets highligting state and recompute active highlighting
+
+      ----------------------
+      -- Set_Highlighting --
+      ----------------------
+
+      procedure Set_Highlighting
+        (Data     : in out Highlighting_Data_Record;
+         Category : Natural;
+         Enabled  : Boolean)
+      is
+         Last_Index : constant Natural := Get_Last_Index;
+
+      begin
+         --  Reallocate data when necessary
+
+         if Data.Enabled = null then
+            --  If we are removing a highlight where no highlight is defined,
+            --  we can exit immediately.
+
+            if not Set then
+               return;
+            end if;
+
+            Data.Enabled := new Boolean_Array (1 .. Last_Index);
+            Data.Enabled.all := (others => False);
+
+         elsif Data.Enabled'Last < Last_Index then
+            declare
+               Aux : Boolean_Array_Access;
+
+            begin
+               Aux := new Boolean_Array (1 .. Last_Index);
+               Aux (1 .. Data.Enabled'Last) := Data.Enabled.all;
+               Aux (Data.Enabled'Last + 1 .. Last_Index) := (others => False);
+               Unchecked_Free (Data.Enabled);
+               Data.Enabled := Aux;
+            end;
+         end if;
+
+         --  Set new state of highlighting
+
+         Data.Enabled (Category) := Enabled;
+
+         --  Find out which category has priority for highlighting
+
+         for J in Data.Enabled'Range loop
+            if Data.Enabled (J) then
+               Data.Active := J;
+
+               return;
+            end if;
+         end loop;
+
+         --  If we reach this stage, no highlighting was found
+
+         Data.Active := 0;
+      end Set_Highlighting;
+
+      Category : Natural;
+
+   begin
+      if Line = 0 then
+         return;
+      end if;
+
+      Category := Lookup_Category (Style);
+
+      if Category = 0 then
+         Trace (Me, "Set_Line_Highlight Id=" & Get_Name (Style)
+                & " couldn't identify category, nothing done");
+         --  Could not identify highlighting category
+         return;
+      end if;
+
+      if Line < Self.Buffer.Line_Data'First
+        or else Line > Self.Buffer.Line_Data'Last
+      then
+         Trace (Me, "Wrong line number: " & Image (Integer (Line)));
+         return;
+      end if;
+
+      for K in Highlight_Location loop
+         if Highlight_In (K) then
+            Set_Highlighting
+              (Self.Buffer.Line_Data (Line).Highlighting (K), Category, Set);
+         end if;
+      end loop;
+   end Set_Line_Highlighting;
+
+   ---------------------------
+   -- Add_Line_Highlighting --
+   ---------------------------
+
+   procedure Add_Line_Highlighting
+     (Self         : access Source_Highlighter_Record;
+      Line         : Editable_Line_Type;
+      Style        : not null Style_Access;
+      Highlight_In : Highlight_Location_Array)
+   is
+      The_Line : Buffer_Line_Type;
+   begin
+      if Line = 0 then
+         for J in Self.Buffer.Line_Data'Range loop
+            Self.Set_Line_Highlighting (J, Style, True, Highlight_In);
+         end loop;
+      else
+         The_Line := Get_Buffer_Line (Self.Buffer, Line);
+
+         if The_Line /= 0 then
+            Self.Set_Line_Highlighting (The_Line, Style, True, Highlight_In);
+         end if;
+      end if;
+
+      Line_Highlights_Changed (Self.Buffer);
+   end Add_Line_Highlighting;
+
+   ---------------------
+   -- Highlight_Range --
+   ---------------------
+
+   procedure Highlight_Range
+     (Self      : access Source_Highlighter_Record;
+      Style     : Style_Access;
+      Line      : Editable_Line_Type;
+      Start_Col : Visible_Column_Type;
+      End_Col   : Visible_Column_Type;
+      Remove    : Boolean := False)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result               : Boolean;
+      The_Line             : Gint;
+   begin
+      --  Here we test whether the buffer is in destruction. If it is the case
+      --  we simply return since it is not worth taking care of unhighlighting
+      --  lines. Furthermore this prevents GPS from crashing when we close a
+      --  source file used in a visual diff while the reference file is still
+      --  being displayed.
+
+      if Self.Buffer.In_Destruction then
+         return;
+      end if;
+
+      --  Get the boundaries of text to (un)highlight
+
+      if Line = 0 then
+         Get_Bounds (Self.Buffer, Start_Iter, End_Iter);
+
+      else
+         The_Line :=
+           Gint (Get_Buffer_Line (Self.Buffer, Line) - 1);
+
+         if The_Line < 0 then
+            return;
+         end if;
+
+         if Start_Col <= 0
+           or else not Is_Valid_Position (Self.Buffer, Line, Start_Col)
+         then
+            Get_Iter_At_Line (Self.Buffer, Start_Iter, The_Line);
+         else
+            Get_Iter_At_Screen_Position
+              (Self.Buffer, Start_Iter, Line, Start_Col);
+
+            if Ends_Line (Start_Iter) then
+               Backward_Char (Start_Iter, Result);
+            end if;
+         end if;
+
+         if End_Col <= 0
+           or else not Is_Valid_Position (Self.Buffer, Line, End_Col)
+         then
+            Copy (Start_Iter, End_Iter);
+            Forward_To_Line_End (End_Iter, Result);
+         else
+            Get_Iter_At_Screen_Position
+              (Self.Buffer, End_Iter, Line, End_Col);
+         end if;
+      end if;
+
+      Self.Highlight_Range (Style      => Style,
+                            Line       => Line,
+                            Start_Iter => Start_Iter,
+                            End_Iter   => End_Iter,
+                            Remove     => Remove);
+   end Highlight_Range;
+
+   ---------------------
+   -- Highlight_Range --
+   ---------------------
+
+   procedure Highlight_Range
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Line       : Editable_Line_Type;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Remove     : Boolean := False)
+   is
+      Tag : Gtk_Text_Tag;
+   begin
+      --  Get the text tag, create it if necessary
+
+      Tag := Lookup (Get_Tag_Table (Self.Buffer), Get_Name (Style));
+
+      if Tag = null then
+         if Remove then
+            return;
+         else
+            --  Create the tag from the style
+            Tag := Get_Tag (Style);
+            Add (Get_Tag_Table (Self.Buffer), Tag);
+         end if;
+      end if;
+
+      --  Highlight/Unhighlight the text
+
+      if Remove then
+         Remove_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
+      else
+         Apply_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
+      end if;
+
+      if Line /= 0 then
+         if Get_In_Speedbar (Style) then
+            if Remove then
+               Self.Remove_Line_Highlighting (Line, Style);
+            else
+               Self.Add_Line_Highlighting
+                 (Line, Style,
+                  Highlight_In => (Highlight_Speedbar => True,
+                                   others             => False));
+            end if;
+         end if;
+      end if;
+   end Highlight_Range;
+
+   ---------------------
+   -- Highlight_Slice --
+   ---------------------
+
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+      procedure Is_Valid_Index is new
+        Generic_Valid_Position (Get_Bytes_In_Line, Set_Line_Index);
+      --  Column should be given in bytes, not characters
+
+      function Highlight_Cb
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Function called by Language.Parse_Entities for each entity found
+
+      procedure Local_Highlight;
+      --  Highlight the region exactly located between Entity_Start and
+      --  Entity_End.
+      --  After this procedure is run, some variables are positioned to
+      --  the following values:
+      --    - Last_Entity is equal to the incomplete entity kind found inside
+      --      the given region, or to Normal_Text if all entities were complete
+      --    - Entity_Start is set to the begining of the incomplete region
+      --      found in the given buffer slice, if any.
+
+      Highlight_Complete : Boolean := False;
+      Entity_Start       : Gtk_Text_Iter;
+      Entity_End         : Gtk_Text_Iter;
+      Slice_Offset_Line  : Buffer_Line_Type;
+      --  Offset between the beginning of the Source_Buffer and the beginning
+      --  of the string slice passed to Parse_Entities.
+
+      Tmp_Start, Tmp_End  : Gtk_Text_Iter;
+      Slice_Offset_Column : Gint;
+      Result              : Boolean;
+      Ignored             : Boolean;
+      Entity_Kind         : Language_Entity;
+      Slice               : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
+
+      ------------------
+      -- Highlight_Cb --
+      ------------------
+
+      function Highlight_Cb
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         Success         : Boolean;
+         Start           : Natural;
+         Col, Line       : Gint;
+         Offset          : Gint;
+         Buffer_Line     : Buffer_Line_Type;
+         End_Buffer_Line : Buffer_Line_Type;
+
+      begin
+         if Partial_Entity then
+            Highlight_Complete := False;
+         end if;
+
+         if Entity not in Standout_Language_Entity then
+            return False;
+         end if;
+
+         --  Some parsers currently leave line numbers to 0. Don't highlight in
+         --  this case, since we cannot use from the byte index due to
+         --  limitations in gtk+
+
+         if Sloc_Start.Line < 1 then
+            return False;
+         end if;
+
+         --  Don't need to take into account the offset column, unless we are
+         --  still on the same line that we started at.
+
+         if Sloc_Start.Line = 1 then
+            Offset := Slice_Offset_Column;
+         else
+            Offset := 0;
+         end if;
+
+         Col := Gint (Sloc_Start.Column) + Offset - 1;
+         Buffer_Line := Buffer_Line_Type (Sloc_Start.Line) + Slice_Offset_Line;
+
+         End_Buffer_Line :=
+           Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
+
+         --  If the column is 0, the entity really ended on the end of the
+         --  previous line.
+
+         if End_Buffer_Line = 0 then
+            return False;
+         end if;
+
+         Line := Gint (Buffer_Line - 1);
+         Is_Valid_Index (Self.Buffer, Entity_Start, Success, Line, Col);
+
+         if not Success then
+            Trace (Me, "invalid position");
+            return False;
+         end if;
+
+         Line := Gint (End_Buffer_Line - 1);
+
+         if Sloc_End.Column = 0 then
+            Get_Iter_At_Line_Index (Self.Buffer, Entity_End, Line, 0);
+            Backward_Char (Entity_End, Success);
+
+         else
+            if Gint (Sloc_End.Line) = 1 then
+               Offset := Slice_Offset_Column;
+            else
+               Offset := 0;
+            end if;
+
+            if Slice (Sloc_End.Index) /= ASCII.LF then
+               Col := Gint (Sloc_End.Column) + Offset - 1;
+
+               --  Is_Valid_Index requires an index at the start of a character
+               --  while Sloc_End.Index points to the end of a character, so
+               --  adjust if needed.
+
+               Start := UTF8_Find_Prev_Char
+                 (Slice (1 .. Sloc_End.Index + 1), Sloc_End.Index + 1);
+
+               if Start /= Sloc_End.Index then
+                  Col := Col - Gint (Sloc_End.Index - Start);
+               end if;
+
+               Is_Valid_Index (Self.Buffer, Entity_End, Success, Line, Col);
+
+               if not Success then
+                  Trace (Me, "invalid position """
+                         & Self.Buffer.Filename.Display_Full_Name & """"
+                         & Line'Img & Col'Img);
+                  return False;
+               end if;
+
+               Forward_Char (Entity_End, Success);
+
+            else
+               Is_Valid_Index (Self.Buffer, Entity_End, Success, Line, 0);
+               if not Success then
+                  Trace (Me, "invalid position """
+                         & Self.Buffer.Filename.Display_Full_Name & """"
+                         & Line'Img & " 0--");
+                  return False;
+               end if;
+
+               if not Ends_Line (Entity_End) then
+                  Forward_To_Line_End (Entity_End, Success);
+               end if;
+            end if;
+         end if;
+
+         Apply_Tag
+           (Self.Buffer, Self.Syntax_Tags (Entity), Entity_Start, Entity_End);
+
+         return False;
+      end Highlight_Cb;
+
+      ---------------------
+      -- Local_Highlight --
+      ---------------------
+
+      procedure Local_Highlight is
+         UTF8   : constant Gtkada.Types.Chars_Ptr :=
+           Get_Slice (Entity_Start, Entity_End);
+
+         --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
+         --  since this would give the number of chars, not bytes.
+
+         Length : constant Integer := Integer (Strlen (UTF8));
+
+      begin
+         Slice               := To_Unchecked_String (UTF8);
+         Highlight_Complete  := True;
+         Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
+         Slice_Offset_Column := Get_Line_Index (Entity_Start);
+
+         --  First, un-apply all the style tags...
+
+         Self.Kill_Highlighting (Entity_Start, Entity_End);
+
+         --  Now re-highlight the text...
+
+         Parse_Entities
+           (Self.Buffer.Lang,
+            Slice (1 .. Length),
+            Highlight_Cb'Unrestricted_Access);
+         Slice := null;
+         g_free (UTF8);
+      end Local_Highlight;
+
+   begin
+      Copy (Source => Start_Iter, Dest => Entity_Start);
+      Copy (Source => End_Iter, Dest => Entity_End);
+
+      --  Start from the beginning of the current line to handle special
+      --  language semantics requiring information from previous characters,
+      --  such as x.all'address in Ada...
+
+      Set_Line_Offset (Entity_Start, 0);
+
+      if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
+         Copy (Source => Start_Iter, Dest => Entity_Start);
+      end if;
+
+      if Get_Language_Context (Self.Buffer.Lang).Use_Semicolon then
+         --  ...and highlight from the previous semicolon, to handle multiple
+         --  line constructs such as C comments or Ada aspect clauses. Note:
+         --  this is a heuristic, since we could find a semicolon in the middle
+         --  of a comment, which wouldn't help us that much.
+
+         Backward_Search
+           (Iter => Entity_Start, Str => ";", Flags => 0,
+            Match_Start => Tmp_Start, Match_End => Tmp_End,
+            Result => Result);
+
+         if Result then
+            Forward_Char (Tmp_Start, Result);
+            Entity_Start := Tmp_Start;
+         else
+            Set_Offset (Entity_Start, 0);
+         end if;
+      end if;
+
+      --  Highlight to the end of line, to avoid missing most of the partial
+      --  entities (strings, characters, ...). In case we have started typing
+      --  a string for instance, that provides a nice optimization over
+      --  rehighlighting the whole buffer...
+
+      Forward_To_Line_End (Entity_End, Result);
+
+      if Get_Language_Context (Self.Buffer.Lang).Use_Semicolon then
+         --  ...and go to next semicolon if any
+         Forward_Search
+           (Iter => Entity_End, Str => ";", Flags => 0,
+            Match_Start => Tmp_Start, Match_End => Tmp_End,
+            Result => Result);
+
+         if Result then
+            Entity_End := Tmp_Start;
+         else
+            Forward_To_End (Entity_End);
+         end if;
+      end if;
+
+      --  Search the initial minimum area to re-highlight...
+
+      Entity_Kind := Normal_Text;
+
+      Entity_Kind_Search_Loop :
+      for Current_Entity in Standout_Language_Entity loop
+         if Has_Tag (Entity_Start, Self.Syntax_Tags (Current_Entity)) then
+            --  This means that we are in a highlighted region. The minimum
+            --  region to re-highlight starts from the begining of the
+            --  current region to the end of the following region.
+
+            Entity_Kind := Current_Entity;
+
+            Backward_To_Tag_Toggle
+              (Entity_Start,
+               Self.Syntax_Tags (Current_Entity),
+               Result => Ignored);
+            Forward_To_Tag_Toggle
+              (Entity_End, Self.Syntax_Tags (Entity_Kind), Ignored);
+            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+
+         elsif Begins_Tag (Entity_End, Self.Syntax_Tags (Current_Entity))
+           or else Ends_Tag (Entity_Start, Self.Syntax_Tags (Current_Entity))
+         then
+            --  Case Begins_Tag:
+            --    This means that we inserted right at the begining of
+            --    a highlighted region... The minimum region to re-highlight
+            --    starts from the begining of the previous region to the
+            --    end of the current region.
+            --  Case Ends_Tag:
+            --    This means that we inserted right at the end of a
+            --    highlighted region. In this case, the minimum region to
+            --    re-highlight starts from the begining of the previous
+            --    region to the end of the current region.
+            --  In both cases, the processing is the same...
+
+            Entity_Kind := Current_Entity;
+            Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
+            Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+         end if;
+      end loop Entity_Kind_Search_Loop;
+
+      if Entity_Kind = Normal_Text then
+         --  We are inside a normal text region. Just re-highlight this
+         --  region.
+
+         Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
+         Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
+      end if;
+
+      Local_Highlight;
+
+      if not Highlight_Complete then
+         --  In this case, we are in the middle of e.g a multi-line comment,
+         --  and we re-highlight the whole buffer since we do not know where
+         --  the comment started.
+         --  ??? would be nice to optimize here. We could for instance
+         --  highlight only from the beginning of the section instead of from
+         --  the start
+
+         Set_Offset (Entity_Start, 0);
+         Forward_To_End (Entity_End);
+         Local_Highlight;
+      end if;
+   end Highlight_Slice;
+
+   -----------------------------
+   -- Update_Highlight_Region --
+   -----------------------------
+
+   procedure Update_Highlight_Region
+     (Self : access Source_Highlighter_Record;
+      Iter : Gtk_Text_Iter)
+   is
+      First_Mark_Iter : Gtk_Text_Iter;
+      Last_Mark_Iter  : Gtk_Text_Iter;
+
+   begin
+      if not Self.Highlight_Needed then
+         Self.Highlight_Needed := True;
+         Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, Iter);
+
+      else
+         Get_Iter_At_Mark
+           (Self.Buffer, First_Mark_Iter, Self.First_Highlight_Mark);
+         Get_Iter_At_Mark
+           (Self.Buffer, Last_Mark_Iter, Self.Last_Highlight_Mark);
+
+         if Get_Offset (First_Mark_Iter) > Get_Offset (Iter) then
+            Move_Mark (Self.Buffer, Self.First_Highlight_Mark, Iter);
+         end if;
+
+         if Get_Offset (Last_Mark_Iter) < Get_Offset (Iter) then
+            Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, Iter);
+         end if;
+      end if;
+
+      if not Self.Buffer.Inserting
+        and then Self.Auto_Highlight_Enabled
+      then
+         if not Self.Use_Highlighting_Hook then
+            Self.Highlight_Region;
+
+         elsif Self.Highlight_Needed then
+            Self.Run_Hook (Phase => 1);
+         end if;
+      end if;
+   end Update_Highlight_Region;
+
+   ----------------------
+   -- Highlight_Region --
+   ----------------------
+
+   procedure Highlight_Region
+     (Self : access Source_Highlighter_Record)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      if not Self.Highlight_Needed
+        or else Self.Use_Highlighting_Hook
+      then
+         return;
+      end if;
+
+      Get_Iter_At_Mark (Self.Buffer, Start_Iter, Self.First_Highlight_Mark);
+      Get_Iter_At_Mark (Self.Buffer, End_Iter, Self.Last_Highlight_Mark);
+
+      Self.Highlight_Slice (Start_Iter, End_Iter);
+      Self.Highlight_Needed := False;
+   end Highlight_Region;
+
+   -----------------------------
+   -- Highlight_Inserted_Text --
+   -----------------------------
+
+   procedure Highlight_Inserted_Text
+     (Self : access Source_Highlighter_Record;
+      From : Buffer_Line_Type;
+      To   : Buffer_Line_Type)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      if Self.Use_Highlighting_Hook then
+         Highlight_Range_Hook.Run
+           (Kernel    => Self.Buffer.Kernel,
+            Phase     => 2,
+            File      => Self.Buffer.Filename,
+            From_Line => Natural (From),
+            To_Line   => Natural (To));
+      else
+         Get_Iter_At_Line (Self.Buffer, Start_Iter, Gint (From - 1));
+         Get_Iter_At_Line (Self.Buffer, End_Iter, Gint (To - 1));
+
+         Self.Highlight_Slice (Start_Iter, End_Iter);
+      end if;
+   end Highlight_Inserted_Text;
+
+   --------------
+   -- Run_Hook --
+   --------------
+
+   procedure Run_Hook
+     (Self  : access Source_Highlighter_Record;
+      Phase : Positive)
+   is
+      Start_Iter  : Gtk_Text_Iter;
+      End_Iter    : Gtk_Text_Iter;
+      From, To    : Integer;
+   begin
+      Get_Iter_At_Mark (Self.Buffer, Start_Iter, Self.First_Highlight_Mark);
+      From := Integer (Get_Line (Start_Iter)) + 1;
+      Get_Iter_At_Mark (Self.Buffer, End_Iter, Self.Last_Highlight_Mark);
+      To := Integer (Get_Line (End_Iter)) + 1;
+
+      Highlight_Range_Hook.Run
+        (Kernel    => Self.Buffer.Kernel,
+         Phase     => Phase,
+         File      => Self.Buffer.Filename,
+         From_Line => From,
+         To_Line   => To);
+
+      if Phase = 2 then
+         Self.Highlight_Needed := False;
+      end if;
+   end Run_Hook;
+
+   --------------
+   -- Run_Hook --
+   --------------
+
+   procedure Run_Hook
+     (Self : access Source_Highlighter_Record) is
+   begin
+      if Self.Use_Highlighting_Hook
+        and then Self.Highlight_Needed
+      then
+         Self.Run_Hook (Phase => 2);
+      end if;
+   end Run_Hook;
+
+   ------------------
+   -- On_Load_File --
+   ------------------
+
+   procedure On_Load_File
+     (Self : access Source_Highlighter_Record)
+   is
+      F, L : Gtk_Text_Iter;
+   begin
+      --  Highlight the newly inserted text
+      if not Get_Language_Context (Self.Buffer.Lang).Syntax_Highlighting then
+         return;
+      end if;
+
+      Get_Bounds (Self.Buffer, F, L);
+      Self.Highlight_Needed := True;
+      Move_Mark (Self.Buffer, Self.First_Highlight_Mark, F);
+      Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, L);
+      Self.Highlight_Region;
+   end On_Load_File;
+
+   ---------------------
+   -- On_Set_Language --
+   ---------------------
+
+   procedure On_Set_Language
+     (Self       : access Source_Highlighter_Record;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter) is
+   begin
+      Self.Use_Highlighting_Hook :=
+        Self.Buffer.Lang.Get_Name = "Ada"
+        and then Use_LAL_In_Highlight.Get_Pref;
+
+      --  Do not try to highlight an empty buffer
+      if not Is_End (Start_Iter) then
+         if not Get_Language_Context
+           (Self.Buffer.Lang).Syntax_Highlighting
+         then
+            Self.Kill_Highlighting (Start_Iter, End_Iter);
+
+         elsif not Self.Use_Highlighting_Hook then
+            Self.Highlight_Slice (Start_Iter, End_Iter);
+         end if;
+      end if;
+   end On_Set_Language;
+
+   ------------------------------
+   -- Remove_Line_Highlighting --
+   ------------------------------
+
+   procedure Remove_Line_Highlighting
+     (Self   : access Source_Highlighter_Record;
+      Line   : Editable_Line_Type;
+      Style  : not null Style_Access)
+   is
+      The_Line : Buffer_Line_Type;
+   begin
+      if Self.Buffer.In_Destruction then
+         return;
+      end if;
+
+      if Line = 0 then
+         --  This procedure is called by Highlight_Range, but not when Line=0,
+         --  so there are no recursive calls here
+         Self.Highlight_Range (Style, 0, 1, 1, True);
+
+         for J in Self.Buffer.Line_Data'Range loop
+            Self.Set_Line_Highlighting (J, Style, False, (others => True));
+         end loop;
+      else
+         The_Line := Get_Buffer_Line (Self.Buffer, Line);
+
+         if The_Line /= 0 then
+            Self.Set_Line_Highlighting
+              (The_Line, Style, False, (others => True));
+         end if;
+      end if;
+
+      Line_Highlights_Changed (Self.Buffer);
+   end Remove_Line_Highlighting;
+
+   -------------------------
+   -- Remove_Highlighting --
+   -------------------------
+
+   procedure Remove_Highlighting
+     (Self      : access Source_Highlighter_Record;
+      Style     : Style_Access;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result               : Boolean;
+      One                  : constant Character_Offset_Type := 1;
+      Tag                  : Gtk_Text_Tag;
+   begin
+      Tag := Lookup (Get_Tag_Table (Self.Buffer), Get_Name (Style));
+
+      --  Remove tag-based highlighting
+      if Tag /= null then
+         Get_Iter_At_Screen_Position
+           (Self.Buffer, Start_Iter, From_Line, One);
+         Get_Iter_At_Screen_Position
+           (Self.Buffer, End_Iter, To_Line, One);
+
+         if not Ends_Line (End_Iter) then
+            Forward_To_Line_End (End_Iter, Result);
+         end if;
+
+         if Result then
+            Remove_Tag (Self.Buffer, Tag, Start_Iter, End_Iter);
+         end if;
+      end if;
+
+      --  Remove line-based highlighting
+      if Get_In_Speedbar (Style) then
+         for Line in From_Line .. To_Line loop
+            Self.Remove_Line_Highlighting (Line, Style);
+         end loop;
+      end if;
+   end Remove_Highlighting;
+
+   -----------------------
+   -- Kill_Highlighting --
+   -----------------------
+
+   procedure Kill_Highlighting
+     (Self : access Source_Highlighter_Record;
+      From : Gtk_Text_Iter;
+      To   : Gtk_Text_Iter) is
+   begin
+      for Entity_Kind in Standout_Language_Entity loop
+         Remove_Tag (Self.Buffer, Self.Syntax_Tags (Entity_Kind), From, To);
+      end loop;
+   end Kill_Highlighting;
+
+   -------------------------
+   -- Get_Highlight_Color --
+   -------------------------
+
+   function Get_Highlight_Color
+     (Self    : access Source_Highlighter_Record;
+      Line    : Buffer_Line_Type;
+      Context : Highlight_Location) return Gdk_RGBA is
+   begin
+      if Line = 0 then
+         return Null_RGBA;
+      end if;
+
+      if Self.Buffer.Line_Data /= null
+        and then Line <= Self.Buffer.Line_Data'Last
+        and then Self.Buffer.Line_Data
+          (Line).Highlighting (Context).Active /= 0
+      then
+         return Get_Color
+           (Self.Buffer.Line_Data (Line).Highlighting (Context).Active);
+
+      else
+         return Null_RGBA;
+      end if;
+   end Get_Highlight_Color;
+
+   --------------------
+   -- Is_Comment_Tag --
+   --------------------
+
+   function Is_Comment_Tag
+     (Self : access Source_Highlighter_Record;
+      Pos  : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean is
+   begin
+      return Has_Tag (Pos, Self.Syntax_Tags (Comment_Text))
+        or else Has_Tag (Pos, Self.Syntax_Tags (Aspect_Comment_Text))
+        or else Has_Tag (Pos, Self.Syntax_Tags (Annotated_Comment_Text))
+        or else Has_Tag (Pos, Self.Syntax_Tags (Annotated_Keyword_Text));
+   end Is_Comment_Tag;
+
+   ---------------------------
+   -- Highlight_Parenthesis --
+   ---------------------------
+
+   procedure Highlight_Parenthesis (Self : access Source_Highlighter_Record)
+   is
+      On_Cursor_Iter       : Gtk_Text_Iter;
+      First_Highlight_Iter : Gtk_Text_Iter;
+      Last_Highlight_Iter  : Gtk_Text_Iter;
+      Current              : Gtk_Text_Iter;
+      Found                : Natural;
+      Success              : Boolean;
+   begin
+      --  Highlight the cursor delimiters
+      if not Self.Highlight_Delimiters then
+         return;
+      end if;
+
+      Get_Iter_At_Mark (Self.Buffer, On_Cursor_Iter, Self.Buffer.Insert_Mark);
+      Get_Delimiters
+        (Self.Buffer,
+         On_Cursor_Iter,
+         First_Highlight_Iter, Last_Highlight_Iter,
+         Found);
+
+      if Found >= 1 then
+         Copy (First_Highlight_Iter, Current);
+         Forward_Char (Current, Success);
+         Apply_Tag
+           (Self.Buffer,
+            Self.Delimiter_Tag,
+            First_Highlight_Iter,
+            Current);
+
+         Copy (Last_Highlight_Iter, Current);
+         Backward_Char (Current, Success);
+         Apply_Tag
+           (Self.Buffer,
+            Self.Delimiter_Tag,
+            Current,
+            Last_Highlight_Iter);
+
+         if Found = 2 then
+            Copy (On_Cursor_Iter, Current);
+            Backward_Char (Current, Success);
+            Forward_Char (On_Cursor_Iter, Success);
+            Apply_Tag
+              (Self.Buffer,
+               Self.Delimiter_Tag,
+               Current,
+               On_Cursor_Iter);
+         end if;
+
+         Self.Start_Delimiters_Highlight := Create_Mark
+           (Self.Buffer, "", First_Highlight_Iter);
+         Self.End_Delimiters_Highlight := Create_Mark
+           (Self.Buffer, "", Last_Highlight_Iter);
+
+         Self.Has_Delimiters_Highlight := True;
+      end if;
+   end Highlight_Parenthesis;
+
+   ------------------------------------
+   -- Remove_Delimiters_Highlighting --
+   ------------------------------------
+
+   procedure Remove_Delimiters_Highlighting
+     (Self : access Source_Highlighter_Record) is
+   begin
+      if not Self.Has_Delimiters_Highlight then
+         return;
+      end if;
+
+      declare
+         From : Gtk_Text_Iter;
+         To   : Gtk_Text_Iter;
+      begin
+         Get_Iter_At_Mark
+           (Self.Buffer, From, Self.Start_Delimiters_Highlight);
+         Get_Iter_At_Mark (Self.Buffer, To, Self.End_Delimiters_Highlight);
+
+         Delete_Mark (Self.Buffer, Self.Start_Delimiters_Highlight);
+         Delete_Mark (Self.Buffer, Self.End_Delimiters_Highlight);
+
+         Remove_Tag (Self.Buffer, Self.Delimiter_Tag, From, To);
+      end;
+
+      Self.Has_Delimiters_Highlight := False;
+   end Remove_Delimiters_Highlighting;
 
 end Src_Editor_Buffer;

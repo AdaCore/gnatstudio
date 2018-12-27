@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2018, AdaCore                     --
+--                     Copyright (C) 2003-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -34,7 +34,6 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtkada.Style;             use Gtkada.Style;
 with Pango.Cairo;              use Pango.Cairo;
@@ -141,14 +140,6 @@ package body Src_Editor_Buffer.Line_Information is
    --  removed.
    --  If Override_Old is True, the new message will replace the old message,
    --  otherwise the old message takes precedence and will not be removed
-
-   procedure Highlight_Range
-     (Buffer     : access Source_Buffer_Record'Class;
-      Style      : Style_Access;
-      Line       : Editable_Line_Type;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Remove     : Boolean := False);
 
    function Message_Is_On_Line
      (Buffer  : access Source_Buffer_Record'Class;
@@ -1711,11 +1702,11 @@ package body Src_Editor_Buffer.Line_Information is
             Copy (Iter, Dest => End_Iter);
             Forward_Chars (End_Iter, Text'Length, Success);
 
-            Highlight_Range (Buffer     => Buffer,
-                             Style      => Style,
-                             Line       => EL,
-                             Start_Iter => Iter,
-                             End_Iter   => End_Iter);
+            Buffer.Highlighter.Highlight_Range
+              (Style      => Style,
+               Line       => EL,
+               Start_Iter => Iter,
+               End_Iter   => End_Iter);
 
             --  Save the style for each of the added lines
             for J in 0 .. Number - 1 loop
@@ -1904,15 +1895,15 @@ package body Src_Editor_Buffer.Line_Information is
 
          case Length is
             when Highlight_None | Highlight_Whole_Line =>
-               Remove_Line_Highlighting (Buffer, Line, Style);
+               Buffer.Highlighter.Remove_Line_Highlighting (Line, Style);
             when others =>
                To_Column := From_Column + Visible_Column_Type (Length);
                if Has_Iters then
-                  Highlight_Range
-                    (Buffer, Style, Line, Start_Iter, End_Iter, True);
+                  Buffer.Highlighter.Highlight_Range
+                    (Style, Line, Start_Iter, End_Iter, True);
                else
-                  Highlight_Range
-                    (Buffer, Style, Line, From_Column, To_Column, True);
+                  Buffer.Highlighter.Highlight_Range
+                    (Style, Line, From_Column, To_Column, True);
                end if;
          end case;
       end if;
@@ -1994,9 +1985,8 @@ package body Src_Editor_Buffer.Line_Information is
       if Style /= null and then BL /= 0 then
          Length := Message.Get_Highlighting_Length;
 
-         Set_Line_Highlighting
-           (Editor       => Buffer,
-            Line         => BL,
+         Buffer.Highlighter.Set_Line_Highlighting
+           (Line         => BL,
             Style        => Style,
             Set          => True,
             Highlight_In =>
@@ -2025,9 +2015,8 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
             end if;
 
-            Highlight_Range
-              (Buffer    => Buffer,
-               Style     => Style,
+            Buffer.Highlighter.Highlight_Range
+              (Style     => Style,
                Line      => EL,
                Start_Col => Mark.Column,
                End_Col   => End_Col,
@@ -2797,15 +2786,14 @@ package body Src_Editor_Buffer.Line_Information is
       Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
 
       use Lines_List;
-      C              : Lines_List.Cursor;
-      U              : Universal_Line;
+      C                 : Lines_List.Cursor;
+      U                 : Universal_Line;
 
-      Current        : Editable_Line_Type;
+      Current           : Editable_Line_Type;
       --  The number of the line we are currently adding
-      Current_B      : Buffer_Line_Type;
+      Current_B         : Buffer_Line_Type;
 
-      Start_Buffer_Line    : Buffer_Line_Type;
-      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Start_Buffer_Line : Buffer_Line_Type;
 
    begin
       if Start_Line = 0 then
@@ -2928,20 +2916,8 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       --  Highlight the inserted text
-
-      if Buffer.Use_Highlighting_Hook then
-         Highlight_Range_Hook.Run
-           (Kernel    => Buffer.Kernel,
-            Phase     => 2,
-            File      => Buffer.Filename,
-            From_Line => Natural (Start_Buffer_Line),
-            To_Line   => Natural (Current_B));
-      else
-         Get_Iter_At_Line (Buffer, Start_Iter, Gint (Start_Buffer_Line - 1));
-         Get_Iter_At_Line (Buffer, End_Iter, Gint (Current_B - 1));
-
-         Highlight_Slice (Buffer, Start_Iter, End_Iter);
-      end if;
+      Buffer.Highlighter.Highlight_Inserted_Text
+        (Start_Buffer_Line, Current_B);
 
       --  Redraw the side column
 
@@ -3237,166 +3213,6 @@ package body Src_Editor_Buffer.Line_Information is
         and then Buffer.Hidden_Lines = 0
         and then Buffer.Blank_Lines = 0;
    end Lines_Are_Real;
-
-   ---------------------
-   -- Highlight_Range --
-   ---------------------
-
-   procedure Highlight_Range
-     (Buffer     : access Source_Buffer_Record'Class;
-      Style      : Style_Access;
-      Line       : Editable_Line_Type;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Remove     : Boolean := False)
-   is
-      Tag : Gtk_Text_Tag;
-   begin
-      --  Get the text tag, create it if necessary
-
-      Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
-
-      if Tag = null then
-         if Remove then
-            return;
-         else
-            --  Create the tag from the style
-            Tag := Get_Tag (Style);
-            Add (Get_Tag_Table (Buffer), Tag);
-         end if;
-      end if;
-
-      --  Highlight/Unhighlight the text
-
-      if Remove then
-         Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
-      else
-         Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
-      end if;
-
-      if Line /= 0 then
-         if Get_In_Speedbar (Style) then
-            if Remove then
-               Remove_Line_Highlighting (Buffer, Line, Style);
-            else
-               Add_Line_Highlighting
-                 (Buffer, Line, Style,
-                  Highlight_In => (Highlight_Speedbar => True,
-                                   others             => False));
-            end if;
-         end if;
-      end if;
-   end Highlight_Range;
-
-   ---------------------
-   -- Highlight_Range --
-   ---------------------
-
-   procedure Highlight_Range
-     (Buffer    : access Source_Buffer_Record'Class;
-      Style     : Style_Access;
-      Line      : Editable_Line_Type;
-      Start_Col : Visible_Column_Type;
-      End_Col   : Visible_Column_Type;
-      Remove    : Boolean := False)
-   is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result               : Boolean;
-      The_Line             : Gint;
-   begin
-      --  Here we test whether the buffer is in destruction. If it is the case
-      --  we simply return since it is not worth taking care of unhighlighting
-      --  lines. Furthermore this prevents GPS from crashing when we close a
-      --  source file used in a visual diff while the reference file is still
-      --  being displayed.
-
-      if Buffer.In_Destruction then
-         return;
-      end if;
-
-      --  Get the boundaries of text to (un)highlight
-
-      if Line = 0 then
-         Get_Bounds (Buffer, Start_Iter, End_Iter);
-
-      else
-         The_Line :=
-           Gint (Get_Buffer_Line (Buffer, Line) - 1);
-
-         if The_Line < 0 then
-            return;
-         end if;
-
-         if Start_Col <= 0
-           or else not Is_Valid_Position (Buffer, Line, Start_Col)
-         then
-            Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
-         else
-            Get_Iter_At_Screen_Position
-              (Buffer, Start_Iter, Line, Start_Col);
-
-            if Ends_Line (Start_Iter) then
-               Backward_Char (Start_Iter, Result);
-            end if;
-         end if;
-
-         if End_Col <= 0
-           or else not Is_Valid_Position (Buffer, Line, End_Col)
-         then
-            Copy (Start_Iter, End_Iter);
-            Forward_To_Line_End (End_Iter, Result);
-         else
-            Get_Iter_At_Screen_Position
-              (Buffer, End_Iter, Line, End_Col);
-         end if;
-      end if;
-
-      Highlight_Range (Buffer     => Buffer,
-                       Style      => Style,
-                       Line       => Line,
-                       Start_Iter => Start_Iter,
-                       End_Iter   => End_Iter,
-                       Remove     => Remove);
-   end Highlight_Range;
-
-   -------------------------
-   -- Remove_Highlighting --
-   -------------------------
-
-   procedure Remove_Highlighting
-     (Buffer    : access Source_Buffer_Record'Class;
-      Style     : Style_Access;
-      From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type)
-   is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result               : Boolean;
-      One : constant Character_Offset_Type := 1;
-      Tag : Gtk_Text_Tag;
-   begin
-      Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
-
-      --  Remove tag-based highlighting
-      if Tag /= null then
-         Get_Iter_At_Screen_Position (Buffer, Start_Iter, From_Line, One);
-         Get_Iter_At_Screen_Position (Buffer, End_Iter, To_Line, One);
-
-         if not Ends_Line (End_Iter) then
-            Forward_To_Line_End (End_Iter, Result);
-         end if;
-
-         if Result then
-            Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
-         end if;
-      end if;
-
-      --  Remove line-based highlighting
-      if Get_In_Speedbar (Style) then
-         for Line in From_Line .. To_Line loop
-            Remove_Line_Highlighting (Buffer, Line, Style);
-         end loop;
-      end if;
-   end Remove_Highlighting;
 
    --------------
    -- Get_Line --

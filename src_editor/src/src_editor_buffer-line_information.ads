@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2018, AdaCore                     --
+--                     Copyright (C) 2003-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -238,29 +238,6 @@ package Src_Editor_Buffer.Line_Information is
    --  side column.
    --  If Remove_Unfold_Commands is False, will only remove block folding
    --  command.
-
-   procedure Highlight_Range
-     (Buffer    : access Source_Buffer_Record'Class;
-      Style     : Style_Access;
-      Line      : Editable_Line_Type;
-      Start_Col : Visible_Column_Type;
-      End_Col   : Visible_Column_Type;
-      Remove    : Boolean := False);
-   --  Highlight the given range of text with category Category.
-   --  If Start_Col <= 0, start at the beginning of line.
-   --  If End_Col <= 0, end at end of line.
-   --  If Remove is True, remove the highlighting instead of adding it.
-   --  If Line = 0, (un)highlight the whole buffer.
-   --  If the style was created so that a mark should be put in the speedbar,
-   --  this function also takes care of this.
-
-   procedure Remove_Highlighting
-     (Buffer    : access Source_Buffer_Record'Class;
-      Style     : Style_Access;
-      From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type);
-   --  Remove the given style highlighting from the given range of lines,
-   --  included.
 
    procedure Highlight_Message
      (Buffer        : access Source_Buffer_Record'Class;

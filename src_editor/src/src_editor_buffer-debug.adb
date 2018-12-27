@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2018, AdaCore                     --
+--                     Copyright (C) 2009-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -355,7 +355,7 @@ package body Src_Editor_Buffer.Debug is
             declare
             begin
                --  Check whether the parameter is a syntax tag
-               Tag := Buffer.Syntax_Tags
+               Tag := Buffer.Highlighter.Syntax_Tags
                  (Language_Entity'Value (Nth_Arg (Data, 2)));
             exception
                when Constraint_Error =>

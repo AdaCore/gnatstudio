@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2358,7 +2358,7 @@ package body Src_Contexts is
       declare
          G : Group_Block := Buffer.New_Undo_Group;
       begin
-         Buffer.Disable_Highlighting;
+         Buffer.Get_Highlighter.Disable_Highlighting;
 
          for M of reverse Matches loop
             if Is_Empty_Match (M) then
@@ -2387,7 +2387,7 @@ package body Src_Contexts is
             end if;
          end loop;
 
-         Buffer.Enable_Highlighting;
+         Buffer.Get_Highlighter.Enable_Highlighting;
       end;
 
       Set_Avoid_Cursor_Move_On_Changes (Buffer, False);

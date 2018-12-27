@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1051,8 +1051,8 @@ package body Src_Editor_View is
          Color            : Gdk_RGBA;
       begin
          for Line in Top_Line .. Bottom_Line loop
-            Color := Get_Highlight_Color
-              (Buffer, Line, Context => Highlight_Editor);
+            Color := Buffer.Get_Highlighter.Get_Highlight_Color
+              (Line, Context => Highlight_Editor);
 
             if Color /= Null_RGBA then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
@@ -2644,8 +2644,8 @@ package body Src_Editor_View is
       Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
 
       for J in 1 .. Total_Lines loop
-         Color := Get_Highlight_Color
-           (Src_Buffer, Buffer_Line_Type (J),
+         Color := Src_Buffer.Get_Highlighter.Get_Highlight_Color
+           (Buffer_Line_Type (J),
             Context => Highlight_Speedbar);
 
          if Color /= Null_RGBA then
