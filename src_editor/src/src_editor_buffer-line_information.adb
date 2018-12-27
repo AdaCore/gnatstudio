@@ -182,6 +182,13 @@ package body Src_Editor_Buffer.Line_Information is
    --  Called when the user clicks on a side column (e.g: to fold a block).
    --  Execute the action associated with the given column, if any.
 
+   package Source_Buffer_Idle_Sources is
+     new Glib.Main.Generic_Sources (Source_Buffer);
+   --  Typed idle handler for Source_Buffer_Record'Class.
+
+   function On_Rehightlight_Messages (Self : Source_Buffer) return Boolean;
+   --  Rehighlights messages on idle.
+
    function Image (Data : Line_Info_Width_Array_Access) return String;
    function Image (Data : Line_Info_Width) return String;
    function Image (Data : Gtk_Text_Mark) return String;
@@ -221,6 +228,48 @@ package body Src_Editor_Buffer.Line_Information is
 
       return False;
    end Message_Is_On_Line;
+
+   ------------------------------
+   -- On_Rehightlight_Messages --
+   ------------------------------
+
+   function On_Rehightlight_Messages (Self : Source_Buffer) return Boolean is
+   begin
+      --  Iterate over all the shifted lines to re-highlight the messages that
+      --  can be associated.
+
+      for J in Self.Line_Data'Range loop
+         if Self.Line_Data (J).Side_Info_Data /= null then
+            declare
+               Position : Message_Reference_List.Cursor :=
+                            Self.Line_Data
+                              (J).Side_Info_Data (1).Messages.First;
+               Ref      : Message_Reference;
+
+            begin
+               --  This code doesn't use "for X of" loop to speedup code.
+
+               while Message_Reference_List.Has_Element (Position) loop
+                  Ref := Message_Reference_List.Element (Position);
+
+                  if not Ref.Is_Empty then
+                     Highlight_Message
+                       (Buffer        => Self,
+                        Editable_Line => 0,
+                        Buffer_Line   => 0,
+                        Message       => Ref.Message);
+                  end if;
+
+                  Message_Reference_List.Next (Position);
+               end loop;
+            end;
+         end if;
+      end loop;
+
+      Self.Hightlight_Messages_Idle := Glib.Main.No_Source_Id;
+
+      return False;
+   end On_Rehightlight_Messages;
 
    ----------------------------
    -- Find_Line_With_Message --
@@ -1599,6 +1648,8 @@ package body Src_Editor_Buffer.Line_Information is
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
+      use type Glib.Main.G_Source_Id;
+
       Iter     : Gtk_Text_Iter;
       Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
       Number   : Positive := 1;
@@ -1715,36 +1766,17 @@ package body Src_Editor_Buffer.Line_Information is
             At_Buffer_Line => Line);
       end if;
 
-      --  Iterate over all the shifted lines to re-highlight the messages that
-      --  can be associated.
+      --  Register idle handler to rehightlight messages after buffer
+      --  modification. It allows to do it only once after all modifications
+      --  of the source buffer.
 
-      for J in Line + 1 .. Buffer.Line_Data'Last loop
-         if Buffer.Line_Data (J).Side_Info_Data /= null then
-            declare
-               Position : Message_Reference_List.Cursor :=
-                            Buffer.Line_Data
-                              (J).Side_Info_Data (1).Messages.First;
-               Ref      : Message_Reference;
-
-            begin
-               --  This code doesn't use "for X of" loop to speedup code.
-
-               while Message_Reference_List.Has_Element (Position) loop
-                  Ref := Message_Reference_List.Element (Position);
-
-                  if not Ref.Is_Empty then
-                     Highlight_Message
-                       (Buffer        => Buffer,
-                        Editable_Line => 0,
-                        Buffer_Line   => 0,
-                        Message       => Ref.Message);
-                  end if;
-
-                  Message_Reference_List.Next (Position);
-               end loop;
-            end;
-         end if;
-      end loop;
+      if Buffer.Hightlight_Messages_Idle = Glib.Main.No_Source_Id then
+         Buffer.Hightlight_Messages_Idle :=
+           Source_Buffer_Idle_Sources.Idle_Add
+             (On_Rehightlight_Messages'Access,
+              Buffer,
+              Glib.Main.Priority_Default);
+      end if;
 
       return Mark;
    end Add_Blank_Lines;

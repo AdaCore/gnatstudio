@@ -1648,6 +1648,11 @@ package body Src_Editor_Buffer is
          Buffer.Blocks_Timeout := Glib.Main.No_Source_Id;
       end if;
 
+      if Buffer.Hightlight_Messages_Idle /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (Buffer.Hightlight_Messages_Idle);
+         Buffer.Hightlight_Messages_Idle := Glib.Main.No_Source_Id;
+      end if;
+
       GNAT.Strings.Free (Buffer.Forced_Title);
    end Destroy_Hook;
 

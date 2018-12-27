@@ -1807,6 +1807,10 @@ private
       Context_Frozen       : Integer := 0;
       --  GPS context is refreshed every time the cursor position changes and
       --  this variable is set to 0. See Freeze_Context and Thaw_Context.
+
+      Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
+                                   Glib.Main.No_Source_Id;
+      --  Idle handler to rehightlight messages.
    end record;
 
    procedure Emit_By_Name
