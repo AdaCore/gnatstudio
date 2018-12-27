@@ -1720,15 +1720,29 @@ package body Src_Editor_Buffer.Line_Information is
 
       for J in Line + 1 .. Buffer.Line_Data'Last loop
          if Buffer.Line_Data (J).Side_Info_Data /= null then
-            for Ref of Buffer.Line_Data (J).Side_Info_Data (1).Messages loop
-               if not Ref.Is_Empty then
-                  Highlight_Message
-                    (Buffer        => Buffer,
-                     Editable_Line => 0,
-                     Buffer_Line   => 0,
-                     Message       => Ref.Message);
-               end if;
-            end loop;
+            declare
+               Position : Message_Reference_List.Cursor :=
+                            Buffer.Line_Data
+                              (J).Side_Info_Data (1).Messages.First;
+               Ref      : Message_Reference;
+
+            begin
+               --  This code doesn't use "for X of" loop to speedup code.
+
+               while Message_Reference_List.Has_Element (Position) loop
+                  Ref := Message_Reference_List.Element (Position);
+
+                  if not Ref.Is_Empty then
+                     Highlight_Message
+                       (Buffer        => Buffer,
+                        Editable_Line => 0,
+                        Buffer_Line   => 0,
+                        Message       => Ref.Message);
+                  end if;
+
+                  Message_Reference_List.Next (Position);
+               end loop;
+            end;
          end if;
       end loop;
 
