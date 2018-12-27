@@ -1674,9 +1674,6 @@ private
       Blocks_Request_Timestamp : Ada.Calendar.Time;
       --  The last time the blocks refresh was requested
 
-      Cursor_Timeout : Glib.Main.G_Source_Id;
-      --  A timeout handling the refresh of the timeouts
-
       Blank_Lines : Natural := 0;
       --  The number of blank lines in the buffer
 
