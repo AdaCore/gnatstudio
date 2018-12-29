@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2018, AdaCore                     --
+--                     Copyright (C) 2016-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -540,7 +540,7 @@ package body GVD.Breakpoints_List is
                others      => <>));
          Module.Breakpoints.Dummy_Id :=
            Module.Breakpoints.Dummy_Id + 1;
-         Show_Breakpoints_In_All_Editors (Kernel);
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
          For_Each_Debugger (Kernel, On_Debugger'Access);
