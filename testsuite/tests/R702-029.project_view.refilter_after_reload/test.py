@@ -2,12 +2,15 @@
 
 from gps_utils.internal.utils import run_test_driver, get_widget_by_name, \
     dump_tree_model, gps_assert, timeout
+from gps_utils.internal.dialogs import Project_View
 
 
 @run_test_driver
 def driver():
-    yield timeout(100)
-    explorer = get_widget_by_name("Project Explorer Tree")
+    prj_view = Project_View()
+    yield prj_view.open_and_yield()
+
+    explorer = prj_view.dialog
     dump = dump_tree_model(explorer.get_model(), 1)
     gps_assert(dump,
                ['p', ['.', ['beau.adb', 'nico.adb'], '.']],
