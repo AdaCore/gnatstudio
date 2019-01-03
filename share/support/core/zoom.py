@@ -17,11 +17,11 @@ from gi.repository import Pango
 import gps_utils
 
 
-def zoom_pref(pref, factor, save=True):
+def zoom_pref(pref, incr, save=True):
     p = GPS.Preference(pref)
     (font, fg, bg) = p.get().split("@")
     descr = Pango.FontDescription(font)
-    new_size = descr.get_size() * factor
+    new_size = descr.get_size() + incr
     # Clamp the new size between reasonable values
     new_size = max(new_size, 6.0 * Pango.SCALE)
     new_size = min(new_size, 24.0 * Pango.SCALE)
@@ -38,11 +38,11 @@ def zoom(factor):
 def zoom_in():
     """Increase the size of fonts in the source editors.
 This impacts the corresponding preferences."""
-    zoom(1.2)
+    zoom(Pango.SCALE)
 
 
 @gps_utils.interactive(name="decrease text size", category="Editor")
 def zoom_out():
     """Decrease the size of fonts in the source editors.
 This impacts the corresponding preferences."""
-    zoom(1 / 1.2)
+    zoom(-Pango.SCALE)
