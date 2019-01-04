@@ -250,8 +250,12 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "side_columns_configuration_changed" signal
 
-   procedure Invalidate_Window (User : access Source_View_Record'Class);
-   --  Redraw the buffer window
+   procedure Invalidate_Window
+     (User           : access Source_View_Record'Class;
+      Side_Area_Only : Boolean := False);
+   --  Redraw the editor's window.
+   --  If Side_Area_Only is True, this function will only redraw the editor's
+   --  side area (i.e: where line numbers are displayed).
 
    procedure Line_Highlight_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -587,7 +591,9 @@ package body Src_Editor_View is
    -- Invalidate_Window --
    -----------------------
 
-   procedure Invalidate_Window (User : access Source_View_Record'Class) is
+   procedure Invalidate_Window
+     (User           : access Source_View_Record'Class;
+      Side_Area_Only : Boolean := False) is
       procedure Invalidate (Window : Gdk_Window);
       --  Invalidate Window
 
@@ -601,9 +607,12 @@ package body Src_Editor_View is
       end Invalidate;
 
    begin
-      Invalidate (Get_Window (User, Text_Window_Text));
       Invalidate (Get_Window (User.Area));
-      Invalidate (User.Scroll.Get_Vscrollbar.Get_Window);
+
+      if not Side_Area_Only then
+         Invalidate (Get_Window (User, Text_Window_Text));
+         Invalidate (User.Scroll.Get_Vscrollbar.Get_Window);
+      end if;
    end Invalidate_Window;
 
    ---------------------------
@@ -2702,13 +2711,13 @@ package body Src_Editor_View is
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class) is
       Src_View : constant Source_View := Source_View (View);
-
    begin
       Recompute_Visible_Area (Src_View);
 
-      --  ??? We use to force a refresh of the window, but not sure why this
-      --  would be needed.
-      Invalidate_Window (Src_View);
+      --  Redraw the editor's side area when scrolling in order to display
+      --  correctly the line numbers.
+
+      Invalidate_Window (Src_View, Side_Area_Only => True);
 
       --  Ensure that synchronized editors are also scrolled
 
