@@ -1901,7 +1901,7 @@ package body Bookmark_Views is
    is
       pragma Unreferenced (Self);
       Filename    : constant Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
       File        : Node_Ptr;
       Err         : GNAT.Strings.String_Access;
       Marker      : Location_Marker;
@@ -1971,7 +1971,9 @@ package body Bookmark_Views is
 
       Bookmark_Views_Module.Loaded := True;
 
-      if Is_Regular_File (Filename) then
+      if Filename.Is_Regular_File
+        and then Filename.Is_Readable
+      then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
@@ -1985,6 +1987,9 @@ package body Bookmark_Views is
          end if;
 
          Bookmark_Added_Hook.Run (Kernel, "");
+
+      elsif not Active (Testsuite_Handle) then
+         Report_Preference_File_Error (Kernel, Filename, False);
       end if;
    end Execute;
 
@@ -1994,7 +1999,7 @@ package body Bookmark_Views is
 
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
       Filename    : constant Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
       File        : Node_Ptr;
 
       procedure Save_Same_Level
@@ -2041,13 +2046,24 @@ package body Bookmark_Views is
          end loop;
       end Save_Same_Level;
 
-      Success     : Boolean;
+      Success     : Boolean := True;
    begin
       Trace (Me, "Saving " & Filename.Display_Full_Name);
       File := new Node;
       File.Tag := new String'("Bookmarks");
       Save_Same_Level (File, Bookmark_Iter_First);
-      Print (File, Filename, Success);
+
+      begin
+         Print (File, Filename, Success);
+      exception
+         when E : others =>
+            if not Active (Testsuite_Handle) then
+               --  Skip error for testsuite
+               Trace (Me, E);
+               Success := False;
+            end if;
+      end;
+
       Free (File);
 
       if not Success then

@@ -1844,7 +1844,9 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
-      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
+      if Buffer.Lang /= null
+        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+      then
          Insert_Text_Cb (Buffer, Iter);
       end if;
 
@@ -2242,7 +2244,9 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
-      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
+      if Buffer.Lang /= null
+        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+      then
          Delete_Range_Cb (Buffer, Start_Iter);
       end if;
 
@@ -3150,13 +3154,18 @@ package body Src_Editor_Buffer is
       Iter   : Gtk_Text_Iter) return Boolean
    is
       Lang         : constant Language_Access := Buffer.Lang;
-      Lang_Context : constant Language_Context_Access :=
-                       Get_Language_Context (Lang);
+      Lang_Context : Language_Context_Access;
       C1, C2       : Character;
       Pos          : Gtk_Text_Iter;
       Quoted       : Boolean := False;
       Result       : Boolean;
    begin
+      if Lang = null then
+         return False;
+      end if;
+
+      Lang_Context := Get_Language_Context (Lang);
+
       Copy (Iter, Pos);
       Backward_Char (Pos, Result);
 
@@ -3219,7 +3228,7 @@ package body Src_Editor_Buffer is
       --  is unknown, it is possible that the new project knows which language
       --  this file is.
 
-      if Buffer.Lang = Unknown_Lang
+      if (Buffer.Lang = null or else Buffer.Lang = Unknown_Lang)
         and then Buffer.Filename /= No_File
       then
          Set_Language
@@ -4653,9 +4662,13 @@ package body Src_Editor_Buffer is
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
       return Boolean is
    begin
-      return Buffer.Lang.Is_Word_Char
-        (Wide_Wide_Character'Val
-           (Gunichar'(Get_Char (Iter))));
+      if Buffer.Lang /= null then
+         return Buffer.Lang.Is_Word_Char
+           (Wide_Wide_Character'Val
+              (Gunichar'(Get_Char (Iter))));
+      else
+         return False;
+      end if;
    end Inside_Word;
 
    -------------------------
@@ -6346,7 +6359,9 @@ package body Src_Editor_Buffer is
       Multiple_Lines_EC_Pattern : Pattern_Matcher_Access;
 
       Lang_Context              : constant Language_Context_Access :=
-                                    Get_Language_Context (Buffer.Lang);
+        (if Buffer.Lang /= null
+         then Get_Language_Context (Buffer.Lang)
+         else null);
 
       function Is_Empty (Line : Src_String) return Boolean;
       --  Return True if Line is empty (no contents it has only spaces/HT)
@@ -6888,7 +6903,9 @@ package body Src_Editor_Buffer is
       is
          Matches        : Match_Array (0 .. 0);
          Single_Line_BC : constant GNAT.Strings.String_Access :=
-                            Lang_Context.Syntax.New_Line_Comment_Start;
+           (if Lang_Context /= null
+            then Lang_Context.Syntax.New_Line_Comment_Start
+            else null);
       begin
          Kind := None;
          Last := 0;
@@ -6909,7 +6926,8 @@ package body Src_Editor_Buffer is
 
                --      This line is an example of a non-refilled comment    --
 
-               if Line (Line'Last - Single_Line_BC_Len + 1 .. Line'Last)
+               if Single_Line_BC = null
+                 or else Line (Line'Last - Single_Line_BC_Len + 1 .. Line'Last)
                     /= Single_Line_BC.all
                then
                   Kind := Single_Line;
@@ -6979,7 +6997,9 @@ package body Src_Editor_Buffer is
          --  Local variables
 
          Single_Line_BC : constant GNAT.Strings.String_Access :=
-                            Lang_Context.Syntax.New_Line_Comment_Start;
+           (if Lang_Context /= null
+            then Lang_Context.Syntax.New_Line_Comment_Start
+            else null);
       begin
          --  Handle single-line comments
 
@@ -6997,7 +7017,9 @@ package body Src_Editor_Buffer is
 
          --  Handle multi-line comments
 
-         if Lang_Context.Syntax.Comment_Start /= null then
+         if Lang_Context /= null
+           and then Lang_Context.Syntax.Comment_Start /= null
+         then
             pragma Assert (Lang_Context.Syntax.Comment_End /= null);
 
             Multiple_Lines_BC_Len := Lang_Context.Syntax.Comment_Start'Length;
@@ -7125,9 +7147,13 @@ package body Src_Editor_Buffer is
       Start_Line, End_Line : out Editable_Line_Type)
    is
       Lang_Context : constant Language_Context_Access :=
-        Get_Language_Context (Buffer.Lang);
+        (if Buffer.Lang /= null
+         then Get_Language_Context (Buffer.Lang)
+         else null);
       Single_Line_BC : constant GNAT.Strings.String_Access :=
-        Lang_Context.Syntax.New_Line_Comment_Start;
+        (if Lang_Context /= null
+         then Lang_Context.Syntax.New_Line_Comment_Start
+         else null);
       Non_Empty_Comment_Re : Pattern_Matcher_Access;
 
       Is_Empty_Re : Pattern_Matcher_Access;
@@ -7192,7 +7218,9 @@ package body Src_Editor_Buffer is
 
          Is_Empty_Re := new Pattern_Matcher'(Compile ("^\s*$"));
 
-         if Lang_Context.Syntax.Comment_Start /= null then
+         if Lang_Context /= null
+           and then Lang_Context.Syntax.Comment_Start /= null
+         then
             Comment_Start_End_Re := new Pattern_Matcher'
               (Compile ("(" & Quote (Lang_Context.Syntax.Comment_Start.all)
                & "|" & Quote (Lang_Context.Syntax.Comment_End.all) & ")"));
@@ -8620,10 +8648,13 @@ package body Src_Editor_Buffer is
 
          --  Now re-highlight the text...
 
-         Parse_Entities
-           (Self.Buffer.Lang,
-            Slice (1 .. Length),
-            Highlight_Cb'Unrestricted_Access);
+         if Self.Buffer.Lang /= null then
+            Parse_Entities
+              (Self.Buffer.Lang,
+               Slice (1 .. Length),
+               Highlight_Cb'Unrestricted_Access);
+         end if;
+
          Slice := null;
          g_free (UTF8);
       end Local_Highlight;
@@ -8642,7 +8673,9 @@ package body Src_Editor_Buffer is
          Copy (Source => Start_Iter, Dest => Entity_Start);
       end if;
 
-      if Get_Language_Context (Self.Buffer.Lang).Use_Semicolon then
+      if Self.Buffer.Lang /= null
+        and then Get_Language_Context (Self.Buffer.Lang).Use_Semicolon
+      then
          --  ...and highlight from the previous semicolon, to handle multiple
          --  line constructs such as C comments or Ada aspect clauses. Note:
          --  this is a heuristic, since we could find a semicolon in the middle
@@ -8668,7 +8701,9 @@ package body Src_Editor_Buffer is
 
       Forward_To_Line_End (Entity_End, Result);
 
-      if Get_Language_Context (Self.Buffer.Lang).Use_Semicolon then
+      if Self.Buffer.Lang /= null
+        and then Get_Language_Context (Self.Buffer.Lang).Use_Semicolon
+      then
          --  ...and go to next semicolon if any
          Forward_Search
            (Iter => Entity_End, Str => ";", Flags => 0,
@@ -8898,7 +8933,10 @@ package body Src_Editor_Buffer is
       F, L : Gtk_Text_Iter;
    begin
       --  Highlight the newly inserted text
-      if not Get_Language_Context (Self.Buffer.Lang).Syntax_Highlighting then
+      if Self.Buffer.Lang = null
+        or else not Get_Language_Context
+          (Self.Buffer.Lang).Syntax_Highlighting
+      then
          return;
       end if;
 
@@ -8919,13 +8957,15 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk_Text_Iter) is
    begin
       Self.Use_Highlighting_Hook :=
-        Self.Buffer.Lang.Get_Name = "Ada"
-        and then Use_LAL_In_Highlight.Get_Pref;
+        Self.Buffer.Lang /= null
+          and then Self.Buffer.Lang.Get_Name = "Ada"
+          and then Use_LAL_In_Highlight.Get_Pref;
 
       --  Do not try to highlight an empty buffer
       if not Is_End (Start_Iter) then
-         if not Get_Language_Context
-           (Self.Buffer.Lang).Syntax_Highlighting
+         if Self.Buffer.Lang /= null
+           and then not Get_Language_Context
+             (Self.Buffer.Lang).Syntax_Highlighting
          then
             Self.Kill_Highlighting (Start_Iter, End_Iter);
 

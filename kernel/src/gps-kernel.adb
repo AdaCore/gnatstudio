@@ -715,22 +715,24 @@ package body GPS.Kernel is
    ----------------------------------
 
    procedure Report_Preference_File_Error
-     (Handle   : access Kernel_Handle_Record;
-      Filename : Virtual_File)
+     (Handle    : access Kernel_Handle_Record;
+      Filename  : Virtual_File;
+      Is_Saving : Boolean := True)
    is
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
+      Part : constant String := (if Is_Saving then " save " else " load ");
    begin
       if Is_In_Destruction (Handle) then
          Button := Message_Dialog
-           ((-"Could not save the configuration file ") &
+           ((-"Could not " & Part & " the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Error, Button_OK, Justification => Justify_Left,
             Parent => Handle.Get_Main_Window);
       else
          Handle.Insert
-           ((-"Could not save the configuration file ") &
+           ((-"Could not " & Part & " the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Mode => Error);
