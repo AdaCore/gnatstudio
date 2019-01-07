@@ -290,7 +290,8 @@ package body Scenario_Views is
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
-      View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
+      View : constant Scenario_View :=
+        Scenario_Views.Retrieve_View (Kernel, Visible_Only => True);
    begin
       if View /= null then
          Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);

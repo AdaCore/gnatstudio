@@ -194,7 +194,7 @@ package body Learn.Views is
       use Generic_Learn_Views;
 
       View : constant Generic_Learn_Views.View_Access :=
-               Generic_Learn_Views.Retrieve_View (Kernel);
+        Generic_Learn_Views.Retrieve_View (Kernel, Visible_Only => True);
    begin
       if View /= null
         and then Pref /= null

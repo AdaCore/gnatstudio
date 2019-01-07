@@ -531,6 +531,7 @@ package body GVD.Call_Stack is
       Frame       : Unbounded_String;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
       Path        : Gtk_Tree_Path;
+      Prev        : Boolean;
    begin
       if S /= null
         and then Process.Current_Output /= null
@@ -542,11 +543,12 @@ package body GVD.Call_Stack is
             Frame, Frame_Info);
 
          if Frame_Info /= Location_Not_Found then
+            Prev := S.Block;
             S.Block := True;
             Gtk_New (Path, To_String (Frame));
             Select_Path (Get_Selection (S.Tree), Path);
             Path_Free (Path);
-            S.Block := False;
+            S.Block := Prev;
          end if;
       end if;
    end Execute;
