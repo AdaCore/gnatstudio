@@ -858,7 +858,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                         msg_match.group('importance'))
                     text = msg_match.group('importance') + ": " + text
                 else:
-                    importance = GPS.Message.Importance.UNSPECIFIED
+                    importance = GPS.Message.Importance.HIGH
 
                 # Create the message and its secondaries
                 message = self.split_in_secondary_messages(
