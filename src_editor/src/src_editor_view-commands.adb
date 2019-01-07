@@ -219,12 +219,13 @@ package body Src_Editor_View.Commands is
       else
          for Cursor of Get_Cursors (Buffer) loop
             declare
-               Mark         : constant Gtk_Text_Mark := Get_Mark (Cursor);
+               Cursor_Mark  : constant Gtk_Text_Mark := Get_Mark (Cursor);
+               Sel_Mark     : Gtk_Text_Mark;
                Horiz_Offset : constant Gint := Get_Column_Memory (Cursor);
                Prevent      : Boolean := False;
                Old_Iter     : Gtk_Text_Iter;
             begin
-               Buffer.Get_Iter_At_Mark (Iter, Mark);
+               Buffer.Get_Iter_At_Mark (Iter, Cursor_Mark);
                Old_Iter := Iter;
                Move_Iter (Iter, Command.Kind, Command.Step,
                           Get_Column_Memory (Cursor));
@@ -238,10 +239,12 @@ package body Src_Editor_View.Commands is
 
                if not Prevent then
                   if not Extend_Selection then
-                     Buffer.Place_Cursor (Iter);
-                  else
-                     Buffer.Move_Mark (Mark, Iter);
+                     --  We can't use Place_Cursor because of the multicursor
+                     Sel_Mark := Get_Sel_Mark (Cursor);
+                     Buffer.Move_Mark (Sel_Mark, Iter);
                   end if;
+
+                  Buffer.Move_Mark (Cursor_Mark, Iter);
 
                   if (Command.Kind = Line or Command.Kind = Page)
                     and then Get_Line (Iter) /= 0
