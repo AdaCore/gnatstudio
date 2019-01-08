@@ -60,6 +60,14 @@ package body GPS.Kernel.Preferences is
    --  This trace is used to activate LAL features that are ready
    --  for experimentation by developers.
 
+   Cygwin_Window_Manager : constant Trace_Handle := Create
+     ("GPS.INTERNAL.CYGWIN_WINDOW_MANAGER",
+      Default => Off);
+   --  The default window manager for cygwin x server poorly handles
+   --  the menu tooltip and will close the menu window too soon.
+   --  Thus generating a Storage_Error: this is not a Gtk bug so disable the
+   --  local config menu tooltips in this case.
+
    use type Config.Host_Type;
 
    procedure Get_Command_Handler
@@ -1946,7 +1954,7 @@ package body GPS.Kernel.Preferences is
       C.Pref := Pref;
       Menu.Add (C);
 
-      if Doc /= "" then
+      if Doc /= "" and then not Active (Cygwin_Window_Manager) then
          C.Set_Tooltip_Text (Doc);
       end if;
 
