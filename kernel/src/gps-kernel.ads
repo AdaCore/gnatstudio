@@ -817,7 +817,7 @@ package GPS.Kernel is
    function Get_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
       return not null Messages_Container_Access;
-   --  Returns messages conntainer for the specified instance of the kernel.
+   --  Returns messages container for the specified instance of the kernel.
 
 private
 

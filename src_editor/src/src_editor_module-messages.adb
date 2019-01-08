@@ -103,8 +103,10 @@ package body Src_Editor_Module.Messages is
    begin
       for J in Categories'Range loop
          declare
-            Messages : constant Message_Array :=
+            Messages : Message_Array :=
               Controller.Get_Messages (Categories (J), File);
+            Last     : Natural := 0;
+            pragma Assert (Messages'First = 1);
 
          begin
             --  Lookup B only once
@@ -117,8 +119,21 @@ package body Src_Editor_Module.Messages is
                end if;
             end if;
 
-            if Messages'Length > 0 then
-               Add_File_Information (B, To_String (Categories (J)), Messages);
+            --  Take message flags into account
+
+            for J in Messages'Range loop
+               if Messages (J).Get_Flags /= Empty_Message_Flags then
+                  Last := Last + 1;
+
+                  if Last /= J then
+                     Messages (Last) := Messages (J);
+                  end if;
+               end if;
+            end loop;
+
+            if Last > 0 then
+               Add_File_Information
+                 (B, To_String (Categories (J)), Messages (1 .. Last));
             end if;
          end;
       end loop;
