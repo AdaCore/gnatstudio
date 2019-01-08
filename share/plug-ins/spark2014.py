@@ -561,6 +561,13 @@ class GNATprove_Parser(tool_output.OutputParser):
         GPS.Locations.remove_category(
             messages_category, GPS.Message.Flags.INVISIBLE)
 
+        # Global map that associates messages text to the location of the
+        # check. Messages already contain a location but it cannot be trusted
+        # for launching manual prover. Messages locations records precisely
+        # what is failing in a vc not the location of said vc.
+        global map_msg
+        map_msg = {}
+
         tool_output.OutputParser.__init__(self, child)
 
         gnatprove_plug.output_parser = self
@@ -817,13 +824,6 @@ class GNATprove_Parser(tool_output.OutputParser):
            which will be used later (in on_exit) to associate more info to the
            message
         """
-        # Global map that associates messages text to the location of the
-        # check. Messages already contain a location but it cannot be trusted
-        # for launching manual prover. Messages locations records precisely
-        # what is failing in a vc not the location of said vc.
-        global map_msg
-        map_msg = {}
-
         artifact_dirs = (
             [os.path.join(f, obj_subdir_name)
              for f in GPS.Project.root().object_dirs(recursive=True)])
