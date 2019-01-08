@@ -1748,8 +1748,9 @@ package body Src_Editor_Buffer is
 
       Buffer.Setting_Mark := True;
 
-      --  If the mark being moved corresponds to the cursor, emit the
-      --  corresponding signal.
+      --  If the mark being moved corresponds to the selection_bound (which is
+      --  moved each time the insert cursor or the selection changes), emit
+      --  the corresponding signal.
 
       if Mark = Buffer.Insert_Mark then
 

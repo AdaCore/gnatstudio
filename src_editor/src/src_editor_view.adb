@@ -226,12 +226,6 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "changed" signal
 
-   procedure On_Mark_Set
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View);
-   --  Callback for "mark_set" signal
-
    procedure Buffer_Information_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
@@ -730,31 +724,6 @@ package body Src_Editor_View is
          return False;
    end Idle_Column_Redraw;
 
-   -----------------
-   -- On_Mark_Set --
-   -----------------
-
-   procedure On_Mark_Set
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View)
-   is
-      Mark : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
-   begin
-      if Mark = Buffer.Get_Selection_Bound then
-         --  Test whether we have the focus
-         if not Buffer.Context_Is_Frozen
-           and then Gtkada.MDI.MDI_Child (User.Child) =
-           Get_Focus_Child (Get_MDI (User.Kernel))
-         then
-            --  We have changed the selection: emit "context_changed" here.
-            User.Kernel.Context_Changed
-              (Build_Editor_Context (User, Location_Cursor));
-         end if;
-      end if;
-   end On_Mark_Set;
-
    -----------------------------
    -- Cursor_Position_Changed --
    -----------------------------
@@ -785,26 +754,6 @@ package body Src_Editor_View is
             User.Kernel.Context_Changed
               (Build_Editor_Context (User, Location_Cursor));
          end if;
-      end if;
-
-      --  If we are highlighting the current line, re-expose the entire view
-      --  if the line has changed. Same thing if we are doing block
-      --  highlighting and the block has changed.
-
-      --  ??? Potential optimization here: this procedure is called a lot when
-      --  the user keeps the down arrow key pressed.
-      --  Do not remove: gtk+ will *not* properly force a redraw of the
-      --  relevant areas.
-
-      if (User.Highlight_Current
-          and then User.Current_Line /= Line)
-        or else
-          (User.Highlight_Blocks
-           and then User.Current_Block /=
-             Get_Block (Buffer, Editable_Line_Type (Line), False,
-                        Filter => Categories_For_Block_Highlighting))
-      then
-         Invalidate_Window (User);
       end if;
 
       User.Current_Line := Line;
@@ -1624,12 +1573,6 @@ package body Src_Editor_View is
         (Source_Buffer_Callback.Connect
            (Buffer, Signal_Cursor_Position_Changed,
             Cb        => Cursor_Position_Changed'Access,
-            User_Data => Source_View (View),
-            After     => True),
-
-         Source_Buffer_Callback.Connect
-           (Buffer, Signal_Mark_Set,
-            Cb        => On_Mark_Set'Access,
             User_Data => Source_View (View),
             After     => True),
 

@@ -371,7 +371,7 @@ private
       --  Whether we just entered hyper mode, and the cursor aspect needs
       --  to be changed.
 
-      Source_Buffer_Handlers       : Handlers_Array (1 .. 6);
+      Source_Buffer_Handlers       : Handlers_Array (1 .. 5);
    end record;
 
 end Src_Editor_View;

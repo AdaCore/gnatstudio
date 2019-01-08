@@ -969,7 +969,7 @@ package Src_Editor_Buffer is
    --    procedure Handler (Buffer : Gtk_Object_Record'Class;
    --                       Line   : Gint;
    --                       Column : Gint);
-   --    Emitted when the cursor position changes.
+   --    Emitted when the cursor position or the selection changes.
    --
    --  - "side_column_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
