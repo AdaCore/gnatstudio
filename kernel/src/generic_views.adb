@@ -29,7 +29,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
@@ -52,7 +51,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
-with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 
 with Config;                    use Config;
@@ -363,7 +361,6 @@ package body Generic_Views is
    begin
       if not V.In_Destruction then
          V.Config.Set_Active (False);
-         V.Config_Menu := null;
       end if;
    end On_Menu_Deactivate;
 
@@ -514,8 +511,9 @@ package body Generic_Views is
         (View  : access GObject_Record'Class;
          Event : Gdk_Event_Button) return Boolean
       is
-         V     : constant Abstract_View_Access := Abstract_View_Access (View);
-         Child : MDI_Child;
+         V                   : constant Abstract_View_Access :=
+           Abstract_View_Access (View);
+         Child               : MDI_Child;
          Time_Before_Factory : Time;
       begin
          if Event.Button /= 1 then
@@ -526,24 +524,26 @@ package body Generic_Views is
             Time_Before_Factory := Clock;
          end if;
 
-         if V.Config_Menu /= null then
-            V.Config_Menu.Destroy;
-         end if;
+         if V.Config_Menu = null then
+            Gtk_New (V.Config_Menu);
+            V.Create_Menu (V.Config_Menu);
+            V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
 
-         Gtk_New (V.Config_Menu);
-         V.Create_Menu (V.Config_Menu);
+            V.Unfloat_Menu := Append_Menu (V.Kernel, V.Config_Menu,
+                                           Label => "Unfloat",
+                                           Action => "unfloat view");
+
+            V.Config_Menu.On_Deactivate (On_Menu_Deactivate'Access, V);
+         end if;
 
          Child := Child_From_View (View_Access (V));
          if Child /= null and then Child.Is_Floating then
-            if Has_Children (V.Config_Menu) then
-               V.Config_Menu.Add (Gtk_Separator_Menu_Item_New);
-            end if;
-            Append_Menu (V.Kernel, V.Config_Menu,
-                         Label => "Unfloat",
-                         Action => "unfloat view");
+            V.Unfloat_Menu.Set_No_Show_All (False);
+         else
+            V.Unfloat_Menu.Set_No_Show_All (True);
+            V.Unfloat_Menu.Hide;
          end if;
 
-         V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
          V.Config_Menu.Show_All;
 
          --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
@@ -558,8 +558,6 @@ package body Generic_Views is
                    Button        => 1,
                    Activate_Time => Event.Time);
          end if;
-
-         V.Config_Menu.On_Deactivate (On_Menu_Deactivate'Access, V);
 
          V.Config.Set_Active (True);
          return True;

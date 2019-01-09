@@ -67,13 +67,14 @@
 --
 --  The entry point of this is the body of Update_Menus_And_Buttons.
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with Glib.Object;
 with Glib.Values;
 with Gtk.Handlers;
 with Gtk.Menu;
-with Gtk.Menu_Bar;       use Gtk.Menu_Bar;
+with Gtk.Menu_Bar;         use Gtk.Menu_Bar;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Target_List;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -362,6 +363,12 @@ package GPS.Kernel.Modules.UI is
       Menu      : not null access Gtk.Menu.Gtk_Menu_Record'Class;
       Label     : String;
       Action    : String);
+   function Append_Menu
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Menu      : not null access Gtk.Menu.Gtk_Menu_Record'Class;
+      Label     : String;
+      Action    : String)
+      return Gtk_Menu_Item;
    --  Append a new entry to the menu, that will execute the action.
    --  This is meant for local config menus.
 

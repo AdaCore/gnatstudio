@@ -60,7 +60,6 @@ with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
@@ -3378,6 +3377,27 @@ package body GPS.Kernel.Modules.UI is
       Action    : String)
    is
       Item      : Gtk_Menu_Item;
+      pragma Unreferenced (Item);
+   begin
+      Item := Append_Menu
+        (Kernel => Kernel,
+         Menu   => Menu,
+         Label  => Label,
+         Action => Action);
+   end Append_Menu;
+
+   -----------------
+   -- Append_Menu --
+   -----------------
+
+   function Append_Menu
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Menu      : not null access Gtk_Menu_Record'Class;
+      Label     : String;
+      Action    : String)
+      return Gtk_Menu_Item
+   is
+      Item      : Gtk_Menu_Item;
    begin
       Item := Gtk_New_Action_Item
         (Kernel      => Kernel,
@@ -3386,6 +3406,7 @@ package body GPS.Kernel.Modules.UI is
          Action      => Action,
          Optional    => False);
       Menu.Append (Item);
+      return Item;
    end Append_Menu;
 
    -------------------------------
