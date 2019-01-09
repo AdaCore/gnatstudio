@@ -71,13 +71,6 @@
    </documentation_file>
 
    <documentation_file>
-     <name>gprbuild_ug.html</name>
-     <descr>gprbuild and GNAT Project Files</descr>
-     <category>GNAT</category>
-     <menu>/Help/GNAT/Gprbuild and GNAT Project Files</menu>
-   </documentation_file>
-
-   <documentation_file>
       <name>gnathie_ug.html</name>
       <descr>GNAT Pro User's Guide Supplement for High-Integrity Edition Platforms</descr>
       <category>GNAT</category>
