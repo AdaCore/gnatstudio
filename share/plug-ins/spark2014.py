@@ -43,6 +43,7 @@ gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 OUTPUT_PARSERS = """
     job_recorder
     gnatprove_parser
+    console_writer
     end_of_build"""
 
 with open(gnatprove_menus_file, "r") as input_file:
