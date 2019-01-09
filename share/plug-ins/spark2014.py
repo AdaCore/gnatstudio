@@ -577,7 +577,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
         self.msg_id = {}
-        self.message_re = re.compile(r"(?P<filename>[^:]+)"
+        self.message_re = re.compile(r"(?P<filename>^[^: ]+)"
                                      r":"
                                      r"(?P<line>[0-9]+)"
                                      r":"
