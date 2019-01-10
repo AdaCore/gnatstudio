@@ -94,7 +94,7 @@ private
         CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor;
 
       Version             : Supported_Format_Version;
-      Show_Status         : Review_Status_Kinds_Flags;
+      Show_Status         : Review_Status_Kinds_Flags := (others => False);
       Show_Ranking        : Message_Ranking_Level_Flags;
       Double_Click        : Boolean := False;
       --  Used to handle double click by setting to True on mouse double-press

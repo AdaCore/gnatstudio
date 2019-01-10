@@ -89,10 +89,6 @@ package body CodePeer.Messages_Reports is
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
-   procedure On_Show_All_Subprograms_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-
    procedure On_Show_Informational_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report);
@@ -708,16 +704,6 @@ package body CodePeer.Messages_Reports is
       Filter_Box.Set_Size_Request (Width => 200);
       Message_Box.Pack_Start (Filter_Box);
 
-      Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
---  ???    Filter_Box.Pack_Start (Check, False);
---  This check button is not displayed by default, see H519-028 discussion
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_All_Subprograms_Toggled'Access),
-         Messages_Report (Self));
-
       --  Messages history
 
       CodePeer.Lifeage_Criteria_Editors.Gtk_New
@@ -971,18 +957,6 @@ package body CodePeer.Messages_Reports is
 
       Self.Analysis_Model.Clear;
    end On_Destroy;
-
-   -------------------------------------
-   -- On_Show_All_Subprograms_Toggled --
-   -------------------------------------
-
-   procedure On_Show_All_Subprograms_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Analysis_Model.Set_Show_All_Subprograms (Object.Get_Active);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_All_Subprograms_Toggled;
 
    -----------------------------------
    -- On_Show_High_Messages_Toggled --
