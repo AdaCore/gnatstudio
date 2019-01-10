@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2018, AdaCore                        --
+--                       Copyright (C) 2018-2019, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,7 @@ with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded.Hash;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with Projects.Views;
 
 package GNAThub.Metrics is
 
@@ -43,13 +44,13 @@ package GNAThub.Metrics is
         "="             => Metrics_Ordered_Sets."=");
 
    procedure Initialize
-     (Self     : not null access Metric_Record'Class;
-      Severity : Severity_Access;
-      Rule     : not null Rule_Access;
-      Value    : Float;
-      Project  : GNATCOLL.Projects.Project_Type;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Entity   : Entity_Data);
+     (Self         : not null access Metric_Record'Class;
+      Severity     : Severity_Access;
+      Rule         : not null Rule_Access;
+      Value        : Float;
+      Project_View : Projects.Views.Project_View_Reference;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Entity       : Entity_Data);
    --  Create a new metric, associating it with a severity, rule, a value and a
    --  location.
 
@@ -107,12 +108,12 @@ package GNAThub.Metrics is
 private
 
    type Metric_Record is tagged record
-      Severity : Severity_Access;
-      Rule     : Rule_Access;
-      Value    : Float;
-      Project  : GNATCOLL.Projects.Project_Type;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Entity   : Entity_Data;
+      Severity     : Severity_Access;
+      Rule         : Rule_Access;
+      Value        : Float;
+      Project_View : Projects.Views.Project_View_Reference;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Entity       : Entity_Data;
    end record;
 
 end GNAThub.Metrics;

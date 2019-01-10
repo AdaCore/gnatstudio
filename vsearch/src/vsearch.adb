@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -225,7 +225,8 @@ package body Vsearch is
       Position               => Position_Float,
       Group                  => Group_Consoles,
       Commands_Category      => "",  --  no automatic command
-      MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
+      MDI_Flags              => All_Buttons
+      or Float_As_Transient or Always_Destroy_Float,
       Areas                  => Sides_Only,
       Default_Width          => Default_Width,
       Default_Height         => Default_Height,
@@ -2746,8 +2747,7 @@ package body Vsearch is
          Vsearch_Module_Id.Projects :=
            new Project_Type_Array'(1 .. 1 => Project_Information (Context));
       elsif Has_File_Information (Context) then
-         Set := Get_Project_Tree (Kernel).Info_Set
-           (File_Information (Context));
+         Set := Kernel.Get_Project_Tree.Info_Set (File_Information (Context));
 
          if not Set.Is_Empty then
             Vsearch_Module_Id.Projects := new Project_Type_Array

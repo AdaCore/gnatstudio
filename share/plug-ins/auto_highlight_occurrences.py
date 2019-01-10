@@ -180,12 +180,13 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 visible_column = 0
 
                 while index < s_len:
-                    if s[index].isalpha():
+                    if s[index].isalpha() or s[index] == '_':
                         end_index = index + 1
 
                         while end_index < s_len and (
                                 s[end_index].isalnum() or s[end_index] == '_'):
                             end_index += 1
+
                         if s[index:end_index] == self.word:
                             self.highlighted += 1
                             self.style.apply(

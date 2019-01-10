@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2018, AdaCore                     --
+--                     Copyright (C) 2003-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1025,19 +1025,18 @@ package body Refactoring.Services is
    ------------------
 
    function Create_Range
-     (Context     : not null access Factory_Context_Record'Class;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      From_Line   : Integer;
-      To_Line     : Integer) return Range_Of_Code
-   is
+     (Context      : not null access Factory_Context_Record'Class;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project_View : Projects.Views.Project_View_Reference;
+      From_Line    : Integer;
+      To_Line      : Integer) return Range_Of_Code is
    begin
       return Range_Of_Code'
-        (Context   => Factory_Context (Context),
-         File      => File,
-         Project   => Project,
-         From_Line => From_Line,
-         To_Line   => To_Line);
+        (Context      => Factory_Context (Context),
+         File         => File,
+         Project_View => Project_View,
+         From_Line    => From_Line,
+         To_Line      => To_Line);
    end Create_Range;
 
    -------------------------------
@@ -1080,7 +1079,8 @@ package body Refactoring.Services is
       Success := True;
 
       --  This code might require loading a file, so we only freeze afterward
-      Iter := Db.Entities_In_File (Self.File, Self.Project);
+      Iter :=
+        Db.Entities_In_File (Self.File, Self.Project_View.Get_Project_Type);
 
       Struct := Get_Or_Create (Self.Context.Db.Constructs, File => Self.File);
       Update_Contents (Struct);

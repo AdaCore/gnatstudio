@@ -35,7 +35,7 @@ help:
 
 generate:
 	mkdir -p generated
-	../../gps/obj/gps --load=python:generate.py --traceon=MODULE.VCS2
+	../../gps/obj/gps --load=python:generate.py
 
 clean:
 	-rm -rf $(BUILDDIR)/*

@@ -532,7 +532,7 @@ You can disable all the project editing related menus in GPS by adding a
 special startup switch, typically by creating a short script that spawns
 GPS with these switches.  Use the following command line::
 
-   gps --traceoff=MODULE.PROJECT_VIEWER --traceoff=MODULE.PROJECT_PROPERTIES
+   gps --traceoff=GPS.INTERNAL.MODULE.PROJECT_VIEWER --traceoff=GPS.INTERNAL.MODULE.PROJECT_PROPERTIES
 
 
 .. highlight:: python

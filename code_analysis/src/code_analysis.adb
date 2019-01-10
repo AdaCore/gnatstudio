@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2018, AdaCore                     --
+--                     Copyright (C) 2006-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -36,7 +36,8 @@ package body Code_Analysis is
         (V1.Display_Base_Name, V2.Display_Base_Name);
    end Less;
 
-   function Less (V1, V2 : Project_Type) return Boolean is
+   function Less
+     (V1, V2 : Projects.Views.Project_View_Reference) return Boolean is
    begin
       return Ada.Strings.Less_Case_Insensitive (V1.Name, V2.Name);
    end Less;
@@ -59,7 +60,7 @@ package body Code_Analysis is
 
    function Equ  (V1, V2 : Project_Access) return Boolean is
    begin
-      return Ada.Strings.Equal_Case_Insensitive (V1.Name.Name, V2.Name.Name);
+      return Ada.Strings.Equal_Case_Insensitive (V1.View.Name, V2.View.Name);
    end Equ;
 
    -------------------------
@@ -201,11 +202,11 @@ package body Code_Analysis is
       function Lt (Op1, Op2 : Natural) return Boolean
       is begin
          if Op1 = 0 then
-            return Tmp.Name.Name < Nodes (Op2).Name.Name;
+            return Tmp.View.Name < Nodes (Op2).View.Name;
          elsif Op2 = 0 then
-            return Nodes (Op1).Name.Name < Tmp.Name.Name;
+            return Nodes (Op1).View.Name < Tmp.View.Name;
          else
-            return Nodes (Op1).Name.Name < Nodes (Op2).Name.Name;
+            return Nodes (Op1).View.Name < Nodes (Op2).View.Name;
          end if;
       end Lt;
 
@@ -275,17 +276,21 @@ package body Code_Analysis is
 
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;
-      Project_Name : Project_Type) return Project_Access
+      Project_View : Standard.Projects.Views.Project_View_Reference)
+      return Project_Access
    is
       Project_Node : Project_Access;
    begin
-      if Projects.Contains (Project_Name) then
-         return Projects.Element (Project_Name);
+      if Projects.Contains (Project_View) then
+         return Projects.Element (Project_View);
       end if;
 
-      Project_Node := new Project;
-      Project_Node.Name := Project_Name;
-      Projects.Insert (Project_Name, Project_Node);
+      Project_Node :=
+        new Project'(Analysis_Data => <>,
+                     View          => Project_View,
+                     Files         => <>);
+      Projects.Insert (Project_View, Project_Node);
+
       return Project_Node;
    end Get_Or_Create;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2018, AdaCore                     --
+--                     Copyright (C) 2003-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -186,12 +186,14 @@ package body Task_Manager is
       end if;
 
       Manager.Active_Handler_Id := No_Source_Id;
+
       return False;
 
    exception
       when E : others =>
          Trace (Me, E);
          Manager.Active_Handler_Id := No_Source_Id;
+
          return False;
    end Active_Incremental;
 
@@ -393,7 +395,10 @@ package body Task_Manager is
 
    procedure Run
      (Manager : Task_Manager_Access;
-      Active  : Boolean) is
+      Active  : Boolean)
+   is
+      use type Interfaces.Unsigned_64;
+
    begin
       if Manager.Passive_Handler_Id = No_Source_Id then
          --  ??? we should fix the task_manager so that it does not run
@@ -438,8 +443,28 @@ package body Task_Manager is
             --  If Active_Incremental returned True, it means "keep going": run
             --  the active idle loop to continue processing.
 
-            Manager.Active_Handler_Id := Task_Manager_Idle.Idle_Add
-              (Active_Incremental'Access, Manager);
+            --  Note: use of idle cycle here raise problem with
+            --  pygps.process_all_events - it slow down testsuite execution,
+            --  because idle Glib's source is always ready to be processed
+            --  and process_all_events returns only when all tasks has been
+            --  done. Thus, idle cycles intermixed with timeouts to unblock
+            --  execution of tests.
+
+            Manager.Active_Run_Count := Manager.Active_Run_Count + 1;
+
+            if Manager.Active_Run_Count mod 10 = 0 then
+               Manager.Active_Handler_Id := Task_Manager_Idle.Timeout_Add
+                 (Interval => 1,
+                  Func     => Active_Incremental'Access,
+                  Data     => Manager,
+                  Priority => Glib.Main.Priority_Default_Idle);
+
+            else
+               Manager.Active_Handler_Id := Task_Manager_Idle.Idle_Add
+                 (Func     => Active_Incremental'Access,
+                  Data     => Manager,
+                  Priority => Glib.Main.Priority_Default_Idle);
+            end if;
          end if;
 
          Manager.Prevent_Active_Reentry := False;

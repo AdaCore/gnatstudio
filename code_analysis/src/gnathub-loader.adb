@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2018, AdaCore                        --
+--                       Copyright (C) 2018-2019, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -87,9 +87,9 @@ package body GNAThub.Loader is
 
             --  Remove the message and decrement its counters
 
-            Message.Remove;
             Message.Decrement_Current_Counters;
             Message.Decrement_Total_Counters;
+            Message.Remove;
          end if;
 
          Self.Messages.Delete_First;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2018, AdaCore                     --
+--                     Copyright (C) 2008-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2414,6 +2414,7 @@ package body Src_Editor_Module.Editors is
       From_Column, To_Column : Visible_Column_Type := -1)
    is
       The_Style : Style_Access;
+      Buffer    : Source_Buffer renames This.Contents.Buffer;
    begin
       The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
 
@@ -2421,17 +2422,16 @@ package body Src_Editor_Module.Editors is
       --  line. It should probably be enhanced rather than do it in this
       --  procedure
 
-      if This.Contents.Buffer /= null then
+      if Buffer /= null then
          if From_Column = To_Column then
-            Add_Line_Highlighting
-              (This.Contents.Buffer,
-               Editable_Line_Type (Line),
+            Buffer.Get_Highlighter.Add_Line_Highlighting
+              (Editable_Line_Type (Line),
                The_Style,
                Highlight_In => (others => True));
 
          else
-            Highlight_Range
-              (This.Contents.Buffer, The_Style,
+            Buffer.Get_Highlighter.Highlight_Range
+              (The_Style,
                Editable_Line_Type (Line),
                From_Column,
                To_Column);
@@ -2450,6 +2450,7 @@ package body Src_Editor_Module.Editors is
       To_Line   : Editable_Line_Type)
    is
       The_Style : Style_Access;
+      Buffer    : Source_Buffer renames This.Contents.Buffer;
    begin
       if To_Line < From_Line then
          return;
@@ -2457,11 +2458,10 @@ package body Src_Editor_Module.Editors is
 
       The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
 
-      if This.Contents.Buffer /= null then
+      if Buffer /= null then
          for Line in From_Line .. To_Line loop
-            Add_Line_Highlighting
-              (This.Contents.Buffer,
-               Editable_Line_Type (Line),
+            Buffer.Get_Highlighter.Add_Line_Highlighting
+              (Editable_Line_Type (Line),
                The_Style,
                Highlight_In => (others => True));
          end loop;
@@ -2479,16 +2479,17 @@ package body Src_Editor_Module.Editors is
       From_Column, To_Column : Visible_Column_Type := -1)
    is
       The_Style : Style_Access;
+      Buffer    : Source_Buffer renames This.Contents.Buffer;
    begin
       The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
 
-      if This.Contents.Buffer /= null then
+      if Buffer /= null then
          if From_Column = To_Column then
-            Remove_Line_Highlighting
-              (This.Contents.Buffer, Editable_Line_Type (Line), The_Style);
+            Buffer.Get_Highlighter.Remove_Line_Highlighting
+              (Editable_Line_Type (Line), The_Style);
          else
-            Highlight_Range
-              (This.Contents.Buffer, The_Style,
+            Buffer.Get_Highlighter.Highlight_Range
+              (The_Style,
                Editable_Line_Type (Line),
                From_Column,
                To_Column,
@@ -2507,11 +2508,12 @@ package body Src_Editor_Module.Editors is
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type)
    is
-      S : Style_Access;
+      S      : Style_Access;
+      Buffer : Source_Buffer renames This.Contents.Buffer;
    begin
-      if This.Contents.Buffer /= null then
+      if Buffer /= null then
          S := Get_Style_Manager (This.Contents.Kernel).Get (Style);
-         Remove_Highlighting (This.Contents.Buffer, S, From_Line, To_Line);
+         Buffer.Get_Highlighter.Remove_Highlighting (S, From_Line, To_Line);
       end if;
    end Remove_Style_On_Lines;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2018, AdaCore                     --
+--                     Copyright (C) 2007-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,7 +18,7 @@
 with GNAT.Strings;            use GNAT.Strings;
 
 with Code_Coverage;           use Code_Coverage;
-with Projects;                use Projects;
+with Projects.Views;
 with UTF8_Utils;              use UTF8_Utils;
 
 package body Code_Analysis_XML is
@@ -74,9 +74,9 @@ package body Code_Analysis_XML is
    --------------------
 
    procedure Parse_Full_XML
-     (Registry : Project_Registry_Access;
-      Tree     : Code_Analysis_Tree;
-      Child    : in out Node_Ptr)
+     (Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
+      Tree   : Code_Analysis_Tree;
+      Child  : in out Node_Ptr)
    is
       Prj_Node  : Project_Access;
 
@@ -85,9 +85,10 @@ package body Code_Analysis_XML is
          if Child.Tag.all = "Project" then
             Prj_Node := Get_Or_Create
               (Tree,
-               Project_From_Name
-                 (Projects.Tree (Registry.all).all,
-                  Get_Attribute (Child, "name")));
+               Projects.Views.Create_Project_View_Reference
+                 (Kernel,
+                  Kernel.Get_Project_Tree.Project_From_Name
+                    (Get_Attribute (Child, "name"))));
             Parse_Project (Prj_Node, Child);
          end if;
 
@@ -111,7 +112,7 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("Project");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name", Name (Prj_Node.Name));
+      Set_Attribute (Loc, "name", Prj_Node.View.Name);
       XML_Dump_Coverage (Prj_Node.Analysis_Data.Coverage_Data, Loc);
 
       for J in Sort_Arr'Range loop

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2018, AdaCore                        --
+--                       Copyright (C) 2018-2019, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -30,6 +30,7 @@ with GPS.Kernel.Project;              use GPS.Kernel.Project;
 with GNAThub.Metrics;                 use GNAThub.Metrics;
 with Database.Orm;
 with Language.Abstract_Language_Tree;
+with Projects.Views;
 
 package body GNAThub.Loader.Databases is
 
@@ -238,8 +239,8 @@ package body GNAThub.Loader.Databases is
          case Kind is
             when From_Project =>
                Project :=
-                 GPS.Kernel.Project.Get_Project_Tree
-                   (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
+                 Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
+                   (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                File := Resource_File;
@@ -295,8 +296,8 @@ package body GNAThub.Loader.Databases is
          case Kind is
             when From_Project =>
                Project :=
-                 GPS.Kernel.Project.Get_Project_Tree
-                   (Self.Module.Get_Kernel).Project_From_Name (Resource_Name);
+                 Self.Module.Get_Kernel.Get_Project_Tree.Project_From_Name
+                   (Resource_Name);
                File := GNATCOLL.Projects.Project_Path (Project);
             when others =>
                Project :=
@@ -317,14 +318,16 @@ package body GNAThub.Loader.Databases is
          end if;
 
          Metric.Initialize
-           (Severity => Severity,
-            Rule     => Rule,
-            Value    =>
+           (Severity     => Severity,
+            Rule         => Rule,
+            Value        =>
               Float'Value
                 (Database.Orm.Data (M)),
-            Project  => Project,
-            File     => File,
-            Entity   => Entity_D);
+            Project_View =>
+              Projects.Views.Create_Project_View_Reference
+                (Self.Module.Get_Kernel, Project),
+            File         => File,
+            Entity       => Entity_D);
       end Load_Metric;
 
    begin

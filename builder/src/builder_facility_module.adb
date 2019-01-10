@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2018, AdaCore                     --
+--                     Copyright (C) 2008-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -448,12 +448,13 @@ package body Builder_Facility_Module is
                   if Mains.List (J).Length /= 0 then
                      declare
                         Display : constant String :=
-                          Mains.List (J).Tuple (1).Str;
+                                    Mains.List (J).Tuple (1).Str;
                         Full    : constant String :=
-                          Mains.List (J).Tuple (2).Str;
+                                    Mains.List (J).Tuple (2).Str;
                         Prj     : constant Project_Type :=
-                          Get_Project_Tree (Kernel).Project_From_Name
-                          (Mains.List (J).Tuple (3).Str);
+                                    Kernel.Get_Project_Tree.Project_From_Name
+                                      (Mains.List (J).Tuple (3).Str);
+
                      begin
                         if not Has_Project_Information (Context)
                           or else Project_Information (Context) = Prj

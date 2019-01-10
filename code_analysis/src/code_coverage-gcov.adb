@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2018, AdaCore                     --
+--                     Copyright (C) 2008-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -40,10 +40,10 @@ package body Code_Coverage.Gcov is
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####): *(\d+):(.*$)", Multiple_Lines);
+        ("^ +(\d+|#####|=====): *(\d+):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
+        ("^ +(\d+|#####|=====|-): *(\d+):", Multiple_Lines);
       Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
       Lines_Count       : Natural := 0;
@@ -124,7 +124,7 @@ package body Code_Coverage.Gcov is
            := No_Code;
 
          case File_Contents (Line_Matches (1).First) is
-            when '#' =>
+            when '#' | '=' =>
                Gcov_Line_Coverage
                  (File_Node.Lines
                     (Line_Num).Analysis_Data.Coverage_Data.all).Status

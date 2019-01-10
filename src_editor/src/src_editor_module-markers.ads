@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2018, AdaCore                     --
+--                     Copyright (C) 2005-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -26,6 +26,7 @@ with GPS.Scripts;          use GPS.Scripts;
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
+private with Projects.Views;
 
 package Src_Editor_Module.Markers is
 
@@ -116,16 +117,16 @@ private
      is ("EditorMark");
 
    type File_Marker_Data is new Abstract_File_Marker_Data with record
-      File     : GNATCOLL.VFS.Virtual_File;
-      Project  : GNATCOLL.Projects.Project_Type;
-      Line     : Editable_Line_Type;
-      Column   : Visible_Column_Type;
-      Length   : Natural := 1;
-      Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-      Buffer   : Gtk.Text_Buffer.Gtk_Text_Buffer;
-      Kernel   : Kernel_Handle;
-      Cid      : Gtk.Handlers.Handler_Id;
-      Instances : File_Marker_Proxy;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project_View : Projects.Views.Project_View_Reference;
+      Line         : Editable_Line_Type;
+      Column       : Visible_Column_Type;
+      Length       : Natural := 1;
+      Mark         : Gtk.Text_Mark.Gtk_Text_Mark;
+      Buffer       : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      Kernel       : Kernel_Handle;
+      Cid          : Gtk.Handlers.Handler_Id;
+      Instances    : File_Marker_Proxy;
    end record;
    overriding procedure Destroy (Marker : in out File_Marker_Data);
    overriding function Go_To

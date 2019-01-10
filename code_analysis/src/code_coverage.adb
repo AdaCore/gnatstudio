@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2018, AdaCore                     --
+--                     Copyright (C) 2006-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -549,7 +549,7 @@ package body Code_Coverage is
       end loop;
 
       if Prj_Cur /= No_Element then
-         return Prj_Node.Name;
+         return Prj_Node.View.Get_Project_Type;
       else
          return No_Project;
       end if;

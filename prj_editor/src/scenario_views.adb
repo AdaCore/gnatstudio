@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                   GPS                                    --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -290,7 +290,8 @@ package body Scenario_Views is
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
-      View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
+      View : constant Scenario_View :=
+        Scenario_Views.Retrieve_View (Kernel, Visible_Only => True);
    begin
       if View /= null then
          Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);

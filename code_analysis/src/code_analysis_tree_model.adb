@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2018, AdaCore                     --
+--                     Copyright (C) 2006-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -255,7 +255,7 @@ package body Code_Analysis_Tree_Model is
       Set_And_Clear
         (Model, Iter, (Icon_Name_Col, Name_Col, Node_Col),
          (1 => As_String  (Prj_Pixbuf_Cst),
-          2 => As_String  (Prj_Node.Name.Name),
+          2 => As_String  (Prj_Node.View.Name),
           3 => As_Pointer (Prj_Node.all'Address)));
 
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);

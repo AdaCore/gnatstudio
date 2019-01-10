@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -226,12 +226,6 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "changed" signal
 
-   procedure On_Mark_Set
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View);
-   --  Callback for "mark_set" signal
-
    procedure Buffer_Information_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
@@ -250,8 +244,12 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "side_columns_configuration_changed" signal
 
-   procedure Invalidate_Window (User : access Source_View_Record'Class);
-   --  Redraw the buffer window
+   procedure Invalidate_Window
+     (User           : access Source_View_Record'Class;
+      Side_Area_Only : Boolean := False);
+   --  Redraw the editor's window.
+   --  If Side_Area_Only is True, this function will only redraw the editor's
+   --  side area (i.e: where line numbers are displayed).
 
    procedure Line_Highlight_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -587,7 +585,9 @@ package body Src_Editor_View is
    -- Invalidate_Window --
    -----------------------
 
-   procedure Invalidate_Window (User : access Source_View_Record'Class) is
+   procedure Invalidate_Window
+     (User           : access Source_View_Record'Class;
+      Side_Area_Only : Boolean := False) is
       procedure Invalidate (Window : Gdk_Window);
       --  Invalidate Window
 
@@ -601,9 +601,12 @@ package body Src_Editor_View is
       end Invalidate;
 
    begin
-      Invalidate (Get_Window (User, Text_Window_Text));
       Invalidate (Get_Window (User.Area));
-      Invalidate (User.Scroll.Get_Vscrollbar.Get_Window);
+
+      if not Side_Area_Only then
+         Invalidate (Get_Window (User, Text_Window_Text));
+         Invalidate (User.Scroll.Get_Vscrollbar.Get_Window);
+      end if;
    end Invalidate_Window;
 
    ---------------------------
@@ -721,31 +724,6 @@ package body Src_Editor_View is
          return False;
    end Idle_Column_Redraw;
 
-   -----------------
-   -- On_Mark_Set --
-   -----------------
-
-   procedure On_Mark_Set
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View)
-   is
-      Mark : constant Gtk_Text_Mark :=
-        Get_Text_Mark (Glib.Values.Nth (Params, 2));
-   begin
-      if Mark = Buffer.Get_Selection_Bound then
-         --  Test whether we have the focus
-         if not Buffer.Context_Is_Frozen
-           and then Gtkada.MDI.MDI_Child (User.Child) =
-           Get_Focus_Child (Get_MDI (User.Kernel))
-         then
-            --  We have changed the selection: emit "context_changed" here.
-            User.Kernel.Context_Changed
-              (Build_Editor_Context (User, Location_Cursor));
-         end if;
-      end if;
-   end On_Mark_Set;
-
    -----------------------------
    -- Cursor_Position_Changed --
    -----------------------------
@@ -776,26 +754,6 @@ package body Src_Editor_View is
             User.Kernel.Context_Changed
               (Build_Editor_Context (User, Location_Cursor));
          end if;
-      end if;
-
-      --  If we are highlighting the current line, re-expose the entire view
-      --  if the line has changed. Same thing if we are doing block
-      --  highlighting and the block has changed.
-
-      --  ??? Potential optimization here: this procedure is called a lot when
-      --  the user keeps the down arrow key pressed.
-      --  Do not remove: gtk+ will *not* properly force a redraw of the
-      --  relevant areas.
-
-      if (User.Highlight_Current
-          and then User.Current_Line /= Line)
-        or else
-          (User.Highlight_Blocks
-           and then User.Current_Block /=
-             Get_Block (Buffer, Editable_Line_Type (Line), False,
-                        Filter => Categories_For_Block_Highlighting))
-      then
-         Invalidate_Window (User);
       end if;
 
       User.Current_Line := Line;
@@ -1051,8 +1009,8 @@ package body Src_Editor_View is
          Color            : Gdk_RGBA;
       begin
          for Line in Top_Line .. Bottom_Line loop
-            Color := Get_Highlight_Color
-              (Buffer, Line, Context => Highlight_Editor);
+            Color := Buffer.Get_Highlighter.Get_Highlight_Color
+              (Line, Context => Highlight_Editor);
 
             if Color /= Null_RGBA then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
@@ -1615,12 +1573,6 @@ package body Src_Editor_View is
         (Source_Buffer_Callback.Connect
            (Buffer, Signal_Cursor_Position_Changed,
             Cb        => Cursor_Position_Changed'Access,
-            User_Data => Source_View (View),
-            After     => True),
-
-         Source_Buffer_Callback.Connect
-           (Buffer, Signal_Mark_Set,
-            Cb        => On_Mark_Set'Access,
             User_Data => Source_View (View),
             After     => True),
 
@@ -2647,8 +2599,8 @@ package body Src_Editor_View is
       Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
 
       for J in 1 .. Total_Lines loop
-         Color := Get_Highlight_Color
-           (Src_Buffer, Buffer_Line_Type (J),
+         Color := Src_Buffer.Get_Highlighter.Get_Highlight_Color
+           (Buffer_Line_Type (J),
             Context => Highlight_Speedbar);
 
          if Color /= Null_RGBA then
@@ -2705,13 +2657,13 @@ package body Src_Editor_View is
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class) is
       Src_View : constant Source_View := Source_View (View);
-
    begin
       Recompute_Visible_Area (Src_View);
 
-      --  ??? We use to force a refresh of the window, but not sure why this
-      --  would be needed.
-      Invalidate_Window (Src_View);
+      --  Redraw the editor's side area when scrolling in order to display
+      --  correctly the line numbers.
+
+      Invalidate_Window (Src_View, Side_Area_Only => True);
 
       --  Ensure that synchronized editors are also scrolled
 

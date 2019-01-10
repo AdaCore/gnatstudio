@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2011-2018, AdaCore                     --
+--                     Copyright (C) 2011-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -67,7 +67,7 @@ package body CodePeer.Reports is
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
             (Tree,
-             GPS.Kernel.Project.Get_Project
+             GPS.Kernel.Project.Get_Root_Project_View
                (Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin

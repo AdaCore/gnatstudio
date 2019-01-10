@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2016-2018, AdaCore                     --
+--                     Copyright (C) 2016-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -63,7 +63,6 @@ with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Search;                  use GPS.Search;
 with GPS_Unbounded_String_Vectors;
@@ -856,8 +855,9 @@ package body VCS2.History is
             end if;
 
             Tree.User_Filter.For_File :=
-              Get_Project_Tree (Self.Kernel).Create
-                 (+Text (Text'First + 5 .. Pos));
+              Self.Kernel.Get_Project_Tree.Create
+                (+Text (Text'First + 5 .. Pos));
+
             if Tree.User_Filter.For_File = No_File then
                --  Create a dummy file
                Tree.User_Filter.For_File :=

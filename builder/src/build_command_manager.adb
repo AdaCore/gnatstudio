@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2018, AdaCore                     --
+--                     Copyright (C) 2008-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -346,18 +346,19 @@ package body Build_Command_Manager is
 
       Launch_Target
         (Target_Name => To_String (Command.Target_Name),
-         Mode_Name   => "",
-         Force_File  => No_File,
-         Extra_Args  => null,
-         Quiet       => Command.Quiet,
-         Dialog      => Command.Dialog,
-         Via_Menu    => Context.Via_Menu,
-         Synchronous => False,
-         Background  => False,
-         Main        => Create (+Mains.List (Command.Main).Tuple (2).Str),
-         Main_Project => Get_Project_Tree (Kernel).Project_From_Name
-           (Mains.List (Command.Main).Tuple (3).Str),
-         Builder     => Command.Builder);
+         Mode_Name    => "",
+         Force_File   => No_File,
+         Extra_Args   => null,
+         Quiet        => Command.Quiet,
+         Dialog       => Command.Dialog,
+         Via_Menu     => Context.Via_Menu,
+         Synchronous  => False,
+         Background   => False,
+         Main         => Create (+Mains.List (Command.Main).Tuple (2).Str),
+         Main_Project =>
+           Kernel.Get_Project_Tree.Project_From_Name
+             (Mains.List (Command.Main).Tuple (3).Str),
+         Builder      => Command.Builder);
 
       Free (Mains);
       return Success;

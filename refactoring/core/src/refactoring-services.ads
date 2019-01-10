@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2018, AdaCore                     --
+--                     Copyright (C) 2003-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -31,6 +31,7 @@ with GNATCOLL.Xref;
 with Language;
 with Language.Tree;
 with Language.Tree.Database;
+with Projects.Views;
 with Xref;                  use Xref;
 
 package Refactoring.Services is
@@ -215,11 +216,11 @@ package Refactoring.Services is
    Empty_Range_Of_Code : constant Range_Of_Code;
 
    function Create_Range
-     (Context     : not null access Factory_Context_Record'Class;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      From_Line   : Integer;
-      To_Line     : Integer) return Range_Of_Code;
+     (Context      : not null access Factory_Context_Record'Class;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project_View : Projects.Views.Project_View_Reference;
+      From_Line    : Integer;
+      To_Line      : Integer) return Range_Of_Code;
    --  Create a range of code (ie the part of the code delimited by two lines).
 
    function File      (Self : Range_Of_Code) return GNATCOLL.VFS.Virtual_File;
@@ -366,12 +367,17 @@ private
       others => <>);
 
    type Range_Of_Code is new With_Factory with record
-      File        : GNATCOLL.VFS.Virtual_File;
-      Project     : GNATCOLL.Projects.Project_Type;
-      From_Line   : Integer;
-      To_Line     : Integer;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project_View : Projects.Views.Project_View_Reference;
+      From_Line    : Integer;
+      To_Line      : Integer;
    end record;
 
    Empty_Range_Of_Code : constant Range_Of_Code :=
-     (null, GNATCOLL.VFS.No_File, GNATCOLL.Projects.No_Project, -1, -1);
+                           (With_Factory with
+                              File         => <>,
+                              Project_View => <>,
+                              From_Line    => -1,
+                              To_Line      => -1);
+
 end Refactoring.Services;

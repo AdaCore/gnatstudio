@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -817,7 +817,7 @@ package GPS.Kernel is
    function Get_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
       return not null Messages_Container_Access;
-   --  Returns messages conntainer for the specified instance of the kernel.
+   --  Returns messages container for the specified instance of the kernel.
 
 private
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -795,17 +795,30 @@ package body GPS.Kernel.Project is
       return Handle.Registry.Tree.Root_Project;
    end Get_Project;
 
-   ----------------------
-   -- Get_Project_Tree --
-   ----------------------
+   ---------------------------
+   -- Get_Root_Project_View --
+   ---------------------------
 
-   function Get_Project_Tree
-     (Handle : access Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Tree_Access
-   is
+   function Get_Root_Project_View
+     (Self : not null access Kernel_Handle_Record'Class)
+      return Projects.Views.Project_View_Reference is
    begin
-      return Handle.Registry.Tree;
-   end Get_Project_Tree;
+      return
+        Projects.Views.Create_Project_View_Reference
+          (Self, Self.Registry.Tree.Root_Project);
+   end Get_Root_Project_View;
+
+   --------------------
+   -- Lookup_Project --
+   --------------------
+
+   function Lookup_Project
+     (Self : not null access Kernel_Handle_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Projects.Project_Type is
+   begin
+      return Self.Registry.Tree.Project_From_Path (File);
+   end Lookup_Project;
 
    ------------------------
    -- Scenario_Variables --

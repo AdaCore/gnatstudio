@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -42,7 +42,7 @@
 --  the view changes.
 
 with GNAT.OS_Lib;
-with Projects;
+with Projects.Views;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
@@ -124,16 +124,24 @@ package GPS.Kernel.Project is
    --  this procedure.
    --  Return True if the project could be successfully saved
 
-   function Get_Project_Tree
-     (Handle : access Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Tree_Access;
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class)
       return GNATCOLL.Projects.Project_Type;
+   function Get_Root_Project_View
+     (Self : not null access Kernel_Handle_Record'Class)
+      return Projects.Views.Project_View_Reference;
    --  Return the current project tree. This tree can be fully manipulated, and
    --  extended. However, you should reevaluate the view after you have
    --  finished your changes, so as to report the changes to all the other
    --  tools.
+
+   function Lookup_Project
+     (Self : not null access Kernel_Handle_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Projects.Project_Type;
+   --  Lookup for project for the given project file in the root project.
+   --
+   --  ??? For LibGPR2 it should return as many project views as exists.
 
    procedure Create_Registry
      (Handle : access Kernel_Handle_Record'Class;

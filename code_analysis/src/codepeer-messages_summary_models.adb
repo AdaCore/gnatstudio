@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2018, AdaCore                     --
+--                     Copyright (C) 2008-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -257,12 +257,12 @@ package body CodePeer.Messages_Summary_Models is
             elsif Project_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
 
-               if Project_Node.Node.Name = No_Project then
+               if Project_Node.Node.View.Get_Project_Type = No_Project then
                   Glib.Values.Set_String (Value, -"RTL and removed");
 
                else
                   Glib.Values.Set_String
-                    (Value, Project_Node.Node.Name.Name);
+                    (Value, Project_Node.Node.View.Name);
                end if;
 
             else

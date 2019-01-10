@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -371,7 +371,7 @@ private
       --  Whether we just entered hyper mode, and the cursor aspect needs
       --  to be changed.
 
-      Source_Buffer_Handlers       : Handlers_Array (1 .. 6);
+      Source_Buffer_Handlers       : Handlers_Array (1 .. 5);
    end record;
 
 end Src_Editor_View;

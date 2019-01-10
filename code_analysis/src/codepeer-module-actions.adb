@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2014-2018, AdaCore                   --
+--                       Copyright (C) 2014-2019, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,6 +32,7 @@ with String_Utils;         use String_Utils;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;
+with Projects.Views;
 
 package body CodePeer.Module.Actions is
 
@@ -579,8 +580,11 @@ package body CodePeer.Module.Actions is
       if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
          declare
             Project_Node : constant Code_Analysis.Project_Access :=
-              Code_Analysis.Get_Or_Create
-                (Self.Module.Tree, Project_Information (Context.Context));
+                             Code_Analysis.Get_Or_Create
+                               (Self.Module.Tree,
+                                Projects.Views.Create_Project_View_Reference
+                                  (Get_Kernel (Context.Context),
+                                   Project_Information (Context.Context)));
             File_Node    : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node, File_Information (Context.Context));
@@ -605,8 +609,11 @@ package body CodePeer.Module.Actions is
       if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
          declare
             Project_Node : constant Code_Analysis.Project_Access :=
-              Code_Analysis.Get_Or_Create
-                (Self.Module.Tree, Project_Information (Context.Context));
+                             Code_Analysis.Get_Or_Create
+                               (Self.Module.Tree,
+                                Projects.Views.Create_Project_View_Reference
+                                  (Get_Kernel (Context.Context),
+                                   Project_Information (Context.Context)));
             File_Node    : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node, File_Information (Context.Context));
@@ -636,8 +643,11 @@ package body CodePeer.Module.Actions is
          use type GPS.Editors.Editor_Buffer'Class;
 
          Project_Node    : constant Code_Analysis.Project_Access :=
-           Code_Analysis.Get_Or_Create
-             (Filter.Module.Tree, Project_Information (Context));
+                             Code_Analysis.Get_Or_Create
+                               (Filter.Module.Tree,
+                                Projects.Views.Create_Project_View_Reference
+                                  (Get_Kernel (Context),
+                                   Project_Information (Context)));
          File_Node       : constant Code_Analysis.File_Access :=
            Code_Analysis.Get_Or_Create
              (Project_Node, File_Information (Context));
@@ -685,8 +695,11 @@ package body CodePeer.Module.Actions is
          use type GPS.Editors.Editor_Buffer'Class;
 
          Project_Node    : constant Code_Analysis.Project_Access :=
-           Code_Analysis.Get_Or_Create
-             (Filter.Module.Tree, Project_Information (Context));
+                             Code_Analysis.Get_Or_Create
+                               (Filter.Module.Tree,
+                                Projects.Views.Create_Project_View_Reference
+                                  (Get_Kernel (Context),
+                                   Project_Information (Context)));
          File_Node       : constant Code_Analysis.File_Access :=
            Code_Analysis.Get_Or_Create
              (Project_Node, File_Information (Context));

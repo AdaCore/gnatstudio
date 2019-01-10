@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2012-2018, AdaCore                     --
+--                     Copyright (C) 2012-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -26,7 +26,6 @@ with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
@@ -147,7 +146,7 @@ package body GPS.Kernel.Xref is
       pragma Unreferenced (Self);
    begin
       Standard.Xref.Project_View_Changed
-        (Kernel.Databases, Get_Project_Tree (Kernel));
+        (Kernel.Databases, Kernel.Get_Project_Tree);
 
       if not Kernel.Databases.Allow_Queries then
          Insert

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -764,7 +764,7 @@ procedure GPS.Main is
 
             File := Traces_File.Write_File;
             Write (File,
-                   ">log/log.$T.txt:buffer_size=0" & ASCII.LF &
+                   ">log/log.$T.$$.txt:buffer_size=0" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
                      "MAIN_TRACE=no" & ASCII.LF &  --  Turn LAL traces off
@@ -789,9 +789,11 @@ procedure GPS.Main is
                if File_Contents /= null then
                   declare
                      Pattern      : constant String :=
-                                      ">log.$T.txt:buffer_size=";
+                                      ">log.$T.$$.txt:buffer_size=";
                      New_Contents : Unbounded_String := To_Unbounded_String
                        (File_Contents.all);
+
+                     Modified     : Boolean := False;
                   begin
 
                      --  Check if the buffer size is already set in the traces
@@ -808,17 +810,26 @@ procedure GPS.Main is
                         --  the ".txt" extension. Replace it by the new pattern
                         --  too in that case.
 
-                        if Index (File_Contents.all, "log.$$.txt") /=  0 then
+                        if Index (File_Contents.all, "log.$$.txt") /= 0 then
                            Replace
                              (S           => New_Contents,
                               Pattern     => ">log.$$.txt",
                               Replacement => Pattern & "0");
+
+                        elsif Index (File_Contents.all, "log.$T.txt") /= 0 then
+                           Replace
+                             (S           => New_Contents,
+                              Pattern     => ">log.$T.txt",
+                              Replacement => Pattern & "0");
+
                         else
                            Replace
                              (S           => New_Contents,
                               Pattern     => ">log.$$",
                               Replacement => Pattern & "0");
                         end if;
+
+                        Modified := True;
                      end if;
 
                      --  Check if the log files are already redirected to the
@@ -830,11 +841,20 @@ procedure GPS.Main is
                           (S           => New_Contents,
                            Pattern     => ">log.",
                            Replacement => ">log/log.");
+
+                        Modified := True;
                      end if;
 
-                     File := Traces_File.Write_File;
-                     Write (File, To_String (New_Contents));
-                     Close (File);
+                     if Modified then
+                        begin
+                           File := Traces_File.Write_File;
+                           Write (File, To_String (New_Contents));
+                           Close (File);
+                        exception
+                           when E : others =>
+                              Trace (Me, E);
+                        end;
+                     end if;
                   end;
 
                   Free (File_Contents);
@@ -3062,6 +3082,8 @@ exception
             & "You will be asked to save modified files before GPS exits");
          Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
       else
-         Put_Line ("Unexpected fatal error, GPS is in an inconsistent state");
+         Put_Line
+           ("Unexpected fatal error, GPS is in an inconsistent state. " &
+              Ada.Exceptions.Exception_Information (E));
       end if;
 end GPS.Main;

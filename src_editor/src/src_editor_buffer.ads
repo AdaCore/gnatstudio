@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,6 +22,7 @@
 --  reference support, etc.
 --  </description>
 
+with Ada.Finalization;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -61,6 +62,10 @@ with Gtkada.Types;
 package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
+
+   type Source_Highlighter_Record (Buffer : Source_Buffer) is
+     new Ada.Finalization.Controlled with private;
+   type Source_Highlighter is access all Source_Highlighter_Record'Class;
 
    function "+" (B : access Source_Buffer_Record) return Source_Buffer
    is (Source_Buffer (B));
@@ -847,43 +852,9 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Natural;
    --  Return the size of the total column width, in pixels
 
-   type Highlight_Location is (Highlight_Speedbar, Highlight_Editor);
-   type Highlight_Location_Array is array (Highlight_Location) of Boolean;
-   pragma Pack (Highlight_Location_Array);
-   --  The various locations where a highlight can be made visible
-
-   procedure Set_Line_Highlighting
-     (Editor       : access Source_Buffer_Record;
-      Line         : Buffer_Line_Type;
-      Style        : not null Style_Access;
-      Set          : Boolean;
-      Highlight_In : Highlight_Location_Array);
-   --  Common function for [Add|Remove]_Line_Highlighting
-
-   procedure Add_Line_Highlighting
-     (Editor       : access Source_Buffer_Record;
-      Line         : Editable_Line_Type;
-      Style        : not null Style_Access;
-      Highlight_In : Highlight_Location_Array);
-   --  Enable the highlighting of Line using colors defined in category
-   --  corresponding to Id.
-   --  See Src_Editor_Box.Add_Line_Highlighting.
-
-   procedure Remove_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Style  : not null Style_Access);
-   --  Disable the highlighting of Line using colors defined in category
-   --  corresponding to Id.
-   --  See Src_Editor_Box.Remove_Line_Highlighting.
-
-   function Get_Highlight_Color
-     (Editor  : access Source_Buffer_Record;
-      Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk.RGBA.Gdk_RGBA;
-   pragma Inline (Get_Highlight_Color);
-   --  Return the current highlighting for Line, or null if no highlighting
-   --  is set.
+   function Get_Highlighter
+     (Editor : access Source_Buffer_Record)
+      return Source_Highlighter;
 
    type Block_Record is record
       Indentation_Level : Integer := 0;
@@ -998,7 +969,7 @@ package Src_Editor_Buffer is
    --    procedure Handler (Buffer : Gtk_Object_Record'Class;
    --                       Line   : Gint;
    --                       Column : Gint);
-   --    Emitted when the cursor position changes.
+   --    Emitted when the cursor position or the selection changes.
    --
    --  - "side_column_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
@@ -1216,10 +1187,6 @@ package Src_Editor_Buffer is
    --  where Group_Block is valid, editor commands will go to a new
    --  undo group, separate from the previous one and the following one.
 
-   procedure Enable_Highlighting (Buffer : access Source_Buffer_Record'Class);
-   procedure Disable_Highlighting (Buffer : access Source_Buffer_Record'Class);
-   --  Suppress highlighting in the Buffer for a while
-
    package Listener_Factory_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Factory_Access);
 
@@ -1236,6 +1203,65 @@ package Src_Editor_Buffer is
      return access GPS.Editors.Editor_Buffer_Factory'Class;
    --  Get the global Editor_Buffer_Factory. Useful to access buffers in an
    --  abstract way (for example, opening new buffers)
+
+   ------------------------
+   -- Source_Highlighter --
+   ------------------------
+
+   type Highlight_Location is (Highlight_Speedbar, Highlight_Editor);
+   type Highlight_Location_Array is array (Highlight_Location) of Boolean;
+   pragma Pack (Highlight_Location_Array);
+   --  The various locations where a highlight can be made visible
+
+   procedure Enable_Highlighting (Self : access Source_Highlighter_Record);
+   procedure Disable_Highlighting (Self : access Source_Highlighter_Record);
+   --  Suppress highlighting in the Buffer for a while
+
+   procedure Add_Line_Highlighting
+     (Self         : access Source_Highlighter_Record;
+      Line         : Editable_Line_Type;
+      Style        : not null Style_Access;
+      Highlight_In : Highlight_Location_Array);
+   --  Enable the highlighting of Line using colors defined in Style.
+   --  See Src_Editor_Box.Add_Line_Highlighting.
+
+   procedure Remove_Line_Highlighting
+     (Self   : access Source_Highlighter_Record;
+      Line   : Editable_Line_Type;
+      Style  : not null Style_Access);
+   --  Disable the highlighting of Line using colors defined in Style.
+   --  See Src_Editor_Box.Remove_Line_Highlighting.
+
+   function Get_Highlight_Color
+     (Self    : access Source_Highlighter_Record;
+      Line    : Buffer_Line_Type;
+      Context : Highlight_Location) return Gdk.RGBA.Gdk_RGBA;
+   pragma Inline (Get_Highlight_Color);
+   --  Return the current highlighting for Line, or null if no highlighting
+   --  is set.
+
+   procedure Highlight_Range
+     (Self      : access Source_Highlighter_Record;
+      Style     : Style_Access;
+      Line      : Editable_Line_Type;
+      Start_Col : Visible_Column_Type;
+      End_Col   : Visible_Column_Type;
+      Remove    : Boolean := False);
+   --  Highlight the given range of text with category Category.
+   --  If Start_Col <= 0, start at the beginning of line.
+   --  If End_Col <= 0, end at end of line.
+   --  If Remove is True, remove the highlighting instead of adding it.
+   --  If Line = 0, (un)highlight the whole buffer.
+   --  If the style was created so that a mark should be put in the speedbar,
+   --  this function also takes care of this.
+
+   procedure Remove_Highlighting
+     (Self      : access Source_Highlighter_Record;
+      Style     : Style_Access;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type);
+   --  Remove the given style highlighting from the given range of lines,
+   --  included.
 
 private
 
@@ -1282,16 +1308,6 @@ private
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Returns true if Iter is inside a string
-
-   procedure Highlight_Slice
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
-      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Re-compute the highlighting for at least the given region.
-   --  If the text creates non-closed comments or string regions, then
-   --  the re-highlighted area is automatically extended to the right.
-   --  When the re-highlighted area is extended to the right, the extension
-   --  is computed in a semi-intelligent fashion.
 
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
@@ -1543,9 +1559,7 @@ private
       --  If set, this title is used for the window, instead of the file name
 
       Lang          : Language.Language_Access;
-      Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
-      Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used when highlighting delimiters (e.g. parens)
+      Highlighter   : Source_Highlighter;
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted
@@ -1610,18 +1624,11 @@ private
       Timeout_Registered : Boolean := False;
       --  Whether Timeout corresponds to a registered timeout
 
-      Setting_Mark : Boolean := False;
-      --  Used to prevent recursion when creating text marks
-
-      Has_Delimiters_Highlight   : Boolean := False;
-      --  Whether delimiters are currently highlighted
-
-      Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
-      End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  Bounds for the parenthesis highlighting
-
       --  The following is related to information regarding
       --  the side column information.
+
+      Setting_Mark : Boolean := False;
+      --  Used to prevent recursion when creating text marks
 
       Editable_Line_Info_Columns : Columns_Config_Access;
       --  The information concerning columns of data that should be displayed
@@ -1674,9 +1681,6 @@ private
       Blocks_Request_Timestamp : Ada.Calendar.Time;
       --  The last time the blocks refresh was requested
 
-      Cursor_Timeout : Glib.Main.G_Source_Id;
-      --  A timeout handling the refresh of the timeouts
-
       Blank_Lines : Natural := 0;
       --  The number of blank lines in the buffer
 
@@ -1701,25 +1705,8 @@ private
 
       --  The following information are used for idle buffer highlighting
 
-      First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  Those marks indicate the minimum area that need to be highlighted.
-      --  They must be valid marks at all times.
-
-      Highlight_Needed : Boolean := False;
-      --  Whether the text should be re-highlighted
-
-      Highlight_Enabled : Boolean := True;
-      --  Endable/Disable immediate highlighting after each insert/delete
-
       Auto_Syntax_Check : Boolean := False;
       --  Whether the syntax should be checked automatically
-
-      Highlight_Delimiters : Boolean := False;
-      --  Cache corresponding preference
-
-      Use_Highlighting_Hook : Boolean := False;
-      --  Use hook to implement text highlight
 
       Tab_Width : Positive := 8;
       --  Width of a Tab character
@@ -1810,6 +1797,10 @@ private
       Context_Frozen       : Integer := 0;
       --  GPS context is refreshed every time the cursor position changes and
       --  this variable is set to 0. See Freeze_Context and Thaw_Context.
+
+      Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
+                                   Glib.Main.No_Source_Id;
+      --  Idle handler to rehightlight messages.
    end record;
 
    procedure Emit_By_Name
@@ -1819,5 +1810,124 @@ private
 
    Default_Column : constant String := "Block Information";
    --  Identifier for the block information column
+
+   ------------------------
+   -- Highlighter_Record --
+   ------------------------
+
+   type Source_Highlighter_Record
+     (Buffer : Src_Editor_Buffer.Source_Buffer) is
+     new Ada.Finalization.Controlled with
+      record
+         Auto_Highlight_Enabled : Boolean := True;
+         --  Enable/Disable immediate highlighting after each insert/delete
+
+         Highlight_Needed : Boolean := False;
+         --  Whether the text should be re-highlighted
+
+         Syntax_Tags : Src_Highlighting.Highlighting_Tags;
+
+         First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+         Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
+         --  Those marks indicate the minimum area that need to be highlighted.
+         --  They must be valid marks at all times.
+
+         Use_Highlighting_Hook : Boolean := False;
+         --  Use hook to implement text highlight
+
+         Highlight_Delimiters : Boolean := False;
+         --  Cache corresponding preference
+
+         Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+         --  A tag used when highlighting delimiters (e.g. parens)
+
+         Has_Delimiters_Highlight   : Boolean := False;
+         --  Whether delimiters are currently highlighted
+
+         Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
+         End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
+         --  Bounds for the parenthesis highlighting
+      end record;
+
+   overriding procedure Initialize (Self : in out Source_Highlighter_Record);
+   overriding procedure Finalize   (Self : in out Source_Highlighter_Record);
+
+   procedure Set_Line_Highlighting
+     (Self         : access Source_Highlighter_Record;
+      Line         : Buffer_Line_Type;
+      Style        : not null Style_Access;
+      Set          : Boolean;
+      Highlight_In : Highlight_Location_Array);
+   --  Common function for [Add|Remove]_Line_Highlighting
+
+   procedure Highlight_Range
+     (Self       : access Source_Highlighter_Record;
+      Style      : Style_Access;
+      Line       : Editable_Line_Type;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Remove     : Boolean := False);
+
+   procedure Highlight_Slice
+     (Self       : access Source_Highlighter_Record;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Re-compute the highlighting for at least the given region.
+   --  If the text creates non-closed comments or string regions, then
+   --  the re-highlighted area is automatically extended to the right.
+   --  When the re-highlighted area is extended to the right, the extension
+   --  is computed in a semi-intelligent fashion.
+
+   procedure Update_Highlight_Region
+     (Self : access Source_Highlighter_Record;
+      Iter : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Update the region to be highlighted in the next highlighting timeout
+
+   procedure Highlight_Region
+     (Self : access Source_Highlighter_Record);
+   --  Highlight the region marked by the highlight marks in the editor
+
+   procedure Highlight_Inserted_Text
+     (Self : access Source_Highlighter_Record;
+      From : Buffer_Line_Type;
+      To   : Buffer_Line_Type);
+   --  Called when text is inserted
+
+   procedure Run_Hook
+     (Self  : access Source_Highlighter_Record;
+      Phase : Positive);
+   --  Run Highlight_Range_Hook to highlight the buffer
+
+   procedure Run_Hook
+     (Self : access Source_Highlighter_Record);
+   --  Trigger syntax highlighting if it is deferred
+
+   procedure On_Load_File
+     (Self : access Source_Highlighter_Record);
+   --  Called when load a file
+
+   procedure On_Set_Language
+     (Self       : access Source_Highlighter_Record;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Called when language is set for the buffer
+
+   procedure Kill_Highlighting
+     (Self : access Source_Highlighter_Record;
+      From : Gtk.Text_Iter.Gtk_Text_Iter;
+      To   : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Remove all highlighting tags for the given region
+
+   function Is_Comment_Tag
+     (Self : access Source_Highlighter_Record;
+      Pos  : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
+   --  Whether the comment tag is applied in the position
+
+   procedure Highlight_Parenthesis (Self : access Source_Highlighter_Record);
+   --  Highlight the matching parenthesis that are next to the cursor, if any
+
+   procedure Remove_Delimiters_Highlighting
+     (Self : access Source_Highlighter_Record);
 
 end Src_Editor_Buffer;

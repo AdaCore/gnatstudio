@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2018, AdaCore                     --
+--                     Copyright (C) 2005-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -46,6 +46,7 @@ with Gtk.Widget;                      use Gtk.Widget;
 with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Language.Tree.Database;          use Language.Tree.Database;
+with Projects.Views;
 with Refactoring.Services;            use Refactoring.Services;
 with Refactoring.Performers;          use Refactoring.Performers;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -824,11 +825,15 @@ package body Refactoring.Subprograms is
    begin
       Get_Area (Context.Context, From_Line, To_Line);
       Extract := (Code => Create_Range
-                  (Context => Get_Kernel (Context.Context).Refactoring_Context,
-                   File      => File_Information (Context.Context),
-                   Project   => Project_Information (Context.Context),
-                   From_Line => From_Line,
-                   To_Line   => To_Line),
+                  (Context      =>
+                     Get_Kernel (Context.Context).Refactoring_Context,
+                   File         => File_Information (Context.Context),
+                   Project_View =>
+                     Projects.Views.Create_Project_View_Reference
+                       (Get_Kernel (Context.Context),
+                        Project_Information (Context.Context)),
+                   From_Line    => From_Line,
+                   To_Line      => To_Line),
                   Source     => No_File,
                   Entities   => <>);
       Compute_Context_Entities
@@ -895,14 +900,16 @@ package body Refactoring.Subprograms is
          Project := F_Info.Project;
       end;
 
-      Context := (Code       => Create_Range
-                  (Context   => Kernel.Refactoring_Context,
-                   File      => File,
-                   Project   => Project,
-                   From_Line => Nth_Arg (Data, 2),
-                   To_Line   => Nth_Arg (Data, 3)),
-                  Source         => No_File,
-                  Entities       => <>);
+      Context := (Code     => Create_Range
+                  (Context      => Kernel.Refactoring_Context,
+                   File         => File,
+                   Project_View =>
+                     Projects.Views.Create_Project_View_Reference
+                       (Kernel, Project),
+                   From_Line    => Nth_Arg (Data, 2),
+                   To_Line      => Nth_Arg (Data, 3)),
+                  Source   => No_File,
+                  Entities => <>);
       Compute_Context_Entities (Context, Db => Get_Kernel (Data).Databases);
 
       if Extract_Method

@@ -43,6 +43,7 @@ gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 OUTPUT_PARSERS = """
     job_recorder
     gnatprove_parser
+    console_writer
     end_of_build"""
 
 with open(gnatprove_menus_file, "r") as input_file:
@@ -561,6 +562,13 @@ class GNATprove_Parser(tool_output.OutputParser):
         GPS.Locations.remove_category(
             messages_category, GPS.Message.Flags.INVISIBLE)
 
+        # Global map that associates messages text to the location of the
+        # check. Messages already contain a location but it cannot be trusted
+        # for launching manual prover. Messages locations records precisely
+        # what is failing in a vc not the location of said vc.
+        global map_msg
+        map_msg = {}
+
         tool_output.OutputParser.__init__(self, child)
 
         gnatprove_plug.output_parser = self
@@ -569,7 +577,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
         self.msg_id = {}
-        self.message_re = re.compile(r"(?P<filename>[^:]+)"
+        self.message_re = re.compile(r"(?P<filename>^[^: ]+)"
                                      r":"
                                      r"(?P<line>[0-9]+)"
                                      r":"
@@ -817,13 +825,6 @@ class GNATprove_Parser(tool_output.OutputParser):
            which will be used later (in on_exit) to associate more info to the
            message
         """
-        # Global map that associates messages text to the location of the
-        # check. Messages already contain a location but it cannot be trusted
-        # for launching manual prover. Messages locations records precisely
-        # what is failing in a vc not the location of said vc.
-        global map_msg
-        map_msg = {}
-
         artifact_dirs = (
             [os.path.join(f, obj_subdir_name)
              for f in GPS.Project.root().object_dirs(recursive=True)])
@@ -858,7 +859,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                         msg_match.group('importance'))
                     text = msg_match.group('importance') + ": " + text
                 else:
-                    importance = GPS.Message.Importance.UNSPECIFIED
+                    importance = GPS.Message.Importance.HIGH
 
                 # Create the message and its secondaries
                 message = self.split_in_secondary_messages(
