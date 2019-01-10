@@ -293,17 +293,6 @@ package body Vdiff2_Module is
          Action => "vdiff recompute difference");
 
       Register_Action
-        (Kernel, "vdiff remove difference",
-         Command     => new Remove_Difference_Command,
-         Description => "Remove the current diff block",
-         Category    => -"Diff",
-         Filter      => Filter);
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Visual Diff/Remove difference",
-         Action => "vdiff remove difference");
-
-      Register_Action
         (Kernel, "vdiff change reference file",
          Command  => new Change_Ref_File_Command,
          Category => -"Diff",
