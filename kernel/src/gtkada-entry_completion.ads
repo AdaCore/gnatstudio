@@ -198,6 +198,9 @@ private
 
       Focus_Check_Idle : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  Idle handler on focus checking
+
+      Toplevel_Handler_Id : Gtk.Handlers.Handler_Id;
+      --  For processing focus events from the toplevel window.
    end record;
 
 end Gtkada.Entry_Completion;

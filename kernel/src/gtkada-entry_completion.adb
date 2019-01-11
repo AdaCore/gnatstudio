@@ -182,10 +182,21 @@ package body Gtkada.Entry_Completion is
    function On_Focus_In
       (Self  : access GObject_Record'Class;
        Event : Gdk_Event_Focus) return Boolean;
+
+   function On_Toplevel_Focus_In
+     (Self  : access GObject_Record'Class;
+      Params : Glib.Values.GValues) return Boolean;
+   --  Called when a focus has revived back to the toplevel window
+
    function On_Focus_Out
       (Self  : access GObject_Record'Class;
        Event : Gdk_Event_Focus) return Boolean;
    --  Focus leaves the entry, we should close the popup
+
+   function On_Toplevel_Focus_Out
+     (Self  : access GObject_Record'Class;
+      Params : Glib.Values.GValues) return Boolean;
+   --  Called when top level window looses a focus
 
    procedure Activate_Proposal
       (Self : not null access Gtkada_Entry_Record'Class;
@@ -846,6 +857,26 @@ package body Gtkada.Entry_Completion is
       return False;
    end On_Focus_In;
 
+   --------------------------
+   -- On_Toplevel_Focus_In --
+   --------------------------
+
+   function On_Toplevel_Focus_In
+     (Self  : access GObject_Record'Class;
+      Params : Glib.Values.GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+      E : constant Gtkada_Entry := Gtkada_Entry (Self);
+   begin
+      if E.Popup /= null
+        and then not E.Popup.Is_Visible
+      then
+         Popup (E);
+      end if;
+
+      return False;
+   end On_Toplevel_Focus_In;
+
    ----------------------
    -- Check_Focus_Idle --
    ----------------------
@@ -853,12 +884,29 @@ package body Gtkada.Entry_Completion is
    function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean is
       use type Gtkada.MDI.MDI_Child;
       Focus_Child : constant Gtkada.MDI.MDI_Child :=
-                      Get_MDI (Self.Kernel).Get_Focus_Child;
+        Get_MDI (Self.Kernel).Get_Focus_Child;
+
    begin
       --  Popdown the omnisearch's popup only if the user has clicked on
       --  another GPS MDI child, not when another app has the focus.
 
-      if not Self.Has_Focus and then Focus_Child /= null then
+      if not Self.Get_Toplevel.Has_Focus
+        and then Self.Popup /= null
+        and then Self.Popup.Is_Visible
+      then
+         --  Toplevel window does not have a focus, user has switched
+         --  to another app. Hide the omnisearch popup.
+
+         Popdown (Self);
+
+         Self.Toplevel_Handler_Id :=
+           Gtkada.Handlers.Object_Return_Callback.Object_Connect
+             (Self.Get_Toplevel,
+              Signal_Focus_In_Event,
+              On_Toplevel_Focus_In'Access,
+              Slot_Object => Self);
+
+      elsif not Self.Has_Focus and then Focus_Child /= null then
          Popdown (Self);
 
          --  Check whether some widget has a focus which could be moved to
@@ -927,8 +975,22 @@ package body Gtkada.Entry_Completion is
       (Self  : access GObject_Record'Class;
        Event : Gdk_Event_Focus) return Boolean
    is
-      S : constant Gtkada_Entry := Gtkada_Entry (Self);
       pragma Unreferenced (Event);
+      Dummy : Glib.Values.GValues;
+   begin
+      return On_Toplevel_Focus_Out (Self, Dummy);
+   end On_Focus_Out;
+
+   ---------------------------
+   -- On_Toplevel_Focus_Out --
+   ---------------------------
+
+   function On_Toplevel_Focus_Out
+     (Self   : access GObject_Record'Class;
+      Params : Glib.Values.GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
       --  We have received a focus_out on the entry: we want to popdown.,,
       --  however, this could happen, in "unoptimized" window enviornments
@@ -940,8 +1002,9 @@ package body Gtkada.Entry_Completion is
          S.Focus_Check_Idle := Completion_Sources.Idle_Add
            (Check_Focus_Idle'Access, Self);
       end if;
+
       return False;
-   end On_Focus_Out;
+   end On_Toplevel_Focus_Out;
 
    -----------------------
    -- Activate_Proposal --
@@ -1546,8 +1609,12 @@ package body Gtkada.Entry_Completion is
 
    procedure Popup (Self : not null access Gtkada_Entry_Record) is
       Toplevel : Gtk_Widget;
-      Status : Gdk_Grab_Status;
+      Status   : Gdk_Grab_Status;
    begin
+      Gtk.Handlers.Disconnect
+        (Self.Get_Toplevel,
+         Id => Self.Toplevel_Handler_Id);
+
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Toplevel := Self.Get_Toplevel;
          if Toplevel /= null
@@ -1555,6 +1622,13 @@ package body Gtkada.Entry_Completion is
          then
             Gtk_Window (Toplevel).Get_Group.Add_Window (Self.Popup);
             Self.Popup.Set_Transient_For (Gtk_Window (Toplevel));
+
+            Self.Toplevel_Handler_Id :=
+              Gtkada.Handlers.Object_Return_Callback.Object_Connect
+                (Toplevel,
+                 Signal_Focus_Out_Event,
+                 On_Toplevel_Focus_Out'Access,
+                 Slot_Object => Self);
          end if;
 
          --  Don't show the progress bar and the 'no results' label when
@@ -1642,6 +1716,10 @@ package body Gtkada.Entry_Completion is
 
    procedure Popdown (Self : not null access Gtkada_Entry_Record) is
    begin
+      Gtk.Handlers.Disconnect
+        (Self.Get_Toplevel,
+         Id => Self.Toplevel_Handler_Id);
+
       if Self.Idle /= No_Source_Id then
          Remove (Self.Idle);
          Self.Idle := No_Source_Id;
