@@ -240,9 +240,13 @@ procedure GNATdoc_Main is
       GNAT.OS_Lib.Free (Gnatinspect);
    end Launch_Gnatinspect;
 
+   Traces_Config : constant GNATCOLL.VFS.Virtual_File :=
+                     GNATCOLL.VFS.Get_Home_Directory.Create_From_Dir
+                       (".gps").Create_From_Dir ("gnatdoc_traces.cfg");
+
 begin
    --  Retrieve log configuration
-   GNATCOLL.Traces.Parse_Config_File;
+   GNATCOLL.Traces.Parse_Config_File (Traces_Config);
 
    --  Set comand line options
    Set_Usage
