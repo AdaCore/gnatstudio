@@ -36,6 +36,13 @@
    </documentation_file>
 
    <documentation_file>
+      <name>html/gnatdoc/index.html</name>
+      <descr>GNATdoc User's Guide</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/GNATdoc User's Guide</menu>
+   </documentation_file>
+
+   <documentation_file>
       <name>html/users_guide/GPS.html</name>
       <descr>GPS extensions for Python</descr>
       <menu>/Help/GPS/Python extensions</menu>
