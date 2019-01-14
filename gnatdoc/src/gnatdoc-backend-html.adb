@@ -910,6 +910,11 @@ package body GNATdoc.Backend.HTML is
             "subprograms",
             Categories_Index);
          Self.Generate_Entities_Category
+           (Self.Entities.Methods,
+            "Dispatching Subprograms",
+            "methods",
+            Categories_Index);
+         Self.Generate_Entities_Category
            (Self.Entities.Pkgs,
             "Packages",
             "packages",
