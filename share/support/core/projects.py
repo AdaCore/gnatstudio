@@ -177,7 +177,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="Tools"
        description="The gnat driver used to run the various commands associated with the GNAT toolchain."
        hide_in="all"
-       label="Gnat">
+       label="GNAT">
        <choice default="true" >gnat</choice>
        <string />
    </project_attribute>
