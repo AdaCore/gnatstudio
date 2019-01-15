@@ -2852,8 +2852,6 @@ package body Src_Editor_View is
       Success                    : Boolean;
 
    begin
-      Trace (Me, "Build_Editor_Context");
-
       if Location = Location_Event
         and then
         (Event = null

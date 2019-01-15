@@ -376,7 +376,7 @@ package body Src_Editor_Status_Bar is
       Child := Find_Editor
         (Get_Kernel (Bar.Buffer),
          File,
-         Get_Project (Bar.View));
+         No_Project);
 
       if Child /= null and then Get_Widget (Child) = Gtk_Widget (Bar.Box) then
          Show_Cursor_Position
