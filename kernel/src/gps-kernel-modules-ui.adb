@@ -2639,6 +2639,7 @@ package body GPS.Kernel.Modules.UI is
          else
             T.Filter := Action_Filter (Create_Filter (Kernel, Label));
          end if;
+
       elsif Filter /= null then
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(N);

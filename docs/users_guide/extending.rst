@@ -1524,6 +1524,7 @@ Adding contextual menus
 -----------------------
 
 .. index:: <contextual>
+.. index:: <filter>
 
 You can also add actions as new items in contextual menus anywhere in GPS.
 Contextual menus are displayed when the user right clicks and only show
@@ -1567,6 +1568,13 @@ attributes:
   Allows you to create groups of contextual menus that are put next to each
   other. Items with the same group number appear before all items with a
   larger group number.
+
+* :file:`filter` (optional)
+
+  .. index:: filter
+
+  The context in which the action can be executed. See
+  :ref:`Filtering_actions`.
 
 The :file:`<contextual>` tag accepts one child tag, :file:`<Title>`, which
 specifies the name of the menu item. If not specified, the menu item uses

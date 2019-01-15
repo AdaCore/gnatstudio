@@ -493,6 +493,7 @@ package body Custom_Module is
          Group   : Integer := Default_Contextual_Group;
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access;
+         Filter  : Action_Filter := null;
       begin
          Title := new String'(Action);
 
@@ -512,6 +513,20 @@ package body Custom_Module is
             if To_Lower (Child.Tag.all) = "title" then
                Free (Title);
                Title := new String'(Child.Value.all);
+
+            elsif To_Lower (Child.Tag.all) = "filter" then
+               declare
+                  Id : constant String := Get_Attribute (Child, "id", "");
+               begin
+                  if Id /= "" then
+                     Filter := Lookup_Filter (Kernel, Id);
+                     if Filter = null then
+                        Insert (Kernel,
+                                -"Invalid filter name: " & Id,
+                                Mode => Error);
+                     end if;
+                  end if;
+               end;
 
             else
                Insert
@@ -534,7 +549,9 @@ package body Custom_Module is
                Action     => Action,
                Ref_Item   => Before,
                Add_Before => True,
-               Group      => Group);
+               Group      => Group,
+               Filter     => Filter);
+
          elsif After /= "" then
             Register_Contextual_Menu
               (Kernel,
@@ -543,14 +560,17 @@ package body Custom_Module is
                Action     => Action,
                Ref_Item   => After,
                Add_Before => False,
-               Group      => Group);
+               Group      => Group,
+               Filter     => Filter);
+
          else
             Register_Contextual_Menu
               (Kernel,
-               Name       => Title.all,
-               Label      => Title.all,
-               Action     => Action,
-               Group      => Group);
+               Name    => Title.all,
+               Label   => Title.all,
+               Action  => Action,
+               Group   => Group,
+               Filter  => Filter);
          end if;
 
          Free (Title);

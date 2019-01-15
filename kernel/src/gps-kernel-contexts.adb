@@ -1213,7 +1213,8 @@ package body GPS.Kernel.Contexts is
       Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
       In_Project_Filter   : constant Action_Filter := new Filter_In_Project;
       Editable_Project    : constant Action_Filter :=
-                              new Filter_Editable_Project;
+        new Filter_Editable_Project;
+
    begin
       Register_Filter (Kernel, File_Filter, "File");
       Register_Filter (Kernel, Directory_Filter, "Directory");
