@@ -429,7 +429,7 @@ procedure GPS.Main is
    procedure Set_Project_Name;
    --  Set the project name from the command line switch
 
-   procedure Error_Message (Message : String);
+   procedure Error_Message (Message : String; Save : Boolean);
    --  Display the "Fatal error" message
 
    procedure Display_Splash_Screen;
@@ -2099,7 +2099,8 @@ procedure GPS.Main is
             Trace (Me, E);
             if not Hide_GPS then
                Error_Message
-                 ("Unexpected fatal error during project load.");
+                 (Message => "Unexpected fatal error during project load.",
+                  Save    => False);
             end if;
 
             GPS_Main.Application.Quit;
@@ -2855,12 +2856,19 @@ procedure GPS.Main is
    -- Error_Message --
    -------------------
 
-   procedure Error_Message (Message : String) is
+   procedure Error_Message (Message : String; Save : Boolean) is
       Log_File : Virtual_File;
       Pid_File : Virtual_File;
       Str      : Virtual_File;
       Button   : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Msg      : constant String :=
+        (if Save
+         then Message
+         & ASCII.LF
+         & "You will be asked to save modified files before GPS exits"
+         else Message);
+      Dead     : Boolean;
+      pragma Unreferenced (Dead, Button);
 
    begin
       --  Error before we created the main window is likely while parsing
@@ -2880,18 +2888,33 @@ procedure GPS.Main is
          Str := Log_File;
       end if;
 
-      if Active (Testsuite_Handle) then
-         Put_Line ("Error message generated: " & Message);
-      else
-         Button := Message_Dialog
-           (Message
-            & ASCII.LF
-            & "Please report with contents of " & Str.Display_Full_Name,
-            Error, Button_OK,
-            Title         => -"Fatal Error",
-            Justification => Justify_Left,
-            Parent        => GPS_Main.Kernel.Get_Main_Window);
-      end if;
+      begin
+         if Active (Testsuite_Handle) then
+            Put_Line ("Error message generated: " & Msg);
+         else
+
+            Button := Message_Dialog
+              (Msg
+               & ASCII.LF
+               & "Please report with contents of " & Str.Display_Full_Name,
+               Error, Button_OK,
+               Title         => -"Fatal Error",
+               Justification => Justify_Left,
+               Parent        => GPS_Main.Kernel.Get_Main_Window);
+         end if;
+
+         if Save then
+            Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
+         end if;
+
+         --  When GPS is in inconsistent state it can be impossible to
+         --   create a new dialog catch the exception here.
+      exception
+         when others =>
+            Put_Line (Message);
+            Shutdown_Callback (GPS_Main.Application);
+      end;
+
    end Error_Message;
 
    ------------------------
@@ -2991,11 +3014,10 @@ procedure GPS.Main is
       Set_Local_Command_Line (Self, Local_Command_Line'Unrestricted_Access);
    end Application_Class_Init;
 
-   Dead        : Boolean;
    Registered  : Boolean;
    Status      : Glib.Gint;
    Application : GPS_Application;
-   pragma Unreferenced (Dead, Registered);
+   pragma Unreferenced (Registered);
 
 begin
    --  Under all platforms, prevent the creation of a dbus session: this serves
@@ -3075,15 +3097,8 @@ exception
    when E : others =>
       Unexpected_Exception := True;
       Trace (Me, E);
-      if GPS_Main /= null then
-         Error_Message
-           ("Unexpected fatal error, GPS is in an inconsistent state"
-            & ASCII.LF
-            & "You will be asked to save modified files before GPS exits");
-         Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
-      else
-         Put_Line
-           ("Unexpected fatal error, GPS is in an inconsistent state. " &
-              Ada.Exceptions.Exception_Information (E));
-      end if;
+      Error_Message
+        (Message =>
+            "Unexpected fatal error, GPS is in an inconsistent state",
+         Save    => True);
 end GPS.Main;
