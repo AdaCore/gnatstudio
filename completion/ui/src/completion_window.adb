@@ -1311,25 +1311,31 @@ package body Completion_Window is
       Proposal : Completion_Proposal_Access := null;
 
    begin
-      --  Set the window to be In_Destruction now;
-      --  the reason for this is the following:
-      --     - we retrieve a pointer to a Proposal from
-      --        Window.Explorer.Info (Pos) below.
-      --     - later on we call Place_Cursor
-      --     - the call to Place_Cursor might cause the completion window
-      --       to disappear, and when this happens, if In_Destruction is not
-      --       set, Window.Explorer.Info will be freed, causing a dangling
-      --       pointer in the Proposal.
-      Window.In_Destruction := True;
-
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
       if Iter /= Null_Iter then
+
+         --  If the user selected the 'Computing...' iter, just close the
+         --  completion window.
+
          Raw_Pos := Get_Int (Window.Explorer.Model_Filter, Iter, Index_Column);
          if Raw_Pos = -1 then
             Delete (Window);
             return;
          end if;
+
+         --  Set the window to be In_Destruction now;
+         --  the reason for this is the following:
+         --     - we retrieve a pointer to a Proposal from
+         --        Window.Explorer.Info (Pos) below.
+         --     - later on we call Place_Cursor
+         --     - the call to Place_Cursor might cause the completion window
+         --       to disappear, and when this happens, if In_Destruction is not
+         --       set, Window.Explorer.Info will be freed, causing a dangling
+         --       pointer in the Proposal.
+
+         Window.In_Destruction := True;
+
          Pos := Natural (Raw_Pos);
 
          --  Get the underlying completion proposal if available
