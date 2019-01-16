@@ -431,6 +431,8 @@ class Git(core.VCS):
     @core.run_in_background
     def async_view_file(self, visitor, ref, file):
         f = os.path.relpath(file.path, self.working_dir.path)
+        # The git command "show HEAD:path" only work with a UNIX path
+        f = f.replace("\\", "/")
         p = self._git(['show', '%s:%s' % (ref, f)])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
