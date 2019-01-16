@@ -72,7 +72,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
         context to highlight the entity under the cursor.
         It is intended that a single entity of this class is created in GPS.
         """
-        Location_Highlighter.__init__(self, style=None, context=0)
+        Location_Highlighter.__init__(self, style=None, context=0,
+                                      initial_timeout=400)
 
         # Cache for some of the preferences
         self.highlight_entities = None
