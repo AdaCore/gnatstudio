@@ -7,6 +7,7 @@ with AWS.Services.Web_Block.Registry;
 with @_Project_Name_@.Dispatchers;
 
 with WBlocks;
+--  Please run `make gen` if WBlocks is absent
 
 procedure @_Project_Name_@.Main is
    use AWS;
