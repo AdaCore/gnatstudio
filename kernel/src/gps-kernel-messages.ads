@@ -223,8 +223,9 @@ package GPS.Kernel.Messages is
    --  Returns editor's mark of the current location of the message.
 
    procedure Set_Flags
-     (Self  : not null access Abstract_Message'Class;
-      Flags : Message_Flags);
+     (Self                     : not null access Abstract_Message'Class;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := False);
    --  Sets flags of the message.
 
    procedure Remove (Self : not null access Abstract_Message'Class);
