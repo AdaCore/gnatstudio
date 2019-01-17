@@ -147,11 +147,4 @@
       <category>General</category>
    </documentation_file>
 
-   <documentation_file>
-      <name>gnatcheck_rm.html</name>
-      <descr>GNATcheck Reference Manual - Predefined Rules</descr>
-      <menu>/Help/GNAT/GNATcheck Reference Manual - Predefined Rules</menu>
-      <category>GNAT</category>
-   </documentation_file>
-
 </index>

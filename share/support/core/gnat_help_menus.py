@@ -26,8 +26,8 @@ _DOC_ENTRIES = {
                 ('gprbuild/html/gprbuild_ug.html', 'GPR/')},
    'gnatls': {
        # Ada RMs
-       "Ada 2005 Reference Manual": ('gnat/html/arm05.html', 'Ada/'),
        "Ada 2012 Reference Manual": ('gnat/html/arm12.html', 'Ada/'),
+       "Ada 2005 Reference Manual": ('gnat/html/arm05.html', 'Ada/'),
        "Ada 95 Reference Manual": ('gnat/html/arm95.html', 'Ada/'),
 
        # GNU toolchain
@@ -54,6 +54,10 @@ _DOC_ENTRIES = {
    # GNATcheck
    'gnatcheck': {"GNATcheck Reference Manual":
                  ('gnat/html/gnatcheck_rm/gnatcheck_rm.html', 'GNAT/')},
+
+   # GNATstack
+   'gnatstack': {"GNATstack Reference Manual":
+                 ('gnatstack/html/index.html', 'GNAT/')},
 
    # Spark2c
    'c-gcc': {"SPARK to C User's Guide Supplement":
