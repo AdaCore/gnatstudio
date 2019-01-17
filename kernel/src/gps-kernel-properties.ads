@@ -33,6 +33,7 @@
 --     end;
 
 with GNATCOLL.Projects;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 with GPS.Properties;     use GPS.Properties;
 
 package GPS.Kernel.Properties is
@@ -140,6 +141,9 @@ package GPS.Kernel.Properties is
    --  Register the script commands associated with this module
 
 private
+
+   Dump : constant Trace_Handle := Create ("TESTSUITE.DUMP_PROPERTIES", Off);
+   --  Whether to automatically dump the properties database on exit
 
    -----------------
    -- Writer_Type --
