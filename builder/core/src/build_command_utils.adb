@@ -556,9 +556,10 @@ package body Build_Command_Utils is
                          and then Get_Trusted_Mode_Preference (Adapter.all)
                      then
                         Console_Insert
-                          (Adapter.all, -("You should"
-                           & " disable the preference Fast Project Loading for"
-                           & " full support of symbolic links"));
+                          (Adapter.all, -("You should check the project's"
+                           & " scenario variable's values"
+                           & " or disable the preference Fast Project"
+                           & " Loading (for full support of symbolic links)"));
                      end if;
 
                      raise Invalid_Argument;
