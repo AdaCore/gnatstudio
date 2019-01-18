@@ -31,6 +31,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Convert;              use Glib.Convert;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Types;
 
 with GUI_Utils;
@@ -38,6 +39,7 @@ with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -94,6 +96,21 @@ package body VFS_Module is
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
+
+   Open_Command_Name : constant String := "open file";
+   type Open_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Open a file selector dialog allowing the user to open a file from
+   --  the current context's directory
+
+   type Open_Remote_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Remote_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Open a file selector allowing the user to open a file on a remote
+   --  machine.
 
    function Check_Prj
      (Tree     : access Project_Tree'Class;
@@ -788,6 +805,76 @@ package body VFS_Module is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Open_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle    := Get_Kernel (Context.Context);
+      Dir    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+   begin
+      if Has_Directory_Information (Context.Context) then
+         Dir := Directory_Information (Context.Context);
+      end if;
+
+      declare
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open File",
+              Base_Directory    => Dir,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
+      begin
+         if Filename /= GNATCOLL.VFS.No_File then
+            --  Open with the first possible project, the user cannot choose
+            --  which specific project to use (in the case of aggregates)
+            Open_File_Action_Hook.Run
+               (Kernel, Filename, Project => No_Project);
+         end if;
+      end;
+      return Standard.Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Open_Remote_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      declare
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open Remote File",
+              Parent            => Get_Current_Window (Kernel),
+              Remote_Browsing   => True,
+              Use_Native_Dialog => False,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
+
+      begin
+         if Filename /= GNATCOLL.VFS.No_File then
+            Open_File_Action_Hook.Run
+               (Kernel, Filename, Project => No_Project);
+         end if;
+      end;
+      return Standard.Commands.Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -823,7 +910,7 @@ package body VFS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File_View_Filter : constant Action_Filter :=
+      File_Explorer_Filter : constant Action_Filter :=
         Lookup_Filter (Kernel, "File_View")
         or (Lookup_Filter (Kernel, "Explorer_View")
             and not Lookup_Filter (Kernel, "Explorer_Toolbar_Filter"));
@@ -831,9 +918,9 @@ package body VFS_Module is
       File_Filter      : constant Action_Filter := new File_Filter_Record;
       Dir_Filter       : constant Action_Filter := new Dir_Filter_Record;
       Is_Dir           : constant Action_Filter :=
-        File_View_Filter and Dir_Filter;
+        File_Explorer_Filter and Dir_Filter;
       Is_File          : constant Action_Filter :=
-        File_View_Filter and File_Filter;
+        File_Explorer_Filter and File_Filter;
       Command          : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
@@ -853,6 +940,26 @@ package body VFS_Module is
         (Kernel,
          Filter => Dir_Filter,
          Name   => "Dir_Filter");
+
+      Register_Action
+        (Kernel, Open_Command_Name, new Open_Command,
+         Description => -"Open an existing file",
+         Icon_Name   => "gps-open-file-symbolic");
+      Register_Contextual_Menu
+        (Kernel,
+         Action => Open_Command_Name,
+         Label  => "Open folder",
+         Filter => File_Explorer_Filter and Dir_Filter);
+      Register_Contextual_Menu
+        (Kernel,
+         Action => Open_Command_Name,
+         Label  => "Open folder containing %f",
+         Filter => File_Explorer_Filter and File_Filter);
+
+      Register_Action
+        (Kernel, "open from host", new Open_Remote_Command,
+         Description => -"Open a file from a remote host",
+         Icon_Name   => "gps-open-file-symbolic");
 
       Register_Contextual_Submenu
         (Kernel,
