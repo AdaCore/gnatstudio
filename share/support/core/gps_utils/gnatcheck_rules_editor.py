@@ -139,6 +139,20 @@ class Namespace:
     pass
 
 
+def _convert_rules(gnatCmd, category, func, prev_name, new_name):
+    warningsCat = Category(category)
+    rules = func(gnatCmd)
+    for r in rules:
+        r.switch = re.sub(prev_name, new_name, r.switch)
+        r.switchoff = re.sub(prev_name, new_name, r.switchoff)
+        r.label = re.sub(prev_name, new_name, r.label)
+        r.tip = re.sub(prev_name, new_name, r.tip)
+        for dep in r.dependencies:
+            dep[0] = re.sub(prev_name, new_name, dep[0])
+        warningsCat.AddRule(r)
+    return warningsCat
+
+
 def get_supported_rules(gnatCmd):
     ns = Namespace()
     ns.msg = ""
@@ -173,18 +187,12 @@ def get_supported_rules(gnatCmd):
         return []
 
     # Then retrieve warnings/style/restriction checks from gnatmake
-    warningsCat = Category("GNAT Warnings")
-    rules = gps_utils.gnat_rules.get_warnings_list(gnatCmd)
-    for r in rules:
-        r.switch = re.sub("-gnatw", "+RWarnings:", r.switch)
-        r.switchoff = re.sub("-gnatw", "+RWarnings:", r.switchoff)
-        r.label = re.sub("-gnatw", "+RWarnings:", r.label)
-        r.tip = re.sub("-gnatw", "+RWarnings:", r.tip)
-        for dep in r.dependencies:
-            dep[0] = re.sub("-gnatw", "+RWarnings:", dep[0])
-        warningsCat.AddRule(r)
-    cat.AddCategory(warningsCat)
-
+    cat.AddCategory(_convert_rules(gnatCmd, "GNAT Warnings",
+                                   gps_utils.gnat_rules.get_warnings_list,
+                                   "-gnatw", "+RWarnings:"))
+    cat.AddCategory(_convert_rules(gnatCmd, "GNAT Style Checks",
+                                   gps_utils.gnat_rules.get_style_checks_list,
+                                   "-gnaty", "+RStyle_Checks:"))
     return cat
 
 
