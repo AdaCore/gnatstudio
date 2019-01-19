@@ -615,7 +615,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -("Save size and position of views in a backup file. Use this file"
               & " in the next session to restore the desktop."),
-         Default => True);
+         Default => False);
 
       Save_Desktop_On_Exit := Manager.Create
         (Path    => -"General:Behavior",
