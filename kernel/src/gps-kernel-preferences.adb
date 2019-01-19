@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2018, AdaCore                     --
+--                     Copyright (C) 2001-2019, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -607,7 +607,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -("Save size and position of views in a backup file. Use this file"
               & " in the next session to restore the desktop."),
-         Default => True);
+         Default => False);
 
       Save_Desktop_On_Exit := Manager.Create
         (Path    => -"General:Behavior",
