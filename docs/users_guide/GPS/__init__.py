@@ -2177,6 +2177,15 @@ class Debugger(object):
     'target [remote_protocol] [remote_target]' command.
     """
 
+    is_connected_remotely = False
+    """
+    True when the debugger is currently connected to the remote target
+    specified via the ``IDE'Program_Host`` and ``IDE'Communication_Protocol``
+    attributes.
+    This is set to false if no remote target is specified or if
+    the debugger failed to connect to it.
+    """
+
     breakpoints = []
     """
     A read-only property that returns the list of breakpoints currently set

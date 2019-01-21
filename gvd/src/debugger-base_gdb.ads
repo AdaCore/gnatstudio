@@ -114,6 +114,9 @@ private
    Undefined_Command : constant String := "Undefined command";
    --  String used to detect undefined commands
 
+   Failed_To_Conect_Pattern : constant String := "timed out";
+   --  String used to detect failures when trying to connect remotely
+
    procedure Question_Filter1
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;

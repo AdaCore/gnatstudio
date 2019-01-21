@@ -88,17 +88,6 @@ package body GVD.Preferences is
                "initializing a remote debugging session."),
          Default   => False);
 
-      Connection_Timeout := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Connection-Timeout",
-         Path     => "Debugger:General",
-         Label    => "Connection timeout",
-         Doc      => "The timeout used when trying to connect a remote target"
-         & ", in milliseconds.",
-         Minimum  => 1_000,
-         Maximum  => 60_000,
-         Default  => 3_000);
-
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
          Name    => "GPS6-Debugger-Debugger-Kind",

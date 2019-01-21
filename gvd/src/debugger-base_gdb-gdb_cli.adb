@@ -807,8 +807,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       Process : constant Visual_Debugger := Convert (Debugger);
       Cmd     : constant String := "target " & Protocol & " " & Target;
-      Timeout : constant Integer := Connection_Timeout.Get_Pref;
-      Success : Boolean;
    begin
       --  If the debugger is already connected, kill the connection if Force
       --  is True or simply return otherwise.
@@ -821,39 +819,29 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end if;
       end if;
 
-      --  Send the command to the debugger in a non-blocking way and check if
-      --  it succeed.
-      Send (Debugger,
+      declare
+         Output : constant String :=  Send_And_Get_Clean_Output
+           (Debugger,
             Cmd             => Cmd,
-            Wait_For_Prompt => False,
+            Synchronous     => False,
             Mode            => Mode);
-      Success := Wait_Prompt (Debugger, Timeout);
+         Success : constant Boolean :=
+                     Index (Output, Pattern => Failed_To_Conect_Pattern) = 0;
+      begin
 
-      --  Mark the command as processed, even if did not succeed in the
-      --  specified timeout so that we can continue sending other commands.
-      Set_Command_In_Process (Get_Process (Debugger), False);
-      Free (Process.Current_Command);
+         if Success then
+            Output_Text
+              (Process, Protocol & " debugging using " & Target & ASCII.LF);
 
-      if Success then
-         Output_Text
-           (Process, Protocol & " debugging using " & Target & ASCII.LF);
+            if Protocol = "remote" then
+               Set_Is_Started (Debugger, True);
+            end if;
 
-         if Protocol = "remote" then
-            Set_Is_Started (Debugger, True);
+            Debugger.Set_VxWorks_Version;
          end if;
 
-         Set_VxWorks_Version (Debugger);
-      else
-         --  If it
-         Interrupt (Debugger);
-         Wait_Prompt (Debugger);
-
-         Output_Text (Process, "Can't connect to the target using "
-                      & Protocol & " protocol on " & Target & ASCII.LF);
-      end if;
-
-      Debugger.Target_Connected := Success;
-      Display_Prompt (Debugger);
+         Debugger.Target_Connected := Success;
+      end;
    end Connect_To_Target;
 
       ----------------------------

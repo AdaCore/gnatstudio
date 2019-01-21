@@ -69,7 +69,6 @@ package GVD.Preferences is
 
    --  Remote Debugging
    Load_Executable_On_Init       : Boolean_Preference;
-   Connection_Timeout            : Integer_Preference;
 
    -- Console --
    Debugger_Console_All_Interactions : Boolean_Preference;
