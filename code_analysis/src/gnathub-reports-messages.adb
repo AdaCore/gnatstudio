@@ -21,6 +21,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Gdk.RGBA;
+with Glib.Convert;             use Glib.Convert;
 with Glib.Object;
 with Glib.Values;
 with Glib_Values_Utils;        use Glib_Values_Utils;
@@ -328,6 +329,7 @@ package body GNAThub.Reports.Messages is
          Name   : String;
          ID     : String) return Gtk_Tree_Iter
       is
+         Escaped_Name : constant String := Escape_Text (Name);
          Iter : Gtk_Tree_Iter;
 
          procedure Update_Row
@@ -379,7 +381,7 @@ package body GNAThub.Reports.Messages is
               (Iter,
                Parent          => Parent,
                Kind            => Kind,
-               Name            => Name,
+               Name            => Escaped_Name,
                ID              => ID,
                Update_Action   => Update_Action,
                Severity_Column => Columns_Info.Total_Col);
