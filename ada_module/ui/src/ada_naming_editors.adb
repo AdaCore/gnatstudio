@@ -40,6 +40,7 @@ with GPR;                        use GPR;
 with GPS.Intl;                   use GPS.Intl;
 with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 package body Ada_Naming_Editors is
 
@@ -252,6 +253,7 @@ package body Ada_Naming_Editors is
       Group_Widget : Dialog_Group_Widget;
       Button       : Gtk_Button;
       Col_Number   : Gint;
+      Scrolled     : Gtk_Scrolled_Window;
 
       procedure Create_Naming_Scheme_Combo
         (Combo      : out Gtk_Combo_Box_Text;
@@ -314,13 +316,14 @@ package body Ada_Naming_Editors is
          Gtk_New (Col);
          Col_Number := Append_Column (Self.Exception_List, Col);
          Set_Title (Col, Name);
+         Col.Set_Resizable (True);
          Gtk_New (Render);
          Pack_Start (Col, Render, False);
          Set_Sort_Column_Id (Col, Col_Number - 1);
          Add_Attribute (Col, Render, "text", Col_Number - 1);
-         Add_Attribute (Col, Render, "editable", 3);
+         Add_Attribute (Col, Render, "editable", Editable_Column);
          Set_Editable_And_Callback
-           (Self.Exception_List_Model, Render, Col_Number - 1);
+           (Self.Exception_List_Model, Render, Col_Number - 1, False);
       end Create_Exceptions_List_Column;
 
    begin
@@ -432,17 +435,16 @@ package body Ada_Naming_Editors is
       Self.Exception_List_View.Append_Button (Button);
 
       --  Create the naming exceptions list tree view
+      Gtk_New (Scrolled);
       Gtk_New (Self.Exception_List_Model, Exception_List_Column_Types);
-      Gtk_New (Self.Exception_List,
-               Self.Exception_List_Model);
+      Gtk_New (Self.Exception_List, Self.Exception_List_Model);
+      Scrolled.Add (Self.Exception_List);
       Self.Exception_List_View.Append
-        (Widget        => Self.Exception_List,
+        (Widget        => Scrolled,
          Expand        => True,
          Fill          => True);
 
-      Set_Mode
-        (Get_Selection (Self.Exception_List),
-         Selection_Single);
+      Self.Exception_List.Get_Selection.Set_Mode (Selection_Single);
 
       --  Create the naming exceptions list tree view columns
       Create_Exceptions_List_Column ("Unit name");

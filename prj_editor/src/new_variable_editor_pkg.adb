@@ -45,6 +45,7 @@ package body New_Variable_Editor_Pkg is
       Title               : String;
       Kernel              : not null access Kernel_Handle_Record'Class)
    is
+      Scrolled : Gtk_Scrolled_Window;
    begin
       GPS.Dialogs.Initialize
         (New_Variable_Editor,
@@ -118,9 +119,10 @@ package body New_Variable_Editor_Pkg is
          Position => Pos_Left);
       Add (New_Variable_Editor.Viewport1, New_Variable_Editor.Values_List_Box);
 
+      Gtk_New (Scrolled);
       Gtk_New (New_Variable_Editor.Values_List);
-      New_Variable_Editor.Values_List_Box.Append
-        (New_Variable_Editor.Values_List);
+      Scrolled.Add (New_Variable_Editor.Values_List);
+      New_Variable_Editor.Values_List_Box.Append (Scrolled);
 
       Gtk_New_From_Icon_Name
         (New_Variable_Editor.Delete_Variable,
