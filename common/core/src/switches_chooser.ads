@@ -422,7 +422,7 @@ package Switches_Chooser is
    --  Switch_Description object Column field getter
 
    function Get_Separator
-     (Switch : Switch_Description) return Character;
+     (Switch : Switch_Description) return String;
    --  Switch_Description object Separator field getter
 
    function Get_Type
@@ -634,7 +634,7 @@ private
       Add_First : Boolean;
       Line      : Positive := 1;
       Column    : Positive := 1;
-      Separator : Character;
+      Separator : Ada.Strings.Unbounded.Unbounded_String;
       Popup     : Popup_Index := Main_Window;
 
       Active    : Boolean := True;

@@ -300,7 +300,7 @@ package body Command_Lines is
      (Config      : in out Command_Line_Configuration;
       Switch      : String;
       Section     : String := "";
-      Separator   : Character;
+      Separator   : String;
       Optional    : Boolean := False)
    is
       Key   : constant Unbounded_String := To_Unbounded_String (Switch);
@@ -324,7 +324,9 @@ package body Command_Lines is
                 Parameter => (Is_Set => True,
                               Optional => Optional,
                               Separator => (Is_Set => True,
-                                            Value  => Separator))));
+                                            Value  =>
+                                              To_Unbounded_String (Separator)
+                                           ))));
          end if;
       end;
    end Define_Switch_With_Parameter;
@@ -481,13 +483,10 @@ package body Command_Lines is
                Found  := True;
                return;
 
-            --  Otherwise check if switch has parameter embeded in argument
+            --  Otherwise check if switch has parameter embedded in argument
             elsif Current.Parameter.Is_Set
               and then Switch'Length > Length
               and then Starts_With (Arg, Current.Switch)
-              and then (not Current.Parameter.Separator.Is_Set
-                        or else Current.Parameter.Separator.Value =
-                          Switch (Switch'First + Length))
             then
                if Found then
                   --  One parameter is already found,
@@ -539,7 +538,8 @@ package body Command_Lines is
                   and then J < List'Last
                   and then Switch_Conf.Parameter.Is_Set
                   and then Switch_Conf.Parameter.Separator.Is_Set
-                  and then Switch_Conf.Parameter.Separator.Value = ' ');
+                  and then
+                  To_String (Switch_Conf.Parameter.Separator.Value) = " ");
 
                if Is_Parameter then
                   Item.Parameter :=
@@ -894,10 +894,10 @@ package body Command_Lines is
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String    := "";
-      Separator  : Character := ASCII.NUL;
-      Section    : String    := "";
-      Add_Before : Boolean   := False)
+      Parameter  : String  := "";
+      Separator  : String  := "";
+      Section    : String  := "";
+      Add_Before : Boolean := False)
    is
       Success : Boolean;
    begin
@@ -912,10 +912,10 @@ package body Command_Lines is
    procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
-      Parameter  : String    := "";
-      Separator  : Character := ASCII.NUL;
-      Section    : String    := "";
-      Add_Before : Boolean   := False;
+      Parameter  : String  := "";
+      Separator  : String  := "";
+      Section    : String  := "";
+      Add_Before : Boolean := False;
       Success    : out Boolean)
    is
       Item : Command_Lines.Switch;
@@ -929,8 +929,10 @@ package body Command_Lines is
             Separator => (Is_Set => False),
             Value     => To_Unbounded_String (Parameter));
 
-         if Separator /= ASCII.NUL then
-            Item.Parameter.Separator := (Is_Set => True, Value => Separator);
+         if Separator /= "" then
+            Item.Parameter.Separator :=
+              (Is_Set => True,
+               Value  => To_Unbounded_String (Separator));
          end if;
       end if;
 
@@ -1310,7 +1312,7 @@ package body Command_Lines is
                Result := Parameter.Separator;
 
                if Result.Is_Set then
-                  return (1 => Result.Value);
+                  return To_String (Result.Value);
                end if;
             end if;
          end;

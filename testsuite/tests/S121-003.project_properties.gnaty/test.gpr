@@ -1,0 +1,8 @@
+project Test is
+   for Languages use ("Ada");
+   for Main use ("foo.adb");
+
+   package Compiler is
+      for Switches ("ada") use ("-gnaty", "-gnaty3M72b");
+   end Compiler;
+end Test;
