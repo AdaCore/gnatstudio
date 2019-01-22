@@ -45,8 +45,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Markers;                use GPS.Markers;
-with Glib.Object;
-with Glib;
 with Language;                   use Language;
 with XML_Parsers;                use XML_Parsers;
 with XML_Utils;                  use XML_Utils;

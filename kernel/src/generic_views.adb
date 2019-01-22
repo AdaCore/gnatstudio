@@ -48,7 +48,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Histories;                 use Histories;

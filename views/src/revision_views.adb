@@ -30,7 +30,6 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
-with Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
 with Gdk.RGBA;                   use Gdk.RGBA;

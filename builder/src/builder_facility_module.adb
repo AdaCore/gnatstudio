@@ -21,8 +21,6 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Glib;                      use Glib;
-
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;

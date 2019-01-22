@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                        use Glib;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;

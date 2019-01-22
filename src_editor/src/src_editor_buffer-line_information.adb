@@ -41,7 +41,6 @@ with Pango.Cairo;              use Pango.Cairo;
 with Commands.Editor;          use Commands.Editor;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;

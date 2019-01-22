@@ -26,8 +26,6 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Glib.Object;
-
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;

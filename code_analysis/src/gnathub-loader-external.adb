@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-
 package body GNAThub.Loader.External is
 
    Load_Messages_Limit : constant := 30;
