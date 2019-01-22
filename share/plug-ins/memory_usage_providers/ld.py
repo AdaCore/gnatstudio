@@ -20,7 +20,9 @@ class LD(core.MemoryUsageProvider):
     _cache = {}
 
     # The list of supported targets
-    _supported_targets = ["arm-eabi"]
+    _supported_targets = ["arm-eabi", "leon3-elf", "powerpc-elf",
+                          "powerpc-eabispe", "riscv32-elf",
+                          "riscv64-elf", "aarch64-elf"]
 
     @staticmethod
     def map_file_is_supported(context):
@@ -48,7 +50,7 @@ class LD(core.MemoryUsageProvider):
                 process = GPS.Process([ld_exe, '--help'])
                 output = process.get_result()
                 v = '-map' in output
-            except:
+            except Exception:
                 v = False
 
         LD._cache[(target, build_mode)] = v
@@ -240,5 +242,6 @@ class LD(core.MemoryUsageProvider):
         sections = [s for s in sections if is_section_allocated(s)]
 
         visitor.on_memory_usage_data_fetched(regions, sections, modules)
+
 
 GPS.parse_xml(xml)
