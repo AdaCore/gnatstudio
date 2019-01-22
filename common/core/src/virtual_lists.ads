@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package implements a "Virtual List". A virtual list is a
---  meta-container, containing serveal heterogeneous lists, but providing a way
+--  meta-container, containing several heterogeneous lists, but providing a way
 --  to access to their elements in an homogeneous manner. Moreover, these
 --  contained lists are not necessary actual lists, but can be viewed as
 --  structures providing an iterator.
