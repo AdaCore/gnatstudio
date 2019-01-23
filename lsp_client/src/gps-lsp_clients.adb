@@ -23,6 +23,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with GPS.Editors;
+with GPS.Kernel.Project;
 with Language;
 
 with Spawn.String_Vectors;
@@ -64,6 +65,35 @@ package body GPS.LSP_Clients is
       Me.Trace ("On_Error:" & Error);
       Self.Is_Ready := False;
    end On_Error;
+
+   ----------------
+   -- On_Started --
+   ----------------
+
+   overriding procedure On_Started (Self : in out LSP_Client) is
+      Root    : constant String :=
+                  String
+                    (GNATCOLL.VFS.Filesystem_String'
+                       (GPS.Kernel.Project.Get_Project
+                          (Self.Kernel).Project_Path.Dir_Name));
+      --  ??? Root directory of the project is directoy where
+      --  project file is stored.
+      Id      : LSP.Types.LSP_Number;
+      My_PID  : constant Integer :=
+                  GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id);
+      Request : constant LSP.Messages.InitializeParams :=
+                  (processId    => (True, My_PID),
+                   rootPath     => +Root,
+                   rootUri      => +("file://" & Root),
+                   capabilities =>
+                     (workspace => (applyEdit => LSP.Types.False,
+                                       others    => <>),
+                      textDocument => <>),
+                   trace        => LSP.Types.Unspecified);
+
+   begin
+      Self.Initialize_Request (Id, Request);
+   end On_Started;
 
    ---------------
    -- Open_File --
@@ -140,24 +170,6 @@ package body GPS.LSP_Clients is
       --  TODO: Self.Set_Working_Directory
       Me.Trace ("Start: " & To_Display_String (Cmd));
       Self.Start;
-
-      declare
-         Root    : constant String := "/tmp/lsp";  --  FIX ME!
-         Id      : LSP.Types.LSP_Number;
-         My_PID  : constant Integer :=
-           GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id);
-         Request : constant LSP.Messages.InitializeParams :=
-           (processId => (True, My_PID),
-            rootPath => +Root,
-            rootUri => +("file://" & Root),
-            capabilities =>
-              (workspace => (applyEdit => (True, False),
-                             others => <>),
-               textDocument => <>),
-            trace => LSP.Types.Unspecified);
-      begin
-         Self.Initialize_Request (Id, Request);
-      end;
    end Start;
 
 end GPS.LSP_Clients;
