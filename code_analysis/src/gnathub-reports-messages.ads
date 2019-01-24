@@ -51,6 +51,11 @@ package GNAThub.Reports.Messages is
       Store_Iter : Gtk_Tree_Iter) return Boolean;
    --  Return True if the row contains messages, False othwerwise.
 
+   procedure Show_Messages
+     (Self : not null access GNAThub_Report_Messages_Record;
+      ID   : String);
+   --  Show the first message in the Locations view related to the given row
+
    function Get_ID
      (Self : not null access GNAThub_Report_Messages_Record'Class;
       Row  : Gtk_Tree_Iter) return String;

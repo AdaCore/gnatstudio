@@ -334,6 +334,7 @@ package body GNAThub.Reports.Collector is
       Iter := View.Messages_Report.Convert_To_Store_Iter (Sort_Iter);
 
       View.Metric_Report.Show_Metrics (View.Messages_Report.Get_ID (Iter));
+      View.Messages_Report.Show_Messages (View.Messages_Report.Get_ID (Iter));
    end On_Selection_Changed;
 
    ---------------------

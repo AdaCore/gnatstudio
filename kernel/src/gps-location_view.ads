@@ -80,4 +80,9 @@ package GPS.Location_View is
    --  Raise the locations window, if it exists or create it before raising
    --  it if Create_If_Needed is True.
 
+   procedure Set_Locations_Filter
+     (Self  : not null access Kernel_Handle_Record'Class;
+      Value : String);
+   --  Set the Locations view filter to Value
+
 end GPS.Location_View;

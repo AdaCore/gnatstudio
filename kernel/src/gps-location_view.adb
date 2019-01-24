@@ -1325,7 +1325,8 @@ package body GPS.Location_View is
          Tooltip     => -"The text pattern or regular expression",
          Placeholder => -"filter",
          Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Locations View Filter");
    end Create_Toolbar;
 
    -----------------
@@ -1370,6 +1371,21 @@ package body GPS.Location_View is
          C.Raise_Child (Give_Focus => Give_Focus);
       end if;
    end Raise_Locations_Window;
+
+   --------------------------
+   -- Set_Locations_Filter --
+   --------------------------
+
+   procedure Set_Locations_Filter
+     (Self  : not null access Kernel_Handle_Record'Class;
+      Value : String)
+   is
+      L   : constant GPS.Location_View.Location_View_Access :=
+        GPS.Location_View.Get_Or_Create_Location_View (Self);
+      Loc : constant Location_View := Location_View (L);
+   begin
+      Loc.Set_Filter (Value);
+   end Set_Locations_Filter;
 
    ---------------------
    -- Register_Module --
