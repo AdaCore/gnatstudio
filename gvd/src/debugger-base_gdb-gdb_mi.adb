@@ -835,7 +835,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       V := Debugger.Create_Var (Entity);
 
       if V.Name = "" then
-         return "";
+         return "<unknown>";
       end if;
 
       Debugger.Detect_Language;
@@ -897,7 +897,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    exception
       when E : others =>
          Me.Trace (E);
-         return "";
+         return "<unknown>";
    end Value_Of;
 
    ---------------------

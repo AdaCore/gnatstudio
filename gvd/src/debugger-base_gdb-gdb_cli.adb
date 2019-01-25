@@ -472,7 +472,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Match (Variable_Pattern, S, Matched);
 
       if Matched (0) = No_Match then
-         return "";
+         return "<unknown>";
       else
          return S (Matched (1).First .. Matched (1).Last);
       end if;
