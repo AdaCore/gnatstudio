@@ -12,7 +12,7 @@
    @define-color theme_bg_color green;
 */
 
-@define-color theme_base_color mix(@theme_bg_color, @editor_bg_color, 0.8);
+@define-color theme_base_color @editor_bg_color;
 
 @define-color inactive_items_color mix(@theme_base_color, @theme_fg_color, 0.55);
 @define-color inactive_items_selected_color mix(@theme_selected_bg_color, @theme_selected_fg_color, 0.7);
@@ -365,17 +365,14 @@ GtkDialog {
   border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
 }
 
-.separator {
-  /* Change the color of the separators to make them more visible in
-     dark themes */
-  color: @mdi_border_color;
-}
-
 /*********************
- * Panes
+ * Separators
  *********************/
 
-.pane-separator {
+ /* Change the color of the separators to make them more visible in
+    dark themes */
+
+.separator, .pane-separator {
    background-color: @mdi_border_color;
    background-image: none;
 }
@@ -406,27 +403,19 @@ GtkDialog {
  * MDI Notebook tabs
  *********************/
 
-
 .notebook.mdi tab {
    border-width: 0px;
    border-color: @mdi_border_color;
+   padding: 8px;
+}
+
+.notebook.mdi tab * {
+   padding: 4px;
 }
 
 .notebook.mdi tab GtkLabel {
    font-weight: normal;
    color: @inactive_items_color;
-}
-
-.notebook.mdi tab.top,
-.notebook.mdi tab.bottom {
-   padding: 5px 2px 5px 6px;
-}
-
-.notebook.mdi tab.left {
-   padding: 2px 5px 6px 5px;
-}
-.notebook.mdi tab.right {
-   padding: 6px 5px 2px 5px;
 }
 
 .notebook.mdifocused tab:active {
