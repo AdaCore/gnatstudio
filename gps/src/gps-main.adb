@@ -1000,11 +1000,11 @@ procedure GPS.Main is
             --  Get_Help (True) will only print options from the main
             --  group
             Help : constant String :=
-                     "GPS " & To_String (Config.Version) & " ("
-                       & Config.Source_Date & ") hosted on "
-                       & Config.Target & ASCII.LF & ASCII.LF
-                       & GPS_Command_Line.Context.Get_Help
-                           (Switch /= "--help-all", null);
+              "GPS " & To_String (Config.Version) & " ("
+              & Config.Source_Date & ") hosted on "
+              & Config.Target & ASCII.LF & ASCII.LF
+              & GPS_Command_Line.Context.Get_Help
+              (Switch /= "--help-all", null);
          begin
             Put_Line (Help);
          end;
@@ -1013,18 +1013,6 @@ procedure GPS.Main is
 
       elsif Switch = "-X" then
          Handle_X_Switch (ICS.Value (Value));
-
-      elsif Switch = "--version" or else Switch = "-v" then
-         declare
-            Version : constant String :=
-                        "GPS " & To_String (Config.Version) & " ("
-                          & Config.Source_Date & ") hosted on "
-                          & Config.Target;
-         begin
-            Put_Line (Version);
-         end;
-
-         GPS_Command_Line.Do_Exit := True;
 
       elsif Switch = "--debug" then
          Free (Program_Args);
@@ -3020,6 +3008,30 @@ procedure GPS.Main is
    pragma Unreferenced (Registered);
 
 begin
+   --  Process the "--version" command line switch separately to make it
+   --  available even without any display.
+
+   for J in 1 .. Ada.Command_Line.Argument_Count loop
+      if Ada.Command_Line.Argument (J) = "--version"
+        or else Ada.Command_Line.Argument (J) = "-v"
+      then
+         declare
+            Version : constant String :=
+              "GPS " & To_String (Config.Version) & " ("
+              & Config.Source_Date & ") hosted on "
+              & Config.Target;
+         begin
+            Put_Line (Version);
+         end;
+
+         GPS_Command_Line.Do_Exit := True;
+      end if;
+   end loop;
+
+   if GPS_Command_Line.Do_Exit then
+      return;
+   end if;
+
    --  Under all platforms, prevent the creation of a dbus session: this serves
    --  no purpose, breaks the testsuite, slows down the startup of the first
    --  GPS instance, and is flaky under Windows XP.
