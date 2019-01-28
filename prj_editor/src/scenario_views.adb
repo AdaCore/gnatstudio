@@ -800,7 +800,50 @@ package body Scenario_Views is
      (Self : access Glib.Object.GObject_Record'Class)
    is
       View : constant Scenario_View := Scenario_View (Self);
+      Incompatible : Boolean := False;
    begin
+      if View.Combo_Build.Get_Active_Text = "debug" then
+         --  Check wether the project contains "-s" option
+
+         declare
+            Project : constant Project_Type :=
+              View.Kernel.Get_Project_Tree.Root_Project;
+            Langs    : GNAT.Strings.String_List := Project.Languages;
+            Args     : GNAT.Strings.String_List_Access;
+            Default  : Boolean;
+         begin
+            Project.Switches
+              (GNATCOLL.Projects.Linker_Package,
+               GNATCOLL.VFS.No_File,
+               (if Project.Has_Language ("ada")
+                then "ada"
+                else Langs (Langs'First).all),
+               Args,
+               Default);
+
+            for J in Args'Range loop
+               if Args (J).all = "-s" then
+                  Incompatible := True;
+                  exit;
+               end if;
+            end loop;
+
+            GNATCOLL.Utils.Free (Langs);
+            GNAT.Strings.Free (Args);
+         end;
+
+         if Incompatible then
+            View.Kernel.Insert
+              ("The project contains 'strip all symbols' option which is " &
+                 "incompatible with debugging. Please, remove '-s' from " &
+                 "the project.",
+               Mode => Error);
+
+            View.Combo_Build.Set_Active (0);
+            return;
+         end if;
+      end if;
+
       View.Kernel.Set_Build_Mode
         (New_Mode => View.Combo_Build.Get_Active_Text);
    end On_Build_Mode_Combo_Changed;

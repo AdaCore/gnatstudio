@@ -555,7 +555,7 @@ package body Toolchains_Editor is
       --  Displaying the project languages
 
       declare
-         Languages : constant GNAT.Strings.String_List :=
+         Languages : GNAT.Strings.String_List :=
            (if Project = No_Project
             then (1 => new String'("ada")) else Project.Languages);
          Mgr : constant Toolchains.Toolchain_Manager :=
@@ -577,6 +577,8 @@ package body Toolchains_Editor is
 
             Self.Lang_Model.Next (Iter);
          end loop;
+
+         Free (Languages);
       end;
    end Initialize;
 
@@ -629,7 +631,7 @@ package body Toolchains_Editor is
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages, Kernel);
-      Old       : constant GNAT.Strings.String_List := Project.Languages;
+      Old       : GNAT.Strings.String_List := Project.Languages;
       Val       : GNAT.Strings.String_List_Access := Get_Languages (Self);
       Tmp_Modif : Boolean := False;
    begin
@@ -641,6 +643,8 @@ package body Toolchains_Editor is
       else
          Tmp_Modif := True;
       end if;
+
+      Free (Old);
 
       if Tmp_Modif then
          Project.Set_Attribute
