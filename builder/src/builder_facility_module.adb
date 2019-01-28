@@ -314,7 +314,8 @@ package body Builder_Facility_Module is
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
-      Background      : Boolean);
+      Background      : Boolean;
+      Quiet           : Boolean);
    --  Clear the compiler output, the console, and the locations view for
    --  Category.
 
@@ -932,7 +933,8 @@ package body Builder_Facility_Module is
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
-      Background      : Boolean)
+      Background      : Boolean;
+      Quiet           : Boolean)
    is
       Console    : Interactive_Console;
       Force_File : Virtual_File renames
@@ -940,11 +942,14 @@ package body Builder_Facility_Module is
       Unit_Part  : Unit_Parts;
       Spec_File  : Virtual_File;
    begin
-      if Clear_Console then
-         Console := Get_Build_Console (Kernel, Shadow, Background, False);
+      Console := Get_Build_Console (Kernel, Shadow, Background, False);
 
-         if Console /= null then
+      if Console /= null then
+         if Clear_Console then
             Clear (Console);
+         else
+            --  Add an empty line to aerate the console
+            Console.Insert ("", Add_LF => True);
          end if;
       end if;
 
@@ -960,20 +965,25 @@ package body Builder_Facility_Module is
               (Category, Builder_Message_Flags);
 
          else
-            --  clear messages for spec file instead
+            --  If not a quiet command try to clear the spec messages
 
             Unit_Part := Kernel.Get_Project_Tree.Info (Force_File).Unit_Part;
 
-            if Unit_Part = Unit_Body
-              or else Unit_Part = Unit_Separate
+            if (Unit_Part = Unit_Body
+              or else Unit_Part = Unit_Separate)
+              and then not Quiet
             then
                Spec_File := Kernel.Get_Project_Tree.Other_File (Force_File);
                if Spec_File /= No_File then
-                  Get_Messages_Container
-                    (Kernel).Remove_File
+                  Get_Messages_Container (Kernel).Remove_File
                     (Category, Spec_File, Builder_Message_Flags);
                end if;
             end if;
+
+            --  Always clear the force_file messages
+
+            Get_Messages_Container (Kernel).Remove_File
+              (Category, Force_File, Builder_Message_Flags);
          end if;
       end if;
 
@@ -1032,10 +1042,10 @@ package body Builder_Facility_Module is
             not Preserve_Output
               and then not Quiet
               and then (Shadow or else Builder_Module_ID.Build_Count = 0),
-         Clear_Locations => (not Quiet)
-           and then Builder_Module_ID.Build_Count = 0,
+         Clear_Locations => Builder_Module_ID.Build_Count = 0,
          Shadow          => Shadow,
-         Background      => Background);
+         Background      => Background,
+         Quiet           => Quiet);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
