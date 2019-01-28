@@ -84,7 +84,8 @@ class Console_Process(GPS.Console, GPS.Process):
                 on_completion=self.on_completion,
                 on_key=self.on_key,
                 ansi=ansi,
-                force=force)
+                force=force,
+                save_desktop=self.save_desktop)
             GPS.Process.__init__(
                 self,
                 command=command,
@@ -94,13 +95,12 @@ class Console_Process(GPS.Console, GPS.Process):
                 task_manager=task_manager,
                 on_exit=self.on_exit,
                 on_match=self.on_output)
-            GPS.MDI.get_by_child(self).raise_window()
-        except:
+        except Exception:
             GPS.Console().write(str(sys.exc_info()[1]) + '\n')
             try:
                 self.destroy()
                 self.kill()
-            except:
+            except Exception:
                 pass
             GPS.Console().write('Could not spawn: %s\n' % (' '.join(command)))
 
@@ -121,7 +121,7 @@ class Console_Process(GPS.Console, GPS.Process):
             else:
                 self.write(remaining_output)
                 self.write('\nexit status: %s' % status)
-        except:
+        except Exception:
             pass  # Might have already been destroyed if that's what
             # resulted in the call to on_exit
 
@@ -188,6 +188,9 @@ class Console_Process(GPS.Console, GPS.Process):
            inserted in the console.
         """
         return False
+
+    def save_desktop(self, child):
+        return ("Console_Process", "")
 
 
 class ANSI_Console_Process(Console_Process):
