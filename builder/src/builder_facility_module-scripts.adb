@@ -91,7 +91,6 @@ package body Builder_Facility_Module.Scripts is
             Remove_Target (Registry, Name);
 
             Refresh_All_Graphical_Elements;
-            Save_Targets;
          end;
 
       elsif Command = "clone" then
@@ -109,7 +108,6 @@ package body Builder_Facility_Module.Scripts is
             Duplicate_Target (Registry, Name, New_Name, New_Category);
 
             Refresh_All_Graphical_Elements;
-            Save_Targets;
          end;
       elsif Command = "get_command_line" then
          declare

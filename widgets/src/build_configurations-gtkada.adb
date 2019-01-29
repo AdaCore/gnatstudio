@@ -54,6 +54,7 @@ with String_Utils;             use String_Utils;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
+with Informational_Popups; use Informational_Popups;
 
 package body Build_Configurations.Gtkada is
 
@@ -872,6 +873,10 @@ package body Build_Configurations.Gtkada is
             Add (Options_Frame, Scrolled.Expanded_Entry);
             Pack_Start (Box, Options_Frame, False, False, 3);
 
+            if Fixed_Font /= null then
+               Modify_Font (Scrolled.Expanded_Entry, Fixed_Font);
+            end if;
+
             if Length (Target.Properties.Project_Switches) /= 0 then
                Gtk_New (Label, "Project switches: " &
                         To_String (Target.Properties.Project_Switches));
@@ -1469,15 +1474,31 @@ package body Build_Configurations.Gtkada is
       Result          : out GNAT.OS_Lib.Argument_List_Access;
       Fixed_Font      : Pango_Font_Description)
    is
-      UI     : Build_UI_Access;
-      Dialog : Gtk_Dialog;
-      Ignore : Gtk_Button;
-      pragma Unreferenced (Ignore);
+      UI               : Build_UI_Access;
+      Dialog           : Gtk_Dialog;
+      Ignore           : Gtk_Button;
+      Save_Button      : Gtk_Button;
+      Ent              : Gtk_Entry;
+      Initial_Cmd_Line : Unbounded_String;
 
       function Exists
         (List : GNAT.Strings.String_List_Access;
          Item : String) return Boolean;
       --  Return true if Item is found in List
+
+      procedure On_Save
+        (Self : access Gtk_Button_Record'Class);
+      --  Save the build target's command line when clicking on the
+      --  'Save' button.
+
+      procedure Update_Save_Button_Sensitivity
+        (Self : access Glib.Object.GObject_Record'Class);
+      --  Used to upate the 'Save' button's sensitiviy when the actual command
+      --  line is different from the default's one.
+
+      ------------
+      -- Exists --
+      ------------
 
       function Exists
         (List : GNAT.Strings.String_List_Access;
@@ -1496,7 +1517,64 @@ package body Build_Configurations.Gtkada is
          return False;
       end Exists;
 
-      Ent : Gtk_Entry;
+      -------------
+      -- On_Save --
+      -------------
+
+      procedure On_Save
+        (Self : access Gtk_Button_Record'Class)
+      is
+         pragma Unreferenced (Self);
+         Editor : Switches_Editor renames UI.Target_UI.Editor;
+         Target : Target_Access renames UI.Target_UI.Target;
+         CL     : GNAT.OS_Lib.String_List_Access;
+      begin
+         --  Change the target's command line so that it gets saved when
+         --  exiting GPS.
+
+         CL := Get_Command_Line (Editor, False);
+         Set_Command_Line (Target, CL.all);
+         Unchecked_Free (CL);
+
+         --  Save it in the history too.
+
+         if History /= null then
+            Add_To_History
+              (History.all,
+               Target_To_Key (Target),
+               Get_Text (Ent));
+
+            Set_Persistent
+              (History.all,
+               Target_To_Key (Target),
+               Target.Model.Persistent_History);
+         end if;
+
+         --  Make the 'Save' button insensitive again.
+
+         Save_Button.Set_Sensitive (False);
+
+         --  Display an informational popup to make it clear that the command
+         --  line has been saved.
+
+         Display_Informational_Popup
+           (Parent    => Dialog,
+            Icon_Name => "vcs-up-to-date",
+            Text      => "The command line has been saved");
+      end On_Save;
+
+      ------------------------------------
+      -- Update_Save_Button_Sensitivity --
+      ------------------------------------
+
+      procedure Update_Save_Button_Sensitivity
+        (Self : access Glib.Object.GObject_Record'Class)
+      is
+         Button : constant Gtk_Button := Gtk_Button (Self);
+      begin
+         Button.Set_Sensitive
+           (To_String (Initial_Cmd_Line) /= Ent.Get_Text);
+      end Update_Save_Button_Sensitivity;
 
       Dummy : Gint;
       pragma Unreferenced (Dummy);
@@ -1537,16 +1615,49 @@ package body Build_Configurations.Gtkada is
 
       Pack_Start (UI, UI.Target_UI, True, True, 3);
 
-      --  Create the dialog buttons
+      Ent := Get_Entry (UI.Target_UI.Editor);
+
+      --  Save the initial command line
+
+      declare
+         List : String_List_Access :=
+                  UI.Target_UI.Target.Command_Line.To_String_List
+                    (Expanded => False);
+      begin
+         Initial_Cmd_Line := To_Unbounded_String
+           (Argument_List_To_String (List.all));
+         Free (List);
+      end;
+
+      --  Create the 'Save' button, used to save the modified command line
+      --  so that it replaced the target's default one.
+
+      Gtk_New (Save_Button, -"Save");
+      Save_Button.On_Clicked (On_Save'Unrestricted_Access);
+      Save_Button.Set_Sensitive (False);
+      Save_Button.Set_Can_Focus (False);
+      Save_Button.Set_Tooltip_Text
+        ("Save the current command line as the default one.");
+      Dialog.Get_Action_Area.Pack_Start (Save_Button, False);
+
+      --  Used to update the 'Save' button's sensitivity
+      Gtk.Editable.On_Changed
+      (Self  => +UI.Target_UI.Editor.Get_Entry,
+       Call  => Update_Save_Button_Sensitivity'Unrestricted_Access,
+       Slot  => Save_Button,
+       After => True);
+
+      --  Create the other dialog buttons
 
       Ignore := Gtk_Button
         (Add_Button (Dialog, -"Execute", Gtk_Response_OK));
+      Ignore.Set_Can_Focus (False);
+
       Ignore := Gtk_Button
         (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
+      Ignore.Set_Can_Focus (False);
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
-
-      Ent := Get_Entry (UI.Target_UI.Editor);
 
       --  Set the entry to the latest history
 

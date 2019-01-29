@@ -347,6 +347,15 @@ package body Builder_Facility_Module is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when GPS is starting
 
+   type On_Before_Exit is
+     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  Called before GPS exits. Save the build targets in the corresponding
+   --  XML file.
+
    type On_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_View_Changed;
@@ -1001,6 +1010,22 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Self, Kernel);
    begin
       Load_Targets;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Self, Kernel);
+   begin
+      Save_Targets;
+
+      return True;
    end Execute;
 
    -------------
@@ -1769,6 +1794,7 @@ package body Builder_Facility_Module is
       Compute_Build_Targets_Hook.Add (new On_Compute_Targets);
       Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed);
       Gps_Started_Hook.Add (new On_GPS_Started);
+      Before_Exit_Action_Hook.Add (new On_Before_Exit);
 
       --  Register the shell commands
 

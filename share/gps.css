@@ -133,6 +133,14 @@ GtkDialog {
    padding: 3px;
 }
 
+/***************
+ * Info Popups *
+ ***************/
+
+.gps-info-popup GtkLabel {
+   font-size: large;
+}
+
 /*************
  * Menubar   *
  *************/
