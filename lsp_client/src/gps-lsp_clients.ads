@@ -80,8 +80,10 @@ private
       Server_Capabilities : LSP.Messages.ServerCapabilities;
    end record;
 
-   overriding procedure On_Error
-     (Self  : in out LSP_Client;
-      Error : String);
+   overriding procedure On_Error (Self : in out LSP_Client; Error : String);
+
+   overriding procedure On_Started (Self : in out LSP_Client);
+   --  Send initialization request on successful startup of the language
+   --  server process.
 
 end GPS.LSP_Clients;
