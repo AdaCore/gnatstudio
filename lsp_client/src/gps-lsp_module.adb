@@ -175,7 +175,8 @@ package body GPS.LSP_Module is
 
             Handler :=
               new GPS.LSP_Client.Editors.Src_Editor_Handler'
-                (File => File);
+                (Kernel => Kernel,
+                 File   => File);
 
             Module.Text_Handlers.Insert (Handler.File, Handler);
             Client.Did_Open_Text_Document (Handler);

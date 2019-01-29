@@ -79,11 +79,11 @@ private
       Request  : LSP.Types.LSP_Number;
       Response : LSP.Messages.Initialize_Response);
 
-   type Command_Kinds is (Open_File);
+   type Command_Kinds is (Open_File, Changed_File);
 
    type Command (Kind : Command_Kinds := Command_Kinds'First) is record
       case Kind is
-         when Open_File =>
+         when Open_File | Changed_File =>
             Handler :
               GPS.LSP_Client.Text_Document_Handlers
                 .Text_Document_Handler_Access;
@@ -116,9 +116,15 @@ private
       --  Handlers of currently open text documents.
    end record;
 
-   not overriding procedure Open_File
-     (Self : in out LSP_Client;
-      File : GNATCOLL.VFS.Virtual_File);
+   procedure Process_Command
+     (Self : in out LSP_Client'Class;
+      Item : Command);
+   --  Executes given command.
+
+   procedure Enqueue
+     (Self : in out LSP_Client'Class;
+      Item : Command);
+   --  Put given command into the queue.
 
    overriding procedure On_Error (Self : in out LSP_Client; Error : String);
 

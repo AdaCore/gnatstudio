@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with LSP.Types;
+
+with GPS.Editors;
+with GPS.LSP_Client.Utilities;
+
 package body GPS.LSP_Client.Editors is
 
    ----------
@@ -33,10 +38,29 @@ package body GPS.LSP_Client.Editors is
 
    overriding function Get_Did_Change_Message
      (Self : in out Src_Editor_Handler)
-      return LSP.Messages.DidChangeTextDocumentParams is
-      pragma Unreferenced (Self);
+      return LSP.Messages.DidChangeTextDocumentParams
+   is
+      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+                  Self.Kernel.Get_Buffer_Factory.Get
+                    (File        => Self.File,
+                     Open_Buffer => True,
+                     Open_View   => False);
+      Changes : LSP.Messages.TextDocumentContentChangeEvent_Vector;
+
    begin
-      return (others => <>);
+      Changes.Append
+        (LSP.Messages.TextDocumentContentChangeEvent'
+           (text   =>
+                LSP.Types.To_LSP_String
+                  (Buffer.Get_Chars
+                     (Buffer.Beginning_Of_Buffer, Buffer.End_Of_Buffer)),
+            others => <>));
+
+      return
+        (textDocument   =>
+           (uri     => GPS.LSP_Client.Utilities.To_URI (Self.File),
+            version => LSP.Types.Version_Id (Buffer.Version)),
+         contentChanges => Changes);
    end Get_Did_Change_Message;
 
    -------------------
