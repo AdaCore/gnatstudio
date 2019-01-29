@@ -51,6 +51,7 @@ package body GPS.LSP_Clients is
    begin
       Self.Client.Server_Capabilities := Response.result.capabilities;
       Self.Client.Is_Ready := True;
+      Self.Client.Initialized;
       Process_Command_Queue (Self.Client.all);
    end Initialize_Response;
 
