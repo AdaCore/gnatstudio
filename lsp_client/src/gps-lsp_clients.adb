@@ -38,6 +38,44 @@ package body GPS.LSP_Clients is
 
    procedure Process_Command_Queue (Self : in out LSP_Client'Class);
 
+   ------------------------------
+   -- Did_Change_Text_Document --
+   ------------------------------
+
+   not overriding procedure Did_Change_Text_Document
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File) is
+      pragma Unreferenced (Self, File);
+   begin
+      null;
+   end Did_Change_Text_Document;
+
+   -----------------------------
+   -- Did_Close_Text_Document --
+   -----------------------------
+
+   not overriding procedure Did_Close_Text_Document
+     (Self : in out LSP_Client;
+      File : GNATCOLL.VFS.Virtual_File) is
+      pragma Unreferenced (Self, File);
+   begin
+      null;
+   end Did_Close_Text_Document;
+
+   ----------------------------
+   -- Did_Open_Text_Document --
+   ----------------------------
+
+   not overriding procedure Did_Open_Text_Document
+     (Self    : in out LSP_Client;
+      Handler : not null
+        GPS.LSP_Client.Text_Document_Handlers.Text_Document_Handler_Access)
+   is
+   begin
+      Self.Text_Document_Handlers.Insert (Handler.File, Handler);
+      Self.Open_File (Handler.File);
+   end Did_Open_Text_Document;
+
    -------------------------
    -- Initialize_Response --
    -------------------------
@@ -125,7 +163,8 @@ package body GPS.LSP_Clients is
             Self.Text_Document_Did_Open (Value);
          end;
       else
-         Self.Commands.Append ((Open_File, File));
+         Self.Commands.Append
+           ((Open_File, Self.Text_Document_Handlers (File)));
       end if;
    end Open_File;
 
@@ -141,7 +180,7 @@ package body GPS.LSP_Clients is
 
          case Next.Kind is
             when Open_File =>
-               Self.Open_File (Next.File);
+               Self.Open_File (Next.Handler.File);
          end case;
 
          Self.Commands.Delete_First;
