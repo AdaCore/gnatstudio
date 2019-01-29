@@ -50,7 +50,8 @@ package Project_Explorers_Common is
    --  See inherited documentation
 
    type Base_Explorer_Tree_Record is new Tree_View_Record with record
-      Kernel : Kernel_Handle;
+      Kernel           : Kernel_Handle;
+      Frozen_Selection : Boolean := False;
    end record;
    type Base_Explorer_Tree is access all Base_Explorer_Tree_Record'Class;
 

@@ -634,6 +634,7 @@ package body Project_Explorers is
          Capability_Type  => Filtered,
          Set_Visible_Func => True);
       Explorer.Tree.Set_Propagate_Filtered_Status (False);
+      Set_Mode (Explorer.Tree.Get_Selection, Selection_Multiple);
       Set_Headers_Visible (Explorer.Tree, False);
       Explorer.Tree.Set_Enable_Search (False);
       Set_Column_Types (Explorer);

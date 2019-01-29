@@ -181,12 +181,12 @@ package body File_Utils is
                --  return C:/path
                File := Create
                  (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                  (URL_Decode (Files (8 .. Last - 1)))));
+                  (URL_Decode (Files (First + 8 .. Last - 1)))));
             else
                --  otherwise get leading '/' into file name
                File := Create
                  (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                  (URL_Decode (Files (7 .. Last - 1)))));
+                  (URL_Decode (Files (First + 7 .. Last - 1)))));
             end if;
 
             Append (Result, File);

@@ -31,7 +31,6 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.Selection_Data;    use Gtk.Selection_Data;
 with Gtk.Target_List;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_View;
 with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 
 with File_Utils;
@@ -87,6 +86,18 @@ package body Project_Explorers_Common is
       File      : Virtual_File;
       Icon_Name : String := "");
    --  Set values of columns
+
+   function Freeze_Selection
+     (Dummy_Selection   : not null access Gtk_Tree_Selection_Record'Class;
+      Dummy_Model       : Gtk.Tree_Model.Gtk_Tree_Model;
+      Dummy_Path        : Gtk.Tree_Model.Gtk_Tree_Path;
+      Dummy_Is_Selected : Boolean) return Boolean is (False);
+
+   function Thaw_Selection
+     (Dummy_Selection   : not null access Gtk_Tree_Selection_Record'Class;
+      Dummy_Model       : Gtk.Tree_Model.Gtk_Tree_Model;
+      Dummy_Path        : Gtk.Tree_Model.Gtk_Tree_Path;
+      Dummy_Is_Selected : Boolean) return Boolean is (True);
 
    ---------------------
    -- Add_Column_File --
@@ -524,7 +535,6 @@ package body Project_Explorers_Common is
       Event     : Gdk_Event_Button) return Boolean
    is
       Iter           : Gtk_Tree_Iter;  --  applies to Model
-      Path           : Gtk_Tree_Path;
       Filter_Path    : Gtk_Tree_Path;
       Project        : Project_Type;
       File           : Virtual_File;
@@ -532,6 +542,7 @@ package body Project_Explorers_Common is
       Rect           : Gdk_Rectangle;
       Cell_X, Cell_Y : Gint;
       Row_Found      : Boolean;
+
    begin
       if Event.Button = 1 then
          declare
@@ -544,13 +555,6 @@ package body Project_Explorers_Common is
 
             Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
          end;
-
-         if Event.The_Type /= Button_Release then
-            --  Set cursor to pointed position before open menu, etc
-            Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
-            Set_Cursor (Tree, Path, null, False);
-            Path_Free (Path);
-         end if;
 
          case Tree.Get_Node_Type (Iter) is
             when Directory_Node_Types
@@ -594,8 +598,28 @@ package body Project_Explorers_Common is
                      Column  => 0);
                   return True;
 
-               elsif Event.The_Type = Button_Press then
+               elsif Event.The_Type = Button_Release then
+                  Tree.Get_Selection.Set_Select_Function
+                    (Thaw_Selection'Access);
 
+                  Get_Path_At_Pos
+                    (Tree,
+                     Gint (Event.X),
+                     Gint (Event.Y),
+                     Filter_Path,
+                     Col,
+                     Cell_X,
+                     Cell_Y,
+                     Row_Found);
+
+                  if Tree.Frozen_Selection then
+                     Tree.Set_Cursor (Filter_Path, null, False);
+                  end if;
+
+                  Tree.Frozen_Selection := False;
+                  Path_Free (Filter_Path);
+
+               elsif Event.The_Type = Button_Press then
                   --  Did the user click on the expander, or on the file name?
 
                   Get_Path_At_Pos
@@ -611,6 +635,15 @@ package body Project_Explorers_Common is
                     (Path   => Filter_Path,
                      Column => Col,
                      Rect   => Rect);
+
+                  --  Intercept mouse clicks on selected items so that we can
+                  --  drag multiple items without the click selecting only one
+                  if Tree.Get_Selection.Path_Is_Selected (Filter_Path) then
+                     Tree.Get_Selection.Set_Select_Function
+                       (Freeze_Selection'Access);
+                     Tree.Frozen_Selection := True;
+                  end if;
+
                   Path_Free (Filter_Path);
                   if Cell_X < Rect.X or else Cell_X > Rect.X + Rect.Width then
                      Cancel_Child_Drag (Child);
@@ -663,38 +696,52 @@ package body Project_Explorers_Common is
       Event  : Gdk_Event) return Boolean
    is
       use type Gdk.Types.Gdk_Key_Type;
+      use Gtk_Tree_Path_List;
 
-      Iter         : Gtk_Tree_Iter;
-      Model        : Gtk_Tree_Model;
-      File         : Virtual_File;
-      Project      : Project_Type;
-
+      List    : Gtk_Tree_Path_List.Glist;
+      G_Iter  : Gtk_Tree_Path_List.Glist;
+      Path    : Gtk_Tree_Path;
+      Iter    : Gtk_Tree_Iter;
+      Model   : Gtk_Tree_Model;
+      File    : Virtual_File;
+      Project : Project_Type;
    begin
-      Get_Selected (Get_Selection (Tree), Model, Iter);
-      Iter := Tree.Convert_To_Store_Iter (Iter);
-
-      if Iter = Null_Iter then
+      if Get_Key_Val (Event) /= GDK_Return then
          return False;
       end if;
 
-      if Get_Key_Val (Event) = GDK_Return then
-         case Tree.Get_Node_Type (Iter) is
-         when File_Node =>
-            File    := Tree.Get_File_From_Node (Iter);
-            Project := Tree.Get_Project_From_Node (Iter, Importing => False);
+      Tree.Get_Selection.Get_Selected_Rows (Model, List);
+      G_Iter := Gtk_Tree_Path_List.Last (List);
 
-            Open_File_Action_Hook.Run
-              (Tree.Kernel,
-               File,
-               Project => Project,
-               Line    => 0,
-               Column  => 0);
+      while G_Iter /= Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+         Iter := Tree.Convert_To_Store_Iter (Iter);
 
-         when others =>
-            null;
-         end case;
-      end if;
+         if Iter /= Null_Iter then
+            case Tree.Get_Node_Type (Iter) is
+            when File_Node =>
+               File := Tree.Get_File_From_Node (Iter);
+               Project := Tree.Get_Project_From_Node
+                 (Iter, Importing => False);
 
+               Open_File_Action_Hook.Run
+                 (Tree.Kernel,
+                  File,
+                  Project => Project,
+                  Line    => 0,
+                  Column  => 0);
+
+            when others =>
+               null;
+            end case;
+         end if;
+
+         Path_Free (Path);
+         G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+      end loop;
+
+      Free (List);
       return False;
    end On_Key_Press;
 
@@ -1027,47 +1074,57 @@ package body Project_Explorers_Common is
       Tree        : constant Base_Explorer_Tree := Base_Explorer_Tree (Object);
       Model       : Gtk_Tree_Model;
       M           : constant Gtk_Tree_Store := Tree.Model;
-      Filter_Iter : Gtk_Tree_Iter;
+      List        : Gtk_Tree_Path_List.Glist;
+      G_Iter      : Gtk_Tree_Path_List.Glist;
+      Path        : Gtk_Tree_Path;
       Iter        : Gtk_Tree_Iter;
-      Kind        : Node_Types;
       File        : Virtual_File;
+      Data_String : Unbounded_String;
       Data        : constant Gtk.Selection_Data.Gtk_Selection_Data :=
-                       From_Object (Get_Address (Nth (Args, 2)));
+        From_Object (Get_Address (Nth (Args, 2)));
+      use Gtk_Tree_Path_List;
+
    begin
-      Get_Selected (Get_Selection (Tree), Model, Filter_Iter);
-      Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
+      Tree.Get_Selection.Get_Selected_Rows (Model, List);
+      G_Iter := Gtk_Tree_Path_List.Last (List);
 
-      if Iter = Null_Iter then
-         return;
-      end if;
+      while G_Iter /= Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
+         Iter := Tree.Convert_To_Store_Iter (Iter);
 
-      Kind := Tree.Get_Node_Type (Iter);
+         if Iter /= Null_Iter then
+            case Tree.Get_Node_Type (Iter) is
+            when File_Node =>
+               File := Get_File (M, Iter, File_Column);
+               begin
+                  if not File.Is_Readable then
+                     Kernel.Get_Messages_Window.Insert_Error
+                       ("File """ & (+(File.Base_Name)) &
+                          """ is not readable" & ASCII.LF);
+                  else
+                     Append (Data_String,
+                             "file://" & File.Display_Full_Name & ASCII.LF);
+                  end if;
 
-      case Kind is
+               exception
+                  when others =>
+                     null;
+               end;
 
-         when File_Node =>
-            File := Get_File (M, Iter, File_Column);
+            when others =>
+               null;
+            end case;
+         end if;
 
-            begin
-               if not File.Is_Readable then
-                  Kernel.Get_Messages_Window.Insert_Error
-                    ("File """ & (+(File.Base_Name)) &
-                       """ is not readable" & ASCII.LF);
-                  return;
-               end if;
-
-            exception
-               when others =>
-                  return;
-            end;
-
-         when others =>
-            return;
-      end case;
+         Path_Free (Path);
+         G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
+      end loop;
+      Free (List);
 
       Gtk.Selection_Data.Selection_Data_Set
         (Data, Gtk.Selection_Data.Get_Target (Data), 8,
-         "file://" & File.Display_Full_Name);
+         To_String (Data_String));
    end Drag_Data_Get;
 
    ------------------------
@@ -1091,6 +1148,7 @@ package body Project_Explorers_Common is
       Action  : constant Drag_Action := Get_Selected_Action (Context);
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
+      Refresh : Boolean := False;  -- Do we have at least a success
 
       procedure Fail (Msg : String);
 
@@ -1101,11 +1159,10 @@ package body Project_Explorers_Common is
       procedure Fail (Msg : String) is
       begin
          Kernel.Get_Messages_Window.Insert_Error (Msg & ASCII.LF);
-         Gtk.Dnd.Finish
-           (Context, Success => False, Del => False, Time => Time);
       end Fail;
 
    begin
+      --  Retrieve the destination directory iter
       declare
          Path      : Gtk_Tree_Path;
          Buffer_X  : Gint;
@@ -1153,52 +1210,55 @@ package body Project_Explorers_Common is
             if Sources = null then
                Success := False;
             else
-               --  Muti-selection not supported by Files View, so
-               --  process only first file
-               Source := Sources (Sources'First);
-               Target := Dir.Create_From_Dir (Source.Base_Name);
+               for Ix in Sources'Range loop
+                  Source := Sources (Ix);
+                  Target := Dir.Create_From_Dir (Source.Base_Name);
 
-               if not Dir.Is_Writable then
-                  Fail ("Target directory " & (+(Dir.Full_Name)) &
-                          " is not writable");
-                  return;
-               end if;
-
-               if Source = Target then
-                  Success := False;
-
-               elsif Action = Action_Move
-                 or else Action = Action_Any
-               then
-                  if not Source.Is_Writable then
-                     Fail ("Source " & (+(Source.Base_Name)) &
+                  if not Dir.Is_Writable then
+                     Fail ("Target directory " & (+(Dir.Full_Name)) &
                              " is not writable");
+                     Gtk.Dnd.Finish
+                       (Context,
+                        Success => False,
+                        Del     => False,
+                        Time    => Time);
                      return;
                   end if;
 
-                  Src_Dir := Source.Get_Parent;
-                  if Src_Dir = No_File then
-                     Fail ("Source directory is unavailable");
-                     return;
+                  if Source = Target then
+                     Success := False;
 
-                  elsif not Src_Dir.Is_Writable then
-                     Fail ("Source directory " & (+(Src_Dir.Full_Name)) &
-                             " is not writable");
-                     return;
+                  elsif Action = Action_Move
+                    or else Action = Action_Any
+                  then
+                     if not Source.Is_Writable then
+                        Fail ("Source " & (+(Source.Base_Name)) &
+                                " is not writable");
+                     end if;
+
+                     Src_Dir := Sources (Ix).Get_Parent;
+                     if Src_Dir = No_File then
+                        Fail ("Source directory is unavailable");
+
+                     elsif not Src_Dir.Is_Writable then
+                        Fail ("Source directory " & (+(Src_Dir.Full_Name)) &
+                                " is not writable");
+                     end if;
+
+                     Source.Rename (Target, Success);
+                     Refresh := Refresh or else Success;
+
+                     if Success then
+                        File_Renamed_Hook.Run (Kernel, Source, Target);
+                     end if;
+                  else
+                     Source.Copy (Target.Full_Name, Success);
+
+                     if Success then
+                        File_Saved_Hook.Run (Kernel, Target);
+                     end if;
                   end if;
-
-                  Source.Rename (Target, Success);
-
-                  if Success then
-                     File_Renamed_Hook.Run (Kernel, Source, Target);
-                  end if;
-               else
-                  Source.Copy (Target.Full_Name, Success);
-
-                  if Success then
-                     File_Saved_Hook.Run (Kernel, Target);
-                  end if;
-               end if;
+               end loop;
             end if;
 
             Gtk.Dnd.Finish
@@ -1207,7 +1267,7 @@ package body Project_Explorers_Common is
                Del     => Success and (Action = Action_Move),
                Time    => Time);
 
-            if Success then
+            if Refresh then
                Reload_Project_If_Needed (Kernel);
                Recompute_View (Kernel);
             end if;

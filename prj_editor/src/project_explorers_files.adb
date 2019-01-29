@@ -658,7 +658,6 @@ package body Project_Explorers_Files is
             begin
                Path := D.Tree.Get_Filter_Path_For_Store_Iter (D.Base);
                D.Tree.Expand_To_Path (Path);
-               D.Tree.Get_Selection.Select_Path (Path);
                D.Tree.Scroll_To_Cell
                  (Path,
                   Column    => null,
@@ -786,6 +785,7 @@ package body Project_Explorers_Files is
       Explorer.Tree.Initialize
         (Column_Types => Columns_Types);
       Explorer.Tree.Set_Enable_Search (False);
+      Set_Mode (Explorer.Tree.Get_Selection, Selection_Multiple);
       Set_Name (Explorer.Tree, "File Explorer Tree");
 
       Scrolled.Add (Explorer.Tree);

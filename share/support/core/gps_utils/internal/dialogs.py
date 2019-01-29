@@ -362,11 +362,12 @@ class Project_View(Dialog, Tree):
 
     def get_selected_name(self):
         """
-        Return the displayed name of the Project view's selected node, or None
-        if there is no selection.
+        Return the displayed name of the Project view's first
+        selected node, or None if there is no selection.
         """
 
-        _, select_iter = self.dialog.get_selection().get_selected()
+        model, list_path = self.dialog.get_selection().get_selected_rows()
+        select_iter = model.get_iter(list_path[0])
         if not select_iter:
             return None
 
