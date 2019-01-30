@@ -1651,6 +1651,24 @@ package body Src_Editor_Buffer is
              & System.Address_Image (Buf));
       Buffer.In_Destruction := True;
 
+      --  Destroying listeners
+
+      while not Buffer.Listeners.Is_Empty loop
+         declare
+            procedure Unchecked_Free is
+              new Ada.Unchecked_Deallocation
+                (Editor_Listener'Class, Editor_Listener_Access);
+
+            Listener : Editor_Listener_Access :=
+                         Buffer.Listeners.First_Element;
+
+         begin
+            Listener.Finalize;
+            Unchecked_Free (Listener);
+            Buffer.Listeners.Delete_First;
+         end;
+      end loop;
+
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
 
