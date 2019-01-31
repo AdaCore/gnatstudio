@@ -165,10 +165,6 @@ package body GPS.Location_View is
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
 
-   procedure Free (List : in out Gtk_Tree_Path_List.Glist);
-   --  Calling Path_Free on each item in list,
-   --  and then freeing the list itself.
-
    function Is_Parent_Selected
      (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
       Path      : Gtk_Tree_Path;
@@ -608,7 +604,7 @@ package body GPS.Location_View is
       if Model = Null_Gtk_Tree_Model
         or else List = Gtk_Tree_Path_List.Null_List
       then
-         Free (List);
+         Free_Path_List (List);
          return;
       end if;
 
@@ -626,7 +622,7 @@ package body GPS.Location_View is
          On_Location_Clicked (Self, Path, Iter);
       end if;
 
-      Free (List);
+      Free_Path_List (List);
    end Goto_Location;
 
    -------------
@@ -676,7 +672,7 @@ package body GPS.Location_View is
       if Model = Null_Gtk_Tree_Model
         or else List = Gtk_Tree_Path_List.Null_List
       then
-         Free (List);
+         Free_Path_List (List);
          return;
       end if;
 
@@ -695,13 +691,13 @@ package body GPS.Location_View is
 
          if not Backwards then
             --  We have found the first iter, our job is done.
-            Free (List);
+            Free_Path_List (List);
             return;
          end if;
       end if;
 
       if Path.Get_Depth < 3 then
-         Free (List);
+         Free_Path_List (List);
          return;
       end if;
 
@@ -740,7 +736,7 @@ package body GPS.Location_View is
                end if;
             else
                Path_Free (File_Path);
-               Free (List);
+               Free_Path_List (List);
                Path_Free (Category_Path);
                return;
             end if;
@@ -765,7 +761,7 @@ package body GPS.Location_View is
       Goto_Location (Loc);
 
       Path_Free (File_Path);
-      Free (List);
+      Free_Path_List (List);
       Path_Free (Category_Path);
    end Next_Item;
 
@@ -820,7 +816,7 @@ package body GPS.Location_View is
       if Model = Null_Gtk_Tree_Model
         or else List = Gtk_Tree_Path_List.Null_List
       then
-         Free (List);
+         Free_Path_List (List);
          return Context;
       end if;
 
@@ -900,7 +896,7 @@ package body GPS.Location_View is
          end;
       end if;
 
-      Free (List);
+      Free_Path_List (List);
       return Context;
    end Build_Context;
 
@@ -989,14 +985,14 @@ package body GPS.Location_View is
               and then Get_File (Model, Iter, -File_Column) = File
               and then Integer (Get_Int (Model, Iter, -Line_Column)) = Line
             then
-               Free (List);
+               Free_Path_List (List);
                return;
             end if;
 
             Cursor := Gtk_Tree_Path_List.Next (Cursor);
          end loop;
 
-         Free (List);
+         Free_Path_List (List);
       end if;
 
       --  Highlight the location. Use the same category as the current
@@ -1693,30 +1689,6 @@ package body GPS.Location_View is
       Self.View.Get_Filter_Model.Set_Pattern (Pattern);
    end Filter_Changed;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Gtk_Tree_Path_List.Glist)
-   is
-      Iter : Gtk_Tree_Path_List.Glist;
-      Path : Gtk_Tree_Path;
-
-      use type Gtk_Tree_Path_List.Glist;
-   begin
-      if List = Gtk_Tree_Path_List.Null_List then
-         return;
-      end if;
-
-      Iter := Gtk_Tree_Path_List.First (List);
-      while Iter /= Gtk_Tree_Path_List.Null_List loop
-         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (Iter));
-         Path_Free (Path);
-         Iter := Gtk_Tree_Path_List.Next (Iter);
-      end loop;
-      Gtk_Tree_Path_List.Free (List);
-   end Free;
-
    --------------------
    -- On_Row_Deleted --
    --------------------
@@ -1787,7 +1759,7 @@ package body GPS.Location_View is
       if Model = Null_Gtk_Tree_Model
         or else List = Gtk_Tree_Path_List.Null_List
       then
-         Free (List);
+         Free_Path_List (List);
          return Commands.Failure;
       end if;
 
@@ -1820,10 +1792,9 @@ package body GPS.Location_View is
             end if;
          end if;
 
-         Path_Free (Path);
          G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
       end loop;
-      Gtk_Tree_Path_List.Free (List);
+      Free_Path_List (List);
 
       return Commands.Success;
    end Execute;
@@ -1979,7 +1950,7 @@ package body GPS.Location_View is
             Result := Commands.Failure;
          end if;
       end if;
-      Free (List);
+      Free_Path_List (List);
 
       return Result;
    end Execute;

@@ -1580,7 +1580,7 @@ package body KeyManager_Module.GUI is
 
                   end if;
 
-                  Free (List);
+                  Free_Path_List (List);
                   Dialog.Destroy;
 
                   return Result;

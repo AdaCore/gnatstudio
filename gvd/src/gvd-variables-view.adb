@@ -782,12 +782,11 @@ package body GVD.Variables.View is
                   end if;
                end if;
 
-               Path_Free (Path);
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
 
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
 
       return Commands.Success;
@@ -1863,10 +1862,9 @@ package body GVD.Variables.View is
                   Expand_Children (Get_Iter (Model, Path));
                end if;
 
-               Path_Free (Path);
             end if;
          end if;
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
       return Commands.Success;
    end Execute;

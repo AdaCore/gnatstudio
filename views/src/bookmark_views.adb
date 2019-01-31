@@ -729,12 +729,11 @@ package body Bookmark_Views is
                   Delete_Bookmark (Get_Kernel (Context.Context), Data);
                end if;
 
-               Path_Free (Path);
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
 
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
          View.Deleting := False;
          Refresh (View);
       end if;

@@ -737,11 +737,10 @@ package body Project_Explorers_Common is
             end case;
          end if;
 
-         Path_Free (Path);
          G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
       end loop;
 
-      Free (List);
+      Free_Path_List (List);
       return False;
    end On_Key_Press;
 
@@ -1117,11 +1116,10 @@ package body Project_Explorers_Common is
             end case;
          end if;
 
-         Path_Free (Path);
          G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
       end loop;
-      Free (List);
 
+      Free_Path_List (List);
       Gtk.Selection_Data.Selection_Data_Set
         (Data, Gtk.Selection_Data.Get_Target (Data), 8,
          To_String (Data_String));

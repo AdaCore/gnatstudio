@@ -71,7 +71,8 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Types;
 
-with String_Utils; use String_Utils;
+with String_Utils;              use String_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
 package body GVD.Registers_View is
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.REGISTERS_VIEW");
@@ -460,11 +461,11 @@ package body GVD.Registers_View is
                      View.Registers.Delete (Name);
                   end;
                end if;
-               Path_Free (Path);
+
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
             end loop;
          end if;
-         Gtk_Tree_Path_List.Free (List);
+         Free_Path_List (List);
       end if;
 
       View.Locked := False;
